@@ -2371,30 +2371,3 @@ body.tutorial-done-open #tutorialDoneModal.active {
   z-index: 2147483647 !important;
 }
 /* UMT_TUTORIAL_REWORK_20260901: MENU FONT AND TUTORIAL STACK END */
-
-/* Menu entries for modes that are visible but not playable yet
-   (Campaign, Challenges). The button carries `disabled`, so its real
-   click listener never fires -- these rules just make that legible
-   instead of looking broken. */
-.menu-action-btn.menu-action-soon {
-  opacity: 0.45;
-  cursor: default;
-}
-.menu-action-btn.menu-action-soon:hover,
-.menu-action-btn.menu-action-soon:focus {
-  transform: none;
-  box-shadow: none;
-}
-.menu-soon-badge {
-  flex: 0 0 auto;
-  margin-left: auto;
-  padding: 3px 8px;
-  border: 1px solid rgba(224, 235, 246, 0.28);
-  border-radius: 999px;
-  color: rgba(224, 235, 246, 0.72);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}

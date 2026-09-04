@@ -74,12 +74,6 @@
 
       <symbol id="icon-fake-clue" viewBox="0 0 120 120"><path fill="currentColor" d="M15 27h57a10 10 0 0 1 10 10v31a10 10 0 0 1-10 10H44L27 94V78H15A10 10 0 0 1 5 68V37a10 10 0 0 1 10-10z"/><path fill="#f4f5f7" d="M52 43h53a10 10 0 0 1 10 10v26a10 10 0 0 1-10 10H91v14L76 89H52a10 10 0 0 1-10-10V53a10 10 0 0 1 10-10z"/><path fill="none" stroke="#f4f5f7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M24 50l8 8 15-18"/><path fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M72 59l17 17M89 59L72 76"/></symbol>
 
-      <!-- Feedback Lie: same two-bubble shape as Falsify Intel (icon-fake-clue)
-           since it's the same "which of these is real" idea taken further --
-           but both bubbles get a cross instead of one check + one cross,
-           since here nothing shown is ever real. -->
-      <symbol id="icon-clean-lie" viewBox="0 0 120 120"><path fill="currentColor" d="M15 27h57a10 10 0 0 1 10 10v31a10 10 0 0 1-10 10H44L27 94V78H15A10 10 0 0 1 5 68V37a10 10 0 0 1 10-10z"/><path fill="#f4f5f7" d="M52 43h53a10 10 0 0 1 10 10v26a10 10 0 0 1-10 10H91v14L76 89H52a10 10 0 0 1-10-10V53a10 10 0 0 1 10-10z"/><path fill="none" stroke="#f4f5f7" stroke-width="5" stroke-linecap="round" d="M23 50l16 16M39 50 23 66"/><path fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" d="M72 59l17 17M89 59 72 76"/></symbol>
-
       <symbol id="icon-delayed-clue" viewBox="0 0 120 120"><rect fill="currentColor" x="10" y="28" width="72" height="55" rx="8"/><path fill="#f4f5f7" d="M14 35l32 25 32-25v-4H14z"/><circle fill="#f4f5f7" cx="87" cy="78" r="25"/><circle fill="currentColor" cx="87" cy="78" r="17"/><path fill="none" stroke="#f4f5f7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M87 67v12l9 6"/></symbol>
 
       <symbol id="icon-time-pressure" viewBox="0 0 120 120"><circle fill="currentColor" cx="60" cy="64" r="40"/><circle fill="#f4f5f7" cx="60" cy="64" r="30"/><rect fill="currentColor" x="48" y="11" width="24" height="11" rx="4"/><path fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M60 64l16-14M60 39v5M84 64h-5M60 89v-5M36 64h5"/></symbol>
@@ -282,7 +276,7 @@
         </span>
         <span class="menu-action-copy">
           <span class="menu-action-title">Quick Play</span>
-          <span class="menu-action-subtitle">Jump into a game right now</span>
+          <span class="menu-action-subtitle">Find a human or AI match fast</span>
         </span>
         <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
       </button>
@@ -293,21 +287,10 @@
         </span>
         <span class="menu-action-copy">
           <span class="menu-action-title">Daily Challenge</span>
-          <span class="menu-action-subtitle">One puzzle a day, the same for everyone</span>
+          <span class="menu-action-subtitle">One shared puzzle each day</span>
         </span>
         <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
       </button>
-
-      <!-- CUDDLE_MODE:MENU START -->
-      <button id="cuddleBtn" class="menu-btn menu-action-btn" type="button">
-        <span class="menu-action-icon menu-action-emoji" aria-hidden="true">☁️</span>
-        <span class="menu-action-copy">
-          <span class="menu-action-title">Cuddle</span>
-          <span class="menu-action-subtitle">A solo card adventure, one run at a time</span>
-        </span>
-        <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
-      </button>
-      <!-- CUDDLE_MODE:MENU END -->
 
       <button id="playMainBtn" class="menu-btn menu-action-btn" type="button">
         <span class="menu-action-icon" aria-hidden="true">
@@ -315,7 +298,7 @@
         </span>
         <span class="menu-action-copy">
           <span class="menu-action-title">Play</span>
-          <span class="menu-action-subtitle">Ranked, campaign, and your saved games</span>
+          <span class="menu-action-subtitle">Friends, ranked, solo, and saved games</span>
         </span>
         <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
       </button>
@@ -326,7 +309,7 @@
         </span>
         <span class="menu-action-copy">
           <span class="menu-action-title">Tutorial</span>
-          <span class="menu-action-subtitle">Learn the game in small steps</span>
+          <span class="menu-action-subtitle">Learn the basics in small steps</span>
         </span>
         <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
       </button>
@@ -423,13 +406,12 @@
 <section id="playFriendScreen" class="screen game-menu streamlined-choice-screen">
   <div class="menu-center">
     <div class="screen-back-header">
-      <button class="menu-btn screen-back-btn" onclick="showScreen('quickPlayScreen')">← Back</button>
-      <h2 class="menu-title" style="flex:1;text-align:center">Play a Friend</h2>
+      <button class="menu-btn screen-back-btn" onclick="showScreen('playScreen')">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Play with a Friend</h2>
     </div>
-    <p class="menu-subtitle">Casual and untimed — neither of you has to stay online.</p>
     <div class="menu-buttons play-menu-buttons">
-      <button id="playFriendInviteBtn" class="menu-btn primary" title="Creates a link you can send anywhere">Send Invite Link ✉️</button>
-      <button id="playFriendFriendsBtn" class="menu-btn" title="Start a game with someone on your friends list">Friends 👥</button>
+      <button id="playFriendInviteBtn" class="menu-btn primary" title="Casual, unlimited-time, shuffled game — send a link, no need to wait around">Send Invite Link ✉️</button>
+      <button id="playFriendFriendsBtn" class="menu-btn">Friends 👥</button>
     </div>
   </div>
 </section>
@@ -441,11 +423,9 @@
       <button class="menu-btn screen-back-btn" onclick="showScreen('startupScreen')">← Back</button>
       <h2 class="menu-title" style="flex:1;text-align:center">Quick Play</h2>
     </div>
-    <p class="menu-subtitle">Who do you want to play?</p>
     <div class="menu-buttons play-menu-buttons">
-      <button id="quickPlayHumanBtn" class="menu-btn primary" title="Drop into a match with whoever is waiting">Play a Human</button>
-      <button id="quickPlayAiBtn" class="menu-btn" title="Pick a difficulty and start straight away">Play the AI</button>
-      <button id="playFriendMainBtn" class="menu-btn" title="Send an invite link - no need to both be online">Play a Friend</button>
+      <button id="quickPlayHumanBtn" class="menu-btn primary">Play Human</button>
+      <button id="quickPlayAiBtn" class="menu-btn">Play AI</button>
     </div>
   </div>
 </section>
@@ -472,53 +452,78 @@
       <button class="menu-btn screen-back-btn" type="button" onclick="showScreen('startupScreen')">← Back</button>
       <h2 class="menu-title">Play</h2>
     </div>
-    <p class="menu-subtitle">Everything else.</p>
+    <p class="menu-subtitle">Choose how you want to play.</p>
 
     <div class="menu-buttons streamlined-menu-buttons play-hub-buttons">
-      <button id="rankedMenuBtn" class="menu-btn menu-action-btn primary" type="button" title="Timed matches against ranked players — results move your rating">
+      <div class="menu-section-label">Multiplayer</div>
+      <button id="playFriendMainBtn" class="menu-btn menu-action-btn primary" type="button" title="Casual, unlimited-time game with an invite link">
+        <span class="menu-action-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false"><path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 20v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </span>
+        <span class="menu-action-copy">
+          <span class="menu-action-title">Play with a Friend</span>
+          <span class="menu-action-subtitle">Send an invite or choose a friend</span>
+        </span>
+        <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
+      </button>
+
+      <button id="rankedMenuBtn" class="menu-btn menu-action-btn" type="button">
         <span class="menu-action-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" focusable="false"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 6H4v1a4 4 0 0 0 4 4M17 6h3v1a4 4 0 0 1-4 4"/></svg>
         </span>
         <span class="menu-action-copy">
           <span class="menu-action-title">Ranked</span>
-          <span class="menu-action-subtitle">Timed matches that move your rating</span>
+          <span class="menu-action-subtitle">Play timed matches and climb the board</span>
         </span>
         <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
       </button>
 
-      <!-- Campaign and Challenges are shown but not yet playable. The
-           `disabled` attribute keeps their existing click listeners
-           (single-player.js, challenges.js) from ever firing, so the
-           screens stay unreachable until the modes ship. -->
-      <button id="singlePlayerBtn" class="menu-btn menu-action-btn menu-action-soon" type="button" disabled aria-disabled="true">
+      <div class="menu-section-label">Solo and ongoing</div>
+      <!-- Campaign and Challenges are hidden for now (kept in the DOM,
+           listeners are null-safe) -- re-add `hidden` removal to bring
+           them back. -->
+      <button id="singlePlayerBtn" class="menu-btn menu-action-btn" type="button" hidden>
         <span class="menu-action-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" focusable="false"><path d="M4 19 9 4l6 16 5-13"/><circle cx="4" cy="19" r="2"/><circle cx="9" cy="4" r="2"/><circle cx="15" cy="20" r="2"/><circle cx="20" cy="7" r="2"/></svg>
         </span>
         <span class="menu-action-copy">
           <span class="menu-action-title">Campaign</span>
-          <span class="menu-action-subtitle">Story missions against the AI</span>
+          <span class="menu-action-subtitle">Story missions against AI</span>
         </span>
-        <span class="menu-soon-badge">Soon</span>
+        <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
       </button>
 
       <!-- UMT_REQUESTED_FIXES_20260901: CHALLENGE MENU START -->
-      <button id="challengesBtn" class="menu-btn menu-action-btn menu-action-soon" type="button" disabled aria-disabled="true">
+      <button id="challengesBtn" class="menu-btn menu-action-btn" type="button" hidden>
         <span class="menu-action-icon menu-action-emoji" aria-hidden="true">&#127919;</span>
         <span class="menu-action-copy">
           <span class="menu-action-title">Challenges</span>
-          <span class="menu-action-subtitle">Beat AIs with one special power each</span>
+          <span class="menu-action-subtitle">Battle powered AIs and earn stars</span>
         </span>
-        <span class="menu-soon-badge">Soon</span>
+        <span class="menu-action-chevron" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
       </button>
       <!-- UMT_REQUESTED_FIXES_20260901: CHALLENGE MENU END -->
 
-      <button id="myGamesBtn" class="menu-btn menu-action-btn" type="button" title="Games you have not finished yet">
+      <!-- CUDDLE_MODE:MENU START -->
+      <button id="cuddleBtn" class="menu-btn menu-action-btn" type="button" title="Single-player card roguelite campaign">
+        <span class="menu-action-icon menu-action-emoji" aria-hidden="true">☁️</span>
+        <span class="menu-action-copy">
+          <span class="menu-action-title">Cuddle</span>
+          <span class="menu-action-subtitle">Single-player card adventure</span>
+        </span>
+        <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
+      </button>
+      <!-- CUDDLE_MODE:MENU END -->
+
+      <button id="myGamesBtn" class="menu-btn menu-action-btn" type="button">
         <span class="menu-action-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" focusable="false"><path d="M4 5h6l2 2h8v12H4V5Z"/><path d="M8 12h8M8 15h5"/></svg>
         </span>
         <span class="menu-action-copy">
           <span class="menu-action-title">My Games</span>
-          <span class="menu-action-subtitle">Pick up a match you already started</span>
+          <span class="menu-action-subtitle">Resume matches already in progress</span>
         </span>
         <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
         <span id="myGamesNotifyBadge" class="notify-badge hidden" title="It's your turn in a game">✉️</span>
@@ -614,14 +619,14 @@
       <button class="menu-btn screen-back-btn" type="button" onclick="showScreen('startupScreen')">← Back</button>
       <h2 class="menu-title">Tutorials</h2>
     </div>
-    <p class="menu-subtitle">Start at the top. Each one takes a few minutes and you play as you learn.</p>
+    <p class="menu-subtitle">Start with Basics. The others are short, focused practice sessions.</p>
 
     <div class="menu-buttons streamlined-menu-buttons tutorial-hub-buttons">
       <button id="startTutorialBtn" class="menu-btn menu-action-btn tutorial-menu-btn primary" type="button" data-tutorial-key="tutorial">
         <span class="tutorial-btn-num">1</span>
         <span class="menu-action-copy">
           <span class="menu-action-title">Basics</span>
-          <span class="menu-action-subtitle">Hide a word, hunt a word, read the score</span>
+          <span class="menu-action-subtitle">Learn both roles and read the score</span>
         </span>
         <span class="tutorial-btn-check" aria-hidden="true">✓</span>
       </button>
@@ -630,7 +635,7 @@
         <span class="tutorial-btn-num">2</span>
         <span class="menu-action-copy">
           <span class="menu-action-title">Quests</span>
-          <span class="menu-action-subtitle">Bonus dares for the hunter, and what they pay</span>
+          <span class="menu-action-subtitle">Complete one optional Guesser goal</span>
         </span>
         <span class="tutorial-btn-check" aria-hidden="true">✓</span>
       </button>
@@ -639,7 +644,7 @@
         <span class="tutorial-btn-num">3</span>
         <span class="menu-action-copy">
           <span class="menu-action-title">Stars</span>
-          <span class="menu-action-subtitle">How bold hiding earns you rewards</span>
+          <span class="menu-action-subtitle">Earn stars and pick a reward</span>
         </span>
         <span class="tutorial-btn-check" aria-hidden="true">✓</span>
       </button>
@@ -648,7 +653,7 @@
         <span class="tutorial-btn-num">4</span>
         <span class="menu-action-copy">
           <span class="menu-action-title">Advanced UI</span>
-          <span class="menu-action-subtitle">Optional shortcuts that make play faster</span>
+          <span class="menu-action-subtitle">Interactive practice: Guide, drag, lock, panels, and Log</span>
         </span>
         <span class="tutorial-btn-check" aria-hidden="true">✓</span>
       </button>
@@ -1710,12 +1715,12 @@
   <script src="powerEngine/powers/fieldReport.js"></script>
   <script src="client/quest.js?guesser-polish=7&hardmode-absent-fix=1"></script>
   <script src="client/quest-charge-v9.js?v=9"></script>
-<script src="client/tutorial-ui.js?tutorial-eli5=4&umt-streamlined=1.0.2&umt-tutorial-rework=20260901"></script>
-<script src="client/tutorial-basic.js?tutorial-eli5=4&umt-streamlined=1.0.2"></script>
-<script src="client/tutorial-powers.js?tutorial-eli5=4&reward-overhaul=1"></script>
-<script src="client/tutorial-advanced.js?v=tutorial-motion-sim-4&umt-streamlined=1.0.2&umt-tutorial-rework=20260901"></script>
-<script src="client/tutorial-quest.js?v=tutorial-motion-sim-3&umt-streamlined=1.0.2&umt-tutorial-rework=20260901"></script>
-<script src="client/tutorial-star.js?v=tutorial-motion-sim-3&umt-streamlined=1.0.2&umt-tutorial-rework=20260901"></script>
+<script src="client/tutorial-ui.js?tutorial-eli5=3&umt-streamlined=1.0.2&umt-tutorial-rework=20260901"></script>
+<script src="client/tutorial-basic.js?tutorial-eli5=3&umt-streamlined=1.0.2"></script>
+<script src="client/tutorial-powers.js?tutorial-eli5=3&reward-overhaul=1"></script>
+<script src="client/tutorial-advanced.js?v=tutorial-motion-sim-3&umt-streamlined=1.0.2&umt-tutorial-rework=20260901"></script>
+<script src="client/tutorial-quest.js?v=tutorial-motion-sim-2&umt-streamlined=1.0.2&umt-tutorial-rework=20260901"></script>
+<script src="client/tutorial-star.js?v=tutorial-motion-sim-2&umt-streamlined=1.0.2&umt-tutorial-rework=20260901"></script>
 <script src="client/tutorial-progress.js?umt-streamlined=1.0.2&umt-tutorial-rework=20260901"></script>
   <script src="client/quest-guide.js"></script>
   <script src="client/quest-choice.js"></script>
@@ -1747,9 +1752,9 @@
   <script src="single-player/achievements.js"></script>
   <script src="single-player/challenges.js?umt-challenges=20260901"></script>
 <!-- CUDDLE_MODE:SCRIPTS START -->
-  <script src="cuddle/cuddle-quests.js?v=15&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3"></script>
-  <script src="cuddle/cuddle-engine.js?v=29&cuddle-boss-rounds=3&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3"></script>
-  <script src="cuddle/cuddle-ui.js?v=28&umt-streamlined=1.0.2&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3"></script>
+  <script src="cuddle/cuddle-quests.js?v=14&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3"></script>
+  <script src="cuddle/cuddle-engine.js?v=28&cuddle-boss-rounds=3&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3"></script>
+  <script src="cuddle/cuddle-ui.js?v=27&umt-streamlined=1.0.2&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3"></script>
 <!-- CUDDLE_MODE:SCRIPTS END -->
   <script src="client/my-games.js?umt-streamlined=1.0.2"></script>
   <script src="client/draft.js?guesser-polish=7"></script>
