@@ -286,13 +286,7 @@
       id: "jokerToken",
       icon: "🃏",
       title: "Joker",
-      description: "Gain a joker charge. Spend it any turn to add a wildcard tile to your hand -- it becomes a real letter, chosen to keep your word legal, the moment you submit."
-    },
-    {
-      id: "greenCount",
-      icon: "🔢",
-      title: "Precise Green",
-      description: "One-time: from now on, a green tile also shows how many times that letter appears in the secret."
+      description: "Gain a joker charge: a wildcard hand tile that resolves to a real letter on submit."
     },
     {
       id: "questReroll",

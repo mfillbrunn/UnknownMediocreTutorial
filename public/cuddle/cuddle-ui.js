@@ -588,31 +588,25 @@
     const isPlaying = state.status === "playing";
     const isMulliganMode = isPlaying && actionMode === "mulligan";
     const showSubmitRow = isPlaying && (actionMode === "play" || isMulliganMode);
+    const mega = state.megaState || {};
+    const jokerCharges = Number(mega.jokerCharges || 0);
     const metaBadges = [
       state.suggestedWord ? `<b>Hint ${escapeHtml(state.suggestedWord)}</b>` : "",
-      state.buffs.greyShield ? `<b>Grey shield ${state.buffs.greyShield}</b>` : ""
+      state.buffs.greyShield ? `<b>Grey shield ${state.buffs.greyShield}</b>` : "",
+      jokerCharges > 0 ? `<b>🃏 Jokers ${jokerCharges}</b>` : ""
     ].filter(Boolean).join("");
     const selectedCount = selectedCards.size;
     const mulliganValid = selectedCount >= 1 && selectedCount <= limit;
-    const mega = state.megaState || {};
-    const jokerCharges = Number(mega.jokerCharges || 0);
-    const hasJokerInHand = state.hand.some(card => card.source === "joker");
     const questRerollCharges = Number(mega.questRerollCharges || 0);
     const canReroll = isPlaying && !game.isBossRound() && Boolean(state.activeQuest) && questRerollCharges > 0;
     return `
       <section class="cuddle-hand-panel">
         ${metaBadges ? `<div class="cuddle-hand-meta">${metaBadges}</div>` : ""}
-        ${isPlaying && (jokerCharges > 0 || hasJokerInHand || canReroll) ? `
+        ${isPlaying && canReroll ? `
           <div class="cuddle-utility-row">
-            ${jokerCharges > 0 || hasJokerInHand ? `
-              <button class="cuddle-btn cuddle-btn-joker" data-action="activate-joker" ${hasJokerInHand || game.isBossRound() ? "disabled" : ""}
-                title="${hasJokerInHand ? "A joker is already in your hand" : "Add a wildcard letter to your hand -- its real letter is chosen when you submit"}">
-                🃏 ${hasJokerInHand ? "Joker in hand" : `Use joker <span>${jokerCharges}</span>`}
-              </button>` : ""}
-            ${canReroll ? `
-              <button class="cuddle-btn" data-action="reroll-quest" title="Swap your active quest for a different one">
-                🔄 Reroll quest <span>${questRerollCharges}</span>
-              </button>` : ""}
+            <button class="cuddle-btn" data-action="reroll-quest" title="Swap your active quest for a different one">
+              🔄 Reroll quest <span>${questRerollCharges}</span>
+            </button>
           </div>` : ""}
         ${showSubmitRow ? `
           <div class="cuddle-submit-row ${isMulliganMode ? "is-mulligan-mode" : ""}">
@@ -1031,11 +1025,6 @@
       case "new-run-hard":
         startNewRun("hard");
         return true;
-      case "activate-joker": {
-        const result = game.activateJoker();
-        setUiMessage(result.ok ? "" : result.error);
-        return true;
-      }
       case "reroll-quest": {
         const result = game.rerollActiveQuest();
         setUiMessage(result.ok ? "" : result.error);

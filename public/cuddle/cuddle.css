@@ -1717,11 +1717,6 @@
   flex: 1;
 }
 
-.cuddle-btn-joker {
-  border-color: #f2d36f;
-  background: linear-gradient(135deg, rgba(242, 211, 111, 0.22), rgba(213, 166, 255, 0.18));
-}
-
 .cuddle-card.is-joker {
   border-color: #f2d36f;
   background: linear-gradient(160deg, #7a5fb8, #4c3a86);

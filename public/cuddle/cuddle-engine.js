@@ -3770,6 +3770,7 @@
       milestonesClaimed100: 0,
       jokerCharges: 0,
       hasJokerUnlocked: false,
+      jokerPerRoundBonus: 0,
       questRerollCharges: 0,
       activeQuests: [],
       pendingExtraQuestRewards: [],
@@ -3804,8 +3805,21 @@
 
   const originalHydrateState = CuddleGame.prototype._hydrateState;
   CuddleGame.prototype._hydrateState = function hydrateMegaState() {
+    // The base _hydrateState's normalizeCards keeps only single-A-Z-letter
+    // glyphs, so an unresolved joker card (glyph "*", replaced below with
+    // the real JOKER_GLYPH constant) gets silently dropped from state.hand
+    // by that filter on every reload -- reproducing the "joker vanishes if
+    // you leave and come back" bug. Save it aside and put it back.
+    const preservedJokers = this.state && Array.isArray(this.state.hand)
+      ? this.state.hand.filter(card => card && card.source === "joker" && card.glyph === JOKER_GLYPH)
+      : [];
     if (typeof originalHydrateState === "function") originalHydrateState.call(this);
+    if (preservedJokers.length && this.state && Array.isArray(this.state.hand)) {
+      const stillPresent = this.state.hand.some(card => card.source === "joker" && card.glyph === JOKER_GLYPH);
+      if (!stillPresent) this.state.hand.push(...preservedJokers);
+    }
     ensureMega(this);
+    ensureJokerInHand(this);
   };
 
   // ------------------------------------------------------------------
@@ -3918,6 +3932,25 @@
       if (!specialPhase) this._advanceRound();
       this.save();
       result = { ok: true };
+    } else if (choice?.id === "greenCount") {
+      mega.greenCountUnlocked = true;
+      this.state.lastMessage = `${choice.title} acquired.`;
+      this.state.upgradeChoices = [];
+      this.state.upgradePhase = null;
+      this.state.upgradeMilestone = null;
+      if (!specialPhase) this._advanceRound();
+      this.save();
+      result = { ok: true };
+    } else if (choice?.id === "jokerPerRound") {
+      mega.jokerPerRoundBonus = Number(mega.jokerPerRoundBonus || 0) + 1;
+      mega.hasJokerUnlocked = true;
+      this.state.lastMessage = `${choice.title} acquired.`;
+      this.state.upgradeChoices = [];
+      this.state.upgradePhase = null;
+      this.state.upgradeMilestone = null;
+      if (!specialPhase) this._advanceRound();
+      this.save();
+      result = { ok: true };
     } else if (specialPhase) {
       mega.suppressAdvance = true;
       result = composedChooseUpgrade.call(this, choiceKey);
@@ -3982,6 +4015,7 @@
   // own catalog truncates it to one via cuddleV3NormalizeUpgradeChoice).
   const composedUpgradeCatalog = CuddleGame.prototype._upgradeCatalog;
   CuddleGame.prototype._upgradeCatalog = function upgradeCatalogMega() {
+    const mega = ensureMega(this);
     const base = (composedUpgradeCatalog.call(this) || []).filter(item => item?.id !== "removeLetter");
     const letters = this._removalCandidates(2);
     if (letters.length) {
@@ -3996,6 +4030,22 @@
         description: `Remove ${list} from the deck and from every future secret. ${verb} drawn from the ten least-common eligible consonants.`
       });
     }
+    if (!mega.greenCountUnlocked) {
+      base.push({
+        id: "greenCount",
+        key: "greenCount",
+        icon: "🔢",
+        title: "Precise Green",
+        description: "One-time: from now on, a green tile also shows how many times that letter appears in the secret."
+      });
+    }
+    base.push({
+      id: "jokerPerRound",
+      key: "jokerPerRound",
+      icon: "🃏",
+      title: "Wild Card",
+      description: "Gain one joker charge at the start of every round. Stacks."
+    });
     return base;
   };
 
@@ -4090,10 +4140,8 @@
     if (rewardId === "jokerToken") {
       mega.jokerCharges = Number(mega.jokerCharges || 0) + 1;
       mega.hasJokerUnlocked = true;
+      ensureJokerInHand(this);
       message = "Gained a joker charge.";
-    } else if (rewardId === "greenCount") {
-      mega.greenCountUnlocked = true;
-      message = "Green tiles now also show how many times that letter appears in the secret.";
     } else if (rewardId === "questReroll") {
       mega.questRerollCharges = Number(mega.questRerollCharges || 0) + 1;
       message = "Gained a quest reroll charge.";
@@ -4177,20 +4225,23 @@
     return null;
   }
 
-  CuddleGame.prototype.activateJoker = function activateJoker() {
-    const mega = ensureMega(this);
-    if (this.state?.status !== "playing") return { ok: false, error: "The round is not running." };
-    if (this.isBossRound()) return { ok: false, error: "Jokers cannot be used during a boss round." };
-    if (Number(mega.jokerCharges || 0) <= 0) return { ok: false, error: "No joker charges available." };
-    if ((this.state.hand || []).some(card => card.source === "joker")) {
-      return { ok: false, error: "A joker is already in your hand." };
-    }
+  // A joker charge used to require pressing "Use joker" to place the tile
+  // in your hand before you could play it. Now any banked charge places
+  // itself straight into the hand tiles automatically -- called from
+  // _hydrateState (reload), _beginRound (new round), _ensureQuestForNextGuess
+  // (every other status transition into "playing"), and right after a
+  // charge is granted, so a charge never sits invisible waiting on a click.
+  function ensureJokerInHand(game) {
+    const mega = ensureMega(game);
+    if (!mega || !game.state) return;
+    if (game.state.status !== "playing") return;
+    if (game.isBossRound()) return;
+    const hasJoker = (game.state.hand || []).some(card => card.source === "joker" && card.glyph === JOKER_GLYPH);
+    if (hasJoker) return;
+    if (Number(mega.jokerCharges || 0) <= 0) return;
     mega.jokerCharges -= 1;
-    this.state.hand.push({ id: this._nextId("joker"), glyph: JOKER_GLYPH, source: "joker" });
-    this.state.lastMessage = "Joker added to hand.";
-    this.save();
-    return { ok: true };
-  };
+    game.state.hand.push({ id: game._nextId("joker"), glyph: JOKER_GLYPH, source: "joker" });
+  }
 
   const composedCardCountsTowardHandLimit = CuddleGame.prototype.cardCountsTowardHandLimit;
   CuddleGame.prototype.cardCountsTowardHandLimit = function cardCountsTowardHandLimitMega(card) {
@@ -4348,6 +4399,9 @@
     if (this.state.boss?.id === "extraGuessTrial") {
       this.state.maxGuesses = Math.max(1, (Number(this.state.maxGuesses) || MAX_GUESSES) - 1);
     }
+    const perRoundJokers = Number(mega.jokerPerRoundBonus || 0);
+    if (perRoundJokers > 0) mega.jokerCharges = Number(mega.jokerCharges || 0) + perRoundJokers;
+    ensureJokerInHand(this);
   };
 
   // ------------------------------------------------------------------
@@ -4364,6 +4418,7 @@
     const mega = ensureMega(this);
     if (claimMilestoneIfDue(this)) return;
     if (this.state.status !== "playing") return;
+    ensureJokerInHand(this);
 
     const nextGuess = Number(this.state.guessesUsed || 0) + 1;
     const forced = getGuessRatchetDebuff(this, nextGuess);
@@ -4678,6 +4733,9 @@
     }
     if (mega.extraGuesses) lines.push(`+${mega.extraGuesses} guess${mega.extraGuesses === 1 ? "" : "es"} every round`);
     if (mega.questPersistsForRound) lines.push("Quests stay active for the rest of the round");
+    if (Number(mega.jokerPerRoundBonus || 0) > 0) {
+      lines.push(`🃏 +${mega.jokerPerRoundBonus} joker charge${mega.jokerPerRoundBonus === 1 ? "" : "s"} every round`);
+    }
     if (Number(mega.jokerCharges || 0) > 0) lines.push(`🃏 Joker charges: ${mega.jokerCharges}`);
     if (Number(mega.questRerollCharges || 0) > 0) lines.push(`🔄 Quest reroll charges: ${mega.questRerollCharges}`);
     if (mega.greenCountUnlocked) lines.push("Green tiles show letter counts");
