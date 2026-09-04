@@ -358,6 +358,7 @@ if (guesserEntries.length) {
             <span class="match-side-label">Opponent</span>
           </div>
         </div>
+        ${summaryHasClock() ? `
         <div class="match-time-row">
           <div class="match-side match-side--mine">
             <strong class="match-side-time">${formatSpentMs(myMs)}</strong>
@@ -367,7 +368,7 @@ if (guesserEntries.length) {
             <strong class="match-side-time">${formatSpentMs(opponentMs)}</strong>
             <span class="match-side-label">Total time</span>
           </div>
-        </div>
+        </div>` : ""}
       </div>
       ${eloHtml}
       ${timeoutNote}
@@ -509,7 +510,17 @@ function summaryRoundSeconds(round, userId) {
   return Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
+// An untimed game (the Daily Challenge, "No Time" casual play, tutorials)
+// has no clock to report on -- every value here would just be "however long
+// you happened to sit there", which is not part of how that game was
+// scored. Checked against the live match state rather than the archived
+// round, since the round snapshots carry raw per-player seconds either way.
+function summaryHasClock() {
+  return state?.timeControl?.enabled !== false;
+}
+
 function renderRoundClockPanel(round, label = "ROUND CLOCK") {
+  if (!summaryHasClock()) return "";
   if (!round || !round.time || typeof round.time !== "object") return "";
   const setterId = round.setter;
   const guesserId = round.guesser;
@@ -545,6 +556,7 @@ function renderRoundClockPanel(round, label = "ROUND CLOCK") {
 // default paragraph styling right next to a sibling block that's actually
 // designed to match the rest of the summary screen.
 function formatTimeSpent(state, setterName, guesserName) {
+  if (state?.timeControl?.enabled === false) return "";
   const spent = state?.timeSpentMs;
   if (!spent) return "";
   const setterMs = Number(spent[state.setter]) || 0;

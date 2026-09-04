@@ -872,6 +872,10 @@ function hideTutorial() {
   clearTutorialUserPosition();
 
   tutorialWaitingFor = null;
+  // The panel-open watch would otherwise tear itself down only on its
+  // next tick; drop it here so nothing observes the document once the
+  // bubble is gone.
+  stopTutorialConditionWatch();
 
   updateActionBadge();
 }
@@ -1510,11 +1514,16 @@ function checkTutorialDragLockWait() {
 window.refreshTutorialKeyDemo = function () {
   applyKeyDemoHighlight();
   checkTutorialDragLockWait();
+  checkTutorialInvalidDraftWait();
 };
 
-function waitForInvalidDraft() {
+// `word`, when given, pins the wait to one specific spelling -- the
+// "break the rule on purpose" step names the word to type, so a different
+// inconsistent word shouldn't skip the lesson out from under it.
+function waitForInvalidDraft(word) {
   tutorialWaitingFor = {
-    type: "invalidDraft"
+    type: "invalidDraft",
+    word: word ? String(word).toUpperCase() : null
   };
 
   setContinue({
@@ -1525,13 +1534,19 @@ function waitForInvalidDraft() {
   updateActionBadge();
 }
 
-// The setter's live remaining-words box arrives over its own socket event
-// (see socket-events.js's "setterRemainingBox" handler / renderSetterRemainingBox()
-// in remaining-words.js) rather than through window.state, so -- like the
-// drag/lock wait above -- it needs its own dedicated hook instead of
-// piggybacking on the normal tutorialSteps() re-run that follows a full
-// state broadcast.
-function checkTutorialRemainingBoxWait(boxState) {
+// This wait used to be resolved by an `isConsistent` flag on the setter's
+// remaining-words socket payload. That field went away with the Keep->New
+// comparison (see server/utils/remainingWords.js and the
+// setterRemainingBoxRemoved regression test), which left the wait armed
+// forever -- and because the Continue button is inert while a wait is
+// armed, the step became a dead end.
+//
+// Judge the draft locally instead. isConsistentWithHistory is the very
+// same check the board itself runs to decide whether to grey the primary
+// button out into "SECRET NOT ALLOWED" (see client.js's
+// validateSetterSecretWord), so the tutorial advances exactly when the
+// player can see the game refusing the word.
+function checkTutorialInvalidDraftWait() {
   if (
     !tutorialWaitingFor ||
     tutorialWaitingFor.type !== "invalidDraft"
@@ -1539,7 +1554,19 @@ function checkTutorialRemainingBoxWait(boxState) {
     return;
   }
 
-  if (boxState?.isConsistent !== false) {
+  const draft = String(window.state?.setterDraft || "").toUpperCase();
+  if (draft.length !== 5 || draft.includes(" ")) return;
+
+  if (tutorialWaitingFor.word && draft !== tutorialWaitingFor.word) return;
+
+  if (typeof window.isConsistentWithHistory !== "function") return;
+  if (
+    window.isConsistentWithHistory(
+      window.state?.history || [],
+      draft,
+      window.state
+    )
+  ) {
     return;
   }
 
@@ -1551,9 +1578,6 @@ function checkTutorialRemainingBoxWait(boxState) {
     tutorialSteps(window.state, window.myRole);
   }
 }
-
-window.refreshTutorialRemainingBox =
-  checkTutorialRemainingBoxWait;
 
 // ------------------------
 // Drag demo: an auto-playing ghost letter that flies from a keyboard key
@@ -1838,6 +1862,19 @@ function highlightConstraintRowAndToggle(role) {
   );
 }
 
+// The ⧉ button in the role screen's header that shows/hides the constraint
+// row. Both screens carry one (they're class-only, no ids -- see
+// index.html), so it's picked out by which screen owns it.
+function highlightConstraintToggleBtn(role) {
+  const screenId =
+    role === "setter" ? "setterScreen" : "guesserScreen";
+
+  highlightEl(
+    qs(`#${screenId} .constraint-toggle-btn`) ||
+      qs(".constraint-toggle-btn")
+  );
+}
+
 function highlightSetterRemainingBox() {
   highlightEl(byId("SetterRemainingBox"));
 }
@@ -1890,6 +1927,25 @@ function highlightLogTabButton() {
 
 function highlightSidebarToggleBtn() {
   highlightEl(byId("setterSidebarToggle"));
+}
+
+// One column inside one round's stored table on the MATCH summary, which
+// stacks a table per round. Falls back to the whole round block if that
+// round's table hasn't rendered its cells (or the modifier class differs),
+// so the step still has something to point at.
+function highlightStoredRoundColumn(index, cellClass) {
+  const round = qs(
+    `#roundSummary .stored-round[data-round-index="${index}"]`
+  );
+
+  const cells = round?.querySelectorAll(`td.${cellClass}`);
+
+  if (cells?.length) {
+    cells.forEach(highlightEl);
+    return;
+  }
+
+  highlightEl(round || byId("roundSummary"));
 }
 
 function highlightStoredRound(index) {
@@ -2447,6 +2503,160 @@ function waitForSidebarToggled() {
   updateActionBadge();
 }
 
+// "Open that panel" waits, driven by the resulting DOM state rather than
+// by the click that caused it.
+//
+// Listening for the click is what made the old sidebar step fail to
+// advance: several controllers race for those buttons and at least two of
+// them (collapsed-actions-v9.js's drawer controller and client.js's
+// constraint toggle) call stopImmediatePropagation() from a capture-phase
+// listener, so whether any given notify hook runs comes down to script
+// registration order. Watching the class the panel actually ends up with
+// sidesteps all of that, and it also credits the player for opening the
+// panel any other way -- the swipe edge, the keyboard, a docked control.
+let tutorialConditionObserver = null;
+let tutorialConditionTimer = null;
+let tutorialConditionFrame = 0;
+
+function stopTutorialConditionWatch() {
+  tutorialConditionObserver?.disconnect();
+  tutorialConditionObserver = null;
+
+  if (tutorialConditionTimer) {
+    clearInterval(tutorialConditionTimer);
+  }
+  tutorialConditionTimer = null;
+
+  if (tutorialConditionFrame) {
+    cancelAnimationFrame(tutorialConditionFrame);
+  }
+  tutorialConditionFrame = 0;
+}
+
+// The observer below watches attributes across the whole document, so it
+// fires on every render pass during live play. Coalesce those bursts into
+// one check per frame.
+function scheduleTutorialConditionCheck() {
+  if (tutorialConditionFrame) return;
+
+  tutorialConditionFrame = requestAnimationFrame(() => {
+    tutorialConditionFrame = 0;
+    checkTutorialConditionWait();
+  });
+}
+
+// Returns true if the wait was satisfied (and the tutorial has already
+// moved on), false if it is still pending.
+function checkTutorialConditionWait() {
+  const waiting = tutorialWaitingFor;
+
+  if (typeof waiting?.test !== "function") {
+    // The step was superseded (a new wait, or the tutorial ended) -- this
+    // watch has nothing left to guard.
+    stopTutorialConditionWatch();
+    return false;
+  }
+
+  let satisfied = false;
+  try {
+    satisfied = !!waiting.test();
+  } catch {
+    satisfied = false;
+  }
+
+  if (!satisfied) return false;
+
+  stopTutorialConditionWatch();
+  tutorialWaitingFor = null;
+  updateActionBadge();
+  tutorialSubStep++;
+
+  if (window.state && window.myRole) {
+    tutorialSteps(window.state, window.myRole);
+  }
+
+  return true;
+}
+
+// `prepare` puts the UI into the state the instruction assumes (closing
+// the panel the step asks the player to open). It runs ONLY on a fresh
+// arm: tutorialSteps() re-runs on every state broadcast, and re-preparing
+// each time would slam the panel shut again a frame after the player
+// opened it.
+function waitForCondition(type, test, label, prepare) {
+  if (tutorialWaitingFor?.type === type) return;
+
+  stopTutorialConditionWatch();
+
+  if (typeof prepare === "function") prepare();
+
+  tutorialWaitingFor = {
+    type,
+    test,
+    label: label || null
+  };
+
+  setContinue({
+    show: true,
+    mode: "hide"
+  });
+
+  updateActionBadge();
+
+  // `prepare` above puts the panel into the "closed" state, so an
+  // immediately-true condition should be rare -- but if it happens,
+  // advancing beats stranding the player on a step whose instruction is
+  // already carried out.
+  if (checkTutorialConditionWait()) return;
+
+  tutorialConditionObserver = new MutationObserver(
+    scheduleTutorialConditionCheck
+  );
+  tutorialConditionObserver.observe(document.documentElement, {
+    attributes: true,
+    subtree: true,
+    attributeFilter: ["class", "aria-expanded", "aria-pressed", "hidden"]
+  });
+
+  // Backstop for any route that changes the panel without touching one of
+  // the observed attributes.
+  tutorialConditionTimer = setInterval(checkTutorialConditionWait, 400);
+}
+
+function setterSidebarIsOpen() {
+  const screen = byId("setterScreen");
+  const toggle = byId("setterSidebarToggle");
+
+  if (screen?.classList.contains("setter-sidebar-collapsed")) return false;
+  if (toggle?.getAttribute("aria-expanded") === "false") return false;
+
+  return !!screen;
+}
+
+function constraintRowIsShown() {
+  return !document.body.classList.contains("hide-constraints");
+}
+
+// Closes the panel first so "open it" is a real instruction rather than a
+// no-op the player has already satisfied.
+function waitForSidebarOpened() {
+  waitForCondition(
+    "sidebarOpened",
+    setterSidebarIsOpen,
+    "OPEN THE COLUMN",
+    () => window.__umtSetSidebarCollapsed?.("setter", true)
+  );
+}
+
+function waitForConstraintRowShown() {
+  waitForCondition(
+    "constraintRowShown",
+    constraintRowIsShown,
+    "SHOW THE ROW",
+    () => window.setConstraintsHidden?.(true)
+  );
+}
+
 function waitForLogTabOpened() {
   tutorialWaitingFor = {
     type: "logTabOpened",
@@ -2491,11 +2701,45 @@ function waitForDraftCleared() {
 // summary screen's own Leave button (summary.js's leaveSummaryBtn) --
 // the last step of a tutorial reaches this same "done, head back" point
 // without requiring the player to actually finish playing out the match.
+// Everything this controller keeps between renders. None of it was being
+// cleared on the way out, so a finished tutorial left its step counter,
+// its armed wait, its reveal gate and its highlight ring behind -- and
+// the next thing the player opened (a real game, or the next tutorial)
+// started on top of that stale state.
+function resetTutorialControllerState() {
+  cancelTutorialRevealGate();
+  stopTutorialConditionWatch();
+  stopKeyDemo();
+  stopDragDemo();
+  clearHighlights();
+  clearTutorialUserPosition();
+
+  lastTutorialRound = null;
+  tutorialSubStep = 0;
+  tutorialWaitingFor = null;
+  tutorialCollapsed = false;
+  tutorialContinueMode = "advance";
+  tutorialEndNextMode = "advanced";
+  tutorialLastStepKey = "";
+
+  powerTutorialDraftPrefilled = false;
+  powerTutorialSkipSent = false;
+
+  // The Advanced UI tutorial hides the constraint row itself so its "show
+  // it" step is a real action (see waitForConstraintRowShown). That hide
+  // is deliberately never persisted, so re-reading the stored preference
+  // restores exactly what the player had before the tutorial rather than
+  // forcing a value on them. The sidebar needs no equivalent: opening it
+  // is the step, and its state is the player's own either way.
+  window.restoreConstraintsPreference?.();
+}
+window.resetTutorialControllerState = resetTutorialControllerState;
+
 function endTutorial() {
   byId("tutorialDoneModal")?.classList.remove("active");
   setTutorialDoneStacking(false);
   byId("tutorialBubble")?.classList.add("hidden");
-  clearTutorialUserPosition();
+  resetTutorialControllerState();
 socket.emit("leaveRoom", {}, () => {
     roomId = null;
     clearRoom();
@@ -2514,11 +2758,14 @@ window.endTutorial = endTutorial;
 // Basics -> Quests -> Stars -> Extra Tools -> back to Basics.
 // Keyed by the startFreshTutorial() mode that's next, not the one that
 // just finished.
+// "none" is the end of the line: the done modal drops its Next Tutorial
+// button entirely and offers only Leave.
 const TUTORIAL_DONE_COPY = {
   quest: `Basics complete! Continue with Quests, or head back to the menu.`,
   star: `Quest tutorial complete! Continue with Stars, or head back to the menu.`,
   advanced: `Star tutorial complete! Continue with Extra Tools, or head back to the menu.`,
-  tutorial: `Extra Tools complete! Return to Basics, or head back to the menu.`
+  tutorial: `Extra Tools complete! Return to Basics, or head back to the menu.`,
+  none: `Extra Tools complete! That's the last of them - head back to the menu.`
 };
 
 // Maps state.tutorialStage (or its absence) to the same key each
@@ -2568,6 +2815,14 @@ function showTutorialDoneModal() {
       TUTORIAL_DONE_COPY[tutorialEndNextMode] ||
       TUTORIAL_DONE_COPY.advanced;
   }
+
+  // Toggled both ways: the modal is a single shared element, so a tutorial
+  // that ends with Leave alone must not leave the button hidden for the
+  // next tutorial that does chain onward.
+  byId("tutorialDoneNextBtn")?.classList.toggle(
+    "hidden",
+    tutorialEndNextMode === "none"
+  );
 
   byId("tutorialDoneModal")?.classList.add("active");
 }

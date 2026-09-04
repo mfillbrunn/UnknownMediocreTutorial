@@ -83,6 +83,19 @@ function spyMeterHighlightTarget() {
   return byId(id) || byId("pcSpyChargeCard") || byId("setterSidebarChargeMini");
 }
 
+// The blue bonus target lives in two places at once: a small "L3" code
+// panel (setterBonusTargetV9) and the tinted tile it points at in the
+// setter's own draft row (see ui/v9-2-ui-fixes.js). Prefer the panel, fall
+// back to the tile, and only then to the charge card -- highlighting the
+// charge card alone left the player hunting for what "blue target" meant.
+function starBonusTargetHighlight() {
+  return (
+    byId("setterBonusTargetV9") ||
+    qs("#draftSetter .setter-bonus-tile-v92") ||
+    spyMeterHighlightTarget()
+  );
+}
+
 function starRewardTarget(selector) {
   const modal = byId("powerChoiceModal");
   return modal?.querySelector(selector) || modal;
@@ -242,19 +255,22 @@ function runStarTutorial(state, role) {
 
   if (step === 2) {
     starTutorialShow(
-      "The blue target asks for one specific letter in one specific spot. Hit it with a changed word and that is a third star. Quiet tip: the target doubles as a hint, because there is always a strong word that matches it.",
+      "That blue mark is the target: one specific letter, one specific spot. Hit it with a changed word and that is a third star. Quiet tip: it doubles as a hint, because there is always a strong word that matches it.",
       {
-        current: 3
+        current: 3,
+        // Pinned low, over the keyboard: the bubble's normal placement
+        // sat right on top of the blue target this step is pointing at.
+        placement: "bottom-forced"
       }
     );
-    api.highlight(spyMeterHighlightTarget());
+    api.highlight(starBonusTargetHighlight());
     api.setMode("advance");
     return;
   }
 
   if (step === 3) {
     starTutorialShow(
-      "Rewards land at 4, 8 and 12 stars - one reward at 4, one at 8, and two at 12.",
+      "Rewards land at 4, 8 and 12 stars - one at each. Twelve is the top of the track, so that last one is what the whole climb is for.",
       {
         title: "Star rewards",
         current: 4

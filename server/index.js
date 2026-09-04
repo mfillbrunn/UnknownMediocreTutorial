@@ -15,6 +15,7 @@ const { loadWordList } = require("./utils/wordListLoader");
 const { applyAction } = require("./core/stateMachine");
 const { getDailyConfig } = require("./utils/dailyConfig");
 const { buildPublicDailyView } = require("./utils/dailyPublicView");
+const { registerBugReportRoutes } = require("./routes/bugReports");
 
 
 
@@ -78,6 +79,12 @@ global.ALLOWED_SECRETS = ALLOWED_SECRETS;
 app.get("/api/allowed-secrets", (req, res) => res.json(ALLOWED_SECRETS));
 
 app.get("/api/allowed-guesses", (req, res) => res.json(ALLOWED_GUESSES));
+
+// Bug reports post JSON, and nothing else on this server did before, so the
+// body parser is scoped to that route rather than applied app-wide.
+app.use("/api/bug-report", express.json({ limit: "32kb" }));
+registerBugReportRoutes(app, { supabase });
+
 app.get("/api/daily", (req, res) => {
   const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
   // Recomputed fresh from the date every time -- this route (like every

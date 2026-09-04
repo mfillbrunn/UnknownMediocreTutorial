@@ -54,6 +54,17 @@ function basicTurnRhythm() {
   `;
 }
 
+function basicTurnOrderVisual() {
+  return `
+    <div class="tutorial-tiny-steps" aria-label="Who moves when">
+      <span><b>Turn 1:</b> both players type at once - hunter a guess, hider a secret.</span>
+      <span><b>After that:</b> the hunter sends a new word first.</span>
+      <span><b>Then:</b> the hider answers by keeping or swapping.</span>
+      <span>Hunter, hider, hunter, hider - back and forth to the end.</span>
+    </div>
+  `;
+}
+
 function basicSecretkeeperChoices() {
   return `
     <div class="tutorial-choice-grid">
@@ -127,7 +138,7 @@ function runBasicInspectorTutorial(state) {
           role: "guesser",
           section: "How the game works",
           current: 1,
-          total: 3,
+          total: 4,
           placement: "top"
         }
       );
@@ -142,8 +153,24 @@ function runBasicInspectorTutorial(state) {
           role: "guesser",
           section: "Two roles",
           current: 2,
-          total: 3,
+          total: 4,
           placement: "top"
+        }
+      );
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      basicTutorialShow(
+        "One thing to know before you move: only the very first turn is simultaneous. Both of you type blind, at the same time. From then on you take proper turns.",
+        {
+          role: "guesser",
+          section: "Who moves when",
+          current: 3,
+          total: 4,
+          placement: "top",
+          visualHtml: basicTurnOrderVisual()
         }
       );
       tutorialContinueMode = "advance";
@@ -152,12 +179,12 @@ function runBasicInspectorTutorial(state) {
 
     if (state.simultaneousGuessSubmitted) {
       basicTutorialShow(
-        "Sent. The very first turn happens at the same time for both players, so the colors show up once you have both moved.",
+        "Sent. That was the simultaneous turn, so the colors show up once you have both moved.",
         {
           role: "guesser",
           section: "First guess",
-          current: 3,
-          total: 3,
+          current: 4,
+          total: 4,
           placement: "top",
           compact: true,
           mode: "hide",
@@ -171,8 +198,8 @@ function runBasicInspectorTutorial(state) {
         {
           role: "guesser",
           section: "First guess",
-          current: 3,
-          total: 3,
+          current: 4,
+          total: 4,
           placement: "top",
           mode: "hide"
         }
@@ -439,7 +466,7 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 3) {
       basicTutorialShow(
-        `Let's break that rule on purpose. Type ${invalidWord}, but do not send it. Watch the words box - it will tell you this one does not fit.`,
+        `Let's break that rule on purpose. Type ${invalidWord}, but do not send it. Keep an eye on the big button underneath.`,
         {
           role: "setter",
           section: "Break it on purpose",
@@ -454,7 +481,7 @@ function runBasicSpyTutorial(state) {
         `basic-secretkeeper-invalid-${invalidWord}`,
         () => tutorialWordKeyEls("setter", invalidWord, window.state?.setterDraft)
       );
-      waitForInvalidDraft();
+      waitForInvalidDraft(invalidWord);
       tutorialWaitingFor.label = `TYPE ${invalidWord}`;
       updateActionBadge();
       return;
@@ -462,7 +489,7 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 4) {
       basicTutorialShow(
-        `See? You already showed that L is in the word. ${invalidWord} has no L, so choosing it would make that clue a lie - and the game will not let you. Clear the boxes.`,
+        `The button went dead and reads SECRET NOT ALLOWED. You already showed a yellow L, so your word has to contain an L. ${invalidWord} does not - picking it would turn that clue into a lie. Clear the boxes.`,
         {
           role: "setter",
           section: "Why that failed",
@@ -696,11 +723,13 @@ function runBasicSummaryTutorial(state) {
 }
 
 function runBasicMatchTutorial(state) {
-  // UMT_REQUESTED_FIXES_20260904: same fix as runBasicSummaryTutorial --
-  // one column at a time instead of naming three columns in a single
-  // sentence over a screen that stacks a full table per round.
+  // The five columns were already walked one at a time on the round
+  // summary after the Guesser round -- doing the whole tour again here is
+  // the same lesson twice. This screen only stops on what is genuinely
+  // new: the Secretkeeper round's table, where the Secret column visibly
+  // changes partway down because the player switched.
   clearHighlights();
-  const totalSteps = 7;
+  const totalSteps = 4;
 
   if (tutorialSubStep === 0) {
     basicTutorialShow(
@@ -734,60 +763,15 @@ function runBasicMatchTutorial(state) {
 
   if (tutorialSubStep === 2) {
     basicTutorialShow(
-      "Each round replays as its own table. Secret: the word being hidden at that exact moment.",
+      "Each round replays as its own table - same five columns you just went through. Look at the round you were hiding in: the Secret column does not read the same word all the way down. That is your switch, on the record.",
       {
-        section: "Secret column",
+        section: "Your switch, recorded",
         current: 3,
         total: totalSteps,
         placement: "bottom"
       }
     );
-    highlightRoundSummaryColumn("secret-cell");
-    tutorialContinueMode = "advance";
-    return;
-  }
-
-  if (tutorialSubStep === 3) {
-    basicTutorialShow(
-      "Guess: the word actually sent that turn.",
-      {
-        section: "Guess column",
-        current: 4,
-        total: totalSteps,
-        placement: "bottom"
-      }
-    );
-    highlightRoundSummaryColumn("guess-cell");
-    tutorialContinueMode = "advance";
-    return;
-  }
-
-  if (tutorialSubStep === 4) {
-    basicTutorialShow(
-      "Result: the colors that guess earned.",
-      {
-        section: "Result column",
-        current: 5,
-        total: totalSteps,
-        placement: "bottom"
-      }
-    );
-    highlightRoundSummaryColumn("feedback-cell");
-    tutorialContinueMode = "advance";
-    return;
-  }
-
-  if (tutorialSubStep === 5) {
-    basicTutorialShow(
-      "Left counts how many words could still have been the secret after that guess. A small number means the hunter was closing in. A big number means the hider still had plenty of places to hide.",
-      {
-        section: "Left column",
-        current: 6,
-        total: totalSteps,
-        placement: "bottom"
-      }
-    );
-    highlightRoundSummaryColumn("remaining-cell");
+    highlightStoredRoundColumn(1, "secret-cell");
     tutorialContinueMode = "advance";
     return;
   }
@@ -797,7 +781,7 @@ function runBasicMatchTutorial(state) {
     "And that is the whole game. Each side also gets a little help of its own - Quests when you hunt, Stars when you hide. Those are the next two tutorials, and both are short.",
     {
       section: "Basics complete",
-      current: 7,
+      current: 4,
       total: totalSteps,
       placement: "bottom",
       mode: "end"

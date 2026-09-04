@@ -7,6 +7,7 @@ const { applyRankedElo } = require("../../utils/elo");
 const { computeMatchResult, writeMatchHistory } = require("../../utils/writeMatchData");
 const { computeRemainingAfterIndexFromState } = require("../../utils/remainingWords");
 const { markDailyCompleted } = require("../dailyTracking");
+const { roomHasGuestPlayer } = require("../../utils/guestUsers");
 const { advanceToNextRound } = require("../transitions/nextRoundTransition");
 const {  clearForceTimer} = require("../../utils/forceTimer");
 const {  clearRoundPowerActivity} = require("../../utils/clearRoundPowerActivity");
@@ -255,6 +256,17 @@ state.setterDraft = "";
     singlePlayerHooks.onMultiplayerMatchCompleted(state, room);
 
     const { winner, tie } = computeMatchResult(state, null);
+
+    // A guest has no profiles row and a non-uuid id, so a match row naming
+    // them can't be written at all -- skip the history write rather than
+    // fire one that can only fail. Ranked is account-only on the client, so
+    // a guest never reaches the Elo branch below either.
+    if (roomHasGuestPlayer(room)) {
+      emitLobbyEvent(io, roomId, { type: "gameOverShowMenu" });
+      io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
+      emitRoomState(roomId, room, io);
+      return;
+    }
 
     if (state.ranked && !isAIMatch) {
       applyRankedElo({ state, room, supabase, winner, tie })

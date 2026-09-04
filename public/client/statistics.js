@@ -39,12 +39,16 @@ function renderMenuAccountStatus () {
   if (el) el.innerHTML = "";
   if (eloEl) eloEl.innerHTML = "";
 
-  if (!window.currentUser) {
+  // Guests get a name and can play everything -- the only thing the menu
+  // asks them for is a sign-up, and only for what actually needs one.
+  if (!window.isSignedIn?.()) {
     if (el) {
+      const guestName = window.myProfile?.username || "Guest";
       el.innerHTML = `
         <span class="account-logged-out">
-          Not logged in —
-          <button class="link-btn menu-login-btn">Log in</button>
+          Playing as <strong>${guestName}</strong> —
+          <button class="link-btn menu-login-btn">Sign up</button>
+          <small class="account-guest-hint">for ranked, friends and saved stats</small>
         </span>
       `;
       el.querySelector(".menu-login-btn").onclick =

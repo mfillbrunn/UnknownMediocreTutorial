@@ -1,6 +1,18 @@
 const activeRooms = new Map();
 const completions = new Map();
 
+// A guest (no account -- see server/utils/guestUsers.js) has no row in
+// `profiles` and an id that is not a uuid, so none of the daily_results
+// reads/writes below can name them. Guests fall through to the same
+// in-memory bookkeeping this module already uses when Supabase is not
+// configured: their attempt is still one-per-day for as long as the
+// server is up, it just never reaches the shared leaderboard.
+const { isGuestUserId } = require("../utils/guestUsers");
+
+function dbFor(supabase, userId) {
+  return isGuestUserId(userId) ? null : supabase;
+}
+
 function key(userId, date) {
   return `${userId}:${date}`;
 }
@@ -57,12 +69,13 @@ function resultFromRow(row) {
 }
 
 async function claimDailyAttempt({
-  supabase,
+  supabase: supabaseClient,
   userId,
   date,
   roomId,
   difficulty
 }) {
+  const supabase = dbFor(supabaseClient, userId);
   if (
     !userId ||
     !date ||
@@ -171,11 +184,12 @@ async function claimDailyAttempt({
 }
 
 async function markDailyCompleted({
-  supabase,
+  supabase: supabaseClient,
   userId,
   date,
   result
 }) {
+  const supabase = dbFor(supabaseClient, userId);
   if (!userId || !date) {
     return;
   }
@@ -281,10 +295,11 @@ async function markDailyCompleted({
 }
 
 async function markDailyAbandoned({
-  supabase,
+  supabase: supabaseClient,
   userId,
   date
 }) {
+  const supabase = dbFor(supabaseClient, userId);
   if (!userId || !date) {
     return;
   }
@@ -328,11 +343,12 @@ async function markDailyAbandoned({
 }
 
 async function getDailyStatus({
-  supabase,
+  supabase: supabaseClient,
   rooms,
   userId,
   date
 }) {
+  const supabase = dbFor(supabaseClient, userId);
   if (!userId || !date) {
     return {
       status: "none"

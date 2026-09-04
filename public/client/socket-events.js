@@ -141,7 +141,6 @@ function persistLastGameInfo(info) {
   localStorage.setItem("lastGameInfo", JSON.stringify(info));
 }
 $("createRoomBtn")?.addEventListener("click", () => {
-  if (!requireAuth("create a room")) return;
   const username =
   window.myProfile?.username ||
   window.currentUser?.email ||
@@ -161,7 +160,6 @@ createRoom(resp => {
 
 
 $("joinRoomBtn")?.addEventListener("click", () => {
-  if (!requireAuth("join a room")) return;
 
   const code = $("joinRoomInput").value.trim().toUpperCase();
   if (!code) return toast("Enter a code");
@@ -329,14 +327,12 @@ $("dailyBtn")?.addEventListener("click", () => {
 });
 
 $("playVsAiBtn")?.addEventListener("click", () => {
-  if (!requireAuth("play vs AI")) return;
   showScreen("vsAiScreen");
 });
 
 // VS AI difficulty selection (called from vsAiScreen inline onclick) --
 // Manual Play-hub path: create the room and AI, then open the lobby.
 window._startVsAI = function (difficulty) {
-  if (!requireAuth("play vs AI")) return;
   window.rememberLastPlayMode?.({ mode: "ai", difficulty });
   const username =
     window.myProfile?.username || window.currentUser?.email || "Player";
@@ -363,7 +359,6 @@ window._startVsAI = function (difficulty) {
 // multiplayer lobby UI for that window, same fix as daily-challenge.js's
 // _dailyStarting for the same reason.
 window._startQuickAI = function (difficulty) {
-  if (!requireAuth("play vs AI")) return;
   window.rememberLastPlayMode?.({ mode: "quickAi", difficulty });
   window._quickAiStarting = true;
   const username = window.myProfile?.username || window.currentUser?.email || "Player";
@@ -447,7 +442,6 @@ socket.on("rouletteSecretStart", ({ feasible }) => {
 // "advanced") — lobby.js's PLAYER_READY handler reads that tag to set
 // isTutorial/tutorialStage before TutorialMode.initMatch runs.
 function startFreshTutorial(mode) {
-  if (!requireAuth("start tutorial")) return;
 
   const username =
     window.myProfile?.username ||
@@ -530,7 +524,6 @@ document
 // SAME power against them from the other side instead of any new "peek at
 // the opponent's screen" machinery -- see runAI.js's maybeUsePower.
 window.startPowerTutorial = function startPowerTutorial(powerId) {
-  if (!requireAuth("start tutorial")) return;
   const meta = window.POWER_METADATA?.[powerId];
   if (!meta) return;
 
@@ -579,7 +572,6 @@ window.startPowerTutorial = function startPowerTutorial(powerId) {
 // SWITCH_ROLES step: a new room's host is setter by default, which is
 // exactly where this tutorial needs the human to start.
 window.startStarTutorial = function startStarTutorial() {
-  if (!requireAuth("start tutorial")) return;
 
   const username =
     window.myProfile?.username ||

@@ -1,11 +1,16 @@
 const status = $("authStatus");
 const logoutBtn = $("logoutBtn");
 window.socketReady = false;
-window.authReady = false;
-window.profileReady = false;
 window.autoRejoinAttempted = false;
-window.currentUser = null;
-window.myProfile = null;
+// Deliberately NOT reset to null/false here: client/guest-identity.js runs
+// first and has already installed a playable guest identity (with
+// authReady/profileReady set to match). Blanking them would leave the app
+// with no identity at all until Supabase answers -- and with none ever, if
+// Supabase is unreachable.
+window.authReady = window.authReady || false;
+window.profileReady = window.profileReady || false;
+window.currentUser = window.currentUser || null;
+window.myProfile = window.myProfile || null;
 let authInitInProgress = false;
 
 function authFullyReady() {
@@ -20,24 +25,32 @@ function authFullyReady() {
     const { data } = await window.supabaseClient.auth.getSession();
 
     if (data.session?.user) {
+      window.clearGuestIdentityFromSession?.();
       window.currentUser = data.session.user;
       window.authReady = true;
     } else {
-      window.currentUser = null;
-      window.authReady = false;
+      // No account: fall back to the guest identity rather than a null
+      // user, so everything except the account-only suite stays playable.
+      window.applyGuestIdentity?.();
     }
 
     updateAccountUI();
     renderMenuAccountStatus();
 
-    // Not logged in at all and came in on an invite link — surface the
-    // login/signup prompt now; the auth hooks below pick the join back
-    // up once they actually sign in.
-    if (!window.currentUser) {
+    // Came in on an invite link without an account — an invite is a
+    // two-player game, so it still wants a real sign-in; the auth hooks
+    // below pick the join back up once they do.
+    if (!window.isSignedIn?.()) {
       window.maybeJoinPendingInvite?.();
     }
   } catch (err) {
     if (!isAbortError(err)) console.error(err);
+    // Supabase unreachable/misconfigured: guest play is the whole point of
+    // not requiring an account, so fall back to it rather than leaving the
+    // player with no identity and every button inert.
+    window.applyGuestIdentity?.();
+    updateAccountUI();
+    renderMenuAccountStatus();
   } finally {
     authInitInProgress = false;
   }
@@ -57,7 +70,13 @@ function isAbortError(err) {
 
   if (cachedProfile) {
     try {
-      window.myProfile = JSON.parse(cachedProfile);
+      const parsed = JSON.parse(cachedProfile);
+      // Only adopt a cached profile that belongs to the identity currently
+      // in play. Without this, a leftover profile from a previous account
+      // would rename the guest that guest-identity.js just set up.
+      if (parsed && (!window.currentUser?.isGuest || parsed.id === window.currentUser.id)) {
+        window.myProfile = parsed;
+      }
     } catch {
       localStorage.removeItem("myProfile");
     }
@@ -200,15 +219,28 @@ $("loginBtn").onclick = async () => {
 
 logoutBtn.onclick = logout;
 
+// Wrapped: if the Supabase client failed to construct (bad/absent config,
+// blocked network), an uncaught throw here would abort the rest of this
+// file -- taking logout, updateAccountUI and loadMyProfile with it. Guest
+// play must survive that, so the failure is logged and the guest identity
+// installed at boot simply stands.
+try {
 window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
   console.log("AUTH EVENT:", event);
 
-  window.currentUser = session?.user || null;
+  if (session?.user) {
+    window.clearGuestIdentityFromSession?.();
+    window.currentUser = session.user;
+  } else {
+    window.currentUser = null;
+  }
 
   if (event === "SIGNED_OUT") {
-    window.authReady = false;
-    window.profileReady = false;
     window.autoRejoinAttempted = false;
+
+    // Signing out drops back to guest play rather than to a dead-end
+    // logged-out state -- everything but ranked/friends/stats still works.
+    window.applyGuestIdentity?.();
 
     updateAccountUI();
     renderMenuAccountStatus();
@@ -218,7 +250,14 @@ window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
 
   // ⛔ DO NOT mark authReady yet
   if (event === "INITIAL_SESSION") {
-    if (!session?.user) return;
+    // No session at all: the guest identity applied at boot stands, and
+    // there is no profile to load.
+    if (!session?.user) {
+      window.applyGuestIdentity?.();
+      updateAccountUI();
+      renderMenuAccountStatus();
+      return;
+    }
 
     // Let Supabase finish wiring the token
     setTimeout(async () => {
@@ -291,11 +330,17 @@ window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
     }
   }
 });
+} catch (err) {
+  console.error("Auth listener unavailable — continuing as a guest:", err);
+  window.applyGuestIdentity?.();
+}
 
 let profileLoadInProgress = false;
 
 async function loadMyProfile() {
-  if (!window.currentUser || profileLoadInProgress) return null;
+  // Guests have no profiles row to read (and their id is not a uuid), so
+  // this would only ever be a failed round-trip for them.
+  if (!window.isSignedIn?.() || profileLoadInProgress) return null;
   profileLoadInProgress = true;
 
   try {
@@ -361,6 +406,9 @@ async function logout() {
   await window.supabaseClient.auth.signOut();
   window.currentUser = null;
   window.myProfile = null;
+  // Straight back to guest play -- logging out is not the same as being
+  // locked out of the game.
+  window.applyGuestIdentity?.();
   clearRoom();
   updateAccountUI();
   renderMenuAccountStatus();
@@ -371,10 +419,16 @@ function updateAccountUI() {
   const root = $("accountScreen");
   if (!root) return;
 
-  const loggedIn =
-    !!window.currentUser &&
-    !!window.currentUser.id &&
-    window.authReady;
+  // A guest has a window.currentUser too, so "logged in" here has to mean
+  // "has a real account" -- see client/guest-identity.js.
+  const loggedIn = !!window.isSignedIn?.();
+
+  const guestBox = root.querySelector("#guestAccountNotice");
+  if (guestBox) {
+    guestBox.classList.toggle("hidden", loggedIn);
+    const nameEl = guestBox.querySelector("#guestAccountName");
+    if (nameEl) nameEl.textContent = window.myProfile?.username || "Guest";
+  }
 
   root.querySelector("#authInputs")
     ?.classList.toggle("hidden", loggedIn);
