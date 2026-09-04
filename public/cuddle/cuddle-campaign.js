@@ -65,38 +65,43 @@
     })
   ]);
 
+  // Vertical layout: index 0 (start) sits near the bottom of the SVG,
+  // increasing index moves toward smaller y (up the page) -- so scrolling
+  // the map is a vertical, mobile-friendly climb instead of a sideways pan.
+  const MAP_VIEW_WIDTH = 300;
+  const MAP_VIEW_HEIGHT = 1925;
   const MAP_NODES = Object.freeze([
-    Object.freeze({ id: "start", kind: "start", label: "Start", short: "★", x: 45, y: 242, region: 0 }),
-    Object.freeze({ id: "round-1", kind: "round", round: 1, label: "Round 1", short: "1", x: 125, y: 196, region: 0 }),
-    Object.freeze({ id: "round-2", kind: "round", round: 2, label: "Round 2", short: "2", x: 210, y: 238, region: 0 }),
-    Object.freeze({ id: "shop-2", kind: "shop", afterRound: 2, label: "Shop", short: "$", x: 292, y: 170, region: 0 }),
-    Object.freeze({ id: "round-3", kind: "round", round: 3, label: "Round 3", short: "3", x: 378, y: 116, region: 0 }),
-    Object.freeze({ id: "boss-before-4", kind: "boss", gate: "before-4", label: "Boss I", short: "B", x: 466, y: 178, region: 0 }),
+    Object.freeze({ id: "start", kind: "start", label: "Start", short: "★", x: 219, y: 1840, region: 0 }),
+    Object.freeze({ id: "round-1", kind: "round", round: 1, label: "Round 1", short: "1", x: 173, y: 1760, region: 0 }),
+    Object.freeze({ id: "round-2", kind: "round", round: 2, label: "Round 2", short: "2", x: 215, y: 1675, region: 0 }),
+    Object.freeze({ id: "shop-2", kind: "shop", afterRound: 2, label: "Shop", short: "$", x: 147, y: 1593, region: 0 }),
+    Object.freeze({ id: "round-3", kind: "round", round: 3, label: "Round 3", short: "3", x: 93, y: 1507, region: 0 }),
+    Object.freeze({ id: "boss-before-4", kind: "boss", gate: "before-4", label: "Boss I", short: "B", x: 155, y: 1419, region: 0 }),
 
-    Object.freeze({ id: "round-4", kind: "round", round: 4, label: "Round 4", short: "4", x: 552, y: 236, region: 1 }),
-    Object.freeze({ id: "round-5", kind: "round", round: 5, label: "Round 5", short: "5", x: 640, y: 174, region: 1 }),
-    Object.freeze({ id: "shop-5", kind: "shop", afterRound: 5, label: "Shop", short: "$", x: 728, y: 112, region: 1 }),
-    Object.freeze({ id: "round-6", kind: "round", round: 6, label: "Round 6", short: "6", x: 816, y: 170, region: 1 }),
-    Object.freeze({ id: "boss-before-7", kind: "boss", gate: "before-7", label: "Boss II", short: "B", x: 904, y: 238, region: 1 }),
+    Object.freeze({ id: "round-4", kind: "round", round: 4, label: "Round 4", short: "4", x: 213, y: 1333, region: 1 }),
+    Object.freeze({ id: "round-5", kind: "round", round: 5, label: "Round 5", short: "5", x: 151, y: 1245, region: 1 }),
+    Object.freeze({ id: "shop-5", kind: "shop", afterRound: 5, label: "Shop", short: "$", x: 89, y: 1157, region: 1 }),
+    Object.freeze({ id: "round-6", kind: "round", round: 6, label: "Round 6", short: "6", x: 147, y: 1069, region: 1 }),
+    Object.freeze({ id: "boss-before-7", kind: "boss", gate: "before-7", label: "Boss II", short: "B", x: 215, y: 981, region: 1 }),
 
-    Object.freeze({ id: "round-7", kind: "round", round: 7, label: "Round 7", short: "7", x: 992, y: 186, region: 2 }),
-    Object.freeze({ id: "round-8", kind: "round", round: 8, label: "Round 8", short: "8", x: 1080, y: 112, region: 2 }),
-    Object.freeze({ id: "shop-8", kind: "shop", afterRound: 8, label: "Shop", short: "$", x: 1168, y: 166, region: 2 }),
-    Object.freeze({ id: "round-9", kind: "round", round: 9, label: "Round 9", short: "9", x: 1256, y: 238, region: 2 }),
-    Object.freeze({ id: "boss-before-10", kind: "boss", gate: "before-10", label: "Boss III", short: "B", x: 1344, y: 178, region: 2 }),
+    Object.freeze({ id: "round-7", kind: "round", round: 7, label: "Round 7", short: "7", x: 163, y: 893, region: 2 }),
+    Object.freeze({ id: "round-8", kind: "round", round: 8, label: "Round 8", short: "8", x: 89, y: 805, region: 2 }),
+    Object.freeze({ id: "shop-8", kind: "shop", afterRound: 8, label: "Shop", short: "$", x: 143, y: 717, region: 2 }),
+    Object.freeze({ id: "round-9", kind: "round", round: 9, label: "Round 9", short: "9", x: 215, y: 629, region: 2 }),
+    Object.freeze({ id: "boss-before-10", kind: "boss", gate: "before-10", label: "Boss III", short: "B", x: 155, y: 541, region: 2 }),
 
-    Object.freeze({ id: "round-10", kind: "round", round: 10, label: "Round 10", short: "10", x: 1432, y: 112, region: 3 }),
-    Object.freeze({ id: "round-11", kind: "round", round: 11, label: "Round 11", short: "11", x: 1520, y: 174, region: 3 }),
-    Object.freeze({ id: "shop-11", kind: "shop", afterRound: 11, label: "Shop", short: "$", x: 1608, y: 238, region: 3 }),
-    Object.freeze({ id: "round-12", kind: "round", round: 12, label: "Round 12", short: "12", x: 1696, y: 178, region: 3 }),
-    Object.freeze({ id: "boss-final", kind: "boss", gate: "final", label: "Final Boss", short: "B", x: 1784, y: 104, region: 4 })
+    Object.freeze({ id: "round-10", kind: "round", round: 10, label: "Round 10", short: "10", x: 89, y: 453, region: 3 }),
+    Object.freeze({ id: "round-11", kind: "round", round: 11, label: "Round 11", short: "11", x: 151, y: 365, region: 3 }),
+    Object.freeze({ id: "shop-11", kind: "shop", afterRound: 11, label: "Shop", short: "$", x: 215, y: 277, region: 3 }),
+    Object.freeze({ id: "round-12", kind: "round", round: 12, label: "Round 12", short: "12", x: 155, y: 189, region: 3 }),
+    Object.freeze({ id: "boss-final", kind: "boss", gate: "final", label: "Final Boss", short: "B", x: 81, y: 101, region: 4 })
   ]);
   const MAP_REGIONS = Object.freeze([
-    Object.freeze({ id: "woods", name: "Whispering Woods", subtitle: "Words take root", x: 0, width: 510 }),
-    Object.freeze({ id: "lakes", name: "Misty Lakes", subtitle: "Reflections hide the truth", x: 510, width: 440 }),
-    Object.freeze({ id: "caverns", name: "Crystal Caverns", subtitle: "Clues glow in the dark", x: 950, width: 440 }),
-    Object.freeze({ id: "isles", name: "Floating Isles", subtitle: "The path rises", x: 1390, width: 350 }),
-    Object.freeze({ id: "citadel", name: "Eclipse Citadel", subtitle: "The last answer waits", x: 1740, width: 105 })
+    Object.freeze({ id: "woods", name: "Whispering Woods", subtitle: "Words take root", y: 1375, height: 510 }),
+    Object.freeze({ id: "lakes", name: "Misty Lakes", subtitle: "Reflections hide the truth", y: 935, height: 440 }),
+    Object.freeze({ id: "caverns", name: "Crystal Caverns", subtitle: "Clues glow in the dark", y: 495, height: 440 }),
+    Object.freeze({ id: "isles", name: "Floating Isles", subtitle: "The path rises", y: 145, height: 350 }),
+    Object.freeze({ id: "citadel", name: "Eclipse Citadel", subtitle: "The last answer waits", y: 40, height: 105 })
   ]);
 
   const hintQueues = new WeakMap();
@@ -576,6 +581,28 @@
     return MAP_NODES.find(node => node.id === `round-${state.round}`) || MAP_NODES[0];
   }
 
+  // The map is a checkpoint screen, not a HUD: it should only appear while
+  // the player is standing at a resolved stage (before a round/boss starts,
+  // or after one ends) and never overlap the actual guessing screen.
+  function shouldShowMap(state) {
+    if (!state) return false;
+    return state.status !== "playing" || Boolean(state.roundIntroPending);
+  }
+
+  // Whichever single click actually moves the player past the stage they
+  // are currently standing on -- starting the round/boss they're about to
+  // play, or leaving a shop they've finished browsing. Every other pause
+  // (choosing a reward, choosing a boss) is resolved on its own screen, not
+  // by tapping the map, so this returns null there and the map stays
+  // read-only.
+  function mapAdvanceAction(game) {
+    const state = game?.state;
+    if (!state) return null;
+    if (state.roundIntroPending) return "dismiss-round-intro";
+    if (state.status === "shop") return "leave-shop";
+    return null;
+  }
+
   function nodeIsCleared(node, game, currentIndex) {
     const state = game.state;
     const campaign = ensureCampaign(game);
@@ -608,24 +635,24 @@
   function renderMapDecorations() {
     return `
       <g class="cuddle-map-decor cuddle-map-decor-woods" aria-hidden="true">
-        <path d="M32 260l18-48 18 48zM78 248l15-40 15 40zM410 94l18-48 18 48zM452 112l14-36 14 36z"></path>
-        <circle cx="250" cy="70" r="20"></circle><circle cx="276" cy="60" r="13"></circle>
+        <path d="M237 1853l-48-18 48-18zM225 1807l-40-15 40-15zM71 1475l-48-18 48-18zM89 1433l-36-14 36-14z"></path>
+        <circle cx="47" cy="1635" r="20"></circle><circle cx="37" cy="1609" r="13"></circle>
       </g>
       <g class="cuddle-map-decor cuddle-map-decor-lakes" aria-hidden="true">
-        <path d="M526 267q80-26 160 0t160 0 90 0"></path>
-        <path d="M575 73q18-20 36 0q18-20 36 0"></path>
-        <circle cx="880" cy="68" r="23"></circle>
+        <path d="M244 1359q-26-80 0-160t0-160 0-90"></path>
+        <path d="M50 1310q-20-18 0-36q-20-18 0-36"></path>
+        <circle cx="45" cy="1005" r="23"></circle>
       </g>
       <g class="cuddle-map-decor cuddle-map-decor-caverns" aria-hidden="true">
-        <path d="M972 276l16-58 17 58zM1010 278l11-40 12 40zM1280 76l16-52 16 52zM1320 82l11-34 12 34z"></path>
+        <path d="M253 913l-58-16 58-17zM255 875l-40-11 40-12zM53 605l-52-16 52-16zM59 565l-34-11 34-12z"></path>
       </g>
       <g class="cuddle-map-decor cuddle-map-decor-isles" aria-hidden="true">
-        <path d="M1412 272q38-26 76 0l-14 14h-48zM1572 78q40-28 80 0l-15 15h-50z"></path>
-        <path d="M1470 64q16-18 32 0q16-18 32 0"></path>
+        <path d="M249 473q-26-38 0-76l14 14v48zM55 313q-28-40 0-80l15 15v50z"></path>
+        <path d="M41 415q-18-16 0-32q-18-16 0-32"></path>
       </g>
       <g class="cuddle-map-decor cuddle-map-decor-citadel" aria-hidden="true">
-        <path d="M1746 275v-92h18v-34l10 20 10-20v34h18v92z"></path>
-        <circle cx="1791" cy="48" r="25"></circle><circle class="cuddle-map-eclipse-cut" cx="1801" cy="42" r="25"></circle>
+        <path d="M252 139h-92v-18h-34l20-10-20-10h34v-18h92z"></path>
+        <circle cx="25" cy="94" r="25"></circle><circle class="cuddle-map-eclipse-cut" cx="19" cy="84" r="25"></circle>
       </g>`;
   }
 
@@ -668,22 +695,29 @@
     const current = currentMapNode(game);
     const currentIndex = Math.max(0, MAP_NODES.indexOf(current));
     const region = MAP_REGIONS[current.region] || MAP_REGIONS[0];
+    const advanceAction = mapAdvanceAction(game);
     const routeSegments = MAP_NODES.slice(0, -1).map((node, index) => {
       const next = MAP_NODES[index + 1];
       const cleared = index < currentIndex;
       return `<line class="cuddle-map-route-segment ${cleared ? "is-cleared" : ""}" x1="${node.x}" y1="${node.y}" x2="${next.x}" y2="${next.y}"></line>`;
     }).join("");
     const nodes = MAP_NODES.map((node, index) => {
+      const isCurrent = index === currentIndex;
+      const actionable = isCurrent && Boolean(advanceAction);
       const classes = [
         "cuddle-map-node",
         `is-${node.kind}`,
-        index === currentIndex ? "is-current" : "",
+        isCurrent ? "is-current" : "",
         nodeIsCleared(node, game, currentIndex) ? "is-cleared" : "",
-        index > currentIndex ? "is-future" : ""
+        index > currentIndex ? "is-future" : "",
+        actionable ? "is-actionable" : ""
       ].filter(Boolean).join(" ");
+      const actionAttrs = actionable
+        ? ` data-cuddle-campaign-action="map-advance" role="button" tabindex="0" aria-label="${escapeHtml(node.label)}: tap to continue"`
+        : "";
       return `
-        <g class="${classes}" transform="translate(${node.x} ${node.y})" data-map-node-id="${escapeHtml(node.id)}">
-          <title>${escapeHtml(node.label)}</title>
+        <g class="${classes}" transform="translate(${node.x} ${node.y})" data-map-node-id="${escapeHtml(node.id)}"${actionAttrs}>
+          <title>${escapeHtml(node.label)}${actionable ? " -- tap to continue" : ""}</title>
           ${mapNodeShape(node)}
           <text class="cuddle-map-node-symbol" text-anchor="middle" dominant-baseline="central">${escapeHtml(node.short)}</text>
           <text class="cuddle-map-node-label" text-anchor="middle" y="31">${escapeHtml(node.label)}</text>
@@ -691,8 +725,8 @@
     }).join("");
     const regionRects = MAP_REGIONS.map(item => `
       <g class="cuddle-map-region is-${escapeHtml(item.id)}">
-        <rect x="${item.x}" y="0" width="${item.width}" height="300"></rect>
-        <text x="${item.x + 18}" y="28">${escapeHtml(item.name)}</text>
+        <rect x="0" y="${item.y}" width="${MAP_VIEW_WIDTH}" height="${item.height}"></rect>
+        <text x="20" y="${item.y + 26}">${escapeHtml(item.name)}</text>
       </g>`).join("");
 
     return `
@@ -705,8 +739,9 @@
           </div>
           ${renderCategoryBadge(campaign)}
         </div>
-        <div class="cuddle-campaign-map-scroll" data-cuddle-map-scroll data-map-current-x="${current.x}">
-          <svg class="cuddle-campaign-map-svg" viewBox="0 0 1845 300" role="img" aria-label="A continuous path through twelve rounds, four shops, and four bosses">
+        ${advanceAction ? `<p class="cuddle-map-advance-hint">The lit stage is ready -- tap it to continue.</p>` : ""}
+        <div class="cuddle-campaign-map-scroll" data-cuddle-map-scroll data-map-current-y="${current.y}">
+          <svg class="cuddle-campaign-map-svg" viewBox="0 0 ${MAP_VIEW_WIDTH} ${MAP_VIEW_HEIGHT}" role="img" aria-label="A vertical path climbing through twelve rounds, four shops, and four bosses">
             ${regionRects}
             ${renderMapDecorations()}
             <g class="cuddle-map-route">${routeSegments}</g>
@@ -780,22 +815,35 @@
   }
 
   function insertMap(runHtml, game) {
+    if (!shouldShowMap(game?.state)) return runHtml || "";
     const map = renderMap(game);
+    const html = String(runHtml || "");
+    // Every "before/after round" screen (round intro, boss choice, reward
+    // picks, the win/lose screen) renders as a full-viewport .cuddle-overlay
+    // modal that visually covers anything placed in the normal document
+    // flow behind it -- inserting the map before <main> put it in the DOM
+    // but left it hidden under that modal's blurred backdrop. Put the map
+    // inside the modal card itself instead, so it's actually visible (and
+    // its lit "next stage" node actually clickable) alongside whatever that
+    // screen is asking the player to do.
+    const modalMatch = html.match(/<section class="cuddle-modal[^"]*">/);
+    if (modalMatch) {
+      const insertAt = modalMatch.index + modalMatch[0].length;
+      return html.slice(0, insertAt) + map + html.slice(insertAt);
+    }
     const marker = '<main class="cuddle-play-area">';
-    return String(runHtml || "").includes(marker)
-      ? String(runHtml).replace(marker, `${map}${marker}`)
-      : `${map}${runHtml || ""}`;
+    return html.includes(marker) ? html.replace(marker, `${map}${marker}`) : `${map}${html}`;
   }
 
   function afterRender(root, game, landing) {
     if (!root || !game?.state || landing) return;
     const scroller = root.querySelector("[data-cuddle-map-scroll]");
     if (!scroller) return;
-    const currentX = Number(scroller.dataset.mapCurrentX || 0);
+    const currentY = Number(scroller.dataset.mapCurrentY || 0);
     requestAnimationFrame(() => {
-      const proportion = currentX / 1845;
-      const target = proportion * scroller.scrollWidth - scroller.clientWidth / 2;
-      scroller.scrollLeft = Math.max(0, Math.min(scroller.scrollWidth - scroller.clientWidth, target));
+      const proportion = currentY / MAP_VIEW_HEIGHT;
+      const target = proportion * scroller.scrollHeight - scroller.clientHeight / 2;
+      scroller.scrollTop = Math.max(0, Math.min(scroller.scrollHeight - scroller.clientHeight, target));
     });
   }
 
@@ -803,6 +851,12 @@
     if (!game) return { ok: false, error: "No Cuddle run is active." };
     if (action === "buy-shop-item") return game.buyCuddleShopItem(itemId);
     if (action === "leave-shop") return game.leaveCuddleShop();
+    if (action === "map-advance") {
+      const advanceAction = mapAdvanceAction(game);
+      if (advanceAction === "dismiss-round-intro") return game.dismissRoundIntro();
+      if (advanceAction === "leave-shop") return game.leaveCuddleShop();
+      return { ok: false, error: "Nothing to advance to yet." };
+    }
     return { ok: false, error: "Unknown campaign action." };
   }
 
