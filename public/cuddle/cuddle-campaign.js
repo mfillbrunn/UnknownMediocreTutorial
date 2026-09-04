@@ -14,6 +14,10 @@
   const CATEGORY_ENDPOINT = "/api/cuddle/category-hint";
   const SHOP_AFTER_ROUNDS = Object.freeze([2, 5, 8, 11]);
   const MAX_CATEGORY_SENSE = 6;
+  // Regardless of Theme Sense or a redeemed Category Whisper, every round
+  // guarantees at least one category by this guess -- earlier on Easy (more
+  // guesses left to use the clue), latest on Hard (least help).
+  const GUARANTEED_REVEAL_GUESS = Object.freeze({ easy: 4, medium: 5, hard: 6 });
   const CATEGORY_REWARD = Object.freeze({
     id: "revealCategory",
     icon: "🧭",
@@ -144,6 +148,7 @@
       categoryExhausted: false,
       noCategory: false,
       categoryNotice: "",
+      guaranteedRevealDone: false,
       shopsVisited: [],
       activeShopRound: null,
       shopPurchases: {},
@@ -194,6 +199,7 @@
     campaign.categoryPending = Boolean(campaign.categoryPending);
     campaign.categoryExhausted = Boolean(campaign.categoryExhausted);
     campaign.noCategory = Boolean(campaign.noCategory);
+    campaign.guaranteedRevealDone = Boolean(campaign.guaranteedRevealDone);
     game.state.cuddleCampaign = campaign;
     return campaign;
   }
@@ -216,6 +222,7 @@
       campaign.categoryExhausted = false;
       campaign.noCategory = false;
       campaign.categoryNotice = "";
+      campaign.guaranteedRevealDone = false;
       automaticTargets.delete(game);
     }
     return campaign;
@@ -265,15 +272,19 @@
       });
       liveCampaign.noCategory = Boolean(payload.noCategory);
       liveCampaign.categoryExhausted = Boolean(payload.exhausted);
+      // This message names the revealed category outright (e.g. "Category
+      // revealed: Animals."), so it must never reach state.lastMessage --
+      // that line renders on the main guessing screen, which would put the
+      // theme on screen exactly where it isn't supposed to appear. It's
+      // kept only for the between-round map badge, which already gates on
+      // the player having engaged the mechanic at all.
       liveCampaign.categoryNotice = String(payload.message || "");
-      if (liveCampaign.categoryNotice) game.state.lastMessage = liveCampaign.categoryNotice;
       game.save();
       emitCampaignUpdate(game);
     } catch (error) {
       if (game?.state?.runId !== runId || String(game?.state?.secret || "").toUpperCase() !== secret) return;
       const liveCampaign = resetCategoryStateForSecret(game);
       liveCampaign.categoryNotice = "Category clue unavailable.";
-      game.state.lastMessage = liveCampaign.categoryNotice;
       if (source === "automatic") automaticTargets.delete(game);
       game.save();
       emitCampaignUpdate(game);
@@ -318,6 +329,24 @@
     if (needed <= 0) return;
     automaticTargets.set(game, { key, target });
     queueCategoryReveal(game, needed, "automatic");
+  }
+
+  function guaranteedRevealGuess(game) {
+    const difficulty = game?.state?.megaState?.difficulty;
+    return GUARANTEED_REVEAL_GUESS[difficulty] || GUARANTEED_REVEAL_GUESS.hard;
+  }
+
+  // Fires once per round, on top of (not instead of) Theme Sense / Category
+  // Whisper -- even a run that has never touched the theme mechanic gets one
+  // category by this guess. queueCategoryReveal already no-ops harmlessly if
+  // every category is already known or the word has none.
+  function ensureGuaranteedCategoryReveal(game) {
+    const campaign = resetCategoryStateForSecret(game);
+    if (!campaign || campaign.guaranteedRevealDone) return;
+    const guessesUsed = Number(game.state?.guessesUsed || 0);
+    if (guessesUsed < guaranteedRevealGuess(game) - 1) return;
+    campaign.guaranteedRevealDone = true;
+    queueCategoryReveal(game, 1, "guaranteed");
   }
 
   function installQuestReward() {
@@ -407,6 +436,13 @@
     }
     if (notes.length) this.state.lastMessage = `${this.state.lastMessage || ""} ${notes.join(" ")}`.trim();
     ensureAutomaticCategories(this);
+    return result;
+  };
+
+  const originalSubmitDraft = CuddleGame.prototype.submitDraft;
+  CuddleGame.prototype.submitDraft = function submitDraftWithGuaranteedTheme(...args) {
+    const result = originalSubmitDraft.apply(this, args);
+    if (result?.ok) ensureGuaranteedCategoryReveal(this);
     return result;
   };
 
@@ -556,6 +592,7 @@
       if (campaign.categorySense > 0) {
         lines.push(`Theme Sense: reveal up to ${campaign.categorySense} ${campaign.categorySense === 1 ? "category" : "categories"} for every solution`);
       }
+      lines.push(`A category is guaranteed to be revealed by guess ${guaranteedRevealGuess(this)} this round`);
       const inventoryCount = Object.values(campaign.inventory).reduce((sum, value) => sum + Number(value || 0), 0)
         + Number(this.state?.megaState?.jokerCharges || 0);
       if (inventoryCount > 0) lines.push(`Shop inventory: ${inventoryCount} one-use item${inventoryCount === 1 ? "" : "s"}`);
@@ -669,6 +706,17 @@
   }
 
   function renderCategoryBadge(campaign) {
+    // Show nothing at all -- not even a "hidden" placeholder -- unless the
+    // player has actually engaged the theme mechanic this round (Theme
+    // Sense, a redeemed Category Whisper, or the guaranteed reveal has
+    // fired). A round that hasn't touched categories yet shouldn't
+    // advertise that the feature exists.
+    const engaged = campaign.categorySense > 0
+      || campaign.revealedCategories.length > 0
+      || campaign.categoryPending
+      || campaign.noCategory
+      || campaign.categoryExhausted;
+    if (!engaged) return "";
     let content;
     if (campaign.revealedCategories.length) {
       content = campaign.revealedCategories
