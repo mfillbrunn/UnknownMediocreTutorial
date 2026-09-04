@@ -1921,18 +1921,24 @@ function validateSetterSecretWord(word) {
     };
   }
 
-  if (state.isTutorial && state.history.length < state.scriptedTurns) {
-    const expected = state.tutorialSecrets?.[state.history.length];
-    if (expected && w !== expected) {
-      return { valid: false, reason: "tutorial-script", expected };
-    }
-  }
-
+  // Consistency is judged BEFORE the scripted-word check, matching the
+  // server's order (game-engine/validation.js runs its history check at
+  // #4 and its tutorial check at #5). The basic tutorial deliberately
+  // asks the player to type a word that breaks a past clue, and "Type in
+  // LEMUR" is the wrong thing to say about it -- the point of the step is
+  // that the word contradicts the colors already shown.
   if (
     typeof window.isConsistentWithHistory === "function" &&
     !window.isConsistentWithHistory(state.history, w, state)
   ) {
     return { valid: false, reason: "inconsistent" };
+  }
+
+  if (state.isTutorial && state.history.length < state.scriptedTurns) {
+    const expected = state.tutorialSecrets?.[state.history.length];
+    if (expected && w !== expected) {
+      return { valid: false, reason: "tutorial-script", expected };
+    }
   }
 
   return { valid: true, reason: null };
@@ -3434,6 +3440,23 @@ if (window._pendingRoleAssignedRefresh) {
   }
 
   applyHidden(readHidden(), false);
+
+  // The Advanced UI tutorial hides the row before asking the player to
+  // reveal it, so its "show the constraint row" step is a real action
+  // rather than one that's already been done. Routed through applyHidden
+  // so the header buttons stay in sync with the body class.
+  //
+  // persist defaults to false: a tutorial forcing the row shut is not the
+  // player expressing a preference, and writing it to localStorage would
+  // leave every later real game with the row hidden.
+  window.setConstraintsHidden = function (hidden, persist = false) {
+    applyHidden(!!hidden, !!persist);
+  };
+
+  // Undo the above: re-apply whatever the player themselves last chose.
+  window.restoreConstraintsPreference = function () {
+    applyHidden(readHidden(), false);
+  };
 
   // Capture the click before older direct handlers. This keeps every header
   // button synchronized even when a role screen is refreshed or replaced.

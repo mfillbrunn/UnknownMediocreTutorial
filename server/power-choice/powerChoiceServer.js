@@ -806,7 +806,9 @@ function fixedOptions(role, threshold) {
       {
         id: "inspector-yellow-1",
         kind: "fixed",
-        tier: 1,
+        // Rare: revealing a confirmed-present letter is stronger than the
+        // other Common guesser cards, which only narrow the field.
+        tier: 2,
         icon: "🟨",
         title: "Yellow Intel",
         description: "Reveal one random letter that is in the secret.",
@@ -852,8 +854,8 @@ function fixedOptions(role, threshold) {
 // apply() requires anyway (see the "revealHistory" case in
 // powerOptionApplicable for the belt-and-suspenders runtime check).
 function guesserRewardPool(tier) {
-  // Rarity (each option's own .tier) groups these into: Common -- Yellow
-  // Intel, Rule Out Two, Peek Letter, Silly Word, Guess Tip. Rare -- Freeze
+  // Rarity (each option's own .tier) groups these into: Common -- Rule Out
+  // Two, Peek Letter, Silly Word, Guess Tip. Rare -- Yellow Intel, Freeze
   // Secret, Time Rewind, Secret Vowel Count, Roulette Secret, Recon Sweep.
   // Legendary -- Remove a Point, Informant, First Letter Reveal, Magic
   // Mode. Stealth Guess is deliberately NOT in this pool -- it's still a

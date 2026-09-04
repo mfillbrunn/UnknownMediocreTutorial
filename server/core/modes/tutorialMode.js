@@ -34,19 +34,21 @@ class TutorialMode {
     state.tutorialSecretsAI = ["CUMIN", "CUMIN"];
     state.tutorialGuessesAI = ["SMALL", "BLIND"];
 
-    // Stage "advanced" is the UI-features walkthrough (Notes, Guide, Drag
-    // & Lock, Power UI) launched standalone from the "Advanced Tutorial"
-    // menu button. Round 1 (human as guesser) teaches revealGreen; round 2
-    // (human as setter, after the role swap) teaches countOnly — see
-    // onLobbyReady/onNextRound below.
+    // Stage "advanced" is the UI-features walkthrough launched standalone
+    // from the "Advanced Tutorial" menu button. It now covers only drag,
+    // lock, the side column and the constraint row -- no powers. It used
+    // to hand out revealGreen and countOnly to demonstrate the power UI;
+    // those steps are gone, so the powers go with them rather than
+    // leaving unexplained power controls on a screen whose own copy says
+    // nothing here is a new rule.
     if (state.tutorialStage === "advanced") {
-      state.tutorialPowerGuesser = "revealGreen";
-      state.tutorialPowerSetter = "countOnly";
+      state.tutorialPowerGuesser = null;
+      state.tutorialPowerSetter = null;
 
       // Second guess is the AI's actual secret (CUMIN, from
       // tutorialSecretsAI above) rather than stage 1's CAIRN, so entering
-      // it right after the Leak Info reveal wins the round immediately
-      // instead of trailing into unscripted free play.
+      // it wins the round immediately instead of trailing into unscripted
+      // free play.
       state.tutorialGuesses = ["CHAMP", "CUMIN"];
     }
 
@@ -206,8 +208,11 @@ class TutorialMode {
   }
 
   if (state.tutorialStage === "advanced") {
-      const sP = [state.tutorialPowerSetter];
-      const gP = [state.tutorialPowerGuesser];
+      // Both are null now (see initMatch) -- filtered rather than wrapped
+      // blindly in an array, so activePowers comes out genuinely empty
+      // instead of holding a [null] the power UI would try to render.
+      const sP = state.tutorialPowerSetter ? [state.tutorialPowerSetter] : [];
+      const gP = state.tutorialPowerGuesser ? [state.tutorialPowerGuesser] : [];
       state.initialPowers = { setter: sP, guesser: gP };
       state.activePowers = [...sP, ...gP];
       return;

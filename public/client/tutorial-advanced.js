@@ -253,7 +253,7 @@ function runAdvancedTutorialSetter(state) {
 
   if (round === 1) {
     const candidate = (state.tutorialSecrets?.[1] || "LEMUR").toUpperCase();
-    const totalSteps = 6;
+    const totalSteps = 8;
 
     if (tutorialSubStep === 0) {
       if (!state.pendingGuess) {
@@ -274,7 +274,7 @@ function runAdvancedTutorialSetter(state) {
         return;
       }
       advancedTutorialShow(
-        "Tap the arrow to slide the side column open or closed.",
+        "There's a whole column tucked away at the side. Tap the arrow to slide it open.",
         {
           role: "setter",
           title: "Side column",
@@ -284,13 +284,13 @@ function runAdvancedTutorialSetter(state) {
         }
       );
       highlightSidebarToggleBtn();
-      tutorialContinueMode = "advance";
+      waitForSidebarOpened();
       return;
     }
 
     if (tutorialSubStep === 1) {
       advancedTutorialShow(
-        "It holds the Log - guesses, secret swaps, rewards, powers, all in one place - plus your own powers and other setter tools.",
+        "There it is. It holds the Log - every guess, every secret swap, in the order they happened - plus the rest of your Secretkeeper tools. Same arrow slides it shut again.",
         {
           role: "setter",
           title: "What's inside",
@@ -306,7 +306,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 2) {
       advancedTutorialShow(
-        "Below the board sits the constraint row: one tile per letter, showing everything you have learned about the secret so far.",
+        "One more thing worth knowing about. Tap this button to show the constraint row.",
         {
           role: "setter",
           title: "Constraint row",
@@ -315,17 +315,17 @@ function runAdvancedTutorialSetter(state) {
           placement: "bottom"
         }
       );
-      highlightConstraintRowAndToggle("setter");
-      tutorialContinueMode = "advance";
+      highlightConstraintToggleBtn("setter");
+      waitForConstraintRowShown();
       return;
     }
 
     if (tutorialSubStep === 3) {
       advancedTutorialShow(
-        "Solved a position? It shows that letter plainly in green, just like a normal tile.",
+        "That's it, sitting just above the board: one tile per letter, holding everything you have learned about the secret so far.",
         {
           role: "setter",
-          title: "Solved positions",
+          title: "What it shows",
           current: 4,
           total: totalSteps,
           placement: "bottom"
@@ -338,10 +338,10 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 4) {
       advancedTutorialShow(
-        "Still unsolved? You might see small red squares instead. Each one names a letter a yellow clue has already ruled out there.",
+        "Solved a position? It shows that letter plainly in green, just like a normal tile.",
         {
           role: "setter",
-          title: "Red squares",
+          title: "Solved positions",
           current: 5,
           total: totalSteps,
           placement: "bottom"
@@ -354,11 +354,27 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 5) {
       advancedTutorialShow(
+        "Still unsolved? You might see small red squares instead. Each one names a letter a yellow clue has already ruled out there.",
+        {
+          role: "setter",
+          title: "Red squares",
+          current: 6,
+          total: totalSteps,
+          placement: "bottom"
+        }
+      );
+      highlightConstraintRowAndToggle("setter");
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 6) {
+      advancedTutorialShow(
         "Here's the rule a red square is really saying: that letter showed yellow there before, so it can never land in that spot again.",
         {
           role: "setter",
           title: "Reading a red square",
-          current: 6,
+          current: 7,
           total: totalSteps,
           placement: "bottom"
         }
@@ -373,7 +389,7 @@ function runAdvancedTutorialSetter(state) {
       {
         role: "setter",
         title: "Finish the turn",
-        current: 6,
+        current: 8,
         total: totalSteps,
         placement: "top",
         mode: "hide"
@@ -397,7 +413,7 @@ function runAdvancedTutorialSetter(state) {
         mode: "end"
       }
     );
-    tutorialEndNextMode = "tutorial";
+    tutorialEndNextMode = "none";
     return;
   }
 
@@ -451,5 +467,5 @@ function runAdvancedMatchTutorial() {
       mode: "end"
     }
   );
-  tutorialEndNextMode = "tutorial";
+  tutorialEndNextMode = "none";
 }
