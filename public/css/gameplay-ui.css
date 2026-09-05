@@ -1438,7 +1438,10 @@
      guess resolution) used to paint the flying word on top of that popup
      instead of behind it, since this used to share the Power-Choice-only
      near-INT32_MAX band those overlays deliberately reserve for staying
-     above even the announce modal. */
+     above even the announce modal. One exception on the "ordinary board
+     chrome" side: .pc-current-quest-host sits just above this at 40001,
+     since the flight clone launches from directly underneath it and used
+     to fly right over it. */
   z-index: 40000;
   margin: 0;
   min-height: 0;
@@ -1753,10 +1756,15 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   font-size: 10px !important;
 }
 
-/* Guesser quest above the draft row. */
+/* Guesser quest above the draft row. z-index above .guesser-guess-flight's
+   40000 (see that rule's comment) -- the submitted guess's flying clone is
+   position:fixed and travels straight up from the draft row, right through
+   where this card sits, and used to paint over it on the way past. Still
+   well under the app-wide announce/modal band (100000+), so it stays
+   exactly where it was relative to everything else. */
 .pc-current-quest-host {
   position: relative;
-  z-index: 8;
+  z-index: 40001;
   width: min(100%, 520px);
   margin: 3px auto 9px;
 }
