@@ -1860,15 +1860,16 @@
 
 .cuddle-campaign-map-scroll {
   position: relative;
-  overflow-x: auto;
-  overflow-y: hidden;
+  height: min(56vh, 460px);
+  overflow-x: hidden;
+  overflow-y: auto;
   scrollbar-color: rgba(230, 187, 116, 0.46) rgba(255, 255, 255, 0.035);
   scrollbar-width: thin;
-  overscroll-behavior-inline: contain;
+  overscroll-behavior-block: contain;
 }
 
 .cuddle-campaign-map-scroll::-webkit-scrollbar {
-  height: 8px;
+  width: 8px;
 }
 
 .cuddle-campaign-map-scroll::-webkit-scrollbar-track {
@@ -1882,10 +1883,11 @@
 
 .cuddle-campaign-map-svg {
   display: block;
-  width: max(100%, 1180px);
-  min-width: 1180px;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
   height: auto;
-  aspect-ratio: 1845 / 300;
+  aspect-ratio: 300 / 1925;
 }
 
 .cuddle-map-region rect {
@@ -2028,6 +2030,38 @@
 
 .cuddle-map-node.is-future {
   opacity: 0.5;
+}
+
+.cuddle-map-node.is-actionable {
+  cursor: pointer;
+  animation: cuddle-map-node-lit 1.5s ease-in-out infinite;
+}
+
+.cuddle-map-node.is-actionable .cuddle-map-node-shape {
+  fill: #8a6423;
+  stroke: #ffd980;
+}
+
+.cuddle-map-node.is-actionable:hover,
+.cuddle-map-node.is-actionable:focus-visible {
+  filter: drop-shadow(0 0 14px rgba(255, 217, 128, 0.95));
+}
+
+.cuddle-map-node.is-actionable:focus-visible {
+  outline: none;
+}
+
+.cuddle-map-advance-hint {
+  margin: 0;
+  padding: 0 20px 12px;
+  color: #f8d595;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+@keyframes cuddle-map-node-lit {
+  0%, 100% { filter: drop-shadow(0 0 7px rgba(255, 217, 128, 0.65)); }
+  50% { filter: drop-shadow(0 0 16px rgba(255, 217, 128, 1)); }
 }
 
 .cuddle-map-cat {
@@ -2267,8 +2301,8 @@
     justify-content: flex-start;
   }
 
-  .cuddle-campaign-map-svg {
-    width: 1180px;
+  .cuddle-campaign-map-scroll {
+    height: min(48vh, 400px);
   }
 
   .cuddle-shop-intro {
@@ -2313,8 +2347,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .cuddle-map-cat,
+  .cuddle-map-node.is-actionable,
   .cuddle-category-chip.is-pending {
     animation: none;
+  }
+
+  .cuddle-map-node.is-actionable {
+    filter: drop-shadow(0 0 12px rgba(255, 217, 128, 0.9));
   }
 
   .cuddle-shop-item {
