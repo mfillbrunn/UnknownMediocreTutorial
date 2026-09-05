@@ -927,12 +927,32 @@
      not set here) scales together with this box, so the outline stays
      proportional at every size without a separate clamp() of its own the
      way -webkit-text-stroke-width used to need. */
-  width: clamp(14px, 6cqw, 26px);
-  height: clamp(14px, 6cqw, 26px);
+  --cover-star-size: clamp(14px, 6cqw, 26px);
+  width: var(--cover-star-size);
+  height: var(--cover-star-size);
   fill: transparent;
   stroke: transparent;
   filter: none;
   transition: fill 180ms ease, stroke 180ms ease, filter 180ms ease, transform 180ms ease;
+}
+
+/* Glow headroom. The lit star's shine is a CSS drop-shadow, and WebKit clips
+   a filter to the element's own box -- with the star filling that box edge to
+   edge (see buildCoverStarSvg), the glow was cut off in a hard-edged square
+   instead of fading out, which is what showed up as a boxy halo behind each
+   lit star on iOS. The SVG's viewBox now leaves a ring of empty space around
+   the star, this sizes the box at 3x to match, and the negative margin pulls
+   that padding back out of the layout -- so the star draws at exactly the
+   same size and position as before, just with room for its own glow.
+   Deliberately scoped to the SVG stars: spy-charge.js has a fallback path
+   that builds text-glyph <span> stars, which have no such padding and would
+   simply overlap each other under a negative margin. */
+#setterScreen svg.setter-cover-star {
+  width: calc(var(--cover-star-size) * 3);
+  height: calc(var(--cover-star-size) * 3);
+  margin: calc(var(--cover-star-size) * -1);
+  overflow: visible;
+  pointer-events: none;
 }
 
 /* Two normal base-star slots. */
@@ -3432,6 +3452,13 @@ body:not(.light-theme) {
   animation: setter-star-earned 680ms cubic-bezier(.22, .9, .3, 1)
     var(--star-dance-delay, 0ms) both;
   transform-origin: 50% 62%;
+}
+
+/* Same pivot point on the star itself, re-expressed against the SVG star's
+   padded box (the star occupies its middle third, so 62% down the star is
+   54% down the box -- see the glow-headroom rule above). */
+#setterScreen #setterCoverStars svg.setter-cover-star.is-filled.is-newly-earned {
+  transform-origin: 50% 54%;
 }
 
 @media (prefers-reduced-motion: reduce) {

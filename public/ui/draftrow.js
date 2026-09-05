@@ -24,8 +24,16 @@
 // below and setter-board.js's ensureCoverStarSlots (via
 // buildCoverStarElement) so the two can never drift into different star
 // shapes for the same slot.
+// The viewBox is deliberately 3x the symbol's own 100x100 box, with the star
+// drawn in the middle third of it. That empty ring is glow headroom: the lit
+// star's shine is a CSS drop-shadow, and WebKit clips a filter to the
+// element's own box -- so while the star filled its box edge to edge, the
+// glow was sheared off into a hard-edged square instead of fading out. The
+// star itself is kept the same size on screen because gameplay-ui.css sizes
+// this box at 3x and pulls the extra padding back out with a negative
+// margin, so the row's layout is unchanged.
 function buildCoverStarSvg(extraClass, dataAttr) {
-  return `<svg class="setter-cover-star ${extraClass}" ${dataAttr} aria-hidden="true"><use href="#icon-cute-star"/></svg>`;
+  return `<svg class="setter-cover-star ${extraClass}" ${dataAttr} aria-hidden="true" viewBox="0 0 300 300"><use href="#icon-cute-star" x="100" y="100" width="100" height="100"/></svg>`;
 }
 window.buildCoverStarSvg = buildCoverStarSvg;
 
