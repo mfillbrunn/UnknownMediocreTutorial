@@ -2089,6 +2089,65 @@
   fill: #f9c86f;
 }
 
+.cuddle-map-shell {
+  min-height: 100%;
+}
+
+/* Sits in the empty space below the map card -- a small icon rather than a
+   permanent stats block, so the map is what the player actually sees first
+   on the screen between rounds. */
+.cuddle-map-toolbar {
+  display: flex;
+  justify-content: flex-start;
+  margin: 12px clamp(12px, 2vw, 28px) 0;
+}
+
+.cuddle-map-stats-panel {
+  width: min(610px, 100%);
+  margin: 12px clamp(12px, 2vw, 28px) 0;
+  padding: clamp(18px, 3vw, 26px);
+  border: 1px solid rgba(213, 166, 255, 0.34);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top right, rgba(213, 166, 255, 0.13), transparent 19rem),
+    #211e2e;
+  color: var(--cuddle-text);
+}
+
+.cuddle-map-stats-panel h2 {
+  margin: 2px 0 8px;
+  font-size: clamp(1.3rem, 3vw, 1.7rem);
+}
+
+.cuddle-map-stats-panel > p {
+  margin: 0 0 4px;
+  color: var(--cuddle-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.cuddle-map-stats-panel .cuddle-round-start {
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* Only ever rendered as the first child of a reward-pick .cuddle-modal (see
+   insertMap) -- the badge's own layout right-aligns it next to the map's
+   chapter heading, which doesn't apply standing alone above that modal's
+   own heading. */
+.cuddle-map-badge-standalone {
+  margin-bottom: 16px;
+}
+
+.cuddle-map-badge-standalone .cuddle-category-readout {
+  min-width: 0;
+  justify-items: start;
+}
+
+.cuddle-map-badge-standalone .cuddle-category-chips {
+  justify-content: flex-start;
+}
+
 .cuddle-shop-shell {
   min-height: 100%;
 }
