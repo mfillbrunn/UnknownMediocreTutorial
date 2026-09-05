@@ -110,6 +110,11 @@
 
   const hintQueues = new WeakMap();
   const automaticTargets = new WeakMap();
+  // UI-only, not persisted: whether the round-intro map screen's stats
+  // drawer is open, and which round it was opened for (so a fresh round's
+  // intro always starts collapsed rather than remembering the last one).
+  let mapStatsOpen = false;
+  let mapStatsOpenRound = null;
 
   function clampInteger(value, minimum, maximum) {
     const number = Math.floor(Number(value) || 0);
@@ -618,14 +623,6 @@
     return MAP_NODES.find(node => node.id === `round-${state.round}`) || MAP_NODES[0];
   }
 
-  // The map is a checkpoint screen, not a HUD: it should only appear while
-  // the player is standing at a resolved stage (before a round/boss starts,
-  // or after one ends) and never overlap the actual guessing screen.
-  function shouldShowMap(state) {
-    if (!state) return false;
-    return state.status !== "playing" || Boolean(state.roundIntroPending);
-  }
-
   // Whichever single click actually moves the player past the stage they
   // are currently standing on -- starting the round/boss they're about to
   // play, or leaving a shop they've finished browsing. Every other pause
@@ -800,6 +797,81 @@
       </section>`;
   }
 
+  // The round-intro stats -- round number, score/target/needed, current
+  // modifications, and the explicit Start button -- used to be the whole
+  // screen. They're still useful, just not by default: tucked behind a
+  // small toggle so the map itself is what the player sees first.
+  function renderMapStatsPanel(game) {
+    const state = game.state;
+    const target = game.getTarget();
+    const needed = Math.max(0, target - state.score);
+    const totalRounds = engine.THRESHOLDS.length;
+    const modifications = typeof game.getCurrentModifications === "function"
+      ? game.getCurrentModifications()
+      : [];
+    const isBoss = typeof game.isBossRound === "function" && game.isBossRound();
+    return `
+      <section id="cuddleMapStatsPanel" class="cuddle-map-stats-panel ${mapStatsOpen ? "" : "hidden"}" aria-label="Run stats">
+        <span class="cuddle-modal-kicker">${isBoss ? "BOSS ROUND" : `ROUND ${state.round} OF ${totalRounds}`}</span>
+        <h2>${isBoss ? "Ready for the boss" : `Ready for round ${state.round}`}</h2>
+        <p>Solve the fixed secret and finish the round at or above the next score target.</p>
+        <div class="cuddle-round-intro-stats">
+          <div><span>Current score</span><strong>${state.score}</strong></div>
+          <div><span>Next target</span><strong>${target}</strong></div>
+          <div><span>Still needed</span><strong>${needed}</strong></div>
+        </div>
+        <div class="cuddle-round-modifications">
+          <h3>Current modifications</h3>
+          <ul>${modifications.map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
+        </div>
+        <button class="cuddle-btn cuddle-btn-primary cuddle-round-start" data-action="start-round">Start round ${state.round}</button>
+      </section>`;
+  }
+
+  function renderMapStatsToggle(game) {
+    if (mapStatsOpenRound !== game.state.round) {
+      mapStatsOpen = false;
+      mapStatsOpenRound = game.state.round;
+    }
+    return `
+      <div class="cuddle-map-toolbar">
+        <button class="cuddle-icon-btn cuddle-map-stats-toggle" data-cuddle-campaign-action="toggle-map-stats"
+          aria-expanded="${mapStatsOpen ? "true" : "false"}" aria-controls="cuddleMapStatsPanel"
+          aria-label="${mapStatsOpen ? "Hide run stats" : "Show run stats"}">
+          ${mapStatsOpen ? "✕" : "📊"}
+        </button>
+      </div>
+      ${renderMapStatsPanel(game)}`;
+  }
+
+  // Replaces the round-intro overlay outright -- the map IS the screen
+  // between rounds now, not a card stacked on top of it. Modeled on
+  // renderShop just below (same shell/header shape, same reason the score
+  // lives in the header: it's the run's spendable currency, so it belongs
+  // somewhere the player sees it without opening anything).
+  function renderRoundIntroMap(game) {
+    const state = game.state;
+    const isBoss = typeof game.isBossRound === "function" && game.isBossRound();
+    return `
+      <div class="cuddle-shell cuddle-map-shell">
+        <header class="cuddle-header">
+          <div class="cuddle-header-side">
+            <button class="cuddle-icon-btn" data-action="run-menu" aria-label="Cuddle menu">←</button>
+          </div>
+          <div class="cuddle-header-title">
+            <span class="cuddle-eyebrow">BETWEEN ROUNDS</span>
+            <div class="cuddle-header-title-line">
+              <h1>${isBoss ? "BOSS AHEAD" : `ROUND ${state.round}`}</h1>
+              <span class="cuddle-header-score" aria-label="Total score ${state.score}">Score ${state.score}</span>
+            </div>
+          </div>
+          <div class="cuddle-header-side cuddle-header-side-right"></div>
+        </header>
+        ${renderMap(game)}
+        ${renderMapStatsToggle(game)}
+      </div>`;
+  }
+
   function inventoryBadges(shop) {
     const entries = [
       ["Joker", shop.jokerCharges],
@@ -862,25 +934,27 @@
       </div>`;
   }
 
+  // The round-intro screen is fully replaced by renderRoundIntroMap above,
+  // and the shop by renderShop below -- both bypass this entirely. What's
+  // left for every other checkpoint (a reward pick after clearing a round,
+  // or one mid-round after finishing a quest) is the "regular" screen
+  // cuddle-ui.js already built, unchanged, PLUS the theme readout: a
+  // category revealed via Theme Sense or a redeemed Category Whisper had
+  // nowhere left to actually show once the map stopped rendering on every
+  // screen, since it's suppressed on the live guessing screen and the
+  // round's own category state resets the moment the next secret is drawn.
+  // The round-clear/reward screens are the one place still showing THIS
+  // round's revealed theme before it's gone.
   function insertMap(runHtml, game) {
-    if (!shouldShowMap(game?.state)) return runHtml || "";
-    const map = renderMap(game);
+    const state = game?.state;
     const html = String(runHtml || "");
-    // Every "before/after round" screen (round intro, boss choice, reward
-    // picks, the win/lose screen) renders as a full-viewport .cuddle-overlay
-    // modal that visually covers anything placed in the normal document
-    // flow behind it -- inserting the map before <main> put it in the DOM
-    // but left it hidden under that modal's blurred backdrop. Put the map
-    // inside the modal card itself instead, so it's actually visible (and
-    // its lit "next stage" node actually clickable) alongside whatever that
-    // screen is asking the player to do.
+    if (!state || (state.status !== "upgrade" && state.status !== "questReward")) return html;
+    const badge = renderCategoryBadge(ensureCampaign(game));
+    if (!badge) return html;
     const modalMatch = html.match(/<section class="cuddle-modal[^"]*">/);
-    if (modalMatch) {
-      const insertAt = modalMatch.index + modalMatch[0].length;
-      return html.slice(0, insertAt) + map + html.slice(insertAt);
-    }
-    const marker = '<main class="cuddle-play-area">';
-    return html.includes(marker) ? html.replace(marker, `${map}${marker}`) : `${map}${html}`;
+    if (!modalMatch) return html;
+    const insertAt = modalMatch.index + modalMatch[0].length;
+    return html.slice(0, insertAt) + `<div class="cuddle-map-badge-standalone">${badge}</div>` + html.slice(insertAt);
   }
 
   function afterRender(root, game, landing) {
@@ -905,6 +979,10 @@
       if (advanceAction === "leave-shop") return game.leaveCuddleShop();
       return { ok: false, error: "Nothing to advance to yet." };
     }
+    if (action === "toggle-map-stats") {
+      mapStatsOpen = !mapStatsOpen;
+      return { ok: true };
+    }
     return { ok: false, error: "Unknown campaign action." };
   }
 
@@ -918,6 +996,7 @@
     queueCategoryReveal,
     renderMap,
     renderShop,
+    renderRoundIntroMap,
     insertMap,
     afterRender,
     handleUiAction

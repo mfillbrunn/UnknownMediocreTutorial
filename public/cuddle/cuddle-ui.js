@@ -1226,6 +1226,10 @@
     if (game.state.status === "shop") {
       return window.CuddleCampaign.renderShop(game);
     }
+    if (game.state.status === "playing" && game.state.roundIntroPending
+        && typeof window.CuddleCampaign.renderRoundIntroMap === "function") {
+      return window.CuddleCampaign.renderRoundIntroMap(game);
+    }
     return window.CuddleCampaign.insertMap(cuddleCampaignOriginalRenderRun(), game);
   };
 
