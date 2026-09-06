@@ -258,7 +258,7 @@
    when the board scrolls instead of pinning itself mid-scroll. */
 #cuddleScreen .cuddle-money-challenge-banner {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 10px;
   width: min(840px, calc(100% - 20px));
@@ -273,16 +273,6 @@
   box-shadow: 0 11px 29px rgba(0, 0, 0, 0.26);
   backdrop-filter: blur(12px);
   animation: cuddleMoneyBannerIn 250ms ease-out both;
-}
-
-#cuddleScreen .cuddle-money-challenge-icon {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: rgba(246, 201, 86, 0.11);
-  font-size: 1.3rem;
 }
 
 #cuddleScreen .cuddle-money-challenge-copy {
@@ -347,6 +337,15 @@
   right: calc((1 - var(--clock-progress, 1)) * 100%);
   background: linear-gradient(90deg, rgba(246, 201, 86, 0.38), rgba(246, 201, 86, 0.1));
   transition: right 100ms linear;
+}
+
+/* The shared display:inline-grid two rules up outranks the browser's own
+   [hidden] default (same specificity, but author styles win), so a
+   challenge with no running clock (anything but effect:"clock") was
+   showing this as an empty dark pill instead of actually disappearing.
+   This rule's extra attribute selector is what wins that fight. */
+#cuddleScreen .cuddle-money-clock[hidden] {
+  display: none;
 }
 
 /* -------------------------------------------------------------------------
@@ -655,16 +654,11 @@
   }
 
   #cuddleScreen .cuddle-money-challenge-banner {
-    grid-template-columns: 36px minmax(0, 1fr) auto;
-  }
-
-  #cuddleScreen .cuddle-money-challenge-icon {
-    width: 36px;
-    height: 36px;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   #cuddleScreen .cuddle-money-clock {
-    grid-column: 2 / -1;
+    grid-column: 1 / -1;
     justify-self: end;
   }
 
