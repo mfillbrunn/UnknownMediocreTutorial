@@ -2435,3 +2435,208 @@
   }
 }
 /* UMT_CUDDLE_CAMPAIGN_MAP END */
+
+/* ---------------------------------------------------------------------------
+   Compact play layout (small / short screens)
+
+   The default layout lets the play screen grow as tall as it likes and hands
+   the scrolling to #cuddleScreen. On a phone that pushes the hand and the
+   Submit button below the fold as soon as the round has a few rows or the
+   player has collected a lot of cards -- you type blind, then scroll back up
+   to read the feedback.
+
+   Here the shell is pinned to the viewport instead and split in two: the board
+   column takes whatever height is left and scrolls inside itself (so only a
+   few guesses show at once, and cuddle-ui.js keeps the row you are typing into
+   in view), while the hand column is capped and keeps Mulligan / Submit /
+   backspace pinned above its own scrolling card rows.
+
+   Scoped with :has(.cuddle-play-area) so the landing, map, shop and summary
+   screens keep their ordinary page scrolling. State overlays are position:
+   fixed and so are not clipped by the shell.
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 860px), (max-height: 620px) {
+  #cuddleScreen:has(.cuddle-play-area) {
+    min-height: 0;
+    height: calc(100dvh - var(--header-height, 0px));
+    overflow: hidden;
+  }
+
+  #cuddleScreen .cuddle-shell:has(.cuddle-play-area) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    padding-bottom: 10px;
+    overflow: hidden;
+  }
+
+  #cuddleScreen .cuddle-shell:has(.cuddle-play-area) > .cuddle-header {
+    flex: 0 0 auto;
+  }
+
+  #cuddleScreen .cuddle-play-area {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    /* The two-column rule sets align-items:start, which in a column flex
+       container shrink-wraps each column's width instead of its height. */
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  /* The quest, the Cuddle heart, the theme badge and any boss/challenge strip
+     stay put; the board is the one thing that scrolls, so the player never
+     loses sight of what the round is asking of them. The column keeps its own
+     auto overflow purely as a safety valve for the case where those banners
+     alone are taller than the space available. */
+  #cuddleScreen .cuddle-play-area > .cuddle-left-column {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    gap: 10px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  #cuddleScreen .cuddle-play-area > .cuddle-left-column > * {
+    flex: 0 0 auto;
+  }
+
+  #cuddleScreen .cuddle-play-area > .cuddle-left-column > .cuddle-board {
+    flex: 1 1 auto;
+    /* Always worth at least a couple of rows, whatever else is on screen. */
+    min-height: 128px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  #cuddleScreen .cuddle-play-area > .cuddle-right-column {
+    flex: 0 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    /* Never let a huge hand eat more than half the screen, but always keep
+       the controls plus one row of cards on screen. */
+    max-height: 52%;
+    min-height: min(190px, 46%);
+  }
+
+  #cuddleScreen .cuddle-hand-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  /* The controls stay put; only the letter cards scroll. */
+  #cuddleScreen .cuddle-hand-meta,
+  #cuddleScreen .cuddle-utility-row,
+  #cuddleScreen .cuddle-submit-row {
+    flex: 0 0 auto;
+  }
+
+  #cuddleScreen .cuddle-hand {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  /* A short viewport gets a tighter board so more than two rows survive. */
+  #cuddleScreen .cuddle-board {
+    padding: 10px 8px;
+    gap: 6px;
+  }
+}
+
+/* Very short screens (landscape phones, split view): shrink the furniture
+   rather than the number of visible rows. */
+@media (max-height: 620px) {
+  #cuddleScreen .cuddle-play-area > .cuddle-right-column {
+    max-height: 58%;
+  }
+
+  #cuddleScreen .cuddle-card {
+    height: 46px;
+  }
+
+  #cuddleScreen .cuddle-card-letter {
+    font-size: 1rem;
+  }
+
+  #cuddleScreen .cuddle-hand-meta {
+    display: none;
+  }
+
+  #cuddleScreen .cuddle-quest {
+    min-height: 0;
+    padding: 8px 11px;
+  }
+
+  #cuddleScreen .cuddle-header-title .cuddle-eyebrow {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   A hand that outgrows its row
+
+   The consonant row is a fixed 5-up grid on phones, so an Extra Letters run
+   ends up eight rows deep. Let the cards get narrower first and only add rows
+   once they hit a genuinely tappable floor (44px is the platform minimum).
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 860px) {
+  #cuddleScreen .cuddle-hand-consonants,
+  #cuddleScreen .cuddle-hand-promoted {
+    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  }
+
+  #cuddleScreen .cuddle-hand-vowels {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  #cuddleScreen .cuddle-card {
+    height: 52px;
+  }
+
+  #cuddleScreen .cuddle-card-letter {
+    font-size: 1.05rem;
+  }
+}
+
+/* Guess rows always fit the width they are given: the tiles share whatever is
+   left after the score column instead of holding a fixed minimum and pushing
+   the row into a horizontal scroll. */
+@media (max-width: 860px) {
+  #cuddleScreen .cuddle-board-row {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(28px, 34px);
+    /* The base rule centres the tracks, which makes 1fr collapse to content
+       width; stretch is what lets the tiles actually share the row. */
+    justify-content: stretch;
+    gap: clamp(4px, 1.4vw, 8px);
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  #cuddleScreen .cuddle-tile {
+    font-size: clamp(1.1rem, 5.6vw, 1.9rem);
+  }
+}
+
+/* Last, so it wins over the max-width block above at, say, 740x380: tiles are
+   square, so capping the row width is the only way to cap their height and
+   keep four or five rows on a landscape phone. */
+@media (max-height: 620px) {
+  #cuddleScreen .cuddle-board-row {
+    max-width: clamp(210px, calc(100dvh * 0.62), 420px);
+  }
+}
