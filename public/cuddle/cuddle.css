@@ -2640,3 +2640,38 @@
     max-width: clamp(210px, calc(100dvh * 0.62), 420px);
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Desktop width: escape #appContainer's global 600px cap
+
+   #appContainer (layout.css) caps every screen at 600px so the base Wordle
+   game reads as a comfortable phone-width column even on desktop. Cuddle's
+   own two-column play area (.cuddle-play-area) wants noticeably more than
+   that -- at 600px the hand column was being squeezed to well under its own
+   350-390px minmax tracks, which is what made the desktop layout look
+   cramped and let the right column overflow.
+
+   This mirrors the identical widening gameplay-ui.css already does for the
+   setter/guesser screens (see DESKTOP_GAME_SIZE_BALANCE_V2) rather than
+   inventing a new pattern, and uses the same 1080px the shop screen already
+   settled on (.cuddle-shop-page). Gated to non-touch desktops so phones and
+   tablets are untouched, and to width > 860px so it can never fight the
+   compact play layout above, which takes over at that breakpoint.
+   --------------------------------------------------------------------------- */
+@media (min-width: 861px) and (hover: hover) and (pointer: fine) {
+  #appContainer:has(#cuddleScreen.active) {
+    max-width: 1080px;
+  }
+
+  /* game-menu.css centers every non-startup "dossier style" menu screen
+     (My Games, settings, etc.) at a fixed 600px via
+     "body.menu-mode .screen.game-menu:not(#startupScreen)" -- #cuddleScreen
+     carries the shared .game-menu class too, so it was being pinned to that
+     same 600px regardless of the #appContainer widening above. Overriding
+     it here (extra .active class keeps this at least as specific as that
+     rule regardless of stylesheet load order) is what actually lets the
+     two-column play area use the room #appContainer now has. */
+  body.menu-mode #cuddleScreen.screen.game-menu.active {
+    width: min(1080px, calc(100vw - 24px));
+  }
+}
