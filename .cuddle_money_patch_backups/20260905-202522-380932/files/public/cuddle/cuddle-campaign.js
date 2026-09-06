@@ -1,5 +1,5 @@
 // public/cuddle/cuddle-campaign.js
-// Server-resolved category clues, continuous campaign map, and money shops.
+// Server-resolved category clues, continuous campaign map, and score shops.
 (function () {
   "use strict";
 
@@ -79,8 +79,8 @@
     Object.freeze({ id: "round-1", kind: "round", round: 1, label: "Round 1", short: "1", x: 173, y: 1760, region: 0 }),
     Object.freeze({ id: "round-2", kind: "round", round: 2, label: "Round 2", short: "2", x: 215, y: 1675, region: 0 }),
     Object.freeze({ id: "shop-2", kind: "shop", afterRound: 2, label: "Shop", short: "$", x: 147, y: 1593, region: 0 }),
-    Object.freeze({ id: "boss-before-3", kind: "boss", gate: "before-3", label: "Boss I", short: "B", x: 93, y: 1507, region: 0 }),
-    Object.freeze({ id: "round-3", kind: "round", round: 3, label: "Round 3", short: "3", x: 155, y: 1419, region: 0 }),
+    Object.freeze({ id: "round-3", kind: "round", round: 3, label: "Round 3", short: "3", x: 93, y: 1507, region: 0 }),
+    Object.freeze({ id: "boss-before-4", kind: "boss", gate: "before-4", label: "Boss I", short: "B", x: 155, y: 1419, region: 0 }),
 
     Object.freeze({ id: "round-4", kind: "round", round: 4, label: "Round 4", short: "4", x: 213, y: 1333, region: 1 }),
     Object.freeze({ id: "round-5", kind: "round", round: 5, label: "Round 5", short: "5", x: 151, y: 1245, region: 1 }),
@@ -546,7 +546,7 @@
       ? campaign.shopPurchases[purchaseKey]
       : [];
     if (purchases.includes(item.id)) return { ok: false, error: "That item is sold out in this shop." };
-    if (Number(this.state.score || 0) < item.cost) return { ok: false, error: `You need $${item.cost}.` };
+    if (Number(this.state.score || 0) < item.cost) return { ok: false, error: `You need ${item.cost} points.` };
 
     this.state.score -= item.cost;
     purchases.push(item.id);
@@ -558,7 +558,7 @@
     } else if (Object.prototype.hasOwnProperty.call(campaign.inventory, item.id)) {
       campaign.inventory[item.id] += 1;
     }
-    this.state.lastMessage = `${item.title} purchased for $${item.cost}.`;
+    this.state.lastMessage = `${item.title} purchased for ${item.cost} points.`;
     this.save();
     return { ok: true, message: this.state.lastMessage };
   };
@@ -814,9 +814,9 @@
       <section id="cuddleMapStatsPanel" class="cuddle-map-stats-panel ${mapStatsOpen ? "" : "hidden"}" aria-label="Run stats">
         <span class="cuddle-modal-kicker">${isBoss ? "BOSS ROUND" : `ROUND ${state.round} OF ${totalRounds}`}</span>
         <h2>${isBoss ? "Ready for the boss" : `Ready for round ${state.round}`}</h2>
-        <p>Solve the fixed secret to clear the round. Money buys supplies but never gates progression.</p>
+        <p>Solve the fixed secret and finish the round at or above the next score target.</p>
         <div class="cuddle-round-intro-stats">
-          <div><span>Current money</span><strong>$${state.score}</strong></div>
+          <div><span>Current score</span><strong>${state.score}</strong></div>
           <div><span>Next target</span><strong>${target}</strong></div>
           <div><span>Still needed</span><strong>${needed}</strong></div>
         </div>
@@ -862,7 +862,7 @@
             <span class="cuddle-eyebrow">BETWEEN ROUNDS</span>
             <div class="cuddle-header-title-line">
               <h1>${isBoss ? "BOSS AHEAD" : `ROUND ${state.round}`}</h1>
-              <span class="cuddle-header-score" aria-label="Total money $${state.score}">Money $${state.score}</span>
+              <span class="cuddle-header-score" aria-label="Total score ${state.score}">Score ${state.score}</span>
             </div>
           </div>
           <div class="cuddle-header-side cuddle-header-side-right"></div>
@@ -897,7 +897,7 @@
             <span class="cuddle-eyebrow">BETWEEN ROUNDS</span>
             <div class="cuddle-header-title-line">
               <h1>THE WANDERING PAW</h1>
-              <span class="cuddle-header-score" aria-label="Spendable money $${state.score}">Money $${state.score}</span>
+              <span class="cuddle-header-score" aria-label="Spendable score ${state.score}">Score ${state.score}</span>
             </div>
           </div>
           <div class="cuddle-header-side cuddle-header-side-right"></div>
@@ -907,10 +907,10 @@
           <section class="cuddle-shop-intro">
             <div>
               <span class="cuddle-eyebrow">SHOP AFTER ROUND ${shop.round}</span>
-              <h2>Spend money on one-use supplies</h2>
-              <p>Money is your spendable run currency. Purchases lower the wallet but never block a solved round. Each item is stocked once at this stop.</p>
+              <h2>Trade score for one-use supplies</h2>
+              <p>Your score is the shop currency. Buying an item lowers the score carried toward the next target (${shop.nextTarget}). Each item is stocked once at this stop.</p>
             </div>
-            <div class="cuddle-shop-wallet"><span>Available</span><strong>$${shop.score}</strong><small>money</small></div>
+            <div class="cuddle-shop-wallet"><span>Available</span><strong>${shop.score}</strong><small>points</small></div>
           </section>
           <div class="cuddle-shop-inventory" aria-label="Stored shop items">
             <strong>Inventory</strong>${inventoryBadges(shop)}
@@ -918,7 +918,7 @@
           <section class="cuddle-shop-grid" aria-label="Shop items">
             ${shop.items.map(item => {
               const disabled = item.purchased || !item.affordable;
-              const status = item.purchased ? "Sold" : item.affordable ? `$${item.cost}` : `Need $${item.cost}`;
+              const status = item.purchased ? "Sold" : item.affordable ? `${item.cost} points` : `Need ${item.cost}`;
               return `
                 <button class="cuddle-shop-item ${item.purchased ? "is-purchased" : ""}"
                   data-cuddle-campaign-action="buy-shop-item" data-shop-item-id="${escapeHtml(item.id)}" ${disabled ? "disabled" : ""}>

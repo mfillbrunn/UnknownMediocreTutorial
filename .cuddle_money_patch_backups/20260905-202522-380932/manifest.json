@@ -1,0 +1,35 @@
+{
+  "patch": "Cuddle Money Mode",
+  "patch_version": "1.0.0",
+  "created_at": "2026-09-05T20:25:22.380932-04:00",
+  "repository": "C:\\Users\\T-Dawg\\vswordle\\UnknownMediocreTutorial",
+  "files": [
+    {
+      "path": "public/index.html",
+      "existed": true,
+      "sha256": "d67d5db72555bfa16b2b8581f1c855a88e5814a3bfb563795a9b939a8a70197c"
+    },
+    {
+      "path": "public/cuddle/cuddle-engine.js",
+      "existed": true,
+      "sha256": "3d23cb70dafbf6edefeb2c8c0690544001923d205fce543c03d4a13da7a23154"
+    },
+    {
+      "path": "public/cuddle/cuddle-campaign.js",
+      "existed": true,
+      "sha256": "a4d387dda276cbd167dd32e050eae3ed1c900a8b561e99ab21502b70016b861b"
+    },
+    {
+      "path": "public/cuddle/cuddle-money-mode.js",
+      "existed": false
+    },
+    {
+      "path": "public/cuddle/cuddle-money-mode.css",
+      "existed": false
+    },
+    {
+      "path": "docs/CUDDLE_MONEY_MODE.md",
+      "existed": false
+    }
+  ]
+}

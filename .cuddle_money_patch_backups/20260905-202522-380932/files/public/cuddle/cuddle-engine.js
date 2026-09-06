@@ -31,10 +31,10 @@
   // points from the running total (never below zero).
   const QUEST_TRIAL_PENALTY = 5;
 
-  // Bosses gate entry before rounds 3, 7, and 10, followed by a final boss.
-  // They are pass/fail and grant
+  // Bosses split twelve scoring rounds into four groups of three: before rounds
+  // 4, 7, and 10, followed by a final boss. They are pass/fail and grant
   // only the permanent boss reward shown on the choice card.
-  const BOSS_BEFORE_ROUNDS = Object.freeze([3, 7, 10]);
+  const BOSS_BEFORE_ROUNDS = Object.freeze([4, 7, 10]);
 
   const DEFAULT_UPGRADES = Object.freeze({
     startingHand: 0,
@@ -2424,7 +2424,7 @@
   }
   function cuddleV3BossStage(gate, bossesCleared = 0) {
     const explicit = {
-      "before-3": 1,
+      "before-4": 1,
       "before-7": 2,
       "before-10": 3,
       final: 4

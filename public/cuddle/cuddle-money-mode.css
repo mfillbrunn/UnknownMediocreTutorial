@@ -1,0 +1,724 @@
+/* CUDDLE_MONEY_MODE v1
+ * Gold economy, optional mini-challenge overlays, and row-by-row cash-out.
+ */
+#cuddleScreen {
+  --cuddle-money-gold: #f6c956;
+  --cuddle-money-gold-bright: #ffe8a3;
+  --cuddle-money-gold-deep: #9a6816;
+  --cuddle-money-ink: #211503;
+  --cuddle-money-panel: rgba(25, 22, 34, 0.985);
+  --cuddle-money-panel-soft: rgba(38, 32, 43, 0.96);
+}
+
+/* Money replaces score as the always-visible run currency. */
+#cuddleScreen .cuddle-header-score {
+  border: 1px solid rgba(246, 201, 86, 0.58);
+  color: var(--cuddle-money-gold-bright);
+  background:
+    linear-gradient(145deg, rgba(246, 201, 86, 0.2), rgba(154, 104, 22, 0.12)),
+    rgba(28, 23, 34, 0.88);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 20px rgba(246, 201, 86, 0.13);
+  font-variant-numeric: tabular-nums;
+}
+
+#cuddleScreen .cuddle-row-score {
+  color: var(--cuddle-money-gold-bright);
+  text-shadow: 0 0 12px rgba(246, 201, 86, 0.2);
+}
+
+/* JavaScript hides the old target/needed blocks. This keeps them gone even
+   for the brief frame between a normal UI render and the enhancement pass. */
+#cuddleScreen .cuddle-round-intro-stats > div:nth-child(n + 2) {
+  display: none !important;
+}
+
+#cuddleScreen .cuddle-round-intro-stats {
+  grid-template-columns: minmax(160px, 1fr) !important;
+}
+
+#cuddleScreen .cuddle-shop-wallet strong,
+#cuddleScreen .cuddle-shop-item-cost {
+  color: var(--cuddle-money-gold-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------------------------------
+   Shared modal shell
+   ------------------------------------------------------------------------- */
+#cuddleScreen .cuddle-money-overlay {
+  position: fixed;
+  z-index: 10150;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(14px, 4vw, 42px);
+  overflow: auto;
+  color: var(--cuddle-text, #f7f4ff);
+  background:
+    radial-gradient(circle at 50% 12%, rgba(246, 201, 86, 0.13), transparent 34rem),
+    rgba(8, 7, 13, 0.82);
+  backdrop-filter: blur(11px) saturate(0.92);
+  animation: cuddleMoneyOverlayIn 180ms ease-out both;
+}
+
+#cuddleScreen .cuddle-money-modal,
+#cuddleScreen .cuddle-money-payout-card {
+  position: relative;
+  width: min(720px, 100%);
+  padding: clamp(22px, 4vw, 38px);
+  overflow: hidden;
+  border: 1px solid rgba(246, 201, 86, 0.4);
+  border-radius: clamp(20px, 4vw, 30px);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(246, 201, 86, 0.12), transparent 24rem),
+    linear-gradient(160deg, var(--cuddle-money-panel-soft), var(--cuddle-money-panel));
+  box-shadow:
+    0 32px 100px rgba(0, 0, 0, 0.62),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  text-align: center;
+  animation: cuddleMoneyModalIn 300ms cubic-bezier(0.2, 0.85, 0.25, 1.14) both;
+}
+
+#cuddleScreen .cuddle-money-modal::before,
+#cuddleScreen .cuddle-money-payout-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cuddle-money-gold-bright), transparent);
+  opacity: 0.72;
+}
+
+#cuddleScreen .cuddle-money-kicker {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 10px;
+  border: 1px solid rgba(246, 201, 86, 0.44);
+  border-radius: 999px;
+  color: var(--cuddle-money-gold-bright);
+  background: rgba(246, 201, 86, 0.08);
+  font-size: 0.69rem;
+  font-weight: 950;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+#cuddleScreen .cuddle-money-modal h2,
+#cuddleScreen .cuddle-money-payout-card h2 {
+  margin: 13px 0 8px;
+  color: #fffaf0;
+  font-size: clamp(1.55rem, 5vw, 2.55rem);
+  line-height: 1.04;
+}
+
+#cuddleScreen .cuddle-money-modal > p {
+  max-width: 58ch;
+  margin: 0 auto 20px;
+  color: var(--cuddle-muted, #aaa5bc);
+  font-size: clamp(0.86rem, 2.2vw, 1rem);
+  line-height: 1.55;
+}
+
+/* Free boss reward choice. */
+#cuddleScreen .cuddle-money-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 22px;
+}
+
+#cuddleScreen .cuddle-money-choice {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  justify-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 210px;
+  padding: 18px 14px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  color: var(--cuddle-text, #f7f4ff);
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.015)),
+    rgba(255, 255, 255, 0.025);
+  box-shadow: 0 13px 32px rgba(0, 0, 0, 0.2);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+#cuddleScreen .cuddle-money-choice:hover,
+#cuddleScreen .cuddle-money-choice:focus-visible {
+  z-index: 1;
+  border-color: rgba(246, 201, 86, 0.72);
+  outline: none;
+  background:
+    linear-gradient(155deg, rgba(246, 201, 86, 0.16), rgba(255, 255, 255, 0.025)),
+    rgba(255, 255, 255, 0.035);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3), 0 0 24px rgba(246, 201, 86, 0.14);
+  transform: translateY(-4px);
+}
+
+#cuddleScreen .cuddle-money-choice-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: 1px solid rgba(246, 201, 86, 0.42);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(246, 201, 86, 0.2), rgba(213, 166, 255, 0.12));
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.1), 0 8px 24px rgba(0, 0, 0, 0.18);
+  font-size: 1.65rem;
+}
+
+#cuddleScreen .cuddle-money-choice > span:nth-child(2) {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+
+#cuddleScreen .cuddle-money-choice strong {
+  font-size: 0.98rem;
+  line-height: 1.15;
+}
+
+#cuddleScreen .cuddle-money-choice small {
+  color: var(--cuddle-muted, #aaa5bc);
+  font-size: 0.74rem;
+  line-height: 1.42;
+}
+
+#cuddleScreen .cuddle-money-choice b {
+  justify-self: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: var(--cuddle-money-ink);
+  background: linear-gradient(135deg, var(--cuddle-money-gold-bright), var(--cuddle-money-gold));
+  box-shadow: 0 5px 15px rgba(246, 201, 86, 0.24);
+  font-size: 0.67rem;
+  letter-spacing: 0.08em;
+}
+
+/* Optional challenge offer. */
+#cuddleScreen .cuddle-money-challenge-offer {
+  width: min(570px, 100%);
+}
+
+#cuddleScreen .cuddle-money-offer-icon {
+  display: grid;
+  place-items: center;
+  width: 82px;
+  height: 82px;
+  margin: 19px auto 4px;
+  border: 1px solid rgba(246, 201, 86, 0.48);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.17), transparent 48%),
+    linear-gradient(145deg, rgba(246, 201, 86, 0.22), rgba(213, 166, 255, 0.18));
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.25), 0 0 28px rgba(246, 201, 86, 0.12);
+  font-size: 2.35rem;
+  animation: cuddleMoneyOfferFloat 2.2s ease-in-out infinite;
+}
+
+#cuddleScreen .cuddle-money-reward-chip {
+  display: inline-flex;
+  margin: 2px auto 22px;
+  padding: 8px 13px;
+  border: 1px solid rgba(246, 201, 86, 0.5);
+  border-radius: 999px;
+  color: var(--cuddle-money-gold-bright);
+  background: rgba(246, 201, 86, 0.09);
+  box-shadow: inset 0 0 15px rgba(246, 201, 86, 0.06);
+  font-size: 0.86rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+#cuddleScreen .cuddle-money-modal-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 10px;
+}
+
+#cuddleScreen .cuddle-money-modal-actions .cuddle-btn {
+  min-height: 48px;
+}
+
+/* Active challenge strip. */
+#cuddleScreen .cuddle-money-challenge-banner {
+  position: sticky;
+  z-index: 30;
+  top: 4px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  width: min(840px, calc(100% - 20px));
+  margin: 8px auto 12px;
+  padding: 9px 11px;
+  border: 1px solid rgba(246, 201, 86, 0.4);
+  border-radius: 16px;
+  color: var(--cuddle-text, #f7f4ff);
+  background:
+    linear-gradient(115deg, rgba(246, 201, 86, 0.12), rgba(213, 166, 255, 0.08)),
+    rgba(25, 22, 34, 0.96);
+  box-shadow: 0 11px 29px rgba(0, 0, 0, 0.26);
+  backdrop-filter: blur(12px);
+  animation: cuddleMoneyBannerIn 250ms ease-out both;
+}
+
+#cuddleScreen .cuddle-money-challenge-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(246, 201, 86, 0.11);
+  font-size: 1.3rem;
+}
+
+#cuddleScreen .cuddle-money-challenge-copy {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+  text-align: left;
+}
+
+#cuddleScreen .cuddle-money-challenge-copy small {
+  color: var(--cuddle-money-gold);
+  font-size: 0.61rem;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+}
+
+#cuddleScreen .cuddle-money-challenge-copy strong {
+  font-size: 0.86rem;
+}
+
+#cuddleScreen .cuddle-money-challenge-copy em {
+  overflow: hidden;
+  color: var(--cuddle-muted, #aaa5bc);
+  font-size: 0.69rem;
+  font-style: normal;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#cuddleScreen .cuddle-money-challenge-value,
+#cuddleScreen .cuddle-money-clock {
+  display: inline-grid;
+  place-items: center;
+  min-height: 34px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 0.77rem;
+  font-weight: 950;
+  font-variant-numeric: tabular-nums;
+}
+
+#cuddleScreen .cuddle-money-challenge-value {
+  color: var(--cuddle-money-ink);
+  background: linear-gradient(135deg, var(--cuddle-money-gold-bright), var(--cuddle-money-gold));
+}
+
+#cuddleScreen .cuddle-money-clock {
+  position: relative;
+  min-width: 61px;
+  overflow: hidden;
+  border: 1px solid rgba(246, 201, 86, 0.4);
+  color: #fff7d8;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+#cuddleScreen .cuddle-money-clock::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  right: calc((1 - var(--clock-progress, 1)) * 100%);
+  background: linear-gradient(90deg, rgba(246, 201, 86, 0.38), rgba(246, 201, 86, 0.1));
+  transition: right 100ms linear;
+}
+
+/* -------------------------------------------------------------------------
+   Row-by-row payout
+   ------------------------------------------------------------------------- */
+#cuddleScreen .cuddle-money-payout-overlay {
+  z-index: 10180;
+  background:
+    radial-gradient(circle at 50% 8%, rgba(246, 201, 86, 0.18), transparent 34rem),
+    rgba(7, 6, 11, 0.88);
+}
+
+#cuddleScreen .cuddle-money-payout-card {
+  width: min(610px, 100%);
+  padding-bottom: clamp(22px, 4vw, 34px);
+}
+
+#cuddleScreen .cuddle-money-payout-challenge {
+  margin: 0 auto 12px;
+  color: var(--cuddle-money-gold-bright);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+#cuddleScreen .cuddle-money-bank {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 18px 0 14px;
+  padding: 13px 15px;
+  border: 1px solid rgba(246, 201, 86, 0.34);
+  border-radius: 15px;
+  background:
+    linear-gradient(135deg, rgba(246, 201, 86, 0.11), rgba(246, 201, 86, 0.025)),
+    rgba(0, 0, 0, 0.14);
+  text-align: left;
+}
+
+#cuddleScreen .cuddle-money-bank span {
+  color: var(--cuddle-muted, #aaa5bc);
+  font-size: 0.69rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+#cuddleScreen .cuddle-money-bank strong {
+  color: var(--cuddle-money-gold-bright);
+  font-size: clamp(1.42rem, 5vw, 2rem);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 18px rgba(246, 201, 86, 0.3);
+}
+
+#cuddleScreen .cuddle-money-payout-rows {
+  display: grid;
+  gap: 7px;
+}
+
+#cuddleScreen .cuddle-money-payout-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.025);
+  opacity: 0.68;
+  transform: translateZ(0);
+  transition: opacity 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+#cuddleScreen .cuddle-money-payout-row.is-counting {
+  z-index: 1;
+  border-color: rgba(246, 201, 86, 0.78);
+  background:
+    linear-gradient(95deg, rgba(246, 201, 86, 0.16), rgba(246, 201, 86, 0.03)),
+    rgba(255, 255, 255, 0.035);
+  box-shadow: 0 0 0 1px rgba(246, 201, 86, 0.12), 0 0 28px rgba(246, 201, 86, 0.15);
+  opacity: 1;
+  transform: scale(1.018);
+  animation: cuddleMoneyRowRing 600ms ease-out both;
+}
+
+#cuddleScreen .cuddle-money-payout-row.is-settled {
+  border-color: rgba(246, 201, 86, 0.24);
+  opacity: 1;
+}
+
+#cuddleScreen .cuddle-money-payout-tiles {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(34px, 47px));
+  justify-content: start;
+  gap: 6px;
+}
+
+#cuddleScreen .cuddle-money-payout-tile {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: clamp(0.9rem, 3vw, 1.08rem);
+  font-weight: 950;
+  text-transform: uppercase;
+  box-shadow: inset 0 -2px rgba(0, 0, 0, 0.15);
+}
+
+#cuddleScreen .cuddle-money-payout-tile.is-green {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: var(--cuddle-green, #4ba66a);
+}
+
+#cuddleScreen .cuddle-money-payout-tile.is-yellow {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: var(--cuddle-yellow, #d7ad3f);
+}
+
+#cuddleScreen .cuddle-money-payout-tile.is-grey {
+  background: var(--cuddle-grey, #5e5b69);
+}
+
+#cuddleScreen .cuddle-money-payout-tile.is-blue {
+  background: var(--cuddle-blue, #3f6fd8);
+}
+
+#cuddleScreen .cuddle-money-payout-tile.is-unknown {
+  background: repeating-linear-gradient(135deg, #5b5865, #5b5865 5px, #45424f 5px, #45424f 10px);
+}
+
+#cuddleScreen .cuddle-money-row-increment {
+  justify-self: end;
+  min-width: 68px;
+  color: var(--cuddle-money-gold-bright);
+  font-size: clamp(0.95rem, 3vw, 1.16rem);
+  font-weight: 950;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  text-shadow: 0 0 14px rgba(246, 201, 86, 0.32);
+  opacity: 0;
+  transform: translateX(-8px) scale(0.84);
+}
+
+#cuddleScreen .cuddle-money-row-increment.is-visible {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  animation: cuddleMoneyIncrementPop 460ms cubic-bezier(0.15, 0.9, 0.2, 1.35) both;
+}
+
+#cuddleScreen .cuddle-money-payout-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+  padding: 13px 15px;
+  border: 1px solid rgba(246, 201, 86, 0.5);
+  border-radius: 15px;
+  color: var(--cuddle-money-gold-bright);
+  background:
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.12), transparent 13rem),
+    linear-gradient(130deg, rgba(154, 104, 22, 0.38), rgba(246, 201, 86, 0.1));
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+}
+
+#cuddleScreen .cuddle-money-payout-total.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  animation: cuddleMoneyTotalIn 500ms cubic-bezier(0.2, 0.85, 0.25, 1.15) both;
+}
+
+#cuddleScreen .cuddle-money-payout-total span {
+  font-size: 0.67rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+}
+
+#cuddleScreen .cuddle-money-payout-total strong {
+  font-size: clamp(1.15rem, 4vw, 1.5rem);
+  font-variant-numeric: tabular-nums;
+}
+
+#cuddleScreen .cuddle-money-collect {
+  width: 100%;
+  min-height: 49px;
+  margin-top: 13px;
+  color: var(--cuddle-money-ink) !important;
+  background: linear-gradient(135deg, var(--cuddle-money-gold-bright), var(--cuddle-money-gold)) !important;
+  box-shadow: 0 10px 30px rgba(246, 201, 86, 0.22);
+  animation: cuddleMoneyCollectIn 300ms ease-out both;
+}
+
+#cuddleScreen .cuddle-money-confetti {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#cuddleScreen .cuddle-money-confetti i {
+  position: absolute;
+  top: -25px;
+  left: var(--coin-x, 50%);
+  width: 10px;
+  height: 10px;
+  border: 1px solid rgba(255, 247, 206, 0.7);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cuddle-money-gold-bright), var(--cuddle-money-gold-deep));
+  box-shadow: 0 0 9px rgba(246, 201, 86, 0.38);
+  opacity: 0;
+}
+
+#cuddleScreen .cuddle-money-payout-overlay.is-finished .cuddle-money-confetti i {
+  animation: cuddleMoneyCoinFall 1.45s calc(var(--coin-delay, 0s)) cubic-bezier(0.16, 0.68, 0.35, 1) both;
+}
+
+@keyframes cuddleMoneyOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cuddleMoneyModalIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.965); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes cuddleMoneyBannerIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cuddleMoneyOfferFloat {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-5px) rotate(1deg); }
+}
+
+@keyframes cuddleMoneyRowRing {
+  0% { box-shadow: 0 0 0 0 rgba(246, 201, 86, 0.35); }
+  100% { box-shadow: 0 0 0 9px rgba(246, 201, 86, 0), 0 0 28px rgba(246, 201, 86, 0.15); }
+}
+
+@keyframes cuddleMoneyIncrementPop {
+  0% { opacity: 0; transform: translateX(-8px) scale(0.72); filter: brightness(1.8); }
+  70% { opacity: 1; transform: translateX(0) scale(1.14); filter: brightness(1.2); }
+  100% { opacity: 1; transform: translateX(0) scale(1); filter: brightness(1); }
+}
+
+@keyframes cuddleMoneyTotalIn {
+  0% { opacity: 0; transform: translateY(10px) scale(0.96); }
+  65% { opacity: 1; transform: translateY(-2px) scale(1.025); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes cuddleMoneyCollectIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cuddleMoneyCoinFall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -25px, 0) rotate(0deg) scale(0.5);
+  }
+  12% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 105vh, 0)
+      rotate(calc(var(--coin-spin, 1) * 820deg)) scale(1.08);
+  }
+}
+
+@media (max-width: 700px) {
+  #cuddleScreen .cuddle-money-choice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #cuddleScreen .cuddle-money-choice {
+    grid-template-columns: 49px minmax(0, 1fr) auto;
+    grid-template-rows: auto;
+    align-items: center;
+    justify-items: start;
+    min-height: 0;
+    padding: 13px;
+    text-align: left;
+  }
+
+  #cuddleScreen .cuddle-money-choice-icon {
+    width: 49px;
+    height: 49px;
+    border-radius: 14px;
+    font-size: 1.35rem;
+  }
+
+  #cuddleScreen .cuddle-money-choice > span:nth-child(2) {
+    text-align: left;
+  }
+
+  #cuddleScreen .cuddle-money-choice b {
+    justify-self: end;
+  }
+
+  #cuddleScreen .cuddle-money-challenge-banner {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+  }
+
+  #cuddleScreen .cuddle-money-challenge-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  #cuddleScreen .cuddle-money-clock {
+    grid-column: 2 / -1;
+    justify-self: end;
+  }
+
+  #cuddleScreen .cuddle-money-payout-card {
+    padding-inline: 13px;
+  }
+
+  #cuddleScreen .cuddle-money-payout-row {
+    grid-template-columns: minmax(0, 1fr) 62px;
+    gap: 7px;
+    padding-inline: 7px;
+  }
+
+  #cuddleScreen .cuddle-money-payout-tiles {
+    grid-template-columns: repeat(5, minmax(30px, 1fr));
+    gap: 4px;
+  }
+}
+
+@media (max-width: 430px) {
+  #cuddleScreen .cuddle-money-overlay {
+    padding: 8px;
+  }
+
+  #cuddleScreen .cuddle-money-modal-actions {
+    grid-template-columns: 1fr;
+  }
+
+  #cuddleScreen .cuddle-money-challenge-copy em {
+    white-space: normal;
+  }
+
+  #cuddleScreen .cuddle-money-payout-row {
+    grid-template-columns: minmax(0, 1fr) 55px;
+  }
+
+  #cuddleScreen .cuddle-money-row-increment {
+    min-width: 0;
+    font-size: 0.85rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cuddleScreen .cuddle-money-overlay,
+  #cuddleScreen .cuddle-money-modal,
+  #cuddleScreen .cuddle-money-payout-card,
+  #cuddleScreen .cuddle-money-choice,
+  #cuddleScreen .cuddle-money-offer-icon,
+  #cuddleScreen .cuddle-money-challenge-banner,
+  #cuddleScreen .cuddle-money-payout-row,
+  #cuddleScreen .cuddle-money-row-increment,
+  #cuddleScreen .cuddle-money-payout-total,
+  #cuddleScreen .cuddle-money-collect,
+  #cuddleScreen .cuddle-money-confetti i {
+    animation: none !important;
+    transition: none !important;
+  }
+}
