@@ -117,7 +117,7 @@ Each selection moves the reward up exactly one tier.
 
 ## Cuddle Meter
 
-The meter is shown as a small grey heart on the play screen carrying the number of visible grey tiles still needed. It counts **down** to zero; when it reaches zero the heart briefly names what the fill granted (`+1 mulligan`, `+1 joker`, `free letter`, `+1 row`) and then settles back to the next requirement. It no longer appears as a progress card in the coach panel or as a detail badge in the round summary. The coach panel's old "Coach statistics" summary box is gone too (Greys collected and Meter fills are tracked internally but no longer surfaced anywhere in the UI); Hints and Unused-row money still show under Details.
+The meter is shown as a small grey heart in the header, next to the money display, carrying the number of visible grey tiles still needed. It counts **down** to zero; when it reaches zero the heart briefly names what the fill granted (`+1 mulligan`, `+1 joker`, `free letter`, `+1 row`) and then settles back to the next requirement. It no longer appears as a progress card in the coach panel or as a detail badge in the round summary. The coach panel's old "Coach statistics" summary box is gone too (Greys collected and Meter fills are tracked internally but no longer surfaced anywhere in the UI); Hints and Unused-row money still show under Details.
 
 The meter fills from **visible grey feedback tiles**. Its default requirement is 12. Progress carries between rounds and overflow is retained after the meter fills.
 

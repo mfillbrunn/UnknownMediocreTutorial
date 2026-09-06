@@ -862,7 +862,7 @@
             <span class="cuddle-eyebrow">BETWEEN ROUNDS</span>
             <div class="cuddle-header-title-line">
               <h1>${isBoss ? "BOSS AHEAD" : `ROUND ${state.round}`}</h1>
-              <span class="cuddle-header-score" aria-label="Total money $${state.score}">Money $${state.score}</span>
+              <span class="cuddle-header-score" aria-label="Total money $${state.score}">$${state.score}</span>
             </div>
           </div>
           <div class="cuddle-header-side cuddle-header-side-right"></div>
@@ -897,7 +897,7 @@
             <span class="cuddle-eyebrow">BETWEEN ROUNDS</span>
             <div class="cuddle-header-title-line">
               <h1>THE WANDERING PAW</h1>
-              <span class="cuddle-header-score" aria-label="Spendable money $${state.score}">Money $${state.score}</span>
+              <span class="cuddle-header-score" aria-label="Spendable money $${state.score}">$${state.score}</span>
             </div>
           </div>
           <div class="cuddle-header-side cuddle-header-side-right"></div>
@@ -947,8 +947,23 @@
   // round's revealed theme before it's gone.
   function insertMap(runHtml, game) {
     const state = game?.state;
-    const html = String(runHtml || "");
+    let html = String(runHtml || "");
     if (!state) return html;
+    // The Cuddle heart used to live in its own strip above the board, only
+    // on the live play screen. It's now a persistent header badge next to
+    // the money display, like the header itself -- shared by every status
+    // that reaches this function (playing, upgrade, questReward, bossChoice,
+    // won, lost; the round-intro map and the shop build their own separate
+    // headers and never call insertMap).
+    const heartBadge = typeof window.CuddleCoachExpansion?.renderHeartBadge === "function"
+      ? window.CuddleCoachExpansion.renderHeartBadge(game)
+      : "";
+    if (heartBadge) {
+      const headerMarker = '<div class="cuddle-header-title-line">';
+      if (html.includes(headerMarker)) {
+        html = html.replace(headerMarker, `${headerMarker}${heartBadge}`);
+      }
+    }
     if (state.status === "upgrade" || state.status === "questReward") {
       const badge = renderCategoryBadge(ensureCampaign(game));
       if (!badge) return html;
@@ -980,21 +995,19 @@
         ? window.CuddleMoneyMode.renderChallengeBanner(game)
         : "";
       const themeBadge = renderCategoryBadge(ensureCampaign(game));
-      const heartBadge = typeof window.CuddleCoachExpansion?.renderHeartBadge === "function"
-        ? window.CuddleCoachExpansion.renderHeartBadge(game)
-        : "";
       // The active quest used to be its own bordered card between the boss
-      // banner and the board -- now it's just plain text riding in this same
-      // strip next to the heart, so it reads at a glance instead of taking a
-      // whole row of its own. Concurrent quests (Quest Cadence boss reward)
-      // get one span each, wrapping onto their own line if there's no room.
+      // banner and the board -- now it's just plain text riding in this
+      // strip next to the theme badge, so it reads at a glance instead of
+      // taking a whole row of its own. Concurrent quests (Quest Cadence
+      // boss reward) get one span each, wrapping onto their own line if
+      // there's no room.
       const quests = [state.activeQuest, ...(Array.isArray(state.activeQuests) ? state.activeQuests.slice(1) : [])]
         .filter(Boolean);
       const questText = quests
         .map(quest => `<span class="cuddle-quest-inline">Quest: ${escapeHtml(quest.description)}</span>`)
         .join("");
-      const strip = heartBadge || themeBadge || questText
-        ? `<div class="cuddle-play-strip">${heartBadge}${questText}${themeBadge ? `<div class="cuddle-map-badge-standalone cuddle-play-theme-badge">${themeBadge}</div>` : ""}</div>`
+      const strip = themeBadge || questText
+        ? `<div class="cuddle-play-strip">${questText}${themeBadge ? `<div class="cuddle-map-badge-standalone cuddle-play-theme-badge">${themeBadge}</div>` : ""}</div>`
         : "";
       const extra = challengeBanner + strip;
       if (!extra) return html;

@@ -717,7 +717,7 @@
   function replaceVisibleMoneyCopy(root, game) {
     var state = game.state;
     root.querySelectorAll(".cuddle-header-score").forEach(function updateHeader(element) {
-      var text = "Money " + formatMoney(state.score);
+      var text = formatMoney(state.score);
       if (element.textContent !== text) element.textContent = text;
       element.setAttribute("aria-label", "Spendable money " + formatMoney(state.score));
     });
