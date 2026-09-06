@@ -15,8 +15,7 @@
 }
 
 .cuddle-coach-remaining-box,
-.cuddle-coach-actions,
-.cuddle-coach-stats {
+.cuddle-coach-actions {
   border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
   border-radius: 16px;
   background: color-mix(in srgb, var(--panel, #ffffff) 94%, transparent);
@@ -114,49 +113,6 @@
   opacity: 0.72;
   font-size: 0.72rem;
   line-height: 1.25;
-}
-
-.cuddle-coach-stats {
-  grid-column: 1 / -1;
-  overflow: hidden;
-}
-
-.cuddle-coach-stats summary {
-  cursor: pointer;
-  padding: 10px 14px;
-  font-weight: 780;
-  font-size: 0.82rem;
-  user-select: none;
-}
-
-.cuddle-coach-stats summary:focus-visible {
-  outline: 3px solid rgba(205, 151, 28, 0.34);
-  outline-offset: -3px;
-}
-
-.cuddle-coach-stats > div {
-  border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
-  padding: 11px 14px 13px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.cuddle-coach-stats span {
-  display: grid;
-  gap: 2px;
-  padding: 8px 9px;
-  border-radius: 10px;
-  background: color-mix(in srgb, currentColor 5%, transparent);
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.cuddle-coach-stats b {
-  opacity: 0.68;
-  font-size: 0.66rem;
-  letter-spacing: 0.025em;
-  text-transform: uppercase;
 }
 
 .cuddle-coach-shop-heading {
@@ -297,13 +253,8 @@
     grid-template-columns: 1fr;
   }
 
-  .cuddle-coach-actions,
-  .cuddle-coach-stats {
+  .cuddle-coach-actions {
     grid-column: 1;
-  }
-
-  .cuddle-coach-stats > div {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -314,10 +265,6 @@
 
   .cuddle-coach-panel {
     gap: 9px;
-  }
-
-  .cuddle-coach-stats > div {
-    grid-template-columns: 1fr;
   }
 
   .cuddle-board.is-golden-thread-live::after {

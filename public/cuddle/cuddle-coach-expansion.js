@@ -1443,34 +1443,33 @@
       return;
     }
     var candidates = coach.possibleAnswersUnlocked ? getPossibleAnswers(game) : [];
-    var threshold = meterThreshold(coach);
     var hintsEligible = integer(game.state.round, 1) >= coach.hintStartRound;
     var hintDisabled = !hintsEligible || coach.hintCharges <= 0 || hiddenPositions(game).length <= 0;
     var compassOwned = hasBossReward(game, "goldenCompass");
     var compassUsed = coach.goldenCompassUsedRoundKey === roundKey(game);
+    // The panel used to always render, if only for its "Coach statistics"
+    // summary box -- that box is gone (the running totals it showed live on
+    // under Details instead, via enhanceStatsBadges), so with neither
+    // Possible Answers nor an action button unlocked there is nothing left
+    // to show at all.
+    if (!coach.possibleAnswersUnlocked && coach.hintsPerRound <= 0 && !compassOwned) {
+      if (existing) existing.remove();
+      return;
+    }
     var signature = JSON.stringify({
       round: game.state.round,
       status: game.state.status,
       candidates: coach.possibleAnswersUnlocked ? candidates.length : null,
       possible: coach.possibleAnswersUnlocked,
-      meter: coach.cuddleProgress,
-      threshold: threshold,
-      tier: coach.cuddleRewardTier,
       hints: coach.hintsPerRound,
       charges: coach.hintCharges,
       hintStart: coach.hintStartRound,
       hidden: hiddenPositions(game).length,
       compass: compassOwned,
-      compassUsed: compassUsed,
-      hintsUsed: coach.hintsUsed,
-      hintRounds: coach.hintRoundsWithUse,
-      greys: coach.cuddleGreysCollected,
-      fills: coach.cuddleTriggers,
-      unusedRows: coach.unusedRowsPaid,
-      unusedMoney: coach.unusedRowMoney
+      compassUsed: compassUsed
     });
     if (existing && existing.dataset.coachSignature === signature) return;
-    var html = "<aside id=\"cuddleCoachPanel\" class=\"cuddle-coach-panel\" data-coach-signature=\"" + escapeHtml(signature) + "\" aria-label=\"Cuddle assistance and statistics\">";
+    var html = "<aside id=\"cuddleCoachPanel\" class=\"cuddle-coach-panel\" data-coach-signature=\"" + escapeHtml(signature) + "\" aria-label=\"Cuddle assistance\">";
     if (coach.possibleAnswersUnlocked) {
       html += "<section id=\"cuddleCoachRemainingBox\" class=\"remaining-box cuddle-coach-remaining-box\">"
         + "<div class=\"line\"><span class=\"label\">🎧 Possible answers</span><span class=\"value\">" + candidates.length.toLocaleString() + "</span></div>"
@@ -1488,16 +1487,7 @@
       }
       html += "</section>";
     }
-    html += "<details class=\"cuddle-coach-stats\"><summary>Coach statistics</summary><div>"
-      + "<span><b>Hints unlocked</b> " + coach.hintsPerRound + "/round</span>"
-      + "<span><b>Hints used</b> " + coach.hintsUsed + "</span>"
-      + "<span><b>Hint rounds</b> " + coach.hintRoundsWithUse + "</span>"
-      + "<span><b>Hint start</b> Round " + coach.hintStartRound + "</span>"
-      + "<span><b>Greys collected</b> " + coach.cuddleGreysCollected + "</span>"
-      + "<span><b>Meter fills</b> " + coach.cuddleTriggers + "</span>"
-      + "<span><b>Unused rows paid</b> " + coach.unusedRowsPaid + "</span>"
-      + "<span><b>Unused-row money</b> " + formatMoney(coach.unusedRowMoney) + "</span>"
-      + "</div></details></aside>";
+    html += "</aside>";
     var next = makeElement(html);
     if (existing) existing.replaceWith(next);
     else insertAfter(board, next);
