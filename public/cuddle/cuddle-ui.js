@@ -153,6 +153,52 @@
     if (landing || !game?.state) root.innerHTML = renderLanding();
     else root.innerHTML = renderRun();
     syncQuickModeTimer();
+    keepCurrentRowVisible();
+    // The bolt-on modules patch their panels in on the next frame, which can
+    // shrink the board after the first pass; watch for that and re-align.
+    watchScrollerResize();
+  }
+
+  // On short screens the board scrolls inside its own box so the quest, the
+  // hand and Submit all stay put (see the compact layout in cuddle.css).
+  // Because render() rebuilds the whole subtree, that box comes back scrolled
+  // to the top, which would hide the row the player is actually typing into
+  // once a few guesses are down. Nudge it back into view -- only when there is
+  // a real scroller, so the desktop layout is untouched.
+  function keepCurrentRowVisible() {
+    const current = root?.querySelector(".cuddle-board-row.is-current-row");
+    if (!current) return;
+    const scroller = findScrollableAncestor(current);
+    if (!scroller) return;
+    const scrollerBox = scroller.getBoundingClientRect();
+    const rowBox = current.getBoundingClientRect();
+    if (rowBox.top >= scrollerBox.top && rowBox.bottom <= scrollerBox.bottom) return;
+    const target = rowBox.bottom > scrollerBox.bottom
+      ? scroller.scrollTop + (rowBox.bottom - scrollerBox.bottom) + 12
+      : scroller.scrollTop - (scrollerBox.top - rowBox.top) - 12;
+    scroller.scrollTop = Math.max(0, target);
+  }
+
+  // render() replaces the board every time, so the observer is re-pointed at
+  // the new element rather than kept alive across renders.
+  let scrollerObserver = null;
+  function watchScrollerResize() {
+    if (typeof ResizeObserver !== "function") return;
+    const board = root?.querySelector(".cuddle-board");
+    if (!scrollerObserver) scrollerObserver = new ResizeObserver(() => keepCurrentRowVisible());
+    scrollerObserver.disconnect();
+    if (board) scrollerObserver.observe(board);
+  }
+
+  function findScrollableAncestor(element) {
+    let node = element.parentElement;
+    while (node && node !== root) {
+      const overflowY = getComputedStyle(node).overflowY;
+      if ((overflowY === "auto" || overflowY === "scroll")
+        && node.scrollHeight > node.clientHeight + 1) return node;
+      node = node.parentElement;
+    }
+    return null;
   }
 
   // Quick Mode is the one boss that needs a real clock. The deadline lives
@@ -469,7 +515,9 @@
           : history
             ? `<span class="cuddle-row-score ${history.scoreDelta < 0 ? "is-negative" : ""}">${history.scoreDelta >= 0 ? "+" : ""}${history.scoreDelta}${history.earlyBonus ? `<small> +${history.earlyBonus}</small>` : ""}</span>`
             : `<span class="cuddle-row-score">${row + 1}</span>`;
-      rows.push(`<div class="cuddle-board-row">${tiles.join("")}${score}</div>`);
+      // The active row is tagged so a short screen, where the board scrolls
+      // inside its own column, can keep it in view after every render.
+      rows.push(`<div class="cuddle-board-row${isDraft ? " is-current-row" : ""}">${tiles.join("")}${score}</div>`);
     }
     const removedCount = state.removedLetters?.length || 0;
     const excluded = removedCount

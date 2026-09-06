@@ -15,7 +15,6 @@
 }
 
 .cuddle-coach-remaining-box,
-.cuddle-meter-card,
 .cuddle-coach-actions,
 .cuddle-coach-stats {
   border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
@@ -50,69 +49,6 @@
 
 .cuddle-coach-remaining-box .remaining-hint {
   opacity: 0.7;
-  font-size: 0.78rem;
-}
-
-.cuddle-meter-card {
-  padding: 12px 15px 11px;
-}
-
-.cuddle-meter-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.cuddle-meter-heading > span {
-  display: grid;
-  gap: 2px;
-}
-
-.cuddle-meter-heading b {
-  font-size: 0.95rem;
-}
-
-.cuddle-meter-heading small {
-  opacity: 0.68;
-  font-size: 0.72rem;
-}
-
-.cuddle-meter-heading strong {
-  font-size: 1.05rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.cuddle-meter-track {
-  height: 12px;
-  margin-top: 10px;
-  overflow: hidden;
-  border-radius: 999px;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(118, 118, 118, 0.22) 0,
-      rgba(118, 118, 118, 0.22) calc(6.666% - 2px),
-      transparent calc(6.666% - 2px),
-      transparent 6.666%
-    ),
-    rgba(115, 115, 115, 0.15);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.16);
-}
-
-.cuddle-meter-track > span {
-  display: block;
-  width: 0;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #9c9c9c 0%, #d7d7d7 45%, #f1c85b 100%);
-  box-shadow: 0 0 12px rgba(241, 200, 91, 0.56);
-  transition: width 360ms cubic-bezier(0.2, 0.9, 0.25, 1);
-}
-
-.cuddle-meter-card p {
-  margin: 8px 0 0;
-  opacity: 0.78;
   font-size: 0.78rem;
 }
 
@@ -391,7 +327,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cuddle-meter-track > span,
+  .cuddle-heart-badge,
+  .cuddle-heart-pop,
   .cuddle-coach-action,
   .cuddle-board.is-golden-thread-live {
     transition: none !important;
@@ -402,4 +339,82 @@
     outline: 3px solid rgba(218, 169, 33, 0.7);
     outline-offset: 4px;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Cuddle Meter heart chip
+   A small grey heart on the play screen holding the number of visible grey
+   tiles still needed. It counts down; on zero it flashes what it just granted
+   and then settles back to the next requirement.
+   --------------------------------------------------------------------------- */
+
+.cuddle-heart-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.cuddle-heart-chip {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  transition: transform 220ms cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+.cuddle-heart-chip svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: color-mix(in srgb, currentColor 26%, transparent);
+  stroke: color-mix(in srgb, currentColor 55%, transparent);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.22));
+  transition: fill 260ms ease, stroke 260ms ease;
+}
+
+.cuddle-heart-chip b {
+  position: relative;
+  font-size: 0.86rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: currentColor;
+  /* A heart's optical centre sits above its bounding-box centre. */
+  transform: translateY(-1px);
+}
+
+.cuddle-heart-badge.is-full .cuddle-heart-chip {
+  transform: scale(1.18);
+}
+
+.cuddle-heart-badge.is-full .cuddle-heart-chip svg {
+  fill: rgba(233, 92, 118, 0.85);
+  stroke: rgba(184, 52, 80, 0.9);
+}
+
+.cuddle-heart-badge.is-full .cuddle-heart-chip b {
+  color: #fff;
+}
+
+.cuddle-heart-pop {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(233, 92, 118, 0.92), rgba(241, 200, 91, 0.92));
+  color: #2b1a12;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  animation: cuddle-heart-pop-in 260ms cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+@keyframes cuddle-heart-pop-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.9); }
+  to { opacity: 1; transform: none; }
 }

@@ -102,7 +102,7 @@ Moves hint availability earlier, down to round 1. When selected before any Guess
 Reduces the meter requirement by three visible grey tiles per stack:
 
 ```text
-15 -> 12 -> 9 -> 6
+12 -> 9 -> 6 -> 3
 ```
 
 ### Bigger Cuddle
@@ -117,7 +117,9 @@ Each selection moves the reward up exactly one tier.
 
 ## Cuddle Meter
 
-The meter fills from **visible grey feedback tiles**. Its default requirement is 15. Progress carries between rounds and overflow is retained after the meter fills.
+The meter is shown as a small grey heart on the play screen carrying the number of visible grey tiles still needed. It counts **down** to zero; when it reaches zero the heart briefly names what the fill granted (`+1 mulligan`, `+1 joker`, `free letter`, `+1 row`) and then settles back to the next requirement. It no longer appears as a progress card in the coach panel or as a detail badge in the round summary — the running totals stay under **Coach statistics** (Greys collected / Meter fills).
+
+The meter fills from **visible grey feedback tiles**. Its default requirement is 12. Progress carries between rounds and overflow is retained after the meter fills.
 
 Hidden tiles do not count until they are actually revealed. This includes delayed feedback: when an old row becomes visible later, its newly visible greys are counted then. Fake grey feedback is still a visible grey and therefore comforts the meter, even though it is not trusted by Possible Answers.
 
@@ -223,7 +225,7 @@ public/cuddle/cuddle-coach-expansion.js
 
 Near the top:
 
-- `BASE_METER_THRESHOLD` controls the default 15-grey requirement.
+- `BASE_METER_THRESHOLD` controls the default 12-grey requirement.
 - `MIN_METER_THRESHOLD` controls the minimum after upgrades.
 - `UPGRADE_DEFINITIONS` controls stack limits and reward text.
 - `SHOP_ITEMS` controls item costs and descriptions.
@@ -237,7 +239,7 @@ Near the top:
 4. Reach the ordinary reward after round 3 without a hint and confirm Guesser Hint is one of the choices.
 5. Select multiple Guesser Hint rewards and confirm multiple charges appear each eligible round.
 6. Select Earlier Hints before Guesser Hint and confirm it grants the first recurring hint for the next numbered round, then lowers the permanent start on later stacks.
-7. Submit visible grey tiles until the Cuddle Meter fills; test each reward tier and threshold stack.
+7. Submit visible grey tiles until the heart chip counts down to zero; confirm it flashes the granted reward and then resets to the next requirement, and test each reward tier and threshold stack.
 8. Buy each boss supply, play a normal round, and confirm it remains stored until the boss starts.
 9. Test Ten-Letter Cull with a draw or bonus-letter reward and confirm culled letters stay unavailable.
 10. Test Quest Autopilot and Double Quest Rewards separately and together.
