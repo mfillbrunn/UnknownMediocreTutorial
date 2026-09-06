@@ -95,7 +95,7 @@
       effect: "singleLie",
       turns: 1,
       baseReward: 10,
-      description: "Exactly one tile on your opening guess is a lie -- but the whole row's colors stay hidden so you can't tell which."
+      description: "Exactly one tile on your opening guess is a lie. All five letters stay unconfirmed on your hand until a later guess clears them."
     },
     {
       id: "lockedOpener",
@@ -329,7 +329,8 @@
     var offer = Object.assign({}, definition, {
       reward: challengeReward(game, definition),
       offeredRound: state.round,
-      hiddenIndex: Math.floor(randomFor(game) * 5)
+      hiddenIndex: Math.floor(randomFor(game) * 5),
+      fakeIndex: Math.floor(randomFor(game) * 5)
     });
     mode.challengeOffer = offer;
     mode.recentChallengeIds = mode.recentChallengeIds.concat(offer.id).slice(-3);
@@ -569,14 +570,25 @@
 
     var result = originalApplyBossFeedback.apply(this, arguments);
     if (challenge.effect !== "singleLie" || asInteger(this.state.guessesUsed, 0) >= 1) return result;
-    // Only one tile actually lies, but showing the other four truthfully
-    // gave the lie away -- a player could spot it by elimination, or with a
-    // repeated letter, by an outright impossible color combination. Every
-    // other masked-feedback effect in this engine (Count Only, Delayed
-    // Feedback, ...) blanks the whole row for exactly this reason; do the
-    // same here instead of leaking four real clues alongside the one fake.
-    var shown = feedback.map(function markUnknown() { return "unknown"; });
-    return Object.assign({}, result, { shown: shown, learn: shown.slice(), fake: true });
+    // The BOARD looks like a normal row -- five real-looking tiles, one of
+    // them a lie -- so it reads as "spot the lie", not a fully masked guess.
+    // But if the other four landed on the player's hand as trusted green/
+    // yellow, comparing which of the five letters DIDN'T get confirmed
+    // would give the lie away just as surely as blanking the row would have.
+    // So none of the five teach the hand anything (learn: all "unknown",
+    // same signal _updateKnowledge already treats as "withheld"), and all
+    // five go into the same unknown pile any masked guess uses -- drawn
+    // with a "?" until a later, untainted guess confirms them for real.
+    var shown = Array.isArray(result.shown) ? result.shown.slice() : feedback.slice();
+    var index = clamp(asInteger(challenge.fakeIndex, 0), 0, Math.max(0, shown.length - 1));
+    var truth = feedback[index];
+    var alternatives = ["green", "yellow", "grey"].filter(function wrongColor(color) {
+      return color !== truth;
+    });
+    shown[index] = alternatives[Math.floor(randomFor(this) * alternatives.length)];
+    var learn = shown.map(function markUnknown() { return "unknown"; });
+    this._markUnknownGlyphs(word);
+    return Object.assign({}, result, { shown: shown, learn: learn, fake: true });
   };
 
   function challengeValidationError(game, challenge) {
@@ -845,8 +857,7 @@
     if (!challenge || game.isBossRound()) return "";
     return (
       "<section id=\"cuddleMoneyChallengeBanner\" class=\"cuddle-money-challenge-banner\" aria-live=\"polite\">"
-      + "<span class=\"cuddle-money-challenge-copy\"><small>CHALLENGE ACTIVE</small><strong>" + escapeHtml(challenge.title || "") + "</strong><em>" + escapeHtml(challenge.description || "") + "</em></span>"
-      + "<span class=\"cuddle-money-challenge-value\">" + formatDelta(challenge.reward) + "</span>"
+      + "<span class=\"cuddle-money-challenge-copy\"><strong>" + escapeHtml(challenge.title || "") + "</strong><em>" + escapeHtml(challenge.description || "") + "</em></span>"
       + "<span id=\"cuddleMoneyClock\" class=\"cuddle-money-clock\" hidden></span>"
       + "</section>"
     );

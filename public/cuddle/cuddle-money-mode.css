@@ -258,7 +258,7 @@
    when the board scrolls instead of pinning itself mid-scroll. */
 #cuddleScreen .cuddle-money-challenge-banner {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   width: min(840px, calc(100% - 20px));
@@ -282,28 +282,20 @@
   text-align: left;
 }
 
-#cuddleScreen .cuddle-money-challenge-copy small {
-  color: var(--cuddle-money-gold);
-  font-size: 0.61rem;
-  font-weight: 950;
-  letter-spacing: 0.1em;
-}
-
 #cuddleScreen .cuddle-money-challenge-copy strong {
   font-size: 0.86rem;
 }
 
+/* Wraps freely now that removing the "CHALLENGE ACTIVE" label and the
+   reward pill left the description the whole row to itself, instead of
+   truncating with an ellipsis under column pressure. */
 #cuddleScreen .cuddle-money-challenge-copy em {
-  overflow: hidden;
   color: var(--cuddle-muted, #aaa5bc);
   font-size: 0.69rem;
   font-style: normal;
   line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-#cuddleScreen .cuddle-money-challenge-value,
 #cuddleScreen .cuddle-money-clock {
   display: inline-grid;
   place-items: center;
@@ -313,11 +305,6 @@
   font-size: 0.77rem;
   font-weight: 950;
   font-variant-numeric: tabular-nums;
-}
-
-#cuddleScreen .cuddle-money-challenge-value {
-  color: var(--cuddle-money-ink);
-  background: linear-gradient(135deg, var(--cuddle-money-gold-bright), var(--cuddle-money-gold));
 }
 
 #cuddleScreen .cuddle-money-clock {
@@ -661,10 +648,6 @@
     justify-self: end;
   }
 
-  #cuddleScreen .cuddle-money-challenge-banner {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
   #cuddleScreen .cuddle-money-clock {
     grid-column: 1 / -1;
     justify-self: end;
@@ -693,10 +676,6 @@
 
   #cuddleScreen .cuddle-money-modal-actions {
     grid-template-columns: 1fr;
-  }
-
-  #cuddleScreen .cuddle-money-challenge-copy em {
-    white-space: normal;
   }
 
   #cuddleScreen .cuddle-money-payout-row {
