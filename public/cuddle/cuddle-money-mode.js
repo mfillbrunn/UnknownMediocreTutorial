@@ -407,8 +407,8 @@
     if (rewardId === "overtimeReward") {
       state.maxGuesses = Math.max(1, asInteger(state.maxGuesses, 6) + 1);
     }
-    if (rewardId === "openingClue" && typeof game._applyRewardEffect === "function") {
-      var clueMessage = game._applyRewardEffect("revealLocation");
+    if (rewardId === "openingClue" && typeof game._applyOpeningClue === "function") {
+      var clueMessage = game._applyOpeningClue();
       if (clueMessage) message = (message + " " + clueMessage).trim();
     }
     if (rewardId === "freeVowelSweep" && typeof game._applyFreeVowelSweep === "function") {

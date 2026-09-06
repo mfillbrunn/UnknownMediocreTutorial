@@ -697,9 +697,13 @@
       this._ensureQuestForNextGuess();
     }
 
-    // Free Vowel Sweep: pick a vowel and reveal, for free, exactly where it
-    // sits in the secret (green) or that it is absent -- without spending a
-    // guess and without creating a history row that could end the round.
+    // Free Vowel Sweep: pick a vowel and reveal, for free, whether it is in
+    // the secret at all -- yellow (present, position unknown), not green.
+    // It's a power the player gets automatically every round for nothing;
+    // handing out an exact position for free trivializes hard mode, where
+    // position information is the scarce resource. Compare _revealPositionPeek,
+    // which stays green because it's spent from an earned charge or a quest
+    // reward rather than given away for free at round start.
     _applyFreeVowelSweep() {
       if (!(Number(this.state.upgrades.freeVowelSweep) > 0)) return "";
       const pool = ALWAYS_AVAILABLE_VOWELS.filter(
@@ -708,21 +712,16 @@
       if (!pool.length) return "";
       const vowel = pool[Math.floor(this.random() * pool.length)];
       const secret = String(this.state.secret || "");
-      const hits = [];
-      secret.split("").forEach((letter, index) => {
-        if (letter !== vowel) return;
-        hits.push(index + 1);
-        this.state.revealedPositions[index] = vowel;
-      });
-      if (hits.length) {
+      const present = secret.includes(vowel);
+      if (present) {
         this.state.knownPresent = unique([...this.state.knownPresent, vowel]).sort();
         this.state.knownAbsent = this.state.knownAbsent.filter(letter => letter !== vowel);
       } else {
         this.state.knownAbsent = unique([...this.state.knownAbsent, vowel]).sort();
       }
       this._syncInfiniteCards();
-      return hits.length
-        ? `Free vowel sweep: ${vowel} is green at position${hits.length === 1 ? "" : "s"} ${hits.join(", ")}.`
+      return present
+        ? `Free vowel sweep: ${vowel} is in the secret (position unknown).`
         : `Free vowel sweep: ${vowel} is not in the secret.`;
     }
 
@@ -1396,6 +1395,27 @@
       return `Position ${index + 1} is ${letter}; ${glyphForLetter(letter)} now stays in hand.`;
     }
 
+    // Margin Note (openingClue): reveals, for free, that some letter is in
+    // the secret -- yellow, not green. Unlike _revealPositionPeek/
+    // "revealLocation" above (an earned Guesser Hint charge, or a quest/boss
+    // reward), this fires automatically at the start of every round for
+    // free, so it should never hand out an exact position for nothing --
+    // that would trivialize hard mode, where position information is the
+    // scarce resource.
+    _applyOpeningClue() {
+      const hidden = this._hiddenPositions();
+      if (!hidden.length) {
+        const drawn = this._drawRewardCards(1);
+        return `Every position was already known, so Margin Note refreshed ${drawn.length} finite card instead.`;
+      }
+      const index = hidden[Math.floor(this.random() * hidden.length)];
+      const letter = this.state.secret[index];
+      this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
+      this._syncInfiniteCards();
+      this.drawToHandLimit();
+      return `Margin Note: ${glyphForLetter(letter)} is in the secret (position unknown); it now stays in hand.`;
+    }
+
     _randomHandLetter() {
       if (!this.state.hand.length) return null;
       const card = this.state.hand[Math.floor(this.random() * this.state.hand.length)];
@@ -1634,14 +1654,14 @@
           return "Each round now opens with a free vowel sweep.";
         case "openingClue":
           // Consumed by beginCuddleV3Round: for each stacked point here it
-          // fires one _applyRewardEffect("revealLocation") at the start of
-          // every future SCORING round (never a boss round, and never the
-          // one that just ended -- unlike Position Peek this doesn't need
-          // banking, since it's a standing multiplier rather than a
-          // one-shot reveal of the secret that was just solved).
+          // fires one _applyOpeningClue() at the start of every future
+          // SCORING round (never a boss round, and never the one that just
+          // ended -- unlike Position Peek this doesn't need banking, since
+          // it's a standing multiplier rather than a one-shot reveal of the
+          // secret that was just solved).
           this.state.cuddleBonuses = this.state.cuddleBonuses || {};
           this.state.cuddleBonuses.openingClue = Number(this.state.cuddleBonuses.openingClue || 0) + 1;
-          return "Margin Note: every future round now opens with a revealed position.";
+          return "Margin Note: every future round now opens with a letter's presence revealed.";
         // revealGreen (Position Peek) is NOT handled here: applying it at
         // boss-clear time would read the secret that was JUST solved to
         // beat this boss -- every position is already known by then, so
@@ -2703,7 +2723,7 @@
     }
     const clues = Number(state.cuddleBonuses.openingClue || 0);
     for (let index = 0; index < clues; index += 1) {
-      const message = this._applyRewardEffect("revealLocation");
+      const message = this._applyOpeningClue();
       if (message) notes.push(message);
     }
     if (notes.length) state.lastMessage = `${state.lastMessage} ${notes.join(" ")}`.trim();

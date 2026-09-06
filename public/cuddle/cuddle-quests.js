@@ -442,7 +442,7 @@
       id: "freeVowelSweep",
       icon: "🅰️",
       title: "Free Vowel Sweep",
-      description: "Each round opens with one random vowel already tested in every position, for free."
+      description: "Each round opens with one random vowel tested for free -- you learn whether it's in the secret, not where."
     },
     {
       id: "questHead",
@@ -460,7 +460,7 @@
       id: "openingClue",
       icon: "🔮",
       title: "Margin Note",
-      description: "Reveal one secret position at the start of every future scoring round."
+      description: "Reveal that one letter is in the secret at the start of every future scoring round -- not where."
     },
     {
       id: "questDoublePick",
