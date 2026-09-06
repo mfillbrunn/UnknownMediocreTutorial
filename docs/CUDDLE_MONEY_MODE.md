@@ -40,8 +40,8 @@ var CONFIG = Object.freeze({
   rewardPerCompletedRound: 2,
   difficultyRewardBonus: Object.freeze({ easy: 0, medium: 2, hard: 4 }),
   minimumGuessCap: 4,
-  payoutRowPauseMs: 250,
-  payoutBankDurationMs: 430,
+  payoutRowPauseMs: 100,
+  payoutBankDurationMs: 180,
   payoutCoinCount: 24
 });
 ```

@@ -1754,8 +1754,7 @@
   font-size: 0.85rem;
 }
 
-.cuddle-map-kicker,
-.cuddle-category-label {
+.cuddle-map-kicker {
   color: #e6bb74;
   font-size: 0.68rem;
   font-weight: 800;
@@ -1777,8 +1776,7 @@
   gap: 6px;
 }
 
-.cuddle-category-chip,
-.cuddle-category-sense {
+.cuddle-category-chip {
   display: inline-flex;
   align-items: center;
   min-height: 26px;
@@ -1802,15 +1800,6 @@
 
 .cuddle-category-chip.is-pending {
   animation: cuddle-category-pulse 1.4s ease-in-out infinite;
-}
-
-.cuddle-category-sense {
-  min-height: 22px;
-  padding: 3px 8px;
-  color: #d9c4f1;
-  border-color: rgba(180, 143, 220, 0.28);
-  background: rgba(137, 91, 177, 0.13);
-  font-size: 0.67rem;
 }
 
 .cuddle-campaign-map-scroll {

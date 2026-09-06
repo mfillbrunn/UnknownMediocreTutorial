@@ -728,9 +728,7 @@
     }
     return `
       <div class="cuddle-category-readout" aria-label="Known solution categories">
-        <span class="cuddle-category-label">Solution theme</span>
         <div class="cuddle-category-chips">${content}</div>
-        ${campaign.categorySense > 0 ? `<span class="cuddle-category-sense">Theme Sense ×${campaign.categorySense}</span>` : ""}
       </div>`;
   }
 
