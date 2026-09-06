@@ -1042,6 +1042,11 @@
       mapStatsOpen = !mapStatsOpen;
       return { ok: true };
     }
+    if (action === "resolve-branch-junction") {
+      return typeof game.resolveBranchJunction === "function"
+        ? game.resolveBranchJunction(itemId)
+        : { ok: false, error: "The branching map is unavailable." };
+    }
     return { ok: false, error: "Unknown campaign action." };
   }
 

@@ -2320,6 +2320,27 @@
   margin: 0 auto;
 }
 
+.cuddle-branch-shell {
+  min-height: 100%;
+}
+
+.cuddle-branch-page {
+  width: min(1080px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 18px 0 42px;
+}
+
+.cuddle-branch-intro {
+  margin: 0 2px 18px;
+  color: rgba(249, 235, 212, 0.78);
+  font-size: 0.92rem;
+  max-width: 60ch;
+}
+
+.cuddle-branch-choice small {
+  min-height: 2.6em;
+}
+
 @keyframes cuddle-map-cat-bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }

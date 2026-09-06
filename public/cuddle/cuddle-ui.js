@@ -300,7 +300,7 @@
           <div class="cuddle-logo" aria-hidden="true">C</div>
           <p class="cuddle-eyebrow">SINGLE-PLAYER ROGUELITE</p>
           <h1>CUDDLE</h1>
-          <p class="cuddle-tagline">Build words from cards. Learn the secret. Shape the deck. Survive ${scoringRounds()} rounds and four bosses.</p>
+          <p class="cuddle-tagline">Build words from cards. Learn the secret. Shape the deck. Survive ${scoringRounds()} rounds and two bosses.</p>
           <div class="cuddle-save-summary ${hasRun ? "" : "is-empty"}">
             <span>${escapeHtml(statusLabel)}</span>
             ${hasRun ? `<strong>Score ${state.score} · Round ${state.round}/${scoringRounds()}</strong>` : `<strong>Your run saves in this browser.</strong>`}
@@ -1253,6 +1253,9 @@
     }
     if (game.state.status === "shop") {
       return window.CuddleCampaign.renderShop(game);
+    }
+    if (game.state.status === "branchJunction" && window.CuddleBranchMap) {
+      return window.CuddleBranchMap.renderJunction(game);
     }
     if (game.state.status === "playing" && game.state.roundIntroPending
         && typeof window.CuddleCampaign.renderRoundIntroMap === "function") {
