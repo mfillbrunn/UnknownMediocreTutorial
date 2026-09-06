@@ -211,6 +211,9 @@
       starterRewardClaimed: Boolean(existingRun),
       starterRewardChoices: [],
       starterRewardId: null,
+      // "boss" (the shared reward book, all other difficulties) or "normal"
+      // (hard mode -- see starterRewardChoices).
+      starterRewardSource: "boss",
       challengeOffer: null,
       activeChallenge: null,
       lastRoundKey: null,
@@ -261,6 +264,7 @@
     mode.starterRewardPending = Boolean(mode.starterRewardPending);
     mode.starterRewardClaimed = Boolean(mode.starterRewardClaimed);
     mode.starterRewardChoices = Array.isArray(mode.starterRewardChoices) ? mode.starterRewardChoices : [];
+    mode.starterRewardSource = mode.starterRewardSource === "normal" ? "normal" : "boss";
     mode.recentChallengeIds = Array.isArray(mode.recentChallengeIds) ? mode.recentChallengeIds.slice(-3) : [];
     mode.noOfferStreak = Math.max(0, asInteger(mode.noOfferStreak, 0));
     mode.acceptedChallenges = Math.max(0, asInteger(mode.acceptedChallenges, 0));
@@ -271,20 +275,33 @@
     return mode;
   }
 
+  // Every other difficulty's Starting Bonus is drawn from the shared boss
+  // reward book -- a free taste of a reward tier the player would otherwise
+  // have to clear a boss to earn. Hard mode already gets no compensation
+  // picks the way easy/medium do (see startNewMega's difficultyStart
+  // branch), so handing it a boss-tier reward for free on top of that was
+  // backwards: the hardest difficulty ended up with the single strongest
+  // opening pick. It draws from the ordinary round-clear catalog instead.
   function starterRewardChoices(game) {
+    var difficulty = String(game.state && game.state.megaState && game.state.megaState.difficulty || "hard");
+    if (difficulty === "hard" && typeof game._upgradeCatalog === "function") {
+      return { source: "normal", choices: shuffled(game._upgradeCatalog(), game).slice(0, 3) };
+    }
     var questBook = window.CuddleQuestBook;
     var choices = STARTER_REWARD_IDS.map(function rewardForId(id) {
       return questBook && typeof questBook.getBossReward === "function" ? questBook.getBossReward(id) : null;
     }).filter(Boolean);
-    return shuffled(choices, game).slice(0, 3);
+    return { source: "boss", choices: shuffled(choices, game).slice(0, 3) };
   }
 
   function resetModeForNewRun(game) {
     var state = game.state;
     var mode = defaultModeState(false);
+    var starter = starterRewardChoices(game);
     mode.starterRewardPending = true;
     mode.starterRewardClaimed = false;
-    mode.starterRewardChoices = starterRewardChoices(game);
+    mode.starterRewardChoices = starter.choices;
+    mode.starterRewardSource = starter.source;
     mode.roundStartingMoney = asNumber(state.score, 0) - asNumber(state.roundScore, 0);
     mode.lastRoundKey = [state.runId, state.round, state.secret].join(":");
     state[MODE_KEY] = mode;
@@ -429,7 +446,18 @@
       return { ok: false, error: "That Starting Bonus is not available." };
     }
 
-    var message = applyStarterRewardNow(this, reward.id);
+    // Hard mode's Starting Bonus comes from the ordinary round-clear catalog
+    // (see starterRewardChoices), which applies through _applyUpgradeChoice
+    // (mutating state.upgrades/removedLetters/etc. directly) rather than
+    // _applyBossReward -- the two pools don't share an id space.
+    var message;
+    if (mode.starterRewardSource === "normal" && typeof this._applyUpgradeChoice === "function") {
+      var applied = this._applyUpgradeChoice(reward);
+      if (!applied.ok) return applied;
+      message = "";
+    } else {
+      message = applyStarterRewardNow(this, reward.id);
+    }
     mode.starterRewardPending = false;
     mode.starterRewardClaimed = true;
     mode.starterRewardId = reward.id;

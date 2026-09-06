@@ -287,12 +287,6 @@
       icon: "🃏",
       title: "Joker",
       description: "Gain a joker charge: a wildcard hand tile that resolves to a real letter on submit."
-    },
-    {
-      id: "questReroll",
-      icon: "🔄",
-      title: "Second Guess Quest",
-      description: "Gain one charge to reroll your active quest for a different one, any turn you like."
     }
   ];
 
