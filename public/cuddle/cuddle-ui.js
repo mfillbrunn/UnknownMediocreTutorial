@@ -363,7 +363,6 @@
         <main class="cuddle-play-area">
           <section class="cuddle-left-column">
             ${renderBossBanner(state)}
-            ${renderActiveQuest(state)}
             ${renderBoard(state)}
           </section>
           <section class="cuddle-right-column">
@@ -427,39 +426,6 @@
           ].filter(Boolean).join(" ");
           return `<span class="${classes}" title="Round ${round}: ${threshold} points">${round}</span>`;
         }).join("")}
-      </div>`;
-  }
-
-  function renderActiveQuest(state) {
-    if (!state.activeQuest) return "";
-    const fulfilled = game.wouldDraftCompleteQuest();
-    const primary = `
-      <article class="cuddle-quest is-active ${fulfilled ? "is-fulfilled" : ""}">
-        <div class="cuddle-quest-icon" aria-hidden="true">${fulfilled ? "✅" : escapeHtml(state.activeQuest.icon || "❗")}</div>
-        <div>
-          <h2>${escapeHtml(state.activeQuest.title)}</h2>
-          <p>${escapeHtml(state.activeQuest.description)}</p>
-        </div>
-      </article>`;
-    // Extra concurrent quests (Quest Cadence boss reward) all ride on the
-    // same guess as the primary -- shown as smaller cards underneath it,
-    // since only the primary's own live "would this draft complete it"
-    // check is worth the cost of running on every render.
-    const extras = (Array.isArray(state.activeQuests) ? state.activeQuests : [])
-      .slice(1)
-      .filter(Boolean);
-    if (!extras.length) return primary;
-    return `
-      <div class="cuddle-quest-stack">
-        ${primary}
-        ${extras.map(quest => `
-          <article class="cuddle-quest cuddle-quest-extra">
-            <div class="cuddle-quest-icon" aria-hidden="true">${escapeHtml(quest.icon || "❗")}</div>
-            <div>
-              <h2>${escapeHtml(quest.title)}</h2>
-              <p>${escapeHtml(quest.description)}</p>
-            </div>
-          </article>`).join("")}
       </div>`;
   }
 
@@ -556,19 +522,15 @@
       return (CARD_STATUS_ORDER[aStatus] ?? 99) - (CARD_STATUS_ORDER[bStatus] ?? 99)
         || a.glyph.localeCompare(b.glyph);
     };
-    const isPromotedConsonant = group => (
-      !VOWEL_SET.has(group.glyph)
-      && ["green", "yellow"].includes(game.getCardKnowledgeStatus(group.glyph))
-    );
+    // All consonants stay in one row (sortByColorThenLetter already ranks
+    // green and yellow ahead of grey/red), rather than pulling known ones
+    // out into a separate row above.
     return {
-      promoted: allGroups
-        .filter(isPromotedConsonant)
-        .sort(sortByColorThenLetter),
       vowels: allGroups
         .filter(group => VOWEL_SET.has(group.glyph))
         .sort(sortByColorThenLetter),
       consonants: allGroups
-        .filter(group => !VOWEL_SET.has(group.glyph) && !isPromotedConsonant(group))
+        .filter(group => !VOWEL_SET.has(group.glyph))
         .sort(sortByColorThenLetter)
     };
   }
@@ -629,7 +591,6 @@
   function renderHand(state, rules) {
     const limit = game.getMulliganLimit();
     const groups = groupedHand(state);
-    const promoted = groups.promoted.map(group => renderHandCard(group, state, limit)).join("");
     const vowels = groups.vowels.map(group => renderHandCard(group, state, limit)).join("");
     const consonants = groups.consonants.map(group => renderHandCard(group, state, limit)).join("");
     const submit = game.canSubmit();
@@ -674,7 +635,6 @@
             `}
           </div>` : ""}
         <div class="cuddle-hand" aria-label="Letter card hand">
-          ${promoted ? `<div class="cuddle-hand-row cuddle-hand-promoted" aria-label="Confirmed consonants">${promoted}</div>` : ""}
           <div class="cuddle-hand-row cuddle-hand-vowels" aria-label="Bold, always-available vowels">${vowels}</div>
           <div class="cuddle-hand-row cuddle-hand-consonants" aria-label="Consonants">${consonants || `<p class="cuddle-draft-empty">No consonant cards are currently available.</p>`}</div>
         </div>

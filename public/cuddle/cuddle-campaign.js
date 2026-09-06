@@ -983,8 +983,18 @@
       const heartBadge = typeof window.CuddleCoachExpansion?.renderHeartBadge === "function"
         ? window.CuddleCoachExpansion.renderHeartBadge(game)
         : "";
-      const strip = heartBadge || themeBadge
-        ? `<div class="cuddle-play-strip">${heartBadge}${themeBadge ? `<div class="cuddle-map-badge-standalone cuddle-play-theme-badge">${themeBadge}</div>` : ""}</div>`
+      // The active quest used to be its own bordered card between the boss
+      // banner and the board -- now it's just plain text riding in this same
+      // strip next to the heart, so it reads at a glance instead of taking a
+      // whole row of its own. Concurrent quests (Quest Cadence boss reward)
+      // get one span each, wrapping onto their own line if there's no room.
+      const quests = [state.activeQuest, ...(Array.isArray(state.activeQuests) ? state.activeQuests.slice(1) : [])]
+        .filter(Boolean);
+      const questText = quests
+        .map(quest => `<span class="cuddle-quest-inline">Quest: ${escapeHtml(quest.description)}</span>`)
+        .join("");
+      const strip = heartBadge || themeBadge || questText
+        ? `<div class="cuddle-play-strip">${heartBadge}${questText}${themeBadge ? `<div class="cuddle-map-badge-standalone cuddle-play-theme-badge">${themeBadge}</div>` : ""}</div>`
         : "";
       const extra = challengeBanner + strip;
       if (!extra) return html;

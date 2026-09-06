@@ -336,29 +336,6 @@
   background: rgba(255, 255, 255, 0.04);
 }
 
-.cuddle-quest.is-active {
-  /* Only the icon + title + description remain (the "TURN N QUEST"/"QUEST
-     READY" eyebrow line was removed), so the badge no longer needs room
-     for a third line -- override the shared .cuddle-quest min-height so
-     it actually shrinks instead of padding out to the old height. */
-  min-height: 64px;
-  border-color: rgba(213, 166, 255, 0.58);
-  background: linear-gradient(135deg, rgba(213, 166, 255, 0.16), rgba(139, 232, 210, 0.07));
-  box-shadow: inset 0 0 0 1px rgba(213, 166, 255, 0.08);
-}
-
-/* Lights up the moment the drafted word would clear the active quest, so the
-   player sees it's safe to submit before spending the guess. */
-.cuddle-quest.is-active.is-fulfilled {
-  border-color: rgba(75, 166, 106, 0.75);
-  background: linear-gradient(135deg, rgba(75, 166, 106, 0.28), rgba(75, 166, 106, 0.1));
-  box-shadow: inset 0 0 0 1px rgba(75, 166, 106, 0.35);
-}
-
-.cuddle-quest.is-fulfilled .cuddle-quest-icon {
-  background: rgba(75, 166, 106, 0.35);
-}
-
 .cuddle-quest-clock {
   min-height: 72px;
   border-radius: 14px;
@@ -543,8 +520,7 @@
   grid-template-columns: repeat(5, minmax(55px, 1fr));
 }
 
-.cuddle-hand-consonants,
-.cuddle-hand-promoted {
+.cuddle-hand-consonants {
   grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
 }
 
@@ -1089,8 +1065,7 @@
   }
 
   .cuddle-hand-vowels,
-  .cuddle-hand-consonants,
-  .cuddle-hand-promoted {
+  .cuddle-hand-consonants {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
@@ -1137,8 +1112,7 @@
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
-  .cuddle-hand-consonants,
-  .cuddle-hand-promoted {
+  .cuddle-hand-consonants {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
@@ -1723,25 +1697,6 @@
   box-shadow: 0 0 0 1px rgba(242, 211, 111, 0.5), 0 6px 13px rgba(0, 0, 0, 0.15);
 }
 
-.cuddle-quest-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.cuddle-quest-extra {
-  padding: 10px 12px;
-  opacity: 0.85;
-}
-
-.cuddle-quest-extra h2 {
-  font-size: 0.85rem;
-}
-
-.cuddle-quest-extra p {
-  font-size: 0.72rem;
-}
-
 .cuddle-preset-words {
   display: flex;
   flex-wrap: wrap;
@@ -2148,8 +2103,9 @@
   justify-content: flex-start;
 }
 
-/* Compact play-screen strip: the Cuddle Meter heart sits beside the theme
-   badge so neither costs the board a full row of vertical space. */
+/* Compact play-screen strip: the Cuddle Meter heart, the active quest and
+   the theme badge share one row so none of them costs the board a full row
+   of vertical space. */
 .cuddle-play-strip {
   display: flex;
   align-items: center;
@@ -2161,6 +2117,14 @@
 .cuddle-play-strip .cuddle-map-badge-standalone {
   margin-bottom: 0;
   min-width: 0;
+}
+
+/* The quest used to be its own bordered, icon-fronted card; it's now plain
+   text riding in this strip, unstyled apart from sizing to match its
+   neighbors. */
+.cuddle-quest-inline {
+  font-size: 0.86rem;
+  color: var(--cuddle-text);
 }
 
 .cuddle-shop-shell {
@@ -2594,8 +2558,7 @@
    --------------------------------------------------------------------------- */
 
 @media (max-width: 860px) {
-  #cuddleScreen .cuddle-hand-consonants,
-  #cuddleScreen .cuddle-hand-promoted {
+  #cuddleScreen .cuddle-hand-consonants {
     grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
   }
 
@@ -2638,5 +2601,40 @@
 @media (max-height: 620px) {
   #cuddleScreen .cuddle-board-row {
     max-width: clamp(210px, calc(100dvh * 0.62), 420px);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Desktop width: escape #appContainer's global 600px cap
+
+   #appContainer (layout.css) caps every screen at 600px so the base Wordle
+   game reads as a comfortable phone-width column even on desktop. Cuddle's
+   own two-column play area (.cuddle-play-area) wants noticeably more than
+   that -- at 600px the hand column was being squeezed to well under its own
+   350-390px minmax tracks, which is what made the desktop layout look
+   cramped and let the right column overflow.
+
+   This mirrors the identical widening gameplay-ui.css already does for the
+   setter/guesser screens (see DESKTOP_GAME_SIZE_BALANCE_V2) rather than
+   inventing a new pattern, and uses the same 1080px the shop screen already
+   settled on (.cuddle-shop-page). Gated to non-touch desktops so phones and
+   tablets are untouched, and to width > 860px so it can never fight the
+   compact play layout above, which takes over at that breakpoint.
+   --------------------------------------------------------------------------- */
+@media (min-width: 861px) and (hover: hover) and (pointer: fine) {
+  #appContainer:has(#cuddleScreen.active) {
+    max-width: 1080px;
+  }
+
+  /* game-menu.css centers every non-startup "dossier style" menu screen
+     (My Games, settings, etc.) at a fixed 600px via
+     "body.menu-mode .screen.game-menu:not(#startupScreen)" -- #cuddleScreen
+     carries the shared .game-menu class too, so it was being pinned to that
+     same 600px regardless of the #appContainer widening above. Overriding
+     it here (extra .active class keeps this at least as specific as that
+     rule regardless of stylesheet load order) is what actually lets the
+     two-column play area use the room #appContainer now has. */
+  body.menu-mode #cuddleScreen.screen.game-menu.active {
+    width: min(1080px, calc(100vw - 24px));
   }
 }
