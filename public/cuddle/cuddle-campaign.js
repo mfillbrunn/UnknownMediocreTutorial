@@ -948,13 +948,45 @@
   function insertMap(runHtml, game) {
     const state = game?.state;
     const html = String(runHtml || "");
-    if (!state || (state.status !== "upgrade" && state.status !== "questReward")) return html;
-    const badge = renderCategoryBadge(ensureCampaign(game));
-    if (!badge) return html;
-    const modalMatch = html.match(/<section class="cuddle-modal[^"]*">/);
-    if (!modalMatch) return html;
-    const insertAt = modalMatch.index + modalMatch[0].length;
-    return html.slice(0, insertAt) + `<div class="cuddle-map-badge-standalone">${badge}</div>` + html.slice(insertAt);
+    if (!state) return html;
+    if (state.status === "upgrade" || state.status === "questReward") {
+      const badge = renderCategoryBadge(ensureCampaign(game));
+      if (!badge) return html;
+      const modalMatch = html.match(/<section class="cuddle-modal[^"]*">/);
+      if (!modalMatch) return html;
+      const insertAt = modalMatch.index + modalMatch[0].length;
+      return html.slice(0, insertAt) + `<div class="cuddle-map-badge-standalone">${badge}</div>` + html.slice(insertAt);
+    }
+    // Live guessing screen (status "playing", already past roundIntroPending
+    // -- that phase is its own full-screen map, dispatched before this ever
+    // runs). Two things get stitched onto the top of .cuddle-left-column
+    // here, above the boss/quest cards: a known theme (once one has
+    // actually been revealed this round -- renderCategoryBadge stays empty
+    // otherwise) and, if Money Mode is installed and a mini-challenge is
+    // active, its status strip. Money Mode used to patch that strip into
+    // the DOM after the fact on every render tick, which the base engine's
+    // full-innerHTML re-render (on every guess) wiped out and it recreated
+    // from scratch each time -- see activeChallengeBannerMarkup's comment
+    // in cuddle-money-mode.js for why that read as the page jumping back to
+    // the top. Rendering it here instead makes it part of the same
+    // template as the boss/quest cards, so it behaves exactly like them.
+    if (state.status === "playing") {
+      // The challenge strip already carries its own complete card styling
+      // (border, background, grid) -- it goes in as-is. The theme badge
+      // reuses the same right-aligned-by-default layout it has inside the
+      // map heading, so it gets the standalone wrapper that flips it to
+      // left-aligned there (see cuddle.css's .cuddle-map-badge-standalone).
+      const challengeBanner = typeof window.CuddleMoneyMode?.renderChallengeBanner === "function"
+        ? window.CuddleMoneyMode.renderChallengeBanner(game)
+        : "";
+      const themeBadge = renderCategoryBadge(ensureCampaign(game));
+      const extra = challengeBanner + (themeBadge ? `<div class="cuddle-map-badge-standalone cuddle-play-theme-badge">${themeBadge}</div>` : "");
+      if (!extra) return html;
+      const marker = '<section class="cuddle-left-column">';
+      if (!html.includes(marker)) return html;
+      return html.replace(marker, `${marker}${extra}`);
+    }
+    return html;
   }
 
   function afterRender(root, game, landing) {

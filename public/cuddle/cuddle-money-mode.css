@@ -251,11 +251,12 @@
   min-height: 48px;
 }
 
-/* Active challenge strip. */
+/* Active challenge strip. Now rendered as part of the normal play-screen
+   template (see cuddle-money-mode.js's activeChallengeBannerMarkup), at the
+   top of .cuddle-left-column alongside the boss/quest cards -- a plain
+   in-flow block like them, not sticky, so it behaves exactly like they do
+   when the board scrolls instead of pinning itself mid-scroll. */
 #cuddleScreen .cuddle-money-challenge-banner {
-  position: sticky;
-  z-index: 30;
-  top: 4px;
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr) auto auto;
   align-items: center;
