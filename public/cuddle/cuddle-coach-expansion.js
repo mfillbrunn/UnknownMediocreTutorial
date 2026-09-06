@@ -24,8 +24,9 @@
 
   var VERSION = 1;
   var STATE_KEY = "cuddleCoachExpansion";
-  var BASE_METER_THRESHOLD = 15;
-  var MIN_METER_THRESHOLD = 6;
+  var BASE_METER_THRESHOLD = 12;
+  var MIN_METER_THRESHOLD = 3;
+  var METER_POP_MS = 1800;
   var ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   var VOWELS = new Set("AEIOU".split(""));
   var activeGame = null;
@@ -63,7 +64,7 @@
       key: "coachMeterThreshold",
       icon: "🩶",
       title: "Softer Cuddle Meter",
-      description: "The Cuddle Meter needs three fewer visible grey tiles to fill. Minimum: six.",
+      description: "The Cuddle Meter needs three fewer visible grey tiles to fill. Minimum: three.",
       max: 3
     },
     {
@@ -312,6 +313,7 @@
       cuddleRewardTier: 0,
       cuddleGreysCollected: 0,
       cuddleTriggers: 0,
+      lastMeterReward: null,
       cuddleRewards: { mulligan: 0, joker: 0, letter: 0, row: 0 },
       bankedMulligans: 0,
       bankedFreeLetters: 0,
@@ -359,6 +361,14 @@
     coach.cuddleRewardTier = clamp(integer(coach.cuddleRewardTier, 0), 0, 3);
     coach.cuddleGreysCollected = Math.max(0, integer(coach.cuddleGreysCollected, 0));
     coach.cuddleTriggers = Math.max(0, integer(coach.cuddleTriggers, 0));
+    if (!coach.lastMeterReward || typeof coach.lastMeterReward !== "object" || !coach.lastMeterReward.label) {
+      coach.lastMeterReward = null;
+    } else {
+      coach.lastMeterReward = {
+        seq: Math.max(0, integer(coach.lastMeterReward.seq, 0)),
+        label: String(coach.lastMeterReward.label)
+      };
+    }
     coach.bankedMulligans = Math.max(0, integer(coach.bankedMulligans, 0));
     coach.bankedFreeLetters = Math.max(0, integer(coach.bankedFreeLetters, 0));
     coach.bankedExtraRows = Math.max(0, integer(coach.bankedExtraRows, 0));
@@ -431,6 +441,45 @@
 
   function meterRewardName(coach) {
     return ["Free mulligan", "Joker", "Free letter", "Extra row"][clamp(integer(coach.cuddleRewardTier, 0), 0, 3)];
+  }
+
+  // The heart chip counts DOWN to zero. When it lands on zero it briefly names what the
+  // fill granted, then settles back to the next requirement on its own re-render.
+  var meterPopSeq = 0;
+  var meterPopUntil = 0;
+  var meterPopTimer = null;
+
+  function renderHeartBadge(game) {
+    var coach = ensureCoach(game);
+    if (!coach) return "";
+    var threshold = meterThreshold(coach);
+    var remaining = Math.max(0, threshold - Math.max(0, integer(coach.cuddleProgress, 0)));
+    var reward = coach.lastMeterReward;
+    var seq = reward ? integer(reward.seq, 0) : 0;
+    var now = Date.now();
+
+    if (reward && seq > meterPopSeq) {
+      meterPopSeq = seq;
+      meterPopUntil = now + METER_POP_MS;
+      if (meterPopTimer) clearTimeout(meterPopTimer);
+      meterPopTimer = setTimeout(function settle() {
+        meterPopTimer = null;
+        if (activeGame) requestRender(activeGame);
+      }, METER_POP_MS + 40);
+    }
+
+    var popping = Boolean(reward && seq === meterPopSeq && now < meterPopUntil);
+    var shown = popping ? 0 : remaining;
+    var title = popping
+      ? "Cuddle Meter full: " + reward.label
+      : remaining + " more grey tile" + (remaining === 1 ? "" : "s") + " for " + meterRewardName(coach).toLowerCase();
+
+    return "<div class=\"cuddle-heart-badge" + (popping ? " is-full" : "") + "\" title=\"" + escapeHtml(title) + "\">"
+      + "<span class=\"cuddle-heart-chip\" role=\"img\" aria-label=\"" + escapeHtml(title) + "\">"
+      + "<svg viewBox=\"0 0 24 22\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M12 20.6 3.6 12.2A5.2 5.2 0 0 1 12 5.5a5.2 5.2 0 0 1 8.4 6.7z\"/></svg>"
+      + "<b>" + shown + "</b></span>"
+      + (popping ? "<span class=\"cuddle-heart-pop\">" + escapeHtml(reward.label) + "</span>" : "")
+      + "</div>";
   }
 
   function hasBossReward(game, rewardId) {
@@ -669,26 +718,32 @@
       coach.cuddleProgress -= threshold;
       coach.cuddleTriggers += 1;
       var tier = clamp(integer(coach.cuddleRewardTier, 0), 0, 3);
+      var popLabel = "";
       if (tier === 0) {
         if (game.state.status === "playing" && !game.state.pendingRoundEnd) {
           game.state.mulligansLeft = Math.max(0, integer(game.state.mulligansLeft, 0)) + 1;
           messages.push("Cuddle Meter full: +1 free mulligan.");
+          popLabel = "+1 mulligan";
         } else {
           coach.bankedMulligans += 1;
           messages.push("Cuddle Meter full: a free mulligan is banked for the next round.");
+          popLabel = "+1 mulligan (banked)";
         }
         coach.cuddleRewards.mulligan += 1;
       } else if (tier === 1) {
         var jokerMessage = typeof game._applyRewardEffect === "function" ? game._applyRewardEffect("jokerToken") : "";
         messages.push("Cuddle Meter full: " + (jokerMessage || "gained a Joker."));
         coach.cuddleRewards.joker += 1;
+        popLabel = "+1 joker";
       } else if (tier === 2) {
         if (hiddenPositions(game).length) {
           var letter = revealExactPosition(game, "Cuddle Meter");
           messages.push(letter.message || "Cuddle Meter revealed a free letter.");
+          popLabel = "free letter";
         } else {
           coach.bankedFreeLetters += 1;
           messages.push("Cuddle Meter full: a free letter is banked for the next round.");
+          popLabel = "free letter (banked)";
         }
         coach.cuddleRewards.letter += 1;
       } else {
@@ -699,15 +754,19 @@
           game.state.failureReason = null;
           if (typeof game._ensureQuestForNextGuess === "function") game._ensureQuestForNextGuess();
           messages.push("Cuddle Meter full: an extra rescue row opened.");
+          popLabel = "rescue row";
         } else if (game.state.status === "playing" && !game.state.pendingRoundEnd) {
           game.state.maxGuesses = Math.max(1, integer(game.state.maxGuesses, 6) + 1);
           messages.push("Cuddle Meter full: +1 extra row this round.");
+          popLabel = "+1 row";
         } else {
           coach.bankedExtraRows += 1;
           messages.push("Cuddle Meter full: an extra row is banked for the next round.");
+          popLabel = "+1 row (banked)";
         }
         coach.cuddleRewards.row += 1;
       }
+      coach.lastMeterReward = { seq: coach.cuddleTriggers, label: popLabel };
       threshold = meterThreshold(coach);
     }
     if (messages.length) game.state.lastMessage = ((game.state.lastMessage || "") + " " + messages.join(" ")).trim();
@@ -1204,7 +1263,6 @@
       lines = lines.slice();
       lines.push("Possible answers: " + (coach.possibleAnswersUnlocked ? "unlocked" : "locked"));
       lines.push("Hints: " + coach.hintsPerRound + " per round from round " + coach.hintStartRound);
-      lines.push("Cuddle Meter: " + meterThreshold(coach) + " greys → " + meterRewardName(coach));
       if (coach.newBossRewardsOwned.length) lines.push("Coach boss rewards: " + coach.newBossRewardsOwned.join(", "));
       return lines;
     };
@@ -1386,7 +1444,6 @@
     }
     var candidates = coach.possibleAnswersUnlocked ? getPossibleAnswers(game) : [];
     var threshold = meterThreshold(coach);
-    var meterPercent = clamp(coach.cuddleProgress / threshold * 100, 0, 100);
     var hintsEligible = integer(game.state.round, 1) >= coach.hintStartRound;
     var hintDisabled = !hintsEligible || coach.hintCharges <= 0 || hiddenPositions(game).length <= 0;
     var compassOwned = hasBossReward(game, "goldenCompass");
@@ -1419,10 +1476,6 @@
         + "<div class=\"line\"><span class=\"label\">🎧 Possible answers</span><span class=\"value\">" + candidates.length.toLocaleString() + "</span></div>"
         + "<div class=\"line remaining-hint\"><span class=\"label\">Matches visible feedback</span><span class=\"value\">exact</span></div></section>";
     }
-    html += "<section class=\"cuddle-meter-card\"><div class=\"cuddle-meter-heading\"><span><b>🩶 Cuddle Meter</b><small>Visible grey tiles fill it</small></span>"
-      + "<strong>" + coach.cuddleProgress + "/" + threshold + "</strong></div>"
-      + "<div class=\"cuddle-meter-track\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"" + threshold + "\" aria-valuenow=\"" + coach.cuddleProgress + "\"><span style=\"width:" + meterPercent.toFixed(1) + "%\"></span></div>"
-      + "<p>Full reward: <b>" + escapeHtml(meterRewardName(coach)) + "</b></p></section>";
     if (coach.hintsPerRound > 0 || compassOwned) {
       html += "<section class=\"cuddle-coach-actions\">";
       if (coach.hintsPerRound > 0) {
@@ -1565,7 +1618,6 @@
     if (!badges || badges.querySelector(".cuddle-coach-detail-badge")) return;
     var fragments = [
       ["Hints", coach.hintsUsed + " used · " + coach.hintCharges + " ready"],
-      ["Cuddle Meter", coach.cuddleProgress + "/" + meterThreshold(coach)],
       ["Unused-row money", formatMoney(coach.unusedRowMoney)]
     ];
     fragments.forEach(function add(pair) {
@@ -1638,6 +1690,10 @@
     useHint: function useCurrentHint() { return activeGame ? useHint(activeGame) : { ok: false, error: "No Cuddle run is active." }; },
     useGoldenCompass: function useCurrentCompass() { return activeGame ? useGoldenCompass(activeGame) : { ok: false, error: "No Cuddle run is active." }; },
     rerollBoss: function rerollCurrentBoss() { return activeGame ? rerollBoss(activeGame) : { ok: false, error: "No Cuddle run is active." }; },
-    meterThreshold: function currentThreshold() { return activeGame ? meterThreshold(ensureCoach(activeGame)) : BASE_METER_THRESHOLD; }
+    meterThreshold: function currentThreshold() { return activeGame ? meterThreshold(ensureCoach(activeGame)) : BASE_METER_THRESHOLD; },
+    renderHeartBadge: function renderCurrentHeartBadge(game) {
+      var target = game || activeGame;
+      return target && target.state ? renderHeartBadge(target) : "";
+    }
   });
 }());

@@ -980,7 +980,13 @@
         ? window.CuddleMoneyMode.renderChallengeBanner(game)
         : "";
       const themeBadge = renderCategoryBadge(ensureCampaign(game));
-      const extra = challengeBanner + (themeBadge ? `<div class="cuddle-map-badge-standalone cuddle-play-theme-badge">${themeBadge}</div>` : "");
+      const heartBadge = typeof window.CuddleCoachExpansion?.renderHeartBadge === "function"
+        ? window.CuddleCoachExpansion.renderHeartBadge(game)
+        : "";
+      const strip = heartBadge || themeBadge
+        ? `<div class="cuddle-play-strip">${heartBadge}${themeBadge ? `<div class="cuddle-map-badge-standalone cuddle-play-theme-badge">${themeBadge}</div>` : ""}</div>`
+        : "";
+      const extra = challengeBanner + strip;
       if (!extra) return html;
       const marker = '<section class="cuddle-left-column">';
       if (!html.includes(marker)) return html;

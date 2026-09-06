@@ -2148,6 +2148,21 @@
   justify-content: flex-start;
 }
 
+/* Compact play-screen strip: the Cuddle Meter heart sits beside the theme
+   badge so neither costs the board a full row of vertical space. */
+.cuddle-play-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.cuddle-play-strip .cuddle-map-badge-standalone {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
 .cuddle-shop-shell {
   min-height: 100%;
 }
