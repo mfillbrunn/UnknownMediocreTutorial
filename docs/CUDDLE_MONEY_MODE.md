@@ -20,7 +20,7 @@ This patch changes only the Cuddle single-player campaign. It keeps the engine's
 | Pocket Tally | First two guesses show only the total green/yellow counts, not positions. | $16 |
 | Fogged Slot | One feedback position is hidden for the first two guesses. | $12 |
 | Blue Haze | Green and yellow are merged into blue for the first two guesses. | $14 |
-| One Little Lie | One tile on the opening row displays a false color; the other four are truthful. | $10 |
+| One Little Lie | One tile on the opening row is a lie, but the whole row's colors are hidden so it can't be picked out. | $10 |
 | Locked Opener | No mulligan before the first submitted guess. | $8 |
 | Five-Guess Sprint | One fewer guess than normal, never fewer than four. | $18 |
 | Vowel Budget | At most two vowels in each of the first two guesses. | $10 |
