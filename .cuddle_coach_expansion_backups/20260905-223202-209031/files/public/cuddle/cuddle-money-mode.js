@@ -426,7 +426,7 @@
       return choice && choice.id === rewardId;
     });
     if (!mode || !mode.starterRewardPending || !reward) {
-      return { ok: false, error: "That Starting Bonus is not available." };
+      return { ok: false, error: "That starting reward is not available." };
     }
 
     var message = applyStarterRewardNow(this, reward.id);
@@ -434,12 +434,12 @@
     mode.starterRewardClaimed = true;
     mode.starterRewardId = reward.id;
     mode.starterRewardChoices = [];
-    this.state.lastMessage = "Starting Bonus: " + reward.title + ". " + (message || reward.description);
+    this.state.lastMessage = "Free starting reward: " + reward.title + ". " + (message || reward.description);
     this.state.bossRewardNotice = {
       icon: reward.icon || "\uD83C\uDF81",
       title: reward.title,
       message: message || reward.description,
-      bossTitle: "Starting Bonus"
+      bossTitle: "Welcome gift"
     };
     if (Array.isArray(this.state.rewardBookHistory)) {
       this.state.rewardBookHistory.push({
@@ -800,9 +800,9 @@
     }).join("");
     root.insertAdjacentHTML("beforeend",
       "<div id=\"cuddleMoneyStarterOverlay\" class=\"cuddle-money-overlay\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"cuddleMoneyStarterTitle\">"
-      + "<section class=\"cuddle-money-modal\"><span class=\"cuddle-money-kicker\">STARTING BONUS</span>"
-      + "<h2 id=\"cuddleMoneyStarterTitle\">Choose your Starting Bonus!</h2>"
-      + "<p>Choose one permanent bonus before your first Wordle.</p>"
+      + "<section class=\"cuddle-money-modal\"><span class=\"cuddle-money-kicker\">WELCOME GIFT</span>"
+      + "<h2 id=\"cuddleMoneyStarterTitle\">Choose one free boss reward</h2>"
+      + "<p>Start the run with one permanent reward before your first Wordle.</p>"
       + "<div class=\"cuddle-money-choice-grid\">" + cards + "</div></section></div>"
     );
   }
@@ -832,28 +832,32 @@
     );
   }
 
-  // Pure markup, no DOM writes -- rendered declaratively as part of the
-  // normal Cuddle play-screen template now (see cuddle-campaign.js's
-  // insertMap, which splices this into the top of .cuddle-left-column,
-  // same place as the boss/quest cards). It used to be patched into the
-  // DOM after the fact via insertAdjacentHTML on every render tick, which
-  // meant the base engine's full innerHTML re-render (on every guess) wiped
-  // it out and this recreated it from scratch each time -- replaying the
-  // entrance animation and briefly bumping the header's own height on
-  // every single guess, which is what made it feel like the page kept
-  // jumping back to the top. Keeping the same ids/classes so
-  // syncChallengeClock's getElementById lookups keep working unchanged.
-  function activeChallengeBannerMarkup(game, mode) {
+  function activeChallengeBanner(game, mode) {
+    var root = document.getElementById("cuddleRoot");
+    if (!root) return;
     var challenge = mode.activeChallenge;
-    if (!challenge || game.isBossRound()) return "";
-    return (
-      "<section id=\"cuddleMoneyChallengeBanner\" class=\"cuddle-money-challenge-banner\" aria-live=\"polite\">"
-      + "<span class=\"cuddle-money-challenge-icon\">" + escapeHtml(challenge.icon || "!") + "</span>"
-      + "<span class=\"cuddle-money-challenge-copy\"><small>MINI CHALLENGE ACTIVE</small><strong>" + escapeHtml(challenge.title || "") + "</strong><em>" + escapeHtml(challenge.description || "") + "</em></span>"
-      + "<span class=\"cuddle-money-challenge-value\">" + formatDelta(challenge.reward) + "</span>"
-      + "<span id=\"cuddleMoneyClock\" class=\"cuddle-money-clock\" hidden></span>"
-      + "</section>"
-    );
+    var existing = document.getElementById("cuddleMoneyChallengeBanner");
+    if (!challenge || game.isBossRound()) {
+      if (existing) existing.remove();
+      return;
+    }
+    if (!existing) {
+      var header = root.querySelector(".cuddle-header");
+      if (!header) return;
+      header.insertAdjacentHTML("afterend",
+        "<section id=\"cuddleMoneyChallengeBanner\" class=\"cuddle-money-challenge-banner\" aria-live=\"polite\">"
+        + "<span class=\"cuddle-money-challenge-icon\"></span>"
+        + "<span class=\"cuddle-money-challenge-copy\"><small>MINI CHALLENGE ACTIVE</small><strong></strong><em></em></span>"
+        + "<span class=\"cuddle-money-challenge-value\"></span>"
+        + "<span id=\"cuddleMoneyClock\" class=\"cuddle-money-clock\" hidden></span>"
+        + "</section>"
+      );
+      existing = document.getElementById("cuddleMoneyChallengeBanner");
+    }
+    existing.querySelector(".cuddle-money-challenge-icon").textContent = challenge.icon || "!";
+    existing.querySelector("strong").textContent = challenge.title;
+    existing.querySelector("em").textContent = challenge.description;
+    existing.querySelector(".cuddle-money-challenge-value").textContent = formatDelta(challenge.reward);
   }
 
   function tileMarkup(letter, result) {
@@ -1040,6 +1044,7 @@
       runningPayoutPayload = null;
     }
     replaceVisibleMoneyCopy(root, activeGame);
+    activeChallengeBanner(activeGame, mode);
     starterRewardModal(activeGame, mode);
     challengeOfferModal(activeGame, mode);
     startPendingPayout(activeGame, mode);
@@ -1096,13 +1101,6 @@
     challenges: CHALLENGES.map(function cloneChallenge(challenge) { return Object.assign({}, challenge); }),
     getActiveGame: function getActiveGame() { return activeGame; },
     acceptChallenge: function acceptCurrentChallenge() { return activeGame ? acceptChallenge(activeGame) : { ok: false }; },
-    declineChallenge: function declineCurrentChallenge() { return activeGame ? declineChallenge(activeGame) : { ok: false }; },
-    // Called from cuddle-campaign.js's insertMap while stitching together
-    // the live play screen -- see activeChallengeBannerMarkup's comment for
-    // why this replaced the old post-render DOM patch.
-    renderChallengeBanner: function renderChallengeBanner(game) {
-      if (!game || !game.state) return "";
-      return activeChallengeBannerMarkup(game, ensureMode(game));
-    }
+    declineChallenge: function declineCurrentChallenge() { return activeGame ? declineChallenge(activeGame) : { ok: false }; }
   });
 }());

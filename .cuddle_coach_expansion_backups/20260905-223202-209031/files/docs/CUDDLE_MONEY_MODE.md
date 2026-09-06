@@ -7,11 +7,11 @@ This patch changes only the Cuddle single-player campaign. It keeps the engine's
 - Normal rounds advance when the Wordle is solved. Cumulative score thresholds no longer decide whether a solved round passes.
 - The score display becomes a dollar wallet. Existing tile, early-solve, mulligan, quest, and other bonuses still feed the wallet.
 - After a solved normal round, a cash-out overlay steps through every submitted row. Each row receives a gold increment and the wallet counts upward before the round total appears.
-- Every new run begins with a **Starting Bonus** choice drawn from three randomly selected permanent rewards; one choice is free.
+- Every new run begins with a choice of three randomly selected boss rewards, and one choice is free.
 - Boss I now gates round 3, so it happens after round 2 and the round-2 shop. The later gates remain before rounds 7 and 10, followed by the final boss.
 - Optional mini-challenges can appear before non-boss rounds beginning with round 2. The player accepts or declines before play starts. Accepted challenges pay bonus money only when the Wordle is solved.
 - Mini-challenges never stack on top of a real boss.
-- Existing Cuddle saves are preserved. Starting a fresh run is recommended for seeing the Starting Bonus and the new first-boss timing cleanly.
+- Existing Cuddle saves are preserved. Starting a fresh run is recommended for seeing the free opening reward and the new first-boss timing cleanly.
 
 ## Implemented mini-challenges
 
@@ -108,7 +108,7 @@ For a completion condition such as “keep one mulligan,” check it in the solv
 
 ## Manual test checklist
 
-1. Start a new Easy, Medium, or Hard Cuddle run and confirm the Starting Bonus picker appears before play.
+1. Start a new Easy, Medium, or Hard Cuddle run and confirm the free reward picker appears before play.
 2. Complete rounds 1 and 2, visit the shop, and confirm Boss I appears before round 3.
 3. Solve a round with money below the former target and confirm progression still succeeds.
 4. Solve a round and confirm every history row receives a visible gold increment before the total and Collect button appear.
