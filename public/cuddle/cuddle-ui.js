@@ -316,7 +316,6 @@
           <div class="cuddle-header-title">
             <span class="cuddle-eyebrow">SINGLE-PLAYER CAMPAIGN</span>
             <div class="cuddle-header-title-line">
-              <h1>CUDDLE</h1>
               <span class="cuddle-header-score" aria-label="Total score ${state.score}${game.isBossRound() ? "" : `, goal ${target}`}">Score ${state.score}${game.isBossRound() ? "" : ` / ${target}`}</span>
             </div>
           </div>
