@@ -426,7 +426,7 @@
       return choice && choice.id === rewardId;
     });
     if (!mode || !mode.starterRewardPending || !reward) {
-      return { ok: false, error: "That Starting Bonus is not available." };
+      return { ok: false, error: "That starting reward is not available." };
     }
 
     var message = applyStarterRewardNow(this, reward.id);
@@ -434,12 +434,12 @@
     mode.starterRewardClaimed = true;
     mode.starterRewardId = reward.id;
     mode.starterRewardChoices = [];
-    this.state.lastMessage = "Starting Bonus: " + reward.title + ". " + (message || reward.description);
+    this.state.lastMessage = "Free starting reward: " + reward.title + ". " + (message || reward.description);
     this.state.bossRewardNotice = {
       icon: reward.icon || "\uD83C\uDF81",
       title: reward.title,
       message: message || reward.description,
-      bossTitle: "Starting Bonus"
+      bossTitle: "Welcome gift"
     };
     if (Array.isArray(this.state.rewardBookHistory)) {
       this.state.rewardBookHistory.push({
@@ -800,9 +800,9 @@
     }).join("");
     root.insertAdjacentHTML("beforeend",
       "<div id=\"cuddleMoneyStarterOverlay\" class=\"cuddle-money-overlay\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"cuddleMoneyStarterTitle\">"
-      + "<section class=\"cuddle-money-modal\"><span class=\"cuddle-money-kicker\">STARTING BONUS</span>"
-      + "<h2 id=\"cuddleMoneyStarterTitle\">Choose your Starting Bonus!</h2>"
-      + "<p>Choose one permanent bonus before your first Wordle.</p>"
+      + "<section class=\"cuddle-money-modal\"><span class=\"cuddle-money-kicker\">WELCOME GIFT</span>"
+      + "<h2 id=\"cuddleMoneyStarterTitle\">Choose one free boss reward</h2>"
+      + "<p>Start the run with one permanent reward before your first Wordle.</p>"
       + "<div class=\"cuddle-money-choice-grid\">" + cards + "</div></section></div>"
     );
   }

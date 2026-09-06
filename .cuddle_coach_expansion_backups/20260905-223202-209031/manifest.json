@@ -1,0 +1,39 @@
+{
+  "patch": "Cuddle Coach Expansion",
+  "patch_version": "1.0.0",
+  "created_at": "2026-09-05T22:32:02.213043-04:00",
+  "repository": "C:\\Users\\T-Dawg\\vswordle\\UnknownMediocreTutorial",
+  "files": [
+    {
+      "path": "public/index.html",
+      "existed": true,
+      "sha256": "7d716dc3b426c08f7471e33bb290204ead13c64f861cfe2cefef123ac0c084e0"
+    },
+    {
+      "path": "public/cuddle/cuddle-money-mode.js",
+      "existed": true,
+      "sha256": "cc0b1f60abc9cd5632d9cf3cb855a30fcd2aa432a15c319decefbdf1b6261481"
+    },
+    {
+      "path": "public/cuddle/cuddle-coach-expansion.js",
+      "existed": false
+    },
+    {
+      "path": "public/cuddle/cuddle-coach-expansion.css",
+      "existed": false
+    },
+    {
+      "path": "docs/CUDDLE_MONEY_MODE.md",
+      "existed": true,
+      "sha256": "3dce1e094aa48fb0059fd507d1e063a78f91e09473bf661bcd76b5f4c426b73f"
+    },
+    {
+      "path": "docs/CUDDLE_COACH_EXPANSION.md",
+      "existed": false
+    },
+    {
+      "path": "docs/CUDDLE_HARDER_WORDLE_IDEAS.md",
+      "existed": false
+    }
+  ]
+}
