@@ -130,13 +130,23 @@
     opacity 150ms ease, transform 200ms ease;
 }
 
-/* The guesser sidebar's actual content (the compact powers row + short
-   action log) is far shorter than the board beside it -- stretched to
-   match the board's full height (the workspace's default align-items),
-   its bordered/shadowed card just showed a lot of empty background below
-   that content instead of the content sizing its own box. */
+/* Stretched to the workspace row's full height, which is what gives the
+   action log inside it a DEFINITE height to scroll within: the log is
+   flex:1 1 auto/min-height:0/overflow-y:auto (see #actionLogGuesser
+   below), and none of that can bite while its ancestors are sized by
+   their own content instead. Left content-sized (align-self:flex-start),
+   a long log grew the sidebar past the bottom of the screen -- 736px tall
+   inside a 700px viewport in one measured case -- and .play-area's
+   overflow:hidden then clipped the overshoot with no way to scroll to it,
+   which is what pushed the board/keyboard out of view for the rest of the
+   match. The setter's sidebar is stretched by its row's default
+   align-items and has always scrolled its log correctly for this reason.
+   The original reason for flex-start ("a bordered/shadowed card showing
+   empty background below short content") no longer applies: this log was
+   since made borderless and background-none, so the stretched box is
+   invisible when the log is short. */
 #guesserScreen .guesser-sidebar {
-  align-self: flex-start;
+  align-self: stretch;
   /* Sits on the left of the board, same side as the setter's sidebar
      (the toggle button's own positioning already assumes a left-side
      sidebar -- see .guesser-sidebar-toggle below). DOM order keeps the
@@ -155,12 +165,22 @@
   display: none !important;
 }
 
-#guesserScreen .guesser-powers-row {
-  min-height: 0;
-}
-
+/* Both of these sit between the (now stretched, definite-height) sidebar
+   and the action log, and both were display:block -- a block box is sized
+   by its content, and flex properties on a block child of a block parent
+   do nothing at all. That broke the chain the log needs: its own
+   flex:1 1 auto/min-height:0/overflow-y:auto can only clamp-and-scroll if
+   every ancestor between it and a definite height is itself a shrinkable
+   flex item. Without that the log just grew (722px inside a 403px
+   sidebar, measured), so old lines were clipped and unreachable instead
+   of scrollable. Making them real flex columns passes the sidebar's
+   height down to the log. */
+#guesserScreen .guesser-powers-row,
 #guesserScreen .guesser-info-col {
+  display: flex;
+  flex-direction: column;
   flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* The log is the whole panel now, so it gets real room and readable type
