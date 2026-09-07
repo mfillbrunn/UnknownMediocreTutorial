@@ -7,7 +7,7 @@ This patch changes only the Cuddle single-player campaign. It keeps the engine's
 - Normal rounds advance when the Wordle is solved. Cumulative score thresholds no longer decide whether a solved round passes.
 - The score display becomes a dollar wallet. Existing tile, early-solve, mulligan, quest, and other bonuses still feed the wallet.
 - After a solved normal round, a cash-out overlay steps through every submitted row. Each row receives a gold increment and the wallet counts upward before the round total appears.
-- Every new run begins with a **Starting Bonus** choice drawn from three randomly selected permanent rewards; one choice is free.
+- Every new run begins with a **Starting Bonus** choice drawn from three randomly selected permanent rewards; one choice is free. On Easy and Medium those are drawn from the shared boss reward book (the same pool a boss victory grants); on Hard they're drawn from the ordinary round-clear reward catalog instead, since Hard already forgoes the extra compensation picks Easy/Medium get and handing it a boss-tier reward for free on top of that made the hardest difficulty's opening pick the single strongest one in the game.
 - Boss I now gates round 3, so it happens after round 2 and the round-2 shop. The later gates remain before rounds 7 and 10, followed by the final boss.
 - Optional mini-challenges can appear before non-boss rounds beginning with round 2. The player accepts or declines before play starts. Accepted challenges pay bonus money only when the Wordle is solved.
 - Mini-challenges never stack on top of a real boss.
@@ -20,7 +20,7 @@ This patch changes only the Cuddle single-player campaign. It keeps the engine's
 | Pocket Tally | First two guesses show only the total green/yellow counts, not positions. | $16 |
 | Fogged Slot | One feedback position is hidden for the first two guesses. | $12 |
 | Blue Haze | Green and yellow are merged into blue for the first two guesses. | $14 |
-| One Little Lie | One tile on the opening row is a lie, but the whole row's colors are hidden so it can't be picked out. | $10 |
+| One Little Lie | One tile on the opening row is a lie -- the row shows normal colors, but none of its five letters update the hand until a later guess confirms them for real. | $10 |
 | Locked Opener | No mulligan before the first submitted guess. | $8 |
 | Five-Guess Sprint | One fewer guess than normal, never fewer than four. | $18 |
 | Vowel Budget | At most two vowels in each of the first two guesses. | $10 |
@@ -40,8 +40,8 @@ var CONFIG = Object.freeze({
   rewardPerCompletedRound: 2,
   difficultyRewardBonus: Object.freeze({ easy: 0, medium: 2, hard: 4 }),
   minimumGuessCap: 4,
-  payoutRowPauseMs: 250,
-  payoutBankDurationMs: 430,
+  payoutRowPauseMs: 100,
+  payoutBankDurationMs: 180,
   payoutCoinCount: 24
 });
 ```

@@ -41,8 +41,8 @@
     rewardPerCompletedRound: 2,
     difficultyRewardBonus: Object.freeze({ easy: 0, medium: 2, hard: 4 }),
     minimumGuessCap: 4,
-    payoutRowPauseMs: 250,
-    payoutBankDurationMs: 430,
+    payoutRowPauseMs: 100,
+    payoutBankDurationMs: 180,
     payoutCoinCount: 24
   });
 
@@ -95,7 +95,7 @@
       effect: "singleLie",
       turns: 1,
       baseReward: 10,
-      description: "Exactly one tile on your opening guess is a lie -- but the whole row's colors stay hidden so you can't tell which."
+      description: "Exactly one tile on your opening guess is a lie. All five letters stay unconfirmed on your hand until a later guess clears them."
     },
     {
       id: "lockedOpener",
@@ -211,6 +211,9 @@
       starterRewardClaimed: Boolean(existingRun),
       starterRewardChoices: [],
       starterRewardId: null,
+      // "boss" (the shared reward book, all other difficulties) or "normal"
+      // (hard mode -- see starterRewardChoices).
+      starterRewardSource: "boss",
       challengeOffer: null,
       activeChallenge: null,
       lastRoundKey: null,
@@ -261,6 +264,7 @@
     mode.starterRewardPending = Boolean(mode.starterRewardPending);
     mode.starterRewardClaimed = Boolean(mode.starterRewardClaimed);
     mode.starterRewardChoices = Array.isArray(mode.starterRewardChoices) ? mode.starterRewardChoices : [];
+    mode.starterRewardSource = mode.starterRewardSource === "normal" ? "normal" : "boss";
     mode.recentChallengeIds = Array.isArray(mode.recentChallengeIds) ? mode.recentChallengeIds.slice(-3) : [];
     mode.noOfferStreak = Math.max(0, asInteger(mode.noOfferStreak, 0));
     mode.acceptedChallenges = Math.max(0, asInteger(mode.acceptedChallenges, 0));
@@ -271,20 +275,33 @@
     return mode;
   }
 
+  // Every other difficulty's Starting Bonus is drawn from the shared boss
+  // reward book -- a free taste of a reward tier the player would otherwise
+  // have to clear a boss to earn. Hard mode already gets no compensation
+  // picks the way easy/medium do (see startNewMega's difficultyStart
+  // branch), so handing it a boss-tier reward for free on top of that was
+  // backwards: the hardest difficulty ended up with the single strongest
+  // opening pick. It draws from the ordinary round-clear catalog instead.
   function starterRewardChoices(game) {
+    var difficulty = String(game.state && game.state.megaState && game.state.megaState.difficulty || "hard");
+    if (difficulty === "hard" && typeof game._upgradeCatalog === "function") {
+      return { source: "normal", choices: shuffled(game._upgradeCatalog(), game).slice(0, 3) };
+    }
     var questBook = window.CuddleQuestBook;
     var choices = STARTER_REWARD_IDS.map(function rewardForId(id) {
       return questBook && typeof questBook.getBossReward === "function" ? questBook.getBossReward(id) : null;
     }).filter(Boolean);
-    return shuffled(choices, game).slice(0, 3);
+    return { source: "boss", choices: shuffled(choices, game).slice(0, 3) };
   }
 
   function resetModeForNewRun(game) {
     var state = game.state;
     var mode = defaultModeState(false);
+    var starter = starterRewardChoices(game);
     mode.starterRewardPending = true;
     mode.starterRewardClaimed = false;
-    mode.starterRewardChoices = starterRewardChoices(game);
+    mode.starterRewardChoices = starter.choices;
+    mode.starterRewardSource = starter.source;
     mode.roundStartingMoney = asNumber(state.score, 0) - asNumber(state.roundScore, 0);
     mode.lastRoundKey = [state.runId, state.round, state.secret].join(":");
     state[MODE_KEY] = mode;
@@ -329,7 +346,8 @@
     var offer = Object.assign({}, definition, {
       reward: challengeReward(game, definition),
       offeredRound: state.round,
-      hiddenIndex: Math.floor(randomFor(game) * 5)
+      hiddenIndex: Math.floor(randomFor(game) * 5),
+      fakeIndex: Math.floor(randomFor(game) * 5)
     });
     mode.challengeOffer = offer;
     mode.recentChallengeIds = mode.recentChallengeIds.concat(offer.id).slice(-3);
@@ -428,7 +446,18 @@
       return { ok: false, error: "That Starting Bonus is not available." };
     }
 
-    var message = applyStarterRewardNow(this, reward.id);
+    // Hard mode's Starting Bonus comes from the ordinary round-clear catalog
+    // (see starterRewardChoices), which applies through _applyUpgradeChoice
+    // (mutating state.upgrades/removedLetters/etc. directly) rather than
+    // _applyBossReward -- the two pools don't share an id space.
+    var message;
+    if (mode.starterRewardSource === "normal" && typeof this._applyUpgradeChoice === "function") {
+      var applied = this._applyUpgradeChoice(reward);
+      if (!applied.ok) return applied;
+      message = "";
+    } else {
+      message = applyStarterRewardNow(this, reward.id);
+    }
     mode.starterRewardPending = false;
     mode.starterRewardClaimed = true;
     mode.starterRewardId = reward.id;
@@ -569,14 +598,25 @@
 
     var result = originalApplyBossFeedback.apply(this, arguments);
     if (challenge.effect !== "singleLie" || asInteger(this.state.guessesUsed, 0) >= 1) return result;
-    // Only one tile actually lies, but showing the other four truthfully
-    // gave the lie away -- a player could spot it by elimination, or with a
-    // repeated letter, by an outright impossible color combination. Every
-    // other masked-feedback effect in this engine (Count Only, Delayed
-    // Feedback, ...) blanks the whole row for exactly this reason; do the
-    // same here instead of leaking four real clues alongside the one fake.
-    var shown = feedback.map(function markUnknown() { return "unknown"; });
-    return Object.assign({}, result, { shown: shown, learn: shown.slice(), fake: true });
+    // The BOARD looks like a normal row -- five real-looking tiles, one of
+    // them a lie -- so it reads as "spot the lie", not a fully masked guess.
+    // But if the other four landed on the player's hand as trusted green/
+    // yellow, comparing which of the five letters DIDN'T get confirmed
+    // would give the lie away just as surely as blanking the row would have.
+    // So none of the five teach the hand anything (learn: all "unknown",
+    // same signal _updateKnowledge already treats as "withheld"), and all
+    // five go into the same unknown pile any masked guess uses -- drawn
+    // with a "?" until a later, untainted guess confirms them for real.
+    var shown = Array.isArray(result.shown) ? result.shown.slice() : feedback.slice();
+    var index = clamp(asInteger(challenge.fakeIndex, 0), 0, Math.max(0, shown.length - 1));
+    var truth = feedback[index];
+    var alternatives = ["green", "yellow", "grey"].filter(function wrongColor(color) {
+      return color !== truth;
+    });
+    shown[index] = alternatives[Math.floor(randomFor(this) * alternatives.length)];
+    var learn = shown.map(function markUnknown() { return "unknown"; });
+    this._markUnknownGlyphs(word);
+    return Object.assign({}, result, { shown: shown, learn: learn, fake: true });
   };
 
   function challengeValidationError(game, challenge) {
@@ -845,8 +885,7 @@
     if (!challenge || game.isBossRound()) return "";
     return (
       "<section id=\"cuddleMoneyChallengeBanner\" class=\"cuddle-money-challenge-banner\" aria-live=\"polite\">"
-      + "<span class=\"cuddle-money-challenge-copy\"><small>CHALLENGE ACTIVE</small><strong>" + escapeHtml(challenge.title || "") + "</strong><em>" + escapeHtml(challenge.description || "") + "</em></span>"
-      + "<span class=\"cuddle-money-challenge-value\">" + formatDelta(challenge.reward) + "</span>"
+      + "<span class=\"cuddle-money-challenge-copy\"><strong>" + escapeHtml(challenge.title || "") + "</strong><em>" + escapeHtml(challenge.description || "") + "</em></span>"
       + "<span id=\"cuddleMoneyClock\" class=\"cuddle-money-clock\" hidden></span>"
       + "</section>"
     );

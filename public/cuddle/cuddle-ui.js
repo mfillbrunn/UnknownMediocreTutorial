@@ -153,10 +153,31 @@
     if (landing || !game?.state) root.innerHTML = renderLanding();
     else root.innerHTML = renderRun();
     syncQuickModeTimer();
+    syncPageScrollLock();
     keepCurrentRowVisible();
     // The bolt-on modules patch their panels in on the next frame, which can
     // shrink the board after the first pass; watch for that and re-align.
     watchScrollerResize();
+  }
+
+  // cuddle.css's compact layout locks #cuddleScreen to overflow:hidden
+  // whenever .cuddle-play-area is on screen (:has(.cuddle-play-area)), and
+  // unlocks it again the moment a guess ends the round and swaps in the
+  // upgrade/round-end overlay's markup instead -- back and forth, many times
+  // a round, entirely inside this one screen (showScreen() is never called
+  // again after Cuddle first opens). client/helpers.js's resetPageScroll()
+  // documents exactly this failure mode for the setter/guesser screens: a
+  // browser that keeps its scroll offset when overflow flips to hidden
+  // leaves the page shifted with no way to scroll back -- Chromium clamps it
+  // itself, iOS Safari does not, which reads as the game being stuck until a
+  // reload. showScreen() already calls resetPageScroll() once, on the way
+  // into Cuddle; this covers every later lock/unlock inside it.
+  let playAreaWasLocked = false;
+  function syncPageScrollLock() {
+    const isLocked = Boolean(root?.querySelector(".cuddle-play-area"));
+    if (isLocked === playAreaWasLocked) return;
+    playAreaWasLocked = isLocked;
+    if (typeof window.resetPageScroll === "function") window.resetPageScroll();
   }
 
   // On short screens the board scrolls inside its own box so the quest, the
@@ -279,7 +300,7 @@
           <div class="cuddle-logo" aria-hidden="true">C</div>
           <p class="cuddle-eyebrow">SINGLE-PLAYER ROGUELITE</p>
           <h1>CUDDLE</h1>
-          <p class="cuddle-tagline">Build words from cards. Learn the secret. Shape the deck. Survive ${scoringRounds()} rounds and four bosses.</p>
+          <p class="cuddle-tagline">Build words from cards. Learn the secret. Shape the deck. Survive ${scoringRounds()} rounds and two bosses.</p>
           <div class="cuddle-save-summary ${hasRun ? "" : "is-empty"}">
             <span>${escapeHtml(statusLabel)}</span>
             ${hasRun ? `<strong>Score ${state.score} · Round ${state.round}/${scoringRounds()}</strong>` : `<strong>Your run saves in this browser.</strong>`}
@@ -1232,6 +1253,9 @@
     }
     if (game.state.status === "shop") {
       return window.CuddleCampaign.renderShop(game);
+    }
+    if (game.state.status === "branchJunction" && window.CuddleBranchMap) {
+      return window.CuddleBranchMap.renderJunction(game);
     }
     if (game.state.status === "playing" && game.state.roundIntroPending
         && typeof window.CuddleCampaign.renderRoundIntroMap === "function") {

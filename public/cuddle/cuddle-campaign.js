@@ -728,9 +728,7 @@
     }
     return `
       <div class="cuddle-category-readout" aria-label="Known solution categories">
-        <span class="cuddle-category-label">Solution theme</span>
         <div class="cuddle-category-chips">${content}</div>
-        ${campaign.categorySense > 0 ? `<span class="cuddle-category-sense">Theme Sense ×${campaign.categorySense}</span>` : ""}
       </div>`;
   }
 
@@ -1043,6 +1041,11 @@
     if (action === "toggle-map-stats") {
       mapStatsOpen = !mapStatsOpen;
       return { ok: true };
+    }
+    if (action === "resolve-branch-junction") {
+      return typeof game.resolveBranchJunction === "function"
+        ? game.resolveBranchJunction(itemId)
+        : { ok: false, error: "The branching map is unavailable." };
     }
     return { ok: false, error: "Unknown campaign action." };
   }

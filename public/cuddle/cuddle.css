@@ -1754,8 +1754,7 @@
   font-size: 0.85rem;
 }
 
-.cuddle-map-kicker,
-.cuddle-category-label {
+.cuddle-map-kicker {
   color: #e6bb74;
   font-size: 0.68rem;
   font-weight: 800;
@@ -1777,8 +1776,7 @@
   gap: 6px;
 }
 
-.cuddle-category-chip,
-.cuddle-category-sense {
+.cuddle-category-chip {
   display: inline-flex;
   align-items: center;
   min-height: 26px;
@@ -1802,15 +1800,6 @@
 
 .cuddle-category-chip.is-pending {
   animation: cuddle-category-pulse 1.4s ease-in-out infinite;
-}
-
-.cuddle-category-sense {
-  min-height: 22px;
-  padding: 3px 8px;
-  color: #d9c4f1;
-  border-color: rgba(180, 143, 220, 0.28);
-  background: rgba(137, 91, 177, 0.13);
-  font-size: 0.67rem;
 }
 
 .cuddle-campaign-map-scroll {
@@ -2143,15 +2132,33 @@
   padding: 2px 0 42px;
 }
 
+/* A scalloped, lantern-strung awning along the top edge and a single faint
+   paw print in the corner give the card a bit of stall/market atmosphere
+   ("The Wandering Paw") without a raster asset. Both are tiny, self-
+   contained tiles at a fixed size rather than one image stretched to
+   "cover" the card: this card's aspect ratio swings from a wide single row
+   on desktop to a tall stack on narrow phones (the title/description wrap
+   above the wallet badge), and "cover" on a shape that different would
+   either crop the motif down to an unrecognizable sliver or blow it up
+   past the point of reading as a shape at all. Layered under the card's
+   own gradient (painted first, so it sits on top): that gradient isn't
+   fully opaque, so the motifs still read through it. */
 .cuddle-shop-intro {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 22px;
   padding: 21px 22px;
+  overflow: hidden;
   border: 1px solid rgba(232, 191, 117, 0.2);
   border-radius: 18px;
-  background: linear-gradient(145deg, rgba(62, 46, 35, 0.78), rgba(31, 31, 42, 0.92));
+  background:
+    linear-gradient(145deg, rgba(62, 46, 35, 0.78), rgba(31, 31, 42, 0.92)),
+    url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj4KICA8ZyBmaWxsPSIjZThiZjc1IiBmaWxsLW9wYWNpdHk9IjAuMTYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEwMCwxMjApIHJvdGF0ZSgtMTApIj4KICAgIDxlbGxpcHNlIGN4PSIwIiBjeT0iNDAiIHJ4PSI0NiIgcnk9IjU2Ii8+CiAgICA8Y2lyY2xlIGN4PSItNDYiIGN5PSItMjQiIHI9IjE5Ii8+CiAgICA8Y2lyY2xlIGN4PSItMTQiIGN5PSItNDYiIHI9IjIxIi8+CiAgICA8Y2lyY2xlIGN4PSIyMCIgY3k9Ii00NiIgcj0iMjEiLz4KICAgIDxjaXJjbGUgY3g9IjUwIiBjeT0iLTI0IiByPSIxOSIvPgogIDwvZz4KPC9zdmc+Cg=="),
+    url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgNTAiPgogIDxwYXRoIGQ9Ik0wLDAgSDE4MCBWMTYgUTEzNSwzMiA5MCwxNiBRNDUsMzIgMCwxNiBaIiBmaWxsPSIjZThiZjc1IiBmaWxsLW9wYWNpdHk9IjAuMTgiLz4KICA8Y2lyY2xlIGN4PSI0NSIgY3k9IjMwIiByPSI1IiBmaWxsPSIjZjBjZjhmIiBmaWxsLW9wYWNpdHk9IjAuMzIiLz4KICA8Y2lyY2xlIGN4PSIxMzUiIGN5PSIzMCIgcj0iNSIgZmlsbD0iI2YwY2Y4ZiIgZmlsbC1vcGFjaXR5PSIwLjMyIi8+Cjwvc3ZnPgo=");
+  background-repeat: no-repeat, no-repeat, repeat-x;
+  background-position: 0 0, bottom -14px right -10px, top left;
+  background-size: auto, 130px 130px, auto 42px;
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.19);
 }
 
@@ -2311,6 +2318,27 @@
   display: block;
   width: min(360px, 100%);
   margin: 0 auto;
+}
+
+.cuddle-branch-shell {
+  min-height: 100%;
+}
+
+.cuddle-branch-page {
+  width: min(1080px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 18px 0 42px;
+}
+
+.cuddle-branch-intro {
+  margin: 0 2px 18px;
+  color: rgba(249, 235, 212, 0.78);
+  font-size: 0.92rem;
+  max-width: 60ch;
+}
+
+.cuddle-branch-choice small {
+  min-height: 2.6em;
 }
 
 @keyframes cuddle-map-cat-bob {

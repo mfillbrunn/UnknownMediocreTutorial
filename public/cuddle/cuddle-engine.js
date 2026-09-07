@@ -1847,6 +1847,12 @@
           icon: "🏅",
           title: "Quest Value",
           description: "Quests are worth 5 more points. Stacks every time you take it."
+        },
+        {
+          id: "questReroll",
+          icon: "🔄",
+          title: "Second Guess Quest",
+          description: "Gain one charge to reroll your active quest for a different one, any turn you like."
         }
       ];
       if (this.state.upgrades.mulliganSize < 2) {
@@ -2846,40 +2852,54 @@
     const count = 3 + Math.min(2, Number(state.cuddleBonuses.wideChoice || 0));
     return shuffle(this._upgradeCatalog(), this.random).slice(0, count);
   };
+  // Mutates state for one _upgradeCatalog() choice. Split out of
+  // chooseUpgrade so money-mode's hard-difficulty starting bonus (a normal
+  // reward instead of a boss reward, see cuddle-money-mode.js) can apply a
+  // choice from the same catalog without needing state.status === "upgrade"
+  // or a matching state.upgradeChoices entry.
+  CuddleGame.prototype._applyUpgradeChoice = function applyCuddleV3UpgradeChoice(choice) {
+    const state = cuddleV3EnsureState(this);
+    const custom = cuddleV3RewardDefinition(choice.id);
+    if (custom) {
+      const current = Number(state.cuddleBonuses[custom.id] || 0);
+      if (current >= custom.max) return { ok: false, error: "That reward is already fully upgraded." };
+      state.cuddleBonuses[custom.id] = current + 1;
+      return { ok: true };
+    }
+    switch (choice.id) {
+      case "removeLetter": {
+        const letter = (choice.letters || (choice.letter ? [choice.letter] : []))[0];
+        if (!letter) return { ok: false, error: "No removable letter was attached to that reward." };
+        state.removedLetters = unique([...state.removedLetters, letter]).sort();
+        return { ok: true };
+      }
+      case "extraMulligans":
+      case "mulliganSize":
+      case "yellowPoints":
+      case "earlyRoundPoint":
+      case "questRefreshes":
+      case "questCadence":
+        state.upgrades[choice.id] = Number(state.upgrades[choice.id] || 0) + 1;
+        return { ok: true };
+      case "questPoints":
+        state.upgrades.questPoints = Number(state.upgrades.questPoints || 0) + 5;
+        return { ok: true };
+      case "questReroll":
+        this._applyRewardEffect("questReroll");
+        return { ok: true };
+      default:
+        return { ok: false, error: "Unknown upgrade." };
+    }
+  };
+
   CuddleGame.prototype.chooseUpgrade = function chooseCuddleV3Upgrade(choiceKey) {
     const state = cuddleV3EnsureState(this);
     if (state.status !== "upgrade") return { ok: false, error: "No upgrade choice is open." };
     const choice = (state.upgradeChoices || []).find(item => item.key === choiceKey);
     if (!choice) return { ok: false, error: "That upgrade is not available." };
 
-    const custom = cuddleV3RewardDefinition(choice.id);
-    if (custom) {
-      const current = Number(state.cuddleBonuses[custom.id] || 0);
-      if (current >= custom.max) return { ok: false, error: "That reward is already fully upgraded." };
-      state.cuddleBonuses[custom.id] = current + 1;
-    } else {
-      switch (choice.id) {
-        case "removeLetter": {
-          const letter = (choice.letters || (choice.letter ? [choice.letter] : []))[0];
-          if (!letter) return { ok: false, error: "No removable letter was attached to that reward." };
-          state.removedLetters = unique([...state.removedLetters, letter]).sort();
-          break;
-        }
-        case "extraMulligans":
-        case "mulliganSize":
-        case "yellowPoints":
-        case "earlyRoundPoint":
-        case "questRefreshes":
-        case "questCadence":
-          state.upgrades[choice.id] = Number(state.upgrades[choice.id] || 0) + 1;
-          break;
-        case "questPoints":
-          state.upgrades.questPoints = Number(state.upgrades.questPoints || 0) + 5;
-          break;
-        default:
-          return { ok: false, error: "Unknown upgrade." };
-      }
-    }
+    const applied = this._applyUpgradeChoice(choice);
+    if (!applied.ok) return applied;
 
     cuddleV3RecordReward(this, choice, "round");
     const unlocked = cuddleV3RefreshSynergies(this, true);
