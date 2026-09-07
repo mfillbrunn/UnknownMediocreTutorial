@@ -171,6 +171,17 @@
     });
   }
 
+  // Wraps a "$5"/"+$5"/"-$1" dollar figure inside already-escaped text in a
+  // gold span, so a reward's actual payoff reads at a glance instead of
+  // blending into the surrounding description. Call AFTER escapeHtml (the
+  // "$" it looks for survives escaping unchanged).
+  function goldenMoney(escapedHtml) {
+    return String(escapedHtml == null ? "" : escapedHtml).replace(
+      /[+-]?\$\d[\d,]*/g,
+      function wrap(match) { return "<span class=\"cuddle-money-figure\">" + match + "</span>"; }
+    );
+  }
+
   function formatMoney(value) {
     var amount = Math.round(asNumber(value, 0));
     var sign = amount < 0 ? "-" : "";
@@ -833,7 +844,7 @@
     var cards = mode.starterRewardChoices.map(function rewardCard(reward) {
       return "<button type=\"button\" class=\"cuddle-money-choice\" data-cuddle-money-action=\"starter\" data-reward-id=\"" + escapeHtml(reward.id) + "\">"
         + "<span class=\"cuddle-money-choice-icon\">" + escapeHtml(reward.icon || "\uD83C\uDF81") + "</span>"
-        + "<span><strong>" + escapeHtml(reward.title) + "</strong><small>" + escapeHtml(reward.description) + "</small></span>"
+        + "<span><strong>" + escapeHtml(reward.title) + "</strong><small>" + goldenMoney(escapeHtml(reward.description)) + "</small></span>"
         + "<b>FREE</b></button>";
     }).join("");
     root.insertAdjacentHTML("beforeend",

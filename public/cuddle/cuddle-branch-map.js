@@ -74,7 +74,7 @@
       id: "windfall",
       icon: "💰",
       title: "Windfall",
-      description: "Pure luck: gain " + EVENT_WINDFALL_AMOUNT + " points for free.",
+      description: "Pure luck: gain +$" + EVENT_WINDFALL_AMOUNT + " for free.",
       luck: "money"
     },
     {
@@ -89,7 +89,7 @@
       id: "priceOfPower",
       icon: "🪙",
       title: "Price of Power",
-      description: "Take a free permanent upgrade now, but pay " + EVENT_MONEY_COST + " points for it.",
+      description: "Take a free permanent upgrade now, but pay $" + EVENT_MONEY_COST + " for it.",
       grantsUpgrade: true,
       cost: "money"
     },
@@ -121,7 +121,7 @@
       id: "debtRun",
       icon: "📉",
       title: "Debt Run",
-      description: "Take a free permanent upgrade now, but the next round's solve is worth no points.",
+      description: "Take a free permanent upgrade now, but the next round's solve is worth $0.",
       grantsUpgrade: true,
       cost: "noMoney"
     }
@@ -161,6 +161,17 @@
         "'": "&#039;"
       }[character];
     });
+  }
+
+  // Wraps a "$5"/"+$5"/"-$1" dollar figure inside already-escaped text in a
+  // gold span, so an event's actual payoff reads at a glance instead of
+  // blending into the surrounding description. Call AFTER escapeHtml (the
+  // "$" it looks for survives escaping unchanged).
+  function goldenMoney(escapedHtml) {
+    return String(escapedHtml == null ? "" : escapedHtml).replace(
+      /[+-]?\$\d[\d,]*/g,
+      function wrap(match) { return "<span class=\"cuddle-money-figure\">" + match + "</span>"; }
+    );
   }
 
   function ensureBranchMap(game) {
@@ -428,7 +439,7 @@
         break;
       case "money":
         game.state.score = Math.max(0, Number(game.state.score || 0) - EVENT_MONEY_COST);
-        messages.push("Paid " + EVENT_MONEY_COST + " points.");
+        messages.push("Paid $" + EVENT_MONEY_COST + ".");
         break;
       case "guess":
         branchMap.pendingPenalty = Object.assign({}, branchMap.pendingPenalty, { guess: 1 });
@@ -444,7 +455,7 @@
         break;
       case "noMoney":
         branchMap.pendingPenalty = Object.assign({}, branchMap.pendingPenalty, { noMoney: true });
-        messages.push("The next round's solve is worth no points.");
+        messages.push("The next round's solve is worth $0.");
         break;
       default:
         break;
@@ -456,7 +467,7 @@
     }
     if (definition.luck === "money") {
       game.state.score = Number(game.state.score || 0) + EVENT_WINDFALL_AMOUNT;
-      messages.push("+" + EVENT_WINDFALL_AMOUNT + " points, free.");
+      messages.push("+$" + EVENT_WINDFALL_AMOUNT + ", free.");
     }
 
     return definition.title + ": " + messages.join(" ");
@@ -861,7 +872,7 @@
       // An event stop resolves without a screen of its own, so what it just
       // did to the run is only ever reported here.
       + (state.lastMessage
-        ? "<p class=\"cuddle-branch-message\" role=\"status\">" + escapeHtml(state.lastMessage) + "</p>"
+        ? "<p class=\"cuddle-branch-message\" role=\"status\">" + goldenMoney(escapeHtml(state.lastMessage)) + "</p>"
         : "")
       + "<p class=\"cuddle-branch-intro\">" + escapeHtml(intro) + "</p>"
       + "<div class=\"cuddle-choice-grid\">"
@@ -876,7 +887,7 @@
           + " data-shop-item-id=\"" + node.row + ":" + node.col + "\">"
           + "<span class=\"cuddle-choice-icon\">" + escapeHtml(nodeIcon(node)) + "</span>"
           + "<strong>" + escapeHtml(nodeTitle(node) + direction) + "</strong>"
-          + "<small>" + escapeHtml(nodeDescription(node)) + "</small>"
+          + "<small>" + goldenMoney(escapeHtml(nodeDescription(node))) + "</small>"
           + "</button>"
         );
       }).join("")

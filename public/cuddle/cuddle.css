@@ -825,6 +825,15 @@
   line-height: 1.45;
 }
 
+/* A reward's actual payoff ($5, +$5, -$1) picked out in gold from the
+   surrounding description text, so it reads at a glance instead of
+   blending into the prose around it. Same gold token cuddle-money-mode.css
+   defines on #cuddleScreen for its own reward chip/header figures. */
+.cuddle-money-figure {
+  color: var(--cuddle-money-gold-bright, #e8bf75);
+  font-weight: 700;
+}
+
 .cuddle-upgrade-details {
   margin: 14px 0;
   color: var(--cuddle-muted);
