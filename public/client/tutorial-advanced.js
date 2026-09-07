@@ -338,7 +338,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 4) {
       advancedTutorialShow(
-        "Solved a position? It shows that letter plainly in green, just like a normal tile.",
+        "Solved a position? It shows that letter plainly, just like a normal tile.",
         {
           role: "setter",
           title: "Solved positions",
@@ -354,27 +354,11 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 5) {
       advancedTutorialShow(
-        "Still unsolved? You might see small red squares instead. Each one names a letter a yellow clue has already ruled out there.",
+        "Still unsolved? You might see small red squares instead. Each one names a letter a yellow clue has already ruled out there. That letter showed yellow there before, so it can never land in that spot again.",
         {
           role: "setter",
           title: "Red squares",
           current: 6,
-          total: totalSteps,
-          placement: "bottom"
-        }
-      );
-      highlightConstraintRowAndToggle("setter");
-      tutorialContinueMode = "advance";
-      return;
-    }
-
-    if (tutorialSubStep === 6) {
-      advancedTutorialShow(
-        "Here's the rule a red square is really saying: that letter showed yellow there before, so it can never land in that spot again.",
-        {
-          role: "setter",
-          title: "Reading a red square",
-          current: 7,
           total: totalSteps,
           placement: "bottom"
         }
