@@ -123,7 +123,7 @@ function runBasicInspectorTutorial(state) {
     const word = state.tutorialGuesses?.[0] || "CHAMP";
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "Welcome to Vowel Play. Here's how the game is played: One player hides a secret five-letter word, and the other player is hunting for it. In on game, you will play both sides. Let's start with the hunting.",
+        "Welcome to Vowel Play. Here's how the game is played: One player hides a secret five-letter word, and the other player is hunting for it. In one game, you will play both sides. Let's start with the hunting.",
         {
           role: "guesser",
           section: "How the game works",
@@ -272,7 +272,7 @@ function runBasicInspectorTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `Last one. Type ${word} and send it. That is the secret word, so this wins the round.`,
+        `The game continues like this, but I believe you've got this. So let's type ${word} and send it. That is the secret word, so this wins the round.`,
         {
           role: "guesser",
           section: "Final guess",
@@ -418,7 +418,7 @@ function runBasicSpyTutorial(state) {
           placement: "bottom"
         }
       );
-      highlightSetterHistory();
+      highlightPendingGuessRow();
       tutorialContinueMode = "advance";
       return;
     }
@@ -447,7 +447,7 @@ function runBasicSpyTutorial(state) {
     }
 
     basicTutorialShow(
-      `Now try ${validWord}. Every clue you have shown so far still holds true for it, so this one is allowed. Send it as your new secret.`,
+      `Clear the current word by clicking on Clear. And wow try ${validWord}. Every clue you have shown so far still holds true for it, so this one is allowed. Send it as your new secret.`,
       {
         role: "setter",
         section: "A switch that works",
@@ -515,9 +515,6 @@ function runBasicSpyTutorial(state) {
 }
 
 function runBasicSummaryTutorial(state) {
-  // UMT_REQUESTED_FIXES_20260904: walk the round summary one piece at a
-  // time instead of rushing past a screen with a score, a clock panel,
-  // and a five-column table all showing at once.
   clearHighlights();
   const guesses = state.history?.length || state.guessCount || 0;
   const totalSteps = 8;
@@ -556,7 +553,7 @@ function runBasicSummaryTutorial(state) {
 
   if (tutorialSubStep === 2) {
     basicTutorialShow(
-      "Secret: the word being hidden at that exact moment. It can change from guess to guess.",
+      "Secret: the word being hidden at that exact moment. It can change from guess to guess - we'll learn about that next.",
       {
         role: "guesser",
         section: "Secret column",
@@ -572,7 +569,7 @@ function runBasicSummaryTutorial(state) {
 
   if (tutorialSubStep === 3) {
     basicTutorialShow(
-      "Guess: the word actually sent that turn.",
+      "Guess: the word actually sent that turn. Those were the words you had typed in.",
       {
         role: "guesser",
         section: "Guess column",
@@ -604,7 +601,7 @@ function runBasicSummaryTutorial(state) {
 
   if (tutorialSubStep === 5) {
     basicTutorialShow(
-      "Left: how many words could still be the secret after that guess. Lower means the guesser closed in more.",
+      "And this shows many words could still be the secret after that guess. Lower means the guesser closed in more.",
       {
         role: "guesser",
         section: "Left column",
@@ -620,7 +617,7 @@ function runBasicSummaryTutorial(state) {
 
   if (tutorialSubStep === 6) {
     basicTutorialShow(
-      "Next round you are hiding instead of hunting, so the goal flips completely. Then you want this number to be as big as you can make it.",
+      "And for this round, your opponent scored 3 points because it took you three guesses to guess the secret. As the guesser, you want this to be as small as possible. But next round you are hiding instead of hunting, so the goal flips completely - then you want this number to be as big as you can make it.",
       {
         role: "guesser",
         section: "The goal flips",
