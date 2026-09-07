@@ -1944,6 +1944,32 @@ function validateSetterSecretWord(word) {
   return { valid: true, reason: null };
 }
 
+// Reason -> primary-button label for an invalid draft, so the Secretkeeper
+// can see WHY a word is rejected without having to tap it first and wait
+// for the toast. Kept as its own table (rather than inline in
+// computeSetterSecretStatus) so every reason validateSetterSecretWord can
+// return has to be handled here too -- an unhandled reason falls through
+// to the old generic label instead of silently going unlabeled.
+function invalidSecretLabel(validation) {
+  switch (validation.reason) {
+    case "not-a-secret":
+      return "NOT ALLOWED AS SECRET";
+    case "not-a-word":
+      return "NOT IN DICTIONARY";
+    case "inconsistent":
+      return "INCONSISTENT WITH CLUES";
+    case "assassin":
+      return "TOO CLOSE TO ASSASSIN WORD";
+    case "tutorial-script":
+      // Same word the toast reveals on tap (see
+      // reportSetterSecretRejection) -- the tutorial is guided practice,
+      // not a puzzle to solve blind, so naming it up front is the point.
+      return validation.expected ? `TYPE ${validation.expected}` : "SECRET NOT ALLOWED";
+    default:
+      return "SECRET NOT ALLOWED";
+  }
+}
+
 // THE shared status computation the task asks for -- everything about the
 // setter's draft/decision controls (primary label, whether Clear shows,
 // whether the primary button is enabled, and which server action pressing
@@ -2037,15 +2063,36 @@ function computeSetterSecretStatus() {
   // Complete, different word -- validate it exactly like submitSetterNew()
   // does today, plus the round locks that forbid a NEW secret specifically
   // (opening-miss lock, Freeze) even when the word itself would otherwise
-  // be perfectly legal.
+  // be perfectly legal. The lock is checked first and reported on its own:
+  // it's a round-level block that has nothing to do with the typed word,
+  // so a word that's ALSO invalid for some other reason still just reads
+  // as locked -- that's the actual blocker standing in front of it.
   const newBlockedByLock =
     isOpeningMissSecretLocked() || !!state.powers?.freezeActive;
-  const wordValid = validateSetterSecretWord(draftUpper).valid;
 
-  if (!wordValid || newBlockedByLock) {
+  if (newBlockedByLock) {
     return {
       mode: "invalid",
-      primaryLabel: "SECRET NOT ALLOWED",
+      primaryLabel: isOpeningMissSecretLocked()
+        ? "SECRET LOCKED THIS ROUND"
+        : "SECRET LOCKED (LOCKDOWN)",
+      primaryEnabled: false,
+      clearVisible: true,
+      clearEnabled: !editingBlocked,
+      action: null
+    };
+  }
+
+  const validation = validateSetterSecretWord(draftUpper);
+
+  if (!validation.valid) {
+    return {
+      mode: "invalid",
+      // Names the actual reason instead of a generic "not allowed" -- see
+      // reportSetterSecretRejection for the matching toast/announce shown
+      // if the player taps anyway, which this label deliberately mirrors
+      // so the two never say different things about the same rejection.
+      primaryLabel: invalidSecretLabel(validation),
       primaryEnabled: false,
       clearVisible: true,
       clearEnabled: !editingBlocked,
