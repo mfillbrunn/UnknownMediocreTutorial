@@ -46,8 +46,8 @@ function basicFeedbackLegend() {
 function basicTurnRhythm() {
   return `
     <div class="tutorial-tiny-steps" aria-label="How a turn works">
-      <span><b>1.</b> The hunter sends a word.</span>
-      <span><b>2.</b> The hider keeps or swaps the secret.</span>
+      <span><b>1.</b> The guesser sends a word.</span>
+      <span><b>2.</b> The secretkeeper keeps or swaps the secret.</span>
       <span><b>3.</b> The word comes back in colors.</span>
       <span><b>4.</b> Repeat until the word is found.</span>
     </div>
@@ -57,10 +57,10 @@ function basicTurnRhythm() {
 function basicTurnOrderVisual() {
   return `
     <div class="tutorial-tiny-steps" aria-label="Who moves when">
-      <span><b>Turn 1:</b> both players type at once - hunter a guess, hider a secret.</span>
-      <span><b>After that:</b> the hunter sends a new word first.</span>
-      <span><b>Then:</b> the hider answers by keeping or swapping.</span>
-      <span>Hunter, hider, hunter, hider - back and forth to the end.</span>
+      <span><b>Turn 1:</b> both players type at once - guesser a guess, secretkeeper a secret.</span>
+      <span><b>After that:</b> the guesser sends a new word first.</span>
+      <span><b>Then:</b> the secretkeeper answers by keeping or swapping.</span>
+      <span>Guesser, secretkeeper, guesser, secretkeeper - back and forth to the end.</span>
     </div>
   `;
 }
@@ -106,16 +106,6 @@ function basicScoreGoalsVisual() {
   `;
 }
 
-function basicMatchScoreVisual() {
-  return `
-    <div class="tutorial-summary-example">
-      <span>Alex's word survived <b>6 guesses</b></span>
-      <span>Sam's word survived <b>4 guesses</b></span>
-      <strong>Alex wins - their word held out longer.</strong>
-    </div>
-  `;
-}
-
 function runBasicTutorial(state, role) {
   if (role === "setter") {
     runBasicSpyTutorial(state);
@@ -133,7 +123,7 @@ function runBasicInspectorTutorial(state) {
     const word = state.tutorialGuesses?.[0] || "CHAMP";
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "Here's the whole game in one breath: a secret five-letter word, one player hunting for it, one hiding it. You play both sides. Let's start with the hunting.",
+        "Welcome to Vowel Play. Here's how the game is played: One player hides a secret five-letter word, and the other player is hunting for it. In on game, you will play both sides. Let's start with the hunting.",
         {
           role: "guesser",
           section: "How the game works",
@@ -146,38 +136,7 @@ function runBasicInspectorTutorial(state) {
       return;
     }
 
-    if (tutorialSubStep === 1) {
-      basicTutorialShow(
-        "Next round, you switch to hiding - same word, opposite job. Each side also gets its own bonus helper, which the later tutorials cover.",
-        {
-          role: "guesser",
-          section: "Two roles",
-          current: 2,
-          total: 4,
-          placement: "top"
-        }
-      );
-      tutorialContinueMode = "advance";
-      return;
-    }
-
-    if (tutorialSubStep === 2) {
-      basicTutorialShow(
-        "One thing to know before you move: only the very first turn is simultaneous. Both of you type blind, at the same time. From then on you take proper turns.",
-        {
-          role: "guesser",
-          section: "Who moves when",
-          current: 3,
-          total: 4,
-          placement: "top",
-          visualHtml: basicTurnOrderVisual()
-        }
-      );
-      tutorialContinueMode = "advance";
-      return;
-    }
-
-    if (state.simultaneousGuessSubmitted) {
+     if (state.simultaneousGuessSubmitted) {
       basicTutorialShow(
         "Sent. That was the simultaneous turn, so the colors show up once you have both moved.",
         {
@@ -194,7 +153,7 @@ function runBasicInspectorTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `Your turn is always the same three beats: type a word, send it, read the colors. Let's do one now. Type ${word}, then tap Submit Guess.`,
+        `The guesser role is always the same beats: type a word, send it, read the feedback; and find a new word. Let's do one now. Type ${word}, then tap Submit Guess.`,
         {
           role: "guesser",
           section: "First guess",
@@ -217,12 +176,12 @@ function runBasicInspectorTutorial(state) {
   if (round === 1) {
     const word = state.tutorialGuesses?.[1] || "CAIRN";
     const feedbackSteps = [
-      "CHAMP came back wearing colors. Let's read them one tile at a time.",
+      "CHAMP came back with feedback. Let's understand the feedback one tile at a time.",
       "C is green. Green means: right letter, right spot. The secret really does start with C.",
-      "H is gray. Gray means: this letter is not in the secret at all. Cross it off.",
-      "A is gray too, so there is no A in the secret either.",
-      "M is yellow. Yellow means: this letter IS in the secret, just not here. It lives somewhere else.",
-      "P is gray, so no P. And that is the whole system: green is right spot, yellow is wrong spot, gray is not in the word."
+      "H is grey. Grey means: this letter is not in the secret at all.",
+      "A is grey too, so there is no A in the secret either.",
+      "M is yellow. Yellow means: this letter IS in the secret, just not here. It must be somewhere else",
+      "P is grey, so no P. And that is the whole system: green is right spot, yellow is wrong spot, grey is not in the word."
     ];
 
     const totalSteps = 8;
@@ -242,7 +201,7 @@ function runBasicInspectorTutorial(state) {
 
     if (tutorialSubStep === feedbackSteps.length) {
       basicTutorialShow(
-        "Here's something people miss: you don't have to obey the clues. Any real word is allowed. Sometimes a throwaway guess that tests fresh letters teaches you more than a careful one.",
+        "Here's something that's important: you don't have to obey the feedback you have already received. Any real word is allowed.",
         {
           role: "guesser",
           section: "An information guess",
@@ -273,7 +232,7 @@ function runBasicInspectorTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `Type ${word} - it reuses the gray A and drops the yellow M on purpose, and that is completely fine.`,
+        `Type ${word} - it reuses the grey A and drops the yellow M on purpose, and that is completely fine.`,
         {
           role: "guesser",
           section: "Second guess",
@@ -345,7 +304,7 @@ function runBasicSpyTutorial(state) {
     const word = state.tutorialSecrets?.[0] || "BLIMP";
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "Now you are on the other side. You hide a word, the Guesser hunts for it, and your job is to make that hunt take as long as you possibly can.",
+        "Now you are on the other side, the secretkeeper. This role is more complicated. You hide a word, the Guesser hunts for it, and your job is to make that hunt take as long as possible.",
         {
           role: "setter",
           section: "Now you hide",
@@ -375,7 +334,7 @@ function runBasicSpyTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `Pick your hiding word. Type ${word}, then tap Submit New Secret. The Guesser never sees it - all they ever get back is colors.`,
+        `Pick your hiding word. Type ${word}, then tap Submit New Secret. The Guesser never sees your secret word - all they ever get back is colors.`,
         {
           role: "setter",
           section: "Pick a word to hide",
@@ -418,7 +377,7 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "Here is their guess - and here is your superpower. You see it before they see any colors. So now you get to choose: keep your word, or quietly switch to a different one.",
+        "Here is their guess - and here is the key of being a secretkeeper. You see the guess before they see any new feedback. And now you get to choose: keep your word, or quietly switch to a different one.",
         {
           role: "setter",
           section: "You see it first",
@@ -434,7 +393,7 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 1) {
       basicTutorialShow(
-        "That preview row shows the colors they would get if you keep your current word. That is a lot of help to hand over. Switching to a different word can give them much less.",
+        "It may feel like cheating but you cannot switch your word to just anything, though. Every color you have already shown has to stay true. Put simply: you are never allowed to turn a past clue into a lie.",
         {
           role: "setter",
           section: "Why change?",
@@ -450,7 +409,7 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 2) {
       basicTutorialShow(
-        "You cannot switch to just anything, though. Every color you have already shown has to stay true. Put simply: you are never allowed to turn a past clue into a lie.",
+        "This preview row shows what colors the guesser would see if you keep your current word. Switching to a different word can give them less info. ",
         {
           role: "setter",
           section: "One rule about switching",
@@ -466,7 +425,7 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 3) {
       basicTutorialShow(
-        `Let's break that rule on purpose. Type ${invalidWord}, but do not send it. Keep an eye on the big button underneath.`,
+        `Let's switch the word - and first break the rule on purpose and type ${invalidWord}, and try to send it. Look at the submit button - it tells you what is wrong.`,
         {
           role: "setter",
           section: "Break it on purpose",
@@ -484,23 +443,6 @@ function runBasicSpyTutorial(state) {
       waitForInvalidDraft(invalidWord);
       tutorialWaitingFor.label = `TYPE ${invalidWord}`;
       updateActionBadge();
-      return;
-    }
-
-    if (tutorialSubStep === 4) {
-      basicTutorialShow(
-        `The button went dead and reads SECRET NOT ALLOWED. You already showed a yellow L, so your word has to contain an L. ${invalidWord} does not - picking it would turn that clue into a lie. Clear the boxes.`,
-        {
-          role: "setter",
-          section: "Why that failed",
-          current: 5,
-          total: 6,
-          placement: "top",
-          mode: "hide"
-        }
-      );
-      highlightDraftRow("setter");
-      waitForDraftCleared();
       return;
     }
 
@@ -544,7 +486,7 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "New guess, so you could switch again. Bold switches actually earn you something - the Stars tutorial covers that. For now, let's take the easy road and keep what we have.",
+        "New guess, so you could switch again. Bold switches actually earn you something - the Stars tutorial covers that. For now, let's take the easy road and keep what we have. It's always an option, so oftentimes you can do better by switching. Tap the Submit button.",
         {
           role: "setter",
           section: "Changing is optional",
@@ -558,17 +500,6 @@ function runBasicSpyTutorial(state) {
       return;
     }
 
-    basicTutorialShow(
-      "You do not need to retype anything - your word is already loaded. The preview row shows exactly what the Guesser is about to get. Tap Keep Current Secret.",
-      {
-        role: "setter",
-        section: "Keep the secret",
-        current: 2,
-        total: 2,
-        placement: "top",
-        mode: "hide"
-      }
-    );
     const submitButton = tutorialSubmitBtnEl("setter");
     highlightPendingGuessRow();
     highlightEl(submitButton);
@@ -657,7 +588,7 @@ function runBasicSummaryTutorial(state) {
 
   if (tutorialSubStep === 4) {
     basicTutorialShow(
-      "Result: the colors that guess earned - green, yellow, or gray.",
+      "Result: the colors that guess earned - green, yellow, or grey.",
       {
         role: "guesser",
         section: "Result column",
@@ -673,7 +604,7 @@ function runBasicSummaryTutorial(state) {
 
   if (tutorialSubStep === 5) {
     basicTutorialShow(
-      "Left: how many words could still be the secret after that guess. Lower means the hunter closed in more.",
+      "Left: how many words could still be the secret after that guess. Lower means the guesser closed in more.",
       {
         role: "guesser",
         section: "Left column",
@@ -723,11 +654,6 @@ function runBasicSummaryTutorial(state) {
 }
 
 function runBasicMatchTutorial(state) {
-  // The five columns were already walked one at a time on the round
-  // summary after the Guesser round -- doing the whole tour again here is
-  // the same lesson twice. This screen only stops on what is genuinely
-  // new: the Secretkeeper round's table, where the Secret column visibly
-  // changes partway down because the player switched.
   clearHighlights();
   const totalSteps = 4;
 
@@ -748,7 +674,7 @@ function runBasicMatchTutorial(state) {
 
   if (tutorialSubStep === 1) {
     basicTutorialShow(
-      "Between two people, a tie goes to whoever was faster overall. Against the AI it just stays a tie - the AI answers instantly, so racing it would not be fair.",
+      "Between two people, a tie goes to whoever was faster overall in a timed game. Against the AI it just stays a tie - the AI answers instantly, so racing it would not be fair.",
       {
         section: "Breaking a tie",
         current: 2,
