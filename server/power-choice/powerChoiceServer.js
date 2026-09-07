@@ -1869,6 +1869,11 @@ function effectDetailText(option, detail) {
           ? `Revealed the secret's first letter as a permanent green clue: ${detail.letter}.`
           : "The secret's first letter was already known -- nothing to reveal.";
       }
+      if (option.powerId === "revealGreen") {
+        return detail?.letter && Number.isInteger(detail.pos)
+          ? `Revealed ${String(detail.letter).toUpperCase()} in position ${detail.pos + 1}.`
+          : "No unrevealed position remained -- nothing to peek at.";
+      }
       if (option.kind === "power") {
         // PERSISTENT_POWER_IDS grants (Informant/Letter Profile) are
         // permanent unlocks, not a one-turn effect -- saying "for this
@@ -2070,6 +2075,17 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
       // exists as apply()'s own side effect on state.
       if (option.powerId === "firstLetterReveal") {
         detail.letter = state.powers.firstLetterRevealedLetter || null;
+      }
+      // And again for Peek Letter: which letter/position it picked is only
+      // on state (revealGreenServer's apply sets revealGreenInfo, plus the
+      // powers.* pair postScore later clears), so without reading it back
+      // here the log could only say the card was taken, never what it
+      // actually revealed.
+      if (option.powerId === "revealGreen") {
+        const peek = state.revealGreenInfo || {};
+        const pos = Number.isInteger(peek.pos) ? peek.pos : state.powers.revealGreenPos;
+        detail.pos = Number.isInteger(pos) ? pos : null;
+        detail.letter = peek.letter || state.powers.revealGreenLetter || null;
       }
     }
   } else {
