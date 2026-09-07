@@ -1648,7 +1648,7 @@
           return "Mulligans now replace up to five cards.";
         case "richerColours":
           this.state.upgrades.yellowPoints += 2;
-          return "Yellow and green tiles are worth 2 more points each.";
+          return "Yellow and green tiles are worth $2 more each.";
         case "freeVowelSweep":
           this.state.upgrades.freeVowelSweep += 1;
           return "Each round now opens with a free vowel sweep.";
@@ -1671,7 +1671,7 @@
         // fresh secret exists.
         case "questHead":
           this.state.upgrades.questPoints += 10;
-          return "Quests are worth 10 more points.";
+          return "Quests are worth $10 more.";
         case "questDoublePick":
           // Consumed at the top of the "quest completed" branch in
           // submitDraft, where questRewardPicksRemaining is seeded from
@@ -1828,13 +1828,13 @@
           id: "yellowPoints",
           icon: "🟨",
           title: "Golden Value",
-          description: "Every yellow tile is worth one additional point."
+          description: "Every yellow tile is worth $1 more."
         },
         {
           id: "earlyRoundPoint",
           icon: "⏱️",
           title: "Quick Cuddle",
-          description: "Each unused guess in the solve bonus is worth one additional point."
+          description: "Each unused guess in the solve bonus is worth $1 more."
         },
         {
           id: "questRefreshes",
@@ -1846,7 +1846,7 @@
           id: "questPoints",
           icon: "🏅",
           title: "Quest Value",
-          description: "Quests are worth 5 more points. Stacks every time you take it."
+          description: "Quests are worth $5 more. Stacks every time you take it."
         },
         {
           id: "questReroll",
@@ -2317,14 +2317,14 @@
       id: "storybookStart",
       icon: "📖",
       title: "Opening Verse",
-      description: "Start every scoring round with +5 points. Stacks up to three times.",
+      description: "Start every scoring round with +$5. Stacks up to three times.",
       max: 3
     },
     {
       id: "questSpark",
       icon: "✨",
       title: "Quest Ink",
-      description: "Completed quests give +5 additional points. Stacks up to three times.",
+      description: "Completed quests give +$5 more. Stacks up to three times.",
       max: 3
     },
     {
@@ -2340,19 +2340,19 @@
       id: "goldenTempo",
       icon: "⚡",
       title: "Golden Tempo",
-      description: "Golden Value + Quick Cuddle: every solved scoring round gives +5 points."
+      description: "Golden Value + Quick Cuddle: every solved scoring round gives +$5."
     },
     {
       id: "questBinding",
       icon: "🔗",
       title: "Quest Binding",
-      description: "Quest Value + Quest Ink: completed quests give another +5 points."
+      description: "Quest Value + Quest Ink: completed quests give another +$5."
     },
     {
       id: "illustratedStart",
       icon: "🌟",
       title: "Illustrated Start",
-      description: "Opening Verse + Margin Note: scoring rounds open with another +5 points."
+      description: "Opening Verse + Margin Note: scoring rounds open with another +$5."
     },
     {
       id: "endlessMargins",
@@ -2488,7 +2488,7 @@
       case "questTrial":
         // Same reasoning as shortHand: a standing pressure for the whole
         // round, not a guess-window mask, so `turns` is ignored here too.
-        return `A quest rides on every guess this round. Miss one and lose ${QUEST_TRIAL_PENALTY} points from your total.`;
+        return `A quest rides on every guess this round. Miss one and lose $${QUEST_TRIAL_PENALTY} from your total.`;
       default:
         return `This boss power lasts for the first ${guesses}.`;
     }
@@ -3236,7 +3236,7 @@
       key: "greyPointBoost",
       icon: "G+",
       title: "Grey Matters",
-      description: "Grey tiles are worth 1 more point, but yellow and green stop scoring for the run. This reward stacks."
+      description: "Grey tiles are worth $1 more, but yellow and green stop scoring for the run. This reward stacks."
     },
     {
       id: "handSizeBoost",
@@ -3250,28 +3250,28 @@
       key: "mulliganValueBoost",
       icon: "M+",
       title: "Mulligan Dividend",
-      description: "Each unused mulligan is worth 5 more points when you solve."
+      description: "Each unused mulligan is worth $5 more when you solve."
     },
     {
       id: "earlySolveBoost",
       key: "earlySolveBoost",
       icon: "E+",
       title: "Early Finish",
-      description: "Each unused guess is worth 5 more early-solve points."
+      description: "Each unused guess earns $5 more on an early solve."
     },
     {
       id: "colourTrade",
       key: "colourTrade",
       icon: "Y/G",
       title: "Colour Surge",
-      description: "Yellow and green gain 3 points each, but grey loses 1 point. This reward stacks."
+      description: "Yellow and green gain $3 each, but grey loses $1. This reward stacks."
     },
     {
       id: "greyscale",
       key: "greyscale",
       icon: "GREY",
       title: "Greyscale",
-      description: "Grey gains 2 points, while yellow and green are reduced to 0 for the run."
+      description: "Grey gains $2, while yellow and green are reduced to $0 for the run."
     }
   ]);
   const customUpgradeIds = new Set(customUpgradeDefinitions.map(item => item.id));
@@ -3280,7 +3280,7 @@
     id: "goldenTempo",
     icon: "⚡",
     title: "Golden Tempo",
-    description: "A colour-value reward plus an early-solve reward: every solved scoring round gives +5 points."
+    description: "A colour-value reward plus an early-solve reward: every solved scoring round gives +$5."
   });
 
   function finiteNumber(value, fallback = 0) {

@@ -554,7 +554,16 @@
      fixed distance from the top always lands in the feedback-history
      area above that, regardless of viewport height or content length. */
   top: 64px;
-  left: calc(var(--game-sidebar) + 3px);
+  /* The tab's LEFT edge sits exactly on the sidebar's right edge, with no
+     translate pulling it back over the panel. It used to be centered on
+     that edge (left: sidebar + 3px, then translate(-50%)), which parked
+     half the button -- 15px, and 12px on narrow screens -- on top of the
+     action log underneath it, clipping the log's text. Anchoring the edge
+     instead keeps it clear of the log at every width, since the sidebar is
+     exactly var(--game-sidebar) wide in every breakpoint that redefines
+     it, and the workspace it is positioned against starts at that same
+     left edge with no padding of its own. */
+  left: var(--game-sidebar);
   display: grid;
   place-items: center;
   width: 36px;
@@ -568,7 +577,7 @@
   font-weight: 900;
   cursor: pointer;
   box-shadow: 5px 0 15px rgba(0, 0, 0, 0.35);
-  transform: translate(-50%, 0);
+  transform: translate(0, 0);
   transition: left 200ms ease, transform 200ms ease;
 }
 

@@ -37,6 +37,17 @@
       .replaceAll("'", "&#039;");
   }
 
+  // Wraps a "$5"/"+$5"/"-$1" dollar figure inside already-escaped reward
+  // text in a gold span, so a reward's payoff reads at a glance instead of
+  // blending into the surrounding description. Call AFTER escapeHtml (the
+  // "$" it looks for survives escaping unchanged).
+  function goldenMoney(escapedHtml) {
+    return String(escapedHtml ?? "").replace(
+      /[+-]?\$\d[\d,]*/g,
+      match => `<span class="cuddle-money-figure">${match}</span>`
+    );
+  }
+
   function showScreen(id) {
     if (typeof window.showScreen === "function") {
       window.showScreen(id);
@@ -717,11 +728,11 @@
               <button class="cuddle-choice cuddle-boss-choice" data-boss-id="${escapeHtml(option.id)}">
                 <span class="cuddle-choice-icon">${escapeHtml(option.icon || "💀")}</span>
                 <strong>${escapeHtml(option.title)}</strong>
-                <small>${escapeHtml(option.description)}</small>
+                <small>${goldenMoney(escapeHtml(option.description))}</small>
                 ${option.reward ? `
                   <span class="cuddle-boss-reward">
                     <b>${escapeHtml(option.reward.icon || "🎁")} ${escapeHtml(option.reward.title)}</b>
-                    <span>${escapeHtml(option.reward.description)}</span>
+                    <span>${goldenMoney(escapeHtml(option.reward.description))}</span>
                   </span>` : ""}
               </button>`).join("")}
           </div>
@@ -753,7 +764,7 @@
               <button class="cuddle-choice" data-reward-id="${escapeHtml(reward.id)}">
                 <span class="cuddle-choice-icon">${escapeHtml(reward.icon || "✨")}</span>
                 <strong>${escapeHtml(reward.title)}</strong>
-                <small>${escapeHtml(reward.description)}</small>
+                <small>${goldenMoney(escapeHtml(reward.description))}</small>
               </button>`).join("")}
           </div>
           <button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-rewards" ${state.questRewardRefreshesLeft > 0 ? "" : "disabled"}>
@@ -776,7 +787,7 @@
       ? "Refresh choices (free)"
       : refreshCost === null
         ? "Refresh unavailable"
-        : `Refresh choices (${refreshCost} points)`;
+        : `Refresh choices ($${refreshCost})`;
     const kicker = milestone
       ? `SCORE MILESTONE · ${state.upgradeMilestone}`
       : startingRewards
@@ -803,14 +814,14 @@
               <button class="cuddle-choice" data-upgrade-key="${escapeHtml(choice.key)}">
                 <span class="cuddle-choice-icon">${escapeHtml(choice.icon || "⬆️")}</span>
                 <strong>${escapeHtml(choice.title)}</strong>
-                <small>${escapeHtml(choice.description)}</small>
+                <small>${goldenMoney(escapeHtml(choice.description))}</small>
               </button>`).join("")}
           </div>
           <div class="cuddle-upgrade-refresh">
             <button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
               ${escapeHtml(refreshLabel)}
             </button>
-            <small>The first refresh on each between-round reward screen is free. Later refreshes cost 3, 5, 7, 9, and so on.</small>
+            <small>The first refresh on each between-round reward screen is free. Later refreshes cost $3, $5, $7, $9, and so on.</small>
           </div>
           <details class="cuddle-upgrade-details">
             <summary>Current run upgrades</summary>
@@ -1187,7 +1198,7 @@
         ${boss ? `
           <section class="cuddle-v3-toast is-boss" role="status">
             <span class="cuddle-v3-toast-icon">${escapeHtml(boss.icon || "🎁")}</span>
-            <div><small>${escapeHtml(boss.bossTitle || "Boss")} cleared</small><strong>${escapeHtml(boss.title || "Boss reward received")}</strong><p>${escapeHtml(boss.message || "Permanent bonus received.")}</p></div>
+            <div><small>${escapeHtml(boss.bossTitle || "Boss")} cleared</small><strong>${escapeHtml(boss.title || "Boss reward received")}</strong><p>${goldenMoney(escapeHtml(boss.message || "Permanent bonus received."))}</p></div>
             <button type="button" data-cuddle-v3-action="dismiss-boss-reward" aria-label="Dismiss boss reward">×</button>
           </section>` : ""}
         ${synergy ? `
@@ -1254,8 +1265,8 @@
     if (game.state.status === "shop") {
       return window.CuddleCampaign.renderShop(game);
     }
-    if (game.state.status === "branchJunction" && window.CuddleBranchMap) {
-      return window.CuddleBranchMap.renderJunction(game);
+    if (game.state.status === "branchMap" && window.CuddleBranchMap) {
+      return window.CuddleBranchMap.renderMapScreen(game);
     }
     if (game.state.status === "playing" && game.state.roundIntroPending
         && typeof window.CuddleCampaign.renderRoundIntroMap === "function") {

@@ -825,6 +825,15 @@
   line-height: 1.45;
 }
 
+/* A reward's actual payoff ($5, +$5, -$1) picked out in gold from the
+   surrounding description text, so it reads at a glance instead of
+   blending into the prose around it. Same gold token cuddle-money-mode.css
+   defines on #cuddleScreen for its own reward chip/header figures. */
+.cuddle-money-figure {
+  color: var(--cuddle-money-gold-bright, #e8bf75);
+  font-weight: 700;
+}
+
 .cuddle-upgrade-details {
   margin: 14px 0;
   color: var(--cuddle-muted);
@@ -2337,13 +2346,56 @@
   max-width: 60ch;
 }
 
+.cuddle-branch-message {
+  margin: 0 2px 10px;
+  color: rgba(244, 217, 160, 0.9);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+/* The map above already carries the run's shape, so the reachable stops
+   below it are a compact legend-sized list rather than the tall hero cards
+   the boss/reward screens use. */
+#cuddleScreen .cuddle-branch-page .cuddle-choice-grid {
+  gap: 8px;
+}
+
+#cuddleScreen .cuddle-branch-choice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: "icon title" "icon copy";
+  align-content: center;
+  align-items: center;
+  min-height: 0;
+  gap: 2px 12px;
+  padding: 11px 13px;
+  text-align: left;
+}
+
+#cuddleScreen .cuddle-branch-choice .cuddle-choice-icon {
+  grid-area: icon;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+#cuddleScreen .cuddle-branch-choice strong {
+  grid-area: title;
+  margin: 0;
+}
+
 .cuddle-branch-choice small {
-  min-height: 2.6em;
+  grid-area: copy;
+  min-height: 0;
 }
 
 .cuddle-branch-map {
-  margin: 0 0 20px;
-  padding: 10px 4px 4px;
+  margin: 0 0 18px;
+  padding: 6px 4px;
+  max-height: min(56vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid rgba(232, 191, 117, 0.16);
   border-radius: 16px;
   background: rgba(20, 18, 28, 0.55);
@@ -2355,87 +2407,103 @@
   height: auto;
 }
 
-.cuddle-map-line,
-.cuddle-map-line-walked {
+/* Scoped under .cuddle-branch-map: the older linear campaign map uses the
+   same .cuddle-map-node class name for a different shape entirely. */
+.cuddle-branch-map .cuddle-map-line,
+.cuddle-branch-map .cuddle-map-line-live,
+.cuddle-branch-map .cuddle-map-line-walked {
   fill: none;
-  stroke: rgba(249, 235, 212, 0.16);
+  stroke: rgba(249, 235, 212, 0.14);
   stroke-width: 2;
 }
 
-.cuddle-map-line-walked {
-  stroke: rgba(232, 191, 117, 0.65);
+.cuddle-branch-map .cuddle-map-line-live {
+  stroke: rgba(232, 191, 117, 0.55);
   stroke-width: 2.5;
 }
 
-.cuddle-map-node circle {
-  fill: rgba(40, 34, 30, 0.9);
-  stroke: rgba(249, 235, 212, 0.28);
+.cuddle-branch-map .cuddle-map-line-walked {
+  stroke: rgba(232, 191, 117, 0.8);
+  stroke-width: 3;
+}
+
+.cuddle-branch-map .cuddle-map-node circle {
+  fill: rgba(40, 34, 30, 0.92);
+  stroke: rgba(249, 235, 212, 0.26);
   stroke-width: 1.5;
 }
 
-.cuddle-map-node-icon {
+.cuddle-branch-map .cuddle-map-node-icon {
   font-size: 15px;
-  fill: rgba(249, 235, 212, 0.65);
+  fill: rgba(249, 235, 212, 0.66);
 }
 
-.cuddle-map-node-label {
+.cuddle-branch-map .cuddle-map-node-label {
   font-size: 8px;
   fill: rgba(249, 235, 212, 0.42);
   letter-spacing: 0.02em;
 }
 
-.cuddle-map-node-future circle {
-  stroke-dasharray: 3 3;
-  opacity: 0.55;
+.cuddle-branch-map .cuddle-map-node-boss circle {
+  fill: rgba(72, 30, 40, 0.92);
+  stroke: rgba(226, 130, 130, 0.5);
 }
 
-.cuddle-map-node-future .cuddle-map-node-icon,
-.cuddle-map-node-future .cuddle-map-node-label {
-  opacity: 0.55;
+.cuddle-branch-map .cuddle-map-node-locked circle,
+.cuddle-branch-map .cuddle-map-node-locked .cuddle-map-node-icon,
+.cuddle-branch-map .cuddle-map-node-locked .cuddle-map-node-label {
+  opacity: 0.42;
 }
 
-.cuddle-map-node-past:not(.cuddle-map-node-chosen) circle {
-  opacity: 0.35;
+.cuddle-branch-map .cuddle-map-node-visited circle {
+  fill: rgba(232, 191, 117, 0.2);
+  stroke: rgba(232, 191, 117, 0.6);
 }
 
-.cuddle-map-node-past:not(.cuddle-map-node-chosen) .cuddle-map-node-icon,
-.cuddle-map-node-past:not(.cuddle-map-node-chosen) .cuddle-map-node-label {
-  opacity: 0.35;
+.cuddle-branch-map .cuddle-map-node-visited .cuddle-map-node-icon {
+  fill: rgba(249, 235, 212, 0.8);
 }
 
-.cuddle-map-node-chosen circle {
-  fill: rgba(232, 191, 117, 0.28);
-  stroke: #e8bf75;
+.cuddle-branch-map .cuddle-map-node-here circle {
+  fill: rgba(232, 191, 117, 0.38);
+  stroke: #f4d9a0;
+  stroke-width: 3;
 }
 
-.cuddle-map-node-chosen .cuddle-map-node-icon {
-  fill: #f9ebd4;
+.cuddle-branch-map .cuddle-map-node-here .cuddle-map-node-icon,
+.cuddle-branch-map .cuddle-map-node-here .cuddle-map-node-label {
+  fill: #fdf3e2;
 }
 
-.cuddle-map-node-current circle {
+.cuddle-branch-map .cuddle-map-node-open {
+  cursor: pointer;
+}
+
+.cuddle-branch-map .cuddle-map-node-open circle {
   fill: rgba(232, 191, 117, 0.16);
   stroke: #e8bf75;
   stroke-width: 2.5;
   animation: cuddle-map-node-pulse 1.8s ease-in-out infinite;
 }
 
-.cuddle-map-node-current .cuddle-map-node-icon,
-.cuddle-map-node-current .cuddle-map-node-label {
+.cuddle-branch-map .cuddle-map-node-open .cuddle-map-node-icon,
+.cuddle-branch-map .cuddle-map-node-open .cuddle-map-node-label {
   fill: #f9ebd4;
   opacity: 1;
 }
 
-.cuddle-map-node-current[role="button"] {
-  cursor: pointer;
+.cuddle-branch-map .cuddle-map-node-open:hover circle,
+.cuddle-branch-map .cuddle-map-node-open:focus-visible circle {
+  fill: rgba(232, 191, 117, 0.34);
 }
 
 @keyframes cuddle-map-node-pulse {
   0%, 100% { stroke-opacity: 1; }
-  50% { stroke-opacity: 0.5; }
+  50% { stroke-opacity: 0.45; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cuddle-map-node-current circle {
+  .cuddle-branch-map .cuddle-map-node-open circle {
     animation: none;
   }
 }

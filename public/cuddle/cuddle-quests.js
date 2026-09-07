@@ -375,7 +375,7 @@
       id: "questTrial",
       icon: "🎯",
       title: "Quest Trial",
-      description: "A quest rides on every guess this round. Miss one and lose 5 points from your total.",
+      description: "A quest rides on every guess this round. Miss one and lose $5 from your total.",
       turns: 0,
       rewardId: "questCadence"
     },
@@ -430,7 +430,7 @@
       id: "richerColours",
       icon: "💰",
       title: "Richer Colours",
-      description: "Every yellow and green tile is worth 2 more points."
+      description: "Every yellow and green tile is worth $2 more."
     },
     {
       id: "freeVowelSweep",
@@ -442,7 +442,7 @@
       id: "questHead",
       icon: "🏅",
       title: "Quest Head Start",
-      description: "Quests are worth 10 more points for the rest of the run."
+      description: "Quests are worth $10 more for the rest of the run."
     },
     {
       id: "revealGreen",

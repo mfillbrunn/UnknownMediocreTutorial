@@ -900,7 +900,7 @@
           </div>
           <div class="cuddle-header-side cuddle-header-side-right"></div>
         </header>
-        ${renderMap(game)}
+        ${window.CuddleBranchMap ? "" : renderMap(game)}
         <main class="cuddle-shop-page">
           <section class="cuddle-shop-intro">
             <div>
@@ -1042,10 +1042,10 @@
       mapStatsOpen = !mapStatsOpen;
       return { ok: true };
     }
-    if (action === "resolve-branch-junction") {
-      return typeof game.resolveBranchJunction === "function"
-        ? game.resolveBranchJunction(itemId)
-        : { ok: false, error: "The branching map is unavailable." };
+    if (action === "enter-branch-node") {
+      return typeof game.enterBranchNode === "function"
+        ? game.enterBranchNode(itemId)
+        : { ok: false, error: "The run map is unavailable." };
     }
     return { ok: false, error: "Unknown campaign action." };
   }
