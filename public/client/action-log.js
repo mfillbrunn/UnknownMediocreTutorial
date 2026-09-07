@@ -350,14 +350,19 @@
     // Only autoscroll when a line was actually added -- an edit to an
     // existing line (e.g. a power result filling in) shouldn't yank the
     // view back down if the player had scrolled up to read earlier lines.
-    // block: "end" (not the default "start") -- "start" aligns the
-    // anchor's (zero-height) top edge with the container's top edge,
-    // which scrolls straight past the last real entry instead of settling
-    // on it, leaving empty container background visible where the last
-    // line should be. "end" aligns its bottom edge with the container's
-    // bottom edge instead, landing exactly at the true bottom.
+    //
+    // Scrolls the log's OWN box, never scrollIntoView on an anchor inside
+    // it: scrollIntoView walks up and scrolls every scrollable ancestor,
+    // and on a game screen those ancestors (.play-area, #appContainer,
+    // body) are overflow:hidden -- which still scrolls programmatically
+    // while giving the player no way to scroll back. That's the same
+    // "board shifted up, stuck until reload" failure resetPageScroll()
+    // exists for (see client/helpers.js). scrollTop can only ever move
+    // this one element, and lands at the exact bottom the old block:"end"
+    // was aiming for.
     if (grew) {
-      container.querySelector(".log-scroll-anchor")?.scrollIntoView({ behavior: "smooth", block: "end" });
+      const bottom = container.scrollHeight - container.clientHeight;
+      if (bottom > 0) container.scrollTo({ top: bottom, behavior: "smooth" });
     }
   }
 

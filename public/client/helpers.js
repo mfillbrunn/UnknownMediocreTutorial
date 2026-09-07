@@ -36,8 +36,21 @@ fetch("/api/allowed-secrets")
 // itself; iOS Safari does not.
 function resetPageScroll() {
   const scroller = document.scrollingElement || document.documentElement;
-  if (scroller && scroller.scrollTop) scroller.scrollTop = 0;
-  if (window.scrollY) window.scrollTo(0, 0);
+  // Written unconditionally rather than gated on a `scrollTop` read: iOS
+  // can report 0 while still painting the page at an offset, and a
+  // redundant write of 0 costs nothing.
+  if (scroller) scroller.scrollTop = 0;
+  if (document.body) document.body.scrollTop = 0;
+  window.scrollTo(0, 0);
+}
+
+// The reset also has to run AFTER the screen swap, not just before it:
+// content the new screen renders asynchronously (the board, the keyboard,
+// the log) lands over the next frame or two and can re-offset things. The
+// rAF pass catches that once layout has settled.
+function resetPageScrollAfterLayout() {
+  resetPageScroll();
+  requestAnimationFrame(resetPageScroll);
 }
 
 const show = id => {
@@ -47,8 +60,15 @@ const show = id => {
   // screen that's already up, and resetting there would yank the page back
   // to the top out from under someone mid-scroll.
   const wasActive = el.classList.contains("active");
-  el.classList.add("active");
+  // Before the class lands as well as after: the gameplay screens pin the
+  // body to exactly one viewport with overflow:hidden the moment .active
+  // applies (layout.css's body:has(#setterScreen.active)), and resetting a
+  // page that no longer HAS a scroll range is a no-op -- while the offset
+  // it was carrying is still what gets painted. Resetting first, while the
+  // old screen's scroll range is still there, is what actually moves it.
   if (!wasActive) resetPageScroll();
+  el.classList.add("active");
+  if (!wasActive) resetPageScrollAfterLayout();
 };
 const hide = id => {
   const el = $(id);
@@ -58,9 +78,14 @@ const hide = id => {
 window.showScreen = (id) => {
   const el = document.getElementById(id);
   const wasActive = !!el?.classList.contains("active");
+  // Same before-and-after pairing as show() above, and for the same reason:
+  // once .active is on a gameplay screen the page has no scroll range left
+  // to reset, so the reset that matters happens while the outgoing screen's
+  // range still exists.
+  if (!wasActive) resetPageScroll();
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   el.classList.add("active");
-  if (!wasActive) resetPageScroll();
+  if (!wasActive) resetPageScrollAfterLayout();
 };
 
 // updateScreens()/onRejoinUI() only ever hide()/show() a fixed, small set
