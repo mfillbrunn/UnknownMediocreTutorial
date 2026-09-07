@@ -447,12 +447,13 @@
     }
 
     // Hard mode's Starting Bonus comes from the ordinary round-clear catalog
-    // (see starterRewardChoices), which applies through _applyUpgradeChoice
-    // (mutating state.upgrades/removedLetters/etc. directly) rather than
+    // (see starterRewardChoices), which applies through _grantUpgradeChoice
+    // (routes through the real chooseUpgrade chain so every layer's own
+    // catalog ids -- not just the base ones -- apply correctly) rather than
     // _applyBossReward -- the two pools don't share an id space.
     var message;
-    if (mode.starterRewardSource === "normal" && typeof this._applyUpgradeChoice === "function") {
-      var applied = this._applyUpgradeChoice(reward);
+    if (mode.starterRewardSource === "normal" && typeof this._grantUpgradeChoice === "function") {
+      var applied = this._grantUpgradeChoice(reward);
       if (!applied.ok) return applied;
       message = "";
     } else {

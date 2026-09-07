@@ -263,12 +263,18 @@
     var branchMap = ensureBranchMap(game);
     var messages = [];
 
-    if (definition.grantsUpgrade && typeof game._upgradeCatalog === "function") {
-      var catalog = game._upgradeCatalog() || [];
-      if (catalog.length) {
-        var choice = catalog[Math.floor(randomFor(game) * catalog.length)];
-        var applied = typeof game._applyUpgradeChoice === "function" ? game._applyUpgradeChoice(choice) : { ok: false };
-        if (applied.ok) messages.push(choice.title + " acquired for free.");
+    if (definition.grantsUpgrade && typeof game._upgradeCatalog === "function" && typeof game._grantUpgradeChoice === "function") {
+      // A couple of catalog entries can be maxed out already (Theme Sense's
+      // cap, a fully-stacked V3 custom reward) and reject that one specific
+      // id -- try a few shuffled picks rather than paying the event's cost
+      // for nothing on an unlucky draw.
+      var pool = shuffled(game._upgradeCatalog() || [], game);
+      for (var pick = 0; pick < pool.length; pick += 1) {
+        var applied = game._grantUpgradeChoice(pool[pick]);
+        if (applied.ok) {
+          messages.push(pool[pick].title + " acquired for free.");
+          break;
+        }
       }
     }
 
@@ -505,6 +511,132 @@
 
   // -- rendering -----------------------------------------------------------
 
+  // The full run as a Slay the Spire-style route: one row per junction (plus
+  // a start pip and the final boss pip), each row's nodes fanning out from
+  // and back into a single point because every option at a junction leads to
+  // the SAME next junction -- there's no separate physical track per choice,
+  // just a different flavor for that one stop. A past row keeps every node
+  // visible (like an unchosen Spire node stays on the map, just unreachable)
+  // and marks which one was actually taken; only that node feeds the line
+  // into the next row. Future rows fan out from every node of the row before
+  // them, since which one you'll be standing on isn't decided yet.
+  var MAP_ROUND_ORDER = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+  function buildMapRows(game) {
+    var branchMap = ensureBranchMap(game);
+    var currentRound = game.state.round + 1;
+    var rows = [];
+    rows.push({
+      kind: "pip",
+      round: 1,
+      status: "past",
+      nodes: [{ id: "start", icon: "🏁", title: "Run Start", chosen: true }]
+    });
+    MAP_ROUND_ORDER.forEach(function addRound(round) {
+      var isBoss = round === MID_BOSS_ROUND;
+      var options = isBoss
+        ? (branchMap.midBoss ? branchMap.midBoss.options : [])
+        : (branchMap.junctions[round] || []);
+      var status = round < currentRound ? "past" : round === currentRound ? "current" : "future";
+      var resolvedValue = branchMap.resolved[round];
+      var nodes = options.map(function toNode(option) {
+        var matchValue = isBoss ? option.id : option.type;
+        return {
+          id: option.id,
+          icon: option.icon,
+          title: option.title,
+          chosen: status === "past" && resolvedValue === matchValue
+        };
+      });
+      rows.push({ kind: isBoss ? "boss" : "junction", round: round, status: status, nodes: nodes });
+    });
+    rows.push({
+      kind: "pip",
+      round: TOTAL_ROUNDS + 1,
+      status: currentRound > TOTAL_ROUNDS ? "past" : "future",
+      nodes: [{ id: "final", icon: "👑", title: "Final Boss", chosen: false }]
+    });
+    return rows;
+  }
+
+  function renderMapSvg(rows) {
+    var ROW_H = 92;
+    var WIDTH = 300;
+    var RADIUS = 18;
+    var MARGIN = 56;
+    var currentIndex = -1;
+    rows.forEach(function findCurrent(row, index) {
+      if (row.status === "current") currentIndex = index;
+    });
+    if (currentIndex === -1) currentIndex = rows.length - 1;
+    var start = Math.max(0, currentIndex - 2);
+    var end = Math.min(rows.length - 1, currentIndex + 2);
+    var visibleRows = rows.slice(start, end + 1);
+
+    function nodeX(count, i) {
+      if (count <= 1) return WIDTH / 2;
+      return MARGIN + (i * (WIDTH - MARGIN * 2)) / (count - 1);
+    }
+
+    var positions = visibleRows.map(function layoutRow(row, rowIndex) {
+      var y = 26 + rowIndex * ROW_H;
+      return row.nodes.map(function layoutNode(node, i) {
+        return { x: nodeX(row.nodes.length, i), y: y, node: node };
+      });
+    });
+
+    var lines = [];
+    for (var r = 0; r < positions.length - 1; r += 1) {
+      var fromRow = visibleRows[r];
+      var fromPositions = positions[r];
+      var toPositions = positions[r + 1];
+      var sources = fromPositions.filter(function isChosen(p) { return p.node.chosen; });
+      if (fromRow.status !== "past" || !sources.length) sources = fromPositions;
+      sources.forEach(function drawFrom(from) {
+        toPositions.forEach(function drawTo(to) {
+          var walked = fromRow.status === "past" && from.node.chosen;
+          lines.push(
+            "<path d=\"M" + from.x + " " + (from.y + RADIUS) + " C " + from.x + " " + (from.y + ROW_H / 2)
+            + ", " + to.x + " " + (to.y - ROW_H / 2) + ", " + to.x + " " + (to.y - RADIUS) + "\""
+            + " class=\"" + (walked ? "cuddle-map-line-walked" : "cuddle-map-line") + "\" />"
+          );
+        });
+      });
+    }
+
+    var nodesMarkup = [];
+    positions.forEach(function drawRow(rowPositions, rowIndex) {
+      var row = visibleRows[rowIndex];
+      rowPositions.forEach(function drawNode(p) {
+        var classes = ["cuddle-map-node", "cuddle-map-node-" + row.status];
+        if (p.node.chosen) classes.push("cuddle-map-node-chosen");
+        var clickable = row.status === "current";
+        nodesMarkup.push(
+          "<g class=\"" + classes.join(" ") + "\""
+          + (clickable ? " data-cuddle-campaign-action=\"resolve-branch-junction\" data-shop-item-id=\"" + escapeHtml(p.node.id) + "\" tabindex=\"0\" role=\"button\" aria-label=\"" + escapeHtml(p.node.title) + "\"" : "")
+          + " transform=\"translate(" + p.x + "," + p.y + ")\">"
+          + "<circle r=\"" + RADIUS + "\"></circle>"
+          + "<text class=\"cuddle-map-node-icon\" text-anchor=\"middle\" dy=\"0.32em\">" + escapeHtml(p.node.icon || "❔") + "</text>"
+          + "<text class=\"cuddle-map-node-label\" text-anchor=\"middle\" y=\"" + (RADIUS + 14) + "\">" + escapeHtml(shortLabel(p.node.title)) + "</text>"
+          + "</g>"
+        );
+      });
+    });
+
+    var height = 26 + (visibleRows.length - 1) * ROW_H + RADIUS + 20;
+    return (
+      "<svg class=\"cuddle-branch-map-svg\" viewBox=\"0 0 " + WIDTH + " " + height + "\" role=\"img\" aria-label=\"Run map\">"
+      + lines.join("")
+      + nodesMarkup.join("")
+      + "</svg>"
+    );
+  }
+
+  function shortLabel(title) {
+    var text = String(title || "");
+    return text.length > 12 ? text.slice(0, 11) + "…" : text;
+  }
+
   function renderJunction(game) {
     var state = game.state;
     var round = state.round + 1;
@@ -513,6 +645,7 @@
     var options = isBossApproach
       ? (branchMap.midBoss ? branchMap.midBoss.options : [])
       : (branchMap.junctions[round] || []);
+    var mapRows = buildMapRows(game);
     return (
       "<div class=\"cuddle-shell cuddle-branch-shell\">"
       + "<header class=\"cuddle-header\">"
@@ -526,6 +659,7 @@
       + "<div class=\"cuddle-header-side cuddle-header-side-right\"></div>"
       + "</header>"
       + "<main class=\"cuddle-branch-page\">"
+      + "<div class=\"cuddle-branch-map\" aria-hidden=\"false\">" + renderMapSvg(mapRows) + "</div>"
       + "<p class=\"cuddle-branch-intro\">" + (isBossApproach
         ? "Round " + round + " is gated by a boss. Walk a known path straight to one previewed challenger, or take the Twin Trial and pick between both once you arrive."
         : "Round " + round + " is ahead. Pick how you want to reach it.") + "</p>"

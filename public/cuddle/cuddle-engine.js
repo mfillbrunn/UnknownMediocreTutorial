@@ -2892,6 +2892,54 @@
     }
   };
 
+  // _applyUpgradeChoice above only understands the base V3 catalog ids --
+  // later layers (the hard-mode balance-refresh rewards, campaign's Theme
+  // Sense, any future one) each special-case their OWN ids directly inside
+  // their own chooseUpgrade wrapper and fall back to the chain otherwise, so
+  // there is no single switch anywhere that covers every possible catalog
+  // entry. A caller outside the normal upgrade screen (money-mode's hard
+  // difficulty Starting Bonus, or a branch-map event) that wants to apply
+  // ONE arbitrary choice from _upgradeCatalog() can't safely call
+  // _applyUpgradeChoice for that reason -- an id from one of those other
+  // layers would fall through to "Unknown upgrade." and leave the caller's
+  // screen stuck open forever. This instead puppets state just long enough
+  // for the REAL, fully layered chooseUpgrade to run (so every layer's own
+  // special-casing applies exactly as it would from a real pick), with
+  // _advanceRound stubbed out for that one call since none of these callers
+  // want an actual round transition as a side effect.
+  CuddleGame.prototype._grantUpgradeChoice = function grantCuddleUpgradeChoiceOutOfBand(choice) {
+    const state = this.state;
+    const key = choice.key || choice.id;
+    const savedStatus = state.status;
+    const savedChoices = state.upgradeChoices;
+    const savedPhase = state.upgradePhase;
+    const savedMilestone = state.upgradeMilestone;
+    state.status = "upgrade";
+    state.upgradeChoices = [{ ...choice, key }];
+    state.upgradePhase = null;
+    const hadOwnAdvance = Object.prototype.hasOwnProperty.call(this, "_advanceRound");
+    const previousOwnAdvance = this._advanceRound;
+    this._advanceRound = function noAdvanceWhileGrantingUpgrade() {};
+    let result;
+    try {
+      result = this.chooseUpgrade(key);
+    } finally {
+      if (hadOwnAdvance) this._advanceRound = previousOwnAdvance;
+      else delete this._advanceRound;
+    }
+    // On success, chooseUpgrade already cleared upgradeChoices/upgradePhase
+    // itself -- but with _advanceRound stubbed out, nothing ever moved
+    // state.status past "upgrade", so it's left dangling on a screen with no
+    // choices left to show. Every caller of this method manages state.status
+    // itself around the call (or doesn't want it touched at all), so restore
+    // the screen exactly as it was before, win or lose.
+    state.status = savedStatus;
+    state.upgradeChoices = savedChoices;
+    state.upgradePhase = savedPhase;
+    state.upgradeMilestone = savedMilestone;
+    return result || { ok: false, error: "Unknown upgrade." };
+  };
+
   CuddleGame.prototype.chooseUpgrade = function chooseCuddleV3Upgrade(choiceKey) {
     const state = cuddleV3EnsureState(this);
     if (state.status !== "upgrade") return { ok: false, error: "No upgrade choice is open." };
