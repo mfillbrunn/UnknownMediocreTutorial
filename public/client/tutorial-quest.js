@@ -154,7 +154,7 @@ function runQuestTutorial(state, role) {
 
   if (step === 0) {
     questTutorialShow(
-      "A Quest is a bonus goal, and only the hunter gets them. Think of it as a little dare: guess a word that does this one thing. You get up to three a round, on guesses 2, 4 and 6.",
+      "A Quest is a bonus goal, and only the guesser gets them. Think of it as a little dare: guess a word that does this one thing. You get up to three a round, on guesses 2, 4 and 6.",
       {
         current: 1
       }
@@ -179,7 +179,7 @@ function runQuestTutorial(state, role) {
 
   if (step === 2) {
     questTutorialShow(
-      `Read the card before you type anything. Today's dare is: ${quest?.description || "Use only letters A through P."}`,
+      `Read the card before you type anything. The first dare is: ${quest?.description || "Use only letters A through P."}`,
       {
         title: "Read the dare",
         current: 3
