@@ -2341,6 +2341,105 @@
   min-height: 2.6em;
 }
 
+.cuddle-branch-map {
+  margin: 0 0 20px;
+  padding: 10px 4px 4px;
+  border: 1px solid rgba(232, 191, 117, 0.16);
+  border-radius: 16px;
+  background: rgba(20, 18, 28, 0.55);
+}
+
+.cuddle-branch-map-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.cuddle-map-line,
+.cuddle-map-line-walked {
+  fill: none;
+  stroke: rgba(249, 235, 212, 0.16);
+  stroke-width: 2;
+}
+
+.cuddle-map-line-walked {
+  stroke: rgba(232, 191, 117, 0.65);
+  stroke-width: 2.5;
+}
+
+.cuddle-map-node circle {
+  fill: rgba(40, 34, 30, 0.9);
+  stroke: rgba(249, 235, 212, 0.28);
+  stroke-width: 1.5;
+}
+
+.cuddle-map-node-icon {
+  font-size: 15px;
+  fill: rgba(249, 235, 212, 0.65);
+}
+
+.cuddle-map-node-label {
+  font-size: 8px;
+  fill: rgba(249, 235, 212, 0.42);
+  letter-spacing: 0.02em;
+}
+
+.cuddle-map-node-future circle {
+  stroke-dasharray: 3 3;
+  opacity: 0.55;
+}
+
+.cuddle-map-node-future .cuddle-map-node-icon,
+.cuddle-map-node-future .cuddle-map-node-label {
+  opacity: 0.55;
+}
+
+.cuddle-map-node-past:not(.cuddle-map-node-chosen) circle {
+  opacity: 0.35;
+}
+
+.cuddle-map-node-past:not(.cuddle-map-node-chosen) .cuddle-map-node-icon,
+.cuddle-map-node-past:not(.cuddle-map-node-chosen) .cuddle-map-node-label {
+  opacity: 0.35;
+}
+
+.cuddle-map-node-chosen circle {
+  fill: rgba(232, 191, 117, 0.28);
+  stroke: #e8bf75;
+}
+
+.cuddle-map-node-chosen .cuddle-map-node-icon {
+  fill: #f9ebd4;
+}
+
+.cuddle-map-node-current circle {
+  fill: rgba(232, 191, 117, 0.16);
+  stroke: #e8bf75;
+  stroke-width: 2.5;
+  animation: cuddle-map-node-pulse 1.8s ease-in-out infinite;
+}
+
+.cuddle-map-node-current .cuddle-map-node-icon,
+.cuddle-map-node-current .cuddle-map-node-label {
+  fill: #f9ebd4;
+  opacity: 1;
+}
+
+.cuddle-map-node-current[role="button"] {
+  cursor: pointer;
+}
+
+@keyframes cuddle-map-node-pulse {
+  0%, 100% { stroke-opacity: 1; }
+  50% { stroke-opacity: 0.5; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cuddle-map-node-current circle {
+    animation: none;
+  }
+}
+
 @keyframes cuddle-map-cat-bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
