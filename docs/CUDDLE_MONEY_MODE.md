@@ -8,7 +8,9 @@ This patch changes only the Cuddle single-player campaign. It keeps the engine's
 - The score display becomes a dollar wallet. Existing tile, early-solve, mulligan, quest, and other bonuses still feed the wallet.
 - After a solved normal round, a cash-out overlay steps through every submitted row. Each row receives a gold increment and the wallet counts upward before the round total appears.
 - Every new run begins with a **Starting Bonus** choice drawn from three randomly selected permanent rewards; one choice is free. On Easy and Medium those are drawn from the shared boss reward book (the same pool a boss victory grants); on Hard they're drawn from the ordinary round-clear reward catalog instead, since Hard already forgoes the extra compensation picks Easy/Medium get and handing it a boss-tier reward for free on top of that made the hardest difficulty's opening pick the single strongest one in the game.
-- Boss I now gates round 3, so it happens after round 2 and the round-2 shop. The later gates remain before rounds 7 and 10, followed by the final boss.
+- The run is laid out as a single branching map, generated once when the run starts (see `public/cuddle/cuddle-branch-map.js`). Rows hold one to three stops, each wired by real edges to specific stops on the next row, so where the player is standing decides what they can reach next. Both acts funnel into a boss row: the mid-run act offers two bosses (some stops reach both, others only one), and the second act ends at the final boss -- two boss fights per run rather than the old four fixed gates.
+- Map stops are a Wordle, a themed Wordle (opens with a category revealed), a mini challenge (guarantees a challenge offer), a shop, a free upgrade, or an event. Only Wordles and bosses consume a round, so a route through more shops and upgrades is a shorter, poorer run.
+- Events trade something gained for something given up: a free permanent upgrade against a tougher next boss, spent money, one fewer guess or mulligan next round, no reward next round, or a scoreless next round. Two events are purely lucky and cost nothing.
 - Optional mini-challenges can appear before non-boss rounds beginning with round 2. The player accepts or declines before play starts. Accepted challenges pay bonus money only when the Wordle is solved.
 - Mini-challenges never stack on top of a real boss.
 - Existing Cuddle saves are preserved. Starting a fresh run is recommended for seeing the Starting Bonus and the new first-boss timing cleanly.
@@ -108,11 +110,11 @@ For a completion condition such as “keep one mulligan,” check it in the solv
 
 ## Manual test checklist
 
-1. Start a new Easy, Medium, or Hard Cuddle run and confirm the Starting Bonus picker appears before play.
-2. Complete rounds 1 and 2, visit the shop, and confirm Boss I appears before round 3.
+1. Start a new Easy, Medium, or Hard Cuddle run and confirm the Starting Bonus picker appears, then the run map, before any Wordle.
+2. From the map, take a shop stop and an event stop, and confirm the shop opens without a second map above it and the event reports its trade back on the map.
 3. Solve a round with money below the former target and confirm progression still succeeds.
 4. Solve a round and confirm every history row receives a visible gold increment before the total and Collect button appear.
 5. Accept, decline, win, and fail several mini-challenges. Confirm the bonus is paid only on a win.
-6. Reload during a run and confirm the wallet, accepted challenge, boss gates, and campaign map survive.
+6. Reload during a run and confirm the wallet, accepted challenge, and the map (its layout, the walked path, and where the player is standing) survive.
 7. Verify shops still deduct from the same wallet and never determine whether a solved round passes.
 8. Turn on reduced-motion at the operating-system level and confirm the payout becomes fast rather than trapping the player in a long animation.

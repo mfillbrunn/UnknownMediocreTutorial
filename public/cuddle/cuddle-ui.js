@@ -1254,8 +1254,8 @@
     if (game.state.status === "shop") {
       return window.CuddleCampaign.renderShop(game);
     }
-    if (game.state.status === "branchJunction" && window.CuddleBranchMap) {
-      return window.CuddleBranchMap.renderJunction(game);
+    if (game.state.status === "branchMap" && window.CuddleBranchMap) {
+      return window.CuddleBranchMap.renderMapScreen(game);
     }
     if (game.state.status === "playing" && game.state.roundIntroPending
         && typeof window.CuddleCampaign.renderRoundIntroMap === "function") {

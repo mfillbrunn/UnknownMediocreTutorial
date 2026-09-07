@@ -1,14 +1,22 @@
-/* CUDDLE_BRANCH_MAP v1
+/* CUDDLE_BRANCH_MAP v2
  * Add-on loaded after cuddle-engine.js, cuddle-campaign.js, cuddle-ui.js and
- * cuddle-money-mode.js. Replaces the old fixed schedule (bosses always at
- * rounds 3/7/10 + final, shops always at rounds 3/6/9/12) with a run-long
- * path generated once at startNew: before most rounds the player is offered
- * 2-3 options (press on / shop / mini challenge / a themed reveal / a
- * two-sided "event"), and the old round-7 boss gate becomes a fork -- walk a
- * known path straight to one previewed boss, or take the Twin Trial and pick
- * between both once you arrive. Rounds 3 and 10 no longer force a boss at
- * all; only round 7 (mid-run) and the final boss (after round 12) still gate
- * the run, so a full run has exactly two boss encounters instead of four.
+ * cuddle-money-mode.js.
+ *
+ * One map for the whole run, generated at startNew and never regenerated:
+ * rows of 1-3 nodes, each node wired by real edges to specific nodes on the
+ * next row (never a "pick any of these" list), so where you are standing
+ * decides what you can reach next. Paths split left and right, merge back
+ * into each other, and all of them funnel into the act's boss row -- two
+ * bosses for the mid-run act, and some nodes reach both of them while
+ * others only reach one, which is what makes the route worth planning from
+ * the first pick. Beating a boss drops you back on the same map for the
+ * second act, which ends at the final boss.
+ *
+ * A node is a Wordle, a themed Wordle, a mini challenge, a shop, a free
+ * upgrade, an event (a real reward for a real cost), or a boss. Only the
+ * Wordle-ish ones and bosses consume a round, so a route through more shops
+ * and upgrades is a shorter, poorer run and a route through more Wordles is
+ * a longer, richer one.
  */
 (function installCuddleBranchMap() {
   "use strict";
@@ -29,20 +37,30 @@
     writable: false
   });
 
+  var MAP_STATUS = "branchMap";
   var TOTAL_ROUNDS = (Engine.THRESHOLDS && Engine.THRESHOLDS.length) || 12;
-  var MID_BOSS_ROUND = 7;
+  var ACT_ROWS = 5;
+  var MID_BOSS_GATE = "before-7";
+  var FINAL_BOSS_GATE = "final";
   var EVENT_MONEY_COST = 15;
   var EVENT_WINDFALL_AMOUNT = 12;
-  // Every round that used to auto-trigger a shop (old SHOP_AFTER_ROUNDS + 1)
-  // stays shop-eligible, so the shop keeps the exact save/inventory slots it
-  // already relies on -- only whether it fires is now a player choice.
-  var SHOP_ROUNDS = (window.CuddleCampaign && Array.isArray(window.CuddleCampaign.SHOP_AFTER_ROUNDS)
-    ? window.CuddleCampaign.SHOP_AFTER_ROUNDS
-    : [2, 5, 8, 11]).map(function addOne(round) { return round + 1; });
-  var JUNCTION_ROUNDS = [];
-  for (var round = 2; round <= TOTAL_ROUNDS; round += 1) {
-    if (round !== MID_BOSS_ROUND) JUNCTION_ROUNDS.push(round);
-  }
+  // The shop's saved state (activeShopRound, shopPurchases) is keyed by the
+  // round numbers cuddle-campaign.js already whitelists, and ensureCampaign
+  // wipes anything outside that list -- so each shop node borrows one of
+  // those slots as its stock key, which also caps how many shops a run has.
+  var SHOP_SLOTS = (window.CuddleCampaign && Array.isArray(window.CuddleCampaign.SHOP_AFTER_ROUNDS)
+    ? window.CuddleCampaign.SHOP_AFTER_ROUNDS.slice()
+    : [2, 5, 8, 11]);
+
+  var NODE_TYPES = {
+    normal: { icon: "🟩", title: "Wordle", label: "Wordle", description: "A plain round: solve the Wordle, nothing else in play.", playsRound: true },
+    theme: { icon: "🧭", title: "Themed Wordle", label: "Theme", description: "A round that opens with one of the solution's categories already revealed.", playsRound: true },
+    challenge: { icon: "⚡", title: "Mini Challenge", label: "Challenge", description: "A round that always offers a challenge: take it for extra money, or wave it off.", playsRound: true },
+    shop: { icon: "🛒", title: "The Wandering Paw", label: "Shop", description: "Spend money on one-use supplies. No Wordle here.", playsRound: false },
+    upgrade: { icon: "✨", title: "Waystone", label: "Upgrade", description: "Take a free permanent upgrade. No Wordle here.", playsRound: false },
+    event: { icon: "❔", title: "Event", label: "Event", description: "A trade: something gained now for something given up.", playsRound: false },
+    boss: { icon: "💀", title: "Boss", label: "Boss", description: "A boss round: pass or fail, and its reward is permanent.", playsRound: true }
+  };
 
   var EVENTS = Object.freeze([
     {
@@ -79,7 +97,7 @@
       id: "borrowedTime",
       icon: "⏳",
       title: "Borrowed Time",
-      description: "Take a free permanent upgrade now, but next round starts one guess short.",
+      description: "Take a free permanent upgrade now, but the next round starts one guess short.",
       grantsUpgrade: true,
       cost: "guess"
     },
@@ -87,7 +105,7 @@
       id: "thinMargins",
       icon: "🎴",
       title: "Thin Margins",
-      description: "Take a free permanent upgrade now, but next round starts one mulligan short.",
+      description: "Take a free permanent upgrade now, but the next round starts one mulligan short.",
       grantsUpgrade: true,
       cost: "mulligan"
     },
@@ -95,7 +113,7 @@
       id: "blackout",
       icon: "🌑",
       title: "Blackout Bargain",
-      description: "Take a free permanent upgrade now, but next round offers no reward of its own.",
+      description: "Take a free permanent upgrade now, but the next round offers no reward of its own.",
       grantsUpgrade: true,
       cost: "rewards"
     },
@@ -103,7 +121,7 @@
       id: "debtRun",
       icon: "📉",
       title: "Debt Run",
-      description: "Take a free permanent upgrade now, but next round's solve is worth no points.",
+      description: "Take a free permanent upgrade now, but the next round's solve is worth no points.",
       grantsUpgrade: true,
       cost: "noMoney"
     }
@@ -116,6 +134,10 @@
       console.warn("Cuddle Branch Map: seeded random failed; using Math.random.", error);
     }
     return Math.random();
+  }
+
+  function pickOne(items, game) {
+    return items[Math.floor(randomFor(game) * items.length)];
   }
 
   function shuffled(items, game) {
@@ -144,87 +166,228 @@
   function ensureBranchMap(game) {
     var state = game.state;
     if (!state.branchMap || typeof state.branchMap !== "object") {
-      state.branchMap = {
-        junctions: {},
-        resolved: {},
-        midBoss: null,
-        bossPenalty: 0,
-        pendingPenalty: null,
-        pendingPenaltyRound: null,
-        rewardsDisabledRound: null,
-        noMoneyRound: null
-      };
+      state.branchMap = { rows: [], position: null, roundsPlayed: 0, bossPenalty: 0 };
     }
     var branchMap = state.branchMap;
-    if (!branchMap.junctions || typeof branchMap.junctions !== "object") branchMap.junctions = {};
-    if (!branchMap.resolved || typeof branchMap.resolved !== "object") branchMap.resolved = {};
+    if (!Array.isArray(branchMap.rows)) branchMap.rows = [];
     if (typeof branchMap.bossPenalty !== "number") branchMap.bossPenalty = 0;
+    if (typeof branchMap.roundsPlayed !== "number") branchMap.roundsPlayed = 0;
     return branchMap;
   }
 
-  function buildJunctionOptions(game, round) {
-    var isShop = SHOP_ROUNDS.indexOf(round) !== -1;
-    // "Press On" and the shop-or-challenge slot are always both on offer --
-    // shop rounds especially need to stay reachable every time, since the
-    // shop's own save state (activeShopRound, shopPurchases) is still keyed
-    // to these exact round numbers. Only the third slot (a themed event or
-    // an early category reveal) is the one that varies run to run.
-    var normal = { id: "normal", type: "normal", icon: "🚶", title: "Press On", description: "A plain round: just solve the Wordle, nothing else in play." };
-    var stop = isShop
-      ? { id: "shop", type: "shop", icon: "🛒", title: "The Wandering Paw", description: "Stop and spend money on one-use supplies instead of an ordinary round." }
-      : { id: "challenge", type: "challenge", icon: "⚡", title: "Mini Challenge", description: "Guarantees a challenge offer this round for a shot at extra money." };
-    var event = EVENTS[Math.floor(randomFor(game) * EVENTS.length)];
-    var eventOption = { id: "event", type: "event", eventId: event.id, icon: event.icon, title: event.title, description: event.description };
-    var themeOption = { id: "theme", type: "theme", icon: "🧭", title: "Ask Around", description: "Learn one of the solution's categories before the round begins." };
-    var extras = shuffled([eventOption, themeOption], game);
-    var picks = randomFor(game) < 0.65 ? extras.slice(0, 1) : [];
-    return [normal, stop].concat(picks);
+  function hasMap(game) {
+    var branchMap = game && game.state && game.state.branchMap;
+    return Boolean(branchMap && Array.isArray(branchMap.rows) && branchMap.rows.length);
   }
 
-  function buildMidBossJunction(game) {
-    var candidates = (window.CuddleQuestBook && window.CuddleQuestBook.bossChoices
-      ? window.CuddleQuestBook.bossChoices(game.random, game.state.bossesSeen)
-      : []) || [];
-    if (candidates.length < 2) return null;
-    var first = candidates[0];
-    var second = candidates[1];
+  // -- map generation ------------------------------------------------------
+
+  // Node mix per act. Wordle-ish stops stay the backbone; the rest are
+  // capped so a run can't turn into a row of shops, and the first row is
+  // always plain Wordles so nobody opens on a shop they can't afford.
+  function buildActRows(game, actIndex, shopSlots) {
+    var rows = [];
+    var counts = { shop: 0, upgrade: 0, event: 0, special: 0 };
+    var previousWidth = 0;
+    for (var rowIndex = 0; rowIndex < ACT_ROWS; rowIndex += 1) {
+      var width;
+      if (rowIndex === 0) width = 2 + (randomFor(game) < 0.35 ? 1 : 0);
+      else if (rowIndex === ACT_ROWS - 1) width = 1 + (randomFor(game) < 0.55 ? 1 : 0);
+      else width = 1 + Math.floor(randomFor(game) * 3);
+      // Never repeat a single-node row back to back: two pinch points in a
+      // row is a corridor, not a fork.
+      if (width === 1 && previousWidth === 1) width = 2;
+      previousWidth = width;
+
+      var nodes = rowTypes(game, rowIndex, width, counts, shopSlots).map(function toNode(type, col) {
+        return { row: rows.length, col: col, type: type, next: [] };
+      });
+      rows.push({ kind: "stops", act: actIndex, nodes: nodes });
+    }
+    return rows;
+  }
+
+  // Wordles are the backbone: every row keeps at least one, so no route is
+  // ever forced through a shop, and the specials stay rare enough (and
+  // capped per act) that the map reads as a road of Wordles with the
+  // occasional detour rather than a row of vending machines.
+  function rowTypes(game, rowIndex, width, counts, shopSlots) {
+    if (rowIndex === 0) {
+      return new Array(width).fill("normal");
+    }
+    var types = [];
+    var specialsAllowed = Math.max(0, width - 1);
+    for (var col = 0; col < width; col += 1) {
+      var pool = ["normal", "normal", "normal", "normal", "theme", "challenge", "challenge"];
+      if (specialsAllowed > 0 && counts.special < 4) {
+        if (counts.shop < Math.min(2, shopSlots.length)) pool.push("shop");
+        if (counts.upgrade < 2) pool.push("upgrade");
+        if (counts.event < 2) pool.push("event");
+      }
+      var type = pickOne(pool, game);
+      if (type === "shop" || type === "upgrade" || type === "event") {
+        counts[type] += 1;
+        counts.special += 1;
+        specialsAllowed -= 1;
+      }
+      types.push(type);
+    }
+    return types;
+  }
+
+  // Wires every node in `from` to a contiguous, non-decreasing slice of
+  // `to`. Non-decreasing is what keeps the edges from crossing each other,
+  // and covering 0..n-1 across the row is what guarantees no node is
+  // stranded without a way in or a way out. The random widening is where
+  // the "this one goes left, that one goes both ways" shape comes from.
+  function connectRows(game, from, to) {
+    var m = from.nodes.length;
+    var n = to.nodes.length;
+    var ranges = [];
+    var index;
+    for (index = 0; index < m; index += 1) {
+      var lo = Math.floor((index * n) / m);
+      var hi = Math.max(lo, Math.ceil(((index + 1) * n) / m) - 1);
+      ranges.push({ lo: lo, hi: hi });
+    }
+    for (index = 0; index < m; index += 1) {
+      if (ranges[index].hi < n - 1 && randomFor(game) < 0.45) ranges[index].hi += 1;
+      if (ranges[index].lo > 0 && randomFor(game) < 0.45
+          && (index === 0 || ranges[index].lo - 1 >= ranges[index - 1].lo)) {
+        ranges[index].lo -= 1;
+      }
+    }
+    for (index = 0; index < m; index += 1) {
+      var edges = [];
+      for (var target = ranges[index].lo; target <= ranges[index].hi; target += 1) edges.push(target);
+      from.nodes[index].next = edges;
+    }
+  }
+
+  function bossNode(definition, gate, row, col) {
     return {
-      bossCandidates: [first, second],
-      options: [
-        {
-          id: "forced-a",
-          type: "bossForced",
-          bossId: first.id,
-          icon: first.icon,
-          title: first.title,
-          description: "Preview: " + first.description
-        },
-        {
-          id: "forced-b",
-          type: "bossForced",
-          bossId: second.id,
-          icon: second.icon,
-          title: second.title,
-          description: "Preview: " + second.description
-        },
-        {
-          id: "choice",
-          type: "bossChoice",
-          icon: "🎭",
-          title: "Twin Trial",
-          description: "Arrive blind and choose between " + first.title + " and " + second.title + " once you get there."
-        }
-      ]
+      row: row,
+      col: col,
+      type: "boss",
+      bossId: definition.id,
+      bossTitle: definition.title,
+      bossIcon: definition.icon,
+      bossDescription: definition.description,
+      gate: gate,
+      next: []
     };
   }
 
-  function generateBranchMap(game) {
-    var branchMap = ensureBranchMap(game);
-    JUNCTION_ROUNDS.forEach(function buildOne(round) {
-      if (!branchMap.junctions[round]) branchMap.junctions[round] = buildJunctionOptions(game, round);
-    });
-    if (!branchMap.midBoss) branchMap.midBoss = buildMidBossJunction(game);
+  function drawBosses(game, count, exclude) {
+    var book = window.CuddleQuestBook;
+    var drawn = (book && typeof book.bossChoices === "function"
+      ? book.bossChoices(game.random, exclude || [])
+      : []) || [];
+    return drawn.slice(0, count);
   }
+
+  function generateMap(game) {
+    var branchMap = ensureBranchMap(game);
+    if (branchMap.rows.length) return branchMap;
+
+    var shopSlots = SHOP_SLOTS.slice();
+    var rows = buildActRows(game, 0, shopSlots);
+
+    var midBosses = drawBosses(game, 2, game.state.bossesSeen || []);
+    var midRow = { kind: "boss", act: 0, nodes: [] };
+    midBosses.forEach(function addMidBoss(definition, col) {
+      midRow.nodes.push(bossNode(definition, MID_BOSS_GATE, rows.length, col));
+    });
+    if (!midRow.nodes.length) return branchMap;
+    rows.push(midRow);
+
+    buildActRows(game, 1, shopSlots).forEach(function addSecondAct(row) {
+      row.nodes.forEach(function reindex(node) { node.row = rows.length; });
+      row.act = 1;
+      rows.push(row);
+    });
+
+    var finalBoss = drawBosses(game, 1, (game.state.bossesSeen || []).concat(
+      midBosses.map(function bossId(definition) { return definition.id; })
+    ))[0] || midBosses[0];
+    rows.push({
+      kind: "boss",
+      act: 1,
+      nodes: [bossNode(finalBoss, FINAL_BOSS_GATE, rows.length, 0)]
+    });
+
+    rows.forEach(function fixRowIndex(row, rowIndex) {
+      row.nodes.forEach(function fixNode(node, col) {
+        node.row = rowIndex;
+        node.col = col;
+        if (node.type === "event" && !node.eventId) node.eventId = pickOne(EVENTS, game).id;
+        if (node.type === "shop" && node.shopSlot == null) {
+          node.shopSlot = shopSlots.length ? shopSlots.shift() : null;
+          if (node.shopSlot == null) node.type = "upgrade";
+        }
+      });
+    });
+
+    for (var rowIndex = 0; rowIndex < rows.length - 1; rowIndex += 1) {
+      connectRows(game, rows[rowIndex], rows[rowIndex + 1]);
+    }
+
+    branchMap.rows = rows;
+    branchMap.position = null;
+    branchMap.visited = [];
+    branchMap.roundsPlayed = 0;
+    return branchMap;
+  }
+
+  // -- position / reachability --------------------------------------------
+
+  function nodeAt(branchMap, row, col) {
+    var rowData = branchMap.rows[row];
+    return rowData && rowData.nodes[col] ? rowData.nodes[col] : null;
+  }
+
+  function currentNode(branchMap) {
+    if (!branchMap.position) return null;
+    return nodeAt(branchMap, branchMap.position.row, branchMap.position.col);
+  }
+
+  function reachableNodes(branchMap) {
+    if (!branchMap.rows.length) return [];
+    var here = currentNode(branchMap);
+    if (!here) return branchMap.rows[0].nodes.slice();
+    var nextRow = branchMap.rows[here.row + 1];
+    if (!nextRow) return [];
+    return (here.next || []).map(function toNode(col) {
+      return nextRow.nodes[col];
+    }).filter(Boolean);
+  }
+
+  function isReachable(branchMap, node) {
+    return reachableNodes(branchMap).some(function match(candidate) {
+      return candidate.row === node.row && candidate.col === node.col;
+    });
+  }
+
+  function wasVisited(branchMap, node) {
+    return (branchMap.visited || []).some(function match(entry) {
+      return entry.row === node.row && entry.col === node.col;
+    });
+  }
+
+  function returnToMap(game) {
+    var branchMap = ensureBranchMap(game);
+    var state = game.state;
+    if (state.status === "won" || state.status === "lost") return;
+    state.lastClearedBossGate = null;
+    state.roundIntroPending = false;
+    state.upgradeChoices = [];
+    state.upgradePhase = null;
+    state.upgradeMilestone = null;
+    state.status = MAP_STATUS;
+    if (!branchMap.rows.length) generateMap(game);
+  }
+
+  // -- node effects --------------------------------------------------------
 
   function applyPendingBossPenalty(game) {
     var branchMap = ensureBranchMap(game);
@@ -235,39 +398,19 @@
     }
   }
 
-  // Routes through the real _openBossGate/chooseBoss chain instead of
-  // hand-building state.boss: those methods (via the V3 mega-layer) retime
-  // a boss's turn count from its run stage every time a boss is opened or
-  // chosen, on top of the branch penalty applied below. Swapping the boss
-  // pool out for exactly the two pre-generated candidates for the length of
-  // one call keeps that retiming (and hidden-index/quick-mode setup) intact
-  // without duplicating it here.
-  function openFixedBossGate(game, candidates) {
-    var stash = window.CuddleQuestBook;
-    window.CuddleQuestBook = Object.assign({}, stash, {
-      bossChoices: function fixedBossChoices() { return candidates.slice(); }
-    });
-    try {
-      return game._openBossGate(MID_BOSS_ROUND);
-    } finally {
-      window.CuddleQuestBook = stash;
-    }
-  }
-
-  function applyEvent(game, option, round) {
+  function applyEvent(game, node) {
     var definition = null;
     for (var index = 0; index < EVENTS.length; index += 1) {
-      if (EVENTS[index].id === option.eventId) { definition = EVENTS[index]; break; }
+      if (EVENTS[index].id === node.eventId) { definition = EVENTS[index]; break; }
     }
-    if (!definition) return;
+    if (!definition) return "";
     var branchMap = ensureBranchMap(game);
     var messages = [];
 
     if (definition.grantsUpgrade && typeof game._upgradeCatalog === "function" && typeof game._grantUpgradeChoice === "function") {
       // A couple of catalog entries can be maxed out already (Theme Sense's
-      // cap, a fully-stacked V3 custom reward) and reject that one specific
-      // id -- try a few shuffled picks rather than paying the event's cost
-      // for nothing on an unlucky draw.
+      // cap, a fully-stacked custom reward) and reject that one id -- walk a
+      // shuffled catalog rather than charging the event's cost for nothing.
       var pool = shuffled(game._upgradeCatalog() || [], game);
       for (var pick = 0; pick < pool.length; pick += 1) {
         var applied = game._grantUpgradeChoice(pool[pick]);
@@ -289,23 +432,19 @@
         break;
       case "guess":
         branchMap.pendingPenalty = Object.assign({}, branchMap.pendingPenalty, { guess: 1 });
-        branchMap.pendingPenaltyRound = round;
-        messages.push("Next round starts one guess short.");
+        messages.push("The next round starts one guess short.");
         break;
       case "mulligan":
         branchMap.pendingPenalty = Object.assign({}, branchMap.pendingPenalty, { mulligan: 1 });
-        branchMap.pendingPenaltyRound = round;
-        messages.push("Next round starts one mulligan short.");
+        messages.push("The next round starts one mulligan short.");
         break;
       case "rewards":
         branchMap.pendingPenalty = Object.assign({}, branchMap.pendingPenalty, { rewards: true });
-        branchMap.pendingPenaltyRound = round;
-        messages.push("Next round offers no reward of its own.");
+        messages.push("The next round offers no reward of its own.");
         break;
       case "noMoney":
         branchMap.pendingPenalty = Object.assign({}, branchMap.pendingPenalty, { noMoney: true });
-        branchMap.pendingPenaltyRound = round;
-        messages.push("Next round's solve is worth no points.");
+        messages.push("The next round's solve is worth no points.");
         break;
       default:
         break;
@@ -320,135 +459,207 @@
       messages.push("+" + EVENT_WINDFALL_AMOUNT + " points, free.");
     }
 
-    // _beginRound (fired next, via _advanceRound) unconditionally overwrites
-    // lastMessage with its own "Round N begins" copy, so this can't just be
-    // written to state.lastMessage here -- it would never be seen. Stash it
-    // and have the _beginRound wrap below splice it back in afterward.
-    ensureBranchMap(game).pendingEventMessage = definition.title + ": " + messages.join(" ");
+    return definition.title + ": " + messages.join(" ");
   }
 
-  function resolveRegularJunction(game, round, option) {
+  function openShop(game, node) {
+    var campaign = window.CuddleCampaign && typeof window.CuddleCampaign.ensureCampaign === "function"
+      ? window.CuddleCampaign.ensureCampaign(game)
+      : null;
+    if (!campaign || node.shopSlot == null) {
+      game.state.lastMessage = "The shop was shuttered; the road goes on.";
+      returnToMap(game);
+      return;
+    }
+    var slot = Number(node.shopSlot);
+    if (campaign.shopsVisited.indexOf(slot) === -1) {
+      campaign.shopsVisited.push(slot);
+      campaign.shopsVisited.sort(function bySize(a, b) { return a - b; });
+    }
+    campaign.activeShopRound = slot;
+    if (!Array.isArray(campaign.shopPurchases[String(slot)])) campaign.shopPurchases[String(slot)] = [];
+    game.state.status = "shop";
+    game.state.lastMessage = "The Wandering Paw is open.";
+  }
+
+  function openUpgradeStop(game) {
+    var choices = typeof game._generateUpgradeChoices === "function" ? game._generateUpgradeChoices() : [];
+    if (!choices.length) {
+      game.state.lastMessage = "The waystone had nothing left to offer.";
+      returnToMap(game);
+      return;
+    }
+    game.state.status = "upgrade";
+    game.state.upgradePhase = "round";
+    game.state.upgradeMilestone = null;
+    game.state.upgradeChoices = choices;
+    game.state.lastMessage = "A waystone: take one permanent upgrade.";
+  }
+
+  // Bosses go through the real _openBossGate/chooseBoss chain (which retimes
+  // a boss from its run stage and sets up hidden indices/quick mode) rather
+  // than a hand-built state.boss -- the pool is swapped for this one node's
+  // boss just long enough for that call.
+  function startBoss(game, node) {
     var branchMap = ensureBranchMap(game);
-    branchMap.resolved[round] = option.type;
-    var completedRound = round - 1;
-    if (option.type !== "shop" && SHOP_ROUNDS.indexOf(round) !== -1 && window.CuddleCampaign) {
-      var campaign = window.CuddleCampaign.ensureCampaign(game);
-      if (campaign && campaign.shopsVisited.indexOf(completedRound) === -1) {
-        campaign.shopsVisited.push(completedRound);
-        campaign.shopsVisited.sort(function bySize(a, b) { return a - b; });
+    var book = window.CuddleQuestBook;
+    var definition = book && typeof book.getBoss === "function" ? book.getBoss(node.bossId) : null;
+    var candidates = definition
+      ? [Object.assign({}, definition, {
+        reward: typeof book.getBossReward === "function" ? book.getBossReward(definition.rewardId) : null
+      })]
+      : drawBosses(game, 1, []);
+    if (!candidates.length) {
+      returnToMap(game);
+      return;
+    }
+
+    branchMap.pendingBossGate = node.gate;
+    var stash = window.CuddleQuestBook;
+    window.CuddleQuestBook = Object.assign({}, stash, {
+      // _openBossGate needs two options to open at all; this node is a fixed
+      // single boss, so the pair is that boss twice and chooseBoss picks it.
+      bossChoices: function fixedBossChoices() {
+        return [Object.assign({}, candidates[0]), Object.assign({}, candidates[0])];
       }
+    });
+    var opened;
+    try {
+      opened = game._openBossGate(game.state.round);
+    } finally {
+      window.CuddleQuestBook = stash;
+      branchMap.pendingBossGate = null;
     }
-    if (option.type === "event") applyEvent(game, option, round);
-    if (option.type === "theme" && window.CuddleCampaign && typeof window.CuddleCampaign.queueCategoryReveal === "function") {
-      window.CuddleCampaign.queueCategoryReveal(game, 1, "branch");
+    if (!opened) {
+      returnToMap(game);
+      return;
     }
-    if (option.type === "challenge") {
+    game.chooseBoss(candidates[0].id);
+    game.state.roundIntroPending = false;
+  }
+
+  function beginRoundForNode(game, node) {
+    var branchMap = ensureBranchMap(game);
+    branchMap.roundsPlayed = Math.min(TOTAL_ROUNDS, Number(branchMap.roundsPlayed || 0) + 1);
+    game.state.round = branchMap.roundsPlayed;
+    game.state.lastClearedBossGate = null;
+
+    if (node.type === "challenge") {
+      // maybeOfferChallenge runs inside _beginRound and is chance-based with
+      // a pity counter; parking the counter high forces this round's offer.
       var mode = game.state.cuddleMoneyMode;
       if (mode) mode.noOfferStreak = 999;
     }
-    game._advanceRound();
-    game.save();
-    return { ok: true, message: game.state.lastMessage || "" };
+
+    if (node.type === "boss") {
+      startBoss(game, node);
+      return;
+    }
+
+    game._beginRound();
+    if (typeof game.dismissRoundIntro === "function" && game.state.roundIntroPending) {
+      // The map already IS the between-rounds screen, so the old round-intro
+      // card is skipped -- dismissRoundIntro is what seeds the first quest.
+      game.dismissRoundIntro();
+    }
+    if (node.type === "theme" && window.CuddleCampaign
+        && typeof window.CuddleCampaign.queueCategoryReveal === "function") {
+      window.CuddleCampaign.queueCategoryReveal(game, 1, "branch");
+    }
   }
 
-  function resolveBossApproach(game, optionId) {
+  function enterNode(game, node) {
     var branchMap = ensureBranchMap(game);
-    var midBoss = branchMap.midBoss;
-    if (!midBoss) return { ok: false, error: "No boss approach is open." };
-    var option = null;
-    for (var index = 0; index < midBoss.options.length; index += 1) {
-      if (midBoss.options[index].id === optionId) { option = midBoss.options[index]; break; }
-    }
-    if (!option) return { ok: false, error: "That path is not available." };
-    branchMap.resolved[MID_BOSS_ROUND] = option.id;
-    game.state.round = MID_BOSS_ROUND;
+    branchMap.position = { row: node.row, col: node.col };
+    if (!Array.isArray(branchMap.visited)) branchMap.visited = [];
+    branchMap.visited.push({ row: node.row, col: node.col, type: node.type });
 
-    var opened = openFixedBossGate(game, midBoss.bossCandidates);
-    if (!opened) {
-      // The boss pool couldn't fill both slots after all (e.g. bossesSeen
-      // changed since the map was generated) -- mirrors _openBossGate's own
-      // fallback of just letting the round proceed with no boss at all.
-      branchMap.resolved[MID_BOSS_ROUND] = "skip";
-      game.state.round = MID_BOSS_ROUND - 1;
-      game._advanceRound();
-      game.save();
+    var definition = NODE_TYPES[node.type] || NODE_TYPES.normal;
+    if (definition.playsRound) {
+      beginRoundForNode(game, node);
       return { ok: true };
     }
 
-    if (option.type === "bossChoice") {
-      game.save();
+    if (node.type === "shop") {
+      openShop(game, node);
       return { ok: true };
     }
-
-    var result = game.chooseBoss(option.bossId);
-    game.save();
-    return result;
+    if (node.type === "upgrade") {
+      openUpgradeStop(game);
+      return { ok: true };
+    }
+    if (node.type === "event") {
+      var message = applyEvent(game, node);
+      returnToMap(game);
+      if (message) game.state.lastMessage = message;
+      return { ok: true, message: message };
+    }
+    returnToMap(game);
+    return { ok: true };
   }
 
-  function presentJunction(game, branchMap, round) {
-    if (!branchMap.junctions[round]) branchMap.junctions[round] = buildJunctionOptions(game, round);
-    game.state.status = "branchJunction";
-    game.save();
-    return undefined;
-  }
-
-  function presentBossApproach(game, branchMap) {
-    if (!branchMap.midBoss) branchMap.midBoss = buildMidBossJunction(game);
-    game.state.status = "branchJunction";
-    game.save();
-    return undefined;
-  }
-
-  // -- prototype wiring --------------------------------------------------
+  // -- prototype wiring ----------------------------------------------------
 
   var originalStartNew = proto.startNew;
   proto.startNew = function startNewWithBranchMap() {
     var result = originalStartNew.apply(this, arguments);
-    generateBranchMap(this);
+    this.state.branchMap = null;
+    generateMap(this);
+    // startNew already prepared round 1; the map is the first screen now, so
+    // that round is re-prepared when the first Wordle node is actually
+    // entered and roundsPlayed drives the numbering from there.
+    ensureBranchMap(this).roundsPlayed = 0;
+    returnToMap(this);
     this.save();
     return typeof this.getSnapshot === "function" ? this.getSnapshot() : result;
   };
 
   proto._bossGateFor = function bossGateForBranchMap(roundValue) {
-    var value = Number(roundValue) || 1;
-    if (value === MID_BOSS_ROUND) return "before-" + MID_BOSS_ROUND;
-    if (value > TOTAL_ROUNDS) return "final";
+    var branchMap = this.state && this.state.branchMap;
+    if (branchMap && branchMap.pendingBossGate) return branchMap.pendingBossGate;
+    if (!hasMap(this)) {
+      var value = Number(roundValue) || 1;
+      return value > TOTAL_ROUNDS ? FINAL_BOSS_GATE : null;
+    }
     return null;
   };
 
   var originalAdvanceRound = proto._advanceRound;
   proto._advanceRound = function advanceThroughBranchMap() {
-    var branchMap = ensureBranchMap(this);
-    var justClearedGate = this.state.lastClearedBossGate;
-    var next = justClearedGate ? this.state.round : this.state.round + 1;
-    if (!justClearedGate && next >= 2 && next <= TOTAL_ROUNDS) {
-      if (next === MID_BOSS_ROUND && !branchMap.resolved[next]) {
-        if (!branchMap.midBoss) branchMap.midBoss = buildMidBossJunction(this);
-        // Mirrors _openBossGate's own fallback: if the boss pool can't fill
-        // both slots, no gate is offered at all and the round just proceeds
-        // -- so once that happens once, fall through the same way forever
-        // rather than presenting a junction with no options in it.
-        if (branchMap.midBoss) return presentBossApproach(this, branchMap);
-        branchMap.resolved[next] = "skip";
-      }
-      if (next !== MID_BOSS_ROUND && !branchMap.resolved[next]) {
-        return presentJunction(this, branchMap, next);
-      }
-    }
-    return originalAdvanceRound.apply(this, arguments);
+    if (!hasMap(this)) return originalAdvanceRound.apply(this, arguments);
+    if (this.state.status === "won" || this.state.status === "lost") return undefined;
+    returnToMap(this);
+    this.save();
+    return undefined;
+  };
+
+  var originalLeaveShop = proto.leaveCuddleShop;
+  proto.leaveCuddleShop = function leaveShopIntoBranchMap() {
+    if (!hasMap(this)) return originalLeaveShop.apply(this, arguments);
+    if (this.state.status !== "shop") return { ok: false, error: "No shop is open." };
+    var campaign = window.CuddleCampaign && typeof window.CuddleCampaign.ensureCampaign === "function"
+      ? window.CuddleCampaign.ensureCampaign(this)
+      : null;
+    if (campaign) campaign.activeShopRound = null;
+    this.state.lastMessage = "The road goes on.";
+    returnToMap(this);
+    this.save();
+    return { ok: true, message: this.state.lastMessage };
   };
 
   var originalBeginRound = proto._beginRound;
   proto._beginRound = function beginRoundWithBranchPenalty() {
     var result = originalBeginRound.apply(this, arguments);
     var branchMap = ensureBranchMap(this);
-    if (branchMap.pendingEventMessage) {
-      this.state.lastMessage = branchMap.pendingEventMessage
-        + (this.state.lastMessage ? " " + this.state.lastMessage : "");
-      branchMap.pendingEventMessage = null;
+    // The map is the between-rounds screen now, so the old round-intro card
+    // (which renders the previous linear map) never gets to open, whichever
+    // path called _beginRound.
+    if (branchMap.rows.length && this.state.roundIntroPending
+        && typeof this.dismissRoundIntro === "function") {
+      this.dismissRoundIntro();
     }
-    if (branchMap.pendingPenalty && Number(branchMap.pendingPenaltyRound) === Number(this.state.round)) {
-      var penalty = branchMap.pendingPenalty;
+    var penalty = branchMap.pendingPenalty;
+    if (penalty) {
       if (penalty.guess) {
         this.state.maxGuesses = Math.max(3, Number(this.state.maxGuesses || Engine.MAX_GUESSES || 6) - penalty.guess);
       }
@@ -458,7 +669,6 @@
       if (penalty.rewards) branchMap.rewardsDisabledRound = this.state.round;
       if (penalty.noMoney) branchMap.noMoneyRound = this.state.round;
       branchMap.pendingPenalty = null;
-      branchMap.pendingPenaltyRound = null;
     }
     return result;
   };
@@ -478,9 +688,6 @@
     if (rewardsFlag) {
       branchMap.rewardsDisabledRound = null;
       if (this.state.status === "upgrade") {
-        this.state.upgradeChoices = [];
-        this.state.upgradePhase = null;
-        this.state.upgradeMilestone = null;
         this.state.lastMessage = (this.state.lastMessage ? this.state.lastMessage + " " : "") + "No reward this round.";
         this._advanceRound();
       }
@@ -495,181 +702,181 @@
     return result;
   };
 
-  proto.resolveBranchJunction = function resolveBranchJunction(optionId) {
-    if (this.state.status !== "branchJunction") return { ok: false, error: "No junction is open." };
-    var round = this.state.round + 1;
-    if (round === MID_BOSS_ROUND) return resolveBossApproach(this, optionId);
+  proto.enterBranchNode = function enterBranchNode(nodeId) {
+    if (this.state.status !== MAP_STATUS) return { ok: false, error: "The map is not open." };
     var branchMap = ensureBranchMap(this);
-    var options = branchMap.junctions[round] || [];
-    var option = null;
-    for (var index = 0; index < options.length; index += 1) {
-      if (options[index].id === optionId) { option = options[index]; break; }
-    }
-    if (!option) return { ok: false, error: "That path is not available." };
-    return resolveRegularJunction(this, round, option);
+    var parts = String(nodeId || "").split(":");
+    var node = nodeAt(branchMap, Number(parts[0]), Number(parts[1]));
+    if (!node) return { ok: false, error: "That stop is not on the map." };
+    if (!isReachable(branchMap, node)) return { ok: false, error: "No path leads there from here." };
+    var result = enterNode(this, node);
+    this.save();
+    return result;
   };
 
   // -- rendering -----------------------------------------------------------
 
-  // The full run as a Slay the Spire-style route: one row per junction (plus
-  // a start pip and the final boss pip), each row's nodes fanning out from
-  // and back into a single point because every option at a junction leads to
-  // the SAME next junction -- there's no separate physical track per choice,
-  // just a different flavor for that one stop. A past row keeps every node
-  // visible (like an unchosen Spire node stays on the map, just unreachable)
-  // and marks which one was actually taken; only that node feeds the line
-  // into the next row. Future rows fan out from every node of the row before
-  // them, since which one you'll be standing on isn't decided yet.
-  var MAP_ROUND_ORDER = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  var ROW_HEIGHT = 68;
+  var MAP_WIDTH = 300;
+  var NODE_RADIUS = 15;
+  var SIDE_MARGIN = 52;
+  var TOP_MARGIN = 26;
 
-  function buildMapRows(game) {
-    var branchMap = ensureBranchMap(game);
-    var currentRound = game.state.round + 1;
-    var rows = [];
-    rows.push({
-      kind: "pip",
-      round: 1,
-      status: "past",
-      nodes: [{ id: "start", icon: "🏁", title: "Run Start", chosen: true }]
-    });
-    MAP_ROUND_ORDER.forEach(function addRound(round) {
-      var isBoss = round === MID_BOSS_ROUND;
-      var options = isBoss
-        ? (branchMap.midBoss ? branchMap.midBoss.options : [])
-        : (branchMap.junctions[round] || []);
-      var status = round < currentRound ? "past" : round === currentRound ? "current" : "future";
-      var resolvedValue = branchMap.resolved[round];
-      var nodes = options.map(function toNode(option) {
-        var matchValue = isBoss ? option.id : option.type;
-        return {
-          id: option.id,
-          icon: option.icon,
-          title: option.title,
-          chosen: status === "past" && resolvedValue === matchValue
-        };
-      });
-      rows.push({ kind: isBoss ? "boss" : "junction", round: round, status: status, nodes: nodes });
-    });
-    rows.push({
-      kind: "pip",
-      round: TOTAL_ROUNDS + 1,
-      status: currentRound > TOTAL_ROUNDS ? "past" : "future",
-      nodes: [{ id: "final", icon: "👑", title: "Final Boss", chosen: false }]
-    });
-    return rows;
+  function nodeX(count, index) {
+    if (count <= 1) return MAP_WIDTH / 2;
+    return SIDE_MARGIN + (index * (MAP_WIDTH - SIDE_MARGIN * 2)) / (count - 1);
   }
 
-  function renderMapSvg(rows) {
-    var ROW_H = 92;
-    var WIDTH = 300;
-    var RADIUS = 18;
-    var MARGIN = 56;
-    var currentIndex = -1;
-    rows.forEach(function findCurrent(row, index) {
-      if (row.status === "current") currentIndex = index;
-    });
-    if (currentIndex === -1) currentIndex = rows.length - 1;
-    var start = Math.max(0, currentIndex - 2);
-    var end = Math.min(rows.length - 1, currentIndex + 2);
-    var visibleRows = rows.slice(start, end + 1);
+  function nodeY(rowIndex) {
+    return TOP_MARGIN + rowIndex * ROW_HEIGHT;
+  }
 
-    function nodeX(count, i) {
-      if (count <= 1) return WIDTH / 2;
-      return MARGIN + (i * (WIDTH - MARGIN * 2)) / (count - 1);
+  function nodeIcon(node) {
+    if (node.type === "boss") return node.bossIcon || NODE_TYPES.boss.icon;
+    return (NODE_TYPES[node.type] || NODE_TYPES.normal).icon;
+  }
+
+  function nodeLabel(node) {
+    if (node.type === "boss") return "Boss";
+    return (NODE_TYPES[node.type] || NODE_TYPES.normal).label;
+  }
+
+  function nodeTitle(node) {
+    if (node.type === "boss") return node.bossTitle || "Boss";
+    return (NODE_TYPES[node.type] || NODE_TYPES.normal).title;
+  }
+
+  function nodeDescription(node) {
+    if (node.type === "boss") {
+      return (node.bossDescription ? node.bossDescription + " " : "")
+        + "Pass or fail, and its reward is permanent.";
+    }
+    if (node.type === "event") {
+      for (var index = 0; index < EVENTS.length; index += 1) {
+        if (EVENTS[index].id === node.eventId) return EVENTS[index].description;
+      }
+    }
+    return (NODE_TYPES[node.type] || NODE_TYPES.normal).description;
+  }
+
+  function renderMapSvg(game, branchMap) {
+    var rows = branchMap.rows;
+    var reachable = reachableNodes(branchMap);
+    var here = currentNode(branchMap);
+    var height = TOP_MARGIN * 2 + (rows.length - 1) * ROW_HEIGHT + NODE_RADIUS + 16;
+    var edges = [];
+    var nodes = [];
+
+    function isReachableNode(node) {
+      return reachable.some(function match(candidate) {
+        return candidate.row === node.row && candidate.col === node.col;
+      });
     }
 
-    var positions = visibleRows.map(function layoutRow(row, rowIndex) {
-      var y = 26 + rowIndex * ROW_H;
-      return row.nodes.map(function layoutNode(node, i) {
-        return { x: nodeX(row.nodes.length, i), y: y, node: node };
-      });
-    });
-
-    var lines = [];
-    for (var r = 0; r < positions.length - 1; r += 1) {
-      var fromRow = visibleRows[r];
-      var fromPositions = positions[r];
-      var toPositions = positions[r + 1];
-      var sources = fromPositions.filter(function isChosen(p) { return p.node.chosen; });
-      if (fromRow.status !== "past" || !sources.length) sources = fromPositions;
-      sources.forEach(function drawFrom(from) {
-        toPositions.forEach(function drawTo(to) {
-          var walked = fromRow.status === "past" && from.node.chosen;
-          lines.push(
-            "<path d=\"M" + from.x + " " + (from.y + RADIUS) + " C " + from.x + " " + (from.y + ROW_H / 2)
-            + ", " + to.x + " " + (to.y - ROW_H / 2) + ", " + to.x + " " + (to.y - RADIUS) + "\""
-            + " class=\"" + (walked ? "cuddle-map-line-walked" : "cuddle-map-line") + "\" />"
+    rows.forEach(function drawEdges(row, rowIndex) {
+      var nextRow = rows[rowIndex + 1];
+      if (!nextRow) return;
+      row.nodes.forEach(function drawFrom(node, col) {
+        var fromX = nodeX(row.nodes.length, col);
+        var fromY = nodeY(rowIndex);
+        (node.next || []).forEach(function drawTo(targetCol) {
+          var target = nextRow.nodes[targetCol];
+          if (!target) return;
+          var toX = nodeX(nextRow.nodes.length, targetCol);
+          var toY = nodeY(rowIndex + 1);
+          var live = here && here.row === node.row && here.col === node.col && isReachableNode(target);
+          var walked = wasVisited(branchMap, node) && wasVisited(branchMap, target);
+          var className = walked ? "cuddle-map-line-walked" : live ? "cuddle-map-line-live" : "cuddle-map-line";
+          edges.push(
+            "<path class=\"" + className + "\" d=\"M" + fromX + " " + (fromY + NODE_RADIUS)
+            + " C " + fromX + " " + (fromY + ROW_HEIGHT * 0.55)
+            + ", " + toX + " " + (toY - ROW_HEIGHT * 0.55)
+            + ", " + toX + " " + (toY - NODE_RADIUS) + "\" />"
           );
         });
       });
-    }
+    });
 
-    var nodesMarkup = [];
-    positions.forEach(function drawRow(rowPositions, rowIndex) {
-      var row = visibleRows[rowIndex];
-      rowPositions.forEach(function drawNode(p) {
-        var classes = ["cuddle-map-node", "cuddle-map-node-" + row.status];
-        if (p.node.chosen) classes.push("cuddle-map-node-chosen");
-        var clickable = row.status === "current";
-        nodesMarkup.push(
-          "<g class=\"" + classes.join(" ") + "\""
-          + (clickable ? " data-cuddle-campaign-action=\"resolve-branch-junction\" data-shop-item-id=\"" + escapeHtml(p.node.id) + "\" tabindex=\"0\" role=\"button\" aria-label=\"" + escapeHtml(p.node.title) + "\"" : "")
-          + " transform=\"translate(" + p.x + "," + p.y + ")\">"
-          + "<circle r=\"" + RADIUS + "\"></circle>"
-          + "<text class=\"cuddle-map-node-icon\" text-anchor=\"middle\" dy=\"0.32em\">" + escapeHtml(p.node.icon || "❔") + "</text>"
-          + "<text class=\"cuddle-map-node-label\" text-anchor=\"middle\" y=\"" + (RADIUS + 14) + "\">" + escapeHtml(shortLabel(p.node.title)) + "</text>"
+    rows.forEach(function drawNodes(row, rowIndex) {
+      row.nodes.forEach(function drawNode(node, col) {
+        var x = nodeX(row.nodes.length, col);
+        var y = nodeY(rowIndex);
+        var visited = wasVisited(branchMap, node);
+        var isHere = Boolean(here && here.row === node.row && here.col === node.col);
+        var open = isReachableNode(node);
+        var classes = ["cuddle-map-node"];
+        classes.push(node.type === "boss" ? "cuddle-map-node-boss" : "cuddle-map-node-stop");
+        if (isHere) classes.push("cuddle-map-node-here");
+        else if (open) classes.push("cuddle-map-node-open");
+        else if (visited) classes.push("cuddle-map-node-visited");
+        else classes.push("cuddle-map-node-locked");
+        nodes.push(
+          "<g class=\"" + classes.join(" ") + "\" transform=\"translate(" + x + "," + y + ")\""
+          + (open
+            ? " data-cuddle-campaign-action=\"enter-branch-node\" data-shop-item-id=\"" + node.row + ":" + node.col + "\""
+              + " role=\"button\" tabindex=\"0\" aria-label=\"" + escapeHtml(nodeTitle(node)) + "\""
+            : " aria-hidden=\"true\"")
+          + ">"
+          + "<circle r=\"" + NODE_RADIUS + "\"></circle>"
+          + "<text class=\"cuddle-map-node-icon\" text-anchor=\"middle\" dy=\"0.32em\">" + escapeHtml(nodeIcon(node)) + "</text>"
+          + "<text class=\"cuddle-map-node-label\" text-anchor=\"middle\" y=\"" + (NODE_RADIUS + 13) + "\">" + escapeHtml(nodeLabel(node)) + "</text>"
           + "</g>"
         );
       });
     });
 
-    var height = 26 + (visibleRows.length - 1) * ROW_H + RADIUS + 20;
     return (
-      "<svg class=\"cuddle-branch-map-svg\" viewBox=\"0 0 " + WIDTH + " " + height + "\" role=\"img\" aria-label=\"Run map\">"
-      + lines.join("")
-      + nodesMarkup.join("")
-      + "</svg>"
+      "<div class=\"cuddle-branch-map\" data-cuddle-branch-scroll>"
+      + "<svg class=\"cuddle-branch-map-svg\" viewBox=\"0 0 " + MAP_WIDTH + " " + height + "\" role=\"img\" aria-label=\"Run map\">"
+      + edges.join("")
+      + nodes.join("")
+      + "</svg></div>"
     );
   }
 
-  function shortLabel(title) {
-    var text = String(title || "");
-    return text.length > 12 ? text.slice(0, 11) + "…" : text;
-  }
-
-  function renderJunction(game) {
+  function renderMapScreen(game) {
     var state = game.state;
-    var round = state.round + 1;
-    var isBossApproach = round === MID_BOSS_ROUND;
     var branchMap = ensureBranchMap(game);
-    var options = isBossApproach
-      ? (branchMap.midBoss ? branchMap.midBoss.options : [])
-      : (branchMap.junctions[round] || []);
-    var mapRows = buildMapRows(game);
+    if (!branchMap.rows.length) generateMap(game);
+    var open = reachableNodes(branchMap);
+    var here = currentNode(branchMap);
+    var heading = here ? "Where to next?" : "Plan your route";
+    var intro = here
+      ? "You are on the map. Only the stops your current path connects to are open."
+      : "The whole run is laid out below. Every path ends at a boss, but no two reach the same stops on the way.";
     return (
       "<div class=\"cuddle-shell cuddle-branch-shell\">"
       + "<header class=\"cuddle-header\">"
       + "<div class=\"cuddle-header-side\"><button class=\"cuddle-icon-btn\" data-action=\"run-menu\" aria-label=\"Cuddle menu\">←</button></div>"
       + "<div class=\"cuddle-header-title\">"
-      + "<span class=\"cuddle-eyebrow\">" + (isBossApproach ? "APPROACHING THE BOSS" : "THE ROAD AHEAD") + "</span>"
+      + "<span class=\"cuddle-eyebrow\">THE ROAD AHEAD</span>"
       + "<div class=\"cuddle-header-title-line\">"
-      + "<h1>" + (isBossApproach ? "Two paths, one gate" : "Choose your next stop") + "</h1>"
+      + "<h1>" + heading + "</h1>"
       + "<span class=\"cuddle-header-score\" aria-label=\"Spendable money $" + escapeHtml(state.score) + "\">$" + escapeHtml(state.score) + "</span>"
       + "</div></div>"
       + "<div class=\"cuddle-header-side cuddle-header-side-right\"></div>"
       + "</header>"
       + "<main class=\"cuddle-branch-page\">"
-      + "<div class=\"cuddle-branch-map\" aria-hidden=\"false\">" + renderMapSvg(mapRows) + "</div>"
-      + "<p class=\"cuddle-branch-intro\">" + (isBossApproach
-        ? "Round " + round + " is gated by a boss. Walk a known path straight to one previewed challenger, or take the Twin Trial and pick between both once you arrive."
-        : "Round " + round + " is ahead. Pick how you want to reach it.") + "</p>"
+      + renderMapSvg(game, branchMap)
+      // An event stop resolves without a screen of its own, so what it just
+      // did to the run is only ever reported here.
+      + (state.lastMessage
+        ? "<p class=\"cuddle-branch-message\" role=\"status\">" + escapeHtml(state.lastMessage) + "</p>"
+        : "")
+      + "<p class=\"cuddle-branch-intro\">" + escapeHtml(intro) + "</p>"
       + "<div class=\"cuddle-choice-grid\">"
-      + options.map(function renderOption(option) {
+      + open.map(function renderOption(node, index) {
+        // Two open stops of the same type would otherwise read as identical
+        // cards, so each card names the fork it belongs to.
+        var direction = open.length < 2 ? "" : open.length === 2
+          ? (index === 0 ? " · left" : " · right")
+          : (index === 0 ? " · left" : index === open.length - 1 ? " · right" : " · middle");
         return (
-          "<button class=\"cuddle-choice cuddle-branch-choice\" data-cuddle-campaign-action=\"resolve-branch-junction\" data-shop-item-id=\"" + escapeHtml(option.id) + "\">"
-          + "<span class=\"cuddle-choice-icon\">" + escapeHtml(option.icon || "❔") + "</span>"
-          + "<strong>" + escapeHtml(option.title) + "</strong>"
-          + "<small>" + escapeHtml(option.description) + "</small>"
+          "<button class=\"cuddle-choice cuddle-branch-choice\" data-cuddle-campaign-action=\"enter-branch-node\""
+          + " data-shop-item-id=\"" + node.row + ":" + node.col + "\">"
+          + "<span class=\"cuddle-choice-icon\">" + escapeHtml(nodeIcon(node)) + "</span>"
+          + "<strong>" + escapeHtml(nodeTitle(node) + direction) + "</strong>"
+          + "<small>" + escapeHtml(nodeDescription(node)) + "</small>"
           + "</button>"
         );
       }).join("")
@@ -678,7 +885,32 @@
     );
   }
 
+  // cuddle-ui.js calls window.CuddleCampaign.afterRender after every render;
+  // wrapping the export (the module reads it fresh each time) is how this
+  // module gets a post-render hook of its own to scroll the map to where the
+  // player is actually standing.
+  var campaignExport = window.CuddleCampaign;
+  if (campaignExport) {
+    var originalAfterRender = campaignExport.afterRender;
+    window.CuddleCampaign = Object.freeze(Object.assign({}, campaignExport, {
+      afterRender: function afterRenderWithBranchMap(root, game, landing) {
+        if (typeof originalAfterRender === "function") originalAfterRender(root, game, landing);
+        if (!root || landing || !game || !game.state || game.state.status !== MAP_STATUS) return;
+        var scroller = root.querySelector("[data-cuddle-branch-scroll]");
+        var marker = root.querySelector(".cuddle-map-node-here") || root.querySelector(".cuddle-map-node-open");
+        if (!scroller || !marker || typeof marker.getBoundingClientRect !== "function") return;
+        window.requestAnimationFrame(function centerOnPosition() {
+          var scrollerBox = scroller.getBoundingClientRect();
+          var markerBox = marker.getBoundingClientRect();
+          var offset = (markerBox.top + markerBox.height / 2) - (scrollerBox.top + scrollerBox.height / 2);
+          scroller.scrollTop = Math.max(0, scroller.scrollTop + offset);
+        });
+      }
+    }));
+  }
+
   window.CuddleBranchMap = Object.freeze({
-    renderJunction: renderJunction
+    STATUS: MAP_STATUS,
+    renderMapScreen: renderMapScreen
   });
 }());
