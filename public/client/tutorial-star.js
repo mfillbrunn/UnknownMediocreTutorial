@@ -230,7 +230,7 @@ function runStarTutorial(state, role) {
 
   if (step === 0) {
     starTutorialShow(
-      "Stars are the hider's reward track, and they come down to one choice each turn. Keeping your word is the safe move: always exactly one star. Changing is the bold move, and boldness pays.",
+      "Stars are the secretkeeper's reward track and they reward you for changing your secret. Keeping your word always gives exactly one star. Changing can give you many more!",
       {
         current: 1
       }
@@ -242,7 +242,7 @@ function runStarTutorial(state, role) {
 
   if (step === 1) {
     starTutorialShow(
-      "Swap to a word that leaves the hunter with lots of possibilities still open, and that is two stars. The counter updates as you type - if it drops to one, keeping is probably wiser.",
+      "The star counter updates as you type your new secret - the stars serve as hints to the secretkeeper. If the new secret only shows one, the new secret gives away a lot of information and keeping your old secret is probably wiser. But swap to a word that doesn't give out a lot of information, and you'll get two stars - good job, do it!",
       {
         title: "What makes a Change strong",
         current: 2
@@ -255,7 +255,7 @@ function runStarTutorial(state, role) {
 
   if (step === 2) {
     starTutorialShow(
-      "That blue mark is the target: one specific letter, one specific spot. Hit it with a changed word and that is a third star. Quiet tip: it doubles as a hint, because there is always a strong word that matches it.",
+      "There is one more star to earn. That blue mark is the target: one specific letter, one specific spot. Include it into your new secret and that is a third star. The letter doubles as a hint because there is always a strong word that matches it. Try to find it and you'll get extra stars and a strong secret - a win-win!",
       {
         current: 3,
         // Pinned low, over the keyboard: the bubble's normal placement
@@ -270,7 +270,7 @@ function runStarTutorial(state, role) {
 
   if (step === 3) {
     starTutorialShow(
-      "Rewards land at 4, 8 and 12 stars - one at each. Twelve is the top of the track, so that last one is what the whole climb is for.",
+      "You receive rewards once you have 4, 8 and 12 stars - one at each. With each reward, the rewards have a higher chance of being good - bronze are common, silver rare, and gold are legendary!",
       {
         title: "Star rewards",
         current: 4
@@ -344,7 +344,7 @@ function runStarTutorial(state, role) {
     starLastPendingChoiceId = pendingChoice.id;
     starSetRewardGuide(true, false);
     starTutorialShow(
-      "Four stars - your first reward is ready. Same idea as the hunter's Quest rewards, except these ones are built to keep you hidden. Read the three cards and take one.",
+      "Four stars - your first reward is ready. Same idea as the guesser's Quest rewards, except these ones are built to keep you hidden. Read the three cards and take one.",
       {
         title: "Cash it in",
         current: 7,
