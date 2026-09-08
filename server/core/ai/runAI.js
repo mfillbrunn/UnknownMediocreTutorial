@@ -274,32 +274,106 @@ function buildPowerAction(powerId, state, context) {
   return { type };
 }
 
+// UMT_CHALLENGES_V2: REPEATABLE POWER KEYS START
+const CHALLENGE_REPEATABLE_POWER_KEYS = Object.freeze({
+  countOnly: "countOnlyUsed",
+  delayedIntel: "delayedIntelUsed",
+  confuseColors: "confuseColorsUsed",
+  fakeFeedback: "fakeFeedbackUsed",
+  feedbackLie: "feedbackLieUsed",
+  vowelRefresh: "vowelRefreshUsed",
+  magicMode: "magicModeUsed",
+  rouletteSecret: "rouletteSecretUsed",
+  revealHistory: "revealHistoryUsed",
+  betMiss: "betMissUsed",
+  nonsense: "nonsenseUsed"
+});
+
+// Some original powers leave an active flag behind because they were built
+// as once-per-round rewards. Challenge mode re-arms them, so clear any
+// lingering effect before an unpowered turn or the role-swap round begins.
+const CHALLENGE_ACTIVE_POWER_KEYS = Object.freeze({
+  countOnly: "countOnlyActive",
+  confuseColors: "confuseColorsActive",
+  vowelRefresh: "vowelRefreshActive",
+  rouletteSecret: "rouletteSecretActive",
+  revealHistory: "revealHistoryActive",
+  nonsense: "nonsenseActive"
+});
+
+function rearmChallengePower(state, powerId) {
+  const usedKey = CHALLENGE_REPEATABLE_POWER_KEYS[powerId];
+  if (!usedKey) return false;
+  state.powers ||= {};
+  state.powers[usedKey] = false;
+  return true;
+}
+
+function disarmChallengePower(state, powerId) {
+  const activeKey = CHALLENGE_ACTIVE_POWER_KEYS[powerId];
+  if (!activeKey || !state.powers) return;
+  state.powers[activeKey] = false;
+  if (powerId === "revealHistory") state.powers.revealHistoryPending = null;
+  if (powerId === "rouletteSecret") state.powers.rouletteSecretFeasible = [];
+}
+// UMT_CHALLENGES_V2: REPEATABLE POWER KEYS END
+
 function maybeUsePower(room, state, aiUserId, roomId, context, isTutorial) {
   const aiRole = getAIRole(state, aiUserId);
   if (!aiRole) return false;
   if (state.powerUsedThisTurn) return false;
-
-  // Challenge mode (e.g. "Count Only"): the AI is forced to use one named
-  // power on every eligible turn it holds that power's role, same idea as
-  // the power-tutorial branch below but independent of isTutorial -- a
-  // challenge is a normal, non-tutorial match (see challengeService.js),
-  // so this has to work without any tutorial flags set. The opposite role
-  // (whichever one that isn't) is untouched and falls through to the
-  // ordinary AI power logic further down, same as any other match.
+  // UMT_CHALLENGES_V2: FORCED POWER START
+  // A challenge suppresses the ordinary random AI power path. During round
+  // one, the AI automatically repeats exactly one named power for the first
+  // N eligible turns. During the role-swap round, it has no power at all.
   const challenge = state.singlePlayer?.challenge;
-  if (
-    challenge?.enabled &&
-    challenge.powerId &&
-    powerMetadata[challenge.powerId]?.role === aiRole &&
-    isPowerAllowed(challenge.powerId, state)
-  ) {
-    const forcedAction = buildPowerAction(challenge.powerId, state, context);
-    if (forcedAction) {
-      applyAIAction(room, forcedAction, aiUserId, roomId, context);
-      return true;
-    }
-  }
+  if (challenge?.enabled) {
+    const limit = Math.max(0, Number(challenge.powerTurns) || 0);
+    const used = Math.max(0, Number(challenge.forcedUses) || 0);
+    const isPoweredRole = (
+      challenge.powerRole === aiRole &&
+      powerMetadata[challenge.powerId]?.role === aiRole
+    );
 
+    // Returning here is intentional: challenge matches never fall through
+    // to the normal random-power picker in either role.
+    if (!isPoweredRole || used >= limit) {
+      disarmChallengePower(state, challenge.powerId);
+      return false;
+    }
+    if (!rearmChallengePower(state, challenge.powerId)) return false;
+    // Challenge powers are mandatory, so use the actual game rule rather
+    // than the normal AI's optional timing heuristics. Context-limited
+    // powers such as Solve Cold Case still wait until their rule allows them.
+    if (!isPowerAllowed(challenge.powerId, state)) return false;
+
+    const forcedAction = buildPowerAction(challenge.powerId, state, context);
+    if (!forcedAction) return false;
+
+    const usedNow = used + 1;
+    challenge.forcedUses = usedNow;
+    challenge.remainingUses = Math.max(0, limit - usedNow);
+    challenge.lastPowerHistoryIndex = state.history?.length || 0;
+    try {
+      applyAIAction(room, forcedAction, aiUserId, roomId, context);
+    } catch (error) {
+      challenge.forcedUses = used;
+      challenge.remainingUses = Math.max(0, limit - used);
+      throw error;
+    }
+
+    if (context.io?.to) {
+      context.io.to(roomId).emit("singlePlayer:challengePowerProgress", {
+        challengeId: challenge.id,
+        powerId: challenge.powerId,
+        used: usedNow,
+        limit,
+        remaining: Math.max(0, limit - usedNow)
+      });
+    }
+    return true;
+  }
+  // UMT_CHALLENGES_V2: FORCED POWER END
   // Power tutorial (tutorialStage "power"): round 1 has the human use the
   // power being taught in its native role; round 2 swaps roles so the AI
   // now holds that same role and must actually demonstrate the power

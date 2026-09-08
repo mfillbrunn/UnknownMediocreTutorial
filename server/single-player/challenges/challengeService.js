@@ -1,4 +1,4 @@
-// UMT_CHALLENGES_V1
+// UMT_CHALLENGES_V2
 "use strict";
 
 const {
@@ -8,45 +8,38 @@ const {
   setPlayerName,
   emitRoomState
 } = require("../../core/rooms");
-const powerMetadata = require("../../powers/powerMetadata");
 const { buildRoundPlan } = require("../unlockService");
 const SinglePlayerMode = require("../campaignMode");
 const { getChallenge, getDifficulty, publicCatalog } = require("./challengeRegistry");
 
 const AI_USER_ID = "AI";
-const AI_FORBIDDEN = new Set(["assassinWord", "revealLetter"]);
-
-function rolePowerPool(role) {
-  return Object.entries(powerMetadata)
-    .filter(([id, meta]) => meta?.role === role && !AI_FORBIDDEN.has(id))
-    .map(([id]) => id);
-}
 
 function makeStage(challenge, difficulty) {
-  const oppositeRole = challenge.powerRole === "setter" ? "guesser" : "setter";
+  const playerStartsAs = challenge.powerRole === "setter" ? "guesser" : "setter";
   const opponentFixed = { setter: [], guesser: [] };
   opponentFixed[challenge.powerRole] = [challenge.powerId];
-  opponentFixed[oppositeRole] = rolePowerPool(oppositeRole);
 
   return {
     id: `challenge:${challenge.id}:${difficulty.id}`,
-    version: 1,
+    version: 2,
     title: challenge.title,
     summary: challenge.summary,
     cast: { human: "Player", opponent: "Challenge AI" },
     map: { label: challenge.title, x: 50, y: 50, next: [] },
     game: {
       roles: "both",
-      // Put the powered AI role first so the challenge mechanic is shown immediately.
-      firstRole: challenge.powerRole === "setter" ? "guesser" : "setter",
+      // The human begins opposite the AI's powered role, so the challenge
+      // mechanic is encountered in round one. Round two is the normal swap.
+      firstRole: playerStartsAs,
       difficulty: difficulty.aiDifficulty,
       powerChoice: false,
-      quests: { disabled: false },
+      quests: { disabled: true },
       human: {},
       ai: {},
       powerPolicy: {
-        playerUsesUnlocks: true,
-        rewardsUseUnlocks: true,
+        playerUsesUnlocks: false,
+        rewardsUseUnlocks: false,
+        playerFixed: { setter: [], guesser: [] },
         opponentFixed
       }
     },
@@ -60,8 +53,12 @@ function normalizeWord(value) {
 }
 
 function roundForHumanRole(state, humanUserId, role) {
-  return (state.matchRounds || []).find(r => {
-    const humanRole = r?.setter === humanUserId ? "setter" : r?.guesser === humanUserId ? "guesser" : null;
+  return (state.matchRounds || []).find(round => {
+    const humanRole = round?.setter === humanUserId
+      ? "setter"
+      : round?.guesser === humanUserId
+        ? "guesser"
+        : null;
     return humanRole === role;
   }) || null;
 }
@@ -71,12 +68,11 @@ function humanSolved(round) {
   const history = Array.isArray(round.history) ? round.history : [];
   const lastGuess = normalizeWord(history[history.length - 1]?.guess);
   const secret = normalizeWord(round.finalSecret || round.secret);
-  return !!lastGuess && !!secret && lastGuess === secret;
+  return Boolean(lastGuess && secret && lastGuess === secret);
 }
 
-// Newer/older builds have used a few names for the setter's star/bonus score.
-// Keep this tolerant so adding a guesser-power challenge does not require
-// touching the shared game engine just to expose one field.
+// Builds have used several names for the Secretkeeper star score. Keep this
+// tolerant so challenge scoring remains compatible with those match records.
 function setterStars(round) {
   if (!round) return 0;
   const direct = [
@@ -90,50 +86,100 @@ function setterStars(round) {
 
   const history = Array.isArray(round.history) ? round.history : [];
   return history.reduce((sum, entry) => {
-    const n = [entry?.setterStarsEarned, entry?.setterStarDelta, entry?.starBonus, entry?.setterBonus]
-      .find(Number.isFinite);
-    return sum + (Number.isFinite(n) ? Number(n) : 0);
+    const delta = [
+      entry?.setterStarsEarned,
+      entry?.setterStarDelta,
+      entry?.starBonus,
+      entry?.setterBonus
+    ].find(Number.isFinite);
+    return sum + (Number.isFinite(delta) ? Number(delta) : 0);
   }, 0);
+}
+
+function evaluateSpecialGoal(goal, { humanGuessCount, setterStarCount, guesserRound }) {
+  if (goal?.type === "setterStars") {
+    return {
+      passed: setterStarCount >= Number(goal.target || 0),
+      value: `${setterStarCount} / ${Number(goal.target || 0)} stars`
+    };
+  }
+
+  const target = Number(goal?.target || 4);
+  return {
+    passed: humanSolved(guesserRound) && humanGuessCount <= target,
+    value: `${humanGuessCount || 0} / ${target} guesses`
+  };
 }
 
 function scoreChallenge(state, sp) {
   const humanId = sp.humanUserId;
   const guesserRound = roundForHumanRole(state, humanId, "guesser");
   const setterRound = roundForHumanRole(state, humanId, "setter");
-
   const humanGuessCount = Number(guesserRound?.guessCount) || 0;
   const aiGuessCount = Number(setterRound?.guessCount) || 0;
-  // Same comparison implied by campaign facts: as setter you want the AI to
-  // need more guesses; as guesser you want to need fewer.
+  const setterStarCount = setterStars(setterRound);
   const margin = aiGuessCount - humanGuessCount;
   const won = humanSolved(guesserRound) && margin > 0;
+  const goal = sp.challenge.specialGoal || {
+    type: sp.challenge.powerRole === "setter" ? "guessLimit" : "setterStars",
+    target: sp.challenge.powerRole === "setter" ? 4 : 12,
+    label: sp.challenge.powerRole === "setter"
+      ? "Solve the powered round in 4 guesses or fewer"
+      : "Earn at least 12 Secretkeeper stars in the powered round"
+  };
+  const special = evaluateSpecialGoal(goal, {
+    humanGuessCount,
+    setterStarCount,
+    guesserRound
+  });
 
-  const specialPassed = sp.challenge.powerRole === "setter"
-    ? humanSolved(guesserRound) && humanGuessCount <= 4
-    : setterStars(setterRound) >= 12;
-
-  const stars = won
-    ? 1 + (margin >= 3 ? 1 : 0) + (specialPassed ? 1 : 0)
-    : 0;
+  const marginPassed = won && margin >= 3;
+  const specialPassed = won && special.passed;
+  const stars = won ? 1 + (marginPassed ? 1 : 0) + (specialPassed ? 1 : 0) : 0;
+  const signedMargin = `${margin >= 0 ? "+" : ""}${margin}`;
 
   return {
     challengeResult: true,
     challengeId: sp.challenge.id,
+    title: sp.challenge.title,
     difficulty: sp.challenge.difficulty,
+    difficultyLabel: sp.challenge.difficultyLabel,
     powerId: sp.challenge.powerId,
     powerRole: sp.challenge.powerRole,
+    powerTurns: sp.challenge.powerTurns,
+    forcedUses: sp.challenge.forcedUses,
     won,
     stars,
     margin,
     humanGuessCount,
     aiGuessCount,
-    setterStars: setterStars(setterRound),
-    specialPassed,
+    setterStars: setterStarCount,
+    specialPassed: special.passed,
     conditions: {
       win: won,
-      margin: won && margin >= 3,
-      special: won && specialPassed
-    }
+      margin: marginPassed,
+      special: specialPassed
+    },
+    objectives: [
+      {
+        id: "win",
+        label: "Beat the AI across both roles",
+        passed: won,
+        value: `${humanGuessCount} vs ${aiGuessCount} guesses`
+      },
+      {
+        id: "margin",
+        label: "Win by at least 3 guesses",
+        passed: marginPassed,
+        value: `${signedMargin} guess margin`
+      },
+      {
+        id: "special",
+        label: goal.label,
+        passed: specialPassed,
+        value: special.value
+      }
+    ]
   };
 }
 
@@ -156,7 +202,6 @@ class ChallengeService {
 
     const profile = await this.repo.ensureProfile(userId);
     if (!profile.ok) return profile;
-    const humanUnlockedPowers = await this.repo.getUnlockedPowersByRole(userId);
 
     const roomId = createRoom(socket, userId);
     const room = rooms[roomId];
@@ -174,7 +219,12 @@ class ChallengeService {
     setPlayerName(room, AI_USER_ID, `${challenge.title} AI`);
 
     const stage = makeStage(challenge, difficulty);
-    const plan = buildRoundPlan({ stage, humanUserId: userId, aiUserId: AI_USER_ID, humanUnlockedPowers });
+    const plan = buildRoundPlan({
+      stage,
+      humanUserId: userId,
+      aiUserId: AI_USER_ID,
+      humanUnlockedPowers: { setter: [], guesser: [] }
+    });
     const firstRound = plan.rounds[0];
     setPlayerRole(room, firstRound.setterUserId, "setter");
     setPlayerRole(room, firstRound.guesserUserId, "guesser");
@@ -186,7 +236,7 @@ class ChallengeService {
       enabled: true,
       sessionId: `challenge:${roomId}`,
       stageId: stage.id,
-      stageVersion: 1,
+      stageVersion: 2,
       attemptNo: 1,
       humanUserId: userId,
       storyPhase: "in_game",
@@ -196,22 +246,25 @@ class ChallengeService {
       challenge: {
         enabled: true,
         id: challenge.id,
+        title: challenge.title,
         difficulty: difficulty.id,
+        difficultyLabel: difficulty.label,
+        aiDifficulty: difficulty.aiDifficulty,
         powerId: challenge.powerId,
-        powerRole: challenge.powerRole
+        powerRole: challenge.powerRole,
+        powerTurns: difficulty.powerTurns,
+        forcedUses: 0,
+        remainingUses: difficulty.powerTurns,
+        poweredRoundIndex: 0,
+        normalRoundIndex: 1,
+        playerStartsAs: challenge.playerStartsAs,
+        specialGoal: { ...challenge.specialGoal }
       }
     };
 
     state.mode = new SinglePlayerMode();
     state.mode.initMatch(state);
     state.mode.onLobbyReady(state);
-
-    // A challenge is a full, normal match (same as any other single-player
-    // stage -- see sessionService.js's startAttempt, which sets this same
-    // isTutorial: false) with exactly one AI quirk layered on top: runAI.js
-    // forces state.singlePlayer.challenge.powerId whenever the AI holds
-    // challenge.powerRole. No tutorial flags needed for that -- see
-    // maybeUsePower's "challenge" branch.
     state.isTutorial = false;
     state.phase = "simultaneous";
 
@@ -226,8 +279,11 @@ class ChallengeService {
     return {
       ok: true,
       roomId,
-      challenge: { ...challenge },
-      difficulty: { id: difficulty.id, label: difficulty.label }
+      challenge: {
+        ...challenge,
+        specialGoal: { ...challenge.specialGoal }
+      },
+      difficulty: { ...difficulty }
     };
   }
 
@@ -256,8 +312,8 @@ class ChallengeService {
     const state = room?.state;
     const sp = state?.singlePlayer;
     if (!sp?.challenge?.enabled) return null;
-    // UMT_REQUESTED_FIXES_20260901: CHALLENGE RESULT GUARD
     if (sp.storyPhase === "completed") return null;
+
     const result = scoreChallenge(state, sp);
     sp.storyPhase = "completed";
     return result;
@@ -269,6 +325,7 @@ class ChallengeService {
     if (sp?.challenge?.enabled && sp.humanUserId !== userId) {
       return { ok: false, code: "CHALLENGE_SESSION_NOT_FOUND" };
     }
+
     this.sessionService.sessionsByRoomId.delete(roomId);
     if (room) room.status = "closed";
     return { ok: true };

@@ -737,18 +737,26 @@ onStateUpdate(newState => {
       );
     }
 
-    // Challenge mode: the round-start popup is the ONLY place this gets
-    // explained -- no separate tutorial-style walkthrough, no extra popups
-    // mid-match (see runAI.js's maybeUsePower "challenge" branch for the
-    // actual mechanic). Keep it to exactly one line stating the one AI
-    // quirk; everything else about the match is normal.
+    // UMT_CHALLENGES_V2: ROUND INTRO START
     const challengeSub = [];
-    if (state.singlePlayer?.challenge) {
-      const powerLabel = window.POWER_METADATA?.[state.singlePlayer.challenge.powerId]?.label
-        || state.singlePlayer.challenge.powerId;
-      challengeSub.push(`You'll play a full match. The AI will use ${powerLabel} every eligible turn.`);
+    const challengeData = state.singlePlayer?.challenge;
+    window.SinglePlayerChallenges?.syncMatchState?.(state);
+    if (challengeData?.enabled) {
+      const powerLabel = challengeData.title
+        || window.POWER_METADATA?.[challengeData.powerId]?.label
+        || challengeData.powerId;
+      const powerTurns = Math.max(0, Number(challengeData.powerTurns) || 0);
+      const poweredRoundIndex = Number(challengeData.poweredRoundIndex) || 0;
+      const isPoweredRound = (Number(state.roundIndex) || 0) === poweredRoundIndex;
+      if (isPoweredRound) {
+        challengeSub.push(
+          `Challenge: the AI automatically uses ${powerLabel} on its first ${powerTurns} eligible ${powerTurns === 1 ? "turn" : "turns"}. Round two has no challenge power.`
+        );
+      } else {
+        challengeSub.push("Challenge round two: the AI has no power bonus and plays normally.");
+      }
     }
-
+    // UMT_CHALLENGES_V2: ROUND INTRO END
     window.showBigAnnounce?.({
       icon: iAmSetter ? "🕵️" : "🔍",
       title: iAmSetter ? "You are the Secretkeeper" : "You are the Guesser",
