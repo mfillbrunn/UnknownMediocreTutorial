@@ -139,7 +139,7 @@ function runBasicInspectorTutorial(state) {
 
         if (tutorialSubStep === 1) {
       basicTutorialShow(
-        "Both players start by secretly typing in their first word at the same time - the secretkeeper types in their secret, you type in your first guess. Afterwards, players alternate taking turns, starting with your role, the guesser."
+        "Both players start by secretly typing in their first word at the same time - the secretkeeper types in their secret, you type in your first guess. Afterwards, players alternate taking turns, starting with your role, the guesser.",
         {
           role: "guesser",
           section: "How the game works",
@@ -150,7 +150,7 @@ function runBasicInspectorTutorial(state) {
       );
       tutorialContinueMode = "advance";
       return;
-    },
+    }
     
      if (state.simultaneousGuessSubmitted) {
       basicTutorialShow(
