@@ -487,6 +487,7 @@
 #setterScreen #setterGuesserSubmitted,
 #guesserScreen #historyGuesser {
   scrollbar-gutter: stable;
+   margin-top: 2px;
 }
 
 #setterScreen #setterGuesserSubmitted {
