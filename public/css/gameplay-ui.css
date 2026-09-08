@@ -3698,3 +3698,80 @@ body.hide-constraints :is(#setterScreen, #guesserScreen) .constraint-row {
   pointer-events: auto !important;
 }
 /* UMT_SIDEBAR_CONSTRAINT_FOLLOWUP_20260901: CSS END */
+/* =========================================================
+   REWARD POPUP SVG ICONS
+   Use the same SVG artwork shown on reward-selection cards.
+   ========================================================= */
+
+.pc-reward-popup-icon {
+  display: grid;
+  place-items: center;
+
+  /*
+   * Keep the existing 40px popup-icon box, but prevent the SVG from
+   * touching the border.
+   */
+  overflow: visible;
+
+  /*
+   * Used by SVG paths that rely on currentColor.
+   */
+  color: #7cd4ff;
+}
+
+/*
+ * The normal card SVG sizing is scoped under .pc-card-icon, so popup
+ * SVGs need their own dimensions.
+ */
+.pc-reward-popup-icon .pc-card-svg,
+.pc-reward-popup-icon .pc-fixed-reward-svg,
+.pc-reward-popup-icon .power-icon {
+  display: block;
+
+  width: 34px;
+  height: 34px;
+  max-width: 34px;
+  max-height: 34px;
+
+  overflow: visible;
+
+  color: currentColor;
+
+  filter: drop-shadow(
+    0 2px 4px rgba(4, 12, 21, 0.48)
+  );
+}
+
+/*
+ * Symbols referenced with <use> should inherit the popup accent unless
+ * an individual part of the icon has its own green/yellow/grey fill.
+ */
+.pc-reward-popup-icon svg {
+  flex: 0 0 34px;
+}
+
+/*
+ * Make fixed reward artwork slightly larger because most of it is drawn
+ * directly inside the 120x120 viewBox.
+ */
+.pc-reward-popup-icon .pc-fixed-reward-svg {
+  width: 36px;
+  height: 36px;
+  max-width: 36px;
+  max-height: 36px;
+}
+
+/*
+ * Do not let a global .power-icon rule add a separate badge background
+ * inside the popup's existing icon box.
+ */
+.pc-reward-popup-icon .power-icon {
+  margin: 0;
+  padding: 0;
+
+  border: 0;
+  border-radius: 0;
+
+  background: transparent;
+  box-shadow: none;
+}
