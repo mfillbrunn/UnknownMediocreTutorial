@@ -2317,7 +2317,7 @@
       id: "storybookStart",
       icon: "📖",
       title: "Opening Verse",
-      description: "Start every scoring round with +$5. Stacks up to three times.",
+      description: "Start every scoring round with +$10. Stacks up to three times.",
       max: 3
     },
     {
@@ -2720,7 +2720,7 @@
     if (this.isBossRound()) return;
 
     const notes = [];
-    const openingPoints = Number(state.cuddleBonuses.storybookStart || 0) * 5
+    const openingPoints = Number(state.cuddleBonuses.storybookStart || 0) * 10
       + (cuddleV3HasSynergy(this, "illustratedStart") ? 5 : 0);
     if (openingPoints > 0) {
       state.score += openingPoints;
@@ -3961,18 +3961,15 @@
     return (choices || []).filter(choice => choice?.id !== "removeLetter");
   }
 
+  // Disabled per request: this used to interrupt play with an extra reward
+  // pick every time total score/money crossed a new multiple of 100 ("$100
+  // extra reward", "$200", ...). All three call sites below only act when
+  // this returns true, so returning false unconditionally is a full,
+  // no-side-effect disable -- mega.milestonesClaimed100 is left in the
+  // save-state shape (still normalized in ensureMega) but never advances,
+  // and no code path still reads state.upgradeMilestone as a trigger.
   function claimMilestoneIfDue(game) {
-    const mega = ensureMega(game);
-    const state = game.state;
-    if (!state || state.status !== "playing") return false;
-    const earned = Math.floor(Number(state.score || 0) / 100);
-    if (earned <= Number(mega.milestonesClaimed100 || 0)) return false;
-    mega.milestonesClaimed100 = Number(mega.milestonesClaimed100 || 0) + 1;
-    state.status = "upgrade";
-    state.upgradePhase = "milestone";
-    state.upgradeMilestone = mega.milestonesClaimed100 * 100;
-    state.upgradeChoices = stripUnsafeMidRoundChoices(game._generateUpgradeChoices());
-    return true;
+    return false;
   }
 
   // The refresh button can otherwise re-introduce removeLetter into a
