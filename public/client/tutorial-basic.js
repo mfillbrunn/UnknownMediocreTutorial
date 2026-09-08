@@ -150,7 +150,7 @@ function runBasicInspectorTutorial(state) {
       );
       tutorialContinueMode = "advance";
       return;
-    }
+    },
     
      if (state.simultaneousGuessSubmitted) {
       basicTutorialShow(
