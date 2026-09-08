@@ -2782,8 +2782,8 @@ function updateTimerAccess() {
   // body.classList.contains("guide-on")). Apply the stored/default
   // preference unconditionally so those features keep working; only the
   // (now nonexistent) button-wiring below is skipped without a button.
-  const stored = localStorage.getItem("guideActive");
-  const guideOn = stored === null ? true : stored === "true";
+const stored = localStorage.getItem("guideActive");
+const guideOn = stored === null ? false : stored === "true";
   document.body.classList.toggle("guide-on", guideOn);
 
   // One instance in the outer app-header (menus) plus one duplicated into
