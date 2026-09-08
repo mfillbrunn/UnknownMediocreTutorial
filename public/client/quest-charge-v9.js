@@ -8,7 +8,6 @@
     { name: "home", label: "HOME", letters: "ASDFGHJKL".split("") },
     { name: "bottom", label: "BOTTOM", letters: "ZXCVBNM".split("") }
   ];
-
   const LIMITS = {
     RARE: 6,
     ALPHA: 3,
@@ -25,7 +24,6 @@
 
   const FIELD_YELLOW = 6;
   const byId = id => document.getElementById(id);
-
   let visualProgress = null;
   let currentQuestKey = "";
   let animationRunning = false;
@@ -68,7 +66,10 @@
     const last = cleanWord(history.at(-1)?.guess);
 
     if (pending.length === 5 && pending !== last) {
-      history.push({ guess: pending, __pendingQuestGuess: true });
+      history.push({
+        guess: pending,
+        __pendingQuestGuess: true
+      });
     }
 
     return history;
@@ -93,7 +94,9 @@
   function isAlternating(word) {
     if (word.length !== 5) return false;
     for (let index = 1; index < word.length; index++) {
-      if (VOWELS.has(word[index]) === VOWELS.has(word[index - 1])) return false;
+      if (VOWELS.has(word[index]) === VOWELS.has(word[index - 1])) {
+        return false;
+      }
     }
     return true;
   }
@@ -117,22 +120,30 @@
   }
 
   function inRange(word, low, high) {
-    return word.length === 5 && [...word].every(letter => letter >= low && letter <= high);
+    return word.length === 5 &&
+      [...word].every(letter => letter >= low && letter <= high);
   }
 
   function satisfiesCondition(word, condition) {
     if (!condition || word.length !== 5) return false;
     const letter = cleanWord(condition.letter);
-
     switch (condition.type) {
-      case "startsWith": return word.startsWith(letter);
-      case "endsWith": return word.endsWith(letter);
-      case "doubleLetter": return word.includes(letter.repeat(2));
-      case "minVowels": return countVowels(word) >= Number(condition.count || 0);
-      case "maxVowels": return countVowels(word) <= Number(condition.count || 0);
-      case "firstLastSame": return word[0] === word[4];
-      case "palindrome": return word === [...word].reverse().join("");
-      default: return false;
+      case "startsWith":
+        return word.startsWith(letter);
+      case "endsWith":
+        return word.endsWith(letter);
+      case "doubleLetter":
+        return word.includes(letter.repeat(2));
+      case "minVowels":
+        return countVowels(word) >= Number(condition.count || 0);
+      case "maxVowels":
+        return countVowels(word) <= Number(condition.count || 0);
+      case "firstLastSame":
+        return word[0] === word[4];
+      case "palindrome":
+        return word === [...word].reverse().join("");
+      default:
+        return false;
     }
   }
 
@@ -143,65 +154,192 @@
 
     const letter = cleanWord(condition?.letter);
     switch (condition?.type) {
-      case "startsWith": return `Starts with ${letter}`;
-      case "endsWith": return `Ends with ${letter}`;
-      case "doubleLetter": return `Has ${letter}${letter}`;
-      case "minVowels": return `${condition.count}+ vowels`;
-      case "maxVowels": return `At most ${condition.count} vowels`;
-      case "firstLastSame": return "Same first and last letter";
-      case "palindrome": return "Reads the same backward";
-      default: return "Special condition";
+      case "startsWith":
+        return `Starts with ${letter}`;
+      case "endsWith":
+        return `Ends with ${letter}`;
+      case "doubleLetter":
+        return `Has ${letter}${letter}`;
+      case "minVowels":
+        return `${condition.count}+ vowels`;
+      case "maxVowels":
+        return `At most ${condition.count} vowels`;
+      case "firstLastSame":
+        return "Same first and last letter";
+      case "palindrome":
+        return "Reads the same backward";
+      default:
+        return "Special condition";
     }
   }
 
-  function hardModeConstraints(history) {
-    const greens = [null, null, null, null, null];
-    const yellows = new Map();
+  // HARDMODE_BADGE_SERVER_SYNC_2026_09
+  // This mirrors questServer.js. A guess is checked against the clues known
+  // before that guess, then its feedback is folded into the constraints used
+  // for the following guess. Duplicate minimums and maximums are preserved.
+  const HARDMODE_GREEN = "\u{1F7E9}";
+  const HARDMODE_YELLOW = "\u{1F7E8}";
+  const HARDMODE_BLACK = "\u2B1B";
 
-    for (const entry of history) {
-      const word = cleanWord(entry.guess);
-      const feedback = entry.fbGuesser || entry.fb;
-      if (word.length !== 5 || !Array.isArray(feedback)) continue;
-
-      for (let index = 0; index < 5; index++) {
-        if (feedback[index] === "🟩") greens[index] = word[index];
-        if (feedback[index] === "🟨") {
-          if (!yellows.has(word[index])) yellows.set(word[index], new Set());
-          yellows.get(word[index]).add(index);
-        }
-      }
+  function hardModeLetterCounts(word) {
+    const counts = new Map();
+    for (const letter of word) {
+      counts.set(letter, (counts.get(letter) || 0) + 1);
     }
-
-    return { greens, yellows };
+    return counts;
   }
 
-  function hardModeCompliant(history, word) {
+  function hardModeRequiredCounts(greens, yellows, minCounts) {
+    const required = new Map(minCounts || []);
+    const greenCounts = new Map();
+
+    for (const letter of greens || []) {
+      if (!letter) continue;
+      greenCounts.set(letter, (greenCounts.get(letter) || 0) + 1);
+    }
+
+    for (const [letter, count] of greenCounts) {
+      required.set(letter, Math.max(required.get(letter) || 0, count));
+    }
+
+    for (const letter of (yellows || new Map()).keys()) {
+      required.set(letter, Math.max(required.get(letter) || 0, 1));
+    }
+
+    return required;
+  }
+
+  function hardModeCompliant(word, greens, yellows, minCounts, maxCounts) {
     if (word.length !== 5) return false;
-    const { greens, yellows } = hardModeConstraints(history);
 
-    for (let index = 0; index < 5; index++) {
+    const actualCounts = hardModeLetterCounts(word);
+    const requiredCounts = hardModeRequiredCounts(
+      greens,
+      yellows,
+      minCounts
+    );
+
+    for (let index = 0; index < greens.length; index++) {
       if (greens[index] && word[index] !== greens[index]) return false;
     }
 
     for (const [letter, bannedPositions] of yellows) {
-      if (!word.includes(letter)) return false;
+      if ((actualCounts.get(letter) || 0) < 1) return false;
       for (const position of bannedPositions) {
         if (word[position] === letter) return false;
       }
     }
 
+    for (const [letter, minimum] of requiredCounts) {
+      if ((actualCounts.get(letter) || 0) < minimum) return false;
+    }
+
+    for (const [letter, maximum] of maxCounts) {
+      // Match the server's requirement-wins behavior if clues become
+      // contradictory after a mid-round secret change.
+      const effectiveMaximum = Math.max(
+        maximum,
+        requiredCounts.get(letter) || 0
+      );
+      if ((actualCounts.get(letter) || 0) > effectiveMaximum) return false;
+    }
+
     return true;
   }
 
+  function foldHardModeConstraint(
+    greens,
+    yellows,
+    minCounts,
+    maxCounts,
+    entry
+  ) {
+    const word = cleanWord(entry.guess);
+    const feedback = entry.fbGuesser || entry.fb;
+    if (word.length !== 5 || !Array.isArray(feedback)) return;
+
+    const guessCounts = new Map();
+    const positiveCounts = new Map();
+    const blackCounts = new Map();
+
+    for (let index = 0; index < 5; index++) {
+      const letter = word[index];
+      const result = feedback[index];
+
+      guessCounts.set(letter, (guessCounts.get(letter) || 0) + 1);
+
+      if (result === HARDMODE_GREEN || result === HARDMODE_YELLOW) {
+        positiveCounts.set(
+          letter,
+          (positiveCounts.get(letter) || 0) + 1
+        );
+      } else if (result === HARDMODE_BLACK) {
+        blackCounts.set(letter, (blackCounts.get(letter) || 0) + 1);
+      }
+
+      if (result === HARDMODE_GREEN) {
+        greens[index] = letter;
+      } else if (result === HARDMODE_YELLOW) {
+        if (!yellows.has(letter)) yellows.set(letter, new Set());
+        yellows.get(letter).add(index);
+      }
+    }
+
+    for (const [letter, positiveCount] of positiveCounts) {
+      minCounts.set(
+        letter,
+        Math.max(minCounts.get(letter) || 0, positiveCount)
+      );
+    }
+
+    for (const [letter, blackCount] of blackCounts) {
+      const rowMaximum = (guessCounts.get(letter) || 0) - blackCount;
+      const previousMaximum = maxCounts.get(letter);
+      if (
+        previousMaximum === undefined ||
+        rowMaximum < previousMaximum
+      ) {
+        maxCounts.set(letter, rowMaximum);
+      }
+    }
+  }
+
   function hardModeProgress(history) {
-    const prior = [];
+    const greens = [null, null, null, null, null];
+    const yellows = new Map();
+    const minCounts = new Map();
+    const maxCounts = new Map();
     let count = 0;
 
     for (const entry of history) {
       const word = cleanWord(entry.guess);
       if (word.length !== 5) continue;
-      if (hardModeCompliant(prior, word)) count++;
-      prior.push(entry);
+
+      const feedback = entry.fbGuesser || entry.fb;
+      const isPending = entry.__pendingQuestGuess === true;
+
+      // Finalized history entries need feedback, exactly as on the server.
+      // A pending submitted/draft guess is checked against prior clues even
+      // though its own feedback does not exist yet.
+      if ((Array.isArray(feedback) || isPending) && hardModeCompliant(
+        word,
+        greens,
+        yellows,
+        minCounts,
+        maxCounts
+      )) {
+        count++;
+      }
+
+      if (Array.isArray(feedback)) {
+        foldHardModeConstraint(
+          greens,
+          yellows,
+          minCounts,
+          maxCounts,
+          entry
+        );
+      }
     }
 
     return count;
@@ -222,7 +360,9 @@
         : conditionHistory[index];
 
       if (!Array.isArray(conditions)) return;
-      total += conditions.filter(condition => satisfiesCondition(word, condition)).length;
+      total += conditions.filter(condition =>
+        satisfiesCondition(word, condition)
+      ).length;
     });
 
     return total;
@@ -235,7 +375,13 @@
 
     if (q.used) {
       const max = type === "ROW" ? 1 : LIMITS[type] || 1;
-      return { type, progress: max, max, yellowAt: max, done: true };
+      return {
+        type,
+        progress: max,
+        max,
+        yellowAt: max,
+        done: true
+      };
     }
 
     if (type === "RARE") {
@@ -243,7 +389,9 @@
       const used = new Set();
       for (const entry of history) {
         const word = cleanWord(entry.guess);
-        targets.forEach(letter => { if (word.includes(letter)) used.add(letter); });
+        targets.forEach(letter => {
+          if (word.includes(letter)) used.add(letter);
+        });
       }
       return {
         type,
@@ -270,7 +418,8 @@
       }
 
       coverages.sort((a, b) =>
-        (b.used.size / b.letters.length) - (a.used.size / a.letters.length)
+        (b.used.size / b.letters.length) -
+        (a.used.size / a.letters.length)
       );
       const best = coverages[0];
       return {
@@ -284,8 +433,15 @@
     }
 
     if (type === "ALPHA") {
-      const progress = history.filter(entry => isAlpha(cleanWord(entry.guess))).length;
-      return { type, progress, max: LIMITS.ALPHA, yellowAt: LIMITS.ALPHA - 1 };
+      const progress = history.filter(entry =>
+        isAlpha(cleanWord(entry.guess))
+      ).length;
+      return {
+        type,
+        progress,
+        max: LIMITS.ALPHA,
+        yellowAt: LIMITS.ALPHA - 1
+      };
     }
 
     if (type === "DOUBLES") {
@@ -321,7 +477,12 @@
 
     if (type === "HARDMODE") {
       const progress = hardModeProgress(history);
-      return { type, progress, max: LIMITS.HARDMODE, yellowAt: LIMITS.HARDMODE - 1 };
+      return {
+        type,
+        progress,
+        max: LIMITS.HARDMODE,
+        yellowAt: LIMITS.HARDMODE - 1
+      };
     }
 
     if (type === "FIELDREPORT") {
@@ -335,23 +496,32 @@
       };
     }
 
-    // V10_QUEST_CHARGE_VOWEL_TARGET
-    const vowelTarget = Number(q?.vowelTarget) >= 1 && Number(q?.vowelTarget) <= 3
-      ? Number(q.vowelTarget)
-      : 1;
+    const vowelTarget =
+      Number(q?.vowelTarget) >= 1 && Number(q?.vowelTarget) <= 3
+        ? Number(q.vowelTarget)
+        : 1;
+
     const predicates = {
       ALTERNATING: word => isAlternating(word),
       BOOKENDS: word => word.length === 5 && word[0] === word[4],
       HALF_AM: word => inRange(word, "A", "P"),
       HALF_NZ: word => inRange(word, "K", "Z"),
-      VOWELSHORTAGE: word => word.length === 5 && countVowels(word) === vowelTarget
+      VOWELSHORTAGE: word =>
+        word.length === 5 && countVowels(word) === vowelTarget
     };
 
     const predicate = predicates[type];
     if (predicate) {
-      const progress = history.filter(entry => predicate(cleanWord(entry.guess))).length;
+      const progress = history.filter(entry =>
+        predicate(cleanWord(entry.guess))
+      ).length;
       const max = LIMITS[type];
-      return { type, progress, max, yellowAt: max - 1 };
+      return {
+        type,
+        progress,
+        max,
+        yellowAt: max - 1
+      };
     }
 
     return null;
@@ -360,19 +530,39 @@
   function previewForDraft(state, word) {
     const base = progressSnapshot(state, baseHistory(state));
     if (!base || word.length !== 5) {
-      return { base, preview: base, delta: 0, qualifies: false };
+      return {
+        base,
+        preview: base,
+        delta: 0,
+        qualifies: false
+      };
     }
 
-    const previewHistory = [...baseHistory(state), { guess: word, __pendingQuestGuess: true }];
+    const previewHistory = [
+      ...baseHistory(state),
+      {
+        guess: word,
+        __pendingQuestGuess: true
+      }
+    ];
     const preview = progressSnapshot(state, previewHistory);
-    const delta = Math.max(0, (preview?.progress || 0) - (base.progress || 0));
+    const delta = Math.max(
+      0,
+      (preview?.progress || 0) - (base.progress || 0)
+    );
 
-    return { base, preview, delta, qualifies: delta > 0 };
+    return {
+      base,
+      preview,
+      delta,
+      qualifies: delta > 0
+    };
   }
 
   function ensureHud() {
     window.ensureGuesserBoardV9?.();
-    const sidebar = byId("guesserSidebar") || document.querySelector("#guesserScreen .powers-col");
+    const sidebar = byId("guesserSidebar") ||
+      document.querySelector("#guesserScreen .powers-col");
     const container = byId("guesserPowerContainer");
     if (!sidebar || !container) return null;
 
@@ -390,12 +580,13 @@
       `;
       container.parentElement?.insertBefore(hud, container);
     }
-
     return hud;
   }
 
   function ensureRequirement() {
-    const draftStack = document.querySelector("#guesserScreen .draft-stack");
+    const draftStack = document.querySelector(
+      "#guesserScreen .draft-stack"
+    );
     const draftContainer = byId("draftGuesser");
     if (!draftStack || !draftContainer) return null;
 
@@ -422,40 +613,66 @@
 
     const max = Math.max(1, snapshot.max || 1);
     meter.style.setProperty("--quest-segments", String(max));
-    const shown = Math.max(0, Math.min(max, visualProgress ?? snapshot.progress ?? 0));
-    const yellow = !!q?.oneAway || shown >= snapshot.yellowAt;
-    const green = !!q?.ready || !!q?.used || shown >= max;
+    const shown = Math.max(
+      0,
+      Math.min(max, visualProgress ?? snapshot.progress ?? 0)
+    );
 
-    name.textContent = window.QUEST_METADATA?.[snapshot.type]?.label || "Quest";
+    // Completion colors are authoritative server state. Local replay still
+    // supplies the numeric preview, but it can no longer turn the badge green.
+    const yellow = !!q?.oneAway;
+    const green = !!q?.ready || !!q?.used;
+
+    name.textContent =
+      window.QUEST_METADATA?.[snapshot.type]?.label || "Quest";
     count.textContent = `${shown}/${max}`;
 
     if (Number(meter.dataset.max) !== max) {
       meter.dataset.max = String(max);
-      meter.replaceChildren(...Array.from({ length: max }, (_, index) => {
-        const segment = document.createElement("span");
-        segment.className = "guesser-quest-charge-segment";
-        segment.dataset.questChargeIndex = String(index);
-        return segment;
-      }));
+      meter.replaceChildren(
+        ...Array.from({ length: max }, (_, index) => {
+          const segment = document.createElement("span");
+          segment.className = "guesser-quest-charge-segment";
+          segment.dataset.questChargeIndex = String(index);
+          return segment;
+        })
+      );
     }
 
-    meter.querySelectorAll(".guesser-quest-charge-segment").forEach((segment, index) => {
-      segment.classList.toggle("is-filled", index < shown);
-      segment.classList.toggle("is-yellow", yellow && index < shown);
-      segment.classList.toggle("is-green", green && index < shown);
-      segment.classList.toggle("is-next", index === shown && shown < max);
-    });
+    meter
+      .querySelectorAll(".guesser-quest-charge-segment")
+      .forEach((segment, index) => {
+        segment.classList.toggle("is-filled", index < shown);
+        segment.classList.toggle(
+          "is-yellow",
+          yellow && index < shown
+        );
+        segment.classList.toggle(
+          "is-green",
+          green && index < shown
+        );
+        segment.classList.toggle(
+          "is-next",
+          index === shown && shown < max
+        );
+      });
 
     meter.classList.toggle("is-yellow", yellow && !green);
     meter.classList.toggle("is-green", green);
     meter.setAttribute("aria-valuemax", String(max));
     meter.setAttribute("aria-valuenow", String(shown));
-    meter.setAttribute("aria-label", `Quest progress: ${shown} of ${max}`);
+    meter.setAttribute(
+      "aria-label",
+      `Quest progress: ${shown} of ${max}`
+    );
 
     const mini = byId("guesserSidebarChargeMini");
     if (mini) {
       mini.textContent = String(shown);
-      mini.classList.toggle("hidden", !window.isGuesserSidebarCollapsed?.());
+      mini.classList.toggle(
+        "hidden",
+        !window.isGuesserSidebarCollapsed?.()
+      );
       mini.classList.toggle("is-yellow", yellow && !green);
       mini.classList.toggle("is-green", green);
     }
@@ -469,7 +686,8 @@
     const progress = snapshot?.progress || 0;
     const max = snapshot?.max || 0;
     const title = window.QUEST_METADATA?.[type]?.label || "Quest";
-    const progressText = `<span class="quest-requirement-progress">${progress}/${max}</span>`;
+    const progressText =
+      `<span class="quest-requirement-progress">${progress}/${max}</span>`;
 
     if (type === "RARE") {
       const used = snapshot.used || new Set();
@@ -494,8 +712,9 @@
     if (type === "FIELDREPORT") {
       const conditions = snapshot.conditions || [];
       const rows = conditions.map(condition => {
-        const hit = word.length === 5 && satisfiesCondition(word, condition);
-        return `<span class="quest-condition-chip${hit ? " is-hit" : ""}">${hit ? "✓" : "○"} ${formatCondition(condition)}</span>`;
+        const hit =
+          word.length === 5 && satisfiesCondition(word, condition);
+        return `<span class="quest-condition-chip${hit ? " is-hit" : ""}">${hit ? "\u2713" : "\u25CB"} ${formatCondition(condition)}</span>`;
       }).join("");
 
       return `
@@ -515,14 +734,15 @@
 
     const copies = {
       ROW: `Complete the ${snapshot.row?.label || "closest"} keyboard row`,
-      ALPHA: "Put all 5 letters in A→Z or Z→A order",
+      ALPHA: "Put all 5 letters in A\u2192Z or Z\u2192A order",
       DOUBLES: "Use a new double letter, like EE or LL",
-      HARDMODE: "Use every green and yellow clue you already know",
+      CHAIN: "Link the next word to the prior word",
+      HARDMODE: "Obey every green, yellow, grey, and duplicate-count clue already known",
       ALTERNATING: "Alternate consonant and vowel",
       BOOKENDS: "Use the same first and last letter",
       HALF_AM: "Use only letters A through P",
       HALF_NZ: "Use only letters K through Z",
-      VOWELSHORTAGE: `Use exactly ${Number(q?.vowelTarget) >= 1 && Number(q?.vowelTarget) <= 3 ? Number(q.vowelTarget) : 1} vowel${Number(q?.vowelTarget) === 1 ? "" : "s"}`
+      VOWELSHORTAGE: `Use exactly ${vowelTargetFor(q)} vowel${vowelTargetFor(q) === 1 ? "" : "s"}`
     };
 
     return `
@@ -530,6 +750,11 @@
       <div class="quest-requirement-copy">${copies[type] || "Complete the Quest"}</div>
       ${delta ? `<div class="quest-requirement-gain">This word adds +${delta}</div>` : ""}
     `;
+  }
+
+  function vowelTargetFor(q) {
+    const target = Number(q?.vowelTarget);
+    return target >= 1 && target <= 3 ? target : 1;
   }
 
   function renderRequirement(state, snapshot) {
@@ -543,22 +768,30 @@
 
     const word = currentDraftWord();
     const draftPreview = previewForDraft(state, word);
-    requirement.innerHTML = requirementHtml(state, snapshot, draftPreview);
-    requirement.classList.toggle("is-qualified", draftPreview.qualifies);
+    requirement.innerHTML = requirementHtml(
+      state,
+      snapshot,
+      draftPreview
+    );
+    requirement.classList.toggle(
+      "is-qualified",
+      draftPreview.qualifies
+    );
     requirement.dataset.questType = q.type;
-    requirement.style.setProperty("--quest-draft-gain", String(draftPreview.delta));
+    requirement.style.setProperty(
+      "--quest-draft-gain",
+      String(draftPreview.delta)
+    );
 
     const draftRow = byId("draftGuesser")?.__draftRows?.draft ||
       document.querySelector("#draftGuesser .history-row.guesser-draft");
-
     draftRow?.classList.toggle(
       "quest-draft-electric",
       word.length === 5 && draftPreview.qualifies
     );
 
-    // Keep the last qualifying source while submission clears the draft;
-    // the following state update needs that rect for the lightning flight.
-    // A different complete non-qualifying word, however, invalidates it.
+    // Keep the source rectangle while submission clears the draft. The next
+    // state update uses it for the charge animation.
     if (word.length === 5 && !draftPreview.qualifies) {
       lastQualifyingSource = null;
       lastQualifyingAt = 0;
@@ -581,15 +814,31 @@
 
   function updateQuestCard(state, snapshot) {
     const q = state?.powers?.quest;
-    const card = document.querySelector("#guesserPowerContainer .quest-badge-tile");
-    if (!card || !snapshot) return;
+    const card = document.querySelector(
+      "#guesserPowerContainer .quest-badge-tile"
+    );
+    if (!card || !snapshot || !q) return;
 
-    const progress = Math.max(0, Math.min(snapshot.max, visualProgress ?? snapshot.progress));
+    const progress = Math.max(
+      0,
+      Math.min(
+        snapshot.max,
+        visualProgress ?? snapshot.progress
+      )
+    );
     const chip = card.querySelector(".quest-progress-chip");
-    if (chip) chip.textContent = q.used ? "Done" : q.ready ? "Ready" : `${progress}/${snapshot.max}`;
+    if (chip) {
+      chip.textContent = q.used
+        ? "Done"
+        : q.ready
+          ? "Ready"
+          : `${progress}/${snapshot.max}`;
+    }
 
-    const yellow = !!q.oneAway || progress >= snapshot.yellowAt;
-    const green = !!q.ready || !!q.used || progress >= snapshot.max;
+    // Do not infer completion color from a client-side number. The server is
+    // the authority that also decides whether the reward is granted.
+    const yellow = !!q.oneAway;
+    const green = !!q.ready || !!q.used;
     card.classList.toggle("quest-oneaway", yellow && !green);
     card.classList.toggle("quest-ready", green && !q.used);
     card.classList.toggle("quest-done", !!q.used);
@@ -599,7 +848,7 @@
     return new Promise(resolve => {
       const bolt = document.createElement("div");
       bolt.className = "quest-charge-flight-bolt";
-      bolt.textContent = "⚡";
+      bolt.textContent = "\u26A1";
 
       const startX = sourceRect.left + sourceRect.width / 2;
       const startY = sourceRect.top + sourceRect.height / 2;
@@ -615,18 +864,40 @@
       setTimeout(() => {
         const animation = bolt.animate(
           [
-            { opacity: 0, transform: "translate(-50%, -50%) scale(.45) rotate(-25deg)" },
-            { opacity: 1, offset: .16, transform: "translate(-50%, -65%) scale(1.35) rotate(18deg)" },
-            { opacity: 1, offset: .65, transform: `translate(calc(-50% + ${dx * .72}px), calc(-50% + ${dy * .72 - 16}px)) scale(1.05) rotate(330deg)` },
-            { opacity: 0, transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.35) rotate(520deg)` }
+            {
+              opacity: 0,
+              transform:
+                "translate(-50%, -50%) scale(.45) rotate(-25deg)"
+            },
+            {
+              opacity: 1,
+              offset: .16,
+              transform:
+                "translate(-50%, -65%) scale(1.35) rotate(18deg)"
+            },
+            {
+              opacity: 1,
+              offset: .65,
+              transform: `translate(calc(-50% + ${dx * .72}px), calc(-50% + ${dy * .72 - 16}px)) scale(1.05) rotate(330deg)`
+            },
+            {
+              opacity: 0,
+              transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.35) rotate(520deg)`
+            }
           ],
-          { duration: 650, easing: "cubic-bezier(.18,.8,.2,1)", fill: "forwards" }
+          {
+            duration: 650,
+            easing: "cubic-bezier(.18,.8,.2,1)",
+            fill: "forwards"
+          }
         );
 
-        animation.finished.catch(() => {}).then(() => {
-          bolt.remove();
-          resolve();
-        });
+        animation.finished
+          .catch(() => {})
+          .then(() => {
+            bolt.remove();
+            resolve();
+          });
       }, delay);
     });
   }
@@ -643,7 +914,11 @@
     const source = lastQualifyingSource;
     const recent = source && Date.now() - lastQualifyingAt < 7000;
 
-    if (!delta || !recent || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+    if (
+      !delta ||
+      !recent ||
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ) {
       visualProgress = targetProgress;
       renderMeter(snapshot, state.powers?.quest);
       animationRunning = false;
@@ -651,12 +926,17 @@
     }
 
     const drawerClosed = !!window.isGuesserSidebarCollapsed?.();
+    const q = state.powers?.quest;
     const toast = drawerClosed
       ? window.showCollapsedChargeToast?.("guesser", {
           value: targetProgress,
           max: snapshot.max,
           delta,
-          tone: targetProgress >= snapshot.max ? "green" : targetProgress >= snapshot.yellowAt ? "yellow" : "blue"
+          tone: q?.ready
+            ? "green"
+            : q?.oneAway
+              ? "yellow"
+              : "blue"
         })
       : null;
 
@@ -664,17 +944,28 @@
       const nextValue = Math.min(snapshot.max, start + index + 1);
       const target = drawerClosed
         ? toast || byId("guesserSidebarToggle")
-        : document.querySelector(`[data-quest-charge-index="${nextValue - 1}"]`);
+        : document.querySelector(
+            `[data-quest-charge-index="${nextValue - 1}"]`
+          );
 
       if (target) {
-        await createBolt(source, target.getBoundingClientRect(), index === 0 ? 0 : 40);
+        await createBolt(
+          source,
+          target.getBoundingClientRect(),
+          index === 0 ? 0 : 40
+        );
       }
 
       visualProgress = nextValue;
-      renderMeter(snapshot, state.powers?.quest);
-      const segment = document.querySelector(`[data-quest-charge-index="${nextValue - 1}"]`);
+      renderMeter(snapshot, q);
+      const segment = document.querySelector(
+        `[data-quest-charge-index="${nextValue - 1}"]`
+      );
       segment?.classList.add("just-charged");
-      setTimeout(() => segment?.classList.remove("just-charged"), 480);
+      setTimeout(
+        () => segment?.classList.remove("just-charged"),
+        480
+      );
     }
 
     animationRunning = false;
@@ -716,7 +1007,10 @@
 
     if (snapshot.progress > (visualProgress ?? 0)) {
       animateProgressTo(state, snapshot, snapshot.progress);
-    } else if (!animationRunning && snapshot.progress < (visualProgress ?? 0)) {
+    } else if (
+      !animationRunning &&
+      snapshot.progress < (visualProgress ?? 0)
+    ) {
       visualProgress = snapshot.progress;
       renderMeter(snapshot, q);
     }
@@ -761,7 +1055,9 @@
     update(window.state, window.myRole);
   }
 
-  window.getQuestChargeV9 = state => progressSnapshot(state || window.state);
+  // Keep the same public names so this file is a drop-in v9 replacement.
+  window.getQuestChargeV9 = state =>
+    progressSnapshot(state || window.state);
   window.updateQuestChargeV9 = update;
 
   if (document.readyState === "loading") {
