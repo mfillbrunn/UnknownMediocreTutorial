@@ -1354,6 +1354,29 @@ function rewardEnsureYellowConstraint(state, letter) {
   }
 }
 
+// Exactly what rewardLoosenAllYellows below is able to remove, and so the
+// only honest gate for offering the card (see rewardFixedOptionApplicable).
+// A bare YELLOW constraint does NOT count: it records only "this letter is
+// in the secret", with no position attached, so there is nothing to loosen
+// off it -- and since the smudge itself ADDS one of those for every letter
+// it touches, gating on "any yellow clue exists" made the card re-offerable
+// forever after the first use, each later pick silently doing nothing while
+// still reporting letters as smudged. Two other rewards leave the same
+// position-free footprint: addYellow ("Yellow clue received"/"Trade a
+// Yellow") and rewardDemoteGreens ("Blur a Green").
+function rewardHasYellowPositionRestriction(state) {
+  const hasHistoryYellow = rewardClueTargets(state, "yellow").some(
+    target => target.source === "history"
+  );
+  if (hasHistoryYellow) return true;
+  // Any YELLOW_NOT_AT letter is automatically part of
+  // rewardKnownYellowLetters (which reads that type too), so one existing
+  // always means the pass below has something to strip.
+  return (state.extraConstraints || []).some(
+    constraint => String(constraint?.type || "").toUpperCase() === "YELLOW_NOT_AT"
+  );
+}
+
 // "Yellow Smudge" (spy-yellow-smudge): every currently-known yellow
 // letter stays known to be present, but every "not in this spot" mark on
 // it -- both the raw history tile (each surviving yellow tile in
@@ -1364,15 +1387,33 @@ function rewardEnsureYellowConstraint(state, letter) {
 // rewardLoosenYellow only ever touched ONE yellow at a time and never
 // looked at YELLOW_NOT_AT at all; this covers every known yellow letter
 // and both storage forms in one pass.
+//
+// Green clues are never touched, in either storage form: the only history
+// tiles erased are ones rewardClueTargets already classified as yellow,
+// and this never calls eraseLetterKnowledge (which would take a letter's
+// greens with it -- see rewardEraseClues).
+//
+// Returns only the letters something was actually removed from, not every
+// known yellow letter: a letter whose yellow knowledge is just a
+// position-free YELLOW constraint is left exactly as it was, so reporting
+// it as smudged would overstate what the Guesser lost.
 function rewardLoosenAllYellows(state) {
   const letters = rewardKnownYellowLetters(state);
   const historyTargets = rewardClueTargets(state, "yellow").filter(
     target => target.source === "history"
   );
+  const loosened = [];
   for (const letter of letters) {
+    // Every listed history target is a currently-visible yellow tile, so
+    // matching one is itself the removal -- no need to consult
+    // rewardEraseClueTarget's return value to know work was done.
+    let removed = false;
     for (const target of historyTargets) {
-      if (target.letter === letter) rewardEraseClueTarget(state, target);
+      if (target.letter !== letter) continue;
+      rewardEraseClueTarget(state, target);
+      removed = true;
     }
+    const constraintsBefore = (state.extraConstraints || []).length;
     state.extraConstraints = (state.extraConstraints || []).filter(
       constraint =>
         !(
@@ -1380,9 +1421,13 @@ function rewardLoosenAllYellows(state) {
           normalizeWord(constraint.letter)[0] === letter
         )
     );
+    if (state.extraConstraints.length !== constraintsBefore) removed = true;
+    // Runs for every known yellow letter, loosened or not: erasing the tile
+    // above would otherwise take "this letter is present" away with it.
     rewardEnsureYellowConstraint(state, letter);
+    if (removed) loosened.push(letter);
   }
-  return letters;
+  return loosened;
 }
 
 function rewardUnknownSecretLetters(state) {
@@ -1463,7 +1508,9 @@ function rewardFixedOptionApplicable(state, option) {
     case "spy-add-point-1":
       return true;
     case "spy-yellow-smudge":
-      return yellowCount >= 1;
+      // Not `yellowCount >= 1`: a yellow clue can exist with no position
+      // restriction on it at all, and this card only removes restrictions.
+      return rewardHasYellowPositionRestriction(state);
     case "spy-trade-yellow":
       return unknownPresentCount >= 1;
     case "spy-trade-green":
