@@ -684,7 +684,24 @@ onStateUpdate(newState => {
   // state this page has ever seen (fresh load/rejoin) — skip the
   // announcement then, it should only fire for a round actually starting
   // while the player is watching.
-  if (prevPhase !== undefined && prevPhase !== "simultaneous" && state.phase === "simultaneous") {
+  //
+  // Skipped entirely in a tutorial: tutorial rooms are always untimed
+  // (no time limit to rush the player through), which makes this render
+  // persistent (see the `persistent:` line below) -- a full-screen,
+  // click-to-dismiss takeover with no auto-dismiss timer. It fires on
+  // every round, including the very first, and its backdrop sits on top
+  // of the tutorial bubble's own Continue button -- so a player who
+  // didn't already know to tap the (tutorial-unaware) announcement first
+  // would find Continue simply doing nothing, over and over, once per
+  // round. The tutorial bubble already narrates role and goal itself, so
+  // this popup was always pure duplicate content for it, never anything
+  // a tutorial step depended on.
+  if (
+    prevPhase !== undefined &&
+    prevPhase !== "simultaneous" &&
+    state.phase === "simultaneous" &&
+    !state.isTutorial
+  ) {
     const iAmSetter = myUserId() === state.setter;
     const describePowers = ids => (ids || []).map(id => {
       const variant = state.powers?.[id]?.mode || null;
