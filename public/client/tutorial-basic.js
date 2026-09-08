@@ -123,7 +123,8 @@ function runBasicInspectorTutorial(state) {
     const word = state.tutorialGuesses?.[0] || "CHAMP";
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "Welcome to Vowel Play. Here's how the game is played: One player hides a secret five-letter word, and the other player is hunting for it. In one game, you will play both sides. Let's start with the hunting.",
+        "Welcome to Vowel Play. Here's how the game is played: One player hides a secret five-letter word, and the other player is hunting for it. In one full match, you will play one round as guesser hunting the secret and one round as secretkeeper hiding a secret. Let's start with the hunting.",
+      
         {
           role: "guesser",
           section: "How the game works",
