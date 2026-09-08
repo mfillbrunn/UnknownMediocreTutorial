@@ -1097,7 +1097,55 @@
     }
     return esc(option?.icon || "◆");
   }
+  /*
+ * Convert a completed reward-resolution payload back into the same
+ * option shape used by the reward-card SVG renderer.
+ *
+ * Power reward IDs look like:
+ *   power:revealGreen
+ *
+ * Fixed reward IDs look like:
+ *   spy-yellow-smudge
+ *   inspector-yellow-1
+ */
+function rewardPopupOption(payload) {
+  const optionId = String(payload?.optionId || "");
 
+  if (!optionId) {
+    return null;
+  }
+
+  if (optionId.startsWith("power:")) {
+    return {
+      id: optionId,
+      kind: "power",
+      powerId: optionId.slice("power:".length),
+      icon: payload?.icon || "⚡",
+      title: payload?.title || ""
+    };
+  }
+
+  return {
+    id: optionId,
+    kind: "fixed",
+    icon: payload?.icon || "◆",
+    title: payload?.title || ""
+  };
+}
+
+/*
+ * Reuse the exact SVG shown on the reward-selection card.
+ * Fall back to the old text icon only if the payload has no option ID.
+ */
+function rewardPopupIconMarkup(payload) {
+  const option = rewardPopupOption(payload);
+
+  if (!option) {
+    return esc(payload?.icon || "◆");
+  }
+
+  return optionIconMarkup(option);
+}
   function wireRewardCarousel(grid) {
     if (!grid || grid.dataset.pcCarouselWired === "1") return;
     grid.dataset.pcCarouselWired = "1";
@@ -1923,29 +1971,67 @@
     return popup;
   }
 
-  async function drainRewardPopups() {
-    if (rewardPopupRunning || !rewardPopupQueue.length) return;
-    rewardPopupRunning = true;
-    const popup = ensureRewardPopup();
-    while (rewardPopupQueue.length) {
-      const payload = rewardPopupQueue.shift() || {};
-      const mine = payload.ownerUserId === me();
-      popup.innerHTML = `<span class="pc-reward-popup-icon">${esc(payload.icon || "◆")}</span>
-        <span class="pc-reward-popup-copy">
-          <small>${mine ? "YOUR REWARD" : "OPPONENT REWARD"}</small>
-          <strong>${esc(payload.title || "Reward activated")}</strong>
-          <span>${esc(payload.detailText || payload.description || "Activated immediately.")}</span>
-        </span>`;
-      popup.classList.remove("show");
-      void popup.offsetWidth;
-      popup.classList.add("show");
-      await sleep(3100);
-      popup.classList.remove("show");
-      await sleep(250);
-    }
-    rewardPopupRunning = false;
+async function drainRewardPopups() {
+  if (rewardPopupRunning || !rewardPopupQueue.length) return;
+
+  rewardPopupRunning = true;
+
+  const popup = ensureRewardPopup();
+
+  while (rewardPopupQueue.length) {
+    const payload = rewardPopupQueue.shift() || {};
+    const mine = payload.ownerUserId === me();
+    const iconMarkup = rewardPopupIconMarkup(payload);
+
+    /*
+     * Store useful identifiers on the popup. They are not required for
+     * rendering, but they make browser inspection and future styling easier.
+     */
+    popup.dataset.optionId = String(payload.optionId || "");
+    popup.dataset.rewardRole = String(payload.role || "");
+    popup.dataset.rewardTier = String(payload.tier || "");
+
+    popup.innerHTML = `
+      <span class="pc-reward-popup-icon" aria-hidden="true">
+        ${iconMarkup}
+      </span>
+
+      <span class="pc-reward-popup-copy">
+        <small>${mine ? "YOUR REWARD" : "OPPONENT REWARD"}</small>
+
+        <strong>
+          ${esc(payload.title || "Reward activated")}
+        </strong>
+
+        <span>
+          ${esc(
+            payload.detailText ||
+            payload.description ||
+            "Activated immediately."
+          )}
+        </span>
+      </span>
+    `;
+
+    popup.classList.remove("show");
+
+    /*
+     * Force a layout read so repeatedly queued rewards restart the popup
+     * animation instead of silently replacing one another.
+     */
+    void popup.offsetWidth;
+
+    popup.classList.add("show");
+
+    await sleep(3100);
+
+    popup.classList.remove("show");
+
+    await sleep(250);
   }
 
+  rewardPopupRunning = false;
+}
   // Several pre-Power-Choice scripts (collapsed-actions-v9.js,
   // v9-2-ui-fixes.js, v9-3-ui-fixes.js) each build their own floating
   // "collapsed charge toast" -- a 12-segment meter + "N/12" + "+N" delta,
