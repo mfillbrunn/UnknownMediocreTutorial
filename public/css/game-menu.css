@@ -2531,3 +2531,72 @@ body.tutorial-done-open #tutorialDoneModal.active {
   text-transform: uppercase;
   white-space: nowrap;
 }
+/* =========================================================
+   LOBBY HOST LABEL
+   Display HOST as a label attached to the outer player card,
+   rather than beside Secretkeeper or Guesser.
+   ========================================================= */
+
+#lobby .role-select {
+  /* Leaves room for the labels that sit above the cards. */
+  padding-top: 11px;
+}
+
+#lobby .role-card {
+  /*
+   * The existing role card uses overflow: hidden, which would cut off
+   * the part of the HOST label placed above the card border.
+   */
+  overflow: visible;
+}
+
+#lobby .lobby-role-header {
+  /*
+   * HOST is absolutely positioned and no longer participates in this
+   * row, so center the Secretkeeper / Guesser role title.
+   */
+  justify-content: center;
+}
+
+#lobby .host-badge {
+  position: absolute;
+  top: 0;
+  right: 12px;
+  z-index: 5;
+
+  transform: translateY(-50%);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 22px;
+  padding: 3px 10px;
+
+  border: 2px solid var(--panel-bg);
+  border-radius: 999px;
+
+  /* Neutral gold because HOST is a status, not a player role. */
+  background: #f6c956;
+  color: #1c1502;
+
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.42),
+    0 0 9px rgba(246, 201, 86, 0.22);
+
+  opacity: 1;
+
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  pointer-events: none;
+}
+
+/* Preserve the game's normal show/hide behavior. */
+#lobby .host-badge.hidden {
+  display: none !important;
+}
