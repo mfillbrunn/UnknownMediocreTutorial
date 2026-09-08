@@ -769,7 +769,6 @@ function buildShareText(state, myRole) {
   // -----------------------
   const {
   points,
-  time,
   winner,
   winReason,
   winnerPoints,
@@ -801,17 +800,21 @@ if (finalWinReason === "timeout") {
   winnerLabel = `**${winnerName}**`;
 }
 
-  // -----------------------
-  // Time control line
-  // -----------------------
-  let timeLine = "No time";
-  if (state.timeControl?.enabled) {
-    timeLine =
-      state.timeControl.mode === "round"
-        ? `${formatDuration(state.timeControl.roundSeconds)}/round`
-        : `${formatDuration(state.timeControl.initialSeconds)} total`;
-
-  }
+// -----------------------
+// Time control category
+// -----------------------
+//
+// Use the named time-control category shown on the match summary:
+//
+//   Bullet
+//   Blitz
+//   Deep
+//   Custom
+//   No time
+//
+// Do not include seconds, minutes, or either player's elapsed time.
+const timeControlLine =
+  `Time control: ${summaryTimeControlLabel(state)}`;
 
   // -----------------------
   // Powers (points)
@@ -900,13 +903,14 @@ const roundLines =
   // -----------------------
   // Assemble final text
   // -----------------------
-  const lines = [
-    "Vowel Play result",
-    `${resultIcon} ${winnerLabel} ${winnerPoints}–${loserPoints} ${loserName}`,
-    assassinationLine,
-    `${powersLine} ⏱ ${timeLine}`,
-    ...roundLines
-  ].filter(Boolean);
+const lines = [
+  "Vowel Play result",
+  `${resultIcon} ${winnerLabel} ${winnerPoints}–${loserPoints} ${loserName}`,
+  assassinationLine,
+  powersLine,
+  timeControlLine,
+  ...roundLines
+].filter(Boolean);
 
   return lines.join("\n");
 }
