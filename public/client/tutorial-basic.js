@@ -129,7 +129,7 @@ function runBasicInspectorTutorial(state) {
           role: "guesser",
           section: "How the game works",
           current: 1,
-          total: 4,
+          total: 2,
           placement: "top"
         }
       );
@@ -137,6 +137,21 @@ function runBasicInspectorTutorial(state) {
       return;
     }
 
+        if (tutorialSubStep === 1) {
+      basicTutorialShow(
+        "Both players start by secretly typing in their first word at the same time - the secretkeeper types in their secret, you type in your first guess. Afterwards, players alternate taking turns, starting with your role, the guesser."
+        {
+          role: "guesser",
+          section: "How the game works",
+          current: 2,
+          total: 2,
+          placement: "top"
+        }
+      );
+      tutorialContinueMode = "advance";
+      return;
+    }
+    
      if (state.simultaneousGuessSubmitted) {
       basicTutorialShow(
         "Sent. That was the simultaneous turn, so the colors show up once you have both moved.",
@@ -218,7 +233,7 @@ function runBasicInspectorTutorial(state) {
 
     if (state.pendingGuess) {
       basicTutorialShow(
-        "Nice. Now the Secretkeeper decides whether to keep their word or swap it. Your colors arrive right after that.",
+        "Nice. Now it's the Secretkeeper's turn and your colors arrive right after that.",
         {
           role: "guesser",
           section: "Second guess",
@@ -602,7 +617,7 @@ function runBasicSummaryTutorial(state) {
 
   if (tutorialSubStep === 5) {
     basicTutorialShow(
-      "And this shows many words could still be the secret after that guess. Lower means the guesser closed in more.",
+      "And this shows how many words could still be the secret after that guess. Lower means the guesser closed in more.",
       {
         role: "guesser",
         section: "Left column",
