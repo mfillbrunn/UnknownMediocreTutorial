@@ -463,6 +463,28 @@
   opacity: 0.75;
 }
 
+/* Marks the one tile a joker filled, whether it's still sitting unresolved
+   in the current draft (its own purple/gold look, matching the joker hand
+   card) or already submitted and showing its resolved letter's real
+   green/yellow/grey result (a small star badge instead, so the feedback
+   colour stays legible). */
+.cuddle-tile.is-joker::after {
+  content: "★";
+  position: absolute;
+  left: 3px;
+  top: 1px;
+  font-size: 0.5em;
+  font-weight: 900;
+  color: #f2d36f;
+  opacity: 0.9;
+}
+
+.cuddle-tile.is-draft-tile.is-joker {
+  border-color: #f2d36f;
+  background: linear-gradient(160deg, #7a5fb8, #4c3a86);
+  color: #fff;
+}
+
 .cuddle-tile {
   position: relative;
 }

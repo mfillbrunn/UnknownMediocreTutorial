@@ -4607,9 +4607,14 @@
     const rawWord = this.getDraftWord();
 
     let jokerLetter = null;
+    let jokerIndex = -1;
     if (rawWord.length === 5 && rawWord.includes(JOKER_GLYPH)) {
       const resolution = resolveJokerWord(this, rawWord);
       if (!resolution) return { ok: false, error: "No letter completes that into a real word." };
+      // Captured before resolution overwrites the hand card's glyph below --
+      // it's the only place the joker's column survives past this point,
+      // and the board tile rendering needs it to mark that tile as a joker.
+      jokerIndex = rawWord.indexOf(JOKER_GLYPH);
       const jokerDraftCard = this.getDraftCards().find(card => card.glyph === JOKER_GLYPH);
       const jokerHandCard = jokerDraftCard && this.state.hand.find(card => card.id === jokerDraftCard.id);
       if (jokerHandCard) jokerHandCard.glyph = resolution.letter;
@@ -4652,6 +4657,7 @@
     if (jokerLetter && entry) {
       entry.jokerLetter = jokerLetter;
       entry.jokerRevealed = true;
+      entry.jokerIndex = jokerIndex;
       this.state.lastMessage = `${this.state.lastMessage || ""} Joker resolved to ${jokerLetter}.`.trim();
     }
 
