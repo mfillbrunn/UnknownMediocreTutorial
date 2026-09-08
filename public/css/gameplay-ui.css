@@ -752,6 +752,19 @@
   min-height: 0;
 }
 
+/* The Guesser's sidebar is a flex column with align-items:flex-start, so
+   its content shrink-wrapped to its own min-content width -- 51px of a
+   133px sidebar in one measurement, with the rest sitting empty and the
+   log's lines wrapping in a sliver. Stretching the content to the width
+   the sidebar was already reserving is what makes the colour palette's
+   swatches (see .key-color-palette) big enough to grab, and gives the log
+   underneath it the full column at the same time. The vertical twin of
+   this same fix is the sidebar's own align-self:stretch further up. */
+#guesserScreen :is(.guesser-sidebar-content, .guesser-powers-row, .guesser-info-col) {
+  align-self: stretch;
+  width: 100%;
+}
+
 #setterScreen .setter-sidebar-activity,
 #setterScreen .setter-sidebar-panels {
   display: flex;

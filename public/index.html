@@ -241,16 +241,6 @@
       </div>
     </div>
   </div>
-  <!-- Guesser-only: hold a keyboard key to mark it green/yellow/gray for
-       your own planning (e.g. after a power leaves the real color
-       ambiguous) -- see client/key-color-picker.js. Positioned above
-       whichever key was held via inline style, not CSS layout. -->
-  <div id="keyColorPicker" class="key-color-picker hidden" role="menu" aria-label="Set letter color">
-    <button type="button" class="key-color-option key-color-option-green" data-color="green" role="menuitem">Green</button>
-    <button type="button" class="key-color-option key-color-option-yellow" data-color="yellow" role="menuitem">Yellow</button>
-    <button type="button" class="key-color-option key-color-option-gray" data-color="gray" role="menuitem">Not in word</button>
-    <button type="button" class="key-color-option key-color-option-clear" data-color="" role="menuitem">Unused</button>
-  </div>
     <div id="appContainer">
       <!-- ========== HEADER ========== -->
 <header class="app-header">
@@ -1487,6 +1477,21 @@
                   <div id="guesserPowerContainer" class="power-container laser-scope guesser-power-view">
                   </div>
                   <section class="guesser-info-col">
+                    <!-- Drag a swatch onto a keyboard letter to mark it that
+                         colour yourself (client/key-color-picker.js). A
+                         planning note only: real feedback always wins. -->
+                    <div
+                      id="keyColorPalette"
+                      class="key-color-palette"
+                      role="group"
+                      aria-label="Letter colour marker: drag a colour onto a keyboard letter"
+                    >
+                      <button type="button" class="key-color-swatch key-color-swatch-green" data-color="green" title="Mark a letter green (right spot)" aria-label="Mark a letter green"></button>
+                      <button type="button" class="key-color-swatch key-color-swatch-yellow" data-color="yellow" title="Mark a letter yellow (in the word, wrong spot)" aria-label="Mark a letter yellow"></button>
+                      <button type="button" class="key-color-swatch key-color-swatch-dark" data-color="gray" title="Mark a letter dark (not in the word)" aria-label="Mark a letter dark"></button>
+                      <button type="button" class="key-color-swatch key-color-swatch-unknown" data-color="unknown" title="Mark a letter unknown" aria-label="Mark a letter unknown">?</button>
+                      <button type="button" class="key-color-swatch key-color-swatch-clear" data-color="" title="Clear your mark from a letter" aria-label="Clear your mark from a letter"></button>
+                    </div>
                     <div
                       id="actionLogGuesser"
                       class="game-side-panel action-log-panel guesser-sidebar-panel"
