@@ -44,20 +44,44 @@ function maybeOverrideAIGuess(state) {
 // guesserUserId: whoever just guessed this turn (state.guesser at the
 // moment of scoring). Mutates entry.fb/fbGuesser in place and returns it,
 // matching the shape callers already push onto state.history.
+function sameTiles(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+  return a.every((tile, index) => tile === b[index]);
+}
+
 function maybeTransformFeedback(state, entry, guesserUserId) {
   if (!isCampaign(state) || !Array.isArray(entry?.fb)) return entry;
 
   const rules = state.singlePlayer.stage.game.rules || [];
   const ctx = { fb: entry.fb, guesserUserId, humanUserId: state.singlePlayer.humanUserId };
+  const original = entry.fb;
   const transformed = runHook("transformFeedback", rules, ctx);
 
-  if (Array.isArray(transformed)) {
-    entry.fb = transformed;
-    // Real assist, not Fake Feedback's deliberate setter/guesser mismatch
-    // -- both copies should agree once a rule has genuinely upgraded a
-    // tile, or the setter's own history would show the pre-rule colors.
-    entry.fbGuesser = [...transformed];
-  }
+  // runHook SEEDS transformFeedback with ctx.fb and returns that same array
+  // untouched when no rule changes it (registry.js) -- and a stage with no
+  // transformFeedback rules at all, which is every Challenge stage, always
+  // lands here. Writing unconditionally therefore overwrote the guesser's
+  // copy on EVERY scored row of every single-player match, which silently
+  // undid whatever the setter's power had just masked into it a few lines
+  // earlier in finalizeFeedback (postScore runs first): Count Only's and
+  // Feedback Lie's "❓", Blue Mode's blue tiles, Fake Feedback's decoy.
+  // Those powers looked like they never fired at all. Only touch the entry
+  // when a rule genuinely changed something.
+  if (!Array.isArray(transformed) || sameTiles(transformed, original)) return entry;
+
+  // Real assist, not Fake Feedback's deliberate setter/guesser mismatch
+  // -- both copies should agree once a rule has genuinely upgraded a
+  // tile, or the setter's own history would show the pre-rule colors.
+  // Except when a power has already masked the guesser's copy: that copy
+  // is deliberately not the feedback any more, so re-mirroring the real
+  // tiles onto it would hand the guesser exactly the information the power
+  // was hiding. A still-unmasked copy is a verbatim mirror of the
+  // pre-transform feedback, which is what distinguishes the two cases.
+  const guesserCopyUnmasked =
+    !Array.isArray(entry.fbGuesser) || sameTiles(entry.fbGuesser, original);
+
+  entry.fb = transformed;
+  if (guesserCopyUnmasked) entry.fbGuesser = [...transformed];
   return entry;
 }
 
