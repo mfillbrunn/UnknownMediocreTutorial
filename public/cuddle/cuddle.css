@@ -1567,6 +1567,12 @@
 #cuddleScreen .cuddle-v3-toast.is-synergy {
   border-color: rgba(255, 215, 111, 0.48);
 }
+#cuddleScreen .cuddle-v3-toast.is-hint {
+  border-color: rgba(107, 214, 143, 0.5);
+}
+#cuddleScreen .cuddle-v3-toast.is-meter {
+  border-color: rgba(233, 92, 118, 0.48);
+}
 #cuddleScreen .cuddle-v3-toast-icon {
   display: grid;
   place-items: center;

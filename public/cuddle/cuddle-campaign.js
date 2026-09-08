@@ -40,27 +40,6 @@
       description: "Gain one Joker charge. It waits in your inventory until used."
     }),
     Object.freeze({
-      id: "extraMulligan",
-      icon: "🔄",
-      title: "Spare Mulligan",
-      cost: 10,
-      description: "The next eligible round starts with one additional mulligan."
-    }),
-    Object.freeze({
-      id: "mulliganRefresh",
-      icon: "♻️",
-      title: "Mulligan Refill",
-      cost: 18,
-      description: "One time, when your mulligans reach zero, refill them to the round allowance."
-    }),
-    Object.freeze({
-      id: "handSize",
-      icon: "🎒",
-      title: "Roomy Satchel",
-      cost: 14,
-      description: "The next round has one additional counted hand slot."
-    }),
-    Object.freeze({
       id: "yellowDetector",
       icon: "🟨",
       title: "Amber Lens",
@@ -956,10 +935,13 @@
     const heartBadge = typeof window.CuddleCoachExpansion?.renderHeartBadge === "function"
       ? window.CuddleCoachExpansion.renderHeartBadge(game)
       : "";
-    if (heartBadge) {
+    const hintBadge = typeof window.CuddleCoachExpansion?.renderHintBadge === "function"
+      ? window.CuddleCoachExpansion.renderHintBadge(game)
+      : "";
+    if (heartBadge || hintBadge) {
       const headerMarker = '<div class="cuddle-header-title-line">';
       if (html.includes(headerMarker)) {
-        html = html.replace(headerMarker, `${headerMarker}${heartBadge}`);
+        html = html.replace(headerMarker, `${headerMarker}${hintBadge}${heartBadge}`);
       }
     }
     if (state.status === "upgrade" || state.status === "questReward") {

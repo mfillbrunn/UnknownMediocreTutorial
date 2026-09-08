@@ -38,6 +38,10 @@
   });
 
   var MAP_STATUS = "branchMap";
+  // Ephemeral UI state: which node (if any) is showing its preview modal
+  // before the player commits to it. Not part of the save -- a fresh page
+  // load always starts with no preview open.
+  var previewKey = null;
   var TOTAL_ROUNDS = (Engine.THRESHOLDS && Engine.THRESHOLDS.length) || 12;
   var ACT_ROWS = 5;
   var MID_BOSS_GATE = "before-7";
@@ -614,6 +618,7 @@
   var originalStartNew = proto.startNew;
   proto.startNew = function startNewWithBranchMap() {
     var result = originalStartNew.apply(this, arguments);
+    previewKey = null;
     this.state.branchMap = null;
     generateMap(this);
     // startNew already prepared round 1; the map is the first screen now, so
@@ -738,8 +743,10 @@
     return SIDE_MARGIN + (index * (MAP_WIDTH - SIDE_MARGIN * 2)) / (count - 1);
   }
 
-  function nodeY(rowIndex) {
-    return TOP_MARGIN + rowIndex * ROW_HEIGHT;
+  // Row 0 (the start) renders at the bottom and each later row climbs
+  // higher, so the run reads bottom-to-top like the route it describes.
+  function nodeY(rowIndex, rowCount) {
+    return TOP_MARGIN + (rowCount - 1 - rowIndex) * ROW_HEIGHT;
   }
 
   function nodeIcon(node) {
@@ -789,20 +796,18 @@
       if (!nextRow) return;
       row.nodes.forEach(function drawFrom(node, col) {
         var fromX = nodeX(row.nodes.length, col);
-        var fromY = nodeY(rowIndex);
+        var fromY = nodeY(rowIndex, rows.length);
         (node.next || []).forEach(function drawTo(targetCol) {
           var target = nextRow.nodes[targetCol];
           if (!target) return;
           var toX = nodeX(nextRow.nodes.length, targetCol);
-          var toY = nodeY(rowIndex + 1);
+          var toY = nodeY(rowIndex + 1, rows.length);
           var live = here && here.row === node.row && here.col === node.col && isReachableNode(target);
           var walked = wasVisited(branchMap, node) && wasVisited(branchMap, target);
           var className = walked ? "cuddle-map-line-walked" : live ? "cuddle-map-line-live" : "cuddle-map-line";
           edges.push(
-            "<path class=\"" + className + "\" d=\"M" + fromX + " " + (fromY + NODE_RADIUS)
-            + " C " + fromX + " " + (fromY + ROW_HEIGHT * 0.55)
-            + ", " + toX + " " + (toY - ROW_HEIGHT * 0.55)
-            + ", " + toX + " " + (toY - NODE_RADIUS) + "\" />"
+            "<path class=\"" + className + "\" d=\"M" + fromX + " " + (fromY - NODE_RADIUS)
+            + " L " + toX + " " + (toY + NODE_RADIUS) + "\" />"
           );
         });
       });
@@ -811,7 +816,7 @@
     rows.forEach(function drawNodes(row, rowIndex) {
       row.nodes.forEach(function drawNode(node, col) {
         var x = nodeX(row.nodes.length, col);
-        var y = nodeY(rowIndex);
+        var y = nodeY(rowIndex, rows.length);
         var visited = wasVisited(branchMap, node);
         var isHere = Boolean(here && here.row === node.row && here.col === node.col);
         var open = isReachableNode(node);
@@ -824,7 +829,7 @@
         nodes.push(
           "<g class=\"" + classes.join(" ") + "\" transform=\"translate(" + x + "," + y + ")\""
           + (open
-            ? " data-cuddle-campaign-action=\"enter-branch-node\" data-shop-item-id=\"" + node.row + ":" + node.col + "\""
+            ? " data-cuddle-campaign-action=\"preview-branch-node\" data-shop-item-id=\"" + node.row + ":" + node.col + "\""
               + " role=\"button\" tabindex=\"0\" aria-label=\"" + escapeHtml(nodeTitle(node)) + "\""
             : " aria-hidden=\"true\"")
           + ">"
@@ -845,12 +850,42 @@
     );
   }
 
+  // Resolves the ephemeral preview selection against the live map, clearing
+  // it out if the node it pointed at is no longer reachable (stop consumed,
+  // a fresh run generated a new map, etc.).
+  function previewedNode(game, branchMap) {
+    if (!previewKey) return null;
+    var parts = previewKey.split(":");
+    var node = nodeAt(branchMap, Number(parts[0]), Number(parts[1]));
+    if (!node || !isReachable(branchMap, node)) {
+      previewKey = null;
+      return null;
+    }
+    return node;
+  }
+
+  function renderPreviewOverlay(node) {
+    return (
+      "<div class=\"cuddle-overlay cuddle-branch-preview-overlay\">"
+      + "<section class=\"cuddle-modal\">"
+      + "<span class=\"cuddle-choice-icon\">" + escapeHtml(nodeIcon(node)) + "</span>"
+      + "<h2>" + escapeHtml(nodeTitle(node)) + "</h2>"
+      + "<p>" + goldenMoney(escapeHtml(nodeDescription(node))) + "</p>"
+      + "<div class=\"cuddle-modal-actions\">"
+      + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-ghost\" data-cuddle-campaign-action=\"cancel-branch-node-preview\">Back</button>"
+      + "<button type=\"button\" class=\"cuddle-btn\" data-cuddle-campaign-action=\"confirm-branch-node\" data-shop-item-id=\""
+      + node.row + ":" + node.col + "\">Choose this path</button>"
+      + "</div></section></div>"
+    );
+  }
+
   function renderMapScreen(game) {
     var state = game.state;
     var branchMap = ensureBranchMap(game);
     if (!branchMap.rows.length) generateMap(game);
     var open = reachableNodes(branchMap);
     var here = currentNode(branchMap);
+    var previewing = previewedNode(game, branchMap);
     var heading = here ? "Where to next?" : "Plan your route";
     var intro = here
       ? "You are on the map. Only the stops your current path connects to are open."
@@ -883,7 +918,7 @@
           ? (index === 0 ? " · left" : " · right")
           : (index === 0 ? " · left" : index === open.length - 1 ? " · right" : " · middle");
         return (
-          "<button class=\"cuddle-choice cuddle-branch-choice\" data-cuddle-campaign-action=\"enter-branch-node\""
+          "<button class=\"cuddle-choice cuddle-branch-choice\" data-cuddle-campaign-action=\"preview-branch-node\""
           + " data-shop-item-id=\"" + node.row + ":" + node.col + "\">"
           + "<span class=\"cuddle-choice-icon\">" + escapeHtml(nodeIcon(node)) + "</span>"
           + "<strong>" + escapeHtml(nodeTitle(node) + direction) + "</strong>"
@@ -893,6 +928,7 @@
       }).join("")
       + "</div>"
       + "</main></div>"
+      + (previewing ? renderPreviewOverlay(previewing) : "")
     );
   }
 
@@ -903,6 +939,7 @@
   var campaignExport = window.CuddleCampaign;
   if (campaignExport) {
     var originalAfterRender = campaignExport.afterRender;
+    var originalHandleUiAction = campaignExport.handleUiAction;
     window.CuddleCampaign = Object.freeze(Object.assign({}, campaignExport, {
       afterRender: function afterRenderWithBranchMap(root, game, landing) {
         if (typeof originalAfterRender === "function") originalAfterRender(root, game, landing);
@@ -916,6 +953,38 @@
           var offset = (markerBox.top + markerBox.height / 2) - (scrollerBox.top + scrollerBox.height / 2);
           scroller.scrollTop = Math.max(0, scroller.scrollTop + offset);
         });
+      },
+      // Tapping a map node used to commit to it immediately. It now only
+      // opens a preview of that stop (ephemeral UI state, not saved) --
+      // committing takes an explicit confirm, handled here rather than by
+      // the base enter-branch-node dispatch.
+      handleUiAction: function handleUiActionWithBranchPreview(game, action, itemId) {
+        if (action === "preview-branch-node") {
+          if (!game || !game.state || game.state.status !== MAP_STATUS) {
+            return { ok: false, error: "The map is not open." };
+          }
+          var branchMap = ensureBranchMap(game);
+          var parts = String(itemId || "").split(":");
+          var node = nodeAt(branchMap, Number(parts[0]), Number(parts[1]));
+          if (!node || !isReachable(branchMap, node)) {
+            return { ok: false, error: "No path leads there from here." };
+          }
+          previewKey = itemId;
+          return { ok: true };
+        }
+        if (action === "cancel-branch-node-preview") {
+          previewKey = null;
+          return { ok: true };
+        }
+        if (action === "confirm-branch-node") {
+          previewKey = null;
+          return typeof game.enterBranchNode === "function"
+            ? game.enterBranchNode(itemId)
+            : { ok: false, error: "The run map is unavailable." };
+        }
+        return typeof originalHandleUiAction === "function"
+          ? originalHandleUiAction(game, action, itemId)
+          : { ok: false, error: "Unknown campaign action." };
       }
     }));
   }

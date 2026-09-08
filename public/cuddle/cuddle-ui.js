@@ -1192,7 +1192,9 @@
   function cuddleV3ToastStack(state) {
     const boss = state?.bossRewardNotice;
     const synergy = state?.synergyNotice;
-    if (!boss && !synergy) return "";
+    const hint = state?.coachHintNotice;
+    const meter = state?.coachMeterNotice;
+    if (!boss && !synergy && !hint && !meter) return "";
     return `
       <div class="cuddle-v3-toast-stack" aria-live="polite">
         ${boss ? `
@@ -1206,6 +1208,18 @@
             <span class="cuddle-v3-toast-icon">${escapeHtml(synergy.icon || "✨")}</span>
             <div><small>Reward interaction</small><strong>${escapeHtml(synergy.title || "Combination unlocked")}</strong><p>${escapeHtml(synergy.message || "A new combination bonus is active.")}</p></div>
             <button type="button" data-cuddle-v3-action="dismiss-synergy" aria-label="Dismiss combination bonus">×</button>
+          </section>` : ""}
+        ${hint ? `
+          <section class="cuddle-v3-toast is-hint" role="status">
+            <span class="cuddle-v3-toast-icon">💡</span>
+            <div><small>Guesser Hint</small><strong>${hint.count > 1 ? `${hint.count} hints granted` : "Hint granted"}</strong><p>An exact letter and position ${hint.count > 1 ? "were" : "was"} revealed automatically.</p></div>
+            <button type="button" data-cuddle-v3-action="dismiss-coach-hint" aria-label="Dismiss hint notice">×</button>
+          </section>` : ""}
+        ${meter ? `
+          <section class="cuddle-v3-toast is-meter" role="status">
+            <span class="cuddle-v3-toast-icon">🫶</span>
+            <div><small>Cuddle Meter full</small><strong>${escapeHtml(meter.label || "Reward received")}</strong><p>The Cuddle Meter filled and granted its reward.</p></div>
+            <button type="button" data-cuddle-v3-action="dismiss-coach-meter" aria-label="Dismiss Cuddle Meter notice">×</button>
           </section>` : ""}
       </div>`;
   }
@@ -1252,6 +1266,8 @@
     const action = button.dataset.cuddleV3Action;
     if (action === "dismiss-boss-reward") game?.dismissBossRewardNotice?.();
     else if (action === "dismiss-synergy") game?.dismissSynergyNotice?.();
+    else if (action === "dismiss-coach-hint") game?.dismissCoachHintNotice?.();
+    else if (action === "dismiss-coach-meter") game?.dismissCoachMeterNotice?.();
     else return;
     render();
   });
