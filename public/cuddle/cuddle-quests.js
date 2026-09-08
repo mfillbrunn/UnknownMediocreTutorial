@@ -485,6 +485,19 @@
       icon: "🧰",
       title: "Backup Plan",
       description: "Gain one additional mulligan every round."
+    },
+    // Not tied to a fixed boss trial -- Cuddle Coach Expansion injects this
+    // one into a boss's offer in place of its normal reward (see
+    // cuddle-coach-expansion.js's decorateBossOffer/nextCustomBossReward),
+    // only once Margin Note (openingClue) has already been picked. Listed
+    // here too so getBossReward() below -- used for the post-clear reward
+    // notice and history -- resolves its real icon/title/description
+    // instead of falling back to a generic "Boss reward".
+    {
+      id: "clearSight",
+      icon: "🟢",
+      title: "Clear Sight",
+      description: "Upgrade Margin Note: it now reveals a letter's exact position instead of just that it's present."
     }
   ];
 
