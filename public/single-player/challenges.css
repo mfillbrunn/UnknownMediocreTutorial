@@ -42,11 +42,9 @@
     rgba(255, 255, 255, .035);
 }
 
-.challenge-eyebrow,
 .challenge-control-label,
 .challenge-progress-kicker,
-.challenge-effect-label,
-.challenge-hud-kicker {
+.challenge-effect-label {
   display: block;
   font-size: 11px;
   font-weight: 800;
@@ -66,22 +64,6 @@
   margin: 0;
   line-height: 1.55;
   opacity: .78;
-}
-
-.challenge-rule-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.challenge-rule-strip span {
-  padding: 7px 10px;
-  border: 1px solid rgba(255, 255, 255, .11);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, .045);
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .challenge-progress-summary {
@@ -614,69 +596,6 @@
   gap: 3px;
 }
 
-.challenge-quick-play-btn small {
-  font-size: 11px;
-  font-weight: 600;
-  opacity: .62;
-}
-
-.challenge-match-hud {
-  position: fixed;
-  z-index: 10020;
-  top: 16px;
-  right: 16px;
-  display: grid;
-  width: min(300px, calc(100vw - 32px));
-  gap: 4px;
-  padding: 13px 14px;
-  border: 1px solid rgba(241, 176, 80, .42);
-  border-radius: 15px;
-  color: #f7f8ff;
-  background: rgba(15, 18, 28, .94);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, .32);
-  backdrop-filter: blur(14px);
-  pointer-events: none;
-}
-
-.challenge-match-hud.is-normal-round {
-  border-color: rgba(143, 167, 255, .38);
-}
-
-.challenge-match-hud > strong {
-  font-size: 15px;
-}
-
-.challenge-match-hud > span {
-  font-size: 11px;
-  opacity: .7;
-}
-
-.challenge-hud-meter {
-  display: flex;
-  gap: 5px;
-  min-height: 7px;
-  margin-top: 5px;
-}
-
-.challenge-hud-meter > span:not(.challenge-hud-normal) {
-  height: 6px;
-  flex: 1;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, .11);
-}
-
-.challenge-hud-meter > span.is-used {
-  background: #f1b050;
-  box-shadow: 0 0 12px rgba(241, 176, 80, .3);
-}
-
-.challenge-hud-normal {
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: .14em;
-  opacity: .58;
-}
-
 @keyframes challenge-pulse {
   0%, 100% { opacity: .35; transform: translateY(0); }
   50% { opacity: 1; transform: translateY(-3px); }
@@ -762,13 +681,6 @@
 
   .challenge-best {
     text-align: center;
-  }
-
-  .challenge-match-hud {
-    top: auto;
-    right: 10px;
-    bottom: 10px;
-    width: calc(100vw - 20px);
   }
 }
 

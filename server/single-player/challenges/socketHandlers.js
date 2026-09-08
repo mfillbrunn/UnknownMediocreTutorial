@@ -24,9 +24,24 @@ module.exports = function registerChallengeSocketHandlers(io, context, { challen
       }
     }
 
-    socket.on("singlePlayer:getChallenges", (payload, cb) =>
-      withAuth(payload, cb, () => challengeService.getCatalog())
-    );
+    // Not routed through withAuth: the catalog is a static, public list
+    // (challengeRegistry's frozen CHALLENGES/DIFFICULTIES, see
+    // getCatalog()) that never reads or reveals anything user-specific --
+    // per-player progress/stars live in the browser's own localStorage
+    // (see challenges.js's loadProgress), never fetched from here. Routing
+    // it through withAuth meant every open of the Challenges screen first
+    // paid for a network round trip to Supabase's auth API
+    // (resolveUserId -> context.supabase.auth.getUser) just to answer a
+    // question that didn't depend on who was asking -- the one thing
+    // actually making that screen slow to open.
+    socket.on("singlePlayer:getChallenges", (payload, cb) => {
+      try {
+        cb?.(challengeService.getCatalog());
+      } catch (err) {
+        console.warn("[challenges] handler error:", err?.message || err);
+        cb?.({ ok: false, code: "CHALLENGE_INTERNAL_ERROR" });
+      }
+    });
 
     socket.on("singlePlayer:startChallenge", (payload, cb) =>
       withAuth(payload, cb, userId => challengeService.startChallenge({
