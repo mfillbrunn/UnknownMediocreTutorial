@@ -983,6 +983,24 @@ function maybeOpenChoice(state) {
         ? "guesser"
         : null;
   if (!role) return;
+  // A challenge hands its AI opponent exactly one named power, repeated
+  // for a fixed number of turns, and nothing else -- offering it an
+  // ordinary milestone reward pick on top of that (even once the forced
+  // turns run out) would let it pick up powers outside the whole point of
+  // the challenge. Block the offer at the source instead of just skipping
+  // the AI's answer to it: a pending choice blocks that seat's turn until
+  // it's resolved, so leaving one open would stall the match. Scoped to
+  // the AI actually holding the powered role right now -- once a
+  // role-swap round hands that role to the human, or the AI itself swaps
+  // into the other role, this no longer applies.
+  const challenge = state.singlePlayer?.challenge;
+  if (
+    challenge?.enabled &&
+    role === challenge.powerRole &&
+    state.players?.[state.turn]?.isAI
+  ) {
+    return;
+  }
   const side = role === "setter" ? pc.spy : pc.inspector;
   const threshold = side.queuedMilestones.shift();
   if (!threshold) return;
@@ -2909,5 +2927,9 @@ module.exports = {
   decorateRewardRarity,
   dailyQuestAt,
   dailyRewardOptions,
-  hasValidDailyRewardSchedule
+  hasValidDailyRewardSchedule,
+  // Exported for server/tests/challengeAiRewardLock.test.js -- lets it drive
+  // the actual milestone-offer gate directly against a synthetic state
+  // instead of round-tripping through engine.turnStart's full power loop.
+  maybeOpenChoice
 };

@@ -488,7 +488,14 @@
         // shownFeedback is what a boss lets the board reveal; it matches
         // feedback exactly in an ordinary round.
         const result = (history?.shownFeedback || history?.feedback || [])[column] || "";
-        const tileClass = result ? ` is-${result}` : letter ? " is-filled" : "";
+        // The joker tile in the current draft still carries its raw star
+        // glyph (unresolved), and a submitted guess only knows which
+        // column it resolved at via history.jokerIndex -- either way, mark
+        // that one tile so it reads as the joker rather than a plain letter.
+        const isJokerTile = draftTile
+          ? draftTile.glyph === window.CuddleEngine.CUDDLE_JOKER_GLYPH
+          : Boolean(history?.jokerRevealed && history.jokerIndex === column);
+        const tileClass = (result ? ` is-${result}` : letter ? " is-filled" : "") + (isJokerTile ? " is-joker" : "");
         if (draftTile) {
           tiles.push(`
             <button type="button" class="cuddle-tile is-draft-tile${tileClass}"
