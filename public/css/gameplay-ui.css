@@ -3775,3 +3775,262 @@ body.hide-constraints :is(#setterScreen, #guesserScreen) .constraint-row {
   background: transparent;
   box-shadow: none;
 }
+
+/* =========================================================
+   SECRET RATING STARS
+   Smooth, clip-safe glow and a short three-star dance.
+   ========================================================= */
+
+/*
+ * Keep the filter pipeline present even before a star lights.
+ *
+ * Previously the browser had to switch from filter:none to a glowing
+ * filtered layer at the same moment the SVG started moving. Some browsers
+ * briefly rasterize that new layer as a small rectangle.
+ *
+ * The two transparent shadows below are visually empty, but they keep the
+ * same two-filter structure alive before and after the star is filled.
+ */
+#setterScreen svg.setter-cover-star {
+  --cover-star-glow-near: clamp(4px, 1.8cqw, 8px);
+  --cover-star-glow-middle: clamp(6px, 2.6cqw, 11px);
+  --cover-star-glow-far: clamp(8px, 3.4cqw, 15px);
+
+  --cover-star-active-filter:
+    drop-shadow(0 0 0 rgba(255, 255, 255, 0))
+    drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+
+  /*
+   * !important is intentional. Earlier star-state rules set filter
+   * directly with more-specific selectors.
+   */
+  -webkit-filter: var(--cover-star-active-filter) !important;
+  filter: var(--cover-star-active-filter) !important;
+
+  overflow: visible;
+
+  /*
+   * Never transform the filtered outer SVG. Moving its internal star shape
+   * instead prevents the filter surface itself from becoming a moving box.
+   */
+  animation: none !important;
+  transform: none !important;
+
+  /*
+   * Do not transition filter. Fill and stroke still fade smoothly.
+   */
+  transition:
+    fill 180ms ease,
+    stroke 180ms ease;
+}
+
+/*
+ * The visible star is this <use> element. It can dance while the outer SVG
+ * and its filter surface remain stationary.
+ */
+#setterScreen #setterCoverStars svg.setter-cover-star > use {
+  transform-box: fill-box;
+  transform-origin: 50% 62%;
+  will-change: transform;
+}
+
+/* One normal yellow star. */
+#setterScreen svg.setter-cover-base-star.is-filled {
+  --cover-star-active-filter:
+    drop-shadow(
+      0 0 var(--cover-star-glow-near)
+      rgba(255, 205, 72, 0.72)
+    )
+    drop-shadow(
+      0 0 var(--cover-star-glow-middle)
+      rgba(255, 184, 46, 0.22)
+    );
+}
+
+/* Two yellow stars: a slightly brighter, wider glow. */
+#setterScreen
+  #setterCoverStars.stars-2
+  svg.setter-cover-base-star.is-filled {
+  --cover-star-active-filter:
+    drop-shadow(
+      0 0 var(--cover-star-glow-middle)
+      rgba(255, 218, 100, 0.88)
+    )
+    drop-shadow(
+      0 0 var(--cover-star-glow-far)
+      rgba(255, 184, 46, 0.32)
+    );
+}
+
+/* Normal filled blue bonus star. */
+#setterScreen svg.setter-cover-bonus-star.is-filled {
+  --cover-star-active-filter:
+    drop-shadow(
+      0 0 var(--cover-star-glow-near)
+      rgba(88, 201, 255, 0.92)
+    )
+    drop-shadow(
+      0 0 var(--cover-star-glow-far)
+      rgba(54, 188, 255, 0.32)
+    );
+}
+
+/* Three-star yellow glow. */
+#setterScreen
+  #setterCoverStars.stars-3
+  svg.setter-cover-base-star.is-filled {
+  --cover-star-active-filter:
+    drop-shadow(
+      0 0 var(--cover-star-glow-middle)
+      rgba(255, 232, 140, 0.98)
+    )
+    drop-shadow(
+      0 0 var(--cover-star-glow-far)
+      rgba(255, 184, 46, 0.52)
+    );
+}
+
+/* Three-star blue bonus glow. */
+#setterScreen
+  #setterCoverStars.stars-3
+  svg.setter-cover-bonus-star.is-filled {
+  --cover-star-active-filter:
+    drop-shadow(
+      0 0 var(--cover-star-glow-middle)
+      rgba(112, 231, 255, 1)
+    )
+    drop-shadow(
+      0 0 var(--cover-star-glow-far)
+      rgba(54, 188, 255, 0.52)
+    );
+}
+
+/* ---------------------------------------------------------
+   Individual star-lighting animation
+   --------------------------------------------------------- */
+
+@keyframes setter-star-light-shape {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(0.88);
+  }
+
+  32% {
+    transform: translateY(-3px) rotate(-6deg) scale(1.14);
+  }
+
+  56% {
+    transform: translateY(0) rotate(5deg) scale(1.04);
+  }
+
+  76% {
+    transform: translateY(-1px) rotate(-2deg) scale(1.07);
+  }
+
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+}
+
+/*
+ * Disable the old outer-SVG animation. Reproduce the same event on the
+ * internal shape. The animationend event bubbles to the SVG, so the current
+ * setter-board.js cleanup handler still works.
+ */
+#setterScreen
+  #setterCoverStars
+  svg.setter-cover-star.is-filled.is-newly-earned {
+  animation: none !important;
+  transform: none !important;
+}
+
+#setterScreen
+  #setterCoverStars
+  svg.setter-cover-star.is-filled.is-newly-earned
+  > use {
+  animation:
+    setter-star-light-shape
+    620ms
+    cubic-bezier(0.22, 0.9, 0.3, 1)
+    var(--star-dance-delay, 0ms)
+    both;
+}
+
+/* ---------------------------------------------------------
+   All-three-stars dance
+   --------------------------------------------------------- */
+
+@keyframes setter-three-star-dance-shape {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+
+  20% {
+    transform: translateY(-3px) rotate(-7deg) scale(1.14);
+  }
+
+  40% {
+    transform: translateY(1px) rotate(5deg) scale(0.99);
+  }
+
+  62% {
+    transform: translateY(-2px) rotate(-4deg) scale(1.08);
+  }
+
+  82% {
+    transform: translateY(0) rotate(2deg) scale(1.02);
+  }
+}
+
+/*
+ * This runs once when setter-board.js adds .stars-3.
+ * It does not loop continuously.
+ */
+#setterScreen
+  #setterCoverStars.stars-3
+  .setter-cover-stars-core
+  > svg.setter-cover-star.is-filled
+  > use {
+  animation:
+    setter-three-star-dance-shape
+    780ms
+    cubic-bezier(0.2, 0.85, 0.25, 1)
+    both;
+}
+
+/* A small wave from left to right. */
+#setterScreen
+  #setterCoverStars.stars-3
+  .setter-cover-stars-core
+  > svg.setter-cover-star:nth-of-type(1)
+  > use {
+  animation-delay: 0ms;
+}
+
+#setterScreen
+  #setterCoverStars.stars-3
+  .setter-cover-stars-core
+  > svg.setter-cover-star:nth-of-type(2)
+  > use {
+  animation-delay: 75ms;
+}
+
+#setterScreen
+  #setterCoverStars.stars-3
+  .setter-cover-stars-core
+  > svg.setter-cover-star:nth-of-type(3)
+  > use {
+  animation-delay: 150ms;
+}
+
+/* Respect the player's reduced-motion preference. */
+@media (prefers-reduced-motion: reduce) {
+  #setterScreen
+    #setterCoverStars
+    svg.setter-cover-star
+    > use {
+    animation: none !important;
+    transform: none !important;
+    will-change: auto;
+  }
+}
