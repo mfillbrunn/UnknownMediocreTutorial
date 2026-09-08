@@ -757,7 +757,6 @@ onStateUpdate(newState => {
     // UMT_CHALLENGES_V2: ROUND INTRO START
     const challengeSub = [];
     const challengeData = state.singlePlayer?.challenge;
-    window.SinglePlayerChallenges?.syncMatchState?.(state);
     if (challengeData?.enabled) {
       const powerLabel = challengeData.title
         || window.POWER_METADATA?.[challengeData.powerId]?.label

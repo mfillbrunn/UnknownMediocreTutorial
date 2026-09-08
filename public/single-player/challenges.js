@@ -11,7 +11,6 @@
   let roleFilter = "all";
   let selectedDifficultyId = DEFAULT_DIFFICULTY;
   let lastSelection = null;
-  let activeMatch = null;
 
   const achievementDefs = [
     {
@@ -373,7 +372,6 @@
   }
 
   async function open() {
-    removeMatchHud();
     window.showScreen("challengesScreen");
     showBrowser();
 
@@ -410,13 +408,6 @@
     if (starting) return;
     setStarting(true);
     lastSelection = { challenge, difficulty };
-    activeMatch = {
-      challenge,
-      difficulty,
-      used: 0,
-      limit: Number(difficulty.powerTurns) || 0,
-      roundIndex: 0
-    };
 
     try {
       const result = await emitWithAuth("singlePlayer:startChallenge", {
@@ -434,19 +425,16 @@
       }
 
       window._challengeStarting = true;
-      mountMatchHud(challenge, difficulty);
       window.SinglePlayerCampaign.joinRoom(result.roomId);
       window.SinglePlayerCampaign.enterGameScreen();
 
       const begun = await emitWithAuth("singlePlayer:beginChallenge", { roomId: result.roomId });
       if (!begun.ok) {
-        removeMatchHud();
         const message = errorMessage(begun);
         if (typeof toast === "function") toast(message);
         await open();
       }
     } catch (error) {
-      removeMatchHud();
       const message = error?.message || "Could not start the challenge.";
       if (typeof toast === "function") toast(message);
       window.showScreen("challengesScreen");
@@ -483,7 +471,6 @@
 
   function showResult(payload) {
     recordResult(payload);
-    removeMatchHud();
     window.showScreen("challengesScreen");
     document.getElementById("challengeAchievementsPanel")?.classList.add("hidden");
     document.getElementById("challengeBrowser")?.classList.add("hidden");
@@ -531,98 +518,6 @@
     }
   }
 
-  function ensureMatchHud() {
-    let hud = document.getElementById("challengeMatchHud");
-    if (hud) return hud;
-
-    hud = document.createElement("aside");
-    hud.id = "challengeMatchHud";
-    hud.className = "challenge-match-hud";
-    hud.setAttribute("aria-live", "polite");
-    hud.innerHTML = `
-      <div class="challenge-hud-kicker" id="challengeHudKicker"></div>
-      <strong id="challengeHudTitle"></strong>
-      <span id="challengeHudStatus"></span>
-      <div class="challenge-hud-meter" id="challengeHudMeter"></div>`;
-    document.body.appendChild(hud);
-    return hud;
-  }
-
-  function renderMatchHud() {
-    if (!activeMatch) return;
-    const hud = ensureMatchHud();
-    const poweredRound = Number(activeMatch.roundIndex || 0) === 0;
-    const role = roleDetails(activeMatch.challenge);
-    const used = Math.max(0, Number(activeMatch.used) || 0);
-    const limit = Math.max(0, Number(activeMatch.limit) || 0);
-    const kicker = document.getElementById("challengeHudKicker");
-    const title = document.getElementById("challengeHudTitle");
-    const status = document.getElementById("challengeHudStatus");
-    const meter = document.getElementById("challengeHudMeter");
-
-    hud.classList.toggle("is-normal-round", !poweredRound);
-    if (kicker) kicker.textContent = poweredRound ? "POWERED ROUND" : "NORMAL ROUND";
-    if (title) title.textContent = activeMatch.challenge.title;
-    if (status) {
-      status.textContent = poweredRound
-        ? `${role.aiRole}: ${used} of ${limit} automatic uses`
-        : "Challenge power off · AI plays normally";
-    }
-    if (meter) {
-      meter.innerHTML = poweredRound
-        ? Array.from({ length: limit }, (_, index) => (
-            `<span class="${index < used ? "is-used" : ""}"></span>`
-          )).join("")
-        : '<span class="challenge-hud-normal">ROLE SWAP</span>';
-    }
-  }
-
-  function mountMatchHud(challenge, difficulty) {
-    activeMatch = {
-      challenge,
-      difficulty,
-      used: 0,
-      limit: Number(difficulty.powerTurns) || 0,
-      roundIndex: 0
-    };
-    renderMatchHud();
-  }
-
-  function removeMatchHud() {
-    document.getElementById("challengeMatchHud")?.remove();
-    activeMatch = null;
-  }
-
-  function syncMatchState(state) {
-    const challengeState = state?.singlePlayer?.challenge;
-    if (!challengeState?.enabled) return;
-
-    const challenge = catalog?.challenges?.find(item => item.id === challengeState.id)
-      || activeMatch?.challenge
-      || {
-        id: challengeState.id,
-        title: challengeState.title || "AI Challenge",
-        powerRole: challengeState.powerRole,
-        powerId: challengeState.powerId
-      };
-    const difficulty = catalog?.difficulties?.find(item => item.id === challengeState.difficulty)
-      || activeMatch?.difficulty
-      || {
-        id: challengeState.difficulty,
-        label: challengeState.difficultyLabel,
-        powerTurns: challengeState.powerTurns
-      };
-
-    activeMatch = {
-      challenge,
-      difficulty,
-      used: Number(challengeState.forcedUses) || 0,
-      limit: Number(challengeState.powerTurns) || Number(difficulty.powerTurns) || 0,
-      roundIndex: Number(state.roundIndex) || 0
-    };
-    renderMatchHud();
-  }
-
   function showAchievements() {
     document.getElementById("challengeBrowser")?.classList.add("hidden");
     document.getElementById("challengeResultPanel")?.classList.add("hidden");
@@ -634,7 +529,6 @@
     loadSettings();
     document.getElementById("challengesBtn")?.addEventListener("click", open);
     document.getElementById("challengesBackBtn")?.addEventListener("click", () => {
-      removeMatchHud();
       window.showScreen("quickPlayScreen");
     });
     document.getElementById("challengeAchievementsBtn")?.addEventListener("click", showAchievements);
@@ -651,19 +545,11 @@
     ready();
   }
 
-  socket.on("singlePlayer:challengePowerProgress", payload => {
-    if (!activeMatch || !payload) return;
-    activeMatch.used = Number(payload.used) || 0;
-    activeMatch.limit = Number(payload.limit) || activeMatch.limit;
-    activeMatch.roundIndex = 0;
-    renderMatchHud();
-  });
   socket.on("singlePlayer:challengeResult", showResult);
 
   window.SinglePlayerChallenges = {
     open,
     renderCatalog,
-    loadProgress,
-    syncMatchState
+    loadProgress
   };
 })();
