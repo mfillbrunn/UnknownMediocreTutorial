@@ -8,9 +8,11 @@
 
   let catalog = null;
   let starting = false;
-  let roleFilter = "all";
   let selectedDifficultyId = DEFAULT_DIFFICULTY;
   let lastSelection = null;
+  // Which challenge's briefing dialog is open, so a re-render (a result
+  // landing, say) can refresh it in place instead of dropping it.
+  let openChallengeId = null;
 
   const achievementDefs = [
     {
@@ -117,17 +119,16 @@
     try {
       const value = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}") || {};
       if (typeof value.difficulty === "string") selectedDifficultyId = value.difficulty;
-      if (["all", "setter", "guesser"].includes(value.roleFilter)) roleFilter = value.roleFilter;
     } catch {
       selectedDifficultyId = DEFAULT_DIFFICULTY;
-      roleFilter = "all";
     }
   }
 
   function saveSettings() {
+    // The map shows both AI roles at once, so the old role filter is gone;
+    // only the last difficulty picked is worth remembering.
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({
-      difficulty: selectedDifficultyId,
-      roleFilter
+      difficulty: selectedDifficultyId
     }));
   }
 
@@ -212,129 +213,199 @@
       </div>`;
   }
 
-  function renderRoleFilters() {
-    const container = document.getElementById("challengeRoleFilters");
-    if (!container) return;
-    const choices = [
-      { id: "all", label: "All powers" },
-      { id: "setter", label: "AI Secretkeeper" },
-      { id: "guesser", label: "AI Guesser" }
-    ];
-
-    container.innerHTML = "";
-    choices.forEach(choice => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = `challenge-segment ${roleFilter === choice.id ? "is-selected" : ""}`;
-      button.textContent = choice.label;
-      button.setAttribute("aria-pressed", String(roleFilter === choice.id));
-      button.addEventListener("click", () => {
-        roleFilter = choice.id;
-        saveSettings();
-        renderCatalog();
-      });
-      container.appendChild(button);
-    });
-  }
-
-  function renderDifficultyPicker() {
-    const container = document.getElementById("challengeDifficultyPicker");
-    if (!container || !catalog) return;
-
-    if (!catalog.difficulties.some(item => item.id === selectedDifficultyId)) {
-      selectedDifficultyId = selectedDifficulty()?.id || DEFAULT_DIFFICULTY;
-    }
-
-    container.innerHTML = "";
-    catalog.difficulties.forEach(difficulty => {
-      const selected = difficulty.id === selectedDifficultyId;
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = `challenge-difficulty-option ${selected ? "is-selected" : ""}`;
-      button.setAttribute("aria-pressed", String(selected));
-      button.innerHTML = `
-        <strong>${escapeHtml(difficulty.label)}</strong>
-        <span>AI level ${Number(difficulty.aiDifficulty) || 1}</span>
-        <small>${Number(difficulty.powerTurns) || 0} powered turns</small>`;
-      button.addEventListener("click", () => {
-        selectedDifficultyId = difficulty.id;
-        saveSettings();
-        renderCatalog();
-      });
-      container.appendChild(button);
-    });
-  }
-
   function powerDots(total) {
     const count = Math.max(0, Number(total) || 0);
     return Array.from({ length: count }, () => '<span class="challenge-power-dot"></span>').join("");
   }
 
-  function renderCatalog() {
-    const list = document.getElementById("challengeList");
-    if (!list || !catalog) return;
+  // How far through a single challenge the player is, across all three
+  // difficulties. This is what the map node's art is driven by, so
+  // "untouched / part-way / finished" is legible without opening anything.
+  function challengeProgress(challenge) {
+    const difficulties = catalog?.difficulties || [];
+    const perDifficulty = difficulties.map(difficulty => ({
+      difficulty,
+      stars: bestStars(challenge.id, difficulty.id)
+    }));
+    const cleared = perDifficulty.filter(row => row.stars >= 1).length;
+    const stars = perDifficulty.reduce((sum, row) => sum + row.stars, 0);
+    const maxStars = perDifficulty.length * 3;
+    const state = stars >= maxStars && maxStars > 0
+      ? "is-mastered"
+      : (cleared > 0 ? "is-started" : "is-untouched");
+    return { perDifficulty, cleared, stars, maxStars, state };
+  }
+
+  function buildNode(challenge) {
+    const role = roleDetails(challenge);
+    const progress = challengeProgress(challenge);
+
+    const pips = progress.perDifficulty.map(row => `
+      <span class="challenge-node-pip challenge-node-pip--${row.stars}"
+            title="${escapeHtml(row.difficulty.label)}: ${row.stars} of 3 stars">
+        <b>${escapeHtml(String(row.difficulty.label || "").charAt(0))}</b>
+      </span>`).join("");
+
+    const node = document.createElement("button");
+    node.type = "button";
+    node.className = `challenge-node challenge-node--${role.roleClass} ${progress.state}`;
+    node.dataset.challengeId = challenge.id;
+    node.setAttribute(
+      "aria-label",
+      `${challenge.title}. ${progress.stars} of ${progress.maxStars} stars. Open briefing.`
+    );
+    node.innerHTML = `
+      <span class="challenge-node-medal" aria-hidden="true">
+        <span class="challenge-node-icon">${escapeHtml(challenge.icon || "AI")}</span>
+        ${progress.state === "is-mastered" ? '<span class="challenge-node-crown">★</span>' : ""}
+      </span>
+      <span class="challenge-node-title">${escapeHtml(challenge.title)}</span>
+      <span class="challenge-node-pips" aria-hidden="true">${pips}</span>`;
+
+    node.addEventListener("click", () => openDetail(challenge));
+    return node;
+  }
+
+  function buildRegion(label, kicker, challenges, roleClass) {
+    const region = document.createElement("section");
+    region.className = `challenge-region challenge-region--${roleClass}`;
+    region.innerHTML = `
+      <header class="challenge-region-head">
+        <span class="challenge-region-kicker">${escapeHtml(kicker)}</span>
+        <h3>${escapeHtml(label)}</h3>
+      </header>
+      <div class="challenge-region-nodes"></div>`;
+    const holder = region.querySelector(".challenge-region-nodes");
+    challenges.forEach(challenge => holder.appendChild(buildNode(challenge)));
+    return region;
+  }
+
+  // The map replaced a scrolling stack of full-detail cards -- eleven of
+  // them, each carrying its own effect/counterplay/matchup copy, which made
+  // simply finding a challenge a long scroll. The briefing moved into
+  // openDetail's dialog; what's left out here is only what you need to
+  // choose: which power, whose role, and how far along you are.
+  function renderMap() {
+    const map = document.getElementById("challengeMap");
+    if (!map || !catalog) return;
 
     renderProgressSummary();
-    renderRoleFilters();
-    renderDifficultyPicker();
     renderAchievements();
 
-    const difficulty = selectedDifficulty();
-    const visible = catalog.challenges.filter(challenge => (
-      roleFilter === "all" || challenge.powerRole === roleFilter
-    ));
+    map.innerHTML = "";
+    const setterChallenges = catalog.challenges.filter(c => c.powerRole === "setter");
+    const guesserChallenges = catalog.challenges.filter(c => c.powerRole === "guesser");
 
-    list.innerHTML = "";
-    if (!difficulty || visible.length === 0) {
-      list.innerHTML = '<div class="challenge-empty">No challenges match this filter.</div>';
+    if (!catalog.challenges.length) {
+      map.innerHTML = '<div class="challenge-empty">No challenges are available.</div>';
       return;
     }
 
-    visible.forEach(challenge => {
-      const role = roleDetails(challenge);
-      const turns = Number(difficulty.powerTurns) || 0;
-      const stars = bestStars(challenge.id, difficulty.id);
-      const card = document.createElement("article");
-      card.className = `challenge-card challenge-card--${role.roleClass}`;
-      card.innerHTML = `
-        <div class="challenge-card-topline">
-          <span class="challenge-card-icon" aria-hidden="true">${escapeHtml(challenge.icon || "AI")}</span>
-          <span class="challenge-role-badge">${escapeHtml(role.aiRole)} power</span>
-        </div>
-        <h3>${escapeHtml(challenge.title)}</h3>
-        <p class="challenge-card-summary">${escapeHtml(challenge.summary)}</p>
-        <div class="challenge-matchup" aria-label="Starting matchup">
-          <div><small>YOU START AS</small><strong>${escapeHtml(role.playerRole)}</strong></div>
-          <span class="challenge-versus" aria-hidden="true">VS</span>
-          <div><small>POWERED ROLE</small><strong>${escapeHtml(role.aiRole)}</strong></div>
-        </div>
-        <div class="challenge-effect-box">
-          <span class="challenge-effect-label">POWER EFFECT</span>
-          <p>${escapeHtml(challenge.effect)}</p>
-        </div>
-        <div class="challenge-power-window">
-          <div>
-            <span>Automatic power window</span>
-            <strong>First ${turns} eligible ${turns === 1 ? "turn" : "turns"}</strong>
-          </div>
-          <div class="challenge-power-dots" aria-hidden="true">${powerDots(turns)}</div>
-        </div>
-        <p class="challenge-counterplay"><strong>Counterplay:</strong> ${escapeHtml(challenge.counterplay)}</p>
-        <div class="challenge-card-footer">
-          <div class="challenge-best">
-            <small>${escapeHtml(difficulty.label)} best</small>
-            <span aria-label="${stars} of 3 stars">${starGlyphs(stars)}</span>
-          </div>
-          <button class="sp-btn challenge-start-btn" type="button">
-            Start ${escapeHtml(difficulty.label)}
-          </button>
-        </div>`;
+    if (setterChallenges.length) {
+      map.appendChild(buildRegion(
+        "AI Secretkeeper powers",
+        "YOU PLAY GUESSER FIRST",
+        setterChallenges,
+        "setter"
+      ));
+    }
+    if (guesserChallenges.length) {
+      map.appendChild(buildRegion(
+        "AI Guesser powers",
+        "YOU PLAY SECRETKEEPER FIRST",
+        guesserChallenges,
+        "guesser"
+      ));
+    }
+  }
 
-      card.querySelector(".challenge-start-btn")?.addEventListener("click", () => {
+  // Kept as the module's public render entry point -- callers (showResult,
+  // the result screen's Continue) just want "redraw whatever is on screen".
+  function renderCatalog() {
+    renderMap();
+    if (openChallengeId) {
+      const challenge = catalog?.challenges?.find(item => item.id === openChallengeId);
+      if (challenge) renderDetail(challenge);
+    }
+  }
+
+  // ---- Challenge briefing dialog -------------------------------------
+
+  function detailModal() {
+    return document.getElementById("challengeDetailModal");
+  }
+
+  function renderDetail(challenge) {
+    const role = roleDetails(challenge);
+    const progress = challengeProgress(challenge);
+
+    const icon = document.getElementById("challengeDetailIcon");
+    if (icon) icon.textContent = challenge.icon || "AI";
+
+    const roleEl = document.getElementById("challengeDetailRole");
+    if (roleEl) roleEl.textContent = `${role.aiRole} power`;
+
+    const title = document.getElementById("challengeDetailTitle");
+    if (title) title.textContent = challenge.title;
+
+    const summary = document.getElementById("challengeDetailSummary");
+    if (summary) summary.textContent = challenge.summary;
+
+    const effect = document.getElementById("challengeDetailEffect");
+    if (effect) effect.textContent = challenge.effect;
+
+    const counterplay = document.getElementById("challengeDetailCounterplay");
+    if (counterplay) {
+      counterplay.innerHTML = `<strong>Counterplay:</strong> ${escapeHtml(challenge.counterplay)}`;
+    }
+
+    const matchup = document.getElementById("challengeDetailMatchup");
+    if (matchup) {
+      matchup.innerHTML = `
+        <div><small>YOU START AS</small><strong>${escapeHtml(role.playerRole)}</strong></div>
+        <span class="challenge-versus" aria-hidden="true">VS</span>
+        <div><small>POWERED ROLE</small><strong>${escapeHtml(role.aiRole)}</strong></div>`;
+    }
+
+    const holder = document.getElementById("challengeDetailDifficulties");
+    if (!holder) return;
+    holder.innerHTML = "";
+
+    progress.perDifficulty.forEach(({ difficulty, stars }) => {
+      const turns = Number(difficulty.powerTurns) || 0;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `sp-btn challenge-detail-difficulty challenge-start-btn ${stars >= 3 ? "is-mastered" : ""}`;
+      button.innerHTML = `
+        <span class="challenge-detail-difficulty-head">
+          <strong>${escapeHtml(difficulty.label)}</strong>
+          <span class="challenge-stars" aria-label="${stars} of 3 stars">${starGlyphs(stars)}</span>
+        </span>
+        <span class="challenge-detail-difficulty-meta">
+          AI level ${Number(difficulty.aiDifficulty) || 1} · ${turns} powered ${turns === 1 ? "turn" : "turns"}
+        </span>
+        <span class="challenge-power-dots" aria-hidden="true">${powerDots(turns)}</span>`;
+      button.addEventListener("click", () => {
+        selectedDifficultyId = difficulty.id;
+        saveSettings();
         startChallenge(challenge, difficulty);
       });
-      list.appendChild(card);
+      holder.appendChild(button);
     });
+  }
+
+  function openDetail(challenge) {
+    const modal = detailModal();
+    if (!modal) return;
+    openChallengeId = challenge.id;
+    renderDetail(challenge);
+    modal.classList.remove("hidden");
+    document.getElementById("challengeDetailCloseBtn")?.focus?.();
+  }
+
+  function closeDetail() {
+    openChallengeId = null;
+    detailModal()?.classList.add("hidden");
   }
 
   function renderAchievements() {
@@ -358,15 +429,16 @@
   }
 
   function showBrowser() {
+    closeDetail();
     document.getElementById("challengeAchievementsPanel")?.classList.add("hidden");
     document.getElementById("challengeResultPanel")?.classList.add("hidden");
     document.getElementById("challengeBrowser")?.classList.remove("hidden");
   }
 
   function showCatalogError(message) {
-    const list = document.getElementById("challengeList");
-    if (list) {
-      list.innerHTML = `<div class="challenge-empty challenge-error" role="alert">${escapeHtml(message)}</div>`;
+    const map = document.getElementById("challengeMap");
+    if (map) {
+      map.innerHTML = `<div class="challenge-empty challenge-error" role="alert">${escapeHtml(message)}</div>`;
     }
     if (typeof toast === "function") toast(message);
   }
@@ -375,9 +447,9 @@
     window.showScreen("challengesScreen");
     showBrowser();
 
-    const list = document.getElementById("challengeList");
-    if (list && !catalog) {
-      list.innerHTML = `
+    const map = document.getElementById("challengeMap");
+    if (map && !catalog) {
+      map.innerHTML = `
         <div class="challenge-loading" aria-live="polite">
           <span></span><span></span><span></span>
           <strong>Loading challenges</strong>
@@ -424,6 +496,9 @@
         throw new Error("Single-player game client is unavailable.");
       }
 
+      // The briefing has done its job the moment the match starts -- left
+      // open it would sit on top of the board.
+      closeDetail();
       window._challengeStarting = true;
       window.SinglePlayerCampaign.joinRoom(result.roomId);
       window.SinglePlayerCampaign.enterGameScreen();
@@ -529,6 +604,7 @@
     loadSettings();
     document.getElementById("challengesBtn")?.addEventListener("click", open);
     document.getElementById("challengesBackBtn")?.addEventListener("click", () => {
+      closeDetail();
       window.showScreen("quickPlayScreen");
     });
     document.getElementById("challengeAchievementsBtn")?.addEventListener("click", showAchievements);
@@ -536,6 +612,15 @@
     document.getElementById("challengeResultContinueBtn")?.addEventListener("click", open);
     document.getElementById("challengeResultReplayBtn")?.addEventListener("click", () => {
       if (lastSelection) startChallenge(lastSelection.challenge, lastSelection.difficulty);
+    });
+
+    // Backdrop and the × both carry data-challenge-detail-close, so one
+    // handler covers every way out of the briefing except Escape.
+    detailModal()?.addEventListener("click", event => {
+      if (event.target.closest("[data-challenge-detail-close]")) closeDetail();
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && openChallengeId) closeDetail();
     });
   }
 

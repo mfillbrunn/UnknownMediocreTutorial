@@ -241,6 +241,34 @@
       </div>
     </div>
   </div>
+  <!-- Challenge briefing. A body-level element on purpose: it is
+       position:fixed, and .screen.active sets a transform, which would
+       make an ancestor screen its containing block and pin it to that
+       screen's box instead of the viewport (same reason helpers.js
+       reparents the assassin/reveal/bet modals). -->
+  <div id="challengeDetailModal" class="challenge-detail-modal hidden" role="dialog" aria-modal="true" aria-labelledby="challengeDetailTitle">
+    <div class="challenge-detail-backdrop" data-challenge-detail-close></div>
+    <div class="challenge-detail-panel" role="document">
+      <button id="challengeDetailCloseBtn" class="challenge-detail-close" type="button" aria-label="Close" data-challenge-detail-close>&times;</button>
+      <div class="challenge-detail-head">
+        <span id="challengeDetailIcon" class="challenge-detail-icon" aria-hidden="true"></span>
+        <div>
+          <span id="challengeDetailRole" class="challenge-detail-role"></span>
+          <h3 id="challengeDetailTitle"></h3>
+        </div>
+      </div>
+      <p id="challengeDetailSummary" class="challenge-detail-summary"></p>
+      <div class="challenge-detail-effect">
+        <span class="challenge-effect-label">POWER EFFECT</span>
+        <p id="challengeDetailEffect"></p>
+      </div>
+      <p id="challengeDetailCounterplay" class="challenge-detail-counterplay"></p>
+      <div id="challengeDetailMatchup" class="challenge-matchup" aria-label="Starting matchup"></div>
+      <span class="challenge-control-label">CHOOSE A DIFFICULTY</span>
+      <div id="challengeDetailDifficulties" class="challenge-detail-difficulties" role="group" aria-label="Challenge difficulty"></div>
+    </div>
+  </div>
+
     <div id="appContainer">
       <!-- ========== HEADER ========== -->
 <header class="app-header">
@@ -419,26 +447,19 @@
         <button id="challengeAchievementsBtn" class="sp-icon-btn" type="button" title="Challenge achievements" aria-label="Challenge achievements">&#127942;</button>
       </div>
 
-      <div class="challenge-hero">
-        <div>
-          <h3>One power. Two roles. Beat the AI.</h3>
-          <p>Round one always puts you against the AI's selected power. The AI uses it automatically for the first 2, 3, or 4 eligible turns. After the role swap, the AI has no power bonus and plays normally.</p>
-        </div>
-        <div id="challengeProgressSummary" class="challenge-progress-summary" aria-live="polite"></div>
-      </div>
+      <div id="challengeProgressSummary" class="challenge-progress-summary" aria-live="polite"></div>
 
-      <div class="challenge-toolbar">
-        <div class="challenge-control">
-          <span class="challenge-control-label">FILTER BY AI ROLE</span>
-          <div id="challengeRoleFilters" class="challenge-segments" role="group" aria-label="Filter challenges by AI role"></div>
-        </div>
-        <div class="challenge-control">
-          <span class="challenge-control-label">DIFFICULTY AND POWER WINDOW</span>
-          <div id="challengeDifficultyPicker" class="challenge-difficulty-picker" role="group" aria-label="Challenge difficulty"></div>
-        </div>
-      </div>
+      <!-- The map: one node per challenge, grouped into the two AI roles.
+           Node art carries its own progress, so which ones are done and
+           which are left reads at a glance. Tapping one opens
+           #challengeDetailModal with the full briefing. -->
+      <div id="challengeMap" class="challenge-map"></div>
 
-      <div id="challengeList" class="challenge-list"></div>
+      <div class="challenge-legend" aria-hidden="true">
+        <span class="challenge-legend-item"><i class="challenge-legend-dot is-untouched"></i>Not tried</span>
+        <span class="challenge-legend-item"><i class="challenge-legend-dot is-started"></i>In progress</span>
+        <span class="challenge-legend-item"><i class="challenge-legend-dot is-mastered"></i>Mastered</span>
+      </div>
     </div>
 
     <div id="challengeResultPanel" class="sp-view challenge-result-panel hidden">
