@@ -641,63 +641,144 @@
   pointer-events: none;
 }
 
-/* Key currently showing its own color picker (see key-color-picker.js) --
-   a plain glow rather than moving/resizing it, so the popup's own
-   position math (measured from the key's real rect) never has to chase a
-   layout shift it just caused. */
-.key.key-color-picker-target {
+/* "?" mark: the player's own "I don't know this one yet". The only manual
+   mark with no real-feedback colour behind it, so the glyph IS the mark --
+   it replaces .key-manual's pencil (same ::after, defined after it and at
+   equal specificity) rather than trying to show both in one corner. */
+.key.key-manual-unknown {
+  position: relative;
+  background: var(--kb-neutral);
+}
+.key.key-manual-unknown::after {
+  content: "?";
+  position: absolute;
+  top: 1px;
+  right: 3px;
+
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+/* --- Manual key-colour palette (client/key-color-picker.js) ----------
+   Sits above the action log in the Guesser's side column. Drag a swatch
+   onto a keyboard letter, or tap one to arm it and then tap the letter. */
+.key-color-palette {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 5px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.key-color-swatch {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 22px;
+  padding: 0;
+  border-radius: var(--r-6);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: var(--kb-neutral);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: grab;
+  /* The palette owns the pointer once a drag starts -- without this the
+     browser's own scroll/pan gesture claims it first on touch. */
+  touch-action: none;
+}
+
+.key-color-swatch:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.key-color-swatch.is-armed {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+.key-color-swatch.is-dragging {
+  opacity: 0.45;
+}
+
+.key-color-swatch-green  { background: var(--tile-green); }
+.key-color-swatch-yellow { background: var(--tile-yellow); }
+.key-color-swatch-dark   { background: #0a0b0d; }
+.key-color-swatch-unknown { background: var(--kb-neutral); }
+
+/* The eraser reads as "nothing here" rather than as another colour. */
+.key-color-swatch-clear {
+  background:
+    linear-gradient(
+      135deg,
+      transparent 44%,
+      rgba(255, 255, 255, 0.5) 44%,
+      rgba(255, 255, 255, 0.5) 56%,
+      transparent 56%
+    ),
+    var(--kb-neutral);
+}
+
+.key-color-drag-ghost {
+  position: fixed;
+  z-index: 10000;
+  width: 26px;
+  height: 26px;
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: var(--r-6);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: var(--kb-neutral);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.key-color-ghost-clear {
+  background:
+    linear-gradient(
+      135deg,
+      transparent 44%,
+      rgba(255, 255, 255, 0.5) 44%,
+      rgba(255, 255, 255, 0.5) 56%,
+      transparent 56%
+    ),
+    var(--kb-neutral);
+}
+
+/* Letter currently under the dragged swatch. */
+.key.key-color-drop-target {
   box-shadow: 0 0 0 2px #fff, 0 0 10px rgba(255, 255, 255, 0.5) !important;
 }
 
-.key-color-picker {
-  position: fixed;
-  z-index: 10000;
-  display: flex;
-  gap: 6px;
-  padding: 6px;
-
-  background: rgba(18, 19, 24, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: var(--r-10);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+/* Dropped on a letter the game has already resolved: real feedback owns
+   that key, so the mark is refused rather than stored and silently
+   discarded on the next render. */
+.key.key-color-drop-rejected {
+  animation: key-color-reject 0.4s ease;
 }
 
-.key-color-picker.hidden {
-  display: none;
+@keyframes key-color-reject {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
 }
 
-.key-color-option {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 8px;
-  border-radius: var(--r-6);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
-  font-size: 10px;
-  font-weight: 700;
-  white-space: nowrap;
-  cursor: pointer;
+@media (prefers-reduced-motion: reduce) {
+  .key.key-color-drop-rejected { animation: none; opacity: 0.5; }
 }
-
-.key-color-option:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.key-color-option::before {
-  content: "";
-  width: 20px;
-  height: 20px;
-  border-radius: var(--r-6);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.key-color-option-green::before  { background: var(--tile-green); }
-.key-color-option-yellow::before { background: var(--tile-yellow); }
-.key-color-option-gray::before   { background: #0a0b0d; }
-.key-color-option-clear::before  { background: var(--kb-neutral); }
 
 /* ENTER key — semantic, not positional */
 /* ENTER key — both roles */

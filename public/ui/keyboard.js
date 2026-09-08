@@ -55,6 +55,7 @@ window.renderKeyboard = function ({
       "key-uncertain",
       "key-purple",
       "key-manual",
+      "key-manual-unknown",
       "key-swept"
     );
     delete keyEl.dataset.sweepOrder;
@@ -87,8 +88,12 @@ window.renderKeyboard = function ({
         window.clearManualKeyColor?.(symbol);
       }
 
-      if (manualColor && !status) {
-        keyEl.classList.add(`key-${manualColor}`, "key-manual");
+      const manualClass = manualColor
+        ? window.manualKeyColorClass?.(manualColor)
+        : null;
+
+      if (manualClass && !status) {
+        keyEl.classList.add(manualClass, "key-manual");
       } else {
         if (status === "green") keyEl.classList.add("key-green");
         else if (status === "yellow") keyEl.classList.add("key-yellow");
@@ -147,7 +152,13 @@ window.renderKeyboard = function ({
           keyEl.dataset.sweepHits = String(sweepHits);
         }
       }
-      keyEl.onclick = () => onInput({ type: "LETTER", value: symbol });
+      // An armed palette swatch (client/key-color-picker.js) claims the tap
+      // and marks the letter instead of typing it. Nothing is armed in the
+      // normal case, so this is a no-op and the letter types as always.
+      keyEl.onclick = () => {
+        if (isGuesser && window.consumeArmedKeyColor?.(symbol, keyEl)) return;
+        onInput({ type: "LETTER", value: symbol });
+      };
 
       // Drag Mode (setter's secret draft, guesser's in-progress guess): a
       // plain tap still types normally (see drag-mode.js -- no real
@@ -162,14 +173,10 @@ window.renderKeyboard = function ({
         });
       }
 
-      // Guesser-only: hold the key for the green/yellow/not-in-word
-      // color picker (see client/key-color-picker.js). Wired once per key
-      // element just like drag above; never wired on the Secretkeeper's own
-      // keyboard, which has no use for this.
-      if (isGuesser && !keyEl.__longPressWired) {
-        keyEl.__longPressWired = true;
-        window.attachKeyLongPress?.(keyEl, symbol);
-      }
+      // Manual key colouring is no longer a gesture on the key at all --
+      // it's a drag from the palette in the Guesser's side column (see
+      // client/key-color-picker.js), which leaves pointerdown here to Drag
+      // Mode alone instead of two hold-vs-drag meanings fighting over it.
     }
   }
 };
