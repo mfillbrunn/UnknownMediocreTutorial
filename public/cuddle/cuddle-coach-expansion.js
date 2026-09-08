@@ -215,6 +215,17 @@
       icon: "🧵",
       title: "Golden Thread",
       description: "A full five-letter draft pulses and vibrates when it contains an answer letter you have not learned yet."
+    },
+    // Only meaningful once Margin Note (the "hiddenMargins" boss's fixed
+    // openingClue reward) has already been picked -- nextCustomBossReward
+    // below excludes it from the rotation until then. Effect lives in the
+    // _applyOpeningClue override further down: every future Margin Note
+    // trigger becomes a full position reveal instead of a presence-only one.
+    {
+      id: "clearSight",
+      icon: "🟢",
+      title: "Clear Sight",
+      description: "Upgrade Margin Note: it now reveals a letter's exact position instead of just that it's present."
     }
   ]);
 
@@ -913,10 +924,19 @@
 
   function nextCustomBossReward(game) {
     var coach = ensureCoach(game);
-    var missing = BOSS_REWARDS.filter(function missingReward(reward) {
+    // Clear Sight upgrades a reveal Margin Note (openingClue) already made
+    // permanent -- offering it before that pick exists would be a dead
+    // choice, so it stays out of the rotation entirely until the player has
+    // at least one openingClue stack.
+    var pool = BOSS_REWARDS.filter(function eligible(reward) {
+      if (reward.id !== "clearSight") return true;
+      return Number(game.state?.cuddleBonuses?.openingClue || 0) > 0;
+    });
+    if (!pool.length) pool = BOSS_REWARDS.slice();
+    var missing = pool.filter(function missingReward(reward) {
       return !coach.newBossRewardsOwned.includes(reward.id);
     });
-    if (!missing.length) missing = BOSS_REWARDS.slice();
+    if (!missing.length) missing = pool.slice();
     var index = Math.max(0, integer(game.state.bossesCleared, 0)) % missing.length;
     return missing[index] || missing[0];
   }
@@ -1326,6 +1346,21 @@
     if (rewardId === "secondCup") coach.secondCupUsed = false;
     return reward.title + " unlocked. " + reward.description;
   };
+
+  // Every openingClue stack fires _applyOpeningClue() once per round (see
+  // cuddle-engine.js's _beginRound) for a free yellow (presence-only)
+  // reveal. Once Clear Sight is owned, redirect each of those triggers into
+  // a full position reveal instead -- the same effect a Guesser Hint or
+  // Position Peek grants -- so Margin Note now hands out green, not yellow.
+  var originalApplyOpeningClue = proto._applyOpeningClue;
+  if (typeof originalApplyOpeningClue === "function") {
+    proto._applyOpeningClue = function applyOpeningClueCuddleCoachExpansion() {
+      if (!hasBossReward(this, "clearSight") || typeof this._applyRewardEffect !== "function") {
+        return originalApplyOpeningClue.apply(this, arguments);
+      }
+      return "Margin Note (Clear Sight): " + this._applyRewardEffect("revealLocation");
+    };
+  }
 
   var originalEnsureQuest = proto._ensureQuestForNextGuess;
   proto._ensureQuestForNextGuess = function ensureQuestCuddleCoachExpansion() {
