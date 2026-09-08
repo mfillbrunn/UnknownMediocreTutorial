@@ -21,6 +21,7 @@
   let landing = true;
   let rulesOpen = false;
   let detailsOpen = false;
+  let bossInfoOpen = false;
   let actionMode = "play";
   let selectedCards = new Set();
   let uiMessage = "";
@@ -348,6 +349,7 @@
           <div class="cuddle-header-title">
             <span class="cuddle-eyebrow">SINGLE-PLAYER CAMPAIGN</span>
             <div class="cuddle-header-title-line">
+              ${renderBossHeaderBadge(state)}
               <span class="cuddle-header-score" aria-label="Total score ${state.score}${game.isBossRound() ? "" : `, goal ${target}`}">Score ${state.score}${game.isBossRound() ? "" : ` / ${target}`}</span>
             </div>
           </div>
@@ -393,7 +395,6 @@
 
         <main class="cuddle-play-area">
           <section class="cuddle-left-column">
-            ${renderBossBanner(state)}
             ${renderBoard(state)}
           </section>
           <section class="cuddle-right-column">
@@ -406,10 +407,11 @@
       </div>`;
   }
 
-  // Keeps the active boss constraint on screen, and counts down how many
-  // guesses are left under it -- otherwise a player who dismissed the intro
-  // has no way to tell why the board is behaving oddly.
-  function renderBossBanner(state) {
+  // A little evil-emoji badge in the header replaces the old always-on boss
+  // banner box (too much screen space for a per-round constraint reminder).
+  // Tapping it opens a small popover with exactly what that banner used to
+  // show -- the constraint, its countdown, and any preset-word candidates.
+  function renderBossHeaderBadge(state) {
     const boss = state.boss;
     if (!boss) return "";
     // Short Hand's constraint (fewer letters, fewer guesses), Steady
@@ -430,19 +432,25 @@
         : "Constraint lifted";
     const presetWords = boss.id === "presetWordsTrial" ? state.megaState?.presetWords : null;
     return `
-      <article class="cuddle-quest cuddle-boss-banner ${stillOn ? "is-active" : "is-spent"}">
-        <div class="cuddle-quest-icon" aria-hidden="true">${escapeHtml(boss.icon || "💀")}</div>
-        <div>
-          <span class="cuddle-eyebrow">BOSS ROUND</span>
-          <h2>${escapeHtml(boss.title || "Boss")}</h2>
-          <p>${escapeHtml(boss.description || "")} <b>${escapeHtml(scope)}.</b></p>
-          ${presetWords?.length ? `
-            <div class="cuddle-preset-words" aria-label="Candidate words">
-              ${presetWords.map(word => `<span class="cuddle-preset-word">${escapeHtml(word)}</span>`).join("")}
-            </div>` : ""}
-        </div>
+      <span class="cuddle-boss-header-badge-wrap">
+        <button type="button" class="cuddle-boss-header-badge ${stillOn ? "is-active" : "is-spent"}"
+          data-action="toggle-boss-info" aria-expanded="${bossInfoOpen ? "true" : "false"}"
+          aria-label="${bossInfoOpen ? "Hide boss challenge" : "Show boss challenge"}">😈</button>
         ${boss.secondsPerGuess ? `<span id="cuddleQuickClock" class="cuddle-quick-clock" aria-live="off">${boss.secondsPerGuess}s</span>` : ""}
-      </article>`;
+        ${bossInfoOpen ? `
+          <article class="cuddle-quest cuddle-boss-info-popover ${stillOn ? "is-active" : "is-spent"}" role="status">
+            <div class="cuddle-quest-icon" aria-hidden="true">${escapeHtml(boss.icon || "💀")}</div>
+            <div>
+              <span class="cuddle-eyebrow">BOSS ROUND</span>
+              <h2>${escapeHtml(boss.title || "Boss")}</h2>
+              <p>${escapeHtml(boss.description || "")} <b>${escapeHtml(scope)}.</b></p>
+              ${presetWords?.length ? `
+                <div class="cuddle-preset-words" aria-label="Candidate words">
+                  ${presetWords.map(word => `<span class="cuddle-preset-word">${escapeHtml(word)}</span>`).join("")}
+                </div>` : ""}
+            </div>
+          </article>` : ""}
+      </span>`;
   }
 
   function renderProgress(state) {
@@ -1028,6 +1036,7 @@
     landing = false;
     rulesOpen = false;
     detailsOpen = false;
+    bossInfoOpen = false;
     resetActionMode();
     setUiMessage("");
   }
@@ -1043,6 +1052,7 @@
         landing = true;
         rulesOpen = false;
         detailsOpen = false;
+        bossInfoOpen = false;
         resetActionMode();
         setUiMessage("");
         return true;
@@ -1050,10 +1060,14 @@
         landing = false;
         rulesOpen = false;
         detailsOpen = false;
+        bossInfoOpen = false;
         resetActionMode();
         return true;
       case "toggle-details":
         detailsOpen = !detailsOpen;
+        return true;
+      case "toggle-boss-info":
+        bossInfoOpen = !bossInfoOpen;
         return true;
       case "new-run-easy":
         startNewRun("easy");

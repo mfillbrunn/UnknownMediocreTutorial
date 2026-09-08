@@ -2317,7 +2317,7 @@
       id: "storybookStart",
       icon: "📖",
       title: "Opening Verse",
-      description: "Start every scoring round with +$5. Stacks up to three times.",
+      description: "Start every scoring round with +$10. Stacks up to three times.",
       max: 3
     },
     {
@@ -2720,7 +2720,7 @@
     if (this.isBossRound()) return;
 
     const notes = [];
-    const openingPoints = Number(state.cuddleBonuses.storybookStart || 0) * 5
+    const openingPoints = Number(state.cuddleBonuses.storybookStart || 0) * 10
       + (cuddleV3HasSynergy(this, "illustratedStart") ? 5 : 0);
     if (openingPoints > 0) {
       state.score += openingPoints;

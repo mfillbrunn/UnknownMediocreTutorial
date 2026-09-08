@@ -644,6 +644,12 @@
   proto._advanceRound = function advanceThroughBranchMap() {
     if (!hasMap(this)) return originalAdvanceRound.apply(this, arguments);
     if (this.state.status === "won" || this.state.status === "lost") return undefined;
+    // The base engine's _advanceRound (never reached from here, since the
+    // branch map replaces its "next round" logic with returnToMap) is also
+    // where the reward-refresh cost normally resets between screens. Reset
+    // it here too, or the cost keeps climbing across every reward screen
+    // for the whole run instead of starting free again each time.
+    this.state.upgradeRefreshesUsed = 0;
     returnToMap(this);
     this.save();
     return undefined;
