@@ -13,6 +13,9 @@
   // Which challenge's briefing dialog is open, so a re-render (a result
   // landing, say) can refresh it in place instead of dropping it.
   let openChallengeId = null;
+  // A scored result waiting for the end-of-match ceremony to finish before
+  // it is shown (see showResult).
+  let pendingResult = null;
 
   const achievementDefs = [
     {
@@ -544,8 +547,61 @@
     ];
   }
 
+  // The server scores a challenge the moment the match ends, which is the
+  // same moment the client STARTS its end-of-match ceremony: the winning
+  // row flips, then the "secret found" popup, then the summary. Presenting
+  // the result on arrival navigated straight off the board mid-flip, so
+  // neither the reveal nor the summary was ever seen. Hold it until
+  // client.js says the ceremony is done, then show it -- with a way back
+  // to the summary from there (see the View summary button).
+  //
+  // Progress is still recorded immediately: it is what the map reads, and
+  // it must not depend on the player sitting through an animation.
   function showResult(payload) {
     recordResult(payload);
+    pendingResult = payload;
+    waitForCeremony();
+  }
+
+  // Waiting on `_gameOverRevealInFlight` alone is not enough: this result
+  // can arrive on its own socket event BEFORE the client has processed the
+  // game-over state that starts the ceremony, and at that instant the flag
+  // is still false -- indistinguishable from "the ceremony is over". So
+  // poll instead, and only present once the client agrees the match is
+  // over AND nothing is mid-reveal. A match that ends with no reveal at
+  // all (nobody's secret was found) satisfies that immediately.
+  //
+  // The cap is a safety net, not the normal path: if the game-over state
+  // never lands, the result is still shown rather than lost.
+  const CEREMONY_POLL_MS = 250;
+  const CEREMONY_MAX_WAIT_MS = 12000;
+  let ceremonyTimer = null;
+
+  function stopWaiting() {
+    clearInterval(ceremonyTimer);
+    ceremonyTimer = null;
+  }
+
+  function waitForCeremony() {
+    stopWaiting();
+    const startedAt = Date.now();
+    ceremonyTimer = setInterval(() => {
+      if (!pendingResult) return stopWaiting();
+
+      const matchOver = window.state?.phase === "gameOver";
+      const revealing = !!window._gameOverRevealInFlight;
+      const timedOut = Date.now() - startedAt >= CEREMONY_MAX_WAIT_MS;
+
+      if ((matchOver && !revealing) || timedOut) {
+        stopWaiting();
+        presentResult(pendingResult);
+      }
+    }, CEREMONY_POLL_MS);
+  }
+
+  function presentResult(payload) {
+    pendingResult = null;
+    stopWaiting();
     window.showScreen("challengesScreen");
     document.getElementById("challengeAchievementsPanel")?.classList.add("hidden");
     document.getElementById("challengeBrowser")?.classList.add("hidden");
@@ -614,6 +670,14 @@
       if (lastSelection) startChallenge(lastSelection.challenge, lastSelection.difficulty);
     });
 
+    // The match summary is the #menu screen, already filled in by
+    // updateSummary() during the ceremony -- this just returns to it, so
+    // the result is a stop on the way out of the match rather than a
+    // replacement for looking at how the match actually went.
+    document.getElementById("challengeResultSummaryBtn")?.addEventListener("click", () => {
+      window.showScreen("menu");
+    });
+
     // Backdrop and the × both carry data-challenge-detail-close, so one
     // handler covers every way out of the briefing except Escape.
     detailModal()?.addEventListener("click", event => {
@@ -631,6 +695,12 @@
   }
 
   socket.on("singlePlayer:challengeResult", showResult);
+
+  // The reveal + "secret found" popup + summary have all played out; now
+  // the result can take the screen without stepping on any of them.
+  window.addEventListener("gameOverRevealDone", () => {
+    if (pendingResult) presentResult(pendingResult);
+  });
 
   window.SinglePlayerChallenges = {
     open,

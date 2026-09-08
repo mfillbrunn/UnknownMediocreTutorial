@@ -1133,6 +1133,18 @@ function updateScreens() {
               window.myRole
             );
           }
+
+          // The end-of-match ceremony is over: the winning row has flipped,
+          // the "secret found" popup has been shown and dismissed, and the
+          // summary is now up. Anything that wants to present its own
+          // end-of-match screen waits for this rather than racing the
+          // ceremony -- a Challenge result used to navigate away the
+          // instant the server scored it, which is mid-flip, so the player
+          // never saw either the reveal or the summary (see
+          // single-player/challenges.js). Dispatched last, after the
+          // screen swap above, so a listener's own navigation is not
+          // immediately undone by it.
+          window.dispatchEvent(new CustomEvent("gameOverRevealDone"));
         }, POPUP_DURATION_MS + 200);
       }
 
