@@ -554,23 +554,6 @@
   font-size: 0.74rem;
 }
 
-.cuddle-hand-meta {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 5px;
-  margin-bottom: 10px;
-}
-
-.cuddle-hand-meta b {
-  padding: 3px 7px;
-  border: 1px solid rgba(139, 232, 210, 0.22);
-  border-radius: 999px;
-  color: var(--cuddle-accent-2);
-  background: rgba(139, 232, 210, 0.07);
-  font-size: 0.68rem;
-  line-height: 1.2;
-}
 .cuddle-card {
   position: relative;
   display: grid;
@@ -1258,10 +1241,6 @@
   gap: 6px;
 }
 
-#cuddleScreen .cuddle-hand-meta {
-  margin-bottom: 7px;
-}
-
 #cuddleScreen .cuddle-card {
   height: 58px;
   padding: 5px 4px 4px;
@@ -1760,16 +1739,6 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-}
-
-.cuddle-utility-row {
-  display: flex;
-  gap: 9px;
-  margin-bottom: 10px;
-}
-
-.cuddle-utility-row .cuddle-btn {
-  flex: 1;
 }
 
 .cuddle-card.is-joker {
@@ -2784,10 +2753,6 @@
 
   #cuddleScreen .cuddle-card-letter {
     font-size: 1rem;
-  }
-
-  #cuddleScreen .cuddle-hand-meta {
-    display: none;
   }
 
   #cuddleScreen .cuddle-quest {

@@ -643,26 +643,10 @@
     const isPlaying = state.status === "playing";
     const isMulliganMode = isPlaying && actionMode === "mulligan";
     const showSubmitRow = isPlaying && (actionMode === "play" || isMulliganMode);
-    const mega = state.megaState || {};
-    const jokerCharges = Number(mega.jokerCharges || 0);
-    const metaBadges = [
-      state.suggestedWord ? `<b>Hint ${escapeHtml(state.suggestedWord)}</b>` : "",
-      state.buffs.greyShield ? `<b>Grey shield ${state.buffs.greyShield}</b>` : "",
-      jokerCharges > 0 ? `<b>🃏 Jokers ${jokerCharges}</b>` : ""
-    ].filter(Boolean).join("");
     const selectedCount = selectedCards.size;
     const mulliganValid = selectedCount >= 1 && selectedCount <= limit;
-    const questRerollCharges = Number(mega.questRerollCharges || 0);
-    const canReroll = isPlaying && !game.isBossRound() && Boolean(state.activeQuest) && questRerollCharges > 0;
     return `
       <section class="cuddle-hand-panel">
-        ${metaBadges ? `<div class="cuddle-hand-meta">${metaBadges}</div>` : ""}
-        ${isPlaying && canReroll ? `
-          <div class="cuddle-utility-row">
-            <button class="cuddle-btn" data-action="reroll-quest" title="Swap your active quest for a different one">
-              🔄 Reroll quest <span>${questRerollCharges}</span>
-            </button>
-          </div>` : ""}
         ${showSubmitRow ? `
           <div class="cuddle-submit-row ${isMulliganMode ? "is-mulligan-mode" : ""}">
             ${isMulliganMode ? `
