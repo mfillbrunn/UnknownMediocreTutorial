@@ -569,6 +569,28 @@
   font: inherit;
   cursor: pointer;
   transition: transform 120ms ease, border-color 120ms ease, opacity 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+  /* Drag Mode (cuddle-drag-mode.js) needs the raw pointer gesture, not the
+     browser's own touch scrolling/zooming, for the length of a drag. */
+  touch-action: none;
+}
+
+/* Drag Mode: dragging a hand card or an already-placed draft tile onto a
+   specific board tile (data-drag-index, set in cuddle-ui.js's renderBoard)
+   places the letter there instead of wherever the word currently ends. */
+#cuddleScreen .cuddle-tile[data-drag-index] {
+  touch-action: none;
+  transition: outline-color 0.12s ease, background 0.12s ease;
+}
+
+#cuddleScreen .cuddle-tile[data-drag-index].drag-hover {
+  outline: 2px dashed var(--cuddle-accent, #d5a6ff);
+  outline-offset: 2px;
+  background: color-mix(in srgb, var(--cuddle-accent, #d5a6ff) 18%, transparent);
+}
+
+.drag-letter-ghost.cuddle-drag-letter-ghost {
+  background: var(--cuddle-accent, #d5a6ff);
+  color: #1c1030;
 }
 
 .cuddle-card-letter {

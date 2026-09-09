@@ -785,6 +785,42 @@
       return { ok: true };
     }
 
+    // Drag Mode: places a hand card at a specific position in the draft,
+    // inserting it there and shifting whatever was at/after that position
+    // one slot to the right -- unlike toggleDraft, which always appends to
+    // the end. Used when a card is dropped on a specific board tile rather
+    // than tapped.
+    insertDraftCardAt(cardId, index) {
+      if (this.state.status !== "playing") return { ok: false, error: "The round is paused." };
+      const card = this.getHandCard(cardId);
+      if (!card) return { ok: false, error: "That card is no longer in your hand." };
+      if (!Number.isInteger(index) || index < 0) return { ok: false, error: "Invalid position." };
+      if (this.getDraftWord().length + card.glyph.length > 5) {
+        return { ok: false, error: "That card would take the word past five letters." };
+      }
+      const clamped = Math.min(index, this.state.draft.length);
+      this.state.draft.splice(clamped, 0, cardId);
+      this.save();
+      return { ok: true };
+    }
+
+    // Drag Mode: moves the draft card already at `from` to sit at `to`,
+    // shifting whatever's between them over by one -- a reorder, not a
+    // duplication (the array only ever holds each occurrence once).
+    moveDraftCard(from, to) {
+      if (this.state.status !== "playing") return { ok: false, error: "The round is paused." };
+      if (!Number.isInteger(from) || from < 0 || from >= this.state.draft.length) {
+        return { ok: false, error: "That drafted card is no longer available." };
+      }
+      if (!Number.isInteger(to) || to < 0) return { ok: false, error: "Invalid position." };
+      const draft = this.state.draft.slice();
+      const [cardId] = draft.splice(from, 1);
+      draft.splice(Math.min(to, draft.length), 0, cardId);
+      this.state.draft = draft;
+      this.save();
+      return { ok: true };
+    }
+
     backspaceDraft() {
       if (!this.state.draft.length) return { ok: false, error: "The current word is already empty." };
       this.state.draft.pop();

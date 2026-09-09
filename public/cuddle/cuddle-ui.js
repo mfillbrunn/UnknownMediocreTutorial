@@ -500,10 +500,15 @@
           tiles.push(`
             <button type="button" class="cuddle-tile is-draft-tile${tileClass}"
               data-draft-index="${draftTile.draftIndex}" data-draft-card-id="${escapeHtml(draftTile.cardId)}"
+              data-drag-index="${column}"
               aria-label="Remove ${escapeHtml(draftTile.glyph)} from the current word"
               title="Click to return ${escapeHtml(draftTile.glyph)} to your hand">
               ${escapeHtml(letter)}
             </button>`);
+        } else if (isDraft) {
+          // Empty, but still a live target -- Drag Mode (cuddle-drag-mode.js)
+          // can drop a card here even though there's nothing yet to tap.
+          tiles.push(`<span class="cuddle-tile${tileClass}" data-drag-index="${column}"></span>`);
         } else {
           tiles.push(`<span class="cuddle-tile${tileClass}">${escapeHtml(letter)}</span>`);
         }

@@ -1,3 +1,28 @@
+/* <html> itself was left with no background at all -- transparent, so
+   anything showing through it (the browser's own default canvas, which is
+   white) painted straight over any sliver of it that ever became visible.
+   On mobile that sliver shows up during elastic overscroll and, more
+   often, whenever the address bar/toolbar animates in or out and briefly
+   changes how tall the *actual* viewport is versus the dvh value the page
+   laid itself out with a moment earlier -- e.g. a white bar sitting right
+   above Cuddle's hand/submit row, which is pinned near the bottom of its
+   own dvh-sized screen (see cuddle.css) where that gap opens up. Painting
+   the same background on <html> means that gap shows the theme's own
+   color instead of white, whichever screen or element it opens up behind. */
+html {
+  background: var(--bg);
+}
+
+/* Cuddle paints its own screen a darker shade than the rest of the app
+   (--cuddle-bg: #11101a, see cuddle.css) -- that custom property is scoped
+   to #cuddleScreen itself, so it isn't visible up here on <html> to
+   reference by var(); match its value directly while Cuddle is the active
+   screen so a revealed sliver blends in there too, instead of trading a
+   white seam for a merely lighter grey one. */
+html:has(#cuddleScreen.active) {
+  background: #11101a;
+}
+
 body {
   margin: 0;
   padding: 0;
