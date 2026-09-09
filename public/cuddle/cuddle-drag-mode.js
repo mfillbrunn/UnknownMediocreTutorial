@@ -4,9 +4,9 @@
 // the end of the current word, tap a filled draft tile and it's pulled back
 // out to your hand. That's still exactly what a plain tap does. This adds
 // an alternative: drag a hand card (or an already-placed draft tile) onto a
-// specific board tile and it lands AT that position instead, shifting
-// whatever else was there over -- rather than always landing wherever the
-// word currently ends.
+// specific board tile and it lands AT that position instead of wherever the
+// word currently ends. Only the tile dropped on changes (and, for a move,
+// the tile left behind) -- nothing else on the row shifts.
 //
 // Built on Pointer Events rather than native HTML5 drag-and-drop, same
 // reasoning as the main game's client/drag-mode.js: native DnD has no
@@ -23,10 +23,10 @@
   // Set only when the drag originated from an already-placed draft tile
   // (not a hand card) -- null means "this is a hand-sourced drag/tap".
   let pendingSourceIndex = null;
-  let pendingSourceEl = null;
   let startX = 0, startY = 0;
   let dragEl = null;
   let hoverTile = null;
+  let swallowClickUntil = 0;
 
   const DRAG_THRESHOLD = 8;
 
@@ -51,23 +51,30 @@
     hoverTile?.classList.add("drag-hover");
   }
 
-  // touch-action:none (see cuddle.css) stops the browser's own panning,
-  // but on some mobile browsers/WebViews it doesn't reliably stop the
-  // trailing compatibility "click" the platform synthesizes once a real
-  // drag lifts -- which would immediately re-trigger whatever the source
-  // element's own tap gesture means (append the hand card again, or pull
-  // the tile back out) right after Drag Mode already placed it correctly.
-  // Swallow exactly that one click, capture-phase, so it never reaches
-  // cuddle-ui.js's own click handler.
-  function suppressNextClick(el) {
-    if (!el) return;
-    const swallow = (e) => {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-    };
-    el.addEventListener("click", swallow, { capture: true, once: true });
-    setTimeout(() => el.removeEventListener("click", swallow, { capture: true }), 400);
+  // touch-action:none (see cuddle.css) stops the browser's own panning, but
+  // it doesn't stop the trailing compatibility "click" the platform
+  // synthesizes once a real drag lifts. Left alone that click re-runs the
+  // ordinary tap gesture on top of the placement Drag Mode just made -- the
+  // hand card gets appended a second time at the first open tile, so a drop
+  // on tile 4 also fills tile 1.
+  //
+  // It can't be swallowed by a listener on the source element: onUp
+  // repaints #cuddleRoot's contents before the click lands, so that element
+  // is already detached and the browser retargets the click to whatever now
+  // sits under the finger. Swallow it on `window` in the capture phase
+  // instead -- ahead of cuddle-ui.js's own handler, which is bound to
+  // #cuddleRoot itself (that node survives the repaint) -- keyed on nothing
+  // but a short time window.
+  function swallowNextClick() {
+    swallowClickUntil = Date.now() + 700;
   }
+
+  window.addEventListener("click", event => {
+    if (!swallowClickUntil || Date.now() > swallowClickUntil) return;
+    swallowClickUntil = 0;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }, true);
 
   function resolveHandCardForPlacement(game, glyph) {
     const state = game.state;
@@ -108,47 +115,44 @@
     const tile = hoverTile;
     const glyph = pendingGlyph;
     const sourceIndex = pendingSourceIndex;
-    const sourceEl = pendingSourceEl;
     const wasDragging = !!dragEl;
     cleanup();
 
     if (!wasDragging) return; // a plain tap: cuddle-ui.js's own click handler acts as always
 
-    suppressNextClick(sourceEl);
-
     const game = activeGame();
     if (!game) return;
 
-    if (!tile) {
-      // Dropped outside every tile: a tile-sourced drag is the player
-      // physically pulling an already-placed letter out, so remove it (a
-      // hand-sourced drag that never found a tile just never places
-      // anything, same as the main game's Drag Mode). removeDraftAt now
-      // leaves that one tile empty rather than shifting the rest of the
-      // row left.
-      if (sourceIndex !== null) {
-        game.removeDraftAt(sourceIndex);
-        requestRerender(game);
-      }
-      return;
-    }
+    const rawIndex = tile ? Number(tile.dataset.dragIndex) : NaN;
+    const targetIndex = Number.isInteger(rawIndex) ? rawIndex : null;
 
-    const targetIndex = Number(tile.dataset.dragIndex);
-    if (!Number.isInteger(targetIndex)) return;
+    // A tile dropped back onto itself is what a tap looks like when the
+    // finger drifted past the threshold on the way up -- common on touch.
+    // Leave it completely alone: no state change, no repaint, and no click
+    // suppression, so the trailing click still reaches cuddle-ui.js and
+    // removes that letter exactly as an undrifted tap would have.
+    if (sourceIndex !== null && sourceIndex === targetIndex) return;
 
     if (sourceIndex !== null) {
-      if (sourceIndex !== targetIndex) game.moveDraftCard(sourceIndex, targetIndex);
-    } else if (glyph) {
+      // A tile dragged clear of the row is the player physically pulling
+      // that letter back out; removeDraftAt empties just that tile rather
+      // than shifting the rest of the row left.
+      if (targetIndex === null) game.removeDraftAt(sourceIndex);
+      else game.moveDraftCard(sourceIndex, targetIndex);
+    } else if (targetIndex !== null && glyph) {
       const card = resolveHandCardForPlacement(game, glyph);
       if (card) game.insertDraftCardAt(card.id, targetIndex);
     }
+    // Reached on a real drag, including a hand card dropped clear of every
+    // tile -- that means "cancel", so the trailing click must not fall
+    // through and append the letter anyway.
+    swallowNextClick();
     requestRerender(game);
   }
 
   function cleanup() {
     pendingGlyph = null;
     pendingSourceIndex = null;
-    pendingSourceEl = null;
     dragEl?.remove();
     dragEl = null;
     setHoverTile(null);
@@ -157,10 +161,9 @@
     document.removeEventListener("pointercancel", cleanup);
   }
 
-  function arm(glyph, sourceIndex, x, y, sourceEl) {
+  function arm(glyph, sourceIndex, x, y) {
     pendingGlyph = glyph;
     pendingSourceIndex = sourceIndex;
-    pendingSourceEl = sourceEl || null;
     startX = x;
     startY = y;
     document.addEventListener("pointermove", onMove);
@@ -169,6 +172,12 @@
   }
 
   document.addEventListener("pointerdown", event => {
+    // Any fresh gesture cancels a pending suppression, so the only click
+    // that can ever be swallowed is the compatibility one belonging to the
+    // drag that just ended -- a real tap always opens with its own
+    // pointerdown and can never be eaten by a stale window.
+    swallowClickUntil = 0;
+
     const root = document.getElementById("cuddleRoot");
     if (!root || !root.contains(event.target)) return;
 
@@ -187,13 +196,13 @@
       const index = Number(tile.dataset.dragIndex);
       const letter = tile.textContent?.trim();
       if (!Number.isInteger(index) || !letter) return; // nothing to drag off an empty tile
-      arm(letter, index, event.clientX, event.clientY, tile);
+      arm(letter, index, event.clientX, event.clientY);
       return;
     }
 
     const card = event.target.closest?.("[data-card-glyph]");
     if (card && !card.disabled) {
-      arm(card.dataset.cardGlyph, null, event.clientX, event.clientY, card);
+      arm(card.dataset.cardGlyph, null, event.clientX, event.clientY);
     }
   });
 })();
