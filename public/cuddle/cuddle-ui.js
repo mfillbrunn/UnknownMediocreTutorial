@@ -469,22 +469,20 @@
   }
 
   function renderBoard(state) {
-    const draftTiles = game.getDraftCards().flatMap((card, draftIndex) => (
-      card.glyph.split("").map(letter => ({
-        letter,
-        cardId: card.id,
-        draftIndex,
-        glyph: card.glyph
-      }))
-    ));
     const rows = [];
     for (let row = 0; row < state.maxGuesses; row += 1) {
       const history = state.history[row];
       const isDraft = !history && row === state.history.length && state.status === "playing";
       const tiles = [];
       for (let column = 0; column < 5; column += 1) {
-        const draftTile = isDraft ? draftTiles[column] : null;
-        const letter = history?.word[column] || draftTile?.letter || "";
+        // state.draft[column] is read directly (not via getDraftCards(),
+        // which compacts gaps away) so a card Drag Mode dropped at a
+        // specific tile renders there even while earlier tiles are still
+        // genuinely empty, rather than everything sliding down to fill in
+        // from the left.
+        const draftCardId = isDraft ? state.draft[column] : null;
+        const draftCard = draftCardId ? game.getHandCard(draftCardId) : null;
+        const letter = history?.word[column] || draftCard?.glyph || "";
         // shownFeedback is what a boss lets the board reveal; it matches
         // feedback exactly in an ordinary round.
         const result = (history?.shownFeedback || history?.feedback || [])[column] || "";
@@ -492,17 +490,17 @@
         // glyph (unresolved), and a submitted guess only knows which
         // column it resolved at via history.jokerIndex -- either way, mark
         // that one tile so it reads as the joker rather than a plain letter.
-        const isJokerTile = draftTile
-          ? draftTile.glyph === window.CuddleEngine.CUDDLE_JOKER_GLYPH
+        const isJokerTile = draftCard
+          ? draftCard.glyph === window.CuddleEngine.CUDDLE_JOKER_GLYPH
           : Boolean(history?.jokerRevealed && history.jokerIndex === column);
         const tileClass = (result ? ` is-${result}` : letter ? " is-filled" : "") + (isJokerTile ? " is-joker" : "");
-        if (draftTile) {
+        if (draftCard) {
           tiles.push(`
             <button type="button" class="cuddle-tile is-draft-tile${tileClass}"
-              data-draft-index="${draftTile.draftIndex}" data-draft-card-id="${escapeHtml(draftTile.cardId)}"
+              data-draft-index="${column}" data-draft-card-id="${escapeHtml(draftCard.id)}"
               data-drag-index="${column}"
-              aria-label="Remove ${escapeHtml(draftTile.glyph)} from the current word"
-              title="Click to return ${escapeHtml(draftTile.glyph)} to your hand">
+              aria-label="Remove ${escapeHtml(draftCard.glyph)} from the current word"
+              title="Click to return ${escapeHtml(draftCard.glyph)} to your hand">
               ${escapeHtml(letter)}
             </button>`);
         } else if (isDraft) {
@@ -601,8 +599,14 @@
     // instead of a colour that would give the answer away.
     const unknown = typeof game.isGlyphUnknown === "function" && game.isGlyphUnknown(group.glyph);
     const status = unknown ? "unknown" : game.getCardKnowledgeStatus(group.glyph);
+    // getDraftWord().length counts gaps Drag Mode has padded out too (each
+    // renders as a literal space), so it reaches 5 as soon as ANY tile has
+    // been positionally placed -- long before the word is actually full.
+    // Count real letters instead, or every other hand card falsely locks
+    // out after a single drag to a non-adjacent tile.
+    const realDraftLetterCount = state.draft.filter(Boolean).length;
     const disabled = state.status !== "playing"
-      || (actionMode === "play" && game.getDraftWord().length >= 5)
+      || (actionMode === "play" && realDraftLetterCount >= 5)
       || (actionMode !== "play" && selectable.length === 0)
       || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
     const isJoker = group.glyph === window.CuddleEngine.CUDDLE_JOKER_GLYPH;

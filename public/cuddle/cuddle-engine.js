@@ -748,8 +748,13 @@
       return this.state.draft.map(id => this.getHandCard(id)).filter(Boolean);
     }
 
+    // Reads state.draft directly (not getDraftCards(), which silently drops
+    // gaps) so a position dropped via Drag Mode but not yet filled in
+    // renders as a real space at that exact index -- the only way the
+    // length-based checks below (and joker letter-position tracking, see
+    // submitDraftMega) stay correct once the draft can have gaps in it.
     getDraftWord() {
-      return this.getDraftCards().map(card => card.glyph).join("");
+      return this.state.draft.map(id => this.getHandCard(id)?.glyph || " ").join("");
     }
 
     getDraftLetters() {
@@ -776,11 +781,20 @@
       return { ok: true };
     }
 
+    // Clears the draft card at `index` in place, leaving a gap there
+    // (state.draft[index] = null) rather than shifting every later card
+    // left -- tapping (or dragging) a tile off the row should only ever
+    // affect that one tile, never move a card someone else already placed
+    // by position. A trailing gap has nothing after it worth keeping, so
+    // it's trimmed off the end, same as backspaceDraft.
     removeDraftAt(index) {
-      if (!Number.isInteger(index) || index < 0 || index >= this.state.draft.length) {
+      if (!Number.isInteger(index) || index < 0 || index >= this.state.draft.length || !this.state.draft[index]) {
         return { ok: false, error: "That drafted card is no longer available." };
       }
-      this.state.draft.splice(index, 1);
+      this.state.draft[index] = null;
+      while (this.state.draft.length && this.state.draft[this.state.draft.length - 1] === null) {
+        this.state.draft.pop();
+      }
       this.save();
       return { ok: true };
     }
@@ -788,59 +802,73 @@
     // Drag Mode: places a hand card at a specific position in the draft.
     // If that tile is already filled, the card sitting there is swapped
     // back out to hand -- a direct replace, so dropping onto tile 3 only
-    // ever changes tile 3, never cascades into every tile after it the
-    // way an insert-and-shift would. Used when a card is dropped on a
-    // specific board tile rather than tapped (which still always appends
-    // via toggleDraft).
+    // ever changes tile 3. Dropping past the current end pads the tiles in
+    // between with real gaps (null) rather than clamping to "wherever the
+    // word currently ends" -- state.draft can hold up to 5 entries and any
+    // of them may be null until every tile is actually filled; getDraftWord
+    // renders each gap as a literal space and canSubmit refuses to submit
+    // while any remain. Used when a card is dropped on a specific board
+    // tile rather than tapped (tapping always fills the first open gap, or
+    // appends if there is none -- see toggleDraftReusable).
     insertDraftCardAt(cardId, index) {
       if (this.state.status !== "playing") return { ok: false, error: "The round is paused." };
       const card = this.getHandCard(cardId);
       if (!card) return { ok: false, error: "That card is no longer in your hand." };
-      if (!Number.isInteger(index) || index < 0) return { ok: false, error: "Invalid position." };
+      if (!Number.isInteger(index) || index < 0 || index > 4) return { ok: false, error: "Invalid position." };
       if (index < this.state.draft.length) {
         if (this.state.draft[index] === cardId) return { ok: true };
         this.state.draft.splice(index, 1, cardId);
         this.save();
         return { ok: true };
       }
-      // Beyond the current word's end -- nothing there to replace, so this
-      // is just an ordinary append (there's no way to leave real gaps
-      // before it; the draft is always a dense, gapless list of cards).
-      if (this.getDraftWord().length + card.glyph.length > 5) {
-        return { ok: false, error: "That card would take the word past five letters." };
-      }
-      this.state.draft.push(cardId);
+      while (this.state.draft.length < index) this.state.draft.push(null);
+      this.state.draft[index] = cardId;
       this.save();
       return { ok: true };
     }
 
     // Drag Mode: swaps the draft cards at `from` and `to` -- only those
-    // two tiles change, nothing between them shifts.
+    // two tiles change, nothing between them shifts. `to` may point past
+    // the current end, in which case the tiles between are padded with
+    // gaps exactly like insertDraftCardAt.
     moveDraftCard(from, to) {
       if (this.state.status !== "playing") return { ok: false, error: "The round is paused." };
-      if (!Number.isInteger(from) || from < 0 || from >= this.state.draft.length) {
+      if (!Number.isInteger(from) || from < 0 || from >= this.state.draft.length || !this.state.draft[from]) {
         return { ok: false, error: "That drafted card is no longer available." };
       }
-      if (!Number.isInteger(to) || to < 0) return { ok: false, error: "Invalid position." };
+      if (!Number.isInteger(to) || to < 0 || to > 4) return { ok: false, error: "Invalid position." };
       if (from === to) return { ok: true };
-      if (to >= this.state.draft.length) {
-        // Past the end of the current word -- move it to the end instead
-        // of trying to swap with a tile that holds nothing.
-        const [cardId] = this.state.draft.splice(from, 1);
-        this.state.draft.push(cardId);
+      const cardId = this.state.draft[from];
+      if (to < this.state.draft.length) {
+        const displaced = this.state.draft[to];
+        this.state.draft[to] = cardId;
+        this.state.draft[from] = displaced; // may be null -- a genuine swap into a gap
         this.save();
         return { ok: true };
       }
-      const temp = this.state.draft[from];
-      this.state.draft[from] = this.state.draft[to];
-      this.state.draft[to] = temp;
+      this.state.draft[from] = null;
+      while (this.state.draft.length < to) this.state.draft.push(null);
+      this.state.draft[to] = cardId;
+      while (this.state.draft.length && this.state.draft[this.state.draft.length - 1] === null) {
+        this.state.draft.pop();
+      }
       this.save();
       return { ok: true };
     }
 
     backspaceDraft() {
+      // A trailing gap has nothing after it worth keeping -- trim it
+      // before (and after) removing the actual rightmost letter, so
+      // backspace always reads as "delete the last real tile" even once
+      // Drag Mode has left gaps in the row.
+      while (this.state.draft.length && this.state.draft[this.state.draft.length - 1] === null) {
+        this.state.draft.pop();
+      }
       if (!this.state.draft.length) return { ok: false, error: "The current word is already empty." };
       this.state.draft.pop();
+      while (this.state.draft.length && this.state.draft[this.state.draft.length - 1] === null) {
+        this.state.draft.pop();
+      }
       this.save();
       return { ok: true };
     }
@@ -852,7 +880,10 @@
 
     canSubmit() {
       const word = this.getDraftWord();
-      if (word.length !== 5) return { ok: false, error: "Build exactly five letters." };
+      // A gap left by Drag Mode (an untouched tile past wherever a card was
+      // dropped) renders as a literal space -- word.length alone can't
+      // catch that once the draft's been padded out to 5 slots.
+      if (word.length !== 5 || word.includes(" ")) return { ok: false, error: "Build exactly five letters." };
       // Silly Word lifts the dictionary requirement for one submission.
       if (!this.guessSet.has(word) && !(Number(this.state.buffs?.sillyWord) > 0)) {
         return { ok: false, error: `${word} is not in the guess word list.` };
@@ -870,7 +901,7 @@
       const quest = this.state.activeQuest;
       if (!quest) return false;
       const word = this.getDraftWord();
-      if (word.length !== 5) return false;
+      if (word.length !== 5 || word.includes(" ")) return false;
       const feedback = evaluateFeedback(this.state.secret, word);
       const requiredLetters = [];
       this.state.history.forEach(previous => {
@@ -2015,10 +2046,16 @@
     if (this.state.status !== "playing") return { ok: false, error: "The round is paused." };
     const card = this.getHandCard(cardId);
     if (!card) return { ok: false, error: "That card is no longer in your hand." };
-    if (this.getDraftWord().length + card.glyph.length > 5) {
+    const realLetterCount = this.state.draft.filter(Boolean).length;
+    if (realLetterCount + card.glyph.length > 5) {
       return { ok: false, error: "That card would take the word past five letters." };
     }
-    this.state.draft.push(cardId);
+    // Fill the first tile Drag Mode left open before falling back to
+    // appending at the end, so ordinary typing still reads left-to-right
+    // around anything already placed by a positional drag.
+    const gapIndex = this.state.draft.indexOf(null);
+    if (gapIndex >= 0) this.state.draft[gapIndex] = cardId;
+    else this.state.draft.push(cardId);
     this.save();
     return { ok: true };
   };

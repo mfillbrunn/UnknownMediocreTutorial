@@ -123,7 +123,9 @@
       // Dropped outside every tile: a tile-sourced drag is the player
       // physically pulling an already-placed letter out, so remove it (a
       // hand-sourced drag that never found a tile just never places
-      // anything, same as the main game's Drag Mode).
+      // anything, same as the main game's Drag Mode). removeDraftAt now
+      // leaves that one tile empty rather than shifting the rest of the
+      // row left.
       if (sourceIndex !== null) {
         game.removeDraftAt(sourceIndex);
         requestRerender(game);
