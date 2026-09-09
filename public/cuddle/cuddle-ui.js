@@ -500,10 +500,15 @@
           tiles.push(`
             <button type="button" class="cuddle-tile is-draft-tile${tileClass}"
               data-draft-index="${draftTile.draftIndex}" data-draft-card-id="${escapeHtml(draftTile.cardId)}"
+              data-drag-index="${column}"
               aria-label="Remove ${escapeHtml(draftTile.glyph)} from the current word"
               title="Click to return ${escapeHtml(draftTile.glyph)} to your hand">
               ${escapeHtml(letter)}
             </button>`);
+        } else if (isDraft) {
+          // Empty, but still a live target -- Drag Mode (cuddle-drag-mode.js)
+          // can drop a card here even though there's nothing yet to tap.
+          tiles.push(`<span class="cuddle-tile${tileClass}" data-drag-index="${column}"></span>`);
         } else {
           tiles.push(`<span class="cuddle-tile${tileClass}">${escapeHtml(letter)}</span>`);
         }
@@ -610,15 +615,32 @@
       selectedCount ? "is-selected" : "",
       isJoker ? "is-joker" : ""
     ].filter(Boolean).join(" ");
+    // A green card's position isn't otherwise visible from the hand -- the
+    // board only shows it once that position has actually been guessed.
+    // That's exactly the case a hint (or Golden Compass/meter reward) fills
+    // in without a guess ever landing there, so the position badge matters
+    // most for those, but it's shown for every green card uniformly since
+    // the underlying knowledge (state.revealedPositions) doesn't track how
+    // a position became known.
+    const revealedPositions = state.revealedPositions || [];
+    const positionIndex = status === "green" ? revealedPositions.indexOf(group.glyph) : -1;
     const statusLabel = status === "unknown" ? "unknown · result withheld"
-      : status === "green" ? "green"
+      : status === "green" ? (positionIndex >= 0 ? `green · position ${positionIndex + 1}` : "green")
         : status === "yellow" ? "yellow"
           : status === "red" ? "red · not in the secret"
             : "grey · unused";
     const count = group.cards.length;
+    // The joker's one hand card only ever shows a single physical copy, so
+    // the ordinary copies badge below never fires for it -- reuse that same
+    // slot instead to show total uses left: the banked charges plus the one
+    // charge this very card already represents.
+    const jokerUsesLeft = isJoker ? Number(state.megaState?.jokerCharges || 0) + 1 : 0;
+    const badgeValue = isJoker ? jokerUsesLeft : count;
+    const showBadge = isJoker ? jokerUsesLeft > 0 : count > 1;
     const details = [
       "reusable while in hand",
-      persistentCard ? "stays in hand after a guess" : `${count} ${count === 1 ? "copy" : "copies"}`,
+      isJoker ? `${jokerUsesLeft} use${jokerUsesLeft === 1 ? "" : "s"} left this run`
+        : persistentCard ? "stays in hand after a guess" : `${count} ${count === 1 ? "copy" : "copies"}`,
       statusLabel,
       draftedCount ? `${draftedCount} in the grid` : "",
       selectedCount ? `${selectedCount} selected` : ""
@@ -630,7 +652,8 @@
         title="${escapeHtml(details)}">
         <span class="cuddle-card-letter">${escapeHtml(group.glyph)}</span>
         ${unknown ? `<span class="cuddle-card-unknown" aria-hidden="true">?</span>` : ""}
-        ${count > 1 ? `<span class="cuddle-card-count" aria-hidden="true">${count}</span>` : ""}
+        ${positionIndex >= 0 ? `<span class="cuddle-card-position" aria-hidden="true">${positionIndex + 1}</span>` : ""}
+        ${showBadge ? `<span class="cuddle-card-count" aria-hidden="true">${badgeValue}</span>` : ""}
       </button>`;
   }
 

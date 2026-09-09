@@ -569,6 +569,28 @@
   font: inherit;
   cursor: pointer;
   transition: transform 120ms ease, border-color 120ms ease, opacity 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+  /* Drag Mode (cuddle-drag-mode.js) needs the raw pointer gesture, not the
+     browser's own touch scrolling/zooming, for the length of a drag. */
+  touch-action: none;
+}
+
+/* Drag Mode: dragging a hand card or an already-placed draft tile onto a
+   specific board tile (data-drag-index, set in cuddle-ui.js's renderBoard)
+   places the letter there instead of wherever the word currently ends. */
+#cuddleScreen .cuddle-tile[data-drag-index] {
+  touch-action: none;
+  transition: outline-color 0.12s ease, background 0.12s ease;
+}
+
+#cuddleScreen .cuddle-tile[data-drag-index].drag-hover {
+  outline: 2px dashed var(--cuddle-accent, #d5a6ff);
+  outline-offset: 2px;
+  background: color-mix(in srgb, var(--cuddle-accent, #d5a6ff) 18%, transparent);
+}
+
+.drag-letter-ghost.cuddle-drag-letter-ghost {
+  background: var(--cuddle-accent, #d5a6ff);
+  color: #1c1030;
 }
 
 .cuddle-card-letter {
@@ -604,6 +626,29 @@
   border-color: rgba(255, 255, 255, 0.82);
   background: #f7f4ff;
   font-size: 0.86rem;
+}
+
+/* Which board position a green (known-position) card belongs to -- the
+   only place that's visible from the hand for a position learned via a
+   hint rather than an actual guess. Top-right, so it never collides with
+   the copies/joker-uses badge at bottom-right. */
+.cuddle-card-position {
+  position: absolute;
+  right: -4px;
+  top: -5px;
+  display: grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 4px;
+  border: 1px solid rgba(18, 17, 27, 0.55);
+  border-radius: 999px;
+  color: #10331d;
+  background: #6bd68f;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  font-size: 0.64rem;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .cuddle-card.is-card-unused {
