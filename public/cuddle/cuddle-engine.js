@@ -785,38 +785,55 @@
       return { ok: true };
     }
 
-    // Drag Mode: places a hand card at a specific position in the draft,
-    // inserting it there and shifting whatever was at/after that position
-    // one slot to the right -- unlike toggleDraft, which always appends to
-    // the end. Used when a card is dropped on a specific board tile rather
-    // than tapped.
+    // Drag Mode: places a hand card at a specific position in the draft.
+    // If that tile is already filled, the card sitting there is swapped
+    // back out to hand -- a direct replace, so dropping onto tile 3 only
+    // ever changes tile 3, never cascades into every tile after it the
+    // way an insert-and-shift would. Used when a card is dropped on a
+    // specific board tile rather than tapped (which still always appends
+    // via toggleDraft).
     insertDraftCardAt(cardId, index) {
       if (this.state.status !== "playing") return { ok: false, error: "The round is paused." };
       const card = this.getHandCard(cardId);
       if (!card) return { ok: false, error: "That card is no longer in your hand." };
       if (!Number.isInteger(index) || index < 0) return { ok: false, error: "Invalid position." };
+      if (index < this.state.draft.length) {
+        if (this.state.draft[index] === cardId) return { ok: true };
+        this.state.draft.splice(index, 1, cardId);
+        this.save();
+        return { ok: true };
+      }
+      // Beyond the current word's end -- nothing there to replace, so this
+      // is just an ordinary append (there's no way to leave real gaps
+      // before it; the draft is always a dense, gapless list of cards).
       if (this.getDraftWord().length + card.glyph.length > 5) {
         return { ok: false, error: "That card would take the word past five letters." };
       }
-      const clamped = Math.min(index, this.state.draft.length);
-      this.state.draft.splice(clamped, 0, cardId);
+      this.state.draft.push(cardId);
       this.save();
       return { ok: true };
     }
 
-    // Drag Mode: moves the draft card already at `from` to sit at `to`,
-    // shifting whatever's between them over by one -- a reorder, not a
-    // duplication (the array only ever holds each occurrence once).
+    // Drag Mode: swaps the draft cards at `from` and `to` -- only those
+    // two tiles change, nothing between them shifts.
     moveDraftCard(from, to) {
       if (this.state.status !== "playing") return { ok: false, error: "The round is paused." };
       if (!Number.isInteger(from) || from < 0 || from >= this.state.draft.length) {
         return { ok: false, error: "That drafted card is no longer available." };
       }
       if (!Number.isInteger(to) || to < 0) return { ok: false, error: "Invalid position." };
-      const draft = this.state.draft.slice();
-      const [cardId] = draft.splice(from, 1);
-      draft.splice(Math.min(to, draft.length), 0, cardId);
-      this.state.draft = draft;
+      if (from === to) return { ok: true };
+      if (to >= this.state.draft.length) {
+        // Past the end of the current word -- move it to the end instead
+        // of trying to swap with a tile that holds nothing.
+        const [cardId] = this.state.draft.splice(from, 1);
+        this.state.draft.push(cardId);
+        this.save();
+        return { ok: true };
+      }
+      const temp = this.state.draft[from];
+      this.state.draft[from] = this.state.draft[to];
+      this.state.draft[to] = temp;
       this.save();
       return { ok: true };
     }
