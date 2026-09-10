@@ -12,7 +12,7 @@
 
   const CuddleGame = engine.CuddleGame;
   const CATEGORY_ENDPOINT = "/api/cuddle/category-hint";
-  const SHOP_AFTER_ROUNDS = Object.freeze([2, 5, 8, 11]);
+  const SHOP_AFTER_ROUNDS = Object.freeze([4, 8, 11]);
   const MAX_CATEGORY_SENSE = 6;
   // Regardless of Theme Sense or a redeemed Category Whisper, every round
   // guarantees at least one category by this guess -- earlier on Easy (more

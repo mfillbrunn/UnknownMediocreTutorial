@@ -1,0 +1,416 @@
+/* Cuddle stability/UI correction v2. Loaded after the built-in Cuddle styles. */
+
+/* Keep patch-owned graphics and counters stable. */
+#cuddleRoot .umt-cuddle-svg-icon,
+#cuddleRoot .umt-inline-reward-file-icon,
+#cuddleRoot .umt-stage-svg-icon,
+#cuddleRoot .umt-shopkeeper-head,
+#cuddleRoot .umt-inventory-pouch img,
+#cuddleRoot .umt-inventory-item-icon,
+.umt-inventory-overlay img {
+  animation: none !important;
+  transition: none !important;
+  backface-visibility: hidden;
+}
+
+/* Plain, fixed-size header money so its box does not pulse while the round earns. */
+#cuddleRoot .cuddle-header-score,
+#cuddleRoot .cuddle-money-header,
+#cuddleRoot [data-cuddle-money-total] {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  min-width: 3.25rem !important;
+  font-size: var(--cuddle-header-chip-font-size, 1rem) !important;
+  line-height: 1.2 !important;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+#cuddleRoot .cuddle-header-title-line {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+#cuddleRoot .cuddle-header-title-line > h1 {
+  min-width: 0;
+}
+
+/* Boss control stays compact instead of colliding with money, hearts, or details. */
+#cuddleRoot .cuddle-boss-header-badge-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+#cuddleRoot .cuddle-boss-header-badge {
+  width: 2rem !important;
+  height: 2rem !important;
+  min-width: 2rem !important;
+  padding: .2rem !important;
+  display: inline-grid !important;
+  place-items: center;
+  overflow: hidden;
+}
+#cuddleRoot .cuddle-boss-header-badge .umt-cuddle-svg-icon {
+  width: 1.45rem !important;
+  height: 1.45rem !important;
+  margin: 0 !important;
+}
+#cuddleRoot .cuddle-quick-clock {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+@media (max-width: 680px) {
+  #cuddleRoot .cuddle-header {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  #cuddleRoot .cuddle-header-title-line {
+    gap: .35rem;
+  }
+  #cuddleRoot .cuddle-boss-header-badge,
+  #cuddleRoot .umt-inventory-pouch {
+    width: 1.85rem !important;
+    height: 1.85rem !important;
+    min-width: 1.85rem !important;
+  }
+}
+
+/* The map itself is the route chooser; duplicate prose/cards below it stay hidden. */
+#cuddleRoot .cuddle-branch-message,
+#cuddleRoot .cuddle-branch-intro,
+#cuddleRoot .cuddle-branch-page > .cuddle-choice-grid,
+#cuddleRoot .cuddle-branch-cards,
+#cuddleRoot .cuddle-map-message,
+#cuddleRoot .cuddle-map-preview-grid,
+#cuddleRoot .cuddle-map-node-list {
+  display: none !important;
+}
+#cuddleRoot .cuddle-branch-page {
+  padding-bottom: 1rem;
+}
+#cuddleRoot .cuddle-map-node-icon {
+  display: none !important;
+}
+#cuddleRoot .umt-stage-svg-icon {
+  pointer-events: none;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .14));
+}
+
+/* Hide live per-row earnings only. Cash-out rows deliberately remain visible. */
+#cuddleRoot .cuddle-board-row > .cuddle-row-score.umt-earned-row-score {
+  display: none !important;
+}
+#cuddleRoot .cuddle-money-payout-row .cuddle-money-row-increment {
+  display: inline-flex !important;
+  min-width: 4.6rem;
+  justify-content: flex-end;
+  align-items: center;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+}
+
+/* Reward, boss, quest, and shop artwork. */
+#cuddleRoot .umt-cuddle-svg-icon,
+#cuddleRoot .cuddle-choice-icon > img,
+#cuddleRoot .cuddle-money-choice-icon > img,
+#cuddleRoot .cuddle-shop-item-icon > img,
+#cuddleRoot .cuddle-quest-icon > img,
+#cuddleRoot .cuddle-v3-toast-icon > img {
+  width: 2.35rem;
+  height: 2.35rem;
+  display: block;
+  object-fit: contain;
+  margin: 0 auto;
+}
+#cuddleRoot .umt-inline-reward-file-icon {
+  display: inline-block;
+  width: 1.3rem;
+  height: 1.3rem;
+  margin: 0 .35rem 0 0;
+  object-fit: contain;
+  vertical-align: middle;
+}
+#cuddleRoot .umt-current-level {
+  display: block;
+  width: fit-content;
+  margin: .45rem auto 0;
+  padding: .2rem .5rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: .76rem;
+  font-weight: 750;
+  line-height: 1.2;
+  opacity: .82;
+}
+
+/* Clean shop header: available money plus a stable shopkeeper greeting. */
+#cuddleRoot .cuddle-shop-shell .cuddle-header-title {
+  align-self: center;
+}
+#cuddleRoot .cuddle-shop-shell .cuddle-header-title > *:not(.umt-shop-header-wallet) {
+  display: none !important;
+}
+#cuddleRoot .umt-shop-header-wallet {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  font-size: 1rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+#cuddleRoot .cuddle-shop-page {
+  display: grid;
+  gap: 1rem;
+}
+#cuddleRoot .cuddle-shop-intro.umt-shopkeeper-bar {
+  display: grid;
+  grid-template-columns: 3.8rem minmax(0, 1fr);
+  align-items: center;
+  gap: .9rem;
+  padding: .8rem 1rem;
+}
+#cuddleRoot .umt-shopkeeper-head {
+  width: 3.6rem;
+  height: 3.6rem;
+  display: block;
+  object-fit: contain;
+}
+#cuddleRoot .umt-shopkeeper-speech {
+  margin: 0;
+  font-size: .98rem;
+  line-height: 1.35;
+  font-weight: 650;
+}
+#cuddleRoot .cuddle-shop-inventory {
+  display: none !important;
+}
+#cuddleRoot .cuddle-shop-grid {
+  display: grid;
+  gap: .7rem;
+}
+#cuddleRoot .cuddle-shop-item {
+  width: 100%;
+  display: grid !important;
+  grid-template-columns: 3rem minmax(0, 1fr) minmax(5.5rem, auto);
+  align-items: center;
+  gap: .8rem;
+  text-align: left;
+  cursor: pointer;
+}
+#cuddleRoot .cuddle-shop-item-icon {
+  width: 3rem;
+  min-width: 3rem;
+  display: grid;
+  place-items: center;
+}
+#cuddleRoot .cuddle-shop-item-copy {
+  min-width: 0;
+  display: grid;
+  gap: .2rem;
+}
+#cuddleRoot .cuddle-shop-item-copy > strong,
+#cuddleRoot .cuddle-shop-item-copy > small {
+  text-align: left;
+}
+#cuddleRoot .cuddle-shop-item-cost {
+  justify-self: end;
+  min-width: 5.5rem;
+  text-align: right;
+  font-size: 1.2rem;
+  line-height: 1;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (max-width: 560px) {
+  #cuddleRoot .cuddle-shop-item {
+    grid-template-columns: 2.65rem minmax(0, 1fr) auto;
+    gap: .55rem;
+    padding-inline: .7rem;
+  }
+  #cuddleRoot .cuddle-shop-item-cost {
+    min-width: 4.5rem;
+    font-size: 1.05rem;
+  }
+}
+
+/* Clickable inventory pouch in every Cuddle header. */
+#cuddleRoot .umt-inventory-pouch {
+  position: relative;
+  width: 2.2rem;
+  height: 2.2rem;
+  min-width: 2.2rem;
+  padding: .28rem !important;
+  display: inline-grid !important;
+  place-items: center;
+  flex: 0 0 auto;
+}
+#cuddleRoot .umt-inventory-pouch img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+#cuddleRoot .umt-inventory-pouch::after {
+  content: attr(data-item-count);
+  position: absolute;
+  right: -.35rem;
+  bottom: -.35rem;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 .2rem;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--cuddle-card, #fff);
+  border-radius: 999px;
+  background: var(--cuddle-accent, #5d6fe8);
+  color: #fff;
+  font-size: .65rem;
+  font-weight: 900;
+  line-height: 1;
+}
+#cuddleRoot .umt-inventory-pouch[data-item-count="0"]::after {
+  display: none;
+}
+.umt-inventory-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100200;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(10, 14, 24, .58);
+  backdrop-filter: blur(4px);
+}
+.umt-inventory-panel {
+  width: min(34rem, 100%);
+  max-height: min(82vh, 44rem);
+  overflow: auto;
+  border: 1px solid rgba(120, 130, 160, .3);
+  border-radius: 1rem;
+  background: var(--cuddle-card, #fff);
+  color: var(--cuddle-ink, #1d2730);
+  box-shadow: 0 1.2rem 3rem rgba(0, 0, 0, .28);
+}
+.umt-inventory-panel > header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid rgba(120, 130, 160, .25);
+  background: inherit;
+}
+.umt-inventory-panel > header > div {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+}
+.umt-inventory-panel > header img {
+  width: 2rem;
+  height: 2rem;
+}
+.umt-inventory-panel h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.umt-inventory-close {
+  width: 2.2rem;
+  height: 2.2rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1.65rem;
+  cursor: pointer;
+}
+.umt-inventory-list {
+  display: grid;
+  gap: .65rem;
+  padding: 1rem;
+}
+.umt-inventory-item {
+  display: grid;
+  grid-template-columns: 2.8rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .8rem;
+  padding: .75rem;
+  border: 1px solid rgba(120, 130, 160, .24);
+  border-radius: .8rem;
+}
+.umt-inventory-item-icon {
+  width: 2.65rem;
+  height: 2.65rem;
+  object-fit: contain;
+}
+.umt-inventory-item > div {
+  min-width: 0;
+}
+.umt-inventory-item strong {
+  display: block;
+  margin-bottom: .18rem;
+}
+.umt-inventory-item p,
+.umt-inventory-empty {
+  margin: 0;
+  font-size: .86rem;
+  line-height: 1.4;
+  opacity: .78;
+}
+.umt-inventory-item > b {
+  min-width: 2.8rem;
+  text-align: right;
+  font-size: 1.08rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Positional drag feedback. */
+#cuddleRoot .cuddle-card[data-card-glyph],
+#cuddleRoot .cuddle-tile[data-drag-index] {
+  touch-action: none;
+}
+.drag-letter-ghost,
+.cuddle-drag-letter-ghost,
+.umt-drag-letter-ghost {
+  position: fixed;
+  z-index: 100000;
+  transform: translate(-50%, -50%);
+  width: 2.7rem;
+  height: 2.7rem;
+  display: grid;
+  place-items: center;
+  border: 2px solid currentColor;
+  border-radius: .65rem;
+  background: #fff;
+  color: #1d2730;
+  box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .22);
+  font-size: 1.35rem;
+  font-weight: 800;
+  pointer-events: none;
+}
+#cuddleRoot .cuddle-tile.drag-hover,
+#cuddleRoot .cuddle-tile.umt-drag-hover {
+  outline: 3px solid currentColor !important;
+  outline-offset: 2px;
+  transform: translateY(-2px);
+}
+
+/* The former Loadout group is merged into Stats by the runtime patch. */
+#cuddleRoot .cuddle-detail-group.umt-empty-detail-group {
+  display: none !important;
+}

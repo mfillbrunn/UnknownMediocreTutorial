@@ -764,67 +764,40 @@
   };
 
   function replaceVisibleMoneyCopy(root, game) {
-    var state = game.state;
+    /* UMT_CUDDLE_STABILITY_V2_MONEY_COPY */
+    var state = game && game.state ? game.state : {};
+    var score = Number(state.score || 0);
+    var roundIsLive = state.status === "playing" && !state.pendingRoundEnd;
+    var provisional = roundIsLive ? Number(state.roundScore || 0) : 0;
+    var visibleMoney = Math.max(0, Math.round(roundIsLive ? score - provisional : score));
+    var visibleText = formatMoney(visibleMoney);
     root.querySelectorAll(".cuddle-header-score").forEach(function updateHeader(element) {
-      var text = formatMoney(state.score);
-      if (element.textContent !== text) element.textContent = text;
-      element.setAttribute("aria-label", "Spendable money " + formatMoney(state.score));
+      if (element.textContent !== visibleText) element.textContent = visibleText;
+      element.setAttribute("aria-label", "Money " + visibleText);
     });
-
-    root.querySelectorAll(".cuddle-progress-node").forEach(function updateProgressNode(element) {
-      var round = element.textContent.trim();
-      element.title = "Round " + round + ": solve the Wordle";
-    });
-
     var stats = root.querySelector(".cuddle-round-intro-stats");
     if (stats) {
       var blocks = stats.children;
       if (blocks[0]) {
         var label = blocks[0].querySelector("span");
         var value = blocks[0].querySelector("strong");
-        if (label) label.textContent = "Current money";
-        if (value) value.textContent = formatMoney(state.score);
+        if (label && label.textContent !== "Current money") label.textContent = "Current money";
+        if (value && value.textContent !== visibleText) value.textContent = visibleText;
       }
       for (var index = 1; index < blocks.length; index += 1) blocks[index].hidden = true;
     }
-
-    var mapStats = root.querySelector("#cuddleMapStatsPanel > p");
-    if (mapStats) mapStats.textContent = "Solve the fixed secret to clear the round. Money is for upgrades, shops, and bragging rights -- never a pass/fail threshold.";
-
-    var shopHeading = root.querySelector(".cuddle-shop-intro h2");
-    if (shopHeading) shopHeading.textContent = "Spend money on one-use supplies";
-    var shopCopy = root.querySelector(".cuddle-shop-intro p");
-    if (shopCopy) shopCopy.textContent = "Money is your spendable run currency. Purchases lower your wallet, but never block round progression.";
     var shopWalletValue = root.querySelector(".cuddle-shop-wallet strong");
-    if (shopWalletValue) shopWalletValue.textContent = formatMoney(state.score);
-    var shopWalletUnit = root.querySelector(".cuddle-shop-wallet small");
-    if (shopWalletUnit) shopWalletUnit.textContent = "money";
+    if (shopWalletValue) {
+      var walletText = formatMoney(Math.max(0, Math.round(score)));
+      if (shopWalletValue.textContent !== walletText) shopWalletValue.textContent = walletText;
+    }
     root.querySelectorAll(".cuddle-shop-item-cost").forEach(function updateShopCost(element) {
-      var text = element.textContent.trim();
-      var number = text.match(/\d+/);
-      if (!number) return;
-      if (/^Need/i.test(text)) element.textContent = "Need $" + number[0];
-      else if (!/^Sold/i.test(text)) element.textContent = "$" + number[0];
-    });
-
-    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    var textNodes = [];
-    var node;
-    while ((node = walker.nextNode())) textNodes.push(node);
-    textNodes.forEach(function rewriteNode(textNode) {
-      var parent = textNode.parentElement;
-      if (!parent || /^(SCRIPT|STYLE|TEXTAREA|INPUT)$/.test(parent.tagName)) return;
-      var original = textNode.nodeValue;
-      var next = original
-        .replace(/\bScore\b/g, "Money")
-        .replace(/\bscore\b/g, "money")
-        .replace(/\bPoints\b/g, "Money")
-        .replace(/\bpoints\b/g, "money")
-        .replace(/\bpoint\b/g, "dollar")
-        .replace(/\breach 0 total money and solve the fixed secret\b/gi, "solve the fixed secret")
-        .replace(/\bat or above the next money target\b/gi, "by solving the Wordle")
-        .replace(/\bnext money target\b/gi, "next round");
-      if (next !== original) textNode.nodeValue = next;
+      var current = element.textContent.trim();
+      var matched = current.match(/\d[\d,]*/);
+      if (!matched) return;
+      var next = /^Need/i.test(current) ? "Need $" + matched[0]
+        : (/^Sold/i.test(current) ? current : "$" + matched[0]);
+      if (next !== current) element.textContent = next;
     });
   }
 
@@ -1003,7 +976,7 @@
       + "<div class=\"cuddle-money-bank\"><span>Wallet</span><strong id=\"cuddleMoneyBankCounter\">" + formatMoney(payload.from) + "</strong></div>"
       + "<div class=\"cuddle-money-payout-rows\">" + payload.rows.map(payoutRowMarkup).join("") + "</div>"
       + "<div class=\"cuddle-money-payout-total\"><span>ROUND TOTAL</span><strong>" + formatDelta(payload.total) + "</strong></div>"
-      + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-primary cuddle-money-collect\" data-cuddle-money-action=\"collect-payout\" hidden>Collect " + formatMoney(payload.to) + "</button>"
+      + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-primary cuddle-money-collect\" data-cuddle-money-action=\"collect-payout\" hidden>Collect " + formatMoney(payload.total) + "</button>"
       + "</section></div>"
     );
     var overlay = document.getElementById("cuddleMoneyPayoutOverlay");

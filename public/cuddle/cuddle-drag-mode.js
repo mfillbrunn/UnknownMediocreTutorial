@@ -1,208 +1,188 @@
-// public/cuddle/cuddle-drag-mode.js — Cuddle Drag Mode
-//
-// Cuddle's ordinary gesture is a tap: tap a hand card and it's appended to
-// the end of the current word, tap a filled draft tile and it's pulled back
-// out to your hand. That's still exactly what a plain tap does. This adds
-// an alternative: drag a hand card (or an already-placed draft tile) onto a
-// specific board tile and it lands AT that position instead of wherever the
-// word currently ends. Only the tile dropped on changes (and, for a move,
-// the tile left behind) -- nothing else on the row shifts.
-//
-// Built on Pointer Events rather than native HTML5 drag-and-drop, same
-// reasoning as the main game's client/drag-mode.js: native DnD has no
-// reliable touch support on mobile, which this game targets, while Pointer
-// Events unify mouse and touch behind one code path. Unlike that file,
-// this one event-delegates from `document` instead of wiring a listener
-// onto each element after every render -- Cuddle repaints #cuddleRoot's
-// whole innerHTML on every state change instead of keeping a persistent
-// DOM to attach to, so there is no stable element to wire once and reuse.
-(function installCuddleDragMode() {
+// public/cuddle/cuddle-drag-mode.js -- user Cuddle drag fix
+(function installCuddleDragModeUserFix() {
   "use strict";
 
-  let pendingGlyph = null;
-  // Set only when the drag originated from an already-placed draft tile
-  // (not a hand card) -- null means "this is a hand-sourced drag/tap".
-  let pendingSourceIndex = null;
-  let startX = 0, startY = 0;
-  let dragEl = null;
+  // cuddle-rebalance-v5.js contains a second drag controller that compacts the
+  // draft. Mark it installed before that file loads, so only this positional
+  // controller handles gestures.
+  document.documentElement.dataset.umtCuddleDragV5 = "1";
+  if (document.documentElement.dataset.umtCuddleDragUserFix === "1") return;
+  document.documentElement.dataset.umtCuddleDragUserFix = "1";
+
+  const DRAG_THRESHOLD = 8;
+  let session = null;
+  let ghost = null;
   let hoverTile = null;
   let swallowClickUntil = 0;
 
-  const DRAG_THRESHOLD = 8;
-
   function activeGame() {
-    return window.CuddleCoachExpansion?.getActiveGame?.() || null;
+    const providers = [
+      window.CuddleRebalanceV5,
+      window.CuddleBranchMap,
+      window.CuddleMoneyMode,
+      window.CuddleCoachExpansion,
+      window.CuddleCampaign
+    ];
+    for (const provider of providers) {
+      try {
+        const game = provider && typeof provider.getActiveGame === "function"
+          ? provider.getActiveGame()
+          : null;
+        if (game && game.state) return game;
+      } catch (_error) {}
+    }
+    return null;
   }
 
-  function requestRerender(game) {
-    // Same event coach-expansion dispatches after its own out-of-band
-    // engine calls -- cuddle-ui.js listens for it and repaints, since these
-    // engine calls happen outside its own click dispatcher (which repaints
-    // unconditionally after every action it handles itself).
-    window.dispatchEvent(new CustomEvent("cuddle:campaign-update", {
-      detail: { runId: game?.state?.runId || null }
-    }));
+  function requestRender(game) {
+    try { if (typeof game.save === "function") game.save(); } catch (_error) {}
+    try {
+      window.dispatchEvent(new CustomEvent("cuddle:campaign-update", {
+        detail: { runId: game && game.state ? game.state.runId : null }
+      }));
+    } catch (_error) {}
   }
 
-  function setHoverTile(tile) {
+  function setHover(tile) {
     if (tile === hoverTile) return;
-    hoverTile?.classList.remove("drag-hover");
+    if (hoverTile) {
+      hoverTile.classList.remove("drag-hover");
+      hoverTile.classList.remove("umt-drag-hover");
+    }
     hoverTile = tile || null;
-    hoverTile?.classList.add("drag-hover");
+    if (hoverTile) {
+      hoverTile.classList.add("drag-hover");
+      hoverTile.classList.add("umt-drag-hover");
+    }
   }
 
-  // touch-action:none (see cuddle.css) stops the browser's own panning, but
-  // it doesn't stop the trailing compatibility "click" the platform
-  // synthesizes once a real drag lifts. Left alone that click re-runs the
-  // ordinary tap gesture on top of the placement Drag Mode just made -- the
-  // hand card gets appended a second time at the first open tile, so a drop
-  // on tile 4 also fills tile 1.
-  //
-  // It can't be swallowed by a listener on the source element: onUp
-  // repaints #cuddleRoot's contents before the click lands, so that element
-  // is already detached and the browser retargets the click to whatever now
-  // sits under the finger. Swallow it on `window` in the capture phase
-  // instead -- ahead of cuddle-ui.js's own handler, which is bound to
-  // #cuddleRoot itself (that node survives the repaint) -- keyed on nothing
-  // but a short time window.
-  function swallowNextClick() {
-    swallowClickUntil = Date.now() + 700;
+  function resolveHandCard(game, glyph) {
+    const state = game.state || {};
+    const hand = Array.isArray(state.hand) ? state.hand : [];
+    const used = new Set(Array.isArray(state.draft) ? state.draft.filter(Boolean) : []);
+    const rank = (card) => card && card.source === "infinite" ? 0
+      : card && card.source === "reward" ? 1 : 2;
+    const matches = hand
+      .filter((card) => card && String(card.glyph || "") === String(glyph || ""))
+      .sort((a, b) => rank(a) - rank(b) || String(a.id || "").localeCompare(String(b.id || "")));
+    const reusable = matches.find((card) => {
+      try { return typeof game.isInfiniteCard === "function" && game.isInfiniteCard(card); }
+      catch (_error) { return false; }
+    });
+    return reusable || matches.find((card) => !used.has(card.id)) || null;
   }
 
-  window.addEventListener("click", event => {
+  function cleanup() {
+    if (ghost) ghost.remove();
+    ghost = null;
+    setHover(null);
+    session = null;
+    document.removeEventListener("pointermove", onMove, { capture: true });
+    document.removeEventListener("pointerup", onUp, { capture: true });
+    document.removeEventListener("pointercancel", cancel, { capture: true });
+  }
+
+  function cancel() {
+    cleanup();
+  }
+
+  function onMove(event) {
+    if (!session || (session.pointerId != null && event.pointerId !== session.pointerId)) return;
+    if (!ghost) {
+      const distance = Math.hypot(event.clientX - session.startX, event.clientY - session.startY);
+      if (distance < DRAG_THRESHOLD) return;
+      ghost = document.createElement("div");
+      ghost.className = "drag-letter-ghost cuddle-drag-letter-ghost umt-drag-letter-ghost";
+      ghost.textContent = session.glyph;
+      document.body.appendChild(ghost);
+    }
+    event.preventDefault();
+    ghost.style.left = `${event.clientX}px`;
+    ghost.style.top = `${event.clientY}px`;
+    const under = document.elementFromPoint(event.clientX, event.clientY);
+    const tile = under && under.closest
+      ? under.closest("#cuddleRoot .cuddle-tile[data-drag-index]")
+      : null;
+    setHover(tile);
+  }
+
+  function onUp(event) {
+    if (!session || (session.pointerId != null && event.pointerId !== session.pointerId)) return;
+    const ended = session;
+    const target = hoverTile;
+    const wasDragging = Boolean(ghost);
+    cleanup();
+    if (!wasDragging) return; // ordinary taps keep the original click behavior
+
+    // A compatibility click can be retargeted after the UI rerenders. Swallow
+    // it globally instead of on the source element that is about to disappear.
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    swallowClickUntil = Date.now() + 1250;
+
+    const game = activeGame();
+    if (!game || !game.state || game.state.status !== "playing") return;
+    const rawIndex = target ? Number(target.dataset.dragIndex) : NaN;
+    const targetIndex = Number.isInteger(rawIndex) && rawIndex >= 0 && rawIndex < 5
+      ? rawIndex
+      : null;
+
+    try {
+      if (ended.kind === "draft") {
+        if (targetIndex === null) {
+          if (typeof game.removeDraftAt === "function") game.removeDraftAt(ended.sourceIndex);
+        } else if (targetIndex !== ended.sourceIndex && typeof game.moveDraftCard === "function") {
+          game.moveDraftCard(ended.sourceIndex, targetIndex);
+        }
+      } else if (targetIndex !== null) {
+        const card = resolveHandCard(game, ended.glyph);
+        if (card && typeof game.insertDraftCardAt === "function") {
+          game.insertDraftCardAt(card.id, targetIndex);
+        }
+      }
+    } finally {
+      requestRender(game);
+    }
+  }
+
+  function begin(event, data) {
+    if (event.button !== undefined && event.button !== 0) return;
+    session = {
+      ...data,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY
+    };
+    document.addEventListener("pointermove", onMove, { capture: true, passive: false });
+    document.addEventListener("pointerup", onUp, { capture: true });
+    document.addEventListener("pointercancel", cancel, { capture: true });
+  }
+
+  // Capture phase is essential: cuddle-ui.js listens below this level and
+  // would otherwise append the same card after a successful drop.
+  window.addEventListener("click", (event) => {
     if (!swallowClickUntil || Date.now() > swallowClickUntil) return;
     swallowClickUntil = 0;
     event.preventDefault();
     event.stopImmediatePropagation();
   }, true);
 
-  function resolveHandCardForPlacement(game, glyph) {
-    const state = game.state;
-    const rank = source => (source === "infinite" ? 0 : source === "reward" ? 1 : 2);
-    const cards = (state.hand || [])
-      .filter(card => card.glyph === glyph)
-      .sort((a, b) => rank(a.source) - rank(b.source) || a.id.localeCompare(b.id));
-    const infinite = cards.find(card => game.isInfiniteCard(card));
-    if (infinite) return infinite;
-    // A finite card already sitting in the draft can't supply a second,
-    // distinct occurrence -- skip past it to another physical copy of the
-    // same glyph if one exists, same as the hand's own selection logic.
-    return cards.find(card => !state.draft.includes(card.id)) || null;
-  }
-
-  function onMove(e) {
-    if (!dragEl) {
-      if (!pendingGlyph) return;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
-
-      dragEl = document.createElement("div");
-      dragEl.className = "drag-letter-ghost cuddle-drag-letter-ghost";
-      dragEl.textContent = pendingGlyph;
-      document.body.appendChild(dragEl);
-    }
-
-    dragEl.style.left = `${e.clientX}px`;
-    dragEl.style.top = `${e.clientY}px`;
-
-    const under = document.elementFromPoint(e.clientX, e.clientY);
-    const tile = under?.closest?.("#cuddleRoot .cuddle-tile[data-drag-index]") || null;
-    setHoverTile(tile);
-  }
-
-  function onUp() {
-    const tile = hoverTile;
-    const glyph = pendingGlyph;
-    const sourceIndex = pendingSourceIndex;
-    const wasDragging = !!dragEl;
-    cleanup();
-
-    if (!wasDragging) return; // a plain tap: cuddle-ui.js's own click handler acts as always
-
-    const game = activeGame();
-    if (!game) return;
-
-    const rawIndex = tile ? Number(tile.dataset.dragIndex) : NaN;
-    const targetIndex = Number.isInteger(rawIndex) ? rawIndex : null;
-
-    // A tile dropped back onto itself is what a tap looks like when the
-    // finger drifted past the threshold on the way up -- common on touch.
-    // Leave it completely alone: no state change, no repaint, and no click
-    // suppression, so the trailing click still reaches cuddle-ui.js and
-    // removes that letter exactly as an undrifted tap would have.
-    if (sourceIndex !== null && sourceIndex === targetIndex) return;
-
-    if (sourceIndex !== null) {
-      // A tile dragged clear of the row is the player physically pulling
-      // that letter back out; removeDraftAt empties just that tile rather
-      // than shifting the rest of the row left.
-      if (targetIndex === null) game.removeDraftAt(sourceIndex);
-      else game.moveDraftCard(sourceIndex, targetIndex);
-    } else if (targetIndex !== null && glyph) {
-      const card = resolveHandCardForPlacement(game, glyph);
-      if (card) game.insertDraftCardAt(card.id, targetIndex);
-    }
-    // Reached on a real drag, including a hand card dropped clear of every
-    // tile -- that means "cancel", so the trailing click must not fall
-    // through and append the letter anyway.
-    swallowNextClick();
-    requestRerender(game);
-  }
-
-  function cleanup() {
-    pendingGlyph = null;
-    pendingSourceIndex = null;
-    dragEl?.remove();
-    dragEl = null;
-    setHoverTile(null);
-    document.removeEventListener("pointermove", onMove);
-    document.removeEventListener("pointerup", onUp);
-    document.removeEventListener("pointercancel", cleanup);
-  }
-
-  function arm(glyph, sourceIndex, x, y) {
-    pendingGlyph = glyph;
-    pendingSourceIndex = sourceIndex;
-    startX = x;
-    startY = y;
-    document.addEventListener("pointermove", onMove);
-    document.addEventListener("pointerup", onUp);
-    document.addEventListener("pointercancel", cleanup);
-  }
-
-  document.addEventListener("pointerdown", event => {
-    // Any fresh gesture cancels a pending suppression, so the only click
-    // that can ever be swallowed is the compatibility one belonging to the
-    // drag that just ended -- a real tap always opens with its own
-    // pointerdown and can never be eaten by a stale window.
+  document.addEventListener("pointerdown", (event) => {
     swallowClickUntil = 0;
-
     const root = document.getElementById("cuddleRoot");
     if (!root || !root.contains(event.target)) return;
-
     const game = activeGame();
-    if (!game || game.state?.status !== "playing") return;
-
-    // Mulligan mode's tap means "select this card to discard", not "place
-    // this letter" -- Drag Mode only applies to the ordinary play gesture.
-    // Read straight from the DOM (the class renderHand already puts on the
-    // submit row) rather than reaching into cuddle-ui.js's own closure
-    // state, which nothing outside that file has access to.
+    if (!game || !game.state || game.state.status !== "playing" || game.state.roundIntroPending) return;
     if (root.querySelector(".cuddle-submit-row.is-mulligan-mode")) return;
 
-    const tile = event.target.closest?.(".cuddle-tile[data-drag-index]");
+    const tile = event.target.closest && event.target.closest(".cuddle-tile[data-drag-index]");
     if (tile) {
       const index = Number(tile.dataset.dragIndex);
-      const letter = tile.textContent?.trim();
-      if (!Number.isInteger(index) || !letter) return; // nothing to drag off an empty tile
-      arm(letter, index, event.clientX, event.clientY);
+      const glyph = String(tile.textContent || "").trim();
+      if (Number.isInteger(index) && glyph) begin(event, { kind: "draft", glyph, sourceIndex: index });
       return;
     }
-
-    const card = event.target.closest?.("[data-card-glyph]");
-    if (card && !card.disabled) {
-      arm(card.dataset.cardGlyph, null, event.clientX, event.clientY);
-    }
-  });
+    const card = event.target.closest && event.target.closest(".cuddle-card[data-card-glyph]");
+    if (card && !card.disabled) begin(event, { kind: "hand", glyph: card.dataset.cardGlyph });
+  }, true);
 })();

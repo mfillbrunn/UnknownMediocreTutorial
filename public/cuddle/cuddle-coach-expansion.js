@@ -71,7 +71,7 @@
       key: "coachMeterReward",
       icon: "🫶",
       title: "Bigger Cuddle",
-      description: "Improve a full meter's reward in order: mulligan → joker → free letter → extra row.",
+      description: "Improve a full meter's reward in order: mulligan → joker → hint → extra row.",
       max: 3
     }
   ]);
@@ -369,7 +369,7 @@
   }
 
   function meterRewardName(coach) {
-    return ["Free mulligan", "Joker", "Free letter", "Extra row"][clamp(integer(coach.cuddleRewardTier, 0), 0, 3)];
+    return ["Free mulligan", "Joker", "Hint", "Extra row"][clamp(integer(coach.cuddleRewardTier, 0), 0, 3)];
   }
 
   // The heart chip counts DOWN to zero, showing how many more visible grey
@@ -688,12 +688,12 @@
       } else if (tier === 2) {
         if (hiddenPositions(game).length) {
           var letter = revealExactPosition(game, "Cuddle Meter");
-          messages.push(letter.message || "Cuddle Meter revealed a free letter.");
-          popLabel = "free letter";
+          messages.push(letter.message || "Cuddle Meter revealed a hint.");
+          popLabel = "hint";
         } else {
           coach.bankedFreeLetters += 1;
-          messages.push("Cuddle Meter full: a free letter is banked for the next round.");
-          popLabel = "free letter (banked)";
+          messages.push("Cuddle Meter full: a hint is banked for the next round.");
+          popLabel = "hint (banked)";
         }
         coach.cuddleRewards.letter += 1;
       } else {
