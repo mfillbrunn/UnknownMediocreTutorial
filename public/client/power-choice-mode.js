@@ -277,8 +277,8 @@
     if (grants.includes("secretThemes")) {
       const label = window.state?.powers?.secretThemesLabel;
       const value = label
-        ? `<strong>${esc(label)}</strong>`
-        : `<span class="pc-persistent-power-pending">—</span>`;
+        ? `Theme of secret: <strong>${esc(label)}</strong>`
+        : `<span class="pc-persistent-power-pending">Theme of secret: —</span>`;
       lines.push(`<div class="pc-persistent-power-line">
         ${persistentPowerIcon("secretThemes")}
         <span class="pc-persistent-power-value">${value}</span>
