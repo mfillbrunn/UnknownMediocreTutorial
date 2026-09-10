@@ -115,6 +115,12 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
     delete safe.powers.secretThemesLabel;
   }
 
+  // Theme Dossier: same reasoning as Secret Themes above, for the round-
+  // scoped full reveal instead of the whole-match single label.
+  if (viewerRole !== "guesser") {
+    delete safe.powers.secretThemesRevealLabels;
+  }
+
   // Double Tap: the setter may know the power fired (doubleGuessPending) but
   // must never see the hidden word, nor which of g1/g2 was the one shown.
   if (viewerRole === "setter") {

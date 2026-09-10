@@ -93,6 +93,9 @@ window.OPPONENT_POWER_DESCRIPTIONS =
     secretThemes:
       "Your opponent can see which category the current secret belongs to, and will notice when you change it to a secret in another category.",
 
+    secretThemesReveal:
+      "For this round only, your opponent can see every category the current secret belongs to, and will notice when you change it to a secret with different categories.",
+
     delayedIntel:
       "Your opponent delayed this round's feedback until after your next guess."
   });

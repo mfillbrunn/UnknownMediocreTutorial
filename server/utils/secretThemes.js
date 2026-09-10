@@ -52,4 +52,18 @@ function topThemeLabelForWord(word) {
   return best ? themes[best].label : null;
 }
 
-module.exports = { topThemeLabelForWord };
+// Every label a word carries, for the one-shot "Theme Dossier" reveal
+// (secretThemesRevealServer.js) — unlike topThemeLabelForWord, handing over
+// everything at once is the entire point of that card. Same flavor-before-
+// utility ordering so the most telling label still reads first in the list.
+function allThemeLabelsForWord(word) {
+  const { themes, wordThemes } = load();
+  const ids = wordThemes[String(word || "").toLowerCase()];
+  if (!Array.isArray(ids)) return [];
+  const labelled = ids.filter(id => themes[id]?.label);
+  const flavor = labelled.filter(id => themes[id].kind === "flavor");
+  const utility = labelled.filter(id => themes[id].kind !== "flavor");
+  return [...flavor, ...utility].map(id => themes[id].label);
+}
+
+module.exports = { topThemeLabelForWord, allThemeLabelsForWord };

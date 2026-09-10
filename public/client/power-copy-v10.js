@@ -122,6 +122,10 @@
       short: "Helps the Guesser see which category the secret belongs to.",
       desc: "Helps the Guesser by showing an always-on reading of which category the current secret belongs to."
     },
+    secretThemesReveal: {
+      short: "Helps the Guesser see every category the secret belongs to, for this round only.",
+      desc: "Helps the Guesser by showing an always-on reading of every category the current secret belongs to, but only for the round it was granted in."
+    },
     letterProfile: {
       short: "Helps the Guesser see how many of the secret's letters are vowels.",
       desc: "Helps the Guesser by showing an always-on count of how many of the secret's 5 letters are vowels."

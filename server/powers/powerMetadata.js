@@ -37,6 +37,7 @@ module.exports = {
   doubleGuess: { label: "Double Tap", role: "guesser" },
   letterProfile: { label: "Secret Vowel Count", role: "guesser" },
   secretThemes: { label: "Secret Themes", role: "guesser" },
+  secretThemesReveal: { label: "Theme Dossier", role: "guesser" },
   delayedIntel: { label: "Delayed Intel", role: "setter" },
   revealPenalty: { label: "Marked Weakness", role: "setter" },
   betMiss: { label: "Risky Maneuver", role: "guesser" },

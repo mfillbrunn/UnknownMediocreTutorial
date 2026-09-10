@@ -251,7 +251,9 @@
     // initializeRound) -- a role swap that hands the seat to someone who
     // never earned the grant correctly drops these lines for them.
     const grants = window.state?.activePowers || [];
-    const relevant = grants.filter(id => id === "revealLocation" || id === "letterProfile" || id === "secretThemes");
+    const relevant = grants.filter(id =>
+      id === "revealLocation" || id === "letterProfile" || id === "secretThemes" || id === "secretThemesReveal"
+    );
     if (!relevant.length) return "";
     const lines = [];
     if (grants.includes("revealLocation")) {
@@ -284,6 +286,16 @@
         <span class="pc-persistent-power-value">${value}</span>
       </div>`);
     }
+    if (grants.includes("secretThemesReveal")) {
+      const labels = window.state?.powers?.secretThemesRevealLabels;
+      const value = Array.isArray(labels) && labels.length
+        ? `Themes of secret: <strong>${labels.map(esc).join(", ")}</strong>`
+        : `<span class="pc-persistent-power-pending">Themes of secret: —</span>`;
+      lines.push(`<div class="pc-persistent-power-line">
+        ${persistentPowerIcon("secretThemesReveal")}
+        <span class="pc-persistent-power-value">${value}</span>
+      </div>`);
+    }
     return `<article class="pc-persistent-powers">
       ${lines.join("")}
     </article>`;
@@ -304,7 +316,8 @@
       grants,
       peek: window.state?.powers?.revealLocationPeek,
       profileStat: window.state?.powers?.letterProfileGuesserStat,
-      themesLabel: window.state?.powers?.secretThemesLabel
+      themesLabel: window.state?.powers?.secretThemesLabel,
+      themesRevealLabels: window.state?.powers?.secretThemesRevealLabels
     });
     if (container.dataset.pcSignature === signature) return;
     container.dataset.pcSignature = signature;
