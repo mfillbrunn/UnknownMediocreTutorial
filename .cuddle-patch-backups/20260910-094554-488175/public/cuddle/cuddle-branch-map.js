@@ -214,7 +214,7 @@
       if (width === 1 && previousWidth === 1) width = 2;
       previousWidth = width;
 
-      var nodes = rowTypes(game, actIndex, rowIndex, width, counts, shopSlots).map(function toNode(type, col) {
+      var nodes = rowTypes(game, rowIndex, width, counts, shopSlots).map(function toNode(type, col) {
         return { row: rows.length, col: col, type: type, next: [] };
       });
       rows.push({ kind: "stops", act: actIndex, nodes: nodes });
@@ -226,31 +226,28 @@
   // ever forced through a shop, and the specials stay rare enough (and
   // capped per act) that the map reads as a road of Wordles with the
   // occasional detour rather than a row of vending machines.
-  function rowTypes(game, actIndex, rowIndex, width, counts, shopSlots) {
-    /* UMT_CUDDLE_STABILITY_V2_UNIQUE_PATHS */
-    var used = Object.create(null);
+  function rowTypes(game, rowIndex, width, counts, shopSlots) {
+    if (rowIndex === 0) {
+      return new Array(width).fill("normal");
+    }
     var types = [];
-    function add(type) {
-      if (!type || used[type] || types.length >= width) return false;
-      used[type] = true;
-      types.push(type);
+    var specialsAllowed = Math.max(0, width - 1);
+    for (var col = 0; col < width; col += 1) {
+      var pool = ["normal", "normal", "normal", "normal", "theme", "challenge", "challenge"];
+      if (specialsAllowed > 0 && counts.special < 4) {
+        if (counts.shop < Math.min(2, shopSlots.length)) pool.push("shop");
+        if (counts.upgrade < 2) pool.push("upgrade");
+        if (counts.event < 2) pool.push("event");
+      }
+      var type = pickOne(pool, game);
       if (type === "shop" || type === "upgrade" || type === "event") {
         counts[type] += 1;
         counts.special += 1;
+        specialsAllowed -= 1;
       }
-      return true;
+      types.push(type);
     }
-    var backbone = shuffled(["normal", "theme", "challenge"], game);
-    add(backbone.shift());
-    var candidates = backbone.slice();
-    if (counts.special < 4) {
-      if (actIndex > 0 && counts.shop < Math.min(2, shopSlots.length)) candidates.push("shop");
-      if (counts.upgrade < 2) candidates.push("upgrade");
-      if (counts.event < 2) candidates.push("event");
-    }
-    shuffled(candidates, game).forEach(add);
-    ["normal", "theme", "challenge", "upgrade", "event"].forEach(add);
-    return shuffled(types.slice(0, width), game);
+    return types;
   }
 
   // Wires every node in `from` to a contiguous, non-decreasing slice of
@@ -519,41 +516,26 @@
   // than a hand-built state.boss -- the pool is swapped for this one node's
   // boss just long enough for that call.
   function startBoss(game, node) {
-    /* UMT_CUDDLE_STABILITY_V2_TWO_BOSS_OFFER */
     var branchMap = ensureBranchMap(game);
     var book = window.CuddleQuestBook;
-    var candidates = [];
-    function addCandidate(definition) {
-      if (!definition || !definition.id) return;
-      if (candidates.some(function sameBoss(item) { return item.id === definition.id; })) return;
-      var reward = definition.reward || (book && typeof book.getBossReward === "function"
-        ? book.getBossReward(definition.rewardId)
-        : null);
-      candidates.push(Object.assign({}, definition, { reward: reward || null }));
-    }
-    var requested = Array.isArray(node.bossIds) ? node.bossIds.slice() : [];
-    if (node.bossId != null) requested.unshift(node.bossId);
-    requested.forEach(function addRequested(id) {
-      var definition = book && typeof book.getBoss === "function" ? book.getBoss(id) : null;
-      addCandidate(definition);
-    });
-    var exclusions = (game.state.bossesSeen || []).concat(candidates.map(function bossId(item) { return item.id; }));
-    for (var attempt = 0; attempt < 10 && candidates.length < 2; attempt += 1) {
-      drawBosses(game, 2, exclusions).forEach(addCandidate);
-      exclusions = (game.state.bossesSeen || []).concat(candidates.map(function bossId(item) { return item.id; }));
-    }
-    if (book && Array.isArray(book.BOSSES)) shuffled(book.BOSSES, game).forEach(addCandidate);
-    candidates = candidates.slice(0, 2);
-    if (candidates.length < 2) {
-      game.state.lastMessage = "Two distinct bosses could not be prepared.";
+    var definition = book && typeof book.getBoss === "function" ? book.getBoss(node.bossId) : null;
+    var candidates = definition
+      ? [Object.assign({}, definition, {
+        reward: typeof book.getBossReward === "function" ? book.getBossReward(definition.rewardId) : null
+      })]
+      : drawBosses(game, 1, []);
+    if (!candidates.length) {
       returnToMap(game);
       return;
     }
+
     branchMap.pendingBossGate = node.gate;
     var stash = window.CuddleQuestBook;
     window.CuddleQuestBook = Object.assign({}, stash, {
-      bossChoices: function pairedBossChoices() {
-        return candidates.map(function cloneBoss(candidate) { return Object.assign({}, candidate); });
+      // _openBossGate needs two options to open at all; this node is a fixed
+      // single boss, so the pair is that boss twice and chooseBoss picks it.
+      bossChoices: function fixedBossChoices() {
+        return [Object.assign({}, candidates[0]), Object.assign({}, candidates[0])];
       }
     });
     var opened;
@@ -567,8 +549,8 @@
       returnToMap(game);
       return;
     }
+    game.chooseBoss(candidates[0].id);
     game.state.roundIntroPending = false;
-    if (typeof game.save === "function") game.save();
   }
 
   function beginRoundForNode(game, node) {

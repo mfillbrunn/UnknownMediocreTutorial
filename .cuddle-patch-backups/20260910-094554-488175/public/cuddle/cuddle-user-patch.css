@@ -1,0 +1,120 @@
+/* User-requested Cuddle mode changes. Loaded after the existing Cuddle styles. */
+
+/* Header money is plain text, sized like the adjacent heart counter. */
+#cuddleRoot .cuddle-header-score,
+#cuddleRoot .cuddle-money-header,
+#cuddleRoot [data-cuddle-money-total] {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  min-width: 0 !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+#cuddleRoot .cuddle-header-score {
+  font-size: var(--cuddle-header-chip-font-size, 1rem) !important;
+}
+
+/* Keep the route visual and clickable, but remove the duplicate content below it. */
+#cuddleRoot .cuddle-branch-message,
+#cuddleRoot .cuddle-branch-intro,
+#cuddleRoot .cuddle-branch-page > .cuddle-choice-grid,
+#cuddleRoot .cuddle-branch-cards,
+#cuddleRoot .cuddle-map-message,
+#cuddleRoot .cuddle-map-preview-grid,
+#cuddleRoot .cuddle-map-node-list {
+  display: none !important;
+}
+
+/* The right side of submitted rows no longer displays earned-money numbers. */
+#cuddleRoot .cuddle-money-row-increment,
+#cuddleRoot .cuddle-row-score.umt-earned-row-score {
+  display: none !important;
+}
+
+/* SVG reward, boss, shop, and map artwork. */
+#cuddleRoot .umt-cuddle-svg-icon,
+#cuddleRoot .cuddle-choice-icon > img,
+#cuddleRoot .cuddle-money-choice-icon > img,
+#cuddleRoot .cuddle-shop-item-icon > img,
+#cuddleRoot .cuddle-quest-icon > img,
+#cuddleRoot .cuddle-v3-toast-icon > img {
+  width: 2.35rem;
+  height: 2.35rem;
+  display: block;
+  object-fit: contain;
+  margin: 0 auto;
+}
+#cuddleRoot .cuddle-boss-reward .umt-cuddle-svg-icon {
+  display: inline-block;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin: 0 .35rem 0 0;
+  vertical-align: middle;
+}
+#cuddleRoot .cuddle-map-node-icon,
+#cuddleRoot .umt-map-power-icon {
+  display: none !important;
+}
+#cuddleRoot .umt-stage-svg-icon {
+  pointer-events: none;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .15));
+}
+
+/* Shopkeeper portrait and fully clickable item tiles. */
+#cuddleRoot .umt-shopkeeper-wrap {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin: 0 0 .85rem;
+}
+#cuddleRoot .umt-shopkeeper-head {
+  width: 3.25rem;
+  height: 3.25rem;
+  flex: 0 0 auto;
+}
+#cuddleRoot .umt-shopkeeper-copy {
+  margin: 0;
+  font-size: .92rem;
+}
+#cuddleRoot [data-shop-item-id] {
+  cursor: pointer;
+}
+
+/* Positional drag feedback. */
+#cuddleRoot .cuddle-card[data-card-glyph],
+#cuddleRoot .cuddle-tile[data-drag-index] {
+  touch-action: none;
+}
+.drag-letter-ghost,
+.cuddle-drag-letter-ghost,
+.umt-drag-letter-ghost {
+  position: fixed;
+  z-index: 100000;
+  transform: translate(-50%, -50%);
+  width: 2.7rem;
+  height: 2.7rem;
+  display: grid;
+  place-items: center;
+  border-radius: .65rem;
+  border: 2px solid currentColor;
+  background: #fff;
+  color: #1d2730;
+  font-weight: 800;
+  font-size: 1.35rem;
+  pointer-events: none;
+  box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .22);
+}
+#cuddleRoot .cuddle-tile.drag-hover,
+#cuddleRoot .cuddle-tile.umt-drag-hover {
+  outline: 3px solid currentColor !important;
+  outline-offset: 2px;
+  transform: translateY(-2px);
+}
+
+/* The former Loadout group is merged into Stats by the runtime patch. */
+#cuddleRoot .cuddle-detail-group.umt-empty-detail-group {
+  display: none !important;
+}

@@ -1733,12 +1733,6 @@
           live.openerPendingToken = null;
           appendNotice(game, `Head Start used row 1 with ${word}.`);
           safeSave(game);
-          /* UMT_CUDDLE_STABILITY_V2_HEAD_START_RENDER */
-          try {
-            window.dispatchEvent(new CustomEvent("cuddle:campaign-update", {
-              detail: { runId: stateOf(game)?.runId || null }
-            }));
-          } catch (_error) {}
           scheduleUi();
           return value;
         }, (error) => {
