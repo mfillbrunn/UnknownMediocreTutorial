@@ -1482,9 +1482,18 @@
      instead of behind it, since this used to share the Power-Choice-only
      near-INT32_MAX band those overlays deliberately reserve for staying
      above even the announce modal. One exception on the "ordinary board
-     chrome" side: .pc-current-quest-host sits just above this at 40001,
-     since the flight clone launches from directly underneath it and used
-     to fly right over it. */
+     chrome" side: .pc-current-quest-host and .pc-inspector-panel-host sit
+     just above this at 40001, since the flight clone launches from
+     directly underneath both and used to fly right over them.
+
+     That pair only actually wins because buildFlightFrom appends this
+     clone INSIDE the board (see its own comment): the board is a stacking
+     context three times over (container-type, isolation on the workspace,
+     a transform on the screen), so from <body> this z-index was never
+     being compared against theirs at all -- it beat the whole board, cards
+     included. Being scoped to the board also means the band note above is
+     now belt-and-braces: nothing in here can reach an app-wide overlay's
+     layer regardless of the number. */
   z-index: 40000;
   margin: 0;
   min-height: 0;
@@ -1800,11 +1809,11 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 /* Guesser quest above the draft row. z-index above .guesser-guess-flight's
-   40000 (see that rule's comment) -- the submitted guess's flying clone is
-   position:fixed and travels straight up from the draft row, right through
-   where this card sits, and used to paint over it on the way past. Still
-   well under the app-wide announce/modal band (100000+), so it stays
-   exactly where it was relative to everything else. */
+   40000 (see that rule's comment) -- the submitted guess's flying clone
+   travels straight up from the draft row, right through where this card
+   sits, and used to paint over it on the way past. Still well under the
+   app-wide announce/modal band (100000+), so it stays exactly where it was
+   relative to everything else. */
 .pc-current-quest-host {
   position: relative;
   z-index: 40001;
@@ -1823,6 +1832,13 @@ body.power-choice-mode #spyChargeAwardBackdrop {
    invisible (renderInspectorPanel leaves it with no innerHTML) whenever
    there is genuinely nothing to show. */
 .pc-inspector-panel-host {
+  /* Same z-index treatment, and for the same reason, as the quest host
+     directly above it: this card sits between the history list and the
+     draft row, so the submitted guess's position:fixed flying clone
+     travels straight up through it and used to paint its tile outlines
+     over the readout on the way past. */
+  position: relative;
+  z-index: 40001;
   width: min(100%, 520px);
   margin: 0 auto 9px;
 }

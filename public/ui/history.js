@@ -169,6 +169,12 @@ const HISTORY_BOTTOM_EPSILON_PX = 4;
 // arriving mid-momentum re-attach the list out from under it.
 const HISTORY_SETTLE_MS = 150;
 
+function now() {
+  return typeof performance !== "undefined" && performance.now
+    ? performance.now()
+    : Date.now();
+}
+
 function historyDistanceFromBottom(container) {
   return container.scrollHeight - container.scrollTop - container.clientHeight;
 }
@@ -189,7 +195,7 @@ function getHistoryScrollState(container) {
   let s = HISTORY_SCROLL_STATE.get(container);
   if (s) return s;
 
-  s = { interacting: false, detached: false, settleTimer: null };
+  s = { interacting: false, detached: false, settleTimer: null, lastScrollAt: 0 };
   HISTORY_SCROLL_STATE.set(container, s);
 
   const beginInteraction = () => {
@@ -230,10 +236,41 @@ function getHistoryScrollState(container) {
   // so it can never trip this into "detached" on its own -- nothing else
   // needs to distinguish who caused a given scroll.
   container.addEventListener("scroll", () => {
+    s.lastScrollAt = now();
     s.detached = !isHistoryScrolledToNewest(container);
   }, { passive: true });
 
+  // This list's own height changes underneath the reader whenever anything
+  // sharing the board column with it grows or shrinks -- most visibly a
+  // Power Choice reward that pays out as a standing readout (Informant,
+  // Secret Themes, Theme Dossier), whose panel appears between this list
+  // and the draft row and takes ~80px straight out of this box. The rows
+  // themselves don't move, so no scroll event fires and nothing else here
+  // ever learns anything happened: a reader who was pinned to the newest
+  // row is silently left that far above it, and every later render's
+  // "hold" then faithfully preserves the wrong position -- which is why
+  // the list read as stuck part-way up, with new rows piling up unseen
+  // below, from the moment one of those rewards was taken. Re-pin to the
+  // newest row on any resize, unless the reader had deliberately scrolled
+  // away from it (exactly the rule the rest of this controller follows).
+  if (typeof ResizeObserver !== "undefined") {
+    const observer = new ResizeObserver(() => {
+      if (s.detached || s.interacting) return;
+      container.scrollTop = container.scrollHeight;
+    });
+    observer.observe(container);
+  }
+
   return s;
+}
+
+// True while the list is still genuinely moving under a reader's own
+// gesture -- either a finger/pointer is still down (interacting) or the
+// native momentum/deceleration is still firing scroll events. A touch
+// fling keeps scrolling for far longer than the settle window after
+// touchend, so "interacting" alone does not cover it.
+function isHistoryScrollLive(s) {
+  return s.interacting || now() - s.lastScrollAt < HISTORY_SETTLE_MS;
 }
 
 // Snapshot taken BEFORE a DOM mutation that might add/remove/patch rows --
@@ -271,10 +308,19 @@ function restoreHistoryScrollIntent(container, snapshot, options = {}) {
 
   if (shouldFollow) {
     container.scrollTop = container.scrollHeight;
-  } else if (options.hold !== false) {
+  } else if (options.hold !== false && !isHistoryScrollLive(s)) {
     // Not following: hold exactly where the reader was before this
     // mutation ran, rather than leaving it to whatever the layout reflow
     // happened to land on.
+    //
+    // Skipped entirely while the list is still moving under the reader's
+    // own gesture. The snapshot is taken when the render begins, so
+    // re-asserting it mid-fling writes a position the reader has already
+    // scrolled past -- it killed the momentum and jumped the list back to
+    // where the drag started, which is what made scrolling down through
+    // the feedback feel like it kept snapping back up. Rows only ever
+    // append below, so nothing above the reader reflows and there is
+    // genuinely nothing to restore in that moment anyway.
     container.scrollTop = snapshot.scrollTop;
   }
 }
