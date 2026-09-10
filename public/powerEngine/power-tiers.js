@@ -16,6 +16,7 @@
     letterProbe:{role:"guesser",tier:2}, revealLocation:{role:"guesser",tier:3},
     letterProfile:{role:"guesser",tier:2}, betMiss:{role:"guesser",tier:2},
     wiretap:{role:"guesser",tier:3}, doubleGuess:{role:"guesser",tier:3},
-    fieldReport:{role:"guesser",tier:3}, firstLetterReveal:{role:"guesser",tier:3}
+    fieldReport:{role:"guesser",tier:3}, firstLetterReveal:{role:"guesser",tier:3},
+    secretThemes:{role:"guesser",tier:3}
   });
 })();

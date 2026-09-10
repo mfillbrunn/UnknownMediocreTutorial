@@ -148,6 +148,12 @@ const powers = {
       // draft/secret instead).
       letterProfileMode: null,
       letterProfileGuesserStat: null,
+      // SECRET THEMES (always-on guesser power, granted as a reward).
+      // The single most specific category of the CURRENT secret, recomputed
+      // every turn start like letterProfileGuesserStat above so it tracks a
+      // mid-round secret swap instead of going stale. Redacted from the
+      // setter in safeState.
+      secretThemesLabel: null,
       // POWER CHOICE: which "always-on" powers a role has permanently
       // unlocked via a reward card (Informant, Letter Profile -- see
       // powerChoiceServer.js's PERSISTENT_POWER_IDS).

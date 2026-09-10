@@ -90,6 +90,9 @@ window.OPPONENT_POWER_DESCRIPTIONS =
     letterProfile:
       "Your opponent can see how many of the secret's letters are vowels.",
 
+    secretThemes:
+      "Your opponent can see which category the current secret belongs to, and will notice when you change it to a secret in another category.",
+
     delayedIntel:
       "Your opponent delayed this round's feedback until after your next guess."
   });

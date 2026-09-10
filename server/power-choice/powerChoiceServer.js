@@ -63,7 +63,8 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 // no way to bank the power for later. See applyChoice's payload param.
 const PERSISTENT_POWER_IDS = new Set([
   "revealLocation",
-  "letterProfile"
+  "letterProfile",
+  "secretThemes"
 ]);
 const KEYBOARD_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
@@ -131,7 +132,11 @@ const POWER_COPY = {
   // PERSISTENT_POWER_IDS -- permanent unlocks, not one-turn effects, so
   // the copy says "from now on" instead of "this turn".
   revealLocation: ["🕵️", "Informant", "Starting now, reveal one still-unknown position on each of your turns for the rest of the round."],
-  letterProfile: ["🔤", "Secret Vowel Count", "From now on, see how many vowels are in the secret, each of your turns."]
+  letterProfile: ["🔤", "Secret Vowel Count", "From now on, see how many vowels are in the secret, each of your turns."],
+  // Re-read every turn, so it tracks the secret rather than a snapshot --
+  // which also means the category visibly changing is the tell that the
+  // Secretkeeper just swapped secrets.
+  secretThemes: ["🗂️", "Secret Themes", "From now on, see which category the secret belongs to, each of your turns."]
 };
 
 function normalizeWord(value) {
@@ -858,7 +863,7 @@ function guesserRewardPool(tier) {
   // Two, Peek Letter, Silly Word, Guess Tip. Rare -- Yellow Intel, Freeze
   // Secret, Time Rewind, Secret Vowel Count, Roulette Secret, Recon Sweep.
   // Legendary -- Remove a Point, Informant, First Letter Reveal, Magic
-  // Mode. Stealth Guess is deliberately NOT in this pool -- it's still a
+  // Mode, Secret Themes. Stealth Guess is deliberately NOT in this pool -- it's still a
   // real classic-mode power (see client/powerEngine/powers/stealthGuess.js
   // and its own POWER_RULES.js entry), just not currently offered as a
   // Power Choice reward.
@@ -877,7 +882,8 @@ function guesserRewardPool(tier) {
     // to bank the power for later.
     powerOption("suggestGuess"),
     powerOption("letterProbe"),
-    powerOption("firstLetterReveal")
+    powerOption("firstLetterReveal"),
+    powerOption("secretThemes")
   ];
   if (tier >= 2) pool.push(powerOption("revealHistory"));
   return pool;
@@ -1739,6 +1745,7 @@ function powerOptionApplicable(state, option) {
       return true;
     case "revealLocation":
     case "letterProfile":
+    case "secretThemes":
       // Already unlocked for the CURRENT guesser -- offering the same
       // permanent grant again would just waste a reward slot on a no-op.
       // Checked by userId, not just powerId, since the grant follows the
@@ -1940,10 +1947,10 @@ function effectDetailText(option, detail) {
           : "No unrevealed position remained -- nothing to peek at.";
       }
       if (option.kind === "power") {
-        // PERSISTENT_POWER_IDS grants (Informant/Letter Profile) are
-        // permanent unlocks, not a one-turn effect -- saying "for this
-        // turn" here would flatly contradict the "from now on" wording
-        // POWER_COPY already gives these same two in the card itself.
+        // PERSISTENT_POWER_IDS grants (Informant / Secret Vowel Count /
+        // Secret Themes) are permanent unlocks, not a one-turn effect --
+        // saying "for this turn" here would flatly contradict the "from
+        // now on" wording POWER_COPY already gives them in the card.
         return PERSISTENT_POWER_IDS.has(option.powerId)
           ? `${option.title} unlocked for the rest of the game.`
           : `${option.title} activated for this turn.`;
@@ -2034,9 +2041,9 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
   if (option.kind === "power") {
     if (PERSISTENT_POWER_IDS.has(option.powerId)) {
       // Calling engine.applyPower with the bare fabricated action below
-      // would just silently no-op -- revealLocation/letterProfile are pure
-      // turnStart hooks with nothing to fire once. The reward IS the
-      // unlock itself: from now on the role simply has access to a power
+      // would just silently no-op -- revealLocation/letterProfile/
+      // secretThemes are pure turnStart hooks with nothing to fire once.
+      // The reward IS the unlock itself: from now on the role has a power
       // that was already fully built and already worked when a
       // human/classic draft granted it the normal way -- there's no
       // second activation step to perform here.
@@ -2060,6 +2067,12 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
           state.powers.letterProfileMode = pickLetterProfileMode();
         }
         engine.powers.letterProfile?.turnStart(state, state.guesser, roomId, io);
+      }
+      // And again for Secret Themes -- also a pure turnStart hook, so
+      // without this the guesser would see an empty tile until their next
+      // turn began.
+      if (option.powerId === "secretThemes") {
+        engine.powers.secretThemes?.turnStart(state, state.guesser, roomId, io);
       }
       state.powerUsedThisTurn = true;
       const side =

@@ -295,6 +295,15 @@ window.POWER_METADATA = {
     color: "#F472B6"
   },
 
+  secretThemes: {
+    label: "Secret Themes",
+    desc: "From now on, the Guesser can always see which category the current secret belongs to, re-read each of their turns.",
+    short: "Always shows which category the secret belongs to.",
+    icon: "folder",
+    emoji: "\u{1F5C2}\uFE0F",
+    color: "#FBBF24"
+  },
+
   letterProfile: {
     label: "Secret Vowel Count",
     desc: "From now on, the Guesser can always see how many of the secret's 5 letters are vowels.",

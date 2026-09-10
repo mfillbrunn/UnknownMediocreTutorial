@@ -122,7 +122,7 @@ function run() {
     );
     assert.deepStrictEqual(
       new Set(byTier[3]),
-      new Set(["Remove a Point", "Informant", "First Letter Reveal", "Magic Mode"]),
+      new Set(["Remove a Point", "Informant", "First Letter Reveal", "Magic Mode", "Secret Themes"]),
       "Legendary tier membership"
     );
   }

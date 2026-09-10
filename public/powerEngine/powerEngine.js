@@ -26,7 +26,8 @@ const POWER_ICON_IDS = {
   nonsense: "icon-silly-word",
   letterProbe: "icon-letter-scan",
   revealLocation: "icon-informant",
-  letterProfile: "icon-letter-profile"
+  letterProfile: "icon-letter-profile",
+  secretThemes: "icon-secret-themes"
 };
 
 // Powers with more than one charge per match show a small "uses left /
