@@ -1003,7 +1003,7 @@
       + "<div class=\"cuddle-money-bank\"><span>Wallet</span><strong id=\"cuddleMoneyBankCounter\">" + formatMoney(payload.from) + "</strong></div>"
       + "<div class=\"cuddle-money-payout-rows\">" + payload.rows.map(payoutRowMarkup).join("") + "</div>"
       + "<div class=\"cuddle-money-payout-total\"><span>ROUND TOTAL</span><strong>" + formatDelta(payload.total) + "</strong></div>"
-      + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-primary cuddle-money-collect\" data-cuddle-money-action=\"collect-payout\" hidden>Collect " + formatMoney(payload.to) + "</button>"
+      + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-primary cuddle-money-collect\" data-cuddle-money-action=\"collect-payout\" hidden>Collect " + formatMoney(payload.total) + "</button>"
       + "</section></div>"
     );
     var overlay = document.getElementById("cuddleMoneyPayoutOverlay");

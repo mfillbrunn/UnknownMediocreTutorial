@@ -81,7 +81,7 @@
       icon: "🃏",
       title: "Joker Cache",
       name: "Joker Cache",
-      description: "Gain two Jokers immediately. Live Joker cards and reserve charges both count.",
+      description: "Gain two new Jokers at the beginning of every round. Live Joker cards and reserve charges both count.",
       maxLevel: 2,
       maxCount: 2,
       kind: "upgrade"
@@ -1525,6 +1525,34 @@
       if (liveChallenge) liveChallenge.paid = true;
     }
 
+    /* UMT_CUDDLE_USER_CONSUME_JOKERS */
+    const spentJokerIds = new Set();
+    for (const hand of handArrays(game)) {
+      for (let index = hand.length - 1; index >= 0; index -= 1) {
+        const card = hand[index];
+        if (!isJokerCard(card)) continue;
+        const cardId = card && (card.id ?? card.cardId);
+        if (cardId != null) spentJokerIds.add(cardId);
+        hand.splice(index, 1);
+      }
+    }
+    const spentState = stateOf(game);
+    const spentMega = megaState(game);
+    const clearJokerDraft = holder => {
+      if (!holder || typeof holder !== "object") return;
+      for (const key of ["draft", "draftCards"]) {
+        if (!Array.isArray(holder[key])) continue;
+        holder[key] = holder[key].filter(item => {
+          const itemId = item && typeof item === "object" ? (item.id ?? item.cardId) : item;
+          const matchesSpentCard = itemId != null && spentJokerIds.has(itemId);
+          return !isJokerCard(item) && !matchesSpentCard;
+        });
+      }
+    };
+    clearJokerDraft(spentState);
+    clearJokerDraft(spentMega);
+    if (spentMega) spentMega.jokerCharges = 0;
+
     custom.paidRoundTokens[token] = true;
     reconcilePendingPayout(game);
     safeSave(game);
@@ -1588,7 +1616,14 @@
   }
 
   function visibleModalBlocksPlay() {
-    const selectors = [".modal.show", ".cuddle-modal:not([hidden])", "[role='dialog'][aria-hidden='false']"];
+    /* UMT_CUDDLE_USER_REAL_BLOCKING_MODAL_ONLY */
+    const selectors = [
+      ".modal.show",
+      ".cuddle-modal-overlay:not([hidden])",
+      ".cuddle-preview-overlay:not([hidden])",
+      ".cuddle-branch-preview:not([hidden])",
+      "[role='dialog'][aria-hidden='false']"
+    ];
     return selectors.some((selector) => Array.from(document.querySelectorAll(selector)).some((node) => {
       const style = getComputedStyle(node);
       return style.display !== "none" && style.visibility !== "hidden";
@@ -1866,9 +1901,14 @@
     if (delta <= 0) return;
 
     if (id === IDS.jokerCache) {
-      const before = totalJokerStock(game);
-      ensureJokerIncrease(game, before, delta * 2);
-      appendNotice(game, `🃏 Joker Cache added ${delta * 2} Jokers.`);
+      /* UMT_CUDDLE_USER_JOKER_CACHE_PER_ROUND */
+      const mega = megaState(game);
+      if (mega) {
+        mega.jokerPerRoundBonus = Math.max(0, Math.floor(asNumber(mega.jokerPerRoundBonus, 0))) + (delta * 2);
+        mega.hasJokerUnlocked = true;
+      }
+      custom.cuddleUserJokerCachePerRoundLevel = current;
+      appendNotice(game, `Joker Cache now adds ${delta * 2} Jokers at the start of every round.`);
     }
     custom.appliedUpgradeEffects[id] = current;
     safeSave(game);

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Cuddle shopkeeper">
+  <circle cx="48" cy="48" r="43" fill="#e8f8ff" stroke="#244d63" stroke-width="4"/>
+  <path d="M25 41c0-22 10-32 23-32s23 10 23 32" fill="#795548" stroke="#3e2723" stroke-width="5"/>
+  <path d="M22 40h52l-7-20H29z" fill="#6fb8d8" stroke="#244d63" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M31 42c0-13 7-20 17-20s17 7 17 20v18c0 15-8 24-17 24s-17-9-17-24z" fill="#ffd8bd" stroke="#6d4535" stroke-width="4"/>
+  <circle cx="40" cy="52" r="3.5" fill="#33231e"/><circle cx="57" cy="52" r="3.5" fill="#33231e"/>
+  <path d="M40 66c5 5 12 5 17 0" fill="none" stroke="#8a3d42" stroke-width="4" stroke-linecap="round"/>
+  <path d="M30 46c4-4 9-5 14-3M53 43c5-2 10-1 14 3" fill="none" stroke="#3e2723" stroke-width="4" stroke-linecap="round"/>
+  <path d="M73 66l8 5-8 5" fill="none" stroke="#ff9f43" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
