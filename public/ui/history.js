@@ -243,39 +243,76 @@ function getHistoryScrollState(container) {
 // trusting that nothing else nudged it.
 function captureHistoryScrollIntent(container) {
   if (!container) {
-    return { eligible: true, scrollTop: 0 };
+    return {
+      eligible: true,
+      scrollTop: 0,
+      interacting: false,
+      detached: false
+    };
   }
+
   const s = getHistoryScrollState(container);
+
   return {
-    eligible: !s.interacting && !s.detached && isHistoryScrolledToNewest(container),
-    scrollTop: container.scrollTop
+    eligible:
+      !s.interacting &&
+      !s.detached &&
+      isHistoryScrolledToNewest(container),
+    scrollTop: container.scrollTop,
+    interacting: s.interacting,
+    detached: s.detached
   };
 }
 
-// Applies the follow-or-hold decision from a snapshot returned by
-// captureHistoryScrollIntent(). Re-checks the LIVE interaction/detached
-// state rather than trusting the snapshot alone, so a gesture that begins
-// after the snapshot was taken but before this runs (the next animation
-// frame, say) still correctly cancels the follow. Never uses smooth/
-// animated scrolling: a CSS/JS-driven scroll animation racing an
-// in-progress native touch scroll is exactly what made the list feel like
-// it was snapping around underneath a real gesture.
+// HISTORY_SCROLL_INPUT_OWNERSHIP_FIX_V1
+// A render can arrive while the reader is dragging, wheel-scrolling, or
+// coasting with touch momentum. In that case snapshot.scrollTop belongs to
+// an older frame. Writing it back in the old "hold" branch fought the native
+// gesture and could reset a just-started downward scroll to 0.
 function restoreHistoryScrollIntent(container, snapshot, options = {}) {
   if (!container || !snapshot) return;
+
   const s = getHistoryScrollState(container);
+  const capturedTop = Number.isFinite(snapshot.scrollTop)
+    ? snapshot.scrollTop
+    : container.scrollTop;
+  const movedSinceCapture =
+    Math.abs(container.scrollTop - capturedTop) >
+    HISTORY_BOTTOM_EPSILON_PX;
+
+  // Do not perform any programmatic scroll write when the user owned the
+  // scroll at capture time, owns it now, newly detached after capture, or
+  // moved an already non-following view before this restore ran.
+  const userOwnsScroll =
+    !!snapshot.interacting ||
+    s.interacting ||
+    (!snapshot.detached && s.detached) ||
+    (!snapshot.eligible && movedSinceCapture);
+
+  if (userOwnsScroll) return;
+
   const shouldFollow =
     options.follow !== false &&
     !!snapshot.eligible &&
-    !s.interacting &&
     !s.detached;
 
   if (shouldFollow) {
     container.scrollTop = container.scrollHeight;
-  } else if (options.hold !== false) {
-    // Not following: hold exactly where the reader was before this
-    // mutation ran, rather than leaving it to whatever the layout reflow
-    // happened to land on.
-    container.scrollTop = snapshot.scrollTop;
+    return;
+  }
+
+  if (options.hold !== false) {
+    // Keep the old feature for a stable, non-interacting view, but clamp the
+    // value in case row removal reduced the scrollable range.
+    const maxScrollTop = Math.max(
+      0,
+      container.scrollHeight - container.clientHeight
+    );
+
+    container.scrollTop = Math.min(
+      Math.max(0, capturedTop),
+      maxScrollTop
+    );
   }
 }
 
