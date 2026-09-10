@@ -341,6 +341,7 @@
 
 .challenge-quick-play-btn {
   display: grid !important;
+  place-items: center;
   gap: 3px;
 }
 
