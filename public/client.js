@@ -1009,6 +1009,21 @@ function updateScreens() {
     return;
   }
 
+  // Same reasoning, for a Challenge whose result screen has already been
+  // shown (see single-player/challenges.js's presentResult): the
+  // end-of-match reveal ceremony below schedules its OWN screen update
+  // several seconds out (to hold the board up long enough for the
+  // winning tile-flip to play before forcing the summary on), with no
+  // way to know the player has since navigated to the challenge's own
+  // result screen -- without this, that later callback (or any other
+  // trailing broadcast for this same finished room) could yank the
+  // player back to the game screen, or straight past it to the summary,
+  // well after they chose to move on. Scoped to this one room, so it
+  // stops applying the instant a fresh challenge claims a new one.
+  if (window._challengeRoomFinished && window._challengeRoomFinished === window.roomId) {
+    return;
+  }
+
   // A disconnect since the last screens update means the player wasn't
   // necessarily watching live -- replaying the ~6s flip+popup ceremony
   // once they reconnect made the win reveal feel like it fired late

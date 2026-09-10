@@ -33,8 +33,26 @@ function resolveSimultaneousRound(room, state, roomId, context) {
     extraInfo: null,
     finalSecret: state.secret,
     roundIndex: state.history.length,
-    powerEvents: []
+    powerEvents: [],
+    fakeFeedback: null
   };
+
+  // Every later round's guess goes through finalizeFeedback.js, which runs
+  // this same step between scoring and committing the entry -- the one
+  // place a setter power (Blue Mode, Count Only, Falsify Intel, Feedback
+  // Lie, Inside Job, Bet Power) actually rewrites what the guesser is
+  // shown. This round's opening guess used to skip it entirely, since
+  // nothing could ever be active this early in ordinary play (a power
+  // only ever got activated on a normal-phase turn, and the simultaneous
+  // phase is always turn zero) -- Challenges are the first thing that can
+  // legitimately arm one before this point (see runAI.js's maybeUsePower,
+  // now also called for the opening simultaneous move). Without this, a
+  // challenge's forced power still burned its one use here but produced
+  // no visible effect at all, silently wasting the very first "powered"
+  // turn it was supposed to demonstrate. Reads state.pendingGuess
+  // directly (fakeFeedbackServer.js among them), so this has to run
+  // before it's cleared below, same ordering finalizeFeedback.js uses.
+  powerEngine.postScore(state, entry, roomId, io);
 
   state.pendingGuess = "";
 

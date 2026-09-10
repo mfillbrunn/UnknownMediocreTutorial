@@ -2,6 +2,7 @@
 
 const { getAI } = require("./aiDifficulty");
 const { applyAIAction } = require("./aiActions");
+const { emitRoomState } = require("../rooms");
 const powerMetadata = require("../../powers/powerMetadata");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
 const { feasibleSecretsFor } = require("./genericAI");
@@ -345,7 +346,26 @@ function maybeUsePower(room, state, aiUserId, roomId, context, isTutorial) {
     // Challenge powers are mandatory, so use the actual game rule rather
     // than the normal AI's optional timing heuristics. Context-limited
     // powers such as Solve Cold Case still wait until their rule allows them.
-    if (!isPowerAllowed(challenge.powerId, state)) return false;
+    //
+    // Most rules in POWER_RULES.js gate on `state.turn === state.setter`/
+    // `state.guesser` -- meaningful once turn order exists, but state.turn
+    // is null through the whole opening simultaneous phase (both roles act
+    // independently, before either has "a turn" at all). Read literally,
+    // that silently pushed every challenge's forced power a full turn
+    // late: turn one (this round's actual opening move) never counted
+    // toward its powerTurns budget, so what was sold as "N powered turns"
+    // only ever showed up starting from turn two. During simultaneous
+    // play specifically, evaluate the rule against a shallow copy with
+    // turn coerced to whichever side is currently deciding -- every rule
+    // here is a pure, read-only predicate (never mutates state), so this
+    // is safe to build fresh on each check rather than threading it
+    // through as a real field. Left untouched for the normal phase, where
+    // state.turn is already exactly this.
+    const allowanceState =
+      state.phase === "simultaneous"
+        ? { ...state, turn: aiRole === "setter" ? state.setter : state.guesser }
+        : state;
+    if (!isPowerAllowed(challenge.powerId, allowanceState)) return false;
 
     const forcedAction = buildPowerAction(challenge.powerId, state, context);
     if (!forcedAction) return false;
@@ -355,7 +375,37 @@ function maybeUsePower(room, state, aiUserId, roomId, context, isTutorial) {
     challenge.remainingUses = Math.max(0, limit - usedNow);
     challenge.lastPowerHistoryIndex = state.history?.length || 0;
     try {
-      applyAIAction(room, forcedAction, aiUserId, roomId, context);
+      // handleSimultaneousPhase (core/phases/simultaneous.js) has no
+      // generic USE_ action dispatch at all -- unlike handleNormalPhase,
+      // it only recognizes CONCEDE/CHOOSE_QUEST/SET_SECRET_NEW/SUBMIT_GUESS
+      // -- so routing this forced action through applyAIAction (which goes
+      // applyAction -> handleSimultaneousPhase) would silently no-op during
+      // round one's opening move: forcedAction.type is always a USE_* type,
+      // and nothing in that phase's handler would even look at it. Call
+      // powerEngine.applyPower directly instead, matching exactly what
+      // handleNormalPhase's own USE_ branch does, and do its bookkeeping
+      // ourselves. This is safe specifically because maybeUsePower is
+      // server-AI-only (never reachable from client input) and has already
+      // fully verified ownership (isPoweredRole above) and eligibility
+      // (isPowerAllowed above) -- the untrusted-caller re-checks
+      // handleNormalPhase does on top of that don't apply here.
+      if (state.phase === "simultaneous") {
+        const applied = context.powerEngine.applyPower(
+          challenge.powerId,
+          state,
+          forcedAction,
+          roomId,
+          context.io,
+          room
+        );
+        if (applied !== false) {
+          state.powerUsedThisTurn = true;
+          singlePlayerHooks.recordPowerUse(state, challenge.powerId, aiUserId);
+        }
+        emitRoomState(roomId, room, context.io);
+      } else {
+        applyAIAction(room, forcedAction, aiUserId, roomId, context);
+      }
     } catch (error) {
       challenge.forcedUses = used;
       challenge.remainingUses = Math.max(0, limit - used);
@@ -637,6 +687,13 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
   if (!actionFn && state.phase === "simultaneous") {
     if (aiRole === "guesser" && !state.simultaneousGuessSubmitted) {
       actionFn = () => {
+        // Same as every normal-phase action below: a challenge's forced
+        // power has to get first look, before the guesser's own move,
+        // exactly like every later turn (see maybeUsePower's own
+        // simultaneous-phase turn shim, and resolveSimultaneousRound's
+        // now-added postScore call for it to actually take effect here).
+        maybeUsePower(room, state, aiUserId, roomId, context, isTutorial);
+
         let guess = aiLogic.pickGuess(
           state,
           context.WORDS.guesses,
@@ -677,6 +734,9 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
 
     if (aiRole === "setter" && !state.simultaneousSecretSubmitted) {
       actionFn = () => {
+        // See the matching comment on the guesser branch above.
+        maybeUsePower(room, state, aiUserId, roomId, context, isTutorial);
+
         let secret = aiLogic.pickSecret(state, context.WORDS.secrets);
 
         if (isTutorial) {
