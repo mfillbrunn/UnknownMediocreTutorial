@@ -98,6 +98,8 @@ function clearRoundPowerActivity(state) {
   powers.doubleGuessShownFirst = null;
 
   powers.letterProfileGuesserStat = null;
+  powers.secretThemesUsed = false;
+  powers.secretThemesRevealed = null;
   powers.delayedIntelRoundIndex = null;
 
   powers.revealLetterActive = false;

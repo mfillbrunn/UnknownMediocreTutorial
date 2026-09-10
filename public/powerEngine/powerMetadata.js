@@ -295,6 +295,15 @@ window.POWER_METADATA = {
     color: "#F472B6"
   },
 
+  secretThemes: {
+    label: "Secret Themes",
+    desc: "Reveals up to three categories the secret belongs to at the moment the card is taken. A one-time reading -- it does not re-read a later secret.",
+    short: "Reveals the categories the secret belongs to, once.",
+    icon: "folder",
+    emoji: "\u{1F5C2}\uFE0F",
+    color: "#FBBF24"
+  },
+
   letterProfile: {
     label: "Secret Vowel Count",
     desc: "From now on, the Guesser can always see how many of the secret's 5 letters are vowels.",

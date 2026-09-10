@@ -118,6 +118,10 @@
       short: "Helps the Guesser submit two guesses and receive feedback for both.",
       desc: "Helps the Guesser by submitting two different guesses at once while the Secretkeeper sees only one of them."
     },
+    secretThemes: {
+      short: "Helps the Guesser see which categories the secret belongs to.",
+      desc: "Helps the Guesser by reading out up to three categories the secret belongs to at the moment the card is taken."
+    },
     letterProfile: {
       short: "Helps the Guesser see how many of the secret's letters are vowels.",
       desc: "Helps the Guesser by showing an always-on count of how many of the secret's 5 letters are vowels."

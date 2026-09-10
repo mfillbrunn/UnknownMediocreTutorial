@@ -36,6 +36,7 @@ module.exports = {
   revealLocation: { label: "Informant", role: "guesser" },
   doubleGuess: { label: "Double Tap", role: "guesser" },
   letterProfile: { label: "Secret Vowel Count", role: "guesser" },
+  secretThemes: { label: "Secret Themes", role: "guesser" },
   delayedIntel: { label: "Delayed Intel", role: "setter" },
   revealPenalty: { label: "Marked Weakness", role: "setter" },
   betMiss: { label: "Risky Maneuver", role: "guesser" },

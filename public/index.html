@@ -12,7 +12,7 @@
   <!-- 3. Structural layout -->
   <link rel="stylesheet" href="css/layout.css?v=history-scroll-quest-note-1">
   <!-- 4. Reusable UI components -->
-  <link rel="stylesheet" href="css/components.css?letter-scan-hits=1&responsive-keys=1">
+  <link rel="stylesheet" href="css/components.css?letter-scan-hits=1&responsive-keys=1&secret-themes=1">
   <!-- 5. Wordle board / history system -->
   <link rel="stylesheet" href="css/history.css?feedback-lie=1">
   <!-- 6. Game & UI states -->
@@ -110,6 +110,7 @@
       <symbol id="icon-informant" viewBox="0 0 120 120"><path fill="currentColor" d="M17 49h86v13H17z"/><path fill="currentColor" d="M31 47c5-20 15-31 29-31s24 11 29 31z"/><path fill="#f4f5f7" d="M32 64h56c-2 23-11 36-28 36S34 87 32 64z"/><path fill="currentColor" d="M73 73h35a9 9 0 0 1 9 9v15a9 9 0 0 1-9 9H93l-11 9v-9h-9a9 9 0 0 1-9-9V82a9 9 0 0 1 9-9z"/><circle fill="var(--tile-green)" cx="81" cy="90" r="3"/><circle fill="var(--tile-green)" cx="90" cy="90" r="3"/><circle fill="var(--tile-green)" cx="99" cy="90" r="3"/></symbol>
 
       <symbol id="icon-letter-profile" viewBox="0 0 120 120"><rect fill="currentColor" x="18" y="17" width="84" height="87" rx="11"/><rect fill="#f4f5f7" x="31" y="63" width="13" height="28" rx="3"/><rect fill="#f4f5f7" x="53" y="45" width="13" height="46" rx="3"/><rect fill="#f4f5f7" x="75" y="30" width="13" height="61" rx="3"/></symbol>
+      <symbol id="icon-secret-themes" viewBox="0 0 120 120"><rect fill="#f4f5f7" x="38" y="6" width="44" height="16" rx="6"/><rect fill="#f4f5f7" x="24" y="26" width="72" height="16" rx="6"/><path fill="currentColor" d="M16 38h30l10 12h48a10 10 0 0 1 10 10v40a10 10 0 0 1-10 10H16a10 10 0 0 1-10-10V48a10 10 0 0 1 10-10z"/><rect fill="#f4f5f7" x="26" y="64" width="44" height="9" rx="4.5"/><rect fill="#f4f5f7" x="26" y="82" width="30" height="9" rx="4.5"/></symbol>
 
       <!-- Surrender (Leave header buttons) -- pole in the button's own
            accent color (currentColor), flag always plain white regardless
@@ -1760,21 +1761,21 @@
   
   <script src="client/socket-events.js?v=9-2&reward-overhaul=1&umt-streamlined=1.0.2&guest-play=1"></script>
   <script src="client/power-functions.js"></script>
-  <script src="powerEngine/powerMetadata.js?reward-overhaul=1&feedback-lie=1"></script>
+  <script src="powerEngine/powerMetadata.js?reward-overhaul=1&feedback-lie=1&secret-themes=1"></script>
   
 
-<script src="powerEngine/powerPalettes.js?reward-overhaul=1&feedback-lie=1"></script>
-  <script src="powerEngine/opponentPowerDescriptions.js?reward-overhaul=1&feedback-lie=1"></script>
+<script src="powerEngine/powerPalettes.js?reward-overhaul=1&feedback-lie=1&secret-themes=1"></script>
+  <script src="powerEngine/opponentPowerDescriptions.js?reward-overhaul=1&feedback-lie=1&secret-themes=1"></script>
   <script src="powerEngine/QUEST_METADATA.js"></script>
   <script src="powerEngine/quest-copy-v7.js?guesser-polish=7"></script>
-  <script src="powerEngine/POWER_POINTS.js?reward-overhaul=1&feedback-lie=1"></script>
+  <script src="powerEngine/POWER_POINTS.js?reward-overhaul=1&feedback-lie=1&secret-themes=1"></script>
   <script src="client/power-log-format.js"></script>
   <script src="client/InfoBadgeEngine.js"></script>
   <script src="client/remaining-words.js?setter-board=1&setter-hint-removed=1&tutorial-fixes=20260904"></script>
   <script src="client/letterProfile.js"></script>
   <script src="client/must-contain-box.js"></script>
   <script src="client/power-keyboard.js"></script>
-  <script src="powerEngine/powerEngine.js"></script>
+  <script src="powerEngine/powerEngine.js?secret-themes=1"></script>
   <script src="powerEngine/powerRules.js?feedback-lie=1"></script>
   
   <script src="powerEngine/powers/hideTile.js"></script>
@@ -1818,6 +1819,7 @@
   <script src="powerEngine/powers/revealLocation.js"></script>
   <script src="powerEngine/powers/doubleGuess.js"></script>
   <script src="powerEngine/powers/letterProfile.js"></script>
+  <script src="powerEngine/powers/secretThemes.js"></script>
   <script src="powerEngine/powers/delayedIntel.js"></script>
   <script src="client/summary.js?v=ai-tie-fix-1&daily-no-defeat=1&untimed-no-clock=1"></script>
   <script src="client/action-log.js?setter-fixes=2"></script>
@@ -1892,10 +1894,10 @@
 <!-- Guesser quest-complete reveal (#questReward) is built dynamically by
      client/quest-complete-reveal.js?v=typed-quest-2's ensureOverlay() on first use, rather
      than hardcoded here -- see that file. -->
-  <script src="client/power-copy-v10.js?v=10&reward-overhaul=1&wiretap-copy=2&feedback-lie=1"></script>
+  <script src="client/power-copy-v10.js?v=10&reward-overhaul=1&wiretap-copy=2&feedback-lie=1&secret-themes=1"></script>
   <script src="ui/gameplay-systems-v10.js?v=10&compact-bonus=1&star-bonus-fix=1&mobile-perf=1"></script>
   <script src="ui/competitive-fixes-v2.js?competitive-fixes=2.2&mobile-perf=1"></script>
-  <script src="powerEngine/power-tiers.js?v=2.3-card-carousel&reward-overhaul=1&magic-mode-legendary=1&feedback-lie=1"></script> <!-- power-choice-mode-v2.2 -->
+  <script src="powerEngine/power-tiers.js?v=2.3-card-carousel&reward-overhaul=1&magic-mode-legendary=1&feedback-lie=1&secret-themes=1"></script> <!-- power-choice-mode-v2.2 -->
   <script src="client/power-choice-mode.js?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&hardmode-copy=1&mobile-perf=1&reward-overhaul=1&optional-note-oneline=1&note-inline-title=1&daily-hide-refresh=1&guide-btn-inline=1&reward-icon-fit=1&spy-rules-short=1&fixed-reward-svg-pack=1&clean-fixed-rewards=1"></script> <!-- power-choice-mode-v2.2 -->
 </body>
 </html>

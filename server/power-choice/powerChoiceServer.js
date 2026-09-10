@@ -17,6 +17,7 @@ const {
 const { tierFor } = require("./powerTiers");
 const { categoryForRewardId } = require("./rewardCategories");
 const { pickLetterProfileMode } = require("../utils/letterProfile");
+const { themeLabelsForWord } = require("../utils/secretThemes");
 const singlePlayerHooks = require("../single-player/hooks");
 
 const MODE = "powerChoice";
@@ -120,6 +121,10 @@ const POWER_COPY = {
   // pinning position 1 as green for the rest of the round (see
   // firstLetterRevealServer.js) -- there's no input to collect first.
   firstLetterReveal: ["🥇", "First Letter Reveal", "Reveal the secret's first letter as a permanent green clue for the rest of the round."],
+  // Also immediate with no payload, and deliberately a single reading: it
+  // reports the secret as it stands when picked and never re-reads, so a
+  // later New secret is not covered (see secretThemesServer.js).
+  secretThemes: ["🗂️", "Secret Themes", "Reveal up to three categories the secret belongs to right now. A one-time reading, not an ongoing feed."],
   // Immediate, payload-carrying cards: picking one prompts for its input
   // (a bet number / two words) right then, and fires on the spot -- there's
   // no unlock to bank for later, see applyChoice's payload param. Recon
@@ -856,7 +861,8 @@ function fixedOptions(role, threshold) {
 function guesserRewardPool(tier) {
   // Rarity (each option's own .tier) groups these into: Common -- Rule Out
   // Two, Peek Letter, Silly Word, Guess Tip. Rare -- Yellow Intel, Freeze
-  // Secret, Time Rewind, Secret Vowel Count, Roulette Secret, Recon Sweep.
+  // Secret, Time Rewind, Secret Vowel Count, Roulette Secret, Recon Sweep,
+  // Secret Themes.
   // Legendary -- Remove a Point, Informant, First Letter Reveal, Magic
   // Mode. Stealth Guess is deliberately NOT in this pool -- it's still a
   // real classic-mode power (see client/powerEngine/powers/stealthGuess.js
@@ -877,7 +883,8 @@ function guesserRewardPool(tier) {
     // to bank the power for later.
     powerOption("suggestGuess"),
     powerOption("letterProbe"),
-    powerOption("firstLetterReveal")
+    powerOption("firstLetterReveal"),
+    powerOption("secretThemes")
   ];
   if (tier >= 2) pool.push(powerOption("revealHistory"));
   return pool;
@@ -1802,6 +1809,14 @@ function powerOptionApplicable(state, option) {
       // point that fewer than 2 rounds have happened yet -- checked here
       // too so that case doesn't get offered as a guaranteed-fail card.
       return !state.powers?.revealHistoryUsed && (state.history || []).length >= 2;
+    case "secretThemes":
+      // Same reason as every other one-off above: once it has been read
+      // there is nothing left to read, and a secret the theme list does
+      // not cover would resolve to an empty reveal.
+      return (
+        !state.powers?.secretThemesUsed &&
+        themeLabelsForWord(state.secret).length > 0
+      );
     case "firstLetterReveal":
       // Mirrors firstLetterRevealServer.js's own firstLetterAlreadyKnown()
       // exactly -- no point offering the card once position 1 is already
@@ -1933,6 +1948,11 @@ function effectDetailText(option, detail) {
         return detail?.letter
           ? `Revealed the secret's first letter as a permanent green clue: ${detail.letter}.`
           : "The secret's first letter was already known -- nothing to reveal.";
+      }
+      if (option.powerId === "secretThemes") {
+        return detail?.themes?.length
+          ? `Revealed the secret's categories: ${detail.themes.join(", ")}.`
+          : "No categories could be read from the secret.";
       }
       if (option.powerId === "revealGreen") {
         return detail?.letter && Number.isInteger(detail.pos)
@@ -2140,6 +2160,9 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
       // exists as apply()'s own side effect on state.
       if (option.powerId === "firstLetterReveal") {
         detail.letter = state.powers.firstLetterRevealedLetter || null;
+      }
+      if (option.powerId === "secretThemes") {
+        detail.themes = state.powers.secretThemesRevealed || null;
       }
       // And again for Peek Letter: which letter/position it picked is only
       // on state (revealGreenServer's apply sets revealGreenInfo, plus the
