@@ -17,7 +17,6 @@ const {
 const { tierFor } = require("./powerTiers");
 const { categoryForRewardId } = require("./rewardCategories");
 const { pickLetterProfileMode } = require("../utils/letterProfile");
-const { themeLabelsForWord } = require("../utils/secretThemes");
 const singlePlayerHooks = require("../single-player/hooks");
 
 const MODE = "powerChoice";
@@ -64,7 +63,8 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 // no way to bank the power for later. See applyChoice's payload param.
 const PERSISTENT_POWER_IDS = new Set([
   "revealLocation",
-  "letterProfile"
+  "letterProfile",
+  "secretThemes"
 ]);
 const KEYBOARD_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
@@ -121,10 +121,6 @@ const POWER_COPY = {
   // pinning position 1 as green for the rest of the round (see
   // firstLetterRevealServer.js) -- there's no input to collect first.
   firstLetterReveal: ["🥇", "First Letter Reveal", "Reveal the secret's first letter as a permanent green clue for the rest of the round."],
-  // Also immediate with no payload, and deliberately a single reading: it
-  // reports the secret as it stands when picked and never re-reads, so a
-  // later New secret is not covered (see secretThemesServer.js).
-  secretThemes: ["🗂️", "Secret Themes", "Reveal up to three categories the secret belongs to right now. A one-time reading, not an ongoing feed."],
   // Immediate, payload-carrying cards: picking one prompts for its input
   // (a bet number / two words) right then, and fires on the spot -- there's
   // no unlock to bank for later, see applyChoice's payload param. Recon
@@ -136,7 +132,11 @@ const POWER_COPY = {
   // PERSISTENT_POWER_IDS -- permanent unlocks, not one-turn effects, so
   // the copy says "from now on" instead of "this turn".
   revealLocation: ["🕵️", "Informant", "Starting now, reveal one still-unknown position on each of your turns for the rest of the round."],
-  letterProfile: ["🔤", "Secret Vowel Count", "From now on, see how many vowels are in the secret, each of your turns."]
+  letterProfile: ["🔤", "Secret Vowel Count", "From now on, see how many vowels are in the secret, each of your turns."],
+  // Re-read every turn, so it tracks the secret rather than a snapshot --
+  // which also means the category visibly changing is the tell that the
+  // Secretkeeper just swapped secrets.
+  secretThemes: ["🗂️", "Secret Themes", "From now on, see which category the secret belongs to, each of your turns."]
 };
 
 function normalizeWord(value) {
@@ -1746,6 +1746,7 @@ function powerOptionApplicable(state, option) {
       return true;
     case "revealLocation":
     case "letterProfile":
+    case "secretThemes":
       // Already unlocked for the CURRENT guesser -- offering the same
       // permanent grant again would just waste a reward slot on a no-op.
       // Checked by userId, not just powerId, since the grant follows the
@@ -1809,14 +1810,6 @@ function powerOptionApplicable(state, option) {
       // point that fewer than 2 rounds have happened yet -- checked here
       // too so that case doesn't get offered as a guaranteed-fail card.
       return !state.powers?.revealHistoryUsed && (state.history || []).length >= 2;
-    case "secretThemes":
-      // Same reason as every other one-off above: once it has been read
-      // there is nothing left to read, and a secret the theme list does
-      // not cover would resolve to an empty reveal.
-      return (
-        !state.powers?.secretThemesUsed &&
-        themeLabelsForWord(state.secret).length > 0
-      );
     case "firstLetterReveal":
       // Mirrors firstLetterRevealServer.js's own firstLetterAlreadyKnown()
       // exactly -- no point offering the card once position 1 is already
@@ -1949,21 +1942,16 @@ function effectDetailText(option, detail) {
           ? `Revealed the secret's first letter as a permanent green clue: ${detail.letter}.`
           : "The secret's first letter was already known -- nothing to reveal.";
       }
-      if (option.powerId === "secretThemes") {
-        return detail?.themes?.length
-          ? `Revealed the secret's categories: ${detail.themes.join(", ")}.`
-          : "No categories could be read from the secret.";
-      }
       if (option.powerId === "revealGreen") {
         return detail?.letter && Number.isInteger(detail.pos)
           ? `Revealed ${String(detail.letter).toUpperCase()} in position ${detail.pos + 1}.`
           : "No unrevealed position remained -- nothing to peek at.";
       }
       if (option.kind === "power") {
-        // PERSISTENT_POWER_IDS grants (Informant/Letter Profile) are
-        // permanent unlocks, not a one-turn effect -- saying "for this
-        // turn" here would flatly contradict the "from now on" wording
-        // POWER_COPY already gives these same two in the card itself.
+        // PERSISTENT_POWER_IDS grants (Informant / Secret Vowel Count /
+        // Secret Themes) are permanent unlocks, not a one-turn effect --
+        // saying "for this turn" here would flatly contradict the "from
+        // now on" wording POWER_COPY already gives them in the card.
         return PERSISTENT_POWER_IDS.has(option.powerId)
           ? `${option.title} unlocked for the rest of the game.`
           : `${option.title} activated for this turn.`;
@@ -2054,9 +2042,9 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
   if (option.kind === "power") {
     if (PERSISTENT_POWER_IDS.has(option.powerId)) {
       // Calling engine.applyPower with the bare fabricated action below
-      // would just silently no-op -- revealLocation/letterProfile are pure
-      // turnStart hooks with nothing to fire once. The reward IS the
-      // unlock itself: from now on the role simply has access to a power
+      // would just silently no-op -- revealLocation/letterProfile/
+      // secretThemes are pure turnStart hooks with nothing to fire once.
+      // The reward IS the unlock itself: from now on the role has a power
       // that was already fully built and already worked when a
       // human/classic draft granted it the normal way -- there's no
       // second activation step to perform here.
@@ -2080,6 +2068,12 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
           state.powers.letterProfileMode = pickLetterProfileMode();
         }
         engine.powers.letterProfile?.turnStart(state, state.guesser, roomId, io);
+      }
+      // And again for Secret Themes -- also a pure turnStart hook, so
+      // without this the guesser would see an empty tile until their next
+      // turn began.
+      if (option.powerId === "secretThemes") {
+        engine.powers.secretThemes?.turnStart(state, state.guesser, roomId, io);
       }
       state.powerUsedThisTurn = true;
       const side =
@@ -2160,9 +2154,6 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
       // exists as apply()'s own side effect on state.
       if (option.powerId === "firstLetterReveal") {
         detail.letter = state.powers.firstLetterRevealedLetter || null;
-      }
-      if (option.powerId === "secretThemes") {
-        detail.themes = state.powers.secretThemesRevealed || null;
       }
       // And again for Peek Letter: which letter/position it picked is only
       // on state (revealGreenServer's apply sets revealGreenInfo, plus the

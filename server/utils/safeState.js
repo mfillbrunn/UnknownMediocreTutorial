@@ -108,11 +108,11 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
     delete safe.powers.letterProbeResult;
   }
 
-  // Secret Themes reads the categories off the real secret for the
-  // guesser's own readout — the setter already knows the secret, so this
-  // stays on the guesser's side of the wire like the two above.
+  // Secret Themes reads the current secret's category for the guesser's
+  // own readout — the setter already knows the secret, so this stays on
+  // the guesser's side of the wire like the two above.
   if (viewerRole !== "guesser") {
-    delete safe.powers.secretThemesRevealed;
+    delete safe.powers.secretThemesLabel;
   }
 
   // Double Tap: the setter may know the power fired (doubleGuessPending) but

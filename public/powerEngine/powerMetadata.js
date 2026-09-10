@@ -297,8 +297,8 @@ window.POWER_METADATA = {
 
   secretThemes: {
     label: "Secret Themes",
-    desc: "Reveals up to three categories the secret belongs to at the moment the card is taken. A one-time reading -- it does not re-read a later secret.",
-    short: "Reveals the categories the secret belongs to, once.",
+    desc: "From now on, the Guesser can always see which category the current secret belongs to, re-read each of their turns.",
+    short: "Always shows which category the secret belongs to.",
     icon: "folder",
     emoji: "\u{1F5C2}\uFE0F",
     color: "#FBBF24"

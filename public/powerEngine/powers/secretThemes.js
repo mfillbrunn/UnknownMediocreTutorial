@@ -1,15 +1,15 @@
 // /powers/powers/secretThemes.js — Secret Themes (guesser)
 //
-// Nothing to click: the card fires the moment it's picked as a reward, and
-// this tile is purely the readout of what it found. Same passive-card shape
-// as letterProfile.js — deliberately no this.buttonEl, so
-// PowerEngine.updateButtonStates skips it and it never gets greyed out on
-// the opponent's turn or crossed out as "used".
+// Always-on, no button to click: a passive card showing which category the
+// current secret falls into, re-read every turn (see
+// secretThemesServer.js). Same shape as letterProfile.js right next to it,
+// deliberately never setting this.buttonEl so
+// PowerEngine.updateButtonStates skips it — there's nothing to use, it's
+// just a readout.
 //
-// Visibility keys off the revealed data rather than activePowers (which
-// letterProfile uses): this is a one-shot reading, so the tile should be
-// there exactly when there is a reading to show, and gone again once the
-// round transition clears it (clearRoundPowerActivity.js).
+// Visibility follows the grant rather than the value, so the card the
+// player just earned is on screen immediately, showing a dash until the
+// server's first reading lands.
 PowerEngine.register("secretThemes", {
   role: "guesser",
   tooltip: {
@@ -40,26 +40,32 @@ PowerEngine.register("secretThemes", {
   uiEffects(state, role) {
     if (!this.wrapperEl) return;
 
-    // Note this hides the tile for a non-guesser rather than returning
-    // early: the roles swap at round 2, and a player who was the guesser
-    // would otherwise keep last round's reading on screen as the
-    // Secretkeeper, since nothing else would repaint the tile.
-    const themes = state.powers?.secretThemesRevealed;
-    const has = role === "guesser" && Array.isArray(themes) && themes.length > 0;
-    this.wrapperEl.style.display = has ? "" : "none";
-    if (!has || !this.linesEl) return;
+    // Hides for a non-guesser rather than returning early: the roles swap
+    // at round 2, and a player who was the guesser would otherwise keep
+    // the tile on screen as the Secretkeeper, since nothing else repaints
+    // it.
+    const active = role === "guesser" && !!state.activePowers?.includes("secretThemes");
+    this.wrapperEl.style.display = active ? "" : "none";
+    if (!active || !this.linesEl) return;
 
-    this.linesEl.replaceChildren(...themes.map(theme => {
-      const line = document.createElement("div");
-      line.className = "line";
-      const label = document.createElement("span");
-      label.className = "label";
-      label.textContent = "Theme";
-      const value = document.createElement("span");
-      value.className = "value";
-      value.textContent = theme;
-      line.append(label, value);
-      return line;
-    }));
+    const label = state.powers?.secretThemesLabel;
+
+    const line = document.createElement("div");
+    line.className = "line";
+    const key = document.createElement("span");
+    key.className = "label";
+    key.textContent = "Theme";
+    const value = document.createElement("span");
+    value.className = "value";
+    if (label) {
+      value.textContent = label;
+    } else {
+      // Not populated until the guesser's turn genuinely begins (the
+      // server only reads then) -- a dash rather than an empty gap.
+      value.textContent = "—";
+      value.classList.add("secret-themes-tile-pending");
+    }
+    line.append(key, value);
+    this.linesEl.replaceChildren(line);
   }
 });

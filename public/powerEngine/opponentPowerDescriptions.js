@@ -91,7 +91,7 @@ window.OPPONENT_POWER_DESCRIPTIONS =
       "Your opponent can see how many of the secret's letters are vowels.",
 
     secretThemes:
-      "Your opponent read the categories the secret belonged to when they took the card.",
+      "Your opponent can see which category the current secret belongs to, and will notice when you change it to a secret in another category.",
 
     delayedIntel:
       "Your opponent delayed this round's feedback until after your next guess."
