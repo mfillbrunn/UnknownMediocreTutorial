@@ -223,44 +223,65 @@
     return [];
   }
 
-  // Informant (revealLocation) and Letter Profile are both "always on, no
-  // button to click" powers -- their whole classic UI (PowerEngine.
-  // register's renderButton) mounts into #guesserPowerContainer, which is
-  // permanently display:none in the current layout (the sidebar redesign
-  // gave the power/quest cards their own homes instead, see index.html's
-  // comment on that container). Once Power Choice can actually grant
-  // these as persistent rewards (see PERSISTENT_POWER_IDS server-side)
-  // that dead-end stops being harmless, so they get their own compact
-  // readout here instead of relying on that hidden legacy tray.
+  // Informant (revealLocation), Secret Vowel Count (letterProfile), and
+  // Secret Themes are all "always on, no button to click" powers -- their
+  // whole classic UI (PowerEngine.register's renderButton) mounts into
+  // #guesserPowerContainer, which is permanently display:none in the
+  // current layout (the sidebar redesign gave the power/quest cards their
+  // own homes instead, see index.html's comment on that container). Once
+  // Power Choice can actually grant these as persistent rewards (see
+  // PERSISTENT_POWER_IDS server-side) that dead-end stops being harmless,
+  // so they get their own compact readout here instead of relying on that
+  // hidden legacy tray.
+  //
+  // Each line is icon + reading only -- no reward name -- and pulls its
+  // vector icon from the same sprite the power buttons use
+  // (window.POWER_ICON_IDS), so this reads as one family with the reward
+  // cards rather than a re-skinned emoji badge.
+  function persistentPowerIcon(powerId) {
+    const iconId = window.POWER_ICON_IDS?.[powerId];
+    return iconId
+      ? `<svg class="pc-persistent-power-icon" viewBox="0 0 120 120" aria-hidden="true"><use href="#${esc(iconId)}" xlink:href="#${esc(iconId)}"></use></svg>`
+      : "";
+  }
+
   function persistentPowerMarkup() {
     // activePowers is already filtered server-side to whichever player
     // currently holds the guesser seat (see powerChoiceServer.js's
     // initializeRound) -- a role swap that hands the seat to someone who
     // never earned the grant correctly drops these lines for them.
     const grants = window.state?.activePowers || [];
-    const relevant = grants.filter(id => id === "revealLocation" || id === "letterProfile");
+    const relevant = grants.filter(id => id === "revealLocation" || id === "letterProfile" || id === "secretThemes");
     if (!relevant.length) return "";
     const lines = [];
     if (grants.includes("revealLocation")) {
       const peek = window.state?.powers?.revealLocationPeek;
       const value = peek && Number.isInteger(peek.index) && peek.letter
-        ? `<strong>${esc(ordinal(peek.index + 1))}</strong> is <strong>${esc(peek.letter)}</strong>`
+        ? `<strong>${esc(peek.letter)}</strong> is in <strong>${esc(ordinal(peek.index + 1))}</strong>`
         : `<span class="pc-persistent-power-pending">watching…</span>`;
       lines.push(`<div class="pc-persistent-power-line">
-        <span class="pc-persistent-power-icon" aria-hidden="true">🕵️</span>
-        <span class="pc-persistent-power-label">Informant</span>
+        ${persistentPowerIcon("revealLocation")}
         <span class="pc-persistent-power-value">${value}</span>
       </div>`);
     }
     if (grants.includes("letterProfile")) {
       const stat = window.state?.powers?.letterProfileGuesserStat;
-      const value = Number.isInteger(stat?.vowels) ? String(stat.vowels) : null;
-      lines.push(`<div class="pc-persistent-power-line pc-letter-profile-line">
-        <span class="pc-persistent-power-icon" aria-hidden="true">🔤</span>
-        <span class="pc-persistent-power-label">Secret Vowel Count</span>
-        ${value !== null
-          ? `<span class="pc-persistent-power-value">${esc(value)}</span>`
-          : `<span class="pc-persistent-power-pending">—</span>`}
+      const value = Number.isInteger(stat?.vowels)
+        ? `Secret has <strong>${esc(stat.vowels)}</strong> vowels`
+        : `<span class="pc-persistent-power-pending">—</span>`;
+      lines.push(`<div class="pc-persistent-power-line">
+        ${persistentPowerIcon("letterProfile")}
+        <span class="pc-persistent-power-value">${value}</span>
+      </div>`);
+    }
+    if (grants.includes("secretThemes")) {
+      const label = window.state?.powers?.secretThemesLabel;
+      const value = label
+        ? `<strong>${esc(label)}</strong>`
+        : `<span class="pc-persistent-power-pending">—</span>`;
+      lines.push(`<div class="pc-persistent-power-line">
+        ${persistentPowerIcon("secretThemes")}
+        <span class="pc-persistent-power-value">${value}</span>
       </div>`);
     }
     return `<article class="pc-persistent-powers">
@@ -282,7 +303,8 @@
       pending,
       grants,
       peek: window.state?.powers?.revealLocationPeek,
-      profileStat: window.state?.powers?.letterProfileGuesserStat
+      profileStat: window.state?.powers?.letterProfileGuesserStat,
+      themesLabel: window.state?.powers?.secretThemesLabel
     });
     if (container.dataset.pcSignature === signature) return;
     container.dataset.pcSignature = signature;

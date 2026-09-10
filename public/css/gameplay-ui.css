@@ -1874,11 +1874,19 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   line-height: 1.3;
 }
 
-/* Informant/Letter Profile: permanently-unlocked reward powers (see
-   PERSISTENT_POWER_IDS server-side) with no button to press -- just a
-   live readout, styled like the intel panel below it. */
+/* Informant/Secret Vowel Count/Secret Themes: permanently-unlocked reward
+   powers (see PERSISTENT_POWER_IDS server-side) with no button to press --
+   just a live readout, styled like the intel panel below it. Each line
+   is icon + reading, no reward name -- the vector icon (persistentPowerIcon,
+   the same sprite the power buttons/reward cards use) is the only thing
+   identifying which power a line belongs to, so lines of different length
+   still read as one deliberate list rather than loose fragments. A hairline
+   divider between lines (rather than plain margin) is what keeps that list
+   legible once more than one power is granted. */
 .pc-persistent-powers {
-  padding: 9px 11px;
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
   border: 1px solid rgba(255, 226, 120, 0.28);
   border-radius: 11px;
   background: rgba(255, 226, 120, 0.05);
@@ -1886,24 +1894,22 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 
 .pc-persistent-power-line {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 7px;
-  margin-top: 6px;
+  align-items: center;
+  gap: 8px;
   font-size: 11px;
+  line-height: 1.3;
 }
 
-.pc-persistent-power-line:first-of-type {
-  margin-top: 0;
+.pc-persistent-power-line + .pc-persistent-power-line {
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 226, 120, 0.16);
 }
 
 .pc-persistent-power-icon {
-  font-size: 12px;
-}
-
-.pc-persistent-power-label {
-  color: rgba(255, 226, 120, 0.85);
-  font-weight: 800;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: #ffe278;
 }
 
 .pc-persistent-power-value {
@@ -1912,15 +1918,12 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 
 .pc-persistent-power-value strong {
   color: #ffe278;
+  font-weight: 800;
 }
 
 .pc-persistent-power-pending {
   color: rgba(220, 237, 247, 0.5);
   font-style: italic;
-}
-
-.pc-letter-profile-line {
-  align-items: flex-start;
 }
 
 /* letterProfileLines() (client/letterProfile.js) outputs plain .line /
