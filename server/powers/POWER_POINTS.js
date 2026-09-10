@@ -45,7 +45,7 @@ const GUESSER_POWER_POINTS = {
   doubleGuess: 3.5,      // Double Tap — two guesses at once, feedback on both
   letterProfile: 1.5,    // Letter Profile — always-on passive category breakdown
   firstLetterReveal: 2.5, // First Letter Reveal — one-time permanent green at position 1
-  secretThemes: 1.5      // Secret Themes — one-time read of the secret's categories
+  secretThemes: 2.5      // Secret Themes — always-on category of the current secret
 };
 
 const POWER_POINTS = { ...SETTER_POWER_POINTS, ...GUESSER_POWER_POINTS };
