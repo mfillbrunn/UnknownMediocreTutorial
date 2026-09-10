@@ -955,6 +955,19 @@
   font-size: 2.6rem;
   line-height: 1;
   flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  /* Matches .pc-reward-popup-icon's own flat accent (gameplay-ui.css) --
+     the closest existing precedent for an SVG power icon inside a popup
+     rather than a card, since neither of this codebase's per-power
+     palette systems (the button badge's --power-color-*, the reward
+     card's --pc-power-accent) is scoped for use outside its own surface. */
+  color: #7cd4ff;
+}
+.power-popup-icon {
+  width: 2.6rem;
+  height: 2.6rem;
+  filter: drop-shadow(0 2px 4px rgba(4, 12, 21, 0.48));
 }
 .power-popup-title {
   font-size: 1.05rem;
