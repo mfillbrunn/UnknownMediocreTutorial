@@ -154,6 +154,13 @@ const powers = {
       // mid-round secret swap instead of going stale. Redacted from the
       // setter in safeState.
       secretThemesLabel: null,
+      // THEME DOSSIER (round-scoped guesser power, granted as a Rare
+      // reward). Every theme the CURRENT secret belongs to, recomputed
+      // every turn start like secretThemesLabel above -- but the grant
+      // itself is stripped at round end (see clearRoundPowerActivity.js),
+      // unlike Secret Themes' whole-match unlock. Redacted from the
+      // setter in safeState.
+      secretThemesRevealLabels: null,
       // POWER CHOICE: which "always-on" powers a role has permanently
       // unlocked via a reward card (Informant, Letter Profile -- see
       // powerChoiceServer.js's PERSISTENT_POWER_IDS).

@@ -269,7 +269,29 @@ let _powerPopupTimer = null;
 window.showPowerPopup = function (html) {
   const el = document.getElementById("powerPopup");
   if (!el) return;
-  el.querySelector(".power-popup-emoji").textContent = html.emoji || "";
+  const iconHost = el.querySelector(".power-popup-emoji");
+  iconHost.replaceChildren();
+  // Prefer the same vector icon the reward card/power button for this
+  // power already shows (window.POWER_ICON_IDS) -- built via
+  // createElementNS rather than an innerHTML template so nothing here
+  // needs to escape iconId, even though it only ever comes from that
+  // fixed, code-controlled map. Falls back to the plain emoji for the
+  // handful of powers (e.g. First Letter Reveal) that don't have a
+  // sprite icon yet -- the reward card falls back the same way.
+  if (html.iconId) {
+    const svgNS = "http://www.w3.org/2000/svg";
+    const xlinkNS = "http://www.w3.org/1999/xlink";
+    const icon = document.createElementNS(svgNS, "svg");
+    icon.setAttribute("class", "power-icon power-popup-icon");
+    icon.setAttribute("viewBox", "0 0 120 120");
+    const use = document.createElementNS(svgNS, "use");
+    use.setAttributeNS(xlinkNS, "xlink:href", `#${html.iconId}`);
+    use.setAttribute("href", `#${html.iconId}`);
+    icon.appendChild(use);
+    iconHost.appendChild(icon);
+  } else {
+    iconHost.textContent = html.emoji || "";
+  }
   el.querySelector(".power-popup-title").textContent = html.title || "";
   el.querySelector(".power-popup-desc").textContent = html.desc || "";
 
@@ -342,6 +364,7 @@ const opponentDescription =
 
 window.showPowerPopup({
   emoji: formatted.emoji,
+  iconId: formatted.iconId,
 
   title:
     `${who}: ${formatted.label}`,

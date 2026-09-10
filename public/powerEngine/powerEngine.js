@@ -27,7 +27,11 @@ const POWER_ICON_IDS = {
   letterProbe: "icon-letter-scan",
   revealLocation: "icon-informant",
   letterProfile: "icon-letter-profile",
-  secretThemes: "icon-secret-themes"
+  secretThemes: "icon-secret-themes",
+  // Reuses Secret Themes' own folder icon -- same subject (the secret's
+  // categories), just a one-round full reveal instead of a standing
+  // single-label readout, so a dedicated icon isn't warranted.
+  secretThemesReveal: "icon-secret-themes"
 };
 
 // Powers with more than one charge per match show a small "uses left /

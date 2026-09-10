@@ -38,7 +38,8 @@ window.GUESSER_POWER_POINTS = {
   doubleGuess: 3.5,
   letterProfile: 1.5,
   firstLetterReveal: 2.5,
-  secretThemes: 2.5
+  secretThemes: 2.5,
+  secretThemesReveal: 1.5
 };
 
 window.POWER_POINTS = { ...window.SETTER_POWER_POINTS, ...window.GUESSER_POWER_POINTS };

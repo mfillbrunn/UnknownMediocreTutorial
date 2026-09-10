@@ -12,7 +12,7 @@
   <!-- 3. Structural layout -->
   <link rel="stylesheet" href="css/layout.css?v=history-scroll-quest-note-1">
   <!-- 4. Reusable UI components -->
-  <link rel="stylesheet" href="css/components.css?letter-scan-hits=1&responsive-keys=1&secret-themes=3">
+  <link rel="stylesheet" href="css/components.css?letter-scan-hits=1&responsive-keys=1&secret-themes=3&power-popup-icon=1">
   <!-- 5. Wordle board / history system -->
   <link rel="stylesheet" href="css/history.css?feedback-lie=1">
   <!-- 6. Game & UI states -->
@@ -20,7 +20,7 @@
   <!-- 7. Animations (keyframes) -->
   <link rel="stylesheet" href="css/animations.css">
   <!-- 8. Power-specific effects -->
-  <link rel="stylesheet" href="css/powers.css">
+  <link rel="stylesheet" href="css/powers.css?fake-feedback-reveal-fix=1">
   <!-- 9. Lobby-->
   <link rel="stylesheet" href="css/game-menu.css?menu-account-spacing=1&umt-fix=20260830-1&umt-streamlined=1.0.2&menu-scroll-fix=1&umt-tutorial-rework=20260901&guest-play=1">
     <!-- 10. Account data-->
@@ -1748,7 +1748,7 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="client/helpers.js?v=screen-scroll-reset-1"></script>
   <script src="client/statistics.js?menu-account-spacing=1&guest-play=1"></script>
-  <script src="network/socketClient.js"></script>
+  <script src="network/socketClient.js?power-popup-icon=1"></script>
 
   <script src="/game-engine/scoring.js"></script>
   <script src="/game-engine/history.js"></script>
@@ -1767,21 +1767,21 @@
   
   <script src="client/socket-events.js?v=9-2&reward-overhaul=1&umt-streamlined=1.0.2&guest-play=1"></script>
   <script src="client/power-functions.js"></script>
-  <script src="powerEngine/powerMetadata.js?reward-overhaul=1&feedback-lie=1&secret-themes=3"></script>
+  <script src="powerEngine/powerMetadata.js?reward-overhaul=1&feedback-lie=1&secret-themes=3&theme-dossier=1"></script>
   
 
-<script src="powerEngine/powerPalettes.js?reward-overhaul=1&feedback-lie=1&secret-themes=3"></script>
-  <script src="powerEngine/opponentPowerDescriptions.js?reward-overhaul=1&feedback-lie=1&secret-themes=3"></script>
+<script src="powerEngine/powerPalettes.js?reward-overhaul=1&feedback-lie=1&secret-themes=3&theme-dossier=1"></script>
+  <script src="powerEngine/opponentPowerDescriptions.js?reward-overhaul=1&feedback-lie=1&secret-themes=3&theme-dossier=1"></script>
   <script src="powerEngine/QUEST_METADATA.js"></script>
   <script src="powerEngine/quest-copy-v7.js?guesser-polish=7"></script>
-  <script src="powerEngine/POWER_POINTS.js?reward-overhaul=1&feedback-lie=1&secret-themes=3"></script>
-  <script src="client/power-log-format.js"></script>
+  <script src="powerEngine/POWER_POINTS.js?reward-overhaul=1&feedback-lie=1&secret-themes=3&theme-dossier=1"></script>
+  <script src="client/power-log-format.js?power-popup-icon=1"></script>
   <script src="client/InfoBadgeEngine.js"></script>
   <script src="client/remaining-words.js?setter-board=1&setter-hint-removed=1&tutorial-fixes=20260904"></script>
   <script src="client/letterProfile.js"></script>
   <script src="client/must-contain-box.js"></script>
   <script src="client/power-keyboard.js"></script>
-  <script src="powerEngine/powerEngine.js?secret-themes=3"></script>
+  <script src="powerEngine/powerEngine.js?secret-themes=3&theme-dossier=1"></script>
   <script src="powerEngine/powerRules.js?feedback-lie=1"></script>
   
   <script src="powerEngine/powers/hideTile.js"></script>
@@ -1846,7 +1846,7 @@
   <script src="single-player/story-player.js?umt-fix=20260830-1"></script>
   <script src="single-player/stage-result.js"></script>
   <script src="single-player/achievements.js"></script>
-  <script src="single-player/challenges.js?umt-challenges=20260901"></script>
+  <script src="single-player/challenges.js?umt-challenges=20260901&challenge-room-finished-guard=1"></script>
 <!-- CUDDLE_MODE:SCRIPTS START -->
   <script src="cuddle/cuddle-quests.js?v=19&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=2"></script>
   <script src="cuddle/cuddle-engine.js?v=35&cuddle-boss-rounds=3&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=3"></script>
@@ -1874,7 +1874,7 @@
   <script src="client/big-announce.js?v=drawer-tap-passthrough-1"></script>
   <script src="client/reward-reveal.js?v=typed-quest-2"></script>
   <script src="client/quest-complete-reveal.js?v=typed-quest-2"></script>
-  <script src="client.js?v=9-2&mobile-perf=1&daily-round-intro=1&daily-both-rounds-fixed=1&challenge-intro=1&guest-play=1&tutorial-fixes=20260904"></script>
+  <script src="client.js?v=9-2&mobile-perf=1&daily-round-intro=1&daily-both-rounds-fixed=1&challenge-intro=1&guest-play=1&tutorial-fixes=20260904&challenge-room-finished-guard=1"></script>
   <script src="ui/guesser-flow-v7.js?v=tutorial-motion-sim-2&win-flight-direct=1"></script>
   <script src="ui/gameplay-polish-v8.js?gameplay-polish=8"></script>
   <!-- V9: matching Guesser drawer, ready-action docks, Notes shortcut, and theme toggle -->
@@ -1900,11 +1900,11 @@
 <!-- Guesser quest-complete reveal (#questReward) is built dynamically by
      client/quest-complete-reveal.js?v=typed-quest-2's ensureOverlay() on first use, rather
      than hardcoded here -- see that file. -->
-  <script src="client/power-copy-v10.js?v=10&reward-overhaul=1&wiretap-copy=2&feedback-lie=1&secret-themes=3"></script>
+  <script src="client/power-copy-v10.js?v=10&reward-overhaul=1&wiretap-copy=2&feedback-lie=1&secret-themes=3&theme-dossier=1"></script>
   <script src="ui/gameplay-systems-v10.js?v=10&compact-bonus=1&star-bonus-fix=1&mobile-perf=1"></script>
   <script src="ui/competitive-fixes-v2.js?competitive-fixes=2.2&mobile-perf=1"></script>
-  <script src="powerEngine/power-tiers.js?v=2.3-card-carousel&reward-overhaul=1&magic-mode-legendary=1&feedback-lie=1&secret-themes=3"></script> <!-- power-choice-mode-v2.2 -->
-  <script src="client/power-choice-mode.js?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&hardmode-copy=1&mobile-perf=1&reward-overhaul=1&optional-note-oneline=1&note-inline-title=1&daily-hide-refresh=1&guide-btn-inline=1&reward-icon-fit=1&spy-rules-short=1&fixed-reward-svg-pack=1&clean-fixed-rewards=1&persistent-power-badge=1"></script> <!-- power-choice-mode-v2.2 -->
+  <script src="powerEngine/power-tiers.js?v=2.3-card-carousel&reward-overhaul=1&magic-mode-legendary=1&feedback-lie=1&secret-themes=3&theme-dossier=1"></script> <!-- power-choice-mode-v2.2 -->
+  <script src="client/power-choice-mode.js?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&hardmode-copy=1&mobile-perf=1&reward-overhaul=1&optional-note-oneline=1&note-inline-title=1&daily-hide-refresh=1&guide-btn-inline=1&reward-icon-fit=1&spy-rules-short=1&fixed-reward-svg-pack=1&clean-fixed-rewards=1&persistent-power-badge=2&theme-dossier=1"></script> <!-- power-choice-mode-v2.2 -->
 <!-- UMT_CUDDLE_REBALANCE_V5_JS_BEGIN -->
 <script src="/cuddle/cuddle-rebalance-v5.js?v=5.0.0"></script>
 <!-- UMT_CUDDLE_REBALANCE_V5_JS_END -->

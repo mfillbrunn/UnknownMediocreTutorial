@@ -483,6 +483,11 @@
     if (starting) return;
     setStarting(true);
     lastSelection = { challenge, difficulty };
+    // A fresh attempt always gets a fresh room (see joinRoom below setting
+    // window.roomId to it), which already makes the guard in client.js's
+    // updateScreens() stop applying on its own -- cleared here too as
+    // plain hygiene, same as this file's own _challengeStarting reset.
+    window._challengeRoomFinished = null;
 
     try {
       const result = await emitWithAuth("singlePlayer:startChallenge", {
@@ -602,6 +607,18 @@
   function presentResult(payload) {
     pendingResult = null;
     stopWaiting();
+    // The finished match's own room can still be lingering in the
+    // background (the server's end-of-match reveal ceremony schedules a
+    // screen update of its OWN several seconds out -- see client.js's
+    // updateScreens() -- to hold the board up long enough for the
+    // winning tile-flip to actually play before it forces the summary
+    // screen on). That later callback has no idea the player has since
+    // navigated here, so without this it can yank them back to the game
+    // screen (or the summary) well after they've already moved on. Same
+    // guard/reasoning as _asyncInviteRoomId's own precedent in
+    // client.js's updateScreens(): scoped to this exact room, so it stops
+    // applying on its own the moment a fresh challenge claims a new one.
+    window._challengeRoomFinished = window.roomId;
     window.showScreen("challengesScreen");
     document.getElementById("challengeAchievementsPanel")?.classList.add("hidden");
     document.getElementById("challengeBrowser")?.classList.add("hidden");

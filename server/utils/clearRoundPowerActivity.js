@@ -76,21 +76,25 @@ function clearRoundPowerActivity(state) {
   powers.revealLocationPeekIndex = null;
   powers.revealLocationPeek = null;
 
-  // Informant (revealLocation) is round-scoped, not game-scoped: the
-  // permanent unlock itself -- not just this round's cached peek above --
-  // must not survive past the round that earned it. This runs from
-  // endGame() (gameOver.js), which every round-ending path already calls
-  // (secret guessed, guess limit, forfeit/disconnect, AI resolution,
-  // timeout), so this is the single place Informant actually deactivates
-  // rather than duplicating the same cleanup in each of those call sites.
+  // Informant (revealLocation) and Theme Dossier (secretThemesReveal) are
+  // round-scoped, not game-scoped: the permanent unlock itself -- not just
+  // this round's cached peek/labels above -- must not survive past the
+  // round that earned it. This runs from endGame() (gameOver.js), which
+  // every round-ending path already calls (secret guessed, guess limit,
+  // forfeit/disconnect, AI resolution, timeout), so this is the single
+  // place these two actually deactivate rather than duplicating the same
+  // cleanup in each of those call sites.
+  const ROUND_SCOPED_PERSISTENT_POWER_IDS = new Set(["revealLocation", "secretThemesReveal"]);
   if (powers.powerChoicePersistentGrants?.guesser?.length) {
     powers.powerChoicePersistentGrants.guesser =
       powers.powerChoicePersistentGrants.guesser.filter(
-        grant => grant.powerId !== "revealLocation"
+        grant => !ROUND_SCOPED_PERSISTENT_POWER_IDS.has(grant.powerId)
       );
   }
-  if (Array.isArray(state.activePowers) && state.activePowers.includes("revealLocation")) {
-    state.activePowers = state.activePowers.filter(id => id !== "revealLocation");
+  if (Array.isArray(state.activePowers)) {
+    state.activePowers = state.activePowers.filter(
+      id => !ROUND_SCOPED_PERSISTENT_POWER_IDS.has(id)
+    );
   }
 
   powers.doubleGuessPending = false;
@@ -99,6 +103,7 @@ function clearRoundPowerActivity(state) {
 
   powers.letterProfileGuesserStat = null;
   powers.secretThemesLabel = null;
+  powers.secretThemesRevealLabels = null;
   powers.delayedIntelRoundIndex = null;
 
   powers.revealLetterActive = false;

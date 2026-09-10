@@ -145,6 +145,13 @@
   const emoji =
     meta?.emoji || "";
 
+  // Same sprite the reward cards and power buttons draw from
+  // (window.POWER_ICON_IDS) -- callers that can show a vector icon should
+  // prefer it over the plain emoji so a "you used X" notification reads
+  // as the same icon the player picked/pressed, not a different glyph.
+  const iconId =
+    window.POWER_ICON_IDS?.[evt.id] || null;
+
   const desc =
     meta?.desc || "";
 
@@ -180,6 +187,7 @@ const opponentText =
   return {
     id: evt.id,
     emoji,
+    iconId,
     label,
     desc,
     opponentDesc,

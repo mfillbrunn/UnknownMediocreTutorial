@@ -100,6 +100,12 @@ window.POWER_PALETTES = Object.freeze({
     "#38BDF8"
   ],
 
+  secretThemesReveal: [
+    "#38BDF8",
+    "#0EA5E9",
+    "#FBBF24"
+  ],
+
   revealLetter: [
     "#16A34A",
     "#FACC15",

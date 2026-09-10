@@ -303,7 +303,28 @@ body.blind-guess .key:hover {
   will-change: background-color, color;
 }
 
-.history-row:not(.draft-row) .history-tile.tile-gray-yellow {
+/* Excludes the row's own .reveal-tiles window (history.css): that class is
+   only present for the ~1.3s one-time flip-in right after the row lands,
+   during which every tile is hidden behind its opaque .history-tile-cover
+   anyway -- nothing about this animation is visible yet regardless of
+   which rule wins. But `animation-name` (like every longhand `animation-*`
+   property) cascades on its own, independent of the `background`/`color`
+   values it happens to carry -- so without this exclusion, this rule's
+   higher specificity was ALSO winning `animation-name` itself away from
+   history.css's ".reveal-tiles .history-tile" rule for the ambiguous tile,
+   meaning `history-wordle-flip` never actually played on it. That silently
+   broke the one thing every reveal-completion listener in ui/history.js
+   and ui/guesser-flow-v7.js waits for (an `animationend` whose
+   animationName is exactly "history-wordle-flip", checked on the row's
+   LAST tile) whenever the ambiguous tile landed in that position --
+   forcing every such row to fall back to those listeners' multi-second
+   safety timers instead of resolving immediately like a normal guess, and
+   whatever asynchronous work was chained behind that reveal (the guesser's
+   own next-render/scroll bookkeeping among it) ran correspondingly late.
+   Once .reveal-tiles is gone (removed in the same call that strips the
+   covers, so this is never visible either way), this rule matches again
+   and the cycle starts immediately -- same end look, correct signal. */
+.history-row-wrap:not(.reveal-tiles) .history-row:not(.draft-row) .history-tile.tile-gray-yellow {
   animation-name: feedback-slide-gray-yellow;
   animation-duration: 4.5s;
   animation-timing-function: ease-in-out;
@@ -311,7 +332,7 @@ body.blind-guess .key:hover {
   animation-delay: calc(-1 * var(--ff-phase));
 }
 
-.history-row:not(.draft-row) .history-tile.tile-yellow-gray {
+.history-row-wrap:not(.reveal-tiles) .history-row:not(.draft-row) .history-tile.tile-yellow-gray {
   animation-name: feedback-slide-yellow-gray;
   animation-duration: 4.5s;
   animation-timing-function: ease-in-out;
@@ -319,7 +340,7 @@ body.blind-guess .key:hover {
   animation-delay: calc(-1 * var(--ff-phase));
 }
 
-.history-row:not(.draft-row) .history-tile.tile-gray-green {
+.history-row-wrap:not(.reveal-tiles) .history-row:not(.draft-row) .history-tile.tile-gray-green {
   animation-name: feedback-slide-gray-green;
   animation-duration: 4.5s;
   animation-timing-function: ease-in-out;
@@ -327,7 +348,7 @@ body.blind-guess .key:hover {
   animation-delay: calc(-1 * var(--ff-phase));
 }
 
-.history-row:not(.draft-row) .history-tile.tile-green-gray {
+.history-row-wrap:not(.reveal-tiles) .history-row:not(.draft-row) .history-tile.tile-green-gray {
   animation-name: feedback-slide-green-gray;
   animation-duration: 4.5s;
   animation-timing-function: ease-in-out;
@@ -335,7 +356,7 @@ body.blind-guess .key:hover {
   animation-delay: calc(-1 * var(--ff-phase));
 }
 
-.history-row:not(.draft-row) .history-tile.tile-yellow-green {
+.history-row-wrap:not(.reveal-tiles) .history-row:not(.draft-row) .history-tile.tile-yellow-green {
   animation-name: feedback-slide-yellow-green;
   animation-duration: 4.5s;
   animation-timing-function: ease-in-out;
@@ -343,7 +364,7 @@ body.blind-guess .key:hover {
   animation-delay: calc(-1 * var(--ff-phase));
 }
 
-.history-row:not(.draft-row) .history-tile.tile-green-yellow {
+.history-row-wrap:not(.reveal-tiles) .history-row:not(.draft-row) .history-tile.tile-green-yellow {
   animation-name: feedback-slide-green-yellow;
   animation-duration: 4.5s;
   animation-timing-function: ease-in-out;
