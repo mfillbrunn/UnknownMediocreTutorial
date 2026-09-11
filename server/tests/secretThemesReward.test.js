@@ -1,4 +1,4 @@
-// Regression test for the Secret Themes guesser power (Legendary Power
+// Regression test for the Secret Themes guesser power (Rare Power
 // Choice reward): an always-on readout of the single most specific category the
 // CURRENT secret belongs to, re-read every turn start so it tracks a
 // mid-round secret swap instead of going stale.
@@ -115,18 +115,18 @@ function run() {
     );
   }
 
-  // Offered as a Legendary guesser reward at every quest milestone.
+  // Offered as a Rare guesser reward at every quest milestone.
   {
     for (const tier of [1, 2, 3]) {
       const pool = guesserRewardPool(tier);
       const option = pool.find(entry => entry.powerId === "secretThemes");
       assert.ok(option, `secretThemes is offered in the guesser reward pool at tier ${tier}`);
-      assert.strictEqual(option.tier, 3, "secretThemes is Legendary (tier 3)");
+      assert.strictEqual(option.tier, 2, "secretThemes is Rare (tier 2)");
       assert.ok(/from now on/i.test(option.description), "the card reads as a standing unlock, not a one-off");
     }
   }
 
-  console.log("PASS secretThemesReward: Secret Themes shows the current secret's category every turn, follows a swapped secret, stays private to the guesser, resets each round, and is offered as a Legendary guesser reward");
+  console.log("PASS secretThemesReward: Secret Themes shows the current secret's category every turn, follows a swapped secret, stays private to the guesser, resets each round, and is offered as a Rare guesser reward");
 }
 
 module.exports = { run };

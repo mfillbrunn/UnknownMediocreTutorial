@@ -2,7 +2,7 @@
 // all-themes counterpart to the Secret Themes guesser power. Same
 // re-read-every-turn shape as secretThemesReward.test.js's Secret Themes
 // coverage, but reveals EVERY theme the secret belongs to instead of just
-// the single most specific one, is offered as a Rare (not Legendary)
+// the single most specific one, is offered as a Common (not Rare)
 // reward, and its grant does not survive past the round it was picked in.
 //
 // Also covers the mutual exclusion the reward was built with: never offer
@@ -138,14 +138,14 @@ function run() {
     );
   }
 
-  // Offered as a Rare guesser reward, phrased as this-round-only rather
+  // Offered as a Common guesser reward, phrased as this-round-only rather
   // than a standing "from now on" unlock.
   {
     for (const tier of [1, 2, 3]) {
       const pool = guesserRewardPool(tier);
       const option = pool.find(entry => entry.powerId === "secretThemesReveal");
       assert.ok(option, `secretThemesReveal is offered in the guesser reward pool at tier ${tier}`);
-      assert.strictEqual(option.tier, 2, "secretThemesReveal is Rare (tier 2), one tier below Secret Themes");
+      assert.strictEqual(option.tier, 1, "secretThemesReveal is Common (tier 1), one tier below Secret Themes");
       assert.ok(/this round only/i.test(option.description), "the card reads as round-scoped, not a standing unlock");
     }
   }

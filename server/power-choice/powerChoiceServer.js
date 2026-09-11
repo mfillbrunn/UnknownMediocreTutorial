@@ -872,10 +872,14 @@ function fixedOptions(role, threshold) {
 // powerOptionApplicable for the belt-and-suspenders runtime check).
 function guesserRewardPool(tier) {
   // Rarity (each option's own .tier) groups these into: Common -- Rule Out
-  // Two, Peek Letter, Silly Word, Guess Tip. Rare -- Yellow Intel, Freeze
-  // Secret, Time Rewind, Secret Vowel Count, Roulette Secret, Recon Sweep,
-  // Theme Dossier. Legendary -- Remove a Point, Informant, First Letter
-  // Reveal, Magic Mode, Secret Themes. Stealth Guess is deliberately NOT in this pool -- it's still a
+  // Two, Peek Letter, Silly Word, Guess Tip, Theme Dossier. Rare -- Yellow
+  // Intel, Freeze Secret, Time Rewind, Secret Vowel Count, Roulette Secret,
+  // Recon Sweep, Secret Themes. Legendary -- Remove a Point, Informant,
+  // First Letter Reveal, Magic Mode. Secret Themes and Theme Dossier are
+  // the only two theme-revealing rewards on purpose -- Secret Themes is
+  // the standing "one label, every turn, for the rest of the match" pick,
+  // Theme Dossier the stronger-but-shorter "every label, this round only"
+  // one; no other reward should ever surface theme information. Stealth Guess is deliberately NOT in this pool -- it's still a
   // real classic-mode power (see client/powerEngine/powers/stealthGuess.js
   // and its own POWER_RULES.js entry), just not currently offered as a
   // Power Choice reward.
