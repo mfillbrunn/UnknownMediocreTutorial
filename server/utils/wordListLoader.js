@@ -3,7 +3,7 @@ const path = require("path");
 
 function loadWordList() {
   const file = fs.readFileSync(
-    path.join(__dirname, "../wordlists/allowed_words.txt"),
+    path.join(__dirname, "../wordlists/allowed_words_modern.txt"),
     "utf8"
   );
 

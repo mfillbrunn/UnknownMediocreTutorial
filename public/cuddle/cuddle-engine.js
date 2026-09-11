@@ -135,7 +135,7 @@
 
   class CuddleGame {
     // wordLists: { guesses, secrets } -- two different pools, same split the
-    // main game already uses (server/wordlists/allowed_guesses.txt vs.
+    // main game already uses (server/wordlists/allowed_guesses_modern.txt vs.
     // allowed_secrets.txt, served as /api/allowed-guesses and
     // /api/allowed-secrets). guesses is the broad dictionary a submitted
     // word is checked against; secrets is the curated pool _pickSecret and

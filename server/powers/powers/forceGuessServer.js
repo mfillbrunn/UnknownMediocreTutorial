@@ -6,7 +6,7 @@ let ALLOWED_GUESSES = [];
 try {
   const allowedPath = path.join(
     __dirname,
-    "../../wordlists/allowed_guesses.txt"
+    "../../wordlists/allowed_guesses_modern.txt"
   );
   const raw = fs.readFileSync(allowedPath, "utf8");
   ALLOWED_GUESSES = parseWordlist(raw);

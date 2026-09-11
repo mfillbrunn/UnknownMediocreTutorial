@@ -15,7 +15,7 @@ const { QUEST_TYPES } = require("../powers/powers/questServer");
 
 function loadRealVocabulary() {
   const secretsRaw = fs.readFileSync(path.join(__dirname, "..", "wordlists", "allowed_secrets.txt"), "utf8");
-  const guessesRaw = fs.readFileSync(path.join(__dirname, "..", "wordlists", "allowed_guesses.txt"), "utf8");
+  const guessesRaw = fs.readFileSync(path.join(__dirname, "..", "wordlists", "allowed_guesses_modern.txt"), "utf8");
   return {
     powerIds: new Set(Object.keys(POWER_METADATA)),
     questTypes: new Set(QUEST_TYPES),
