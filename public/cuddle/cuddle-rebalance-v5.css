@@ -72,19 +72,10 @@
   box-sizing: border-box;
 }
 
-.umt-candidate-notebook {
-  display: flex;
-  align-items: center;
-  width: min(100%, 34rem);
-  box-sizing: border-box;
-  margin: 0 auto 0.55rem;
-  padding: 0.42rem 0.66rem;
-  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
-  border-radius: 0.62rem;
-  background: color-mix(in srgb, var(--surface, #fff) 92%, currentColor 3%);
-  font-size: 0.78rem;
-  font-weight: 720;
-  line-height: 1.25;
+.cuddle-feasible-chip {
+  color: #c9e8d8;
+  border-color: rgba(150, 224, 189, 0.28);
+  background: rgba(150, 224, 189, 0.1);
 }
 
 /* The native reroll action remains the same button, just relocated beside the quest. */
@@ -197,6 +188,11 @@
   translate: 0 -50%;
 }
 
+/* Its icon draws in currentColor (see powerSvgBody's "ink"), which resolves
+   to this dark theme's near-white body text -- so the button needs a dark
+   card background (matching .cuddle-choice-icon) rather than the light
+   "surface" tint the base site uses for cards, or the icon renders as
+   white-on-near-white and disappears. */
 .umt-power-icon-button {
   display: grid;
   place-items: center;
@@ -206,7 +202,7 @@
   padding: 0.18rem;
   border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
   border-radius: 0.48rem;
-  background: color-mix(in srgb, var(--surface, #fff) 94%, currentColor 3%);
+  background: rgba(18, 17, 27, 0.88);
   color: inherit;
   box-shadow: 0 0.1rem 0.32rem rgb(0 0 0 / 0.16);
   cursor: pointer;

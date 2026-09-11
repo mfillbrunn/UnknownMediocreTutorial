@@ -39,7 +39,7 @@
       key: "coachPossibleAnswers",
       icon: "🎧",
       title: "Remaining Setter Box",
-      description: "Unlock an exact Possible Answers counter beside the Cuddle board.",
+      description: "Unlock an exact Secrets Remaining counter next to the theme readout.",
       max: 1
     },
     {
@@ -98,8 +98,8 @@
     {
       id: "coachShopPossibleAnswers",
       icon: "🎧",
-      title: "Permanent Remaining Box",
-      description: "PERMANENT: unlock the Possible Answers counter for this run.",
+      title: "Permanent Secrets Counter",
+      description: "PERMANENT: unlock the Secrets Remaining counter for this run.",
       cost: 44,
       kind: "permanent",
       upgradeId: "coachPossibleAnswers"
@@ -589,7 +589,7 @@
       return { ok: false, error: "Unlock a Guesser Hint first." };
     }
     if (upgradeId === "coachPossibleAnswers") {
-      if (coach.possibleAnswersUnlocked) return { ok: false, error: "Possible Answers is already unlocked." };
+      if (coach.possibleAnswersUnlocked) return { ok: false, error: "Secrets Remaining is already unlocked." };
       coach.possibleAnswersUnlocked = true;
     } else if (upgradeId === "coachHint") {
       if (coach.hintsPerRound >= 4) return { ok: false, error: "Hints are already fully upgraded." };
@@ -1222,7 +1222,7 @@
       var lines = originalGetUpgradeSummary.apply(this, arguments) || [];
       var coach = ensureCoach(this);
       lines = lines.slice();
-      lines.push("Possible answers: " + (coach.possibleAnswersUnlocked ? "unlocked" : "locked"));
+      lines.push("Secrets remaining: " + (coach.possibleAnswersUnlocked ? "unlocked" : "locked"));
       lines.push("Hints: " + coach.hintsPerRound + " per round from round " + coach.hintStartRound);
       if (coach.newBossRewardsOwned.length) lines.push("Coach boss rewards: " + coach.newBossRewardsOwned.join(", "));
       return lines;
@@ -1418,44 +1418,49 @@
       if (existing) existing.remove();
       return;
     }
-    var candidates = coach.possibleAnswersUnlocked ? getPossibleAnswers(game) : [];
     var compassOwned = hasBossReward(game, "goldenCompass");
     var compassUsed = coach.goldenCompassUsedRoundKey === roundKey(game);
     // The panel used to always render, if only for its "Coach statistics"
     // summary box -- that box is gone (the running totals it showed live on
-    // under Details instead, via enhanceStatsBadges), and the Guesser Hint
-    // now auto-fires with its own header badge and pop-up instead of a
-    // button here, so with neither Possible Answers nor Golden Compass
-    // unlocked there is nothing left to show at all.
-    if (!coach.possibleAnswersUnlocked && !compassOwned) {
+    // under Details instead, via enhanceStatsBadges), the Guesser Hint now
+    // auto-fires with its own header badge and pop-up instead of a button
+    // here, and Possible Answers moved to the inline "Secrets remaining"
+    // readout next to the theme badge (see secretsRemainingInline, consumed
+    // by cuddle-campaign.js's insertMap) instead of its own white box -- so
+    // with Golden Compass not owned there is nothing left to show at all.
+    if (!compassOwned) {
       if (existing) existing.remove();
       return;
     }
     var signature = JSON.stringify({
       round: game.state.round,
       status: game.state.status,
-      candidates: coach.possibleAnswersUnlocked ? candidates.length : null,
-      possible: coach.possibleAnswersUnlocked,
       compass: compassOwned,
       compassUsed: compassUsed
     });
     if (existing && existing.dataset.coachSignature === signature) return;
     var html = "<aside id=\"cuddleCoachPanel\" class=\"cuddle-coach-panel\" data-coach-signature=\"" + escapeHtml(signature) + "\" aria-label=\"Cuddle assistance\">";
-    if (coach.possibleAnswersUnlocked) {
-      html += "<section id=\"cuddleCoachRemainingBox\" class=\"remaining-box cuddle-coach-remaining-box\">"
-        + "<div class=\"line\"><span class=\"label\">🎧 Possible answers</span><span class=\"value\">" + candidates.length.toLocaleString() + "</span></div>"
-        + "<div class=\"line remaining-hint\"><span class=\"label\">Matches visible feedback</span><span class=\"value\">exact</span></div></section>";
-    }
-    if (compassOwned) {
-      html += "<section class=\"cuddle-coach-actions\">";
-      html += "<button type=\"button\" class=\"cuddle-coach-action\" data-cuddle-coach-action=\"use-compass\" " + (compassUsed ? "disabled" : "") + ">"
-        + "<span>🧭</span><span><b>Golden Compass</b><small>" + (compassUsed ? "Used this round" : "Find the best untested letter") + "</small></span></button>";
-      html += "</section>";
-    }
+    html += "<section class=\"cuddle-coach-actions\">";
+    html += "<button type=\"button\" class=\"cuddle-coach-action\" data-cuddle-coach-action=\"use-compass\" " + (compassUsed ? "disabled" : "") + ">"
+      + "<span>🧭</span><span><b>Golden Compass</b><small>" + (compassUsed ? "Used this round" : "Find the best untested letter") + "</small></span></button>";
+    html += "</section>";
     html += "</aside>";
     var next = makeElement(html);
     if (existing) existing.replaceWith(next);
     else insertAfter(board, next);
+  }
+
+  // Plain inline text next to the theme badge -- deliberately not a pill
+  // chip like the theme/quest badges (see cuddle.css's
+  // .cuddle-secrets-remaining), since the count is meant to read as a
+  // quieter, secondary readout rather than another badge competing for
+  // attention.
+  function secretsRemainingInline(game) {
+    var coach = ensureCoach(game);
+    if (!coach || !coach.possibleAnswersUnlocked) return "";
+    if (!game.state || game.state.status !== "playing") return "";
+    var count = getPossibleAnswers(game).length;
+    return "<span class=\"cuddle-secrets-remaining\">Secrets remaining: " + count.toLocaleString() + "</span>";
   }
 
   function enhanceShop(game, coach) {
@@ -1580,6 +1585,32 @@
     });
   }
 
+  // A small banner that sweeps across the screen the moment a hint is
+  // unlocked, on top of (not instead of) the dismissible corner toast --
+  // green for the Guesser Hint's exact-position reveal. Keyed off
+  // coachHintNotice.seq so it fires once per grant, not once per render.
+  var lastHintBannerSeq = 0;
+  function renderHintSweepBanner(game) {
+    var notice = game && game.state && game.state.coachHintNotice;
+    var seq = notice ? integer(notice.seq, 0) : 0;
+    if (!seq || seq === lastHintBannerSeq) return;
+    lastHintBannerSeq = seq;
+    var root = document.getElementById("cuddleRoot");
+    if (!root) return;
+    var banner = document.createElement("div");
+    banner.className = "cuddle-hint-sweep-banner";
+    banner.setAttribute("aria-hidden", "true");
+    banner.textContent = notice.count > 1
+      ? notice.count + " Guesser Hints unlocked!"
+      : "Guesser Hint unlocked!";
+    root.appendChild(banner);
+    banner.addEventListener("animationend", function removeBanner() { banner.remove(); });
+    // Belt-and-suspenders: a tab switch or throttled rAF can skip the
+    // animationend event entirely, which would otherwise leave the banner
+    // stuck on screen forever.
+    setTimeout(function cleanupBanner() { banner.remove(); }, 2200);
+  }
+
   function enhanceUi() {
     uiQueued = false;
     var root = document.getElementById("cuddleRoot");
@@ -1592,6 +1623,7 @@
     enhanceUpgradeCopy(activeGame);
     enhanceStatsBadges(activeGame, coach);
     updateGoldenThread(activeGame, coach);
+    renderHintSweepBanner(activeGame);
   }
 
   function queueUi() {
@@ -1667,6 +1699,10 @@
     renderHintBadge: function renderCurrentHintBadge(game) {
       var target = game || activeGame;
       return target && target.state ? renderHintBadge(target) : "";
+    },
+    renderSecretsRemaining: function renderCurrentSecretsRemaining(game) {
+      var target = game || activeGame;
+      return target && target.state ? secretsRemainingInline(target) : "";
     }
   });
 }());

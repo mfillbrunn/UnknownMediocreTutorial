@@ -832,6 +832,7 @@
 }
 
 .cuddle-choice {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -845,6 +846,32 @@
   font: inherit;
   cursor: pointer;
   transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+/* Marks a reward/upgrade card that would complete a synergy the player has
+   already half-earned (see CuddleEngine.rewardInteractionSynergy). */
+.umt-interaction-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(246, 201, 86, 0.28), rgba(246, 201, 86, 0.12));
+  border: 1px solid rgba(246, 201, 86, 0.55);
+  color: #f6c956;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.umt-interaction-badge svg {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 auto;
 }
 
 .cuddle-choice:hover {
@@ -1568,6 +1595,29 @@
   font-size: 0.7rem;
   line-height: 1.35;
 }
+
+.cuddle-boss-leave-behind {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px 9px;
+  border: 1px solid rgba(230, 138, 118, 0.34);
+  border-radius: 10px;
+  background: rgba(230, 138, 118, 0.08);
+  text-align: left;
+}
+
+.cuddle-boss-leave-behind b {
+  color: #e68a76;
+  font-size: 0.74rem;
+}
+
+.cuddle-boss-leave-behind span {
+  color: var(--cuddle-muted);
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
 /* UMT_CUDDLE_BOSS_ROUNDS: END */
 /* UMT_CUDDLE_REBALANCE_V3: CSS START */
 /* Twelve scoring rounds, with compact horizontal scrolling on narrow screens. */
@@ -1656,6 +1706,9 @@
 }
 #cuddleScreen .cuddle-v3-toast.is-synergy {
   border-color: rgba(255, 215, 111, 0.48);
+}
+#cuddleScreen .cuddle-v3-toast.is-burden {
+  border-color: rgba(230, 138, 118, 0.48);
 }
 #cuddleScreen .cuddle-v3-toast.is-hint {
   border-color: rgba(107, 214, 143, 0.5);
@@ -2201,6 +2254,25 @@
 .cuddle-play-strip .cuddle-map-badge-standalone {
   margin-bottom: 0;
   min-width: 0;
+}
+
+/* Holds the theme readout plus the plain-text Secrets Remaining count
+   (Candidate Notebook's Feasible chip lives inside the theme readout's own
+   chip row instead -- see renderCategoryBadge). */
+.cuddle-play-theme-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Deliberately not a pill/chip like the theme and quest badges beside it --
+   a quieter secondary readout, plain label:value text. */
+.cuddle-secrets-remaining {
+  color: var(--cuddle-muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+  white-space: nowrap;
 }
 
 /* The quest used to be its own bordered, icon-fronted card taking a full
