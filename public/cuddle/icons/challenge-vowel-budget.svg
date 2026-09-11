@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Vowel Budget challenge">
+  <rect x="2" y="2" width="60" height="60" rx="18" fill="#fff5e8" stroke="#3f2d4f" stroke-width="4"/>
+
+  <circle cx="32" cy="32" r="20" fill="#efc56b" stroke="#3f2d4f" stroke-width="3"/>
+  <path d="M22 22h20v20H22Z" fill="#fff5e8" stroke="#3f2d4f" stroke-width="2.5" rx="4"/>
+  <text x="32" y="37" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="900" fill="#3f2d4f">AE</text>
+  <circle cx="16" cy="45" r="5" fill="#e79ab0" stroke="#3f2d4f" stroke-width="2"/>
+  <circle cx="48" cy="45" r="5" fill="#78b98a" stroke="#3f2d4f" stroke-width="2"/>
+</svg>

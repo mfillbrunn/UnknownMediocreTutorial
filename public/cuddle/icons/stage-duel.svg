@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Word Duel stage">
+  <rect x="2" y="2" width="60" height="60" rx="18" fill="#fff5e8" stroke="#3f2d4f" stroke-width="4"/>
+
+  <path d="M14 46 43 17l5 5-29 29-8 2Z" fill="#75b5cf" stroke="#3f2d4f" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M50 46 21 17l-5 5 29 29 8 2Z" fill="#e79ab0" stroke="#3f2d4f" stroke-width="3" stroke-linejoin="round"/>
+  <rect x="24" y="25" width="16" height="14" rx="4" fill="#efc56b" stroke="#3f2d4f" stroke-width="3"/>
+  <path d="M28 32h8" stroke="#3f2d4f" stroke-width="3" stroke-linecap="round"/>
+  <path d="M11 13h16l-5 5 5 5H11Z" fill="#78b98a" stroke="#3f2d4f" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M53 13H37l5 5-5 5h16Z" fill="#a98bc1" stroke="#3f2d4f" stroke-width="2.5" stroke-linejoin="round"/>
+</svg>

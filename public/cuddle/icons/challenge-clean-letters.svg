@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Clean Letters challenge">
+  <rect x="2" y="2" width="60" height="60" rx="18" fill="#fff5e8" stroke="#3f2d4f" stroke-width="4"/>
+
+  <g stroke="#3f2d4f" stroke-width="2.5">
+    <rect x="7" y="24" width="10" height="17" rx="3" fill="#e79ab0"/>
+    <rect x="17" y="19" width="10" height="22" rx="3" fill="#efc56b"/>
+    <rect x="27" y="14" width="10" height="27" rx="3" fill="#78b98a"/>
+    <rect x="37" y="19" width="10" height="22" rx="3" fill="#75b5cf"/>
+    <rect x="47" y="24" width="10" height="17" rx="3" fill="#a98bc1"/>
+  </g>
+  <text x="12" y="36" text-anchor="middle" font-family="Arial" font-size="8" font-weight="900" fill="#3f2d4f">C</text>
+  <text x="22" y="34" text-anchor="middle" font-family="Arial" font-size="8" font-weight="900" fill="#3f2d4f">L</text>
+  <text x="32" y="31" text-anchor="middle" font-family="Arial" font-size="8" font-weight="900" fill="#3f2d4f">E</text>
+  <text x="42" y="34" text-anchor="middle" font-family="Arial" font-size="8" font-weight="900" fill="#3f2d4f">A</text>
+  <text x="52" y="36" text-anchor="middle" font-family="Arial" font-size="8" font-weight="900" fill="#3f2d4f">N</text>
+  <path d="M19 49l8 5 18-13" fill="none" stroke="#78b98a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

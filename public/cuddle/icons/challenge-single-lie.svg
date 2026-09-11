@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="One Little Lie challenge">
+  <rect x="2" y="2" width="60" height="60" rx="18" fill="#fff5e8" stroke="#3f2d4f" stroke-width="4"/>
+
+  <path d="M15 19c7-5 15-5 22 0v17c-5 9-17 12-22 2Z" fill="#eadff2" stroke="#3f2d4f" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M29 19c7-5 15-4 20 1l-2 18c-6 7-15 6-20 1Z" fill="#e79ab0" stroke="#3f2d4f" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="23" cy="27" r="2.5" fill="#3f2d4f"/>
+  <circle cx="39" cy="27" r="2.5" fill="#3f2d4f"/>
+  <path d="M20 35c4 3 7 3 10 0M35 36c3-3 7-3 10 0" fill="none" stroke="#3f2d4f" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M47 13l3-4M50 17l5-1" stroke="#efc56b" stroke-width="3" stroke-linecap="round"/>
+</svg>

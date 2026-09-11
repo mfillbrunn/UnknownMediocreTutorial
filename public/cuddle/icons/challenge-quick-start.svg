@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Quick Start challenge">
+  <rect x="2" y="2" width="60" height="60" rx="18" fill="#fff5e8" stroke="#3f2d4f" stroke-width="4"/>
+
+  <circle cx="32" cy="34" r="18" fill="#fff5e8" stroke="#3f2d4f" stroke-width="4"/>
+  <path d="M32 34V22M32 34l10 5" stroke="#e79ab0" stroke-width="4" stroke-linecap="round"/>
+  <path d="M26 11h12M32 11v5M45 17l4 4" stroke="#3f2d4f" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="32" cy="34" r="3" fill="#efc56b" stroke="#3f2d4f" stroke-width="2"/>
+</svg>

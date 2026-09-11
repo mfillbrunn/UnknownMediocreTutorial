@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Fogged Slot challenge">
+  <rect x="2" y="2" width="60" height="60" rx="18" fill="#fff5e8" stroke="#3f2d4f" stroke-width="4"/>
+
+  <rect x="18" y="13" width="28" height="38" rx="7" fill="#75b5cf" stroke="#3f2d4f" stroke-width="3"/>
+  <path d="M14 36c0-5 4-9 9-9 2-5 7-8 12-6 4 1 7 5 7 9 5 0 8 3 8 7 0 5-4 8-9 8H22c-5 0-8-4-8-9Z" fill="#fff5e8" stroke="#3f2d4f" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M24 49h16" stroke="#a98bc1" stroke-width="3" stroke-linecap="round"/>
+</svg>
