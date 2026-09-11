@@ -934,6 +934,17 @@
       - finite(entry.ratchetQuestPenalty, 0);
   }
 
+  // Each row carries the labelled lines behind its figure so the cash-out
+  // screen's tap-to-open breakdown still adds up after this rebuild.
+  function breakdownFor(entry) {
+    if (typeof window.CuddleMoneyMode?.rowBreakdown !== "function") return [];
+    try {
+      return window.CuddleMoneyMode.rowBreakdown(entry) || [];
+    } catch (error) {
+      return [];
+    }
+  }
+
   function rebuildPendingPayout(game, unusedRows, perRow) {
     var moneyMode = game.state.cuddleMoneyMode;
     var payload = moneyMode && moneyMode.pendingPayout;
@@ -945,7 +956,8 @@
         word: String(entry && entry.word || "").toUpperCase(),
         feedback: (entry && (entry.shownFeedback || entry.feedback) || []).slice(),
         timedOut: Boolean(entry && entry.timedOut),
-        amount: Math.round(rowMoneyWithoutUnusedBonus(entry))
+        amount: Math.round(rowMoneyWithoutUnusedBonus(entry)),
+        breakdown: breakdownFor(entry)
       };
     });
     for (var index = 0; index < unusedRows; index += 1) {
@@ -956,7 +968,8 @@
         timedOut: false,
         amount: Math.round(perRow),
         bonusRow: true,
-        unusedRowNumber: index + 1
+        unusedRowNumber: index + 1,
+        breakdown: [{ label: "Unused guess row " + (index + 1), detail: "paid as five greens", amount: Math.round(perRow) }]
       });
     }
     payload.to = Math.round(finite(game.state.score, 0));
@@ -964,7 +977,11 @@
     var allocated = payload.rows.reduce(function sum(total, row) { return total + finite(row.amount, 0); }, 0);
     if (payload.rows.length && allocated !== payload.total) {
       var realIndex = Math.max(0, history.length - 1);
-      payload.rows[realIndex].amount += payload.total - allocated;
+      var shortfall = payload.total - allocated;
+      payload.rows[realIndex].amount += shortfall;
+      if (Array.isArray(payload.rows[realIndex].breakdown)) {
+        payload.rows[realIndex].breakdown.push({ label: "Round bonus", amount: shortfall });
+      }
     }
   }
 

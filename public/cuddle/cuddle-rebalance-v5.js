@@ -24,8 +24,82 @@
     quickStudy: "umtQuickStudy",
     candidateNotebook: "umtCandidateNotebook",
     jokerCache: "umtJokerCache",
-    reserveDividend: "umtReserveDividend"
+    reserveDividend: "umtReserveDividend",
+    rainyDay: "umtRainyDay",
+    encore: "umtEncore",
+    hotStreak: "umtHotStreak",
+    vowelBounty: "umtVowelBounty",
+    doubleDown: "umtDoubleDown"
   });
+
+  const VOWELS = new Set(["A", "E", "I", "O", "U"]);
+
+  // Rewards that change how a stage plays rather than nudging a number --
+  // they compound with each other through FUN_SYNERGIES below, so a run can
+  // build toward a payday engine instead of just buying +$1 four times.
+  const FUN_REWARDS = Object.freeze([
+    Object.freeze({
+      id: IDS.rainyDay, key: IDS.rainyDay, icon: "\uD83C\uDFE6",
+      title: "Rainy Day Fund", name: "Rainy Day Fund",
+      description: "Every non-boss stage opens by paying 5% interest on your wallet, up to $25. Stacks.",
+      maxLevel: 2, maxCount: 2, kind: "upgrade"
+    }),
+    Object.freeze({
+      id: IDS.encore, key: IDS.encore, icon: "\uD83C\uDFAC",
+      title: "Encore", name: "Encore",
+      description: "Every third stage you solve pays a $75 encore bonus.",
+      maxLevel: 1, maxCount: 1, kind: "upgrade"
+    }),
+    Object.freeze({
+      id: IDS.hotStreak, key: IDS.hotStreak, icon: "\uD83D\uDD25",
+      title: "Hot Streak", name: "Hot Streak",
+      description: "Each guess in a row that pins a new green pays a growing bonus: $5, then $10, then $15. A guess with no new green resets it.",
+      maxLevel: 2, maxCount: 2, kind: "upgrade"
+    }),
+    Object.freeze({
+      id: IDS.vowelBounty, key: IDS.vowelBounty, icon: "\uD83C\uDD70\uFE0F",
+      title: "Vowel Bounty", name: "Vowel Bounty",
+      description: "Every vowel in a secret you solve pays $5.",
+      maxLevel: 2, maxCount: 2, kind: "upgrade"
+    }),
+    Object.freeze({
+      id: IDS.doubleDown, key: IDS.doubleDown, icon: "\uD83C\uDFB2",
+      title: "Double Down", name: "Double Down",
+      description: "Solve on your very last guess and the whole stage pays double.",
+      maxLevel: 1, maxCount: 1, kind: "upgrade"
+    })
+  ]);
+
+  // Owning both halves of a pair turns it on permanently. Each one changes a
+  // reward's rule rather than adding another flat number, so the combination
+  // is worth more than the two pieces.
+  const FUN_SYNERGIES = Object.freeze([
+    Object.freeze({
+      id: "compoundCuddle", icon: "\uD83C\uDFE6", title: "Compound Cuddle",
+      requires: Object.freeze([IDS.rainyDay, IDS.reserveDividend]),
+      description: "Rainy Day Fund + Reserve Dividend: interest doubles its cap and unused Jokers count toward the balance it pays on."
+    }),
+    Object.freeze({
+      id: "goldenStreak", icon: "\uD83D\uDD25", title: "Golden Streak",
+      requires: Object.freeze([IDS.hotStreak, "yellowPoints"]),
+      description: "Hot Streak + Golden Value: a guess that pins a new yellow keeps the streak alive too."
+    }),
+    Object.freeze({
+      id: "encoreNight", icon: "\uD83C\uDFAC", title: "Encore Night",
+      requires: Object.freeze([IDS.encore, IDS.vowelBounty]),
+      description: "Encore + Vowel Bounty: every encore also pays $10 for each vowel in that stage's secret."
+    }),
+    Object.freeze({
+      id: "allIn", icon: "\uD83C\uDFB2", title: "All In",
+      requires: Object.freeze([IDS.doubleDown, IDS.hotStreak]),
+      description: "Double Down + Hot Streak: a last-guess solve also pays the streak bonus at its highest step."
+    }),
+    Object.freeze({
+      id: "studyGroup", icon: "\uD83D\uDCD3", title: "Study Group",
+      requires: Object.freeze([IDS.candidateNotebook, IDS.openingInsight]),
+      description: "Candidate Notebook + Opening Insight: the notebook lists a second feasible answer."
+    })
+  ]);
 
   const ALL_THEMES_REWARD = Object.freeze({
     id: IDS.allThemesBoss,
@@ -243,6 +317,10 @@
   function asNumber(value, fallback = 0) {
     const number = Number(value);
     return Number.isFinite(number) ? number : fallback;
+  }
+
+  function asInteger(value, fallback = 0) {
+    return Math.trunc(asNumber(value, fallback));
   }
 
   function clamp(value, minimum, maximum) {
@@ -1803,12 +1881,191 @@
     };
   }
 
+  // -- opening-stage ramp --------------------------------------------------
+
+  // The first stages hand out a little help so the opening Wordles aren't a
+  // wall: spare guesses, a spare mulligan, and a free clue. It tapers to
+  // nothing by stage 4, so everything past the ramp plays exactly as before.
+  const TRAINING_WHEELS = Object.freeze({
+    1: Object.freeze({ guesses: 2, mulligans: 1, exactHint: true, summary: "+2 guesses, +1 mulligan, one position revealed" }),
+    2: Object.freeze({ guesses: 1, mulligans: 1, exactHint: true, summary: "+1 guess, +1 mulligan, one position revealed" }),
+    3: Object.freeze({ guesses: 1, mulligans: 0, letterHint: true, summary: "+1 guess, one letter revealed" })
+  });
+  const TRAINING_WHEELS_LAST_STAGE = 3;
+
+  function trainingWheelsFor(game) {
+    const state = stateOf(game);
+    if (!state || state.status !== "playing" || trueBossRound(game)) return null;
+    // A Duel runs on a cloned throwaway state with its own rules; the ramp is
+    // about the campaign's opening Wordles only.
+    if (state.branchMap && state.branchMap.expandedDuel) return null;
+    return TRAINING_WHEELS[Math.max(0, asInteger(state.round, 0))] || null;
+  }
+
+  function applyTrainingWheels(game) {
+    const plan = trainingWheelsFor(game);
+    const custom = customState(game);
+    if (!plan || !custom) return;
+    const token = roundToken(game);
+    if (custom.trainingWheelsToken === token) return;
+    custom.trainingWheelsToken = token;
+
+    const state = stateOf(game);
+    if (plan.guesses > 0) state.maxGuesses = Math.max(1, asInteger(state.maxGuesses, 6) + plan.guesses);
+    if (plan.mulligans > 0) state.mulligansLeft = Math.max(0, asInteger(state.mulligansLeft, 0)) + plan.mulligans;
+    try {
+      if (plan.exactHint && typeof game._revealPositionPeek === "function") game._revealPositionPeek();
+      else if (plan.letterHint && typeof game._applyOpeningClue === "function") game._applyOpeningClue();
+    } catch (error) {
+      log("training wheels hint failed", error);
+    }
+    const remaining = TRAINING_WHEELS_LAST_STAGE - asInteger(state.round, 0);
+    appendNotice(game, `\uD83D\uDEB2 Training wheels: ${plan.summary}.`
+      + (remaining > 0 ? ` They fade after stage ${TRAINING_WHEELS_LAST_STAGE}.` : " This is the last stage with them."));
+  }
+
+  // -- fun rewards ---------------------------------------------------------
+
+  function ownedFunSynergies(game) {
+    const custom = customState(game);
+    return new Set(custom && Array.isArray(custom.funSynergies) ? custom.funSynergies : []);
+  }
+
+  function hasFunSynergy(game, id) {
+    return ownedFunSynergies(game).has(id);
+  }
+
+  // Both halves owned turns a pair on for good. Called after every reward
+  // pick, so the toast lands on the screen that granted the second half.
+  function refreshFunSynergies(game) {
+    const custom = customState(game);
+    if (!custom) return [];
+    const owned = ownedFunSynergies(game);
+    const unlocked = FUN_SYNERGIES.filter((item) =>
+      !owned.has(item.id) && item.requires.every((id) => upgradeLevel(game, id) > 0));
+    if (!unlocked.length) return [];
+    unlocked.forEach((item) => owned.add(item.id));
+    custom.funSynergies = [...owned];
+    const state = stateOf(game);
+    if (state) {
+      state.synergyNotice = {
+        icon: unlocked[0].icon,
+        title: unlocked.length === 1 ? unlocked[0].title : "Reward combinations unlocked",
+        message: unlocked.map((item) => item.description).join(" ")
+      };
+    }
+    safeSave(game);
+    return unlocked;
+  }
+
+  // The pair this reward would complete, for the "Interaction bonus!" badge
+  // on a card that is still only an offer (see cuddle-ui.js).
+  function funInteractionPreview(game, optionId) {
+    const id = normalizedId(optionId);
+    if (!id || !game) return null;
+    const owned = ownedFunSynergies(game);
+    return FUN_SYNERGIES.find((item) => !owned.has(item.id)
+      && item.requires.includes(id)
+      && item.requires.every((need) => need === id || upgradeLevel(game, need) > 0)) || null;
+  }
+
+  function payStageInterest(game) {
+    const level = upgradeLevel(game, IDS.rainyDay);
+    const state = stateOf(game);
+    const custom = customState(game);
+    if (level <= 0 || !state || !custom || trueBossRound(game) || noMoneyRound(game)) return;
+    const token = roundToken(game);
+    if (custom.interestPaidToken === token) return;
+    custom.interestPaidToken = token;
+    const compound = hasFunSynergy(game, "compoundCuddle");
+    const balance = Math.max(0, asNumber(state.score, 0)) + (compound ? totalJokerStock(game) * 10 : 0);
+    const cap = (compound ? 50 : 25) * level;
+    const interest = Math.min(cap, Math.floor(balance * 0.05 * level));
+    if (interest <= 0) return;
+    addScoreBonus(game, interest, "umtInterest", "Rainy Day interest");
+    appendNotice(game, `\uD83C\uDFE6 Rainy Day Fund paid $${interest} in interest.`);
+  }
+
+  // Runs once per submitted guess: a guess that pins new information keeps
+  // the streak climbing, anything else drops it back to nothing.
+  function applyStreakBonus(game, before) {
+    const level = upgradeLevel(game, IDS.hotStreak);
+    const custom = customState(game);
+    const state = stateOf(game);
+    if (level <= 0 || !custom || !state || trueBossRound(game) || noMoneyRound(game)) return;
+    const token = roundToken(game);
+    if (custom.streakToken !== token) {
+      custom.streakToken = token;
+      custom.streakCount = 0;
+    }
+    const gainedGreen = knownPositionCount(game) > asInteger(before.greens, 0);
+    const gainedYellow = hasFunSynergy(game, "goldenStreak")
+      && (Array.isArray(state.knownPresent) ? state.knownPresent.length : 0) > asInteger(before.presents, 0);
+    if (!gainedGreen && !gainedYellow) {
+      custom.streakCount = 0;
+      return;
+    }
+    custom.streakCount = asInteger(custom.streakCount, 0) + 1;
+    addScoreBonus(game, custom.streakCount * 5 * level, "umtHotStreak", `Hot Streak x${custom.streakCount}`);
+  }
+
+  function secretVowelCount(game) {
+    const state = stateOf(game) || {};
+    return String(state.secret || "").toUpperCase().split("").filter((letter) => VOWELS.has(letter)).length;
+  }
+
+  // Runs once when a stage is solved, after the engine has settled the round.
+  function applySolveRewards(game) {
+    const state = stateOf(game);
+    const custom = customState(game);
+    if (!state || !custom || trueBossRound(game) || noMoneyRound(game)) return;
+    const token = roundToken(game);
+    if (custom.funSolveToken === token) return;
+    custom.funSolveToken = token;
+
+    const vowelLevel = upgradeLevel(game, IDS.vowelBounty);
+    if (vowelLevel > 0) {
+      const vowels = secretVowelCount(game);
+      if (vowels > 0) {
+        addScoreBonus(game, vowels * 5 * vowelLevel, "umtVowelBounty",
+          `${vowels} vowel${vowels === 1 ? "" : "s"} in the secret`);
+      }
+    }
+
+    if (upgradeLevel(game, IDS.encore) > 0) {
+      custom.encoreSolves = asInteger(custom.encoreSolves, 0) + 1;
+      if (custom.encoreSolves % 3 === 0) {
+        addScoreBonus(game, 75, "umtEncore", "Encore");
+        if (hasFunSynergy(game, "encoreNight")) {
+          const vowels = secretVowelCount(game);
+          if (vowels > 0) addScoreBonus(game, vowels * 10, "umtEncore", "Encore Night vowels");
+        }
+        appendNotice(game, "\uD83C\uDFAC Encore! Every third solved stage pays a bonus.");
+      }
+    }
+
+    if (upgradeLevel(game, IDS.doubleDown) > 0) {
+      const limit = typeof game._effectiveMaxGuesses === "function"
+        ? asInteger(game._effectiveMaxGuesses(), 6)
+        : asInteger(state.maxGuesses, 6);
+      if (asInteger(state.guessesUsed, 0) >= limit) {
+        const earned = Math.max(0, Math.round(asNumber(state.roundScore, 0)));
+        if (earned > 0) addScoreBonus(game, earned, "umtDoubleDown", "Double Down (last-guess solve)");
+        if (hasFunSynergy(game, "allIn")) {
+          addScoreBonus(game, 15 * Math.max(1, upgradeLevel(game, IDS.hotStreak)), "umtHotStreak", "All In streak payout");
+        }
+      }
+    }
+  }
+
   function finishBeginRound(game, pending, configuredHints, revealAllThemes) {
     const coach = coachState(game);
     if (coach && configuredHints > 0) coach.hintsPerRound = configuredHints;
     if (revealAllThemes) queueAllThemes(game);
     clearNativeChallengeOffer(game);
     beginVariant(game, pending);
+    applyTrainingWheels(game);
+    payStageInterest(game);
     initializeHintSchedule(game);
     scheduleUi();
     safeSave(game);
@@ -1822,10 +2079,24 @@
     return SOLVING_REWARDS.filter((reward) => upgradeLevel(game, reward.id) < rewardMax(reward));
   }
 
+  function availableFunRewards(game) {
+    return FUN_REWARDS.filter((reward) => upgradeLevel(game, reward.id) < rewardMax(reward));
+  }
+
+  // Every custom reward this layer can grant -- the solving aids that
+  // repairUpgradeChoices guarantees one of, plus the fun rewards, which are
+  // deliberately NOT aids so they compete for ordinary slots instead of
+  // displacing the guaranteed help.
+  function customRewardById(id) {
+    return SOLVING_REWARDS.find((item) => item.id === id)
+      || FUN_REWARDS.find((item) => item.id === id)
+      || null;
+  }
+
   function filterCatalog(game, catalog) {
     if (!Array.isArray(catalog)) return catalog;
     const output = catalog.filter((item) => !REMOVED_NORMAL_REWARDS.has(normalizedId(item)));
-    for (const reward of availableSolvingRewards(game)) {
+    for (const reward of availableSolvingRewards(game).concat(availableFunRewards(game))) {
       if (!output.some((item) => normalizedId(item) === reward.id)) output.push({ ...reward });
     }
     return output;
@@ -1884,7 +2155,7 @@
   }
 
   function fallbackChooseCustom(game, id) {
-    const reward = SOLVING_REWARDS.find((item) => item.id === id);
+    const reward = customRewardById(id);
     if (!reward) return { ok: false, reason: "Unknown reward" };
     const before = upgradeLevel(game, id);
     if (before >= rewardMax(reward)) return { ok: false, reason: "Reward is already at maximum level" };
@@ -2062,10 +2333,14 @@
     const state = stateOf(game);
     if (!state || state.status !== "playing") return "";
     if (upgradeLevel(game, IDS.candidateNotebook) < 1 || trueBossRound(game)) return "";
-    const [word] = bestWords(game, 1);
+    // Study Group (Candidate Notebook + Opening Insight) widens the readout
+    // to a second candidate -- see FUN_SYNERGIES.
+    const wanted = hasFunSynergy(game, "studyGroup") ? 2 : 1;
+    const words = bestWords(game, wanted);
     // bestWords/feasibleWords only ever admit words matching /^[A-Z]{5}$/, so
     // this is always safe to inline without escaping.
-    return `<span class="cuddle-category-chip cuddle-feasible-chip" title="Strongest feasible answer based on the current feedback">Feasible: ${word || "?????"}</span>`;
+    const shown = words.length ? words.join(" · ") : "?????";
+    return `<span class="cuddle-category-chip cuddle-feasible-chip" title="Strongest feasible answer${wanted > 1 ? "s" : ""} based on the current feedback">Feasible: ${shown}</span>`;
   }
 
   function burdenLabel(item, index) {
@@ -2540,6 +2815,32 @@
     else line.appendChild(indicator);
   }
 
+
+  // Says the opening ramp is on and when it stops, so the help never reads
+  // as "the game is randomly easier sometimes".
+  function renderTrainingBadge(game) {
+    const root = rootElement();
+    if (!root) return;
+    let badge = root.querySelector(".umt-training-badge");
+    const plan = trainingWheelsFor(game);
+    if (!plan) {
+      if (badge) badge.remove();
+      return;
+    }
+    const line = root.querySelector(".cuddle-header-title-line");
+    if (!line) return;
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "umt-training-badge";
+      badge.textContent = "\uD83D\uDEB2";
+    }
+    const stage = asInteger((stateOf(game) || {}).round, 0);
+    badge.title = `Training wheels (stage ${stage} of ${TRAINING_WHEELS_LAST_STAGE}): ${plan.summary}.`;
+    badge.setAttribute("aria-label", badge.title);
+    const score = line.querySelector(".cuddle-header-score");
+    if (score) line.insertBefore(badge, score);
+    else line.appendChild(badge);
+  }
 
   function renderHintedTiles(game) {
     const root = rootElement();
@@ -3023,6 +3324,7 @@
       reconcileMysteryKnowledge(game);
       ensureLiveHintSchedule(game);
       renderHintIndicator(game);
+      renderTrainingBadge(game);
       renderHintedTiles(game);
       moveQuestReroll();
       renderBossBurdens(game);
@@ -3223,6 +3525,12 @@
       const previousBoss = state && state.boss;
       const synthetic = !trueBossRound(this) ? syntheticBossForChallenge(this, challenge, used) : null;
       if (state && synthetic) state.boss = synthetic;
+      // What this guess is measured against for Hot Streak: how much was
+      // already pinned down before it was submitted.
+      const knowledgeBefore = {
+        greens: knownPositionCount(this),
+        presents: state && Array.isArray(state.knownPresent) ? state.knownPresent.length : 0
+      };
       let result;
       try {
         result = original.apply(this, args);
@@ -3235,7 +3543,9 @@
         const history = state && Array.isArray(state.history) ? state.history : [];
         if (history.length > historyLength) history[history.length - 1].umtPowerIds = activePowers;
         reconcileMysteryKnowledge(this);
+        if (history.length > historyLength) applyStreakBonus(this, knowledgeBefore);
         if (resultSolved(this, value)) {
+          applySolveRewards(this);
           reconcileRoundBonuses(this, before);
           window.setTimeout(() => reconcileRoundBonuses(this, before), 0);
         } else if (guessesUsed(this) > before.guesses) {
@@ -3322,8 +3632,15 @@
         : null;
       const id = normalizedId(selected || choiceKey);
       if (REMOVED_NORMAL_REWARDS.has(id)) return rejectAction(this, "That reward has moved out of the between-round reward pool.");
-      const customReward = SOLVING_REWARDS.find((item) => item.id === id);
-      if (!customReward) return original.apply(this, args);
+      const customReward = customRewardById(id);
+      if (!customReward) {
+        // A base-catalog pick can still complete a pair (Golden Value feeds
+        // Golden Streak), so synergies are re-checked either way.
+        return afterResult(original.apply(this, args), (value) => {
+          refreshFunSynergies(this);
+          return value;
+        }, (error) => { throw error; });
+      }
       const oldLevel = upgradeLevel(this, id);
       let result;
       try {
@@ -3334,11 +3651,13 @@
       return afterResult(result, (value) => {
         if (upgradeLevel(this, id) <= oldLevel) value = fallbackChooseCustom(this, id);
         applyCustomUpgradeEffects(this, id, oldLevel);
+        refreshFunSynergies(this);
         scheduleUi();
         return value;
       }, (_error) => {
         const value = fallbackChooseCustom(this, id);
         applyCustomUpgradeEffects(this, id, oldLevel);
+        refreshFunSynergies(this);
         return value;
       });
     });
@@ -3405,6 +3724,16 @@
       // the boss-choice screen (cuddle-ui.js's renderBossChoiceOverlay) so
       // both surfaces describe the same burdens identically.
       burdenInfo: (id) => BURDEN_INFO[id] || null,
+      // Consumed by cuddle-ui.js's reward cards for the "Interaction bonus!"
+      // badge, alongside the engine's own synergy preview.
+      synergies: FUN_SYNERGIES.map((item) => ({ ...item, requires: item.requires.slice() })),
+      rewardInteractionSynergy: (game, optionId) => funInteractionPreview(game || publicActiveGame(), optionId),
+      ownedSynergies: (game) => [...ownedFunSynergies(game || publicActiveGame())],
+      // Consumed by cuddle-ui.js's reward cards for the "Interaction bonus!"
+      // badge, alongside the engine's own synergy preview.
+      synergies: FUN_SYNERGIES.map((item) => ({ ...item, requires: item.requires.slice() })),
+      rewardInteractionSynergy: (game, optionId) => funInteractionPreview(game || publicActiveGame(), optionId),
+      ownedSynergies: (game) => [...ownedFunSynergies(game || publicActiveGame())],
       defeatedBossIcon: defeatedBossSvg,
       normalizeMap: () => {
         const current = publicActiveGame();

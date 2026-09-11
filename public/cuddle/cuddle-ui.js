@@ -50,10 +50,28 @@
 
   // Small star badge on a reward/upgrade card still in the picker, shown
   // only when taking THIS option would complete a synergy the player has
-  // already half-earned (see CuddleEngine.rewardInteractionSynergy).
+  // already half-earned. Two registries can answer: the engine's own pairs
+  // and the reward pairs in cuddle-rebalance-v5.js.
+  function pendingSynergyFor(optionId) {
+    if (!game) return null;
+    const sources = [
+      window.CuddleEngine?.rewardInteractionSynergy,
+      window.CuddleRebalanceV5?.rewardInteractionSynergy
+    ];
+    for (const lookup of sources) {
+      if (typeof lookup !== "function") continue;
+      try {
+        const found = lookup(game, optionId);
+        if (found) return found;
+      } catch (error) {
+        // A registry that can't answer just doesn't contribute a badge.
+      }
+    }
+    return null;
+  }
+
   function interactionBonusBadge(optionId) {
-    if (!game || typeof window.CuddleEngine?.rewardInteractionSynergy !== "function") return "";
-    const synergy = window.CuddleEngine.rewardInteractionSynergy(game, optionId);
+    const synergy = pendingSynergyFor(optionId);
     if (!synergy) return "";
     return `<span class="umt-interaction-badge" title="${escapeHtml(synergy.title)}: ${escapeHtml(synergy.description)}">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l3.22 6.53 7.21 1.05-5.22 5.09 1.23 7.18L12 17.9l-6.44 3.45 1.23-7.18-5.22-5.09 7.21-1.05z"/></svg>

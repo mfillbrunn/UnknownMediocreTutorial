@@ -1152,6 +1152,12 @@
         yellowCount,
         greenCount,
         greyCount,
+        // What each tile colour was worth for THIS guess, so the cash-out
+        // screen can show the split (see rowBreakdown in
+        // cuddle-money-mode.js) instead of one opaque scoreDelta. Rates move
+        // with upgrades mid-run, so they're recorded per guess rather than
+        // recomputed from the current upgrades later.
+        tileRates: { green: greenValue, yellow: yellowValue, grey: greyValue },
         shielded,
         usedCards: draftCards.map(card => card.glyph),
         replacements: replacements.length,
