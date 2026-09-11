@@ -11,8 +11,11 @@
 
   const CONFIG = Object.freeze({
     regularWordlePercent: 8,
-    themedWordlePercent: 20,
-    randomOpenerPercent: 24,
+    themedWordlePercent: 18,
+    randomOpenerPercent: 16,
+    luckyStartPercent: 10,
+    jackpotPercent: 10,
+    doubleOrNothingPercent: 8,
     unusedJokerBonus: 3,
     reserveDividendExtra: 5,
     hints: Object.freeze({"easy":{"first":1,"cadence":2},"medium":{"first":2,"cadence":3},"hard":{"first":3,"cadence":4}})
@@ -787,6 +790,33 @@
         title: "Head Start",
         description: "A random legal word is played automatically as the first guess, consuming row one."
       };
+    } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent + CONFIG.randomOpenerPercent
+        + CONFIG.luckyStartPercent) {
+      variant = {
+        version: VERSION,
+        kind: "luckyStart",
+        icon: "\uD83C\uDF40",
+        title: "Lucky Start",
+        description: "One exact position is already revealed before the first guess."
+      };
+    } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent + CONFIG.randomOpenerPercent
+        + CONFIG.luckyStartPercent + CONFIG.jackpotPercent) {
+      variant = {
+        version: VERSION,
+        kind: "jackpot",
+        icon: "\uD83D\uDCB0",
+        title: "Jackpot Run",
+        description: "Green tiles pay double here, but the stage runs one guess short."
+      };
+    } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent + CONFIG.randomOpenerPercent
+        + CONFIG.luckyStartPercent + CONFIG.jackpotPercent + CONFIG.doubleOrNothingPercent) {
+      variant = {
+        version: VERSION,
+        kind: "doubleOrNothing",
+        icon: "\u2696\uFE0F",
+        title: "Double or Nothing",
+        description: "Solve within three guesses and the stage's earnings double. Take longer and you lose half of them."
+      };
     } else {
       const challenge = challengeForNode(game, node);
       variant = {
@@ -1218,6 +1248,21 @@
       appendNotice(game, `${challenge.icon} ${challenge.title} accepted automatically. Win for a $${challenge.reward} bonus.`);
     } else if (variant.kind === "randomOpener") {
       scheduleRandomOpener(game);
+    } else if (variant.kind === "luckyStart") {
+      try {
+        if (typeof game._revealPositionPeek === "function") game._revealPositionPeek();
+      } catch (error) {
+        log("lucky start reveal failed", error);
+      }
+      appendNotice(game, "\uD83C\uDF40 Lucky Start: one position is already yours.");
+    } else if (variant.kind === "jackpot") {
+      const state = stateOf(game);
+      // The shorter board is the cost of the doubled greens (paid per guess
+      // in applyJackpotBonus).
+      if (state) state.maxGuesses = Math.max(2, asInteger(state.maxGuesses, 6) - 1);
+      appendNotice(game, "\uD83D\uDCB0 Jackpot Run: greens pay double, and the board is one row shorter.");
+    } else if (variant.kind === "doubleOrNothing") {
+      appendNotice(game, "\u2696\uFE0F Double or Nothing: solve by guess three to double this stage, or lose half of it.");
     }
     // "themedWordle" needs no special handling here: normalizeMap already
     // set the node's type to "theme", and the branch map's own enterNode
@@ -2009,6 +2054,38 @@
     addScoreBonus(game, custom.streakCount * 5 * level, "umtHotStreak", `Hot Streak x${custom.streakCount}`);
   }
 
+  function activeVariantKind(game) {
+    const variant = activeVariant(game);
+    return variant ? String(variant.kind || "") : "";
+  }
+
+  // Jackpot Run pays a second time for every green the guess showed.
+  function applyJackpotBonus(game, entry) {
+    if (activeVariantKind(game) !== "jackpot") return;
+    if (!entry || trueBossRound(game) || noMoneyRound(game)) return;
+    const greens = asInteger(entry.greenCount, 0);
+    if (greens <= 0) return;
+    const bonus = Math.round(greens * greenValue(game, entry));
+    if (bonus > 0) addScoreBonus(game, bonus, "umtJackpot", `Jackpot greens x${greens}`, entry);
+  }
+
+  // Double or Nothing settles on the solve: fast enough doubles the stage's
+  // earnings so far, slow loses half of them.
+  function settleDoubleOrNothing(game) {
+    if (activeVariantKind(game) !== "doubleOrNothing") return;
+    const state = stateOf(game);
+    if (!state || trueBossRound(game) || noMoneyRound(game)) return;
+    const earned = Math.round(asNumber(state.roundScore, 0));
+    if (earned === 0) return;
+    if (asInteger(state.guessesUsed, 0) <= 3) {
+      addScoreBonus(game, earned, "umtDoubleOrNothing", "Double or Nothing won");
+      appendNotice(game, "\u2696\uFE0F Double or Nothing paid off: this stage's earnings doubled.");
+    } else {
+      addScoreBonus(game, -Math.round(earned / 2), "umtDoubleOrNothing", "Double or Nothing lost");
+      appendNotice(game, "\u2696\uFE0F Double or Nothing: too slow, half this stage's earnings are gone.");
+    }
+  }
+
   function secretVowelCount(game) {
     const state = stateOf(game) || {};
     return String(state.secret || "").toUpperCase().split("").filter((letter) => VOWELS.has(letter)).length;
@@ -2623,6 +2700,9 @@
 
   const POWER_INFO = Object.freeze({
     plain: { title: "Classic Wordle", description: "A standard Wordle with no special rule.", shape: "grid" },
+    luckyStart: { title: "Lucky Start", description: "One exact position is revealed before the first guess.", shape: "clover" },
+    jackpot: { title: "Jackpot Run", description: "Greens pay double, with one fewer guess.", shape: "coins" },
+    doubleOrNothing: { title: "Double or Nothing", description: "Solve by guess three to double the stage, or lose half of it.", shape: "scales" },
     themedWordle: { title: "Themed Wordle", description: "A round that opens with one of the solution's categories already revealed.", shape: "tag" },
     randomOpener: { title: "Head Start", description: "A random legal word automatically consumes the first guess.", shape: "die" },
     deepFog: { title: "Deep Fog", description: "Two tile positions are hidden on each affected guess.", shape: "fog" },
@@ -2707,6 +2787,8 @@
       case "greenHint": return `<rect x="17" y="17" width="86" height="86" rx="18" fill="${green}"/><text x="60" y="76" text-anchor="middle" fill="${paper}" font-family="system-ui,sans-serif" font-size="51" font-weight="900">A</text><circle cx="92" cy="28" r="16" fill="${yellow}"/><text x="92" y="35" text-anchor="middle" fill="${ink}" font-family="system-ui,sans-serif" font-size="20" font-weight="900">2</text>`;
       case "joker": return `<path d="M31 14h58l16 18v74H31z" fill="${ink}"/><path d="m68 28 7 15 17 2-12 12 3 17-15-8-15 8 3-17-12-12 17-2z" fill="${yellow}"/>`;
       case "notebook": return `<rect x="25" y="13" width="75" height="94" rx="12" fill="${ink}"/><path d="M25 13v94" stroke="${yellow}" stroke-width="12"/><g stroke="${paper}" stroke-width="7" stroke-linecap="round"><path d="M48 38h34M48 58h34M48 78h25"/></g>`;
+      case "clover": return `<g fill="${green}"><circle cx="60" cy="34" r="19"/><circle cx="34" cy="60" r="19"/><circle cx="86" cy="60" r="19"/><circle cx="60" cy="86" r="19"/></g><circle cx="60" cy="60" r="9" fill="${yellow}"/>`;
+      case "scales": return `<path d="M56 16h8v88h-8z" fill="${ink}"/><path d="M22 100h76v9H22z" fill="${ink}"/><path d="M20 40h80v8H20z" fill="${ink}"/><path d="M12 76a20 20 0 0 0 34 0z" fill="${yellow}"/><path d="M74 76a20 20 0 0 0 34 0z" fill="${green}"/>`;
       case "coins": return `<g fill="${yellow}" stroke="${ink}" stroke-width="7"><ellipse cx="45" cy="35" rx="27" ry="14"/><path d="M18 35v25c0 8 12 14 27 14s27-6 27-14V35"/><ellipse cx="76" cy="75" rx="27" ry="14"/><path d="M49 75v20c0 8 12 14 27 14s27-6 27-14V75"/></g>`;
       case "compass": return `<circle cx="60" cy="60" r="46" fill="${ink}"/><circle cx="60" cy="60" r="32" fill="${paper}"/><path d="m72 32-6 25-25 31 13-29z" fill="${yellow}"/><path d="m48 88 6-29 25-31-13 29z" fill="${green}"/><circle cx="60" cy="60" r="7" fill="${ink}"/>`;
       // Boss-choice monster silhouettes -- deliberately NOT tied to a boss's
@@ -3543,9 +3625,13 @@
         const history = state && Array.isArray(state.history) ? state.history : [];
         if (history.length > historyLength) history[history.length - 1].umtPowerIds = activePowers;
         reconcileMysteryKnowledge(this);
-        if (history.length > historyLength) applyStreakBonus(this, knowledgeBefore);
+        if (history.length > historyLength) {
+          applyJackpotBonus(this, history[history.length - 1]);
+          applyStreakBonus(this, knowledgeBefore);
+        }
         if (resultSolved(this, value)) {
           applySolveRewards(this);
+          settleDoubleOrNothing(this);
           reconcileRoundBonuses(this, before);
           window.setTimeout(() => reconcileRoundBonuses(this, before), 0);
         } else if (guessesUsed(this) > before.guesses) {
