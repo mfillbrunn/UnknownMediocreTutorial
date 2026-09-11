@@ -155,7 +155,14 @@
         // words in plain text, so without this it's an easy way to read
         // right through the blackout. Redact every guess in the live
         // round the same way, for as long as the board itself is blanked.
-        const blackedOut = isLiveRound && state.powers?.blindGuessActive;
+        //
+        // Guesser-only: the Secretkeeper was never blind -- they already
+        // know their own secret and every guess as it's submitted, so
+        // there's nothing for their own log to protect them from. Scoped
+        // to the live flag (not a permanent per-entry mark), this also
+        // naturally reverts to normal the moment that one guess resolves
+        // and blindGuessActive clears, rather than redacting it forever.
+        const blackedOut = viewerRole === "guesser" && isLiveRound && state.powers?.blindGuessActive;
         const guessDisplay = blackedOut
           ? `<span class="log-blackout-word">${"█".repeat(entry.guess.length)}</span>`
           : entry.guess.toUpperCase();

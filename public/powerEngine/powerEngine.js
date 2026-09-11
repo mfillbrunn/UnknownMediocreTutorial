@@ -27,6 +27,7 @@ const POWER_ICON_IDS = {
   letterProbe: "icon-letter-scan",
   revealLocation: "icon-informant",
   letterProfile: "icon-letter-profile",
+  firstLetterReveal: "icon-first-letter-reveal",
   secretThemes: "icon-secret-themes",
   // Reuses Secret Themes' own folder icon -- same subject (the secret's
   // categories), just a one-round full reveal instead of a standing

@@ -511,7 +511,16 @@
       const roleId = label?.classList.contains("role-setter") ? "setter" : "guesser";
       const roleLabel = roleId === "setter" ? "SECRETKEEPER" : "GUESSER";
       const ownerLabel = roleId === window.myRole ? "YOU" : "OPPONENT";
-      if (label) label.textContent = `${ownerLabel} · ${roleLabel}`;
+      if (label) {
+        // client.js's own group.icon (an <svg><use> for the role -- see
+        // showBigAnnounce's powerGroups) renders as this label's first
+        // child. A plain textContent write below would wipe it out along
+        // with the placeholder text it's replacing, so pull it out first
+        // and put it back once the text is in place.
+        const icon = label.querySelector("svg");
+        label.textContent = `${ownerLabel} · ${roleLabel}`;
+        if (icon) label.prepend(icon);
+      }
       group.classList.toggle("is-you-v10", ownerLabel === "YOU");
       group.classList.toggle("is-opponent-v10", ownerLabel === "OPPONENT");
       group.querySelectorAll(".big-announce-power-row").forEach(row => {
