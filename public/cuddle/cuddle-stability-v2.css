@@ -39,32 +39,6 @@
   min-width: 0;
 }
 
-/* Boss control stays compact instead of colliding with money, hearts, or details. */
-#cuddleRoot .cuddle-boss-header-badge-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-  min-width: 0;
-}
-#cuddleRoot .cuddle-boss-header-badge {
-  width: 2rem !important;
-  height: 2rem !important;
-  min-width: 2rem !important;
-  padding: .2rem !important;
-  display: inline-grid !important;
-  place-items: center;
-  overflow: hidden;
-}
-#cuddleRoot .cuddle-boss-header-badge .umt-cuddle-svg-icon {
-  width: 1.45rem !important;
-  height: 1.45rem !important;
-  margin: 0 !important;
-}
-#cuddleRoot .cuddle-quick-clock {
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
 @media (max-width: 680px) {
   #cuddleRoot .cuddle-header {
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -72,7 +46,6 @@
   #cuddleRoot .cuddle-header-title-line {
     gap: .35rem;
   }
-  #cuddleRoot .cuddle-boss-header-badge,
   #cuddleRoot .umt-inventory-pouch {
     width: 1.85rem !important;
     height: 1.85rem !important;
