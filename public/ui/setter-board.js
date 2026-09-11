@@ -8,6 +8,7 @@
   let gesture = null;
   let suppressSidebarClickUntil = 0;
   let meterObserver = null;
+  let meterWaitObserver = null;
 
   function screen() {
     return byId("setterScreen");
@@ -41,7 +42,19 @@
       ? Number(window.getDisplayedSpyChargeTotal()) || 0
       : document.querySelectorAll("#spyChargeMeter .spy-charge-segment.is-filled").length;
 
-    mini.textContent = String(total);
+    // This runs as meterObserver's own callback -- it watches
+    // #spyChargeMeter's class/aria-valuenow, which spy-charge.js's
+    // renderMeter() writes unconditionally on every render (setAttribute
+    // always queues a mutation record, even when the value is unchanged).
+    // An unconditional write here used to turn that into a closed loop:
+    // this textContent assignment is itself a childList mutation, which
+    // other files' page-wide body/documentElement observers pick up and
+    // use to schedule another render, which calls renderMeter() again,
+    // which fires meterObserver again -- forever, for the length of any
+    // match with the Secretkeeper's sidebar ever rendered. Guard it like
+    // the rest of this controller already guards its own writes.
+    const text = String(total);
+    if (mini.textContent !== text) mini.textContent = text;
     mini.classList.toggle("hidden", !isCollapsed());
   }
 
@@ -61,9 +74,28 @@
 
   function scheduleChargeObserver() {
     observeChargeMeter();
-    if (!meterObserver) {
-      requestAnimationFrame(scheduleChargeObserver);
-    }
+    if (meterObserver || meterWaitObserver) return;
+
+    // #spyChargeMeter only exists inside #setterScreen, which most of a
+    // session never shows at all (the main menu, lobby, tutorials, Cuddle,
+    // and an entire match spent as Guesser all have no such element). This
+    // used to fall back to `requestAnimationFrame(scheduleChargeObserver)`
+    // -- a call-itself-every-frame loop with no way to ever stop short of
+    // the meter actually appearing, so it burned a full animation frame's
+    // worth of work 60 times a second for the ENTIRE browser session on
+    // every screen of the site that isn't the Secretkeeper's board. Watch
+    // for the element to be inserted instead: a MutationObserver callback
+    // only runs when the DOM genuinely changes (and coalesces a burst of
+    // changes into one call), and this one disconnects itself the first
+    // time #spyChargeMeter shows up, for good.
+    if (typeof MutationObserver === "undefined" || !document.body) return;
+    meterWaitObserver = new MutationObserver(() => {
+      if (!byId("spyChargeMeter")) return;
+      meterWaitObserver.disconnect();
+      meterWaitObserver = null;
+      observeChargeMeter();
+    });
+    meterWaitObserver.observe(document.body, { childList: true, subtree: true });
   }
 
   function setCollapsed(collapsed, persist = true) {
