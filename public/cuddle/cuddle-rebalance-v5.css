@@ -194,6 +194,7 @@
    "surface" tint the base site uses for cards, or the icon renders as
    white-on-near-white and disappears. */
 .umt-power-icon-button {
+  position: relative;
   display: grid;
   place-items: center;
   flex: 0 0 auto;
@@ -206,6 +207,29 @@
   color: inherit;
   box-shadow: 0 0.1rem 0.32rem rgb(0 0 0 / 0.16);
   cursor: pointer;
+}
+
+/* Quick Mode's per-guess countdown, pinned to the corner of its row icon
+   (see renderRowPowerIcons) now that the boss header badge is gone. */
+.umt-row-quick-clock {
+  position: absolute;
+  left: calc(100% + 0.3rem);
+  top: 50%;
+  translate: 0 -50%;
+  padding: 0.1rem 0.36rem;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(9, 8, 15, 0.92);
+  color: var(--cuddle-text, #f7f4ff);
+  font-size: 0.62rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.umt-row-quick-clock.is-urgent {
+  border-color: var(--cuddle-danger, #e95c76);
+  color: var(--cuddle-danger, #e95c76);
 }
 
 .umt-power-icon-button:hover,
@@ -225,54 +249,64 @@
   background: rgb(0 0 0 / 0.58);
 }
 
+/* Explicit dark background + light text, not var(--surface, #fff) with
+   color: inherit -- that combination is near-white text (this dark theme's
+   inherited body color) on a near-white background (--surface is never
+   actually defined anywhere in this app, so the #fff fallback always
+   applies), which is unreadable. Same root cause as .umt-power-icon-button
+   above. Also sized down per feedback that the dialog read as too large. */
 .umt-power-info-dialog {
   position: relative;
-  width: min(25rem, 100%);
+  width: min(19rem, 92vw);
   box-sizing: border-box;
-  padding: 1.15rem 1.2rem 1.25rem;
-  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
-  border-radius: 0.9rem;
-  background: var(--surface, #fff);
-  color: inherit;
+  padding: 0.95rem 1rem 1.05rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.8rem;
+  background: #18161f;
+  color: var(--cuddle-text, #f7f4ff);
   box-shadow: 0 1.2rem 3.2rem rgb(0 0 0 / 0.4);
   text-align: center;
 }
 
 .umt-power-info-large-icon {
-  width: 5.3rem;
-  height: 5.3rem;
-  margin: 0 auto 0.55rem;
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto 0.45rem;
 }
 
 .umt-power-info-dialog small {
   display: block;
-  margin-bottom: 0.18rem;
+  margin-bottom: 0.15rem;
   opacity: 0.65;
+  font-size: 0.7rem;
   font-weight: 760;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .umt-power-info-dialog h2 {
-  margin: 0 2rem 0.42rem;
+  margin: 0 1.7rem 0.35rem;
+  font-size: 1.05rem;
 }
 
 .umt-power-info-dialog p {
   margin: 0;
-  line-height: 1.45;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  opacity: 0.85;
 }
 
 .umt-power-info-close {
   position: absolute;
-  top: 0.5rem;
-  right: 0.55rem;
-  width: 2rem;
-  height: 2rem;
+  top: 0.45rem;
+  right: 0.5rem;
+  width: 1.7rem;
+  height: 1.7rem;
   border: 0;
   border-radius: 50%;
-  background: color-mix(in srgb, currentColor 10%, transparent);
+  background: rgba(255, 255, 255, 0.1);
   color: inherit;
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   line-height: 1;
   cursor: pointer;
 }

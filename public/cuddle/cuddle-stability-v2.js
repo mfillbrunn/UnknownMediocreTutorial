@@ -569,15 +569,6 @@
       }
     });
 
-    const boss = game?.state?.boss;
-    root.querySelectorAll(".cuddle-boss-info-popover .cuddle-quest-icon").forEach(icon => {
-      replaceIconContents(icon, boss?.id || "stage-boss", boss?.title || "Boss");
-    });
-    root.querySelectorAll(".cuddle-boss-header-badge").forEach(badge => {
-      badge.dataset.umtIconKey = boss?.id || "stage-boss";
-      badge.replaceChildren(makeImg(boss?.id || "stage-boss", "umt-cuddle-svg-icon"));
-    });
-
     const activeQuest = game?.state?.activeQuest;
     root.querySelectorAll(".cuddle-quest:not(.cuddle-boss-info-popover) .cuddle-quest-icon").forEach(icon => {
       if (activeQuest?.id) replaceIconContents(icon, activeQuest.id, activeQuest.title || "Quest");

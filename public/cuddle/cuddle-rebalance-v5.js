@@ -2692,6 +2692,17 @@
         button.innerHTML = powerSvg(id);
         button.title = `${info.title} — click for details`;
         button.setAttribute("aria-label", `${info.title} on guess ${index + 1}. Open explanation.`);
+        // Quick Mode's per-guess countdown used to live in a header badge
+        // (removed -- this row icon is now the only place a boss's effect
+        // shows). cuddle-ui.js's paintQuickModeClock still writes into
+        // #cuddleQuickClock by id every 250ms; only the current row gets one.
+        if (id === "quickMode" && index === asInteger((stateOf(game) || {}).guessesUsed, 0)) {
+          const clock = document.createElement("span");
+          clock.id = "cuddleQuickClock";
+          clock.className = "umt-row-quick-clock";
+          clock.setAttribute("aria-live", "off");
+          button.appendChild(clock);
+        }
         stack.appendChild(button);
       });
     });
