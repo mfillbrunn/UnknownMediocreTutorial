@@ -664,7 +664,7 @@
       - asNumber(entry.ratchetQuestPenalty, 0);
   }
 
-  function buildPayout(game, challenge) {
+  function buildPayout(game, challenge, wasBoss) {
     var state = game.state;
     var mode = ensureMode(game);
     var start = asNumber(mode.roundStartingMoney, asNumber(state.score, 0) - asNumber(state.roundScore, 0));
@@ -685,6 +685,7 @@
     return {
       id: [state.runId, state.round, Date.now(), Math.floor(randomFor(game) * 1000000)].join("-"),
       round: state.round,
+      wasBoss: Boolean(wasBoss),
       from: Math.round(start),
       to: Math.round(finish),
       total: expected,
@@ -734,6 +735,26 @@
       mode.activeChallenge = null;
     }
 
+    saveGame(this);
+    queueUiEnhancement();
+    return result;
+  };
+
+  // A boss round never scores per guess (it's pass/fail), but quest/mulligan
+  // bonuses can still land money during one, and clearing a non-final boss
+  // cascades straight into _advanceRound()/_beginRound() for the very next
+  // round (see cuddle-engine.js's _clearBoss) -- by the time submitDraft's
+  // own wrapper would run buildPayout, state.history and
+  // mode.roundStartingMoney already belong to the NEW round. So the boss
+  // round's payout has to be captured here, before the composed _clearBoss
+  // call does any of that.
+  var originalClearBoss = proto._clearBoss;
+  proto._clearBoss = function clearBossCuddleMoneyMode() {
+    activateGame(this);
+    var mode = ensureMode(this);
+    var payout = buildPayout(this, null, true);
+    if (payout) mode.pendingPayout = payout;
+    var result = originalClearBoss.apply(this, arguments);
     saveGame(this);
     queueUiEnhancement();
     return result;
@@ -970,12 +991,12 @@
       "<div id=\"cuddleMoneyPayoutOverlay\" class=\"cuddle-money-overlay cuddle-money-payout-overlay\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"cuddleMoneyPayoutTitle\">"
       + "<div class=\"cuddle-money-confetti\" aria-hidden=\"true\">" + confetti + "</div>"
       + "<section class=\"cuddle-money-payout-card\">"
-      + "<span class=\"cuddle-money-kicker\">ROUND " + escapeHtml(payload.round) + " CASH OUT</span>"
+      + "<span class=\"cuddle-money-kicker\">" + (payload.wasBoss ? "BOSS DEFEATED &middot; CASH OUT" : "ROUND " + escapeHtml(payload.round) + " CASH OUT") + "</span>"
       + "<h2 id=\"cuddleMoneyPayoutTitle\">Every row pays</h2>"
       + challengeLine
       + "<div class=\"cuddle-money-bank\"><span>Wallet</span><strong id=\"cuddleMoneyBankCounter\">" + formatMoney(payload.from) + "</strong></div>"
       + "<div class=\"cuddle-money-payout-rows\">" + payload.rows.map(payoutRowMarkup).join("") + "</div>"
-      + "<div class=\"cuddle-money-payout-total\"><span>ROUND TOTAL</span><strong>" + formatDelta(payload.total) + "</strong></div>"
+      + "<div class=\"cuddle-money-payout-total\"><span>" + (payload.wasBoss ? "BOSS TOTAL" : "ROUND TOTAL") + "</span><strong>" + formatDelta(payload.total) + "</strong></div>"
       + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-primary cuddle-money-collect\" data-cuddle-money-action=\"collect-payout\" hidden>Collect " + formatMoney(payload.total) + "</button>"
       + "</section></div>"
     );

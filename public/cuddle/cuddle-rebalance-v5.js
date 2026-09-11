@@ -11,7 +11,7 @@
 
   const CONFIG = Object.freeze({
     regularWordlePercent: 8,
-    allThemesPercent: 20,
+    themedWordlePercent: 20,
     randomOpenerPercent: 24,
     unusedJokerBonus: 3,
     reserveDividendExtra: 5,
@@ -70,7 +70,7 @@
       icon: "📓",
       title: "Candidate Notebook",
       name: "Candidate Notebook",
-      description: "Show up to three strong feasible answer candidates above the board.",
+      description: "Reveal your single strongest feasible answer next to the theme readout.",
       maxLevel: 1,
       maxCount: 1,
       kind: "upgrade"
@@ -693,15 +693,15 @@
         title: "Classic Wordle",
         description: "A rare standard Wordle with no special setup."
       };
-    } else if (roll < CONFIG.regularWordlePercent + CONFIG.allThemesPercent) {
+    } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent) {
       variant = {
         version: VERSION,
-        kind: "allThemes",
-        icon: "🏷️",
-        title: "Open Book",
-        description: "Every available theme is revealed before the first guess."
+        kind: "themedWordle",
+        icon: "🧭",
+        title: "Themed Wordle",
+        description: "A round that opens with one of the solution's categories already revealed."
       };
-    } else if (roll < CONFIG.regularWordlePercent + CONFIG.allThemesPercent + CONFIG.randomOpenerPercent) {
+    } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent + CONFIG.randomOpenerPercent) {
       variant = {
         version: VERSION,
         kind: "randomOpener",
@@ -717,7 +717,7 @@
         challengeId: challenge.id,
         icon: challenge.icon,
         title: challenge.title,
-        description: `${challenge.description} Mandatory; pays a $${challenge.reward} completion bonus.`
+        description: `${challenge.description} Pays $${challenge.reward}.`
       };
     }
     node.cuddleVariant = variant;
@@ -737,7 +737,7 @@
       const variant = variantForNode(game, node);
       const desiredType = variant.kind === "mandatoryChallenge"
         ? "challenge"
-        : variant.kind === "allThemes" ? "theme" : "normal";
+        : variant.kind === "themedWordle" ? "theme" : "normal";
       if (node.type !== desiredType) {
         node.type = desiredType;
         changed = true;
@@ -1140,9 +1140,11 @@
       appendNotice(game, `${challenge.icon} ${challenge.title} accepted automatically. Win for a $${challenge.reward} bonus.`);
     } else if (variant.kind === "randomOpener") {
       scheduleRandomOpener(game);
-    } else if (variant.kind === "allThemes") {
-      appendNotice(game, "🏷️ Open Book: every available theme is revealed.");
     }
+    // "themedWordle" needs no special handling here: normalizeMap already
+    // set the node's type to "theme", and the branch map's own enterNode
+    // (cuddle-branch-map.js) queues the single-category reveal for any
+    // "theme"-type node on its own.
   }
 
   function draftWord(game) {
@@ -2051,24 +2053,19 @@
 
 
 
-  function renderNotebook(game) {
-    const root = rootElement();
-    if (!root) return;
-    let notebook = root.querySelector(".umt-candidate-notebook");
-    if (upgradeLevel(game, IDS.candidateNotebook) < 1 || trueBossRound(game)) {
-      if (notebook) notebook.remove();
-      return;
-    }
-    const board = root.querySelector(".cuddle-board, .cuddle-board-wrap, [aria-label='Word board']");
-    if (!board) return;
-    if (!notebook) {
-      notebook = document.createElement("div");
-      notebook.className = "umt-candidate-notebook";
-    }
-    const words = bestWords(game, 3);
-    notebook.textContent = words.length ? `Candidate Notebook: ${words.join(" · ")}` : "Candidate Notebook: no feasible candidates yet";
-    notebook.title = "Strong feasible answers based on the current feedback.";
-    if (notebook.nextElementSibling !== board) board.parentNode.insertBefore(notebook, board);
+  // Used to insert a "Candidate Notebook" box directly above the board (the
+  // feedback tiles) listing three words -- moved next to the theme readout
+  // instead (see feasibleBadgeMarkup, consumed by cuddle-campaign.js's
+  // insertMap) so the single strongest candidate reads alongside the
+  // solution's known category rather than floating in its own white box.
+  function feasibleBadgeMarkup(game) {
+    const state = stateOf(game);
+    if (!state || state.status !== "playing") return "";
+    if (upgradeLevel(game, IDS.candidateNotebook) < 1 || trueBossRound(game)) return "";
+    const [word] = bestWords(game, 1);
+    // bestWords/feasibleWords only ever admit words matching /^[A-Z]{5}$/, so
+    // this is always safe to inline without escaping.
+    return `<span class="cuddle-category-chip cuddle-feasible-chip" title="Strongest feasible answer based on the current feedback">Feasible: ${word || "?????"}</span>`;
   }
 
   function burdenLabel(item, index) {
@@ -2351,7 +2348,7 @@
 
   const POWER_INFO = Object.freeze({
     plain: { title: "Classic Wordle", description: "A standard Wordle with no special rule.", shape: "grid" },
-    allThemes: { title: "Open Book", description: "All available themes are revealed before the first guess.", shape: "tags" },
+    themedWordle: { title: "Themed Wordle", description: "A round that opens with one of the solution's categories already revealed.", shape: "tag" },
     randomOpener: { title: "Head Start", description: "A random legal word automatically consumes the first guess.", shape: "die" },
     deepFog: { title: "Deep Fog", description: "Two tile positions are hidden on each affected guess.", shape: "fog" },
     countedSteps: { title: "Counted Steps", description: "Only the total number of green and yellow tiles is shown.", shape: "count", multiplayerId: "countOnly" },
@@ -2381,7 +2378,7 @@
     umtAllThemes: { title: "All-Seeing Atlas", description: "Reveal every available theme at the start of every non-boss Wordle.", shape: "tags" },
     umtOpeningInsight: { title: "Opening Insight", description: "Begin each non-boss Wordle with an extra green position hint.", shape: "greenHint" },
     umtQuickStudy: { title: "Quick Study", description: "Guesser Hints arrive sooner.", shape: "hourglass" },
-    umtCandidateNotebook: { title: "Candidate Notebook", description: "Show several strong feasible answers near the board.", shape: "notebook" },
+    umtCandidateNotebook: { title: "Candidate Notebook", description: "Show your single strongest feasible answer next to the theme readout.", shape: "notebook" },
     umtJokerCache: { title: "Joker Cache", description: "Gain two real Jokers immediately.", shape: "joker" },
     umtReserveDividend: { title: "Reserve Dividend", description: "Unused Jokers and mulligans pay an additional end-of-round bonus.", shape: "coins" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
@@ -2406,17 +2403,12 @@
     return { id: key, title, description, shape: "bolt", multiplayerId: key };
   }
 
-  function powerSvgBody(id) {
-    const info = powerInfo(id);
-    const shared = info.multiplayerId && window.POWER_ICON_IDS && window.POWER_ICON_IDS[info.multiplayerId];
-    if (shared && document.getElementById(shared)) {
-      return `<use href="#${escapeMarkup(shared)}" xlink:href="#${escapeMarkup(shared)}"></use>`;
-    }
+  function shapeBody(shape) {
     const ink = "currentColor";
     const yellow = "var(--tile-yellow, #d6a925)";
     const green = "var(--tile-green, #3aa76d)";
     const paper = "var(--surface, #f4f5f7)";
-    switch (info.shape) {
+    switch (shape) {
       case "grid": return `<g fill="${ink}"><rect x="14" y="14" width="40" height="40" rx="8"/><rect x="66" y="14" width="40" height="40" rx="8"/><rect x="14" y="66" width="40" height="40" rx="8"/><rect x="66" y="66" width="40" height="40" rx="8"/></g>`;
       case "tags": return `<path d="M13 27h57l36 33-36 33H13z" fill="${ink}"/><circle cx="31" cy="60" r="8" fill="${paper}"/><path d="M38 14h47l28 25-28 25" fill="none" stroke="${yellow}" stroke-width="10" stroke-linejoin="round"/>`;
       case "tag": return `<path d="M15 32h57l34 28-34 28H15z" fill="${ink}"/><circle cx="34" cy="60" r="8" fill="${yellow}"/>`;
@@ -2442,12 +2434,50 @@
       case "notebook": return `<rect x="25" y="13" width="75" height="94" rx="12" fill="${ink}"/><path d="M25 13v94" stroke="${yellow}" stroke-width="12"/><g stroke="${paper}" stroke-width="7" stroke-linecap="round"><path d="M48 38h34M48 58h34M48 78h25"/></g>`;
       case "coins": return `<g fill="${yellow}" stroke="${ink}" stroke-width="7"><ellipse cx="45" cy="35" rx="27" ry="14"/><path d="M18 35v25c0 8 12 14 27 14s27-6 27-14V35"/><ellipse cx="76" cy="75" rx="27" ry="14"/><path d="M49 75v20c0 8 12 14 27 14s27-6 27-14V75"/></g>`;
       case "compass": return `<circle cx="60" cy="60" r="46" fill="${ink}"/><circle cx="60" cy="60" r="32" fill="${paper}"/><path d="m72 32-6 25-25 31 13-29z" fill="${yellow}"/><path d="m48 88 6-29 25-31-13 29z" fill="${green}"/><circle cx="60" cy="60" r="7" fill="${ink}"/>`;
+      // Boss-choice monster silhouettes -- deliberately NOT tied to a boss's
+      // effect (see bossMonsterSvg), just a varied, consistently-styled
+      // "creature" look so two boss cards read as two different monsters to
+      // fight rather than two feature-diagram icons.
+      case "bossFang": return `<path d="M60 13c27 0 47 21 47 48 0 23-13 40-28 47H41c-15-7-28-24-28-47 0-27 20-48 47-48z" fill="${ink}"/><circle cx="42" cy="57" r="9" fill="${paper}"/><circle cx="78" cy="57" r="9" fill="${paper}"/><path d="M38 95l11-19 11 19 11-19 11 19" fill="none" stroke="${yellow}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>`;
+      case "bossHorn": return `<circle cx="60" cy="68" r="41" fill="${ink}"/><path d="M38 32 24 5l25 11z" fill="${yellow}"/><path d="M82 32 96 5 71 16z" fill="${yellow}"/><circle cx="60" cy="68" r="15" fill="${paper}"/>`;
+      case "bossSpike": return `<path d="M14 72c0-31 21-52 46-52s46 21 46 52c0 20-15 33-46 33S14 92 14 72z" fill="${ink}"/><path d="M20 44l11-22 11 22 11-26 11 26 11-22 11 22" fill="none" stroke="${yellow}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="45" cy="72" r="8" fill="${paper}"/><circle cx="75" cy="72" r="8" fill="${paper}"/>`;
+      case "bossEye": return `<circle cx="60" cy="60" r="47" fill="${ink}"/><circle cx="60" cy="51" r="23" fill="${paper}"/><circle cx="60" cy="51" r="9" fill="${ink}"/><path d="M33 90l13-11 14 11 14-11 13 11" fill="none" stroke="${yellow}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>`;
+      case "bossClaw": return `<path d="M60 12c25 0 43 19 43 44 0 18-7 31-17 39H34c-10-8-17-21-17-39 0-25 18-44 43-44z" fill="${ink}"/><circle cx="45" cy="52" r="9" fill="${paper}"/><circle cx="75" cy="52" r="9" fill="${paper}"/><path d="M18 98l16-11 4 16z" fill="${yellow}"/><path d="M102 98l-16-11-4 16z" fill="${yellow}"/>`;
+      case "bossMask": return `<circle cx="60" cy="65" r="44" fill="${ink}"/><path d="M19 54c14-11 68-11 82 0-6 15-31 21-41 21s-35-6-41-21z" fill="${paper}"/><circle cx="42" cy="55" r="6" fill="${ink}"/><circle cx="78" cy="55" r="6" fill="${ink}"/><path d="M60 5l11 23H49z" fill="${yellow}"/>`;
+      // A defeated monster: the same blob silhouette on its side, eyes
+      // crossed out. Shown once, right when a left-behind boss's negative
+      // becomes active (see the burdenNotice toast in cuddle-ui.js).
+      case "bossDefeated": return `<g transform="rotate(90 60 60)"><path d="M60 13c27 0 47 21 47 48 0 23-13 40-28 47H41c-15-7-28-24-28-47 0-27 20-48 47-48z" fill="${ink}"/><path d="m33 48 18 18M51 48 33 66" stroke="${yellow}" stroke-width="7" stroke-linecap="round"/><path d="m69 48 18 18M87 48 69 66" stroke="${yellow}" stroke-width="7" stroke-linecap="round"/><path d="M42 95h36" stroke="${paper}" stroke-width="8" stroke-linecap="round"/></g>`;
       default: return `<circle cx="60" cy="60" r="45" fill="${ink}"/><path d="m67 13-39 54h27l-8 40 45-61H65z" fill="${yellow}"/>`;
     }
   }
 
+  function powerSvgBody(id) {
+    const info = powerInfo(id);
+    const shared = info.multiplayerId && window.POWER_ICON_IDS && window.POWER_ICON_IDS[info.multiplayerId];
+    if (shared && document.getElementById(shared)) {
+      return `<use href="#${escapeMarkup(shared)}" xlink:href="#${escapeMarkup(shared)}"></use>`;
+    }
+    return shapeBody(info.shape);
+  }
+
   function powerSvg(id, className = "umt-power-svg") {
     return `<svg class="${escapeMarkup(className)}" viewBox="0 0 120 120" aria-hidden="true" focusable="false">${powerSvgBody(id)}</svg>`;
+  }
+
+  function defeatedBossSvg(className = "umt-power-svg") {
+    return `<svg class="${escapeMarkup(className)}" viewBox="0 0 120 120" aria-hidden="true" focusable="false">${shapeBody("bossDefeated")}</svg>`;
+  }
+
+  const BOSS_MONSTER_SHAPES = ["bossFang", "bossHorn", "bossSpike", "bossEye", "bossClaw", "bossMask"];
+
+  // A boss's icon here is deliberately decoupled from its effect id -- see
+  // the shape cases above -- so it's picked by hashing the boss's own id
+  // (stable for that boss, varied across the roster) rather than by what
+  // the boss actually does.
+  function bossMonsterSvg(seed, className = "umt-power-svg") {
+    const shape = BOSS_MONSTER_SHAPES[hash32(`bossMonster:${seed}`) % BOSS_MONSTER_SHAPES.length];
+    return `<svg class="${escapeMarkup(className)}" viewBox="0 0 120 120" aria-hidden="true" focusable="false">${shapeBody(shape)}</svg>`;
   }
 
   function removeLegacyHud() {
@@ -2588,7 +2618,7 @@
       if (icon && icon.dataset.umtIconKey !== definition.id) {
         icon.dataset.umtIconKey = definition.id;
         icon.classList.add("umt-svg-choice-icon");
-        icon.innerHTML = powerSvg(definition.id);
+        icon.innerHTML = button.dataset.bossId ? bossMonsterSvg(definition.id) : powerSvg(definition.id);
       }
       if (definition.option && definition.option.reward) {
         const reward = definition.option.reward;
@@ -2984,7 +3014,6 @@
       renderHintIndicator(game);
       renderHintedTiles(game);
       moveQuestReroll();
-      renderNotebook(game);
       renderBossBurdens(game);
       renderGoldenCompass(game);
       renderMapVariants(game);
@@ -3131,7 +3160,11 @@
       normalizeState(this);
       const custom = customState(this);
       const pending = custom && custom.pendingVariant ? { ...custom.pendingVariant } : null;
-      const shouldRevealAll = ownsAllThemes(this) || (pending && pending.kind === "allThemes");
+      // The per-node "reveal every theme" variant was retired in favor of
+      // the ordinary single-category Themed Wordle experience (see
+      // variantForNode) -- only the permanent All-Seeing Atlas boss reward
+      // still reveals every theme now.
+      const shouldRevealAll = ownsAllThemes(this);
       const hasRevealQueue = Boolean(window.CuddleCampaign && typeof window.CuddleCampaign.queueCategoryReveal === "function");
       const restoreCategory = shouldRevealAll && !hasRevealQueue ? temporaryCategorySense(this, 99) : () => undefined;
       const hintSuppression = temporaryCoachHintsDisabled(this);
@@ -3355,6 +3388,13 @@
       version: VERSION,
       config: CONFIG,
       getActiveGame: publicActiveGame,
+      feasibleBadge: (game) => feasibleBadgeMarkup(game || publicActiveGame()),
+      // [title, description] for the burden a boss's effect leaves behind
+      // once it's skipped and the OTHER boss is later cleared -- shared with
+      // the boss-choice screen (cuddle-ui.js's renderBossChoiceOverlay) so
+      // both surfaces describe the same burdens identically.
+      burdenInfo: (id) => BURDEN_INFO[id] || null,
+      defeatedBossIcon: defeatedBossSvg,
       normalizeMap: () => {
         const current = publicActiveGame();
         if (current) {

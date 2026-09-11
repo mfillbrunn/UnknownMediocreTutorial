@@ -49,6 +49,19 @@
     );
   }
 
+  // Small star badge on a reward/upgrade card still in the picker, shown
+  // only when taking THIS option would complete a synergy the player has
+  // already half-earned (see CuddleEngine.rewardInteractionSynergy).
+  function interactionBonusBadge(optionId) {
+    if (!game || typeof window.CuddleEngine?.rewardInteractionSynergy !== "function") return "";
+    const synergy = window.CuddleEngine.rewardInteractionSynergy(game, optionId);
+    if (!synergy) return "";
+    return `<span class="umt-interaction-badge" title="${escapeHtml(synergy.title)}: ${escapeHtml(synergy.description)}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l3.22 6.53 7.21 1.05-5.22 5.09 1.23 7.18L12 17.9l-6.44 3.45 1.23-7.18-5.22-5.09 7.21-1.05z"/></svg>
+      Interaction bonus!
+    </span>`;
+  }
+
   function showScreen(id) {
     if (typeof window.showScreen === "function") {
       window.showScreen(id);
@@ -738,6 +751,27 @@
 
   // Every boss choice shows its permanent reward, including the final boss.
   // Bosses never add a second ordinary post-round reward.
+  // What happens to the OTHER boss's effect once this one is picked and
+  // this option is left behind -- surfaced on each card so the choice also
+  // weighs the negative the skipped boss leaves for later (see
+  // CuddleEngine's _clearBoss/_chooseBoss ratchetSourceId handling and
+  // extraGuessTrialPunishPending/questEndurancePunishPending, which is where
+  // this actually takes effect once the chosen boss is defeated).
+  const LEAVE_BEHIND_SPECIAL = {
+    extraGuessTrial: "Your first guess of the very next round will score 0 points.",
+    questEndurance: "If a quest rides on a later round and you miss it, that round's hand size drops by one."
+  };
+  function leaveBehindNote(option, isFinal) {
+    // The final boss never leaves a ratchet burden behind (see
+    // CuddleEngine's _clearBoss: it explicitly skips bossBefore.gate ===
+    // "final"), so the note would describe something that can't happen.
+    if (!option || isFinal) return "";
+    if (LEAVE_BEHIND_SPECIAL[option.id]) return LEAVE_BEHIND_SPECIAL[option.id];
+    const info = typeof window.CuddleRebalanceV5?.burdenInfo === "function"
+      ? window.CuddleRebalanceV5.burdenInfo(option.id)
+      : null;
+    return info ? `A future guess (after you clear the other boss) will carry: ${info[1]}` : "";
+  }
   function renderBossChoiceOverlay(state) {
     const options = state.bossOffer || [];
     const isFinal = options.some(option => option.gate === "final");
@@ -759,6 +793,11 @@
                   <span class="cuddle-boss-reward">
                     <b>${escapeHtml(option.reward.icon || "🎁")} ${escapeHtml(option.reward.title)}</b>
                     <span>${goldenMoney(escapeHtml(option.reward.description))}</span>
+                  </span>` : ""}
+                ${leaveBehindNote(option, isFinal) ? `
+                  <span class="cuddle-boss-leave-behind">
+                    <b>⚠️ Leave this behind:</b>
+                    <span>${escapeHtml(leaveBehindNote(option, isFinal))}</span>
                   </span>` : ""}
               </button>`).join("")}
           </div>
@@ -788,6 +827,7 @@
           <div class="cuddle-choice-grid">
             ${state.questRewardChoices.map(reward => `
               <button class="cuddle-choice" data-reward-id="${escapeHtml(reward.id)}">
+                ${interactionBonusBadge(reward.id)}
                 <span class="cuddle-choice-icon">${escapeHtml(reward.icon || "✨")}</span>
                 <strong>${escapeHtml(reward.title)}</strong>
                 <small>${goldenMoney(escapeHtml(reward.description))}</small>
@@ -838,6 +878,7 @@
           <div class="cuddle-choice-grid">
             ${state.upgradeChoices.map(choice => `
               <button class="cuddle-choice" data-upgrade-key="${escapeHtml(choice.key)}">
+                ${interactionBonusBadge(choice.key || choice.id)}
                 <span class="cuddle-choice-icon">${escapeHtml(choice.icon || "⬆️")}</span>
                 <strong>${escapeHtml(choice.title)}</strong>
                 <small>${goldenMoney(escapeHtml(choice.description))}</small>
@@ -1223,10 +1264,14 @@
   /* UMT_CUDDLE_REBALANCE_V3: UI START */
   function cuddleV3ToastStack(state) {
     const boss = state?.bossRewardNotice;
+    const burden = state?.burdenNotice;
     const synergy = state?.synergyNotice;
     const hint = state?.coachHintNotice;
     const meter = state?.coachMeterNotice;
-    if (!boss && !synergy && !hint && !meter) return "";
+    if (!boss && !burden && !synergy && !hint && !meter) return "";
+    const burdenIcon = burden && typeof window.CuddleRebalanceV5?.defeatedBossIcon === "function"
+      ? window.CuddleRebalanceV5.defeatedBossIcon("umt-power-svg umt-toast-svg")
+      : "💀";
     return `
       <div class="cuddle-v3-toast-stack" aria-live="polite">
         ${boss ? `
@@ -1234,6 +1279,12 @@
             <span class="cuddle-v3-toast-icon">${escapeHtml(boss.icon || "🎁")}</span>
             <div><small>${escapeHtml(boss.bossTitle || "Boss")} cleared</small><strong>${escapeHtml(boss.title || "Boss reward received")}</strong><p>${goldenMoney(escapeHtml(boss.message || "Permanent bonus received."))}</p></div>
             <button type="button" data-cuddle-v3-action="dismiss-boss-reward" aria-label="Dismiss boss reward">×</button>
+          </section>` : ""}
+        ${burden ? `
+          <section class="cuddle-v3-toast is-burden" role="status">
+            <span class="cuddle-v3-toast-icon">${burdenIcon}</span>
+            <div><small>Left-behind boss</small><strong>${escapeHtml(burden.title || "Negative bonus active")}</strong><p>${escapeHtml(burden.description || "A future guess carries this burden.")}</p></div>
+            <button type="button" data-cuddle-v3-action="dismiss-burden" aria-label="Dismiss burden notice">×</button>
           </section>` : ""}
         ${synergy ? `
           <section class="cuddle-v3-toast is-synergy" role="status">
@@ -1297,6 +1348,7 @@
     event.preventDefault();
     const action = button.dataset.cuddleV3Action;
     if (action === "dismiss-boss-reward") game?.dismissBossRewardNotice?.();
+    else if (action === "dismiss-burden") game?.dismissBurdenNotice?.();
     else if (action === "dismiss-synergy") game?.dismissSynergyNotice?.();
     else if (action === "dismiss-coach-hint") game?.dismissCoachHintNotice?.();
     else if (action === "dismiss-coach-meter") game?.dismissCoachMeterNotice?.();

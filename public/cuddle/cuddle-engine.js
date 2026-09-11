@@ -2407,7 +2407,7 @@
       id: "storybookStart",
       icon: "📖",
       title: "Opening Verse",
-      description: "Start every scoring round with +$10. Stacks up to three times.",
+      description: "Start every non-boss stage with +$10. Stacks up to three times.",
       max: 3
     },
     {
@@ -2430,7 +2430,7 @@
       id: "goldenTempo",
       icon: "⚡",
       title: "Golden Tempo",
-      description: "Golden Value + Quick Cuddle: every solved scoring round gives +$5."
+      description: "Golden Value + Quick Cuddle: every solved non-boss stage gives +$5."
     },
     {
       id: "questBinding",
@@ -2442,7 +2442,7 @@
       id: "illustratedStart",
       icon: "🌟",
       title: "Illustrated Start",
-      description: "Opening Verse + Margin Note: scoring rounds open with another +$5."
+      description: "Opening Verse + Margin Note: non-boss stages open with another +$5."
     },
     {
       id: "endlessMargins",
@@ -2519,6 +2519,9 @@
       : null;
     state.synergyNotice = state.synergyNotice && typeof state.synergyNotice === "object"
       ? state.synergyNotice
+      : null;
+    state.burdenNotice = state.burdenNotice && typeof state.burdenNotice === "object"
+      ? state.burdenNotice
       : null;
     const sourceKinds = state.mysteryGlyphKinds && typeof state.mysteryGlyphKinds === "object"
       && !Array.isArray(state.mysteryGlyphKinds)
@@ -3267,6 +3270,13 @@
     this.save();
     return { ok: true };
   };
+  CuddleGame.prototype.dismissBurdenNotice = function dismissCuddleV3BurdenNotice() {
+    const state = cuddleV3EnsureState(this);
+    if (!state?.burdenNotice) return { ok: false };
+    state.burdenNotice = null;
+    this.save();
+    return { ok: true };
+  };
   CuddleGame.prototype.getRewardBook = function getCuddleV3RewardBook() {
     const state = cuddleV3EnsureState(this);
     const history = (state.rewardBookHistory || []).slice().reverse();
@@ -3370,7 +3380,7 @@
     id: "goldenTempo",
     icon: "⚡",
     title: "Golden Tempo",
-    description: "A colour-value reward plus an early-solve reward: every solved scoring round gives +$5."
+    description: "A colour-value reward plus an early-solve reward: every solved non-boss stage gives +$5."
   });
 
   function finiteNumber(value, fallback = 0) {
@@ -4504,6 +4514,12 @@
         if (debuff.bossId === "hideFeedback") debuff.hiddenIndex = Math.floor(this.random() * 5);
         if (debuff.bossId === "hiddenMargins") debuff.hiddenIndices = shuffle([0, 1, 2, 3, 4], this.random).slice(0, 2);
         mega.ratchetDebuffs.push(debuff);
+        const info = window.CuddleRebalanceV5?.burdenInfo?.(debuff.bossId);
+        this.state.burdenNotice = {
+          bossId: debuff.bossId,
+          title: info ? info[0] : debuff.bossId,
+          description: info ? info[1] : "A defeated boss burden affects this guess."
+        };
       }
     }
     return composedClearBoss.call(this);
@@ -4872,6 +4888,29 @@
     }
   ];
 
+  // Previews, for a reward/upgrade CARD still in the picker, whether taking
+  // it would complete one of the two synergy pairs above -- i.e. the other
+  // half is already owned and this pick is the one that's missing. Only
+  // meaningful for the specific reward ids each synergy's test() actually
+  // reads (see _applyRewardEffect/mega upgrade handling for where each id
+  // sets the state a test() checks); every other reward previews as null.
+  function rewardInteractionSynergy(game, optionId) {
+    const mega = ensureMega(game);
+    const owned = new Set(mega.unlockedSynergies || []);
+    const id = String(optionId || "");
+    if (!owned.has("jokerQuest")) {
+      const hasQuestCadence = Number(game.state.upgrades?.questCadence || 0) > 0;
+      const hasJoker = Boolean(mega.hasJokerUnlocked);
+      if (id === "questCadence" && hasJoker) return MEGA_SYNERGIES[0];
+      if ((id === "jokerToken" || id === "jokerPerRound") && hasQuestCadence) return MEGA_SYNERGIES[0];
+    }
+    if (!owned.has("overtimeCull")) {
+      const hasTwoRemoved = (game.state.removedLetters || []).length >= 2;
+      if (id === "overtimeReward" && hasTwoRemoved) return MEGA_SYNERGIES[1];
+    }
+    return null;
+  }
+
   function refreshMegaSynergies(game, announce) {
     const mega = ensureMega(game);
     const owned = new Set(mega.unlockedSynergies);
@@ -4930,7 +4969,8 @@
 
   window.CuddleEngine = Object.freeze({
     ...Engine,
-    CUDDLE_JOKER_GLYPH: JOKER_GLYPH
+    CUDDLE_JOKER_GLYPH: JOKER_GLYPH,
+    rewardInteractionSynergy
   });
 }());
 /* UMT_CUDDLE_EXPANSION_V1: ENGINE END */

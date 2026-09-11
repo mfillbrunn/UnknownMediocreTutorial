@@ -4,7 +4,6 @@
   width: min(100%, 760px);
   margin: 14px auto 4px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   position: relative;
   z-index: 1;
@@ -14,45 +13,11 @@
   min-width: 0;
 }
 
-.cuddle-coach-remaining-box,
 .cuddle-coach-actions {
   border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
   border-radius: 16px;
   background: color-mix(in srgb, var(--panel, #ffffff) 94%, transparent);
   box-shadow: 0 10px 24px rgba(25, 20, 10, 0.08);
-}
-
-.cuddle-coach-remaining-box {
-  margin: 0;
-  padding: 13px 15px;
-  display: grid;
-  gap: 5px;
-}
-
-.cuddle-coach-remaining-box .line {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.cuddle-coach-remaining-box .label {
-  font-weight: 750;
-}
-
-.cuddle-coach-remaining-box .value {
-  font-variant-numeric: tabular-nums;
-  font-weight: 900;
-  font-size: 1.16rem;
-}
-
-.cuddle-coach-remaining-box .remaining-hint {
-  opacity: 0.7;
-  font-size: 0.78rem;
-}
-
-.cuddle-coach-actions {
-  grid-column: 1 / -1;
   padding: 10px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -416,4 +381,44 @@
   font-weight: 900;
   font-variant-numeric: tabular-nums;
   line-height: 1;
+}
+
+/* A one-shot banner that sweeps left-to-right across the screen the moment
+   a Guesser Hint is unlocked, on top of (not instead of) the dismissible
+   corner toast -- see renderHintSweepBanner. */
+.cuddle-hint-sweep-banner {
+  position: fixed;
+  top: 16%;
+  left: 0;
+  z-index: 10200;
+  width: 100%;
+  padding: 13px 0;
+  text-align: center;
+  color: #0f2d1c;
+  background: linear-gradient(90deg, transparent, rgba(107, 214, 143, 0.94) 18%, rgba(107, 214, 143, 0.94) 82%, transparent);
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+  animation: cuddleHintSweep 1.9s cubic-bezier(0.22, 0.85, 0.3, 1) both;
+}
+
+@keyframes cuddleHintSweep {
+  0% { transform: translateX(-100%); opacity: 0; }
+  12% { opacity: 1; }
+  50% { transform: translateX(0); opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cuddle-hint-sweep-banner {
+    animation: cuddleHintSweepFade 1.9s ease both;
+  }
+}
+
+@keyframes cuddleHintSweepFade {
+  0%, 100% { opacity: 0; }
+  15%, 85% { opacity: 1; }
 }

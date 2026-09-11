@@ -454,7 +454,7 @@
       id: "openingClue",
       icon: "🔮",
       title: "Margin Note",
-      description: "Reveal that one letter is in the secret at the start of every future scoring round -- not where."
+      description: "Reveal that one letter is in the secret at the start of every future non-boss stage -- not where."
     },
     {
       id: "questDoublePick",

@@ -681,20 +681,24 @@
       </g>`;
   }
 
-  function renderCategoryBadge(campaign) {
+  function renderCategoryBadge(campaign, extraChipsHtml = "") {
     // Show nothing at all -- not even a "hidden" placeholder -- unless the
     // player has actually engaged the theme mechanic this round (Theme
     // Sense, a redeemed Category Whisper, or the guaranteed reveal has
     // fired). A round that hasn't touched categories yet shouldn't
-    // advertise that the feature exists.
+    // advertise that the feature exists. An extra chip (e.g. the Candidate
+    // Notebook's feasible-answer readout) can still force the strip to
+    // render even when the theme itself has nothing to show yet.
     const engaged = campaign.categorySense > 0
       || campaign.revealedCategories.length > 0
       || campaign.categoryPending
       || campaign.noCategory
       || campaign.categoryExhausted;
-    if (!engaged) return "";
+    if (!engaged && !extraChipsHtml) return "";
     let content;
-    if (campaign.revealedCategories.length) {
+    if (!engaged) {
+      content = "";
+    } else if (campaign.revealedCategories.length) {
       content = campaign.revealedCategories
         .map(item => `<span class="cuddle-category-chip">${escapeHtml(item.label)}</span>`)
         .join("");
@@ -707,7 +711,7 @@
     }
     return `
       <div class="cuddle-category-readout" aria-label="Known solution categories">
-        <div class="cuddle-category-chips">${content}</div>
+        <div class="cuddle-category-chips">${content}${extraChipsHtml}</div>
       </div>`;
   }
 
@@ -974,7 +978,10 @@
       const challengeBanner = typeof window.CuddleMoneyMode?.renderChallengeBanner === "function"
         ? window.CuddleMoneyMode.renderChallengeBanner(game)
         : "";
-      const themeBadge = renderCategoryBadge(ensureCampaign(game));
+      const feasibleChip = typeof window.CuddleRebalanceV5?.feasibleBadge === "function"
+        ? window.CuddleRebalanceV5.feasibleBadge(game)
+        : "";
+      const themeBadge = renderCategoryBadge(ensureCampaign(game), feasibleChip);
       // The active quest used to be its own bordered card between the boss
       // banner and the board -- now it's just plain text riding in this
       // strip next to the theme badge, so it reads at a glance instead of
@@ -986,8 +993,16 @@
       const questText = quests
         .map(quest => `<span class="cuddle-quest-inline">Quest: ${escapeHtml(quest.description)}</span>`)
         .join("");
-      const strip = themeBadge || questText
-        ? `<div class="cuddle-play-strip">${questText}${themeBadge ? `<div class="cuddle-map-badge-standalone cuddle-play-theme-badge">${themeBadge}</div>` : ""}</div>`
+      // Plain text, deliberately not folded into the theme's pill-chip list
+      // (see secretsRemainingInline's comment in cuddle-coach-expansion.js).
+      const secretsRemaining = typeof window.CuddleCoachExpansion?.renderSecretsRemaining === "function"
+        ? window.CuddleCoachExpansion.renderSecretsRemaining(game)
+        : "";
+      const themeArea = themeBadge || secretsRemaining
+        ? `<div class="cuddle-map-badge-standalone cuddle-play-theme-badge">${themeBadge}${secretsRemaining}</div>`
+        : "";
+      const strip = themeArea || questText
+        ? `<div class="cuddle-play-strip">${questText}${themeArea}</div>`
         : "";
       const extra = challengeBanner + strip;
       if (!extra) return html;
