@@ -333,16 +333,41 @@
     const sourceStyle =
       getComputedStyle(sourceRow);
 
+    /*
+     * Hosted inside the board rather than on <body>, because the board is
+     * the innermost stacking context the cards this clone flies past (the
+     * quest card and the persistent-power readouts a reward like Informant
+     * or Secret Themes pays out) also live in. From <body> the clone sits
+     * outside all three of the board's stacking-context ancestors
+     * (container-type, isolation, transform), so it painted its tile
+     * outlines straight over those cards on the way up no matter how high
+     * their own z-index reached -- which is why .pc-current-quest-host's
+     * 40001 never actually did what its comment claims. In here that
+     * z-index finally resolves against this clone's own 40000, so the
+     * cards occlude it and it passes behind them.
+     *
+     * The board is position:relative, so switching to absolute and
+     * measuring from its padding box (clientLeft/clientTop drop the
+     * border) lands the clone on exactly the same pixels the viewport
+     * coordinates used to -- the flight animation itself is a pure
+     * translate delta, so nothing below needs to change.
+     */
+    const host = sourceRow.closest(
+      ".guesser-board, .guesser-board-v9"
+    );
+    const hostRect = host?.getBoundingClientRect();
+
     Object.assign(flight.style, {
-      left: `${startRect.left}px`,
-      top: `${startRect.top}px`,
+      position: host ? "absolute" : "",
+      left: `${host ? startRect.left - hostRect.left - host.clientLeft : startRect.left}px`,
+      top: `${host ? startRect.top - hostRect.top - host.clientTop : startRect.top}px`,
       width: `${startRect.width}px`,
       height: `${startRect.height}px`,
       gap: sourceStyle.gap,
       transformOrigin: "center center"
     });
 
-    document.body.appendChild(flight);
+    (host || document.body).appendChild(flight);
 
     sourceRow.style.display = "none";
     sourceRow.style.visibility = "hidden";

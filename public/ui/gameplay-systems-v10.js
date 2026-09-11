@@ -485,8 +485,21 @@
     const phase = byId("guidePhase");
     const task = byId("guideTask");
     if (!phase) return;
-    phase.textContent = isMyTurn(state) ? "Your turn" : "Opponent's turn";
-    if (task) task.textContent = "";
+    // Guarded rather than an unconditional write: assigning .textContent
+    // replaces the element's child text node even when the string is
+    // identical, which fires a real childList MutationRecord every time.
+    // updateAll() disconnects THIS file's own systemsObserver before
+    // running, but several other files (cuddle-rebalance-v5.js's
+    // documentElement-wide observer among them) watch document.body/
+    // documentElement with childList+subtree and have no reason to know
+    // about this write -- an unconditional one here kept re-triggering
+    // those, which scheduled another render, which wrote here again,
+    // forever, for the entire length of any match (confirmed via a
+    // MutationObserver instrumentation trace: this call site alone fired
+    // 60 times a second with nothing else happening on screen).
+    const nextPhase = isMyTurn(state) ? "Your turn" : "Opponent's turn";
+    if (phase.textContent !== nextPhase) phase.textContent = nextPhase;
+    if (task && task.textContent !== "") task.textContent = "";
   }
 
   function enhanceAnnouncement() {
@@ -498,7 +511,16 @@
       const roleId = label?.classList.contains("role-setter") ? "setter" : "guesser";
       const roleLabel = roleId === "setter" ? "SECRETKEEPER" : "GUESSER";
       const ownerLabel = roleId === window.myRole ? "YOU" : "OPPONENT";
-      if (label) label.textContent = `${ownerLabel} · ${roleLabel}`;
+      if (label) {
+        // client.js's own group.icon (an <svg><use> for the role -- see
+        // showBigAnnounce's powerGroups) renders as this label's first
+        // child. A plain textContent write below would wipe it out along
+        // with the placeholder text it's replacing, so pull it out first
+        // and put it back once the text is in place.
+        const icon = label.querySelector("svg");
+        label.textContent = `${ownerLabel} · ${roleLabel}`;
+        if (icon) label.prepend(icon);
+      }
       group.classList.toggle("is-you-v10", ownerLabel === "YOU");
       group.classList.toggle("is-opponent-v10", ownerLabel === "OPPONENT");
       group.querySelectorAll(".big-announce-power-row").forEach(row => {

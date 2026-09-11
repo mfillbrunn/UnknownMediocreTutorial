@@ -572,6 +572,25 @@
   line-height: 1;
 }
 
+/* The round-start popup's own role icon (client.js passes an <svg><use>
+   for this instead of an emoji) -- sized to match the 44px emoji it
+   replaces, colored via the popup's own .role-setter/.role-guesser class
+   below rather than baked into the icon itself. */
+.big-announce-icon svg {
+  width: 44px;
+  height: 44px;
+  display: block;
+  margin: 0 auto;
+}
+
+.big-announce.compact .big-announce-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.big-announce.role-setter .big-announce-icon { color: var(--setter-color); }
+.big-announce.role-guesser .big-announce-icon { color: var(--guesser-color); }
+
 .big-announce-title {
   font-size: var(--fs-24, 24px);
   font-weight: 900;
@@ -663,6 +682,18 @@
   font-weight: 900;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+}
+
+/* The group header's own role icon (client.js's setterGroup/guesserGroup
+   pass an <svg><use> in place of the emoji this label used to lead with)
+   -- currentColor already resolves to this label's own role color (see
+   the .role-setter/.role-guesser rules just below), so no separate color
+   rule is needed here. */
+.big-announce-power-group-label svg {
+  width: 15px;
+  height: 15px;
+  vertical-align: -2px;
+  margin-right: 1px;
 }
 
 .big-announce-power-group-label.role-setter { color: var(--setter-color, #f87171); }

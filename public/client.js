@@ -722,8 +722,9 @@ onStateUpdate(newState => {
     // -- see .big-announce-powers in special-effects.css -- rather than a
     // fixed Secretkeeper-then-Guesser order, so the viewer doesn't have to work
     // out which of two role-labeled lists is theirs every round.
-    const setterGroup = { icon: "🕵️", label: "Secretkeeper", roleClass: "role-setter", powers: describePowers(state.initialPowers?.setter) };
-    const guesserGroup = { icon: "🔍", label: "Guesser", roleClass: "role-guesser", powers: guesserPowers };
+    const roleIconSvg = iconId => `<svg viewBox="0 0 120 120" aria-hidden="true"><use href="#${iconId}" xlink:href="#${iconId}"></use></svg>`;
+    const setterGroup = { icon: roleIconSvg("icon-role-secretkeeper"), label: "Secretkeeper", roleClass: "role-setter", powers: describePowers(state.initialPowers?.setter) };
+    const guesserGroup = { icon: roleIconSvg("icon-role-guesser"), label: "Guesser", roleClass: "role-guesser", powers: guesserPowers };
     const [myGroup, opponentGroup] = iAmSetter ? [setterGroup, guesserGroup] : [guesserGroup, setterGroup];
     const powerGroups = [
       { ...myGroup, label: `You — ${myGroup.label}` },
@@ -774,7 +775,7 @@ onStateUpdate(newState => {
     }
     // UMT_CHALLENGES_V2: ROUND INTRO END
     window.showBigAnnounce?.({
-      icon: iAmSetter ? "🕵️" : "🔍",
+      icon: roleIconSvg(iAmSetter ? "icon-role-secretkeeper" : "icon-role-guesser"),
       title: iAmSetter ? "You are the Secretkeeper" : "You are the Guesser",
       sub: [iAmSetter ? "Keep your secret hidden." : "Find the secret word.", ...dailySub, ...challengeSub],
       powerGroups,

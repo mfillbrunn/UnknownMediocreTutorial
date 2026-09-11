@@ -31,12 +31,12 @@
   <link rel="stylesheet" href="css/tutorial.css?tutorial-v2=2">
   <link rel="stylesheet" href="css/tutorial-eli5.css?tutorial-eli5=3&umt-streamlined=1.0.2">
   <!-- 13. Special effects--->
-  <link rel="stylesheet" href="css/special-effects.css?v=typed-quest-2">
+  <link rel="stylesheet" href="css/special-effects.css?v=typed-quest-2&role-icons=1">
   <!-- Last. Mobile phone adjustments-->
   <link rel="stylesheet" href="css/mobile.css?mobile-perf=1">
   <!-- New features -->
   <link rel="stylesheet" href="css/features.css?v=tutorial-motion-sim-2&summary-result-center=1&daily-playmode=1">
-  <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&desktop-size-balance=2&optional-note-oneline=1&note-inline-title=1&win-stutter-hollow-stars=1&responsive-board=1&umt-fix=20260830-1&cute-star=1&spyometer-flat=1&star-dance-refresh=1&umt-sidebar-fix=2&umt-constraint-frame=2&avoid-row-red=1&star-glow-headroom=1&quest-flight-z=1&persistent-power-badge=1">
+  <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&desktop-size-balance=2&optional-note-oneline=1&note-inline-title=1&win-stutter-hollow-stars=1&responsive-board=1&umt-fix=20260830-1&cute-star=1&spyometer-flat=1&star-dance-refresh=1&umt-sidebar-fix=2&umt-constraint-frame=2&avoid-row-red=1&star-glow-headroom=1&quest-flight-z=1&persistent-power-badge=1&panel-flight-z=1">
   <link rel="stylesheet" href="single-player/single-player.css?sp-shell-stretch=1&umt-fix=20260830-1">
   <link rel="stylesheet" href="single-player/challenges.css?umt-challenges=20260901&quick-play-btn-center=1">
 <!-- CUDDLE_MODE:STYLE START -->
@@ -117,6 +117,23 @@
 
       <symbol id="icon-letter-profile" viewBox="0 0 120 120"><rect fill="currentColor" x="18" y="17" width="84" height="87" rx="11"/><rect fill="#f4f5f7" x="31" y="63" width="13" height="28" rx="3"/><rect fill="#f4f5f7" x="53" y="45" width="13" height="46" rx="3"/><rect fill="#f4f5f7" x="75" y="30" width="13" height="61" rx="3"/></symbol>
       <symbol id="icon-secret-themes" viewBox="0 0 120 120"><rect fill="#f4f5f7" x="38" y="6" width="44" height="16" rx="6"/><rect fill="#f4f5f7" x="24" y="26" width="72" height="16" rx="6"/><path fill="currentColor" d="M16 38h30l10 12h48a10 10 0 0 1 10 10v40a10 10 0 0 1-10 10H16a10 10 0 0 1-10-10V48a10 10 0 0 1 10-10z"/><rect fill="#f4f5f7" x="26" y="64" width="44" height="9" rx="4.5"/><rect fill="#f4f5f7" x="26" y="82" width="30" height="9" rx="4.5"/></symbol>
+
+      <!-- Round-start "You are the X" popup role icons (client.js's
+           showBigAnnounce call, plus the same popup's per-role power-group
+           headers) -- a hooded, silent figure for the Secretkeeper (keeps
+           the secret; no mouth) and a magnifying glass over a "?" for the
+           Guesser (searching for the unknown word). Two colors each
+           (currentColor + a light cutout), same restraint as the power
+           badge icons above -- colored via the popup's own role class
+           (.role-setter/.role-guesser), not baked into the icon itself. -->
+      <symbol id="icon-role-secretkeeper" viewBox="0 0 120 120"><path fill="currentColor" d="M60 10c-28 0-46 22-46 55v35a6 6 0 0 0 6 6h80a6 6 0 0 0 6-6V65c0-33-18-55-46-55z"/><rect fill="#f4f5f7" x="38" y="54" width="15" height="9" rx="4.5" transform="rotate(-8 45.5 58.5)"/><rect fill="#f4f5f7" x="67" y="54" width="15" height="9" rx="4.5" transform="rotate(8 74.5 58.5)"/><rect fill="#f4f5f7" x="33" y="80" width="54" height="16" rx="8"/></symbol>
+      <symbol id="icon-role-guesser" viewBox="0 0 120 120"><circle fill="currentColor" cx="50" cy="50" r="34"/><circle fill="#f4f5f7" cx="50" cy="50" r="24"/><text fill="currentColor" font-weight="900" text-anchor="middle" x="50" y="61" font-size="32">?</text><path fill="currentColor" d="M74 74l36 36-12 12-36-36z"/></symbol>
+
+      <!-- First Letter Reveal (guesser Power Choice Legendary reward) --
+           a green Wordle tile (this power's whole effect: a permanent
+           green clue) with the position it always targets, plus a small
+           medal badge echoing the reward's own 🥇 emoji. -->
+      <symbol id="icon-first-letter-reveal" viewBox="0 0 120 120"><rect fill="var(--tile-green)" x="14" y="14" width="92" height="92" rx="14"/><text fill="var(--tile-green-text)" font-weight="900" text-anchor="middle" x="60" y="80" font-size="58">1</text><circle fill="currentColor" cx="96" cy="24" r="18"/><path fill="var(--tile-green)" d="M96 13l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></symbol>
 
       <!-- Surrender (Leave header buttons) -- pole in the button's own
            accent color (currentColor), flag always plain white regardless
@@ -1781,7 +1798,7 @@
   <script src="client/letterProfile.js"></script>
   <script src="client/must-contain-box.js"></script>
   <script src="client/power-keyboard.js"></script>
-  <script src="powerEngine/powerEngine.js?secret-themes=3&theme-dossier=1"></script>
+  <script src="powerEngine/powerEngine.js?secret-themes=3&theme-dossier=1&first-letter-icon=1"></script>
   <script src="powerEngine/powerRules.js?feedback-lie=1"></script>
   
   <script src="powerEngine/powers/hideTile.js"></script>
@@ -1828,12 +1845,12 @@
   <script src="powerEngine/powers/secretThemes.js"></script>
   <script src="powerEngine/powers/delayedIntel.js"></script>
   <script src="client/summary.js?v=ai-tie-fix-1&daily-no-defeat=1&untimed-no-clock=1"></script>
-  <script src="client/action-log.js?setter-fixes=2"></script>
+  <script src="client/action-log.js?setter-fixes=2&blind-guess-log-scope=1"></script>
   <script src="client/action-log-colors.js?setter-board=1"></script>
   <script src="client/action-log-dedupe-v6.js?setter-fixes=2"></script>
   <script src="ui/setter-sidebar.js?setter-board=1"></script>
   <script src="client/starter-word-suggestions.js"></script>
-  <script src="ui/setter-board.js?setter-board=1&compact-bonus=1&star-bonus-fix=1&umt-fix=20260830-1&cute-star=1&star-dance-refresh=1"></script>
+  <script src="ui/setter-board.js?setter-board=1&compact-bonus=1&star-bonus-fix=1&umt-fix=20260830-1&cute-star=1&star-dance-refresh=1&spy-meter-observer-fix=1"></script>
   <script src="ui/setter-board-polish.js?setter-polish=1"></script>
   <script src="ui/guesser-sidebar.js"></script>
   <script src="client/notes.js"></script>
@@ -1874,8 +1891,8 @@
   <script src="client/big-announce.js?v=drawer-tap-passthrough-1"></script>
   <script src="client/reward-reveal.js?v=typed-quest-2"></script>
   <script src="client/quest-complete-reveal.js?v=typed-quest-2"></script>
-  <script src="client.js?v=9-2&mobile-perf=1&daily-round-intro=1&daily-both-rounds-fixed=1&challenge-intro=1&guest-play=1&tutorial-fixes=20260904&challenge-room-finished-guard=1"></script>
-  <script src="ui/guesser-flow-v7.js?v=tutorial-motion-sim-2&win-flight-direct=1"></script>
+  <script src="client.js?v=9-2&mobile-perf=1&daily-round-intro=1&daily-both-rounds-fixed=1&challenge-intro=1&guest-play=1&tutorial-fixes=20260904&challenge-room-finished-guard=1&role-icons=1"></script>
+  <script src="ui/guesser-flow-v7.js?v=tutorial-motion-sim-2&win-flight-direct=1&flight-behind-cards=1"></script>
   <script src="ui/gameplay-polish-v8.js?gameplay-polish=8"></script>
   <!-- V9: matching Guesser drawer, ready-action docks, Notes shortcut, and theme toggle -->
   <script src="ui/guesser-board-v9.js?v=9"></script>
@@ -1901,9 +1918,9 @@
      client/quest-complete-reveal.js?v=typed-quest-2's ensureOverlay() on first use, rather
      than hardcoded here -- see that file. -->
   <script src="client/power-copy-v10.js?v=10&reward-overhaul=1&wiretap-copy=2&feedback-lie=1&secret-themes=3&theme-dossier=1"></script>
-  <script src="ui/gameplay-systems-v10.js?v=10&compact-bonus=1&star-bonus-fix=1&mobile-perf=1"></script>
+  <script src="ui/gameplay-systems-v10.js?v=10&compact-bonus=1&star-bonus-fix=1&mobile-perf=1&guide-no-op-guard=1&role-icon-preserve=1"></script>
   <script src="ui/competitive-fixes-v2.js?competitive-fixes=2.2&mobile-perf=1"></script>
-  <script src="powerEngine/power-tiers.js?v=2.3-card-carousel&reward-overhaul=1&magic-mode-legendary=1&feedback-lie=1&secret-themes=3&theme-dossier=1"></script> <!-- power-choice-mode-v2.2 -->
+  <script src="powerEngine/power-tiers.js?v=2.3-card-carousel&reward-overhaul=1&magic-mode-legendary=1&feedback-lie=1&secret-themes=3&theme-dossier=1&theme-reward-rarity-swap=1"></script> <!-- power-choice-mode-v2.2 -->
   <script src="client/power-choice-mode.js?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&hardmode-copy=1&mobile-perf=1&reward-overhaul=1&optional-note-oneline=1&note-inline-title=1&daily-hide-refresh=1&guide-btn-inline=1&reward-icon-fit=1&spy-rules-short=1&fixed-reward-svg-pack=1&clean-fixed-rewards=1&persistent-power-badge=2&theme-dossier=1"></script> <!-- power-choice-mode-v2.2 -->
 <!-- UMT_CUDDLE_REBALANCE_V5_JS_BEGIN -->
 <script src="/cuddle/cuddle-rebalance-v5.js?v=5.0.0"></script>
