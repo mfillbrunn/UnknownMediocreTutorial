@@ -1,11 +1,11 @@
-/* CUDDLE EXPANDED STAGES v1.2
- * Specific challenge stops, icon legend, choice events, mystery stops,
- * and forced alternating Wordle duels with a Cuddle-card player hand.
+/* CUDDLE EXPANDED STAGES v1.3
+ * Progression-scaled challenge stops, graded themes, icon legend, choice
+ * events, mystery stops, and forced Duels with a Cuddle-card player hand.
  */
 (function bootstrapCuddleExpandedStages() {
   "use strict";
 
-  const VERSION = "2026.09.11.2";
+  const VERSION = "2026.09.11.3";
   const INSTALL_MARK = Symbol.for("umt.cuddle.expandedStages.v1");
   const MAP_STATUS = "branchMap";
   const ICON_ROOT = "cuddle/icons/";
@@ -20,6 +20,7 @@
     "_syncInfiniteCards", "drawToHandLimit"
   ]);
   const COMMON_OPENERS = Object.freeze(["CRANE", "SLATE", "TRACE", "STARE", "ARISE", "RAISE", "LEAST", "AUDIO"]);
+  const OPENING_STAGE_TYPES = Object.freeze(["theme", "normal", "event", "challenge"]);
 
   const CHALLENGES = Object.freeze([
     Object.freeze({
@@ -27,63 +28,63 @@
       title: "Pocket Tally",
       label: "Tally",
       icon: "challenge-pocket-tally.svg",
-      description: "For two guesses, feedback shows counts rather than normal tile colors."
+      description: "Opening feedback shows counts rather than normal tile colors."
     }),
     Object.freeze({
       id: "foggedSlot",
       title: "Fogged Slot",
       label: "Fog",
       icon: "challenge-fogged-slot.svg",
-      description: "For two guesses, one feedback position is hidden by fog."
+      description: "One position in each affected feedback row is hidden by fog."
     }),
     Object.freeze({
       id: "blueHaze",
       title: "Blue Haze",
       label: "Haze",
       icon: "challenge-blue-haze.svg",
-      description: "For two guesses, feedback is filtered through blue-haze rules."
+      description: "Affected feedback is filtered through blue-haze rules."
     }),
     Object.freeze({
       id: "singleLie",
       title: "One Little Lie",
       label: "Lie",
       icon: "challenge-single-lie.svg",
-      description: "The first feedback row contains one convincing false tile."
+      description: "Each affected feedback row contains one convincing false tile."
     }),
     Object.freeze({
       id: "lockedOpener",
       title: "Locked Opener",
       label: "Lock",
       icon: "challenge-locked-opener.svg",
-      description: "Your opening turn has no mulligan escape."
+      description: "Mulligans are locked during the affected opening guesses."
     }),
     Object.freeze({
       id: "fiveGuessSprint",
       title: "Five-Guess Sprint",
       label: "Sprint",
       icon: "challenge-five-guess-sprint.svg",
-      description: "Solve with one fewer guess than a normal round."
+      description: "Solve with fewer guesses than a normal round."
     }),
     Object.freeze({
       id: "vowelBudget",
       title: "Vowel Budget",
       label: "Vowels",
       icon: "challenge-vowel-budget.svg",
-      description: "The first two guesses may use at most two vowels."
+      description: "Affected opening guesses may use at most two vowels."
     }),
     Object.freeze({
       id: "cleanLetters",
       title: "Clean Letters",
       label: "Clean",
       icon: "challenge-clean-letters.svg",
-      description: "Your opening guess must use five different letters."
+      description: "Affected opening guesses must use five different letters."
     }),
     Object.freeze({
       id: "quickStart",
       title: "Quick Start",
       label: "Clock",
       icon: "challenge-quick-start.svg",
-      description: "The first two guesses run on a short clock."
+      description: "Affected opening guesses run on a short clock."
     })
   ]);
 
@@ -91,7 +92,7 @@
 
   const BASE_STAGE_META = Object.freeze({
     normal: Object.freeze({ title: "Wordle", label: "Wordle", icon: "stage-normal.svg", description: "A standard Cuddle Wordle round." }),
-    theme: Object.freeze({ title: "Themed Wordle", label: "Theme", icon: "stage-theme.svg", description: "A Wordle that reveals a solution category." }),
+    theme: Object.freeze({ title: "Themed Wordle", label: "Theme", icon: "stage-theme.svg", description: "Theme reveals scale by act: all, all but one, then one." }),
     upgrade: Object.freeze({ title: "Waystone", label: "Upgrade", icon: "stage-upgrade.svg", description: "Choose a permanent upgrade." }),
     shop: Object.freeze({ title: "Wandering Paw", label: "Shop", icon: "stage-shop.svg", description: "Spend money on run supplies." }),
     event: Object.freeze({ title: "Choice Event", label: "Event", icon: "stage-event-choice.svg", description: "Choose a safe reward or a stronger bargain with a cost." }),
@@ -237,6 +238,10 @@
     const originalHydrateState = proto._hydrateState;
     const originalEnterBranchNode = proto.enterBranchNode;
     const originalBeginRound = proto._beginRound;
+    const originalCanSubmit = proto.canSubmit;
+    const originalMulligan = proto.mulligan;
+    const originalSubmitDraft = proto.submitDraft;
+    const originalApplyBossFeedback = proto._applyBossFeedback;
     const originalRenderMapScreen = branchExport.renderMapScreen;
     const originalAfterRender = campaignExport.afterRender;
     const originalHandleUiAction = campaignExport.handleUiAction;
@@ -264,6 +269,17 @@
     function integer(value, fallback = 0) {
       const parsed = Number(value);
       return Number.isFinite(parsed) ? Math.trunc(parsed) : fallback;
+    }
+
+    function goldenMoney(escapedHtml) {
+      return String(escapedHtml == null ? "" : escapedHtml).replace(
+        /[+-]?\$\s?\d[\d,]*/g,
+        match => `<span class="cuddle-money-figure">${match}</span>`
+      );
+    }
+
+    function richText(value) {
+      return goldenMoney(escapeHtml(value));
     }
 
     function hashText(value) {
@@ -365,11 +381,134 @@
       });
     }
 
+    function rowHasBoss(row) {
+      return Boolean(row && (row.kind === "boss"
+        || (Array.isArray(row.nodes) && row.nodes.some(node => node && node.type === "boss"))));
+    }
+
+    function progressionTier(map, nodeOrRow) {
+      const rowIndex = typeof nodeOrRow === "number"
+        ? integer(nodeOrRow, 0)
+        : integer(nodeOrRow && nodeOrRow.row, 0);
+      let bossesBefore = 0;
+      for (let index = 0; index < rowIndex; index += 1) {
+        if (rowHasBoss(map && map.rows ? map.rows[index] : null)) bossesBefore += 1;
+      }
+      return Math.max(1, Math.min(3, bossesBefore + 1));
+    }
+
+    function challengeDescription(challengeId, turns) {
+      const count = Math.max(1, Math.min(3, integer(turns, 1)));
+      const guessWord = count === 1 ? "guess" : "guesses";
+      const descriptions = {
+        pocketTally: `For the first ${count} ${guessWord}, feedback shows only the total green and yellow counts, not their positions.`,
+        foggedSlot: `One feedback position is hidden on each of the first ${count} ${guessWord}.`,
+        blueHaze: `For the first ${count} ${guessWord}, green and yellow both appear blue.`,
+        singleLie: `Each of the first ${count} feedback ${count === 1 ? "row contains" : "rows contain"} one convincing false tile.`,
+        lockedOpener: `Mulligans are locked until ${count === 1 ? "the first guess is" : `the first ${count} guesses are`} submitted.`,
+        fiveGuessSprint: `This Wordle has ${count} fewer ${count === 1 ? "guess" : "guesses"} than normal, with a minimum of three.`,
+        vowelBudget: `Each of the first ${count} ${guessWord} may contain at most two vowels.`,
+        cleanLetters: `Each of the first ${count} ${guessWord} must use five different letters.`,
+        quickStart: `Each of the first ${count} ${guessWord} has a 50-second clock.`
+      };
+      return descriptions[challengeId] || `This challenge affects the first ${count} ${guessWord}.`;
+    }
+
+    function themeDescription(tier) {
+      const value = Math.max(1, Math.min(3, integer(tier, 1)));
+      if (value === 1) return "Reveals every available solution theme when the round begins.";
+      if (value === 2) return "Reveals every available solution theme except one when the round begins.";
+      return "Reveals one solution theme when the round begins.";
+    }
+
+    function clearOpeningNodeFields(node) {
+      [
+        "challengeId", "expandedEventId", "mysteryType", "mysteryRevealed",
+        "duelId", "gate", "bossTitle", "bossDescription", "expandedChallengeReward",
+        "expandedChallengeTurns", "expandedThemeRevealTier", "expandedProgressionTier"
+      ].forEach(key => { delete node[key]; });
+    }
+
+    function connectOpeningRow(row, nextRow) {
+      const nextCount = nextRow && Array.isArray(nextRow.nodes) ? nextRow.nodes.length : 0;
+      if (!row || !Array.isArray(row.nodes) || !nextCount) return;
+      if (nextCount === 1) {
+        row.nodes.forEach(node => { node.next = [0]; });
+        return;
+      }
+      if (nextCount === 2) {
+        row.nodes[0].next = [0];
+        row.nodes[1].next = [1];
+        return;
+      }
+      const middleLeft = Math.max(0, Math.floor((nextCount - 1) / 2));
+      const middleRight = Math.min(nextCount - 1, Math.ceil((nextCount - 1) / 2));
+      row.nodes[0].next = Array.from({ length: middleRight + 1 }, (_unused, index) => index);
+      row.nodes[1].next = Array.from({ length: nextCount - middleLeft }, (_unused, index) => middleLeft + index);
+    }
+
+    function configureOpeningRow(game, map) {
+      if (!map || !Array.isArray(map.rows) || map.rows.length < 2 || mapHasProgress(map)) return false;
+      const row = map.rows[0];
+      if (!row || !Array.isArray(row.nodes) || !row.nodes.length) return false;
+      const rng = seededRandom(`${game.state.runId || "run"}:opening-pair:v1`);
+      const types = shuffled(OPENING_STAGE_TYPES, rng).slice(0, 2);
+      const template = row.nodes[0] || { row: 0, col: 0, next: [] };
+      const nodes = row.nodes.slice(0, 2);
+      while (nodes.length < 2) nodes.push(Object.assign({}, template));
+      nodes.forEach((node, index) => {
+        clearOpeningNodeFields(node);
+        node.row = 0;
+        node.col = index;
+        node.type = types[index];
+        node.expandedBaseRow = 0;
+        node.next = [];
+      });
+      row.nodes = nodes;
+      connectOpeningRow(row, map.rows[1]);
+      map.expandedOpeningTypes = types.slice();
+      map.expandedOpeningConfigured = VERSION;
+      return true;
+    }
+
+    function annotateProgression(map) {
+      if (!map || !Array.isArray(map.rows)) return;
+      map.rows.forEach((row, rowIndex) => {
+        const tier = progressionTier(map, rowIndex);
+        (row.nodes || []).forEach(node => {
+          node.expandedProgressionTier = tier;
+          if (node.type === "challenge" || node.mysteryType === "challenge") {
+            node.expandedChallengeTurns = tier;
+          }
+          if (node.type === "theme" || node.mysteryType === "theme") {
+            node.expandedThemeRevealTier = tier;
+          }
+        });
+      });
+    }
+
     function challengeDefinition(game, challengeId) {
       const catalog = window.CuddleMoneyMode && Array.isArray(window.CuddleMoneyMode.challenges)
         ? window.CuddleMoneyMode.challenges
         : [];
       return catalog.find(item => item && item.id === challengeId) || null;
+    }
+
+    function challengeRewardFor(game, definition, turns, preview = false) {
+      const config = window.CuddleMoneyMode && window.CuddleMoneyMode.config || {};
+      const difficulty = String(game && game.state && game.state.megaState && game.state.megaState.difficulty || "hard");
+      const rewardPerRound = integer(config.rewardPerCompletedRound, 2);
+      const difficultyBonuses = config.difficultyRewardBonus || {};
+      const map = ensureMap(game);
+      const round = preview && map
+        ? Math.max(1, integer(map.roundsPlayed, 0) + 1)
+        : Math.max(1, integer(game && game.state && game.state.round, 1));
+      return Math.max(1,
+        integer(definition && definition.baseReward, 8)
+        + Math.max(0, round - 1) * rewardPerRound
+        + integer(difficultyBonuses[difficulty], difficulty === "hard" ? 4 : difficulty === "medium" ? 2 : 0)
+        + (Math.max(1, Math.min(3, integer(turns, 1))) - 1) * 4
+      );
     }
 
     function addDuelRows(game, map, rng) {
@@ -458,6 +597,7 @@
         }));
         map.expandedBaseRowsRecorded = true;
       }
+      configureOpeningRow(game, map);
       const rng = seededRandom(`${game.state.runId || "run"}:expanded-stages`);
       decorateChallengeNodes(game, map, rng);
       decorateEventNodes(map, rng);
@@ -465,14 +605,36 @@
       if (allowDuelInsertion && !mapHasProgress(map)) addDuelRows(game, map, rng);
       else if (!map.expandedDuelRowsInserted && mapHasProgress(map)) map.expandedDuelMigrationDeferred = true;
       reindexRows(map);
+      annotateProgression(map);
       map.expandedStagesVersion = VERSION;
       return map;
     }
 
-    function metaForNode(node) {
+    function metaForNode(node, game) {
       if (!node) return BASE_STAGE_META.normal;
       if (node.type === "mystery" && !node.mysteryRevealed) return BASE_STAGE_META.mystery;
-      if (node.type === "challenge") return CHALLENGE_BY_ID[node.challengeId] || BASE_STAGE_META.normal;
+      if (node.type === "challenge") {
+        const base = CHALLENGE_BY_ID[node.challengeId] || BASE_STAGE_META.normal;
+        const turns = Math.max(1, Math.min(3, integer(node.expandedChallengeTurns || node.expandedProgressionTier, 1)));
+        const definition = challengeDefinition(game, node.challengeId);
+        const reward = Number(node.expandedChallengeReward || (definition ? challengeRewardFor(game, definition, turns, true) : 0));
+        return Object.assign({}, base, {
+          description: `${challengeDescription(node.challengeId, turns)}${reward > 0 ? ` Win for +$${reward}.` : ""}`
+        });
+      }
+      if (node.type === "theme") {
+        const tier = Math.max(1, Math.min(3, integer(node.expandedThemeRevealTier || node.expandedProgressionTier, 1)));
+        return Object.assign({}, BASE_STAGE_META.theme, { description: themeDescription(tier) });
+      }
+      if (node.type === "event") {
+        const definition = EVENT_BY_ID[node.expandedEventId];
+        if (definition) {
+          return Object.assign({}, BASE_STAGE_META.event, {
+            title: definition.title,
+            description: definition.options.map(option => option.summary).join(" Or ")
+          });
+        }
+      }
       if (node.type === "boss") {
         return {
           title: node.bossTitle || "Boss",
@@ -489,6 +651,67 @@
       node.type = node.mysteryType;
       node.mysteryRevealed = true;
       return node;
+    }
+
+    function scheduleThemeRevealPolicy(game, node) {
+      const map = ensureMap(game);
+      if (!map || !game.state || !game.state.secret) return;
+      const tier = Math.max(1, Math.min(3, integer(
+        node && (node.expandedThemeRevealTier || node.expandedProgressionTier),
+        progressionTier(map, node || 0)
+      )));
+      map.expandedThemeRevealPolicy = {
+        secret: String(game.state.secret || "").toUpperCase(),
+        tier,
+        attempts: 0,
+        applied: tier === 3,
+        withheld: ""
+      };
+      settleThemeRevealPolicy(game);
+    }
+
+    function settleThemeRevealPolicy(game) {
+      const map = ensureMap(game);
+      const policy = map && map.expandedThemeRevealPolicy;
+      const campaign = game && game.state && game.state.cuddleCampaign;
+      if (!policy || !campaign || policy.applied) return false;
+      if (String(game.state.secret || "").toUpperCase() !== String(policy.secret || "")) {
+        policy.applied = true;
+        return false;
+      }
+      if (policy.tier === 3) {
+        policy.applied = true;
+        return false;
+      }
+      if (campaign.categoryPending) return false;
+      if (campaign.noCategory) {
+        policy.applied = true;
+        safeSave(game);
+        return true;
+      }
+      if (!campaign.categoryExhausted && integer(policy.attempts, 0) < 3
+          && window.CuddleCampaign && typeof window.CuddleCampaign.queueCategoryReveal === "function") {
+        policy.attempts = integer(policy.attempts, 0) + 1;
+        window.CuddleCampaign.queueCategoryReveal(game, 8, "branch");
+        safeSave(game);
+        return true;
+      }
+      const categories = Array.isArray(campaign.revealedCategories)
+        ? campaign.revealedCategories.slice()
+        : [];
+      if (policy.tier === 2 && categories.length > 1) {
+        policy.withheld = categories.pop();
+        campaign.revealedCategories = categories;
+        campaign.categoryExhausted = false;
+        campaign.categoryNotice = `${categories.length} themes revealed; one remains hidden.`;
+      } else if (policy.tier === 1) {
+        campaign.categoryNotice = categories.length
+          ? `All ${categories.length} available themes revealed.`
+          : campaign.categoryNotice;
+      }
+      policy.applied = true;
+      safeSave(game);
+      return true;
     }
 
     function reversibleUpgrade(game) {
@@ -670,16 +893,20 @@
       const mode = game.state && game.state.cuddleMoneyMode;
       const definition = node && challengeDefinition(game, node.challengeId);
       if (!mode || !definition || game.state.status !== "playing") return;
-      const config = window.CuddleMoneyMode.config || {};
-      const difficulty = String(game.state.megaState && game.state.megaState.difficulty || "hard");
-      const rewardPerRound = integer(config.rewardPerCompletedRound, 2);
-      const difficultyBonuses = config.difficultyRewardBonus || {};
-      const reward = Math.max(1,
-        integer(definition.baseReward, 8)
-        + Math.max(0, integer(game.state.round, 1) - 1) * rewardPerRound
-        + integer(difficultyBonuses[difficulty], difficulty === "hard" ? 4 : difficulty === "medium" ? 2 : 0)
-      );
+      const turns = Math.max(1, Math.min(3, integer(
+        node.expandedChallengeTurns || node.expandedProgressionTier,
+        progressionTier(ensureMap(game), node)
+      )));
+      const reward = challengeRewardFor(game, definition, turns);
+      const meta = CHALLENGE_BY_ID[definition.id] || { title: definition.title || "Challenge" };
+      node.expandedChallengeTurns = turns;
+      node.expandedChallengeReward = reward;
       mode.challengeOffer = Object.assign({}, definition, {
+        title: meta.title,
+        description: challengeDescription(definition.id, turns),
+        turns,
+        expandedTurns: turns,
+        expandedCapApplied: false,
         reward,
         offeredRound: game.state.round,
         hiddenIndex: Math.floor(randomFor(game) * 5),
@@ -697,6 +924,28 @@
       if (!node || node.type === "challenge") return;
       const mode = game.state && game.state.cuddleMoneyMode;
       if (mode && mode.challengeOffer && !mode.challengeOffer.expandedStage) mode.challengeOffer = null;
+    }
+
+    function activeExpandedChallenge(game) {
+      const mode = game && game.state && game.state.cuddleMoneyMode;
+      const challenge = mode && mode.activeChallenge;
+      return challenge && challenge.expandedStage ? challenge : null;
+    }
+
+    function expandedChallengeTurns(challenge) {
+      return Math.max(1, Math.min(3, integer(challenge && (challenge.expandedTurns || challenge.turns), 1)));
+    }
+
+    function syncExpandedChallengeRules(game) {
+      const challenge = activeExpandedChallenge(game);
+      if (!challenge || challenge.effect !== "guessCap" || challenge.expandedCapApplied) return false;
+      const extraReduction = Math.max(0, expandedChallengeTurns(challenge) - 1);
+      if (extraReduction) {
+        game.state.maxGuesses = Math.max(3, integer(game.state.maxGuesses, 6) - extraReduction);
+      }
+      challenge.expandedCapApplied = true;
+      safeSave(game);
+      return true;
     }
 
     function duelSacrifices(game) {
@@ -1422,6 +1671,7 @@
       if (result && result.ok) {
         if (node.type === "challenge") forceSpecificChallenge(game, node);
         else clearIncidentalChallenge(game, node);
+        if (node.type === "theme") scheduleThemeRevealPolicy(game, node);
         safeSave(game);
       }
       return result;
@@ -1487,6 +1737,45 @@
       return enterOrdinaryNode(this, node, nodeId);
     };
 
+    proto.canSubmit = function canSubmitWithExpandedChallenge() {
+      syncExpandedChallengeRules(this);
+      return originalCanSubmit.apply(this, arguments);
+    };
+
+    proto.mulligan = function mulliganWithExpandedChallenge() {
+      const challenge = activeExpandedChallenge(this);
+      if (challenge && challenge.effect === "mulliganLock"
+          && integer(this.state.guessesUsed, 0) < expandedChallengeTurns(challenge)) {
+        const count = expandedChallengeTurns(challenge);
+        return { ok: false, error: `Mulligans are locked for the first ${count} ${count === 1 ? "guess" : "guesses"}.` };
+      }
+      return originalMulligan.apply(this, arguments);
+    };
+
+    proto.submitDraft = function submitDraftWithExpandedChallenge() {
+      syncExpandedChallengeRules(this);
+      return originalSubmitDraft.apply(this, arguments);
+    };
+
+    proto._applyBossFeedback = function applyProgressionChallengeFeedback(word, feedback) {
+      const challenge = activeExpandedChallenge(this);
+      const used = integer(this.state && this.state.guessesUsed, 0);
+      if (!challenge || challenge.effect !== "singleLie" || used <= 0
+          || used >= expandedChallengeTurns(challenge)) {
+        return originalApplyBossFeedback.apply(this, arguments);
+      }
+      const savedUsed = this.state.guessesUsed;
+      const savedFakeIndex = challenge.fakeIndex;
+      this.state.guessesUsed = 0;
+      challenge.fakeIndex = (integer(savedFakeIndex, 0) + used) % 5;
+      try {
+        return originalApplyBossFeedback.apply(this, arguments);
+      } finally {
+        this.state.guessesUsed = savedUsed;
+        challenge.fakeIndex = savedFakeIndex;
+      }
+    };
+
     function stageImage(meta, className = "umt-expanded-icon") {
       return `<img class="${className}" src="${ICON_ROOT}${escapeHtml(meta.icon)}" alt="" aria-hidden="true">`;
     }
@@ -1506,8 +1795,8 @@
           + `data-cuddle-campaign-action="expanded-event-choice" data-shop-item-id="${escapeHtml(option.id)}"${available.ok ? "" : " disabled"}>`
           + `<span class="umt-event-choice-mark">${option.id === "safe" ? "SAFE" : option.id === "bold" ? "BARGAIN" : "RANDOM"}</span>`
           + `<strong>${escapeHtml(option.title)}</strong>`
-          + `<small>${escapeHtml(option.summary)}</small>`
-          + (available.ok ? "" : `<em>${escapeHtml(available.reason)}</em>`)
+          + `<small>${richText(option.summary)}</small>`
+          + (available.ok ? "" : `<em>${richText(available.reason)}</em>`)
           + `</button>`
         );
       }).join("");
@@ -1653,13 +1942,13 @@
       duel.easySacrifices = duelSacrifices(game);
       const easyCosts = duel.easySacrifices.map(item => (
         `<button type="button" class="umt-duel-cost${item.enabled ? "" : " is-disabled"}" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="easy:${escapeHtml(item.id)}"${item.enabled ? "" : " disabled"}>`
-        + `<strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.description)}</small></button>`
+        + `<strong>${richText(item.title)}</strong><small>${richText(item.description)}</small></button>`
       )).join("");
       return (
         `<section class="umt-duel-difficulty">`
         + `<article class="umt-duel-level is-easy"><span class="umt-duel-level-tag">EASY AI</span><h2>Choose a sacrifice</h2><p>The AI plays less efficiently. Easy is never free.</p><div class="umt-duel-costs">${easyCosts}</div></article>`
-        + `<button type="button" class="umt-duel-level is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium"><span class="umt-duel-level-tag">MEDIUM AI</span><h2>Standard Duel</h2><p>No cost. Win to gain $18.</p></button>`
-        + `<button type="button" class="umt-duel-level is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard"><span class="umt-duel-level-tag">HARD AI</span><h2>Expert Duel</h2><p>A stronger solver. Win to gain $38 and a random permanent upgrade.</p></button>`
+        + `<button type="button" class="umt-duel-level is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium"><span class="umt-duel-level-tag">MEDIUM AI</span><h2>Standard Duel</h2><p>${richText("No cost. Win to gain +$18.")}</p></button>`
+        + `<button type="button" class="umt-duel-level is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard"><span class="umt-duel-level-tag">HARD AI</span><h2>Expert Duel</h2><p>${richText("A stronger solver. Win to gain +$38 and a random permanent upgrade.")}</p></button>`
         + `</section>`
       );
     }
@@ -1693,9 +1982,12 @@
       const standard = ["normal", "theme", "event", "upgrade", "shop", "duel", "mystery", "boss"];
       const standardRows = standard.map(type => {
         const meta = BASE_STAGE_META[type];
-        return `<li>${stageImage(meta, "umt-legend-icon")}<span><strong>${escapeHtml(meta.title)}</strong><small>${escapeHtml(meta.description)}</small></span></li>`;
+        return `<li>${stageImage(meta, "umt-legend-icon")}<span><strong>${escapeHtml(meta.title)}</strong><small>${richText(meta.description)}</small></span></li>`;
       }).join("");
-      const challengeRows = CHALLENGES.map(meta => `<li>${stageImage(meta, "umt-legend-icon")}<span><strong>${escapeHtml(meta.title)}</strong><small>${escapeHtml(meta.description)}</small></span></li>`).join("");
+      const challengeRows = CHALLENGES.map(meta => (
+        `<li>${stageImage(meta, "umt-legend-icon")}<span><strong>${escapeHtml(meta.title)}</strong>`
+        + `<small>${escapeHtml(meta.description)} Difficulty scales to the first 1 / 2 / 3 guesses before Boss I / Boss II / after Boss II.</small></span></li>`
+      )).join("");
       return (
         `<div class="cuddle-overlay umt-stage-legend-overlay" role="dialog" aria-modal="true" aria-labelledby="umtStageLegendTitle">`
         + `<section class="cuddle-modal umt-stage-legend"><header><div><span class="cuddle-eyebrow">MAP KEY</span><h2 id="umtStageLegendTitle">What every stop means</h2></div><button type="button" class="umt-legend-close" data-cuddle-campaign-action="expanded-help-close" aria-label="Close map key">&times;</button></header>`
@@ -1715,6 +2007,9 @@
     function setSvgImage(group, meta) {
       if (!group || !meta) return;
       const namespace = "http://www.w3.org/2000/svg";
+      group.querySelectorAll(":scope > image:not(.umt-stage-svg-icon)").forEach(legacy => legacy.remove());
+      group.querySelectorAll(":scope > .cuddle-map-node-icon, :scope > .cuddle-map-node-symbol")
+        .forEach(legacy => legacy.setAttribute("display", "none"));
       let image = group.querySelector(":scope > image.umt-stage-svg-icon");
       if (!image) {
         image = document.createElementNS(namespace, "image");
@@ -1732,8 +2027,6 @@
       const href = `${ICON_ROOT}${meta.icon}`;
       image.setAttribute("href", href);
       image.setAttributeNS("http://www.w3.org/1999/xlink", "href", href);
-      const textIcon = group.querySelector(".cuddle-map-node-icon");
-      if (textIcon) textIcon.setAttribute("display", "none");
       const label = group.querySelector(".cuddle-map-node-label");
       if (label) label.textContent = meta.label;
       group.setAttribute("aria-label", meta.title);
@@ -1764,12 +2057,12 @@
       const flatNodes = map.rows.flatMap(row => row.nodes || []);
       root.querySelectorAll(".cuddle-branch-map-svg g.cuddle-map-node").forEach((group, index) => {
         const node = nodeFromElement(game, group) || flatNodes[index];
-        if (node) setSvgImage(group, metaForNode(node));
+        if (node) setSvgImage(group, metaForNode(node, game));
       });
       root.querySelectorAll(".cuddle-branch-choice").forEach(button => {
         const node = nodeFromElement(game, button);
         if (!node) return;
-        const meta = metaForNode(node);
+        const meta = metaForNode(node, game);
         replaceHtmlIcon(button.querySelector(":scope > .cuddle-choice-icon"), meta);
         const heading = button.querySelector(":scope > strong");
         if (heading) {
@@ -1777,19 +2070,19 @@
           heading.textContent = meta.title + (direction ? ` - ${direction[1]}` : "");
         }
         const description = button.querySelector(":scope > small");
-        if (description) description.textContent = meta.description;
+        if (description) description.innerHTML = richText(meta.description);
       });
       const preview = root.querySelector(".cuddle-branch-preview-overlay");
       if (preview) {
         const confirm = preview.querySelector("[data-cuddle-campaign-action='confirm-branch-node']");
         const node = nodeFromElement(game, confirm);
         if (node) {
-          const meta = metaForNode(node);
+          const meta = metaForNode(node, game);
           replaceHtmlIcon(preview.querySelector(".cuddle-choice-icon"), meta);
           const title = preview.querySelector("h2");
           const description = preview.querySelector("p");
           if (title) title.textContent = meta.title;
-          if (description) description.textContent = meta.description;
+          if (description) description.innerHTML = richText(meta.description);
         }
       }
       const side = root.querySelector(".cuddle-header-side-right");
@@ -1818,6 +2111,10 @@
         if (kicker) kicker.textContent = `${meta.title.toUpperCase()} STAGE`;
         const title = overlay.querySelector("#cuddleMoneyChallengeTitle");
         if (title) title.textContent = meta.title;
+        const description = overlay.querySelector(".cuddle-money-challenge-offer > p");
+        if (description) description.innerHTML = richText(challenge.description || meta.description);
+        const reward = overlay.querySelector(".cuddle-money-reward-chip");
+        if (reward) reward.innerHTML = goldenMoney(reward.textContent);
       }
       const banner = document.getElementById("cuddleMoneyChallengeBanner");
       if (banner) {
@@ -1830,6 +2127,8 @@
           banner.prepend(image);
         }
         image.src = `${ICON_ROOT}${meta.icon}`;
+        const copy = banner.querySelector(".cuddle-money-challenge-copy em");
+        if (copy) copy.innerHTML = richText(challenge.description || meta.description);
       }
     }
 
@@ -1892,6 +2191,8 @@
       afterRender(root, game, landing) {
         if (typeof originalAfterRender === "function") originalAfterRender(root, game, landing);
         if (!landing && game && game.state) {
+          settleThemeRevealPolicy(game);
+          syncExpandedChallengeRules(game);
           decorateMapDom(root, game);
           decorateChallengeUi(game);
           installChallengeObserver(game);
@@ -1903,9 +2204,11 @@
       handleUiAction(game, action, itemId) {
         const expanded = handleExpandedAction(game, action, itemId);
         if (expanded) return expanded;
-        return typeof originalHandleUiAction === "function"
+        const result = typeof originalHandleUiAction === "function"
           ? originalHandleUiAction(game, action, itemId)
           : { ok: false, error: "Unknown campaign action." };
+        syncExpandedChallengeRules(game);
+        return result;
       }
     }));
 

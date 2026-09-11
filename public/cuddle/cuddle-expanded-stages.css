@@ -1,4 +1,4 @@
-/* CUDDLE EXPANDED STAGES v1.1 */
+/* CUDDLE EXPANDED STAGES v1.3 */
 :root {
   --umt-plum: #3f2d4f;
   --umt-plum-deep: #2e203b;
@@ -678,4 +678,92 @@ button.umt-duel-level:focus-visible {
   .umt-stage-help {
     transition: none;
   }
+}
+
+
+/* v1.3: readable information surfaces and consistent reward emphasis */
+#cuddleRoot .cuddle-boss-info-popover,
+#cuddleRoot .cuddle-power-info-dialog,
+#cuddleRoot .cuddle-power-info-modal,
+#cuddleRoot .cuddle-power-info-popover,
+#cuddleRoot .cuddle-power-info-card,
+#cuddleRoot .cuddle-row-power-popover,
+#cuddleRoot .power-info-dialog,
+#cuddleRoot .power-info-modal,
+#cuddleRoot #cuddlePowerInfoDialog,
+#cuddleRoot #cuddlePowerInfoModal,
+#cuddleRoot [data-power-info-dialog],
+#cuddleRoot [class*="power-info"][role="dialog"],
+#cuddleMoneyChallengeOverlay .cuddle-money-modal,
+#cuddleMoneyChallengeOverlay .cuddle-money-challenge-offer {
+  color: #fff8ec !important;
+  border: 2px solid rgba(239, 197, 107, .58) !important;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(169, 139, 193, .26), transparent 34%),
+    linear-gradient(155deg, #382744 0%, #24192f 100%) !important;
+  box-shadow: 0 18px 50px rgba(25, 15, 34, .44) !important;
+}
+
+#cuddleRoot .cuddle-boss-info-popover :is(h1, h2, h3, strong, b),
+#cuddleRoot .cuddle-power-info-dialog :is(h1, h2, h3, strong, b),
+#cuddleRoot .cuddle-power-info-modal :is(h1, h2, h3, strong, b),
+#cuddleRoot .cuddle-power-info-popover :is(h1, h2, h3, strong, b),
+#cuddleRoot .cuddle-power-info-card :is(h1, h2, h3, strong, b),
+#cuddleRoot .cuddle-row-power-popover :is(h1, h2, h3, strong, b),
+#cuddleRoot [class*="power-info"][role="dialog"] :is(h1, h2, h3, strong, b),
+#cuddleRoot .power-info-dialog :is(h1, h2, h3, strong, b),
+#cuddleRoot .power-info-modal :is(h1, h2, h3, strong, b),
+#cuddleMoneyChallengeOverlay .cuddle-money-modal :is(h1, h2, h3, strong, b) {
+  color: #fffaf1 !important;
+}
+
+#cuddleRoot .cuddle-boss-info-popover :is(p, small, em, li, span),
+#cuddleRoot .cuddle-power-info-dialog :is(p, small, em, li, span),
+#cuddleRoot .cuddle-power-info-modal :is(p, small, em, li, span),
+#cuddleRoot .cuddle-power-info-popover :is(p, small, em, li, span),
+#cuddleRoot .cuddle-power-info-card :is(p, small, em, li, span),
+#cuddleRoot .cuddle-row-power-popover :is(p, small, em, li, span),
+#cuddleRoot [class*="power-info"][role="dialog"] :is(p, small, em, li, span),
+#cuddleRoot .power-info-dialog :is(p, small, em, li, span),
+#cuddleRoot .power-info-modal :is(p, small, em, li, span),
+#cuddleMoneyChallengeOverlay .cuddle-money-modal :is(p, small, em, li, span) {
+  color: #eadff2 !important;
+}
+
+#cuddleMoneyChallengeOverlay .cuddle-money-kicker,
+#cuddleMoneyChallengeOverlay .cuddle-money-reward-chip,
+#cuddleRoot .cuddle-boss-info-popover .cuddle-eyebrow {
+  color: #f6d789 !important;
+}
+
+#cuddleScreen .cuddle-money-figure,
+#cuddleRoot .cuddle-money-figure,
+.umt-stage-legend .cuddle-money-figure,
+.umt-event-choice .cuddle-money-figure,
+.umt-duel-level .cuddle-money-figure,
+.cuddle-branch-choice .cuddle-money-figure,
+.cuddle-branch-preview-overlay .cuddle-money-figure {
+  color: var(--cuddle-money-gold-bright, #e8bf75) !important;
+  font-weight: 900 !important;
+  text-shadow: 0 0 10px rgba(246, 201, 86, .18);
+}
+
+#cuddleMoneyChallengeOverlay .cuddle-money-figure,
+#cuddleRoot .cuddle-boss-info-popover .cuddle-money-figure,
+#cuddleRoot .cuddle-power-info-dialog .cuddle-money-figure,
+#cuddleRoot .cuddle-power-info-modal .cuddle-money-figure,
+#cuddleRoot .cuddle-power-info-popover .cuddle-money-figure,
+#cuddleRoot .cuddle-power-info-card .cuddle-money-figure,
+#cuddleRoot .cuddle-row-power-popover .cuddle-money-figure,
+#cuddleRoot [class*="power-info"][role="dialog"] .cuddle-money-figure {
+  color: var(--cuddle-money-gold-bright, #ffe8a3) !important;
+  text-shadow: 0 0 10px rgba(246, 201, 86, .18);
+}
+
+/* The add-on SVG is the only map-stage artwork. This removes the legacy
+   book/glyph variant, including on Themed Wordle nodes. */
+#cuddleRoot .cuddle-map-node > image:not(.umt-stage-svg-icon),
+#cuddleRoot .cuddle-map-node > .cuddle-map-node-icon,
+#cuddleRoot .cuddle-map-node > .cuddle-map-node-symbol {
+  display: none !important;
 }
