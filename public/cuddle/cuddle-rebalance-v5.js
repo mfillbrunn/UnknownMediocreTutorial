@@ -11,8 +11,11 @@
 
   const CONFIG = Object.freeze({
     regularWordlePercent: 8,
-    themedWordlePercent: 20,
-    randomOpenerPercent: 24,
+    themedWordlePercent: 18,
+    randomOpenerPercent: 16,
+    luckyStartPercent: 10,
+    jackpotPercent: 10,
+    doubleOrNothingPercent: 8,
     unusedJokerBonus: 3,
     reserveDividendExtra: 5,
     hints: Object.freeze({"easy":{"first":1,"cadence":2},"medium":{"first":2,"cadence":3},"hard":{"first":3,"cadence":4}})
@@ -24,8 +27,82 @@
     quickStudy: "umtQuickStudy",
     candidateNotebook: "umtCandidateNotebook",
     jokerCache: "umtJokerCache",
-    reserveDividend: "umtReserveDividend"
+    reserveDividend: "umtReserveDividend",
+    rainyDay: "umtRainyDay",
+    encore: "umtEncore",
+    hotStreak: "umtHotStreak",
+    vowelBounty: "umtVowelBounty",
+    doubleDown: "umtDoubleDown"
   });
+
+  const VOWELS = new Set(["A", "E", "I", "O", "U"]);
+
+  // Rewards that change how a stage plays rather than nudging a number --
+  // they compound with each other through FUN_SYNERGIES below, so a run can
+  // build toward a payday engine instead of just buying +$1 four times.
+  const FUN_REWARDS = Object.freeze([
+    Object.freeze({
+      id: IDS.rainyDay, key: IDS.rainyDay, icon: "\uD83C\uDFE6",
+      title: "Rainy Day Fund", name: "Rainy Day Fund",
+      description: "Every non-boss stage opens by paying 5% interest on your wallet, up to $25. Stacks.",
+      maxLevel: 2, maxCount: 2, kind: "upgrade"
+    }),
+    Object.freeze({
+      id: IDS.encore, key: IDS.encore, icon: "\uD83C\uDFAC",
+      title: "Encore", name: "Encore",
+      description: "Every third stage you solve pays a $75 encore bonus.",
+      maxLevel: 1, maxCount: 1, kind: "upgrade"
+    }),
+    Object.freeze({
+      id: IDS.hotStreak, key: IDS.hotStreak, icon: "\uD83D\uDD25",
+      title: "Hot Streak", name: "Hot Streak",
+      description: "Each guess in a row that pins a new green pays a growing bonus: $5, then $10, then $15. A guess with no new green resets it.",
+      maxLevel: 2, maxCount: 2, kind: "upgrade"
+    }),
+    Object.freeze({
+      id: IDS.vowelBounty, key: IDS.vowelBounty, icon: "\uD83C\uDD70\uFE0F",
+      title: "Vowel Bounty", name: "Vowel Bounty",
+      description: "Every vowel in a secret you solve pays $5.",
+      maxLevel: 2, maxCount: 2, kind: "upgrade"
+    }),
+    Object.freeze({
+      id: IDS.doubleDown, key: IDS.doubleDown, icon: "\uD83C\uDFB2",
+      title: "Double Down", name: "Double Down",
+      description: "Solve on your very last guess and the whole stage pays double.",
+      maxLevel: 1, maxCount: 1, kind: "upgrade"
+    })
+  ]);
+
+  // Owning both halves of a pair turns it on permanently. Each one changes a
+  // reward's rule rather than adding another flat number, so the combination
+  // is worth more than the two pieces.
+  const FUN_SYNERGIES = Object.freeze([
+    Object.freeze({
+      id: "compoundCuddle", icon: "\uD83C\uDFE6", title: "Compound Cuddle",
+      requires: Object.freeze([IDS.rainyDay, IDS.reserveDividend]),
+      description: "Rainy Day Fund + Reserve Dividend: interest doubles its cap and unused Jokers count toward the balance it pays on."
+    }),
+    Object.freeze({
+      id: "goldenStreak", icon: "\uD83D\uDD25", title: "Golden Streak",
+      requires: Object.freeze([IDS.hotStreak, "yellowPoints"]),
+      description: "Hot Streak + Golden Value: a guess that pins a new yellow keeps the streak alive too."
+    }),
+    Object.freeze({
+      id: "encoreNight", icon: "\uD83C\uDFAC", title: "Encore Night",
+      requires: Object.freeze([IDS.encore, IDS.vowelBounty]),
+      description: "Encore + Vowel Bounty: every encore also pays $10 for each vowel in that stage's secret."
+    }),
+    Object.freeze({
+      id: "allIn", icon: "\uD83C\uDFB2", title: "All In",
+      requires: Object.freeze([IDS.doubleDown, IDS.hotStreak]),
+      description: "Double Down + Hot Streak: a last-guess solve also pays the streak bonus at its highest step."
+    }),
+    Object.freeze({
+      id: "studyGroup", icon: "\uD83D\uDCD3", title: "Study Group",
+      requires: Object.freeze([IDS.candidateNotebook, IDS.openingInsight]),
+      description: "Candidate Notebook + Opening Insight: the notebook lists a second feasible answer."
+    })
+  ]);
 
   const ALL_THEMES_REWARD = Object.freeze({
     id: IDS.allThemesBoss,
@@ -243,6 +320,10 @@
   function asNumber(value, fallback = 0) {
     const number = Number(value);
     return Number.isFinite(number) ? number : fallback;
+  }
+
+  function asInteger(value, fallback = 0) {
+    return Math.trunc(asNumber(value, fallback));
   }
 
   function clamp(value, minimum, maximum) {
@@ -709,6 +790,33 @@
         title: "Head Start",
         description: "A random legal word is played automatically as the first guess, consuming row one."
       };
+    } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent + CONFIG.randomOpenerPercent
+        + CONFIG.luckyStartPercent) {
+      variant = {
+        version: VERSION,
+        kind: "luckyStart",
+        icon: "\uD83C\uDF40",
+        title: "Lucky Start",
+        description: "One exact position is already revealed before the first guess."
+      };
+    } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent + CONFIG.randomOpenerPercent
+        + CONFIG.luckyStartPercent + CONFIG.jackpotPercent) {
+      variant = {
+        version: VERSION,
+        kind: "jackpot",
+        icon: "\uD83D\uDCB0",
+        title: "Jackpot Run",
+        description: "Green tiles pay double here, but the stage runs one guess short."
+      };
+    } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent + CONFIG.randomOpenerPercent
+        + CONFIG.luckyStartPercent + CONFIG.jackpotPercent + CONFIG.doubleOrNothingPercent) {
+      variant = {
+        version: VERSION,
+        kind: "doubleOrNothing",
+        icon: "\u2696\uFE0F",
+        title: "Double or Nothing",
+        description: "Solve within three guesses and the stage's earnings double. Take longer and you lose half of them."
+      };
     } else {
       const challenge = challengeForNode(game, node);
       variant = {
@@ -1140,6 +1248,21 @@
       appendNotice(game, `${challenge.icon} ${challenge.title} accepted automatically. Win for a $${challenge.reward} bonus.`);
     } else if (variant.kind === "randomOpener") {
       scheduleRandomOpener(game);
+    } else if (variant.kind === "luckyStart") {
+      try {
+        if (typeof game._revealPositionPeek === "function") game._revealPositionPeek();
+      } catch (error) {
+        log("lucky start reveal failed", error);
+      }
+      appendNotice(game, "\uD83C\uDF40 Lucky Start: one position is already yours.");
+    } else if (variant.kind === "jackpot") {
+      const state = stateOf(game);
+      // The shorter board is the cost of the doubled greens (paid per guess
+      // in applyJackpotBonus).
+      if (state) state.maxGuesses = Math.max(2, asInteger(state.maxGuesses, 6) - 1);
+      appendNotice(game, "\uD83D\uDCB0 Jackpot Run: greens pay double, and the board is one row shorter.");
+    } else if (variant.kind === "doubleOrNothing") {
+      appendNotice(game, "\u2696\uFE0F Double or Nothing: solve by guess three to double this stage, or lose half of it.");
     }
     // "themedWordle" needs no special handling here: normalizeMap already
     // set the node's type to "theme", and the branch map's own enterNode
@@ -1803,12 +1926,223 @@
     };
   }
 
+  // -- opening-stage ramp --------------------------------------------------
+
+  // The first stages hand out a little help so the opening Wordles aren't a
+  // wall: spare guesses, a spare mulligan, and a free clue. It tapers to
+  // nothing by stage 4, so everything past the ramp plays exactly as before.
+  const TRAINING_WHEELS = Object.freeze({
+    1: Object.freeze({ guesses: 2, mulligans: 1, exactHint: true, summary: "+2 guesses, +1 mulligan, one position revealed" }),
+    2: Object.freeze({ guesses: 1, mulligans: 1, exactHint: true, summary: "+1 guess, +1 mulligan, one position revealed" }),
+    3: Object.freeze({ guesses: 1, mulligans: 0, letterHint: true, summary: "+1 guess, one letter revealed" })
+  });
+  const TRAINING_WHEELS_LAST_STAGE = 3;
+
+  function trainingWheelsFor(game) {
+    const state = stateOf(game);
+    if (!state || state.status !== "playing" || trueBossRound(game)) return null;
+    // A Duel runs on a cloned throwaway state with its own rules; the ramp is
+    // about the campaign's opening Wordles only.
+    if (state.branchMap && state.branchMap.expandedDuel) return null;
+    return TRAINING_WHEELS[Math.max(0, asInteger(state.round, 0))] || null;
+  }
+
+  function applyTrainingWheels(game) {
+    const plan = trainingWheelsFor(game);
+    const custom = customState(game);
+    if (!plan || !custom) return;
+    const token = roundToken(game);
+    if (custom.trainingWheelsToken === token) return;
+    custom.trainingWheelsToken = token;
+
+    const state = stateOf(game);
+    if (plan.guesses > 0) state.maxGuesses = Math.max(1, asInteger(state.maxGuesses, 6) + plan.guesses);
+    if (plan.mulligans > 0) state.mulligansLeft = Math.max(0, asInteger(state.mulligansLeft, 0)) + plan.mulligans;
+    try {
+      if (plan.exactHint && typeof game._revealPositionPeek === "function") game._revealPositionPeek();
+      else if (plan.letterHint && typeof game._applyOpeningClue === "function") game._applyOpeningClue();
+    } catch (error) {
+      log("training wheels hint failed", error);
+    }
+    const remaining = TRAINING_WHEELS_LAST_STAGE - asInteger(state.round, 0);
+    appendNotice(game, `\uD83D\uDEB2 Training wheels: ${plan.summary}.`
+      + (remaining > 0 ? ` They fade after stage ${TRAINING_WHEELS_LAST_STAGE}.` : " This is the last stage with them."));
+  }
+
+  // -- fun rewards ---------------------------------------------------------
+
+  function ownedFunSynergies(game) {
+    const custom = customState(game);
+    return new Set(custom && Array.isArray(custom.funSynergies) ? custom.funSynergies : []);
+  }
+
+  function hasFunSynergy(game, id) {
+    return ownedFunSynergies(game).has(id);
+  }
+
+  // Both halves owned turns a pair on for good. Called after every reward
+  // pick, so the toast lands on the screen that granted the second half.
+  function refreshFunSynergies(game) {
+    const custom = customState(game);
+    if (!custom) return [];
+    const owned = ownedFunSynergies(game);
+    const unlocked = FUN_SYNERGIES.filter((item) =>
+      !owned.has(item.id) && item.requires.every((id) => upgradeLevel(game, id) > 0));
+    if (!unlocked.length) return [];
+    unlocked.forEach((item) => owned.add(item.id));
+    custom.funSynergies = [...owned];
+    const state = stateOf(game);
+    if (state) {
+      state.synergyNotice = {
+        icon: unlocked[0].icon,
+        title: unlocked.length === 1 ? unlocked[0].title : "Reward combinations unlocked",
+        message: unlocked.map((item) => item.description).join(" ")
+      };
+    }
+    safeSave(game);
+    return unlocked;
+  }
+
+  // The pair this reward would complete, for the "Interaction bonus!" badge
+  // on a card that is still only an offer (see cuddle-ui.js).
+  function funInteractionPreview(game, optionId) {
+    const id = normalizedId(optionId);
+    if (!id || !game) return null;
+    const owned = ownedFunSynergies(game);
+    return FUN_SYNERGIES.find((item) => !owned.has(item.id)
+      && item.requires.includes(id)
+      && item.requires.every((need) => need === id || upgradeLevel(game, need) > 0)) || null;
+  }
+
+  function payStageInterest(game) {
+    const level = upgradeLevel(game, IDS.rainyDay);
+    const state = stateOf(game);
+    const custom = customState(game);
+    if (level <= 0 || !state || !custom || trueBossRound(game) || noMoneyRound(game)) return;
+    const token = roundToken(game);
+    if (custom.interestPaidToken === token) return;
+    custom.interestPaidToken = token;
+    const compound = hasFunSynergy(game, "compoundCuddle");
+    const balance = Math.max(0, asNumber(state.score, 0)) + (compound ? totalJokerStock(game) * 10 : 0);
+    const cap = (compound ? 50 : 25) * level;
+    const interest = Math.min(cap, Math.floor(balance * 0.05 * level));
+    if (interest <= 0) return;
+    addScoreBonus(game, interest, "umtInterest", "Rainy Day interest");
+    appendNotice(game, `\uD83C\uDFE6 Rainy Day Fund paid $${interest} in interest.`);
+  }
+
+  // Runs once per submitted guess: a guess that pins new information keeps
+  // the streak climbing, anything else drops it back to nothing.
+  function applyStreakBonus(game, before) {
+    const level = upgradeLevel(game, IDS.hotStreak);
+    const custom = customState(game);
+    const state = stateOf(game);
+    if (level <= 0 || !custom || !state || trueBossRound(game) || noMoneyRound(game)) return;
+    const token = roundToken(game);
+    if (custom.streakToken !== token) {
+      custom.streakToken = token;
+      custom.streakCount = 0;
+    }
+    const gainedGreen = knownPositionCount(game) > asInteger(before.greens, 0);
+    const gainedYellow = hasFunSynergy(game, "goldenStreak")
+      && (Array.isArray(state.knownPresent) ? state.knownPresent.length : 0) > asInteger(before.presents, 0);
+    if (!gainedGreen && !gainedYellow) {
+      custom.streakCount = 0;
+      return;
+    }
+    custom.streakCount = asInteger(custom.streakCount, 0) + 1;
+    addScoreBonus(game, custom.streakCount * 5 * level, "umtHotStreak", `Hot Streak x${custom.streakCount}`);
+  }
+
+  function activeVariantKind(game) {
+    const variant = activeVariant(game);
+    return variant ? String(variant.kind || "") : "";
+  }
+
+  // Jackpot Run pays a second time for every green the guess showed.
+  function applyJackpotBonus(game, entry) {
+    if (activeVariantKind(game) !== "jackpot") return;
+    if (!entry || trueBossRound(game) || noMoneyRound(game)) return;
+    const greens = asInteger(entry.greenCount, 0);
+    if (greens <= 0) return;
+    const bonus = Math.round(greens * greenValue(game, entry));
+    if (bonus > 0) addScoreBonus(game, bonus, "umtJackpot", `Jackpot greens x${greens}`, entry);
+  }
+
+  // Double or Nothing settles on the solve: fast enough doubles the stage's
+  // earnings so far, slow loses half of them.
+  function settleDoubleOrNothing(game) {
+    if (activeVariantKind(game) !== "doubleOrNothing") return;
+    const state = stateOf(game);
+    if (!state || trueBossRound(game) || noMoneyRound(game)) return;
+    const earned = Math.round(asNumber(state.roundScore, 0));
+    if (earned === 0) return;
+    if (asInteger(state.guessesUsed, 0) <= 3) {
+      addScoreBonus(game, earned, "umtDoubleOrNothing", "Double or Nothing won");
+      appendNotice(game, "\u2696\uFE0F Double or Nothing paid off: this stage's earnings doubled.");
+    } else {
+      addScoreBonus(game, -Math.round(earned / 2), "umtDoubleOrNothing", "Double or Nothing lost");
+      appendNotice(game, "\u2696\uFE0F Double or Nothing: too slow, half this stage's earnings are gone.");
+    }
+  }
+
+  function secretVowelCount(game) {
+    const state = stateOf(game) || {};
+    return String(state.secret || "").toUpperCase().split("").filter((letter) => VOWELS.has(letter)).length;
+  }
+
+  // Runs once when a stage is solved, after the engine has settled the round.
+  function applySolveRewards(game) {
+    const state = stateOf(game);
+    const custom = customState(game);
+    if (!state || !custom || trueBossRound(game) || noMoneyRound(game)) return;
+    const token = roundToken(game);
+    if (custom.funSolveToken === token) return;
+    custom.funSolveToken = token;
+
+    const vowelLevel = upgradeLevel(game, IDS.vowelBounty);
+    if (vowelLevel > 0) {
+      const vowels = secretVowelCount(game);
+      if (vowels > 0) {
+        addScoreBonus(game, vowels * 5 * vowelLevel, "umtVowelBounty",
+          `${vowels} vowel${vowels === 1 ? "" : "s"} in the secret`);
+      }
+    }
+
+    if (upgradeLevel(game, IDS.encore) > 0) {
+      custom.encoreSolves = asInteger(custom.encoreSolves, 0) + 1;
+      if (custom.encoreSolves % 3 === 0) {
+        addScoreBonus(game, 75, "umtEncore", "Encore");
+        if (hasFunSynergy(game, "encoreNight")) {
+          const vowels = secretVowelCount(game);
+          if (vowels > 0) addScoreBonus(game, vowels * 10, "umtEncore", "Encore Night vowels");
+        }
+        appendNotice(game, "\uD83C\uDFAC Encore! Every third solved stage pays a bonus.");
+      }
+    }
+
+    if (upgradeLevel(game, IDS.doubleDown) > 0) {
+      const limit = typeof game._effectiveMaxGuesses === "function"
+        ? asInteger(game._effectiveMaxGuesses(), 6)
+        : asInteger(state.maxGuesses, 6);
+      if (asInteger(state.guessesUsed, 0) >= limit) {
+        const earned = Math.max(0, Math.round(asNumber(state.roundScore, 0)));
+        if (earned > 0) addScoreBonus(game, earned, "umtDoubleDown", "Double Down (last-guess solve)");
+        if (hasFunSynergy(game, "allIn")) {
+          addScoreBonus(game, 15 * Math.max(1, upgradeLevel(game, IDS.hotStreak)), "umtHotStreak", "All In streak payout");
+        }
+      }
+    }
+  }
+
   function finishBeginRound(game, pending, configuredHints, revealAllThemes) {
     const coach = coachState(game);
     if (coach && configuredHints > 0) coach.hintsPerRound = configuredHints;
     if (revealAllThemes) queueAllThemes(game);
     clearNativeChallengeOffer(game);
     beginVariant(game, pending);
+    applyTrainingWheels(game);
+    payStageInterest(game);
     initializeHintSchedule(game);
     scheduleUi();
     safeSave(game);
@@ -1822,10 +2156,24 @@
     return SOLVING_REWARDS.filter((reward) => upgradeLevel(game, reward.id) < rewardMax(reward));
   }
 
+  function availableFunRewards(game) {
+    return FUN_REWARDS.filter((reward) => upgradeLevel(game, reward.id) < rewardMax(reward));
+  }
+
+  // Every custom reward this layer can grant -- the solving aids that
+  // repairUpgradeChoices guarantees one of, plus the fun rewards, which are
+  // deliberately NOT aids so they compete for ordinary slots instead of
+  // displacing the guaranteed help.
+  function customRewardById(id) {
+    return SOLVING_REWARDS.find((item) => item.id === id)
+      || FUN_REWARDS.find((item) => item.id === id)
+      || null;
+  }
+
   function filterCatalog(game, catalog) {
     if (!Array.isArray(catalog)) return catalog;
     const output = catalog.filter((item) => !REMOVED_NORMAL_REWARDS.has(normalizedId(item)));
-    for (const reward of availableSolvingRewards(game)) {
+    for (const reward of availableSolvingRewards(game).concat(availableFunRewards(game))) {
       if (!output.some((item) => normalizedId(item) === reward.id)) output.push({ ...reward });
     }
     return output;
@@ -1884,7 +2232,7 @@
   }
 
   function fallbackChooseCustom(game, id) {
-    const reward = SOLVING_REWARDS.find((item) => item.id === id);
+    const reward = customRewardById(id);
     if (!reward) return { ok: false, reason: "Unknown reward" };
     const before = upgradeLevel(game, id);
     if (before >= rewardMax(reward)) return { ok: false, reason: "Reward is already at maximum level" };
@@ -2062,10 +2410,14 @@
     const state = stateOf(game);
     if (!state || state.status !== "playing") return "";
     if (upgradeLevel(game, IDS.candidateNotebook) < 1 || trueBossRound(game)) return "";
-    const [word] = bestWords(game, 1);
+    // Study Group (Candidate Notebook + Opening Insight) widens the readout
+    // to a second candidate -- see FUN_SYNERGIES.
+    const wanted = hasFunSynergy(game, "studyGroup") ? 2 : 1;
+    const words = bestWords(game, wanted);
     // bestWords/feasibleWords only ever admit words matching /^[A-Z]{5}$/, so
     // this is always safe to inline without escaping.
-    return `<span class="cuddle-category-chip cuddle-feasible-chip" title="Strongest feasible answer based on the current feedback">Feasible: ${word || "?????"}</span>`;
+    const shown = words.length ? words.join(" · ") : "?????";
+    return `<span class="cuddle-category-chip cuddle-feasible-chip" title="Strongest feasible answer${wanted > 1 ? "s" : ""} based on the current feedback">Feasible: ${shown}</span>`;
   }
 
   function burdenLabel(item, index) {
@@ -2348,6 +2700,9 @@
 
   const POWER_INFO = Object.freeze({
     plain: { title: "Classic Wordle", description: "A standard Wordle with no special rule.", shape: "grid" },
+    luckyStart: { title: "Lucky Start", description: "One exact position is revealed before the first guess.", shape: "clover" },
+    jackpot: { title: "Jackpot Run", description: "Greens pay double, with one fewer guess.", shape: "coins" },
+    doubleOrNothing: { title: "Double or Nothing", description: "Solve by guess three to double the stage, or lose half of it.", shape: "scales" },
     themedWordle: { title: "Themed Wordle", description: "A round that opens with one of the solution's categories already revealed.", shape: "tag" },
     randomOpener: { title: "Head Start", description: "A random legal word automatically consumes the first guess.", shape: "die" },
     deepFog: { title: "Deep Fog", description: "Two tile positions are hidden on each affected guess.", shape: "fog" },
@@ -2432,6 +2787,8 @@
       case "greenHint": return `<rect x="17" y="17" width="86" height="86" rx="18" fill="${green}"/><text x="60" y="76" text-anchor="middle" fill="${paper}" font-family="system-ui,sans-serif" font-size="51" font-weight="900">A</text><circle cx="92" cy="28" r="16" fill="${yellow}"/><text x="92" y="35" text-anchor="middle" fill="${ink}" font-family="system-ui,sans-serif" font-size="20" font-weight="900">2</text>`;
       case "joker": return `<path d="M31 14h58l16 18v74H31z" fill="${ink}"/><path d="m68 28 7 15 17 2-12 12 3 17-15-8-15 8 3-17-12-12 17-2z" fill="${yellow}"/>`;
       case "notebook": return `<rect x="25" y="13" width="75" height="94" rx="12" fill="${ink}"/><path d="M25 13v94" stroke="${yellow}" stroke-width="12"/><g stroke="${paper}" stroke-width="7" stroke-linecap="round"><path d="M48 38h34M48 58h34M48 78h25"/></g>`;
+      case "clover": return `<g fill="${green}"><circle cx="60" cy="34" r="19"/><circle cx="34" cy="60" r="19"/><circle cx="86" cy="60" r="19"/><circle cx="60" cy="86" r="19"/></g><circle cx="60" cy="60" r="9" fill="${yellow}"/>`;
+      case "scales": return `<path d="M56 16h8v88h-8z" fill="${ink}"/><path d="M22 100h76v9H22z" fill="${ink}"/><path d="M20 40h80v8H20z" fill="${ink}"/><path d="M12 76a20 20 0 0 0 34 0z" fill="${yellow}"/><path d="M74 76a20 20 0 0 0 34 0z" fill="${green}"/>`;
       case "coins": return `<g fill="${yellow}" stroke="${ink}" stroke-width="7"><ellipse cx="45" cy="35" rx="27" ry="14"/><path d="M18 35v25c0 8 12 14 27 14s27-6 27-14V35"/><ellipse cx="76" cy="75" rx="27" ry="14"/><path d="M49 75v20c0 8 12 14 27 14s27-6 27-14V75"/></g>`;
       case "compass": return `<circle cx="60" cy="60" r="46" fill="${ink}"/><circle cx="60" cy="60" r="32" fill="${paper}"/><path d="m72 32-6 25-25 31 13-29z" fill="${yellow}"/><path d="m48 88 6-29 25-31-13 29z" fill="${green}"/><circle cx="60" cy="60" r="7" fill="${ink}"/>`;
       // Boss-choice monster silhouettes -- deliberately NOT tied to a boss's
@@ -2540,6 +2897,32 @@
     else line.appendChild(indicator);
   }
 
+
+  // Says the opening ramp is on and when it stops, so the help never reads
+  // as "the game is randomly easier sometimes".
+  function renderTrainingBadge(game) {
+    const root = rootElement();
+    if (!root) return;
+    let badge = root.querySelector(".umt-training-badge");
+    const plan = trainingWheelsFor(game);
+    if (!plan) {
+      if (badge) badge.remove();
+      return;
+    }
+    const line = root.querySelector(".cuddle-header-title-line");
+    if (!line) return;
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "umt-training-badge";
+      badge.textContent = "\uD83D\uDEB2";
+    }
+    const stage = asInteger((stateOf(game) || {}).round, 0);
+    badge.title = `Training wheels (stage ${stage} of ${TRAINING_WHEELS_LAST_STAGE}): ${plan.summary}.`;
+    badge.setAttribute("aria-label", badge.title);
+    const score = line.querySelector(".cuddle-header-score");
+    if (score) line.insertBefore(badge, score);
+    else line.appendChild(badge);
+  }
 
   function renderHintedTiles(game) {
     const root = rootElement();
@@ -3023,6 +3406,7 @@
       reconcileMysteryKnowledge(game);
       ensureLiveHintSchedule(game);
       renderHintIndicator(game);
+      renderTrainingBadge(game);
       renderHintedTiles(game);
       moveQuestReroll();
       renderBossBurdens(game);
@@ -3223,6 +3607,12 @@
       const previousBoss = state && state.boss;
       const synthetic = !trueBossRound(this) ? syntheticBossForChallenge(this, challenge, used) : null;
       if (state && synthetic) state.boss = synthetic;
+      // What this guess is measured against for Hot Streak: how much was
+      // already pinned down before it was submitted.
+      const knowledgeBefore = {
+        greens: knownPositionCount(this),
+        presents: state && Array.isArray(state.knownPresent) ? state.knownPresent.length : 0
+      };
       let result;
       try {
         result = original.apply(this, args);
@@ -3235,7 +3625,13 @@
         const history = state && Array.isArray(state.history) ? state.history : [];
         if (history.length > historyLength) history[history.length - 1].umtPowerIds = activePowers;
         reconcileMysteryKnowledge(this);
+        if (history.length > historyLength) {
+          applyJackpotBonus(this, history[history.length - 1]);
+          applyStreakBonus(this, knowledgeBefore);
+        }
         if (resultSolved(this, value)) {
+          applySolveRewards(this);
+          settleDoubleOrNothing(this);
           reconcileRoundBonuses(this, before);
           window.setTimeout(() => reconcileRoundBonuses(this, before), 0);
         } else if (guessesUsed(this) > before.guesses) {
@@ -3322,8 +3718,15 @@
         : null;
       const id = normalizedId(selected || choiceKey);
       if (REMOVED_NORMAL_REWARDS.has(id)) return rejectAction(this, "That reward has moved out of the between-round reward pool.");
-      const customReward = SOLVING_REWARDS.find((item) => item.id === id);
-      if (!customReward) return original.apply(this, args);
+      const customReward = customRewardById(id);
+      if (!customReward) {
+        // A base-catalog pick can still complete a pair (Golden Value feeds
+        // Golden Streak), so synergies are re-checked either way.
+        return afterResult(original.apply(this, args), (value) => {
+          refreshFunSynergies(this);
+          return value;
+        }, (error) => { throw error; });
+      }
       const oldLevel = upgradeLevel(this, id);
       let result;
       try {
@@ -3334,11 +3737,13 @@
       return afterResult(result, (value) => {
         if (upgradeLevel(this, id) <= oldLevel) value = fallbackChooseCustom(this, id);
         applyCustomUpgradeEffects(this, id, oldLevel);
+        refreshFunSynergies(this);
         scheduleUi();
         return value;
       }, (_error) => {
         const value = fallbackChooseCustom(this, id);
         applyCustomUpgradeEffects(this, id, oldLevel);
+        refreshFunSynergies(this);
         return value;
       });
     });
@@ -3405,6 +3810,16 @@
       // the boss-choice screen (cuddle-ui.js's renderBossChoiceOverlay) so
       // both surfaces describe the same burdens identically.
       burdenInfo: (id) => BURDEN_INFO[id] || null,
+      // Consumed by cuddle-ui.js's reward cards for the "Interaction bonus!"
+      // badge, alongside the engine's own synergy preview.
+      synergies: FUN_SYNERGIES.map((item) => ({ ...item, requires: item.requires.slice() })),
+      rewardInteractionSynergy: (game, optionId) => funInteractionPreview(game || publicActiveGame(), optionId),
+      ownedSynergies: (game) => [...ownedFunSynergies(game || publicActiveGame())],
+      // Consumed by cuddle-ui.js's reward cards for the "Interaction bonus!"
+      // badge, alongside the engine's own synergy preview.
+      synergies: FUN_SYNERGIES.map((item) => ({ ...item, requires: item.requires.slice() })),
+      rewardInteractionSynergy: (game, optionId) => funInteractionPreview(game || publicActiveGame(), optionId),
+      ownedSynergies: (game) => [...ownedFunSynergies(game || publicActiveGame())],
       defeatedBossIcon: defeatedBossSvg,
       normalizeMap: () => {
         const current = publicActiveGame();

@@ -664,6 +664,47 @@
       - asNumber(entry.ratchetQuestPenalty, 0);
   }
 
+  // Every line that fed rowMoney, labelled, so a payout row can be opened up
+  // to show where its figure came from. Tile money is split by colour using
+  // the rates recorded on the guess itself (entry.tileRates), since upgrades
+  // move those rates mid-run.
+  function rowBreakdown(entry) {
+    if (!entry) return [];
+    var lines = [];
+    var rates = entry.tileRates || {};
+    var tile = function addTile(count, rate, label) {
+      var total = Math.round(asNumber(count, 0) * asNumber(rate, 0));
+      if (!asNumber(count, 0) || !total) return;
+      lines.push({ label: count + " " + label, detail: formatMoney(rate) + " each", amount: total });
+    };
+    tile(entry.greenCount, rates.green, asNumber(entry.greenCount, 0) === 1 ? "green tile" : "green tiles");
+    tile(entry.yellowCount, rates.yellow, asNumber(entry.yellowCount, 0) === 1 ? "yellow tile" : "yellow tiles");
+    tile(entry.greyCount, rates.grey, asNumber(entry.greyCount, 0) === 1 ? "grey tile" : "grey tiles");
+
+    // Anything the tile lines can't account for (an older save with no
+    // tileRates, or a bonus folded into scoreDelta by another layer) still
+    // has to add up, so the remainder rides in as one honest line.
+    var tileTotal = lines.reduce(function sum(total, line) { return total + line.amount; }, 0);
+    var remainder = Math.round(asNumber(entry.scoreDelta, 0)) - tileTotal;
+    if (remainder) lines.push({ label: "Tiles", amount: remainder });
+
+    var extra = function addExtra(amount, label, detail) {
+      var value = Math.round(asNumber(amount, 0));
+      if (value) lines.push({ label: label, detail: detail || "", amount: value });
+    };
+    extra(entry.earlyBonus, "Solved early", "unused guesses");
+    extra(entry.questBonus, "Quest complete");
+    extra(entry.questFinalBonus, "Final quest bonus");
+    extra(entry.cuddleQuestBonus, "Quest bonus");
+    extra(entry.cuddleSolveBonus, "Solve bonus");
+    extra(entry.coachDoubleQuestBonus, "Double quest bonus");
+    extra(entry.mulliganBonus, "Unused mulligans");
+    extra(entry.challengeBonus, "Challenge cleared");
+    extra(-asNumber(entry.questTrialPenalty, 0), "Quest trial missed");
+    extra(-asNumber(entry.ratchetQuestPenalty, 0), "Boss burden");
+    return lines;
+  }
+
   function buildPayout(game, challenge, wasBoss) {
     var state = game.state;
     var mode = ensureMode(game);
@@ -675,13 +716,18 @@
         word: String(entry && entry.word || "").toUpperCase(),
         feedback: (entry && (entry.shownFeedback || entry.feedback) || []).slice(),
         timedOut: Boolean(entry && entry.timedOut),
-        amount: Math.round(rowMoney(entry))
+        amount: Math.round(rowMoney(entry)),
+        breakdown: rowBreakdown(entry)
       };
     });
     if (!rows.length) return null;
     var expected = Math.round(finish - start);
     var allocated = rows.reduce(function sumRows(total, row) { return total + row.amount; }, 0);
-    rows[rows.length - 1].amount += expected - allocated;
+    var shortfall = expected - allocated;
+    rows[rows.length - 1].amount += shortfall;
+    // The remainder is folded into the last row's figure above, so its
+    // breakdown has to name it too or that row won't add up to what it shows.
+    if (shortfall) rows[rows.length - 1].breakdown.push({ label: "Round bonus", amount: shortfall });
     return {
       id: [state.runId, state.round, Date.now(), Math.floor(randomFor(game) * 1000000)].join("-"),
       round: state.round,
@@ -902,14 +948,43 @@
     return "<span class=\"cuddle-money-payout-tile" + (safeResult ? " is-" + safeResult : "") + "\">" + escapeHtml(letter || "") + "</span>";
   }
 
+  function breakdownMarkup(row) {
+    var lines = (Array.isArray(row.breakdown) ? row.breakdown : []).slice();
+    // Several layers adjust a row's figure after its lines were built (the
+    // unused-row rebuild in cuddle-coach-expansion.js, reconcilePendingPayout
+    // in cuddle-rebalance-v5.js). Rather than chase each one, the remainder
+    // is reconciled here so the lines always sum to the figure on the row.
+    var listed = lines.reduce(function sum(total, line) { return total + Math.round(asNumber(line.amount, 0)); }, 0);
+    var remainder = Math.round(asNumber(row.amount, 0)) - listed;
+    if (remainder) lines.push({ label: lines.length ? "Round bonus" : "Round total", amount: remainder });
+    if (!lines.length) return "<p class=\"cuddle-money-row-detail-empty\">This guess paid nothing.</p>";
+    return "<dl class=\"cuddle-money-row-detail-list\">" + lines.map(function detailLine(line) {
+      var amount = Math.round(asNumber(line.amount, 0));
+      return "<div class=\"cuddle-money-row-detail-line" + (amount < 0 ? " is-negative" : "") + "\">"
+        + "<dt>" + escapeHtml(line.label || "")
+        + (line.detail ? "<small>" + escapeHtml(line.detail) + "</small>" : "")
+        + "</dt><dd>" + formatDelta(amount) + "</dd></div>";
+    }).join("") + "</dl>";
+  }
+
   function payoutRowMarkup(row) {
     var word = row.timedOut ? "TIME!" : (row.word || "     ").padEnd(5, " ").slice(0, 5);
     var tiles = word.split("").map(function payoutTile(letter, index) {
       return tileMarkup(letter === " " ? "" : letter, row.feedback[index] || "");
     }).join("");
+    var label = row.timedOut ? "timed-out guess" : "guess " + (asNumber(row.index, 0) + 1);
+    // The row's main line is a button so the breakdown is reachable by
+    // keyboard and reads as tappable; the delegated handler does the toggle.
     return "<div class=\"cuddle-money-payout-row\" data-payout-row=\"" + row.index + "\">"
-      + "<div class=\"cuddle-money-payout-tiles\">" + tiles + "</div>"
-      + "<span class=\"cuddle-money-row-increment\">" + formatDelta(row.amount) + "</span></div>";
+      + "<button type=\"button\" class=\"cuddle-money-payout-row-main\""
+      + " data-cuddle-money-action=\"toggle-payout-row\""
+      + " aria-expanded=\"false\" aria-label=\"Show what " + escapeHtml(label) + " paid\">"
+      + "<span class=\"cuddle-money-payout-tiles\">" + tiles + "</span>"
+      + "<span class=\"cuddle-money-row-increment\">" + formatDelta(row.amount) + "</span>"
+      + "<span class=\"cuddle-money-row-chevron\" aria-hidden=\"true\"></span>"
+      + "</button>"
+      + "<div class=\"cuddle-money-row-detail\" hidden>" + breakdownMarkup(row) + "</div>"
+      + "</div>";
   }
 
   function animateBank(element, from, to, duration) {
@@ -996,6 +1071,7 @@
       + challengeLine
       + "<div class=\"cuddle-money-bank\"><span>Wallet</span><strong id=\"cuddleMoneyBankCounter\">" + formatMoney(payload.from) + "</strong></div>"
       + "<div class=\"cuddle-money-payout-rows\">" + payload.rows.map(payoutRowMarkup).join("") + "</div>"
+      + "<p class=\"cuddle-money-payout-hint\">Tap a row to see what it paid.</p>"
       + "<div class=\"cuddle-money-payout-total\"><span>" + (payload.wasBoss ? "BOSS TOTAL" : "ROUND TOTAL") + "</span><strong>" + formatDelta(payload.total) + "</strong></div>"
       + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-primary cuddle-money-collect\" data-cuddle-money-action=\"collect-payout\" hidden>Collect " + formatMoney(payload.total) + "</button>"
       + "</section></div>"
@@ -1110,6 +1186,16 @@
     event.preventDefault();
     event.stopPropagation();
     var action = button.dataset.cuddleMoneyAction;
+    if (action === "toggle-payout-row") {
+      var payoutRow = button.closest(".cuddle-money-payout-row");
+      var detail = payoutRow && payoutRow.querySelector(".cuddle-money-row-detail");
+      if (!detail) return;
+      var opening = detail.hidden;
+      detail.hidden = !opening;
+      payoutRow.classList.toggle("is-open", opening);
+      button.setAttribute("aria-expanded", opening ? "true" : "false");
+      return;
+    }
     if (action === "starter") {
       activeGame.chooseCuddleStarterReward(button.dataset.rewardId);
     } else if (action === "accept-challenge") {
@@ -1136,6 +1222,11 @@
     }),
     challenges: CHALLENGES.map(function cloneChallenge(challenge) { return Object.assign({}, challenge); }),
     getActiveGame: function getActiveGame() { return activeGame; },
+    // The labelled lines behind one guess's payout figure. Shared so any
+    // layer that rebuilds pendingPayout.rows (cuddle-coach-expansion.js does,
+    // to add its unused-row bonus rows) can keep the tap-to-open breakdown
+    // working instead of leaving rows the cash-out screen can't explain.
+    rowBreakdown: function payoutRowBreakdown(entry) { return rowBreakdown(entry); },
     acceptChallenge: function acceptCurrentChallenge() { return activeGame ? acceptChallenge(activeGame) : { ok: false }; },
     declineChallenge: function declineCurrentChallenge() { return activeGame ? declineChallenge(activeGame) : { ok: false }; },
     // Called from cuddle-campaign.js's insertMap while stitching together

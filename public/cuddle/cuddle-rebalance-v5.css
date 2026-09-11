@@ -34,6 +34,22 @@
   background: var(--tile-green, #3aa76d);
 }
 
+/* Opening-stage help marker, next to the hint clock in the header. */
+.umt-training-badge {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.72rem;
+  height: 1.72rem;
+  margin-right: 0.42rem;
+  border: 2px solid rgba(139, 232, 210, 0.45);
+  border-radius: 50%;
+  background: rgba(139, 232, 210, 0.16);
+  font-size: 0.86rem;
+  line-height: 1;
+  cursor: help;
+}
+
 .cuddle-card.umt-hint-yellow,
 .cuddle-card.umt-hint-green {
   position: relative;

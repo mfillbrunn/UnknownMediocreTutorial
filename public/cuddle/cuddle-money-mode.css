@@ -398,11 +398,6 @@
    around every row, which read as dividers stacking the whole list taller
    than it needed to be. */
 #cuddleScreen .cuddle-money-payout-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 72px;
-  align-items: center;
-  gap: 12px;
-  min-height: 40px;
   padding: 4px 9px;
   border: 1px solid transparent;
   border-radius: 13px;
@@ -410,6 +405,111 @@
   opacity: 0.68;
   transform: translateZ(0);
   transition: opacity 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+/* The tiles + figure line is its own button so the breakdown underneath can
+   be opened by tap or keyboard; the row keeps the counting/settled states. */
+#cuddleScreen .cuddle-money-payout-row-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 14px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+#cuddleScreen .cuddle-money-row-chevron {
+  justify-self: center;
+  align-self: center;
+  box-sizing: border-box;
+  width: 8px;
+  height: 8px;
+  margin-top: -3px;
+  border-right: 2px solid rgba(246, 201, 86, 0.75);
+  border-bottom: 2px solid rgba(246, 201, 86, 0.75);
+  rotate: 45deg;
+  transition: rotate 160ms ease, margin-top 160ms ease;
+}
+
+#cuddleScreen .cuddle-money-payout-row.is-open .cuddle-money-row-chevron {
+  margin-top: 3px;
+  rotate: -135deg;
+}
+
+#cuddleScreen .cuddle-money-payout-row.is-open {
+  opacity: 1;
+  border-color: rgba(246, 201, 86, 0.4);
+}
+
+#cuddleScreen .cuddle-money-row-detail {
+  margin: 6px 2px 4px;
+  padding: 8px 10px;
+  border-top: 1px solid rgba(246, 201, 86, 0.2);
+  animation: cuddleMoneyDetailIn 180ms ease-out both;
+}
+
+@keyframes cuddleMoneyDetailIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+#cuddleScreen .cuddle-money-row-detail-list {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+}
+
+#cuddleScreen .cuddle-money-row-detail-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#cuddleScreen .cuddle-money-row-detail-line dt {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+#cuddleScreen .cuddle-money-row-detail-line dt small {
+  margin-left: 6px;
+  opacity: 0.6;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+#cuddleScreen .cuddle-money-row-detail-line dd {
+  margin: 0;
+  color: var(--cuddle-money-gold-bright);
+  font-size: 0.82rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+#cuddleScreen .cuddle-money-row-detail-line.is-negative dd {
+  color: #e68a76;
+}
+
+#cuddleScreen .cuddle-money-row-detail-empty {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.78rem;
+}
+
+#cuddleScreen .cuddle-money-payout-hint {
+  margin: 7px 0 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.72rem;
+  text-align: center;
 }
 
 #cuddleScreen .cuddle-money-payout-row.is-counting {
@@ -658,9 +758,12 @@
   }
 
   #cuddleScreen .cuddle-money-payout-row {
-    grid-template-columns: minmax(0, 1fr) 62px;
-    gap: 7px;
     padding-inline: 7px;
+  }
+
+  #cuddleScreen .cuddle-money-payout-row-main {
+    grid-template-columns: minmax(0, 1fr) 62px 12px;
+    gap: 7px;
   }
 
   #cuddleScreen .cuddle-money-payout-tiles {
@@ -678,8 +781,8 @@
     grid-template-columns: 1fr;
   }
 
-  #cuddleScreen .cuddle-money-payout-row {
-    grid-template-columns: minmax(0, 1fr) 55px;
+  #cuddleScreen .cuddle-money-payout-row-main {
+    grid-template-columns: minmax(0, 1fr) 55px 12px;
   }
 
   #cuddleScreen .cuddle-money-row-increment {
