@@ -31,12 +31,12 @@
   <link rel="stylesheet" href="css/tutorial.css?tutorial-v2=2">
   <link rel="stylesheet" href="css/tutorial-eli5.css?tutorial-eli5=3&umt-streamlined=1.0.2">
   <!-- 13. Special effects--->
-  <link rel="stylesheet" href="css/special-effects.css?v=typed-quest-2&role-icons=1">
+  <link rel="stylesheet" href="css/special-effects.css?v=typed-quest-2&role-icons=1&power-icons=1">
   <!-- Last. Mobile phone adjustments-->
   <link rel="stylesheet" href="css/mobile.css?mobile-perf=1">
   <!-- New features -->
   <link rel="stylesheet" href="css/features.css?v=tutorial-motion-sim-2&summary-result-center=1&daily-playmode=1">
-  <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&desktop-size-balance=2&optional-note-oneline=1&note-inline-title=1&win-stutter-hollow-stars=1&responsive-board=1&umt-fix=20260830-1&cute-star=1&spyometer-flat=1&star-dance-refresh=1&umt-sidebar-fix=2&umt-constraint-frame=2&avoid-row-red=1&star-glow-headroom=1&quest-flight-z=1&persistent-power-badge=1&panel-flight-z=1&guesser-lock-svg=1">
+  <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&desktop-size-balance=2&optional-note-oneline=1&note-inline-title=1&win-stutter-hollow-stars=1&responsive-board=1&umt-fix=20260830-1&cute-star=1&spyometer-flat=1&star-dance-refresh=1&umt-sidebar-fix=2&umt-constraint-frame=2&avoid-row-red=1&star-glow-headroom=1&quest-flight-z=1&persistent-power-badge=1&panel-flight-z=1&guesser-lock-svg=1&refresh-hide-swap=1">
   <link rel="stylesheet" href="single-player/single-player.css?sp-shell-stretch=1&umt-fix=20260830-1">
   <link rel="stylesheet" href="single-player/challenges.css?umt-challenges=20260901&quick-play-btn-center=1">
 <!-- CUDDLE_MODE:STYLE START -->
@@ -1851,7 +1851,8 @@
   <script src="client/action-log-dedupe-v6.js?setter-fixes=2"></script>
   <script src="ui/setter-sidebar.js?setter-board=1"></script>
   <script src="client/starter-word-suggestions.js"></script>
-  <script src="ui/setter-board.js?setter-board=1&compact-bonus=1&star-bonus-fix=1&umt-fix=20260830-1&cute-star=1&star-dance-refresh=1&spy-meter-observer-fix=1"></script>
+  <script src="ui/sidebar-toggle.js?v=2"></script>
+  <script src="ui/setter-board.js?setter-board=1&compact-bonus=1&star-bonus-fix=1&umt-fix=20260830-1&cute-star=1&star-dance-refresh=1&spy-meter-observer-fix=1&drawer-owner=2"></script>
   <script src="ui/setter-board-polish.js?setter-polish=1"></script>
   <script src="ui/guesser-sidebar.js"></script>
   <script src="client/notes.js"></script>
@@ -1889,15 +1890,15 @@
   <script src="client/dev-reward-simulation.js?v=tutorial-motion-sim-2"></script>
   <script src="client/dev-daily-reset.js?v=daily-reset-1"></script>
   <script src="client/invite.js?guest-play=1"></script>
-  <script src="client/big-announce.js?v=drawer-tap-passthrough-1"></script>
+  <script src="client/big-announce.js?v=drawer-tap-passthrough-1&power-icons=1"></script>
   <script src="client/reward-reveal.js?v=typed-quest-2"></script>
   <script src="client/quest-complete-reveal.js?v=typed-quest-2"></script>
-  <script src="client.js?v=9-2&mobile-perf=1&daily-round-intro=1&daily-both-rounds-fixed=1&challenge-intro=1&guest-play=1&tutorial-fixes=20260904&challenge-room-finished-guard=1&role-icons=1&guesser-lock-svg=1"></script>
+  <script src="client.js?v=9-2&mobile-perf=1&daily-round-intro=1&daily-both-rounds-fixed=1&challenge-intro=1&guest-play=1&tutorial-fixes=20260904&challenge-room-finished-guard=1&role-icons=1&guesser-lock-svg=1&power-icons=1"></script>
   <script src="ui/guesser-flow-v7.js?v=tutorial-motion-sim-2&win-flight-direct=1&flight-behind-cards=1"></script>
   <script src="ui/gameplay-polish-v8.js?gameplay-polish=8"></script>
   <!-- V9: matching Guesser drawer, ready-action docks, Notes shortcut, and theme toggle -->
-  <script src="ui/guesser-board-v9.js?v=9"></script>
-  <script src="ui/collapsed-actions-v9.js?v=9-1&umt-sidebar-fix=2"></script>
+  <script src="ui/guesser-board-v9.js?v=9&drawer-owner=1"></script>
+  <script src="ui/collapsed-actions-v9.js?v=9-1&umt-sidebar-fix=2&drawer-owner=1"></script>
   <script src="ui/setter-notes-target-v9.js?v=9&compact-bonus=1"></script>
   <script src="ui/v9-2-ui-fixes.js?v=9-2"></script>
   <script src="ui/v9-3-ui-fixes.js?v=9-3"></script>
@@ -1922,7 +1923,7 @@
   <script src="ui/gameplay-systems-v10.js?v=10&compact-bonus=1&star-bonus-fix=1&mobile-perf=1&guide-no-op-guard=1&role-icon-preserve=1"></script>
   <script src="ui/competitive-fixes-v2.js?competitive-fixes=2.2&mobile-perf=1"></script>
   <script src="powerEngine/power-tiers.js?v=2.3-card-carousel&reward-overhaul=1&magic-mode-legendary=1&feedback-lie=1&secret-themes=3&theme-dossier=1&theme-reward-rarity-swap=1"></script> <!-- power-choice-mode-v2.2 -->
-  <script src="client/power-choice-mode.js?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&hardmode-copy=1&mobile-perf=1&reward-overhaul=1&optional-note-oneline=1&note-inline-title=1&daily-hide-refresh=1&guide-btn-inline=1&reward-icon-fit=1&spy-rules-short=1&fixed-reward-svg-pack=1&clean-fixed-rewards=1&persistent-power-badge=2&theme-dossier=1"></script> <!-- power-choice-mode-v2.2 -->
+  <script src="client/power-choice-mode.js?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&hardmode-copy=1&mobile-perf=1&reward-overhaul=1&optional-note-oneline=1&note-inline-title=1&daily-hide-refresh=1&guide-btn-inline=1&reward-icon-fit=1&spy-rules-short=1&fixed-reward-svg-pack=1&clean-fixed-rewards=1&persistent-power-badge=2&theme-dossier=1&refresh-hide-swap=1"></script> <!-- power-choice-mode-v2.2 -->
 <!-- UMT_CUDDLE_REBALANCE_V5_JS_BEGIN -->
 <script src="/cuddle/cuddle-rebalance-v5.js?v=5.5.0"></script>
 <!-- UMT_CUDDLE_REBALANCE_V5_JS_END -->

@@ -2454,11 +2454,14 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 /* Bold and clearly coloured -- this is the one way out of the modal
-   without picking, so it has to read as a real, available action. */
+   without picking, so it has to read as a real, available action. Sits
+   below the cards (see ensureChoiceModal's markup order) rather than
+   overlaid in a corner, mirroring Refresh's own quiet-action placement
+   at the top. */
 .pc-modal-peek {
-  position: absolute;
-  top: 12px;
-  left: 12px;
+  display: inline-flex;
+  align-self: center;
+  margin: 13px auto 0;
   padding: 6px 14px;
   border: 1px solid rgba(117, 214, 255, 0.7);
   border-radius: 999px;
@@ -2479,7 +2482,10 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 .pc-modal h2 {
-  margin: 12px 46px 2px;
+  /* Used to reserve extra side margin to clear .pc-modal-peek when that
+     button overlaid this corner -- it now sits below the cards instead,
+     so this matches .pc-modal-sub's own horizontal gutter. */
+  margin: 12px 34px 2px;
   font-size: clamp(1.45rem, 4vw, 2.15rem);
   letter-spacing: -0.025em;
   text-align: center;

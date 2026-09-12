@@ -707,7 +707,10 @@ onStateUpdate(newState => {
     const describePowers = ids => (ids || []).map(id => {
       const variant = state.powers?.[id]?.mode || null;
       const meta = window.getPowerMeta ? window.getPowerMeta(id, variant) : window.POWER_METADATA?.[id];
-      return { emoji: meta?.emoji, label: meta?.label || id, desc: meta?.short || meta?.desc };
+      // Same vector icon the power buttons and Power Choice's reward cards
+      // already use (window.POWER_ICON_IDS) -- big-announce.js falls back
+      // to the emoji when a power has no entry there yet.
+      return { emoji: meta?.emoji, iconId: window.POWER_ICON_IDS?.[id] || null, label: meta?.label || id, desc: meta?.short || meta?.desc };
     });
     const guesserPowers = describePowers(state.initialPowers?.guesser);
     const questType = state.powers?.quest?.type;

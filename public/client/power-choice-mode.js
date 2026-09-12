@@ -925,14 +925,12 @@
     modal.className = "pc-modal";
     modal.setAttribute("role", "dialog");
     modal.setAttribute("aria-modal", "true");
-    // Hierarchy is exactly: heading / "Select one" / cards / one Refresh
-    // choices action below the cards -- no toolbar, no duplicate reroll,
-    // no competing top-level instruction (see REFINEMENT_SPEC section 4).
+    // Hierarchy is exactly: one Refresh choices action above the heading /
+    // "Select one" / cards / Hide below the cards -- no toolbar, no
+    // duplicate reroll, no competing top-level instruction (see
+    // REFINEMENT_SPEC section 4; the refresh/hide positions themselves
+    // were later swapped from that spec's original top/bottom layout).
     modal.innerHTML = `<div class="pc-modal-card">
-      <button type="button" class="pc-modal-peek" title="Look at the board -- your reward stays waiting">Hide</button>
-      <h2></h2>
-      <p class="pc-modal-sub">Select one</p>
-      <div class="pc-card-grid"></div>
       <button type="button" class="pc-refresh-choice-btn" title="Refresh reward choices" aria-label="Refresh reward choices">
         <svg class="pc-refresh-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path d="M20 11a8 8 0 1 0-2.34 5.66" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
@@ -940,6 +938,10 @@
         </svg>
         <span class="pc-refresh-label">Refresh choices</span>
       </button>
+      <h2></h2>
+      <p class="pc-modal-sub">Select one</p>
+      <div class="pc-card-grid"></div>
+      <button type="button" class="pc-modal-peek" title="Look at the board -- your reward stays waiting">Hide</button>
     </div>`;
     document.body.appendChild(modal);
     return modal;

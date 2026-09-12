@@ -103,7 +103,9 @@ window.showBigAnnounce = function ({
               <div class="big-announce-power-group-label ${group.roleClass || ""}">${group.icon || ""} ${group.label}</div>
               ${group.powers.map(p => `
                 <div class="big-announce-power-row">
-                  <span class="big-announce-power-emoji">${p.emoji || ""}</span>
+                  ${p.iconId
+                    ? `<svg class="big-announce-power-icon" viewBox="0 0 120 120" aria-hidden="true"><use href="#${p.iconId}" xlink:href="#${p.iconId}"></use></svg>`
+                    : `<span class="big-announce-power-emoji">${p.emoji || ""}</span>`}
                   <span class="big-announce-power-text"><strong>${p.label}</strong> — ${p.desc || ""}</span>
                 </div>
               `).join("")}
