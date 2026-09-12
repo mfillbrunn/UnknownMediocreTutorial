@@ -11,6 +11,7 @@ const {
 const { buildRoundPlan } = require("../unlockService");
 const SinglePlayerMode = require("../campaignMode");
 const { getChallenge, getDifficulty, publicCatalog } = require("./challengeRegistry");
+const { isGuestUserId } = require("../../utils/guestUsers");
 
 const AI_USER_ID = "AI";
 
@@ -200,8 +201,16 @@ class ChallengeService {
     if (!challenge) return { ok: false, code: "UNKNOWN_CHALLENGE" };
     if (!difficulty) return { ok: false, code: "UNKNOWN_DIFFICULTY" };
 
-    const profile = await this.repo.ensureProfile(userId);
-    if (!profile.ok) return profile;
+    // A guest has no row in single_player_profiles to ensure -- and no
+    // matching auth.users row for one to reference -- so ensureProfile
+    // would only fail a write that was never meaningful for them. Star/
+    // clear progress for challenges lives in the browser's own
+    // localStorage regardless of account (see challenges.js's
+    // loadProgress), so nothing here depends on this call succeeding.
+    if (!isGuestUserId(userId)) {
+      const profile = await this.repo.ensureProfile(userId);
+      if (!profile.ok) return profile;
+    }
 
     const roomId = createRoom(socket, userId);
     const room = rooms[roomId];

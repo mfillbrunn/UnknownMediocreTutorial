@@ -1,7 +1,19 @@
 // UMT_CHALLENGES_V1
 "use strict";
 
-async function resolveUserId(context, accessToken) {
+const { isGuestUserId } = require("../../utils/guestUsers");
+
+// A guest id is trusted outright, the same trust model the rest of the app
+// already uses for guests (see server/utils/guestUsers.js and, e.g., the
+// plain-userId daily-challenge socket handlers) -- there is no profile row
+// or ranked identity at stake, only a room to play a challenge in. A
+// non-guest id still has to be backed by a verified Supabase access token,
+// so a client can't claim someone else's real account id.
+async function resolveUserId(context, payload) {
+  const claimedId = payload?.userId;
+  if (isGuestUserId(claimedId)) return claimedId;
+
+  const accessToken = payload?.accessToken;
   if (!accessToken || typeof accessToken !== "string" || !context.supabase) return null;
   try {
     const { data, error } = await context.supabase.auth.getUser(accessToken);
@@ -15,7 +27,7 @@ module.exports = function registerChallengeSocketHandlers(io, context, { challen
   io.on("connection", socket => {
     async function withAuth(payload, cb, fn) {
       try {
-        const userId = await resolveUserId(context, payload?.accessToken);
+        const userId = await resolveUserId(context, payload);
         if (!userId) return cb?.({ ok: false, code: "UNAUTHENTICATED" });
         cb?.(await fn(userId));
       } catch (err) {
