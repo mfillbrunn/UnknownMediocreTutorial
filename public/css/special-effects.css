@@ -711,6 +711,17 @@
   flex-shrink: 0;
 }
 
+/* client.js's describePowers hands each power its own vector icon
+   (window.POWER_ICON_IDS) when one exists, in place of the emoji above --
+   already self-colored (the symbols bake in their own tile/palette
+   colors), so this only needs to size and align it. */
+.big-announce-power-icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
 .big-announce-power-text {
   /* .big-announce carries the bare .role-setter/.role-guesser utility
      class (also used for header badges) to color the title — without
