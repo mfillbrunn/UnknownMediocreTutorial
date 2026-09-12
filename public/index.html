@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="css/mobile.css?mobile-perf=1">
   <!-- New features -->
   <link rel="stylesheet" href="css/features.css?v=tutorial-motion-sim-2&summary-result-center=1&daily-playmode=1">
-  <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&desktop-size-balance=2&optional-note-oneline=1&note-inline-title=1&win-stutter-hollow-stars=1&responsive-board=1&umt-fix=20260830-1&cute-star=1&spyometer-flat=1&star-dance-refresh=1&umt-sidebar-fix=2&umt-constraint-frame=2&avoid-row-red=1&star-glow-headroom=1&quest-flight-z=1&persistent-power-badge=1&panel-flight-z=1">
+  <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&desktop-size-balance=2&optional-note-oneline=1&note-inline-title=1&win-stutter-hollow-stars=1&responsive-board=1&umt-fix=20260830-1&cute-star=1&spyometer-flat=1&star-dance-refresh=1&umt-sidebar-fix=2&umt-constraint-frame=2&avoid-row-red=1&star-glow-headroom=1&quest-flight-z=1&persistent-power-badge=1&panel-flight-z=1&guesser-lock-svg=1">
   <link rel="stylesheet" href="single-player/single-player.css?sp-shell-stretch=1&umt-fix=20260830-1">
   <link rel="stylesheet" href="single-player/challenges.css?umt-challenges=20260901&quick-play-btn-center=1">
 <!-- CUDDLE_MODE:STYLE START -->
@@ -120,17 +120,15 @@
 
       <symbol id="icon-letter-profile" viewBox="0 0 120 120"><rect fill="currentColor" x="18" y="17" width="84" height="87" rx="11"/><rect fill="#f4f5f7" x="31" y="63" width="13" height="28" rx="3"/><rect fill="#f4f5f7" x="53" y="45" width="13" height="46" rx="3"/><rect fill="#f4f5f7" x="75" y="30" width="13" height="61" rx="3"/></symbol>
       <symbol id="icon-secret-themes" viewBox="0 0 120 120"><rect fill="#f4f5f7" x="38" y="6" width="44" height="16" rx="6"/><rect fill="#f4f5f7" x="24" y="26" width="72" height="16" rx="6"/><path fill="currentColor" d="M16 38h30l10 12h48a10 10 0 0 1 10 10v40a10 10 0 0 1-10 10H16a10 10 0 0 1-10-10V48a10 10 0 0 1 10-10z"/><rect fill="#f4f5f7" x="26" y="64" width="44" height="9" rx="4.5"/><rect fill="#f4f5f7" x="26" y="82" width="30" height="9" rx="4.5"/></symbol>
-
-      <!-- Round-start "You are the X" popup role icons (client.js's
-           showBigAnnounce call, plus the same popup's per-role power-group
-           headers) -- a hooded, silent figure for the Secretkeeper (keeps
-           the secret; no mouth) and a magnifying glass over a "?" for the
-           Guesser (searching for the unknown word). Two colors each
-           (currentColor + a light cutout), same restraint as the power
-           badge icons above -- colored via the popup's own role class
-           (.role-setter/.role-guesser), not baked into the icon itself. -->
+      <!-- Round-start role icons used by the main role reveal and its
+           per-role power headers. The Secretkeeper stays hooded and eerie;
+           the Guesser is a curious little human with crooked oversized
+           glasses and a question-mark badge. Both keep the same restrained
+           currentColor + dark ink + warm light palette. The lock symbol below
+           is shared by the secret-locked popup and the setter draft overlay. -->
       <symbol id="icon-role-secretkeeper" viewBox="0 0 120 120"><path fill="#241a30" d="M60 10c-28 0-46 22-46 55v35a6 6 0 0 0 6 6h80a6 6 0 0 0 6-6V65c0-33-18-55-46-55z"/><ellipse fill="currentColor" cx="43" cy="56" rx="11" ry="4.5" transform="rotate(-20 43 56)"/><ellipse fill="currentColor" cx="77" cy="56" rx="11" ry="4.5" transform="rotate(20 77 56)"/><path fill="#f4ede0" d="M26 74Q60 112 94 74Q60 92 26 74Z"/><g fill="#241a30"><rect x="34" y="78" width="4" height="12" rx="2"/><rect x="44" y="83" width="4" height="16" rx="2"/><rect x="54" y="86" width="4" height="18" rx="2"/><rect x="66" y="86" width="4" height="18" rx="2"/><rect x="78" y="83" width="4" height="16" rx="2"/><rect x="88" y="78" width="4" height="12" rx="2"/></g></symbol>
-      <symbol id="icon-role-guesser" viewBox="0 0 120 120"><circle fill="currentColor" cx="45" cy="34" r="16"/><path fill="currentColor" d="M20 104c0-26 11-42 25-42s25 16 25 42z"/><rect fill="currentColor" x="58" y="30" width="12" height="34" rx="6" transform="rotate(-35 64 47)"/><circle fill="currentColor" cx="90" cy="30" r="20"/><circle fill="#f4f5f7" cx="90" cy="30" r="13"/></symbol>
+      <symbol id="icon-role-guesser" viewBox="0 0 120 120"><path fill="currentColor" d="M14 116c2-28 19-43 46-43s44 15 46 43z"/><circle fill="#f4ede0" cx="24" cy="52" r="9"/><circle fill="#f4ede0" cx="96" cy="52" r="9"/><path fill="#f4ede0" d="M60 12c-22 0-36 16-36 40 0 23 15 39 36 39s36-16 36-39c0-24-14-40-36-40z"/><path fill="#241a30" d="M24 43C26 19 40 8 60 8c18 0 32 9 37 28-11 1-20-4-26-14-10 9-25 15-47 21z"/><path fill="#241a30" d="M10 43h10v7H10zM100 43h10v7h-10zM53 43h14v6H53z"/><g transform="rotate(-4 38 50)"><circle fill="#241a30" cx="38" cy="50" r="19"/><circle fill="#f4ede0" cx="38" cy="50" r="12"/></g><g transform="rotate(5 82 49)"><circle fill="#241a30" cx="82" cy="49" r="19"/><circle fill="#f4ede0" cx="82" cy="49" r="12"/></g><circle fill="#241a30" cx="41" cy="52" r="4"/><circle fill="#241a30" cx="79" cy="51" r="7"/><circle fill="#f4ede0" cx="77" cy="48" r="2"/><path fill="none" stroke="#241a30" stroke-width="4" stroke-linecap="round" d="M51 70q9 7 18 0"/><circle fill="#f4ede0" cx="60" cy="102" r="13"/><path fill="#241a30" d="M52 98c0-6 4-10 10-10 6 0 10 4 10 9 0 4-2 6-6 9-2 1-3 3-3 5h-7c0-5 2-7 6-10 2-2 3-3 3-5 0-2-1-3-4-3-3 0-4 2-4 5z"/><circle fill="#241a30" cx="60" cy="113" r="3"/></symbol>
+      <symbol id="icon-secret-lock" viewBox="0 0 120 120"><path fill="#241a30" d="M29 52V37C29 17 41 6 60 6s31 11 31 31v15H76V37c0-10-5-16-16-16s-16 6-16 16v15z"/><rect fill="#241a30" x="14" y="44" width="92" height="70" rx="21"/><rect fill="currentColor" x="20" y="50" width="80" height="58" rx="16"/><path fill="#f4ede0" d="M60 61c-8 0-14 6-14 14 0 5 3 9 8 12l-3 13h18l-3-13c5-3 8-7 8-12 0-8-6-14-14-14z"/><rect fill="#f4ede0" x="29" y="58" width="25" height="6" rx="3" transform="rotate(-12 29 58)"/></symbol>
 
       <!-- First Letter Reveal (guesser Power Choice Legendary reward) --
            a green Wordle tile (this power's whole effect: a permanent
@@ -1367,7 +1365,7 @@
       <div class="draft-row-wrap">
         <div class="draft-stack">
           <div id="draftSetter" class="history-tiles draft-layer"></div>
-          <div id="secretLockOverlay" class="secret-lock-overlay hidden">🔒</div>
+          <div id="secretLockOverlay" class="secret-lock-overlay hidden"><svg class="secret-lock-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false"><use href="#icon-secret-lock" xlink:href="#icon-secret-lock"></use></svg></div>
           <div id="setterDraftInvalidOverlay" class="secret-invalid-overlay hidden">✕</div>
         </div>
       </div>
@@ -1894,7 +1892,7 @@
   <script src="client/big-announce.js?v=drawer-tap-passthrough-1"></script>
   <script src="client/reward-reveal.js?v=typed-quest-2"></script>
   <script src="client/quest-complete-reveal.js?v=typed-quest-2"></script>
-  <script src="client.js?v=9-2&mobile-perf=1&daily-round-intro=1&daily-both-rounds-fixed=1&challenge-intro=1&guest-play=1&tutorial-fixes=20260904&challenge-room-finished-guard=1&role-icons=1"></script>
+  <script src="client.js?v=9-2&mobile-perf=1&daily-round-intro=1&daily-both-rounds-fixed=1&challenge-intro=1&guest-play=1&tutorial-fixes=20260904&challenge-room-finished-guard=1&role-icons=1&guesser-lock-svg=1"></script>
   <script src="ui/guesser-flow-v7.js?v=tutorial-motion-sim-2&win-flight-direct=1&flight-behind-cards=1"></script>
   <script src="ui/gameplay-polish-v8.js?gameplay-polish=8"></script>
   <!-- V9: matching Guesser drawer, ready-action docks, Notes shortcut, and theme toggle -->

@@ -4066,3 +4066,55 @@ body.hide-constraints :is(#setterScreen, #guesserScreen) .constraint-row {
     will-change: auto;
   }
 }
+
+/* UMT_GUESSER_LOCK_SVG_PATCH: START */
+/* Keep the setter draft overlays exactly as wide as the keyboard below them.
+   This constrains both the locked-secret overlay and the invalid-draft overlay,
+   because both fill the same .draft-stack. */
+#setterScreen .setter-decision-stage > .draft-row-wrap {
+  width: min(100%, 520px);
+  margin-inline: auto;
+}
+
+#setterScreen .setter-decision-stage > .draft-row-wrap > .draft-stack {
+  width: 100%;
+}
+
+.secret-lock-svg {
+  display: block;
+  color: var(--setter-color, #ff4b5c);
+}
+
+#secretLockOverlay.secret-lock-overlay {
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#secretLockOverlay .secret-lock-svg {
+  width: auto;
+  height: clamp(24px, 72%, 58px);
+  filter:
+    drop-shadow(0 3px 5px rgba(0, 0, 0, 0.38))
+    drop-shadow(0 0 9px color-mix(in srgb, var(--setter-color, #ff4b5c) 32%, transparent));
+}
+
+/* The compact notice is role-guesser, but the object being shown is still the
+   Secretkeeper's locked secret, so the lock itself remains setter red. */
+.big-announce-icon .secret-lock-svg {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto;
+  color: var(--setter-color, #ff4b5c);
+}
+
+.big-announce.compact .big-announce-icon .secret-lock-svg {
+  width: 22px;
+  height: 22px;
+}
+
+@media (min-width: 761px) and (hover: hover) and (pointer: fine) {
+  #setterScreen .setter-decision-stage > .draft-row-wrap {
+    width: min(100%, var(--desktop-keyboard-width, 500px));
+  }
+}
+/* UMT_GUESSER_LOCK_SVG_PATCH: END */

@@ -219,6 +219,7 @@ function setKeyboardPickHint(active, text) {
 window.setKeyboardPickHint = setKeyboardPickHint;
 
 let lastOpeningMissLockNoticeAt = 0;
+const SECRET_LOCK_ICON_SVG = `<svg class="secret-lock-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false"><use href="#icon-secret-lock" xlink:href="#icon-secret-lock"></use></svg>`;
 
 function isOpeningMissSecretLocked() {
   return (
@@ -249,7 +250,7 @@ function showOpeningMissLockNotice() {
   const iAmSetter = myUserId() === state?.setter;
 
   window.showBigAnnounce?.({
-    icon: "🔒",
+    icon: SECRET_LOCK_ICON_SVG,
 
     title: iAmSetter
       ? "Secret locked for this round"
