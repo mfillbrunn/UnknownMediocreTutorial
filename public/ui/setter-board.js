@@ -3,6 +3,12 @@
 
   const STORAGE_KEY = "setterSidebarCollapsed";
   const SWIPE_THRESHOLD = 46;
+  // A tap aimed at a control inside the panel is a press, never the start
+  // of a drawer swipe -- see beginGesture. Covers the action log's
+  // underlined power/reward terms, which are role="button" tabindex="0"
+  // (client/action-log.js), as well as any ordinary control.
+  const TAP_TARGETS =
+    "button, a, input, select, textarea, label, summary, [role=\"button\"], [tabindex]";
   const byId = id => document.getElementById(id);
 
   let gesture = null;
@@ -158,6 +164,19 @@
   function beginGesture(event, direction) {
     if (event.pointerType === "mouse" || event.button > 0) return;
     if (event.target.closest?.(".activity-drag-handle")) return;
+    // Arming a swipe from a tap on a control was how the drawer toggle
+    // could die for the rest of the match: the action log sits inside this
+    // panel, so tapping one of its underlined terms armed a gesture here,
+    // and that tap ALSO expands the term's detail -- which makes
+    // renderActionLog rebuild the log's innerHTML and destroy the node the
+    // finger is on. iOS then never delivers that pointer's pointerup, so
+    // finishGesture below never cleared `gesture`, and onPointerMove kept
+    // preventDefault()ing later touches: every subsequent tap on the
+    // toggle was swallowed before it could become a click, with the rest
+    // of the screen still working normally. (Chromium retargets the
+    // orphaned pointerup to an ancestor, which is why this only showed up
+    // on iPhone.)
+    if (event.target.closest?.(TAP_TARGETS)) return;
 
     gesture = {
       pointerId: event.pointerId,
@@ -184,7 +203,13 @@
   }
 
   function finishGesture(event) {
-    if (!gesture || event.pointerId !== gesture.pointerId) return;
+    if (!gesture) return;
+    // A gesture that never became a real swipe is just a tap being held,
+    // so ANY pointer release ends it -- matching on pointerId alone let a
+    // gesture whose own pointerup went missing sit armed indefinitely
+    // (see beginGesture). A genuine in-progress swipe still requires the
+    // id to match, so a second finger landing can't cut it short.
+    if (gesture.active && event.pointerId !== gesture.pointerId) return;
 
     const current = gesture;
     gesture = null;

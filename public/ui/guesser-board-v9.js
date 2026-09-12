@@ -3,6 +3,11 @@
 
   const STORAGE_KEY = "guesserSidebarCollapsedV9";
   const SWIPE_THRESHOLD = 44;
+  // See beginGesture: a tap on a control inside the panel must not arm a
+  // drawer swipe. The action log lives in here and its power/reward terms
+  // are role="button" tabindex="0" (client/action-log.js).
+  const TAP_TARGETS =
+    "button, a, input, select, textarea, label, summary, [role=\"button\"], [tabindex]";
   const byId = id => document.getElementById(id);
 
   let gesture = null;
@@ -154,6 +159,14 @@
 
   function beginGesture(event, direction) {
     if (event.pointerType === "mouse" || event.button > 0) return;
+    // Same failure the Secretkeeper panel hit (ui/setter-board.js): a tap
+    // on one of the action log's underlined terms armed a swipe here, and
+    // that same tap expands the term -- which rebuilds the log's innerHTML
+    // and destroys the node under the finger, so iOS never delivers the
+    // pointerup that would clear this. The stranded gesture then had
+    // onPointerMove preventDefault() away every later tap on the drawer
+    // toggle.
+    if (event.target.closest?.(TAP_TARGETS)) return;
 
     gesture = {
       pointerId: event.pointerId,
@@ -180,7 +193,13 @@
   }
 
   function finishGesture(event) {
-    if (!gesture || event.pointerId !== gesture.pointerId) return;
+    if (!gesture) return;
+    // An unactivated gesture is a tap being held, so any pointer release
+    // ends it; only a real in-progress swipe needs its own pointerId back,
+    // so a second finger can't cut it short. Matching on the id alone left
+    // a gesture whose pointerup went missing armed for the rest of the
+    // match (see beginGesture).
+    if (gesture.active && event.pointerId !== gesture.pointerId) return;
 
     const current = gesture;
     gesture = null;
