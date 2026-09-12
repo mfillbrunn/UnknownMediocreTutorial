@@ -1942,6 +1942,9 @@
   function trainingWheelsFor(game) {
     const state = stateOf(game);
     if (!state || state.status !== "playing" || trueBossRound(game)) return null;
+    // Easy difficulty only -- Medium/Hard players chose the harder start on
+    // purpose, so the ramp would just be free value they didn't ask for.
+    if (difficultyName(game) !== "easy") return null;
     // A Duel runs on a cloned throwaway state with its own rules; the ramp is
     // about the campaign's opening Wordles only.
     if (state.branchMap && state.branchMap.expandedDuel) return null;
