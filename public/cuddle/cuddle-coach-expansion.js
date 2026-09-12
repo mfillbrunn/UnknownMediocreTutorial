@@ -1503,7 +1503,12 @@
         grid.insertBefore(permanent, firstPermanent);
       }
     }
-    SHOP_ITEMS.forEach(function classify(item) {
+    // Later layers can stock this shop too (see CuddleRebalanceV5.shopItems).
+    // They sit under the same headings, so they need the same corner badge --
+    // classifying only our own items would leave theirs visibly bare.
+    var external = Array.isArray(window.CuddleRebalanceV5?.shopItems) ? window.CuddleRebalanceV5.shopItems : [];
+    SHOP_ITEMS.concat(external).forEach(function classify(item) {
+      if (!item || !item.kind) return;
       var button = root.querySelector('[data-shop-item-id="' + item.id + '"]');
       if (button) button.classList.add("is-coach-shop-item", "is-" + item.kind);
     });

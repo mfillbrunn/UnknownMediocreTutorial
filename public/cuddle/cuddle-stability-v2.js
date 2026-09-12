@@ -617,6 +617,7 @@
   function shopDefinition(id) {
     const catalogs = [
       window.CuddleCampaign?.SHOP_ITEMS,
+      window.CuddleRebalanceV5?.shopItems,
       window.CuddleCoachExpansion?.shopItems,
       window.CuddleCampaign?.shopItems,
       window.CuddleMoneyMode?.shopItems
