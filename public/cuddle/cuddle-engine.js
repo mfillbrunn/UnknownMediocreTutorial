@@ -144,7 +144,8 @@
     // Guess reward) draws from. Every secrets word is already contained in
     // guesses (verified against the real lists), so a picked secret is
     // always itself a legal submission.
-    constructor(wordLists, options = {}) {
+    constructor(wordLists, options = {
+}) {
       const guesses = normalizeWords(wordLists?.guesses || []);
       const secrets = normalizeWords(wordLists?.secrets || []);
       this.secrets = secrets;
@@ -159,6 +160,9 @@
       if (!this.guessSet.size) {
         throw new Error("Cuddle needs a non-empty guess word list.");
       }
+      /* CUDDLE_ECONOMY_V8_CONTEXT */
+      window.__cuddleV8Contexts = window.__cuddleV8Contexts || [];
+      if (!window.__cuddleV8Contexts.includes(this)) window.__cuddleV8Contexts.push(this);
     }
 
     static hasSavedRun(storage = safeStorage()) {

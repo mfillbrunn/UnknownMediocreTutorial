@@ -1,0 +1,176 @@
+
+:root {
+  --cuddle-v8-common: #d7e0e8;
+  --cuddle-v8-rare: #8fc8ff;
+  --cuddle-v8-legendary: #f2c56d;
+  --cuddle-v8-panel: #2a1e39;
+  --cuddle-v8-panel-2: #3a294d;
+  --cuddle-v8-ink: #fff7e8;
+}
+
+.cuddle-v8-rarity {
+  position: relative;
+}
+
+.cuddle-v8-rarity-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: max-content;
+  margin: 0 0 .4rem;
+  padding: .18rem .48rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.cuddle-v8-common .cuddle-v8-rarity-badge { color: var(--cuddle-v8-common); }
+.cuddle-v8-rare .cuddle-v8-rarity-badge { color: var(--cuddle-v8-rare); }
+.cuddle-v8-legendary .cuddle-v8-rarity-badge { color: var(--cuddle-v8-legendary); }
+
+.cuddle-v8-pouch-button {
+  position: fixed;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 2450;
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  min-height: 42px;
+  padding: .55rem .7rem;
+  border: 1px solid rgba(242, 197, 109, .8);
+  border-radius: 999px;
+  color: var(--cuddle-v8-ink);
+  background: linear-gradient(145deg, #4a315d, #271b35);
+  box-shadow: 0 8px 24px rgba(16, 8, 24, .4);
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.cuddle-v8-pouch-button b {
+  display: grid;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  place-items: center;
+  border-radius: 999px;
+  color: #271b35;
+  background: var(--cuddle-v8-legendary);
+  font-size: .72rem;
+}
+
+.cuddle-v8-pouch-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2600;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(16, 9, 23, .72);
+  backdrop-filter: blur(5px);
+}
+
+.cuddle-v8-pouch-dialog {
+  width: min(520px, 100%);
+  max-height: min(78vh, 720px);
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid rgba(242, 197, 109, .55);
+  border-radius: 18px;
+  color: var(--cuddle-v8-ink);
+  background: linear-gradient(160deg, var(--cuddle-v8-panel-2), var(--cuddle-v8-panel));
+  box-shadow: 0 20px 60px rgba(9, 4, 14, .55);
+}
+
+.cuddle-v8-pouch-dialog header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cuddle-v8-pouch-dialog h2,
+.cuddle-v8-pouch-dialog p { margin: 0 0 .85rem; }
+
+.cuddle-v8-close {
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 50%;
+  color: inherit;
+  background: rgba(255,255,255,.08);
+  font-size: 1.35rem;
+  cursor: pointer;
+}
+
+.cuddle-v8-pouch-list {
+  display: grid;
+  gap: .65rem;
+}
+
+.cuddle-v8-pouch-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: .65rem;
+  padding: .7rem;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 12px;
+  background: rgba(255,255,255,.055);
+}
+
+.cuddle-v8-pouch-item button {
+  padding: .45rem .7rem;
+  border: 1px solid rgba(242,197,109,.65);
+  border-radius: 9px;
+  color: #2b1e37;
+  background: var(--cuddle-v8-legendary);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cuddle-v8-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 5.4rem;
+  z-index: 2800;
+  max-width: min(440px, calc(100vw - 2rem));
+  padding: .72rem 1rem;
+  border: 1px solid rgba(242,197,109,.6);
+  border-radius: 12px;
+  color: var(--cuddle-v8-ink);
+  background: #2b1e38;
+  box-shadow: 0 10px 32px rgba(0,0,0,.38);
+  opacity: 0;
+  transform: translate(-50%, 10px);
+  transition: opacity .2s ease, transform .2s ease;
+  pointer-events: none;
+}
+
+.cuddle-v8-toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@keyframes cuddle-v8-hand-wiggle {
+  0%, 100% { transform: translateX(0); }
+  18% { transform: translateX(-3px) rotate(-.4deg); }
+  36% { transform: translateX(3px) rotate(.4deg); }
+  54% { transform: translateX(-2px); }
+  72% { transform: translateX(2px); }
+}
+
+.cuddle-v8-hand-wiggle {
+  animation: cuddle-v8-hand-wiggle .62s ease-in-out both;
+}
+
+@media (max-width: 560px) {
+  .cuddle-v8-pouch-button span:nth-child(2) { display: none; }
+  .cuddle-v8-pouch-item { grid-template-columns: minmax(0, 1fr) auto; }
+  .cuddle-v8-pouch-item button { grid-column: 1 / -1; }
+}
