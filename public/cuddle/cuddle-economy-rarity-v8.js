@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "8.0.1";
+  const VERSION = "8.0.2";
   const PATCHED = Symbol.for("cuddle.economy.rarity.v8.patched");
   const CATALOG_PATCHED = Symbol.for("cuddle.economy.rarity.v8.catalog");
   const APPLY_PATCHED = Symbol.for("cuddle.economy.rarity.v8.apply");
@@ -239,6 +239,85 @@
     return Boolean(value) && typeof value === "object";
   }
 
+  // Never instrument JavaScript or DOM built-ins. Version 8.0.1 could discover
+  // an Array stored under a name such as `rewards` or the global `Map`
+  // constructor and then wrap Array.prototype.filter / Map.prototype methods.
+  // The wrapper calls findState(), which itself needs arrays, producing an
+  // immediate recursive stack overflow. Keep this deny-list and the native
+  // function test at every instrumentation boundary.
+  const BUILTIN_PROTOTYPES = new Set([
+    Object.prototype,
+    Function.prototype,
+    Array.prototype,
+    Map.prototype,
+    Set.prototype,
+    WeakMap.prototype,
+    WeakSet.prototype,
+    Promise.prototype,
+    Date.prototype,
+    RegExp.prototype,
+    Error.prototype,
+    Number.prototype,
+    String.prototype,
+    Boolean.prototype,
+    Symbol.prototype,
+    typeof BigInt !== "undefined" ? BigInt.prototype : null,
+    typeof ArrayBuffer !== "undefined" ? ArrayBuffer.prototype : null,
+    typeof DataView !== "undefined" ? DataView.prototype : null,
+    typeof Int8Array !== "undefined" ? Int8Array.prototype : null,
+    typeof Uint8Array !== "undefined" ? Uint8Array.prototype : null,
+    typeof Uint8ClampedArray !== "undefined" ? Uint8ClampedArray.prototype : null,
+    typeof Int16Array !== "undefined" ? Int16Array.prototype : null,
+    typeof Uint16Array !== "undefined" ? Uint16Array.prototype : null,
+    typeof Int32Array !== "undefined" ? Int32Array.prototype : null,
+    typeof Uint32Array !== "undefined" ? Uint32Array.prototype : null,
+    typeof Float32Array !== "undefined" ? Float32Array.prototype : null,
+    typeof Float64Array !== "undefined" ? Float64Array.prototype : null,
+    typeof BigInt64Array !== "undefined" ? BigInt64Array.prototype : null,
+    typeof BigUint64Array !== "undefined" ? BigUint64Array.prototype : null
+  ].filter(Boolean));
+
+  function isNativeFunction(value) {
+    if (typeof value !== "function") return false;
+    try {
+      return /\{\s*\[native code\]\s*\}/.test(Function.prototype.toString.call(value));
+    } catch (_) {
+      return true;
+    }
+  }
+
+  function isDomRuntimeObject(value) {
+    try {
+      if (typeof Node !== "undefined" && value instanceof Node) return true;
+      if (typeof Window !== "undefined" && value instanceof Window) return true;
+      if (typeof Document !== "undefined" && value instanceof Document) return true;
+      if (typeof EventTarget !== "undefined" && value instanceof EventTarget) return true;
+    } catch (_) {
+      return true;
+    }
+    return false;
+  }
+
+  function isBuiltinRuntimeObject(value) {
+    if (!isObject(value)) return false;
+    if (Array.isArray(value) || isDomRuntimeObject(value)) return true;
+    if (value instanceof Map || value instanceof Set || value instanceof WeakMap || value instanceof WeakSet) return true;
+    if (value instanceof Date || value instanceof RegExp || value instanceof Error || value instanceof Promise) return true;
+    if (typeof ArrayBuffer !== "undefined") {
+      if (value instanceof ArrayBuffer || ArrayBuffer.isView(value)) return true;
+    }
+    return false;
+  }
+
+  function isSafePrototype(proto) {
+    return Boolean(proto) && !BUILTIN_PROTOTYPES.has(proto) && !isDomRuntimeObject(proto);
+  }
+
+  function isPatchableValue(value) {
+    if (typeof value === "function") return !isNativeFunction(value);
+    return isObject(value) && !isBuiltinRuntimeObject(value);
+  }
+
   function safeOwnEntries(value) {
     if (!isObject(value)) return [];
     try {
@@ -270,26 +349,48 @@
   function stateScore(value) {
     if (!isObject(value)) return -1;
     let score = 0;
-    const keys = Object.keys(value).map(norm);
-    for (const key of keys) {
+    let hasMoney = false;
+    let hasMulligan = false;
+    let hasGuess = false;
+    const rawKeys = Object.keys(value);
+    for (let index = 0; index < rawKeys.length; index += 1) {
+      const key = norm(rawKeys[index]);
       if (/money|mulligan|guess|hand|deck|upgrade|reward|quest|difficulty|secret|answer|stage|round|map/.test(key)) score += 1;
+      if (/money|cash|balance/.test(key)) hasMoney = true;
+      if (/mulligan/.test(key)) hasMulligan = true;
+      if (/guess|history/.test(key)) hasGuess = true;
     }
-    if (keys.some((key) => /money|cash|balance/.test(key))) score += 2;
-    if (keys.some((key) => /mulligan/.test(key))) score += 2;
-    if (keys.some((key) => /guess|history/.test(key))) score += 2;
+    if (hasMoney) score += 2;
+    if (hasMulligan) score += 2;
+    if (hasGuess) score += 2;
     return score;
   }
 
   function findState(context, args = []) {
-    const roots = [context, ...(Array.isArray(args) ? args : [])].filter(isObject);
-    const candidates = [];
-    for (const root of roots) {
-      for (const object of shallowObjects(root, 2)) {
-        candidates.push([stateScore(object), object]);
+    // Deliberately avoid Array.prototype.filter/map/sort here. This function is
+    // called by every wrapper and therefore must not depend on methods that a
+    // faulty or third-party monkey patch could route back into the wrapper.
+    const roots = [];
+    if (isObject(context)) roots[roots.length] = context;
+    if (Array.isArray(args)) {
+      for (let index = 0; index < args.length; index += 1) {
+        if (isObject(args[index])) roots[roots.length] = args[index];
       }
     }
-    candidates.sort((a, b) => b[0] - a[0]);
-    return candidates.length && candidates[0][0] >= 3 ? candidates[0][1] : (isObject(context) ? context : null);
+    let best = null;
+    let bestScore = -1;
+    for (let rootIndex = 0; rootIndex < roots.length; rootIndex += 1) {
+      const objects = shallowObjects(roots[rootIndex], 2);
+      for (let objectIndex = 0; objectIndex < objects.length; objectIndex += 1) {
+        const object = objects[objectIndex];
+        const score = stateScore(object);
+        if (score > bestScore) {
+          best = object;
+          bestScore = score;
+        }
+      }
+    }
+    return bestScore >= 3 ? best : (isObject(context) ? context : null);
   }
 
   function runKey(state) {
@@ -1843,11 +1944,11 @@
   }
 
   function patchMethod(holder, receiver, name, label) {
-    if (!holder || name === "constructor") return;
+    if (!holder || name === "constructor" || BUILTIN_PROTOTYPES.has(holder) || isDomRuntimeObject(holder)) return;
     const descriptor = Object.getOwnPropertyDescriptor(holder, name);
     if (!descriptor || typeof descriptor.value !== "function") return;
     const original = descriptor.value;
-    if (original[PATCHED]) return;
+    if (original[PATCHED] || isNativeFunction(original)) return;
     const source = Function.prototype.toString.call(original);
     const sourceNorm = norm(source);
 
@@ -1909,43 +2010,55 @@
   }
 
   function patchObject(object, label = "") {
-    if (!isObject(object) && typeof object !== "function") return;
+    if (!isPatchableValue(object)) return;
     if (patchedObjects.has(object)) return;
     patchedObjects.add(object);
-    if (isObject(object)) contextList.add(object);
+    if (isObject(object) && !isBuiltinRuntimeObject(object)) contextList.add(object);
 
     const holders = [];
-    if (typeof object === "function" && object.prototype) holders.push([object.prototype, object.prototype]);
-    if (isObject(object)) {
-      holders.push([object, object]);
-      const proto = Object.getPrototypeOf(object);
-      if (proto && proto !== Object.prototype) holders.push([proto, object]);
+    if (typeof object === "function" && object.prototype && isSafePrototype(object.prototype)) {
+      holders[holders.length] = [object.prototype, object.prototype];
     }
-    for (const [holder, receiver] of holders) {
+    if (isObject(object) && !isBuiltinRuntimeObject(object)) {
+      holders[holders.length] = [object, object];
+      const proto = Object.getPrototypeOf(object);
+      if (isSafePrototype(proto)) holders[holders.length] = [proto, object];
+    }
+    for (let holderIndex = 0; holderIndex < holders.length; holderIndex += 1) {
+      const holder = holders[holderIndex][0];
+      const receiver = holders[holderIndex][1];
       let names = [];
       try { names = Object.getOwnPropertyNames(holder); } catch (_) { names = []; }
-      for (const name of names) patchMethod(holder, receiver, name, label);
+      for (let nameIndex = 0; nameIndex < names.length; nameIndex += 1) {
+        patchMethod(holder, receiver, names[nameIndex], label);
+      }
     }
   }
 
   function scanGlobals() {
     const candidates = [];
     for (const registered of window.__cuddleV8Contexts || []) {
-      if (isObject(registered) || typeof registered === "function") candidates.push([registered, "registered-context"]);
+      if (isPatchableValue(registered)) candidates[candidates.length] = [registered, "registered-context"];
     }
     let keys = [];
     try { keys = Object.getOwnPropertyNames(window); } catch (_) { keys = []; }
-    for (const key of keys) {
+    for (let keyIndex = 0; keyIndex < keys.length; keyIndex += 1) {
+      const key = keys[keyIndex];
       if (!shouldPatchObjectName(key)) continue;
       let value;
       try { value = window[key]; } catch (_) { continue; }
-      if (isObject(value) || typeof value === "function") candidates.push([value, key]);
+      if (isPatchableValue(value)) candidates[candidates.length] = [value, key];
     }
-    for (const [value, key] of candidates) {
+    for (let candidateIndex = 0; candidateIndex < candidates.length; candidateIndex += 1) {
+      const value = candidates[candidateIndex][0];
+      const key = candidates[candidateIndex][1];
       patchObject(value, key);
-      if (isObject(value)) {
-        for (const [childKey, child] of safeOwnEntries(value)) {
-          if (shouldPatchObjectName(childKey) && (isObject(child) || typeof child === "function")) patchObject(child, `${key}.${childKey}`);
+      if (isObject(value) && !isBuiltinRuntimeObject(value)) {
+        const children = safeOwnEntries(value);
+        for (let childIndex = 0; childIndex < children.length; childIndex += 1) {
+          const childKey = children[childIndex][0];
+          const child = children[childIndex][1];
+          if (shouldPatchObjectName(childKey) && isPatchableValue(child)) patchObject(child, `${key}.${childKey}`);
         }
       }
     }
