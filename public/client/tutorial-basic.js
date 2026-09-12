@@ -409,7 +409,7 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 1) {
       basicTutorialShow(
-        "It may feel like cheating but you cannot switch your word to just anything, though. Every color you have already shown has to stay true. Put simply: you are never allowed to turn a past clue into a lie.",
+        "Being able to switch words may feel like cheating but you cannot switch your word to just anything. Your secret has to stay true to whatever feedback you had already given. Put simply: you are never allowed to turn a past clue into a lie.",
         {
           role: "setter",
           section: "Why change?",
@@ -425,7 +425,7 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 2) {
       basicTutorialShow(
-        "This preview row shows what colors the guesser would see if you keep your current word. Switching to a different word can give them less info. ",
+        "This preview row shows what colors the guesser would see if you kept your current word. You can type out different words and see if they give the guesser less info. ",
         {
           role: "setter",
           section: "One rule about switching",
@@ -463,7 +463,7 @@ function runBasicSpyTutorial(state) {
     }
 
     basicTutorialShow(
-      `Clear the current word by clicking on Clear. And wow try ${validWord}. Every clue you have shown so far still holds true for it, so this one is allowed. Send it as your new secret.`,
+      `Clear the current word by clicking on Clear. And now try ${validWord}. Every clue you have shown so far still holds true for it, so this one is allowed. Send it as your new secret.`,
       {
         role: "setter",
         section: "A switch that works",
@@ -485,7 +485,7 @@ function runBasicSpyTutorial(state) {
   if (round === 2) {
     if (!state.pendingGuess) {
       basicTutorialShow(
-        "They are picking another word. Sit tight again.",
+        "The guesser is picking another word. Sit tight again.",
         {
           role: "setter",
           section: "Another guess",
