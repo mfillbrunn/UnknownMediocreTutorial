@@ -639,18 +639,28 @@
   function enhanceShop(game, root) {
     if (game?.state?.status !== "shop") return;
     const score = Math.max(0, Math.round(number(game.state.score, 0)));
+
+    const headerScore = root.querySelector(".cuddle-header-score");
+    if (headerScore) {
+      const text = `$${score.toLocaleString()}`;
+      if (headerScore.textContent !== text) headerScore.textContent = text;
+      headerScore.setAttribute("aria-label", `Spendable money ${text}`);
+    }
+
     const title = root.querySelector(".cuddle-header-title");
-    if (title) {
-      title.replaceChildren();
+    if (title && !title.querySelector(".umt-shop-header-wallet")) {
       const wallet = document.createElement("span");
       wallet.className = "umt-shop-header-wallet";
       wallet.textContent = `Available $${score.toLocaleString()}`;
       title.appendChild(wallet);
+    } else if (title) {
+      const wallet = title.querySelector(".umt-shop-header-wallet");
+      const next = `Available $${score.toLocaleString()}`;
+      if (wallet && wallet.textContent !== next) wallet.textContent = next;
     }
 
     const intro = root.querySelector(".cuddle-shop-intro");
-    if (intro) {
-      intro.replaceChildren();
+    if (intro && !intro.querySelector(".umt-shopkeeper-head")) {
       intro.classList.add("umt-shopkeeper-bar");
       const head = document.createElement("img");
       head.src = "cuddle/icons/shopkeeper.svg";
@@ -659,19 +669,32 @@
       const speech = document.createElement("p");
       speech.className = "umt-shopkeeper-speech";
       speech.textContent = shopGreeting(game);
-      intro.append(head, speech);
+      intro.replaceChildren(head, speech);
+    } else if (intro) {
+      const speech = intro.querySelector(".umt-shopkeeper-speech");
+      const greeting = shopGreeting(game);
+      if (speech && speech.textContent !== greeting) speech.textContent = greeting;
     }
 
-    root.querySelectorAll(".cuddle-shop-inventory").forEach(element => element.remove());
+    root.querySelectorAll(".cuddle-shop-inventory").forEach(element => {
+      element.hidden = true;
+    });
+
     root.querySelectorAll(".cuddle-shop-item[data-shop-item-id]").forEach(control => {
       const id = control.dataset.shopItemId;
       const definition = shopDefinition(id);
+      const signature = `${id}:${definition?.title || ""}:${control.textContent || ""}`;
+      if (control.dataset.umtShopDecorated === signature) return;
+      control.dataset.umtShopDecorated = signature;
       const icon = control.querySelector(".cuddle-shop-item-icon, .cuddle-choice-icon, .cuddle-shop-icon");
       if (icon) replaceIconContents(icon, id, definition?.title || id);
       const cost = control.querySelector(".cuddle-shop-item-cost");
       if (cost) {
-        const match = String(cost.textContent || "").match(/\d[\d,]*/);
-        if (match) cost.textContent = `$${match[0]}`;
+        const current = String(cost.textContent || "").trim();
+        const match = current.match(/\d[\d,]*/);
+        if (match && !/^Sold/i.test(current)) {
+          cost.textContent = /^Need/i.test(current) ? `Need $${match[0]}` : `$${match[0]}`;
+        }
       }
     });
   }
@@ -756,7 +779,21 @@
     const coach = game?.state?.cuddleCoachExpansion || {};
     const threshold = typeof window.CuddleCoachExpansion?.meterThreshold === "function"
       ? integer(window.CuddleCoachExpansion.meterThreshold(), 12)
-      : Math.max(3, 12 - 3 * integer(coach.cuddleThresholdStacks, 0));
+      : (() => {
+        const difficulty = String(
+          game?.state?.megaState?.difficulty
+          || game?.state?.difficulty
+          || game?.state?.mode?.difficulty
+          || game?.state?.settings?.difficulty
+          || "medium"
+        ).toLowerCase();
+        const base = /easy|casual/.test(difficulty)
+          ? 10
+          : /hard|expert|difficult/.test(difficulty)
+            ? 15
+            : 12;
+        return Math.max(7, base - integer(coach.cuddleThresholdStacks, 0));
+      })();
     const rewards = ["Free mulligan", "Joker", "Hint", "Extra row"];
     const meterReward = rewards[Math.max(0, Math.min(3, integer(coach.cuddleRewardTier, 0)))];
     addStatBadge(badges, "Unused guess", `+$${5 * green + extraGuessRate}`);
@@ -804,7 +841,7 @@
     const collect = root.querySelector("[data-cuddle-money-action='collect-payout'], [data-action='collect-money-payout']");
     const total = payoutTotalFromOverlay(root);
     if (!collect || total === null) return;
-    collect.textContent = `Collect $${total.toLocaleString()}`;
+    collect.textContent = "Collect";
     collect.setAttribute("aria-label", `Collect ${total} dollars earned this round`);
   }
 
@@ -945,19 +982,37 @@
 
   function enhanceRenderedUi(root, game) {
     if (!root || !game?.state) return;
-    installRoute(game, false);
-    if (game.state.status === "branchMap") repairDuplicatePathOptions(game);
-    migrateJokerCache(game);
-    enhanceHeaderMoney(game, root);
-    enhanceStats(game, root);
-    enhanceChoiceIcons(game, root);
-    enhanceMapIcons(game, root);
-    enhanceShop(game, root);
-    enhanceUpgradeLevels(game, root);
-    hideLiveRowMoney(game, root);
-    fixCollectButton(root);
-    enhanceInventoryPouch(game, root);
-    kickHeadStart(game);
+    root.__umtCuddleStabilityGame = game;
+    if (root.__umtCuddleStabilityFrame) return;
+
+    const schedule = typeof window.requestAnimationFrame === "function"
+      ? window.requestAnimationFrame.bind(window)
+      : callback => window.setTimeout(callback, 0);
+
+    root.__umtCuddleStabilityFrame = schedule(() => {
+      root.__umtCuddleStabilityFrame = 0;
+      const liveGame = root.__umtCuddleStabilityGame;
+      if (!root.isConnected || !liveGame?.state) return;
+
+      installRoute(liveGame, false);
+      if (liveGame.state.status === "branchMap") repairDuplicatePathOptions(liveGame);
+      migrateJokerCache(liveGame);
+
+      if (root.querySelector(".cuddle-header-score")) enhanceHeaderMoney(liveGame, root);
+      if (root.querySelector(".cuddle-stat-group, .cuddle-detail-group")) enhanceStats(liveGame, root);
+      if (root.querySelector(".cuddle-choice, .cuddle-money-choice")) {
+        enhanceChoiceIcons(liveGame, root);
+        enhanceUpgradeLevels(liveGame, root);
+      }
+      if (root.querySelector(".cuddle-map-shell, .cuddle-branch-map")) enhanceMapIcons(liveGame, root);
+      if (liveGame.state.status === "shop") enhanceShop(liveGame, root);
+      if (root.querySelector(".cuddle-board-row")) hideLiveRowMoney(liveGame, root);
+      if (root.querySelector("[data-cuddle-money-action='collect-payout'], [data-action='collect-money-payout']")) {
+        fixCollectButton(root);
+      }
+      if (root.querySelector(".cuddle-header-side-right")) enhanceInventoryPouch(liveGame, root);
+      if (liveGame.state.status === "playing" && !(liveGame.state.history || []).length) kickHeadStart(liveGame);
+    });
   }
 
   function wrapCampaignExport() {
@@ -1061,3 +1116,601 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", install, { once: true });
   else install();
 })();
+
+/* UMT_CUDDLE_FIXPACK_20260912: START */
+(function installUmtCuddleFixpack() {
+  "use strict";
+
+  const VERSION = "2026.09.12-r2";
+  const Engine = window.CuddleEngine;
+  const Game = Engine && Engine.CuddleGame;
+  if (!Game || !Game.prototype) {
+    console.error("Cuddle fix pack: CuddleEngine was not available.");
+    return;
+  }
+
+  const SHOP_ITEMS = Object.freeze([
+    Object.freeze({ id: "joker", icon: "🃏", title: "Pocket Joker", cost: 18, kind: "one-time", description: "Gain one Joker charge for this run." }),
+    Object.freeze({ id: "yellowDetector", icon: "🟨", title: "Amber Lens", cost: 12, kind: "one-time", description: "Reveal one solution letter at the start of the next eligible round." }),
+    Object.freeze({ id: "coachBossTenLetterCull", icon: "✂️", title: "Ten-Letter Cull", cost: 24, kind: "boss", description: "Save a ten-letter cull for the next boss." }),
+    Object.freeze({ id: "coachBossUnlimitedMulligans", icon: "♾️", title: "Regular Wordle Hands", cost: 28, kind: "boss", description: "Save unlimited mulligans for the next boss." }),
+    Object.freeze({ id: "coachShopPossibleAnswers", icon: "🎧", title: "Secrets Counter", cost: 44, kind: "upgrade", rarity: "bronze", description: "Unlock the exact Secrets Remaining counter for this run." }),
+    Object.freeze({ id: "coachShopHint", icon: "💡", title: "Guesser Hint", cost: 50, kind: "upgrade", rarity: "silver", description: "Add one exact-position hint to every eligible round, up to four." }),
+    Object.freeze({ id: "coachShopMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", cost: 56, kind: "upgrade", rarity: "gold", description: "Reduce the Cuddle Meter requirement by one for this run, up to three times." })
+  ]);
+  const SHOP_BY_ID = new Map(SHOP_ITEMS.map(item => [item.id, item]));
+  const UPGRADE_MAX = Object.freeze({
+    coachShopPossibleAnswers: 1,
+    coachShopHint: 4,
+    coachShopMeterThreshold: 3
+  });
+
+  let activeGame = null;
+  const scheduledRoots = new WeakMap();
+  const openingJobs = new WeakMap();
+  const lastBurstSequence = new WeakMap();
+
+  function numeric(value, fallback = 0) {
+    const result = Number(value);
+    return Number.isFinite(result) ? result : fallback;
+  }
+
+  function integer(value, fallback = 0) {
+    return Math.trunc(numeric(value, fallback));
+  }
+
+  function currentGame() {
+    if (activeGame && activeGame.state) return activeGame;
+    const candidates = [
+      window.CuddleUI && typeof window.CuddleUI.getActiveGame === "function" ? window.CuddleUI.getActiveGame() : null,
+      window.CuddleStabilityV2 && typeof window.CuddleStabilityV2.getActiveGame === "function" ? window.CuddleStabilityV2.getActiveGame() : null,
+      window.CuddleRebalanceV5?.debug && typeof window.CuddleRebalanceV5.debug.getActiveGame === "function" ? window.CuddleRebalanceV5.debug.getActiveGame() : null,
+      window.cuddleGame,
+      window.activeCuddleGame,
+      window.CuddleGame && window.CuddleGame.state ? window.CuddleGame : null
+    ];
+    if (Array.isArray(window.__cuddleV8Contexts)) {
+      for (let index = window.__cuddleV8Contexts.length - 1; index >= 0; index -= 1) {
+        const entry = window.__cuddleV8Contexts[index];
+        candidates.push(entry?.game || entry);
+      }
+    }
+    const found = candidates.find(candidate => candidate && candidate.state);
+    if (found) activeGame = found;
+    return found || null;
+  }
+
+  function ensureCampaignState(game) {
+    const state = game.state || (game.state = {});
+    const campaign = state.cuddleCampaign && typeof state.cuddleCampaign === "object"
+      ? state.cuddleCampaign
+      : (state.cuddleCampaign = {});
+    campaign.shopPurchases = campaign.shopPurchases && typeof campaign.shopPurchases === "object"
+      ? campaign.shopPurchases
+      : {};
+    campaign.inventory = Object.assign({
+      extraMulligan: 0,
+      mulliganRefresh: 0,
+      handSize: 0,
+      yellowDetector: 0
+    }, campaign.inventory || {});
+    return campaign;
+  }
+
+  function ensureCoachState(game) {
+    const state = game.state || (game.state = {});
+    const coach = state.cuddleCoachExpansion && typeof state.cuddleCoachExpansion === "object"
+      ? state.cuddleCoachExpansion
+      : (state.cuddleCoachExpansion = {});
+    coach.shopPurchases = coach.shopPurchases && typeof coach.shopPurchases === "object"
+      ? coach.shopPurchases
+      : {};
+    coach.inventory = Object.assign({
+      tenLetterCull: 0,
+      unlimitedMulligans: 0
+    }, coach.inventory || {});
+    coach.hintsPerRound = Math.max(0, integer(coach.hintsPerRound, 0));
+    coach.cuddleThresholdStacks = Math.max(0, integer(coach.cuddleThresholdStacks, 0));
+    coach.possibleAnswersUnlocked = Boolean(coach.possibleAnswersUnlocked);
+    return coach;
+  }
+
+  function shopKey(game, campaign) {
+    const value = campaign.activeShopRound ?? game.state?.round ?? "shop";
+    return String(value);
+  }
+
+  function listFor(object, key) {
+    const current = object[key];
+    if (Array.isArray(current)) return current;
+    object[key] = [];
+    return object[key];
+  }
+
+  function upgradeLevel(itemId, coach) {
+    if (itemId === "coachShopPossibleAnswers") return coach.possibleAnswersUnlocked ? 1 : 0;
+    if (itemId === "coachShopHint") return Math.max(0, integer(coach.hintsPerRound, 0));
+    if (itemId === "coachShopMeterThreshold") return Math.max(0, integer(coach.cuddleThresholdStacks, 0));
+    return 0;
+  }
+
+  function itemIsMaxed(item, coach) {
+    const maximum = UPGRADE_MAX[item.id];
+    return maximum ? upgradeLevel(item.id, coach) >= maximum : false;
+  }
+
+  function safeSave(game) {
+    try {
+      if (game && typeof game.save === "function") game.save();
+    } catch (error) {
+      console.warn("Cuddle fix pack: save failed.", error);
+    }
+  }
+
+  function requestRender(game) {
+    try {
+      window.dispatchEvent(new CustomEvent("cuddle:campaign-update", {
+        detail: { runId: game?.state?.runId || null }
+      }));
+    } catch (error) {
+      console.warn("Cuddle fix pack: render request failed.", error);
+    }
+  }
+
+  function installShopMethods() {
+    const proto = Game.prototype;
+    if (proto.__umtCuddleFixpackShop === VERSION) return;
+
+    proto.getCuddleShop = function getFixedCuddleShop() {
+      activeGame = this;
+      const campaign = ensureCampaignState(this);
+      const coach = ensureCoachState(this);
+      const key = shopKey(this, campaign);
+      const purchased = new Set([
+        ...listFor(campaign.shopPurchases, key),
+        ...listFor(coach.shopPurchases, key)
+      ]);
+      const score = Math.max(0, numeric(this.state?.score, 0));
+      return {
+        round: campaign.activeShopRound ?? this.state?.round ?? null,
+        score,
+        nextTarget: null,
+        items: SHOP_ITEMS.map(item => ({
+          ...item,
+          purchased: purchased.has(item.id) || itemIsMaxed(item, coach),
+          affordable: score >= item.cost && !itemIsMaxed(item, coach)
+        })),
+        inventory: { ...campaign.inventory },
+        jokerCharges: Math.max(0, integer(this.state?.megaState?.jokerCharges, 0))
+      };
+    };
+
+    proto.buyCuddleShopItem = function buyFixedCuddleShopItem(itemId) {
+      activeGame = this;
+      if (this.state?.status !== "shop") return { ok: false, error: "No shop is open." };
+      const item = SHOP_BY_ID.get(String(itemId || ""));
+      if (!item) return { ok: false, error: "That shop item does not exist." };
+
+      const campaign = ensureCampaignState(this);
+      const coach = ensureCoachState(this);
+      const key = shopKey(this, campaign);
+      const campaignPurchases = listFor(campaign.shopPurchases, key);
+      const coachPurchases = listFor(coach.shopPurchases, key);
+      if (campaignPurchases.includes(item.id) || coachPurchases.includes(item.id)) {
+        return { ok: false, error: "That item is sold out in this shop." };
+      }
+      if (itemIsMaxed(item, coach)) return { ok: false, error: `${item.title} is already maxed.` };
+
+      const balance = numeric(this.state.score, 0);
+      if (balance < item.cost) return { ok: false, error: `You need $${item.cost}.` };
+
+      const snapshot = {
+        score: balance,
+        campaignPurchases: campaignPurchases.slice(),
+        coachPurchases: coachPurchases.slice(),
+        jokerCharges: numeric(this.state?.megaState?.jokerCharges, 0),
+        hasJokerUnlocked: Boolean(this.state?.megaState?.hasJokerUnlocked),
+        yellowDetector: integer(campaign.inventory.yellowDetector, 0),
+        tenLetterCull: integer(coach.inventory.tenLetterCull, 0),
+        unlimitedMulligans: integer(coach.inventory.unlimitedMulligans, 0),
+        possibleAnswersUnlocked: Boolean(coach.possibleAnswersUnlocked),
+        hintsPerRound: integer(coach.hintsPerRound, 0),
+        cuddleThresholdStacks: integer(coach.cuddleThresholdStacks, 0)
+      };
+
+      try {
+        this.state.score = balance - item.cost;
+        campaignPurchases.push(item.id);
+        coachPurchases.push(item.id);
+
+        if (item.id === "joker") {
+          const mega = this.state.megaState && typeof this.state.megaState === "object"
+            ? this.state.megaState
+            : (this.state.megaState = {});
+          mega.jokerCharges = Math.max(0, integer(mega.jokerCharges, 0)) + 1;
+          mega.hasJokerUnlocked = true;
+        } else if (item.id === "yellowDetector") {
+          campaign.inventory.yellowDetector = Math.max(0, integer(campaign.inventory.yellowDetector, 0)) + 1;
+        } else if (item.id === "coachBossTenLetterCull") {
+          coach.inventory.tenLetterCull = Math.max(0, integer(coach.inventory.tenLetterCull, 0)) + 1;
+        } else if (item.id === "coachBossUnlimitedMulligans") {
+          coach.inventory.unlimitedMulligans = Math.max(0, integer(coach.inventory.unlimitedMulligans, 0)) + 1;
+        } else if (item.id === "coachShopPossibleAnswers") {
+          coach.possibleAnswersUnlocked = true;
+        } else if (item.id === "coachShopHint") {
+          coach.hintsPerRound = Math.min(4, Math.max(0, integer(coach.hintsPerRound, 0)) + 1);
+        } else if (item.id === "coachShopMeterThreshold") {
+          coach.cuddleThresholdStacks = Math.min(3, Math.max(0, integer(coach.cuddleThresholdStacks, 0)) + 1);
+        }
+
+        this.state.lastMessage = `${item.title} purchased for $${item.cost}.`;
+        safeSave(this);
+        return { ok: true, message: this.state.lastMessage, item: { ...item } };
+      } catch (error) {
+        this.state.score = snapshot.score;
+        campaign.shopPurchases[key] = snapshot.campaignPurchases;
+        coach.shopPurchases[key] = snapshot.coachPurchases;
+        if (this.state.megaState) {
+          this.state.megaState.jokerCharges = snapshot.jokerCharges;
+          this.state.megaState.hasJokerUnlocked = snapshot.hasJokerUnlocked;
+        }
+        campaign.inventory.yellowDetector = snapshot.yellowDetector;
+        coach.inventory.tenLetterCull = snapshot.tenLetterCull;
+        coach.inventory.unlimitedMulligans = snapshot.unlimitedMulligans;
+        coach.possibleAnswersUnlocked = snapshot.possibleAnswersUnlocked;
+        coach.hintsPerRound = snapshot.hintsPerRound;
+        coach.cuddleThresholdStacks = snapshot.cuddleThresholdStacks;
+        console.error("Cuddle fix pack: purchase rolled back.", error);
+        return { ok: false, error: "The purchase could not be completed." };
+      }
+    };
+
+    Object.defineProperty(proto, "__umtCuddleFixpackShop", {
+      value: VERSION,
+      configurable: true
+    });
+  }
+
+  function installShopClickHandler() {
+    if (document.documentElement.dataset.umtCuddleFixpackShopClick === VERSION) return;
+    document.documentElement.dataset.umtCuddleFixpackShopClick = VERSION;
+    document.addEventListener("click", event => {
+      const target = event.target instanceof Element ? event.target : null;
+      const button = target?.closest('[data-cuddle-campaign-action="buy-shop-item"][data-shop-item-id]');
+      if (!button || button.disabled) return;
+      const game = currentGame();
+      if (!game || typeof game.buyCuddleShopItem !== "function") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const result = game.buyCuddleShopItem(button.dataset.shopItemId);
+      if (!result?.ok && result?.error) game.state.lastMessage = result.error;
+      safeSave(game);
+      requestRender(game);
+    }, true);
+  }
+
+  function installBlueChallengeFix() {
+    const proto = Game.prototype;
+    if (proto.__umtCuddleFixpackBlue === VERSION || typeof proto._applyBossFeedback !== "function") return;
+    const original = proto._applyBossFeedback;
+    proto._applyBossFeedback = function applyFixedBlueChallenge(word, feedback) {
+      const result = original.apply(this, arguments);
+      const challenge = this.state?.cuddleMoneyMode?.activeChallenge;
+      const withinTurns = challenge && integer(this.state?.guessesUsed, 0) < integer(challenge.turns, 0);
+      if (!withinTurns || challenge.effect !== "blueMode" || !Array.isArray(feedback)) return result;
+      const shown = feedback.map(value => value === "grey" ? "grey" : "blue");
+      const learn = feedback.map(value => value === "grey" ? "grey" : "yellow");
+      return Object.assign({}, result || {}, { shown, learn, counts: null });
+    };
+    Object.defineProperty(proto, "__umtCuddleFixpackBlue", { value: VERSION, configurable: true });
+  }
+
+  function randomOpenerState(game) {
+    const state = game?.state || {};
+    return state.cuddleRebalanceV5 || state.cuddleRebalance || state.cuddleV5 || {};
+  }
+
+  function scheduleOpeningWord(game) {
+    if (!game?.state) return;
+    const state = game.state;
+    const token = `${state.runId || "run"}:${state.round || 0}:${state.secret || ""}`;
+    const existing = openingJobs.get(game);
+    if (existing === token) return;
+    openingJobs.set(game, token);
+    let attempts = 0;
+    const initialHistory = Array.isArray(state.history) ? state.history.length : 0;
+
+    const attempt = () => {
+      if (!game.state || openingJobs.get(game) !== token) return;
+      const live = game.state;
+      const history = Array.isArray(live.history) ? live.history : [];
+      if (history.length > initialHistory) {
+        openingJobs.delete(game);
+        safeSave(game);
+        requestRender(game);
+        return;
+      }
+      if (live.status !== "playing" || live.roundIntroPending || live.pendingRoundEnd) {
+        openingJobs.delete(game);
+        return;
+      }
+
+      const custom = randomOpenerState(game);
+      const variant = custom.activeVariant || custom.pendingVariant || null;
+      if (variant && variant.kind === "randomOpener") {
+        const scheduler = window.CuddleRebalanceV5?.debug?.scheduleRandomOpener;
+        const played = custom.openerPlayedToken === token;
+        const pending = custom.openerPendingToken === token;
+        if (!played && !pending && typeof scheduler === "function") {
+          try { scheduler(game); }
+          catch (error) { console.warn("Cuddle fix pack: opening word retry failed.", error); }
+        }
+      }
+
+      attempts += 1;
+      if (attempts < 18) window.setTimeout(attempt, 20);
+      else openingJobs.delete(game);
+    };
+
+    window.setTimeout(attempt, 0);
+  }
+
+  function installOpeningWordFix() {
+    const proto = Game.prototype;
+    if (proto.__umtCuddleFixpackOpening === VERSION || typeof proto._beginRound !== "function") return;
+    const original = proto._beginRound;
+    proto._beginRound = function beginRoundWithOpeningWord() {
+      const result = original.apply(this, arguments);
+      activeGame = this;
+      scheduleOpeningWord(this);
+      return result;
+    };
+    Object.defineProperty(proto, "__umtCuddleFixpackOpening", { value: VERSION, configurable: true });
+  }
+
+  function formatDelta(value) {
+    const amount = Math.round(numeric(value, 0));
+    if (amount > 0) return `+$${amount.toLocaleString()}`;
+    if (amount < 0) return `-$${Math.abs(amount).toLocaleString()}`;
+    return "$0";
+  }
+
+  function pendingPayout(game) {
+    return game?.state?.cuddleMoneyMode?.pendingPayout || null;
+  }
+
+  function payoutTotal(payload, overlay) {
+    if (payload && Number.isFinite(Number(payload.total))) return Math.round(Number(payload.total));
+    const source = overlay.querySelector(".cuddle-money-payout-total strong, [data-payout-total], .cuddle-money-round-total");
+    const match = String(source?.textContent || "").replace(/,/g, "").match(/-?\d+(?:\.\d+)?/);
+    return match ? Math.round(numeric(match[0], 0)) : 0;
+  }
+
+  function enhanceCashout(game, root) {
+    const scope = root || document;
+    const overlay = scope.querySelector?.("#cuddleMoneyPayoutOverlay, .cuddle-money-payout-overlay")
+      || document.querySelector("#cuddleMoneyPayoutOverlay, .cuddle-money-payout-overlay");
+    if (!overlay) return;
+    const modal = overlay.querySelector(".cuddle-money-modal, .cuddle-money-payout-modal") || overlay;
+    const payload = pendingPayout(game);
+    const total = payoutTotal(payload, overlay);
+
+    let collect = overlay.querySelector("[data-cuddle-money-action='collect-payout'], [data-action='collect-money-payout'], [data-action='collect-payout']");
+    if (!collect) {
+      collect = Array.from(overlay.querySelectorAll("button")).find(button => /^\s*collect\b/i.test(button.textContent || "")) || null;
+    }
+    if (collect) {
+      collect.textContent = "Collect";
+      collect.setAttribute("aria-label", `Collect ${Math.max(0, total)} dollars earned this round`);
+      let top = modal.querySelector(":scope > .umt-cashout-top");
+      if (!top) {
+        top = document.createElement("div");
+        top.className = "umt-cashout-top";
+        const heading = modal.querySelector("h1, h2, .cuddle-money-kicker");
+        if (heading?.nextSibling) modal.insertBefore(top, heading.nextSibling);
+        else modal.prepend(top);
+      }
+      if (collect.parentElement !== top) top.appendChild(collect);
+      let roundTotal = top.querySelector(".umt-round-total");
+      if (!roundTotal) {
+        roundTotal = document.createElement("div");
+        roundTotal.className = "umt-round-total";
+        top.appendChild(roundTotal);
+      }
+      roundTotal.innerHTML = `<span>Round total</span><strong>${formatDelta(total)}</strong>`;
+    }
+
+    const walletSelectors = [
+      ".cuddle-money-payout-bank",
+      ".cuddle-money-bank",
+      ".cuddle-money-wallet",
+      ".cuddle-money-payout-wallet",
+      ".cuddle-money-bank-counter",
+      "[data-cuddle-money-bank]"
+    ];
+    overlay.querySelectorAll(walletSelectors.join(",")).forEach(element => {
+      if (!element.closest(".umt-round-total")) element.hidden = true;
+    });
+    overlay.querySelectorAll(".cuddle-money-payout-total").forEach(element => {
+      if (!element.closest(".umt-round-total")) {
+        element.hidden = true;
+        element.classList.add("umt-source-total");
+      }
+    });
+
+    const rows = Array.isArray(payload?.rows) ? payload.rows : null;
+    const allocated = rows
+      ? rows.reduce((sum, row) => sum + Math.round(numeric(row?.amount, 0)), 0)
+      : 0;
+    const stageBonus = Number.isFinite(Number(payload?.stageBonus))
+      ? Math.round(Number(payload.stageBonus))
+      : rows
+        ? Math.round(total - allocated)
+        : 0;
+    const rowsContainer = overlay.querySelector(".cuddle-money-payout-rows, .cuddle-money-payout-list")
+      || overlay.querySelector(".cuddle-money-payout-row")?.parentElement;
+    let bonus = overlay.querySelector(".umt-stage-bonus-row");
+    if (!stageBonus) {
+      bonus?.remove();
+    } else if (rowsContainer) {
+      if (!bonus) {
+        bonus = document.createElement("div");
+        bonus.className = "umt-stage-bonus-row";
+        rowsContainer.appendChild(bonus);
+      }
+      bonus.innerHTML = `<span><b>Stage bonus</b><small>Rewards not attached to a guess row</small></span><strong>${formatDelta(stageBonus)}</strong>`;
+    }
+  }
+
+  function removeMeterPopup(game, root) {
+    if (game?.state?.coachMeterNotice) game.state.coachMeterNotice = null;
+    const selectors = [
+      ".cuddle-coach-meter-notice",
+      ".cuddle-meter-notice",
+      "[data-cuddle-meter-notice]",
+      ".cuddle-v3-toast.is-meter"
+    ];
+    root.querySelectorAll(selectors.join(",")).forEach(element => element.remove());
+    root.querySelectorAll("[role='dialog'], [role='alert'], .cuddle-toast, .cuddle-v3-toast").forEach(element => {
+      const text = String(element.textContent || "");
+      if (/Cuddle Meter\s+(?:full|filled)/i.test(text) && !element.closest(".cuddle-heart-badge")) element.remove();
+    });
+  }
+
+  function animateMeter(game, root) {
+    removeMeterPopup(game, root);
+    const coach = game?.state?.cuddleCoachExpansion || {};
+    const burst = game?.state?.cuddleMeterBurst || coach.lastMeterReward;
+    const sequence = Math.max(0, integer(burst?.seq, 0));
+    if (!sequence || lastBurstSequence.get(game) === sequence) return;
+    const badge = root.querySelector(".cuddle-heart-badge");
+    if (!badge) return;
+    lastBurstSequence.set(game, sequence);
+    game.state.cuddleMeterBurst = null;
+    badge.querySelectorAll(".umt-cuddle-spark").forEach(element => element.remove());
+    for (let index = 0; index < 8; index += 1) {
+      const spark = document.createElement("i");
+      spark.className = "umt-cuddle-spark";
+      spark.style.setProperty("--i", String(index));
+      spark.setAttribute("aria-hidden", "true");
+      badge.appendChild(spark);
+    }
+    badge.classList.remove("is-bursting");
+    void badge.offsetWidth;
+    badge.classList.add("is-bursting");
+    window.setTimeout(() => {
+      badge.classList.remove("is-bursting");
+      badge.querySelectorAll(".umt-cuddle-spark").forEach(element => element.remove());
+    }, 900);
+  }
+
+  function decorateShop(root) {
+    const grid = root.querySelector(".cuddle-shop-grid");
+    if (!grid) return;
+    const cards = Array.from(grid.querySelectorAll(":scope > .cuddle-shop-item[data-shop-item-id]"));
+    if (!cards.length) return;
+    const signature = cards.map(card => card.dataset.shopItemId).join("|");
+    if (grid.dataset.umtFixpackShopSignature === signature) return;
+    grid.dataset.umtFixpackShopSignature = signature;
+    grid.querySelectorAll(":scope > .umt-shop-section-label").forEach(element => element.remove());
+
+    let previousKind = "";
+    cards.forEach(card => {
+      const item = SHOP_BY_ID.get(card.dataset.shopItemId);
+      if (!item) return;
+      card.dataset.shopKind = item.kind;
+      if (item.rarity) card.dataset.rarity = item.rarity;
+      if (item.kind !== previousKind) {
+        previousKind = item.kind;
+        const heading = document.createElement("h3");
+        heading.className = `umt-shop-section-label is-${item.kind}`;
+        heading.textContent = item.kind === "one-time" ? "One-time items" : item.kind === "boss" ? "Boss items" : "Upgrades";
+        grid.insertBefore(heading, card);
+      }
+      const copy = card.querySelector(".cuddle-shop-item-copy") || card;
+      copy.querySelectorAll(".umt-upgrade-rarity").forEach(element => element.remove());
+      if (item.kind === "upgrade" && item.rarity) {
+        const badge = document.createElement("span");
+        badge.className = `umt-upgrade-rarity is-${item.rarity}`;
+        badge.textContent = item.rarity[0].toUpperCase() + item.rarity.slice(1);
+        const title = copy.querySelector("strong, b");
+        if (title?.nextSibling) copy.insertBefore(badge, title.nextSibling);
+        else copy.prepend(badge);
+      }
+    });
+  }
+
+  function enhance(root, game) {
+    if (!root || !game?.state) return;
+    activeGame = game;
+    animateMeter(game, root);
+    enhanceCashout(game, root);
+    if (game.state.status === "shop") decorateShop(root);
+    scheduleOpeningWord(game);
+  }
+
+  function scheduleEnhance(root, game) {
+    if (!root || !game?.state) return;
+    activeGame = game;
+    const previous = scheduledRoots.get(root);
+    if (previous) {
+      previous.game = game;
+      return;
+    }
+    const entry = { game };
+    scheduledRoots.set(root, entry);
+    window.requestAnimationFrame(() => {
+      scheduledRoots.delete(root);
+      enhance(root, entry.game);
+    });
+  }
+
+  function wrapCampaignExport() {
+    const campaign = window.CuddleCampaign;
+    if (!campaign) return false;
+    if (campaign.__umtCuddleFixpack === VERSION) return true;
+    const originalAfterRender = campaign.afterRender;
+    window.CuddleCampaign = Object.freeze({
+      ...campaign,
+      SHOP_ITEMS,
+      shopItems: SHOP_ITEMS,
+      __umtCuddleFixpack: VERSION,
+      afterRender(root, game, landing) {
+        if (typeof originalAfterRender === "function") originalAfterRender(root, game, landing);
+        if (!landing) scheduleEnhance(root, game);
+      }
+    });
+    return true;
+  }
+
+  function install() {
+    installShopMethods();
+    installShopClickHandler();
+    installBlueChallengeFix();
+    installOpeningWordFix();
+    wrapCampaignExport();
+    const game = currentGame();
+    const root = document.getElementById("cuddleRoot");
+    if (game && root) scheduleEnhance(root, game);
+  }
+
+  install();
+  let installAttempts = 0;
+  const retryInstall = () => {
+    installAttempts += 1;
+    install();
+    if (installAttempts < 12 && (!window.CuddleCampaign || window.CuddleCampaign.__umtCuddleFixpack !== VERSION)) {
+      window.setTimeout(retryInstall, 50);
+    }
+  };
+  window.setTimeout(retryInstall, 0);
+
+  window.UMTCuddleFixpack = Object.freeze({
+    version: VERSION,
+    shopItems: SHOP_ITEMS,
+    enhance(root = document.getElementById("cuddleRoot"), game = currentGame()) {
+      if (root && game) scheduleEnhance(root, game);
+    }
+  });
+})();
+/* UMT_CUDDLE_FIXPACK_20260912: END */

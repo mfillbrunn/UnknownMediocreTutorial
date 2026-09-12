@@ -41,9 +41,9 @@
     rewardPerCompletedRound: 2,
     difficultyRewardBonus: Object.freeze({ easy: 0, medium: 2, hard: 4 }),
     minimumGuessCap: 4,
-    payoutRowPauseMs: 100,
-    payoutBankDurationMs: 180,
-    payoutCoinCount: 24
+    payoutRowPauseMs: 20,
+    payoutBankDurationMs: 90,
+    payoutCoinCount: 8
   });
 
   var STARTER_REWARD_IDS = [
@@ -723,11 +723,7 @@
     if (!rows.length) return null;
     var expected = Math.round(finish - start);
     var allocated = rows.reduce(function sumRows(total, row) { return total + row.amount; }, 0);
-    var shortfall = expected - allocated;
-    rows[rows.length - 1].amount += shortfall;
-    // The remainder is folded into the last row's figure above, so its
-    // breakdown has to name it too or that row won't add up to what it shows.
-    if (shortfall) rows[rows.length - 1].breakdown.push({ label: "Round bonus", amount: shortfall });
+    var stageBonus = expected - allocated;
     return {
       id: [state.runId, state.round, Date.now(), Math.floor(randomFor(game) * 1000000)].join("-"),
       round: state.round,
@@ -735,6 +731,7 @@
       from: Math.round(start),
       to: Math.round(finish),
       total: expected,
+      stageBonus: stageBonus,
       rows: rows,
       challenge: challenge ? {
         title: challenge.title,

@@ -25,7 +25,7 @@
   var VERSION = 1;
   var STATE_KEY = "cuddleCoachExpansion";
   var BASE_METER_THRESHOLD = 12;
-  var MIN_METER_THRESHOLD = 3;
+  var MIN_METER_THRESHOLD = 7;
   var ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   var VOWELS = new Set("AEIOU".split(""));
   var activeGame = null;
@@ -63,7 +63,7 @@
       key: "coachMeterThreshold",
       icon: "🩶",
       title: "Softer Cuddle Meter",
-      description: "The Cuddle Meter needs three fewer visible grey tiles to fill. Minimum: three.",
+      description: "The Cuddle Meter needs one fewer visible grey tile to fill per stack. Minimum: seven.",
       max: 3
     },
     {
@@ -365,7 +365,20 @@
   }
 
   function meterThreshold(coach) {
-    return Math.max(MIN_METER_THRESHOLD, BASE_METER_THRESHOLD - 3 * integer(coach.cuddleThresholdStacks, 0));
+    coach = coach || (activeGame && ensureCoach(activeGame)) || {};
+    var state = activeGame && activeGame.state || {};
+    var rawDifficulty = state.megaState && state.megaState.difficulty
+      || state.difficulty
+      || state.mode && state.mode.difficulty
+      || state.settings && state.settings.difficulty
+      || "medium";
+    var difficulty = String(rawDifficulty).toLowerCase();
+    var base = difficulty.indexOf("easy") >= 0 || difficulty.indexOf("casual") >= 0
+      ? 10
+      : difficulty.indexOf("hard") >= 0 || difficulty.indexOf("expert") >= 0 || difficulty.indexOf("difficult") >= 0
+        ? 15
+        : BASE_METER_THRESHOLD;
+    return Math.max(MIN_METER_THRESHOLD, base - integer(coach.cuddleThresholdStacks, 0));
   }
 
   function meterRewardName(coach) {
@@ -373,9 +386,8 @@
   }
 
   // The heart chip counts DOWN to zero, showing how many more visible grey
-  // tiles are needed before the meter fills. The reward itself is announced
-  // through a dismissible pop-up toast (see coachMeterNotice) instead of an
-  // inline label on the badge.
+  // tiles are needed before the meter fills. Filling it now bursts the meter
+  // itself; there is no separate dismissible reward pop-up.
   function renderHeartBadge(game) {
     var coach = ensureCoach(game);
     if (!coach) return "";
@@ -717,7 +729,8 @@
         coach.cuddleRewards.row += 1;
       }
       coach.lastMeterReward = { seq: coach.cuddleTriggers, label: popLabel };
-      game.state.coachMeterNotice = { seq: coach.cuddleTriggers, label: popLabel };
+    game.state.coachMeterNotice = null;
+    game.state.cuddleMeterBurst = { seq: coach.cuddleTriggers, label: popLabel };
       threshold = meterThreshold(coach);
     }
     if (messages.length) game.state.lastMessage = ((game.state.lastMessage || "") + " " + messages.join(" ")).trim();

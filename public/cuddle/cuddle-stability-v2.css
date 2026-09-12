@@ -387,3 +387,259 @@
 #cuddleRoot .cuddle-detail-group.umt-empty-detail-group {
   display: none !important;
 }
+
+/* UMT_CUDDLE_FIXPACK_20260912: START */
+/* Meter fill: animate the meter itself instead of showing a reward dialog. */
+#cuddleRoot .cuddle-heart-badge {
+  position: relative;
+  overflow: visible;
+  isolation: isolate;
+}
+
+#cuddleRoot .cuddle-heart-badge.is-bursting .cuddle-heart-chip {
+  animation: umt-cuddle-meter-pop 780ms cubic-bezier(.18, .9, .28, 1.35) both;
+}
+
+#cuddleRoot .umt-cuddle-spark {
+  --angle: calc(var(--i) * 45deg);
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  pointer-events: none;
+  background: currentColor;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .72);
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-8px) scale(.25);
+  opacity: 0;
+  animation: umt-cuddle-meter-spark 720ms ease-out calc(var(--i) * 16ms) both;
+}
+
+@keyframes umt-cuddle-meter-pop {
+  0% { transform: scale(1); filter: brightness(1); }
+  28% { transform: scale(.72) rotate(-8deg); filter: brightness(1.15); }
+  58% { transform: scale(1.55) rotate(7deg); filter: brightness(1.35) drop-shadow(0 0 12px currentColor); }
+  78% { transform: scale(.9) rotate(-3deg); }
+  100% { transform: scale(1) rotate(0); filter: brightness(1); }
+}
+
+@keyframes umt-cuddle-meter-spark {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-6px) scale(.2);
+  }
+  24% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-46px) scale(1.05);
+  }
+}
+
+/* Blue Haze must remain visibly blue in the live board and payout recap. */
+#cuddleRoot .cuddle-tile.is-blue,
+#cuddleRoot .cuddle-board-tile.is-blue,
+#cuddleRoot .cuddle-money-payout-tile.is-blue,
+#cuddleRoot [data-feedback="blue"] {
+  color: #fff !important;
+  background: #3977d7 !important;
+  border-color: #2358a6 !important;
+  box-shadow: inset 0 -3px 0 rgba(12, 39, 83, .28) !important;
+}
+
+/* Cash-out hierarchy: action first, one round total, then rows and stage bonus. */
+#cuddleRoot .umt-cashout-top {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin: 10px 0 16px;
+}
+
+#cuddleRoot .umt-cashout-top > button {
+  width: 100%;
+  min-height: 48px;
+  order: 0;
+}
+
+#cuddleRoot .umt-round-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .08);
+  order: 1;
+}
+
+#cuddleRoot .umt-round-total span {
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  opacity: .76;
+}
+
+#cuddleRoot .umt-round-total strong {
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+}
+
+#cuddleRoot .umt-stage-bonus-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 10px;
+  padding: 13px 14px;
+  border: 1px dashed rgba(255, 255, 255, .28);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .055);
+}
+
+#cuddleRoot .umt-stage-bonus-row > span {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+
+#cuddleRoot .umt-stage-bonus-row small {
+  opacity: .68;
+}
+
+#cuddleRoot .umt-stage-bonus-row > strong {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+#cuddleRoot [hidden],
+#cuddleRoot .umt-source-total[hidden] {
+  display: none !important;
+}
+
+#cuddleRoot .cuddle-money-modal-actions:empty {
+  display: none !important;
+}
+
+/* The between-round map owns every remaining viewport row. */
+#cuddleScreen:has(.cuddle-map-shell),
+#cuddleRoot:has(.cuddle-map-shell) {
+  min-height: 100dvh;
+}
+
+#cuddleRoot .cuddle-map-shell {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+#cuddleRoot .cuddle-map-shell > .cuddle-campaign-map-card {
+  box-sizing: border-box;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
+#cuddleRoot .cuddle-map-shell .cuddle-campaign-map-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  max-height: none;
+  padding-bottom: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+#cuddleRoot .cuddle-map-shell .cuddle-campaign-map-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 100%;
+  margin: 0 auto;
+}
+
+@media (min-width: 900px) {
+  #cuddleRoot .cuddle-map-shell .cuddle-campaign-map-scroll {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+  }
+
+  #cuddleRoot .cuddle-map-shell .cuddle-campaign-map-svg {
+    width: auto !important;
+    height: min(100%, 86vh) !important;
+    min-height: 0;
+    max-width: min(68vw, 780px);
+  }
+}
+
+/* Fixed shop groups and rarity badges. */
+#cuddleRoot .cuddle-shop-grid {
+  align-items: stretch;
+}
+
+#cuddleRoot .umt-shop-section-label {
+  grid-column: 1 / -1;
+  margin: 10px 0 0;
+  padding: 4px 2px;
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  opacity: .74;
+}
+
+#cuddleRoot .umt-upgrade-rarity {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  margin: 4px 0 2px;
+  padding: 2px 8px;
+  border: 1px solid rgba(20, 18, 28, .28);
+  border-radius: 999px;
+  color: #241a30;
+  font-size: .66rem;
+  font-weight: 950;
+  letter-spacing: .08em;
+  line-height: 1.45;
+  text-transform: uppercase;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .55);
+}
+
+#cuddleRoot .umt-upgrade-rarity.is-bronze {
+  background: linear-gradient(180deg, #e4b38d, #b87545);
+}
+
+#cuddleRoot .umt-upgrade-rarity.is-silver {
+  background: linear-gradient(180deg, #f3f5f7, #aeb8c2);
+}
+
+#cuddleRoot .umt-upgrade-rarity.is-gold {
+  background: linear-gradient(180deg, #ffe89a, #d6a72e);
+}
+
+/* Keep the heavier cards in their own paint boundaries and trim payout work. */
+#cuddleRoot .cuddle-shop-item,
+#cuddleRoot .cuddle-money-payout-row,
+#cuddleRoot .umt-stage-bonus-row {
+  contain: layout paint;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cuddleRoot .cuddle-heart-badge.is-bursting .cuddle-heart-chip,
+  #cuddleRoot .umt-cuddle-spark {
+    animation: none !important;
+  }
+}
+/* UMT_CUDDLE_FIXPACK_20260912: END */
