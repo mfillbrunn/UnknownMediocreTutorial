@@ -1714,3 +1714,102 @@
   });
 })();
 /* UMT_CUDDLE_FIXPACK_20260912: END */
+
+/* UMT_CUDDLE_MAP_DESKTOP_FIT_20260912: START */
+(function installUmtCuddleMapDesktopFit() {
+  "use strict";
+
+  const VERSION = "2026.09.12-r1";
+  const FLAG = "__umtCuddleMapDesktopFitVersion";
+  const SHELL_SELECTOR = "#cuddleRoot .cuddle-map-shell, #cuddleScreen .cuddle-map-shell";
+  const HEIGHT_PROPERTY = "--umt-cuddle-map-available-height";
+
+  if (window[FLAG] === VERSION) return;
+  window[FLAG] = VERSION;
+
+  let animationFrame = 0;
+  let mutationObserver = null;
+
+  function visibleViewportHeight() {
+    const visualViewport = window.visualViewport;
+    const measured = visualViewport && Number.isFinite(visualViewport.height)
+      ? visualViewport.height
+      : window.innerHeight;
+    return Math.max(1, Math.floor(measured || document.documentElement.clientHeight || 320));
+  }
+
+  function fitShell(shell) {
+    if (!(shell instanceof HTMLElement)) return;
+
+    const rect = shell.getBoundingClientRect();
+    if (rect.width <= 0 && rect.height <= 0) return;
+
+    /*
+     * The shell can begin beneath the game's own header. Subtract its actual
+     * viewport position so the shell ends exactly at the bottom edge instead
+     * of adding a second full viewport and leaving blank space below.
+     */
+    const viewportTop = window.visualViewport
+      ? Math.max(0, Math.round(window.visualViewport.offsetTop || 0))
+      : 0;
+    const top = Math.max(viewportTop, Math.round(rect.top));
+    const available = Math.max(1, viewportTop + visibleViewportHeight() - top);
+    const nextValue = `${available}px`;
+
+    if (shell.style.getPropertyValue(HEIGHT_PROPERTY) !== nextValue) {
+      shell.style.setProperty(HEIGHT_PROPERTY, nextValue);
+    }
+    if (!shell.classList.contains("umt-cuddle-map-viewport-fit")) {
+      shell.classList.add("umt-cuddle-map-viewport-fit");
+    }
+  }
+
+  function fitAllMaps() {
+    animationFrame = 0;
+    document.querySelectorAll(SHELL_SELECTOR).forEach(fitShell);
+  }
+
+  function scheduleFit() {
+    if (animationFrame) return;
+    const schedule = typeof window.requestAnimationFrame === "function"
+      ? window.requestAnimationFrame.bind(window)
+      : callback => window.setTimeout(callback, 0);
+    animationFrame = schedule(fitAllMaps);
+  }
+
+  function start() {
+    scheduleFit();
+
+    /* Cuddle replaces whole views. Refit only when a mutation adds or removes
+       a map shell (or an ancestor containing one), not after every game update. */
+    if (document.body && typeof MutationObserver === "function") {
+      mutationObserver = new MutationObserver(records => {
+        const touchesMap = records.some(record => {
+          const changedNodes = [...record.addedNodes, ...record.removedNodes];
+          return changedNodes.some(node => {
+            if (!(node instanceof Element)) return false;
+            return node.matches(SHELL_SELECTOR) || Boolean(node.querySelector(SHELL_SELECTOR));
+          });
+        });
+        if (touchesMap) scheduleFit();
+      });
+      mutationObserver.observe(document.body, { childList: true, subtree: true });
+    }
+
+    window.addEventListener("resize", scheduleFit, { passive: true });
+    window.addEventListener("orientationchange", scheduleFit, { passive: true });
+    window.addEventListener("pageshow", scheduleFit, { passive: true });
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", scheduleFit, { passive: true });
+      window.visualViewport.addEventListener("scroll", scheduleFit, { passive: true });
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start, { once: true });
+  } else {
+    start();
+  }
+})();
+/* UMT_CUDDLE_MAP_DESKTOP_FIT_20260912: END */

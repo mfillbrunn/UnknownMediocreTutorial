@@ -643,3 +643,98 @@
   }
 }
 /* UMT_CUDDLE_FIXPACK_20260912: END */
+
+/* UMT_CUDDLE_MAP_DESKTOP_FIT_20260912: START */
+/*
+ * Fill the remaining viewport instead of assigning another complete 100dvh
+ * below UI that is already above the map. The JavaScript companion supplies
+ * the exact remaining height through --umt-cuddle-map-available-height.
+ */
+#cuddleScreen:has(.cuddle-map-shell.umt-cuddle-map-viewport-fit),
+#cuddleRoot:has(.cuddle-map-shell.umt-cuddle-map-viewport-fit) {
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+#cuddleRoot .cuddle-map-shell.umt-cuddle-map-viewport-fit {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: var(--umt-cuddle-map-available-height, 100dvh) !important;
+  min-height: 0 !important;
+  max-height: var(--umt-cuddle-map-available-height, 100dvh) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+#cuddleRoot .cuddle-map-shell.umt-cuddle-map-viewport-fit .cuddle-campaign-map-card {
+  box-sizing: border-box !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+#cuddleRoot .cuddle-map-shell.umt-cuddle-map-viewport-fit .cuddle-campaign-map-scroll {
+  box-sizing: border-box !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  overscroll-behavior: contain;
+}
+
+/* Desktop: use the whole map panel, but fit a smaller map inside it. */
+@media (min-width: 900px) {
+  #cuddleRoot .cuddle-map-shell.umt-cuddle-map-viewport-fit .cuddle-campaign-map-scroll {
+    display: grid !important;
+    place-items: center !important;
+    overflow: hidden !important;
+    padding: clamp(12px, 2vh, 24px) clamp(18px, 3vw, 48px) !important;
+  }
+
+  #cuddleRoot .cuddle-map-shell.umt-cuddle-map-viewport-fit .cuddle-campaign-map-svg {
+    box-sizing: border-box !important;
+    display: block !important;
+    width: min(58vw, 640px) !important;
+    height: 78% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 100% !important;
+    max-height: 78% !important;
+    margin: auto !important;
+    transform: none !important;
+    transform-origin: center center !important;
+  }
+}
+
+/* Keep the existing tall, scrollable presentation on smaller screens. */
+@media (max-width: 899px) {
+  #cuddleRoot .cuddle-map-shell.umt-cuddle-map-viewport-fit .cuddle-campaign-map-scroll {
+    overflow: auto !important;
+  }
+
+  #cuddleRoot .cuddle-map-shell.umt-cuddle-map-viewport-fit .cuddle-campaign-map-svg {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 auto !important;
+  }
+}
+/* UMT_CUDDLE_MAP_DESKTOP_FIT_20260912: END */
