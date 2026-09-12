@@ -169,7 +169,7 @@ function runBasicInspectorTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `The guesser role is always the same beats: type a word, send it, read the feedback; and find a new word. Let's do one now. Type ${word}, then tap Submit Guess.`,
+        `The guesser role is always the same until they find out the secret: type their guess, send it, and read the feedback; and with that feedback, find a new and better word to use as their next guess. Let's take a guess now. Type ${word}, then tap Submit Guess.`,
         {
           role: "guesser",
           section: "First guess",
@@ -217,7 +217,7 @@ function runBasicInspectorTutorial(state) {
 
     if (tutorialSubStep === feedbackSteps.length) {
       basicTutorialShow(
-        "Here's something that's important: you don't have to obey the feedback you have already received. Any real word is allowed.",
+        "Here's something that's important: you don't have to obey the feedback you have already received when coming up with a new guess. Any real word is allowed.",
         {
           role: "guesser",
           section: "An information guess",
