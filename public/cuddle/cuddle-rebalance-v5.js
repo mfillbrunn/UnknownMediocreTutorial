@@ -32,7 +32,8 @@
     encore: "umtEncore",
     hotStreak: "umtHotStreak",
     vowelBounty: "umtVowelBounty",
-    doubleDown: "umtDoubleDown"
+    doubleDown: "umtDoubleDown",
+    extraRow: "umtExtraRow"
   });
 
   const VOWELS = new Set(["A", "E", "I", "O", "U"]);
@@ -1969,6 +1970,117 @@
       + (remaining > 0 ? ` They fade after stage ${TRAINING_WHEELS_LAST_STAGE}.` : " This is the last stage with them."));
   }
 
+  // -- shop: the permanent extra row ---------------------------------------
+
+  // Sold at The Wandering Paw. The effect rides on the engine's own
+  // megaState.extraGuesses -- the field the Overtime boss reward already
+  // feeds, which _beginRound tops every round up from and the run summary
+  // already reports -- so buying one needs no per-round bookkeeping here.
+  // The purchase count is tracked separately so an Overtime reward earned
+  // elsewhere never counts against what the shop will still sell.
+  const EXTRA_ROW_ITEM = Object.freeze({
+    id: IDS.extraRow,
+    icon: "➕",
+    title: "Extra Row",
+    description: "PERMANENT: every round from here on gets one more guess. Stocked once per shop, twice per run.",
+    cost: 150,
+    kind: "permanent",
+    maxPurchases: 2
+  });
+
+  function campaignOf(game) {
+    try {
+      const campaign = window.CuddleCampaign && typeof window.CuddleCampaign.ensureCampaign === "function"
+        ? window.CuddleCampaign.ensureCampaign(game)
+        : null;
+      return campaign && typeof campaign === "object" ? campaign : null;
+    } catch (error) {
+      log("campaign lookup failed", error);
+      return null;
+    }
+  }
+
+  // Branch-map shops key their stock by slot; the linear campaign keys it by
+  // the round the shop follows. activeShopRound holds whichever is current.
+  function shopStockKey(game) {
+    const campaign = campaignOf(game);
+    if (campaign && campaign.activeShopRound != null) return String(campaign.activeShopRound);
+    const state = stateOf(game);
+    return String(state ? asInteger(state.round, 0) : 0);
+  }
+
+  function shopStockList(game) {
+    const campaign = campaignOf(game);
+    if (!campaign) return null;
+    if (!campaign.shopPurchases || typeof campaign.shopPurchases !== "object") campaign.shopPurchases = {};
+    const key = shopStockKey(game);
+    if (!Array.isArray(campaign.shopPurchases[key])) campaign.shopPurchases[key] = [];
+    return campaign.shopPurchases[key];
+  }
+
+  function extraRowsBought(game) {
+    const custom = customState(game);
+    return custom ? Math.max(0, asInteger(custom.extraRowsBought, 0)) : 0;
+  }
+
+  function extraRowSoldOutHere(game) {
+    const stock = shopStockList(game);
+    if (stock) return stock.indexOf(EXTRA_ROW_ITEM.id) !== -1;
+    const custom = customState(game);
+    return Boolean(custom) && String(custom.extraRowSoldAt || "") === shopStockKey(game);
+  }
+
+  function markExtraRowSoldHere(game) {
+    const stock = shopStockList(game);
+    if (stock) stock.push(EXTRA_ROW_ITEM.id);
+    const custom = customState(game);
+    if (custom) custom.extraRowSoldAt = shopStockKey(game);
+  }
+
+  function extraRowOffer(game) {
+    const state = stateOf(game);
+    const soldOut = extraRowsBought(game) >= EXTRA_ROW_ITEM.maxPurchases || extraRowSoldOutHere(game);
+    return Object.assign({}, EXTRA_ROW_ITEM, {
+      purchased: soldOut,
+      affordable: !soldOut && asNumber(state && state.score, 0) >= EXTRA_ROW_ITEM.cost,
+      coachKind: EXTRA_ROW_ITEM.kind
+    });
+  }
+
+  function withExtraRowItem(game, shop) {
+    if (!shop || typeof shop !== "object") return shop;
+    const items = Array.isArray(shop.items) ? shop.items : [];
+    if (items.some((item) => item && String(item.id) === EXTRA_ROW_ITEM.id)) return shop;
+    return Object.assign({}, shop, { items: items.concat([extraRowOffer(game)]) });
+  }
+
+  function buyExtraRow(game) {
+    const state = stateOf(game);
+    if (!state || state.status !== "shop") return { ok: false, error: "No shop is open." };
+    if (extraRowsBought(game) >= EXTRA_ROW_ITEM.maxPurchases) {
+      return { ok: false, error: "Every extra row has already been bought." };
+    }
+    if (extraRowSoldOutHere(game)) return { ok: false, error: "That item is sold out in this shop." };
+    if (asNumber(state.score, 0) < EXTRA_ROW_ITEM.cost) return { ok: false, error: `You need $${EXTRA_ROW_ITEM.cost}.` };
+    const mega = megaState(game);
+    const custom = customState(game);
+    if (!mega || !custom) return { ok: false, error: "That upgrade is unavailable right now." };
+
+    state.score = asNumber(state.score, 0) - EXTRA_ROW_ITEM.cost;
+    mega.extraGuesses = Math.max(0, asInteger(mega.extraGuesses, 0)) + 1;
+    custom.extraRowsBought = extraRowsBought(game) + 1;
+    markExtraRowSoldHere(game);
+
+    // The next round has not begun yet, so _beginRound's own top-up applies
+    // the new row; there is nothing to patch on a live board.
+    const rows = Math.max(0, asInteger(mega.extraGuesses, 0));
+    state.lastMessage = `${EXTRA_ROW_ITEM.title} purchased for $${EXTRA_ROW_ITEM.cost}.`
+      + ` Every round now runs ${rows} guess${rows === 1 ? "" : "es"} longer.`;
+    safeSave(game);
+    scheduleUi();
+    return { ok: true, message: state.lastMessage };
+  }
+
   // -- fun rewards ---------------------------------------------------------
 
   function ownedFunSynergies(game) {
@@ -3748,6 +3860,16 @@
       });
     });
 
+    wrapMethod(prototype, "getCuddleShop", function (original, args) {
+      const result = original.apply(this, args);
+      return afterResult(result, (value) => withExtraRowItem(this, value), (error) => { throw error; });
+    });
+
+    wrapMethod(prototype, "buyCuddleShopItem", function (original, args) {
+      if (String(args[0] || "") === EXTRA_ROW_ITEM.id) return buyExtraRow(this);
+      return original.apply(this, args);
+    });
+
     wrapMethod(prototype, "_openBossGate", function (original, args) {
       const result = original.apply(this, args);
       return afterResult(result, (value) => {
@@ -3815,11 +3937,9 @@
       synergies: FUN_SYNERGIES.map((item) => ({ ...item, requires: item.requires.slice() })),
       rewardInteractionSynergy: (game, optionId) => funInteractionPreview(game || publicActiveGame(), optionId),
       ownedSynergies: (game) => [...ownedFunSynergies(game || publicActiveGame())],
-      // Consumed by cuddle-ui.js's reward cards for the "Interaction bonus!"
-      // badge, alongside the engine's own synergy preview.
-      synergies: FUN_SYNERGIES.map((item) => ({ ...item, requires: item.requires.slice() })),
-      rewardInteractionSynergy: (game, optionId) => funInteractionPreview(game || publicActiveGame(), optionId),
-      ownedSynergies: (game) => [...ownedFunSynergies(game || publicActiveGame())],
+      // The shop stock this layer adds, so the icon/label registry in
+      // cuddle-stability-v2.js can resolve it like every other catalog.
+      shopItems: [Object.assign({}, EXTRA_ROW_ITEM)],
       defeatedBossIcon: defeatedBossSvg,
       normalizeMap: () => {
         const current = publicActiveGame();
