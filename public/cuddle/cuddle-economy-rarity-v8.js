@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "8.0.2";
+  const VERSION = "8.0.3";
   const PATCHED = Symbol.for("cuddle.economy.rarity.v8.patched");
   const CATALOG_PATCHED = Symbol.for("cuddle.economy.rarity.v8.catalog");
   const APPLY_PATCHED = Symbol.for("cuddle.economy.rarity.v8.apply");
@@ -122,6 +122,9 @@
   const patchedObjects = new WeakSet();
   const seenContexts = new WeakSet();
   const contextList = new Set();
+  // Runtime state objects can be sealed or frozen by the game. Keep v8 data
+  // beside those objects instead of adding a property to them.
+  const customStateByObject = new WeakMap();
   const adjustedPayoutNodes = new WeakSet();
   const challengeNoticeNodes = new WeakSet();
   let scanTimer = null;
@@ -402,23 +405,54 @@
     return values.length ? String(values[0]) : "default";
   }
 
+  function attachedCustomState(state) {
+    try {
+      if (!Object.prototype.hasOwnProperty.call(state, "__cuddleEconomyV8")) return null;
+      const value = state.__cuddleEconomyV8;
+      return value && typeof value === "object" ? value : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function mutableCustomCopy(value) {
+    if (!value || typeof value !== "object") return {};
+    // The data is intentionally JSON-shaped. A JSON clone also thaws records
+    // restored from a deeply frozen legacy property.
+    try {
+      const copy = JSON.parse(JSON.stringify(value));
+      if (copy && typeof copy === "object") return copy;
+    } catch (_) {
+      // Fall through to a guarded shallow copy.
+    }
+    const copy = {};
+    for (const [key, child] of safeOwnEntries(value)) {
+      try {
+        if (Array.isArray(child)) copy[key] = child.slice();
+        else if (child && typeof child === "object") copy[key] = { ...child };
+        else copy[key] = child;
+      } catch (_) {
+        // Ignore an individual hostile getter rather than disabling the addon.
+      }
+    }
+    return copy;
+  }
+
   function customState(state) {
     if (!isObject(state)) return null;
-    if (!Object.prototype.hasOwnProperty.call(state, "__cuddleEconomyV8")) {
+    let data = customStateByObject.get(state);
+    if (!data) {
       let restored = null;
       try {
         restored = JSON.parse(localStorage.getItem(`cuddle-economy-v8:${runKey(state)}`) || "null");
       } catch (_) {
         restored = null;
       }
-      Object.defineProperty(state, "__cuddleEconomyV8", {
-        value: restored && typeof restored === "object" ? restored : {},
-        writable: true,
-        enumerable: true,
-        configurable: true
-      });
+      // Migrate data created by 8.0.0-8.0.2 when that property exists, but do
+      // not define or rewrite it. Some live Cuddle objects are non-extensible.
+      data = mutableCustomCopy(attachedCustomState(state) || restored || {});
+      customStateByObject.set(state, data);
     }
-    const data = state.__cuddleEconomyV8;
     data.version = VERSION;
     data.upgrades ||= {};
     data.pouch ||= {};
@@ -429,9 +463,11 @@
   }
 
   function saveCustom(state) {
-    if (!isObject(state) || !state.__cuddleEconomyV8) return;
+    if (!isObject(state)) return;
+    const data = customStateByObject.get(state) || attachedCustomState(state);
+    if (!data) return;
     try {
-      localStorage.setItem(`cuddle-economy-v8:${runKey(state)}`, JSON.stringify(state.__cuddleEconomyV8));
+      localStorage.setItem(`cuddle-economy-v8:${runKey(state)}`, JSON.stringify(data));
     } catch (_) {
       // A full or disabled localStorage must not interrupt gameplay.
     }
@@ -2087,12 +2123,16 @@
     const rowSlots = findNumberSlots(state, (key) => /unused.*row.*(?:base|value|cash|money|reward)|(?:base|value).*unused.*row/.test(key), 4);
     if (rowSlots.length) {
       data.flags.rowBaseFieldFound = true;
-      for (const slot of rowSlots) slot.owner[slot.key] = 3;
+      for (const slot of rowSlots) {
+        try { slot.owner[slot.key] = 3; } catch (_) { /* read-only config */ }
+      }
     }
     const mulliganSlots = findNumberSlots(state, (key) => /unused.*mulligan.*(?:base|value|cash|money|reward)|(?:base|value).*unused.*mulligan/.test(key), 4);
     if (mulliganSlots.length) {
       data.flags.mulliganBaseFieldFound = true;
-      for (const slot of mulliganSlots) slot.owner[slot.key] = 2;
+      for (const slot of mulliganSlots) {
+        try { slot.owner[slot.key] = 2; } catch (_) { /* read-only config */ }
+      }
     }
 
     // Repeating intervals are disabled. The watcher gives one yellow hint at turn
