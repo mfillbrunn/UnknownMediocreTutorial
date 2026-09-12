@@ -75,16 +75,26 @@
     }
   }
 
+  // Star/clear progress here lives entirely in this file's own localStorage
+  // (see loadProgress/saveProgress) -- the server never needs a real
+  // account for it, only a stable id to hang the room on for the length of
+  // one match. A guest identity (see client/guest-identity.js) is applied
+  // on every visit before this file ever runs, so it already provides
+  // that id; a signed-in player's access token still rides along so the
+  // server can verify their real id instead of trusting it blindly.
   async function emitWithAuth(event, payload) {
-    const token = await accessToken();
-    if (!token) {
+    const userId = window.currentUser?.id || null;
+    if (!userId) {
+      // Should not happen -- guest identity applies eagerly on load -- but
+      // covers a race where this fires before it has.
       return { ok: false, code: "UNAUTHENTICATED" };
     }
+    const token = window.isSignedIn?.() ? await accessToken() : null;
 
     return new Promise(resolve => {
       socket.timeout(8000).emit(
         event,
-        { ...(payload || {}), accessToken: token },
+        { ...(payload || {}), userId, accessToken: token },
         (error, result) => {
           resolve(error
             ? { ok: false, code: "CHALLENGE_TIMEOUT" }
@@ -97,7 +107,7 @@
   function errorMessage(result) {
     if (result?.error) return result.error;
     const messages = {
-      UNAUTHENTICATED: "Sign in before starting a challenge.",
+      UNAUTHENTICATED: "Could not identify you as a player -- try reloading.",
       UNKNOWN_CHALLENGE: "That challenge is no longer available.",
       UNKNOWN_DIFFICULTY: "Choose a valid challenge difficulty.",
       CHALLENGE_TIMEOUT: "The challenge server did not respond.",
