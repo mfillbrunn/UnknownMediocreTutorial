@@ -1,43 +1,13 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "setterSidebarCollapsed";
-  const SWIPE_THRESHOLD = 46;
-  // A tap aimed at a control inside the panel is a press, never the start
-  // of a drawer swipe -- see beginGesture. Covers the action log's
-  // underlined power/reward terms, which are role="button" tabindex="0"
-  // (client/action-log.js), as well as any ordinary control.
-  const TAP_TARGETS =
-    "button, a, input, select, textarea, label, summary, [role=\"button\"], [tabindex]";
   const byId = id => document.getElementById(id);
 
-  let gesture = null;
-  let suppressSidebarClickUntil = 0;
   let meterObserver = null;
   let meterWaitObserver = null;
 
   function screen() {
     return byId("setterScreen");
-  }
-
-  function isCollapsed() {
-    return screen()?.classList.contains("setter-sidebar-collapsed") || false;
-  }
-
-  function saveCollapsed(value) {
-    try {
-      localStorage.setItem(STORAGE_KEY, value ? "1" : "0");
-    } catch {
-      // Storage is optional.
-    }
-  }
-
-  function readCollapsed() {
-    try {
-      return localStorage.getItem(STORAGE_KEY) === "1";
-    } catch {
-      return false;
-    }
   }
 
   function syncMiniCharge() {
@@ -61,7 +31,12 @@
     // the rest of this controller already guards its own writes.
     const text = String(total);
     if (mini.textContent !== text) mini.textContent = text;
-    mini.classList.toggle("hidden", !isCollapsed());
+    // Only meaningful while the panel is shut -- the meter itself is
+    // visible inside it otherwise. Read straight off the screen's class
+    // (the collapsed state's single source of truth, written by
+    // ui/sidebar-toggle.js) rather than through a global, so this can't
+    // depend on module load order.
+    mini.classList.toggle("hidden", !screen()?.classList.contains("setter-sidebar-collapsed"));
   }
 
   function observeChargeMeter() {
@@ -104,24 +79,16 @@
     meterWaitObserver.observe(document.body, { childList: true, subtree: true });
   }
 
-  function setCollapsed(collapsed, persist = true) {
+  // The drawer itself -- the button, its state, persistence and the swipe
+  // -- belongs to ui/sidebar-toggle.js, which owns both roles' panels
+  // through a single delegated listener. This file only reacts to the
+  // panel having moved, with the Secretkeeper-specific follow-ups that
+  // are its own business.
+  document.addEventListener("umt:sidebartoggle", event => {
+    if (event.detail?.role !== "setter") return;
+    const collapsed = !!event.detail.collapsed;
     const setterScreen = screen();
-    const toggle = byId("setterSidebarToggle");
-    const icon = toggle?.querySelector(".setter-sidebar-toggle-icon");
-
-    if (!setterScreen || !toggle) return;
-
-    setterScreen.classList.toggle("setter-sidebar-collapsed", collapsed);
-    setterScreen.dataset.sidebarCollapsed = collapsed ? "true" : "false";
-    toggle.setAttribute("aria-expanded", String(!collapsed));
-    toggle.setAttribute(
-      "aria-label",
-      collapsed ? "Show Secretkeeper side panel" : "Hide Secretkeeper side panel"
-    );
-    toggle.title = collapsed ? "Show side panel" : "Hide side panel";
-
-    if (icon) icon.textContent = collapsed ? "›" : "‹";
-    if (persist) saveCollapsed(collapsed);
+    if (!setterScreen) return;
 
     // Collapsing while the Guesser-turn Notes popout is showing
     // (gameplay-polish-v8.js's openInspectorTurnNotes, flagged here via
@@ -144,8 +111,8 @@
     // The Star Tutorial gates its own opening steps on this panel being
     // open (the Spyometer lives inside it) and re-checks that on every
     // render -- but a plain toggle click has no server round-trip of its
-    // own to trigger one. notifyTutorialSidebarToggled (called right
-    // after this by every caller) only re-renders when a step was
+    // own to trigger one. notifyTutorialSidebarToggled (fired by the
+    // toggle owner alongside this event) only re-renders when a step was
     // already waiting specifically on this tap, which can't be true the
     // very first time the panel gets collapsed -- so nudge it here too,
     // scoped to this one tutorial to avoid changing render timing for
@@ -156,135 +123,9 @@
 
     requestAnimationFrame(() => {
       window.reanchorSetterIdleNotes?.();
-      window.scheduleTutorialLayout?.();
       window.dispatchEvent(new Event("resize"));
     });
-  }
-
-  function beginGesture(event, direction) {
-    if (event.pointerType === "mouse" || event.button > 0) return;
-    if (event.target.closest?.(".activity-drag-handle")) return;
-    // Arming a swipe from a tap on a control was how the drawer toggle
-    // could die for the rest of the match: the action log sits inside this
-    // panel, so tapping one of its underlined terms armed a gesture here,
-    // and that tap ALSO expands the term's detail -- which makes
-    // renderActionLog rebuild the log's innerHTML and destroy the node the
-    // finger is on. iOS then never delivers that pointer's pointerup, so
-    // finishGesture below never cleared `gesture`, and onPointerMove kept
-    // preventDefault()ing later touches: every subsequent tap on the
-    // toggle was swallowed before it could become a click, with the rest
-    // of the screen still working normally. (Chromium retargets the
-    // orphaned pointerup to an ancestor, which is why this only showed up
-    // on iPhone.)
-    if (event.target.closest?.(TAP_TARGETS)) return;
-
-    gesture = {
-      pointerId: event.pointerId,
-      direction,
-      startX: event.clientX,
-      startY: event.clientY,
-      active: false
-    };
-  }
-
-  function onPointerMove(event) {
-    if (!gesture || event.pointerId !== gesture.pointerId) return;
-
-    const dx = event.clientX - gesture.startX;
-    const dy = event.clientY - gesture.startY;
-
-    if (!gesture.active) {
-      if (Math.abs(dx) < 12 || Math.abs(dx) <= Math.abs(dy) * 1.15) return;
-      gesture.active = true;
-      screen()?.classList.add("setter-sidebar-swipe-active");
-    }
-
-    event.preventDefault();
-  }
-
-  function finishGesture(event) {
-    if (!gesture) return;
-    // A gesture that never became a real swipe is just a tap being held,
-    // so ANY pointer release ends it -- matching on pointerId alone let a
-    // gesture whose own pointerup went missing sit armed indefinitely
-    // (see beginGesture). A genuine in-progress swipe still requires the
-    // id to match, so a second finger landing can't cut it short.
-    if (gesture.active && event.pointerId !== gesture.pointerId) return;
-
-    const current = gesture;
-    gesture = null;
-    screen()?.classList.remove("setter-sidebar-swipe-active");
-
-    if (!current.active) return;
-
-    const endX = Number.isFinite(event.clientX) ? event.clientX : current.startX;
-    const dx = endX - current.startX;
-
-    if (current.direction === "close" && dx <= -SWIPE_THRESHOLD) {
-      suppressSidebarClickUntil = Date.now() + 350;
-      setCollapsed(true);
-      window.notifyTutorialSidebarToggled?.();
-    }
-
-    if (current.direction === "open" && dx >= SWIPE_THRESHOLD) {
-      setCollapsed(false);
-      window.notifyTutorialSidebarToggled?.();
-    }
-  }
-
-  function initDrawer() {
-    const setterScreen = screen();
-    const sidebar = byId("setterSidebar");
-    const toggle = byId("setterSidebarToggle");
-    const edge = byId("setterSidebarSwipeEdge");
-
-    if (!setterScreen || !sidebar || !toggle || !edge) return;
-
-    // UMT_USER_FIX_PACK_V1: data-* flags can survive cloned/replaced nodes even
-    // though their listeners do not. Bind each live node independently instead.
-    setCollapsed(readCollapsed(), false);
-    delete toggle.dataset.drawerBound;
-
-    if (!toggle.__umtSetterDrawerBound) {
-      toggle.__umtSetterDrawerBound = true;
-      toggle.addEventListener("click", event => {
-        event.stopPropagation();
-        setCollapsed(!isCollapsed());
-        window.notifyTutorialSidebarToggled?.();
-      });
-    }
-
-    if (!sidebar.__umtSetterDrawerBound) {
-      sidebar.__umtSetterDrawerBound = true;
-      sidebar.addEventListener("pointerdown", event => {
-        beginGesture(event, "close");
-      });
-      sidebar.addEventListener(
-        "click",
-        event => {
-          if (Date.now() < suppressSidebarClickUntil) {
-            event.preventDefault();
-            event.stopPropagation();
-          }
-        },
-        true
-      );
-    }
-
-    if (!edge.__umtSetterDrawerBound) {
-      edge.__umtSetterDrawerBound = true;
-      edge.addEventListener("pointerdown", event => {
-        beginGesture(event, "open");
-      });
-    }
-
-    if (!window.__umtSetterDrawerPointerBound) {
-      window.__umtSetterDrawerPointerBound = true;
-      window.addEventListener("pointermove", onPointerMove, { passive: false });
-      window.addEventListener("pointerup", finishGesture, { passive: true });
-      window.addEventListener("pointercancel", finishGesture, { passive: true });
-    }
-  }
+  });
 
   // Congratulation text for a genuinely good decision -- shown ONLY as the
   // floating popup once the Secretkeeper actually commits (see floatPraise /
@@ -716,17 +557,14 @@ function stopCoverStarDance(star) {
 
   function init() {
     installStarRenderer();
-    initDrawer();
     initDecisionButtons();
     scheduleChargeObserver();
   }
 
-  // Exposed for tutorial-ui.js's highlightPowerButtonByText -- the Secretkeeper's
-  // power cards live inside this collapsible sidebar, so a tutorial step
-  // trying to highlight one has to force it open first or the highlight
-  // ring ends up positioned against a hidden (zero-size) element.
-  window.isSetterSidebarCollapsed = isCollapsed;
-  window.setSetterSidebarCollapsed = setCollapsed;
+  // window.isSetterSidebarCollapsed (read by tutorial-ui.js's
+  // highlightPowerButtonByText, which has to force this collapsible panel
+  // open before it can measure a power card inside it) is published by
+  // ui/sidebar-toggle.js along with the rest of the drawer's state.
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init, { once: true });
