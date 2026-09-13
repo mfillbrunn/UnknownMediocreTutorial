@@ -10,7 +10,7 @@
   let nextNodeId = 1;
   let updateFrame = 0;
   let updating = false;
-  let lateMeterObserver = null;
+  let lateMeterCancel = null;
 
   function nodeId(node) {
     if (!node) return "none";
@@ -417,22 +417,19 @@
   }
 
   function watchForLateMeter() {
-    if (observeSetterMeter() || lateMeterObserver || !document.body) {
-      return;
-    }
+    if (observeSetterMeter() || lateMeterCancel) return;
 
-    lateMeterObserver = new MutationObserver(() => {
-      if (observeSetterMeter()) {
-        lateMeterObserver.disconnect();
-        lateMeterObserver = null;
+    // Shared with ui/setter-board.js's identical wait for the same
+    // element -- both ride the one structural observer in
+    // ui/dom-watch.js instead of each running their own copy over the
+    // whole document.
+    lateMeterCancel = window.DomWatch?.whenPresent(
+      observeSetterMeter,
+      () => {
+        lateMeterCancel = null;
         scheduleUpdate();
       }
-    });
-
-    lateMeterObserver.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    ) || null;
   }
 
   function installObservers() {

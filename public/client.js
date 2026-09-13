@@ -3560,9 +3560,12 @@ if (window._pendingRoleAssignedRefresh) {
     applyHidden(!document.body.classList.contains("hide-constraints"));
   }, true);
 
-  const observer = new MutationObserver(() => {
+  // Structural, not attribute: the point is to catch .constraint-toggle-btn
+  // elements that a role screen re-render has just inserted and push the
+  // current body class onto them. Rides the shared observer in
+  // ui/dom-watch.js.
+  window.DomWatch.onStructure(() => {
     syncButtons(document.body.classList.contains("hide-constraints"));
   });
-  observer.observe(document.body, { childList: true, subtree: true });
 })();
 /* UMT_REQUESTED_FIXES_20260901: CONSTRAINT TOGGLE END */

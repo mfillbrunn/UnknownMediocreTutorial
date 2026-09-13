@@ -77,15 +77,7 @@
 
   function init() {
     dedupeAll();
-
-    const observer = new MutationObserver(
-      scheduleDedupe
-    );
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    window.DomWatch.onStructure(scheduleDedupe);
   }
 
   if (document.readyState === "loading") {

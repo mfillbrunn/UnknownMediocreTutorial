@@ -2,7 +2,6 @@
   "use strict";
 
   const LOG_IDS = ["actionLogSetter", "actionLogGuesser"];
-  let observer = null;
 
   function powerEntries() {
     return Object.entries(window.POWER_METADATA || {})
@@ -64,7 +63,7 @@
   function init() {
     colorizeAll();
 
-    observer = new MutationObserver(mutations => {
+    window.DomWatch.onStructure(mutations => {
       const containers = new Set();
 
       for (const mutation of mutations) {
@@ -80,11 +79,6 @@
       }
 
       containers.forEach(colorize);
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
     });
   }
 

@@ -2205,13 +2205,13 @@ function waitForModalDismissed(modalTargetId) {
 // registration order. Watching the class the panel actually ends up with
 // sidesteps all of that, and it also credits the player for opening the
 // panel any other way -- the swipe edge, the keyboard, a docked control.
-let tutorialConditionObserver = null;
+let tutorialConditionUnwatch = null;
 let tutorialConditionTimer = null;
 let tutorialConditionFrame = 0;
 
 function stopTutorialConditionWatch() {
-  tutorialConditionObserver?.disconnect();
-  tutorialConditionObserver = null;
+  tutorialConditionUnwatch?.();
+  tutorialConditionUnwatch = null;
 
   if (tutorialConditionTimer) {
     clearInterval(tutorialConditionTimer);
@@ -2300,14 +2300,13 @@ function waitForCondition(type, test, label, prepare) {
   // already carried out.
   if (checkTutorialConditionWait()) return;
 
-  tutorialConditionObserver = new MutationObserver(
+  // Only observed while a step is actually waiting: ui/dom-watch.js
+  // ref-counts the shared attribute observer and disconnects it again as
+  // soon as this unsubscribes.
+  tutorialConditionUnwatch = window.DomWatch?.onAttribute(
+    ["class", "aria-expanded", "aria-pressed", "hidden"],
     scheduleTutorialConditionCheck
-  );
-  tutorialConditionObserver.observe(document.documentElement, {
-    attributes: true,
-    subtree: true,
-    attributeFilter: ["class", "aria-expanded", "aria-pressed", "hidden"]
-  });
+  ) || null;
 
   // Backstop for any route that changes the panel without touching one of
   // the observed attributes.
