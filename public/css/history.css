@@ -140,9 +140,6 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
    (same specificity, same selector shape as that rule -- has to come
    after it in the file to actually win the tie instead of being
    silently reset back to "running" by the later animation: shorthand). */
-.history-row-wrap.flight-sliding {
-  animation: none;
-}
 
 /* Setter's draft stack: the secret row slides down into place, the
    incoming pending-guess row slides in from the side — distinct motions
@@ -187,14 +184,9 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 
 /* Guesser's own submitted guess, waiting on the setter to respond — stays
    in place (no slide-away) and pulses gently instead. */
-.draft-row.pending-guess.row-pulse-wait .history-tile {
-  animation: draft-pulse-wait 1.8s ease-in-out infinite;
-}
 
 @media (prefers-reduced-motion: reduce) {
-  .draft-row.pending-guess.row-pulse-wait .history-tile {
-    animation: none;
-  }
+  
 }
 
 .history-row-anchor {
@@ -617,12 +609,6 @@ position: absolute;
   animation: none;
 }
 
-.constraint-row .history-tile .quadrants {
-  position: absolute;
-  inset: var(--sp-4);             
-  z-index: 1;
-  pointer-events: none;
-}
 .constraint-row .history-tile > .main-letter {
   position: relative;
   z-index: 2;
@@ -641,7 +627,6 @@ position: absolute;
   font-weight: 900;
   letter-spacing: 0.5px;
 }
-
 
 /* A position that just turned green (e.g. Magic Mode) — a green tile
    flows up from the bottom of the cell and fades out, leaving the normal
@@ -736,14 +721,12 @@ body.hide-constraints .constraint-row {
 .history-row .history-tile:nth-child(4) { animation-delay: 0ms; }
 .history-row .history-tile:nth-child(5) { animation-delay: 0ms; }
 
-
 /* Wordle-style feedback colors */
 .tile-green  { background: var(--tile-green)  !important; color: var(--tile-green-text) !important; }
 .tile-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text)!important; }
 .tile-gray   { background: var(--tile-gray)   !important; color: var(--tile-gray-text)  !important; }
 .tile-blue   { background: var(--tile-blue)  !important; color: var(--tile-blue-text) !important; }
 .tile-purple {  background: var(--tile-purple) !important;  color: var(--tile-purple-text) !important;}
-
 
 .draft-row .history-tile { animation: draft-pop 120ms ease-out; }
 
@@ -885,19 +868,9 @@ body.hide-constraints .constraint-row {
   background: transparent;
 }
 
-
-
-.draft-row .draft-tile,
-.draft-box .history-tile {
+.draft-row .draft-tile {
   border: 1px solid rgba(255,255,255,0.12);
   opacity: 0.75;
-}
-
-.submitted-row .submitted-tile {
-  background: #3a3d44;
-  color: #eee;
-  border: 1px solid #00000066;
-  opacity: 0.95;
 }
 
 .pending-guess .history-tile {
@@ -905,20 +878,13 @@ body.hide-constraints .constraint-row {
 }
  /*----REMAINING WORDS ---*/
 /* SETTER REMAINING WORDS */
-.remaining-label {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-16);          
-  white-space: nowrap;
-}
 
-.remaining-old,
 .remaining-new {
   transition: color 0.2s ease, opacity 0.2s ease;
   }
 
 /* Better option */
-.remaining-old.better,
+
 .remaining-new.better {
   color: var(--tile-green);
   font-weight: 700;
@@ -948,7 +914,6 @@ body.hide-constraints .constraint-row {
   font-weight: 900;
   color: #7b1fa2; /* or your assassin color */
   letter-spacing: 0.3px;
-
 
 }
 /*Flipping*/

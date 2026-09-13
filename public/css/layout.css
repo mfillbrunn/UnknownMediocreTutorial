@@ -76,7 +76,6 @@
   pointer-events: auto;
 }
 
-
 /* Base layout: single column, board (tiles/draft) on top, powers below it
    -- see .center-col/.powers-col order below. This is the guesser's
    layout; the setter goes back to the side-by-side sidebar+board layout
@@ -221,11 +220,6 @@
 }
 /* Same reasoning as .remaining-box above -- no horizontal room to share
    a line with the power badges in this narrow sidebar. */
-.theme-setter .powers-col .letter-profile-box {
-  width: 100%;
-  max-width: 100%;
-  align-self: stretch;
-}
 
 /* Turn indicator banner (index.html, one copy per screen right after
    <header>) -- purely CSS-driven off the is-your-turn/is-not-your-turn
@@ -257,11 +251,6 @@
   transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
 }
 
-.turn-banner-mine,
-.turn-banner-theirs {
-  display: none;
-}
-
 .screen:not(.is-your-turn):not(.is-not-your-turn) .turn-banner {
   display: none;
 }
@@ -273,18 +262,10 @@
   animation: turn-banner-pulse 1.7s ease-in-out infinite;
 }
 
-.screen.is-your-turn .turn-banner-mine {
-  display: block;
-}
-
 .screen.is-not-your-turn .turn-banner {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: rgba(255, 255, 255, 0.5);
-}
-
-.screen.is-not-your-turn .turn-banner-theirs {
-  display: block;
 }
 
 @keyframes turn-banner-pulse {
@@ -370,11 +351,6 @@
    margin-right: var(--sp-8);
    min-height: var(--h-control);
 }
-.header-row.header-sub {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
 /* The opponent-name title client.js still writes into (setterName/
    guesserName) -- kept in the DOM so that assignment doesn't throw, just
@@ -427,15 +403,6 @@
   overflow: visible;
 }
 /* Room + badge stacked */
-.room-meta {
-   display: inline-flex;
-     flex-direction: column;
-  gap: var(--sp-2);
-  line-height: 1;
-   align-items: center;
-   font-size: var(--fs-14);
-  font-weight: 700;
-}
 
 /* Center: score */
 .header-center {
@@ -489,9 +456,7 @@
 }
 /* Icon-only in this compact header -- the outer app-header's own copy
    (shown on menu screens) keeps its full "Guide" text. */
-.header-right .guide-btn-label {
-  display: none;
-}
+
 .header-right .guide-toggle-btn:not(.keyboard-toggle-btn) {
   padding: 0 var(--sp-4);
 }
@@ -500,10 +465,9 @@
   width: 24px;
   height: 24px;
 }
-.role-header h2{
+.role-header h2 {
 margin:0;
 }
-
 
 .app-header {
   display: flex;
@@ -568,13 +532,6 @@ body:has(#guesserScreen.active) #appContainer {
   flex-shrink: 0;
 }
 
-.app-header-left {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-8);
-  min-width: 0;
-}
-
 /* GAME VIEWPORT — complete the flex chain */
 
 /*
@@ -608,10 +565,6 @@ body:has(#guesserScreen.active) #appContainer {
 #guesserScreen.active {
   flex: 1 1 0;
   min-height: 0;
-}
-
-.header-divider {
-  opacity: 0.4;
 }
 
 .header-room-code {
@@ -783,14 +736,6 @@ body:has(#guesserScreen.active) #appContainer {
   flex-shrink: 0;
 }
 /* SECRET ROW */
-.secret-row {
-  display: flex;
-  justify-content: center;
-}
-.secret-inline {
-  display: inline-flex;
-  align-items: center;
- }
 
 /* Stale rules from a much older 3-column layout used to live here
    (.power-container { flex-direction: column } and a `> * + *`
@@ -824,7 +769,6 @@ align-self: baseline;
   align-items: center;
   padding: var(--sp-8) var(--sp-12);
 }
-
 
 .header-role-badge {
   justify-self: center;

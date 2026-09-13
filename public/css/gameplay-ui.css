@@ -24,7 +24,6 @@
 :is(#setterScreen, #guesserScreen),
 .pc-modal,
 .pc-reward-peek-bar,
-.pc-quest-met-flourish,
 .pc-spy-award-capsule,
 .pc-reward-popup,
 .collapsed-charge-toast {
@@ -200,7 +199,6 @@
   font-size: 11px;
   line-height: 1.45;
 }
-
 
 /* Secretkeeper side column: Spyometer on top, log filling the rest. The Log/Notes
    tab strip is gone, so the log can never be toggled hidden -- force it
@@ -639,9 +637,6 @@
   background: none !important;
 }
 
-#setterScreen #pcSpyChargeCard .pc-card-title,
-#actionLogSetter .action-log-title,
-#actionLogSetter .game-side-panel-title,
 #setterScreen .setter-sidebar-charge-mini {
   color: color-mix(in srgb, var(--setter-color) 74%, white) !important;
 }
@@ -773,27 +768,6 @@
   gap: 8px;
 }
 
-#setterScreen .setter-sidebar-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
-#setterScreen .setter-sidebar-tab {
-  min-height: 28px;
-  border: 1px solid var(--game-line);
-  border-radius: 8px;
-  background: var(--game-soft);
-  color: var(--game-muted);
-  font-size: 9px;
-  font-weight: 800;
-}
-
-#setterScreen .setter-sidebar-tab[aria-selected="true"] {
-  border-color: color-mix(in srgb, var(--role-accent, var(--game-blue)) 55%, transparent);
-  color: var(--game-text);
-}
-
 :is(#setterScreen, #guesserScreen) :is(.game-side-panel, .notes-panel) {
   min-height: 0;
   padding: 8px;
@@ -835,24 +809,12 @@
   line-height: 1.35;
 }
 
-#setterScreen .notes-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-#setterScreen .notes-list {
-  min-height: 0;
-  overflow-y: auto;
-}
-
 #setterScreen .notes-word {
   font-size: 10px;
   font-weight: 900;
 }
 
-#setterScreen :is(.activity-drag-handle, .setter-notes-idle-hint),
-#setterScreen .setter-sidebar-activity.idle-mode .setter-sidebar-tabs {
+#setterScreen :is(.activity-drag-handle, .setter-notes-idle-hint) {
   display: none !important;
 }
 
@@ -1125,10 +1087,6 @@
   color: var(--game-cyan);
   font-size: 11px;
   font-weight: 900;
-}
-
-#setterScreen .setter-cover-target.is-earned .setter-cover-target-label {
-  text-shadow: 0 0 10px rgba(88, 201, 255, 0.7);
 }
 
 #setterScreen #SetterRemainingBox {
@@ -1526,21 +1484,6 @@
    Power Choice mode
    -------------------------------------------------------------------------- */
 
-body.power-choice-mode :is(
-    #questInfoBar,
-    #guesserQuestRequirement,
-    #guesserQuestChargeHud,
-    #spyChargeHud,
-    .quest-charge-v9,
-    .setter-quest-v9,
-    #questChoiceModal,
-    .quest-not-met,
-    .power-button,
-    .power-card:not(.pc-choice-card)
-  ) {
-  display: none !important;
-}
-
 body.power-choice-mode #spyChargeAwardBackdrop {
   display: none !important;
   visibility: hidden !important;
@@ -1677,11 +1620,6 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   box-shadow: inset 0 0 0 1px rgba(255, 226, 158, 0.6);
 }
 
-:is(.pc-meter-segment, .pc-award-capsule-segment).just-landed {
-  animation: pc-segment-impact 560ms cubic-bezier(0.18, 0.9, 0.24, 1);
-  z-index: 2;
-}
-
 /* Impact flash: the cell overshoots and blooms white-hot before settling,
    so you can see exactly which notch the star just filled. */
 @keyframes pc-segment-impact {
@@ -1757,36 +1695,6 @@ body.power-choice-mode #spyChargeAwardBackdrop {
    Left in place only because other selector groups below still reference
    this class name; nothing in JS creates a .pc-quest-met-flourish element
    anymore. */
-.pc-quest-met-flourish {
-  position: fixed;
-  z-index: 2147482800;
-  top: clamp(70px, 12vh, 130px);
-  left: 50%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border: 1px solid rgba(112, 255, 194, 0.86);
-  border-radius: 999px;
-  background: rgba(7, 20, 16, 0.97);
-  color: #b8ffdd;
-  font-size: 13px;
-  font-weight: 950;
-  letter-spacing: 0.08em;
-  box-shadow: 0 15px 42px rgba(0, 0, 0, 0.5), 0 0 24px rgba(78, 255, 183, 0.3);
-  opacity: 0;
-  pointer-events: none;
-  transform: translate(-50%, -10px) scale(0.9);
-}
-
-.pc-quest-met-flourish.is-visible {
-  animation: pcQuestMetPop 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-}
-
-.pc-quest-met-star {
-  color: #9effce;
-  text-shadow: 0 0 12px rgba(85, 255, 180, 0.8);
-}
 
 @keyframes pcQuestMetPop {
   0% { opacity: 0; transform: translate(-50%, -10px) scale(0.9); }
@@ -1946,26 +1854,6 @@ body.power-choice-mode #spyChargeAwardBackdrop {
    .label / .value markup shared with the classic standalone box -- laid
    out as a compact inline row here instead of that box's own stacked
    layout. */
-.pc-letter-profile-lines {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px 10px;
-}
-
-.pc-letter-profile-lines .line {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-
-.pc-letter-profile-lines .label {
-  color: rgba(220, 237, 247, 0.7);
-}
-
-.pc-letter-profile-lines .value {
-  color: #ffe278;
-  font-weight: 800;
-}
 
 .pc-current-quest-card {
   display: grid;
@@ -2296,78 +2184,10 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 /* Bigger, hotter core with a layered halo and a comet trail streaming
    back along the flight path, so a star landing reads as an event rather
    than a small glyph sliding across. */
-.pc-award-falling-star {
-  position: absolute;
-  z-index: 3;
-  color: #ffffff;
-  font-size: 26px;
-  text-shadow:
-    0 0 6px #ffffff,
-    0 0 16px rgba(140, 226, 255, 1),
-    0 0 34px rgba(60, 178, 255, 0.9),
-    0 0 60px rgba(40, 150, 255, 0.55);
-  filter: drop-shadow(0 0 10px rgba(120, 215, 255, 0.9));
-  pointer-events: none;
-}
-
-.pc-award-falling-star::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 4px;
-  height: 40px;
-  transform: translate(-50%, -96%);
-  border-radius: 999px;
-  background: linear-gradient(
-    to top,
-    rgba(150, 226, 255, 0) 0%,
-    rgba(150, 226, 255, 0.75) 45%,
-    rgba(255, 255, 255, 0.95) 100%
-  );
-  opacity: 0.9;
-  pointer-events: none;
-}
-
-.pc-award-falling-star.is-bonus {
-  color: var(--game-blue);
-}
 
 /* The capsule-to-meter award flight (animateSpyAward in power-choice-mode.js)
    -- same comet look as .pc-award-falling-star, positioned/sized for a
    fixed, viewport-wide flight rather than one confined inside the capsule. */
-.pc-award-shooting-star {
-  position: fixed;
-  z-index: 2147482750;
-  color: #ffffff;
-  font-size: 28px;
-  text-shadow:
-    0 0 6px #ffffff,
-    0 0 16px rgba(140, 226, 255, 1),
-    0 0 34px rgba(60, 178, 255, 0.9),
-    0 0 60px rgba(40, 150, 255, 0.55);
-  filter: drop-shadow(0 0 10px rgba(120, 215, 255, 0.9));
-  pointer-events: none;
-}
-
-.pc-award-shooting-star::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 4px;
-  height: 46px;
-  transform: translate(-50%, -96%);
-  border-radius: 999px;
-  background: linear-gradient(
-    to top,
-    rgba(150, 226, 255, 0) 0%,
-    rgba(150, 226, 255, 0.75) 45%,
-    rgba(255, 255, 255, 0.95) 100%
-  );
-  opacity: 0.9;
-  pointer-events: none;
-}
 
 .pc-spy-source-pulse {
   position: fixed;
@@ -2559,7 +2379,6 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   --pc-rarity-surface: #746020;
   --pc-rarity-border: #d7bb58;
 }
-
 
 .pc-choice-card:hover:not(:disabled),
 .pc-choice-card:focus-visible:not(:disabled) {
@@ -3151,7 +2970,6 @@ body:not(.light-theme) {
 :is(#setterScreen, #guesserScreen),
 .pc-modal,
 .pc-reward-peek-bar,
-.pc-quest-met-flourish,
 .pc-reward-popup,
 .collapsed-charge-toast {
   --game-panel: #20262d;

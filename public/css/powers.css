@@ -274,7 +274,6 @@ body.blind-guess .key:hover {
   border-bottom: 3px solid rgba(155, 80, 255, 0.95);
   border-right: 3px solid rgba(155, 80, 255, 0.95);
 
-
   pointer-events: none;
   z-index: 3;
 }
@@ -892,26 +891,6 @@ body.power-assassinWord #power-fx {
 }
 
 /* Recon Sweep (letter probe) input */
-.letter-probe-input {
-  display: block;
-  width: 100%;
-  margin: 0 0 var(--sp-16);
-  padding: var(--sp-10) var(--sp-12);
-  border-radius: var(--r-8);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: #1a1b20;
-  color: #fff;
-  font-weight: 800;
-  font-size: var(--fs-20);
-  letter-spacing: 0.4em;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.letter-probe-input:focus {
-  outline: none;
-  border-color: var(--guesser-color, #60a5fa);
-}
 
 body.power-revealPenalty #power-fx {
   opacity: 1;
@@ -937,7 +916,6 @@ body.power-betMiss #power-fx {
   mix-blend-mode: screen;
   animation: fx-flash 650ms ease-out;
 }
-
 
 /* Reward refresh button + rarity metal tokens now live in gameplay-ui.css
    next to the .pc-choice-card system they style. */
