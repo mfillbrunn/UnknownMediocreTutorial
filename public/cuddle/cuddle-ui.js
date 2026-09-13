@@ -20,6 +20,8 @@
   let game = null;
   let landing = true;
   let rulesOpen = false;
+  let skillTreeOpen = false;
+  let selectedSkillNodeId = null;
   let detailsOpen = false;
   let actionMode = "play";
   let selectedCards = new Set();
@@ -336,6 +338,7 @@
       <div class="cuddle-landing">
         <div class="cuddle-landing-top">
           <button class="cuddle-icon-btn" data-action="back" aria-label="Back to main menu">←</button>
+          <button class="cuddle-icon-btn" data-action="skill-tree" aria-label="Skill tree">🌳</button>
           <button class="cuddle-icon-btn" data-action="rules" aria-label="How to play Cuddle">?</button>
         </div>
         <section class="cuddle-hero">
@@ -361,6 +364,7 @@
           </div>
         </section>
         ${rulesOpen ? renderRulesOverlay() : ""}
+        ${skillTreeOpen ? renderSkillTreeOverlay() : ""}
       </div>`;
   }
 
@@ -388,6 +392,7 @@
               aria-label="${detailsOpen ? "Hide run details" : "Show run details"}">
               ${detailsOpen ? "Hide ▲" : "Details ▼"}
             </button>
+            <button class="cuddle-icon-btn" data-action="skill-tree" aria-label="Skill tree">🌳</button>
             <button class="cuddle-icon-btn" data-action="rules" aria-label="How to play">?</button>
           </div>
         </header>
@@ -433,6 +438,7 @@
         </main>
         ${renderStateOverlay(state)}
         ${rulesOpen ? renderRulesOverlay() : ""}
+        ${skillTreeOpen ? renderSkillTreeOverlay() : ""}
       </div>`;
   }
 
@@ -975,6 +981,70 @@
       </div>`;
   }
   /* UMT_CUDDLE_SINGLEPLAYER_V2: END SHARE END */
+  function renderSkillTreeOverlay() {
+    const tree = window.CuddleSkillTree;
+    if (!tree) return "";
+    let selected = null;
+    const branches = tree.BRANCHES.map(branch => {
+      const nodes = branch.nodes.map(node => {
+        const ownedNow = Boolean(game) && tree.isOwned(game, node);
+        if (node.id === selectedSkillNodeId) selected = { branch, node, owned: ownedNow };
+        const tierClass = `is-${node.tier || "common"}`;
+        return `
+          <button type="button" class="cuddle-skilltree-node ${tierClass} ${ownedNow ? "is-owned" : ""} ${node.id === selectedSkillNodeId ? "is-selected" : ""}"
+            data-action="select-skill-node" data-node-id="${escapeHtml(node.id)}"
+            aria-pressed="${node.id === selectedSkillNodeId ? "true" : "false"}">
+            <span class="cuddle-skilltree-node-icon" aria-hidden="true">${node.icon}</span>
+            <span class="cuddle-skilltree-node-title">${escapeHtml(node.title)}</span>
+          </button>`;
+      }).join("");
+      return `
+        <section class="cuddle-skilltree-branch">
+          <div class="cuddle-skilltree-branch-head">
+            <h3 class="cuddle-skilltree-branch-title">${escapeHtml(branch.title)}${branch.easyOnly ? '<span class="cuddle-skilltree-branch-tag">Easy only</span>' : ""}</h3>
+            <p class="cuddle-skilltree-branch-blurb">${escapeHtml(branch.blurb)}</p>
+          </div>
+          <div class="cuddle-skilltree-nodes">${nodes}</div>
+        </section>`;
+    }).join("");
+
+    const detail = selected ? `
+      <div class="cuddle-skilltree-detail">
+        <div class="cuddle-skilltree-detail-head">
+          <span class="cuddle-skilltree-detail-icon is-${selected.node.tier || "common"}" aria-hidden="true">${selected.node.icon}</span>
+          <h4 class="cuddle-skilltree-detail-title">${escapeHtml(selected.node.title)}</h4>
+          <span class="cuddle-skilltree-detail-status ${selected.owned ? "is-owned" : "is-locked"}">${selected.owned ? "Owned this run" : "Not yet picked up"}</span>
+        </div>
+        <p>${escapeHtml(selected.node.description)}${selected.node.easyOnly ? " (Easy difficulty only.)" : ""}</p>
+        ${selected.node.requires ? `<p class="cuddle-skilltree-detail-requires">Requires: ${selected.node.requires.map(id => escapeHtml(findSkillNodeTitle(id))).join(" + ")}</p>` : ""}
+      </div>` : "";
+
+    return `
+      <div class="cuddle-overlay cuddle-skilltree-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleSkillTreeTitle">
+        <section class="cuddle-modal cuddle-modal-wide cuddle-skilltree-modal">
+          <button class="cuddle-modal-close" data-action="close-skill-tree" aria-label="Close skill tree">×</button>
+          <span class="cuddle-modal-kicker">SKILL TREE</span>
+          <h2 id="cuddleSkillTreeTitle">Every Cuddle upgrade</h2>
+          <div class="cuddle-skilltree-legend">
+            <span><i class="is-owned-swatch"></i> Owned this run</span>
+            <span><i class="is-locked-swatch"></i> Not yet picked up</span>
+          </div>
+          <div class="cuddle-skilltree-map">${branches}</div>
+          ${detail}
+        </section>
+      </div>`;
+  }
+
+  function findSkillNodeTitle(id) {
+    const tree = window.CuddleSkillTree;
+    if (!tree) return id;
+    for (const branch of tree.BRANCHES) {
+      const match = branch.nodes.find(node => node.id === id);
+      if (match) return match.title;
+    }
+    return id;
+  }
+
   function renderRulesOverlay() {
     const state = currentState();
     const rules = state ? game.getRulesSummary() : {
@@ -1064,21 +1134,27 @@
     game.startNew(difficulty);
     landing = false;
     rulesOpen = false;
+    skillTreeOpen = false;
+    selectedSkillNodeId = null;
     detailsOpen = false;
     resetActionMode();
     setUiMessage("");
   }
 
-  function handleAction(action) {
+  function handleAction(action, dataset = {}) {
     switch (action) {
       case "back":
         rulesOpen = false;
+        skillTreeOpen = false;
+        selectedSkillNodeId = null;
         // Cuddle sits on the main menu now, not inside the Play hub.
         showScreen("startupScreen");
         return false;
       case "run-menu":
         landing = true;
         rulesOpen = false;
+        skillTreeOpen = false;
+        selectedSkillNodeId = null;
         detailsOpen = false;
         resetActionMode();
         setUiMessage("");
@@ -1086,6 +1162,8 @@
       case "continue":
         landing = false;
         rulesOpen = false;
+        skillTreeOpen = false;
+        selectedSkillNodeId = null;
         detailsOpen = false;
         resetActionMode();
         return true;
@@ -1114,6 +1192,16 @@
         return true;
       case "close-rules":
         rulesOpen = false;
+        return true;
+      case "skill-tree":
+        skillTreeOpen = true;
+        return true;
+      case "close-skill-tree":
+        skillTreeOpen = false;
+        selectedSkillNodeId = null;
+        return true;
+      case "select-skill-node":
+        selectedSkillNodeId = selectedSkillNodeId === dataset.nodeId ? null : dataset.nodeId;
         return true;
       /* UMT_CUDDLE_SINGLEPLAYER_V2: ACTIONS START */
       case "start-round": {
@@ -1173,7 +1261,7 @@
     const actionButton = event.target.closest("[data-action]");
     if (actionButton) {
       event.preventDefault();
-      const shouldRender = handleAction(actionButton.dataset.action);
+      const shouldRender = handleAction(actionButton.dataset.action, actionButton.dataset);
       if (shouldRender) render();
       return;
     }
