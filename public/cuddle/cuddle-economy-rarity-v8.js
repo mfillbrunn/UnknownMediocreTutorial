@@ -2416,7 +2416,11 @@
 
       const chip = document.createElement("span");
       chip.className = "cuddle-v8-rarity-badge";
-      chip.textContent = metal;
+      // No visible label -- the metal is conveyed by color/shine alone, not
+      // by spelling out "BRONZE"/"SILVER"/"GOLD". role="img" + aria-label
+      // keeps the tier available to screen readers without printing it.
+      chip.setAttribute("role", "img");
+      chip.setAttribute("aria-label", `${metal} rarity`);
       // Directly above the reward's name. In .cuddle-choice's column flex
       // that lands on its own row; in .cuddle-shop-item's three-column
       // grid it stays inside the copy column rather than becoming a

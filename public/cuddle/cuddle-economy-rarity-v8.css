@@ -19,35 +19,33 @@
   position: relative;
 }
 
+/* A small metallic swatch, not a text pill -- the tier reads from the
+   color and shine alone (see decorateRewardCards in the .js: the badge
+   carries role="img" + aria-label instead of visible text). The
+   radial gradient plus the dark rim is what makes "bronze" vs "silver"
+   vs "gold" legible as metal rather than as three similar dots. */
 .cuddle-v8-rarity-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: max-content;
+  display: inline-block;
+  width: 14px;
+  height: 14px;
   margin: 0 0 .4rem;
-  padding: .18rem .48rem;
-  border: 1px solid currentColor;
-  border-radius: 999px;
-  font-size: .65rem;
-  font-weight: 800;
-  letter-spacing: .08em;
-  line-height: 1;
-  text-transform: uppercase;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.4);
 }
 
 .cuddle-v8-common .cuddle-v8-rarity-badge {
-  color: var(--cuddle-v8-common);
-  background: var(--cuddle-v8-common-wash);
+  background: radial-gradient(circle at 32% 28%, #f7d3ab 0%, var(--cuddle-v8-common) 55%, #8a5a34 100%);
+  box-shadow: 0 0 6px var(--cuddle-v8-common-wash);
 }
 
 .cuddle-v8-rare .cuddle-v8-rarity-badge {
-  color: var(--cuddle-v8-rare);
-  background: var(--cuddle-v8-rare-wash);
+  background: radial-gradient(circle at 32% 28%, #ffffff 0%, var(--cuddle-v8-rare) 55%, #97a4b0 100%);
+  box-shadow: 0 0 6px var(--cuddle-v8-rare-wash);
 }
 
 .cuddle-v8-legendary .cuddle-v8-rarity-badge {
-  color: var(--cuddle-v8-legendary);
-  background: var(--cuddle-v8-legendary-wash);
+  background: radial-gradient(circle at 32% 28%, #fff2c4 0%, var(--cuddle-v8-legendary) 55%, #b8860b 100%);
+  box-shadow: 0 0 6px var(--cuddle-v8-legendary-wash);
 }
 
 /* Tint the card's own edge to match, so the tier reads at a glance from
