@@ -264,15 +264,6 @@ function getHistoryScrollState(container) {
   return s;
 }
 
-// True while the list is still genuinely moving under a reader's own
-// gesture -- either a finger/pointer is still down (interacting) or the
-// native momentum/deceleration is still firing scroll events. A touch
-// fling keeps scrolling for far longer than the settle window after
-// touchend, so "interacting" alone does not cover it.
-function isHistoryScrollLive(s) {
-  return s.interacting || now() - s.lastScrollAt < HISTORY_SETTLE_MS;
-}
-
 // Snapshot taken BEFORE a DOM mutation that might add/remove/patch rows --
 // records whether the list is currently allowed to follow a newly-added
 // row down to the bottom, plus its exact live scrollTop so a caller that
@@ -416,8 +407,6 @@ function createFeedbackLieBadge() {
   `;
   return badge;
 }
-
-
 
 ///DOM creator
 function createHistoryRowDOM(row) {
@@ -785,13 +774,3 @@ function getSetterTileClasses(safeEntry, guessIndex, isBlindSpot) {
   return classes;
 }
 
-
-
-function resetHistoryRenderer(container) {
-  container.__prevRenderState = [];
-  container.innerHTML = "";
-  // A fresh round starts attached to the bottom -- an empty list can't be
-  // "scrolled away" from, and any mid-gesture flag left over from the
-  // previous round's list no longer applies to it.
-  HISTORY_SCROLL_STATE.delete(container);
-}

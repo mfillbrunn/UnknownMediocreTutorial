@@ -101,21 +101,6 @@ function starRewardTarget(selector) {
   return modal?.querySelector(selector) || modal;
 }
 
-function starMeterVisual(total) {
-  const safeTotal = Math.max(0, Math.min(STAR_TUTORIAL_MAX, Number(total) || 0));
-  return `
-    <div class="tutorial-summary-explainer tutorial-star-explainer">
-      <span class="tutorial-summary-number">${safeTotal}</span>
-      <span><strong>stars now</strong><small>The first reward opens at ${STAR_TUTORIAL_REWARD_AT}.</small></span>
-    </div>
-  `;
-}
-
-function starRulesVisual() {
-  // Kept for compatibility; the simplified tutorial uses plain text only.
-  return "";
-}
-
 function starPromptForPractice(api, charge, practiceStep, total) {
   // UMT_SIMPLIFIED_TUTORIAL_COPY_20260902
   const hint = charge?.hint || {};

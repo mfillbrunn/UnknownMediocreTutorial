@@ -1,7 +1,5 @@
 // /public/client/statistics.js
 
-
-
 function formatTimeMode(tc) {
   if (!tc || tc.enabled === false || tc.rankMode === "notime") {
     return "No Time";
@@ -470,23 +468,6 @@ function renderStats(matches, container) {
 }
 window.renderStats = renderStats;
 
-function summarizeMatchPowers(rounds = []) {
-  const used = new Set();
-
-  rounds.forEach(r => {
-  if (!r || !Array.isArray(r.history)) return;
-  r.history.forEach(h => {
-      (h.powersSetter || []).forEach(p => used.add(p));
-      (h.powersGuesser || []).forEach(p => used.add(p));
-    });
-  });
-
-  if (!used.size) return "";
-
-  return [...used]
-    .map(powerToInlineIcon)
-    .join(" ");
-}
 let leaderboardLoadInProgress = false;
 let pendingLeaderboardMode = null;
 
@@ -545,8 +526,6 @@ async function loadLeaderboard(mode) {
     }
   }
 }
-
-
 
 function renderLeaderboard(rows, mode) {
   const list = $("leaderboardList");

@@ -154,14 +154,6 @@
     return "★".repeat(stars) + "☆".repeat(3 - stars);
   }
 
-  function selectedDifficulty() {
-    const difficulties = catalog?.difficulties || [];
-    return difficulties.find(item => item.id === selectedDifficultyId)
-      || difficulties.find(item => item.id === DEFAULT_DIFFICULTY)
-      || difficulties[0]
-      || null;
-  }
-
   function roleDetails(challenge) {
     if (challenge.powerRole === "setter") {
       return {

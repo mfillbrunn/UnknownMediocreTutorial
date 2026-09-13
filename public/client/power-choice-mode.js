@@ -725,7 +725,6 @@
     applyQuestKeyHints();
   }
 
-
   function keyboardLetter(key) {
     const candidate = String(
       key?.dataset?.key ||
@@ -741,12 +740,6 @@
   function keyboardKeys() {
     return [...document.querySelectorAll(
       "#keyboardGuesser button, #keyboardGuesser [data-key], #keyboardGuesser [data-letter], #keyboardGuesser .key"
-    )];
-  }
-
-  function setterKeyboardKeys() {
-    return [...document.querySelectorAll(
-      "#keyboardSetter button, #keyboardSetter [data-key], #keyboardSetter [data-letter], #keyboardSetter .key"
     )];
   }
 

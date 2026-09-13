@@ -84,8 +84,6 @@ function toast(msg) {
   setTimeout(() => t.classList.remove("show"), 1500);
 }
 
-
-
 function shake(element) {
   if (!element) return;
   element.classList.add("shake");
@@ -292,10 +290,6 @@ function exitMenuMode() {
   document.body.classList.remove("menu-mode");
 }
 
-function mySocketId() {
-  return socket?.id || null;
-}
-
 function updateRoleCards() {
   if (!state?.players) return;
 
@@ -479,7 +473,6 @@ onPowerUsed(data => {
     startSecretRoulette(state.powers.rouletteSecretFeasible);
   }
 });
-
 
 // After renderButtons is called:
 if (!PowerEngine._initialized && window.roomId && roleAssigned) {
@@ -2603,7 +2596,6 @@ function submitSetterNew() {
   }
 }
 
-
 // -----------------------------------------------------
 // GUESSER UI
 // -----------------------------------------------------
@@ -2804,8 +2796,6 @@ function updateHostControls() {
   }
 }
 
-
-
 function updateTimerAccess() {
   if (!state) return;
   document
@@ -2821,12 +2811,10 @@ function updateTimerAccess() {
     });
 }
 
-
 // -----------------------------------------------------
 // BUTTONS
 // -----------------------------------------------------
 // Play/Ranked menu wiring lives in client/play-menu.js
-
 
 (function setupGuideToggle() {
   // No on-screen toggle button remains anywhere in the app anymore (see
@@ -3057,7 +3045,6 @@ function updateGuideBanner() {
   });
 })();
 
-
 function isHost() {
   // window.currentUser starts out null and only resolves once Supabase's
   // async getSession() finishes (see auth.js) -- a stateUpdate can arrive
@@ -3114,7 +3101,6 @@ function enableReadyButton(isReady) {
   btn.classList.remove("waiting");
   btn.classList.toggle("lobby-ready-btn", !!isReady);
 }
-
 
 document
   .querySelectorAll('input[name="timePreset"]')
@@ -3331,7 +3317,6 @@ function stopSecretRoulette() {
   }
   rouletteWords = [];
 }
-
 
 function maybeStartRouletteFromState(state) {
   if (

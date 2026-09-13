@@ -44,13 +44,6 @@
     return String(state?.matchId || state?.matchStartedAt || window.roomId || "");
   }
 
-  function isVisible(element) {
-    if (!element?.isConnected) return false;
-    const style = getComputedStyle(element);
-    const rect = element.getBoundingClientRect();
-    return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
-  }
-
   function scheduleUpdate() {
     if (updateFrame || document.hidden) return;
     updateFrame = requestAnimationFrame(() => {
@@ -590,18 +583,6 @@
       updating = false;
       connectSystemsObserver();
     }
-  }
-
-  function wrapUpdater(name) {
-    const original = window[name];
-    if (typeof original !== "function" || original.__v10Wrapped) return;
-    const wrapped = function (...args) {
-      const result = original.apply(this, args);
-      scheduleUpdate();
-      return result;
-    };
-    wrapped.__v10Wrapped = true;
-    window[name] = wrapped;
   }
 
   function installHooks() {

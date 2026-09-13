@@ -154,8 +154,6 @@ window.renderDraftRows = function ({
         row.appendChild(tile);
       }
 
-
-
       // The setter's cover stars deliberately do NOT live in this row --
       // see ensureSetterCoverStars above for why they sit on the
       // decision-meta bar instead.
@@ -499,34 +497,5 @@ if (!setterCanEdit) {
   }
 };
 
-function updateDraftRow(row, word, className, state) {
-  const frozen =
-    state.turn === state.setter &&
-    state.powers?.freezeActive;
-
-  row.className = frozen
-    ? "history-row draft-row freeze-draft"
-    : `history-row ${className}`;
-
-  for (let i = 0; i < 5; i++) {
-    row.__tiles[i].textContent = word[i] || "";
-  }
-}
-
-function renderDraftRow(word, container, className) {
-  const row = document.createElement("div"); 
-  if (state.turn === state.setter && state.powers?.freezeActive ) {
-      row.className = `history-row draft-row freeze-draft`;
-    } else{    
-    row.className = `history-row ${className}`;
-  }
-  for (let i = 0; i < 5; i++) { 
-    const tile = document.createElement("div"); 
-    tile.className = "history-tile draft-tile"; 
-    tile.textContent = word[i] || ""; 
-    row.appendChild(tile); 
-  } 
-  container.appendChild(row); 
-};
-
+;
 
