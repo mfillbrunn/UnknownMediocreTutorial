@@ -851,7 +851,6 @@ onStateUpdate(newState => {
   updateTimerAccess(); 
   updateTimerPresetUI();
   updateWaitingIndicator();
-  updatePowerInfoState(state);
   updateTimerVisibility();
   updateAppHeader(state);
   updateLeaveGameButtons(state);

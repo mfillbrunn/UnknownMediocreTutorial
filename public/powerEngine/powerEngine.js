@@ -271,14 +271,6 @@ applyPowerPalette(
       btn.appendChild(usesEl);
     }
 
-    const meta = this.powers[id]?.tooltip;
-    if (meta) {
-      wrapper.addEventListener("mouseenter", () => {
-        showTooltip(wrapper, meta);
-      });
-      wrapper.addEventListener("mouseleave", hideTooltip);
-    }
-
     // Tapping/clicking no longer fires the power directly -- it opens an
     // info popup (title/desc) with an explicit Use button instead. Power
     // modules still just do `btn.onclick = fn` exactly as before (see
