@@ -28,10 +28,20 @@
   var MIN_METER_THRESHOLD = 7;
   var ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   var VOWELS = new Set("AEIOU".split(""));
+  var HINT_UPGRADE_IDS = new Set(["coachHint", "coachEarlierHint"]);
   var activeGame = null;
   var observer = null;
   var uiQueued = false;
   var lastThreadSignature = "";
+
+  // Free hints (Guesser Hint / Earlier Hints, and the forced round-3 offer
+  // below) are Easy's whole reason to exist -- see trainingWheelsFor in
+  // cuddle-rebalance-v5.js, which ramps down the same way for the same
+  // reason. Medium/Hard chose the harder start on purpose.
+  function isEasyDifficulty(game) {
+    var difficulty = String(game && game.state && game.state.megaState && game.state.megaState.difficulty || "");
+    return difficulty === "easy";
+  }
 
   var UPGRADE_DEFINITIONS = Object.freeze([
     {
@@ -651,9 +661,11 @@
 
   function eligibleUpgrades(game) {
     var coach = ensureCoach(game);
+    var easy = isEasyDifficulty(game);
     return UPGRADE_DEFINITIONS.filter(function eligible(definition) {
       if (upgradeIsMaxed(coach, definition)) return false;
       if (definition.requiresHint && coach.hintsPerRound <= 0) return false;
+      if (HINT_UPGRADE_IDS.has(definition.id) && !easy) return false;
       return true;
     }).map(function clone(definition) { return Object.assign({}, definition); });
   }
@@ -1184,7 +1196,7 @@
     choices = Array.isArray(choices) ? choices.slice() : [];
     var coach = ensureCoach(this);
     var clearedRound = integer(this.state?.lastRoundSummary?.round, 0);
-    if (isNormalRoundThreeReward(this) && clearedRound === 3 && coach.hintsPerRound <= 0) {
+    if (isNormalRoundThreeReward(this) && clearedRound === 3 && coach.hintsPerRound <= 0 && isEasyDifficulty(this)) {
       var forced = UPGRADE_DEFINITIONS.find(function hint(item) { return item.id === "coachHint"; });
       if (!choices.some(function already(item) { return item && item.id === forced.id; })) {
         if (choices.length) choices[choices.length - 1] = Object.assign({}, forced);
@@ -1200,7 +1212,7 @@
     proto.refreshUpgradeChoices = function refreshUpgradeChoicesCuddleCoachExpansion() {
       var result = originalRefreshUpgradeChoices.apply(this, arguments);
       if (result?.ok && isNormalRoundThreeReward(this)
-          && ensureCoach(this).hintsPerRound <= 0) {
+          && ensureCoach(this).hintsPerRound <= 0 && isEasyDifficulty(this)) {
         var forced = UPGRADE_DEFINITIONS.find(function hint(item) { return item.id === "coachHint"; });
         if (!this.state.upgradeChoices.some(function already(item) { return item && item.id === forced.id; })) {
           if (this.state.upgradeChoices.length) this.state.upgradeChoices[this.state.upgradeChoices.length - 1] = Object.assign({}, forced);

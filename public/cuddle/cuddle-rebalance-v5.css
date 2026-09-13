@@ -439,6 +439,21 @@ html.umt-mandatory-challenge .cuddle-challenge-decline {
     padding: 0.14rem;
   }
 
+  /* .umt-row-quick-clock's desktop position (left: calc(100% + 0.3rem) of
+     its button) assumes the row icon sits to the RIGHT of the board with
+     open space beyond it -- true on a wide layout, but on mobile the icon
+     itself moves to the row's own top-right corner (above), so that same
+     offset pushes the clock straight past the edge of the screen and off
+     it entirely, clipped by the board's overflow:hidden. Hang it below the
+     icon instead, still right-aligned to the same corner. */
+  .umt-row-quick-clock {
+    left: auto;
+    right: 0;
+    top: 100%;
+    translate: 0;
+    margin-top: 0.2rem;
+  }
+
   .cuddle-play-strip .umt-quest-reroll {
     font-size: 0.66rem;
   }

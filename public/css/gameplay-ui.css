@@ -2010,6 +2010,23 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   outline: none;
 }
 
+/* Replaces the emoji the Highlight button used to lead with -- vector, so
+   it stays crisp at any size and always matches the button's own text
+   color instead of an emoji font's fixed palette. */
+.pc-guide-star-icon {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.08em;
+  overflow: visible;
+}
+
+.pc-guide-star-icon use {
+  stroke: currentColor;
+  stroke-width: 6;
+  stroke-linejoin: round;
+}
+
 #draftGuesser .history-row.pc-quest-draft-met {
   position: relative;
   filter: drop-shadow(0 0 8px rgba(75, 255, 181, 0.5));
@@ -2232,6 +2249,21 @@ body.power-choice-mode #spyChargeAwardBackdrop {
      and the shared game-ready pulse animates transform, which would
      replace that translate and knock it off-centre. */
   animation: pc-peek-glow 1.2s ease-in-out infinite alternate;
+}
+
+/* Replaces the peek bar's old plain-text star -- vector, so it stays
+   crisp at any size and matches the bar's own gold text color exactly. */
+.pc-peek-star-icon {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  overflow: visible;
+}
+
+.pc-peek-star-icon use {
+  stroke: currentColor;
+  stroke-width: 6;
+  stroke-linejoin: round;
 }
 
 @keyframes pc-peek-glow {

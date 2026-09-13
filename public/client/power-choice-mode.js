@@ -700,7 +700,7 @@
             // already spelled out by the description and condition chips
             // directly below, so it lives in the tooltip/aria-label here
             // instead of in the visible text.
-            : `<button type="button" class="pc-guide-highlight-btn" title="Highlight ${esc(hintSpec.label)} on the keyboard" aria-label="Highlight ${esc(hintSpec.label)} on the keyboard"><span aria-hidden="true">✨</span> Highlight</button>`}
+            : `<button type="button" class="pc-guide-highlight-btn" title="Highlight ${esc(hintSpec.label)} on the keyboard" aria-label="Highlight ${esc(hintSpec.label)} on the keyboard"><svg class="pc-guide-star-icon" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#icon-cute-star" fill="currentColor"/></svg> Highlight</button>`}
         </span>` : ""}
       </span>
       <span class="pc-current-desc">${esc(quest.description || "Complete the shown condition.")}</span>
@@ -950,7 +950,7 @@
     bar.type = "button";
     bar.id = "pcRewardPeekBar";
     bar.className = "pc-reward-peek-bar";
-    bar.innerHTML = `<span aria-hidden="true">★</span> Reward waiting — tap to select`;
+    bar.innerHTML = `<svg class="pc-peek-star-icon" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#icon-cute-star" fill="currentColor"/></svg> Reward waiting — tap to select`;
     bar.addEventListener("click", () => {
       const modal = byId("powerChoiceModal");
       if (!modal) return;

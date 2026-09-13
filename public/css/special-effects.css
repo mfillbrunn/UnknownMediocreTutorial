@@ -570,19 +570,22 @@
 }
 
 /* The round-start popup's own role icon (client.js passes an <svg><use>
-   for this instead of an emoji) -- sized to match the 44px emoji it
-   replaces, colored via the popup's own .role-setter/.role-guesser class
-   below rather than baked into the icon itself. */
+   for this instead of an emoji), colored via the popup's own
+   .role-setter/.role-guesser class below rather than baked into the icon
+   itself. Sized up from the 44px it originally matched to the emoji it
+   replaced -- a vector person silhouette reads clearly at a size that
+   made an emoji glyph look oversized, and this is the one moment per
+   round that actually needs the role to register at a glance. */
 .big-announce-icon svg {
-  width: 44px;
-  height: 44px;
+  width: 64px;
+  height: 64px;
   display: block;
   margin: 0 auto;
 }
 
 .big-announce.compact .big-announce-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 30px;
+  height: 30px;
 }
 
 .big-announce.role-setter .big-announce-icon { color: var(--setter-color); }
@@ -685,12 +688,14 @@
    pass an <svg><use> in place of the emoji this label used to lead with)
    -- currentColor already resolves to this label's own role color (see
    the .role-setter/.role-guesser rules just below), so no separate color
-   rule is needed here. */
+   rule is needed here. Sized well past the label's own 13px text: at the
+   old 15px a person silhouette read as an unrecognizable smudge next to
+   bold uppercase text of nearly the same height. */
 .big-announce-power-group-label svg {
-  width: 15px;
-  height: 15px;
-  vertical-align: -2px;
-  margin-right: 1px;
+  width: 26px;
+  height: 26px;
+  vertical-align: -7px;
+  margin-right: 2px;
 }
 
 .big-announce-power-group-label.role-setter { color: var(--setter-color, #f87171); }

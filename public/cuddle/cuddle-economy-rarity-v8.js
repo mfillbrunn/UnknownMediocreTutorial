@@ -337,12 +337,29 @@
     const seen = new WeakSet();
     while (queue.length) {
       const { value, depth } = queue.shift();
-      if (!isObject(value) || seen.has(value)) continue;
+      // Arrays (and Maps/Sets/Dates/RegExps/DOM nodes -- see
+      // isBuiltinRuntimeObject) can never usefully match stateScore's
+      // "does this look like {money, mulligans, guesses, ...}" heuristic
+      // -- Object.entries() on an array yields one entry per INDEX, all
+      // digit-string keys that no pattern there tests true for -- so
+      // skip them entirely rather than paying to enumerate them (let
+      // alone score them). A word list with a few thousand entries (e.g.
+      // the pool Head Start draws from) reachable from a scanned context
+      // turned Object.entries() on it into a multi-hundred-millisecond
+      // stall on its own, repeated for every context this runs against
+      // -- and this runs on every page-wide DOM mutation while any
+      // Cuddle reward/toast/summary screen is open. This does mean a
+      // plain object sitting AT an array index (state.history entries,
+      // say) is no longer reachable through the array the way it used to
+      // be, but stateScore never had a reason to prefer one of those over
+      // the real state object it's actually looking for, which always
+      // scores far higher on its own many matching keys.
+      if (!isObject(value) || seen.has(value) || isBuiltinRuntimeObject(value)) continue;
       seen.add(value);
       out.push(value);
       if (depth >= maxDepth) continue;
       for (const [, child] of safeOwnEntries(value)) {
-        if (isObject(child) && !(child instanceof Node) && !(child instanceof Window)) {
+        if (isObject(child) && !isBuiltinRuntimeObject(child)) {
           queue.push({ value: child, depth: depth + 1 });
         }
       }
