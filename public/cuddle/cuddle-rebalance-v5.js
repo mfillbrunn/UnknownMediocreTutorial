@@ -1769,9 +1769,20 @@
       if (typeof game.getActiveWords === "function") pools.push(game.getActiveWords());
     } catch (_error) {}
     if (Array.isArray(game && game.secrets)) pools.push(game.secrets);
+    // Head Start's word pool merges up to three sources (guessSet,
+    // getActiveWords(), secrets), which can add up to several thousand
+    // words. Deduping via array.indexOf() inside a filter callback is
+    // O(n^2) -- each of those thousands of words re-scans the whole array
+    // from the start -- and was the actual source of the visible pause on
+    // entering a Head Start stage. A Set makes the dedup O(n).
+    const seen = new Set();
     let words = pools.flat().map((word) => String(word || "").toUpperCase())
       .filter((word) => /^[A-Z]{5}$/.test(word))
-      .filter((word, index, array) => array.indexOf(word) === index)
+      .filter((word) => {
+        if (seen.has(word)) return false;
+        seen.add(word);
+        return true;
+      })
       .filter((word) => !word.split("").some((letter) => removed.has(letter)));
     const nonAnswer = words.filter((word) => word !== secret);
     if (nonAnswer.length) words = nonAnswer;
