@@ -10,126 +10,6 @@
     return Math.max(minimum, Math.min(maximum, value));
   }
 
-  function bonusHint(state = window.state) {
-    const charge = state?.powers?.spyCharge;
-    const hint = charge?.hint;
-
-    if (
-      window.myRole !== "setter" ||
-      !charge?.enabled ||
-      !hint?.letter ||
-      !Number.isInteger(hint.position)
-    ) {
-      return null;
-    }
-
-    return {
-      letter: String(hint.letter).toUpperCase(),
-      position: hint.position
-    };
-  }
-
-  function bonusBoxes(hint) {
-    return Array.from({ length: 5 }, (_, index) => {
-      const active = index === hint.position;
-      return (
-        `<span class="setter-bonus-box-v9 setter-bonus-box-v93${active ? " is-target" : ""}">` +
-        `${active ? hint.letter : ""}` +
-        `</span>`
-      );
-    }).join("");
-  }
-
-  function renderInlineBonus(state = window.state) {
-    // Power Choice mode has its own single canonical renderer for this
-    // element (power-choice-mode.js's normalizeBonusTarget) -- bail out
-    // instead of fighting it for the same DOM node every render tick.
-    if (document.body.classList.contains("power-choice-mode")) return;
-
-    const hint = bonusHint(state);
-    const target = byId("setterBonusTargetV9");
-    const meta = byId("setterDecisionMeta");
-    const remaining = byId("SetterRemainingBox");
-
-    if (!target) return;
-
-    const show = !!hint;
-    target.classList.toggle("hidden", !show);
-
-    if (!show) {
-      target.classList.remove("setter-bonus-inline-v93");
-      return;
-    }
-
-    if (meta && target.parentElement !== meta) {
-      meta.appendChild(target);
-    } else if (
-      meta &&
-      remaining?.parentElement === meta &&
-      target.previousElementSibling !== remaining
-    ) {
-      remaining.insertAdjacentElement("afterend", target);
-    }
-
-    const key = `${hint.letter}:${hint.position}`;
-    const ready =
-      target.dataset.inlineBonusV93 === key &&
-      !!target.querySelector(".setter-bonus-label-v93");
-
-    if (!ready) {
-      target.dataset.inlineBonusV93 = key;
-      /* Keeps V9.2's own normalizer from rewriting this compact version. */
-      target.dataset.compactBonusV92 = key;
-      target.classList.add("setter-bonus-inline-v93");
-      target.innerHTML = `
-        <span class="setter-bonus-code-v92 setter-bonus-label-v93">
-          <span class="setter-bonus-plus-star-v93" aria-hidden="true">+★</span>
-          <span>Bonus star</span>
-        </span>
-        <span class="setter-bonus-boxes-v9 setter-bonus-boxes-v93" aria-hidden="true">
-          ${bonusBoxes(hint)}
-        </span>
-      `;
-      target.setAttribute(
-        "aria-label",
-        `Bonus star: put ${hint.letter} in box ${hint.position + 1}`
-      );
-    }
-  }
-
-  function syncBonusDraftTile(state = window.state) {
-    // Same reasoning as renderInlineBonus above -- Power Choice mode owns
-    // this tile decoration entirely (and removes it, see task list).
-    if (document.body.classList.contains("power-choice-mode")) return;
-
-    const hint = bonusHint(state);
-
-    document
-      .querySelectorAll("#draftSetter .bonus-target-met-v93")
-      .forEach(tile => tile.classList.remove("bonus-target-met-v93"));
-
-    if (!hint) return;
-
-    const rows = [...document.querySelectorAll(
-      "#draftSetter .history-row.setter-draft, #draftSetter .history-row.ghost-secret"
-    )].filter(row => row.style.display !== "none");
-
-    const row = rows.at(-1);
-    if (!row) return;
-
-    const tiles = row.__tiles || row.querySelectorAll(":scope > .history-tile");
-    const tile = tiles?.[hint.position];
-    if (!tile) return;
-
-    const actual = String(tile.textContent || "").trim().toUpperCase();
-    const isTypedDraft = row.classList.contains("setter-draft");
-
-    tile.classList.toggle(
-      "bonus-target-met-v93",
-      isTypedDraft && actual === hint.letter
-    );
-  }
-
   function formatFieldCondition(condition) {
     if (typeof window.formatFieldReportCondition === "function") {
       return window.formatFieldReportCondition(condition);
@@ -446,8 +326,6 @@
   }
 
   function updateUi() {
-    renderInlineBonus(window.state);
-    syncBonusDraftTile(window.state);
     renderQuestInstruction(window.state);
     installAnimatedCollapsedMeter();
     installSetterAwardBridge();
@@ -502,7 +380,6 @@
     for (const id of [
       "setterDecisionMeta",
       "SetterRemainingBox",
-      "setterBonusTargetV9",
       "draftSetter",
       "guesserQuestRequirement",
       "draftGuesser"

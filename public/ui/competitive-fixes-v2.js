@@ -27,149 +27,8 @@
       .slice(0, 1);
   }
 
-  function ordinal(position) {
-    return ["1st", "2nd", "3rd", "4th", "5th"][position - 1] || `${position}th`;
-  }
-
   function stateNow() {
     return window.state || null;
-  }
-
-  function ensureBonusTarget() {
-    let target = byId("setterBonusTargetV9");
-    if (target) return target;
-
-    const stage = document.querySelector("#setterScreen .setter-decision-stage");
-    const draftWrap = stage?.querySelector(".draft-row-wrap");
-    if (!stage || !draftWrap) return null;
-
-    target = document.createElement("div");
-    target.id = "setterBonusTargetV9";
-    target.className = "setter-bonus-target-v9 hidden";
-    stage.insertBefore(target, draftWrap);
-    return target;
-  }
-
-  function bonusIsVisible(state, charge, hint) {
-    return !!(
-      state &&
-      window.myRole === "setter" &&
-      charge?.enabled &&
-      state.phase === "normal" &&
-      state.turn === state.setter &&
-      state.pendingGuess &&
-      !state.powers?.freezeActive &&
-      !state.powers?.rouletteSecretActive &&
-      !state.simultaneousAllWrong &&
-      cleanLetter(hint?.letter) &&
-      Number.isInteger(hint?.position) &&
-      hint.position >= 0 &&
-      hint.position < 5
-    );
-  }
-
-  function writeBonusMarkup(target, letter, positionLabel, signature) {
-    const currentLetter = target.querySelector(".setter-bonus-letter-chip-v2")?.textContent;
-    const currentCopy = target.querySelector(".setter-bonus-position-copy-v2")?.textContent;
-    const complete =
-      target.dataset.competitiveFixSignature === signature &&
-      currentLetter === letter &&
-      currentCopy === `in ${positionLabel}`;
-
-    if (!complete) {
-      const plus = document.createElement("span");
-      plus.className = "setter-bonus-plus-v10";
-      plus.setAttribute("aria-hidden", "true");
-      plus.textContent = "+★";
-
-      const position = document.createElement("span");
-      position.className = "setter-bonus-position-v10";
-
-      const letterChip = document.createElement("strong");
-      letterChip.className = "setter-bonus-letter-chip-v2";
-      letterChip.textContent = letter;
-
-      const copy = document.createElement("span");
-      copy.className = "setter-bonus-position-copy-v2";
-      copy.textContent = `in ${positionLabel}`;
-
-      position.append(letterChip, copy);
-      target.replaceChildren(plus, position);
-    }
-
-    target.classList.add("competitive-bonus-target-v2");
-    if (target.dataset.signature !== signature) target.dataset.signature = signature;
-    if (target.dataset.competitiveFixSignature !== signature) {
-      target.dataset.competitiveFixSignature = signature;
-    }
-    setAttributeIfChanged(target, "aria-label", `Bonus star: ${letter} in ${positionLabel}`);
-  }
-
-  function setterDraftTiles() {
-    const draft = byId("draftSetter");
-    const row = draft?.__draftRows?.draft ||
-      draft?.querySelector(".history-row.setter-draft, .history-row.ghost-secret");
-    if (!row) return [];
-    if (Array.isArray(row.__tiles)) return row.__tiles;
-    if (row.__tiles && typeof row.__tiles.length === "number") return [...row.__tiles];
-    return [...row.querySelectorAll(".history-tile")].slice(0, 5);
-  }
-
-  function syncCornerBadge(targetTile, letter) {
-    document
-      .querySelectorAll("#draftSetter .setter-target-corner-letter-v2")
-      .forEach(badge => {
-        if (badge.parentElement !== targetTile) badge.remove();
-      });
-
-    if (!targetTile || !letter) return;
-
-    let badge = [...targetTile.children]
-      .find(child => child.classList?.contains("setter-target-corner-letter-v2"));
-    if (!badge) {
-      badge = document.createElement("span");
-      badge.className = "setter-target-corner-letter-v2";
-      badge.setAttribute("aria-hidden", "true");
-      targetTile.appendChild(badge);
-    }
-    setAttributeIfChanged(badge, "data-letter", letter);
-  }
-
-  function syncBonusTarget() {
-    // Power Choice mode has its own single canonical renderer for this
-    // element and tile decoration (power-choice-mode.js's
-    // normalizeBonusTarget) -- bail out instead of fighting it for the
-    // same DOM node every render tick.
-    if (document.body.classList.contains("power-choice-mode")) return;
-
-    const state = stateNow();
-    const charge = state?.powers?.spyCharge;
-    const hint = charge?.hint;
-    const target = ensureBonusTarget();
-    const show = bonusIsVisible(state, charge, hint);
-    const tiles = setterDraftTiles();
-
-    tiles.forEach((tile, index) => {
-      tile.classList.toggle(
-        "setter-bonus-target-tile-v2",
-        !!(show && index === hint?.position)
-      );
-    });
-
-    if (target) target.classList.toggle("hidden", !show);
-    if (!show || !target) {
-      syncCornerBadge(null, "");
-      return;
-    }
-
-    const letter = cleanLetter(hint.letter);
-    const position = hint.position + 1;
-    const positionLabel = ordinal(position);
-    const signature = `${letter}:${hint.position}`;
-    writeBonusMarkup(target, letter, positionLabel, signature);
-
-    const tile = tiles[hint.position] || null;
-    syncCornerBadge(tile, letter);
   }
 
   function formatFieldReportCondition(condition) {
@@ -457,7 +316,6 @@
     updateFrame = 0;
     compatibilityObserver?.disconnect();
     try {
-      syncBonusTarget();
       bindQuestRequirement();
       disableAwardBackdrop();
     } finally {
@@ -491,7 +349,6 @@
       byId("questInfoBar"),
       byId("guesserQuestRequirement"),
       byId("guesserQuestChargeHud"),
-      byId("setterBonusTargetV9"),
       byId("spyChargeAwardBackdrop")
     ]
       .filter(Boolean)

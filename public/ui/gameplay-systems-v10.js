@@ -20,7 +20,6 @@
   let updateFrame = 0;
   let systemsObserver = null;
   let updating = false;
-  let lastBonusMatchKey = "";
   let lastQuestKey = "";
   let lastQuestProgress = null;
   let draftRepairRequested = false;
@@ -321,113 +320,6 @@
     lastQuestProgress = progress;
   }
 
-  function clearSetterDraftDecorations() {
-    const draft = byId("draftSetter");
-    draft?.querySelectorAll(
-      ".setter-cover-bonus-star, .setter-cover-target, .draft-hint-star, " +
-      ".setter-draft-target-letter, .setter-target-corner-letter, [data-cover-bonus-star]"
-    ).forEach(element => {
-      // The persistent blue bonus-star slot inside #setterCoverStars (see
-      // ui/draftrow.js and ui/setter-board.js's ensureCoverStarSlots)
-      // shares this class/attribute with the legacy per-render bonus-
-      // target decorations this sweep actually exists to remove -- skip it
-      // so it isn't torn out of the DOM on every render tick.
-      if (element.closest("#setterCoverStars")) return;
-      element.remove();
-    });
-
-    const row = draft?.__draftRows?.draft || draft?.querySelector(".history-row.setter-draft, .history-row.ghost-secret");
-    row?.querySelectorAll(".history-tile").forEach(tile => {
-      tile.classList.remove(
-        "setter-bonus-target-tile-v10",
-        "is-correct",
-        "draft-tile-hint-slot",
-        "draft-tile-hint-slot-matched",
-        "draft-tile-hint-slot-shake"
-      );
-      tile.removeAttribute("data-bonus-letter");
-      tile.removeAttribute("data-target-letter");
-    });
-  }
-
-  function ensureBonusTarget() {
-    const stage = document.querySelector("#setterScreen .setter-decision-stage");
-    const draftWrap = stage?.querySelector(".draft-row-wrap");
-    if (!stage || !draftWrap) return null;
-    let target = byId("setterBonusTargetV9");
-    if (!target) {
-      target = document.createElement("div");
-      target.id = "setterBonusTargetV9";
-      target.className = "setter-bonus-target-v9 hidden";
-      stage.insertBefore(target, draftWrap);
-    }
-    return target;
-  }
-
-  function updateSetterBonusTarget(state) {
-    // Power Choice mode has its own single canonical renderer for this
-    // element and tile decoration (power-choice-mode.js's
-    // normalizeBonusTarget) -- bail out instead of fighting it for the
-    // same DOM node every render tick.
-    if (document.body.classList.contains("power-choice-mode")) return;
-
-    const target = ensureBonusTarget();
-    if (!target) return;
-    const matchKey = currentMatchKey(state);
-    if (matchKey !== lastBonusMatchKey) {
-      lastBonusMatchKey = matchKey;
-      target.replaceChildren();
-      target.classList.add("hidden");
-      clearSetterDraftDecorations();
-    }
-
-    const charge = state?.powers?.spyCharge;
-    const hint = charge?.hint;
-    const show = window.myRole === "setter" &&
-      charge?.enabled &&
-      state?.phase === "normal" &&
-      state.turn === state.setter &&
-      !!state.pendingGuess &&
-      !state.powers?.freezeActive &&
-      !state.powers?.rouletteSecretActive &&
-      !state.simultaneousAllWrong &&
-      !!hint?.letter &&
-      Number.isInteger(hint.position);
-
-    target.classList.toggle("hidden", !show);
-    clearSetterDraftDecorations();
-    if (!show) {
-      target.replaceChildren();
-      return;
-    }
-
-    const letter = cleanWord(hint.letter).slice(0, 1);
-    const position = hint.position + 1;
-    const positionLabel =
-      ["1st", "2nd", "3rd", "4th", "5th"][hint.position] || `${position}th`;
-    const signature = `${letter}:${hint.position}`;
-    if (
-      target.dataset.signature !== signature ||
-      !target.querySelector(".setter-bonus-position-v10")
-    ) {
-      target.dataset.signature = signature;
-      target.innerHTML =
-        `<span class="setter-bonus-plus-v10" aria-hidden="true">+★</span>` +
-        `<span class="setter-bonus-position-v10"><strong>${letter}</strong> in ${positionLabel}</span>`;
-    }
-    target.setAttribute("aria-label", `Bonus star: ${letter} in ${positionLabel}`);
-    // compact-bonus-hint-v1
-
-    const row = byId("draftSetter")?.__draftRows?.draft ||
-      document.querySelector("#draftSetter .history-row.setter-draft, #draftSetter .history-row.ghost-secret");
-    const tile = row?.__tiles?.[hint.position] || row?.querySelectorAll(".history-tile")?.[hint.position];
-    if (tile) {
-      tile.classList.add("setter-bonus-target-tile-v10");
-      const draft = cleanWord(state.setterDraft);
-      tile.classList.toggle("is-correct", draft.length === 5 && draft[hint.position] === letter);
-    }
-  }
-
   function updateSpyChargeMeter() {
     byId("spyChargeHud")?.classList.add("spy-charge-hud-v10");
     byId("spyChargeMeter")?.classList.add("spy-charge-meter-v10");
@@ -571,7 +463,6 @@
         ensureQuestMeterAction(state);
         ensureQuestCollapsedAction(state);
         updateQuestProgressPraise(state);
-        updateSetterBonusTarget(state);
         repairGuesserDraft(state);
         updateGuide(state);
       }

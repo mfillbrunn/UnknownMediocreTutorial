@@ -1213,15 +1213,7 @@
   white-space: nowrap;
 }
 
-#setterBonusTargetV9:is(.hidden, :empty),
-#setterBonusTargetV9 :is(
-    .setter-bonus-copy-v9,
-    .setter-bonus-boxes-v9,
-    .setter-bonus-box-v9,
-    .setter-bonus-boxes-v10,
-    .setter-bonus-box-v10,
-    .setter-bonus-star-v9
-  ) {
+#setterBonusTargetV9:is(.hidden, :empty) {
   display: none !important;
 }
 
@@ -1298,8 +1290,6 @@
 
 #draftSetter .history-tile:is(
     .draft-tile-hint-slot,
-    .setter-bonus-target-tile-v10,
-    .setter-bonus-target-tile-v2,
     .pc-bonus-hint-tile
   ) {
   position: relative !important;
@@ -1320,9 +1310,6 @@
 }
 
 #draftSetter :is(
-    .setter-target-corner-letter-v2,
-    .setter-target-corner-letter,
-    .setter-target-corner-letter-v10,
     [class*="target-corner-letter"],
     .setter-draft-target-letter,
     [class*="draft-target-letter"],
