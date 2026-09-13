@@ -130,6 +130,7 @@
   let scanTimer = null;
   let tickTimer = null;
   let observer = null;
+  let sweepFrame = 0;
 
   function norm(value) {
     return String(value == null ? "" : value)
@@ -349,6 +350,38 @@
     return out;
   }
 
+  // How a single property name contributes to stateScore, as a bit set:
+  // 1 = counts toward the score, 2 = money, 4 = mulligan, 8 = guess.
+  //
+  // stateScore walks every own key of every candidate object, and the
+  // page-wide observer below drives it thousands of times a session over
+  // the same handful of property names -- norm() (two regex replaces and
+  // a lowercase) plus six regex tests per key was, measured over a
+  // scripted round, the single most expensive thing running on the page.
+  // The classification depends on nothing but the key string, so it is
+  // computed once per distinct name and reused.
+  const KEY_FLAG_CACHE = new Map();
+  const KEY_FLAG_CACHE_LIMIT = 4096;
+
+  function keyFlags(rawKey) {
+    const cached = KEY_FLAG_CACHE.get(rawKey);
+    if (cached !== undefined) return cached;
+
+    const key = norm(rawKey);
+    let flags = 0;
+    if (/money|mulligan|guess|hand|deck|upgrade|reward|quest|difficulty|secret|answer|stage|round|map/.test(key)) flags |= 1;
+    if (/money|cash|balance/.test(key)) flags |= 2;
+    if (/mulligan/.test(key)) flags |= 4;
+    if (/guess|history/.test(key)) flags |= 8;
+
+    // Property names are normally a small fixed set, but nothing stops a
+    // scanned object from carrying generated keys -- cap the cache rather
+    // than let it grow without bound for the life of the tab.
+    if (KEY_FLAG_CACHE.size >= KEY_FLAG_CACHE_LIMIT) KEY_FLAG_CACHE.clear();
+    KEY_FLAG_CACHE.set(rawKey, flags);
+    return flags;
+  }
+
   function stateScore(value) {
     if (!isObject(value)) return -1;
     let score = 0;
@@ -357,11 +390,11 @@
     let hasGuess = false;
     const rawKeys = Object.keys(value);
     for (let index = 0; index < rawKeys.length; index += 1) {
-      const key = norm(rawKeys[index]);
-      if (/money|mulligan|guess|hand|deck|upgrade|reward|quest|difficulty|secret|answer|stage|round|map/.test(key)) score += 1;
-      if (/money|cash|balance/.test(key)) hasMoney = true;
-      if (/mulligan/.test(key)) hasMulligan = true;
-      if (/guess|history/.test(key)) hasGuess = true;
+      const flags = keyFlags(rawKeys[index]);
+      if (flags & 1) score += 1;
+      if (flags & 2) hasMoney = true;
+      if (flags & 4) hasMulligan = true;
+      if (flags & 8) hasGuess = true;
     }
     if (hasMoney) score += 2;
     if (hasMulligan) score += 2;
@@ -2381,18 +2414,31 @@
     }
   }
 
-  function onMutations(records) {
-    for (const record of records) {
-      for (const node of record.addedNodes) {
-        if (!(node instanceof Element)) continue;
-        decorateRewardCards(node);
-        adjustPayoutText(node);
-        adjustChallengeNotice(node);
-      }
-    }
+  // The three passes below take a root and run querySelectorAll on it, so
+  // sweeping `document` already covers every node added in this batch --
+  // and covers it better than a per-node pass did, since querySelectorAll
+  // never matches the root element itself, so an added node that WAS a
+  // reward card was missed by its own pass and only ever picked up by the
+  // document sweep. The per-added-node loop that used to run here was
+  // therefore redundant work on every mutation anywhere in the page.
+  function runSweeps() {
+    sweepFrame = 0;
     decorateRewardCards(document);
     adjustPayoutText(document);
     adjustChallengeNotice(document);
+  }
+
+  // Coalesce to one sweep per frame. This observer sees every DOM change
+  // anywhere on the page -- including a whole multiplayer match, which has
+  // no Cuddle content at all -- and ran three whole-document
+  // querySelectorAll passes for each batch, ~195 times over a single
+  // scripted round. All three passes are idempotent (decorateRewardCards
+  // checks for its own badge; the other two carry WeakSets of nodes they
+  // have already rewritten), so running once per frame instead of once per
+  // batch produces the same DOM one frame later at most.
+  function onMutations() {
+    if (sweepFrame) return;
+    sweepFrame = requestAnimationFrame(runSweeps);
   }
 
   function installObserver() {
