@@ -1767,16 +1767,6 @@ function highlightConstraintToggleBtn(role) {
   );
 }
 
-// spy-charge.js disables the whole charge system for any tutorial state
-// (createSpyChargeState's enabled flag is !state.isTutorial), so this stays
-// hidden throughout every tutorial round -- highlightEl is a no-op on a
-// hidden/disconnected element, which is fine here: the accompanying text is
-// written to stand on its own without a live visual anchor, and this still
-// starts working automatically if that ever changes.
-function highlightSpyChargeMeter() {
-  highlightEl(byId("spyChargeHud"));
-}
-
 function highlightSidebarToggleBtn() {
   highlightEl(byId("setterSidebarToggle"));
 }
@@ -1824,72 +1814,6 @@ function highlightSummaryActions() {
   });
 
   highlightEl(el);
-}
-
-function highlightStoredRoundSecretSegment(
-  roundIndex,
-  segment
-) {
-  [
-    ...document.querySelectorAll(
-      `#roundSummary .stored-round[data-round-index="${roundIndex}"] tbody tr`
-    )
-  ]
-    .slice(
-      segment.startTurn - 1,
-      segment.endTurn
-    )
-    .map(row =>
-      row.querySelector(
-        "td.secret-cell"
-      )
-    )
-    .forEach(highlightEl);
-}
-
-// Collapses a round's per-guess finalSecret list into runs of consecutive
-// guesses that faced the same secret -- e.g. secret X for guesses 1-2,
-// then Y for guess 3 -- so the match summary can narrate exactly when (and
-// to what) the Secretkeeper changed their secret, instead of just listing words.
-function computeSecretSegments(round) {
-  const segments = [];
-
-  (round?.history || []).forEach(
-    (h, i) => {
-      const secret = (
-        h.finalSecret || ""
-      ).toUpperCase();
-
-      const last =
-        segments[segments.length - 1];
-
-      if (last && last.secret === secret) {
-        last.endTurn = i + 1;
-      } else {
-        segments.push({
-          secret,
-          startTurn: i + 1,
-          endTurn: i + 1
-        });
-      }
-    }
-  );
-
-  return segments;
-}
-
-function describeSecretSegment(
-  segment,
-  isFirst
-) {
-  const span =
-    segment.startTurn === segment.endTurn
-      ? `guess ${segment.startTurn}`
-      : `guesses ${segment.startTurn}–${segment.endTurn}`;
-
-  return isFirst
-    ? `The Secretkeeper's secret was "${segment.secret}" for ${span}.`
-    : `Then they switched to "${segment.secret}" for ${span}.`;
 }
 
 window.addEventListener(
