@@ -1,0 +1,227 @@
+/* public/cuddle/cuddle-skill-tree.css
+   Tech-tree / map styling for the Cuddle skill tree overlay. Reuses the
+   shared --cuddle-v8-common/rare/legendary metal tokens from
+   cuddle-economy-rarity-v8.css so a node's ring matches the same
+   bronze/silver/gold language as the in-run reward badges. */
+
+.cuddle-skilltree-modal {
+  width: min(920px, 100%);
+  max-height: calc(100vh - 32px);
+}
+
+.cuddle-skilltree-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 2px 0 22px;
+  color: var(--cuddle-muted);
+  font-size: 0.78rem;
+}
+
+.cuddle-skilltree-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cuddle-skilltree-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.cuddle-skilltree-legend .is-owned-swatch {
+  background: var(--cuddle-v8-legendary, #f5c542);
+  box-shadow: 0 0 6px rgba(245, 197, 66, 0.5);
+}
+
+.cuddle-skilltree-legend .is-locked-swatch {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.cuddle-skilltree-map {
+  position: relative;
+  padding-left: 22px;
+  border-left: 2px dashed rgba(213, 166, 255, 0.28);
+}
+
+.cuddle-skilltree-branch {
+  position: relative;
+  margin-bottom: 26px;
+}
+
+.cuddle-skilltree-branch::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: -22px;
+  width: 16px;
+  height: 2px;
+  background: rgba(213, 166, 255, 0.28);
+}
+
+.cuddle-skilltree-branch-head {
+  margin-bottom: 12px;
+}
+
+.cuddle-skilltree-branch-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  color: var(--cuddle-text);
+  font-size: 1.02rem;
+  font-weight: 800;
+}
+
+.cuddle-skilltree-branch-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(246, 201, 86, 0.5);
+  background: rgba(246, 201, 86, 0.12);
+  color: #f6c956;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cuddle-skilltree-branch-blurb {
+  margin: 3px 0 0;
+  color: var(--cuddle-muted);
+  font-size: 0.76rem;
+}
+
+.cuddle-skilltree-nodes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cuddle-skilltree-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 84px;
+  padding: 8px 4px 6px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  font: inherit;
+  color: var(--cuddle-text);
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.cuddle-skilltree-node:hover,
+.cuddle-skilltree-node.is-selected {
+  background: rgba(213, 166, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.cuddle-skilltree-node-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #241f31;
+  font-size: 1.25rem;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+}
+
+.cuddle-skilltree-node.is-owned .cuddle-skilltree-node-icon {
+  border-color: var(--cuddle-v8-tier-color, var(--cuddle-v8-legendary));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--cuddle-v8-tier-color, var(--cuddle-v8-legendary)) 55%, transparent);
+}
+
+.cuddle-skilltree-node.is-common { --cuddle-v8-tier-color: var(--cuddle-v8-common); }
+.cuddle-skilltree-node.is-rare { --cuddle-v8-tier-color: var(--cuddle-v8-rare); }
+.cuddle-skilltree-node.is-legendary { --cuddle-v8-tier-color: var(--cuddle-v8-legendary); }
+
+.cuddle-skilltree-node:not(.is-owned) {
+  opacity: 0.4;
+  filter: grayscale(0.65);
+}
+
+.cuddle-skilltree-node:not(.is-owned):hover,
+.cuddle-skilltree-node:not(.is-owned).is-selected {
+  opacity: 0.72;
+}
+
+.cuddle-skilltree-node-title {
+  max-width: 100%;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.cuddle-skilltree-detail {
+  position: sticky;
+  bottom: -1px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(213, 166, 255, 0.34);
+  border-radius: 16px;
+  background: #241f31;
+}
+
+.cuddle-skilltree-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.cuddle-skilltree-detail-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #171320;
+  border: 2px solid var(--cuddle-v8-tier-color, var(--cuddle-v8-legendary));
+  font-size: 1.05rem;
+}
+
+.cuddle-skilltree-detail-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.cuddle-skilltree-detail-status {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.cuddle-skilltree-detail-status.is-owned { color: var(--cuddle-v8-legendary, #f5c542); }
+.cuddle-skilltree-detail-status.is-locked { color: var(--cuddle-muted); }
+
+.cuddle-skilltree-detail p {
+  margin: 0;
+  color: var(--cuddle-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.cuddle-skilltree-detail-requires {
+  margin-top: 6px;
+  font-size: 0.74rem;
+  color: var(--cuddle-muted);
+}
+
+@media (max-width: 560px) {
+  .cuddle-skilltree-node { width: 72px; }
+  .cuddle-skilltree-node-icon { width: 40px; height: 40px; font-size: 1.1rem; }
+}
