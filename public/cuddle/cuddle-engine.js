@@ -2592,6 +2592,16 @@
         // Same reasoning as shortHand: a standing pressure for the whole
         // round, not a guess-window mask, so `turns` is ignored here too.
         return `A quest rides on every guess this round. Miss one and lose $${QUEST_TRIAL_PENALTY} from your total.`;
+      case "presetWordsTrial":
+        // Same reasoning as shortHand: setupPresetWordsBoss narrows the
+        // secret to a short list up front and shortens the guess budget by
+        // that list's size -- a standing setup for the whole round, not a
+        // guess-window mask, so `turns` (which describes neither of those
+        // things for this boss) is ignored here too. This case was simply
+        // missing, so every Preset Trial offer fell through to the generic
+        // "lasts for the first N guesses" line above, which describes a
+        // mechanic this boss doesn't have.
+        return "Before this round starts, the secret is narrowed to a short list of candidate words shown on screen -- the real one is among them. Your guess budget is cut by the size of that list.";
       default:
         return `This boss power lasts for the first ${guesses}.`;
     }

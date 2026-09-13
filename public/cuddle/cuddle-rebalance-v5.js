@@ -2267,8 +2267,23 @@
     return Math.max(1, Math.floor(asNumber(reward.maxLevel ?? reward.maxCount ?? reward.max, 1)));
   }
 
+  // Opening Insight and Quick Study directly grant/accelerate hints (an
+  // extra exact-position reveal, and moving the automatic hint schedule
+  // earlier) -- Easy's whole reason to exist (see trainingWheelsFor and
+  // CONFIG.hints above). This pool backstops EVERY reward screen with a
+  // guaranteed "solving aid" if the generated choices don't already
+  // contain one (see repairUpgradeChoices below), so leaving these two in
+  // it for Medium/Hard would keep re-offering free hints through a path
+  // that has nothing to do with the Guesser Hint upgrade's own difficulty
+  // gate in cuddle-coach-expansion.js. Candidate Notebook, Joker Cache and
+  // Reserve Dividend aren't hints (a computed suggestion, cards, a payout
+  // bonus) and stay available on every difficulty.
+  const HINT_SOLVING_REWARD_IDS = new Set([IDS.openingInsight, IDS.quickStudy]);
+
   function availableSolvingRewards(game) {
-    return SOLVING_REWARDS.filter((reward) => upgradeLevel(game, reward.id) < rewardMax(reward));
+    const easy = difficultyName(game) === "easy";
+    return SOLVING_REWARDS.filter((reward) =>
+      (easy || !HINT_SOLVING_REWARD_IDS.has(reward.id)) && upgradeLevel(game, reward.id) < rewardMax(reward));
   }
 
   function availableFunRewards(game) {

@@ -299,7 +299,15 @@
       return { source: "normal", choices: shuffled(game._upgradeCatalog(), game).slice(0, 3) };
     }
     var questBook = window.CuddleQuestBook;
-    var choices = STARTER_REWARD_IDS.map(function rewardForId(id) {
+    // "Margin Note" (openingClue) reveals a letter at the start of every
+    // future stage -- a standing hint. Free hints are Easy's whole reason
+    // to exist (see trainingWheelsFor in cuddle-rebalance-v5.js), so
+    // Medium's Starting Bonus draw excludes it rather than risk handing a
+    // Medium run the same free-hint value Easy is built around.
+    var ids = difficulty === "easy" ? STARTER_REWARD_IDS : STARTER_REWARD_IDS.filter(function notAHint(id) {
+      return id !== "openingClue";
+    });
+    var choices = ids.map(function rewardForId(id) {
       return questBook && typeof questBook.getBossReward === "function" ? questBook.getBossReward(id) : null;
     }).filter(Boolean);
     return { source: "boss", choices: shuffled(choices, game).slice(0, 3) };
