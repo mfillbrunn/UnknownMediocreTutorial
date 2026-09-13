@@ -4,7 +4,6 @@
   const byId = id => document.getElementById(id);
   const toastTimers = new Map();
   let layoutFrame = 0;
-  let bonusFrame = 0;
   let questFrame = 0;
 
   function clamp(value, minimum, maximum) {
@@ -243,141 +242,6 @@
     scheduleQuestCompact();
   }
 
-  function bonusHint(state = window.state) {
-    const charge = state?.powers?.spyCharge;
-    const hint = charge?.hint;
-
-    if (
-      window.myRole !== "setter" ||
-      !charge?.enabled ||
-      !hint?.letter ||
-      !Number.isInteger(hint.position)
-    ) {
-      return null;
-    }
-
-    return {
-      letter: String(hint.letter).toUpperCase(),
-      position: hint.position
-    };
-  }
-
-  function normalizeBonusPanel(state = window.state) {
-    const target = byId("setterBonusTargetV9");
-    const hint = bonusHint(state);
-
-    if (!target || !hint) return;
-
-    const key = `${hint.letter}:${hint.position}`;
-    if (
-      target.dataset.compactBonusV92 === key &&
-      target.querySelector(".setter-bonus-code-v92")
-    ) {
-      return;
-    }
-
-    target.dataset.compactBonusV92 = key;
-
-    const boxes = Array.from({ length: 5 }, (_, index) => {
-      const active = index === hint.position;
-      return `<span class="setter-bonus-box-v9${active ? " is-target" : ""}">${active ? hint.letter : ""}</span>`;
-    }).join("");
-
-    target.innerHTML = `
-      <span class="setter-bonus-code-v92">${hint.letter}${hint.position + 1}</span>
-      <span class="setter-bonus-boxes-v9" aria-hidden="true">${boxes}</span>
-    `;
-
-    target.setAttribute(
-      "aria-label",
-      `Put ${hint.letter} in box ${hint.position + 1} for the bonus star`
-    );
-  }
-
-  function applyBonusTile(state = window.state) {
-    const hint = bonusHint(state);
-    const rows = [...document.querySelectorAll(
-      "#draftSetter .history-row.setter-draft, #draftSetter .history-row.ghost-secret"
-    )].filter(row => row.style.display !== "none");
-
-    document
-      .querySelectorAll("#draftSetter .setter-bonus-tile-v92")
-      .forEach(tile => {
-        tile.classList.remove("setter-bonus-tile-v92");
-        delete tile.dataset.bonusLetterV92;
-      });
-
-    document
-      .querySelectorAll("#draftSetter .history-row.setter-bonus-row-v92")
-      .forEach(row => {
-        row.classList.remove("setter-bonus-row-v92");
-        row.style.removeProperty("--setter-bonus-letter-v92");
-        row.style.removeProperty("--setter-bonus-label-left-v92");
-      });
-
-    /* Remove labels left by an earlier V9.2 prerelease, if present. */
-    document
-      .querySelectorAll("#draftSetter .setter-bonus-corner-v92")
-      .forEach(label => label.remove());
-
-    if (!hint || !rows.length) return;
-
-    const row = rows.at(-1);
-    const tiles = row.__tiles || row.querySelectorAll(":scope > .history-tile");
-    const tile = tiles?.[hint.position];
-    if (!tile) return;
-
-    tile.classList.add("setter-bonus-tile-v92");
-    tile.dataset.bonusLetterV92 = hint.letter;
-
-    /*
-     * Put the large corner letter on the row pseudo-element rather than
-     * inside the tile. That keeps tile.textContent equal to the real draft
-     * letter, which is important for drag/lock input and draft validation.
-     */
-    row.classList.add("setter-bonus-row-v92");
-    row.style.setProperty(
-      "--setter-bonus-letter-v92",
-      `"${hint.letter}"`
-    );
-    row.style.setProperty(
-      "--setter-bonus-label-left-v92",
-      `${tile.offsetLeft + tile.offsetWidth}px`
-    );
-  }
-
-  function updateBonusUI(state = window.state) {
-    // Power Choice mode has its own single canonical renderer for this
-    // element and tile decoration (power-choice-mode.js's
-    // normalizeBonusTarget) -- bail out instead of fighting it for the
-    // same DOM node every render tick.
-    if (document.body.classList.contains("power-choice-mode")) return;
-
-    normalizeBonusPanel(state);
-    applyBonusTile(state);
-  }
-
-  function scheduleBonusUI() {
-    if (bonusFrame) return;
-    bonusFrame = requestAnimationFrame(() => {
-      bonusFrame = 0;
-      updateBonusUI(window.state);
-    });
-  }
-
-  function wrapSpyChargeUpdate() {
-    const original = window.updateSpyChargeUI;
-    if (typeof original !== "function" || original.__v92Wrapped) return;
-
-    const wrapped = function (state, role) {
-      original(state, role);
-      scheduleBonusUI();
-    };
-
-    wrapped.__v92Wrapped = true;
-    window.updateSpyChargeUI = wrapped;
-  }
-
   function readySources(role) {
     const container = byId(role === "setter" ? "setterPowerContainer" : "guesserPowerContainer");
     if (!container) return [];
@@ -451,19 +315,6 @@
   }
 
   function installObservers() {
-    const draftSetter = byId("draftSetter");
-    if (draftSetter && !draftSetter.__v92BonusObserved) {
-      draftSetter.__v92BonusObserved = true;
-      const observer = new MutationObserver(scheduleBonusUI);
-      observer.observe(draftSetter, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-        attributes: true,
-        attributeFilter: ["class", "style"]
-      });
-    }
-
     for (const id of [
       "setterCollapsedActionDock",
       "guesserCollapsedActionDock",
@@ -491,11 +342,9 @@
 
   function init() {
     installImmediateSetterMeter();
-    wrapSpyChargeUpdate();
     observeQuestRequirement();
     installObservers();
     stripNotesCount();
-    scheduleBonusUI();
     scheduleDockLayout();
 
     window.addEventListener("resize", scheduleDockLayout, { passive: true });

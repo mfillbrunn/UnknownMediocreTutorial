@@ -398,9 +398,6 @@
 }
 
 /* Defensive: an older cached DOM instance may still contain this element. */
-#questReward .quest-message-cursor {
-  display: none !important;
-}
 
 #questReward.whoosh .quest-message {
   transform: translateY(-72px) scaleX(.18) scaleY(.72);

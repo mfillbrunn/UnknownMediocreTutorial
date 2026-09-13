@@ -113,63 +113,12 @@
     updateNotesButton(latestState || window.state);
   }
 
-  function ensureBonusTarget() {
-    const stage = document.querySelector("#setterScreen .setter-decision-stage");
-    const draftWrap = stage?.querySelector(".draft-row-wrap");
-    if (!stage || !draftWrap) return null;
-
-    let target = byId("setterBonusTargetV9");
-    if (!target) {
-      target = document.createElement("div");
-      target.id = "setterBonusTargetV9";
-      target.className = "setter-bonus-target-v9 hidden";
-      stage.insertBefore(target, draftWrap);
-    }
-    return target;
-  }
-
-  function renderBonusTarget(state) {
-    const target = ensureBonusTarget();
-    if (!target) return;
-
-    // Power Choice mode has its own single canonical renderer for this
-    // element (power-choice-mode.js's normalizeBonusTarget) -- bail out
-    // instead of fighting it for the same DOM node every render tick.
-    if (document.body.classList.contains("power-choice-mode")) return;
-
-    const charge = state?.powers?.spyCharge;
-    const hint = charge?.hint;
-    const show = window.myRole === "setter" && charge?.enabled && hint?.letter && Number.isInteger(hint.position);
-    target.classList.toggle("hidden", !show);
-
-    if (!show) return;
-
-    const letter = String(hint.letter).toUpperCase().slice(0, 1);
-    const position = hint.position + 1;
-    const positionLabel =
-      ["1st", "2nd", "3rd", "4th", "5th"][hint.position] || `${position}th`;
-    target.innerHTML = `
-      <span class="setter-bonus-plus-v10" aria-hidden="true">+★</span>
-      <span class="setter-bonus-position-v10"><strong>${letter}</strong> in ${positionLabel}</span>
-    `;
-    target.setAttribute("aria-label", `Bonus star: ${letter} in ${positionLabel}`);
-    // compact-bonus-hint-v1
-
-    const action = byId("spyChargeActionBtn");
-    const actionLetter = byId("spyChargeHintLetter");
-    if (action && actionLetter) {
-      actionLetter.textContent = "↺";
-      action.classList.toggle("hint-moved-v9", !action.classList.contains("is-ready"));
-    }
-  }
-
   function wrapSpyChargeUpdate() {
     if (!window.updateSpyChargeUI || window.updateSpyChargeUI.__targetV9) return;
     originalSpyChargeUpdate = window.updateSpyChargeUI;
 
     const wrapped = function (state, role) {
       originalSpyChargeUpdate(state, role);
-      renderBonusTarget(state);
       updateNotesButton(state);
       window.updateCollapsedActionDocks?.();
     };
@@ -180,7 +129,6 @@
   function init() {
     byId("setterNotesIdleOpenBtn")?.classList.add("hidden");
     ensureNotesButton();
-    ensureBonusTarget();
     wrapSpyChargeUpdate();
 
     window.updateSetterIdleExpand = function (state) {
@@ -191,7 +139,6 @@
     };
 
     updateNotesButton(window.state);
-    renderBonusTarget(window.state);
   }
 
   window.updateSetterNotesQuickV9 = updateNotesButton;

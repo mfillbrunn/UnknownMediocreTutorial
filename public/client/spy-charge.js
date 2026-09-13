@@ -347,41 +347,6 @@
     return draft?.getBoundingClientRect?.() || null;
   }
 
-  function waitForLatestReveal(callback) {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const lastTile = document.querySelector(
-          "#setterGuesserSubmitted .history-row-wrap:last-child .history-tile:last-child"
-        );
-
-        if (!lastTile) {
-          setTimeout(callback, 420);
-          return;
-        }
-
-        let done = false;
-        let timer = null;
-
-        const finish = () => {
-          if (done) return;
-          done = true;
-          clearTimeout(timer);
-          lastTile.removeEventListener("animationend", onEnd);
-          callback();
-        };
-
-        const onEnd = event => {
-          if (event.target !== lastTile) return;
-          if (!/flip|reveal|cover/i.test(event.animationName || "")) return;
-          finish();
-        };
-
-        lastTile.addEventListener("animationend", onEnd);
-        timer = setTimeout(finish, 2700);
-      });
-    });
-  }
-
   const deferredHistoryReleases = [];
   let deferredHistoryTimer = null;
   let lastAwardFinishedAt = 0;
@@ -442,7 +407,6 @@
 
     return true;
   };
-
 
   // Full-screen solid backdrop, up for exactly as long as stars are
   // actually flying/landing -- without it the board keeps changing

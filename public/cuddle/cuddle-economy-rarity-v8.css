@@ -1,8 +1,15 @@
 
 :root {
-  --cuddle-v8-common: #d7e0e8;
-  --cuddle-v8-rare: #8fc8ff;
-  --cuddle-v8-legendary: #f2c56d;
+  /* The three reward tiers read as metals on the card: common = bronze,
+     rare = silver, legendary = gold. Lifted well above the true metal
+     hexes (#cd7f32 / #c0c0c0 / #d4af37) so each one still carries on the
+     dark panel behind the cards. */
+  --cuddle-v8-common: #e2a06a;
+  --cuddle-v8-rare: #d5dee8;
+  --cuddle-v8-legendary: #f5c542;
+  --cuddle-v8-common-wash: rgba(226, 160, 106, 0.14);
+  --cuddle-v8-rare-wash: rgba(213, 222, 232, 0.14);
+  --cuddle-v8-legendary-wash: rgba(245, 197, 66, 0.16);
   --cuddle-v8-panel: #2a1e39;
   --cuddle-v8-panel-2: #3a294d;
   --cuddle-v8-ink: #fff7e8;
@@ -28,9 +35,31 @@
   text-transform: uppercase;
 }
 
-.cuddle-v8-common .cuddle-v8-rarity-badge { color: var(--cuddle-v8-common); }
-.cuddle-v8-rare .cuddle-v8-rarity-badge { color: var(--cuddle-v8-rare); }
-.cuddle-v8-legendary .cuddle-v8-rarity-badge { color: var(--cuddle-v8-legendary); }
+.cuddle-v8-common .cuddle-v8-rarity-badge {
+  color: var(--cuddle-v8-common);
+  background: var(--cuddle-v8-common-wash);
+}
+
+.cuddle-v8-rare .cuddle-v8-rarity-badge {
+  color: var(--cuddle-v8-rare);
+  background: var(--cuddle-v8-rare-wash);
+}
+
+.cuddle-v8-legendary .cuddle-v8-rarity-badge {
+  color: var(--cuddle-v8-legendary);
+  background: var(--cuddle-v8-legendary-wash);
+}
+
+/* Tint the card's own edge to match, so the tier reads at a glance from
+   the card outline and not only from the chip. */
+.cuddle-choice.cuddle-v8-rarity,
+.cuddle-shop-item.cuddle-v8-rarity {
+  border-color: color-mix(in srgb, var(--cuddle-v8-tier-color, transparent) 55%, var(--cuddle-border, transparent));
+}
+
+.cuddle-v8-common { --cuddle-v8-tier-color: var(--cuddle-v8-common); }
+.cuddle-v8-rare { --cuddle-v8-tier-color: var(--cuddle-v8-rare); }
+.cuddle-v8-legendary { --cuddle-v8-tier-color: var(--cuddle-v8-legendary); }
 
 .cuddle-v8-pouch-button {
   position: fixed;

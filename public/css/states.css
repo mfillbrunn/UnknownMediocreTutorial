@@ -5,14 +5,14 @@
    turn, so dimming it and setting pointer-events:none would silently
    block real taps from reaching Notes (synthetic .click() calls in tests
    bypass pointer-events, which is why this didn't show up there). */
-#guesserScreen.is-not-your-turn #keyboardGuesser{
+#guesserScreen.is-not-your-turn #keyboardGuesser {
   filter: grayscale(0.9);
   opacity: 0.45;
   pointer-events: none;
 }
 
 #setterScreen.is-your-turn #keyboardSetter,
-#guesserScreen.is-your-turn #keyboardGuesser{
+#guesserScreen.is-your-turn #keyboardGuesser {
   filter: none;
   opacity: 1;
   pointer-events: auto;
@@ -44,12 +44,6 @@
 .theme-setter .key.key-gray:active {
  transform: none;
   box-shadow: none;
-}
-.theme-guesser .history-box,
-.theme-setter .secret-inline {
-  background: transparent;
-  box-shadow: none;
-  border: none;
 }
 
 /* Marks a key present in the guesser's just-submitted guess — a subtle

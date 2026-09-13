@@ -26,21 +26,6 @@ function advancedTutorialShow(text, {
   });
 }
 
-function advancedRemainingVisual() {
-  // The simplified Advanced UI tutorial uses plain text only.
-  return "";
-}
-
-function advancedPanelVisual() {
-  // The simplified Advanced UI tutorial uses plain text only.
-  return "";
-}
-
-function advancedExitVisual() {
-  // The simplified Advanced UI tutorial uses plain text only.
-  return "";
-}
-
 function runAdvancedTutorial(state, role) {
   clearHighlights();
   if (role === "guesser") {

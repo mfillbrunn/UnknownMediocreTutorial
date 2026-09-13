@@ -79,10 +79,6 @@
   gap: var(--sp-14);
 }
 
-#accountScreen .account-actions {
-  margin-top: var(--sp-6);
-}
-
 /* Past games container */
 .past-games {
   width: 100%;

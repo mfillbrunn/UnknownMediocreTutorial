@@ -4,7 +4,7 @@
   const byId = id => document.getElementById(id);
 
   let meterObserver = null;
-  let meterWaitObserver = null;
+  let meterWaitCancel = null;
 
   function screen() {
     return byId("setterScreen");
@@ -55,7 +55,7 @@
 
   function scheduleChargeObserver() {
     observeChargeMeter();
-    if (meterObserver || meterWaitObserver) return;
+    if (meterObserver || meterWaitCancel) return;
 
     // #spyChargeMeter only exists inside #setterScreen, which most of a
     // session never shows at all (the main menu, lobby, tutorials, Cuddle,
@@ -64,19 +64,17 @@
     // -- a call-itself-every-frame loop with no way to ever stop short of
     // the meter actually appearing, so it burned a full animation frame's
     // worth of work 60 times a second for the ENTIRE browser session on
-    // every screen of the site that isn't the Secretkeeper's board. Watch
-    // for the element to be inserted instead: a MutationObserver callback
-    // only runs when the DOM genuinely changes (and coalesces a burst of
-    // changes into one call), and this one disconnects itself the first
-    // time #spyChargeMeter shows up, for good.
-    if (typeof MutationObserver === "undefined" || !document.body) return;
-    meterWaitObserver = new MutationObserver(() => {
-      if (!byId("spyChargeMeter")) return;
-      meterWaitObserver.disconnect();
-      meterWaitObserver = null;
-      observeChargeMeter();
-    });
-    meterWaitObserver.observe(document.body, { childList: true, subtree: true });
+    // every screen of the site that isn't the Secretkeeper's board. Wait
+    // for the element to be inserted instead, through the shared
+    // structural watch in ui/dom-watch.js, which drops the subscription
+    // the first time #spyChargeMeter shows up, for good.
+    meterWaitCancel = window.DomWatch?.whenPresent(
+      () => !!byId("spyChargeMeter"),
+      () => {
+        meterWaitCancel = null;
+        observeChargeMeter();
+      }
+    ) || null;
   }
 
   // The drawer itself -- the button, its state, persistence and the swipe

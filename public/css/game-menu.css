@@ -21,9 +21,6 @@
    don't need anywhere near that much width, and the old cap left a lot
    of empty side padding around them. */
 .rules-center,
-.powers-center,
-.leaderboard-center,
-.my-games-center,
 .friends-center {
   width: min(92vw, 560px);
   padding: clamp(16px, 3vw, 28px);
@@ -47,7 +44,6 @@ body.menu-mode .app-header {
 #showPowersBtn[hidden] {
   display: none !important;
 }
-
 
 /*----LOBBY ----*/
 #lobby.screen.active {
@@ -77,20 +73,6 @@ body.menu-mode .app-header {
   opacity: 0.85;
 }
 
-.waiting-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-10);
-  opacity: 0.8;
-}
-
-.lobby-controls {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-14);
-}
-
 .role-select {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -100,7 +82,6 @@ body.menu-mode .app-header {
 
   align-items: center;
 }
-
 
 .role-card.setter {
   border: 2px solid var(--setter-color);
@@ -118,13 +99,6 @@ body.menu-mode .app-header {
   letter-spacing: 0.6px;
 }
 
-.timer-select {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--sp-10);
-  margin-top: var(--sp-20);
-}
-
 .timer-option {
   position: relative;
   padding: var(--sp-10);
@@ -137,9 +111,6 @@ body.menu-mode .app-header {
 
 /* Unlimited is now the 3rd (odd) item in the grid since Deep was hidden —
    span both columns instead of leaving it stranded alone on its own row. */
-.timer-option-wide {
-  grid-column: 1 / -1;
-}
 
 .timer-option input {
   position: absolute;
@@ -161,7 +132,7 @@ body.menu-mode .app-header {
   opacity: 0.4;
   pointer-events: none;
 }
-.lobby-role-header{
+.lobby-role-header {
    display: flex;
   justify-content: space-between;
   align-items: center;
@@ -439,9 +410,6 @@ body.menu-mode .app-header {
 
 @media (max-width: 720px) {
   .rules-center,
-  .powers-center,
-  .leaderboard-center,
-  .my-games-center,
   .friends-center {
     width: min(96vw, 560px) !important;
     border-radius: 16px !important;
@@ -471,10 +439,7 @@ body.menu-mode .app-header {
     font-size: 13px;
   }
 
-  .dev-tools-icon-btn {
-    top: 6px;
-    right: 6px;
-  }
+  
 }
 
 /* Program title */
@@ -585,11 +550,6 @@ body.menu-mode .app-header {
 .tutorial-menu-btn.primary .tutorial-btn-num {
   background: rgba(0, 0, 0, 0.16);
   color: #111;
-}
-
-.tutorial-btn-label {
-  flex: 1 1 auto;
-  text-align: left;
 }
 
 /* Hidden until client/tutorial-progress.js toggles .tutorial-completed
@@ -719,14 +679,6 @@ body.menu-mode .app-header {
 }
 
 /* Waiting block */
-.waiting-block {
-  margin-top: var(--sp-14);
-  padding: var(--sp-12);
-  border-radius: var(--r-8);
-  background: #1a1b20;
-  border: 1px dashed rgba(255,255,255,0.15);
-  opacity: 0.75;
-}
 
 /* ROLE SELECTION — FILE CARDS */
 
@@ -884,8 +836,6 @@ body.menu-mode .app-header {
   background: #20222a;
 }
 
-
-
 .secondary-btn.small:hover {
   background: #20222a;
 }
@@ -924,10 +874,6 @@ body.menu-mode .app-header {
 
 /* TIMER OPTIONS — BRIEFING CHOICES */
 
-.timer-select {
-  margin-top: var(--sp-22);
-}
-
 .timer-option {
   background: #18191f;
   border: 1px solid #2a2c34;
@@ -945,70 +891,6 @@ body.menu-mode .app-header {
 }
 
 /* RANKED STATUS — FOOTNOTE */
-
-.ranked-status {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  width: 260px;
-  padding: 10px 12px;
-
-  border-radius: var(--r-8);
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.25);
-
-  font-size: var(--fs-14);
-  font-weight: 700;
-  letter-spacing: 0.6px;
-
-  cursor: pointer;
-  user-select: none;
-
-  transition: background 0.15s ease;
-}
-
-#rankedBadge {
-  height: 32px;
-  padding: 0 14px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  cursor: pointer;
-  user-select: none;
-
-  transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    transform 0.15s ease;
-}
-
-#rankedBadge.ranked-on {
-  background: #e6d27a;
-  color: #111;
-  border: 1px solid #f0e3a0;
-}
-
-#rankedBadge.ranked-off {
-  color: #ffffff;
-  border: 1px solid rgba(255,255,255,0.25);
-}
-
-#rankedBadge:not(.readonly):hover {
-  transform: translateY(-1px);
-}
-
-#rankedBadge.readonly {
-  opacity: 0.5;
-  pointer-events: none;
-}
 
 /* ── Power Draft screen ──────────────────────────────────────────────── */
 .draft-panel {
@@ -1359,35 +1241,6 @@ body.menu-mode .app-header {
   border-radius: 999px;
 }
 
-.lobby-actions {
-  grid-column: 1 / -1; /* span full width */
-  grid-row: 2;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-
-  margin-top: 10px;
-  padding: 8px 10px;
-  border-radius: var(--r-10);
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-}
-
-.lobby-actions > * {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.lobby-action-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-
 .lobby-info-btn {
   width: 18px;
   height: 18px;
@@ -1524,9 +1377,6 @@ body.menu-mode .app-header {
 @keyframes pulse_dots {
   0%, 80%, 100% { opacity: 0.3; }
   40% { opacity: 1; }
-}
-.pulse_dots {
-  will-change: opacity;
 }
 
 /* ==========================================================================
@@ -1699,35 +1549,14 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   transform: translateY(0);
 }
 
-#startupScreen .menu-btn.primary,
-#startupScreen .menu-split-btn .menu-btn.primary {
+#startupScreen .menu-btn.primary {
   border-color: rgba(246, 178, 202, 0.45) !important;
   background: rgba(169, 83, 114, 0.64) !important;
   color: #fff !important;
 }
 
-#startupScreen .menu-btn.primary:hover:not(:disabled),
-#startupScreen .menu-split-btn .menu-btn.primary:hover:not(:disabled) {
+#startupScreen .menu-btn.primary:hover:not(:disabled) {
   background: rgba(179, 90, 121, 0.74) !important;
-}
-
-#startupScreen .menu-split-btn {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 46px;
-  gap: 0;
-  width: 100%;
-  overflow: hidden;
-  border-radius: 10px;
-  box-shadow: 0 5px 14px rgba(3, 13, 25, 0.24);
-}
-
-#startupScreen .menu-split-btn .menu-btn {
-  border-radius: 0;
-  box-shadow: none;
-}
-
-#startupScreen .menu-split-btn-main {
-  border-right-width: 0;
 }
 
 #startupScreen #playQuickBtn {
@@ -1749,25 +1578,6 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 /* Thin-stroke bolt matching the app's other inline-SVG icon language
    (e.g. the reward refresh icon) instead of an emoji, which reads as a
    separate colored sticker sitting on top of the button. */
-#startupScreen #playQuickBtn .menu-quick-icon {
-  width: 18px;
-  height: 18px;
-  color: #fff;
-  opacity: 0.92;
-}
-
-#startupScreen .dev-tools-icon-btn {
-  top: -40px;
-  right: 0;
-  width: 32px;
-  height: 32px;
-  border: 1px solid rgba(188, 207, 225, 0.2);
-  border-radius: 9px;
-  background: rgba(9, 31, 52, 0.78);
-  color: rgba(247, 241, 244, 0.84);
-  box-shadow: none;
-  opacity: 0.72;
-}
 
 #startupScreen .notify-badge {
   color: #fff;
@@ -1854,9 +1664,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   gap: 7px !important;
 }
 
-#startupScreen .menu-buttons > .menu-btn,
-#startupScreen .menu-split-btn > #quickPlayBtn,
-#startupScreen .menu-split-btn > #playQuickBtn {
+#startupScreen .menu-buttons > .menu-btn {
   box-sizing: border-box;
   min-height: 54px;
   height: auto !important;
@@ -1870,37 +1678,12 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease !important;
 }
 
-#startupScreen .menu-buttons > .menu-btn,
-#startupScreen .menu-split-btn > #quickPlayBtn {
+#startupScreen .menu-buttons > .menu-btn {
   display: flex !important;
   align-items: center;
   gap: 10px;
   padding: 8px 12px !important;
   text-align: left !important;
-}
-
-#startupScreen .menu-split-btn {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 54px;
-  gap: 6px !important;
-  width: 100%;
-}
-
-#startupScreen .menu-split-btn > #quickPlayBtn {
-  border-radius: 13px 8px 8px 13px !important;
-  background: linear-gradient(145deg, rgba(129, 32, 58, .95), rgba(83, 20, 42, .95)) !important;
-  border-color: rgba(255, 153, 181, .34) !important;
-}
-
-#startupScreen .menu-split-btn > #playQuickBtn {
-  display: grid !important;
-  place-items: center;
-  width: 54px !important;
-  min-width: 54px !important;
-  padding: 0 !important;
-  border-radius: 8px 13px 13px 8px !important;
-  background: linear-gradient(145deg, rgba(118, 28, 53, .96), rgba(72, 18, 38, .96)) !important;
-  border-color: rgba(255, 153, 181, .3) !important;
 }
 
 #startupScreen .menu-action-icon {
@@ -1980,8 +1763,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   height: 14px;
 }
 
-#startupScreen .menu-buttons > .menu-btn:hover:not(:disabled),
-#startupScreen .menu-split-btn > button:hover:not(:disabled) {
+#startupScreen .menu-buttons > .menu-btn:hover:not(:disabled) {
   transform: translateY(-1px) !important;
   border-color: rgba(191, 220, 242, .34) !important;
   box-shadow: 0 10px 24px rgba(2, 11, 20, .28), inset 0 1px rgba(255, 255, 255, .035) !important;
@@ -1992,8 +1774,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   transform: translateX(1px);
 }
 
-#startupScreen .menu-buttons > .menu-btn:active:not(:disabled),
-#startupScreen .menu-split-btn > button:active:not(:disabled) {
+#startupScreen .menu-buttons > .menu-btn:active:not(:disabled) {
   transform: translateY(0) !important;
 }
 
@@ -2019,14 +1800,11 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
     gap: 5px !important;
   }
 
-  #startupScreen .menu-buttons > .menu-btn,
-  #startupScreen .menu-split-btn > #quickPlayBtn,
-  #startupScreen .menu-split-btn > #playQuickBtn {
+  #startupScreen .menu-buttons > .menu-btn {
     min-height: 46px;
   }
 
-  #startupScreen .menu-buttons > .menu-btn,
-  #startupScreen .menu-split-btn > #quickPlayBtn {
+  #startupScreen .menu-buttons > .menu-btn {
     padding-block: 6px !important;
   }
 
@@ -2207,15 +1985,6 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   text-transform: none !important;
 }
 
-.menu-section-label {
-  margin: 7px 2px -2px;
-  color: rgba(224, 235, 246, 0.56);
-  font-size: 10px;
-  font-weight: 850;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
 .play-hub-card,
 .tutorial-hub-card {
   align-items: stretch !important;
@@ -2224,59 +1993,6 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 .play-hub-card > .menu-subtitle,
 .tutorial-hub-card > .menu-subtitle {
   align-self: center;
-}
-
-.play-room-tools {
-  width: 100%;
-  max-width: 430px;
-  align-self: center;
-  border: 1px solid rgba(188, 207, 225, 0.18);
-  border-radius: 14px;
-  background: rgba(23, 51, 79, 0.22);
-  overflow: hidden;
-}
-
-.play-room-tools summary {
-  padding: 12px 14px;
-  color: rgba(238, 245, 251, 0.9);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-}
-
-.play-room-tools[open] summary {
-  border-bottom: 1px solid rgba(188, 207, 225, 0.16);
-}
-
-.play-room-tools > p {
-  margin: 12px 14px 8px;
-  color: rgba(224, 235, 246, 0.62);
-  font-size: 11.5px;
-  line-height: 1.4;
-}
-
-.room-tool-buttons {
-  box-sizing: border-box;
-  padding: 6px 12px 14px;
-}
-
-.room-tool-buttons > .menu-btn {
-  min-height: 42px !important;
-  height: auto !important;
-  padding: 9px 12px !important;
-  border-radius: 11px !important;
-  font-size: 12px !important;
-  letter-spacing: 0.02em !important;
-  text-transform: none !important;
-}
-
-.room-tool-buttons .join-room-row {
-  width: 100%;
-}
-
-.room-tool-buttons .join-room-input {
-  min-width: 0;
 }
 
 .tutorial-hub-buttons .tutorial-menu-btn {
@@ -2294,7 +2010,6 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   color: var(--tile-green);
   font-size: 16px;
 }
-
 
 /* Child screens keep the same card radius, spacing, and button treatment as
    the new hubs, without requiring their existing markup to be rebuilt. */
@@ -2451,9 +2166,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
    11px !important declarations no longer win. */
 .game-menu .screen-back-btn,
 #myGamesScreen .screen-back-btn,
-#friendsScreen .friends-back,
-.game-menu .room-tool-buttons > .menu-btn,
-.game-menu .play-room-tools summary {
+#friendsScreen .friends-back {
   font-size: 14px !important;
 }
 
@@ -2477,10 +2190,6 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 
 .game-menu .tutorial-btn-num {
   font-size: 13px !important;
-}
-
-.game-menu .room-tool-buttons > .menu-btn {
-  font-size: 14px !important;
 }
 
 body.tutorial-reward-choice-guide #tutorialBubble {

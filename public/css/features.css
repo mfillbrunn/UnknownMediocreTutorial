@@ -130,32 +130,7 @@
 .guide-task {
   opacity: 0.92;
 }
-.header-sm-btn {
-  height: 28px;
-  padding: 0 9px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--panel-bg) var(--glass-alpha, 60%), transparent);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid var(--glass-border, rgba(255,255,255,0.15));
-  color: rgba(255,255,255,0.6);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background 0.15s,color 0.15s,border-color 0.15s;
-  flex-shrink: 0;
-}
-.header-sm-btn:hover {
-  background: color-mix(in srgb, var(--panel-bg) var(--glass-alpha-hover, 72%), transparent);
-  color: rgba(255,255,255,0.9);
-}
-.header-sm-btn.active {
-  background: rgba(255,255,255,0.14);
-  border-color: rgba(255,255,255,0.35);
-  color: #fff;
-}
+
 /* Action log and notes */
 .action-log-panel {
   padding: 10px;
@@ -207,19 +182,7 @@
 .log-scroll-anchor {
   height: 4px;
 }
-.notes-panel-title {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.4);
-  margin-bottom: 8px;
-}
-.notes-draft-row {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 10px;
-}
+
 .notes-draft-cell {
   flex: 1;
   aspect-ratio: 1;
@@ -251,11 +214,7 @@
     border-color: rgba(255,255,255,0.2);
   }
 }
-.notes-list {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
+
 .notes-empty {
   font-size: 11px;
   opacity: 0.35;
@@ -478,78 +437,7 @@
   margin: -8px 0 12px;
   letter-spacing: 0.5px;
 }
-.daily-powers-block {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-  max-width: 300px;
-  margin: 0 auto 12px;
-}
-.daily-powers-row {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-.daily-role-label {
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-}
-.daily-role-label.spy {
-  color: var(--setter-color,#f87171);
-}
-.daily-role-label.inspector {
-  color: var(--guesser-color,#60a5fa);
-}
-.daily-role-label.quest {
-  color: #4ade80;
-}
-.daily-powers {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-.daily-power-pill {
-  font-size: 15px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-weight: 700;
-}
-.daily-power-pill.spy {
-  background: rgba(239,68,68,0.12);
-  border: 1px solid rgba(239,68,68,0.3);
-  color: #f87171;
-}
-.daily-power-pill.inspector {
-  background: rgba(59,130,246,0.12);
-  border: 1px solid rgba(59,130,246,0.3);
-  color: #60a5fa;
-}
-.daily-power-pill.quest {
-  background: rgba(22,163,74,0.12);
-  border: 1px solid rgba(22,163,74,0.3);
-  color: #4ade80;
-}
-.daily-pill-info {
-  cursor: pointer;
-  transition: filter 0.15s ease,transform 0.1s ease;
-}
-.daily-pill-info:hover {
-  filter: brightness(1.25);
-}
-.daily-pill-info:active {
-  transform: scale(0.96);
-}
-.daily-pill-info-icon {
-  opacity: 0.55;
-  font-size: 12px;
-}
+
 .daily-ai-label {
   font-size: 16px;
   opacity: 0.6;
@@ -732,44 +620,7 @@
    for every line ("Mode", "Role order", "Your first guess", ...) so the
    pre-start card and the post-completion result card share one visual
    language instead of two parallel styles. */
-.daily-setup-block {
-  width: 100%;
-  max-width: 300px;
-  margin: 0 auto 16px;
-  padding: var(--sp-12) var(--sp-16);
-  background: var(--panel-bg);
-  border-radius: var(--r-10);
-  box-shadow: var(--shadow-inset-soft);
-  text-align: left;
-}
-.daily-setup-title {
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  opacity: 0.5;
-  margin: 14px 0 6px;
-}
-.daily-setup-title:first-child {
-  margin-top: 0;
-}
-.daily-setup-word {
-  font-family: var(--font-mono);
-  font-weight: 800;
-  letter-spacing: 1px;
-}
-.daily-setup-choose {
-  font-style: italic;
-  opacity: 0.6;
-  font-weight: 600;
-}
-.daily-setup-note {
-  font-size: 12px;
-  opacity: 0.55;
-  text-align: center;
-  margin: 10px 0 0;
-  line-height: 1.4;
-}
+
 /* Saved games and friends */
 .my-games-section {
   width: 280px;
@@ -1373,11 +1224,7 @@
   background: none;
   padding: 8px 0;
 }
-.summary-clock-panel--match {
-  width: min(500px, 100%);
-  margin: 15px auto 0;
-  opacity: 1;
-}
+
 .summary-clock-panel {
   margin-block: 8px;
 }
@@ -1411,7 +1258,7 @@
 }
 .summary-clock-player.is-setter { --clock-color: var(--setter-color, #fb7185); }
 .summary-clock-player.is-guesser { --clock-color: var(--guesser-color, #60a5fa); }
-.summary-clock-player.is-self { --clock-color: #74e0a7; }
+
 .summary-clock-player.is-opponent { --clock-color: #8eb8ee; }
 .summary-clock-name {
   grid-area: name;
@@ -1573,10 +1420,7 @@
   line-height: 1.2;
   opacity: 1;
 }
-.stored-round-time {
-  font-weight: 600;
-  opacity: 0.7;
-}
+
 .summary-table-wrap {
   width: min(400px, 100%);
   max-width: 100%;
@@ -1668,9 +1512,6 @@
 .summary-table tr.final-row {
   background: rgba(57, 120, 103, 0.18);
 }
-.summary-powers.compact {
-  justify-content: center;
-}
 
 @media (max-width: 720px) {
   .stored-round-header {
@@ -1760,22 +1601,7 @@
   background: var(--kb-hover);
   transform: translateY(-1px);
 }
-.letter-grid button.picker-green {
-  background: var(--tile-green);
-  color: var(--tile-green-text);
-}
-.letter-grid button.picker-yellow {
-  background: var(--tile-yellow);
-  color: var(--tile-yellow-text);
-}
-.letter-grid button.picker-gray {
-  background: var(--tile-gray);
-  color: var(--tile-gray-text);
-}
-.letter-grid button.picker-blue {
-  background: var(--tile-blue);
-  color: var(--tile-blue-text);
-}
+
 .letter-grid button.selected {
   background: var(--setter-color) !important;
   color: #000 !important;
@@ -1801,109 +1627,11 @@
   flex-direction: column;
   gap: var(--sp-10);
 }
-#accountScreen .account-actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-10);
-  width: 260px;
-}
-.split-btn {
-  display: flex;
-  gap: 2px;
-}
-.split-btn-main {
-  flex: 1;
-}
-.split-btn-quick {
-  flex: 0 0 auto;
-  width: var(--h-control);
-  padding: 0;
-  font-size: var(--fs-18);
-}
+
 .play-menu-buttons {
   width: 280px;
 }
-.join-room-row {
-  display: flex;
-  gap: var(--sp-8);
-  align-items: center;
-}
-.join-room-input {
-  flex: 1;
-  min-width: 0;
-  height: var(--h-control);
-  padding: 0 var(--sp-12);
-  border-radius: var(--r-8);
-  background: #1a1b20;
-  color: var(--text);
-  border: 1px solid #2a2c34;
-  font-size: var(--fs-13);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.join-room-input:focus {
-  outline: none;
-  border-color: var(--role-accent,#60a5fa);
-}
-.join-room-submit-btn {
-  flex: 0 0 auto;
-  width: auto;
-  padding: 0 var(--sp-14);
-}
-.quick-join-circle-btn {
-  flex: 0 0 auto;
-  width: var(--h-control);
-  height: var(--h-control);
-  border-radius: 50%;
-  padding: 0;
-  font-size: var(--fs-16);
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--btn-secondary,#23242b);
-  color: var(--text);
-  border: 1px solid #2a2c34;
-  cursor: pointer;
-  transition: background 0.15s ease,transform 0.15s ease;
-}
-.quick-join-circle-btn:hover {
-  background: var(--btn-secondary-hover);
-  transform: translateY(-1px);
-}
-.quick-join-circle-btn:active {
-  transform: translateY(0) scale(0.95);
-}
-.dev-tools-icon-btn {
-  position: absolute;
-  top: 0;
-  right: 0;
-  flex: 0 0 auto;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  padding: 0;
-  font-size: var(--fs-16);
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--btn-secondary,#23242b);
-  color: var(--text);
-  border: 1px solid #2a2c34;
-  opacity: 0.7;
-  cursor: pointer;
-  transition: background 0.15s ease,opacity 0.15s ease,transform 0.15s ease;
-}
-.dev-tools-icon-btn:hover {
-  background: var(--btn-secondary-hover);
-  opacity: 1;
-  transform: translateY(-1px);
-}
-.dev-tools-icon-btn:active {
-  transform: translateY(0) scale(0.95);
-}
+
 /* Ranked, rules, and developer tools */
 .ranked-waiting-body {
   display: flex;
@@ -2306,35 +2034,7 @@
   opacity: 0.5;
   padding: 20px 0;
 }
-.sim-chart-pair {
-  display: flex;
-  gap: 14px;
-}
-.sim-chart-pair > .sim-chart-single {
-  flex: 1;
-  min-width: 0;
-}
-.sim-chart-title {
-  font-size: 12px;
-  font-weight: 700;
-  text-align: center;
-  opacity: 0.7;
-  margin-bottom: 4px;
-}
-.sim-chart-baseline {
-  font-weight: 400;
-  opacity: 0.7;
-}
-.sim-chart-note {
-  font-size: 11px;
-  text-align: center;
-  opacity: 0.55;
-  margin-bottom: 8px;
-  font-family: var(--font-mono,monospace);
-}
-.sim-chart-svg-wrap {
-  overflow-x: auto;
-}
+
 .sim-bar-fill {
   transition: opacity 0.15s ease;
 }

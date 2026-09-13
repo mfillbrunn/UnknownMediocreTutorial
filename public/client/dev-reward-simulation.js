@@ -329,13 +329,6 @@ function rsBuildChartDataset(rows, roleFilter, tierFilter) {
     .sort((a, b) => (Number.isFinite(b.value) ? b.value : -Infinity) - (Number.isFinite(a.value) ? a.value : -Infinity));
 }
 
-function rsBaselineLabel(rows, role) {
-  const filtered = rows.filter((r) => role === "all" || r.role === role);
-  if (!filtered.length) return "";
-  const avg = filtered.reduce((s, r) => s + Number(r.avgBaseline), 0) / filtered.length;
-  return `baseline ${avg.toFixed(2)} avg guesses`;
-}
-
 function rsRenderTable(container, title, rows, includeRole) {
   const renderer = window.renderSimulationTable;
   if (typeof renderer !== "function") {

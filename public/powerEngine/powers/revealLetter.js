@@ -129,26 +129,6 @@ PowerEngine.register("revealLetter", {
       sendGameAction({ type: "USE_REVEAL_LETTER" });
     };
 
-// Tooltip hooks (variant-aware, with live progress)
-    const showVariantTooltip = () => {
-      const mode = window.state?.powers?.revealLetter?.mode;
-      const meta =
-        window.POWER_METADATA?.revealLetter?.variants?.[mode];
-
-      if (!meta) return;
-
-      const status = window.state ? computeRevealLetterStatus(window.state) : null;
-
-      showTooltip(btn, {
-        title: meta.label,
-        desc: status ? `${meta.desc} ${status.desc}` : meta.desc
-      });
-    };
-
-    btn.addEventListener("mouseenter", showVariantTooltip);
-    btn.addEventListener("focus", showVariantTooltip);
-    btn.addEventListener("mouseleave", hideTooltip);
-    btn.addEventListener("blur", hideTooltip);
   },
 
   uiEffects(state, role) {

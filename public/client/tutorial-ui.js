@@ -746,7 +746,6 @@ function animateTutorialBody() {
     }, 380);
 }
 
-
 function defaultTutorialTitle() {
   const stage = window.state?.tutorialStage;
 
@@ -1333,12 +1332,6 @@ function highlightHistoryGuesser() {
 // See highlightKeyboardGuesser above -- same reasoning, setter side.
 function highlightKeyboardSetter() {}
 
-function highlightSetterHistory() {
-  highlightEl(
-    lastHistoryRow("setterGuesserSubmitted")
-  );
-}
-
 function highlightDraftRow(role) {
   const rows = visibleDraftRows(role);
 
@@ -1681,74 +1674,6 @@ function highlightNotesPanel() {
   );
 }
 
-function highlightNotesDraft() {
-  highlightEl(
-    byId("notesDraftSetter")
-  );
-}
-
-// Notes' own typed-so-far draft (notes.js's private `_draft`) isn't
-// exposed on window -- read it straight from the cell text it already
-// renders into, the same shape tutorialWordKeyEls expects from
-// localGuesserDraft/state.setterDraft elsewhere.
-function notesDraftText() {
-  return [
-    ...document.querySelectorAll(
-      "#notesDraftSetter .notes-draft-cell"
-    )
-  ]
-    .map(cell => cell.textContent || "")
-    .join("");
-}
-
-function highlightNotesList() {
-  highlightEl(
-    byId("notesListSetter")
-  );
-}
-
-// Precise tap target for "tap this specific word in Notes" steps -- the
-// whole list can be far from whatever else a step also highlights (e.g.
-// a remaining-box row), and unioning both into one bounding ring would
-// stretch it across everything in between (see
-// highlightConstraintRowAndToggle's comment for the same lesson).
-function highlightSavedNote(word) {
-  const target = [
-    ...document.querySelectorAll(
-      "#notesListSetter " +
-      ".notes-fillable"
-    )
-  ].find(
-    element =>
-      element.dataset.fill === word
-  );
-
-  target?.scrollIntoView({
-    block: "nearest",
-    behavior: "smooth"
-  });
-
-  highlightEl(
-    target ||
-    byId("notesListSetter")
-  );
-}
-function highlightPowersCol() {
-  highlightEl(
-    byId("guesserPowerContainer")
-  );
-
-  // Same collapse issue as highlightPowerButtonByText -- force the
-  // sidebar open so the ring lands on a real, visible rect.
-  if (window.isSetterSidebarCollapsed?.()) {
-    window.setSetterSidebarCollapsed?.(false);
-  }
-
-  highlightEl(
-    byId("setterPowerContainer")
-  );
-}
-
 function highlightPowerButtonByText(
   label
 ) {
@@ -1779,31 +1704,9 @@ function highlightPowerButtonByText(
     });
 }
 
-// Log entries carry no power-id attribute (see action-log.js), only a
-// `.log-power` class and free text built from formatPowerEvent -- same
-// text-matching approach as highlightPowerButtonByText above.
-function highlightLogEntryByText(text, role) {
-  const containerId =
-    role === "setter" ? "actionLogSetter" : "actionLogGuesser";
-
-  byId(containerId)
-    ?.querySelectorAll(".log-power")
-    .forEach(entry => {
-      if (entry.textContent.includes(text)) {
-        highlightEl(entry);
-      }
-    });
-}
-
 function highlightRoundSummary() {
   highlightEl(
     byId("roundSummary")
-  );
-}
-
-function highlightRoundSummaryNames() {
-  highlightEl(
-    qs("#roundSummary .summary-players")
   );
 }
 
@@ -1832,17 +1735,6 @@ function highlightNextRoundBtn() {
 function highlightMatchScore() {
   highlightEl(
     qs("#roundSummary .match-score-line")
-  );
-}
-
-// Advanced Tutorial's UI-tour steps (round1 of the setter side) -- each
-// targets the live in-game header/sidebar chrome, not the summary screen.
-function highlightHeaderScore(role) {
-  const screenId =
-    role === "setter" ? "setterScreen" : "guesserScreen";
-
-  highlightEl(
-    qs(`#${screenId} .header-role-badge`)
   );
 }
 
@@ -1875,56 +1767,6 @@ function highlightConstraintToggleBtn(role) {
   );
 }
 
-function highlightSetterRemainingBox() {
-  highlightEl(byId("SetterRemainingBox"));
-}
-
-// spy-charge.js disables the whole charge system for any tutorial state
-// (createSpyChargeState's enabled flag is !state.isTutorial), so this stays
-// hidden throughout every tutorial round -- highlightEl is a no-op on a
-// hidden/disconnected element, which is fine here: the accompanying text is
-// written to stand on its own without a live visual anchor, and this still
-// starts working automatically if that ever changes.
-function highlightSpyChargeMeter() {
-  highlightEl(byId("spyChargeHud"));
-}
-
-// Same reasoning as highlightSpyChargeMeter -- the star preview lives right
-// on the setter's own draft row (see draftrow.js), but only ever renders
-// real content when spy charge is enabled, which the tutorial turns off.
-function highlightSetterCoverStars() {
-  highlightEl(byId("setterCoverStars"));
-}
-
-// index: 0 = Keep, 1 = New -- the box has no per-row id, only the
-// repeated .remaining-stat class (see remaining-words.js), so the row is
-// picked out by its fixed rendering position instead.
-function highlightSetterRemainingBoxRow(index) {
-  const box = byId("SetterRemainingBox");
-
-  const row =
-    box?.querySelectorAll(".remaining-stat")[index];
-
-  highlightEl(row || box);
-}
-
-function highlightSetterMustContainBox() {
-  highlightEl(byId("SetterMustContainBox"));
-}
-
-function highlightSetterLog() {
-  highlightEl(byId("actionLogBtnSetter"));
-  highlightEl(byId("actionLogSetter"));
-}
-
-// Just the Log tab button on its own -- used by the "tap the Log tab" step,
-// which wants a tight ring around the one thing it's asking the player to
-// tap rather than the whole panel below it too (same "don't union unrelated
-// targets" reasoning as highlightConstraintRowAndToggle above).
-function highlightLogTabButton() {
-  highlightEl(byId("actionLogBtnSetter"));
-}
-
 function highlightSidebarToggleBtn() {
   highlightEl(byId("setterSidebarToggle"));
 }
@@ -1946,14 +1788,6 @@ function highlightStoredRoundColumn(index, cellClass) {
   }
 
   highlightEl(round || byId("roundSummary"));
-}
-
-function highlightStoredRound(index) {
-  highlightEl(
-    qs(
-      `#roundSummary .stored-round[data-round-index="${index}"]`
-    )
-  );
 }
 
 function highlightSummaryActions() {
@@ -1980,108 +1814,6 @@ function highlightSummaryActions() {
   });
 
   highlightEl(el);
-}
-
-function highlightStoredRoundSecretSegment(
-  roundIndex,
-  segment
-) {
-  [
-    ...document.querySelectorAll(
-      `#roundSummary .stored-round[data-round-index="${roundIndex}"] tbody tr`
-    )
-  ]
-    .slice(
-      segment.startTurn - 1,
-      segment.endTurn
-    )
-    .map(row =>
-      row.querySelector(
-        "td.secret-cell"
-      )
-    )
-    .forEach(highlightEl);
-}
-
-// Collapses a round's per-guess finalSecret list into runs of consecutive
-// guesses that faced the same secret -- e.g. secret X for guesses 1-2,
-// then Y for guess 3 -- so the match summary can narrate exactly when (and
-// to what) the Secretkeeper changed their secret, instead of just listing words.
-function computeSecretSegments(round) {
-  const segments = [];
-
-  (round?.history || []).forEach(
-    (h, i) => {
-      const secret = (
-        h.finalSecret || ""
-      ).toUpperCase();
-
-      const last =
-        segments[segments.length - 1];
-
-      if (last && last.secret === secret) {
-        last.endTurn = i + 1;
-      } else {
-        segments.push({
-          secret,
-          startTurn: i + 1,
-          endTurn: i + 1
-        });
-      }
-    }
-  );
-
-  return segments;
-}
-
-function describeSecretSegment(
-  segment,
-  isFirst
-) {
-  const span =
-    segment.startTurn === segment.endTurn
-      ? `guess ${segment.startTurn}`
-      : `guesses ${segment.startTurn}–${segment.endTurn}`;
-
-  return isFirst
-    ? `The Secretkeeper's secret was "${segment.secret}" for ${span}.`
-    : `Then they switched to "${segment.secret}" for ${span}.`;
-}
-
-function buildMatchSecretNarrationSteps(
-  state
-) {
-  const rounds =
-    state.matchRounds || [];
-
-  const steps = [];
-
-  rounds.forEach(
-    (round, roundIndex) => {
-      const segments =
-        computeSecretSegments(round);
-
-      segments.forEach(
-        (segment, i) => {
-          steps.push({
-            text: `Round ${
-              roundIndex + 1
-            }: ${describeSecretSegment(
-              segment,
-              i === 0
-            )}`,
-            highlight: () =>
-              highlightStoredRoundSecretSegment(
-                roundIndex,
-                segment
-              )
-          });
-        }
-      );
-    }
-  );
-
-  return steps;
 }
 
 window.addEventListener(
@@ -2462,47 +2194,6 @@ function waitForModalDismissed(modalTargetId) {
   updateActionBadge();
 }
 
-function waitForNoteAdded(word) {
-  tutorialWaitingFor = {
-    type: "noteAdded",
-    word: word?.toUpperCase() || ""
-  };
-
-  setContinue({
-    show: true,
-    mode: "hide"
-  });
-
-  updateActionBadge();
-}
-
-function waitForNoteSelected(word) {
-  tutorialWaitingFor = {
-    type: "noteSelected",
-    word: word?.toUpperCase() || ""
-  };
-
-  setContinue({
-    show: true,
-    mode: "hide"
-  });
-
-  updateActionBadge();
-}
-function waitForSidebarToggled() {
-  tutorialWaitingFor = {
-    type: "sidebarToggled",
-    label: "TAP THE PANEL BUTTON"
-  };
-
-  setContinue({
-    show: true,
-    mode: "hide"
-  });
-
-  updateActionBadge();
-}
-
 // "Open that panel" waits, driven by the resulting DOM state rather than
 // by the click that caused it.
 //
@@ -2514,13 +2205,13 @@ function waitForSidebarToggled() {
 // registration order. Watching the class the panel actually ends up with
 // sidesteps all of that, and it also credits the player for opening the
 // panel any other way -- the swipe edge, the keyboard, a docked control.
-let tutorialConditionObserver = null;
+let tutorialConditionUnwatch = null;
 let tutorialConditionTimer = null;
 let tutorialConditionFrame = 0;
 
 function stopTutorialConditionWatch() {
-  tutorialConditionObserver?.disconnect();
-  tutorialConditionObserver = null;
+  tutorialConditionUnwatch?.();
+  tutorialConditionUnwatch = null;
 
   if (tutorialConditionTimer) {
     clearInterval(tutorialConditionTimer);
@@ -2609,14 +2300,13 @@ function waitForCondition(type, test, label, prepare) {
   // already carried out.
   if (checkTutorialConditionWait()) return;
 
-  tutorialConditionObserver = new MutationObserver(
+  // Only observed while a step is actually waiting: ui/dom-watch.js
+  // ref-counts the shared attribute observer and disconnects it again as
+  // soon as this unsubscribes.
+  tutorialConditionUnwatch = window.DomWatch?.onAttribute(
+    ["class", "aria-expanded", "aria-pressed", "hidden"],
     scheduleTutorialConditionCheck
-  );
-  tutorialConditionObserver.observe(document.documentElement, {
-    attributes: true,
-    subtree: true,
-    attributeFilter: ["class", "aria-expanded", "aria-pressed", "hidden"]
-  });
+  ) || null;
 
   // Backstop for any route that changes the panel without touching one of
   // the observed attributes.
@@ -2655,46 +2345,6 @@ function waitForConstraintRowShown() {
     "SHOW THE ROW",
     () => window.setConstraintsHidden?.(true)
   );
-}
-
-function waitForLogTabOpened() {
-  tutorialWaitingFor = {
-    type: "logTabOpened",
-    label: "TAP LOG"
-  };
-
-  setContinue({
-    show: true,
-    mode: "hide"
-  });
-
-  updateActionBadge();
-}
-
-function waitForRejectedSecret() {
-  tutorialWaitingFor = {
-    type: "rejectedSecret"
-  };
-
-  setContinue({
-    show: true,
-    mode: "hide"
-  });
-
-  updateActionBadge();
-}
-
-function waitForDraftCleared() {
-  tutorialWaitingFor = {
-    type: "draftCleared"
-  };
-
-  setContinue({
-    show: true,
-    mode: "hide"
-  });
-
-  updateActionBadge();
 }
 
 // Leaves the room and returns to the menu, exactly like the match
@@ -3231,7 +2881,6 @@ function tutorialSteps(state, role) {
 
   runBasicTutorial(state, role);
 }
-
 
 window.TutorialCore = {
   show: showTutorial,

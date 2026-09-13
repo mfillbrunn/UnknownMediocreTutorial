@@ -84,8 +84,6 @@ function toast(msg) {
   setTimeout(() => t.classList.remove("show"), 1500);
 }
 
-
-
 function shake(element) {
   if (!element) return;
   element.classList.add("shake");
@@ -292,10 +290,6 @@ function exitMenuMode() {
   document.body.classList.remove("menu-mode");
 }
 
-function mySocketId() {
-  return socket?.id || null;
-}
-
 function updateRoleCards() {
   if (!state?.players) return;
 
@@ -479,7 +473,6 @@ onPowerUsed(data => {
     startSecretRoulette(state.powers.rouletteSecretFeasible);
   }
 });
-
 
 // After renderButtons is called:
 if (!PowerEngine._initialized && window.roomId && roleAssigned) {
@@ -851,7 +844,6 @@ onStateUpdate(newState => {
   updateTimerAccess(); 
   updateTimerPresetUI();
   updateWaitingIndicator();
-  updatePowerInfoState(state);
   updateTimerVisibility();
   updateAppHeader(state);
   updateLeaveGameButtons(state);
@@ -2604,7 +2596,6 @@ function submitSetterNew() {
   }
 }
 
-
 // -----------------------------------------------------
 // GUESSER UI
 // -----------------------------------------------------
@@ -2805,8 +2796,6 @@ function updateHostControls() {
   }
 }
 
-
-
 function updateTimerAccess() {
   if (!state) return;
   document
@@ -2822,12 +2811,10 @@ function updateTimerAccess() {
     });
 }
 
-
 // -----------------------------------------------------
 // BUTTONS
 // -----------------------------------------------------
 // Play/Ranked menu wiring lives in client/play-menu.js
-
 
 (function setupGuideToggle() {
   // No on-screen toggle button remains anywhere in the app anymore (see
@@ -3058,7 +3045,6 @@ function updateGuideBanner() {
   });
 })();
 
-
 function isHost() {
   // window.currentUser starts out null and only resolves once Supabase's
   // async getSession() finishes (see auth.js) -- a stateUpdate can arrive
@@ -3115,7 +3101,6 @@ function enableReadyButton(isReady) {
   btn.classList.remove("waiting");
   btn.classList.toggle("lobby-ready-btn", !!isReady);
 }
-
 
 document
   .querySelectorAll('input[name="timePreset"]')
@@ -3332,7 +3317,6 @@ function stopSecretRoulette() {
   }
   rouletteWords = [];
 }
-
 
 function maybeStartRouletteFromState(state) {
   if (
@@ -3576,9 +3560,12 @@ if (window._pendingRoleAssignedRefresh) {
     applyHidden(!document.body.classList.contains("hide-constraints"));
   }, true);
 
-  const observer = new MutationObserver(() => {
+  // Structural, not attribute: the point is to catch .constraint-toggle-btn
+  // elements that a role screen re-render has just inserted and push the
+  // current body class onto them. Rides the shared observer in
+  // ui/dom-watch.js.
+  window.DomWatch.onStructure(() => {
     syncButtons(document.body.classList.contains("hide-constraints"));
   });
-  observer.observe(document.body, { childList: true, subtree: true });
 })();
 /* UMT_REQUESTED_FIXES_20260901: CONSTRAINT TOGGLE END */

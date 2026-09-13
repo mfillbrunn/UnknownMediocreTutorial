@@ -6,7 +6,7 @@
   }
   /* powers-col sits below the board (center-col) now, one flex row that
      wraps -- see layout.css's .play-row/.center-col/.powers-col order. */
-   .keyboard{
+   .keyboard {
    margin-top: var(--sp-2);
    }
    #keyboardSetter, #keyboardGuesser {
@@ -78,16 +78,16 @@
     font-size: 8px;
     text-align: center;
   }
-   .history-tiles{
+   .history-tiles {
       gap: var(--sp-6);
    }
-   .history-row{
+   .history-row {
       min-height:0;
    }
-   .draft-row-wrap{
+   .draft-row-wrap {
       margin-top: var(--sp-2);
    }
-   .center-col .history-tiles{
+   .center-col .history-tiles {
       margin-top: var(--sp-2);
    }
   /* Shares the power-buttons row instead of being forced onto its own
@@ -105,9 +105,7 @@
     font-size: 9px;
     align-self: center;
   }
-  .room-meta {
-    font-size: var(--fs-12);
-  }
+  
      .role-card {
     height: 96px;
   }
@@ -128,13 +126,8 @@
      .history-row.freeze-draft::after {
     animation: none;
   }
-     .pulse_dots {
-    animation-duration: 2.5s;
-  }
-     .pulse_dots::before,
-  .pulse_dots::after {
-    animation: pulse 1.2s infinite;
-  }
+     
+     
    
 }
 /* MOBILE PERFORMANCE FIX V1 START */

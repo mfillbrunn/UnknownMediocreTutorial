@@ -399,20 +399,6 @@ function computeEffectiveness(row) {
   return { value, sem };
 }
 
-// Plain (unflipped) average guesses across the no-power baseline trials,
-// to contextualize the effectiveness scale above — e.g. "+0.4" only means
-// something once you know a typical round takes ~4-5 guesses to begin
-// with. Averaged per-row rather than per-trial: each row already IS an
-// average over its own baseline batch (shared across every power of that
-// role for a "Test All" run, or dedicated for a standalone single-power
-// run), so this is an average of averages, not a mix of different sample
-// sizes double-counting the shared "Test All" baseline.
-function computeBaselineAvg(rows, role) {
-  const filtered = rows.filter(r => role === "all" || r.power_role === role);
-  if (!filtered.length) return null;
-  return filtered.reduce((s, r) => s + Number(r.avg_guesses_without_power), 0) / filtered.length;
-}
-
 // Sorted ascending by effectiveness, per the "sort by guess count" spec —
 // weakest (or backfiring) powers first, strongest last.
 function buildChartDataset(rows, roleFilter) {
@@ -774,13 +760,6 @@ async function loadQuestChartData(forceReload) {
     console.error("Failed to load quest chart data:", err);
     if (wrap) wrap.innerHTML = `<div class="sim-chart-empty">Failed to load table data</div>`;
   }
-}
-
-// Standard error of a Bernoulli proportion (completion rate), as a
-// percentage to match the chart's 0-100 y-axis.
-function completionRateSem(rate, n) {
-  if (!n || rate == null) return 0;
-  return Math.sqrt((rate * (1 - rate)) / n) * 100;
 }
 
 function buildQuestChartDataset(rows) {

@@ -607,24 +607,6 @@ transition:
   padding: 9px;
 }
 
-.tutorial-role-goal {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.tutorial-role-icon {
-  flex: 0 0 34px;
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--tutorial-accent) 15%, transparent);
-  font-size: 19px;
-}
-
-.tutorial-role-goal span:last-child,
 .tutorial-feedback-item span:last-child {
   min-width: 0;
   display: flex;
@@ -632,7 +614,6 @@ transition:
   gap: 2px;
 }
 
-.tutorial-role-goal strong,
 .tutorial-feedback-item strong,
 .tutorial-choice-card strong {
   font-size: 11px;
@@ -640,7 +621,6 @@ transition:
   text-transform: uppercase;
 }
 
-.tutorial-role-goal small,
 .tutorial-feedback-item small,
 .tutorial-choice-card span {
   font-size: 11px;
@@ -700,62 +680,6 @@ transition:
    pill "steps" plus arrows showing the simultaneous opening move followed
    by the guesser/setter back-and-forth, so the alternating structure of a
    round is something the player can look at, not just read about. */
-.tutorial-turn-order {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-}
-
-.tutorial-turn-step {
-  display: inline-flex;
-  align-items: center;
-  padding: 5px 8px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
-.tutorial-turn-step.tutorial-turn-both {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-.tutorial-turn-step.tutorial-turn-guesser {
-  background: rgba(96, 165, 250, 0.15);
-  color: #93c5fd;
-  border: 1px solid rgba(96, 165, 250, 0.4);
-}
-
-.tutorial-turn-step.tutorial-turn-setter {
-  background: rgba(251, 113, 133, 0.15);
-  color: #fda4af;
-  border: 1px solid rgba(251, 113, 133, 0.4);
-}
-
-.tutorial-turn-arrow {
-  color: rgba(255, 255, 255, 0.32);
-  font-size: 12px;
-}
-
-.tutorial-finish-checks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.tutorial-finish-checks span {
-  padding: 5px 7px;
-  border-radius: 999px;
-  background: rgba(74,222,128,0.1);
-  border: 1px solid rgba(74,222,128,0.25);
-  color: #86efac;
-  font-size: 10px;
-  font-weight: 800;
-}
 
 .tutorial-focus-ring {
   border-color: var(--tutorial-accent, #ffd54f);

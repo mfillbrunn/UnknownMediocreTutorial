@@ -101,14 +101,6 @@ textarea {
   display: none !important;
 }
 
-#roomInfo {
-  opacity: 0;
-  transition: opacity 0.25s var(--ease-ui, ease);
-}
-
-#roomInfo:not(.hidden) { opacity: 1; }
-
-
 :where(.theme-setter, .theme-guesser) {
   background: var(--screen-bg, #282c32);
   color: var(--role-accent);
@@ -133,7 +125,6 @@ body::before {
   mix-blend-mode: overlay;
   opacity: 0.6;
 }
-
 
 .title::before {
   content: "▌";
