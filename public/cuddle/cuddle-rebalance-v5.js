@@ -1217,6 +1217,24 @@
     return CHALLENGES.find((challenge) => challenge.id === id) || CHALLENGES[0];
   }
 
+  // How many of a challenge's designed guesses actually carry its extra
+  // difficulty this run: 1 before the first boss, 2 between the first and
+  // second, 3 from the second boss on. A challenge whose own masks/vowel
+  // budget already run shorter than the cap is unaffected -- this only
+  // ever shortens, never lengthens, a challenge's designed effect.
+  function challengeTurnCap(game) {
+    const state = stateOf(game);
+    const cleared = state && Array.isArray(state.bossGatesDone) ? state.bossGatesDone.length : 0;
+    return clamp(cleared + 1, 1, 3);
+  }
+
+  function describeCappedChallenge(challenge, cap) {
+    const note = cap === 1
+      ? "This early in the run, it only affects your first guess."
+      : `This early in the run, it only affects your first ${cap} guesses.`;
+    return `${challenge.description} ${note}`;
+  }
+
   function clearNativeChallengeOffer(game) {
     const mode = moneyState(game);
     if (!mode) return;
@@ -1238,8 +1256,18 @@
     if (!variant) return;
     if (variant.kind === "mandatoryChallenge") {
       const challenge = challengeById(variant.challengeId);
+      const cap = challengeTurnCap(game);
+      const masks = Array.isArray(challenge.masks) ? challenge.masks.slice(0, cap) : challenge.masks;
+      const vowelBudget = challenge.vowelBudget
+        ? { ...challenge.vowelBudget, guesses: Math.min(challenge.vowelBudget.guesses, cap) }
+        : challenge.vowelBudget;
+      const capped = (Array.isArray(challenge.masks) && masks.length < challenge.masks.length)
+        || (challenge.vowelBudget && vowelBudget.guesses < challenge.vowelBudget.guesses);
       custom.activeChallenge = {
         ...challenge,
+        masks,
+        vowelBudget,
+        description: capped ? describeCappedChallenge(challenge, cap) : challenge.description,
         nodeId: variant.nodeId,
         roundToken: roundToken(game),
         paid: false,
