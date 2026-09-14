@@ -14,7 +14,7 @@
   <!-- 4. Reusable UI components -->
   <link rel="stylesheet" href="css/components.css?letter-scan-hits=1&responsive-keys=1&secret-themes=3&power-popup-icon=1">
   <!-- 5. Wordle board / history system -->
-  <link rel="stylesheet" href="css/history.css?feedback-lie=1">
+  <link rel="stylesheet" href="css/history.css?feedback-lie=1&tile-marks=1">
   <!-- 6. Game & UI states -->
   <link rel="stylesheet" href="css/states.css">
   <!-- 7. Animations (keyframes) -->
@@ -1529,20 +1529,22 @@
                   <div id="guesserPowerContainer" class="power-container laser-scope guesser-power-view">
                   </div>
                   <section class="guesser-info-col">
-                    <!-- Drag a swatch onto a keyboard letter to mark it that
-                         colour yourself (client/key-color-picker.js). A
-                         planning note only: real feedback always wins. -->
+                    <!-- Drag a swatch onto a keyboard letter, or onto a tile
+                         in your feedback list, to mark it that colour
+                         yourself (client/key-color-picker.js). A planning
+                         note only: on the keyboard real feedback always
+                         wins, and every mark clears at the round. -->
                     <div
                       id="keyColorPalette"
                       class="key-color-palette"
                       role="group"
-                      aria-label="Letter colour marker: drag a colour onto a keyboard letter"
+                      aria-label="Colour marker: drag a colour onto a keyboard letter or a feedback tile"
                     >
-                      <button type="button" class="key-color-swatch key-color-swatch-green" data-color="green" title="Mark a letter green (right spot)" aria-label="Mark a letter green"></button>
-                      <button type="button" class="key-color-swatch key-color-swatch-yellow" data-color="yellow" title="Mark a letter yellow (in the word, wrong spot)" aria-label="Mark a letter yellow"></button>
-                      <button type="button" class="key-color-swatch key-color-swatch-dark" data-color="gray" title="Mark a letter dark (not in the word)" aria-label="Mark a letter dark"></button>
-                      <button type="button" class="key-color-swatch key-color-swatch-unknown" data-color="unknown" title="Mark a letter unknown" aria-label="Mark a letter unknown">?</button>
-                      <button type="button" class="key-color-swatch key-color-swatch-clear" data-color="" title="Clear your mark from a letter" aria-label="Clear your mark from a letter"></button>
+                      <button type="button" class="key-color-swatch key-color-swatch-green" data-color="green" title="Mark a letter or tile green (right spot)" aria-label="Mark a letter or tile green"></button>
+                      <button type="button" class="key-color-swatch key-color-swatch-yellow" data-color="yellow" title="Mark a letter or tile yellow (in the word, wrong spot)" aria-label="Mark a letter or tile yellow"></button>
+                      <button type="button" class="key-color-swatch key-color-swatch-dark" data-color="gray" title="Mark a letter or tile dark (not in the word)" aria-label="Mark a letter or tile dark"></button>
+                      <button type="button" class="key-color-swatch key-color-swatch-unknown" data-color="unknown" title="Mark a letter or tile unknown" aria-label="Mark a letter or tile unknown">?</button>
+                      <button type="button" class="key-color-swatch key-color-swatch-clear" data-color="" title="Clear your mark from a letter or tile" aria-label="Clear your mark from a letter or tile"></button>
                     </div>
                     <div
                       id="actionLogGuesser"
@@ -1781,7 +1783,7 @@
   <script src="ui/constraints.js"></script>
   <script src="ui/draftrow.js?gameplay-polish=8&star-bonus-fix=1&stars-above-rows=1&cute-star=1&star-glow-headroom=1"></script>
   <script src="ui/keyboard.js?setter-fixes=2&letter-scan-hits=1"></script>
-  <script src="ui/history.js?setter-fixes=2&feedback-lie=1&history-scroll-input-fix=1&history-resize-clamp-fix=1"></script>
+  <script src="ui/history.js?setter-fixes=2&feedback-lie=1&history-scroll-input-fix=1&history-resize-clamp-fix=1&tile-marks=1"></script>
   <script src="ui/timers.js?mobile-perf=1"></script>
   <script src="ui/colorPicker.js"></script>
   
@@ -1863,7 +1865,7 @@
   <script src="ui/guesser-sidebar.js"></script>
   <script src="client/notes.js"></script>
   <script src="client/drag-mode.js"></script>
-  <script src="client/key-color-picker.js"></script>
+  <script src="client/key-color-picker.js?tile-marks=1"></script>
   <script src="client/friends.js?umt-streamlined=1.0.2&guest-play=1"></script>
   <script src="client/daily-challenge.js?v=daily-playmode-1&daily-difficulty-picker=1&daily-error-state=1&daily-abandoned-actions=1&daily-rank-fallback=1&daily-no-spoilers=1&untimed-no-clock=1"></script>
   <script src="single-player/single-player.js?umt-fix=20260830-1&umt-streamlined=1.0.2"></script>

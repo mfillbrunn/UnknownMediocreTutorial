@@ -94,6 +94,12 @@ function buildHistoryRenderState(state, role) {
   // guesser's diff on whichever call ran second that tick.
   if (role === "guesser" && state.powers?.blindGuessActive) return [];
   const isSetter = role === "setter";
+  // The guesser's own tile marks (client/key-color-picker.js) are scoped
+  // to a round, and this render runs before the keyboard's on a guesser
+  // update -- so ask for the round check here too rather than painting one
+  // frame of last round's marks onto this round's rows. It is a no-op
+  // unless the round actually changed.
+  if (!isSetter) window.resetManualKeyColorsForRound?.(state);
   const bsIdx   = state?.powers?.blindSpotIndex;
   const bsRound = state?.powers?.blindSpotRoundIndex;
   const history = state?.history || [];
@@ -133,6 +139,24 @@ function buildHistoryRenderState(state, role) {
     // adds the row note that makes the deception legible instead of
     // reading as a genuine result.
     const feedbackLieInfo = !!safeEntry.feedbackLieApplied;
+
+    // The guesser's own reading of a tile, dropped on from the palette
+    // (client/key-color-picker.js). Applied last, after every real-feedback
+    // branch above including Count Only's per-tile "?" corner: the mark
+    // REPLACES the tile's class rather than layering over it, so a row the
+    // player has already made their mind up about doesn't keep asking the
+    // question underneath their answer. Folding it into classKey (rather
+    // than patching the DOM separately) is what lets rowsEqual see a mark
+    // change as a change and re-render the row for it.
+    if (!isSetter) {
+      for (let i = 0; i < tiles.length; i++) {
+        const manual = window.getManualTileColor?.(entry.__historyKey, i);
+        const manualClass = manual
+          ? window.manualTileColorClass?.(manual)
+          : null;
+        if (manualClass) tiles[i].classKey = manualClass;
+      }
+    }
 
     rows.push({
       key: entry.__historyKey,

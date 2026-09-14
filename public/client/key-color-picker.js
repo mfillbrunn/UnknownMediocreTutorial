@@ -1,4 +1,5 @@
-// client/key-color-picker.js — Guesser-only keyboard key colouring.
+// client/key-color-picker.js — Guesser-only keyboard and feedback-tile
+// colouring.
 //
 // A small palette sits above the action log in the Guesser's side column
 // (see index.html): green / yellow / dark / "?" / clear. Drag one onto a
@@ -8,6 +9,17 @@
 // instead, so the next letter tapped takes that colour; that's the same
 // gesture for people who can't comfortably drag, and it's how it works
 // with a keyboard too.
+//
+// The same palette, the same two gestures and the same storage also mark
+// individual tiles in the Guesser's own feedback list. The keyboard says
+// what a LETTER is worth anywhere in the word; a feedback tile says what
+// it was worth in that one position, which is exactly the read a masked
+// row (Count Only's tally, a Feedback Lie, Delayed Intel, a Dead Zone
+// tile) leaves the player to work out for themselves. Keyboard marks are
+// keyed by letter, tile marks by row + position, but everything else --
+// the palette, the drag, the armed-swatch tap, the per-round reset, the
+// pencil that keeps a mark from being mistaken for real feedback -- is
+// deliberately shared rather than reimplemented per surface.
 //
 // This replaced a hold-the-key long-press that opened a popup. The keys
 // already own pointerdown for Drag Mode (dragging a letter onto a draft
@@ -38,7 +50,24 @@
     unknown: "key-manual-unknown"
   };
 
+  // The feedback-tile equivalent. A marked tile is rendered entirely from
+  // this (ui/history.js swaps the whole class string, rather than layering
+  // a mark over the real result) so that a mark always looks the same
+  // wherever it lands -- over a plain colour, over Count Only's "?" corner,
+  // over a composite Fake Feedback tile -- instead of inheriting whatever
+  // the underlying tile happened to be. tile-manual is what carries the
+  // pencil that keeps it distinguishable from real feedback.
+  const MANUAL_TILE_CLASSES = {
+    green: "history-tile tile-green tile-manual",
+    yellow: "history-tile tile-yellow tile-manual",
+    gray: "history-tile tile-gray tile-manual",
+    unknown: "history-tile tile-manual tile-manual-unknown"
+  };
+
   let manualColors = {};
+  // Keyed `${rowKey}|${tileIndex}` -- rowKey being the same stable key
+  // ui/history.js diffs rows by (.history-row-wrap's data-key).
+  let manualTileColors = {};
   let lastRoundKey = null;
 
   // Swatch armed by a tap, applied to the next letter tapped.
@@ -51,20 +80,27 @@
   let startX = 0;
   let startY = 0;
   let dragEl = null;
-  let hoverKey = null;
+  // The key OR feedback tile currently under a dragged swatch.
+  let hoverEl = null;
   let suppressNextClick = false;
 
   function roundKeyFor(state) {
     return `${window.roomId || ""}|${state?.roundIndex ?? 0}`;
   }
 
-  // Called every render (see ui/keyboard.js) -- cheap no-op unless the
-  // room or round actually changed since the last call.
+  // Called every render (see ui/keyboard.js and ui/history.js) -- cheap
+  // no-op unless the room or round actually changed since the last call.
+  // Tile marks HAVE to go when the round does: the server clears
+  // state.history at every round boundary (utils/resetRoundState.js) and
+  // the row keys start again from h-0, so a mark left behind would
+  // reappear on an unrelated row of the next round rather than simply
+  // going stale.
   window.resetManualKeyColorsForRound = function (state) {
     const key = roundKeyFor(state);
     if (key === lastRoundKey) return;
     lastRoundKey = key;
     manualColors = {};
+    manualTileColors = {};
     disarm();
   };
 
@@ -74,6 +110,18 @@
 
   window.manualKeyColorClass = function (color) {
     return MANUAL_CLASSES[color] || null;
+  };
+
+  function tileMarkKey(rowKey, index) {
+    return `${rowKey}|${index}`;
+  }
+
+  window.getManualTileColor = function (rowKey, index) {
+    return manualTileColors[tileMarkKey(rowKey, index)] || null;
+  };
+
+  window.manualTileColorClass = function (color) {
+    return MANUAL_TILE_CLASSES[color] || null;
   };
 
   // Real feedback overrides a stale manual guess the instant it exists --
@@ -87,20 +135,47 @@
     return document.getElementById("keyColorPalette");
   }
 
-  // Only the Guesser's own keyboard, and only real letters -- ⌫/ENTER have
-  // no colour to carry.
-  function letterKeyAt(x, y) {
-    const under = document.elementFromPoint(x, y);
-    const keyEl = under?.closest?.("#keyboardGuesser .key");
-    if (!keyEl) return null;
-    return /^[A-Z]$/.test(keyEl.dataset.key || "") ? keyEl : null;
+  // Describes one tile in the Guesser's feedback list by the row it
+  // belongs to and its position in that row, or null for anything that
+  // isn't one. Scoped to #historyGuesser on purpose: the constraint row
+  // and the in-progress draft row are built from the same .history-tile
+  // markup but live outside this list, and neither is a result to have a
+  // reading of.
+  function tileTargetFrom(tileEl) {
+    if (!tileEl) return null;
+    const rowKey = tileEl.closest(".history-row-wrap")?.dataset.key;
+    if (!rowKey) return null;
+    const siblings = tileEl.parentElement
+      ? [...tileEl.parentElement.querySelectorAll(":scope > .history-tile")]
+      : [];
+    const index = siblings.indexOf(tileEl);
+    if (index < 0) return null;
+    return { kind: "tile", el: tileEl, rowKey, index };
   }
 
-  function setHoverKey(keyEl) {
-    if (keyEl === hoverKey) return;
-    hoverKey?.classList.remove("key-color-drop-target");
-    hoverKey = keyEl || null;
-    hoverKey?.classList.add("key-color-drop-target");
+  // What, if anything, a colour dropped at this point would land on.
+  // Only the Guesser's own keyboard and their own feedback list; on the
+  // keyboard only real letters, since ⌫/ENTER have no colour to carry.
+  function dropTargetAt(x, y) {
+    const under = document.elementFromPoint(x, y);
+    if (!under?.closest) return null;
+
+    const keyEl = under.closest("#keyboardGuesser .key");
+    if (keyEl) {
+      return /^[A-Z]$/.test(keyEl.dataset.key || "")
+        ? { kind: "key", el: keyEl, letter: keyEl.dataset.key }
+        : null;
+    }
+
+    return tileTargetFrom(under.closest("#historyGuesser .history-tile"));
+  }
+
+  function setHoverTarget(target) {
+    const el = target?.el || null;
+    if (el === hoverEl) return;
+    hoverEl?.classList.remove("key-color-drop-target");
+    hoverEl = el;
+    hoverEl?.classList.add("key-color-drop-target");
   }
 
   function disarm() {
@@ -149,10 +224,31 @@
     return true;
   }
 
+  // Tiles have no equivalent of letterIsResolved. A key's real status can
+  // still arrive and overrule a mark on the next render, which is the only
+  // reason marking a resolved letter is refused there; a submitted row's
+  // feedback never changes again, so a mark on it is simply the player's
+  // own note about a result they already have -- nothing to race, nothing
+  // to refuse.
+  function applyTileColor(target, color) {
+    const key = tileMarkKey(target.rowKey, target.index);
+    if (color) manualTileColors[key] = color;
+    else delete manualTileColors[key];
+    window.updateUI?.();
+    return true;
+  }
+
+  function applyToTarget(target, color) {
+    if (!target) return false;
+    return target.kind === "tile"
+      ? applyTileColor(target, color)
+      : applyColor(target.letter, color, target.el);
+  }
+
   function cleanupDrag() {
     dragEl?.remove();
     dragEl = null;
-    setHoverKey(null);
+    setHoverTarget(null);
     pendingColor = null;
     pendingSwatch?.classList.remove("is-dragging");
     pendingSwatch = null;
@@ -181,16 +277,16 @@
 
     dragEl.style.left = `${event.clientX}px`;
     dragEl.style.top = `${event.clientY}px`;
-    setHoverKey(letterKeyAt(event.clientX, event.clientY));
+    setHoverTarget(dropTargetAt(event.clientX, event.clientY));
   }
 
   function onPointerUp(event) {
-    const dropKey = dragEl ? letterKeyAt(event.clientX, event.clientY) : null;
+    const target = dragEl ? dropTargetAt(event.clientX, event.clientY) : null;
     const color = pendingColor;
     cleanupDrag();
 
-    if (!dropKey) return;
-    applyColor(dropKey.dataset.key, color, dropKey);
+    if (!target) return;
+    applyToTarget(target, color);
     // A completed drag stands on its own -- don't leave a swatch armed
     // behind it and surprise the next letter tapped.
     disarm();
@@ -233,12 +329,33 @@
     });
 
     // Clicking away puts an armed swatch down again, so the mode can never
-    // sit there unnoticed and eat a later keystroke.
+    // sit there unnoticed and eat a later keystroke. Both surfaces a mark
+    // can land on are exempt -- pointerdown runs before the click that
+    // actually applies the mark, so disarming here would take the armed
+    // colour away a moment before the tap could use it.
     document.addEventListener("pointerdown", event => {
       if (!armedColor) return;
       if (event.target.closest("#keyColorPalette")) return;
       if (event.target.closest("#keyboardGuesser .key")) return;
+      if (event.target.closest("#historyGuesser .history-tile")) return;
       disarm();
+    });
+
+    // The feedback tiles' half of the armed-swatch gesture. The keyboard's
+    // half lives in ui/keyboard.js's own click handler instead (see
+    // consumeArmedKeyColor below), because there a tap has a second
+    // meaning -- typing the letter -- that has to be suppressed when the
+    // mark claims it. A tile has no competing meaning, so it is handled
+    // here and the renderer stays out of the input path entirely.
+    document.addEventListener("click", event => {
+      if (!armedSwatch) return;
+      const target = tileTargetFrom(
+        event.target.closest?.("#historyGuesser .history-tile")
+      );
+      if (!target) return;
+      const color = armedColor;
+      disarm();
+      applyTileColor(target, color);
     });
 
     document.addEventListener("keydown", event => {

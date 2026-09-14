@@ -728,6 +728,63 @@ body.hide-constraints .constraint-row {
 .tile-blue   { background: var(--tile-blue)  !important; color: var(--tile-blue-text) !important; }
 .tile-purple {  background: var(--tile-purple) !important;  color: var(--tile-purple-text) !important;}
 
+/* --- Guesser's own mark on a feedback tile (client/key-color-picker.js)
+   The exact counterpart of .key.key-manual on the keyboard, and
+   deliberately the same pencil: a mark is the player's private reading of
+   a tile, not a result, and the two must never be confusable. It reuses
+   the real .tile-green/.tile-yellow/.tile-gray fills for the same reason
+   the keyboard does -- "that tile should be that colour" is the whole
+   point of making the mark, so the colour has to match what real feedback
+   would have looked like.
+
+   ::after is free here: the marked class string replaces the tile's own
+   (see buildHistoryRenderState), so powers.css's .tile-guesser-hidden "?"
+   corner is never on the same element as this. */
+.history-tile.tile-manual {
+  position: relative;
+}
+
+.history-tile.tile-manual::after {
+  content: "✎";
+  position: absolute;
+  inset: auto;
+  top: 1px;
+  right: 2px;
+
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+  background: none;
+  animation: none;
+  opacity: 1;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* "?" -- the player's own "I still can't call this one". The only mark
+   with no real-feedback colour behind it, so the glyph IS the mark and it
+   replaces the pencil rather than crowding the same corner. */
+.history-tile.tile-manual-unknown {
+  background: var(--kb-neutral) !important;
+  color: var(--tile-gray-text) !important;
+}
+
+.history-tile.tile-manual-unknown::after {
+  content: "?";
+  font-size: 10px;
+  font-weight: 800;
+  right: 3px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Tile currently under a dragged swatch -- same readout as the keyboard's
+   .key.key-color-drop-target. */
+.history-tile.key-color-drop-target {
+  box-shadow: 0 0 0 2px #fff, 0 0 10px rgba(255, 255, 255, 0.5) !important;
+}
+
 .draft-row .history-tile { animation: draft-pop 120ms ease-out; }
 
 .draft-layer {
