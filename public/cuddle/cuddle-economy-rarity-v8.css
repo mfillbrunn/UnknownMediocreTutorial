@@ -19,37 +19,59 @@
   position: relative;
 }
 
-/* A small metallic swatch, not a text pill -- the tier reads from the
-   color and shine alone (see decorateRewardCards in the .js: the badge
-   carries role="img" + aria-label instead of visible text). The
-   radial gradient plus the dark rim is what makes "bronze" vs "silver"
-   vs "gold" legible as metal rather than as three similar dots. */
+/* A named metal pill pinned to the card's top-right corner -- the tier
+   name is spelled out now, not just implied by a color dot, so it reads
+   at a glance instead of needing a hover/aria-label to confirm it. The
+   linear sheen plus the dark rim is what makes "bronze" vs "silver" vs
+   "gold" legible as metal rather than as three similar-brightness pills. */
 .cuddle-v8-rarity-badge {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  margin: 0 0 .4rem;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px 3px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  color: #241708;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.cuddle-v8-rarity-badge::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
   border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.4);
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
 }
 
 .cuddle-v8-common .cuddle-v8-rarity-badge {
-  background: radial-gradient(circle at 32% 28%, #f7d3ab 0%, var(--cuddle-v8-common) 55%, #8a5a34 100%);
-  box-shadow: 0 0 6px var(--cuddle-v8-common-wash);
+  background: linear-gradient(155deg, #f7d3ab 0%, var(--cuddle-v8-common) 45%, #9a6538 100%);
+  box-shadow: 0 3px 10px var(--cuddle-v8-common-wash), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .cuddle-v8-rare .cuddle-v8-rarity-badge {
-  background: radial-gradient(circle at 32% 28%, #ffffff 0%, var(--cuddle-v8-rare) 55%, #97a4b0 100%);
-  box-shadow: 0 0 6px var(--cuddle-v8-rare-wash);
+  background: linear-gradient(155deg, #ffffff 0%, var(--cuddle-v8-rare) 45%, #9aa7b3 100%);
+  box-shadow: 0 3px 10px var(--cuddle-v8-rare-wash), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .cuddle-v8-legendary .cuddle-v8-rarity-badge {
-  background: radial-gradient(circle at 32% 28%, #fff2c4 0%, var(--cuddle-v8-legendary) 55%, #b8860b 100%);
-  box-shadow: 0 0 6px var(--cuddle-v8-legendary-wash);
+  background: linear-gradient(155deg, #fff2c4 0%, var(--cuddle-v8-legendary) 45%, #c08f18 100%);
+  box-shadow: 0 3px 10px var(--cuddle-v8-legendary-wash), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 /* Tint the card's own edge to match, so the tier reads at a glance from
-   the card outline and not only from the chip. */
+   the card outline and not only from the badge. */
 .cuddle-choice.cuddle-v8-rarity,
 .cuddle-shop-item.cuddle-v8-rarity {
   border-color: color-mix(in srgb, var(--cuddle-v8-tier-color, transparent) 55%, var(--cuddle-border, transparent));

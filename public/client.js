@@ -2533,7 +2533,7 @@ function reportSetterSecretRejection(result) {
       ? explainSecretInconsistency(state.history, state.extraConstraints, w)
       : [];
     window.showBigAnnounce?.({
-      icon: "🚫",
+      icon: '<svg class="clue-conflict-icon" viewBox="0 0 120 120" aria-hidden="true"><use href="#icon-clue-conflict"></use></svg>',
       title: "Not consistent with prior feedback",
       sub: reasons.length ? reasons.slice(0, 2) : ["Doesn't match the clues given so far."],
       roleClass: "role-setter",

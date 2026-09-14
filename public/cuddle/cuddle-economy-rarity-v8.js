@@ -2413,7 +2413,7 @@
   function decorateRewardCards(root = document) {
     const elements = root.querySelectorAll?.(REWARD_CARD_SELECTOR) || [];
     for (const element of elements) {
-      const { title, tier } = tierForCard(element);
+      const { tier } = tierForCard(element);
       const metal = TIER_METAL[tier];
 
       // Cards are recycled across a reward refresh and between rounds, so
@@ -2433,17 +2433,16 @@
 
       const chip = document.createElement("span");
       chip.className = "cuddle-v8-rarity-badge";
-      // No visible label -- the metal is conveyed by color/shine alone, not
-      // by spelling out "BRONZE"/"SILVER"/"GOLD". role="img" + aria-label
-      // keeps the tier available to screen readers without printing it.
+      // Tier name spelled out now (COMMON/RARE/LEGENDARY), not just implied
+      // by color -- aria-label kept too so the metal ("bronze"/"silver"/
+      // "gold") is still announced alongside the printed tier word.
+      chip.textContent = tier;
       chip.setAttribute("role", "img");
-      chip.setAttribute("aria-label", `${metal} rarity`);
-      // Directly above the reward's name. In .cuddle-choice's column flex
-      // that lands on its own row; in .cuddle-shop-item's three-column
-      // grid it stays inside the copy column rather than becoming a
-      // fourth column and shunting the price out of the card.
-      if (title?.parentElement) title.parentElement.insertBefore(chip, title);
-      else element.prepend(chip);
+      chip.setAttribute("aria-label", `${tier}, ${metal} rarity`);
+      // Pinned to the card's own top-right corner via CSS (position:
+      // absolute) rather than the reward name's position, so it reads as a
+      // corner badge instead of another line of card copy.
+      element.prepend(chip);
     }
   }
 

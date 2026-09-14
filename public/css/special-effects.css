@@ -591,6 +591,13 @@
 .big-announce.role-setter .big-announce-icon { color: var(--setter-color); }
 .big-announce.role-guesser .big-announce-icon { color: var(--guesser-color); }
 
+/* Rejected-secret popup keeps its "something's wrong" red regardless of
+   role, overriding the role tint above. */
+.big-announce.role-setter .big-announce-icon svg.clue-conflict-icon,
+.big-announce.role-guesser .big-announce-icon svg.clue-conflict-icon {
+  color: var(--game-red, #fb7185);
+}
+
 .big-announce-title {
   font-size: var(--fs-24, 24px);
   font-weight: 900;
