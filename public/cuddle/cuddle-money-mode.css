@@ -524,7 +524,7 @@
   /* Timed to slightly outlast payoutBankDurationMs (cuddle-money-mode.js)
      so the ring finishes its own fade instead of being cut off the instant
      the row flips to .is-settled. */
-  animation: cuddleMoneyRowRing 600ms ease-out both;
+  animation: cuddleMoneyRowRing 480ms ease-out both;
 }
 
 #cuddleScreen .cuddle-money-payout-row.is-settled {
