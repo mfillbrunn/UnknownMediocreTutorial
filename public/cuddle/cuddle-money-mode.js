@@ -44,8 +44,8 @@
     // Slow enough that the wallet visibly climbs and each row gets its own
     // beat, rather than the total just jumping -- see cuddleMoneyRowRing in
     // cuddle-money-mode.css, which is timed to last exactly one row here.
-    payoutRowPauseMs: 176,
-    payoutBankDurationMs: 440,
+    payoutRowPauseMs: 123,
+    payoutBankDurationMs: 308,
     payoutCoinCount: 8
   });
 
