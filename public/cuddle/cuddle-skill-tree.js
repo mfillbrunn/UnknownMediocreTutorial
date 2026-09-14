@@ -77,9 +77,9 @@
       nodes: [
         { id: "openingInsight", icon: "💡", title: "Opening Insight", tier: "rare", description: "Start every non-boss Wordle with one additional exact-position hint.", owned: g => upgradeCount(g, "openingInsight") > 0 },
         { id: "quickStudy", icon: "⏳", title: "Quick Study", tier: "common", description: "Automatic hints arrive one guess sooner (minimum: every two guesses).", owned: g => upgradeCount(g, "quickStudy") > 0 },
-        { id: "candidateNotebook", icon: "📓", title: "Candidate Notebook", tier: "rare", description: "Reveal your single strongest feasible answer next to the theme readout.", owned: g => upgradeCount(g, "candidateNotebook") > 0 },
         { id: "jokerCache", icon: "🃏", title: "Joker Cache", tier: "legendary", description: "Gain two new Jokers at the beginning of every round. Live Joker cards and reserve charges both count.", owned: g => upgradeCount(g, "jokerCache") > 0 },
-        { id: "reserveDividend", icon: "🏦", title: "Reserve Dividend", tier: "rare", description: "At a win, earn $5 extra for every unused mulligan and every unused Joker.", owned: g => upgradeCount(g, "reserveDividend") > 0 }
+        { id: "reserveDividend", icon: "🏦", title: "Reserve Dividend", tier: "rare", description: "At a win, earn $5 extra for every unused mulligan and every unused Joker.", owned: g => upgradeCount(g, "reserveDividend") > 0 },
+        { id: "consonantSweep", icon: "🔍", title: "Process of Elimination", tier: "rare", description: "Every guess rules out one consonant that is not in the secret.", owned: g => upgradeCount(g, "consonantSweep") > 0 }
       ]
     },
     {
@@ -102,8 +102,7 @@
         { id: "compoundCuddle", icon: "🏦", title: "Compound Cuddle", tier: "legendary", description: "Rainy Day Fund + Reserve Dividend: interest doubles its cap and unused Jokers count toward the balance it pays on.", requires: ["rainyDay", "reserveDividend"], owned: g => upgradeCount(g, "rainyDay") > 0 && upgradeCount(g, "reserveDividend") > 0 },
         { id: "goldenStreak", icon: "🔥", title: "Golden Streak", tier: "legendary", description: "Hot Streak + Golden Value: a guess that pins a new yellow keeps the streak alive too.", requires: ["hotStreak", "yellowPoints"], owned: g => upgradeCount(g, "hotStreak") > 0 && upgradeCount(g, "yellowPoints") > 0 },
         { id: "encoreNight", icon: "🎬", title: "Encore Night", tier: "legendary", description: "Encore + Vowel Bounty: every encore also pays $10 for each vowel in that stage's secret.", requires: ["encore", "vowelBounty"], owned: g => upgradeCount(g, "encore") > 0 && upgradeCount(g, "vowelBounty") > 0 },
-        { id: "allIn", icon: "🎲", title: "All In", tier: "legendary", description: "Double Down + Hot Streak: a last-guess solve also pays the streak bonus at its highest step.", requires: ["doubleDown", "hotStreak"], owned: g => upgradeCount(g, "doubleDown") > 0 && upgradeCount(g, "hotStreak") > 0 },
-        { id: "studyGroup", icon: "📓", title: "Study Group", tier: "legendary", description: "Candidate Notebook + Opening Insight: the notebook lists a second feasible answer.", requires: ["candidateNotebook", "openingInsight"], easyOnly: true, owned: g => upgradeCount(g, "candidateNotebook") > 0 && upgradeCount(g, "openingInsight") > 0 }
+        { id: "allIn", icon: "🎲", title: "All In", tier: "legendary", description: "Double Down + Hot Streak: a last-guess solve also pays the streak bonus at its highest step.", requires: ["doubleDown", "hotStreak"], owned: g => upgradeCount(g, "doubleDown") > 0 && upgradeCount(g, "hotStreak") > 0 }
       ]
     },
     {

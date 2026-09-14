@@ -25,7 +25,6 @@
     allThemesBoss: "umtAllThemes",
     openingInsight: "umtOpeningInsight",
     quickStudy: "umtQuickStudy",
-    candidateNotebook: "umtCandidateNotebook",
     jokerCache: "umtJokerCache",
     reserveDividend: "umtReserveDividend",
     rainyDay: "umtRainyDay",
@@ -33,10 +32,12 @@
     hotStreak: "umtHotStreak",
     vowelBounty: "umtVowelBounty",
     doubleDown: "umtDoubleDown",
-    extraRow: "umtExtraRow"
+    extraRow: "umtExtraRow",
+    consonantSweep: "umtConsonantSweep"
   });
 
   const VOWELS = new Set(["A", "E", "I", "O", "U"]);
+  const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
   // Rewards that change how a stage plays rather than nudging a number --
   // they compound with each other through FUN_SYNERGIES below, so a run can
@@ -98,11 +99,6 @@
       requires: Object.freeze([IDS.doubleDown, IDS.hotStreak]),
       description: "Double Down + Hot Streak: a last-guess solve also pays the streak bonus at its highest step."
     }),
-    Object.freeze({
-      id: "studyGroup", icon: "\uD83D\uDCD3", title: "Study Group",
-      requires: Object.freeze([IDS.candidateNotebook, IDS.openingInsight]),
-      description: "Candidate Notebook + Opening Insight: the notebook lists a second feasible answer."
-    })
   ]);
 
   const ALL_THEMES_REWARD = Object.freeze({
@@ -143,17 +139,6 @@
       kind: "upgrade"
     }),
     Object.freeze({
-      id: IDS.candidateNotebook,
-      key: IDS.candidateNotebook,
-      icon: "📓",
-      title: "Candidate Notebook",
-      name: "Candidate Notebook",
-      description: "Reveal your single strongest feasible answer next to the theme readout.",
-      maxLevel: 1,
-      maxCount: 1,
-      kind: "upgrade"
-    }),
-    Object.freeze({
       id: IDS.jokerCache,
       key: IDS.jokerCache,
       icon: "🃏",
@@ -174,14 +159,25 @@
       maxLevel: 1,
       maxCount: 1,
       kind: "upgrade"
+    }),
+    Object.freeze({
+      id: IDS.consonantSweep,
+      key: IDS.consonantSweep,
+      icon: "🔍",
+      title: "Process of Elimination",
+      name: "Process of Elimination",
+      description: "Every guess rules out one consonant that is not in the secret.",
+      maxLevel: 1,
+      maxCount: 1,
+      kind: "upgrade"
     })
   ]);
 
   const SOLVING_AID_IDS = new Set([
     IDS.openingInsight,
     IDS.quickStudy,
-    IDS.candidateNotebook,
     IDS.jokerCache,
+    IDS.consonantSweep,
     "coachHint",
     "possibleAnswers",
     "coachPossibleAnswers",
@@ -1219,13 +1215,15 @@
 
   // How many of a challenge's designed guesses actually carry its extra
   // difficulty this run: 1 before the first boss, 2 between the first and
-  // second, 3 from the second boss on. A challenge whose own masks/vowel
+  // second, 4 from the second boss on. A challenge whose own masks/vowel
   // budget already run shorter than the cap is unaffected -- this only
   // ever shortens, never lengthens, a challenge's designed effect.
   function challengeTurnCap(game) {
     const state = stateOf(game);
     const cleared = state && Array.isArray(state.bossGatesDone) ? state.bossGatesDone.length : 0;
-    return clamp(cleared + 1, 1, 3);
+    if (cleared <= 0) return 1;
+    if (cleared === 1) return 2;
+    return 4;
   }
 
   function describeCappedChallenge(challenge, cap) {
@@ -1714,6 +1712,10 @@
     scheduleUi();
   }
 
+  // Ranks candidate answers still consistent with the feedback so far.
+  // Golden Compass (the coach boss reward) is the only remaining consumer --
+  // Candidate Notebook, which used to display this ranking directly to the
+  // player, has been removed.
   function feasibleWords(game) {
     const words = [];
     const add = (value) => {
@@ -2208,6 +2210,25 @@
     addScoreBonus(game, custom.streakCount * 5 * level, "umtHotStreak", `Hot Streak x${custom.streakCount}`);
   }
 
+  // Process of Elimination: rules out one consonant not in the secret after
+  // every guess (including a forfeited one) -- unlike Free Vowel Sweep
+  // (round start only, vowels only), this fires every guess and only ever
+  // narrows the alphabet, never reveals a position.
+  function applyConsonantSweep(game) {
+    if (upgradeLevel(game, IDS.consonantSweep) < 1 || trueBossRound(game)) return;
+    const state = stateOf(game);
+    if (!state) return;
+    const secret = String(state.secret || "").toUpperCase();
+    const known = new Set(state.knownAbsent || []);
+    const removed = new Set(state.removedLetters || []);
+    const pool = ALPHABET.filter((letter) =>
+      !VOWELS.has(letter) && !secret.includes(letter) && !known.has(letter) && !removed.has(letter));
+    if (!pool.length) return;
+    const roll = typeof game.random === "function" ? game.random() : Math.random();
+    const letter = pool[Math.floor(roll * pool.length)];
+    state.knownAbsent = [...known, letter].sort();
+  }
+
   function activeVariantKind(game) {
     const variant = activeVariant(game);
     return variant ? String(variant.kind || "") : "";
@@ -2314,10 +2335,11 @@
   // contain one (see repairUpgradeChoices below), so leaving these two in
   // it for Medium/Hard would keep re-offering free hints through a path
   // that has nothing to do with the Guesser Hint upgrade's own difficulty
-  // gate in cuddle-coach-expansion.js. Candidate Notebook, Joker Cache and
-  // Reserve Dividend aren't hints (a computed suggestion, cards, a payout
-  // bonus) and stay available on every difficulty.
-  const HINT_SOLVING_REWARD_IDS = new Set([IDS.openingInsight, IDS.quickStudy]);
+  // gate in cuddle-coach-expansion.js. Process of Elimination reveals
+  // secret info every guess, so it's gated the same way. Joker Cache and
+  // Reserve Dividend aren't hints (cards, a payout bonus) and stay
+  // available on every difficulty.
+  const HINT_SOLVING_REWARD_IDS = new Set([IDS.openingInsight, IDS.quickStudy, IDS.consonantSweep]);
 
   function availableSolvingRewards(game) {
     const easy = difficultyName(game) === "easy";
@@ -2570,24 +2592,6 @@
 
 
 
-  // Used to insert a "Candidate Notebook" box directly above the board (the
-  // feedback tiles) listing three words -- moved next to the theme readout
-  // instead (see feasibleBadgeMarkup, consumed by cuddle-campaign.js's
-  // insertMap) so the single strongest candidate reads alongside the
-  // solution's known category rather than floating in its own white box.
-  function feasibleBadgeMarkup(game) {
-    const state = stateOf(game);
-    if (!state || state.status !== "playing") return "";
-    if (upgradeLevel(game, IDS.candidateNotebook) < 1 || trueBossRound(game)) return "";
-    // Study Group (Candidate Notebook + Opening Insight) widens the readout
-    // to a second candidate -- see FUN_SYNERGIES.
-    const wanted = hasFunSynergy(game, "studyGroup") ? 2 : 1;
-    const words = bestWords(game, wanted);
-    // bestWords/feasibleWords only ever admit words matching /^[A-Z]{5}$/, so
-    // this is always safe to inline without escaping.
-    const shown = words.length ? words.join(" · ") : "?????";
-    return `<span class="cuddle-category-chip cuddle-feasible-chip" title="Strongest feasible answer${wanted > 1 ? "s" : ""} based on the current feedback">Feasible: ${shown}</span>`;
-  }
 
   function burdenLabel(item, index) {
     const id = String(item.bossId || item.id || "unknown");
@@ -2902,9 +2906,9 @@
     umtAllThemes: { title: "All-Seeing Atlas", description: "Reveal every available theme at the start of every non-boss Wordle.", shape: "tags" },
     umtOpeningInsight: { title: "Opening Insight", description: "Begin each non-boss Wordle with an extra green position hint.", shape: "greenHint" },
     umtQuickStudy: { title: "Quick Study", description: "Guesser Hints arrive sooner.", shape: "hourglass" },
-    umtCandidateNotebook: { title: "Candidate Notebook", description: "Show your single strongest feasible answer next to the theme readout.", shape: "notebook" },
     umtJokerCache: { title: "Joker Cache", description: "Gain two real Jokers immediately.", shape: "joker" },
     umtReserveDividend: { title: "Reserve Dividend", description: "Unused Jokers and mulligans pay an additional end-of-round bonus.", shape: "coins" },
+    umtConsonantSweep: { title: "Process of Elimination", description: "Every guess rules out one consonant that is not in the secret.", shape: "eliminate" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
     compass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" }
   });
@@ -2946,6 +2950,7 @@
       case "noShield": return `<path d="M60 12 101 27v31c0 27-16 43-41 51C35 101 19 85 19 58V27z" fill="${ink}"/><path d="m25 98 71-76" stroke="${yellow}" stroke-width="13" stroke-linecap="round"/>`;
       case "unique": return `<g fill="${ink}"><rect x="7" y="40" width="18" height="40" rx="5"/><rect x="29" y="40" width="18" height="40" rx="5"/><rect x="51" y="40" width="18" height="40" rx="5"/><rect x="73" y="40" width="18" height="40" rx="5"/><rect x="95" y="40" width="18" height="40" rx="5"/></g><g fill="${yellow}"><circle cx="16" cy="60" r="4"/><circle cx="38" cy="60" r="4"/><circle cx="60" cy="60" r="4"/><circle cx="82" cy="60" r="4"/><circle cx="104" cy="60" r="4"/></g>`;
       case "consonant": return `<rect x="14" y="20" width="92" height="80" rx="17" fill="${ink}"/><text x="60" y="75" text-anchor="middle" fill="${paper}" font-family="system-ui,sans-serif" font-size="48" font-weight="900">BC</text><circle cx="94" cy="30" r="13" fill="${yellow}"/>`;
+      case "eliminate": return `<rect x="14" y="14" width="92" height="92" rx="16" fill="${ink}"/><text x="55" y="72" text-anchor="middle" fill="${paper}" font-family="system-ui,sans-serif" font-size="46" font-weight="900">B</text><path d="M30 30l60 60M90 30 30 90" stroke="${yellow}" stroke-width="9" stroke-linecap="round"/>`;
       case "edges": return `<g fill="${ink}"><rect x="11" y="31" width="26" height="58" rx="7"/><rect x="83" y="31" width="26" height="58" rx="7"/></g><g fill="${green}"><rect x="43" y="31" width="14" height="58" rx="5"/><rect x="63" y="31" width="14" height="58" rx="5"/></g><path d="M17 18h86M17 102h86" stroke="${yellow}" stroke-width="8" stroke-linecap="round"/>`;
       case "clock": return `<circle cx="60" cy="60" r="45" fill="${ink}"/><circle cx="60" cy="60" r="31" fill="${paper}"/><path d="M60 35v27l20 12" fill="none" stroke="${yellow}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>`;
       case "hourglass": return `<path d="M28 15h64v17c0 18-13 25-24 28 11 4 24 12 24 29v16H28V89c0-17 13-25 24-29-11-3-24-10-24-28z" fill="${ink}"/><path d="m43 32 17 20 17-20M43 89l17-20 17 20" fill="none" stroke="${yellow}" stroke-width="8" stroke-linejoin="round"/>`;
@@ -2955,7 +2960,6 @@
       case "hint": return `<circle cx="60" cy="53" r="38" fill="${yellow}"/><path d="M47 92h26v14H47z" fill="${ink}"/><path d="M60 27v36" stroke="${ink}" stroke-width="11" stroke-linecap="round"/><circle cx="60" cy="75" r="7" fill="${ink}"/>`;
       case "greenHint": return `<rect x="17" y="17" width="86" height="86" rx="18" fill="${green}"/><text x="60" y="76" text-anchor="middle" fill="${paper}" font-family="system-ui,sans-serif" font-size="51" font-weight="900">A</text><circle cx="92" cy="28" r="16" fill="${yellow}"/><text x="92" y="35" text-anchor="middle" fill="${ink}" font-family="system-ui,sans-serif" font-size="20" font-weight="900">2</text>`;
       case "joker": return `<path d="M31 14h58l16 18v74H31z" fill="${ink}"/><path d="m68 28 7 15 17 2-12 12 3 17-15-8-15 8 3-17-12-12 17-2z" fill="${yellow}"/>`;
-      case "notebook": return `<rect x="25" y="13" width="75" height="94" rx="12" fill="${ink}"/><path d="M25 13v94" stroke="${yellow}" stroke-width="12"/><g stroke="${paper}" stroke-width="7" stroke-linecap="round"><path d="M48 38h34M48 58h34M48 78h25"/></g>`;
       case "clover": return `<g fill="${green}"><circle cx="60" cy="34" r="19"/><circle cx="34" cy="60" r="19"/><circle cx="86" cy="60" r="19"/><circle cx="60" cy="86" r="19"/></g><circle cx="60" cy="60" r="9" fill="${yellow}"/>`;
       case "scales": return `<path d="M56 16h8v88h-8z" fill="${ink}"/><path d="M22 100h76v9H22z" fill="${ink}"/><path d="M20 40h80v8H20z" fill="${ink}"/><path d="M12 76a20 20 0 0 0 34 0z" fill="${yellow}"/><path d="M74 76a20 20 0 0 0 34 0z" fill="${green}"/>`;
       case "coins": return `<g fill="${yellow}" stroke="${ink}" stroke-width="7"><ellipse cx="45" cy="35" rx="27" ry="14"/><path d="M18 35v25c0 8 12 14 27 14s27-6 27-14V35"/><ellipse cx="76" cy="75" rx="27" ry="14"/><path d="M49 75v20c0 8 12 14 27 14s27-6 27-14V75"/></g>`;
@@ -3805,6 +3809,7 @@
           window.setTimeout(() => reconcileRoundBonuses(this, before), 0);
         } else if (guessesUsed(this) > before.guesses) {
           processScheduledHint(this);
+          applyConsonantSweep(this);
         }
         safeSave(this);
         scheduleUi();
@@ -3845,7 +3850,10 @@
       return afterResult(result, (value) => {
         const history = state && Array.isArray(state.history) ? state.history : [];
         if (history.length > historyLength) history[history.length - 1].umtPowerIds = activePowers;
-        if (guessesUsed(this) > before) processScheduledHint(this);
+        if (guessesUsed(this) > before) {
+          processScheduledHint(this);
+          applyConsonantSweep(this);
+        }
         safeSave(this);
         scheduleUi();
         return value;
@@ -3983,7 +3991,6 @@
       version: VERSION,
       config: CONFIG,
       getActiveGame: publicActiveGame,
-      feasibleBadge: (game) => feasibleBadgeMarkup(game || publicActiveGame()),
       // [title, description] for the burden a boss's effect leaves behind
       // once it's skipped and the OTHER boss is later cleared -- shared with
       // the boss-choice screen (cuddle-ui.js's renderBossChoiceOverlay) so

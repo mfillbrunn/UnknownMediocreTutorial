@@ -2188,9 +2188,7 @@
   min-width: 0;
 }
 
-/* Holds the theme readout plus the plain-text Secrets Remaining count
-   (Candidate Notebook's Feasible chip lives inside the theme readout's own
-   chip row instead -- see renderCategoryBadge). */
+/* Holds the theme readout plus the plain-text Secrets Remaining count. */
 .cuddle-play-theme-badge {
   display: flex;
   align-items: center;
