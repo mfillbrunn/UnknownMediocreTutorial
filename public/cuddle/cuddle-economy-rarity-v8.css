@@ -81,6 +81,101 @@
 .cuddle-v8-rare { --cuddle-v8-tier-color: var(--cuddle-v8-rare); }
 .cuddle-v8-legendary { --cuddle-v8-tier-color: var(--cuddle-v8-legendary); }
 
+/* Category theming: what KIND of reward a card is (Economy, Solving Aid,
+   Easier Stages, Quest, Combo) or, for anything from the boss-reward
+   pool, simply "Boss Reward" regardless of what it actually does. A
+   colored corner badge plus a matching inset stripe down the card's own
+   left edge, so the grouping reads even at a glance across a whole row
+   of cards. Colors come from cuddle-skill-tree.js's CATEGORIES registry;
+   keep these in sync with it if either changes. */
+.cuddle-v8-cat-economy { --cuddle-v8-category-color: #5cd6a0; }
+.cuddle-v8-cat-solving { --cuddle-v8-category-color: #5aa9ff; }
+.cuddle-v8-cat-easierStages { --cuddle-v8-category-color: #b98cff; }
+.cuddle-v8-cat-quests { --cuddle-v8-category-color: #f6a94a; }
+.cuddle-v8-cat-combo { --cuddle-v8-category-color: #ff6fb0; }
+.cuddle-v8-cat-boss { --cuddle-v8-category-color: #fb7185; }
+
+.cuddle-v8-themed {
+  position: relative;
+  box-shadow: inset 4px 0 0 var(--cuddle-v8-category-color, transparent);
+}
+
+/* .cuddle-shop-item is a short, horizontal 3-column row (icon | copy |
+   price) with its content vertically centered -- nowhere near the
+   headroom .cuddle-choice's tall column layout gives the corner badge
+   for free, so push everything down far enough that the badge has its
+   own clear space above the icon/title line instead of overlapping it. */
+.cuddle-shop-item.cuddle-v8-themed {
+  padding-top: 30px;
+}
+
+.cuddle-v8-category-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  display: inline-block;
+  max-width: calc(100% - 76px);
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--cuddle-v8-category-color, #444);
+  color: #1a1220;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* A small "current/max" (or bare "Lv N" when a reward has no fixed cap)
+   tag, inline right after the card's title so it reads as part of the
+   reward's name rather than a separate stat. */
+.cuddle-v8-level-tag {
+  display: inline-block;
+  /* Both .cuddle-choice's title and .cuddle-shop-item-copy are CSS Grid
+     containers, which stretch a bare grid item to the full column width
+     by default -- align/justify-self here keep the tag pill-sized inside
+     either container (and inside a flex one, if a future card shape
+     uses that instead). */
+  align-self: start;
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+  margin: 2px 0 0;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--cuddle-v8-category-color, #888) 55%, transparent);
+  background: color-mix(in srgb, var(--cuddle-v8-category-color, #888) 20%, transparent);
+  color: var(--cuddle-v8-category-color, inherit);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Boss-round preview badge: not a full pickable card, just a small
+   category tag ahead of the reward's own name inside the boss-choice
+   card's nested preview. */
+.cuddle-boss-reward {
+  position: relative;
+}
+
+.cuddle-boss-reward.cuddle-v8-themed {
+  padding-left: 10px;
+  box-shadow: inset 3px 0 0 var(--cuddle-v8-category-color, transparent);
+}
+
+.cuddle-boss-reward .cuddle-v8-category-badge {
+  position: static;
+  display: inline-block;
+  max-width: none;
+  margin: 0 0 4px;
+}
+
 .cuddle-v8-pouch-button {
   position: fixed;
   right: max(12px, env(safe-area-inset-right));
