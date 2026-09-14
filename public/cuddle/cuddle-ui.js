@@ -513,7 +513,10 @@
             : `<span class="cuddle-row-score is-boss-inactive" title="${escapeHtml(state.boss.title || "Boss power")} no longer applies to this guess">—</span>`)
         : null;
       const score = counts
-        ? `<span class="cuddle-row-score is-counts" title="${counts.green} green, ${counts.yellow} yellow">🟩${counts.green} 🟨${counts.yellow}</span>`
+        ? `<span class="cuddle-row-score is-counts" title="${counts.green} green, ${counts.yellow} yellow">` +
+            `<span class="cuddle-row-score-count is-green">🟩${counts.green}</span>` +
+            `<span class="cuddle-row-score-count is-yellow">🟨${counts.yellow}</span>` +
+          `</span>`
         : bossBadge
           ? bossBadge
           : history
@@ -585,9 +588,16 @@
     const unselectedCount = selectable.length - selectedCount;
     // A boss can withhold what a played letter actually did. Those letters go
     // to the unknown pile: still playable, but drawn with a question mark
-    // instead of a colour that would give the answer away.
-    const unknown = typeof game.isGlyphUnknown === "function" && game.isGlyphUnknown(group.glyph);
-    const status = unknown ? "unknown" : game.getCardKnowledgeStatus(group.glyph);
+    // instead of a colour that would give the answer away. state.unknownGlyphs
+    // only ever grows (a boss's masked guess adds to it, nothing removes a
+    // single letter once its OWN masked guess ends), so a letter tested again
+    // in a later, unmasked guess would stay stuck on "?" forever if this
+    // just trusted that flag -- only fall back to "unknown" when nothing
+    // concrete is actually known yet.
+    const trueStatus = game.getCardKnowledgeStatus(group.glyph);
+    const unknown = trueStatus === "unused"
+      && typeof game.isGlyphUnknown === "function" && game.isGlyphUnknown(group.glyph);
+    const status = unknown ? "unknown" : trueStatus;
     // getDraftWord().length counts gaps Drag Mode has padded out too (each
     // renders as a literal space), so it reaches 5 as soon as ANY tile has
     // been positionally placed -- long before the word is actually full.
