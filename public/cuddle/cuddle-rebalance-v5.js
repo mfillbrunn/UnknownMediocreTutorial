@@ -2847,29 +2847,6 @@
     }
   }
 
-  function renderPayoutLines(game) {
-    const custom = customState(game);
-    const lines = custom && Array.isArray(custom.lastPayoutLines)
-      ? custom.lastPayoutLines.filter((line) => line.roundToken === roundToken(game) || !line.roundToken)
-      : [];
-    if (!lines.length) return;
-    const dialogs = Array.from(document.querySelectorAll("[role='dialog'], .modal, .cuddle-modal, .cuddle-payout"));
-    const payout = dialogs.find((dialog) => /payout|round total|earn|money/i.test(dialog.textContent || ""));
-    if (!payout) return;
-    let box = payout.querySelector(".umt-payout-lines");
-    if (!box) {
-      box = document.createElement("div");
-      box.className = "umt-payout-lines";
-      payout.appendChild(box);
-    }
-    box.innerHTML = "";
-    for (const line of lines) {
-      const row = document.createElement("div");
-      row.textContent = `${line.label}: +$${line.amount}`;
-      box.appendChild(row);
-    }
-  }
-
 
   const POWER_INFO = Object.freeze({
     plain: { title: "Classic Wordle", description: "A standard Wordle with no special rule.", shape: "grid" },
@@ -3589,7 +3566,6 @@
       renderRowPowerIcons(game);
       enhanceDragTargets(game);
       hideChallengeDecline();
-      renderPayoutLines(game);
     } finally {
       observeUiMutations();
     }

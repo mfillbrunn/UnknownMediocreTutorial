@@ -1549,16 +1549,38 @@
         : 0;
     const rowsContainer = overlay.querySelector(".cuddle-money-payout-rows, .cuddle-money-payout-list")
       || overlay.querySelector(".cuddle-money-payout-row")?.parentElement;
-    let bonus = overlay.querySelector(".umt-stage-bonus-row");
-    if (!stageBonus) {
+    // cuddle-rebalance-v5.js resets this to [] at the top of every round's
+    // reconcileRoundBonuses, so by the time the payout screen shows it
+    // already holds only this round's stage-level bonuses (unused
+    // mulligans/Jokers, Reserve Dividend, a mini-challenge clear, etc.) --
+    // itemized, instead of the one opaque "stage bonus" figure a save from
+    // an older build would leave us to fall back to.
+    const itemizedLines = Array.isArray(game?.state?.cuddleRebalanceV5?.lastPayoutLines)
+      ? game.state.cuddleRebalanceV5.lastPayoutLines
+          .map(line => ({ label: String(line?.label || ""), amount: Math.round(numeric(line?.amount, 0)) }))
+          .filter(line => line.label && line.amount)
+      : [];
+    const bonusLines = itemizedLines.length
+      ? itemizedLines
+      : (stageBonus ? [{ label: "Rewards not attached to a guess row", amount: stageBonus }] : []);
+    // A sibling section AFTER the whole rows list (not another child
+    // appended inside it), so it reads as its own area instead of one more
+    // counting row blended into the animated list above it.
+    let bonus = overlay.querySelector(".umt-stage-bonus-section");
+    if (!bonusLines.length) {
       bonus?.remove();
-    } else if (rowsContainer) {
+    } else if (rowsContainer?.parentElement) {
       if (!bonus) {
         bonus = document.createElement("div");
-        bonus.className = "umt-stage-bonus-row";
-        rowsContainer.appendChild(bonus);
+        bonus.className = "umt-stage-bonus-section";
+        rowsContainer.insertAdjacentElement("afterend", bonus);
       }
-      bonus.innerHTML = `<span><b>Stage bonus</b><small>Rewards not attached to a guess row</small></span><strong>${formatDelta(stageBonus)}</strong>`;
+      const signature = bonusLines.map(line => `${line.label}:${line.amount}`).join("|");
+      if (bonus.dataset.umtSignature !== signature) {
+        bonus.dataset.umtSignature = signature;
+        bonus.innerHTML = `<div class="umt-stage-bonus-title">Stage bonus</div>`
+          + bonusLines.map(line => `<div class="umt-stage-bonus-line"><span>${line.label}</span><strong>${formatDelta(line.amount)}</strong></div>`).join("");
+      }
     }
   }
 

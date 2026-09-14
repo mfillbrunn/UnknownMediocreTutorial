@@ -1048,6 +1048,36 @@
     }
   }
 
+  // Everything a stage paid that never rode on one specific guess (unused
+  // mulligans, unused Jokers, Reserve Dividend, a mini challenge clear,
+  // Rainy Day interest...), itemized -- cuddle-rebalance-v5.js resets its
+  // own lastPayoutLines to [] at the top of every round, so by the time
+  // this runs it already holds only the current round's stage-level
+  // bonuses. Falls back to one lump figure (payload.stageBonus, the
+  // round's total minus what the per-guess rows account for) only for a
+  // reward source that predates lastPayoutLines.
+  function stageBonusMarkup(game, payload) {
+    var custom = game && game.state && game.state.cuddleRebalanceV5;
+    var lines = Array.isArray(custom && custom.lastPayoutLines)
+      ? custom.lastPayoutLines
+          .map(function normalize(line) {
+            return { label: String(line && line.label || ""), amount: Math.round(asNumber(line && line.amount, 0)) };
+          })
+          .filter(function keep(line) { return line.label && line.amount; })
+      : [];
+    if (!lines.length) {
+      var fallback = Math.round(asNumber(payload.stageBonus, 0));
+      if (!fallback) return "";
+      lines = [{ label: "Rewards not attached to a guess row", amount: fallback }];
+    }
+    return "<div class=\"umt-stage-bonus-section\">"
+      + "<div class=\"umt-stage-bonus-title\">Stage bonus</div>"
+      + lines.map(function row(line) {
+          return "<div class=\"umt-stage-bonus-line\"><span>" + escapeHtml(line.label) + "</span><strong>" + formatDelta(line.amount) + "</strong></div>";
+        }).join("")
+      + "</div>";
+  }
+
   function startPendingPayout(game, mode) {
     if (payoutRunning || !mode.pendingPayout) return;
     var root = document.getElementById("cuddleRoot");
@@ -1079,6 +1109,7 @@
       + challengeLine
       + "<div class=\"cuddle-money-bank\"><span>Wallet</span><strong id=\"cuddleMoneyBankCounter\">" + formatMoney(payload.from) + "</strong></div>"
       + "<div class=\"cuddle-money-payout-rows\">" + payload.rows.map(payoutRowMarkup).join("") + "</div>"
+      + stageBonusMarkup(game, payload)
       + "<p class=\"cuddle-money-payout-hint\">Tap a row to see what it paid.</p>"
       + "<div class=\"cuddle-money-payout-total\"><span>" + (payload.wasBoss ? "BOSS TOTAL" : "ROUND TOTAL") + "</span><strong>" + formatDelta(payload.total) + "</strong></div>"
       + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-primary cuddle-money-collect\" data-cuddle-money-action=\"collect-payout\" hidden>Collect " + formatMoney(payload.total) + "</button>"

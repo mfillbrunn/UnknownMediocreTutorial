@@ -414,16 +414,6 @@ html.umt-mandatory-challenge .cuddle-challenge-decline {
   display: none !important;
 }
 
-.umt-payout-lines {
-  display: grid;
-  gap: 0.25rem;
-  margin-top: 0.65rem;
-  padding-top: 0.55rem;
-  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
 @media (max-width: 720px) {
   .umt-row-power-icons {
     left: auto;
