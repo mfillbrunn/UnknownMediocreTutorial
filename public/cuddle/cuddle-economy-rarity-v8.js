@@ -2439,8 +2439,15 @@
     element.querySelector(":scope > .cuddle-v8-level-tag")?.remove();
   }
 
+  // Shows the transition taking this card would make (e.g. "Lv 0 -> 1"),
+  // not just the current count -- what a level number alone doesn't say
+  // is whether this pick is your first copy or your last one before the
+  // cap.
   function formatLevelTag(current, maxLevel) {
-    return Number.isFinite(maxLevel) ? `${current}/${maxLevel}` : `Lv ${current}`;
+    const capped = Number.isFinite(maxLevel);
+    const next = capped ? Math.min(current + 1, maxLevel) : current + 1;
+    const atMax = capped && next >= maxLevel;
+    return `Lv ${current} → ${next}${atMax ? " (max)" : ""}`;
   }
 
   function decorateRewardTheme(root = document) {

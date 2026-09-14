@@ -145,6 +145,8 @@
   justify-self: start;
   width: fit-content;
   max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   margin: 2px 0 0;
   padding: 1px 6px;
   border-radius: 999px;
