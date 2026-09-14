@@ -41,8 +41,11 @@
     rewardPerCompletedRound: 2,
     difficultyRewardBonus: Object.freeze({ easy: 0, medium: 2, hard: 4 }),
     minimumGuessCap: 4,
-    payoutRowPauseMs: 20,
-    payoutBankDurationMs: 90,
+    // Slow enough that the wallet visibly climbs and each row gets its own
+    // beat, rather than the total just jumping -- see cuddleMoneyRowRing in
+    // cuddle-money-mode.css, which is timed to last exactly one row here.
+    payoutRowPauseMs: 220,
+    payoutBankDurationMs: 550,
     payoutCoinCount: 8
   });
 

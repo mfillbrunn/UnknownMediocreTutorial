@@ -521,10 +521,10 @@
   box-shadow: 0 0 0 1px rgba(246, 201, 86, 0.12), 0 0 28px rgba(246, 201, 86, 0.15);
   opacity: 1;
   transform: scale(1.018);
-  /* Matched to the faster payoutBankDurationMs (cuddle-money-mode.js) --
-     .is-counting no longer lasts long enough for the old 600ms ring to
-     finish before the row flips to .is-settled and cuts it off. */
-  animation: cuddleMoneyRowRing 260ms ease-out both;
+  /* Timed to slightly outlast payoutBankDurationMs (cuddle-money-mode.js)
+     so the ring finishes its own fade instead of being cut off the instant
+     the row flips to .is-settled. */
+  animation: cuddleMoneyRowRing 600ms ease-out both;
 }
 
 #cuddleScreen .cuddle-money-payout-row.is-settled {
