@@ -2410,6 +2410,83 @@
     element.querySelector(".cuddle-v8-rarity-badge")?.remove();
   }
 
+  // Category + level theming (separate from the tier badge above): what
+  // KIND of reward a card is, and how many of it the run already has.
+  // Matches by display name too, same as tierForCard, and deliberately
+  // never touches the <strong>/<b> title node itself -- tierForCard reads
+  // that node's plain textContent afterward, so anything appended here
+  // has to be a sibling, not a child.
+  function themeTitleElement(element) {
+    return element.classList.contains("cuddle-boss-reward")
+      ? element.querySelector("b")
+      : element.querySelector("strong");
+  }
+
+  function nodeForThemedCard(element) {
+    const tree = window.CuddleSkillTree;
+    const name = themeTitleElement(element)?.textContent || "";
+    if (!tree || !name) return null;
+    return tree.findNodeByName(name);
+  }
+
+  function clearRewardTheme(element) {
+    const previous = element.dataset.cuddleV8Category;
+    if (!previous) return;
+    element.classList.remove("cuddle-v8-themed", `cuddle-v8-cat-${previous}`);
+    delete element.dataset.cuddleV8Category;
+    delete element.dataset.cuddleV8Level;
+    element.querySelector(":scope > .cuddle-v8-category-badge")?.remove();
+    element.querySelector(":scope > .cuddle-v8-level-tag")?.remove();
+  }
+
+  function formatLevelTag(current, maxLevel) {
+    return Number.isFinite(maxLevel) ? `${current}/${maxLevel}` : `Lv ${current}`;
+  }
+
+  function decorateRewardTheme(root = document) {
+    const tree = window.CuddleSkillTree;
+    if (!tree) return;
+    const elements = root.querySelectorAll?.(
+      `${REWARD_CARD_SELECTOR}, .cuddle-choice[data-reward-id], .cuddle-boss-reward[data-reward-id]`
+    ) || [];
+    const game = window.CuddleRebalanceV5?.getActiveGame?.() || null;
+
+    for (const element of elements) {
+      const node = nodeForThemedCard(element);
+      const category = node?.category ? tree.CATEGORIES[node.category] : null;
+      const isBossReward = element.classList.contains("cuddle-boss-reward");
+
+      if (!category) {
+        clearRewardTheme(element);
+        continue;
+      }
+
+      const level = typeof node.level === "function" ? tree.level(game, node) : null;
+      const levelTagText = level === null ? "" : formatLevelTag(level, node.maxLevel);
+      const stamp = `${node.category}:${levelTagText}`;
+      if (element.dataset.cuddleV8Level === stamp) continue;
+
+      clearRewardTheme(element);
+      element.dataset.cuddleV8Category = node.category;
+      element.dataset.cuddleV8Level = stamp;
+      element.classList.add("cuddle-v8-themed", `cuddle-v8-cat-${node.category}`);
+
+      const badge = document.createElement("span");
+      badge.className = "cuddle-v8-category-badge";
+      badge.textContent = category.label;
+      element.prepend(badge);
+
+      if (!isBossReward && levelTagText) {
+        const title = themeTitleElement(element);
+        const tag = document.createElement("span");
+        tag.className = "cuddle-v8-level-tag";
+        tag.textContent = levelTagText;
+        if (title) title.insertAdjacentElement("afterend", tag);
+        else element.appendChild(tag);
+      }
+    }
+  }
+
   function decorateRewardCards(root = document) {
     const elements = root.querySelectorAll?.(REWARD_CARD_SELECTOR) || [];
     for (const element of elements) {
@@ -2501,6 +2578,7 @@
   function runSweeps() {
     sweepFrame = 0;
     decorateRewardCards(document);
+    decorateRewardTheme(document);
     adjustPayoutText(document);
     adjustChallengeNotice(document);
   }

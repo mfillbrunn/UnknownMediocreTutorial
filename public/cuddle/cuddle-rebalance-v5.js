@@ -3991,6 +3991,11 @@
       version: VERSION,
       config: CONFIG,
       getActiveGame: publicActiveGame,
+      // Generic "how many times has this id been taken" lookup, reused by
+      // cuddle-economy-rarity-v8.js's card decorator to print a level tag
+      // (e.g. "1/2") on live reward cards without duplicating the several
+      // state locations a level can live in.
+      upgradeLevel: (game, id) => upgradeLevel(game || publicActiveGame(), id),
       // [title, description] for the burden a boss's effect leaves behind
       // once it's skipped and the OTHER boss is later cleared -- shared with
       // the boss-choice screen (cuddle-ui.js's renderBossChoiceOverlay) so

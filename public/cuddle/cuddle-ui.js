@@ -766,7 +766,7 @@
                 <strong>${escapeHtml(option.title)}</strong>
                 <small>${goldenMoney(escapeHtml(option.description))}</small>
                 ${option.reward ? `
-                  <span class="cuddle-boss-reward">
+                  <span class="cuddle-boss-reward" data-reward-id="${escapeHtml(option.reward.id || "")}">
                     <b>${escapeHtml(option.reward.icon || "🎁")} ${escapeHtml(option.reward.title)}</b>
                     <span>${goldenMoney(escapeHtml(option.reward.description))}</span>
                   </span>` : ""}
