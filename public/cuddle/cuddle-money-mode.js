@@ -44,8 +44,8 @@
     // Slow enough that the wallet visibly climbs and each row gets its own
     // beat, rather than the total just jumping -- see cuddleMoneyRowRing in
     // cuddle-money-mode.css, which is timed to last exactly one row here.
-    payoutRowPauseMs: 220,
-    payoutBankDurationMs: 550,
+    payoutRowPauseMs: 123,
+    payoutBankDurationMs: 308,
     payoutCoinCount: 8
   });
 
@@ -196,6 +196,24 @@
     if (amount > 0) return "+$" + amount.toLocaleString();
     if (amount < 0) return "-$" + Math.abs(amount).toLocaleString();
     return "+$0";
+  }
+
+  // Points counterparts of the two above -- everything in this payout
+  // screen that isn't a challenge's own reward (a genuine Money grant,
+  // still formatted with formatMoney/formatDelta) is the round's ordinary
+  // score: tile rates, per-row increments, the stage-bonus lines, and the
+  // round/boss total.
+  function formatPoints(value) {
+    var amount = Math.round(asNumber(value, 0));
+    var sign = amount < 0 ? "-" : "";
+    return sign + Math.abs(amount).toLocaleString() + " pts";
+  }
+
+  function formatPointsDelta(value) {
+    var amount = Math.round(asNumber(value, 0));
+    if (amount > 0) return "+" + amount.toLocaleString();
+    if (amount < 0) return "-" + Math.abs(amount).toLocaleString();
+    return "+0";
   }
 
   function randomFor(game) {
@@ -686,7 +704,7 @@
     var tile = function addTile(count, rate, label) {
       var total = Math.round(asNumber(count, 0) * asNumber(rate, 0));
       if (!asNumber(count, 0) || !total) return;
-      lines.push({ label: count + " " + label, detail: formatMoney(rate) + " each", amount: total });
+      lines.push({ label: count + " " + label, detail: formatPoints(rate) + " each", amount: total });
     };
     tile(entry.greenCount, rates.green, asNumber(entry.greenCount, 0) === 1 ? "green tile" : "green tiles");
     tile(entry.yellowCount, rates.yellow, asNumber(entry.yellowCount, 0) === 1 ? "yellow tile" : "yellow tiles");
@@ -768,14 +786,15 @@
 
     if (result.solved && !wasBoss) {
       if (challenge) {
+        // A mini challenge's reward is Money, not Points -- kept out of
+        // state.score/roundScore entirely so it never counts toward this
+        // round's points target or shows up as a per-guess row in the
+        // cash-out below (see stageBonusMarkup's own note on the same
+        // split).
         var reward = Math.max(0, asInteger(challenge.reward, 0));
-        state.score = asNumber(state.score, 0) + reward;
-        state.roundScore = asNumber(state.roundScore, 0) + reward;
+        state.cuddleMoney = asNumber(state.cuddleMoney, 0) + reward;
         if (entry) entry.challengeBonus = reward;
-        if (state.pendingRoundEnd) state.pendingRoundEnd.score = state.score;
         if (state.lastRoundSummary) {
-          state.lastRoundSummary.score = state.score;
-          state.lastRoundSummary.roundScore = state.roundScore;
           state.lastRoundSummary.challenge = challenge.title;
           state.lastRoundSummary.challengeBonus = reward;
         }
@@ -844,11 +863,20 @@
     var score = Number(state.score || 0);
     var roundIsLive = state.status === "playing" && !state.pendingRoundEnd;
     var provisional = roundIsLive ? Number(state.roundScore || 0) : 0;
-    var visibleMoney = Math.max(0, Math.round(roundIsLive ? score - provisional : score));
-    var visibleText = formatMoney(visibleMoney);
+    // Points: this run's ordinary score. Money (below) is the separate,
+    // always-spendable currency the shop and events actually charge --
+    // see cuddle-points-money.js.
+    var visiblePoints = Math.max(0, Math.round(roundIsLive ? score - provisional : score));
+    var pointsText = visiblePoints.toLocaleString() + " PTS";
     root.querySelectorAll(".cuddle-header-score").forEach(function updateHeader(element) {
-      if (element.textContent !== visibleText) element.textContent = visibleText;
-      element.setAttribute("aria-label", "Money " + visibleText);
+      if (element.textContent !== pointsText) element.textContent = pointsText;
+      element.setAttribute("aria-label", visiblePoints + " points");
+    });
+    var money = Math.max(0, Math.round(Number(state.cuddleMoney || 0)));
+    var moneyText = formatMoney(money);
+    root.querySelectorAll(".cuddle-header-money").forEach(function updateHeaderMoney(element) {
+      if (element.textContent !== moneyText) element.textContent = moneyText;
+      element.setAttribute("aria-label", money + " money");
     });
     var stats = root.querySelector(".cuddle-round-intro-stats");
     if (stats) {
@@ -856,15 +884,15 @@
       if (blocks[0]) {
         var label = blocks[0].querySelector("span");
         var value = blocks[0].querySelector("strong");
-        if (label && label.textContent !== "Current money") label.textContent = "Current money";
-        if (value && value.textContent !== visibleText) value.textContent = visibleText;
+        if (label && label.textContent !== "Current points") label.textContent = "Current points";
+        if (value && value.textContent !== pointsText) value.textContent = pointsText;
       }
       for (var index = 1; index < blocks.length; index += 1) blocks[index].hidden = true;
     }
     var shopWalletValue = root.querySelector(".cuddle-shop-wallet strong");
     if (shopWalletValue) {
-      var walletText = formatMoney(Math.max(0, Math.round(score)));
-      if (shopWalletValue.textContent !== walletText) shopWalletValue.textContent = walletText;
+      // The shop spends Money, not Points.
+      if (shopWalletValue.textContent !== moneyText) shopWalletValue.textContent = moneyText;
     }
     root.querySelectorAll(".cuddle-shop-item-cost").forEach(function updateShopCost(element) {
       var current = element.textContent.trim();
@@ -971,7 +999,7 @@
       return "<div class=\"cuddle-money-row-detail-line" + (amount < 0 ? " is-negative" : "") + "\">"
         + "<dt>" + escapeHtml(line.label || "")
         + (line.detail ? "<small>" + escapeHtml(line.detail) + "</small>" : "")
-        + "</dt><dd>" + formatDelta(amount) + "</dd></div>";
+        + "</dt><dd>" + formatPointsDelta(amount) + "</dd></div>";
     }).join("") + "</dl>";
   }
 
@@ -988,7 +1016,7 @@
       + " data-cuddle-money-action=\"toggle-payout-row\""
       + " aria-expanded=\"false\" aria-label=\"Show what " + escapeHtml(label) + " paid\">"
       + "<span class=\"cuddle-money-payout-tiles\">" + tiles + "</span>"
-      + "<span class=\"cuddle-money-row-increment\">" + formatDelta(row.amount) + "</span>"
+      + "<span class=\"cuddle-money-row-increment\">" + formatPointsDelta(row.amount) + "</span>"
       + "<span class=\"cuddle-money-row-chevron\" aria-hidden=\"true\"></span>"
       + "</button>"
       + "<div class=\"cuddle-money-row-detail\" hidden>" + breakdownMarkup(row) + "</div>"
@@ -998,7 +1026,7 @@
   function animateBank(element, from, to, duration) {
     return new Promise(function animatePromise(resolve) {
       if (!element || duration <= 0) {
-        if (element) element.textContent = formatMoney(to);
+        if (element) element.textContent = formatPoints(to);
         resolve();
         return;
       }
@@ -1006,7 +1034,7 @@
       function frame(now) {
         var progress = clamp((now - startTime) / duration, 0, 1);
         var eased = 1 - Math.pow(1 - progress, 3);
-        element.textContent = formatMoney(Math.round(from + (to - from) * eased));
+        element.textContent = formatPoints(Math.round(from + (to - from) * eased));
         if (progress < 1) requestAnimationFrame(frame);
         else resolve();
       }
@@ -1037,7 +1065,7 @@
       rowElement.classList.add("is-settled");
       await delay(rowPause);
     }
-    if (bank) bank.textContent = formatMoney(payload.to);
+    if (bank) bank.textContent = formatPoints(payload.to);
     var total = overlay.querySelector(".cuddle-money-payout-total");
     var collect = overlay.querySelector("[data-cuddle-money-action=\"collect-payout\"]");
     if (total) total.classList.add("is-visible");
@@ -1046,6 +1074,36 @@
       collect.hidden = false;
       collect.focus({ preventScroll: true });
     }
+  }
+
+  // Everything a stage paid that never rode on one specific guess (unused
+  // mulligans, unused Jokers, Reserve Dividend, a mini challenge clear,
+  // Rainy Day interest...), itemized -- cuddle-rebalance-v5.js resets its
+  // own lastPayoutLines to [] at the top of every round, so by the time
+  // this runs it already holds only the current round's stage-level
+  // bonuses. Falls back to one lump figure (payload.stageBonus, the
+  // round's total minus what the per-guess rows account for) only for a
+  // reward source that predates lastPayoutLines.
+  function stageBonusMarkup(game, payload) {
+    var custom = game && game.state && game.state.cuddleRebalanceV5;
+    var lines = Array.isArray(custom && custom.lastPayoutLines)
+      ? custom.lastPayoutLines
+          .map(function normalize(line) {
+            return { label: String(line && line.label || ""), amount: Math.round(asNumber(line && line.amount, 0)) };
+          })
+          .filter(function keep(line) { return line.label && line.amount; })
+      : [];
+    if (!lines.length) {
+      var fallback = Math.round(asNumber(payload.stageBonus, 0));
+      if (!fallback) return "";
+      lines = [{ label: "Rewards not attached to a guess row", amount: fallback }];
+    }
+    return "<div class=\"umt-stage-bonus-section\">"
+      + "<div class=\"umt-stage-bonus-title\">Stage bonus</div>"
+      + lines.map(function row(line) {
+          return "<div class=\"umt-stage-bonus-line\"><span>" + escapeHtml(line.label) + "</span><strong>" + formatPointsDelta(line.amount) + "</strong></div>";
+        }).join("")
+      + "</div>";
   }
 
   function startPendingPayout(game, mode) {
@@ -1077,11 +1135,12 @@
       + "<span class=\"cuddle-money-kicker\">" + (payload.wasBoss ? "BOSS DEFEATED &middot; CASH OUT" : "ROUND " + escapeHtml(payload.round) + " CASH OUT") + "</span>"
       + "<h2 id=\"cuddleMoneyPayoutTitle\">Every row pays</h2>"
       + challengeLine
-      + "<div class=\"cuddle-money-bank\"><span>Wallet</span><strong id=\"cuddleMoneyBankCounter\">" + formatMoney(payload.from) + "</strong></div>"
+      + "<div class=\"cuddle-money-bank\"><span>Wallet</span><strong id=\"cuddleMoneyBankCounter\">" + formatPoints(payload.from) + "</strong></div>"
       + "<div class=\"cuddle-money-payout-rows\">" + payload.rows.map(payoutRowMarkup).join("") + "</div>"
+      + stageBonusMarkup(game, payload)
       + "<p class=\"cuddle-money-payout-hint\">Tap a row to see what it paid.</p>"
-      + "<div class=\"cuddle-money-payout-total\"><span>" + (payload.wasBoss ? "BOSS TOTAL" : "ROUND TOTAL") + "</span><strong>" + formatDelta(payload.total) + "</strong></div>"
-      + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-primary cuddle-money-collect\" data-cuddle-money-action=\"collect-payout\" hidden>Collect " + formatMoney(payload.total) + "</button>"
+      + "<div class=\"cuddle-money-payout-total\"><span>" + (payload.wasBoss ? "BOSS TOTAL" : "ROUND TOTAL") + "</span><strong>" + formatPointsDelta(payload.total) + "</strong></div>"
+      + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-primary cuddle-money-collect\" data-cuddle-money-action=\"collect-payout\" hidden>Collect " + formatPoints(payload.total) + "</button>"
       + "</section></div>"
     );
     var overlay = document.getElementById("cuddleMoneyPayoutOverlay");

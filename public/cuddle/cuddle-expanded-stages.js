@@ -796,7 +796,7 @@
         switch (effect.type) {
           case "money": {
             const amount = Number(effect.amount || 0);
-            game.state.score = Math.max(0, Number(game.state.score || 0) + amount);
+            game.state.cuddleMoney = Math.max(0, Number(game.state.cuddleMoney || 0) + amount);
             messages.push(amount >= 0 ? `+$${amount}.` : `Paid $${Math.abs(amount)}.`);
             break;
           }
@@ -849,7 +849,7 @@
 
     function eventAvailability(game, option, eventState) {
       if (!option || !option.requires) return { ok: true, reason: "" };
-      if (Number(option.requires.money || 0) > Number(game.state.score || 0)) {
+      if (Number(option.requires.money || 0) > Number(game.state.cuddleMoney || 0)) {
         return { ok: false, reason: `Needs $${option.requires.money}.` };
       }
       if (option.requires.upgrade && !(eventState && eventState.sacrificeUpgrade)) {
@@ -951,7 +951,7 @@
     function duelSacrifices(game) {
       const upgrade = reversibleUpgrade(game);
       return [
-        { id: "pay", title: "Pay $10", description: "Start Easy after paying $10.", enabled: Number(game.state.score || 0) >= 10, upgrade: null },
+        { id: "pay", title: "Pay $10", description: "Start Easy after paying $10.", enabled: Number(game.state.cuddleMoney || 0) >= 10, upgrade: null },
         { id: "nextGuess", title: "Borrow a guess", description: "Start Easy, but the next normal Wordle begins one guess short.", enabled: true, upgrade: null },
         { id: "boss", title: "Strengthen the boss", description: "Start Easy, but the next boss is one guess tougher.", enabled: true, upgrade: null },
         { id: "upgrade", title: upgrade ? `Give up ${upgrade.title}` : "Give up an upgrade", description: upgrade ? `Surrender one level of ${upgrade.title}.` : "No reversible upgrade is available.", enabled: Boolean(upgrade), upgrade }
@@ -1179,8 +1179,8 @@
       if (!sacrifice || !sacrifice.enabled) return { ok: false, error: "That Easy-mode sacrifice is unavailable." };
       switch (sacrifice.id) {
         case "pay":
-          if (Number(game.state.score || 0) < 10) return { ok: false, error: "Easy mode needs $10 for that option." };
-          game.state.score = Math.max(0, Number(game.state.score || 0) - 10);
+          if (Number(game.state.cuddleMoney || 0) < 10) return { ok: false, error: "Easy mode needs $10 for that option." };
+          game.state.cuddleMoney = Math.max(0, Number(game.state.cuddleMoney || 0) - 10);
           return { ok: true, message: "Paid $10." };
         case "nextGuess":
           addNextPenalty(map, "guess", 1);
@@ -1804,7 +1804,7 @@
         `<div class="cuddle-shell umt-event-shell">`
         + `<header class="cuddle-header">`
         + `<div class="cuddle-header-side"><button class="cuddle-icon-btn" data-action="run-menu" aria-label="Cuddle menu">&larr;</button></div>`
-        + `<div class="cuddle-header-title"><span class="cuddle-eyebrow">CHOICE EVENT</span><div class="cuddle-header-title-line"><h1>${escapeHtml(definition.title)}</h1><span class="cuddle-header-score">$${escapeHtml(game.state.score)}</span></div></div>`
+        + `<div class="cuddle-header-title"><span class="cuddle-eyebrow">CHOICE EVENT</span><div class="cuddle-header-title-line"><h1>${escapeHtml(definition.title)}</h1><span class="cuddle-header-score cuddle-header-points">${escapeHtml(game.state.score)} PTS</span><span class="cuddle-header-money">$${escapeHtml(Number(game.state.cuddleMoney || 0))}</span></div></div>`
         + `<div class="cuddle-header-side cuddle-header-side-right"></div>`
         + `</header>`
         + `<main class="umt-event-page">`
@@ -1965,7 +1965,7 @@
         `<div class="cuddle-shell umt-duel-shell">`
         + `<header class="cuddle-header">`
         + `<div class="cuddle-header-side"><button class="cuddle-icon-btn" data-action="run-menu" aria-label="Cuddle menu">&larr;</button></div>`
-        + `<div class="cuddle-header-title"><span class="cuddle-eyebrow">WORD DUEL</span><div class="cuddle-header-title-line"><h1>First solve wins</h1><span class="cuddle-header-score">$${escapeHtml(game.state.score)}</span></div></div>`
+        + `<div class="cuddle-header-title"><span class="cuddle-eyebrow">WORD DUEL</span><div class="cuddle-header-title-line"><h1>First solve wins</h1><span class="cuddle-header-score cuddle-header-points">${escapeHtml(game.state.score)} PTS</span><span class="cuddle-header-money">$${escapeHtml(Number(game.state.cuddleMoney || 0))}</span></div></div>`
         + `<div class="cuddle-header-side cuddle-header-side-right"></div>`
         + `</header>`
         + `<main class="umt-duel-page">`

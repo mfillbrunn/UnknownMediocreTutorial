@@ -1837,6 +1837,34 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   font-style: italic;
 }
 
+/* On a short phone the board column's whole vertical budget is already
+   spoken for -- #historyGuesser is the only flexible link in the chain,
+   so every pixel this readout occupies comes straight out of the visible
+   feedback rows. Measured on a 390x540 viewport, one "Themes of secret"
+   line took the list from 84px (roughly two rows) down to 23px, at which
+   point there is barely a sliver of a row to drag and the list reads as
+   unscrollable. Same readout, same legibility -- just without the
+   generous desktop padding around a single 11px line. */
+@media (max-height: 700px) {
+  .pc-inspector-panel-host {
+    margin-bottom: 4px;
+  }
+
+  .pc-persistent-powers {
+    gap: 5px;
+    padding: 5px 9px;
+  }
+
+  .pc-persistent-power-line + .pc-persistent-power-line {
+    padding-top: 5px;
+  }
+
+  .pc-persistent-power-icon {
+    width: 15px;
+    height: 15px;
+  }
+}
+
 /* letterProfileLines() (client/letterProfile.js) outputs plain .line /
    .label / .value markup shared with the classic standalone box -- laid
    out as a compact inline row here instead of that box's own stacked

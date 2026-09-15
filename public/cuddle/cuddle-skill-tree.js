@@ -62,10 +62,10 @@
       blurb: "Offered after most non-boss stages.",
       nodes: [
         { id: "extraMulligans", icon: "🔄", title: "Second Thoughts", tier: "common", category: "easierStages", description: "Gain one additional mulligan each round.", level: g => upgradeCount(g, "extraMulligans") },
-        { id: "yellowPoints", icon: "🟨", title: "Golden Value", tier: "common", category: "economy", description: "Every yellow tile is worth $1 more.", level: g => upgradeCount(g, "yellowPoints") },
-        { id: "earlyRoundPoint", icon: "⏱️", title: "Quick Cuddle", tier: "common", category: "economy", description: "Each unused guess in the solve bonus is worth $1 more.", level: g => upgradeCount(g, "earlyRoundPoint") },
+        { id: "yellowPoints", icon: "🟨", title: "Golden Value", tier: "common", category: "economy", description: "Every yellow tile is worth 1 point more.", level: g => upgradeCount(g, "yellowPoints") },
+        { id: "earlyRoundPoint", icon: "⏱️", title: "Quick Cuddle", tier: "common", category: "economy", description: "Each unused guess in the solve bonus is worth 1 point more.", level: g => upgradeCount(g, "earlyRoundPoint") },
         { id: "questRefreshes", icon: "♻️", title: "Reward Refresh", tier: "common", category: "quests", description: "Gain one refresh whenever you choose a quest reward.", level: g => upgradeCount(g, "questRefreshes") },
-        { id: "questPoints", icon: "🏅", title: "Quest Value", tier: "common", category: "quests", description: "Quests are worth $5 more. Stacks every time you take it.", level: g => upgradeCount(g, "questPoints") },
+        { id: "questPoints", icon: "🏅", title: "Quest Value", tier: "common", category: "quests", description: "Quests are worth 5 points more. Stacks every time you take it.", level: g => upgradeCount(g, "questPoints") },
         { id: "questReroll", icon: "🔄", title: "Second Guess Quest", tier: "common", category: "quests", description: "Gain one charge to reroll your active quest for a different one, any turn you like.", level: g => upgradeCount(g, "questReroll") },
         { id: "mulliganSize", icon: "🃏", title: "Bigger Mulligan", tier: "common", category: "easierStages", maxLevel: 2, description: "Each mulligan may replace one additional card.", level: g => upgradeCount(g, "mulliganSize") },
         { id: "categorySense", icon: "🔮", title: "Theme Sense", tier: "rare", category: "solving", maxLevel: 6, description: "From now on, reveal one category at the start of every solution. Stacks.", level: g => Number(campaignState(g)?.categorySense) || 0 }
@@ -77,9 +77,9 @@
       blurb: "Reward pool that pays out for how you play a round, not just for finishing it.",
       nodes: [
         { id: "rainyDay", icon: "🏦", title: "Rainy Day Fund", tier: "common", category: "economy", maxLevel: 2, description: "Every non-boss stage opens by paying 5% interest on your wallet, up to $25. Stacks.", level: g => upgradeCount(g, "rainyDay") },
-        { id: "encore", icon: "🎬", title: "Encore", tier: "rare", category: "economy", maxLevel: 1, description: "Every third stage you solve pays a $75 encore bonus.", level: g => upgradeCount(g, "encore") },
-        { id: "hotStreak", icon: "🔥", title: "Hot Streak", tier: "rare", category: "economy", maxLevel: 2, description: "Each guess in a row that pins a new green pays a growing bonus: $5, then $10, then $15. A guess with no new green resets it.", level: g => upgradeCount(g, "hotStreak") },
-        { id: "vowelBounty", icon: "🅰️", title: "Vowel Bounty", tier: "common", category: "economy", maxLevel: 2, description: "Every vowel in a secret you solve pays $5.", level: g => upgradeCount(g, "vowelBounty") },
+        { id: "encore", icon: "🎬", title: "Encore", tier: "rare", category: "economy", maxLevel: 1, description: "Every third stage you solve pays a 75-point encore bonus.", level: g => upgradeCount(g, "encore") },
+        { id: "hotStreak", icon: "🔥", title: "Hot Streak", tier: "rare", category: "economy", maxLevel: 2, description: "Each guess in a row that pins a new green pays a growing bonus: 5, then 10, then 15 points. A guess with no new green resets it.", level: g => upgradeCount(g, "hotStreak") },
+        { id: "vowelBounty", icon: "🅰️", title: "Vowel Bounty", tier: "common", category: "economy", maxLevel: 2, description: "Every vowel in a secret you solve pays 5 points.", level: g => upgradeCount(g, "vowelBounty") },
         { id: "doubleDown", icon: "🎲", title: "Double Down", tier: "legendary", category: "economy", maxLevel: 1, description: "Solve on your very last guess and the whole stage pays double.", level: g => upgradeCount(g, "doubleDown") }
       ]
     },
@@ -92,7 +92,7 @@
         { id: "openingInsight", icon: "💡", title: "Opening Insight", tier: "rare", category: "solving", maxLevel: 2, description: "Start every non-boss Wordle with one additional exact-position hint.", level: g => upgradeCount(g, "openingInsight") },
         { id: "quickStudy", icon: "⏳", title: "Quick Study", tier: "common", category: "solving", maxLevel: 2, description: "Automatic hints arrive one guess sooner (minimum: every two guesses).", level: g => upgradeCount(g, "quickStudy") },
         { id: "jokerCache", icon: "🃏", title: "Joker Cache", tier: "legendary", category: "easierStages", maxLevel: 2, description: "Gain two new Jokers at the beginning of every round. Live Joker cards and reserve charges both count.", level: g => upgradeCount(g, "jokerCache") },
-        { id: "reserveDividend", icon: "🏦", title: "Reserve Dividend", tier: "rare", category: "economy", maxLevel: 1, description: "At a win, earn $5 extra for every unused mulligan and every unused Joker.", level: g => upgradeCount(g, "reserveDividend") },
+        { id: "reserveDividend", icon: "🏦", title: "Reserve Dividend", tier: "rare", category: "economy", maxLevel: 1, description: "At a win, earn 5 points extra for every unused mulligan and every unused Joker.", level: g => upgradeCount(g, "reserveDividend") },
         { id: "consonantSweep", icon: "🔍", title: "Process of Elimination", tier: "rare", category: "solving", maxLevel: 1, description: "Every guess rules out one consonant that is not in the secret.", level: g => upgradeCount(g, "consonantSweep") }
       ]
     },
@@ -115,7 +115,7 @@
       nodes: [
         { id: "compoundCuddle", icon: "🏦", title: "Compound Cuddle", tier: "legendary", category: "combo", maxLevel: 1, description: "Rainy Day Fund + Reserve Dividend: interest doubles its cap and unused Jokers count toward the balance it pays on.", requires: ["rainyDay", "reserveDividend"], level: g => (upgradeCount(g, "rainyDay") > 0 && upgradeCount(g, "reserveDividend") > 0) ? 1 : 0 },
         { id: "goldenStreak", icon: "🔥", title: "Golden Streak", tier: "legendary", category: "combo", maxLevel: 1, description: "Hot Streak + Golden Value: a guess that pins a new yellow keeps the streak alive too.", requires: ["hotStreak", "yellowPoints"], level: g => (upgradeCount(g, "hotStreak") > 0 && upgradeCount(g, "yellowPoints") > 0) ? 1 : 0 },
-        { id: "encoreNight", icon: "🎬", title: "Encore Night", tier: "legendary", category: "combo", maxLevel: 1, description: "Encore + Vowel Bounty: every encore also pays $10 for each vowel in that stage's secret.", requires: ["encore", "vowelBounty"], level: g => (upgradeCount(g, "encore") > 0 && upgradeCount(g, "vowelBounty") > 0) ? 1 : 0 },
+        { id: "encoreNight", icon: "🎬", title: "Encore Night", tier: "legendary", category: "combo", maxLevel: 1, description: "Encore + Vowel Bounty: every encore also pays 10 points for each vowel in that stage's secret.", requires: ["encore", "vowelBounty"], level: g => (upgradeCount(g, "encore") > 0 && upgradeCount(g, "vowelBounty") > 0) ? 1 : 0 },
         { id: "allIn", icon: "🎲", title: "All In", tier: "legendary", category: "combo", maxLevel: 1, description: "Double Down + Hot Streak: a last-guess solve also pays the streak bonus at its highest step.", requires: ["doubleDown", "hotStreak"], level: g => (upgradeCount(g, "doubleDown") > 0 && upgradeCount(g, "hotStreak") > 0) ? 1 : 0 }
       ]
     },
@@ -127,9 +127,9 @@
         { id: "cullRare", icon: "✂️", title: "Deep Cull", tier: "legendary", category: "boss", maxLevel: 1, description: "Remove three rare letters from the deck and from every future secret." },
         { id: "doubleMulligans", icon: "🔁", title: "Double Mulligans", tier: "legendary", category: "boss", maxLevel: 1, description: "Double the number of mulligans you get each round.", level: g => upgradeCount(g, "doubleMulligans") },
         { id: "biggerMulligans", icon: "🖐️", title: "Full Hand Mulligan", tier: "legendary", category: "boss", maxLevel: 1, description: "Every mulligan can now replace up to five cards.", level: g => upgradeCount(g, "mulliganSize") },
-        { id: "richerColours", icon: "💰", title: "Richer Colours", tier: "legendary", category: "boss", maxLevel: 1, description: "Every yellow and green tile is worth $2 more.", level: g => upgradeCount(g, "yellowPoints") },
+        { id: "richerColours", icon: "💰", title: "Richer Colours", tier: "legendary", category: "boss", maxLevel: 1, description: "Every yellow and green tile is worth 2 points more.", level: g => upgradeCount(g, "yellowPoints") },
         { id: "freeVowelSweep", icon: "🅰️", title: "Free Vowel Sweep", tier: "legendary", category: "boss", maxLevel: 1, description: "Each round opens with one random vowel tested for free -- you learn whether it's in the secret, not where.", level: g => upgradeCount(g, "freeVowelSweep") },
-        { id: "questHead", icon: "🏅", title: "Quest Head Start", tier: "legendary", category: "boss", maxLevel: 1, description: "Quests are worth $10 more for the rest of the run.", level: g => upgradeCount(g, "questPoints") },
+        { id: "questHead", icon: "🏅", title: "Quest Head Start", tier: "legendary", category: "boss", maxLevel: 1, description: "Quests are worth 10 points more for the rest of the run.", level: g => upgradeCount(g, "questPoints") },
         { id: "revealGreen", icon: "📍", title: "Position Peek", tier: "legendary", category: "boss", maxLevel: 1, description: "Reveal one hidden position and make that letter reusable for this round." },
         { id: "openingClue", icon: "🔮", title: "Margin Note", tier: "legendary", category: "boss", maxLevel: 1, description: "Reveal that one letter is in the secret at the start of every future non-boss stage -- not where.", level: g => Number(g?.state?.cuddleBonuses?.openingClue) || 0 },
         { id: "questDoublePick", icon: "✌️", title: "Double Pick", tier: "legendary", category: "boss", maxLevel: 1, description: "Quest reward screens let you choose two options instead of one, for the rest of the run.", level: g => upgradeCount(g, "questDoublePick") },

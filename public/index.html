@@ -14,7 +14,7 @@
   <!-- 4. Reusable UI components -->
   <link rel="stylesheet" href="css/components.css?letter-scan-hits=1&responsive-keys=1&secret-themes=3&power-popup-icon=1">
   <!-- 5. Wordle board / history system -->
-  <link rel="stylesheet" href="css/history.css?feedback-lie=1">
+  <link rel="stylesheet" href="css/history.css?feedback-lie=1&tile-marks=1">
   <!-- 6. Game & UI states -->
   <link rel="stylesheet" href="css/states.css">
   <!-- 7. Animations (keyframes) -->
@@ -36,22 +36,22 @@
   <link rel="stylesheet" href="css/mobile.css?mobile-perf=1">
   <!-- New features -->
   <link rel="stylesheet" href="css/features.css?v=tutorial-motion-sim-2&summary-result-center=1&daily-playmode=1">
-  <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&desktop-size-balance=2&optional-note-oneline=1&note-inline-title=1&win-stutter-hollow-stars=1&responsive-board=1&umt-fix=20260830-1&cute-star=1&spyometer-flat=1&star-dance-refresh=1&umt-sidebar-fix=2&umt-constraint-frame=2&avoid-row-red=1&star-glow-headroom=1&quest-flight-z=1&persistent-power-badge=1&panel-flight-z=1&guesser-lock-svg=1&refresh-hide-swap=1&bonus-cleanup=1&svg-star-icons=1">
+  <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&desktop-size-balance=2&optional-note-oneline=1&note-inline-title=1&win-stutter-hollow-stars=1&responsive-board=1&umt-fix=20260830-1&cute-star=1&spyometer-flat=1&star-dance-refresh=1&umt-sidebar-fix=2&umt-constraint-frame=2&avoid-row-red=1&star-glow-headroom=1&quest-flight-z=1&persistent-power-badge=1&panel-flight-z=1&guesser-lock-svg=1&refresh-hide-swap=1&bonus-cleanup=1&svg-star-icons=1&compact-persistent-powers=1">
   <link rel="stylesheet" href="single-player/single-player.css?sp-shell-stretch=1&umt-fix=20260830-1">
   <link rel="stylesheet" href="single-player/challenges.css?umt-challenges=20260901&quick-play-btn-center=1">
 <!-- CUDDLE_MODE:STYLE START -->
-  <link rel="stylesheet" href="cuddle/cuddle.css?v=43&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=3&cuddle-campaign-map=3&boss-leave-behind=1&boss-badge-removed=1&notebook-removed=1">
+  <link rel="stylesheet" href="cuddle/cuddle.css?v=44&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=3&cuddle-campaign-map=3&boss-leave-behind=1&boss-badge-removed=1&notebook-removed=1&count-only-stack=1">
 <!-- CUDDLE_COACH_EXPANSION:STYLE START -->
-  <link rel="stylesheet" href="cuddle/cuddle-money-mode.css?v=9&slower-payout=1">
+  <link rel="stylesheet" href="cuddle/cuddle-money-mode.css?v=11&slower-payout=1&payout-20pct-faster=1&payout-30pct-faster=1&points-money-split=1">
   <link rel="stylesheet" href="cuddle/cuddle-coach-expansion.css?v=5">
 <!-- CUDDLE_COACH_EXPANSION:STYLE END -->
   <link rel="stylesheet" href="cuddle/cuddle-skill-tree.css?v=1">
 <!-- CUDDLE_MODE:STYLE END -->
 <!-- UMT_CUDDLE_REBALANCE_V5_CSS_BEGIN -->
-<link rel="stylesheet" href="/cuddle/cuddle-rebalance-v5.css?v=5.3.0&quick-clock-mobile=1">
+<link rel="stylesheet" href="/cuddle/cuddle-rebalance-v5.css?v=5.4.0&quick-clock-mobile=1&stage-bonus-cleanup=1">
 <!-- UMT_CUDDLE_REBALANCE_V5_CSS_END -->
   <!-- UMT_CUDDLE_USER_PATCH_CSS_BEGIN -->
-<link rel="stylesheet" href="cuddle/cuddle-stability-v2.css?v=2026.09.11.1&cuddle-fixpack=20260912r2&cuddle-map-fit=20260912r1">
+<link rel="stylesheet" href="cuddle/cuddle-stability-v2.css?v=2026.09.15.3&cuddle-fixpack=20260912r2&stage-bonus-itemized=1&cuddle-map-fit=20260912r1">
 <!-- UMT_CUDDLE_USER_PATCH_CSS_END -->
   <!-- UMT_CUDDLE_EXPANDED_STAGES_CSS_BEGIN -->
   <link rel="stylesheet" href="cuddle/cuddle-expanded-stages.css?v=2026.09.11.3">
@@ -1529,20 +1529,22 @@
                   <div id="guesserPowerContainer" class="power-container laser-scope guesser-power-view">
                   </div>
                   <section class="guesser-info-col">
-                    <!-- Drag a swatch onto a keyboard letter to mark it that
-                         colour yourself (client/key-color-picker.js). A
-                         planning note only: real feedback always wins. -->
+                    <!-- Drag a swatch onto a keyboard letter, or onto a tile
+                         in your feedback list, to mark it that colour
+                         yourself (client/key-color-picker.js). A planning
+                         note only: on the keyboard real feedback always
+                         wins, and every mark clears at the round. -->
                     <div
                       id="keyColorPalette"
                       class="key-color-palette"
                       role="group"
-                      aria-label="Letter colour marker: drag a colour onto a keyboard letter"
+                      aria-label="Colour marker: drag a colour onto a keyboard letter or a feedback tile"
                     >
-                      <button type="button" class="key-color-swatch key-color-swatch-green" data-color="green" title="Mark a letter green (right spot)" aria-label="Mark a letter green"></button>
-                      <button type="button" class="key-color-swatch key-color-swatch-yellow" data-color="yellow" title="Mark a letter yellow (in the word, wrong spot)" aria-label="Mark a letter yellow"></button>
-                      <button type="button" class="key-color-swatch key-color-swatch-dark" data-color="gray" title="Mark a letter dark (not in the word)" aria-label="Mark a letter dark"></button>
-                      <button type="button" class="key-color-swatch key-color-swatch-unknown" data-color="unknown" title="Mark a letter unknown" aria-label="Mark a letter unknown">?</button>
-                      <button type="button" class="key-color-swatch key-color-swatch-clear" data-color="" title="Clear your mark from a letter" aria-label="Clear your mark from a letter"></button>
+                      <button type="button" class="key-color-swatch key-color-swatch-green" data-color="green" title="Mark a letter or tile green (right spot)" aria-label="Mark a letter or tile green"></button>
+                      <button type="button" class="key-color-swatch key-color-swatch-yellow" data-color="yellow" title="Mark a letter or tile yellow (in the word, wrong spot)" aria-label="Mark a letter or tile yellow"></button>
+                      <button type="button" class="key-color-swatch key-color-swatch-dark" data-color="gray" title="Mark a letter or tile dark (not in the word)" aria-label="Mark a letter or tile dark"></button>
+                      <button type="button" class="key-color-swatch key-color-swatch-unknown" data-color="unknown" title="Mark a letter or tile unknown" aria-label="Mark a letter or tile unknown">?</button>
+                      <button type="button" class="key-color-swatch key-color-swatch-clear" data-color="" title="Clear your mark from a letter or tile" aria-label="Clear your mark from a letter or tile"></button>
                     </div>
                     <div
                       id="actionLogGuesser"
@@ -1781,7 +1783,7 @@
   <script src="ui/constraints.js"></script>
   <script src="ui/draftrow.js?gameplay-polish=8&star-bonus-fix=1&stars-above-rows=1&cute-star=1&star-glow-headroom=1"></script>
   <script src="ui/keyboard.js?setter-fixes=2&letter-scan-hits=1"></script>
-  <script src="ui/history.js?setter-fixes=2&feedback-lie=1&history-scroll-input-fix=1"></script>
+  <script src="ui/history.js?setter-fixes=2&feedback-lie=1&history-scroll-input-fix=1&history-resize-clamp-fix=1&tile-marks=1"></script>
   <script src="ui/timers.js?mobile-perf=1"></script>
   <script src="ui/colorPicker.js"></script>
   
@@ -1863,7 +1865,7 @@
   <script src="ui/guesser-sidebar.js"></script>
   <script src="client/notes.js"></script>
   <script src="client/drag-mode.js"></script>
-  <script src="client/key-color-picker.js"></script>
+  <script src="client/key-color-picker.js?tile-marks=1"></script>
   <script src="client/friends.js?umt-streamlined=1.0.2&guest-play=1"></script>
   <script src="client/daily-challenge.js?v=daily-playmode-1&daily-difficulty-picker=1&daily-error-state=1&daily-abandoned-actions=1&daily-rank-fallback=1&daily-no-spoilers=1&untimed-no-clock=1"></script>
   <script src="single-player/single-player.js?umt-fix=20260830-1&umt-streamlined=1.0.2"></script>
@@ -1873,19 +1875,19 @@
   <script src="single-player/achievements.js"></script>
   <script src="single-player/challenges.js?umt-challenges=20260901&challenge-room-finished-guard=1&guest-access=1"></script>
 <!-- CUDDLE_MODE:SCRIPTS START -->
-  <script src="cuddle/cuddle-quests.js?v=20&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=2"></script>
-  <script src="cuddle/cuddle-engine.js?v=37&cuddle-boss-rounds=3&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=3&preset-trial-desc=1"></script>
+  <script src="cuddle/cuddle-quests.js?v=21&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=2&points-money-split=1"></script>
+  <script src="cuddle/cuddle-engine.js?v=38&cuddle-boss-rounds=3&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=3&preset-trial-desc=1&no-guess-cap=1"></script>
 <!-- UMT_CUDDLE_CAMPAIGN_SCRIPT START -->
-  <script src="cuddle/cuddle-campaign.js?v=12"></script>
+  <script src="cuddle/cuddle-campaign.js?v=13&points-money-split=1"></script>
 <!-- UMT_CUDDLE_CAMPAIGN_SCRIPT END -->
-  <script src="cuddle/cuddle-ui.js?v=42&umt-streamlined=1.0.2&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=3&cuddle-campaign-map=2&skill-tree=1&boss-reward-id=1"></script>
+  <script src="cuddle/cuddle-ui.js?v=44&umt-streamlined=1.0.2&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=3&cuddle-campaign-map=2&skill-tree=1&boss-reward-id=1&count-only-fix=1&points-money-split=1"></script>
 <!-- CUDDLE_COACH_EXPANSION:SCRIPTS START -->
-  <script src="cuddle/cuddle-money-mode.js?v=12&easy-only-hints=1&slower-payout=1"></script>
-  <script src="cuddle/cuddle-coach-expansion.js?v=7&easy-only-hints=1"></script>
+  <script src="cuddle/cuddle-money-mode.js?v=16&easy-only-hints=1&slower-payout=1&payout-20pct-faster=1&payout-30pct-faster=1&stage-bonus-section=1&points-money-split=1"></script>
+  <script src="cuddle/cuddle-coach-expansion.js?v=8&easy-only-hints=1&points-money-split=1"></script>
 <!-- CUDDLE_COACH_EXPANSION:SCRIPTS END -->
-  <script src="cuddle/cuddle-skill-tree.js?v=3"></script>
+  <script src="cuddle/cuddle-skill-tree.js?v=4&points-money-split=1"></script>
 <!-- CUDDLE_BRANCH_MAP:SCRIPTS START -->
-  <script src="cuddle/cuddle-branch-map.js?v=3"></script>
+  <script src="cuddle/cuddle-branch-map.js?v=4&points-money-split=1"></script>
 <!-- CUDDLE_BRANCH_MAP:SCRIPTS END -->
   <script src="cuddle/cuddle-drag-mode.js?v=2"></script>
 <!-- CUDDLE_MODE:SCRIPTS END -->
@@ -1932,17 +1934,19 @@
   <script src="powerEngine/power-tiers.js?v=2.3-card-carousel&reward-overhaul=1&magic-mode-legendary=1&feedback-lie=1&secret-themes=3&theme-dossier=1&theme-reward-rarity-swap=1"></script> <!-- power-choice-mode-v2.2 -->
   <script src="client/power-choice-mode.js?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&hardmode-copy=1&mobile-perf=1&reward-overhaul=1&optional-note-oneline=1&note-inline-title=1&daily-hide-refresh=1&guide-btn-inline=1&reward-icon-fit=1&spy-rules-short=1&fixed-reward-svg-pack=1&clean-fixed-rewards=1&persistent-power-badge=2&theme-dossier=1&refresh-hide-swap=1&svg-star-icons=1"></script> <!-- power-choice-mode-v2.2 -->
 <!-- UMT_CUDDLE_REBALANCE_V5_JS_BEGIN -->
-<script src="/cuddle/cuddle-rebalance-v5.js?v=5.8.0&challenge-turn-scaling=2&consonant-sweep=1&notebook-removed=1&expose-upgrade-level=1"></script>
+<script src="/cuddle/cuddle-rebalance-v5.js?v=5.10.0&challenge-turn-scaling=2&consonant-sweep=1&notebook-removed=1&expose-upgrade-level=1&stage-bonus-cleanup=1&points-money-split=1"></script>
 <!-- UMT_CUDDLE_REBALANCE_V5_JS_END -->
   <!-- UMT_CUDDLE_USER_PATCH_JS_BEGIN -->
-<script src="cuddle/cuddle-stability-v2.js?v=2026.09.12.1&cuddle-fixpack=20260912r2&cuddle-map-fit=20260912r1"></script>
+<script src="cuddle/cuddle-stability-v2.js?v=2026.09.15.3&cuddle-fixpack=20260912r2&stage-bonus-itemized=1&points-money-split=1&shop-4th-upgrade=1&shop-lockin-export=1&cuddle-map-fit=20260912r1"></script>
   <!-- UMT_CUDDLE_EXPANDED_STAGES_JS_BEGIN -->
-  <script src="cuddle/cuddle-expanded-stages.js?v=2026.09.11.3"></script>
+  <script src="cuddle/cuddle-expanded-stages.js?v=2026.09.15.1&points-money-split=1"></script>
   <!-- UMT_CUDDLE_EXPANDED_STAGES_JS_END -->
 <!-- UMT_CUDDLE_USER_PATCH_JS_END -->
+  <script src="cuddle/cuddle-points-money.js?v=4"></script>
 <!-- CUDDLE_ECONOMY_RARITY_V8_START -->
-<link rel="stylesheet" href="cuddle/cuddle-economy-rarity-v8.css?v=8.2.0&rarity-metals=3&rarity-badge-corner=1&reward-theme=1">
-<script src="cuddle/cuddle-economy-rarity-v8.js?v=8.2.0&observer-cost=2&rarity-metals=3&shallow-skip-builtins=1&rarity-badge-corner=1&reward-theme=1" defer></script>
+<link rel="stylesheet" href="cuddle/cuddle-economy-rarity-v8.css?v=8.3.0&rarity-metals=3&rarity-badge-corner=1&reward-theme=1&level-transition=1">
+<script src="cuddle/cuddle-economy-rarity-v8.js?v=8.3.0&observer-cost=2&rarity-metals=3&shallow-skip-builtins=1&rarity-badge-corner=1&reward-theme=1&level-transition=1" defer></script>
 <!-- CUDDLE_ECONOMY_RARITY_V8_END -->
+  <script src="cuddle/cuddle-shop-lockin.js?v=2&accessor-lock=1" defer></script>
 </body>
 </html>

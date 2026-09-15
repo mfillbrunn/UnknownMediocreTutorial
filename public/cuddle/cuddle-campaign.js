@@ -501,14 +501,19 @@
     const campaign = ensureCampaign(this);
     const shopRound = campaign.activeShopRound;
     const purchased = new Set(campaign.shopPurchases[String(shopRound)] || []);
+    // The shop spends Money (see cuddle-points-money.js), not Points --
+    // "score" here stays the field name callers already expect, but its
+    // VALUE is now the money balance so affordability/display don't have
+    // to change at every call site.
+    const money = Number(this.state?.cuddleMoney || 0);
     return {
       round: shopRound,
-      score: Number(this.state?.score || 0),
+      score: money,
       nextTarget: this.getTarget(Math.min(engine.THRESHOLDS.length, Number(this.state?.round || 1) + 1)),
       items: SHOP_ITEMS.map(item => ({
         ...item,
         purchased: purchased.has(item.id),
-        affordable: Number(this.state?.score || 0) >= item.cost
+        affordable: money >= item.cost
       })),
       inventory: { ...campaign.inventory },
       jokerCharges: Math.max(0, Number(this.state?.megaState?.jokerCharges || 0))
@@ -525,9 +530,9 @@
       ? campaign.shopPurchases[purchaseKey]
       : [];
     if (purchases.includes(item.id)) return { ok: false, error: "That item is sold out in this shop." };
-    if (Number(this.state.score || 0) < item.cost) return { ok: false, error: `You need $${item.cost}.` };
+    if (Number(this.state.cuddleMoney || 0) < item.cost) return { ok: false, error: `You need $${item.cost}.` };
 
-    this.state.score -= item.cost;
+    this.state.cuddleMoney = Number(this.state.cuddleMoney || 0) - item.cost;
     purchases.push(item.id);
     campaign.shopPurchases[purchaseKey] = purchases;
     if (item.id === "joker") {
@@ -843,7 +848,8 @@
             <span class="cuddle-eyebrow">BETWEEN ROUNDS</span>
             <div class="cuddle-header-title-line">
               <h1>${isBoss ? "BOSS AHEAD" : `ROUND ${state.round}`}</h1>
-              <span class="cuddle-header-score" aria-label="Total money $${state.score}">$${state.score}</span>
+              <span class="cuddle-header-score cuddle-header-points" aria-label="${state.score} points">${state.score} PTS</span>
+              <span class="cuddle-header-money" aria-label="${Number(state.cuddleMoney || 0)} money">$${Number(state.cuddleMoney || 0)}</span>
             </div>
           </div>
           <div class="cuddle-header-side cuddle-header-side-right"></div>
@@ -878,7 +884,7 @@
             <span class="cuddle-eyebrow">BETWEEN ROUNDS</span>
             <div class="cuddle-header-title-line">
               <h1>THE WANDERING PAW</h1>
-              <span class="cuddle-header-score" aria-label="Spendable money $${state.score}">$${state.score}</span>
+              <span class="cuddle-header-money" aria-label="Spendable money $${shop.score}">$${shop.score}</span>
             </div>
           </div>
           <div class="cuddle-header-side cuddle-header-side-right"></div>

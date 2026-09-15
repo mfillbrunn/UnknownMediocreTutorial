@@ -1479,10 +1479,16 @@
   line-height: 1;
 }
 
-/* Count Only replaces the row's points with the only thing it reveals. */
+/* Count Only replaces the row's points with the only thing it reveals --
+   green count above yellow count (the parent's own column flex, same as
+   the ordinary score/early-bonus stack above), not side by side. */
 .cuddle-row-score.is-counts {
   color: var(--cuddle-text);
   font-size: 0.66rem;
+  gap: 1px;
+}
+
+.cuddle-row-score-count {
   white-space: nowrap;
 }
 

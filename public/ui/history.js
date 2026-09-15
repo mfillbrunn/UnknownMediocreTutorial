@@ -94,6 +94,12 @@ function buildHistoryRenderState(state, role) {
   // guesser's diff on whichever call ran second that tick.
   if (role === "guesser" && state.powers?.blindGuessActive) return [];
   const isSetter = role === "setter";
+  // The guesser's own tile marks (client/key-color-picker.js) are scoped
+  // to a round, and this render runs before the keyboard's on a guesser
+  // update -- so ask for the round check here too rather than painting one
+  // frame of last round's marks onto this round's rows. It is a no-op
+  // unless the round actually changed.
+  if (!isSetter) window.resetManualKeyColorsForRound?.(state);
   const bsIdx   = state?.powers?.blindSpotIndex;
   const bsRound = state?.powers?.blindSpotRoundIndex;
   const history = state?.history || [];
@@ -133,6 +139,24 @@ function buildHistoryRenderState(state, role) {
     // adds the row note that makes the deception legible instead of
     // reading as a genuine result.
     const feedbackLieInfo = !!safeEntry.feedbackLieApplied;
+
+    // The guesser's own reading of a tile, dropped on from the palette
+    // (client/key-color-picker.js). Applied last, after every real-feedback
+    // branch above including Count Only's per-tile "?" corner: the mark
+    // REPLACES the tile's class rather than layering over it, so a row the
+    // player has already made their mind up about doesn't keep asking the
+    // question underneath their answer. Folding it into classKey (rather
+    // than patching the DOM separately) is what lets rowsEqual see a mark
+    // change as a change and re-render the row for it.
+    if (!isSetter) {
+      for (let i = 0; i < tiles.length; i++) {
+        const manual = window.getManualTileColor?.(entry.__historyKey, i);
+        const manualClass = manual
+          ? window.manualTileColorClass?.(manual)
+          : null;
+        if (manualClass) tiles[i].classKey = manualClass;
+      }
+    }
 
     rows.push({
       key: entry.__historyKey,
@@ -185,6 +209,18 @@ function isHistoryScrolledToNewest(container) {
   return historyDistanceFromBottom(container) <= HISTORY_BOTTOM_EPSILON_PX;
 }
 
+// Genuinely nothing to scroll: every row fits in the box as it stands.
+// Being "scrolled away" is meaningless here, so any stale detached flag
+// from an earlier, taller list has to be dropped rather than left to
+// suppress the follow-to-newest behaviour forever.
+function historyHasNowhereToScroll(container) {
+  return historyMaxScrollTop(container) <= HISTORY_BOTTOM_EPSILON_PX;
+}
+
+function historyMaxScrollTop(container) {
+  return Math.max(0, container.scrollHeight - container.clientHeight);
+}
+
 // Exposed so other guesser-history callers (guesser-flow-v7.js's own
 // pending-row scroll, outside this file's diff/render pipeline) can apply
 // the exact same "only follow if already at the bottom" rule instead of
@@ -195,8 +231,42 @@ function getHistoryScrollState(container) {
   let s = HISTORY_SCROLL_STATE.get(container);
   if (s) return s;
 
-  s = { interacting: false, detached: false, settleTimer: null, lastScrollAt: 0 };
+  s = {
+    interacting: false,
+    detached: false,
+    settleTimer: null,
+    lastScrollAt: 0,
+    // Last position/scrollable range this controller actually observed,
+    // so the next scroll event can be compared against them (see
+    // landedAtBottomByClamping below).
+    seenTop: container.scrollTop,
+    seenMax: historyMaxScrollTop(container)
+  };
   HISTORY_SCROLL_STATE.set(container, s);
+
+  // Did the list arrive at the bottom because the BOX shrank out from
+  // under the reader rather than because they scrolled there?
+  //
+  // Anything sharing the board column can take height out of this box --
+  // the Secret Themes / Informant readout appearing below it is the usual
+  // cause, and it is rebuilt and repositioned on ordinary state updates
+  // for as long as the reward is held, so this happens over and over
+  // rather than once. Each time the scrollable range shrinks past where
+  // the reader was parked, the browser clamps scrollTop to the new
+  // maximum by itself and dispatches a perfectly genuine scroll event for
+  // it. Read literally that event says "the reader is at the newest row
+  // now" -- which is how someone holding a position part-way up the list
+  // silently lost their "scrolled away" flag and got dragged back down by
+  // the very next resize, over and over, and why the list felt like it
+  // refused to stay where it was put. The signature is exact: the range
+  // is smaller than when we last looked, the position we last saw no
+  // longer exists inside it, and we have landed on the new ceiling. A
+  // timestamp set from the ResizeObserver can't stand in for this -- the
+  // rendering steps fire scroll events BEFORE resize-observer callbacks,
+  // so the stamp would always arrive a frame too late.
+  const landedAtBottomByClamping = (top, max) =>
+    max < s.seenMax && s.seenTop > max + HISTORY_BOTTOM_EPSILON_PX &&
+    top >= max - HISTORY_BOTTOM_EPSILON_PX;
 
   const beginInteraction = () => {
     s.interacting = true;
@@ -211,9 +281,15 @@ function getHistoryScrollState(container) {
     s.settleTimer = setTimeout(() => {
       s.interacting = false;
       s.settleTimer = null;
-      // Momentum settled -- if it actually carried the reader back to the
-      // bottom on its own, resume following from here.
-      if (isHistoryScrolledToNewest(container)) s.detached = false;
+      // Momentum settled. Whether it carried the reader back to the
+      // newest row is already recorded -- every frame of that coast fires
+      // a scroll event and the listener below judges each one -- so this
+      // deliberately does NOT re-read the live geometry, which a resize
+      // in the meantime may have moved the bottom of without the reader
+      // touching anything. The one thing no scroll event can report is
+      // the list ceasing to overflow at all, which leaves nothing to be
+      // scrolled away from.
+      if (historyHasNowhereToScroll(container)) s.detached = false;
     }, HISTORY_SETTLE_MS);
   };
 
@@ -233,11 +309,31 @@ function getHistoryScrollState(container) {
   // detached, whether it came from a touch drag, a wheel, or dragging the
   // scrollbar itself. A programmatic follow-to-bottom write (see
   // restoreHistoryScrollIntent below) always lands exactly at the bottom,
-  // so it can never trip this into "detached" on its own -- nothing else
-  // needs to distinguish who caused a given scroll.
+  // so it can never trip this into "detached" on its own. The one caller
+  // that does have to be told apart is the box resizing under the reader:
+  // that clamps scrollTop and fires a scroll event of its own, which
+  // reads exactly like the reader choosing to come back down -- hence
+  // landedAtBottomByClamping rather than a bare assignment here.
   container.addEventListener("scroll", () => {
     s.lastScrollAt = now();
-    s.detached = !isHistoryScrolledToNewest(container);
+    const top = container.scrollTop;
+    const max = historyMaxScrollTop(container);
+
+    if (!isHistoryScrolledToNewest(container)) {
+      s.detached = true;
+    } else if (historyHasNowhereToScroll(container)) {
+      // Every row fits as things stand, so there is nowhere to be
+      // scrolled away to and no stale flag worth keeping.
+      s.detached = false;
+    } else if (s.interacting || !landedAtBottomByClamping(top, max)) {
+      // s.interacting means a finger/pointer/wheel is on the list right
+      // now, so reaching the bottom is unambiguously the reader's doing
+      // even if a resize happened to land in the same frame.
+      s.detached = false;
+    }
+
+    s.seenTop = top;
+    s.seenMax = max;
   }, { passive: true });
 
   // This list's own height changes underneath the reader whenever anything
@@ -252,11 +348,15 @@ function getHistoryScrollState(container) {
   // the list read as stuck part-way up, with new rows piling up unseen
   // below, from the moment one of those rewards was taken. Re-pin to the
   // newest row on any resize, unless the reader had deliberately scrolled
-  // away from it (exactly the rule the rest of this controller follows).
+  // away from it (exactly the rule the rest of this controller follows) --
+  // which is what landedAtBottomByClamping above exists to keep true
+  // across the repeated resizes that same panel causes while it is held.
   if (typeof ResizeObserver !== "undefined") {
     const observer = new ResizeObserver(() => {
       if (s.detached || s.interacting) return;
       container.scrollTop = container.scrollHeight;
+      s.seenTop = container.scrollTop;
+      s.seenMax = historyMaxScrollTop(container);
     });
     observer.observe(container);
   }

@@ -486,29 +486,44 @@
   font-variant-numeric: tabular-nums;
 }
 
-#cuddleRoot .umt-stage-bonus-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+/* A distinct area below the whole rows list -- everything a stage paid
+   that wasn't tied to one specific guess (unused mulligans, unused
+   Jokers, Reserve Dividend, a mini-challenge clear), each on its own
+   line instead of one blended figure. */
+#cuddleRoot .umt-stage-bonus-section {
+  display: grid;
+  gap: 6px;
   margin-top: 10px;
-  padding: 13px 14px;
+  padding: 12px 14px;
   border: 1px dashed rgba(255, 255, 255, .28);
   border-radius: 12px;
   background: rgba(255, 255, 255, .055);
 }
 
-#cuddleRoot .umt-stage-bonus-row > span {
-  display: grid;
-  gap: 2px;
-  text-align: left;
-}
-
-#cuddleRoot .umt-stage-bonus-row small {
+#cuddleRoot .umt-stage-bonus-title {
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
   opacity: .68;
 }
 
-#cuddleRoot .umt-stage-bonus-row > strong {
+#cuddleRoot .umt-stage-bonus-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+#cuddleRoot .umt-stage-bonus-line span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#cuddleRoot .umt-stage-bonus-line strong {
+  flex: 0 0 auto;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -632,7 +647,7 @@
 /* Keep the heavier cards in their own paint boundaries and trim payout work. */
 #cuddleRoot .cuddle-shop-item,
 #cuddleRoot .cuddle-money-payout-row,
-#cuddleRoot .umt-stage-bonus-row {
+#cuddleRoot .umt-stage-bonus-section {
   contain: layout paint;
 }
 
