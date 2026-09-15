@@ -403,38 +403,54 @@
   function rememberUnchosenBoss(game, offer, chosenId) {
     const unchosen = (Array.isArray(offer) ? offer : []).find(option => option && option.id !== chosenId);
     if (!unchosen || !game?.state?.boss) return null;
-    const mega = megaState(game);
     game.state.boss.ratchetSourceId = unchosen.id;
     game.state.boss.ratchetSourceTitle = unchosen.title || unchosen.id;
-    if (mega) {
-      if (unchosen.id === "extraGuessTrial") mega.extraGuessTrialPunishPending = true;
-      if (unchosen.id === "questEndurance") mega.questEndurancePunishPending = true;
-    }
     safeSave(game);
     return unchosen;
   }
 
+  // Random guess slot(s) for a newly-created ratchet debuff, drawn from
+  // 1..poolMax and never reusing a slot an existing debuff already claims.
+  function pickRatchetGuessIndices(game, mega, count, poolMax) {
+    const used = new Set((mega.ratchetDebuffs || []).map(item => integer(item?.guessIndex, 0)));
+    const pool = [];
+    for (let index = 1; index <= poolMax; index += 1) {
+      if (!used.has(index)) pool.push(index);
+    }
+    return shuffled(pool, game?.random || Math.random).slice(0, count);
+  }
+
+  // The declined boss's effect is permanent from here on -- every future
+  // round, not just the next one -- and which guess(es) it haunts is
+  // random: the first boss's decline claims one random guess among the
+  // first three of every future round, the second boss's decline claims
+  // two among the first four (never reusing a slot the first boss's
+  // decline already claimed). No ratchet is ever created for the final
+  // boss -- no round follows it. mega.ratchetOrdinalsApplied guards
+  // against double-applying the same boss stage's penalty (guessIndex is
+  // no longer 1:1 with the ordinal, so it can't double as that guard by
+  // itself the way it used to).
   function commitUnchosenBossPenalty(game, boss) {
     if (!boss?.ratchetSourceId || boss.gate === "final") return false;
     const mega = megaState(game);
     if (!mega) return false;
-    if (boss.ratchetSourceId === "extraGuessTrial") {
-      mega.extraGuessTrialPunishPending = true;
-      return true;
-    }
-    if (boss.ratchetSourceId === "questEndurance") {
-      mega.questEndurancePunishPending = true;
-      return true;
-    }
     if (!Array.isArray(mega.ratchetDebuffs)) mega.ratchetDebuffs = [];
+    if (!Array.isArray(mega.ratchetOrdinalsApplied)) mega.ratchetOrdinalsApplied = [];
     const ordinal = Math.max(1, integer(game?.state?.bossesCleared, 0) + 1);
-    if (mega.ratchetDebuffs.some(item => integer(item?.guessIndex, -1) === ordinal)) return false;
-    const debuff = { bossId: boss.ratchetSourceId, guessIndex: ordinal };
-    if (debuff.bossId === "hideFeedback") debuff.hiddenIndex = Math.floor((game?.random || Math.random)() * 5);
-    if (debuff.bossId === "hiddenMargins") {
-      debuff.hiddenIndices = shuffled([0, 1, 2, 3, 4], game?.random || Math.random).slice(0, 2);
-    }
-    mega.ratchetDebuffs.push(debuff);
+    if (mega.ratchetOrdinalsApplied.includes(ordinal)) return false;
+    mega.ratchetOrdinalsApplied.push(ordinal);
+    const bossId = boss.ratchetSourceId;
+    const slotCount = ordinal >= 2 ? 2 : 1;
+    const poolMax = ordinal >= 2 ? 4 : 3;
+    const guessIndices = pickRatchetGuessIndices(game, mega, slotCount, poolMax);
+    guessIndices.forEach(guessIndex => {
+      const debuff = { bossId, guessIndex };
+      if (bossId === "hideFeedback") debuff.hiddenIndex = Math.floor((game?.random || Math.random)() * 5);
+      if (bossId === "hiddenMargins") {
+        debuff.hiddenIndices = shuffled([0, 1, 2, 3, 4], game?.random || Math.random).slice(0, 2);
+      }
+      mega.ratchetDebuffs.push(debuff);
+    });
     safeSave(game);
     return true;
   }

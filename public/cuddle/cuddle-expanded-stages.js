@@ -1047,12 +1047,11 @@
         suppressAdvance: false,
         extraGuesses: 0,
         ratchetDebuffs: [],
+        ratchetOrdinalsApplied: [],
         activeQuests: [],
         pendingExtraQuestRewards: [],
         questPersistsForRound: false,
         handSizePenaltyThisRound: 0,
-        extraGuessTrialPunishPending: false,
-        questEndurancePunishPending: false,
         ratchetForcedQuestGuessIndex: null,
         presetWords: null,
         // One-use and per-round joker rewards stay with ordinary Wordle stages.

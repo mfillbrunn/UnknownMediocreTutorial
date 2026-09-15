@@ -101,7 +101,7 @@
   ]);
 
   const QUEST_REWARD_NAMES = new Set([
-    "guided letter", "extra mulligan", "letter count", "silly word",
+    "extra mulligan", "letter count", "silly word",
     "extra letters", "joker", "category whisper"
   ]);
 
@@ -1193,22 +1193,6 @@
     return result.called;
   }
 
-  function currentCandidateWords(state, context) {
-    const result = callCandidateMethod(context, [
-      /active.*words/, /feasible.*words/, /candidate.*words/, /possible.*words/
-    ]);
-    if (result.called && Array.isArray(result.value)) return result.value.filter((word) => /^[a-z]{5}$/i.test(String(word)));
-    for (const object of shallowObjects(state, 3)) {
-      for (const [key, value] of safeOwnEntries(object)) {
-        if (/candidate|feasible|possible|activewords/.test(norm(key)) && Array.isArray(value)) {
-          const words = value.filter((word) => /^[a-z]{5}$/i.test(String(word)));
-          if (words.length) return words;
-        }
-      }
-    }
-    return [];
-  }
-
   function showMessage(text) {
     const event = new CustomEvent("cuddle:toast", { detail: { message: text, source: "economy-v8" } });
     document.dispatchEvent(event);
@@ -1221,19 +1205,6 @@
       toast.classList.remove("is-visible");
       setTimeout(() => toast.remove(), 300);
     }, 2600);
-  }
-
-  function applyGuidedWord(state, context) {
-    const words = currentCandidateWords(state, context);
-    const feasible = words.filter((word) => canBuildWithHand(word, state));
-    const word = feasible[0] || words[0];
-    if (word) {
-      showMessage(`Guided word: ${String(word).toUpperCase()}`);
-      dispatch("cuddle:guided-word", { word: String(word).toUpperCase(), source: "economy-v8" });
-      return true;
-    }
-    showMessage("No feasible guided word is currently available.");
-    return false;
   }
 
   function applyCustomEffect(effectId, state, context, original, thisArg, args) {
@@ -1330,8 +1301,6 @@
       case "rarity-lens":
         addUpgradeStack(state, "rarity-lens", 1);
         return true;
-      case "guided-word":
-        return applyGuidedWord(state, context);
       case "letter-count-two": {
         const patchedArgs = args.map((value) => typeof value === "number" && value === 3 ? 2 : value);
         if (typeof original === "function") return original.apply(thisArg, patchedArgs);
@@ -1547,10 +1516,7 @@
   function transformQuestDefinition(def) {
     if (!isObject(def)) return def;
     const name = norm(getName(def));
-    if (name === "guided letter") {
-      setDescription(def, "Show a feasible word that can be made with currently usable letters and unused consonants.");
-      replaceHandlers(def, "guided-word");
-    } else if (name === "letter count") {
+    if (name === "letter count") {
       setDescription(def, "Reveal how many times two selected consonants occur in the answer.");
       for (const key of ["count", "letterCount", "selectionCount", "choices"]) {
         if (key in def && typeof def[key] === "number") def[key] = 2;

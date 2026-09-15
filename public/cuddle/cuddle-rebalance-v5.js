@@ -205,17 +205,19 @@
   ]);
 
   const BURDEN_INFO = Object.freeze({
-    countOnly: ["Count Only", "The affected guess shows only how many letters are correct."],
-    delayedFeedback: ["Delayed Feedback", "The affected guess withholds its feedback until later."],
-    hideFeedback: ["Hidden Feedback", "The affected guess hides tile feedback."],
-    hiddenMargins: ["Hidden Margins", "Some feedback positions are concealed."],
-    blueMode: ["Blue Mode", "Yellow and green information is merged into blue feedback."],
-    fakeFeedback: ["False Signal", "One affected guess contains misleading feedback."],
-    quickMode: ["Quick Mode", "The affected guess is played under a time limit."],
-    noMulligans: ["No Mulligans", "Mulligans are disabled on the affected guess."],
-    shortHand: ["Short Hand", "The affected round uses a reduced hand or guess allowance."],
-    questTrial: ["Quest Trial", "A previous boss trial returns as a stacking burden."],
-    presetWordsTrial: ["Preset Trial", "A forced-word boss trial returns as a stacking burden."]
+    countOnly: ["Count Only", "That same guess shows only how many letters are correct, every round from now on."],
+    delayedFeedback: ["Delayed Feedback", "That same guess withholds its feedback until later, every round from now on."],
+    hideFeedback: ["Hidden Feedback", "That same guess hides tile feedback, every round from now on."],
+    hiddenMargins: ["Hidden Margins", "Some feedback positions on that same guess stay concealed, every round from now on."],
+    blueMode: ["Blue Mode", "That same guess merges yellow and green into blue feedback, every round from now on."],
+    fakeFeedback: ["False Signal", "That same guess shows misleading feedback, every round from now on."],
+    quickMode: ["Quick Mode", "That same guess is played under a time limit, every round from now on."],
+    noMulligans: ["No Mulligans", "Mulligans are disabled on that same guess, every round from now on."],
+    shortHand: ["Short Hand", "That round's hand or guess allowance is reduced, every round from now on."],
+    questTrial: ["Quest Trial", "A quest is forced on that same guess, every round from now on."],
+    presetWordsTrial: ["Preset Trial", "That round's hand allowance is reduced by a forced-word trial, every round from now on."],
+    extraGuessTrial: ["Overtime Trial", "That same guess scores 0 points, every round from now on."],
+    questEndurance: ["Endurance Trial", "If that same guess misses its quest, that round's hand size drops by one -- every round from now on."]
   });
 
   const CHALLENGES = Object.freeze([
@@ -3165,34 +3167,54 @@
     });
   }
 
-  function powerIdsForGuess(game, guessIndex) {
-    const ids = [];
-    const add = (id) => { if (id && !ids.includes(String(id))) ids.push(String(id)); };
+  // Tiers below are priority, not chronology: when two effects would land
+  // on the very same guess, the lower tier number wins and the other shows
+  // as inactive rather than as an equally-live icon. History snapshots
+  // (tier -1) always win -- they're what actually happened, recorded once
+  // at submit time, and can't be re-derived after the fact. A live boss's
+  // own constraint (tier 0) outranks a challenge effect (tier 1), which
+  // outranks a stacked ratchet debuff (tier 2) -- ratchet debuffs don't
+  // even fire during a boss round to begin with (see getGuessRatchetDebuff's
+  // callers, all gated on !isBossRound()), so showing one as equally live
+  // next to the real boss icon was misleading.
+  function powerIdsForGuess(game, guessIndex, opts) {
+    const entries = [];
+    const seen = new Set();
+    const add = (id, tier) => {
+      const key = id ? String(id) : "";
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      entries.push({ id: key, tier: typeof tier === "number" ? tier : -1 });
+    };
     const state = stateOf(game) || {};
     const history = Array.isArray(state.history) ? state.history[guessIndex] : null;
-    if (history && Array.isArray(history.umtPowerIds)) history.umtPowerIds.forEach(add);
+    if (history && Array.isArray(history.umtPowerIds)) history.umtPowerIds.forEach((id) => add(id, -1));
 
     const challenge = activeChallenge(game);
     if (challenge) {
-      if (Array.isArray(challenge.masks) && challenge.masks[guessIndex]) add(challenge.masks[guessIndex]);
-      if (challenge.noMulligans) add("noMulligans");
-      if (challenge.uniqueFirst && guessIndex === 0) add("perfectOpener");
-      if (challenge.vowelBudget && guessIndex < asNumber(challenge.vowelBudget.guesses, 0)) add("consonantCrunch");
+      if (Array.isArray(challenge.masks) && challenge.masks[guessIndex]) add(challenge.masks[guessIndex], 1);
+      if (challenge.noMulligans) add("noMulligans", 1);
+      if (challenge.uniqueFirst && guessIndex === 0) add("perfectOpener", 1);
+      if (challenge.vowelBudget && guessIndex < asNumber(challenge.vowelBudget.guesses, 0)) add("consonantCrunch", 1);
     }
 
     const boss = state.boss;
     if (boss && !boss.__umtSynthetic) {
       const turns = Math.max(0, Math.floor(asNumber(boss.turns, 0)));
       const wholeRound = ["shortHand", "noMulligans", "questTrial", "presetWordsTrial", "hideFeedback"].includes(String(boss.id || ""));
-      if (wholeRound || turns <= 0 || guessIndex < turns) add(boss.id || boss.bossId);
+      if (wholeRound || turns <= 0 || guessIndex < turns) add(boss.id || boss.bossId, 0);
     }
 
     const mega = megaOfState(state) || {};
     (Array.isArray(mega.ratchetDebuffs) ? mega.ratchetDebuffs : []).forEach((burden, index) => {
       const affected = Math.max(1, Math.floor(asNumber(burden.guessIndex, index + 1))) - 1;
-      if (affected === guessIndex) add(burden.bossId || burden.id);
+      if (affected === guessIndex) add(burden.bossId || burden.id, 2);
     });
-    return ids;
+
+    if (!opts || !opts.withTiers) return entries.map((entry) => entry.id);
+    if (!entries.length) return [];
+    const topTier = Math.min(...entries.map((entry) => entry.tier));
+    return entries.map((entry) => ({ id: entry.id, active: entry.tier === topTier }));
   }
 
   function renderRowPowerIcons(game) {
@@ -3201,8 +3223,8 @@
     const rows = Array.from(root.querySelectorAll(".cuddle-board-row"));
     rows.forEach((row, index) => {
       let stack = row.querySelector(":scope > .umt-row-power-icons");
-      const ids = powerIdsForGuess(game, index);
-      if (!ids.length) {
+      const entries = powerIdsForGuess(game, index, { withTiers: true });
+      if (!entries.length) {
         if (stack) stack.remove();
         return;
       }
@@ -3211,25 +3233,29 @@
         stack.className = "umt-row-power-icons";
         row.appendChild(stack);
       }
-      const signature = ids.join("|");
+      const signature = entries.map((entry) => `${entry.id}:${entry.active ? 1 : 0}`).join("|");
       if (stack.dataset.umtSignature === signature) return;
       stack.dataset.umtSignature = signature;
       stack.innerHTML = "";
-      ids.forEach((id) => {
+      entries.forEach(({ id, active }) => {
         const info = powerInfo(id);
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "umt-power-icon-button";
+        button.className = active ? "umt-power-icon-button" : "umt-power-icon-button is-power-inactive";
         button.dataset.umtPowerInfo = id;
         button.dataset.umtPowerScope = `Guess ${index + 1}`;
         button.innerHTML = powerSvg(id);
-        button.title = `${info.title} — click for details`;
-        button.setAttribute("aria-label", `${info.title} on guess ${index + 1}. Open explanation.`);
+        button.title = active
+          ? `${info.title} — click for details`
+          : `${info.title} — overridden this guess by a higher-priority effect, click for details`;
+        button.setAttribute("aria-label", active
+          ? `${info.title} on guess ${index + 1}. Open explanation.`
+          : `${info.title} on guess ${index + 1}, currently overridden. Open explanation.`);
         // Quick Mode's per-guess countdown used to live in a header badge
         // (removed -- this row icon is now the only place a boss's effect
         // shows). cuddle-ui.js's paintQuickModeClock still writes into
         // #cuddleQuickClock by id every 250ms; only the current row gets one.
-        if (id === "quickMode" && index === asInteger((stateOf(game) || {}).guessesUsed, 0)) {
+        if (id === "quickMode" && active && index === asInteger((stateOf(game) || {}).guessesUsed, 0)) {
           const clock = document.createElement("span");
           clock.id = "cuddleQuickClock";
           clock.className = "umt-row-quick-clock";

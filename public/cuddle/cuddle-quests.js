@@ -253,12 +253,6 @@
   // descriptions, and effects below are owned by single-player Cuddle.
   const REWARDS = [
     {
-      id: "suggestGuess",
-      icon: "💡",
-      title: "Guided Letter",
-      description: "Show a word you can play right now."
-    },
-    {
       id: "stealthGuess",
       icon: "🔁",
       title: "Extra Mulligan",
