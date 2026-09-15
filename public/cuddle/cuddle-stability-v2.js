@@ -1150,13 +1150,15 @@
     Object.freeze({ id: "coachBossUnlimitedMulligans", icon: "♾️", title: "Regular Wordle Hands", cost: 28, kind: "boss", description: "Save unlimited mulligans for the next boss." }),
     Object.freeze({ id: "coachShopPossibleAnswers", icon: "🎧", title: "Secrets Counter", cost: 44, kind: "upgrade", rarity: "bronze", description: "Unlock the exact Secrets Remaining counter for this run." }),
     Object.freeze({ id: "coachShopHint", icon: "💡", title: "Guesser Hint", cost: 50, kind: "upgrade", rarity: "silver", description: "Add one exact-position hint to every eligible round, up to four." }),
-    Object.freeze({ id: "coachShopMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", cost: 56, kind: "upgrade", rarity: "gold", description: "Reduce the Cuddle Meter requirement by one for this run, up to three times." })
+    Object.freeze({ id: "coachShopMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", cost: 56, kind: "upgrade", rarity: "gold", description: "Reduce the Cuddle Meter requirement by one for this run, up to three times." }),
+    Object.freeze({ id: "moreGuesses", icon: "➕", title: "Extra Row", cost: 65, kind: "upgrade", rarity: "gold", description: "Permanently add one guess to every round, boss fights included. Stacks twice." })
   ]);
   const SHOP_BY_ID = new Map(SHOP_ITEMS.map(item => [item.id, item]));
   const UPGRADE_MAX = Object.freeze({
     coachShopPossibleAnswers: 1,
     coachShopHint: 4,
-    coachShopMeterThreshold: 3
+    coachShopMeterThreshold: 3,
+    moreGuesses: 2
   });
 
   let activeGame = null;
@@ -1241,16 +1243,17 @@
     return object[key];
   }
 
-  function upgradeLevel(itemId, coach) {
+  function upgradeLevel(itemId, coach, game) {
     if (itemId === "coachShopPossibleAnswers") return coach.possibleAnswersUnlocked ? 1 : 0;
     if (itemId === "coachShopHint") return Math.max(0, integer(coach.hintsPerRound, 0));
     if (itemId === "coachShopMeterThreshold") return Math.max(0, integer(coach.cuddleThresholdStacks, 0));
+    if (itemId === "moreGuesses") return Math.max(0, integer(game?.state?.megaState?.extraGuesses, 0));
     return 0;
   }
 
-  function itemIsMaxed(item, coach) {
+  function itemIsMaxed(item, coach, game) {
     const maximum = UPGRADE_MAX[item.id];
-    return maximum ? upgradeLevel(item.id, coach) >= maximum : false;
+    return maximum ? upgradeLevel(item.id, coach, game) >= maximum : false;
   }
 
   function safeSave(game) {
@@ -1294,8 +1297,8 @@
         nextTarget: null,
         items: SHOP_ITEMS.map(item => ({
           ...item,
-          purchased: purchased.has(item.id) || itemIsMaxed(item, coach),
-          affordable: score >= item.cost && !itemIsMaxed(item, coach)
+          purchased: purchased.has(item.id) || itemIsMaxed(item, coach, this),
+          affordable: score >= item.cost && !itemIsMaxed(item, coach, this)
         })),
         inventory: { ...campaign.inventory },
         jokerCharges: Math.max(0, integer(this.state?.megaState?.jokerCharges, 0))
@@ -1316,7 +1319,7 @@
       if (campaignPurchases.includes(item.id) || coachPurchases.includes(item.id)) {
         return { ok: false, error: "That item is sold out in this shop." };
       }
-      if (itemIsMaxed(item, coach)) return { ok: false, error: `${item.title} is already maxed.` };
+      if (itemIsMaxed(item, coach, this)) return { ok: false, error: `${item.title} is already maxed.` };
 
       const balance = numeric(this.state.cuddleMoney, 0);
       if (balance < item.cost) return { ok: false, error: `You need $${item.cost}.` };
@@ -1332,7 +1335,8 @@
         unlimitedMulligans: integer(coach.inventory.unlimitedMulligans, 0),
         possibleAnswersUnlocked: Boolean(coach.possibleAnswersUnlocked),
         hintsPerRound: integer(coach.hintsPerRound, 0),
-        cuddleThresholdStacks: integer(coach.cuddleThresholdStacks, 0)
+        cuddleThresholdStacks: integer(coach.cuddleThresholdStacks, 0),
+        extraGuesses: integer(this.state?.megaState?.extraGuesses, 0)
       };
 
       try {
@@ -1358,6 +1362,11 @@
           coach.hintsPerRound = Math.min(4, Math.max(0, integer(coach.hintsPerRound, 0)) + 1);
         } else if (item.id === "coachShopMeterThreshold") {
           coach.cuddleThresholdStacks = Math.min(3, Math.max(0, integer(coach.cuddleThresholdStacks, 0)) + 1);
+        } else if (item.id === "moreGuesses") {
+          const mega = this.state.megaState && typeof this.state.megaState === "object"
+            ? this.state.megaState
+            : (this.state.megaState = {});
+          mega.extraGuesses = Math.min(UPGRADE_MAX.moreGuesses, Math.max(0, integer(mega.extraGuesses, 0)) + 1);
         }
 
         this.state.lastMessage = `${item.title} purchased for $${item.cost}.`;
@@ -1370,6 +1379,7 @@
         if (this.state.megaState) {
           this.state.megaState.jokerCharges = snapshot.jokerCharges;
           this.state.megaState.hasJokerUnlocked = snapshot.hasJokerUnlocked;
+          this.state.megaState.extraGuesses = snapshot.extraGuesses;
         }
         campaign.inventory.yellowDetector = snapshot.yellowDetector;
         coach.inventory.tenLetterCull = snapshot.tenLetterCull;
@@ -1385,6 +1395,27 @@
     Object.defineProperty(proto, "__umtCuddleFixpackShop", {
       value: VERSION,
       configurable: true
+    });
+
+    // Handed to cuddle-shop-lockin.js (loaded last, after the deferred
+    // cuddle-economy-rarity-v8.js) so it can put these exact, never-wrapped
+    // functions back on the prototype once everything else has had its
+    // turn -- see that file for why: economy-rarity-v8.js's generic
+    // method-instrumentation pass re-wraps proto.getCuddleShop and
+    // proto.buyCuddleShopItem for its own reward-theming bookkeeping,
+    // among many other methods, and its shop-shaped-array heuristic
+    // (isShopArray/transformShopCatalog) then rewrites and pads out
+    // whatever items() this shop returns with an entirely separate
+    // "pouch" reward economy of its own -- so a caller reading
+    // game.getCuddleShop() no longer sees the plain 8-item catalog this
+    // function actually builds. Keeping a direct reference to the
+    // pristine functions (rather than trying to make them un-wrappable,
+    // or reversing whatever the wrapper did) is what makes it possible to
+    // restore exactly this catalog and exactly this purchase logic
+    // afterward, regardless of what runs in between.
+    window.__cuddleShopFinal = Object.freeze({
+      getShop: proto.getCuddleShop,
+      buyItem: proto.buyCuddleShopItem
     });
   }
 
