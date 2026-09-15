@@ -506,8 +506,13 @@ function aiDelayForState(
     !state.pendingGuess &&
     state.history?.length === 1;
 
+  // Just long enough for the "The Guesser is picking a word." wait screen
+  // (tutorial-advanced.js round 1, sub-step 0) to actually be readable
+  // instead of flashing by at the normal ~1.5-2.5s AI pace -- not a real
+  // "thinking" delay, so it doesn't need to be anywhere near as long as it
+  // used to be (18s).
   return isAdvancedNotesPractice
-    ? 18000
+    ? 4000
     : aiDelay();
 }
 // Decides what a given seat's AI-controlled player should do right now, but
