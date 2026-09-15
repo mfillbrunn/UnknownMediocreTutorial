@@ -52,19 +52,19 @@
     Object.freeze({
       id: IDS.encore, key: IDS.encore, icon: "\uD83C\uDFAC",
       title: "Encore", name: "Encore",
-      description: "Every third stage you solve pays a $75 encore bonus.",
+      description: "Every third stage you solve pays a 75-point encore bonus.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.hotStreak, key: IDS.hotStreak, icon: "\uD83D\uDD25",
       title: "Hot Streak", name: "Hot Streak",
-      description: "Each guess in a row that pins a new green pays a growing bonus: $5, then $10, then $15. A guess with no new green resets it.",
+      description: "Each guess in a row that pins a new green pays a growing bonus: 5, then 10, then 15 points. A guess with no new green resets it.",
       maxLevel: 2, maxCount: 2, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.vowelBounty, key: IDS.vowelBounty, icon: "\uD83C\uDD70\uFE0F",
       title: "Vowel Bounty", name: "Vowel Bounty",
-      description: "Every vowel in a secret you solve pays $5.",
+      description: "Every vowel in a secret you solve pays 5 points.",
       maxLevel: 2, maxCount: 2, kind: "upgrade"
     }),
     Object.freeze({
@@ -92,7 +92,7 @@
     Object.freeze({
       id: "encoreNight", icon: "\uD83C\uDFAC", title: "Encore Night",
       requires: Object.freeze([IDS.encore, IDS.vowelBounty]),
-      description: "Encore + Vowel Bounty: every encore also pays $10 for each vowel in that stage's secret."
+      description: "Encore + Vowel Bounty: every encore also pays 10 points for each vowel in that stage's secret."
     }),
     Object.freeze({
       id: "allIn", icon: "\uD83C\uDFB2", title: "All In",
@@ -155,7 +155,7 @@
       icon: "🏦",
       title: "Reserve Dividend",
       name: "Reserve Dividend",
-      description: "At a win, earn $5 extra for every unused mulligan and every unused Joker.",
+      description: "At a win, earn 5 points extra for every unused mulligan and every unused Joker.",
       maxLevel: 1,
       maxCount: 1,
       kind: "upgrade"
@@ -1708,7 +1708,7 @@
     custom.paidRoundTokens[token] = true;
     reconcilePendingPayout(game);
     safeSave(game);
-    appendNotice(game, custom.lastPayoutLines.map((line) => `${line.label}: +$${line.amount}`).join(" · "));
+    appendNotice(game, custom.lastPayoutLines.map((line) => `${line.label}: +${line.amount} pts`).join(" · "));
     scheduleUi();
   }
 
@@ -2086,7 +2086,7 @@
     const soldOut = extraRowsBought(game) >= EXTRA_ROW_ITEM.maxPurchases || extraRowSoldOutHere(game);
     return Object.assign({}, EXTRA_ROW_ITEM, {
       purchased: soldOut,
-      affordable: !soldOut && asNumber(state && state.score, 0) >= EXTRA_ROW_ITEM.cost,
+      affordable: !soldOut && asNumber(state && state.cuddleMoney, 0) >= EXTRA_ROW_ITEM.cost,
       coachKind: EXTRA_ROW_ITEM.kind
     });
   }
@@ -2105,12 +2105,12 @@
       return { ok: false, error: "Every extra row has already been bought." };
     }
     if (extraRowSoldOutHere(game)) return { ok: false, error: "That item is sold out in this shop." };
-    if (asNumber(state.score, 0) < EXTRA_ROW_ITEM.cost) return { ok: false, error: `You need $${EXTRA_ROW_ITEM.cost}.` };
+    if (asNumber(state.cuddleMoney, 0) < EXTRA_ROW_ITEM.cost) return { ok: false, error: `You need $${EXTRA_ROW_ITEM.cost}.` };
     const mega = megaState(game);
     const custom = customState(game);
     if (!mega || !custom) return { ok: false, error: "That upgrade is unavailable right now." };
 
-    state.score = asNumber(state.score, 0) - EXTRA_ROW_ITEM.cost;
+    state.cuddleMoney = asNumber(state.cuddleMoney, 0) - EXTRA_ROW_ITEM.cost;
     mega.extraGuesses = Math.max(0, asInteger(mega.extraGuesses, 0)) + 1;
     custom.extraRowsBought = extraRowsBought(game) + 1;
     markExtraRowSoldHere(game);

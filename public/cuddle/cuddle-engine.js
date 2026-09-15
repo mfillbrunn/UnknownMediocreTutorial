@@ -312,6 +312,12 @@
         round: 1,
         score: 0,
         roundScore: 0,
+        // Spendable Money, separate from the Points earned above (see
+        // cuddle-points-money.js): Points come from ordinary play (tile
+        // colors, quest bonuses, the solve-speed threshold below); Money
+        // only from clearing a stage (flat) or a challenge (its own
+        // reward), and it's the only thing shops/events actually charge.
+        cuddleMoney: 0,
         secret: "",
         usedSecrets: [],
         removedLetters: [],
@@ -422,6 +428,21 @@
     // MAX_GUESSES, but Short Hand shortens it to four. Centralized so every
     // "out of guesses" check agrees with what the board actually shows
     // (state.maxGuesses), instead of some checks quietly assuming six.
+    // How many guesses still earn the "solved it quickly" Points bonus
+    // below -- separate from _effectiveMaxGuesses() above (which is about
+    // challenges/rewards nudging the round's real guess allowance) and
+    // never affected by them. Tightens as boss gates clear, the same way
+    // cuddle-rebalance-v5.js's challengeTurnCap tiers a different number:
+    // 6 guesses before the first boss, 5 after it, 4 after the second.
+    _solveGuessThreshold() {
+      const cleared = Array.isArray(this.state?.bossGatesDone)
+        ? this.state.bossGatesDone.length
+        : 0;
+      if (cleared <= 0) return 6;
+      if (cleared === 1) return 5;
+      return 4;
+    }
+
     _effectiveMaxGuesses() {
       const value = Number(this.state?.maxGuesses);
       return Number.isFinite(value) && value > 0 ? value : MAX_GUESSES;
@@ -1078,7 +1099,14 @@
     submitDraft() {
       const validation = this.canSubmit();
       if (!validation.ok) return validation;
-      if (this.state.guessesUsed >= this._effectiveMaxGuesses()) return { ok: false, error: "No guesses remain." };
+      // A normal Wordle stage no longer has a hard guess cap -- only a
+      // boss encounter is still pass/fail within its turn count, since
+      // that's the one place "out of guesses" is a real defeat rather
+      // than just missing this round's solve-speed Points bonus (see
+      // _solveGuessThreshold() and the solved branch below).
+      if (this.isBossRound() && this.state.guessesUsed >= this._effectiveMaxGuesses()) {
+        return { ok: false, error: "No guesses remain." };
+      }
 
       const word = validation.word;
       const feedback = evaluateFeedback(this.state.secret, word);
@@ -1218,9 +1246,14 @@
       if (solved) {
         // Unused guesses and unspent mulligans both pay out on a solve. A
         // boss round is pass/fail, so neither is worth anything there.
+        // The guess side is measured against _solveGuessThreshold(), not
+        // a flat six -- it tightens as boss gates clear -- and clamped at
+        // zero since guesses are no longer capped at that threshold: a
+        // normal round can now run past it and still solve, just without
+        // this bonus.
         const earlyBonus = this.isBossRound()
           ? 0
-          : (MAX_GUESSES - this.state.guessesUsed)
+          : Math.max(0, this._solveGuessThreshold() - this.state.guessesUsed)
               * (EARLY_GUESS_POINTS + this.state.upgrades.earlyRoundPoint);
         const mulliganBonus = this.isBossRound()
           ? 0
@@ -1239,7 +1272,10 @@
           score: this.state.score,
           target: this.getTarget()
         };
-      } else if (this.state.guessesUsed >= this._effectiveMaxGuesses()) {
+      } else if (this.isBossRound() && this.state.guessesUsed >= this._effectiveMaxGuesses()) {
+        // Non-boss rounds never reach this any more (see submitDraft's own
+        // guard above) -- a normal stage just keeps accepting guesses
+        // until it's solved, however many that takes.
         this.state.pendingRoundEnd = {
           type: "outOfGuesses",
           secret: this.state.secret,
@@ -1922,13 +1958,13 @@
           id: "yellowPoints",
           icon: "🟨",
           title: "Golden Value",
-          description: "Every yellow tile is worth $1 more."
+          description: "Every yellow tile is worth 1 point more."
         },
         {
           id: "earlyRoundPoint",
           icon: "⏱️",
           title: "Quick Cuddle",
-          description: "Each unused guess in the solve bonus is worth $1 more."
+          description: "Each unused guess in the solve bonus is worth 1 point more."
         },
         {
           id: "questRefreshes",
@@ -1940,7 +1976,7 @@
           id: "questPoints",
           icon: "🏅",
           title: "Quest Value",
-          description: "Quests are worth $5 more. Stacks every time you take it."
+          description: "Quests are worth 5 points more. Stacks every time you take it."
         },
         {
           id: "questReroll",
@@ -2417,14 +2453,14 @@
       id: "storybookStart",
       icon: "📖",
       title: "Opening Verse",
-      description: "Start every non-boss stage with +$10. Stacks up to three times.",
+      description: "Start every non-boss stage with +10 points. Stacks up to three times.",
       max: 3
     },
     {
       id: "questSpark",
       icon: "✨",
       title: "Quest Ink",
-      description: "Completed quests give +$5 more. Stacks up to three times.",
+      description: "Completed quests give +5 points more. Stacks up to three times.",
       max: 3
     },
     {
@@ -2440,19 +2476,19 @@
       id: "goldenTempo",
       icon: "⚡",
       title: "Golden Tempo",
-      description: "Golden Value + Quick Cuddle: every solved non-boss stage gives +$5."
+      description: "Golden Value + Quick Cuddle: every solved non-boss stage gives +5 points."
     },
     {
       id: "questBinding",
       icon: "🔗",
       title: "Quest Binding",
-      description: "Quest Value + Quest Ink: completed quests give another +$5."
+      description: "Quest Value + Quest Ink: completed quests give another +5 points."
     },
     {
       id: "illustratedStart",
       icon: "🌟",
       title: "Illustrated Start",
-      description: "Opening Verse + Margin Note: non-boss stages open with another +$5."
+      description: "Opening Verse + Margin Note: non-boss stages open with another +5 points."
     },
     {
       id: "endlessMargins",
@@ -3356,7 +3392,7 @@
       key: "greyPointBoost",
       icon: "G+",
       title: "Grey Matters",
-      description: "Grey tiles are worth $1 more, but yellow and green stop scoring for the run. This reward stacks."
+      description: "Grey tiles are worth 1 point more, but yellow and green stop scoring for the run. This reward stacks."
     },
     {
       id: "handSizeBoost",
@@ -3370,28 +3406,28 @@
       key: "mulliganValueBoost",
       icon: "M+",
       title: "Mulligan Dividend",
-      description: "Each unused mulligan is worth $5 more when you solve."
+      description: "Each unused mulligan is worth 5 points more when you solve."
     },
     {
       id: "earlySolveBoost",
       key: "earlySolveBoost",
       icon: "E+",
       title: "Early Finish",
-      description: "Each unused guess earns $5 more on an early solve."
+      description: "Each unused guess earns 5 points more on an early solve."
     },
     {
       id: "colourTrade",
       key: "colourTrade",
       icon: "Y/G",
       title: "Colour Surge",
-      description: "Yellow and green gain $3 each, but grey loses $1. This reward stacks."
+      description: "Yellow and green gain 3 points each, but grey loses 1 point. This reward stacks."
     },
     {
       id: "greyscale",
       key: "greyscale",
       icon: "GREY",
       title: "Greyscale",
-      description: "Grey gains $2, while yellow and green are reduced to $0 for the run."
+      description: "Grey gains 2 points, while yellow and green are reduced to 0 for the run."
     }
   ]);
   const customUpgradeIds = new Set(customUpgradeDefinitions.map(item => item.id));
@@ -3400,7 +3436,7 @@
     id: "goldenTempo",
     icon: "⚡",
     title: "Golden Tempo",
-    description: "A colour-value reward plus an early-solve reward: every solved non-boss stage gives +$5."
+    description: "A colour-value reward plus an early-solve reward: every solved non-boss stage gives +5 points."
   });
 
   function finiteNumber(value, fallback = 0) {

@@ -638,24 +638,23 @@
 
   function enhanceShop(game, root) {
     if (game?.state?.status !== "shop") return;
-    const score = Math.max(0, Math.round(number(game.state.score, 0)));
-
-    const headerScore = root.querySelector(".cuddle-header-score");
-    if (headerScore) {
-      const text = `$${score.toLocaleString()}`;
-      if (headerScore.textContent !== text) headerScore.textContent = text;
-      headerScore.setAttribute("aria-label", `Spendable money ${text}`);
-    }
+    // The shop spends Money, not Points -- enhanceHeaderMoney (called
+    // right before this on every render) already keeps both header spans
+    // current, .cuddle-header-score (Points) and .cuddle-header-money
+    // (Money), so there's nothing left for the shop screen itself to
+    // override there. Only the shop's own "Available $X" wallet line
+    // below is specific to this screen.
+    const money = Math.max(0, Math.round(number(game.state.cuddleMoney, 0)));
 
     const title = root.querySelector(".cuddle-header-title");
     if (title && !title.querySelector(".umt-shop-header-wallet")) {
       const wallet = document.createElement("span");
       wallet.className = "umt-shop-header-wallet";
-      wallet.textContent = `Available $${score.toLocaleString()}`;
+      wallet.textContent = `Available $${money.toLocaleString()}`;
       title.appendChild(wallet);
     } else if (title) {
       const wallet = title.querySelector(".umt-shop-header-wallet");
-      const next = `Available $${score.toLocaleString()}`;
+      const next = `Available $${money.toLocaleString()}`;
       if (wallet && wallet.textContent !== next) wallet.textContent = next;
     }
 
@@ -796,8 +795,11 @@
       })();
     const rewards = ["Free mulligan", "Joker", "Hint", "Extra row"];
     const meterReward = rewards[Math.max(0, Math.min(3, integer(coach.cuddleRewardTier, 0)))];
-    addStatBadge(badges, "Unused guess", `+$${5 * green + extraGuessRate}`);
-    addStatBadge(badges, "Extra guess money", `+$${extraGuessRate}`);
+    // Points, not money -- the unused-guess/mulligan bonuses below pay into
+    // state.score (see cuddle-engine.js's submitDraft), same as every
+    // other in-round scoring rule these stat badges describe.
+    addStatBadge(badges, "Unused guess", `+${5 * green + extraGuessRate} pts`);
+    addStatBadge(badges, "Extra guess points", `+${extraGuessRate}`);
     addStatBadge(badges, "Hints", hints.total ? `${hints.total} (${hints.detail})` : "0");
     addStatBadge(badges, "Jokers", String(Math.max(0, integer(mega.jokerPerRoundBonus, 0))));
     addStatBadge(badges, "Cuddle meter max", String(threshold));
@@ -808,13 +810,25 @@
     const state = game?.state || {};
     const roundIsLive = state.status === "playing" && !state.pendingRoundEnd;
     const provisional = roundIsLive ? number(state.roundScore, 0) : 0;
+    // Points: this run's ordinary score, still not shown mid-round as
+    // "already banked" until the round actually resolves (see the
+    // pendingRoundEnd guard above) -- the header shouldn't count a guess
+    // that could still be undone by a mulligan.
     const amount = roundIsLive
       ? Math.max(0, Math.round(number(state.score, 0) - provisional))
       : Math.max(0, Math.round(number(state.score, 0)));
     root.querySelectorAll(".cuddle-header-score").forEach(score => {
-      score.textContent = `$${amount.toLocaleString()}`;
-      score.setAttribute("aria-label", `Money ${amount}`);
-      score.classList.add("umt-plain-money-counter");
+      score.textContent = `${amount.toLocaleString()} PTS`;
+      score.setAttribute("aria-label", `${amount} points`);
+      score.classList.add("umt-plain-points-counter");
+    });
+    // Money: unlike Points, never provisional -- it's only ever granted on
+    // a clean stage/challenge clear (see cuddle-points-money.js), never
+    // mid-round, so there's nothing to hold back here.
+    const money = Math.max(0, Math.round(number(state.cuddleMoney, 0)));
+    root.querySelectorAll(".cuddle-header-money").forEach(el => {
+      el.textContent = `$${money.toLocaleString()}`;
+      el.setAttribute("aria-label", `${money} money`);
     });
   }
 
@@ -1270,7 +1284,10 @@
         ...listFor(campaign.shopPurchases, key),
         ...listFor(coach.shopPurchases, key)
       ]);
-      const score = Math.max(0, numeric(this.state?.score, 0));
+      // The shop spends Money, not Points -- the returned field is still
+      // called "score" for callers that already expect it (renderShop's
+      // ${shop.score} in cuddle-campaign.js, labelled "money" there).
+      const score = Math.max(0, numeric(this.state?.cuddleMoney, 0));
       return {
         round: campaign.activeShopRound ?? this.state?.round ?? null,
         score,
@@ -1301,7 +1318,7 @@
       }
       if (itemIsMaxed(item, coach)) return { ok: false, error: `${item.title} is already maxed.` };
 
-      const balance = numeric(this.state.score, 0);
+      const balance = numeric(this.state.cuddleMoney, 0);
       if (balance < item.cost) return { ok: false, error: `You need $${item.cost}.` };
 
       const snapshot = {
@@ -1319,7 +1336,7 @@
       };
 
       try {
-        this.state.score = balance - item.cost;
+        this.state.cuddleMoney = balance - item.cost;
         campaignPurchases.push(item.id);
         coachPurchases.push(item.id);
 
@@ -1347,7 +1364,7 @@
         safeSave(this);
         return { ok: true, message: this.state.lastMessage, item: { ...item } };
       } catch (error) {
-        this.state.score = snapshot.score;
+        this.state.cuddleMoney = snapshot.score;
         campaign.shopPurchases[key] = snapshot.campaignPurchases;
         coach.shopPurchases[key] = snapshot.coachPurchases;
         if (this.state.megaState) {
@@ -1468,11 +1485,15 @@
     Object.defineProperty(proto, "__umtCuddleFixpackOpening", { value: VERSION, configurable: true });
   }
 
+  // The round-end cash-out screen is entirely a Points readout (a
+  // challenge's own Money reward is called out separately -- see
+  // cuddle-money-mode.js's cuddle-money-payout-challenge line, which this
+  // function leaves alone), so its own local figures format as points.
   function formatDelta(value) {
     const amount = Math.round(numeric(value, 0));
-    if (amount > 0) return `+$${amount.toLocaleString()}`;
-    if (amount < 0) return `-$${Math.abs(amount).toLocaleString()}`;
-    return "$0";
+    if (amount > 0) return `+${amount.toLocaleString()}`;
+    if (amount < 0) return `-${Math.abs(amount).toLocaleString()}`;
+    return "0";
   }
 
   function pendingPayout(game) {
@@ -1501,7 +1522,7 @@
     }
     if (collect) {
       collect.textContent = "Collect";
-      collect.setAttribute("aria-label", `Collect ${Math.max(0, total)} dollars earned this round`);
+      collect.setAttribute("aria-label", `Collect ${Math.max(0, total)} points earned this round`);
       let top = modal.querySelector(":scope > .umt-cashout-top");
       if (!top) {
         top = document.createElement("div");

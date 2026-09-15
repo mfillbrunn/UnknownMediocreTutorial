@@ -863,14 +863,14 @@
     var purchaseKey = currentShopRound(game);
     var purchases = Array.isArray(coach.shopPurchases[purchaseKey]) ? coach.shopPurchases[purchaseKey] : [];
     if (purchases.includes(item.id)) return { ok: false, error: "That item is sold out in this shop." };
-    if (finite(game.state.score, 0) < item.cost) return { ok: false, error: "You need $" + item.cost + "." };
+    if (finite(game.state.cuddleMoney, 0) < item.cost) return { ok: false, error: "You need $" + item.cost + "." };
     if (item.kind === "permanent") {
       var upgrade = UPGRADE_DEFINITIONS.find(function match(definition) { return definition.id === item.upgradeId; });
       if (!upgrade) return { ok: false, error: "That permanent upgrade is unavailable." };
       if (upgradeIsMaxed(coach, upgrade)) return { ok: false, error: "That permanent upgrade is already maxed." };
       if (upgrade.requiresHint && coach.hintsPerRound <= 0) return { ok: false, error: "Unlock a Guesser Hint first." };
     }
-    game.state.score -= item.cost;
+    game.state.cuddleMoney = finite(game.state.cuddleMoney, 0) - item.cost;
     purchases.push(item.id);
     coach.shopPurchases[purchaseKey] = purchases;
     if (item.kind === "consumable") {
@@ -878,7 +878,7 @@
     } else {
       var applied = applyUpgrade(game, item.upgradeId, "shop");
       if (!applied.ok) {
-        game.state.score += item.cost;
+        game.state.cuddleMoney = finite(game.state.cuddleMoney, 0) + item.cost;
         purchases.splice(purchases.indexOf(item.id), 1);
         return applied;
       }
@@ -1278,7 +1278,7 @@
       var coach = ensureCoach(this);
       var purchaseKey = currentShopRound(this);
       var purchases = new Set(coach.shopPurchases[purchaseKey] || []);
-      var money = finite(this.state.score, 0);
+      var money = finite(this.state.cuddleMoney, 0);
       var extra = SHOP_ITEMS.map(function build(item) {
         var maxed = false;
         if (item.kind === "permanent") {
@@ -1410,7 +1410,15 @@
   proto.submitDraft = function submitDraftCuddleCoachExpansion() {
     activateGame(this);
     var wasBoss = Boolean(this.isBossRound && this.isBossRound());
-    var maxBefore = typeof this._effectiveMaxGuesses === "function" ? this._effectiveMaxGuesses() : integer(this.state.maxGuesses, 6);
+    // The "unused guess" bonus below is measured against the solve-speed
+    // threshold (tiered by boss progress -- see cuddle-engine.js's
+    // _solveGuessThreshold), not _effectiveMaxGuesses(), which is a
+    // completely separate number: the round's actual guess allowance,
+    // nudged up/down by challenges and rewards, and no longer even a hard
+    // cap for a normal round. Using that here would have paid out on
+    // whatever the allowance happened to be instead of the intended
+    // fixed-by-difficulty bar.
+    var maxBefore = typeof this._solveGuessThreshold === "function" ? this._solveGuessThreshold() : 6;
     var coachBefore = ensureCoach(this);
     var activeBefore = Object.assign({}, coachBefore.activeBossKit || {});
     var result = originalSubmitDraft.apply(this, arguments);

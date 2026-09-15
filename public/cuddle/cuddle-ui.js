@@ -348,7 +348,7 @@
           <p class="cuddle-tagline">Build words from cards. Learn the secret. Shape the deck. Survive ${scoringRounds()} rounds and three bosses.</p>
           <div class="cuddle-save-summary ${hasRun ? "" : "is-empty"}">
             <span>${escapeHtml(statusLabel)}</span>
-            ${hasRun ? `<strong>Score ${state.score} · Round ${state.round}/${scoringRounds()}</strong>` : `<strong>Your run saves in this browser.</strong>`}
+            ${hasRun ? `<strong>${state.score} pts · Round ${state.round}/${scoringRounds()}</strong>` : `<strong>Your run saves in this browser.</strong>`}
           </div>
           <div class="cuddle-landing-actions">
             ${hasRun ? `<button class="cuddle-btn cuddle-btn-primary" data-action="continue">${escapeHtml(continueLabel)}</button>` : ""}
@@ -383,7 +383,8 @@
           <div class="cuddle-header-title">
             <span class="cuddle-eyebrow">SINGLE-PLAYER CAMPAIGN</span>
             <div class="cuddle-header-title-line">
-              <span class="cuddle-header-score" aria-label="Total score ${state.score}${game.isBossRound() ? "" : `, goal ${target}`}">Score ${state.score}${game.isBossRound() ? "" : ` / ${target}`}</span>
+              <span class="cuddle-header-score cuddle-header-points" aria-label="${state.score} points${game.isBossRound() ? "" : `, goal ${target}`}">${state.score} PTS${game.isBossRound() ? "" : ` / ${target}`}</span>
+              <span class="cuddle-header-money" aria-label="${Number(state.cuddleMoney || 0)} money">$${Number(state.cuddleMoney || 0).toLocaleString()}</span>
             </div>
           </div>
           <div class="cuddle-header-side cuddle-header-side-right">
@@ -408,7 +409,13 @@
                 <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}</span>
                 <span class="cuddle-detail-badge is-green"><b>Green</b> ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}</span>
                 <span class="cuddle-detail-badge is-grey"><b>Grey</b> ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}</span>
-                <span class="cuddle-detail-badge"><b>Guesses left</b> ${Math.max(0, (state.maxGuesses || window.CuddleEngine.MAX_GUESSES) - state.guessesUsed)}</span>
+                ${game.isBossRound()
+                  ? `<span class="cuddle-detail-badge"><b>Guesses left</b> ${Math.max(0, (state.maxGuesses || window.CuddleEngine.MAX_GUESSES) - state.guessesUsed)}</span>`
+                  // Normal rounds no longer run out of guesses -- what's
+                  // worth showing instead is the window that still earns
+                  // the solve-speed Points bonus below, which shrinks as
+                  // boss gates clear (see _solveGuessThreshold()).
+                  : `<span class="cuddle-detail-badge"><b>Bonus within</b> ${game._solveGuessThreshold ? game._solveGuessThreshold() : 6} guesses</span>`}
                 <span class="cuddle-detail-badge"><b>Unused guess</b> +${(5 * rules.greenPoints) + rules.earlyPoint}</span>
                 <span class="cuddle-detail-badge"><b>Unused mulligan</b> +${rules.mulliganPoints}</span>
                 <span class="cuddle-detail-badge"><b>Quest</b> +${rules.questPoints}</span>
@@ -459,7 +466,18 @@
 
   function renderBoard(state) {
     const rows = [];
-    for (let row = 0; row < state.maxGuesses; row += 1) {
+    // A normal round no longer has to fit inside state.maxGuesses -- a
+    // player can keep guessing past it (see cuddle-engine.js's
+    // submitDraft), so the board has to grow past that many rows too, or
+    // guesses beyond it would simply have nowhere to render. Boss rounds
+    // are still genuinely capped at maxGuesses, so this only ever adds
+    // rows when there's real history (or a live draft) past it, never
+    // pads a normal board with extra empty ones.
+    const rowCount = Math.max(
+      state.maxGuesses,
+      state.history.length + (state.status === "playing" ? 1 : 0)
+    );
+    for (let row = 0; row < rowCount; row += 1) {
       const history = state.history[row];
       const isDraft = !history && row === state.history.length && state.status === "playing";
       const tiles = [];
@@ -713,7 +731,7 @@
           <button class="cuddle-btn cuddle-btn-primary cuddle-round-start" data-action="start-round">Start round ${state.round}</button>
           <p>Solve the fixed secret and finish the round at or above the next score target.</p>
           <div class="cuddle-round-intro-stats">
-            <div><span>Current score</span><strong>${state.score}</strong></div>
+            <div><span>Current points</span><strong>${state.score}</strong></div>
             <div><span>Next target</span><strong>${target}</strong></div>
             <div><span>Still needed</span><strong>${needed}</strong></div>
           </div>
@@ -839,9 +857,9 @@
       ? "Refresh choices (free)"
       : refreshCost === null
         ? "Refresh unavailable"
-        : `Refresh choices ($${refreshCost})`;
+        : `Refresh choices (${refreshCost} pts)`;
     const kicker = milestone
-      ? `SCORE MILESTONE · ${state.upgradeMilestone}`
+      ? `POINTS MILESTONE · ${state.upgradeMilestone}`
       : startingRewards
         ? "STARTING REWARDS"
         : `ROUND ${summary?.round || state.round} CLEARED`;
@@ -854,7 +872,7 @@
       ? `Your total score reached ${state.upgradeMilestone}. This choice is in addition to the round reward.`
       : startingRewards
         ? "Pick a reward to begin the run with."
-        : `${escapeHtml(summary?.secret || state.secret)} solved in ${summary?.guesses || state.guessesUsed} guesses. Total score: ${state.score}.`;
+        : `${escapeHtml(summary?.secret || state.secret)} solved in ${summary?.guesses || state.guessesUsed} guesses. Total points: ${state.score}.`;
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleUpgradeTitle">
         <section class="cuddle-modal cuddle-modal-wide">
@@ -874,7 +892,7 @@
             <button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
               ${escapeHtml(refreshLabel)}
             </button>
-            <small>The first refresh on each between-round reward screen is free. Later refreshes cost $3, $5, $7, $9, and so on.</small>
+            <small>The first refresh on each between-round reward screen is free. Later refreshes cost 3, 5, 7, 9 points, and so on.</small>
           </div>
           <details class="cuddle-upgrade-details">
             <summary>Current run upgrades</summary>
@@ -897,7 +915,7 @@
     const lines = [
       `Cuddle ${won ? "🏆" : "🌙"} · Round ${round}/${totalRounds}`,
       `${won ? "Campaign complete" : "Run ended"} · ${state.score} points`,
-      `Guesses: ${(state.history || []).length}/${state.maxGuesses || 6}`
+      `Guesses: ${(state.history || []).length}`
     ];
     if (grid) lines.push(grid);
     if (lastEntry?.questFinalBonus) lines.push(`Quest finish bonus: +${lastEntry.questFinalBonus}`);
@@ -972,7 +990,8 @@
             ? `You won the campaign with ${state.score} points.`
             : escapeHtml(state.failureReason || "The run could not continue.")}</p>
           <div class="cuddle-end-stats">
-            <div><span>Score</span><strong>${state.score}</strong></div>
+            <div><span>Points</span><strong>${state.score}</strong></div>
+            <div><span>Money</span><strong>$${Number(state.cuddleMoney || 0).toLocaleString()}</strong></div>
             <div><span>Rounds reached</span><strong>${state.round}/${totalRounds}</strong></div>
             <div><span>Removed letters</span><strong>${removedLetters.length ? escapeHtml(removedLetters.join(" ")) : "—"}</strong></div>
           </div>
@@ -1081,7 +1100,7 @@
             <article><strong>2 · Reuse letters in hand</strong><p>Any letter currently shown in your hand can be tapped more than once while building a word. A, E, I, O, and U are bold, always available, and do not use counted hand slots. Yellow or green consonants stay in hand after a guess.</p></article>
             <article><strong>3 · Refill the hand</strong><p>You have ${rules.handSize} counted consonant slots. A finite consonant used in a submitted word leaves once, even when it was repeated in that word, and the draw pile refills open counted slots back toward ${rules.handSize}.</p></article>
             <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards.</p></article>
-            <article><strong>5 · Score enough</strong><p>Yellow tiles score ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}, green tiles score ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}, and grey tiles score ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}. Solving early adds +${rules.earlyPoint} for every unused guess, and every mulligan you did not spend is worth +${rules.mulliganPoints}. You must also meet the cumulative round target.</p></article>
+            <article><strong>5 · Earn enough points</strong><p>Yellow tiles score ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}, green tiles score ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}, and grey tiles score ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}. Solving within your bonus window (see Stats) adds +${rules.earlyPoint} for every guess still spare, and every mulligan you did not spend is worth +${rules.mulliganPoints}. There is no guess limit -- just keep guessing until you solve it -- but you must also meet the cumulative round points target.</p></article>
             <article><strong>6 · Grow the run</strong><p>Quests appear every few turns and pay bonus points once you own a reward that makes them worth something. Certain boss rewards add extra concurrent quests. Solve the word to choose an upgrade after every round.</p></article>
             <article><strong>7 · Boss rounds</strong><p>Before rounds 4, 7, and 10 -- and once more after round 12 -- you pick one of two bosses. Their powers last for 2, 2, 3, and 4 guesses respectively. A boss round is pass or fail: nothing scores and no target applies, you just have to solve it. Clear any boss to receive its displayed permanent reward; no ordinary upgrade is added afterward.</p></article>
           </div>

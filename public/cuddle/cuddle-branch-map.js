@@ -125,7 +125,7 @@
       id: "debtRun",
       icon: "📉",
       title: "Debt Run",
-      description: "Take a free permanent upgrade now, but the next round's solve is worth $0.",
+      description: "Take a free permanent upgrade now, but the next round's solve is worth 0 points.",
       grantsUpgrade: true,
       cost: "noMoney"
     }
@@ -445,7 +445,7 @@
         messages.push("The next boss you face will be one guess tougher.");
         break;
       case "money":
-        game.state.score = Math.max(0, Number(game.state.score || 0) - EVENT_MONEY_COST);
+        game.state.cuddleMoney = Math.max(0, Number(game.state.cuddleMoney || 0) - EVENT_MONEY_COST);
         messages.push("Paid $" + EVENT_MONEY_COST + ".");
         break;
       case "guess":
@@ -922,7 +922,8 @@
       + "<span class=\"cuddle-eyebrow\">THE ROAD AHEAD</span>"
       + "<div class=\"cuddle-header-title-line\">"
       + "<h1>" + heading + "</h1>"
-      + "<span class=\"cuddle-header-score\" aria-label=\"Spendable money $" + escapeHtml(state.score) + "\">$" + escapeHtml(state.score) + "</span>"
+      + "<span class=\"cuddle-header-score cuddle-header-points\" aria-label=\"" + escapeHtml(state.score) + " points\">" + escapeHtml(state.score) + " PTS</span>"
+      + "<span class=\"cuddle-header-money\" aria-label=\"" + escapeHtml(Number(state.cuddleMoney || 0)) + " money\">$" + escapeHtml(Number(state.cuddleMoney || 0)) + "</span>"
       + "</div></div>"
       + "<div class=\"cuddle-header-side cuddle-header-side-right\"></div>"
       + "</header>"
