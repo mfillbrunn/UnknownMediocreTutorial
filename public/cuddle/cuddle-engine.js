@@ -1115,16 +1115,15 @@
       const greyCount = feedback.filter(result => result === "grey").length;
       const shielded = this.state.buffs.greyShield > 0;
       // Permanent upgrades can change all three tile values. Boss rounds
-      // stay pass/fail, so no tile scores there.
+      // are still pass/fail (a miss on the last guess still loses the
+      // encounter), but tile points now accrue there too.
       const scoringUpgrades = this.state.upgrades || {};
       const colourBonus = Number(scoringUpgrades.yellowPoints) || 0;
       const greyValue = Number(scoringUpgrades.greyPoints) || 0;
       const coloursDisabled = Number(scoringUpgrades.zeroColourPoints) > 0;
       const yellowValue = coloursDisabled ? 0 : YELLOW_POINTS + colourBonus;
       const greenValue = coloursDisabled ? 0 : GREEN_POINTS + colourBonus;
-      const scoreDelta = this.isBossRound()
-        ? 0
-        : greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue;
+      const scoreDelta = greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue;
       if (shielded) this.state.buffs.greyShield -= 1;
 
       const activeQuest = this.state.activeQuest;
@@ -1219,9 +1218,8 @@
         }));
         entry.questComplete = questComplete;
         // Quests are worth nothing on their own -- the points only exist once
-        // Quest Value / Quest Head Start have been taken. Boss rounds never
-        // score, so they never pay this out either.
-        if (questComplete && !this.isBossRound()) {
+        // Quest Value / Quest Head Start have been taken.
+        if (questComplete) {
           const questBonus = Number(this.state.upgrades.questPoints) || 0;
           if (questBonus > 0) {
             entry.questBonus = questBonus;
@@ -1244,21 +1242,16 @@
 
       const solved = word === this.state.secret;
       if (solved) {
-        // Unused guesses and unspent mulligans both pay out on a solve. A
-        // boss round is pass/fail, so neither is worth anything there.
-        // The guess side is measured against _solveGuessThreshold(), not
-        // a flat six -- it tightens as boss gates clear -- and clamped at
-        // zero since guesses are no longer capped at that threshold: a
-        // normal round can now run past it and still solve, just without
-        // this bonus.
-        const earlyBonus = this.isBossRound()
-          ? 0
-          : Math.max(0, this._solveGuessThreshold() - this.state.guessesUsed)
-              * (EARLY_GUESS_POINTS + this.state.upgrades.earlyRoundPoint);
-        const mulliganBonus = this.isBossRound()
-          ? 0
-          : Math.max(0, Number(this.state.mulligansLeft) || 0)
-              * (UNUSED_MULLIGAN_POINTS + (Number(this.state.upgrades.mulliganPointBonus) || 0));
+        // Unused guesses and unspent mulligans both pay out on a solve,
+        // boss rounds included now. The guess side is measured against
+        // _solveGuessThreshold(), not a flat six -- it tightens as boss
+        // gates clear -- and clamped at zero since guesses are no longer
+        // capped at that threshold: a normal round can now run past it
+        // and still solve, just without this bonus.
+        const earlyBonus = Math.max(0, this._solveGuessThreshold() - this.state.guessesUsed)
+          * (EARLY_GUESS_POINTS + this.state.upgrades.earlyRoundPoint);
+        const mulliganBonus = Math.max(0, Number(this.state.mulligansLeft) || 0)
+          * (UNUSED_MULLIGAN_POINTS + (Number(this.state.upgrades.mulliganPointBonus) || 0));
         entry.earlyBonus = earlyBonus;
         entry.mulliganBonus = mulliganBonus;
         this.state.score += earlyBonus + mulliganBonus;
@@ -1554,40 +1547,6 @@
 
     _applyRewardEffect(rewardId) {
       switch (rewardId) {
-        case "suggestGuess": {
-          const active = this.getActiveWords();
-          const handCounts = Object.create(null);
-          this.state.hand.forEach(card => {
-            handCounts[card.glyph] = this.isInfiniteCard(card)
-              ? Infinity
-              : (handCounts[card.glyph] || 0) + 1;
-          });
-          let best = null;
-          let bestDeficit = Infinity;
-          active.forEach(word => {
-            const tokens = tokensForWord(word);
-            if (!tokens) return;
-            const needs = Object.create(null);
-            tokens.forEach(token => { needs[token] = (needs[token] || 0) + 1; });
-            const deficit = Object.entries(needs).reduce(
-              (sum, [token, count]) => sum + Math.max(0, count - (handCounts[token] || 0)),
-              0
-            );
-            if (deficit < bestDeficit || (deficit === bestDeficit && this.random() < 0.08)) {
-              best = { word, tokens, needs };
-              bestDeficit = deficit;
-            }
-          });
-          if (!best) return "No suggestion was available.";
-          const useful = best.tokens.find(token => (handCounts[token] || 0) < (best.needs[token] || 0))
-            || best.tokens.find(token => !this.isInfiniteGlyph(token))
-            || best.tokens[0];
-          const added = this._addBonusCard(useful);
-          this.state.suggestedWord = best.word;
-          return added
-            ? `Suggestion: ${best.word}. ${useful} replaced one finite hand card.`
-            : `Suggestion: ${best.word}. Your reusable hand already covers its useful letters.`;
-        }
         case "rouletteSecret": {
           const drawn = this._drawRewardCards(3);
           return `Roulette Draw refreshed ${drawn.length} finite card${drawn.length === 1 ? "" : "s"}; the secret stayed fixed.`;
@@ -2122,40 +2081,6 @@
     return feasible;
   };
 
-  // Guided Letter shows a word and nothing else -- it no longer swaps a card
-  // into the hand, so the suggestion has to be one the current hand can
-  // already build or it would be useless.
-  const originalCuddleApplyRewardEffect = CuddleGame.prototype._applyRewardEffect;
-  CuddleGame.prototype._applyRewardEffect = function applyReusableLetterReward(rewardId) {
-    if (rewardId !== "suggestGuess") {
-      return originalCuddleApplyRewardEffect.call(this, rewardId);
-    }
-
-    const buildable = this.getFeasibleWords(200);
-    if (buildable.length) {
-      const word = buildable[Math.floor(this.random() * buildable.length)];
-      this.state.suggestedWord = word;
-      return `Guided Letter: try ${word}.`;
-    }
-
-    // Nothing is currently buildable, so fall back to the closest candidate
-    // rather than showing nothing at all.
-    const available = new Set(this.state.hand.map(card => card.glyph));
-    let best = null;
-    let bestDeficit = Infinity;
-    this.getActiveWords().forEach(word => {
-      const tokens = tokensForWord(word);
-      if (!tokens) return;
-      const deficit = unique(tokens.filter(token => !available.has(token))).length;
-      if (deficit < bestDeficit) {
-        best = word;
-        bestDeficit = deficit;
-      }
-    });
-    if (!best) return "No suggestion was available.";
-    this.state.suggestedWord = best;
-    return `Guided Letter: aim for ${best}.`;
-  };
   /* UMT_USER_FIX_PACK_V1: ENGINE OVERRIDES END */
 
   /* UMT_CUDDLE_SINGLEPLAYER_V2: ENGINE START */
@@ -2420,7 +2345,7 @@
 
     const entry = this.state.history[this.state.history.length - 1];
     let bonus = 0;
-    const questBonus = this.isBossRound() ? 0 : (Number(this.state.upgrades.questPoints) || 0);
+    const questBonus = Number(this.state.upgrades.questPoints) || 0;
     if (result.solved && entry && !entry.questFinalBonus && questBonus > 0) {
       bonus = questBonus;
       entry.questFinalBonus = bonus;
@@ -4021,8 +3946,7 @@
       questPersistsForRound: false,
       handSizePenaltyThisRound: 0,
       greenCountUnlocked: false,
-      extraGuessTrialPunishPending: false,
-      questEndurancePunishPending: false,
+      ratchetOrdinalsApplied: [],
       ratchetForcedQuestGuessIndex: null,
       presetWords: null,
       unlockedSynergies: []
@@ -4040,6 +3964,7 @@
         if (!(key in state.megaState)) state.megaState[key] = defaults[key];
       });
       if (!Array.isArray(state.megaState.ratchetDebuffs)) state.megaState.ratchetDebuffs = [];
+      if (!Array.isArray(state.megaState.ratchetOrdinalsApplied)) state.megaState.ratchetOrdinalsApplied = [];
       if (!Array.isArray(state.megaState.activeQuests)) state.megaState.activeQuests = [];
       if (!Array.isArray(state.megaState.pendingExtraQuestRewards)) state.megaState.pendingExtraQuestRewards = [];
       if (!Array.isArray(state.megaState.unlockedSynergies)) state.megaState.unlockedSynergies = [];
@@ -4326,54 +4251,8 @@
 
   // ------------------------------------------------------------------
   // Reward-book (chooseQuestReward) tweaks: the joker, the one-time green
-  // letter count, the quest reroll charge, and re-pointing the "feasible
-  // word" suggestion at a hard-mode-compliant candidate instead of any
-  // hand-buildable word.
+  // letter count, and the quest reroll charge.
   // ------------------------------------------------------------------
-  function applyHardModeSuggestion(game) {
-    const state = game.state;
-    const active = game.getActiveWords();
-    const handCounts = Object.create(null);
-    state.hand.forEach(card => {
-      handCounts[card.glyph] = game.isInfiniteCard(card) ? Infinity : (handCounts[card.glyph] || 0) + 1;
-    });
-    const hardModeDef = window.CuddleQuestBook?.QUESTS?.find(item => item.id === "hardModeStreak");
-    const context = {
-      history: state.history,
-      knownAbsent: state.knownAbsent,
-      knownPresent: state.knownPresent,
-      revealedPositions: state.revealedPositions
-    };
-    const candidates = active.filter(word => (
-      !hardModeDef || hardModeDef.test({ word, ...context })
-    ));
-    const pool = candidates.length ? candidates : active;
-    let best = null;
-    let bestDeficit = Infinity;
-    pool.forEach(word => {
-      const tokens = word.split("");
-      const needs = Object.create(null);
-      tokens.forEach(token => { needs[token] = (needs[token] || 0) + 1; });
-      const deficit = Object.entries(needs).reduce(
-        (sum, [token, count]) => sum + Math.max(0, count - (handCounts[token] || 0)),
-        0
-      );
-      if (deficit < bestDeficit || (deficit === bestDeficit && game.random() < 0.08)) {
-        best = { word, tokens, needs };
-        bestDeficit = deficit;
-      }
-    });
-    if (!best) return "No hard-mode-compliant suggestion was available.";
-    const useful = best.tokens.find(token => (handCounts[token] || 0) < (best.needs[token] || 0))
-      || best.tokens.find(token => !game.isInfiniteGlyph(token))
-      || best.tokens[0];
-    const added = game._addBonusCard(useful);
-    state.suggestedWord = best.word;
-    return added
-      ? `Hard-mode suggestion: ${best.word}. ${useful} replaced one finite hand card.`
-      : `Hard-mode suggestion: ${best.word}. Your reusable hand already covers its useful letters.`;
-  }
-
   const composedApplyRewardEffect = CuddleGame.prototype._applyRewardEffect;
   CuddleGame.prototype._applyRewardEffect = function applyRewardEffectMega(rewardId) {
     const mega = ensureMega(this);
@@ -4386,8 +4265,6 @@
     } else if (rewardId === "questReroll") {
       mega.questRerollCharges = Number(mega.questRerollCharges || 0) + 1;
       message = "Gained a quest reroll charge.";
-    } else if (rewardId === "suggestGuess") {
-      message = applyHardModeSuggestion(this);
     } else {
       message = composedApplyRewardEffect.call(this, rewardId);
     }
@@ -4510,12 +4387,19 @@
   // round, and the feedback-masking analogs it can apply. Only the six
   // bosses whose disadvantage IS a feedback transform reuse that exact
   // transform (via a temporary state.boss swap so _applyBossFeedback's
-  // existing switch does the work); the four structural bosses (and the
-  // two new bosses with their own explicit non-pick punishments, handled
-  // separately below) get a themed but simpler analog instead.
+  // existing switch does the work); the rest (structural bosses, plus
+  // Overtime/Endurance Trial's own explicit non-pick punishments) get a
+  // themed but simpler analog instead.
+  //
+  // A declined boss's effect is PERMANENT from here on -- every future
+  // round, not just the next one -- and which guess(es) it haunts is
+  // random rather than fixed: the first boss's decline claims one random
+  // guess among the first three of every future round; the second
+  // boss's decline claims two, among the first four, never reusing a
+  // slot the first boss's decline already claimed. (No ratchet is ever
+  // created for the final boss -- no round follows it.)
   // ------------------------------------------------------------------
   const MASK_KINDS = new Set(["countOnly", "delayedFeedback", "hideFeedback", "hiddenMargins", "blueMode", "fakeFeedback"]);
-  const SPECIAL_PUNISH_IDS = new Set(["extraGuessTrial", "questEndurance"]);
   const RATCHET_LABEL = {
     countOnly: "Count Only",
     delayedFeedback: "Delayed Feedback",
@@ -4527,7 +4411,9 @@
     noMulligans: "Steady Hand (no mulligan just before it)",
     shortHand: "Short Hand (-1 hand slot going in)",
     questTrial: "Quest Trial (forces a quest)",
-    presetWordsTrial: "Preset Trial (-1 hand slot going in)"
+    presetWordsTrial: "Preset Trial (-1 hand slot going in)",
+    extraGuessTrial: "Overtime Trial (that guess scores 0)",
+    questEndurance: "Endurance Trial (-1 hand size if that guess misses its quest)"
   };
 
   function getGuessRatchetDebuff(game, guessIndex) {
@@ -4535,16 +4421,24 @@
     return (mega.ratchetDebuffs || []).find(item => item.guessIndex === guessIndex) || null;
   }
 
+  // Random guess slot(s) for a newly-created ratchet debuff, drawn from
+  // 1..poolMax and never reusing a slot an existing debuff already claims.
+  function pickRatchetGuessIndices(game, mega, count, poolMax) {
+    const used = new Set((mega.ratchetDebuffs || []).map(item => Number(item?.guessIndex) || 0));
+    const pool = [];
+    for (let index = 1; index <= poolMax; index += 1) {
+      if (!used.has(index)) pool.push(index);
+    }
+    return shuffle(pool, game?.random || Math.random).slice(0, count);
+  }
+
   const composedChooseBoss = CuddleGame.prototype.chooseBoss;
   CuddleGame.prototype.chooseBoss = function chooseBossMega(bossId) {
-    const mega = ensureMega(this);
     const offerBefore = Array.isArray(this.state?.bossOffer) ? this.state.bossOffer.slice() : [];
     const result = composedChooseBoss.call(this, bossId);
     if (result?.ok && this.state?.boss) {
       const unpicked = offerBefore.find(option => option.id !== bossId);
       this.state.boss.ratchetSourceId = unpicked ? unpicked.id : null;
-      if (unpicked?.id === "extraGuessTrial") mega.extraGuessTrialPunishPending = true;
-      if (unpicked?.id === "questEndurance") mega.questEndurancePunishPending = true;
       if (this.state.boss.id === "presetWordsTrial") setupPresetWordsBoss(this);
       this.save();
     }
@@ -4561,20 +4455,26 @@
     // includes that round's own opening _ensureQuestForNextGuess() -- the
     // Quest Trial ratchet analog needs the debuff on record before that
     // happens, or the first round right after this boss never sees it.
-    if (bossBefore?.ratchetSourceId
-        && bossBefore.gate !== "final"
-        && !SPECIAL_PUNISH_IDS.has(bossBefore.ratchetSourceId)) {
+    if (bossBefore?.ratchetSourceId && bossBefore.gate !== "final") {
       const ordinal = Number(this.state?.bossesCleared || 0) + 1;
-      if (!mega.ratchetDebuffs.some(item => item.guessIndex === ordinal)) {
-        const debuff = { bossId: bossBefore.ratchetSourceId, guessIndex: ordinal };
-        if (debuff.bossId === "hideFeedback") debuff.hiddenIndex = Math.floor(this.random() * 5);
-        if (debuff.bossId === "hiddenMargins") debuff.hiddenIndices = shuffle([0, 1, 2, 3, 4], this.random).slice(0, 2);
-        mega.ratchetDebuffs.push(debuff);
-        const info = window.CuddleRebalanceV5?.burdenInfo?.(debuff.bossId);
+      if (!Array.isArray(mega.ratchetOrdinalsApplied)) mega.ratchetOrdinalsApplied = [];
+      if (!mega.ratchetOrdinalsApplied.includes(ordinal)) {
+        mega.ratchetOrdinalsApplied.push(ordinal);
+        const bossId = bossBefore.ratchetSourceId;
+        const slotCount = ordinal >= 2 ? 2 : 1;
+        const poolMax = ordinal >= 2 ? 4 : 3;
+        const guessIndices = pickRatchetGuessIndices(this, mega, slotCount, poolMax);
+        guessIndices.forEach(guessIndex => {
+          const debuff = { bossId, guessIndex };
+          if (bossId === "hideFeedback") debuff.hiddenIndex = Math.floor(this.random() * 5);
+          if (bossId === "hiddenMargins") debuff.hiddenIndices = shuffle([0, 1, 2, 3, 4], this.random).slice(0, 2);
+          mega.ratchetDebuffs.push(debuff);
+        });
+        const info = window.CuddleRebalanceV5?.burdenInfo?.(bossId);
         this.state.burdenNotice = {
-          bossId: debuff.bossId,
-          title: info ? info[0] : debuff.bossId,
-          description: info ? info[1] : "A defeated boss burden affects this guess."
+          bossId,
+          title: info ? info[0] : bossId,
+          description: info ? info[1] : "A defeated boss burden now affects future rounds."
         };
       }
     }
@@ -4724,7 +4624,7 @@
     if (mega.unlockedSynergies.includes("jokerQuest")) mega.jokerCharges = Number(mega.jokerCharges || 0) + 1;
 
     if (game.isBossRound() || state.status === "lost" || state.status === "won" || state.pendingRoundEnd) {
-      const questBonus = game.isBossRound() ? 0 : (Number(state.upgrades.questPoints) || 0);
+      const questBonus = Number(state.upgrades.questPoints) || 0;
       if (questBonus > 0) {
         state.score += questBonus;
         state.roundScore += questBonus;
@@ -4862,16 +4762,18 @@
       if (Object.keys(counts).length) entry.greenLetterCounts = counts;
     }
 
-    if (mega.extraGuessTrialPunishPending && entry && this.state.guessesUsed === 1 && !this.isBossRound()) {
-      const delta = Number(entry.scoreDelta || 0);
-      if (delta) {
-        this.state.score -= delta;
-        this.state.roundScore -= delta;
-        entry.scoreDelta = 0;
-        entry.overtimePunished = true;
-        this.state.lastMessage = `${this.state.lastMessage || ""} Declined Overtime Trial: your first guess this round scored 0.`.trim();
+    if (entry && !this.isBossRound()) {
+      const overtimeDebuff = getGuessRatchetDebuff(this, this.state.guessesUsed);
+      if (overtimeDebuff?.bossId === "extraGuessTrial") {
+        const delta = Number(entry.scoreDelta || 0);
+        if (delta) {
+          this.state.score -= delta;
+          this.state.roundScore -= delta;
+          entry.scoreDelta = 0;
+          entry.overtimePunished = true;
+          this.state.lastMessage = `${this.state.lastMessage || ""} Stacked disadvantage (Overtime Trial): that guess scored 0.`.trim();
+        }
       }
-      mega.extraGuessTrialPunishPending = false;
     }
 
     if (extrasBefore.length && entry) {
@@ -4907,12 +4809,12 @@
       mega.handSizePenaltyThisRound = Number(mega.handSizePenaltyThisRound || 0) + 1;
       this.state.lastMessage = `${this.state.lastMessage || ""} Endurance Trial: -1 hand size this round.`.trim();
     }
-    if (mega.questEndurancePunishPending && entry && entry.questId && !this.isBossRound()) {
-      if (!entry.questComplete) {
+    if (entry && entry.questId && !entry.questComplete && !this.isBossRound()) {
+      const enduranceDebuff = getGuessRatchetDebuff(this, this.state.guessesUsed);
+      if (enduranceDebuff?.bossId === "questEndurance") {
         mega.handSizePenaltyThisRound = Number(mega.handSizePenaltyThisRound || 0) + 1;
-        this.state.lastMessage = `${this.state.lastMessage || ""} Declined Endurance Trial: -1 hand size this round.`.trim();
+        this.state.lastMessage = `${this.state.lastMessage || ""} Stacked disadvantage (Endurance Trial): -1 hand size this round.`.trim();
       }
-      mega.questEndurancePunishPending = false;
     }
 
     refreshMegaSynergies(this, true);

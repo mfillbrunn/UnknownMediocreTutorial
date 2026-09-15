@@ -109,6 +109,15 @@
   padding-top: 30px;
 }
 
+/* .cuddle-choice-icon starts right at the card's own 18px padding-top,
+   with no margin-top of its own, so the category badge's old top: 8px
+   (badge height ~19px, spanning 8-27px) ran a good 9px into the icon
+   underneath it. Lifted clear of the icon instead of pushing the icon
+   down, so the reward title/description keep their usual position. */
+.cuddle-choice.cuddle-v8-themed .cuddle-v8-category-badge {
+  top: -6px;
+}
+
 .cuddle-v8-category-badge {
   position: absolute;
   top: 8px;

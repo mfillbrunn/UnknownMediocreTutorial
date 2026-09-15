@@ -56,6 +56,44 @@
     ? window.CuddleCampaign.SHOP_AFTER_ROUNDS.slice()
     : [2, 5, 8, 11]);
 
+  // How many cumulative run points are needed before a boss row can be
+  // entered at all -- on top of a path actually reaching it. The first
+  // boss is the same threshold on every difficulty; the later two scale
+  // with difficulty since a harder run also earns points faster.
+  var BOSS_GATE_ORDER = ["before-3", "before-7", "final"];
+  var BOSS_POINT_REQUIREMENTS = {
+    "before-3": { easy: 100, medium: 100, hard: 100 },
+    "before-7": { easy: 200, medium: 250, hard: 300 },
+    "final": { easy: 400, medium: 450, hard: 500 }
+  };
+
+  function difficultyOf(game) {
+    var mega = game && game.state && game.state.megaState;
+    var value = (mega && mega.difficulty) || (game && game.state && game.state.difficulty) || "hard";
+    value = String(value).toLowerCase();
+    return value === "easy" || value === "medium" ? value : "hard";
+  }
+
+  function bossPointRequirement(game, gate) {
+    var tiers = BOSS_POINT_REQUIREMENTS[gate];
+    if (!tiers) return 0;
+    return tiers[difficultyOf(game)] || tiers.hard;
+  }
+
+  // The next boss gate the run hasn't cleared yet, and what it costs --
+  // used by the HUD (cuddle-ui.js) to show progress toward it up front,
+  // not just once the map already put a boss node in reach.
+  function nextBossRequirement(game) {
+    var done = (game && game.state && game.state.bossGatesDone) || [];
+    var gate = BOSS_GATE_ORDER.find(function (candidate) { return done.indexOf(candidate) === -1; });
+    if (!gate) return null;
+    return {
+      gate: gate,
+      required: bossPointRequirement(game, gate),
+      score: Number((game && game.state && game.state.score) || 0)
+    };
+  }
+
   var NODE_TYPES = {
     normal: { icon: "🟩", title: "Wordle", label: "Wordle", description: "A plain round: solve the Wordle, nothing else in play.", playsRound: true },
     theme: { icon: "🧭", title: "Themed Wordle", label: "Theme", description: "A round that opens with one of the solution's categories already revealed.", playsRound: true },
@@ -749,6 +787,16 @@
     var node = nodeAt(branchMap, Number(parts[0]), Number(parts[1]));
     if (!node) return { ok: false, error: "That stop is not on the map." };
     if (!isReachable(branchMap, node)) return { ok: false, error: "No path leads there from here." };
+    if (node.type === "boss") {
+      var required = bossPointRequirement(this, node.gate);
+      var current = Number(this.state.score || 0);
+      if (required && current < required) {
+        return {
+          ok: false,
+          error: "You need " + required + " points to challenge this boss (you have " + current + ")."
+        };
+      }
+    }
     var result = enterNode(this, node);
     this.save();
     return result;
@@ -788,10 +836,16 @@
     return (NODE_TYPES[node.type] || NODE_TYPES.normal).title;
   }
 
-  function nodeDescription(node) {
+  function nodeDescription(game, node) {
     if (node.type === "boss") {
-      return (node.bossDescription ? node.bossDescription + " " : "")
+      var base = (node.bossDescription ? node.bossDescription + " " : "")
         + "Pass or fail, and its reward is permanent.";
+      var required = bossPointRequirement(game, node.gate);
+      var current = Number((game && game.state && game.state.score) || 0);
+      if (required && current < required) {
+        base += " Locked: reach " + required + " points to challenge it (you have " + current + ").";
+      }
+      return base;
     }
     if (node.type === "event") {
       for (var index = 0; index < EVENTS.length; index += 1) {
@@ -888,17 +942,21 @@
     return node;
   }
 
-  function renderPreviewOverlay(node) {
+  function renderPreviewOverlay(game, node) {
+    var required = node.type === "boss" ? bossPointRequirement(game, node.gate) : 0;
+    var current = Number((game && game.state && game.state.score) || 0);
+    var locked = Boolean(required) && current < required;
     return (
       "<div class=\"cuddle-overlay cuddle-branch-preview-overlay\">"
       + "<section class=\"cuddle-modal\">"
       + "<span class=\"cuddle-choice-icon\">" + escapeHtml(nodeIcon(node)) + "</span>"
       + "<h2>" + escapeHtml(nodeTitle(node)) + "</h2>"
-      + "<p>" + goldenMoney(escapeHtml(nodeDescription(node))) + "</p>"
+      + "<p>" + goldenMoney(escapeHtml(nodeDescription(game, node))) + "</p>"
       + "<div class=\"cuddle-modal-actions\">"
       + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-ghost\" data-cuddle-campaign-action=\"cancel-branch-node-preview\">Back</button>"
-      + "<button type=\"button\" class=\"cuddle-btn\" data-cuddle-campaign-action=\"confirm-branch-node\" data-shop-item-id=\""
-      + node.row + ":" + node.col + "\">Choose this path</button>"
+      + "<button type=\"button\" class=\"cuddle-btn\"" + (locked ? " disabled" : "")
+      + " data-cuddle-campaign-action=\"confirm-branch-node\" data-shop-item-id=\""
+      + node.row + ":" + node.col + "\">" + (locked ? "Not enough points" : "Choose this path") + "</button>"
       + "</div></section></div>"
     );
   }
@@ -947,13 +1005,13 @@
           + " data-shop-item-id=\"" + node.row + ":" + node.col + "\">"
           + "<span class=\"cuddle-choice-icon\">" + escapeHtml(nodeIcon(node)) + "</span>"
           + "<strong>" + escapeHtml(nodeTitle(node) + direction) + "</strong>"
-          + "<small>" + goldenMoney(escapeHtml(nodeDescription(node))) + "</small>"
+          + "<small>" + goldenMoney(escapeHtml(nodeDescription(game, node))) + "</small>"
           + "</button>"
         );
       }).join("")
       + "</div>"
       + "</main></div>"
-      + (previewing ? renderPreviewOverlay(previewing) : "")
+      + (previewing ? renderPreviewOverlay(game, previewing) : "")
     );
   }
 
@@ -1016,6 +1074,8 @@
 
   window.CuddleBranchMap = Object.freeze({
     STATUS: MAP_STATUS,
-    renderMapScreen: renderMapScreen
+    renderMapScreen: renderMapScreen,
+    bossPointRequirement: bossPointRequirement,
+    nextBossRequirement: nextBossRequirement
   });
 }());

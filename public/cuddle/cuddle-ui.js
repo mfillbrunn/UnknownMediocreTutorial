@@ -374,6 +374,9 @@
     const target = game.getTarget();
     const drawPile = state.deck.length;
     const recyclable = state.discard.length;
+    const bossGoal = window.CuddleBranchMap && typeof window.CuddleBranchMap.nextBossRequirement === "function"
+      ? window.CuddleBranchMap.nextBossRequirement(game)
+      : null;
     return `
       <div class="cuddle-shell">
         <header class="cuddle-header">
@@ -386,6 +389,7 @@
               <span class="cuddle-header-score cuddle-header-points" aria-label="${state.score} points${game.isBossRound() ? "" : `, goal ${target}`}">${state.score} PTS${game.isBossRound() ? "" : ` / ${target}`}</span>
               <span class="cuddle-header-money" aria-label="${Number(state.cuddleMoney || 0)} money">$${Number(state.cuddleMoney || 0).toLocaleString()}</span>
             </div>
+            ${bossGoal ? `<span class="cuddle-header-boss-goal" aria-label="${Math.min(bossGoal.score, bossGoal.required)} of ${bossGoal.required} points toward the next boss">Next boss: ${Math.min(bossGoal.score, bossGoal.required)}/${bossGoal.required} pts</span>` : ""}
           </div>
           <div class="cuddle-header-side cuddle-header-side-right">
             <button class="cuddle-details-toggle ${detailsOpen ? "is-open" : ""}" data-action="toggle-details"
@@ -758,23 +762,20 @@
   // What happens to the OTHER boss's effect once this one is picked and
   // this option is left behind -- surfaced on each card so the choice also
   // weighs the negative the skipped boss leaves for later (see
-  // CuddleEngine's _clearBoss/_chooseBoss ratchetSourceId handling and
-  // extraGuessTrialPunishPending/questEndurancePunishPending, which is where
-  // this actually takes effect once the chosen boss is defeated).
-  const LEAVE_BEHIND_SPECIAL = {
-    extraGuessTrial: "Your first guess of the very next round will score 0 points.",
-    questEndurance: "If a quest rides on a later round and you miss it, that round's hand size drops by one."
-  };
+  // CuddleEngine's _clearBoss/_chooseBoss ratchetSourceId handling, and
+  // cuddle-stability-v2.js's commitUnchosenBossPenalty, which is where this
+  // actually takes effect once the chosen boss is defeated). Permanent, not
+  // one-and-done: BURDEN_INFO's own copy already says "every round from now
+  // on", so this just names which guess(es) that applies to.
   function leaveBehindNote(option, isFinal) {
     // The final boss never leaves a ratchet burden behind (see
     // CuddleEngine's _clearBoss: it explicitly skips bossBefore.gate ===
     // "final"), so the note would describe something that can't happen.
     if (!option || isFinal) return "";
-    if (LEAVE_BEHIND_SPECIAL[option.id]) return LEAVE_BEHIND_SPECIAL[option.id];
     const info = typeof window.CuddleRebalanceV5?.burdenInfo === "function"
       ? window.CuddleRebalanceV5.burdenInfo(option.id)
       : null;
-    return info ? `A future guess (after you clear the other boss) will carry: ${info[1]}` : "";
+    return info ? `Skip it and it comes back permanently: ${info[1]}` : "";
   }
   function renderBossChoiceOverlay(state) {
     const options = state.bossOffer || [];

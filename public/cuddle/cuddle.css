@@ -109,6 +109,16 @@
   font-size: 0.55rem;
 }
 
+.cuddle-header-boss-goal {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cuddle-muted);
+}
+
 .cuddle-hero h1 {
   margin: 0;
   font-size: clamp(1.9rem, 5vw, 3rem);
