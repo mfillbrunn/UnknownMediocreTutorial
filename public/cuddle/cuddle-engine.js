@@ -4232,9 +4232,6 @@
           return `Deep Cull removed ${letters.join(", ")}.`;
         })()
         : "No letters were safe to remove.";
-    } else if (rewardId === "overtimeReward") {
-      mega.extraGuesses = Number(mega.extraGuesses || 0) + 1;
-      message = "Gained one additional guess every round.";
     } else if (rewardId === "questPersistReward") {
       mega.questPersistsForRound = true;
       message = "Quests now stay active for the rest of the round instead of expiring after one guess.";
@@ -4388,8 +4385,8 @@
   // bosses whose disadvantage IS a feedback transform reuse that exact
   // transform (via a temporary state.boss swap so _applyBossFeedback's
   // existing switch does the work); the rest (structural bosses, plus
-  // Overtime/Endurance Trial's own explicit non-pick punishments) get a
-  // themed but simpler analog instead.
+  // Endurance Trial's own explicit non-pick punishment) get a themed but
+  // simpler analog instead.
   //
   // A declined boss's effect is PERMANENT from here on -- every future
   // round, not just the next one -- and which guess(es) it haunts is
@@ -4412,7 +4409,6 @@
     shortHand: "Short Hand (-1 hand slot going in)",
     questTrial: "Quest Trial (forces a quest)",
     presetWordsTrial: "Preset Trial (-1 hand slot going in)",
-    extraGuessTrial: "Overtime Trial (that guess scores 0)",
     questEndurance: "Endurance Trial (-1 hand size if that guess misses its quest)"
   };
 
@@ -4521,8 +4517,8 @@
   };
 
   // ------------------------------------------------------------------
-  // _beginRound: per-round mega bookkeeping, Overtime/Overtime Trial's
-  // guess-count adjustments, and resetting the concurrent-quest list
+  // _beginRound: per-round mega bookkeeping, the permanent extra-guess
+  // count, and resetting the concurrent-quest list
   // BEFORE the composed chain's own trailing _ensureQuestForNextGuess()
   // call runs (that call already resolves to this file's override below,
   // so the reset has to land first or it would build the new round's
@@ -4542,9 +4538,6 @@
     const extra = Number(mega.extraGuesses || 0);
     if (extra > 0) {
       this.state.maxGuesses = Math.max(1, (Number(this.state.maxGuesses) || MAX_GUESSES) + extra);
-    }
-    if (this.state.boss?.id === "extraGuessTrial") {
-      this.state.maxGuesses = Math.max(1, (Number(this.state.maxGuesses) || MAX_GUESSES) - 1);
     }
     const perRoundJokers = Number(mega.jokerPerRoundBonus || 0);
     if (perRoundJokers > 0) mega.jokerCharges = Number(mega.jokerCharges || 0) + perRoundJokers;
@@ -4762,20 +4755,6 @@
       if (Object.keys(counts).length) entry.greenLetterCounts = counts;
     }
 
-    if (entry && !this.isBossRound()) {
-      const overtimeDebuff = getGuessRatchetDebuff(this, this.state.guessesUsed);
-      if (overtimeDebuff?.bossId === "extraGuessTrial") {
-        const delta = Number(entry.scoreDelta || 0);
-        if (delta) {
-          this.state.score -= delta;
-          this.state.roundScore -= delta;
-          entry.scoreDelta = 0;
-          entry.overtimePunished = true;
-          this.state.lastMessage = `${this.state.lastMessage || ""} Stacked disadvantage (Overtime Trial): that guess scored 0.`.trim();
-        }
-      }
-    }
-
     if (extrasBefore.length && entry) {
       const remaining = [];
       extrasBefore.forEach(quest => {
@@ -4836,13 +4815,6 @@
       title: "Joker Quest",
       description: "Concurrent Quests + Joker: completing any quest grants a joker charge.",
       test: game => Number(game.state.upgrades.questCadence || 0) > 0 && ensureMega(game).hasJokerUnlocked
-    },
-    {
-      id: "overtimeCull",
-      icon: "⏱️",
-      title: "Overtime Cull",
-      description: "Overtime + two removed letters: gain one permanent bonus mulligan.",
-      test: game => Number(ensureMega(game).extraGuesses || 0) > 0 && (game.state.removedLetters || []).length >= 2
     }
   ];
 
@@ -4862,10 +4834,6 @@
       if (id === "questCadence" && hasJoker) return MEGA_SYNERGIES[0];
       if ((id === "jokerToken" || id === "jokerPerRound") && hasQuestCadence) return MEGA_SYNERGIES[0];
     }
-    if (!owned.has("overtimeCull")) {
-      const hasTwoRemoved = (game.state.removedLetters || []).length >= 2;
-      if (id === "overtimeReward" && hasTwoRemoved) return MEGA_SYNERGIES[1];
-    }
     return null;
   }
 
@@ -4876,9 +4844,6 @@
     if (!unlocked.length) return [];
     unlocked.forEach(definition => {
       owned.add(definition.id);
-      if (definition.id === "overtimeCull") {
-        game.state.upgrades.extraMulligans = Number(game.state.upgrades.extraMulligans || 0) + 1;
-      }
     });
     mega.unlockedSynergies = [...owned];
     if (announce) {

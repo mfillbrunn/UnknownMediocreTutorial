@@ -139,15 +139,6 @@
       ])
     }),
     Object.freeze({
-      id: "starlitToll",
-      title: "Starlit Toll",
-      flavor: "A moonlit waystone responds to either patience or coin.",
-      options: Object.freeze([
-        Object.freeze({ id: "safe", title: "Wait for the gate", summary: "Gain one extra guess in the next Wordle.", effects: Object.freeze([{ type: "nextBonus", key: "guess", amount: 1 }]) }),
-        Object.freeze({ id: "bold", title: "Pay the starlit toll", summary: "Pay $12 and gain a random permanent upgrade.", requires: Object.freeze({ money: 12 }), effects: Object.freeze([{ type: "money", amount: -12 }, { type: "upgrade" }]) })
-      ])
-    }),
-    Object.freeze({
       id: "travellingTailor",
       title: "Travelling Tailor",
       flavor: "A tailor has letter cards tucked into every pocket.",
@@ -767,7 +758,6 @@
     function randomMinorEffects(game) {
       const pools = [
         [{ type: "money", amount: 10 }],
-        [{ type: "nextBonus", key: "guess", amount: 1 }],
         [{ type: "nextBonus", key: "mulligan", amount: 1 }],
         [{ type: "nextBonus", key: "cards", amount: 2 }],
         [{ type: "nextBonus", key: "clue", amount: 1 }]
@@ -779,7 +769,7 @@
       const pools = [
         [{ type: "money", amount: 24 }],
         [{ type: "upgrade" }],
-        [{ type: "nextBonus", key: "guess", amount: 2 }, { type: "nextBonus", key: "cards", amount: 2 }],
+        [{ type: "nextBonus", key: "cards", amount: 2 }],
         [{ type: "nextBonus", key: "clue", amount: 2 }],
         [{ type: "money", amount: 12 }, { type: "nextBonus", key: "mulligan", amount: 2 }]
       ];
@@ -1695,10 +1685,6 @@
       const bonus = map && map.expandedPendingBonus;
       if (!bonus) return result;
       const messages = [];
-      if (bonus.guess) {
-        this.state.maxGuesses = Number(this.state.maxGuesses || 0) + Number(bonus.guess || 0);
-        messages.push(`+${bonus.guess} guess${Number(bonus.guess) === 1 ? "" : "es"}`);
-      }
       if (bonus.mulligan) {
         this.state.mulligansLeft = Number(this.state.mulligansLeft || 0) + Number(bonus.mulligan || 0);
         messages.push(`+${bonus.mulligan} mulligan${Number(bonus.mulligan) === 1 ? "" : "s"}`);

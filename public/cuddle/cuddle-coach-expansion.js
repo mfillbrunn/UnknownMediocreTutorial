@@ -81,8 +81,8 @@
       key: "coachMeterReward",
       icon: "🫶",
       title: "Bigger Cuddle",
-      description: "Improve a full meter's reward in order: mulligan → joker → hint → extra row.",
-      max: 3
+      description: "Improve a full meter's reward in order: mulligan → joker → hint.",
+      max: 2
     }
   ]);
 
@@ -297,7 +297,7 @@
     coach.hintRoundsWithUse = Math.max(0, integer(coach.hintRoundsWithUse, 0));
     coach.cuddleProgress = Math.max(0, integer(coach.cuddleProgress, 0));
     coach.cuddleThresholdStacks = clamp(integer(coach.cuddleThresholdStacks, 0), 0, 3);
-    coach.cuddleRewardTier = clamp(integer(coach.cuddleRewardTier, 0), 0, 3);
+    coach.cuddleRewardTier = clamp(integer(coach.cuddleRewardTier, 0), 0, 2);
     coach.cuddleGreysCollected = Math.max(0, integer(coach.cuddleGreysCollected, 0));
     coach.cuddleTriggers = Math.max(0, integer(coach.cuddleTriggers, 0));
     if (!coach.lastMeterReward || typeof coach.lastMeterReward !== "object" || !coach.lastMeterReward.label) {
@@ -392,7 +392,7 @@
   }
 
   function meterRewardName(coach) {
-    return ["Free mulligan", "Joker", "Hint", "Extra row"][clamp(integer(coach.cuddleRewardTier, 0), 0, 3)];
+    return ["Free mulligan", "Joker", "Hint"][clamp(integer(coach.cuddleRewardTier, 0), 0, 2)];
   }
 
   // The heart chip counts DOWN to zero, showing how many more visible grey
@@ -632,7 +632,7 @@
       if (coach.cuddleThresholdStacks >= 3) return { ok: false, error: "The Cuddle Meter is already at its minimum." };
       coach.cuddleThresholdStacks += 1;
     } else if (upgradeId === "coachMeterReward") {
-      if (coach.cuddleRewardTier >= 3) return { ok: false, error: "The Cuddle Meter reward is already an extra row." };
+      if (coach.cuddleRewardTier >= 2) return { ok: false, error: "The Cuddle Meter reward is already a hint." };
       coach.cuddleRewardTier += 1;
     }
     autoGrantHints(game, coach);
@@ -691,7 +691,7 @@
     while (coach.cuddleProgress >= threshold) {
       coach.cuddleProgress -= threshold;
       coach.cuddleTriggers += 1;
-      var tier = clamp(integer(coach.cuddleRewardTier, 0), 0, 3);
+      var tier = clamp(integer(coach.cuddleRewardTier, 0), 0, 2);
       var popLabel = "";
       if (tier === 0) {
         if (game.state.status === "playing" && !game.state.pendingRoundEnd) {
@@ -709,7 +709,7 @@
         messages.push("Cuddle Meter full: " + (jokerMessage || "gained a Joker."));
         coach.cuddleRewards.joker += 1;
         popLabel = "+1 joker";
-      } else if (tier === 2) {
+      } else {
         if (hiddenPositions(game).length) {
           var letter = revealExactPosition(game, "Cuddle Meter");
           messages.push(letter.message || "Cuddle Meter revealed a hint.");
@@ -720,25 +720,6 @@
           popLabel = "hint (banked)";
         }
         coach.cuddleRewards.letter += 1;
-      } else {
-        if (game.state.pendingRoundEnd?.type === "outOfGuesses") {
-          game.state.maxGuesses = Math.max(1, integer(game.state.maxGuesses, 6) + 1);
-          game.state.pendingRoundEnd = null;
-          game.state.status = "playing";
-          game.state.failureReason = null;
-          if (typeof game._ensureQuestForNextGuess === "function") game._ensureQuestForNextGuess();
-          messages.push("Cuddle Meter full: an extra rescue row opened.");
-          popLabel = "rescue row";
-        } else if (game.state.status === "playing" && !game.state.pendingRoundEnd) {
-          game.state.maxGuesses = Math.max(1, integer(game.state.maxGuesses, 6) + 1);
-          messages.push("Cuddle Meter full: +1 extra row this round.");
-          popLabel = "+1 row";
-        } else {
-          coach.bankedExtraRows += 1;
-          messages.push("Cuddle Meter full: an extra row is banked for the next round.");
-          popLabel = "+1 row (banked)";
-        }
-        coach.cuddleRewards.row += 1;
       }
       coach.lastMeterReward = { seq: coach.cuddleTriggers, label: popLabel };
     game.state.coachMeterNotice = null;

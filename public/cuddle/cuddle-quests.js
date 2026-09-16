@@ -374,14 +374,6 @@
       rewardId: "questCadence"
     },
     {
-      id: "extraGuessTrial",
-      icon: "⌛",
-      title: "Overtime Trial",
-      description: "You have one fewer guess this round.",
-      turns: 0,
-      rewardId: "overtimeReward"
-    },
-    {
       id: "questEndurance",
       icon: "🏃",
       title: "Endurance Trial",
@@ -461,12 +453,6 @@
       icon: "❗",
       title: "Quest Cadence",
       description: "One additional quest is active at the same time, for the rest of the run. Stacks."
-    },
-    {
-      id: "overtimeReward",
-      icon: "➕",
-      title: "Overtime",
-      description: "Gain one additional guess every round."
     },
     {
       id: "questPersistReward",

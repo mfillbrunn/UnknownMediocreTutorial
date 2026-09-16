@@ -809,8 +809,8 @@
             : 12;
         return Math.max(7, base - integer(coach.cuddleThresholdStacks, 0));
       })();
-    const rewards = ["Free mulligan", "Joker", "Hint", "Extra row"];
-    const meterReward = rewards[Math.max(0, Math.min(3, integer(coach.cuddleRewardTier, 0)))];
+    const rewards = ["Free mulligan", "Joker", "Hint"];
+    const meterReward = rewards[Math.max(0, Math.min(2, integer(coach.cuddleRewardTier, 0)))];
     // Points, not money -- the unused-guess/mulligan bonuses below pay into
     // state.score (see cuddle-engine.js's submitDraft), same as every
     // other in-round scoring rule these stat badges describe.
@@ -1166,15 +1166,13 @@
     Object.freeze({ id: "coachBossUnlimitedMulligans", icon: "♾️", title: "Regular Wordle Hands", cost: 28, kind: "boss", description: "Save unlimited mulligans for the next boss." }),
     Object.freeze({ id: "coachShopPossibleAnswers", icon: "🎧", title: "Secrets Counter", cost: 44, kind: "upgrade", rarity: "bronze", description: "Unlock the exact Secrets Remaining counter for this run." }),
     Object.freeze({ id: "coachShopHint", icon: "💡", title: "Guesser Hint", cost: 50, kind: "upgrade", rarity: "silver", description: "Add one exact-position hint to every eligible round, up to four." }),
-    Object.freeze({ id: "coachShopMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", cost: 56, kind: "upgrade", rarity: "gold", description: "Reduce the Cuddle Meter requirement by one for this run, up to three times." }),
-    Object.freeze({ id: "moreGuesses", icon: "➕", title: "Extra Row", cost: 65, kind: "upgrade", rarity: "gold", description: "Permanently add one guess to every round, boss fights included. Stacks twice." })
+    Object.freeze({ id: "coachShopMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", cost: 56, kind: "upgrade", rarity: "gold", description: "Reduce the Cuddle Meter requirement by one for this run, up to three times." })
   ]);
   const SHOP_BY_ID = new Map(SHOP_ITEMS.map(item => [item.id, item]));
   const UPGRADE_MAX = Object.freeze({
     coachShopPossibleAnswers: 1,
     coachShopHint: 4,
-    coachShopMeterThreshold: 3,
-    moreGuesses: 2
+    coachShopMeterThreshold: 3
   });
 
   let activeGame = null;
@@ -1263,7 +1261,6 @@
     if (itemId === "coachShopPossibleAnswers") return coach.possibleAnswersUnlocked ? 1 : 0;
     if (itemId === "coachShopHint") return Math.max(0, integer(coach.hintsPerRound, 0));
     if (itemId === "coachShopMeterThreshold") return Math.max(0, integer(coach.cuddleThresholdStacks, 0));
-    if (itemId === "moreGuesses") return Math.max(0, integer(game?.state?.megaState?.extraGuesses, 0));
     return 0;
   }
 
@@ -1351,8 +1348,7 @@
         unlimitedMulligans: integer(coach.inventory.unlimitedMulligans, 0),
         possibleAnswersUnlocked: Boolean(coach.possibleAnswersUnlocked),
         hintsPerRound: integer(coach.hintsPerRound, 0),
-        cuddleThresholdStacks: integer(coach.cuddleThresholdStacks, 0),
-        extraGuesses: integer(this.state?.megaState?.extraGuesses, 0)
+        cuddleThresholdStacks: integer(coach.cuddleThresholdStacks, 0)
       };
 
       try {
@@ -1378,11 +1374,6 @@
           coach.hintsPerRound = Math.min(4, Math.max(0, integer(coach.hintsPerRound, 0)) + 1);
         } else if (item.id === "coachShopMeterThreshold") {
           coach.cuddleThresholdStacks = Math.min(3, Math.max(0, integer(coach.cuddleThresholdStacks, 0)) + 1);
-        } else if (item.id === "moreGuesses") {
-          const mega = this.state.megaState && typeof this.state.megaState === "object"
-            ? this.state.megaState
-            : (this.state.megaState = {});
-          mega.extraGuesses = Math.min(UPGRADE_MAX.moreGuesses, Math.max(0, integer(mega.extraGuesses, 0)) + 1);
         }
 
         this.state.lastMessage = `${item.title} purchased for $${item.cost}.`;
@@ -1395,7 +1386,6 @@
         if (this.state.megaState) {
           this.state.megaState.jokerCharges = snapshot.jokerCharges;
           this.state.megaState.hasJokerUnlocked = snapshot.hasJokerUnlocked;
-          this.state.megaState.extraGuesses = snapshot.extraGuesses;
         }
         campaign.inventory.yellowDetector = snapshot.yellowDetector;
         coach.inventory.tenLetterCull = snapshot.tenLetterCull;

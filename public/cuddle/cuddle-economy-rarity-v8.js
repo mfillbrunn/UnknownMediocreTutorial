@@ -71,7 +71,6 @@
     "free vowel sweep",
     "quest head start",
     "double pick",
-    "overtime",
     "lasting quests",
     "golden compass",
     "second cup",
@@ -95,7 +94,7 @@
     "deep cull", "double mulligans", "full hand mulligan", "richer colours",
     "richer colors", "free vowel sweep", "quest head start", "position peek",
     "false letter scout", "margin note", "boss field notes", "double pick",
-    "quest cadence", "overtime", "lasting quests", "backup plan", "golden compass",
+    "quest cadence", "lasting quests", "backup plan", "golden compass",
     "second cup", "golden thread", "hand resonance", "clear sight",
     "rarity lens", "all seeing atlas"
   ]);
@@ -982,13 +981,6 @@
     return false;
   }
 
-  function addRows(state, amount) {
-    const slots = findNumberSlots(state, (key) => /maxguesses|guesslimit|totalrows|rowlimit|allowedguesses/.test(key), 3);
-    for (const slot of slots) slot.owner[slot.key] = Math.max(1, slot.owner[slot.key] + amount);
-    dispatch("cuddle:rows-changed", { amount, source: "economy-v8" });
-    return slots.length > 0;
-  }
-
   function answerWord(state) {
     for (const object of shallowObjects(state, 3)) {
       for (const [key, value] of safeOwnEntries(object)) {
@@ -1412,8 +1404,8 @@
       setMaxStack(def, 6);
       replaceHandlers(def, "soft-meter");
     } else if (name === "bigger cuddle") {
-      setDescription(def, "Advance the reward received when the Cuddle Meter fills: mulligan, Joker, yellow hint, green hint, then extra row.");
-      setMaxStack(def, 4);
+      setDescription(def, "Advance the reward received when the Cuddle Meter fills: mulligan, Joker, then hint.");
+      setMaxStack(def, 2);
     } else if (name === "joker cache") {
       setDescription(def, "Begin every stage with two additional Jokers.");
       replaceHandlers(def, "joker-cache");
@@ -1817,7 +1809,6 @@
 
     const consumables = [
       makeShopItem(template, "theme-atlas-token", "Theme Atlas", "Pouch item: reveal every available theme in the next stage.", 20, { type: "pouch", key: "allThemesNext", amount: 1 }),
-      makeShopItem(template, "spare-row-token", "Spare Row", "Pouch item: add one extra row in the next stage.", 22, { type: "pouch", key: "extraRowNext", amount: 1 }),
       makeShopItem(template, "two-stage-cull", "Twin-Stage Cull", "Pouch item: remove three non-answer letters in each of the next two normal stages.", 26, { type: "pouch", key: "cullThreeTwoStages", amount: 1 }),
       makeShopItem(template, "echo-voucher", "Echo Voucher", "Pouch item: apply the next permanent reward twice in total.", 30, { type: "pouch", key: "doubleNextReward", amount: 1 }),
       makeShopItem(template, "borrowed-pocket", "Borrowed Pocket", "Pouch item: gain +1 hand size in each of the next two normal stages.", 24, { type: "pouch", key: "handPlusOneTwoStages", amount: 1 }),
@@ -1848,7 +1839,6 @@
     switch (key) {
       case "pocketJoker": addJokers(state, 1); consume(); return true;
       case "allThemesNext": data.flags.allThemesNext = Number(data.flags.allThemesNext || 0) + 1; consume(); return true;
-      case "extraRowNext": data.flags.extraRowNext = Number(data.flags.extraRowNext || 0) + 1; consume(); return true;
       case "cullThreeTwoStages": data.flags.cullThreeStagesLeft = Number(data.flags.cullThreeStagesLeft || 0) + 2; consume(); return true;
       case "doubleNextReward": data.flags.doubleNextReward = Number(data.flags.doubleNextReward || 0) + 1; consume(); return true;
       case "handPlusOneTwoStages": data.flags.handPlusOneStagesLeft = Number(data.flags.handPlusOneStagesLeft || 0) + 2; consume(); return true;
@@ -1866,7 +1856,6 @@
     return {
       pocketJoker: "Pocket Joker",
       allThemesNext: "Theme Atlas",
-      extraRowNext: "Spare Row",
       cullThreeTwoStages: "Twin-Stage Cull",
       doubleNextReward: "Echo Voucher",
       handPlusOneTwoStages: "Borrowed Pocket",
@@ -2023,7 +2012,7 @@
       const isLegacyHintGrant = isLegacyAutoHint && /grant|give|reveal|apply|trigger|award/.test(norm(name));
       if (isLegacyHintGrant && state) return undefined;
       if (isMeterResolver && state) {
-        const level = Math.max(0, Math.min(4, upgradeStack(state, "bigger-cuddle") || firstNumber(state, [(key) => /biggercuddle|meterrewardlevel|cuddletier/.test(key)], 0)));
+        const level = Math.max(0, Math.min(2, upgradeStack(state, "bigger-cuddle") || firstNumber(state, [(key) => /biggercuddle|meterrewardlevel|cuddletier/.test(key)], 0)));
         return grantMeterReward(state, context, level);
       }
 
@@ -2120,9 +2109,7 @@
     switch (level) {
       case 0: addMulligans(state, 1); showMessage("Cuddle Meter: +1 mulligan"); return true;
       case 1: addJokers(state, 1); showMessage("Cuddle Meter: +1 Joker"); return true;
-      case 2: grantYellowHint(state, context); showMessage("Cuddle Meter: yellow hint"); return true;
-      case 3: grantGreenHint(state, context); showMessage("Cuddle Meter: green hint"); return true;
-      default: addRows(state, 1); showMessage("Cuddle Meter: +1 row"); return true;
+      default: grantYellowHint(state, context); showMessage("Cuddle Meter: hint"); return true;
     }
   }
 
@@ -2212,10 +2199,6 @@
     if (data.flags.allThemesNext > 0 && isWordStage(node)) {
       revealAllThemes(state, context);
       data.flags.allThemesNext -= 1;
-    }
-    if (data.flags.extraRowNext > 0 && isWordStage(node)) {
-      addRows(state, 1);
-      data.flags.extraRowNext -= 1;
     }
     if (data.flags.yellowHintNext > 0 && isWordStage(node)) {
       grantYellowHint(state, context);
