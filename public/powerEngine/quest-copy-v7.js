@@ -13,7 +13,8 @@
     BOOKENDS: "Make 3 guesses that start and end with the same letter.",
     HALF_AM: "Make 3 guesses using only letters A to P.",
     HALF_NZ: "Make 3 guesses using only letters K to Z.",
-    VOWELSHORTAGE: "Make 4 guesses with exactly one vowel."
+    VOWELSHORTAGE: "Make 4 guesses with exactly one vowel.",
+    ASCENDING_RUN: "Make 3 guesses with 3 letters in a row that rise alphabetically."
   };
 
   const metadata = window.QUEST_METADATA;
