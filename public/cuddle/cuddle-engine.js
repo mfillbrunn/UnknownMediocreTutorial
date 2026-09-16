@@ -1047,6 +1047,22 @@
       });
       this.state.knownAbsent = [...absent].sort();
       this.state.knownPresent = [...present].sort();
+
+      // A hand card whose letter is now confirmed absent is dead weight --
+      // discard it right away instead of leaving it to occupy a slot until
+      // the player happens to play or mulligan it. New draws already skip
+      // known-absent letters entirely (see _drawOne); this is the matching
+      // cleanup for a copy already dealt before its letter was known --
+      // including one sitting in hand marked "?" from an earlier masked
+      // guess (Count Only, Delayed Feedback) that only just resolved.
+      const deadCardIds = this.state.hand
+        .filter(card => (
+          !this.isInfiniteCard(card)
+          && !this.state.draft.includes(card.id)
+          && this.getCardKnowledgeStatus(card.glyph) === "red"
+        ))
+        .map(card => card.id);
+      if (deadCardIds.length) this._discardCards(deadCardIds);
     }
 
     _trimHandToLimit() {

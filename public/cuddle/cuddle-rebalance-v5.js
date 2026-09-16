@@ -822,7 +822,13 @@
         challengeId: challenge.id,
         icon: challenge.icon,
         title: challenge.title,
-        description: `${challenge.description} Pays $${challenge.reward}.`
+        // description is the uncapped baseline, cached alongside the node
+        // for its whole lifetime; rewardSuffix lets renderMapVariants
+        // rebuild the shown text against the LIVE guess-count cap at
+        // render time instead of whatever it was the moment this node's
+        // variant first got rolled (see challengeDisplayDescription).
+        description: `${challenge.description} Pays $${challenge.reward}.`,
+        rewardSuffix: `Pays $${challenge.reward}.`
       };
     }
     node.cuddleVariant = variant;
@@ -865,7 +871,8 @@
           challengeId: challenge.id,
           icon: challenge.icon,
           title: challenge.title,
-          description: `${challenge.description} Mandatory; pays a $${challenge.reward} completion bonus.`
+          description: `${challenge.description} Mandatory; pays a $${challenge.reward} completion bonus.`,
+          rewardSuffix: `Mandatory; pays a $${challenge.reward} completion bonus.`
         };
         node.type = "challenge";
         changed = true;
@@ -1231,6 +1238,20 @@
       ? "This early in the run, it only affects your first guess."
       : `This early in the run, it only affects your first ${cap} guesses.`;
     return `${challenge.description} ${note}`;
+  }
+
+  // The map preview has to describe the same capped guess count
+  // beginVariant will actually apply once the round starts (see
+  // challengeTurnCap), or the description overstates how many guesses a
+  // challenge affects -- which is the normal case for most of an early
+  // run, not an edge case (the cap is 1 before the first boss, 2 before
+  // the second, and only reaches a challenge's full designed length
+  // after that).
+  function challengeDisplayDescription(game, challenge) {
+    const cap = challengeTurnCap(game);
+    const capped = (Array.isArray(challenge.masks) && challenge.masks.length > cap)
+      || (challenge.vowelBudget && challenge.vowelBudget.guesses > cap);
+    return capped ? describeCappedChallenge(challenge, cap) : challenge.description;
   }
 
   function clearNativeChallengeOffer(game) {
@@ -2656,9 +2677,18 @@
       if (!node || !node.cuddleVariant) continue;
       const variant = node.cuddleVariant;
       const iconKey = variant.kind === "mandatoryChallenge" ? variant.challengeId : variant.kind;
+      // variant.description is a permanent cache set the first time this
+      // node's variant was rolled -- for a challenge node, rebuild it
+      // against challengeTurnCap's CURRENT value instead, so a node
+      // rolled before the run's first boss doesn't keep understating (or,
+      // once that boss clears, overstating) how many guesses it actually
+      // affects by the time the player reaches it.
+      const displayDescription = variant.kind === "mandatoryChallenge" && variant.challengeId
+        ? `${challengeDisplayDescription(game, challengeById(variant.challengeId))} ${variant.rewardSuffix || ""}`.trim()
+        : variant.description;
       element.dataset.umtVariant = variant.kind;
-      element.title = `${variant.title}: ${variant.description}`;
-      element.setAttribute("aria-label", `${variant.title}: ${variant.description}`);
+      element.title = `${variant.title}: ${displayDescription}`;
+      element.setAttribute("aria-label", `${variant.title}: ${displayDescription}`);
 
       if (element.matches(".cuddle-map-node")) {
         const oldIcon = element.querySelector(".cuddle-map-node-icon");
@@ -2689,7 +2719,7 @@
           icon.innerHTML = powerSvg(iconKey);
         }
         if (heading) heading.textContent = variant.title + (direction ? direction[0] : "");
-        if (description) description.textContent = variant.description;
+        if (description) description.textContent = displayDescription;
       }
 
       const preview = element.closest(".cuddle-branch-preview-overlay");
@@ -2702,7 +2732,7 @@
           icon.innerHTML = powerSvg(iconKey);
         }
         if (heading) heading.textContent = variant.title;
-        if (description) description.textContent = variant.description;
+        if (description) description.textContent = displayDescription;
       }
     }
   }
@@ -3107,10 +3137,16 @@
   function renderRowPowerIcons(game) {
     const root = rootElement();
     if (!root) return;
+    const state = stateOf(game);
     const rows = Array.from(root.querySelectorAll(".cuddle-board-row"));
     rows.forEach((row, index) => {
       let stack = row.querySelector(":scope > .umt-row-power-icons");
-      const entries = powerIdsForGuess(game, index, { withTiers: true });
+      // Once a guess's Count Only result is in (the row's own score column
+      // already shows the green/yellow tally), the row icon sits right on
+      // top of that count and makes it unreadable -- the count itself is
+      // the more precise signal, so drop the icon rather than layer both.
+      const hasCountResult = Boolean(state?.history?.[index]?.bossCounts);
+      const entries = hasCountResult ? [] : powerIdsForGuess(game, index, { withTiers: true });
       if (!entries.length) {
         if (stack) stack.remove();
         return;
