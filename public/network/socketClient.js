@@ -856,57 +856,46 @@ socket.on(
       }, 700);
   }
 );
+/*
+ * Android fires visibilitychange constantly during play (notification
+ * shade, soft keyboard, app switcher). Resyncing on each one made the
+ * connection banner flap and looked like a storm of tiny disconnects.
+ *
+ * This used to clear gameSessionReady and paint the banner BEFORE asking
+ * requestRoomSync to do anything -- and that function no-ops when called
+ * within 500ms of the previous sync. A rapid pair of blips therefore left
+ * the session permanently not-ready with no sync in flight to clear it,
+ * so real moves were rejected with "Syncing game -- try again in a
+ * moment". requestRoomSync already sets both on the path where it truly
+ * syncs, so let it own that state.
+ */
+const MIN_AWAY_MS_FOR_RESYNC = 1500;
 
-document.addEventListener(
-  "visibilitychange",
-  () => {
-    if (
-      document.visibilityState ===
-      "hidden"
-    ) {
-      pageHiddenAt = Date.now();
-      return;
-    }
-
-    if (!hasStoredRoom()) {
-      return;
-    }
-
-    const awayMs =
-      pageHiddenAt
-        ? Date.now() -
-          pageHiddenAt
-        : 0;
-
-    pageHiddenAt = 0;
-
-    window.gameSessionReady =
-      false;
-
-    setConnectionStatus(
-      "syncing",
-      "Syncing game…"
-    );
-
-    requestRoomSync(
-      `visible-${awayMs}`
-    );
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    pageHiddenAt = Date.now();
+    return;
   }
-);
 
-window.addEventListener(
-  "focus",
-  () => {
-    if (
-      document.visibilityState !==
-      "visible"
-    ) {
-      return;
-    }
+  if (!hasStoredRoom()) return;
 
-    requestRoomSync("focus");
-  }
-);
+  const awayMs = pageHiddenAt ? Date.now() - pageHiddenAt : 0;
+  pageHiddenAt = 0;
+
+  // A momentary blip with a live socket has missed nothing: the server
+  // pushes state, so there is no catching up to do.
+  if (awayMs < MIN_AWAY_MS_FOR_RESYNC && socket.connected) return;
+
+  requestRoomSync(`visible-${awayMs}`);
+});
+
+window.addEventListener("focus", () => {
+  if (document.visibilityState !== "visible") return;
+  // The soft keyboard opening/closing fires this repeatedly mid-turn.
+  // Only resync when the connection actually needs it.
+  if (socket.connected && window.gameSessionReady !== false) return;
+  requestRoomSync("focus");
+});
 
 window.addEventListener(
   "online",
