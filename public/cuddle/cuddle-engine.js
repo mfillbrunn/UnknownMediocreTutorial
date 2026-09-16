@@ -24,6 +24,14 @@
   const GREEN_POINTS = 2;
   const EARLY_GUESS_POINTS = 10;
   const UNUSED_MULLIGAN_POINTS = 3;
+  // A guess past the round's "quick solve" window (_solveGuessThreshold(),
+  // 6/5/4 as boss gates clear) costs this many points, flat, on top of
+  // whatever it scores normally -- separate from EARLY_GUESS_POINTS above,
+  // which only ever pays out on the guesses a solve never needed.
+  const LATE_GUESS_PENALTY = 10;
+  // A flat bonus for solving within that same window at all, in addition
+  // to the scaled-by-unused-guesses EARLY_GUESS_POINTS payout above.
+  const EARLY_SOLVE_BONUS = 5;
   // Quests start at zero and are only worth anything once the Quest Value
   // reward (+5 a pick, stacking) or the Quest Head Start boss reward is taken.
   const QUEST_POINTS_PER_PICK = 5;
@@ -1179,6 +1187,15 @@
       this.state.guessesUsed += 1;
       this.state.score += scoreDelta;
       this.state.roundScore += scoreDelta;
+
+      // Past the round's quick-solve window, every extra guess costs
+      // points instead of just missing the solve-speed bonus below.
+      const latePenalty = this.state.guessesUsed > this._solveGuessThreshold() ? LATE_GUESS_PENALTY : 0;
+      if (latePenalty > 0) {
+        this.state.score -= latePenalty;
+        this.state.roundScore -= latePenalty;
+      }
+
       this.state.draft = [];
       this.state.suggestedWord = null;
 
@@ -1196,6 +1213,7 @@
         // guesses in the same boss round are ordinary again.
         bossActive: bossActiveThisGuess,
         scoreDelta,
+        latePenalty,
         yellowCount,
         greenCount,
         greyCount,
@@ -1264,19 +1282,26 @@
         // gates clear -- and clamped at zero since guesses are no longer
         // capped at that threshold: a normal round can now run past it
         // and still solve, just without this bonus.
-        const earlyBonus = Math.max(0, this._solveGuessThreshold() - this.state.guessesUsed)
+        const solveThreshold = this._solveGuessThreshold();
+        const earlyBonus = Math.max(0, solveThreshold - this.state.guessesUsed)
           * (EARLY_GUESS_POINTS + this.state.upgrades.earlyRoundPoint);
+        // Flat, on top of the scaled-by-unused-guesses bonus above --
+        // rewards solving inside the window at all, not just how many
+        // guesses were left over when it happened.
+        const earlySolveBonus = this.state.guessesUsed <= solveThreshold ? EARLY_SOLVE_BONUS : 0;
         const mulliganBonus = Math.max(0, Number(this.state.mulligansLeft) || 0)
           * (UNUSED_MULLIGAN_POINTS + (Number(this.state.upgrades.mulliganPointBonus) || 0));
         entry.earlyBonus = earlyBonus;
+        entry.earlySolveBonus = earlySolveBonus;
         entry.mulliganBonus = mulliganBonus;
-        this.state.score += earlyBonus + mulliganBonus;
-        this.state.roundScore += earlyBonus + mulliganBonus;
+        this.state.score += earlyBonus + earlySolveBonus + mulliganBonus;
+        this.state.roundScore += earlyBonus + earlySolveBonus + mulliganBonus;
         this.state.pendingRoundEnd = {
           type: "solved",
           word,
           secret: this.state.secret,
           earlyBonus,
+          earlySolveBonus,
           mulliganBonus,
           score: this.state.score,
           target: this.getTarget()
@@ -4011,6 +4036,7 @@
   // Difficulty tiers
   // ------------------------------------------------------------------
   const DIFFICULTIES = new Set(["easy", "medium", "hard"]);
+  const STARTING_MONEY = Object.freeze({ easy: 50, medium: 30, hard: 20 });
 
   const originalStartNew = CuddleGame.prototype.startNew;
   CuddleGame.prototype.startNew = function startNewMega(difficulty) {
@@ -4018,6 +4044,7 @@
     const mega = ensureMega(this);
     const chosen = DIFFICULTIES.has(difficulty) ? difficulty : "hard";
     mega.difficulty = chosen;
+    this.state.cuddleMoney = STARTING_MONEY[chosen];
 
     if (chosen !== "hard") {
       const extraMulligans = chosen === "medium" ? 2 : 3;

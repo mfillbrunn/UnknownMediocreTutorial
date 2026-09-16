@@ -681,12 +681,14 @@
     return asNumber(entry.scoreDelta, 0)
       + asNumber(entry.questBonus, 0)
       + asNumber(entry.earlyBonus, 0)
+      + asNumber(entry.earlySolveBonus, 0)
       + asNumber(entry.mulliganBonus, 0)
       + asNumber(entry.cuddleQuestBonus, 0)
       + asNumber(entry.cuddleSolveBonus, 0)
       + asNumber(entry.challengeBonus, 0)
       - asNumber(entry.questTrialPenalty, 0)
-      - asNumber(entry.ratchetQuestPenalty, 0);
+      - asNumber(entry.ratchetQuestPenalty, 0)
+      - asNumber(entry.latePenalty, 0);
   }
 
   // Every line that fed rowMoney, labelled, so a payout row can be opened up
@@ -718,6 +720,7 @@
       if (value) lines.push({ label: label, detail: detail || "", amount: value });
     };
     extra(entry.earlyBonus, "Solved early", "unused guesses");
+    extra(entry.earlySolveBonus, "Solved within the window");
     extra(entry.questBonus, "Quest complete");
     extra(entry.questFinalBonus, "Final quest bonus");
     extra(entry.cuddleQuestBonus, "Quest bonus");
@@ -727,6 +730,7 @@
     extra(entry.challengeBonus, "Challenge cleared");
     extra(-asNumber(entry.questTrialPenalty, 0), "Quest trial missed");
     extra(-asNumber(entry.ratchetQuestPenalty, 0), "Boss burden");
+    extra(-asNumber(entry.latePenalty, 0), "Too many guesses");
     return lines;
   }
 

@@ -519,6 +519,10 @@
   font-size: 0.66rem;
 }
 
+.cuddle-row-score small.is-negative {
+  color: var(--cuddle-danger);
+}
+
 .cuddle-sr-status {
   position: absolute;
   width: 1px;

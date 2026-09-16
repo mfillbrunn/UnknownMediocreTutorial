@@ -62,9 +62,9 @@
   // with difficulty since a harder run also earns points faster.
   var BOSS_GATE_ORDER = ["before-3", "before-7", "final"];
   var BOSS_POINT_REQUIREMENTS = {
-    "before-3": { easy: 100, medium: 100, hard: 100 },
-    "before-7": { easy: 200, medium: 250, hard: 300 },
-    "final": { easy: 400, medium: 450, hard: 500 }
+    "before-3": { easy: 50, medium: 100, hard: 150 },
+    "before-7": { easy: 250, medium: 300, hard: 350 },
+    "final": { easy: 550, medium: 600, hard: 650 }
   };
 
   function difficultyOf(game) {
