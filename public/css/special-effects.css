@@ -870,13 +870,23 @@
   border-radius: var(--r-12, 12px);
   gap: 4px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+/* Only catch taps while actually visible. Ungated, this kept
+   pointer-events:auto after dismissal -- invisible (parent is opacity:0)
+   but still hit-testable, since a descendant re-enabling pointer-events
+   overrides the parent's `none` and opacity:0 doesn't stop hit testing.
+   Left a dead zone ~12vh down the screen that silently ate every tap,
+   the sidebar drawer toggle included. */
+.big-announce.compact.show .big-announce-card {
   pointer-events: auto;
 }
-
 .big-announce.compact .big-announce-icon {
   font-size: 22px;
 }
-
+.big-announce:not(.show),
+.big-announce:not(.show) * {
+  pointer-events: none !important;
+}
 .big-announce.compact .big-announce-title {
   font-size: var(--fs-15, 15px);
 }
