@@ -45,7 +45,7 @@ const { generateConditions } = require("./fieldReportServer.js");
 
 const QUEST_TYPES = [
   "ROW", "RARE", "ALPHA", "DOUBLES", "CHAIN", "HARDMODE", "FIELDREPORT",
-  "ALTERNATING", "BOOKENDS", "HALF_AM", "HALF_NZ", "VOWELSHORTAGE"
+  "ALTERNATING", "BOOKENDS", "HALF_AM", "HALF_NZ", "VOWELSHORTAGE", "ASCENDING_RUN"
 ];
 
 // Per-type "how many qualifying guesses does this quest need" -- shared by
@@ -67,7 +67,8 @@ const QUEST_THRESHOLDS = {
   BOOKENDS: 3,
   HALF_AM: 3,
   HALF_NZ: 3,
-  VOWELSHORTAGE: 4
+  VOWELSHORTAGE: 4,
+  ASCENDING_RUN: 3
 };
 
 // FIELDREPORT's early-yellow checkpoint isn't "one condition short of 8"
@@ -128,6 +129,19 @@ function isAlphaOrderedWord(word) {
 // BOOKENDS' condition (first letter === last letter, e.g. SEEDS).
 function isBookendWord(word) {
   return word[0] === word[word.length - 1];
+}
+
+// ASCENDING_RUN's condition: unlike ALPHA (all 5 letters strictly
+// ascending/descending), this only needs SOME 3 consecutive letters
+// rising in strict alphabetical order somewhere in the word (e.g. GHOST
+// via G-H-O at positions 0-2, ABORT via A-B-O at positions 0-2).
+function isAscendingRunWord(word) {
+  for (let i = 0; i <= word.length - 3; i++) {
+    if (word.charCodeAt(i) < word.charCodeAt(i + 1) && word.charCodeAt(i + 1) < word.charCodeAt(i + 2)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // DOUBLES' per-word check: the first doubled letter in the word, or null.
@@ -318,6 +332,9 @@ function isQuestOneAway(quest, state) {
         === QUEST_THRESHOLDS.HALF_NZ - 1;
     case "VOWELSHORTAGE":
       return computeVowelShortageCount(history, quest) === QUEST_THRESHOLDS.VOWELSHORTAGE - 1;
+    case "ASCENDING_RUN":
+      return history.filter(h => isAscendingRunWord(h.guess.toUpperCase())).length
+        === QUEST_THRESHOLDS.ASCENDING_RUN - 1;
     default:
       return false;
   }
@@ -587,6 +604,9 @@ function isQuestReady(quest, history) {
         >= QUEST_THRESHOLDS.HALF_NZ;
     case "VOWELSHORTAGE":
       return computeVowelShortageCount(history, quest) >= QUEST_THRESHOLDS.VOWELSHORTAGE;
+    case "ASCENDING_RUN":
+      return history.filter(h => isAscendingRunWord(h.guess.toUpperCase())).length
+        >= QUEST_THRESHOLDS.ASCENDING_RUN;
     default:
       return false;
   }
@@ -911,6 +931,7 @@ module.exports = {
   isAscendingWord,
   isAlphaOrderedWord,
   isBookendWord,
+  isAscendingRunWord,
   doubledLetterOf,
   questVowelTarget,
   computeVowelShortageCount,

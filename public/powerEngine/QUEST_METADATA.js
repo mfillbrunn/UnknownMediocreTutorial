@@ -95,5 +95,12 @@ window.QUEST_METADATA = {
     emoji: "🏜️",
     color: "#16A34A",
     examples: ["TRUST", "CRISP", "GHOST", "PLANT"]
+  },
+  ASCENDING_RUN: {
+    label: "Rising Run",
+    desc: "Submit 3 guesses that each contain 3 consecutive letters rising in strict alphabetical order (e.g. GHOST via G-H-O, ABORT via A-B-O).",
+    emoji: "📈",
+    color: "#16A34A",
+    examples: ["GHOST", "ABORT", "CHIMP"]
   }
 };

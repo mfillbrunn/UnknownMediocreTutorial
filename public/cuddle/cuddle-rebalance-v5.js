@@ -32,7 +32,6 @@
     hotStreak: "umtHotStreak",
     vowelBounty: "umtVowelBounty",
     doubleDown: "umtDoubleDown",
-    extraRow: "umtExtraRow",
     consonantSweep: "umtConsonantSweep"
   });
 
@@ -216,7 +215,6 @@
     shortHand: ["Short Hand", "That round's hand or guess allowance is reduced, every round from now on."],
     questTrial: ["Quest Trial", "A quest is forced on that same guess, every round from now on."],
     presetWordsTrial: ["Preset Trial", "That round's hand allowance is reduced by a forced-word trial, every round from now on."],
-    extraGuessTrial: ["Overtime Trial", "That same guess scores 0 points, every round from now on."],
     questEndurance: ["Endurance Trial", "If that same guess misses its quest, that round's hand size drops by one -- every round from now on."]
   });
 
@@ -824,7 +822,13 @@
         challengeId: challenge.id,
         icon: challenge.icon,
         title: challenge.title,
-        description: `${challenge.description} Pays $${challenge.reward}.`
+        // description is the uncapped baseline, cached alongside the node
+        // for its whole lifetime; rewardSuffix lets renderMapVariants
+        // rebuild the shown text against the LIVE guess-count cap at
+        // render time instead of whatever it was the moment this node's
+        // variant first got rolled (see challengeDisplayDescription).
+        description: `${challenge.description} Pays $${challenge.reward}.`,
+        rewardSuffix: `Pays $${challenge.reward}.`
       };
     }
     node.cuddleVariant = variant;
@@ -867,7 +871,8 @@
           challengeId: challenge.id,
           icon: challenge.icon,
           title: challenge.title,
-          description: `${challenge.description} Mandatory; pays a $${challenge.reward} completion bonus.`
+          description: `${challenge.description} Mandatory; pays a $${challenge.reward} completion bonus.`,
+          rewardSuffix: `Mandatory; pays a $${challenge.reward} completion bonus.`
         };
         node.type = "challenge";
         changed = true;
@@ -1233,6 +1238,20 @@
       ? "This early in the run, it only affects your first guess."
       : `This early in the run, it only affects your first ${cap} guesses.`;
     return `${challenge.description} ${note}`;
+  }
+
+  // The map preview has to describe the same capped guess count
+  // beginVariant will actually apply once the round starts (see
+  // challengeTurnCap), or the description overstates how many guesses a
+  // challenge affects -- which is the normal case for most of an early
+  // run, not an edge case (the cap is 1 before the first boss, 2 before
+  // the second, and only reaches a challenge's full designed length
+  // after that).
+  function challengeDisplayDescription(game, challenge) {
+    const cap = challengeTurnCap(game);
+    const capped = (Array.isArray(challenge.masks) && challenge.masks.length > cap)
+      || (challenge.vowelBudget && challenge.vowelBudget.guesses > cap);
+    return capped ? describeCappedChallenge(challenge, cap) : challenge.description;
   }
 
   function clearNativeChallengeOffer(game) {
@@ -2016,117 +2035,6 @@
       + (remaining > 0 ? ` They fade after stage ${TRAINING_WHEELS_LAST_STAGE}.` : " This is the last stage with them."));
   }
 
-  // -- shop: the permanent extra row ---------------------------------------
-
-  // Sold at The Wandering Paw. The effect rides on the engine's own
-  // megaState.extraGuesses -- the field the Overtime boss reward already
-  // feeds, which _beginRound tops every round up from and the run summary
-  // already reports -- so buying one needs no per-round bookkeeping here.
-  // The purchase count is tracked separately so an Overtime reward earned
-  // elsewhere never counts against what the shop will still sell.
-  const EXTRA_ROW_ITEM = Object.freeze({
-    id: IDS.extraRow,
-    icon: "➕",
-    title: "Extra Row",
-    description: "PERMANENT: every round from here on gets one more guess. Stocked once per shop, twice per run.",
-    cost: 150,
-    kind: "permanent",
-    maxPurchases: 2
-  });
-
-  function campaignOf(game) {
-    try {
-      const campaign = window.CuddleCampaign && typeof window.CuddleCampaign.ensureCampaign === "function"
-        ? window.CuddleCampaign.ensureCampaign(game)
-        : null;
-      return campaign && typeof campaign === "object" ? campaign : null;
-    } catch (error) {
-      log("campaign lookup failed", error);
-      return null;
-    }
-  }
-
-  // Branch-map shops key their stock by slot; the linear campaign keys it by
-  // the round the shop follows. activeShopRound holds whichever is current.
-  function shopStockKey(game) {
-    const campaign = campaignOf(game);
-    if (campaign && campaign.activeShopRound != null) return String(campaign.activeShopRound);
-    const state = stateOf(game);
-    return String(state ? asInteger(state.round, 0) : 0);
-  }
-
-  function shopStockList(game) {
-    const campaign = campaignOf(game);
-    if (!campaign) return null;
-    if (!campaign.shopPurchases || typeof campaign.shopPurchases !== "object") campaign.shopPurchases = {};
-    const key = shopStockKey(game);
-    if (!Array.isArray(campaign.shopPurchases[key])) campaign.shopPurchases[key] = [];
-    return campaign.shopPurchases[key];
-  }
-
-  function extraRowsBought(game) {
-    const custom = customState(game);
-    return custom ? Math.max(0, asInteger(custom.extraRowsBought, 0)) : 0;
-  }
-
-  function extraRowSoldOutHere(game) {
-    const stock = shopStockList(game);
-    if (stock) return stock.indexOf(EXTRA_ROW_ITEM.id) !== -1;
-    const custom = customState(game);
-    return Boolean(custom) && String(custom.extraRowSoldAt || "") === shopStockKey(game);
-  }
-
-  function markExtraRowSoldHere(game) {
-    const stock = shopStockList(game);
-    if (stock) stock.push(EXTRA_ROW_ITEM.id);
-    const custom = customState(game);
-    if (custom) custom.extraRowSoldAt = shopStockKey(game);
-  }
-
-  function extraRowOffer(game) {
-    const state = stateOf(game);
-    const soldOut = extraRowsBought(game) >= EXTRA_ROW_ITEM.maxPurchases || extraRowSoldOutHere(game);
-    return Object.assign({}, EXTRA_ROW_ITEM, {
-      purchased: soldOut,
-      affordable: !soldOut && asNumber(state && state.cuddleMoney, 0) >= EXTRA_ROW_ITEM.cost,
-      coachKind: EXTRA_ROW_ITEM.kind
-    });
-  }
-
-  function withExtraRowItem(game, shop) {
-    if (!shop || typeof shop !== "object") return shop;
-    const items = Array.isArray(shop.items) ? shop.items : [];
-    if (items.some((item) => item && String(item.id) === EXTRA_ROW_ITEM.id)) return shop;
-    return Object.assign({}, shop, { items: items.concat([extraRowOffer(game)]) });
-  }
-
-  function buyExtraRow(game) {
-    const state = stateOf(game);
-    if (!state || state.status !== "shop") return { ok: false, error: "No shop is open." };
-    if (extraRowsBought(game) >= EXTRA_ROW_ITEM.maxPurchases) {
-      return { ok: false, error: "Every extra row has already been bought." };
-    }
-    if (extraRowSoldOutHere(game)) return { ok: false, error: "That item is sold out in this shop." };
-    if (asNumber(state.cuddleMoney, 0) < EXTRA_ROW_ITEM.cost) return { ok: false, error: `You need $${EXTRA_ROW_ITEM.cost}.` };
-    const mega = megaState(game);
-    const custom = customState(game);
-    if (!mega || !custom) return { ok: false, error: "That upgrade is unavailable right now." };
-
-    state.cuddleMoney = asNumber(state.cuddleMoney, 0) - EXTRA_ROW_ITEM.cost;
-    mega.extraGuesses = Math.max(0, asInteger(mega.extraGuesses, 0)) + 1;
-    custom.extraRowsBought = extraRowsBought(game) + 1;
-    markExtraRowSoldHere(game);
-
-    // The next round has not begun yet, so _beginRound's own top-up applies
-    // the new row; there is nothing to patch on a live board.
-    const rows = Math.max(0, asInteger(mega.extraGuesses, 0));
-    state.lastMessage = `${EXTRA_ROW_ITEM.title} purchased for $${EXTRA_ROW_ITEM.cost}.`
-      + ` Every round now runs ${rows} guess${rows === 1 ? "" : "es"} longer.`;
-    safeSave(game);
-    scheduleUi();
-    return { ok: true, message: state.lastMessage };
-  }
-
   // -- fun rewards ---------------------------------------------------------
 
   function ownedFunSynergies(game) {
@@ -2769,9 +2677,18 @@
       if (!node || !node.cuddleVariant) continue;
       const variant = node.cuddleVariant;
       const iconKey = variant.kind === "mandatoryChallenge" ? variant.challengeId : variant.kind;
+      // variant.description is a permanent cache set the first time this
+      // node's variant was rolled -- for a challenge node, rebuild it
+      // against challengeTurnCap's CURRENT value instead, so a node
+      // rolled before the run's first boss doesn't keep understating (or,
+      // once that boss clears, overstating) how many guesses it actually
+      // affects by the time the player reaches it.
+      const displayDescription = variant.kind === "mandatoryChallenge" && variant.challengeId
+        ? `${challengeDisplayDescription(game, challengeById(variant.challengeId))} ${variant.rewardSuffix || ""}`.trim()
+        : variant.description;
       element.dataset.umtVariant = variant.kind;
-      element.title = `${variant.title}: ${variant.description}`;
-      element.setAttribute("aria-label", `${variant.title}: ${variant.description}`);
+      element.title = `${variant.title}: ${displayDescription}`;
+      element.setAttribute("aria-label", `${variant.title}: ${displayDescription}`);
 
       if (element.matches(".cuddle-map-node")) {
         const oldIcon = element.querySelector(".cuddle-map-node-icon");
@@ -2802,7 +2719,7 @@
           icon.innerHTML = powerSvg(iconKey);
         }
         if (heading) heading.textContent = variant.title + (direction ? direction[0] : "");
-        if (description) description.textContent = variant.description;
+        if (description) description.textContent = displayDescription;
       }
 
       const preview = element.closest(".cuddle-branch-preview-overlay");
@@ -2815,7 +2732,7 @@
           icon.innerHTML = powerSvg(iconKey);
         }
         if (heading) heading.textContent = variant.title;
-        if (description) description.textContent = variant.description;
+        if (description) description.textContent = displayDescription;
       }
     }
   }
@@ -3220,10 +3137,16 @@
   function renderRowPowerIcons(game) {
     const root = rootElement();
     if (!root) return;
+    const state = stateOf(game);
     const rows = Array.from(root.querySelectorAll(".cuddle-board-row"));
     rows.forEach((row, index) => {
       let stack = row.querySelector(":scope > .umt-row-power-icons");
-      const entries = powerIdsForGuess(game, index, { withTiers: true });
+      // Once a guess's Count Only result is in (the row's own score column
+      // already shows the green/yellow tally), the row icon sits right on
+      // top of that count and makes it unreadable -- the count itself is
+      // the more precise signal, so drop the icon rather than layer both.
+      const hasCountResult = Boolean(state?.history?.[index]?.bossCounts);
+      const entries = hasCountResult ? [] : powerIdsForGuess(game, index, { withTiers: true });
       if (!entries.length) {
         if (stack) stack.remove();
         return;
@@ -3927,16 +3850,6 @@
       });
     });
 
-    wrapMethod(prototype, "getCuddleShop", function (original, args) {
-      const result = original.apply(this, args);
-      return afterResult(result, (value) => withExtraRowItem(this, value), (error) => { throw error; });
-    });
-
-    wrapMethod(prototype, "buyCuddleShopItem", function (original, args) {
-      if (String(args[0] || "") === EXTRA_ROW_ITEM.id) return buyExtraRow(this);
-      return original.apply(this, args);
-    });
-
     wrapMethod(prototype, "_openBossGate", function (original, args) {
       const result = original.apply(this, args);
       return afterResult(result, (value) => {
@@ -4008,9 +3921,6 @@
       synergies: FUN_SYNERGIES.map((item) => ({ ...item, requires: item.requires.slice() })),
       rewardInteractionSynergy: (game, optionId) => funInteractionPreview(game || publicActiveGame(), optionId),
       ownedSynergies: (game) => [...ownedFunSynergies(game || publicActiveGame())],
-      // The shop stock this layer adds, so the icon/label registry in
-      // cuddle-stability-v2.js can resolve it like every other catalog.
-      shopItems: [Object.assign({}, EXTRA_ROW_ITEM)],
       defeatedBossIcon: defeatedBossSvg,
       normalizeMap: () => {
         const current = publicActiveGame();

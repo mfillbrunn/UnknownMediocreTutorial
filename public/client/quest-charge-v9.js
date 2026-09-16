@@ -19,7 +19,8 @@
     BOOKENDS: 3,
     HALF_AM: 3,
     HALF_NZ: 3,
-    VOWELSHORTAGE: 4
+    VOWELSHORTAGE: 4,
+    ASCENDING_RUN: 3
   };
 
   const FIELD_YELLOW = 6;
@@ -99,6 +100,17 @@
       }
     }
     return true;
+  }
+
+  function isAscendingRun(word) {
+    if (word.length !== 5) return false;
+    for (let index = 0; index <= word.length - 3; index++) {
+      if (word.charCodeAt(index) < word.charCodeAt(index + 1)
+          && word.charCodeAt(index + 1) < word.charCodeAt(index + 2)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   function isAlpha(word) {
@@ -507,7 +519,8 @@
       HALF_AM: word => inRange(word, "A", "P"),
       HALF_NZ: word => inRange(word, "K", "Z"),
       VOWELSHORTAGE: word =>
-        word.length === 5 && countVowels(word) === vowelTarget
+        word.length === 5 && countVowels(word) === vowelTarget,
+      ASCENDING_RUN: word => isAscendingRun(word)
     };
 
     const predicate = predicates[type];
@@ -742,7 +755,8 @@
       BOOKENDS: "Use the same first and last letter",
       HALF_AM: "Use only letters A through P",
       HALF_NZ: "Use only letters K through Z",
-      VOWELSHORTAGE: `Use exactly ${vowelTargetFor(q)} vowel${vowelTargetFor(q) === 1 ? "" : "s"}`
+      VOWELSHORTAGE: `Use exactly ${vowelTargetFor(q)} vowel${vowelTargetFor(q) === 1 ? "" : "s"}`,
+      ASCENDING_RUN: "Use 3 letters in a row that rise alphabetically"
     };
 
     return `

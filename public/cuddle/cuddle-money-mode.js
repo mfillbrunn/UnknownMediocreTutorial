@@ -58,7 +58,6 @@
     "openingClue",
     "questDoublePick",
     "questCadence",
-    "overtimeReward",
     "questPersistReward",
     "backupPlanReward"
   ];
@@ -461,9 +460,6 @@
     if (rewardId === "doubleMulligans" && typeof game.getMulliganAllowance === "function") {
       var afterAllowance = asInteger(game.getMulliganAllowance(), beforeAllowance);
       state.mulligansLeft = asInteger(state.mulligansLeft, 0) + Math.max(0, afterAllowance - beforeAllowance);
-    }
-    if (rewardId === "overtimeReward") {
-      state.maxGuesses = Math.max(1, asInteger(state.maxGuesses, 6) + 1);
     }
     if (rewardId === "openingClue" && typeof game._applyOpeningClue === "function") {
       var clueMessage = game._applyOpeningClue();

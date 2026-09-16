@@ -460,6 +460,8 @@ function questWordAdvances(word, quest, state) {
       // V10_AI_VOWEL_TARGET
       return vowelCount === questServer.questVowelTarget(quest);
     }
+    case "ASCENDING_RUN":
+      return questServer.isAscendingRunWord(w);
     default:
       return false;
   }

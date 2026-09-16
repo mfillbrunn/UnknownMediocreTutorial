@@ -504,6 +504,12 @@
       case "HALF_AM": return [...clean].every(letter => letter >= "A" && letter <= "P");
       case "HALF_NZ": return [...clean].every(letter => letter >= "K" && letter <= "Z");
       case "VOWELSHORTAGE": return [...clean].filter(letter => VOWELS.has(letter)).length === Number(quest.vowelTarget);
+      case "ASCENDING_RUN": {
+        const codes = [...clean].map(letter => letter.charCodeAt(0));
+        return codes.some((value, index) =>
+          index <= codes.length - 3 && value < codes[index + 1] && codes[index + 1] < codes[index + 2]
+        );
+      }
       default: return false;
     }
   }

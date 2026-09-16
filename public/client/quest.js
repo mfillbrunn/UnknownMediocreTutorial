@@ -42,6 +42,15 @@ function questIsAscendingWord(word) {
   return true;
 }
 
+function questIsAscendingRunWord(word) {
+  for (let i = 0; i <= word.length - 3; i++) {
+    if (word.charCodeAt(i) < word.charCodeAt(i + 1) && word.charCodeAt(i + 1) < word.charCodeAt(i + 2)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function questDoubledLetterOf(word) {
   for (let i = 0; i < word.length - 1; i++) {
     if (word[i] === word[i + 1]) return word[i];
@@ -397,6 +406,11 @@ function computeQuestStatus(state) {
     const count = computeVowelShortageCount(history, target);
     const desc = `Submit 4 guesses with exactly ${target} vowel${target === 1 ? "" : "s"}.`;
     return { meta, label: `${count}/4`, desc, done: false };
+  }
+
+  if (q.type === "ASCENDING_RUN") {
+    const count = history.filter(h => questIsAscendingRunWord((h.guess || "").toUpperCase())).length;
+    return { meta, label: `${count}/3`, desc: meta.desc, done: false };
   }
 
   return null;

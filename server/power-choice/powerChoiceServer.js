@@ -88,7 +88,8 @@ const QUEST_TYPES = [
   "BOOKENDS",
   "HALF_AM",
   "HALF_NZ",
-  "VOWELSHORTAGE"
+  "VOWELSHORTAGE",
+  "ASCENDING_RUN"
 ];
 
 // Power Choice AI tuning. These are intentionally separate from the generic
@@ -458,6 +459,15 @@ function makeQuest(excludeType = null, rng = null) {
       description: "Use only letters K through Z."
     };
   }
+  if (type === "ASCENDING_RUN") {
+    return {
+      id,
+      type,
+      icon: "📈",
+      title: "Rising Run",
+      description: "Use 3 letters in a row that climb in alphabetical order (e.g. H-O-U in HOUSE)."
+    };
+  }
   const vowelTarget = pick([1, 2, 3], rng);
   return {
     id,
@@ -576,6 +586,12 @@ function evaluateQuest(state, quest, guess) {
       return [...word].every(letter => letter >= "K" && letter <= "Z");
     case "VOWELSHORTAGE":
       return [...word].filter(letter => VOWELS.has(letter)).length === quest.vowelTarget;
+    case "ASCENDING_RUN": {
+      const codes = [...word].map(letter => letter.charCodeAt(0));
+      return codes.some((value, index) =>
+        index <= codes.length - 3 && value < codes[index + 1] && codes[index + 1] < codes[index + 2]
+      );
+    }
     default:
       return false;
   }
