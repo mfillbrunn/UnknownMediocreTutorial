@@ -2,14 +2,7 @@
 <html lang="en">
   <!---- INFO -->
   <!-- TEMP DEBUG — remove before release -->
-<script>
-  if (location.search.includes("debug=1")) {
-    const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/eruda";
-    s.onload = () => eruda.init();
-    document.head.appendChild(s);
-  }
-</script>
+
 
 <head>
   <title>Vowel Play — Competitive Mode</title>
@@ -66,6 +59,14 @@
   <!-- UMT_CUDDLE_EXPANDED_STAGES_CSS_BEGIN -->
   <link rel="stylesheet" href="cuddle/cuddle-expanded-stages.css?v=2026.09.11.3">
   <!-- UMT_CUDDLE_EXPANDED_STAGES_CSS_END -->
+  <script>
+  if (location.search.includes("debug=1")) {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/eruda";
+    s.onload = () => eruda.init();
+    document.head.appendChild(s);
+  }
+</script>
 </head>
 <body>
   <script>
