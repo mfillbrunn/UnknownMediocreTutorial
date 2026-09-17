@@ -942,21 +942,43 @@
     return node;
   }
 
+  // The lock meter's own copy of a boss's flavor text, without the
+  // "Locked: reach N points..." sentence nodeDescription appends for the
+  // plain-text spots (the map's choice-card <small>) -- the meter below
+  // already shows that same information visually.
+  function bossFlavorText(node) {
+    return (node.bossDescription ? node.bossDescription + " " : "") + "Pass or fail, and its reward is permanent.";
+  }
+
+  function renderBossLockPanel(game, node, required, current, locked) {
+    var pct = required ? Math.max(0, Math.min(100, Math.round((current / required) * 100))) : 100;
+    return (
+      "<div class=\"cuddle-boss-lock" + (locked ? "" : " cuddle-boss-lock-open") + "\">"
+      + "<div class=\"cuddle-boss-lock-icon\" aria-hidden=\"true\">" + (locked ? "🔒" : "🔓") + "</div>"
+      + "<div class=\"cuddle-boss-lock-meter\"><div class=\"cuddle-boss-lock-meter-fill\" style=\"width:" + pct + "%\"></div></div>"
+      + "<div class=\"cuddle-boss-lock-label\">" + current + " / " + required + " points"
+      + (locked ? "" : " — unlocked") + "</div>"
+      + "</div>"
+    );
+  }
+
   function renderPreviewOverlay(game, node) {
     var required = node.type === "boss" ? bossPointRequirement(game, node.gate) : 0;
     var current = Number((game && game.state && game.state.score) || 0);
     var locked = Boolean(required) && current < required;
+    var description = node.type === "boss" ? bossFlavorText(node) : nodeDescription(game, node);
     return (
       "<div class=\"cuddle-overlay cuddle-branch-preview-overlay\">"
       + "<section class=\"cuddle-modal\">"
       + "<span class=\"cuddle-choice-icon\">" + escapeHtml(nodeIcon(node)) + "</span>"
       + "<h2>" + escapeHtml(nodeTitle(node)) + "</h2>"
-      + "<p>" + goldenMoney(escapeHtml(nodeDescription(game, node))) + "</p>"
+      + "<p>" + goldenMoney(escapeHtml(description)) + "</p>"
+      + (required ? renderBossLockPanel(game, node, required, current, locked) : "")
       + "<div class=\"cuddle-modal-actions\">"
       + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-ghost\" data-cuddle-campaign-action=\"cancel-branch-node-preview\">Back</button>"
       + "<button type=\"button\" class=\"cuddle-btn\"" + (locked ? " disabled" : "")
       + " data-cuddle-campaign-action=\"confirm-branch-node\" data-shop-item-id=\""
-      + node.row + ":" + node.col + "\">" + (locked ? "Not enough points" : "Choose this path") + "</button>"
+      + node.row + ":" + node.col + "\">" + (locked ? "Locked" : "Choose this path") + "</button>"
       + "</div></section></div>"
     );
   }

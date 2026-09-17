@@ -912,9 +912,19 @@
     ) || null;
   }
 
+  const VARIANT_ELIGIBLE_TYPES = new Set(["normal", "theme", "challenge", "wordle"]);
+
   function setPendingVariant(game, node) {
     const custom = customState(game);
     if (!custom || !node) return;
+    // Boss/shop/upgrade/event nodes never get a stop variant (jackpot,
+    // lucky start, etc.) -- those are wordle-stop gimmicks, and applying
+    // one to a boss round (e.g. jackpot silently shaving a guess off the
+    // boss's cap) was never intended.
+    if (!VARIANT_ELIGIBLE_TYPES.has(String(node.type))) {
+      custom.pendingVariant = null;
+      return;
+    }
     const variant = variantForNode(game, node);
     custom.pendingVariant = { ...variant, nodeId: nodeId(node) };
   }

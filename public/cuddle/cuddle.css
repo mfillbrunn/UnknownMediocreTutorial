@@ -473,6 +473,34 @@
   opacity: 0.75;
 }
 
+/* Money tiles (cuddle-points-money.js): marked in gold before they are
+   played so they can be aimed at, then showing what the guess through
+   them actually paid. A spent tile that paid nothing drops the marking
+   entirely rather than keeping a promise it no longer holds. */
+.cuddle-tile.is-money-tile {
+  box-shadow: inset 0 0 0 2px var(--cuddle-money-gold-bright, #e8bf75);
+}
+
+.cuddle-tile.is-money-tile::after {
+  content: attr(data-money);
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  color: var(--cuddle-money-gold-bright, #e8bf75);
+  font-size: 0.34em;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cuddle-tile.is-money-won {
+  box-shadow: inset 0 0 0 2px #f5d68a;
+}
+
+.cuddle-tile.is-money-missed {
+  box-shadow: none;
+}
+
 /* Marks the one tile a joker filled, whether it's still sitting unresolved
    in the current draft (its own purple/gold look, matching the joker hand
    card) or already submitted and showing its resolved letter's real
@@ -684,6 +712,15 @@
 .cuddle-card.is-card-green {
   border-color: #82d39a;
   background: linear-gradient(160deg, #61b77b, var(--cuddle-green));
+}
+
+/* Blue Mode: a letter only ever shown as blue on the board reads blue in
+   the hand too, instead of claiming a yellow that would rule out the
+   green it might really be. */
+.cuddle-card.is-card-blue {
+  color: #fff;
+  border-color: #6ea8ff;
+  background: linear-gradient(160deg, #4f7fe0, var(--cuddle-blue));
 }
 
 .cuddle-card:hover:not(:disabled) {
@@ -946,6 +983,61 @@
 
 .cuddle-upgrade-details li {
   margin-bottom: 5px;
+}
+
+/* The boss-gate lock meter shown in the branch-map preview overlay: a big
+   padlock that swaps open once the run's score clears the gate's point
+   requirement, plus a fill bar tracking progress toward it. */
+.cuddle-boss-lock {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin: 4px 0 18px;
+  padding: 16px 12px;
+  border: 1px solid var(--cuddle-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.cuddle-boss-lock-icon {
+  font-size: 2.1rem;
+  filter: grayscale(1) opacity(0.75);
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.cuddle-boss-lock-open .cuddle-boss-lock-icon {
+  filter: none;
+  transform: scale(1.08);
+}
+
+.cuddle-boss-lock-meter {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.cuddle-boss-lock-meter-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cuddle-danger);
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.cuddle-boss-lock-open .cuddle-boss-lock-meter-fill {
+  background: var(--cuddle-accent-2);
+}
+
+.cuddle-boss-lock-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--cuddle-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cuddle-boss-lock-open .cuddle-boss-lock-label {
+  color: var(--cuddle-accent-2);
 }
 
 .cuddle-end-modal {

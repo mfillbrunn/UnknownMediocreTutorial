@@ -566,6 +566,28 @@
       return (this.state?.unknownGlyphs || []).includes(glyphForLetter(glyph));
     }
 
+    // Blue Mode shows green and yellow alike as blue, so the only thing
+    // the player was told about such a letter is "it is in the secret".
+    // The hand card has to say exactly that much and no more -- drawn
+    // blue like the board drew it, rather than claiming a yellow that
+    // would quietly rule out the green it might really be. A later
+    // unmasked guess on the same letter settles it and this goes false.
+    isGlyphBlue(glyph) {
+      const letter = glyphForLetter(glyph);
+      let sawBlue = false;
+      for (const entry of this.state?.history || []) {
+        if (entry?.fakeFeedback) continue;
+        const word = String(entry?.word || "");
+        const shown = Array.isArray(entry?.shownFeedback) ? entry.shownFeedback : entry?.feedback || [];
+        for (let index = 0; index < word.length; index += 1) {
+          if (word[index] !== letter) continue;
+          if (shown[index] === "green" || shown[index] === "yellow") return false;
+          if (shown[index] === "blue") sawBlue = true;
+        }
+      }
+      return sawBlue;
+    }
+
     _nextId(prefix = "card") {
       this.state.serial += 1;
       return `${prefix}-${this.state.serial}`;

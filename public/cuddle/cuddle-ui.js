@@ -481,6 +481,10 @@
       state.maxGuesses,
       state.history.length + (state.status === "playing" ? 1 : 0)
     );
+    // Money tiles (cuddle-points-money.js) are marked on the board before
+    // they are played so they can actually be aimed at, then keep showing
+    // what they paid once the guess through them has landed.
+    const moneyTiles = Array.isArray(state.cuddleMoneyTiles) ? state.cuddleMoneyTiles : [];
     for (let row = 0; row < rowCount; row += 1) {
       const history = state.history[row];
       const isDraft = !history && row === state.history.length && state.status === "playing";
@@ -504,12 +508,22 @@
         const isJokerTile = draftCard
           ? draftCard.glyph === window.CuddleEngine.CUDDLE_JOKER_GLYPH
           : Boolean(history?.jokerRevealed && history.jokerIndex === column);
-        const tileClass = (result ? ` is-${result}` : letter ? " is-filled" : "") + (isJokerTile ? " is-joker" : "");
+        const moneyTile = moneyTiles.find(tile => tile && tile.row === row && tile.col === column);
+        const moneyClass = !moneyTile
+          ? ""
+          : moneyTile.paid
+            ? (moneyTile.payout > 0 ? " is-money-tile is-money-won" : " is-money-tile is-money-missed")
+            : " is-money-tile";
+        const moneyBadge = !moneyTile || (moneyTile.paid && !moneyTile.payout)
+          ? ""
+          : ` data-money="${moneyTile.paid ? `+$${moneyTile.payout}` : "$"}"`;
+        const tileClass = (result ? ` is-${result}` : letter ? " is-filled" : "")
+          + (isJokerTile ? " is-joker" : "") + moneyClass;
         if (draftCard) {
           tiles.push(`
             <button type="button" class="cuddle-tile is-draft-tile${tileClass}"
               data-draft-index="${column}" data-draft-card-id="${escapeHtml(draftCard.id)}"
-              data-drag-index="${column}"
+              data-drag-index="${column}"${moneyBadge}
               aria-label="Remove ${escapeHtml(draftCard.glyph)} from the current word"
               title="Click to return ${escapeHtml(draftCard.glyph)} to your hand">
               ${escapeHtml(letter)}
@@ -517,9 +531,9 @@
         } else if (isDraft) {
           // Empty, but still a live target -- Drag Mode (cuddle-drag-mode.js)
           // can drop a card here even though there's nothing yet to tap.
-          tiles.push(`<span class="cuddle-tile${tileClass}" data-drag-index="${column}"></span>`);
+          tiles.push(`<span class="cuddle-tile${tileClass}" data-drag-index="${column}"${moneyBadge}></span>`);
         } else {
-          tiles.push(`<span class="cuddle-tile${tileClass}">${escapeHtml(letter)}</span>`);
+          tiles.push(`<span class="cuddle-tile${tileClass}"${moneyBadge}>${escapeHtml(letter)}</span>`);
         }
       }
       // Count Only replaces the row's score with the only thing it tells you:
@@ -626,7 +640,12 @@
     const trueStatus = game.getCardKnowledgeStatus(group.glyph);
     const unknown = trueStatus === "unused"
       && typeof game.isGlyphUnknown === "function" && game.isGlyphUnknown(group.glyph);
-    const status = unknown ? "unknown" : trueStatus;
+    // Blue Mode's letters read yellow to the scoring logic (all it can
+    // safely conclude is "present"), but the player was only ever shown
+    // blue -- so the hand shows blue too, matching the board.
+    const blueOnly = trueStatus === "yellow"
+      && typeof game.isGlyphBlue === "function" && game.isGlyphBlue(group.glyph);
+    const status = unknown ? "unknown" : blueOnly ? "blue" : trueStatus;
     // getDraftWord().length counts gaps Drag Mode has padded out too (each
     // renders as a literal space), so it reaches 5 as soon as ANY tile has
     // been positionally placed -- long before the word is actually full.
@@ -658,9 +677,10 @@
     const positionIndex = status === "green" ? revealedPositions.indexOf(group.glyph) : -1;
     const statusLabel = status === "unknown" ? "unknown · result withheld"
       : status === "green" ? (positionIndex >= 0 ? `green · position ${positionIndex + 1}` : "green")
-        : status === "yellow" ? "yellow"
-          : status === "red" ? "red · not in the secret"
-            : "grey · unused";
+        : status === "blue" ? "blue · in the secret, placement unknown"
+          : status === "yellow" ? "yellow"
+            : status === "red" ? "red · not in the secret"
+              : "grey · unused";
     const count = group.cards.length;
     // The joker's one hand card only ever shows a single physical copy, so
     // the ordinary copies badge below never fires for it -- reuse that same
