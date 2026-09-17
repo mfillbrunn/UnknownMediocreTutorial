@@ -61,18 +61,12 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 // in the pool: the reward pick itself carries the real payload -- 5
 // letters, a bet number, or a second word -- typed in on the spot, with
 // no way to bank the power for later. See applyChoice's payload param.
-// secretThemesReveal (Theme Dossier) also belongs here despite being
-// round-scoped rather than game-scoped: like the other three it's a pure
-// turnStart hook with no one-shot apply() of its own, so the reward IS the
-// grant, exactly the same shape as Informant/Letter Profile/Secret Themes.
-// clearRoundPowerActivity.js is what actually makes it round-scoped, by
-// stripping its grant (and Informant's) at round end -- the other two
-// survive there deliberately, for the rest of the match.
+// clearRoundPowerActivity.js strips Informant's grant at round end; the
+// other two survive there deliberately, for the rest of the match.
 const PERSISTENT_POWER_IDS = new Set([
   "revealLocation",
   "letterProfile",
-  "secretThemes",
-  "secretThemesReveal"
+  "secretThemes"
 ]);
 const KEYBOARD_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
@@ -146,10 +140,6 @@ const POWER_COPY = {
   // which also means the category visibly changing is the tell that the
   // Secretkeeper just swapped secrets.
   secretThemes: ["🗂️", "Secret Themes", "From now on, see which category the secret belongs to, each of your turns."],
-  // Stronger than Secret Themes for one round instead of weaker for the
-  // whole match: every category at once, but the reveal doesn't survive
-  // past the round it's granted in (see clearRoundPowerActivity.js).
-  secretThemesReveal: ["📂", "Theme Dossier", "For this round only, see every category the secret belongs to, each of your turns."]
 };
 
 function normalizeWord(value) {
@@ -888,14 +878,12 @@ function fixedOptions(role, threshold) {
 // powerOptionApplicable for the belt-and-suspenders runtime check).
 function guesserRewardPool(tier) {
   // Rarity (each option's own .tier) groups these into: Common -- Rule Out
-  // Two, Peek Letter, Silly Word, Guess Tip, Theme Dossier. Rare -- Yellow
-  // Intel, Freeze Secret, Time Rewind, Secret Vowel Count, Roulette Secret,
-  // Recon Sweep, Secret Themes. Legendary -- Remove a Point, Informant,
-  // First Letter Reveal, Magic Mode. Secret Themes and Theme Dossier are
-  // the only two theme-revealing rewards on purpose -- Secret Themes is
-  // the standing "one label, every turn, for the rest of the match" pick,
-  // Theme Dossier the stronger-but-shorter "every label, this round only"
-  // one; no other reward should ever surface theme information. Stealth Guess is deliberately NOT in this pool -- it's still a
+  // Two, Peek Letter, Silly Word, Guess Tip. Rare -- Yellow Intel, Freeze
+  // Secret, Time Rewind, Secret Vowel Count, Roulette Secret, Recon Sweep,
+  // Secret Themes. Legendary -- Remove a Point, Informant, First Letter
+  // Reveal, Magic Mode. Secret Themes is the ONLY theme-revealing reward
+  // on purpose -- the standing "one label, every turn, for the rest of the
+  // match" pick; no other reward should ever surface theme information. Stealth Guess is deliberately NOT in this pool -- it's still a
   // real classic-mode power (see client/powerEngine/powers/stealthGuess.js
   // and its own POWER_RULES.js entry), just not currently offered as a
   // Power Choice reward.
@@ -915,12 +903,7 @@ function guesserRewardPool(tier) {
     powerOption("suggestGuess"),
     powerOption("letterProbe"),
     powerOption("firstLetterReveal"),
-    powerOption("secretThemes"),
-    // Theme Dossier -- the one-round-only, all-themes counterpart to
-    // Secret Themes above. See powerOptionApplicable for why the two are
-    // mutually exclusive: offering both would just let one card make the
-    // other redundant instead of forcing a real choice.
-    powerOption("secretThemesReveal")
+    powerOption("secretThemes")
   ];
   if (tier >= 2) pool.push(powerOption("revealHistory"));
   return pool;
@@ -1790,20 +1773,6 @@ function powerOptionApplicable(state, option) {
       // guesser seat hasn't unlocked it and should still be offered it.
       return !(state.powers?.powerChoicePersistentGrants?.guesser || [])
         .some(grant => grant.userId === state.guesser && grant.powerId === option.powerId);
-    case "secretThemesReveal": {
-      // Same "already granted" guard as the three cases above, PLUS: never
-      // offer this alongside the persistent Secret Themes grant. That
-      // grant already shows a label every turn for the rest of the match,
-      // so a guesser who holds it would gain nothing real by also taking
-      // the one-round full reveal -- it'd just be strictly extra
-      // information for the same card slot, not an actual choice.
-      const guesserGrants = state.powers?.powerChoicePersistentGrants?.guesser || [];
-      return !guesserGrants.some(
-        grant =>
-          grant.userId === state.guesser &&
-          (grant.powerId === option.powerId || grant.powerId === "secretThemes")
-      );
-    }
     // Immediate-fire, payload-carrying cards -- mirrors each power's own
     // POWER_RULES.js/applyDoubleGuess precondition (minus the redundant
     // turn===guesser check, since a reward choice only ever opens on the
@@ -1997,12 +1966,6 @@ function effectDetailText(option, detail) {
           ? `Revealed ${String(detail.letter).toUpperCase()} in position ${detail.pos + 1}.`
           : "No unrevealed position remained -- nothing to peek at.";
       }
-      if (option.powerId === "secretThemesReveal") {
-        // Round-scoped, not game-scoped like the other PERSISTENT_POWER_IDS
-        // grants below -- "unlocked for the rest of the game" would be
-        // flatly false for this one (see clearRoundPowerActivity.js).
-        return `${option.title} unlocked for the rest of this round.`;
-      }
       if (option.kind === "power") {
         // PERSISTENT_POWER_IDS grants (Informant / Secret Vowel Count /
         // Secret Themes) are permanent unlocks, not a one-turn effect --
@@ -2130,11 +2093,6 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
       // turn began.
       if (option.powerId === "secretThemes") {
         engine.powers.secretThemes?.turnStart(state, state.guesser, roomId, io);
-      }
-      // And again for Theme Dossier -- also a pure turnStart hook, so
-      // without this the guesser would see nothing until their next turn.
-      if (option.powerId === "secretThemesReveal") {
-        engine.powers.secretThemesReveal?.turnStart(state, state.guesser, roomId, io);
       }
       state.powerUsedThisTurn = true;
       const side =

@@ -17,7 +17,6 @@ const REWARD_CATEGORIES = Object.freeze({
   revealLocation: "information",
   letterProfile: "information",
   secretThemes: "information",
-  secretThemesReveal: "information",
   suggestGuess: "information",
   letterProbe: "information",
   revealHistory: "information",
