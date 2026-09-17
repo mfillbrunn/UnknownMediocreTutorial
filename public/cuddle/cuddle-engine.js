@@ -3380,7 +3380,7 @@
       key: "greyPointBoost",
       icon: "G+",
       title: "Grey Matters",
-      description: "Grey tiles are worth 1 point more, but yellow and green stop scoring for the run. This reward stacks."
+      description: "Grey tiles are worth 1 point more. Yellow and green keep their values. This reward stacks."
     },
     {
       id: "handSizeBoost",
@@ -3408,7 +3408,7 @@
       key: "colourTrade",
       icon: "Y/G",
       title: "Colour Surge",
-      description: "Yellow and green gain 3 points each, but grey loses 1 point. This reward stacks."
+      description: "Yellow and green gain 3 points each. Grey tiles keep their value. This reward stacks."
     },
     {
       id: "greyscale",
@@ -3603,20 +3603,16 @@
     const upgrades = state.upgrades;
     switch (choice.id) {
       case "greyPointBoost":
-        // Grey gains, colours go away: taking this is a commitment to
-        // scoring off grey rather than a free top-up alongside the colour
-        // rewards. zeroColourPoints is what locks the colour cards out
-        // from here on (see the guard above and _generateUpgradeChoices).
+        // Pure upside: grey starts paying without costing the colours
+        // anything. Greyscale below is the reward that actually trades
+        // them away, and it alone sets zeroColourPoints.
         upgrades.greyPoints += 1;
-        upgrades.yellowPoints = 0;
-        upgrades.zeroColourPoints = 1;
         break;
       case "handSizeBoost":
         upgrades.handSizeBonus += 1;
         break;
       case "colourTrade":
         upgrades.yellowPoints += 3;
-        upgrades.greyPoints -= 1;
         break;
       case "greyscale":
         upgrades.greyPoints += 2;
