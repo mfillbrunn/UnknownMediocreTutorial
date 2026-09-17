@@ -20,7 +20,10 @@
     "_syncInfiniteCards", "drawToHandLimit"
   ]);
   const COMMON_OPENERS = Object.freeze(["CRANE", "SLATE", "TRACE", "STARE", "ARISE", "RAISE", "LEAST", "AUDIO"]);
-  const OPENING_STAGE_TYPES = Object.freeze(["theme", "normal", "event", "challenge"]);
+  // "event" is deliberately excluded: row 0 sits inside every world's
+  // guaranteed-wordle opening rows, so both randomized options here need to
+  // actually play a round.
+  const OPENING_STAGE_TYPES = Object.freeze(["theme", "normal", "challenge"]);
 
   const CHALLENGES = Object.freeze([
     Object.freeze({

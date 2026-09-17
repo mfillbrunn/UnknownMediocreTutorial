@@ -3,7 +3,7 @@
   "use strict";
 
   const VERSION = "2026.09.09.2";
-  const ROUTE_VERSION = "umt-cuddle-route-2026.09.09.v2";
+  const ROUTE_VERSION = "umt-cuddle-route-2026.09.16.v3";
   const PATCH_MARK = Symbol.for("umt.cuddle.stability.v2");
   const ROUND_TYPES = new Set(["normal", "theme", "challenge", "boss", "wordle"]);
   const FALLBACK_ICON = "gift.svg";
@@ -206,22 +206,32 @@
     return pairs;
   }
 
+  // Every world's three "stops" rows before its boss offer only wordle-type
+  // nodes (normal/theme/challenge) on both sides -- whichever side the
+  // player picks, that guarantees at least 3 played wordles before the
+  // boss. Non-wordle utility stops (shop/upgrade/event) all live in one
+  // dedicated row of their own per world instead, so that guarantee holds
+  // regardless of path, and utility content is neither lost nor able to
+  // starve the wordle count.
   function buildRoute(game) {
     const pairs = bossPairs(game);
     if (pairs.length < 3) return null;
     const rows = [
       { kind: "stops", act: 0, nodes: [routeNode(0, 0, "normal"), routeNode(0, 1, "theme")] },
       { kind: "stops", act: 0, nodes: [routeNode(1, 0, "challenge"), routeNode(1, 1, "normal")] },
-      { kind: "stops", act: 0, nodes: [routeNode(2, 0, "upgrade"), routeNode(2, 1, "theme")] },
-      { kind: "boss", act: 0, nodes: [bossNode(pairs[0], "before-3", 3)] },
-      { kind: "stops", act: 1, nodes: [routeNode(4, 0, "shop", { shopSlot: 4 }), routeNode(4, 1, "normal")] },
-      { kind: "stops", act: 1, nodes: [routeNode(5, 0, "theme"), routeNode(5, 1, "challenge")] },
-      { kind: "stops", act: 1, nodes: [routeNode(6, 0, "event", { eventId: "windfall" }), routeNode(6, 1, "normal")] },
-      { kind: "boss", act: 1, nodes: [bossNode(pairs[1], "before-7", 7)] },
-      { kind: "stops", act: 2, nodes: [routeNode(8, 0, "shop", { shopSlot: 8 }), routeNode(8, 1, "theme")] },
-      { kind: "stops", act: 2, nodes: [routeNode(9, 0, "challenge"), routeNode(9, 1, "upgrade")] },
-      { kind: "stops", act: 2, nodes: [routeNode(10, 0, "shop", { shopSlot: 11 }), routeNode(10, 1, "normal")] },
-      { kind: "boss", act: 2, nodes: [bossNode(pairs[2], "final", 11)] }
+      { kind: "stops", act: 0, nodes: [routeNode(2, 0, "challenge"), routeNode(2, 1, "theme")] },
+      { kind: "stops", act: 0, nodes: [routeNode(3, 0, "upgrade"), routeNode(3, 1, "event", { eventId: "windfall" })] },
+      { kind: "boss", act: 0, nodes: [bossNode(pairs[0], "before-3", 4)] },
+      { kind: "stops", act: 1, nodes: [routeNode(5, 0, "theme"), routeNode(5, 1, "normal")] },
+      { kind: "stops", act: 1, nodes: [routeNode(6, 0, "theme"), routeNode(6, 1, "challenge")] },
+      { kind: "stops", act: 1, nodes: [routeNode(7, 0, "challenge"), routeNode(7, 1, "normal")] },
+      { kind: "stops", act: 1, nodes: [routeNode(8, 0, "shop", { shopSlot: 4 }), routeNode(8, 1, "event", { eventId: "windfall" })] },
+      { kind: "boss", act: 1, nodes: [bossNode(pairs[1], "before-7", 9)] },
+      { kind: "stops", act: 2, nodes: [routeNode(10, 0, "normal"), routeNode(10, 1, "theme")] },
+      { kind: "stops", act: 2, nodes: [routeNode(11, 0, "challenge"), routeNode(11, 1, "theme")] },
+      { kind: "stops", act: 2, nodes: [routeNode(12, 0, "challenge"), routeNode(12, 1, "normal")] },
+      { kind: "stops", act: 2, nodes: [routeNode(13, 0, "shop", { shopSlot: 8 }), routeNode(13, 1, "upgrade")] },
+      { kind: "boss", act: 2, nodes: [bossNode(pairs[2], "final", 14)] }
     ];
     connectRows(rows);
     return {

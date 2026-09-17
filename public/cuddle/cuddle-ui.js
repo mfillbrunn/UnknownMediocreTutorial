@@ -534,6 +534,13 @@
             ? `<span class="cuddle-row-score is-boss-active" title="${escapeHtml(state.boss.title || "Boss power")} applied to this guess">${escapeHtml(state.boss.icon || "⚡")}</span>`
             : `<span class="cuddle-row-score is-boss-inactive" title="${escapeHtml(state.boss.title || "Boss power")} no longer applies to this guess">—</span>`)
         : null;
+      // A solve's early bonuses (scaled-by-unused-guess plus the flat
+      // solve-in-window bonus) and a too-late guess's flat penalty are
+      // both separate from the tile-color scoreDelta above -- shown as
+      // their own small suffixes so the number itself still reads as
+      // "what this guess's tiles were worth."
+      const rowBonus = (history?.earlyBonus || 0) + (history?.earlySolveBonus || 0);
+      const rowPenalty = history?.latePenalty || 0;
       const score = counts
         ? `<span class="cuddle-row-score is-counts" title="${counts.green} green, ${counts.yellow} yellow">` +
             `<span class="cuddle-row-score-count is-green">🟩${counts.green}</span>` +
@@ -542,7 +549,7 @@
         : bossBadge
           ? bossBadge
           : history
-            ? `<span class="cuddle-row-score ${history.scoreDelta < 0 ? "is-negative" : ""}">${history.scoreDelta >= 0 ? "+" : ""}${history.scoreDelta}${history.earlyBonus ? `<small> +${history.earlyBonus}</small>` : ""}</span>`
+            ? `<span class="cuddle-row-score ${history.scoreDelta < 0 ? "is-negative" : ""}">${history.scoreDelta >= 0 ? "+" : ""}${history.scoreDelta}${rowBonus ? `<small> +${rowBonus}</small>` : ""}${rowPenalty ? `<small class="is-negative"> -${rowPenalty}</small>` : ""}</span>`
             : `<span class="cuddle-row-score">${row + 1}</span>`;
       // The active row is tagged so a short screen, where the board scrolls
       // inside its own column, can keep it in view after every render.

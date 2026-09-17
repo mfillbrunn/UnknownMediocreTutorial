@@ -218,12 +218,18 @@
     questEndurance: ["Endurance Trial", "If that same guess misses its quest, that round's hand size drops by one -- every round from now on."]
   });
 
+  // "1 guess" vs "N guesses" -- description functions below combine this
+  // with their own verb conjugation (e.g. `hide${count === 1 ? "s" : ""}`).
+  function guessPhrase(count) {
+    return count === 1 ? "guess" : `${count} guesses`;
+  }
+
   const CHALLENGES = Object.freeze([
     Object.freeze({
       id: "deepFog",
       icon: "🌫️",
       title: "Deep Fog",
-      description: "The first two guesses hide two consistent tile positions.",
+      description: count => `The first ${guessPhrase(count)} hide${count === 1 ? "s" : ""} two consistent tile positions.`,
       reward: 24,
       masks: ["hiddenMargins", "hiddenMargins"]
     }),
@@ -231,7 +237,7 @@
       id: "countedSteps",
       icon: "🔢",
       title: "Counted Steps",
-      description: "The first three guesses reveal only a count of correct letters.",
+      description: count => `The first ${guessPhrase(count)} reveal${count === 1 ? "s" : ""} only a count of correct letters.`,
       reward: 28,
       masks: ["countOnly", "countOnly", "countOnly"]
     }),
@@ -239,7 +245,7 @@
       id: "blueMoon",
       icon: "🔵",
       title: "Blue Moon",
-      description: "The first three guesses merge green and yellow information into blue.",
+      description: count => `The first ${guessPhrase(count)} merge${count === 1 ? "s" : ""} green and yellow information into blue.`,
       reward: 26,
       masks: ["blueMode", "blueMode", "blueMode"]
     }),
@@ -255,7 +261,12 @@
       id: "doubleBlind",
       icon: "🕶️",
       title: "Double Blind",
-      description: "Guess one is count-only; guess two hides two tile positions.",
+      // Two DIFFERENT effects, one per guess -- if only the first guess is
+      // actually in play this early in the run, guess two's effect never
+      // happens, so it has no business being mentioned at all.
+      description: count => count >= 2
+        ? "Guess one is count-only; guess two hides two tile positions."
+        : "Guess one is count-only.",
       reward: 27,
       masks: ["countOnly", "hiddenMargins"]
     }),
@@ -263,7 +274,13 @@
       id: "signalStorm",
       icon: "⛈️",
       title: "Signal Storm",
-      description: "The first three guesses cycle through blue, false, and two hidden positions.",
+      // Same reasoning as Double Blind: each guess has its own distinct
+      // effect, so only describe as many of the sequence as actually fire.
+      description: count => {
+        if (count >= 3) return "The first three guesses cycle through blue, false, and two hidden positions.";
+        if (count === 2) return "The first two guesses cycle through blue, then a false signal.";
+        return "The first guess is blue feedback.";
+      },
       reward: 32,
       masks: ["blueMode", "fakeFeedback", "hiddenMargins"]
     }),
@@ -287,7 +304,7 @@
       id: "consonantCrunch",
       icon: "🥨",
       title: "Consonant Crunch",
-      description: "Each of the first two submitted words may contain at most one vowel.",
+      description: count => `Each of your first ${guessPhrase(count)} may contain at most one vowel.`,
       reward: 25,
       vowelBudget: { guesses: 2, max: 1 }
     }),
@@ -295,7 +312,7 @@
       id: "shroudedEdges",
       icon: "🫥",
       title: "Shrouded Edges",
-      description: "Two consistent tile positions stay hidden on each of the first two guesses.",
+      description: count => `Two consistent tile positions stay hidden on each of your first ${guessPhrase(count)}.`,
       reward: 24,
       masks: ["hiddenMargins", "hiddenMargins"]
     })
@@ -822,12 +839,13 @@
         challengeId: challenge.id,
         icon: challenge.icon,
         title: challenge.title,
-        // description is the uncapped baseline, cached alongside the node
-        // for its whole lifetime; rewardSuffix lets renderMapVariants
-        // rebuild the shown text against the LIVE guess-count cap at
-        // render time instead of whatever it was the moment this node's
-        // variant first got rolled (see challengeDisplayDescription).
-        description: `${challenge.description} Pays $${challenge.reward}.`,
+        // description is only a baseline cached alongside the node for its
+        // whole lifetime (change-detection in normalizeMap reads it, not
+        // the player); rewardSuffix lets renderMapVariants rebuild the
+        // shown text against the LIVE guess-count cap at render time
+        // instead of whatever it was the moment this node's variant first
+        // got rolled (see challengeDisplayDescription).
+        description: `${challengeDisplayDescription(game, challenge)} Pays $${challenge.reward}.`,
         rewardSuffix: `Pays $${challenge.reward}.`
       };
     }
@@ -871,7 +889,7 @@
           challengeId: challenge.id,
           icon: challenge.icon,
           title: challenge.title,
-          description: `${challenge.description} Mandatory; pays a $${challenge.reward} completion bonus.`,
+          description: `${challengeDisplayDescription(game, challenge)} Mandatory; pays a $${challenge.reward} completion bonus.`,
           rewardSuffix: `Mandatory; pays a $${challenge.reward} completion bonus.`
         };
         node.type = "challenge";
@@ -1233,25 +1251,18 @@
     return 4;
   }
 
-  function describeCappedChallenge(challenge, cap) {
-    const note = cap === 1
-      ? "This early in the run, it only affects your first guess."
-      : `This early in the run, it only affects your first ${cap} guesses.`;
-    return `${challenge.description} ${note}`;
-  }
-
   // The map preview has to describe the same capped guess count
   // beginVariant will actually apply once the round starts (see
-  // challengeTurnCap), or the description overstates how many guesses a
-  // challenge affects -- which is the normal case for most of an early
-  // run, not an edge case (the cap is 1 before the first boss, 2 before
-  // the second, and only reaches a challenge's full designed length
-  // after that).
+  // challengeTurnCap): a challenge whose description depends on the guess
+  // count is a function of that count, called with however many of its
+  // designed guesses actually fire this early in the run, so the sentence
+  // itself states the right number instead of an appended correction.
   function challengeDisplayDescription(game, challenge) {
+    if (typeof challenge.description !== "function") return challenge.description;
     const cap = challengeTurnCap(game);
-    const capped = (Array.isArray(challenge.masks) && challenge.masks.length > cap)
-      || (challenge.vowelBudget && challenge.vowelBudget.guesses > cap);
-    return capped ? describeCappedChallenge(challenge, cap) : challenge.description;
+    const designedLength = Array.isArray(challenge.masks) ? challenge.masks.length
+      : (challenge.vowelBudget ? challenge.vowelBudget.guesses : cap);
+    return challenge.description(Math.min(cap, designedLength));
   }
 
   function clearNativeChallengeOffer(game) {
@@ -1280,13 +1291,11 @@
       const vowelBudget = challenge.vowelBudget
         ? { ...challenge.vowelBudget, guesses: Math.min(challenge.vowelBudget.guesses, cap) }
         : challenge.vowelBudget;
-      const capped = (Array.isArray(challenge.masks) && masks.length < challenge.masks.length)
-        || (challenge.vowelBudget && vowelBudget.guesses < challenge.vowelBudget.guesses);
       custom.activeChallenge = {
         ...challenge,
         masks,
         vowelBudget,
-        description: capped ? describeCappedChallenge(challenge, cap) : challenge.description,
+        description: challengeDisplayDescription(game, challenge),
         nodeId: variant.nodeId,
         roundToken: roundToken(game),
         paid: false,
