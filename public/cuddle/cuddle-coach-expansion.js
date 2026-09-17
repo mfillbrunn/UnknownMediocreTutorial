@@ -931,13 +931,15 @@
     return finite(entry.scoreDelta, 0)
       + finite(entry.questBonus, 0)
       + finite(entry.questFinalBonus, 0)
+      + finite(entry.earlySolveBonus, 0)
       + finite(entry.mulliganBonus, 0)
       + finite(entry.cuddleQuestBonus, 0)
       + finite(entry.cuddleSolveBonus, 0)
       + finite(entry.challengeBonus, 0)
       + finite(entry.coachDoubleQuestBonus, 0)
       - finite(entry.questTrialPenalty, 0)
-      - finite(entry.ratchetQuestPenalty, 0);
+      - finite(entry.ratchetQuestPenalty, 0)
+      - finite(entry.latePenalty, 0);
   }
 
   // Each row carries the labelled lines behind its figure so the cash-out
@@ -981,14 +983,12 @@
     payload.to = Math.round(finite(game.state.score, 0));
     payload.total = Math.round(payload.to - finite(payload.from, 0));
     var allocated = payload.rows.reduce(function sum(total, row) { return total + finite(row.amount, 0); }, 0);
-    if (payload.rows.length && allocated !== payload.total) {
-      var realIndex = Math.max(0, history.length - 1);
-      var shortfall = payload.total - allocated;
-      payload.rows[realIndex].amount += shortfall;
-      if (Array.isArray(payload.rows[realIndex].breakdown)) {
-        payload.rows[realIndex].breakdown.push({ label: "Round bonus", amount: shortfall });
-      }
-    }
+    // Anything the guess rows don't account for is a stage-level reward,
+    // so it is left to the cash-out's own "Stage bonus" box below the rows
+    // rather than being added onto the last guess. Folding it in there put
+    // the same points on screen twice -- inside that row and again in the
+    // box -- which reads as double counting even when the total is right.
+    payload.stageBonus = payload.total - allocated;
   }
 
   function applyUnusedRowMoney(game, entry, maxGuessesBefore) {

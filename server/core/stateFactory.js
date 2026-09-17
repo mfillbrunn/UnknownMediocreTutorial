@@ -160,7 +160,6 @@ const powers = {
       // itself is stripped at round end (see clearRoundPowerActivity.js),
       // unlike Secret Themes' whole-match unlock. Redacted from the
       // setter in safeState.
-      secretThemesRevealLabels: null,
       // POWER CHOICE: which "always-on" powers a role has permanently
       // unlocked via a reward card (Informant, Letter Profile -- see
       // powerChoiceServer.js's PERSISTENT_POWER_IDS).

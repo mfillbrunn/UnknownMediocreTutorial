@@ -30,7 +30,6 @@ const POWER_TIERS = Object.freeze({
   revealLocation: { role: "guesser", tier: 3 },
   letterProfile: { role: "guesser", tier: 2 },
   secretThemes: { role: "guesser", tier: 2 },
-  secretThemesReveal: { role: "guesser", tier: 1 },
   wiretap: { role: "guesser", tier: 3 },
   doubleGuess: { role: "guesser", tier: 3 },
   fieldReport: { role: "guesser", tier: 3 },

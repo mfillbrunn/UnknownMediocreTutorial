@@ -912,9 +912,19 @@
     ) || null;
   }
 
+  const VARIANT_ELIGIBLE_TYPES = new Set(["normal", "theme", "challenge", "wordle"]);
+
   function setPendingVariant(game, node) {
     const custom = customState(game);
     if (!custom || !node) return;
+    // Boss/shop/upgrade/event nodes never get a stop variant (jackpot,
+    // lucky start, etc.) -- those are wordle-stop gimmicks, and applying
+    // one to a boss round (e.g. jackpot silently shaving a guess off the
+    // boss's cap) was never intended.
+    if (!VARIANT_ELIGIBLE_TYPES.has(String(node.type))) {
+      custom.pendingVariant = null;
+      return;
+    }
     const variant = variantForNode(game, node);
     custom.pendingVariant = { ...variant, nodeId: nodeId(node) };
   }
@@ -1605,15 +1615,15 @@
     payout.total = target - from;
     if (Array.isArray(payout.rows) && payout.rows.length) {
       let allocated = 0;
-      let lastInfo = null;
       for (const row of payout.rows) {
         const info = numericRowAmount(row);
-        if (info) {
-          allocated += info.value;
-          lastInfo = { row, key: info.key };
-        }
+        if (info) allocated += info.value;
       }
-      if (lastInfo) lastInfo.row[lastInfo.key] += payout.total - allocated;
+      // Whatever the guess rows don't account for is a stage bonus, and it
+      // is reported as one under the rows rather than being folded into
+      // the last row -- otherwise a stage-level reward reads as if that
+      // final guess had earned it, on top of the box already listing it.
+      payout.stageBonus = payout.total - allocated;
     }
   }
 
@@ -1634,13 +1644,14 @@
       state.lastRoundSummary.score = state.score;
       state.lastRoundSummary.roundScore = state.roundScore;
     }
+    // A stage bonus is reported once, in the cash-out's own "Stage bonus"
+    // box (lastPayoutLines below). It deliberately does NOT ride on a
+    // guess row's scoreDelta as well: that made the same points show up
+    // twice on the payout screen -- once swallowed by whichever row
+    // happened to be last, once itemized in the box -- which reads as
+    // double counting even though the round total was right all along.
     const target = entry || latestRoundEntry(game);
-    if (target) {
-      target[field] = asNumber(target[field], 0) + value;
-      target.scoreDelta = asNumber(target.scoreDelta, 0) + value;
-      if (!Array.isArray(target.umtBonusLines)) target.umtBonusLines = [];
-      target.umtBonusLines.push({ label, amount: value });
-    }
+    if (target) target[field] = asNumber(target[field], 0) + value;
     const custom = customState(game);
     if (custom) {
       if (!Array.isArray(custom.lastPayoutLines)) custom.lastPayoutLines = [];
@@ -1664,7 +1675,12 @@
     const currentUnused = asNumber(entry && entry.unusedRowBonus, 0) + asNumber(entry && entry.earlyBonus, 0);
     const unusedDelta = Math.max(0, desiredUnused - currentUnused);
 
-    custom.lastPayoutLines = [];
+    // Drop older rounds' lines but keep this round's: a bonus already paid
+    // mid-round (a jackpot's doubled greens, Rainy Day interest) belongs in
+    // the same Stage bonus box as the ones reconciled here, now that none
+    // of them ride on a guess row any more.
+    custom.lastPayoutLines = (Array.isArray(custom.lastPayoutLines) ? custom.lastPayoutLines : [])
+      .filter((line) => line && line.roundToken === token);
     if (unusedDelta > 0) {
       addScoreBonus(game, unusedDelta, "umtUnusedRowAdjustment", "Unused rows corrected", entry);
     }

@@ -339,7 +339,7 @@ function getHistoryScrollState(container) {
   // This list's own height changes underneath the reader whenever anything
   // sharing the board column with it grows or shrinks -- most visibly a
   // Power Choice reward that pays out as a standing readout (Informant,
-  // Secret Themes, Theme Dossier), whose panel appears between this list
+  // Secret Themes), whose panel appears between this list
   // and the draft row and takes ~80px straight out of this box. The rows
   // themselves don't move, so no scroll event fires and nothing else here
   // ever learns anything happened: a reader who was pinned to the newest

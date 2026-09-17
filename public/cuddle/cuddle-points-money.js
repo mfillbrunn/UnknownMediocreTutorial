@@ -53,9 +53,93 @@
   // baseline every stage pays regardless of what else is unlocked.
   var STAGE_CLEAR_MONEY = 10;
 
+  // Money tiles: a handful of board cells, rolled fresh at the start of
+  // every non-boss round, that pay out for the guess played through them.
+  // A yellow letter on one pays MONEY_TILE_YELLOW and a green one pays
+  // double; grey pays nothing but still spends the tile. They only ever
+  // sit inside the round's quick-solve window (_solveGuessThreshold():
+  // 6 guesses in world one, 5 in world two, 4 in world three), so hunting
+  // one is never a reason to guess past that window and eat the late
+  // penalty cuddle-engine.js charges beyond it.
+  var MONEY_TILE_COUNT = 3;
+  var MONEY_TILE_YELLOW = 2;
+  var MONEY_TILE_GREEN = MONEY_TILE_YELLOW * 2;
+  var MONEY_TILE_COLUMNS = 5;
+
   function addMoney(state, amount) {
     state.cuddleMoney = Math.max(0, Number(state.cuddleMoney || 0) + amount);
   }
+
+  function randomFor(game) {
+    return typeof game.random === "function" ? game.random : Math.random;
+  }
+
+  function rollMoneyTiles(game) {
+    var random = randomFor(game);
+    var threshold = typeof game._solveGuessThreshold === "function" ? game._solveGuessThreshold() : 6;
+    var rows = [];
+    for (var row = 0; row < threshold; row += 1) rows.push(row);
+    for (var index = rows.length - 1; index > 0; index -= 1) {
+      var swap = Math.floor(random() * (index + 1));
+      var held = rows[index];
+      rows[index] = rows[swap];
+      rows[swap] = held;
+    }
+    // One tile per row at most, so the three of them spread across the
+    // window instead of stacking into a single lucky guess.
+    return rows
+      .slice(0, Math.min(MONEY_TILE_COUNT, rows.length))
+      .map(function place(chosenRow) {
+        return { row: chosenRow, col: Math.floor(random() * MONEY_TILE_COLUMNS), paid: false, payout: 0 };
+      })
+      .sort(function byRow(a, b) { return a.row - b.row; });
+  }
+
+  function payMoneyTiles(state, row, entry) {
+    var tiles = Array.isArray(state.cuddleMoneyTiles) ? state.cuddleMoneyTiles : null;
+    if (!tiles || !entry) return 0;
+    // The true colours, not the masked ones a boss or challenge shows on
+    // the board: the letter really did land where it landed, whatever the
+    // feedback is willing to admit this guess.
+    var feedback = Array.isArray(entry.feedback) ? entry.feedback : [];
+    var earned = 0;
+    tiles.forEach(function pay(tile) {
+      if (!tile || tile.paid || Number(tile.row) !== row) return;
+      var result = feedback[Number(tile.col)];
+      var amount = result === "green" ? MONEY_TILE_GREEN : result === "yellow" ? MONEY_TILE_YELLOW : 0;
+      tile.paid = true;
+      tile.payout = amount;
+      earned += amount;
+    });
+    if (earned > 0) addMoney(state, earned);
+    return earned;
+  }
+
+  var originalBeginRound = proto._beginRound;
+  proto._beginRound = function beginRoundWithMoneyTiles() {
+    var result = originalBeginRound.apply(this, arguments);
+    var state = this.state;
+    if (state) {
+      // Bosses are a straight fight -- no money tiles there, only on the
+      // wordle, themed wordle and challenge stops.
+      state.cuddleMoneyTiles = this.isBossRound() ? [] : rollMoneyTiles(this);
+    }
+    return result;
+  };
+
+  var originalSubmitDraft = proto.submitDraft;
+  proto.submitDraft = function submitDraftWithMoneyTiles() {
+    var state = this.state;
+    var before = state && Array.isArray(state.history) ? state.history.length : 0;
+    var result = originalSubmitDraft.apply(this, arguments);
+    if (!state || !Array.isArray(state.history) || state.history.length <= before) return result;
+    var earned = payMoneyTiles(state, before, state.history[before]);
+    if (earned > 0) {
+      state.lastMessage = ((state.lastMessage || "") + " Money tile: +$" + earned + ".").trim();
+      if (typeof this.save === "function") this.save();
+    }
+    return result;
+  };
 
   // _advanceRound is what actually leaves a stage behind -- called once a
   // reward pick (or boss-reward pick) resolves, whether that lands on the

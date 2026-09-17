@@ -1078,12 +1078,12 @@
 
   // Everything a stage paid that never rode on one specific guess (unused
   // mulligans, unused Jokers, Reserve Dividend, a mini challenge clear,
-  // Rainy Day interest...), itemized -- cuddle-rebalance-v5.js resets its
-  // own lastPayoutLines to [] at the top of every round, so by the time
-  // this runs it already holds only the current round's stage-level
-  // bonuses. Falls back to one lump figure (payload.stageBonus, the
-  // round's total minus what the per-guess rows account for) only for a
-  // reward source that predates lastPayoutLines.
+  // Rainy Day interest...), itemized -- cuddle-rebalance-v5.js keeps its
+  // own lastPayoutLines trimmed to the current round, and deliberately
+  // keeps these amounts off the per-guess rows so each one is reported
+  // here and only here. Falls back to one lump figure (payload.stageBonus,
+  // the round's total minus what the per-guess rows account for) only for
+  // a reward source that predates lastPayoutLines.
   function stageBonusMarkup(game, payload) {
     var custom = game && game.state && game.state.cuddleRebalanceV5;
     var lines = Array.isArray(custom && custom.lastPayoutLines)

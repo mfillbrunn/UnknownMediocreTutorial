@@ -566,6 +566,28 @@
       return (this.state?.unknownGlyphs || []).includes(glyphForLetter(glyph));
     }
 
+    // Blue Mode shows green and yellow alike as blue, so the only thing
+    // the player was told about such a letter is "it is in the secret".
+    // The hand card has to say exactly that much and no more -- drawn
+    // blue like the board drew it, rather than claiming a yellow that
+    // would quietly rule out the green it might really be. A later
+    // unmasked guess on the same letter settles it and this goes false.
+    isGlyphBlue(glyph) {
+      const letter = glyphForLetter(glyph);
+      let sawBlue = false;
+      for (const entry of this.state?.history || []) {
+        if (entry?.fakeFeedback) continue;
+        const word = String(entry?.word || "");
+        const shown = Array.isArray(entry?.shownFeedback) ? entry.shownFeedback : entry?.feedback || [];
+        for (let index = 0; index < word.length; index += 1) {
+          if (word[index] !== letter) continue;
+          if (shown[index] === "green" || shown[index] === "yellow") return false;
+          if (shown[index] === "blue") sawBlue = true;
+        }
+      }
+      return sawBlue;
+    }
+
     _nextId(prefix = "card") {
       this.state.serial += 1;
       return `${prefix}-${this.state.serial}`;
@@ -3358,7 +3380,7 @@
       key: "greyPointBoost",
       icon: "G+",
       title: "Grey Matters",
-      description: "Grey tiles are worth 1 point more, but yellow and green stop scoring for the run. This reward stacks."
+      description: "Grey tiles are worth 1 point more. Yellow and green keep their values. This reward stacks."
     },
     {
       id: "handSizeBoost",
@@ -3386,7 +3408,7 @@
       key: "colourTrade",
       icon: "Y/G",
       title: "Colour Surge",
-      description: "Yellow and green gain 3 points each, but grey loses 1 point. This reward stacks."
+      description: "Yellow and green gain 3 points each. Grey tiles keep their value. This reward stacks."
     },
     {
       id: "greyscale",
@@ -3581,20 +3603,16 @@
     const upgrades = state.upgrades;
     switch (choice.id) {
       case "greyPointBoost":
-        // Grey gains, colours go away: taking this is a commitment to
-        // scoring off grey rather than a free top-up alongside the colour
-        // rewards. zeroColourPoints is what locks the colour cards out
-        // from here on (see the guard above and _generateUpgradeChoices).
+        // Pure upside: grey starts paying without costing the colours
+        // anything. Greyscale below is the reward that actually trades
+        // them away, and it alone sets zeroColourPoints.
         upgrades.greyPoints += 1;
-        upgrades.yellowPoints = 0;
-        upgrades.zeroColourPoints = 1;
         break;
       case "handSizeBoost":
         upgrades.handSizeBonus += 1;
         break;
       case "colourTrade":
         upgrades.yellowPoints += 3;
-        upgrades.greyPoints -= 1;
         break;
       case "greyscale":
         upgrades.greyPoints += 2;

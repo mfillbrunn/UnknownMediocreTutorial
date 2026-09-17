@@ -1617,12 +1617,13 @@
         : 0;
     const rowsContainer = overlay.querySelector(".cuddle-money-payout-rows, .cuddle-money-payout-list")
       || overlay.querySelector(".cuddle-money-payout-row")?.parentElement;
-    // cuddle-rebalance-v5.js resets this to [] at the top of every round's
+    // cuddle-rebalance-v5.js trims this to the current round inside
     // reconcileRoundBonuses, so by the time the payout screen shows it
-    // already holds only this round's stage-level bonuses (unused
-    // mulligans/Jokers, Reserve Dividend, a mini-challenge clear, etc.) --
-    // itemized, instead of the one opaque "stage bonus" figure a save from
-    // an older build would leave us to fall back to.
+    // holds only this round's stage-level bonuses (unused mulligans/Jokers,
+    // Reserve Dividend, a mini-challenge clear, etc.) -- itemized, instead
+    // of the one opaque "stage bonus" figure a save from an older build
+    // would leave us to fall back to. None of them are also folded into a
+    // guess row, so rows plus this box add up to the round total exactly.
     const itemizedLines = Array.isArray(game?.state?.cuddleRebalanceV5?.lastPayoutLines)
       ? game.state.cuddleRebalanceV5.lastPayoutLines
           .map(line => ({ label: String(line?.label || ""), amount: Math.round(numeric(line?.amount, 0)) }))
