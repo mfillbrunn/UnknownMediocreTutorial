@@ -867,7 +867,7 @@
     // always-spendable currency the shop and events actually charge --
     // see cuddle-points-money.js.
     var visiblePoints = Math.max(0, Math.round(roundIsLive ? score - provisional : score));
-    var pointsText = visiblePoints.toLocaleString() + " PTS";
+    var pointsText = visiblePoints.toLocaleString();
     root.querySelectorAll(".cuddle-header-score").forEach(function updateHeader(element) {
       if (element.textContent !== pointsText) element.textContent = pointsText;
       element.setAttribute("aria-label", visiblePoints + " points");
@@ -1096,7 +1096,7 @@
     if (!lines.length) {
       var fallback = Math.round(asNumber(payload.stageBonus, 0));
       if (!fallback) return "";
-      lines = [{ label: "Rewards not attached to a guess row", amount: fallback }];
+      lines = [{ label: "Other stage rewards", amount: fallback }];
     }
     return "<div class=\"umt-stage-bonus-section\">"
       + "<div class=\"umt-stage-bonus-title\">Stage bonus</div>"

@@ -848,7 +848,7 @@
             <span class="cuddle-eyebrow">BETWEEN ROUNDS</span>
             <div class="cuddle-header-title-line">
               <h1>${isBoss ? "BOSS AHEAD" : `ROUND ${state.round}`}</h1>
-              <span class="cuddle-header-score cuddle-header-points" aria-label="${state.score} points">${state.score} PTS</span>
+              <span class="cuddle-header-score cuddle-header-points" aria-label="${state.score} points">${state.score}</span>
               <span class="cuddle-header-money" aria-label="${Number(state.cuddleMoney || 0)} money">$${Number(state.cuddleMoney || 0)}</span>
             </div>
           </div>

@@ -386,7 +386,7 @@
           <div class="cuddle-header-title">
             <span class="cuddle-eyebrow">SINGLE-PLAYER CAMPAIGN</span>
             <div class="cuddle-header-title-line">
-              <span class="cuddle-header-score cuddle-header-points" aria-label="${state.score} points${game.isBossRound() ? "" : `, goal ${target}`}">${state.score} PTS${game.isBossRound() ? "" : ` / ${target}`}</span>
+              <span class="cuddle-header-score cuddle-header-points" aria-label="${state.score} points${game.isBossRound() ? "" : `, goal ${target}`}">${state.score}${game.isBossRound() ? "" : ` / ${target}`}</span>
               <span class="cuddle-header-money" aria-label="${Number(state.cuddleMoney || 0)} money">$${Number(state.cuddleMoney || 0).toLocaleString()}</span>
             </div>
             ${bossGoal ? `<span class="cuddle-header-boss-goal" aria-label="${Math.min(bossGoal.score, bossGoal.required)} of ${bossGoal.required} points toward the next boss">Next boss: ${Math.min(bossGoal.score, bossGoal.required)}/${bossGoal.required} pts</span>` : ""}
@@ -397,7 +397,6 @@
               aria-label="${detailsOpen ? "Hide run details" : "Show run details"}">
               ${detailsOpen ? "Hide ▲" : "Details ▼"}
             </button>
-            <button class="cuddle-icon-btn" data-action="skill-tree" aria-label="Skill tree">🌳</button>
             <button class="cuddle-icon-btn" data-action="rules" aria-label="How to play">?</button>
           </div>
         </header>
@@ -880,12 +879,12 @@
       ? game.getUpgradeRefreshCost()
       : null;
     const canRefresh = refreshCost !== null
-      && (refreshCost === 0 || Number(state.score) >= refreshCost);
+      && (refreshCost === 0 || Number(state.cuddleMoney) >= refreshCost);
     const refreshLabel = refreshCost === 0
       ? "Refresh choices (free)"
       : refreshCost === null
         ? "Refresh unavailable"
-        : `Refresh choices (${refreshCost} pts)`;
+        : `Refresh choices ($${refreshCost})`;
     const kicker = milestone
       ? `POINTS MILESTONE · ${state.upgradeMilestone}`
       : startingRewards
@@ -920,7 +919,7 @@
             <button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
               ${escapeHtml(refreshLabel)}
             </button>
-            <small>The first refresh on each between-round reward screen is free. Later refreshes cost 3, 5, 7, 9 points, and so on.</small>
+            <small>The first refresh on each between-round reward screen is free. Later refreshes cost $3, $5, $7, $9, and so on.</small>
           </div>
           <details class="cuddle-upgrade-details">
             <summary>Current run upgrades</summary>
@@ -1284,7 +1283,11 @@
         return true;
       }
       case "mulligan-mode":
-        game.clearDraft();
+        // The word being built is left alone. Cards already placed in it
+        // are not offered for replacement anyway (renderHandCard filters
+        // them out of `selectable`, and mulligan() rejects them outright),
+        // so wiping the draft to guarantee a clean selection cost the
+        // player their word for no reason.
         actionMode = "mulligan";
         selectedCards = new Set();
         setUiMessage("Choose cards to replace, then confirm.");

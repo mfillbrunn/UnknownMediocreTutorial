@@ -1002,7 +1002,7 @@
       + "<span class=\"cuddle-eyebrow\">THE ROAD AHEAD</span>"
       + "<div class=\"cuddle-header-title-line\">"
       + "<h1>" + heading + "</h1>"
-      + "<span class=\"cuddle-header-score cuddle-header-points\" aria-label=\"" + escapeHtml(state.score) + " points\">" + escapeHtml(state.score) + " PTS</span>"
+      + "<span class=\"cuddle-header-score cuddle-header-points\" aria-label=\"" + escapeHtml(state.score) + " points\">" + escapeHtml(state.score) + "</span>"
       + "<span class=\"cuddle-header-money\" aria-label=\"" + escapeHtml(Number(state.cuddleMoney || 0)) + " money\">$" + escapeHtml(Number(state.cuddleMoney || 0)) + "</span>"
       + "</div></div>"
       + "<div class=\"cuddle-header-side cuddle-header-side-right\"></div>"

@@ -1792,7 +1792,7 @@
         `<div class="cuddle-shell umt-event-shell">`
         + `<header class="cuddle-header">`
         + `<div class="cuddle-header-side"><button class="cuddle-icon-btn" data-action="run-menu" aria-label="Cuddle menu">&larr;</button></div>`
-        + `<div class="cuddle-header-title"><span class="cuddle-eyebrow">CHOICE EVENT</span><div class="cuddle-header-title-line"><h1>${escapeHtml(definition.title)}</h1><span class="cuddle-header-score cuddle-header-points">${escapeHtml(game.state.score)} PTS</span><span class="cuddle-header-money">$${escapeHtml(Number(game.state.cuddleMoney || 0))}</span></div></div>`
+        + `<div class="cuddle-header-title"><span class="cuddle-eyebrow">CHOICE EVENT</span><div class="cuddle-header-title-line"><h1>${escapeHtml(definition.title)}</h1><span class="cuddle-header-score cuddle-header-points">${escapeHtml(game.state.score)}</span><span class="cuddle-header-money">$${escapeHtml(Number(game.state.cuddleMoney || 0))}</span></div></div>`
         + `<div class="cuddle-header-side cuddle-header-side-right"></div>`
         + `</header>`
         + `<main class="umt-event-page">`
@@ -1953,7 +1953,7 @@
         `<div class="cuddle-shell umt-duel-shell">`
         + `<header class="cuddle-header">`
         + `<div class="cuddle-header-side"><button class="cuddle-icon-btn" data-action="run-menu" aria-label="Cuddle menu">&larr;</button></div>`
-        + `<div class="cuddle-header-title"><span class="cuddle-eyebrow">WORD DUEL</span><div class="cuddle-header-title-line"><h1>First solve wins</h1><span class="cuddle-header-score cuddle-header-points">${escapeHtml(game.state.score)} PTS</span><span class="cuddle-header-money">$${escapeHtml(Number(game.state.cuddleMoney || 0))}</span></div></div>`
+        + `<div class="cuddle-header-title"><span class="cuddle-eyebrow">WORD DUEL</span><div class="cuddle-header-title-line"><h1>First solve wins</h1><span class="cuddle-header-score cuddle-header-points">${escapeHtml(game.state.score)}</span><span class="cuddle-header-money">$${escapeHtml(Number(game.state.cuddleMoney || 0))}</span></div></div>`
         + `<div class="cuddle-header-side cuddle-header-side-right"></div>`
         + `</header>`
         + `<main class="umt-duel-page">`
@@ -2133,8 +2133,35 @@
       challengeObserver.observe(root, { childList: true, subtree: true });
     }
 
+    // An Unknown Stop used to reveal and start in the same tap: the player
+    // committed to it sight unseen and only learned what it was once the
+    // stage was already running. Revealing on the first confirm and leaving
+    // the preview open turns that into what the card promises -- the stop
+    // opens, says what it is, and the player enters it deliberately. The
+    // reveal is not a free peek: it sticks, so backing out of the preview
+    // leaves the stop face-up on the map rather than hidden again.
+    function revealMysteryBeforeEntering(game, itemId) {
+      if (!game || !game.state || game.state.status !== MAP_STATUS) return null;
+      const map = ensureMap(game);
+      if (!map) return null;
+      const parsed = parseNodeId(itemId);
+      const node = nodeAt(map, parsed.row, parsed.col);
+      if (!node || node.type !== "mystery" || node.mysteryRevealed) return null;
+      if (!isReachable(map, node)) return null;
+
+      revealMystery(node);
+      const meta = metaForNode(node, game);
+      game.state.lastMessage = `Unknown Stop revealed: ${meta.title}.`;
+      safeSave(game);
+      return { ok: true, message: game.state.lastMessage };
+    }
+
     function handleExpandedAction(game, action, itemId) {
       switch (action) {
+        case "confirm-branch-node":
+          // Returns null for every non-mystery stop, which falls through to
+          // the ordinary confirm below and enters as before.
+          return revealMysteryBeforeEntering(game, itemId);
         case "expanded-help-open":
           legendOpen = true;
           return { ok: true };

@@ -3338,6 +3338,44 @@ body:not(.light-theme) {
     font-size: 9px;
   }
 
+  /* The quest card's sizes are all clamp(min, vw, max), so a wide screen
+     pins every one of them to its maximum -- built for a phone, where the
+     card is the only thing between the board and the keyboard. On desktop
+     it just eats board height, so this trims it back, vertically first:
+     tighter padding and row gap, and one step down on each type size. */
+  .pc-current-quest-card {
+    gap: 2px 10px;
+    padding: 5px 10px;
+    border-radius: 9px;
+  }
+
+  .pc-current-main strong {
+    font-size: 13px;
+  }
+
+  .pc-current-desc {
+    font-size: 11px;
+    line-height: 1.25;
+  }
+
+  .pc-current-conditions {
+    gap: 4px;
+  }
+
+  .pc-condition-chip {
+    padding: 2px 8px;
+    font-size: 10px;
+  }
+
+  .pc-guide-actions button {
+    padding: 3px 8px;
+    font-size: 10px;
+  }
+
+  .pc-current-quest-host {
+    margin: 2px auto 5px;
+  }
+
   /* The reward modal was sized for a phone's full width and kept that
      820px on a mouse-driven screen, where it reads as a wall rather than
      a card to pick from. One reward per row still fits comfortably at
