@@ -24,6 +24,7 @@
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
   let questHintsActive = false;
+  let lastGuideFire = 0;
   let lastQuestId = "";
   let renderQueued = false;
   let modeObserver = null;
@@ -701,14 +702,38 @@
       <span class="pc-current-desc">${esc(quest.description || "Complete the shown condition.")}</span>
       ${conditionLabels.length ? `<span class="pc-current-conditions">${conditionLabels.map((label, index) => `<span class="pc-condition-chip${conditionResults[index] ? " is-met" : ""}">${esc(label)}</span>`).join("")}</span>` : ""}
     </div>`;
+    // Bind pointerup as well as click. The callbacks below re-render the
+    // card (host.innerHTML), which destroys these very buttons -- and any
+    // state update that changes the card's signature does the same. If
+    // that re-render lands between mouseup and the browser dispatching
+    // the synthesised click, the click is never delivered and the button
+    // appears dead. Reproduces reliably on some machines during the
+    // guesser's own turn (Chrome and Edge alike), where composing a guess
+    // keeps changing `met`/`conditionResults` and re-rendering the card.
+    // pointerup always fires, so this makes the control work regardless;
+    // lastGuideFire stops a normal click from toggling twice.
+    const bindGuide = (selector, fn) => {
+      const el = host.querySelector(selector);
+      if (!el) return;
+      const run = () => {
+        if (Date.now() - lastGuideFire < 350) return;
+        lastGuideFire = Date.now();
+        fn();
+      };
+      el.addEventListener("click", run);
+      el.addEventListener("pointerup", event => {
+        if (event.pointerType !== "mouse" || event.button === 0) run();
+      });
+    };
 
-    host.querySelector(".pc-guide-highlight-btn")?.addEventListener("click", () => {
+    bindGuide(".pc-guide-highlight-btn", () => {
       questHintsActive = true;
       applyQuestKeyHints();
       host.dataset.pcSignature = "";
       renderCurrentQuest();
     });
-    host.querySelector(".pc-guide-clear-btn")?.addEventListener("click", () => {
+
+    bindGuide(".pc-guide-clear-btn", () => {
       questHintsActive = false;
       clearQuestKeyHints();
       host.dataset.pcSignature = "";
