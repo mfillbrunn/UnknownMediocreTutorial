@@ -3653,9 +3653,12 @@
     }
     const state = ensureBalanceState(this);
     const cost = this.getUpgradeRefreshCost();
-    const score = finiteNumber(state.score);
-    if (cost > 0 && cost > score) {
-      return { ok: false, error: `You need ${cost} points to refresh these choices.` };
+    // Paid in Money (the spendable currency), not Points -- Points are the
+    // run's score and what boss gates are measured against, so charging
+    // them here made a reroll cost progress rather than resources.
+    const wallet = finiteNumber(state.cuddleMoney);
+    if (cost > 0 && cost > wallet) {
+      return { ok: false, error: `You need $${cost} to refresh these choices.` };
     }
 
     const currentChoices = (Array.isArray(state.upgradeChoices) ? state.upgradeChoices : [])
@@ -3687,12 +3690,12 @@
       return { ok: false, error: "There are no different reward choices available right now." };
     }
 
-    if (cost > 0) state.score = score - cost;
+    if (cost > 0) state.cuddleMoney = wallet - cost;
     state.upgradeRefreshesUsed += 1;
     state.upgradeChoices = nextChoices;
     state.lastMessage = cost === 0
       ? "Reward choices refreshed for free."
-      : `Reward choices refreshed for ${cost} points.`;
+      : `Reward choices refreshed for $${cost}.`;
     this.save();
     return { ok: true, cost, message: state.lastMessage };
   };

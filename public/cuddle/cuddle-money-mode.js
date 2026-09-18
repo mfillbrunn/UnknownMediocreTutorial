@@ -867,7 +867,7 @@
     // always-spendable currency the shop and events actually charge --
     // see cuddle-points-money.js.
     var visiblePoints = Math.max(0, Math.round(roundIsLive ? score - provisional : score));
-    var pointsText = visiblePoints.toLocaleString() + " PTS";
+    var pointsText = visiblePoints.toLocaleString();
     root.querySelectorAll(".cuddle-header-score").forEach(function updateHeader(element) {
       if (element.textContent !== pointsText) element.textContent = pointsText;
       element.setAttribute("aria-label", visiblePoints + " points");

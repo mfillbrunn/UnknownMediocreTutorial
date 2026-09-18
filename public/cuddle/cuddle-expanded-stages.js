@@ -1792,7 +1792,7 @@
         `<div class="cuddle-shell umt-event-shell">`
         + `<header class="cuddle-header">`
         + `<div class="cuddle-header-side"><button class="cuddle-icon-btn" data-action="run-menu" aria-label="Cuddle menu">&larr;</button></div>`
-        + `<div class="cuddle-header-title"><span class="cuddle-eyebrow">CHOICE EVENT</span><div class="cuddle-header-title-line"><h1>${escapeHtml(definition.title)}</h1><span class="cuddle-header-score cuddle-header-points">${escapeHtml(game.state.score)} PTS</span><span class="cuddle-header-money">$${escapeHtml(Number(game.state.cuddleMoney || 0))}</span></div></div>`
+        + `<div class="cuddle-header-title"><span class="cuddle-eyebrow">CHOICE EVENT</span><div class="cuddle-header-title-line"><h1>${escapeHtml(definition.title)}</h1><span class="cuddle-header-score cuddle-header-points">${escapeHtml(game.state.score)}</span><span class="cuddle-header-money">$${escapeHtml(Number(game.state.cuddleMoney || 0))}</span></div></div>`
         + `<div class="cuddle-header-side cuddle-header-side-right"></div>`
         + `</header>`
         + `<main class="umt-event-page">`
@@ -1953,7 +1953,7 @@
         `<div class="cuddle-shell umt-duel-shell">`
         + `<header class="cuddle-header">`
         + `<div class="cuddle-header-side"><button class="cuddle-icon-btn" data-action="run-menu" aria-label="Cuddle menu">&larr;</button></div>`
-        + `<div class="cuddle-header-title"><span class="cuddle-eyebrow">WORD DUEL</span><div class="cuddle-header-title-line"><h1>First solve wins</h1><span class="cuddle-header-score cuddle-header-points">${escapeHtml(game.state.score)} PTS</span><span class="cuddle-header-money">$${escapeHtml(Number(game.state.cuddleMoney || 0))}</span></div></div>`
+        + `<div class="cuddle-header-title"><span class="cuddle-eyebrow">WORD DUEL</span><div class="cuddle-header-title-line"><h1>First solve wins</h1><span class="cuddle-header-score cuddle-header-points">${escapeHtml(game.state.score)}</span><span class="cuddle-header-money">$${escapeHtml(Number(game.state.cuddleMoney || 0))}</span></div></div>`
         + `<div class="cuddle-header-side cuddle-header-side-right"></div>`
         + `</header>`
         + `<main class="umt-duel-page">`

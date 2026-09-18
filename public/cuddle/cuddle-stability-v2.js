@@ -29,8 +29,6 @@
   ]);
 
   let installAttempts = 0;
-  let inventoryOpen = false;
-  let inventoryReturnFocus = null;
 
   function number(value, fallback = 0) {
     const parsed = Number(value);
@@ -844,7 +842,7 @@
       ? Math.max(0, Math.round(number(state.score, 0) - provisional))
       : Math.max(0, Math.round(number(state.score, 0)));
     root.querySelectorAll(".cuddle-header-score").forEach(score => {
-      score.textContent = `${amount.toLocaleString()} PTS`;
+      score.textContent = amount.toLocaleString();
       score.setAttribute("aria-label", `${amount} points`);
       score.classList.add("umt-plain-points-counter");
     });
@@ -901,111 +899,6 @@
     });
   }
 
-  function inventoryEntries(game) {
-    const state = game?.state || {};
-    const campaign = state.cuddleCampaign || {};
-    const inventory = campaign.inventory || {};
-    const mega = state.megaState || {};
-    return [
-      { id: "joker", label: "Joker charges", count: integer(mega.jokerCharges, 0), description: "Click a Joker card during a round to choose its letter." },
-      { id: "umtJokerCache", label: "Jokers each round", count: integer(mega.jokerPerRoundBonus, 0), description: "Fresh Jokers added at the start of every round." },
-      { id: "extraMulligans", label: "Spare mulligan", count: integer(inventory.extraMulligan, 0), description: "Adds one mulligan to the next eligible round." },
-      { id: "mulligan", label: "Mulligan refill", count: integer(inventory.mulliganRefresh, 0), description: "Refills mulligans when used." },
-      { id: "extraRow", label: "+1 hand", count: integer(inventory.handSize, 0), description: "Adds one counted hand slot for the next round." },
-      { id: "yellowDetector", label: "Amber lens", count: integer(inventory.yellowDetector, 0), description: "Reveals one present letter at the next eligible round." },
-      { id: "questReroll", label: "Quest rerolls", count: integer(mega.questRerollCharges, 0), description: "Replaces the current quest when the reroll control is available." }
-    ].filter(entry => entry.count > 0);
-  }
-
-  function closeInventory() {
-    inventoryOpen = false;
-    document.querySelectorAll(".umt-inventory-overlay").forEach(element => element.remove());
-    if (inventoryReturnFocus && typeof inventoryReturnFocus.focus === "function") inventoryReturnFocus.focus();
-    inventoryReturnFocus = null;
-  }
-
-  function openInventory(game, trigger) {
-    closeInventory();
-    inventoryOpen = true;
-    inventoryReturnFocus = trigger || null;
-    const overlay = document.createElement("div");
-    overlay.className = "umt-inventory-overlay";
-    overlay.setAttribute("role", "dialog");
-    overlay.setAttribute("aria-modal", "true");
-    overlay.setAttribute("aria-labelledby", "umtInventoryTitle");
-    const panel = document.createElement("section");
-    panel.className = "umt-inventory-panel";
-    const header = document.createElement("header");
-    const titleWrap = document.createElement("div");
-    const icon = document.createElement("img");
-    icon.src = "cuddle/icons/pouch.svg";
-    icon.alt = "";
-    icon.setAttribute("aria-hidden", "true");
-    const title = document.createElement("h2");
-    title.id = "umtInventoryTitle";
-    title.textContent = "Pouch";
-    titleWrap.append(icon, title);
-    const close = document.createElement("button");
-    close.type = "button";
-    close.className = "umt-inventory-close";
-    close.dataset.umtInventoryClose = "1";
-    close.setAttribute("aria-label", "Close inventory");
-    close.textContent = "×";
-    header.append(titleWrap, close);
-    const list = document.createElement("div");
-    list.className = "umt-inventory-list";
-    const entries = inventoryEntries(game);
-    if (!entries.length) {
-      const empty = document.createElement("p");
-      empty.className = "umt-inventory-empty";
-      empty.textContent = "No one-use items are stored in the pouch.";
-      list.appendChild(empty);
-    } else {
-      entries.forEach(entry => {
-        const article = document.createElement("article");
-        article.className = "umt-inventory-item";
-        const artwork = makeImg(entry.id, "umt-inventory-item-icon");
-        const copy = document.createElement("div");
-        const heading = document.createElement("strong");
-        heading.textContent = entry.label;
-        const description = document.createElement("p");
-        description.textContent = entry.description;
-        copy.append(heading, description);
-        const count = document.createElement("b");
-        count.textContent = `×${entry.count}`;
-        count.setAttribute("aria-label", `${entry.count} available`);
-        article.append(artwork, copy, count);
-        list.appendChild(article);
-      });
-    }
-    panel.append(header, list);
-    overlay.appendChild(panel);
-    document.body.appendChild(overlay);
-    close.focus();
-  }
-
-  function enhanceInventoryPouch(game, root) {
-    const side = root.querySelector(".cuddle-header-side-right");
-    if (!side) return;
-    let button = side.querySelector("[data-umt-inventory-toggle]");
-    if (!button) {
-      button = document.createElement("button");
-      button.type = "button";
-      button.className = "cuddle-icon-btn umt-inventory-pouch";
-      button.dataset.umtInventoryToggle = "1";
-      button.setAttribute("aria-label", "Open inventory pouch");
-      const icon = document.createElement("img");
-      icon.src = "cuddle/icons/pouch.svg";
-      icon.alt = "";
-      icon.setAttribute("aria-hidden", "true");
-      button.appendChild(icon);
-      side.appendChild(button);
-    }
-    const count = inventoryEntries(game).reduce((sum, entry) => sum + entry.count, 0);
-    button.dataset.itemCount = String(count);
-    button.title = count ? `Inventory pouch: ${count} stored` : "Inventory pouch: empty";
-  }
-
   function kickHeadStart(game) {
     const state = game?.state || {};
     const custom = customState(game) || {};
@@ -1050,7 +943,6 @@
       if (root.querySelector("[data-cuddle-money-action='collect-payout'], [data-action='collect-money-payout']")) {
         fixCollectButton(root);
       }
-      if (root.querySelector(".cuddle-header-side-right")) enhanceInventoryPouch(liveGame, root);
       if (liveGame.state.status === "playing" && !(liveGame.state.history || []).length) kickHeadStart(liveGame);
     });
   }
@@ -1089,24 +981,8 @@
     document.documentElement.dataset.umtCuddleStabilityV2Handlers = "1";
     document.addEventListener("click", event => {
       const target = event.target instanceof Element ? event.target : null;
-      const toggle = target?.closest("[data-umt-inventory-toggle]");
-      if (toggle) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        const game = activeGame();
-        if (game) openInventory(game, toggle);
-        return;
-      }
-      if (target?.closest("[data-umt-inventory-close]") || target?.classList.contains("umt-inventory-overlay")) {
-        event.preventDefault();
-        closeInventory();
-      }
     }, true);
     document.addEventListener("keydown", event => {
-      if (event.key === "Escape" && inventoryOpen) {
-        event.preventDefault();
-        closeInventory();
-      }
       if (event.key !== "Enter" && event.key !== " ") return;
       const control = event.target instanceof Element
         ? event.target.closest("#cuddleRoot [data-shop-item-id][role='button']")
