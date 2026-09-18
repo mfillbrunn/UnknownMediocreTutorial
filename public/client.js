@@ -1123,17 +1123,13 @@ function updateScreens() {
       });
 
       // The tile flip has to actually finish playing before the popup
-      // shows — worst case (setter's view, where the winning row also
-      // slides up into place via slideRowIntoPlace before any tile can
-      // start flipping): slideRowIntoPlace's own 650ms safety timer (land())
-      // plus history.js's revealHistoryRow 1400ms safety timer (already
-      // covers the full 5-tile stagger through the last tile's own flip)
-      // = 2050ms, rounded up for a small buffer. This used to read 2000ms,
-      // under that 2050ms worst case by just enough that a slow transitionend
-      // (the kind slideRowIntoPlace's own safety timer exists to catch)
-      // let the "Your secret was found" popup fire while the row was still
-      // visibly sliding/flipping -- the announcement beating its own reveal
-      // to the punch.
+      // shows. history.js's revealHistoryRow carries a 1400ms safety timer
+      // that already covers the full 5-tile stagger through the last
+      // tile's own flip; the rest is headroom, kept from when the
+      // Secretkeeper's row also flew into place ahead of the first flip
+      // (see finishPendingGuessRow, which no longer moves it) so a slow
+      // frame can't let the "Your secret was found" popup beat its own
+      // reveal to the punch.
       const FLIP_TOTAL_MS = 2200;
       const POPUP_DURATION_MS = 3200;
 
@@ -1468,282 +1464,47 @@ function resolvePendingGuessFlight(
   target.style.visibility = "hidden";
   target.classList.remove("row-enter");
 
-  const beginHistoryFlight = () => {
-    slideRowIntoPlace(
-      target,
-      capture.rect,
-      capture.holdClone
-    );
+  const finishHistoryRow = () => {
+    finishPendingGuessRow(target, capture.holdClone);
   };
 
   if (
     window.deferSetterHistoryUntilSpyCharge?.(
-      beginHistoryFlight
+      finishHistoryRow
     )
   ) {
     return;
   }
 
-  beginHistoryFlight();
+  finishHistoryRow();
 }
 
-function slideRowIntoPlace(
-  newRow,
-  startRect,
-  existingFlight = null
-) {
-  const scrollBox =
-    newRow.closest(".history-scroll");
+// The Secretkeeper's just-resolved row used to FLIP-fly here from the
+// pending row's old position, which visibly moved the rows already in the
+// list every time the Guesser submitted. The Guesser never had that (its
+// own row has long since slid away by the time its feedback lands) and so
+// its board held still, which left the two roles disagreeing about whether
+// a submitted guess disturbs the board at all. Neither moves now: the row
+// simply takes its place, exactly as the flight's own reduced-motion and
+// scrolled-away paths already did.
+function finishPendingGuessRow(newRow, existingFlight = null) {
+  const scrollBox = newRow.closest(".history-scroll");
 
-  const visualRow =
-    newRow.querySelector(".history-row");
-
-  const finishWithoutFlight = () => {
-    existingFlight?.remove();
-    startHistoryRowReveal(newRow);
-  };
-
-  if (
-    !scrollBox ||
-    !visualRow ||
-    !startRect?.width ||
-    !startRect?.height
-  ) {
-    finishWithoutFlight();
-    return;
+  if (scrollBox) {
+    if (window.captureHistoryScrollIntent && window.restoreHistoryScrollIntent) {
+      window.restoreHistoryScrollIntent(
+        scrollBox,
+        window.captureHistoryScrollIntent(scrollBox)
+      );
+    } else if (window.isHistoryScrolledToNewest?.(scrollBox) ?? true) {
+      scrollBox.scrollTop = scrollBox.scrollHeight;
+    }
   }
 
-  newRow.classList.remove("row-enter");
-
-  // Follow to the bottom only if the Secretkeeper is actually eligible to
-  // follow right now -- if they've scrolled away to review an earlier row,
-  // the new row just landed off-screen; flying a decorative clone toward
-  // (or forcing the viewport to) something they can't see isn't worth
-  // fighting their own gesture for. Finish the real row in place instead.
-  const scrollIntent =
-    window.captureHistoryScrollIntent?.(scrollBox) ?? { eligible: true, scrollTop: scrollBox.scrollTop };
-
-  if (window.restoreHistoryScrollIntent) {
-    window.restoreHistoryScrollIntent(scrollBox, scrollIntent);
-  } else if (scrollIntent.eligible) {
-    scrollBox.scrollTop = scrollBox.scrollHeight;
-  }
-
-  if (!scrollIntent.eligible) {
-    finishWithoutFlight();
-    return;
-  }
-
-  const runFlight = () => {
-    const endRect =
-      visualRow.getBoundingClientRect();
-
-    if (!endRect.width || !endRect.height) {
-      finishWithoutFlight();
-      return;
-    }
-
-    if (
-      window.matchMedia?.(
-        "(prefers-reduced-motion: reduce)"
-      ).matches
-    ) {
-      finishWithoutFlight();
-      return;
-    }
-
-    // See components.css's body.row-flight-active rule -- fades out the
-    // sidebar's Keep/New chrome for the flight's duration so it doesn't
-    // redraw mid-motion right as this same guess resolution updates it.
-    // Cleared in land() below once the row actually settles.
-    document.body.classList.add(
-      "row-flight-active"
-    );
-
-    const usingHeldPending = !!(
-      existingFlight?.isConnected
-    );
-
-    const flight = usingHeldPending
-      ? existingFlight
-      : visualRow.cloneNode(true);
-
-    flight.classList.add(
-      "history-flight-clone",
-      "setter-source-flight"
-    );
-
-    flight.classList.remove(
-      "row-slide-in",
-      "row-slide-down",
-      "row-enter",
-      "reveal-tiles"
-    );
-
-    flight.setAttribute(
-      "aria-hidden",
-      "true"
-    );
-
-    flight
-      .querySelectorAll(
-        ".history-tile-cover, " +
-        ".setter-row-caption, " +
-        "#setterCoverStars"
-      )
-      .forEach(element => element.remove());
-
-    flight
-      .querySelectorAll("[id]")
-      .forEach(element => {
-        element.removeAttribute("id");
-      });
-
-    if (!usingHeldPending) {
-      const sourceTiles =
-        visualRow.querySelectorAll(
-          ":scope > .history-tile"
-        );
-
-      const flightTiles =
-        flight.querySelectorAll(
-          ":scope > .history-tile"
-        );
-
-      sourceTiles.forEach(
-        (source, index) => {
-          const clone = flightTiles[index];
-          if (!clone) return;
-
-          const rect =
-            source.getBoundingClientRect();
-
-          const style =
-            getComputedStyle(source);
-
-          Object.assign(clone.style, {
-            width: `${rect.width}px`,
-            height: `${rect.height}px`,
-            flex: `0 0 ${rect.width}px`,
-            fontSize: style.fontSize,
-            fontFamily: style.fontFamily,
-            fontWeight: style.fontWeight,
-            lineHeight: style.lineHeight,
-            borderRadius: style.borderRadius,
-            letterSpacing: style.letterSpacing
-          });
-        }
-      );
-    }
-
-    const rowStyle =
-      getComputedStyle(
-        usingHeldPending
-          ? flight
-          : visualRow
-      );
-
-    Object.assign(flight.style, {
-      position: "fixed",
-      left: `${startRect.left}px`,
-      top: `${startRect.top}px`,
-      width: `${startRect.width}px`,
-      height: `${startRect.height}px`,
-      display: "flex",
-      alignItems: rowStyle.alignItems,
-      justifyContent: rowStyle.justifyContent,
-      gap: rowStyle.gap,
-      margin: "0",
-      zIndex: "100000",
-      pointerEvents: "none",
-      transformOrigin: "center center",
-      transform: "translate3d(0, 0, 0) scale(1)",
-      transition: "none",
-      willChange: "transform",
-      opacity: "1"
-    });
-
-    if (!flight.isConnected) {
-      document.body.appendChild(flight);
-    }
-
-    newRow.style.visibility = "hidden";
-
-    const dx =
-      endRect.left +
-      endRect.width / 2 -
-      (
-        startRect.left +
-        startRect.width / 2
-      );
-
-    const dy =
-      endRect.top +
-      endRect.height / 2 -
-      (
-        startRect.top +
-        startRect.height / 2
-      );
-
-    const scaleX =
-      endRect.width / startRect.width;
-
-    const scaleY =
-      endRect.height / startRect.height;
-
-    void flight.offsetWidth;
-
-    let finished = false;
-    let safetyTimer = null;
-
-    const land = () => {
-      if (finished) return;
-
-      finished = true;
-      clearTimeout(safetyTimer);
-
-      flight.remove();
-      document.body.classList.remove(
-        "row-flight-active"
-      );
-      startHistoryRowReveal(newRow);
-    };
-
-    requestAnimationFrame(() => {
-      flight.style.transition =
-        "transform 460ms " +
-        "cubic-bezier(0.22, 1, 0.36, 1)";
-
-      flight.style.transform =
-        `translate3d(${dx}px, ${dy}px, 0) ` +
-        `scale(${scaleX}, ${scaleY})`;
-
-      flight.addEventListener(
-        "transitionend",
-        event => {
-          if (
-            event.propertyName ===
-            "transform"
-          ) {
-            land();
-          }
-        },
-        { once: true }
-      );
-
-      safetyTimer =
-        setTimeout(land, 650);
-    });
-  };
-
-  /*
-   * The history container has just scrolled to its final resting place.
-   * Two frames make the destination stable before measuring it on Safari.
-   */
-  requestAnimationFrame(() => {
-    requestAnimationFrame(runFlight);
-  });
+  existingFlight?.remove();
+  startHistoryRowReveal(newRow);
 }
+
 ///SETTER FEEDBACK PREVIEW FUNCTION
 function updateSetterPreview() {
   if (state.powers?.rouletteSecretActive || state.powers?.stealthGuessActive){

@@ -325,12 +325,21 @@ function getHistoryScrollState(container) {
       // Every row fits as things stand, so there is nowhere to be
       // scrolled away to and no stale flag worth keeping.
       s.detached = false;
-    } else if (s.interacting || !landedAtBottomByClamping(top, max)) {
-      // s.interacting means a finger/pointer/wheel is on the list right
-      // now, so reaching the bottom is unambiguously the reader's doing
-      // even if a resize happened to land in the same frame.
+    } else if (!landedAtBottomByClamping(top, max)) {
       s.detached = false;
     }
+    // A finger on the list used to be taken as proof that reaching the
+    // bottom was the reader's own doing, even when landedAtBottomByClamping
+    // said the box had just shrunk out from under them. On the Guesser's
+    // phone layout that is routine rather than rare: the quest card above
+    // the list changes height as the draft changes (a condition chip
+    // wrapping is enough), clamping a mid-list reader to the bottom while
+    // they are still dragging, clearing "scrolled away", and letting the
+    // next resize pin them to the newest row -- the list snapping back
+    // that only happens while a quest is up. A genuine drag to the bottom
+    // is not lost by dropping that exception: the gesture keeps firing
+    // scroll events, and the very next one arrives with a stable range,
+    // where landedAtBottomByClamping is false and this clears as usual.
 
     s.seenTop = top;
     s.seenMax = max;
