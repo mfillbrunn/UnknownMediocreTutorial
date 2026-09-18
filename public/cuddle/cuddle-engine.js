@@ -4747,14 +4747,28 @@
     let ratchetBossSwap;
     let sawMaskRatchet = false;
     if (ratchet && MASK_KINDS.has(ratchet.bossId) && !this.isBossRound()) {
-      sawMaskRatchet = true;
-      ratchetBossSwap = this.state.boss || null;
-      this.state.boss = {
-        id: ratchet.bossId,
-        turns: 999,
-        hiddenIndex: ratchet.hiddenIndex,
-        hiddenIndices: ratchet.hiddenIndices
-      };
+      // A mini challenge may already have masked this same guess -- its own
+      // synthetic boss is installed by cuddle-rebalance-v5.js's submitDraft
+      // wrapper just before this runs. Two masks on one guess is not a
+      // stack anyone can read, and simply overwriting (what used to happen
+      // here) meant the challenge the player accepted, and is being paid
+      // for, silently did not apply. Exactly one of the two lands, drawn at
+      // random from the run's own seeded RNG so a replay is reproducible.
+      const challengeMask = this.state.boss && this.state.boss.__umtSynthetic
+        ? this.state.boss
+        : null;
+      const random = typeof this.random === "function" ? this.random : Math.random;
+      const ratchetWins = !challengeMask || random() < 0.5;
+      if (ratchetWins) {
+        sawMaskRatchet = true;
+        ratchetBossSwap = this.state.boss || null;
+        this.state.boss = {
+          id: ratchet.bossId,
+          turns: 999,
+          hiddenIndex: ratchet.hiddenIndex,
+          hiddenIndices: ratchet.hiddenIndices
+        };
+      }
     }
 
     const extrasBefore = mega.activeQuests.slice(1).filter(Boolean);

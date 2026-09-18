@@ -1283,7 +1283,11 @@
         return true;
       }
       case "mulligan-mode":
-        game.clearDraft();
+        // The word being built is left alone. Cards already placed in it
+        // are not offered for replacement anyway (renderHandCard filters
+        // them out of `selectable`, and mulligan() rejects them outright),
+        // so wiping the draft to guarantee a clean selection cost the
+        // player their word for no reason.
         actionMode = "mulligan";
         selectedCards = new Set();
         setUiMessage("Choose cards to replace, then confirm.");

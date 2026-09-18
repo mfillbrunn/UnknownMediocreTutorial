@@ -1256,9 +1256,7 @@
   function challengeTurnCap(game) {
     const state = stateOf(game);
     const cleared = state && Array.isArray(state.bossGatesDone) ? state.bossGatesDone.length : 0;
-    if (cleared <= 0) return 1;
-    if (cleared === 1) return 2;
-    return 4;
+    return cleared >= 2 ? 2 : 1;
   }
 
   // The map preview has to describe the same capped guess count
@@ -1718,6 +1716,14 @@
       const reward = Math.max(0, Math.round(asNumber(challenge.reward, 0)));
       if (reward > 0) {
         addScoreBonus(game, reward, "umtChallengeBonus", "Challenge cleared", entry);
+        // Paid in both currencies: the Points above count toward the run's
+        // score and its boss gates, and the same figure in Money is what
+        // makes taking a challenge worth the masked guesses it costs.
+        const paidState = stateOf(game);
+        if (paidState) {
+          paidState.cuddleMoney = Math.max(0, asNumber(paidState.cuddleMoney, 0) + reward);
+          if (entry) entry.challengeBonusMoney = asNumber(entry.challengeBonusMoney, 0) + reward;
+        }
       }
       challenge.paid = true;
       const liveChallenge = activeChallenge(game);
