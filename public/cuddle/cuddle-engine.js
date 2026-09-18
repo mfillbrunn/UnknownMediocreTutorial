@@ -4481,6 +4481,73 @@
     return (mega.ratchetDebuffs || []).find(item => item.guessIndex === guessIndex) || null;
   }
 
+  // How many opening rows this round's own stage already spoils: a real
+  // boss's constraint window, or a mini challenge's masked guesses. Both
+  // claim guess 1 upward, and the two never co-occur (challenges are not
+  // offered on boss stages).
+  function ownNegativeRowCount(game) {
+    const state = game.state || {};
+    if (game.isBossRound()) {
+      const boss = state.boss || {};
+      // Whole-round bosses never lift, so they claim the entire board.
+      if (boss.id === "shortHand" || boss.id === "noMulligans" || boss.id === "questTrial") {
+        return Math.max(0, Number(state.maxGuesses) || MAX_GUESSES);
+      }
+      return Math.max(0, Number(boss.turns) || 0);
+    }
+    const challenge = state.cuddleRebalanceV5 && state.cuddleRebalanceV5.activeChallenge;
+    return challenge && Array.isArray(challenge.masks) ? challenge.masks.length : 0;
+  }
+
+  // Which guess each ratchet debuff spoils THIS round. Every negative gets
+  // a row of its own: the stage's own rows (a boss's window, or a
+  // challenge's masked guesses) plus one row per ratchet, so the number of
+  // spoiled guesses is the sum of the three rather than some of them
+  // landing on the same guess and quietly cancelling each other out.
+  //
+  // A ratchet keeps the guess it was rolled for when that guess is free,
+  // and slides to the next free one when it is not. A boss stage really
+  // does end after its six guesses, so ratchets that find no free row
+  // there are simply dropped -- and because the order is shuffled first,
+  // which ones survive is random rather than always the lowest-numbered.
+  // The boss's own window is never given up to make room.
+  function ratchetRowPlan(game) {
+    const mega = ensureMega(game);
+    const state = game.state || {};
+    const key = [state.runId || "run", state.round || 0, state.secret || ""].join(":");
+    if (mega.ratchetRowPlanKey === key && mega.ratchetRowPlan) return mega.ratchetRowPlan;
+
+    const debuffs = (mega.ratchetDebuffs || []).filter(item => item && MASK_KINDS.has(item.bossId));
+    const claimed = new Set();
+    const own = ownNegativeRowCount(game);
+    for (let row = 1; row <= own; row += 1) claimed.add(row);
+
+    // An ordinary stage has no guess limit (see submitDraft), so a
+    // displaced ratchet always has somewhere to go.
+    const lastRow = game.isBossRound()
+      ? Math.max(0, Number(state.maxGuesses) || MAX_GUESSES)
+      : Number.MAX_SAFE_INTEGER;
+
+    const plan = {};
+    shuffle(debuffs.slice(), game.random || Math.random).forEach(debuff => {
+      let row = Math.max(1, Number(debuff.guessIndex) || 1);
+      while (row <= lastRow && claimed.has(row)) row += 1;
+      if (row > lastRow) return;
+      claimed.add(row);
+      plan[row] = debuff.guessIndex;
+    });
+
+    mega.ratchetRowPlanKey = key;
+    mega.ratchetRowPlan = plan;
+    return plan;
+  }
+
+  function plannedRatchetForGuess(game, guessIndex) {
+    const planned = ratchetRowPlan(game)[guessIndex];
+    if (planned == null) return null;
+    return getGuessRatchetDebuff(game, planned);
+  }
+
   // Random guess slot(s) for a newly-created ratchet debuff, drawn from
   // 1..poolMax and never reusing a slot an existing debuff already claims.
   function pickRatchetGuessIndices(game, mega, count, poolMax) {
@@ -4742,33 +4809,26 @@
 
     const secretForThisGuess = this.state.secret;
     const nextGuessIndex = Number(this.state.guessesUsed || 0) + 1;
-    const ratchet = getGuessRatchetDebuff(this, nextGuessIndex);
+    // ratchetRowPlan has already placed this round's ratchets on guesses
+    // the boss/challenge does not already spoil, so reaching one here can
+    // never double up on a guess that is masked for another reason.
+    const ratchet = plannedRatchetForGuess(this, nextGuessIndex);
 
     let ratchetBossSwap;
     let sawMaskRatchet = false;
-    if (ratchet && MASK_KINDS.has(ratchet.bossId) && !this.isBossRound()) {
-      // A mini challenge may already have masked this same guess -- its own
-      // synthetic boss is installed by cuddle-rebalance-v5.js's submitDraft
-      // wrapper just before this runs. Two masks on one guess is not a
-      // stack anyone can read, and simply overwriting (what used to happen
-      // here) meant the challenge the player accepted, and is being paid
-      // for, silently did not apply. Exactly one of the two lands, drawn at
-      // random from the run's own seeded RNG so a replay is reproducible.
-      const challengeMask = this.state.boss && this.state.boss.__umtSynthetic
-        ? this.state.boss
-        : null;
-      const random = typeof this.random === "function" ? this.random : Math.random;
-      const ratchetWins = !challengeMask || random() < 0.5;
-      if (ratchetWins) {
-        sawMaskRatchet = true;
-        ratchetBossSwap = this.state.boss || null;
-        this.state.boss = {
-          id: ratchet.bossId,
-          turns: 999,
-          hiddenIndex: ratchet.hiddenIndex,
-          hiddenIndices: ratchet.hiddenIndices
-        };
-      }
+    if (ratchet && MASK_KINDS.has(ratchet.bossId)) {
+      sawMaskRatchet = true;
+      ratchetBossSwap = this.state.boss || null;
+      // Spread the boss being displaced so its identity survives the swap:
+      // on a boss stage that keeps gate/title present, so isBossRound()
+      // stays true and the stage's own pass/fail rules still apply while
+      // this one guess wears the ratchet's mask.
+      this.state.boss = Object.assign({}, ratchetBossSwap, {
+        id: ratchet.bossId,
+        turns: 999,
+        hiddenIndex: ratchet.hiddenIndex,
+        hiddenIndices: ratchet.hiddenIndices
+      });
     }
 
     const extrasBefore = mega.activeQuests.slice(1).filter(Boolean);
