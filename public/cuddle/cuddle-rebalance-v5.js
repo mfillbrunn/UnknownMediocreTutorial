@@ -1682,7 +1682,8 @@
     custom.lastPayoutLines = (Array.isArray(custom.lastPayoutLines) ? custom.lastPayoutLines : [])
       .filter((line) => line && line.roundToken === token);
     if (unusedDelta > 0) {
-      addScoreBonus(game, unusedDelta, "umtUnusedRowAdjustment", "Unused rows corrected", entry);
+      addScoreBonus(game, unusedDelta, "umtUnusedRowAdjustment",
+        `${rows} unused guess row${rows === 1 ? "" : "s"}`, entry);
     }
     if (entry) {
       // Keep the engine's own display buckets intact. Older builds receive
@@ -1706,7 +1707,7 @@
           game,
           dividend,
           "umtReserveDividendBonus",
-          `Reserve Dividend (${unusedJokers} Joker${unusedJokers === 1 ? "" : "s"}, ${mulligans} mulligan${mulligans === 1 ? "" : "s"})`,
+          `${unusedJokers} Joker${unusedJokers === 1 ? "" : "s"}, ${mulligans} mulligan${mulligans === 1 ? "" : "s"} held`,
           entry
         );
       }
@@ -1716,7 +1717,7 @@
     if (challenge && !challenge.paid) {
       const reward = Math.max(0, Math.round(asNumber(challenge.reward, 0)));
       if (reward > 0) {
-        addScoreBonus(game, reward, "umtChallengeBonus", `${challenge.title} challenge`, entry);
+        addScoreBonus(game, reward, "umtChallengeBonus", "Challenge cleared", entry);
       }
       challenge.paid = true;
       const liveChallenge = activeChallenge(game);
@@ -2118,7 +2119,7 @@
     const cap = (compound ? 50 : 25) * level;
     const interest = Math.min(cap, Math.floor(balance * 0.05 * level));
     if (interest <= 0) return;
-    addScoreBonus(game, interest, "umtInterest", "Rainy Day interest");
+    addScoreBonus(game, interest, "umtInterest", "Bank interest");
     appendNotice(game, `\uD83C\uDFE6 Rainy Day Fund paid $${interest} in interest.`);
   }
 
@@ -2142,7 +2143,8 @@
       return;
     }
     custom.streakCount = asInteger(custom.streakCount, 0) + 1;
-    addScoreBonus(game, custom.streakCount * 5 * level, "umtHotStreak", `Hot Streak x${custom.streakCount}`);
+    addScoreBonus(game, custom.streakCount * 5 * level, "umtHotStreak",
+      `${custom.streakCount} stage streak`);
   }
 
   // Process of Elimination: rules out one consonant not in the secret after
@@ -2176,7 +2178,8 @@
     const greens = asInteger(entry.greenCount, 0);
     if (greens <= 0) return;
     const bonus = Math.round(greens * greenValue(game, entry));
-    if (bonus > 0) addScoreBonus(game, bonus, "umtJackpot", `Jackpot greens x${greens}`, entry);
+    if (bonus > 0) addScoreBonus(game, bonus, "umtJackpot",
+      `${greens} green tile${greens === 1 ? "" : "s"} doubled`, entry);
   }
 
   // Double or Nothing settles on the solve: fast enough doubles the stage's
@@ -2188,10 +2191,10 @@
     const earned = Math.round(asNumber(state.roundScore, 0));
     if (earned === 0) return;
     if (asInteger(state.guessesUsed, 0) <= 3) {
-      addScoreBonus(game, earned, "umtDoubleOrNothing", "Double or Nothing won");
+      addScoreBonus(game, earned, "umtDoubleOrNothing", "Stage doubled");
       appendNotice(game, "\u2696\uFE0F Double or Nothing paid off: this stage's earnings doubled.");
     } else {
-      addScoreBonus(game, -Math.round(earned / 2), "umtDoubleOrNothing", "Double or Nothing lost");
+      addScoreBonus(game, -Math.round(earned / 2), "umtDoubleOrNothing", "Stage halved");
       appendNotice(game, "\u2696\uFE0F Double or Nothing: too slow, half this stage's earnings are gone.");
     }
   }
@@ -2222,10 +2225,11 @@
     if (upgradeLevel(game, IDS.encore) > 0) {
       custom.encoreSolves = asInteger(custom.encoreSolves, 0) + 1;
       if (custom.encoreSolves % 3 === 0) {
-        addScoreBonus(game, 75, "umtEncore", "Encore");
+        addScoreBonus(game, 75, "umtEncore", "Every third stage solved");
         if (hasFunSynergy(game, "encoreNight")) {
           const vowels = secretVowelCount(game);
-          if (vowels > 0) addScoreBonus(game, vowels * 10, "umtEncore", "Encore Night vowels");
+          if (vowels > 0) addScoreBonus(game, vowels * 10, "umtEncore",
+            `${vowels} vowel${vowels === 1 ? "" : "s"} encored`);
         }
         appendNotice(game, "\uD83C\uDFAC Encore! Every third solved stage pays a bonus.");
       }
@@ -2237,9 +2241,10 @@
         : asInteger(state.maxGuesses, 6);
       if (asInteger(state.guessesUsed, 0) >= limit) {
         const earned = Math.max(0, Math.round(asNumber(state.roundScore, 0)));
-        if (earned > 0) addScoreBonus(game, earned, "umtDoubleDown", "Double Down (last-guess solve)");
+        if (earned > 0) addScoreBonus(game, earned, "umtDoubleDown", "Solved on the last guess");
         if (hasFunSynergy(game, "allIn")) {
-          addScoreBonus(game, 15 * Math.max(1, upgradeLevel(game, IDS.hotStreak)), "umtHotStreak", "All In streak payout");
+          addScoreBonus(game, 15 * Math.max(1, upgradeLevel(game, IDS.hotStreak)), "umtHotStreak",
+            "Streak payout");
         }
       }
     }

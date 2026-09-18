@@ -512,14 +512,18 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 16px;
+  gap: 10px;
 }
 
+/* Wraps rather than truncating. A single nowrap line was cut off by its own
+   ellipsis on every label longer than the card is wide, which is most of
+   them on a phone -- and an elided label is exactly the part worth reading,
+   since the figure beside it is already shown in full. */
 #cuddleRoot .umt-stage-bonus-line span {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
 }
 
 #cuddleRoot .umt-stage-bonus-line strong {

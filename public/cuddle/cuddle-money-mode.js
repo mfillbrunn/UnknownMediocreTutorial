@@ -1096,7 +1096,7 @@
     if (!lines.length) {
       var fallback = Math.round(asNumber(payload.stageBonus, 0));
       if (!fallback) return "";
-      lines = [{ label: "Rewards not attached to a guess row", amount: fallback }];
+      lines = [{ label: "Other stage rewards", amount: fallback }];
     }
     return "<div class=\"umt-stage-bonus-section\">"
       + "<div class=\"umt-stage-bonus-title\">Stage bonus</div>"

@@ -1631,7 +1631,7 @@
       : [];
     const bonusLines = itemizedLines.length
       ? itemizedLines
-      : (stageBonus ? [{ label: "Rewards not attached to a guess row", amount: stageBonus }] : []);
+      : (stageBonus ? [{ label: "Other stage rewards", amount: stageBonus }] : []);
     // A sibling section AFTER the whole rows list (not another child
     // appended inside it), so it reads as its own area instead of one more
     // counting row blended into the animated list above it.
