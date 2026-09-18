@@ -746,8 +746,19 @@
   }
 
   function keyboardLetter(key) {
+    // data-key is authoritative when present: ENTER (the submit key on
+    // this keyboard skin) and the backspace glyph are both control keys,
+    // not letters, but "ENTER" contains a real A-Z letter ("E") and was
+    // matching the /[A-Z]/ scan below same as any other key -- so a quest
+    // hinting E (a common letter to need) lit up the submit button along
+    // with every real E on the board. Only a data-key that IS a single
+    // letter counts; any other explicit data-key is a control key and
+    // never highlighted, full stop -- it does not fall through to
+    // textContent, which would repeat the same mistake ("Submit" also
+    // starts with a letter).
+    const rawKey = String(key?.dataset?.key || "").trim().toUpperCase();
+    if (rawKey) return rawKey.length === 1 && /^[A-Z]$/.test(rawKey) ? rawKey : "";
     const candidate = String(
-      key?.dataset?.key ||
       key?.dataset?.letter ||
       key?.getAttribute?.("aria-label") ||
       key?.textContent ||
