@@ -588,6 +588,13 @@
   height: 30px;
 }
 
+/* Letter Peek's icon draws its eye shape in currentColor and its pupil in
+   --tile-green; the popup's own role tint would leave that shape nearly
+   white against the light inner fill, so it keeps the power's own green. */
+.big-announce-icon svg.peek-letter-announce-icon {
+  color: var(--tile-green, #22c55e);
+}
+
 .big-announce.role-setter .big-announce-icon { color: var(--setter-color); }
 .big-announce.role-guesser .big-announce-icon { color: var(--guesser-color); }
 

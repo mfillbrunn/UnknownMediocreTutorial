@@ -3216,10 +3216,10 @@ body:not(.light-theme) {
   :is(#setterScreen, #guesserScreen) {
     --desktop-game-tile-size: 48px;
     --desktop-game-tile-font-size: 24px;
-    --desktop-key-width: 45px;
-    --desktop-key-height: 52px;
-    --desktop-key-font-size: 18px;
-    --desktop-keyboard-width: 500px;
+    --desktop-key-width: 39px;
+    --desktop-key-height: 44px;
+    --desktop-key-font-size: 16px;
+    --desktop-keyboard-width: 434px;
     --game-sidebar: 168px;
   }
 
@@ -3285,15 +3285,15 @@ body:not(.light-theme) {
 
   :is(#keyboardSetter, #keyboardGuesser)
     .key:is([data-key="ENTER"], [data-key="⌫"]) {
-    flex-basis: 55px;
-    width: 55px;
+    flex-basis: 48px;
+    width: 48px;
   }
 
   :is(#keyboardSetter, #keyboardGuesser)
     .key[data-key="ENTER"]::before,
   :is(#keyboardSetter, #keyboardGuesser)
     .pc-key-eliminated::after {
-    font-size: 20px;
+    font-size: 17px;
   }
 
   .pc-current-quest-host,
@@ -3316,10 +3316,10 @@ body:not(.light-theme) {
       #setterScreen .setter-decision-btn,
       #guesserDecisionActions .guesser-decision-btn
     ) {
-    min-height: 42px;
-    padding: 7px 11px;
-    border-radius: 10px;
-    font-size: 11px;
+    min-height: 34px;
+    padding: 5px 9px;
+    border-radius: 9px;
+    font-size: 10px;
   }
 
   /* mobile.css intentionally supplies compact cards globally; restore a
@@ -3343,6 +3343,30 @@ body:not(.light-theme) {
     .power-btn-label {
     height: 20px;
     font-size: 9px;
+  }
+
+  /* The reward modal was sized for a phone's full width and kept that
+     820px on a mouse-driven screen, where it reads as a wall rather than
+     a card to pick from. One reward per row still fits comfortably at
+     this width, and the Hide button no longer has to be thumb-sized. */
+  .pc-modal-card {
+    width: min(560px, 92vw);
+    padding: 16px;
+  }
+
+  .pc-modal h2 {
+    margin: 6px 28px 2px;
+    font-size: 1.4rem;
+  }
+
+  .pc-modal-sub {
+    margin: 0 28px 10px;
+  }
+
+  .pc-modal-peek {
+    margin-top: 10px;
+    padding: 4px 11px;
+    font-size: 11px;
   }
 }
 /* DESKTOP_GAME_SIZE_BALANCE_V2: END */

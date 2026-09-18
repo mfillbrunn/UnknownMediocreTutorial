@@ -72,16 +72,22 @@ document.addEventListener("DOMContentLoaded", () => {
   renderMenuAccountStatus();
   showStartup();
 });
-function toast(msg) {
+// The hide timer is stored on the element and cleared on every call. Two
+// toasts close together used to share one element and two timers: the
+// second replaced the text while "show" was already set (so it never
+// re-animated in), and the FIRST timer then hid it early -- which read as
+// the second message never appearing at all.
+function toast(msg, durationMs = 1500) {
   const t = $("toast");
   if (!t) {
     console.warn("toast() called but #toast not in DOM:", msg);
     return;
   }
 
+  clearTimeout(t.__toastTimer);
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 1500);
+  t.__toastTimer = setTimeout(() => t.classList.remove("show"), durationMs);
 }
 
 function shake(element) {
@@ -499,6 +505,16 @@ case "playerKicked":
   toast("Opponent disconnected too long. You win.");
   break;
 
+    // The server emits playerRejoined (not playerJoined) when a player
+    // reattaches to a room they were already in -- without this case a
+    // reconnect said nothing, while the disconnect that preceded it had
+    // announced itself. Also clears the waiting overlay the same way
+    // playerJoined does, since the opponent is back in the room.
+    case "playerRejoined":
+      $("waitingForPlayer")?.classList.add("hidden");
+      toast("Your opponent reconnected.", 3000);
+      break;
+
 case "playerLeft": {
       const msg =
         evt.reason === "kicked"
@@ -512,7 +528,7 @@ case "playerLeft": {
     }
 
     case "playerDisconnected":
-      toast("Your opponent disconnected. Waiting to reconnect…");
+      toast("Your opponent disconnected. Waiting to reconnect…", 3000);
       break;
 
     case "hideLobby":
