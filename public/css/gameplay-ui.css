@@ -3999,7 +3999,22 @@ body.hide-constraints :is(#setterScreen, #guesserScreen) .constraint-row {
   width: 22px;
   height: 22px;
 }
+.pc-guide-highlight-btn,
+.pc-guide-clear-btn {
+  position: relative;
+}
 
+/* The whole ancestor chain is pointer-events:none so this button has no
+   hit-slop at all -- a tap one pixel outside its 65x31 box falls through
+   every ancestor to .screen and silently does nothing. Expand the hit
+   area without changing the painted size, same as the sidebar toggles. */
+.pc-guide-highlight-btn::before,
+.pc-guide-clear-btn::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  pointer-events: auto;
+}
 @media (min-width: 761px) and (hover: hover) and (pointer: fine) {
   #setterScreen .setter-decision-stage > .draft-row-wrap {
     width: min(100%, var(--desktop-keyboard-width, 500px));
