@@ -1385,15 +1385,18 @@
   background: #10263d;
   box-shadow: none;
 }
+/* One column at every width. Side by side, the "<name> set the secret"
+   title wrapped to two lines and squeezed the clock panel below the width
+   its two player cells need, which truncated both names to "Br..."/"pl..."
+   and crowded the times against them. The title is short enough that a row
+   of its own costs little, and the clock then gets the full width it was
+   always sized for. */
 .stored-round-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(235px, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: stretch;
   gap: 8px;
   margin-bottom: 6px;
-}
-.stored-round-header:not(:has(.summary-clock-panel)) {
-  grid-template-columns: minmax(0, 1fr);
 }
 .stored-round-header .summary-clock-panel {
   margin: 0;
@@ -1511,12 +1514,6 @@
 }
 .summary-table tr.final-row {
   background: rgba(57, 120, 103, 0.18);
-}
-
-@media (max-width: 720px) {
-  .stored-round-header {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 480px) {

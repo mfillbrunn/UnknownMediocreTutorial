@@ -107,14 +107,14 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 
 /* Whole-row entrance when a new guess is submitted, on top of the
    per-tile flip-reveal already applied to the tiles themselves. Only the
-   setter has a live element to FLIP-fly from the draft row it just came
-   from (slideRowIntoPlace in client.js) -- the guesser's own row is long
-   gone (slid out to the right on submission, possibly a full opponent
-   turn earlier) by the time this fires, so there's no source position to
-   fly from. This keeps the same *character* as that flight -- a plain
+   guesser's own row is long gone (slid out to the right on submission,
+   possibly a full opponent turn earlier) by the time this fires. A plain
    upward float, staying fully visible the whole time (no fade-in, no
-   scale-in) -- so both roles read as one continuous "the row moves into
-   place" motion, not the row vanishing and a new one fading in after it. */
+   scale-in), so the row reads as moving into place rather than vanishing
+   and a new one fading in after it. The Secretkeeper's side deliberately
+   has no entrance motion at all (see finishPendingGuessRow in client.js):
+   its row used to fly in from the pending row's old position, which moved
+   the rows already in the list on every guess. */
 .history-row-wrap.row-enter {
   animation: history-row-enter 320ms var(--ease-ui, ease-out) both;
 }
@@ -129,17 +129,6 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
     animation: none;
   }
 }
-
-/* Setter only (client.js's slideRowIntoPlace): the real just-added row is
-   dragged (via an inline transform, FLIP-style) from the pending row's old
-   position up into its actual spot in the history list, instead of a
-   disposable clone flying there while the real row waits underneath.
-   Cancels the default row-enter fade -- the slide itself is this row's
-   entrance. The matching rule that freezes each tile's cover-flip during
-   the slide lives further down, right after tile-cover-flip is defined
-   (same specificity, same selector shape as that rule -- has to come
-   after it in the file to actually win the tie instead of being
-   silently reset back to "running" by the later animation: shorthand). */
 
 /* Setter's draft stack: the secret row slides down into place, the
    incoming pending-guess row slides in from the side — distinct motions

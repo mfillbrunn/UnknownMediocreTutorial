@@ -143,7 +143,10 @@ socket.on("greenLetterRevealed", ({ index, letter, source }) => {
   // it doesn't have, so it gets its own, more accurate wording.
   if (source === "revealGreen") {
     window.showBigAnnounce?.({
-      icon: "👁️",
+      // Letter Peek's own drawn icon (index.html's sprite) rather than an
+      // eye emoji, so the popup matches the power button that fired it.
+      // showBigAnnounce renders a value containing "<" as real markup.
+      icon: `<svg class="peek-letter-announce-icon" viewBox="0 0 120 120" aria-hidden="true"><use href="#icon-letter-peek" xlink:href="#icon-letter-peek"></use></svg>`,
       title: "Letter revealed!",
       sub: `${label} revealed ${letter.toUpperCase()} in position ${index + 1}.`,
       roleClass: "outcome-win",

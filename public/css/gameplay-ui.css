@@ -2094,34 +2094,27 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   position: relative;
 }
 
-/* Helpful quest letters keep the existing blue guide treatment. */
+/* Both treatments lead with an INSET ring, drawn over the key's own fill
+   rather than around its edge. A border-colour change alone was all but
+   invisible on the keys that matter most -- the ones already painted
+   green/yellow/grey by earlier feedback -- which is why pressing Highlight
+   could look like it had done nothing at all. The outer ring and glow sit
+   on top of that so the group also reads as a block at a glance. */
 #keyboardGuesser .pc-quest-key-hint {
-  border-color: rgba(88, 201, 255, 0.86) !important;
-  box-shadow: 0 0 10px rgba(88, 201, 255, 0.38) !important;
-}
-#keyboardGuesser .pc-quest-key-hint::before {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  border: 1px solid rgba(128, 232, 255, 0.48);
-  border-radius: inherit;
-  pointer-events: none;
+  border-color: #8fddff !important;
+  box-shadow:
+    inset 0 0 0 3px #8fddff,
+    0 0 0 2px rgba(143, 221, 255, 0.55),
+    0 0 14px rgba(88, 201, 255, 0.7) !important;
 }
 
 /* UMT_ROW_AVOID_RED_20260902: a warning, not a suggestion. */
 #keyboardGuesser .pc-quest-key-avoid {
-  border-color: rgba(255, 75, 92, 0.94) !important;
+  border-color: #ff8f99 !important;
   box-shadow:
-    inset 0 0 0 1px rgba(255, 75, 92, 0.24),
-    0 0 11px rgba(255, 75, 92, 0.46) !important;
-}
-#keyboardGuesser .pc-quest-key-avoid::before {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  border: 1px solid rgba(255, 112, 125, 0.66);
-  border-radius: inherit;
-  pointer-events: none;
+    inset 0 0 0 3px #ff8f99,
+    0 0 0 2px rgba(255, 143, 153, 0.55),
+    0 0 14px rgba(255, 75, 92, 0.6) !important;
 }
 .pc-key-eliminated {
   position: relative;
@@ -3216,10 +3209,10 @@ body:not(.light-theme) {
   :is(#setterScreen, #guesserScreen) {
     --desktop-game-tile-size: 48px;
     --desktop-game-tile-font-size: 24px;
-    --desktop-key-width: 45px;
-    --desktop-key-height: 52px;
-    --desktop-key-font-size: 18px;
-    --desktop-keyboard-width: 500px;
+    --desktop-key-width: 39px;
+    --desktop-key-height: 44px;
+    --desktop-key-font-size: 16px;
+    --desktop-keyboard-width: 434px;
     --game-sidebar: 168px;
   }
 
@@ -3285,15 +3278,15 @@ body:not(.light-theme) {
 
   :is(#keyboardSetter, #keyboardGuesser)
     .key:is([data-key="ENTER"], [data-key="⌫"]) {
-    flex-basis: 55px;
-    width: 55px;
+    flex-basis: 48px;
+    width: 48px;
   }
 
   :is(#keyboardSetter, #keyboardGuesser)
     .key[data-key="ENTER"]::before,
   :is(#keyboardSetter, #keyboardGuesser)
     .pc-key-eliminated::after {
-    font-size: 20px;
+    font-size: 17px;
   }
 
   .pc-current-quest-host,
@@ -3316,10 +3309,10 @@ body:not(.light-theme) {
       #setterScreen .setter-decision-btn,
       #guesserDecisionActions .guesser-decision-btn
     ) {
-    min-height: 42px;
-    padding: 7px 11px;
-    border-radius: 10px;
-    font-size: 11px;
+    min-height: 34px;
+    padding: 5px 9px;
+    border-radius: 9px;
+    font-size: 10px;
   }
 
   /* mobile.css intentionally supplies compact cards globally; restore a
@@ -3343,6 +3336,30 @@ body:not(.light-theme) {
     .power-btn-label {
     height: 20px;
     font-size: 9px;
+  }
+
+  /* The reward modal was sized for a phone's full width and kept that
+     820px on a mouse-driven screen, where it reads as a wall rather than
+     a card to pick from. One reward per row still fits comfortably at
+     this width, and the Hide button no longer has to be thumb-sized. */
+  .pc-modal-card {
+    width: min(560px, 92vw);
+    padding: 16px;
+  }
+
+  .pc-modal h2 {
+    margin: 6px 28px 2px;
+    font-size: 1.4rem;
+  }
+
+  .pc-modal-sub {
+    margin: 0 28px 10px;
+  }
+
+  .pc-modal-peek {
+    margin-top: 10px;
+    padding: 4px 11px;
+    font-size: 11px;
   }
 }
 /* DESKTOP_GAME_SIZE_BALANCE_V2: END */
