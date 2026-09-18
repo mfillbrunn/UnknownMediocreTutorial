@@ -3,32 +3,43 @@
 // Shows the guesser TWO feedbacks for their guess (one true, one fake,
 // alternating on the tiles) so they can't trust the reading. The fake is
 // built directly from THIS guess's real feedback rather than by scoring an
-// alternate secret: take the true feedback, work out which positions the
-// guesser could already deduce on their own, then flip some of the
-// remaining ("unknown") positions to a different color.
+// alternate secret: take the true feedback, work out which tiles the
+// guesser could already contradict on their own, and recolor only the rest.
 //
-// Defining "known" is the crux. It doesn't have to be airtight, just not
-// obviously wrong -- if we lied about a tile the guesser can already prove
-// the color of, the fake reads as broken. Positions treated as known:
+// The point is that NEITHER row may be obviously wrong. The truth never is,
+// so all the work is in constraining the lie against what earlier rows
+// already revealed. Per letter, measured against the guesser's existing
+// knowledge:
 //
-//   1. Exact (position, letter) repeat. If an earlier guess placed this
-//      same letter at this same position, secret consistency (enforced on
-//      every secret submission via isConsistentWithHistory) forces the
-//      current color there to match what it was then -- the guesser can
-//      derive it. Covers "the 3rd tile was green last round too".
-//   2. Letter globally eliminated. If the letter is confirmed absent
-//      everywhere (gray on the keyboard, never green/yellow), the guesser
-//      knows every occurrence of it is gray.
-//   3. Letter force-revealed green at this exact position by a power
-//      (extraConstraints GREEN with a matching index/letter).
-//   4. A light inference: a letter confirmed present whose only remaining
-//      possible home is this position (every other slot already has a
-//      different confirmed green, or forbids this letter) must be green
-//      here -- so a true green there is known.
+//   * A letter proven ABSENT stays gray everywhere. It can't come back.
+//   * A letter proven PRESENT (green or yellow somewhere, or blue under Blue
+//     Mode) may show green or yellow, never gray -- it can move, not vanish.
+//   * A letter proven GREEN at some position stays green at THAT position,
+//     and shows yellow when guessed anywhere else -- unless the guesser has
+//     already seen that letter present twice at once, in which case a second
+//     green is fair game.
+//
+// On top of those, two positional locks:
+//
+//   1. Exact (position, letter) repeat. If an earlier guess placed this same
+//      letter at this same position, secret consistency (enforced on every
+//      secret submission via isConsistentWithHistory) forces the current
+//      color there to match what it was then -- the guesser can derive it.
+//      This also covers "was green here, must stay green here" and "was
+//      yellow here, so it can't be green here".
+//   2. A letter force-revealed green at this exact position by a power
+//      (extraConstraints GREEN with a matching index).
+//
+// And one softer inference: a letter confirmed present whose only remaining
+// possible home is this position (every other slot is taken by a different
+// green or forbids this letter) must be green here. That one takes real
+// reasoning to catch, so it's relaxed as a last resort (see the two-pass
+// loop in buildFakeFeedback) rather than being allowed to leave the power
+// with nothing to lie about.
 //
 // Left fakeable: a letter merely confirmed present somewhere but not pinned
-// to this position -- the classic green-vs-yellow ambiguity this power
-// exists to exploit.
+// to a position -- the classic green-vs-yellow ambiguity this power exists
+// to exploit -- and anything about a letter the guesser hasn't tried yet.
 const engine = require("../powerEngineServer.js");
 const { scoreGuess } = require("../../game-engine/scoring");
 const { buildKeyboardState } = require("../../game-engine/keyboardState");
@@ -37,8 +48,17 @@ const { buildKeyboardState } = require("../../game-engine/keyboardState");
 // (confuseColors) / purple (blindSpot) special tiles are never faked --
 // they'd look broken -- so they're excluded here and skipped below.
 const FAKEABLE = ["🟩", "🟨", "⬛"];
+// Keyboard statuses that mean "this letter is in the secret". Blue is a real
+// green or yellow hidden by Blue Mode, so it proves presence just as much.
+const PRESENT = new Set(["green", "yellow", "blue"]);
 
-function computeKnownMask(state, guess, trueFb) {
+function rowFeedback(entry) {
+  const fb = entry && (entry.fb ?? entry.fbGuesser);
+  return Array.isArray(fb) ? fb : null;
+}
+
+// Everything the guesser can hold against a fake tile, gathered once.
+function computeKnowledge(state, guess) {
   const { keyboard } = buildKeyboardState(state);
   const history = Array.isArray(state.history) ? state.history : [];
 
@@ -49,119 +69,150 @@ function computeKnownMask(state, guess, trueFb) {
     }
   }
 
-  // Positions already pinned to a specific green letter (from real history
-  // or a forced green) -- used for the (4) "only home left" inference.
+  // Positions pinned to a specific green letter, letters seen present twice
+  // in a single row (so a second green for them is believable), and the
+  // per-position sets of letters proven NOT to live there.
   const greenAt = Array(5).fill(null);
+  const doubled = new Set();
+  const forbiddenAt = Array.from({ length: 5 }, () => new Set());
+
   for (const past of history) {
     const pg = (past.guess || "").toUpperCase();
-    const pfb = past.fb ?? past.fbGuesser;
-    if (!Array.isArray(pfb)) continue;
+    const pfb = rowFeedback(past);
+    if (!pfb) continue;
+
+    const presentInGuess = new Set();
+    const presentCount = {};
     for (let i = 0; i < 5; i++) {
+      if (pfb[i] === "🟩" || pfb[i] === "🟨" || pfb[i] === "🟦") {
+        presentInGuess.add(pg[i]);
+        presentCount[pg[i]] = (presentCount[pg[i]] || 0) + 1;
+      }
       if (pfb[i] === "🟩") greenAt[i] = pg[i];
     }
-  }
-  for (const idx in forcedGreenAt) greenAt[idx] = forcedGreenAt[idx];
-
-  // Per-position set of letters the guesser knows are NOT there (a yellow
-  // or a "present elsewhere" gray for that letter at that spot).
-  const forbiddenAt = Array.from({ length: 5 }, () => new Set());
-  for (const past of history) {
-    const pg = (past.guess || "").toUpperCase();
-    const pfb = past.fb ?? past.fbGuesser;
-    if (!Array.isArray(pfb)) continue;
-    const presentInGuess = new Set();
-    for (let i = 0; i < 5; i++) {
-      if (pfb[i] === "🟩" || pfb[i] === "🟨") presentInGuess.add(pg[i]);
+    for (const letter of Object.keys(presentCount)) {
+      if (presentCount[letter] >= 2) doubled.add(letter);
     }
     for (let i = 0; i < 5; i++) {
       if (pfb[i] === "🟨") forbiddenAt[i].add(pg[i]);
       else if (pfb[i] === "⬛" && presentInGuess.has(pg[i])) forbiddenAt[i].add(pg[i]);
     }
   }
+  for (const idx in forcedGreenAt) greenAt[idx] = forcedGreenAt[idx];
 
-  const known = [false, false, false, false, false];
-
+  // (1) this exact letter was already tried at this exact position
+  const seenHere = [false, false, false, false, false];
   for (let i = 0; i < 5; i++) {
-    const letter = guess[i];
-
-    // (2) globally-absent letter -> every occurrence is gray
-    if (keyboard[letter] === "gray") { known[i] = true; continue; }
-
-    // (3) force-revealed green at this exact spot
-    if (forcedGreenAt[i] === letter) { known[i] = true; continue; }
-
-    // (1) same letter, same position, seen before -> consistency locks it
-    let seenHere = false;
     for (const past of history) {
       const pg = (past.guess || "").toUpperCase();
-      const pfb = past.fb ?? past.fbGuesser;
-      if (!Array.isArray(pfb)) continue;
+      const pfb = rowFeedback(past);
+      if (!pfb) continue;
       const c = pfb[i];
-      if (pg[i] === letter && c && c !== "?" && c !== "❓") { seenHere = true; break; }
-    }
-    if (seenHere) { known[i] = true; continue; }
-
-    // (4) inference: a present letter (green/yellow somewhere) whose every
-    // OTHER slot is already taken by a different green or forbids it must
-    // live here -> a true green here is deducible.
-    if (trueFb[i] === "🟩" && (keyboard[letter] === "green" || keyboard[letter] === "yellow")) {
-      let onlyHome = true;
-      for (let j = 0; j < 5; j++) {
-        if (j === i) continue;
-        const takenByOther = greenAt[j] && greenAt[j] !== letter;
-        const forbiddenHere = forbiddenAt[j].has(letter);
-        if (!takenByOther && !forbiddenHere) { onlyHome = false; break; }
-      }
-      if (onlyHome) { known[i] = true; continue; }
+      if (pg[i] === guess[i] && c && c !== "?" && c !== "❓") { seenHere[i] = true; break; }
     }
   }
 
-  return known;
+  return { keyboard, forcedGreenAt, greenAt, doubled, forbiddenAt, seenHere };
 }
 
-// Real feedback in, "real with some lies mixed in" out. Never touches a
-// position the guesser could already deduce (computeKnownMask); flips a
-// random 1..N of the rest to a genuinely different color so at least one
+// The colors position i may show INSTEAD of its true one. `greenNow` is the
+// running picture of which letter sits green where -- history's greens plus
+// whatever the fake row has already committed to -- so two fake greens never
+// invent a double letter between them.
+function lieOptions(i, guess, trueFb, knowledge, greenNow, strict) {
+  const trueColor = trueFb[i];
+  if (!FAKEABLE.includes(trueColor)) return [];
+
+  const letter = guess[i];
+  const { keyboard, forcedGreenAt, doubled, seenHere } = knowledge;
+
+  if (keyboard[letter] === "gray") return [];        // proven absent: stays gray
+  if (forcedGreenAt[i] === letter) return [];        // power-revealed green
+  if (seenHere[i]) return [];                        // consistency pins this tile
+  if (strict && knowledge.onlyHome[i]) return [];    // inference: must live here
+
+  let options = FAKEABLE.filter(color => color !== trueColor);
+
+  // A letter the guesser has proven is in the secret can move, but it can't
+  // disappear.
+  if (PRESENT.has(keyboard[letter])) {
+    options = options.filter(color => color !== "⬛");
+  }
+
+  // Green claims are the easiest lie to catch, so they get the strictest
+  // reading -- and one this pass never relaxes. This slot can't turn green if
+  // the guesser has already watched a DIFFERENT letter land green here, and
+  // this letter can't turn green here while it sits green somewhere else,
+  // unless the guesser has seen it appear twice at once.
+  const pinnedHere = greenNow[i];
+  const pinnedElsewhere = greenNow.some((g, j) => j !== i && g === letter);
+  if ((pinnedHere && pinnedHere !== letter) || (pinnedElsewhere && !doubled.has(letter))) {
+    options = options.filter(color => color !== "🟩");
+  }
+
+  return options;
+}
+
+// Real feedback in, "real with some lies mixed in" out. Flips a random 1..N
+// of the fakeable positions to a genuinely different color so at least one
 // tile always reads ambiguously.
 function buildFakeFeedback(state, guess, trueFb) {
-  const known = computeKnownMask(state, guess, trueFb);
+  const knowledge = computeKnowledge(state, guess);
+
+  // The soft inference: a present letter whose every OTHER slot is already
+  // taken by a different green or forbids it must live here, so a true green
+  // there is deducible.
+  knowledge.onlyHome = [0, 1, 2, 3, 4].map(i => {
+    const letter = guess[i];
+    if (trueFb[i] !== "🟩") return false;
+    if (!PRESENT.has(knowledge.keyboard[letter])) return false;
+    for (let j = 0; j < 5; j++) {
+      if (j === i) continue;
+      const takenByOther = knowledge.greenAt[j] && knowledge.greenAt[j] !== letter;
+      if (!takenByOther && !knowledge.forbiddenAt[j].has(letter)) return false;
+    }
+    return true;
+  });
+
   const fake = [...trueFb];
+  // Greens the guesser will be looking at: history's pins, plus this row's
+  // own greens as they stand.
+  const greenNow = knowledge.greenAt.slice();
+  for (let i = 0; i < 5; i++) if (fake[i] === "🟩") greenNow[i] = guess[i];
 
-  const eligible = [];
-  for (let i = 0; i < 5; i++) {
-    if (known[i]) continue;
-    if (!FAKEABLE.includes(trueFb[i])) continue;
-    eligible.push(i);
+  // Pass 1 honors every rule above. If that leaves nothing to lie about, pass
+  // 2 relaxes the one inference-only rule (`onlyHome`) for a single tile -- a
+  // sharp guesser could reason that one out, but handing back a completely
+  // truthful row makes the power read as broken. The color rules themselves
+  // are never relaxed.
+  for (const strict of [true, false]) {
+    const pool = [0, 1, 2, 3, 4]
+      .filter(i => lieOptions(i, guess, trueFb, knowledge, greenNow, strict).length > 0);
+    if (pool.length === 0) continue;
+
+    // Fisher-Yates shuffle, then lie about the first k.
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+
+    const target = strict ? 1 + Math.floor(Math.random() * pool.length) : 1;
+    let told = 0;
+    for (const pos of pool) {
+      if (told >= target) break;
+      // Recomputed per tile: an earlier lie in this same row can have moved
+      // a green and closed off an option here.
+      const options = lieOptions(pos, guess, trueFb, knowledge, greenNow, strict);
+      if (options.length === 0) continue;
+      fake[pos] = options[Math.floor(Math.random() * options.length)];
+      greenNow[pos] = fake[pos] === "🟩" ? guess[pos] : knowledge.greenAt[pos];
+      told += 1;
+    }
+    if (told > 0) return fake;
   }
 
-  // Every position was safely deducible -- most commonly an all-miss
-  // guess, where every gray tile is trivially provable absent on its own.
-  // Rather than let the power whiff and hand back the guesser's true
-  // feedback completely untouched (a solid, non-animated row that reads
-  // as "this did nothing"), still lie about exactly one tile so using the
-  // power is always visible. A sharp guesser could in principle catch
-  // this one lie by reasoning it out, but a fully truthful row defeats
-  // the power outright.
-  let pool = eligible;
-  let forcedSingle = false;
-  if (pool.length === 0) {
-    pool = [0, 1, 2, 3, 4].filter(i => FAKEABLE.includes(trueFb[i]));
-    forcedSingle = true;
-  }
-  if (pool.length === 0) return fake; // no ordinary-colored tile to lie about at all
-
-  // Fisher-Yates shuffle, then lie about the first k.
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  const k = forcedSingle ? 1 : 1 + Math.floor(Math.random() * pool.length);
-  for (let n = 0; n < k; n++) {
-    const pos = pool[n];
-    const others = FAKEABLE.filter(c => c !== trueFb[pos]);
-    fake[pos] = others[Math.floor(Math.random() * others.length)];
-  }
-
+  // Nothing could be recolored without contradicting a row the guesser has
+  // already seen. The truth twice over is the honest failure mode here.
   return fake;
 }
 
@@ -189,7 +240,7 @@ engine.registerPower("fakeFeedback", {
     const entry2 = buildFakeFeedback(state, guess, entry1);
     entry.fakeFeedback = {
       entry1, // the truth
-      entry2  // the truth with 1..N unknown tiles recolored
+      entry2  // the truth with 1..N deniable tiles recolored
     };
     entry.fbGuesser = ["?", "?", "?", "?", "?"];
   }
