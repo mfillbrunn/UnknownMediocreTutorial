@@ -33,3 +33,18 @@ problems early. Scaffold and generalisation follow the working slice.
 - Success ladder definition (D3 depends on it) — see SPEC-QUESTIONS Q11
 - Horizon for "stock up": 1-day vs 1-week vs hold-to-approval — Q16
 - Whether AI-extracted effect modifiers need human approval before entering the model — Q15
+
+## D5 — Success definition: graded ladder
+```
+grade 0 = primary endpoint missed
+grade 1 = primary met at protocol alpha, no secondaries
+grade 2 = primary + key secondary met
+grade 3 = primary + >=2 secondaries met, clean safety
+```
+Stage 4 emits the full distribution over grades; stage 5 consumes all four, not a point
+estimate. Grades are evaluated by walking the extracted testing hierarchy in order and
+spending alpha as specified, so secondaries are not independent draws.
+
+Safety is a descriptor of grade 3 rather than a gate that can void lower grades —
+pre-readout safety signals are too weakly identified to carry a veto. Revisit if the
+backtest shows safety-driven failures being systematically missed.
