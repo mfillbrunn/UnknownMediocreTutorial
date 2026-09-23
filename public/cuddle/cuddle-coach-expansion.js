@@ -645,7 +645,7 @@
         kind: source || "round",
         round: integer(game.state.round, 1)
       });
-      game.state.rewardBookHistory = game.state.rewardBookHistory.slice(-60);
+      game.state.rewardBookHistory = game.state.rewardBookHistory.slice(-200);
     }
     return { ok: true, definition: definition };
   }

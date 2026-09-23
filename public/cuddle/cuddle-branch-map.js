@@ -1105,10 +1105,28 @@
     }));
   }
 
+  // The map node the player is standing on (the stage being played), with
+  // its type's display info merged in -- read by the stage-intro banner in
+  // cuddle-progression.js. Null before the first stop is entered.
+  function currentStageNode(game) {
+    var state = game && game.state;
+    if (!state || !state.branchMap || !Array.isArray(state.branchMap.rows)) return null;
+    var node = currentNode(state.branchMap);
+    if (!node) return null;
+    var info = NODE_TYPES[node.type] || {};
+    return Object.assign({}, node, {
+      typeIcon: info.icon || "",
+      typeTitle: info.title || "",
+      typeDescription: info.description || "",
+      totalRows: state.branchMap.rows.length
+    });
+  }
+
   window.CuddleBranchMap = Object.freeze({
     STATUS: MAP_STATUS,
     renderMapScreen: renderMapScreen,
     bossPointRequirement: bossPointRequirement,
-    nextBossRequirement: nextBossRequirement
+    nextBossRequirement: nextBossRequirement,
+    currentStageNode: currentStageNode
   });
 }());

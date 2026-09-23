@@ -68,7 +68,25 @@
         { id: "questPoints", icon: "🏅", title: "Quest Value", tier: "common", category: "quests", description: "Quests are worth 5 points more. Stacks every time you take it.", level: g => upgradeCount(g, "questPoints") },
         { id: "questReroll", icon: "🔄", title: "Second Guess Quest", tier: "common", category: "quests", description: "Gain one charge to reroll your active quest for a different one, any turn you like.", level: g => upgradeCount(g, "questReroll") },
         { id: "mulliganSize", icon: "🃏", title: "Bigger Mulligan", tier: "common", category: "easierStages", maxLevel: 2, description: "Each mulligan may replace one additional card.", level: g => upgradeCount(g, "mulliganSize") },
-        { id: "categorySense", icon: "🔮", title: "Theme Sense", tier: "rare", category: "solving", maxLevel: 6, description: "From now on, reveal one category at the start of every solution. Stacks.", level: g => Number(campaignState(g)?.categorySense) || 0 }
+        { id: "categorySense", icon: "🔮", title: "Theme Sense", tier: "rare", category: "solving", maxLevel: 6, description: "From now on, reveal one category at the start of every solution. Stacks.", level: g => Number(campaignState(g)?.categorySense) || 0 },
+        // Round rewards the live pool offers that this catalogue used to be
+        // missing entirely (so they never appeared on the tree). Icons are
+        // emoji rather than the pool's text badges ("H+", "Y/G") so every
+        // node reads as a picture on the progression tree. Descriptions
+        // state what the engine actually applies.
+        { id: "storybookStart", icon: "📖", title: "Opening Verse", tier: "common", category: "economy", maxLevel: 3, description: "Start every non-boss stage with +10 points, banked straight away. Stacks up to three times.", level: g => Number(g?.state?.cuddleBonuses?.storybookStart) || 0 },
+        { id: "wideChoice", icon: "🌈", title: "Wide Margins", tier: "common", category: "easierStages", maxLevel: 2, description: "See one additional between-round upgrade choice. Stacks up to two times." },
+        { id: "greyPointBoost", icon: "🩶", title: "Grey Matters", tier: "rare", category: "economy", description: "Grey tiles are worth 1 point more. Yellow and green values are unchanged." },
+        { id: "handSizeBoost", icon: "✋", title: "Bigger Hand", tier: "rare", category: "easierStages", description: "Increase the counted hand size by 1 for future rounds." },
+        { id: "mulliganValueBoost", icon: "💱", title: "Mulligan Dividend", tier: "common", category: "economy", description: "Each unused mulligan is worth 5 points more when you solve." },
+        { id: "earlySolveBoost", icon: "🏁", title: "Early Finish", tier: "common", category: "economy", description: "Each unused guess earns 5 points more on an early solve." },
+        { id: "colourTrade", icon: "🎨", title: "Colour Surge", tier: "common", category: "economy", description: "Yellow and green tiles are each worth 3 points more." },
+        { id: "greyscale", icon: "⬛", title: "Greyscale", tier: "common", category: "economy", description: "Grey tiles gain 2 points, while yellow and green drop to 0 for the rest of the run." },
+        { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", category: "easierStages", description: "The next round reward you pick is applied three times." },
+        { id: "removeLetter", icon: "✂️", title: "Cull", tier: "common", category: "easierStages", description: "Remove rare consonants from the deck and from every future secret." },
+        { id: "greenCount", icon: "🔢", title: "Precise Green", tier: "rare", category: "solving", maxLevel: 1, description: "A green tile also shows how many times that letter appears in the secret." },
+        { id: "jokerPerRound", icon: "🃏", title: "Wild Card", tier: "rare", category: "easierStages", description: "Begin every stage with one Joker in the active pouch." },
+        { id: "surprise-assignment", icon: "📜", title: "Surprise Assignment", tier: "rare", category: "quests", description: "Add one extra quest at a random turn in every stage. Each copy schedules another quest." }
       ]
     },
     {

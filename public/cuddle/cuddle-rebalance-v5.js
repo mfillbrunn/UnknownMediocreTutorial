@@ -304,7 +304,7 @@
       id: "consonantCrunch",
       icon: "🥨",
       title: "Consonant Crunch",
-      description: count => `Each of your first ${guessPhrase(count)} may contain at most one vowel.`,
+      description: count => count === 1 ? "Your first guess may contain at most one vowel." : `Each of your first ${count} guesses may contain at most one vowel.`,
       reward: 25,
       vowelBudget: { guesses: 2, max: 1 }
     }),
@@ -312,7 +312,7 @@
       id: "shroudedEdges",
       icon: "🫥",
       title: "Shrouded Edges",
-      description: count => `The same two marked tile positions stay hidden on each of your first ${guessPhrase(count)}.`,
+      description: count => `The same two marked tile positions stay hidden on ${count === 1 ? "your first guess" : `each of your first ${count} guesses`}.`,
       reward: 24,
       masks: ["hiddenMargins", "hiddenMargins"]
     })

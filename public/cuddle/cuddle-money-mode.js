@@ -528,7 +528,7 @@
         kind: "starter",
         round: 1
       });
-      this.state.rewardBookHistory = this.state.rewardBookHistory.slice(-40);
+      this.state.rewardBookHistory = this.state.rewardBookHistory.slice(-200);
     }
     saveGame(this);
     requestRender(this);

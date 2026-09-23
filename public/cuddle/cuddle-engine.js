@@ -2690,7 +2690,9 @@
     );
     state.rewardBookHistory = (Array.isArray(state.rewardBookHistory) ? state.rewardBookHistory : [])
       .filter(item => item && typeof item === "object")
-      .slice(-40);
+      // Kept long enough to hold a whole run: the progression tree lights
+      // every node from this ledger, so trimming it would un-light early picks.
+      .slice(-200);
     state.bossRewardHistory = (Array.isArray(state.bossRewardHistory) ? state.bossRewardHistory : [])
       .filter(item => item && typeof item === "object")
       .slice(-12);
@@ -2842,7 +2844,7 @@
       kind,
       round: Number(state.round || 1)
     });
-    state.rewardBookHistory = state.rewardBookHistory.slice(-40);
+    state.rewardBookHistory = state.rewardBookHistory.slice(-200);
   }
   function cuddleV3NormalizeUpgradeChoice(choice) {
     if (!choice || choice.id !== "removeLetter") return choice;
@@ -3670,7 +3672,7 @@
       kind: "round",
       round: Number(state.round || 1)
     });
-    state.rewardBookHistory = state.rewardBookHistory.slice(-40);
+    state.rewardBookHistory = state.rewardBookHistory.slice(-200);
   }
 
   function unlockGoldenTempoIfReady(game) {
