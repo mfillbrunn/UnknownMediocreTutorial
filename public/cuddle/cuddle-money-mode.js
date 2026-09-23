@@ -70,7 +70,7 @@
       effect: "countOnly",
       turns: 2,
       baseReward: 16,
-      description: "For the first two guesses, you only see the total number of green and yellow tiles, not their positions."
+      description: "For the first two guesses, the marked tiles show only how many of them are green and yellow, not which. The rest of the row reports normally."
     },
     {
       id: "foggedSlot",
@@ -79,7 +79,7 @@
       effect: "hideFeedback",
       turns: 2,
       baseReward: 12,
-      description: "One tile position is hidden on each of your first two guesses."
+      description: "One marked tile position is hidden on each of your first two guesses."
     },
     {
       id: "blueHaze",
@@ -88,7 +88,7 @@
       effect: "blueMode",
       turns: 2,
       baseReward: 14,
-      description: "For two guesses, green and yellow both appear blue, so you know the letter is present but not whether it is placed correctly."
+      description: "For two guesses, a green or yellow on the marked tiles appears blue, so you know the letter is present but not whether it is placed correctly. The rest of the row reports normally."
     },
     {
       id: "singleLie",
@@ -97,7 +97,7 @@
       effect: "singleLie",
       turns: 1,
       baseReward: 10,
-      description: "Exactly one tile on your opening guess is a lie. All five letters stay unconfirmed on your hand until a later guess clears them."
+      description: "The marked tiles on your opening guess lie about their colour, and those letters stay unconfirmed on your hand until a later guess clears them. The rest of the row reports normally."
     },
     {
       id: "lockedOpener",
@@ -147,6 +147,19 @@
       description: "You have 50 seconds for each of the first two guesses. A timeout spends the guess."
     }
   ];
+
+  // Challenge effects the engine knows how to mask a row with. The rest
+  // (guessCap, vowelBudget, uniqueLetters, mulliganLock, clock) constrain
+  // the round or the word, never the feedback colours.
+  var MASKING_EFFECTS = {
+    countOnly: true,
+    delayedFeedback: true,
+    hideFeedback: true,
+    hiddenMargins: true,
+    blueMode: true,
+    fakeFeedback: true,
+    singleLie: true
+  };
 
   function asNumber(value, fallback) {
     var number = Number(value);
@@ -618,42 +631,31 @@
       return originalApplyBossFeedback.apply(this, arguments);
     }
 
-    if (challenge.effect === "countOnly" || challenge.effect === "hideFeedback" || challenge.effect === "blueMode") {
-      var savedBoss = this.state.boss;
-      this.state.boss = {
-        id: challenge.effect,
-        title: challenge.title,
-        turns: challenge.turns,
-        hiddenIndex: challenge.hiddenIndex
-      };
-      try {
-        return originalApplyBossFeedback.apply(this, arguments);
-      } finally {
-        this.state.boss = savedBoss;
-      }
-    }
+    // Every feedback-altering challenge effect is now just the engine's own
+    // effect of the same name, run against a stand-in boss: the engine picks
+    // the span of tiles to touch (maskSpanFor) and applies it. This used to
+    // hand three effects over and then reimplement singleLie here, blanking
+    // the whole row's `learn` so the player couldn't spot the lie by which
+    // letters failed to resolve. That is no longer a leak worth plugging --
+    // the board marks the affected tiles up front by design -- so the lie is
+    // the engine's fakeFeedback/singleLie case and the untouched tiles teach
+    // the hand normally.
+    if (!MASKING_EFFECTS[challenge.effect]) return originalApplyBossFeedback.apply(this, arguments);
 
-    var result = originalApplyBossFeedback.apply(this, arguments);
-    if (challenge.effect !== "singleLie" || asInteger(this.state.guessesUsed, 0) >= 1) return result;
-    // The BOARD looks like a normal row -- five real-looking tiles, one of
-    // them a lie -- so it reads as "spot the lie", not a fully masked guess.
-    // But if the other four landed on the player's hand as trusted green/
-    // yellow, comparing which of the five letters DIDN'T get confirmed
-    // would give the lie away just as surely as blanking the row would have.
-    // So none of the five teach the hand anything (learn: all "unknown",
-    // same signal _updateKnowledge already treats as "withheld"), and all
-    // five go into the same unknown pile any masked guess uses -- drawn
-    // with a "?" until a later, untainted guess confirms them for real.
-    var shown = Array.isArray(result.shown) ? result.shown.slice() : feedback.slice();
-    var index = clamp(asInteger(challenge.fakeIndex, 0), 0, Math.max(0, shown.length - 1));
-    var truth = feedback[index];
-    var alternatives = ["green", "yellow", "grey"].filter(function wrongColor(color) {
-      return color !== truth;
-    });
-    shown[index] = alternatives[Math.floor(randomFor(this) * alternatives.length)];
-    var learn = shown.map(function markUnknown() { return "unknown"; });
-    this._markUnknownGlyphs(word);
-    return Object.assign({}, result, { shown: shown, learn: learn, fake: true });
+    var savedBoss = this.state.boss;
+    this.state.boss = {
+      id: challenge.effect,
+      title: challenge.title,
+      icon: challenge.icon,
+      turns: challenge.turns,
+      hiddenIndex: challenge.hiddenIndex,
+      hiddenIndices: challenge.hiddenIndices
+    };
+    try {
+      return originalApplyBossFeedback.apply(this, arguments);
+    } finally {
+      this.state.boss = savedBoss;
+    }
   };
 
   function challengeValidationError(game, challenge) {

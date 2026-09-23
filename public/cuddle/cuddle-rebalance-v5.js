@@ -229,7 +229,7 @@
       id: "deepFog",
       icon: "🌫️",
       title: "Deep Fog",
-      description: count => `The first ${guessPhrase(count)} hide${count === 1 ? "s" : ""} two consistent tile positions.`,
+      description: count => `The first ${guessPhrase(count)} hide${count === 1 ? "s" : ""} the same two marked tile positions.`,
       reward: 24,
       masks: ["hiddenMargins", "hiddenMargins"]
     }),
@@ -237,7 +237,7 @@
       id: "countedSteps",
       icon: "🔢",
       title: "Counted Steps",
-      description: count => `The first ${guessPhrase(count)} reveal${count === 1 ? "s" : ""} only a count of correct letters.`,
+      description: count => `On the first ${guessPhrase(count)}, the marked tiles reveal only a count of correct letters. The rest of the row reports normally.`,
       reward: 28,
       masks: ["countOnly", "countOnly", "countOnly"]
     }),
@@ -245,15 +245,15 @@
       id: "blueMoon",
       icon: "🔵",
       title: "Blue Moon",
-      description: count => `The first ${guessPhrase(count)} merge${count === 1 ? "s" : ""} green and yellow information into blue.`,
+      description: count => `On the first ${guessPhrase(count)}, the marked tiles merge green and yellow into blue. The rest of the row reports normally.`,
       reward: 26,
       masks: ["blueMode", "blueMode", "blueMode"]
     }),
     Object.freeze({
       id: "littleLie",
       icon: "🤥",
-      title: "One Little Lie",
-      description: "The first guess receives one false signal.",
+      title: "Little Lies",
+      description: "The marked tiles on the first guess show a false colour. The rest of the row reports normally.",
       reward: 20,
       masks: ["fakeFeedback"]
     }),
@@ -265,8 +265,8 @@
       // actually in play this early in the run, guess two's effect never
       // happens, so it has no business being mentioned at all.
       description: count => count >= 2
-        ? "Guess one is count-only; guess two hides two tile positions."
-        : "Guess one is count-only.",
+        ? "Guess one's marked tiles are count-only; guess two hides two marked positions."
+        : "Guess one's marked tiles are count-only.",
       reward: 27,
       masks: ["countOnly", "hiddenMargins"]
     }),
@@ -277,9 +277,9 @@
       // Same reasoning as Double Blind: each guess has its own distinct
       // effect, so only describe as many of the sequence as actually fire.
       description: count => {
-        if (count >= 3) return "The first three guesses cycle through blue, false, and two hidden positions.";
-        if (count === 2) return "The first two guesses cycle through blue, then a false signal.";
-        return "The first guess is blue feedback.";
+        if (count >= 3) return "The first three guesses cycle their marked tiles through blue, false, and hidden.";
+        if (count === 2) return "The first two guesses cycle their marked tiles through blue, then a false signal.";
+        return "The first guess shows blue on its marked tiles.";
       },
       reward: 32,
       masks: ["blueMode", "fakeFeedback", "hiddenMargins"]
@@ -312,7 +312,7 @@
       id: "shroudedEdges",
       icon: "🫥",
       title: "Shrouded Edges",
-      description: count => `Two consistent tile positions stay hidden on each of your first ${guessPhrase(count)}.`,
+      description: count => `The same two marked tile positions stay hidden on each of your first ${guessPhrase(count)}.`,
       reward: 24,
       masks: ["hiddenMargins", "hiddenMargins"]
     })
@@ -420,6 +420,37 @@
     if (state.megaState && typeof state.megaState === "object") return state.megaState;
     if (state.mega && typeof state.mega === "object") return state.mega;
     return null;
+  }
+
+  // Both read live off window.CuddleEngine rather than being captured at load
+  // time: this file is layered on top of the engine and its own installer
+  // already retries until the engine is present, so the engine's final frozen
+  // export may not exist yet while this module body runs.
+  //
+  // WHOLE_ROUND_BOSSES: bosses whose constraint covers the entire round
+  // instead of their first `turns` guesses (see _bossActive in the engine).
+  // ratchetForGuess: which ratchet debuff really spoils a given 1-based guess
+  // this round, after ratchetRowPlan has slid them clear of the rows the
+  // stage's own boss or challenge already claims.
+  function wholeRoundBosses() {
+    const set = window.CuddleEngine && window.CuddleEngine.WHOLE_ROUND_BOSSES;
+    return set instanceof Set ? set : new Set();
+  }
+
+  // The effects that claim tiles, as opposed to constraining the round.
+  function maskingPowerIds() {
+    const set = window.CuddleEngine && window.CuddleEngine.MASK_SPAN_EFFECTS;
+    return set instanceof Set ? set : new Set();
+  }
+
+  function ratchetForGuess(game, guessNumber) {
+    const lookup = window.CuddleEngine && window.CuddleEngine.ratchetForGuess;
+    if (typeof lookup !== "function") return null;
+    try {
+      return lookup(game, guessNumber) || null;
+    } catch (_error) {
+      return null;
+    }
   }
 
   function megaState(game) {
@@ -2810,22 +2841,22 @@
     doubleOrNothing: { title: "Double or Nothing", description: "Solve by guess three to double the stage, or lose half of it.", shape: "scales" },
     themedWordle: { title: "Themed Wordle", description: "A round that opens with one of the solution's categories already revealed.", shape: "tag" },
     randomOpener: { title: "Head Start", description: "A random legal word automatically consumes the first guess.", shape: "die" },
-    deepFog: { title: "Deep Fog", description: "Two tile positions are hidden on each affected guess.", shape: "fog" },
-    countedSteps: { title: "Counted Steps", description: "Only the total number of green and yellow tiles is shown.", shape: "count", multiplayerId: "countOnly" },
-    blueMoon: { title: "Blue Moon", description: "Green and yellow are merged into one blue result.", shape: "merge" },
-    littleLie: { title: "One Little Lie", description: "The displayed feedback is deliberately false.", shape: "lie" },
-    doubleBlind: { title: "Double Blind", description: "The first guesses combine count-only and hidden-position feedback.", shape: "blind" },
-    signalStorm: { title: "Signal Storm", description: "Affected guesses cycle through several feedback disruptions.", shape: "storm" },
+    deepFog: { title: "Deep Fog", description: "The marked tiles are hidden on each affected guess.", shape: "fog" },
+    countedSteps: { title: "Counted Steps", description: "The marked tiles show only a green and yellow count, not which tile was which. The rest of the row reports normally.", shape: "count", multiplayerId: "countOnly" },
+    blueMoon: { title: "Blue Moon", description: "On the marked tiles, green and yellow are merged into one blue result. The rest of the row reports normally.", shape: "merge" },
+    littleLie: { title: "Little Lies", description: "The marked tiles show a deliberately false colour. The rest of the row reports normally.", shape: "lie" },
+    doubleBlind: { title: "Double Blind", description: "The first guesses combine count-only and hidden-position feedback on their marked tiles.", shape: "blind" },
+    signalStorm: { title: "Signal Storm", description: "Affected guesses cycle through several feedback disruptions on their marked tiles.", shape: "storm" },
     noSafetyNet: { title: "No Safety Net", description: "Mulligans and skipped guesses are disabled for this Wordle.", shape: "noShield" },
     perfectOpener: { title: "Perfect Opener", description: "The first word must use five different letters.", shape: "unique" },
     consonantCrunch: { title: "Consonant Crunch", description: "Affected words may contain no more than one vowel.", shape: "consonant" },
-    shroudedEdges: { title: "Shrouded Edges", description: "Two consistent positions remain hidden on affected guesses.", shape: "edges" },
-    countOnly: { title: "Count Only", description: "Only the number of green and yellow letters is revealed; positions stay hidden.", shape: "count", multiplayerId: "countOnly" },
-    delayedFeedback: { title: "Delayed Feedback", description: "Feedback is withheld and then released after the delay expires.", shape: "clock" },
-    hideFeedback: { title: "Hidden Feedback", description: "One feedback position stays concealed.", shape: "blind" },
-    hiddenMargins: { title: "Hidden Margins", description: "Two feedback positions stay concealed.", shape: "edges" },
-    blueMode: { title: "Blue Mode", description: "Positive feedback is shown as blue without revealing exact placement.", shape: "merge" },
-    fakeFeedback: { title: "False Signal", description: "Displayed colours are unreliable for this guess.", shape: "lie" },
+    shroudedEdges: { title: "Shrouded Edges", description: "The same marked positions remain hidden on every affected guess.", shape: "edges" },
+    countOnly: { title: "Count Only", description: "The marked tiles report only how many of them are green and how many yellow, never which is which. Every other tile in the row shows its real colour.", shape: "count", multiplayerId: "countOnly" },
+    delayedFeedback: { title: "Delayed Feedback", description: "The marked tiles withhold their colours until the delay expires, then release them all at once. Every other tile in the row shows its real colour.", shape: "clock" },
+    hideFeedback: { title: "Hidden Feedback", description: "One tile position stays concealed for the whole round, and you never learn what it was.", shape: "blind" },
+    hiddenMargins: { title: "Hidden Margins", description: "Two tile positions stay concealed for the whole round, and you never learn what they were.", shape: "edges" },
+    blueMode: { title: "Blue Mode", description: "On the marked tiles green and yellow both show as blue, so you learn the letter is in the secret but not whether it is placed right. Every other tile in the row shows its real colour.", shape: "merge" },
+    fakeFeedback: { title: "False Signal", description: "The marked tiles show a colour that is deliberately wrong. Every other tile in the row shows its real colour.", shape: "lie" },
     quickMode: { title: "Quick Mode", description: "The guess must be made before the timer expires.", shape: "hourglass" },
     noMulligans: { title: "No Mulligans", description: "Mulligans are unavailable while this power applies.", shape: "noShield" },
     shortHand: { title: "Short Hand", description: "The round has a smaller hand or fewer guesses.", shape: "hand" },
@@ -3126,10 +3157,14 @@
   // (tier -1) always win -- they're what actually happened, recorded once
   // at submit time, and can't be re-derived after the fact. A live boss's
   // own constraint (tier 0) outranks a challenge effect (tier 1), which
-  // outranks a stacked ratchet debuff (tier 2) -- ratchet debuffs don't
-  // even fire during a boss round to begin with (see getGuessRatchetDebuff's
-  // callers, all gated on !isBossRound()), so showing one as equally live
-  // next to the real boss icon was misleading.
+  // outranks a stacked ratchet debuff (tier 2).
+  //
+  // Collisions are now rare by construction: the engine's ratchetRowPlan
+  // gives every negative a row of its own, and this reads that plan rather
+  // than the guess a ratchet was rolled for. Reading the rolled number
+  // instead put the icon on a guess the engine had already slid the ratchet
+  // off -- so that row advertised an effect that did nothing, while the row
+  // the ratchet really landed on hid a position with nothing to explain it.
   function powerIdsForGuess(game, guessIndex, opts) {
     const entries = [];
     const seen = new Set();
@@ -3154,20 +3189,51 @@
     const boss = state.boss;
     if (boss && !boss.__umtSynthetic) {
       const turns = Math.max(0, Math.floor(asNumber(boss.turns, 0)));
-      const wholeRound = ["shortHand", "noMulligans", "questTrial", "presetWordsTrial", "hideFeedback"].includes(String(boss.id || ""));
+      // Same set the engine's _bossActive() reads, so a row is marked with
+      // the boss icon on exactly the guesses the boss still constrains.
+      const wholeRound = wholeRoundBosses().has(String(boss.id || ""));
       if (wholeRound || turns <= 0 || guessIndex < turns) add(boss.id || boss.bossId, 0);
     }
 
-    const mega = megaOfState(state) || {};
-    (Array.isArray(mega.ratchetDebuffs) ? mega.ratchetDebuffs : []).forEach((burden, index) => {
-      const affected = Math.max(1, Math.floor(asNumber(burden.guessIndex, index + 1))) - 1;
-      if (affected === guessIndex) add(burden.bossId || burden.id, 2);
-    });
+    // guessIndex is 0-based here; the engine's plan is keyed by 1-based
+    // guess number.
+    const ratchet = ratchetForGuess(game, guessIndex + 1);
+    if (ratchet) add(ratchet.bossId || ratchet.id, 2);
 
     if (!opts || !opts.withTiers) return entries.map((entry) => entry.id);
     if (!entries.length) return [];
     const topTier = Math.min(...entries.map((entry) => entry.tier));
     return entries.map((entry) => ({ id: entry.id, active: entry.tier === topTier }));
+  }
+
+  // The effects actually in force on a guess. Anything a higher-priority
+  // effect outranks is simply not in force, so it is no longer shown at
+  // all: the margin used to carry greyed-out "overridden" icons beside the
+  // live one, which read as several powers stacking on the row when only
+  // one of them did anything. What remains can still be more than one icon,
+  // but only when the effects genuinely co-occur -- a masking challenge and
+  // a mulligan lock on the same guess, say.
+  function activePowersForGuess(game, guessIndex) {
+    return powerIdsForGuess(game, guessIndex, { withTiers: true })
+      .filter((entry) => entry.active)
+      .map((entry) => entry.id);
+  }
+
+  // Which of the row's five tiles that effect claims. A submitted guess
+  // reports the positions it really landed on; an unplayed one asks the
+  // engine for the span it is about to use, which is the same pure
+  // function the guess itself will be scored through.
+  function rowMaskSpan(game, guessIndex) {
+    const state = stateOf(game) || {};
+    const history = Array.isArray(state.history) ? state.history[guessIndex] : null;
+    if (history) return Array.isArray(history.maskedIndices) ? history.maskedIndices : [];
+    if (guessIndex !== asInteger(state.guessesUsed, 0) || state.status !== "playing") return [];
+    try {
+      const preview = typeof game.maskSpanPreview === "function" ? game.maskSpanPreview() : null;
+      return preview && Array.isArray(preview.indices) ? preview.indices : [];
+    } catch (_error) {
+      return [];
+    }
   }
 
   function renderRowPowerIcons(game) {
@@ -3177,13 +3243,19 @@
     const rows = Array.from(root.querySelectorAll(".cuddle-board-row"));
     rows.forEach((row, index) => {
       let stack = row.querySelector(":scope > .umt-row-power-icons");
+      const history = state?.history?.[index] || null;
+      const ids = activePowersForGuess(game, index);
+      // The ring is computed even when the icons below are suppressed: a
+      // finished row still has to show which of its tiles were the affected
+      // ones, or the player can't tell what the counts referred to.
+      const span = ids.length ? rowMaskSpan(game, index) : [];
+      markMaskedTiles(row, span, Boolean(history));
+
       // Once a guess's Count Only result is in (the row's own score column
       // already shows the green/yellow tally), the row icon sits right on
       // top of that count and makes it unreadable -- the count itself is
       // the more precise signal, so drop the icon rather than layer both.
-      const hasCountResult = Boolean(state?.history?.[index]?.bossCounts);
-      const entries = hasCountResult ? [] : powerIdsForGuess(game, index, { withTiers: true });
-      if (!entries.length) {
+      if (!ids.length || history?.bossCounts) {
         if (stack) stack.remove();
         return;
       }
@@ -3192,29 +3264,34 @@
         stack.className = "umt-row-power-icons";
         row.appendChild(stack);
       }
-      const signature = entries.map((entry) => `${entry.id}:${entry.active ? 1 : 0}`).join("|");
+      const signature = `${ids.join("+")}:${span.join(",")}`;
       if (stack.dataset.umtSignature === signature) return;
       stack.dataset.umtSignature = signature;
       stack.innerHTML = "";
-      entries.forEach(({ id, active }) => {
+
+      ids.forEach((id) => {
         const info = powerInfo(id);
+        // Only the effect that actually claims tiles names them; a mulligan
+        // lock sharing the row has nothing to do with the marked span.
+        const marks = span.length && maskingPowerIds().has(id) ? span : [];
+        const scope = marks.length
+          ? `${info.title} — hits ${tilePhrase(marks)} on guess ${index + 1}`
+          : `${info.title} — on guess ${index + 1}`;
         const button = document.createElement("button");
         button.type = "button";
-        button.className = active ? "umt-power-icon-button" : "umt-power-icon-button is-power-inactive";
+        button.className = "umt-power-icon-button";
         button.dataset.umtPowerInfo = id;
-        button.dataset.umtPowerScope = `Guess ${index + 1}`;
+        button.dataset.umtPowerScope = marks.length
+          ? `Guess ${index + 1} — ${tilePhrase(marks)}`
+          : `Guess ${index + 1}`;
         button.innerHTML = powerSvg(id);
-        button.title = active
-          ? `${info.title} — click for details`
-          : `${info.title} — overridden this guess by a higher-priority effect, click for details`;
-        button.setAttribute("aria-label", active
-          ? `${info.title} on guess ${index + 1}. Open explanation.`
-          : `${info.title} on guess ${index + 1}, currently overridden. Open explanation.`);
+        button.title = `${scope}. Click for details`;
+        button.setAttribute("aria-label", `${scope}. Open explanation.`);
         // Quick Mode's per-guess countdown used to live in a header badge
         // (removed -- this row icon is now the only place a boss's effect
         // shows). cuddle-ui.js's paintQuickModeClock still writes into
         // #cuddleQuickClock by id every 250ms; only the current row gets one.
-        if (id === "quickMode" && active && index === asInteger((stateOf(game) || {}).guessesUsed, 0)) {
+        if (id === "quickMode" && index === asInteger(state?.guessesUsed, 0)) {
           const clock = document.createElement("span");
           clock.id = "cuddleQuickClock";
           clock.className = "umt-row-quick-clock";
@@ -3223,6 +3300,26 @@
         }
         stack.appendChild(button);
       });
+    });
+  }
+
+  function tilePhrase(span) {
+    if (!span.length) return "no tiles";
+    const positions = span.map((index) => index + 1);
+    if (positions.length === 1) return `tile ${positions[0]}`;
+    return `tiles ${positions.slice(0, -1).join(", ")} and ${positions[positions.length - 1]}`;
+  }
+
+  // Ring the tiles the row's effect claims. On the row still being played
+  // this is the warning -- these are the tiles that will come back masked,
+  // blue or lying -- and it stays on afterwards so the finished row still
+  // says which tiles were the ones not to trust.
+  function markMaskedTiles(row, span, played) {
+    const claimed = new Set(span);
+    Array.from(row.querySelectorAll(".cuddle-tile")).forEach((tile, column) => {
+      const wanted = claimed.has(column);
+      tile.classList.toggle("umt-masked-tile", wanted);
+      tile.classList.toggle("is-mask-pending", wanted && !played);
     });
   }
 
@@ -3309,15 +3406,23 @@
         });
       }
 
-      if (unknownSeen) {
-        unresolved.add(glyph);
-        if (!kinds[glyph]) {
-          kinds[glyph] = "unknown";
-          changed = true;
+      // Reliable evidence outranks a masked sighting, and this used to be
+      // the other way round: a letter that sat under a Hide Feedback /
+      // Hidden Margins mask once was pinned to "?" for the rest of the run,
+      // even after a later row showed it plainly grey. The mask withholds
+      // what THAT row would have taught, not what every later row does --
+      // once any row states the letter's colour outright, the question mark
+      // has been answered and the letter resolves like any other.
+      if (!reliableSeen) {
+        if (unknownSeen) {
+          unresolved.add(glyph);
+          if (!kinds[glyph]) {
+            kinds[glyph] = "unknown";
+            changed = true;
+          }
         }
         return;
       }
-      if (!reliableSeen) return;
 
       if (unresolved.delete(glyph)) changed = true;
       if (Object.prototype.hasOwnProperty.call(kinds, glyph)) {

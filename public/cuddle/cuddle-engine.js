@@ -18,6 +18,87 @@
   const VOWELS = new Set(ALWAYS_AVAILABLE_VOWELS);
   const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
+  // ------------------------------------------------------------------
+  // Mask spans: WHICH of a row's five tiles an effect touches.
+  //
+  // Every feedback-altering effect -- a boss's, a mini challenge's, a
+  // mandatory challenge's, a stacked ratchet's -- now works the same way:
+  // it claims a span of tile positions and leaves the rest of the row
+  // alone. Previously the "row-wide" ones (Count Only, Delayed Feedback,
+  // Blue Mode, Fake Feedback) each blanked or recoloured all five tiles in
+  // their own bespoke `case`, which made them far harsher than the
+  // position-scoped ones and meant six subtly different implementations of
+  // the same idea.
+  //
+  // A span is a pure function of the round and guess, never of the run's
+  // random stream, so the UI can show the player which tiles are about to
+  // be affected BEFORE they commit a word and get exactly the positions
+  // the guess will really land on.
+  // ------------------------------------------------------------------
+
+  // How wide a row-wide effect's span is, by difficulty. Easy gets off
+  // with two of the five tiles; medium and hard take three.
+  const MASK_SPAN_BY_DIFFICULTY = Object.freeze({ easy: 2, medium: 3, hard: 3 });
+  const DEFAULT_MASK_SPAN = 3;
+
+  // Effects that were already position-scoped keep the width that IS their
+  // gimmick -- Hide Feedback is "one position", Hidden Margins is "two",
+  // One Little Lie is one false tile -- rather than being widened to the
+  // difficulty span, which would only make them harsher. Hide Feedback and
+  // Hidden Margins additionally hold their positions still for the whole
+  // round; every other effect re-rolls its span each guess.
+  const FIXED_MASK_SPANS = Object.freeze({ hideFeedback: 1, hiddenMargins: 2, singleLie: 1 });
+  const ROUND_STABLE_SPANS = new Set(["hideFeedback", "hiddenMargins"]);
+
+  // Every effect that alters what a row's tiles show. Anything not listed
+  // leaves feedback alone (Quick Mode, Short Hand, Steady Hand and the
+  // trials constrain the round, not the colours).
+  const MASK_SPAN_EFFECTS = new Set([
+    "countOnly", "delayedFeedback", "hideFeedback",
+    "hiddenMargins", "blueMode", "fakeFeedback", "singleLie"
+  ]);
+
+  // FNV-1a. A hash, deliberately not this.random(): a span has to be
+  // identical every time it is asked for -- once to preview the upcoming
+  // row, again to score it -- and drawing from the run's random stream
+  // would both differ per call and desync every later draw.
+  function hashSeed(text) {
+    let hash = 0x811c9dc5;
+    const value = String(text);
+    for (let index = 0; index < value.length; index += 1) {
+      hash ^= value.charCodeAt(index);
+      hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+    return hash >>> 0;
+  }
+
+  // `width` distinct tile positions drawn from 0..4, seeded.
+  function seededPositions(seed, width) {
+    const pool = [0, 1, 2, 3, 4];
+    const picked = [];
+    let hash = hashSeed(seed);
+    for (let step = 0; step < width && pool.length; step += 1) {
+      hash = hashSeed(`${seed}|${step}|${hash}`);
+      picked.push(pool.splice(hash % pool.length, 1)[0]);
+    }
+    return picked.sort((left, right) => left - right);
+  }
+
+  // Bosses whose constraint covers the entire round rather than a window of
+  // the first `turns` guesses. Two shapes end up here for different reasons:
+  // standing setups (Short Hand's smaller deck, Steady Hand's banned
+  // mulligans, the trials' per-guess quests) that were never guess-scoped at
+  // all, and masks whose own copy says "for the whole round" (Hide Feedback,
+  // Hidden Margins) or "every guess" (Quick Mode). The second group carries a
+  // nominal turns:6 that matches a default board only by coincidence, so
+  // reading their window off `turns` stopped constraining the extra rows the
+  // moment a run bought extra guesses. Exported so the row-icon renderer in
+  // cuddle-rebalance-v5.js marks exactly the guesses the engine constrains.
+  const WHOLE_ROUND_BOSSES = new Set([
+    "shortHand", "noMulligans", "questTrial", "presetWordsTrial",
+    "hideFeedback", "hiddenMargins", "quickMode"
+  ]);
+
   // Scoring. Greys are worth nothing (not a penalty), each unused guess on a
   // solve is worth a lot, and mulligans you never spent pay out at round end.
   const YELLOW_POINTS = 1;
@@ -417,17 +498,18 @@
     }
 
     // True while the constraint of the active boss is still in force. Bosses
-    // that run the whole round (hideFeedback, quickMode) always return true.
+    // in WHOLE_ROUND_BOSSES always return true.
     _bossActive() {
       const boss = this.state?.boss;
       if (!boss) return false;
-      // Short Hand's constraint (fewer letters, fewer guesses) isn't a
-      // guess-window feedback mask like the other bosses -- it applies for
-      // the whole round, so it never "lifts" partway through the way a
-      // `turns`-scoped constraint does. Steady Hand (no mulligans) and
-      // Quest Trial (a quest, and its penalty, on every guess) are the
-      // same shape of constraint for the same reason.
-      if (boss.id === "shortHand" || boss.id === "noMulligans" || boss.id === "questTrial") return true;
+      // A whole-round boss never "lifts" partway through the way a
+      // `turns`-scoped constraint does, so its window isn't read off `turns`
+      // at all. Hide Feedback and Hidden Margins nominally carry turns:6 and
+      // so happened to cover a default six-guess board by coincidence -- but
+      // a run carrying +1 guess every round (mega.extraGuesses) pushed the
+      // board past that window and quietly stopped hiding anything on the
+      // extra rows, while the row's power icon still promised it would.
+      if (WHOLE_ROUND_BOSSES.has(boss.id)) return true;
       const turns = Number(boss.turns) || 0;
       return this.state.guessesUsed < turns;
     }
@@ -456,94 +538,149 @@
       return Number.isFinite(value) && value > 0 ? value : MAX_GUESSES;
     }
 
+    // How many of the five tiles this run's row-wide effects claim.
+    maskSpanWidth() {
+      const difficulty = String(this.state?.megaState?.difficulty || this.state?.mega?.difficulty || "");
+      return MASK_SPAN_BY_DIFFICULTY[difficulty] || DEFAULT_MASK_SPAN;
+    }
+
+    // Which tile positions `effectId` touches on the given guess (0-based).
+    // Returns [] for anything that isn't a feedback effect, so callers can
+    // treat "no span" and "not a masking power" as the same thing.
+    maskSpanFor(effectId, guessIndex) {
+      const id = String(effectId || "");
+      if (!MASK_SPAN_EFFECTS.has(id)) return [];
+
+      const boss = this.state?.boss || {};
+      const inRange = index => Number.isInteger(index) && index >= 0 && index < 5;
+
+      // Hide Feedback and Hidden Margins pick their positions once, up
+      // front (chooseBoss, the ratchet roll, or a synthetic challenge
+      // boss), so honour whatever was stored rather than re-deriving it.
+      if (id === "hideFeedback" && inRange(Number(boss.hiddenIndex))) {
+        return [Number(boss.hiddenIndex)];
+      }
+      if (id === "hiddenMargins" && Array.isArray(boss.hiddenIndices)) {
+        const stored = boss.hiddenIndices.map(Number).filter(inRange);
+        if (stored.length) return [...new Set(stored)].sort((a, b) => a - b);
+      }
+
+      const width = FIXED_MASK_SPANS[id] || this.maskSpanWidth();
+      const state = this.state || {};
+      const base = `${state.runId || "run"}|${state.round || 0}|${state.secret || ""}|${id}`;
+      // Round-stable effects deliberately leave the guess out of the seed,
+      // so the same positions stay hidden all round.
+      const seed = ROUND_STABLE_SPANS.has(id)
+        ? base
+        : `${base}|${Math.max(0, Number(guessIndex) || 0)}`;
+      return seededPositions(seed, width);
+    }
+
+    // The effect and tile positions that will alter the NEXT guess, for the
+    // board to show before the player commits a word. Null when this guess
+    // is unaffected.
+    maskSpanPreview() {
+      const boss = this.state?.boss;
+      if (!boss || !this._bossActive()) return null;
+      const indices = this.maskSpanFor(boss.id, Number(this.state.guessesUsed) || 0);
+      if (!indices.length) return null;
+      return {
+        effectId: String(boss.id),
+        title: boss.title || "",
+        icon: boss.icon || "",
+        indices
+      };
+    }
+
     // Turns the true feedback into what the board is allowed to show, plus
     // what the player is allowed to LEARN from it. Anything masked reads as
     // "unknown" and teaches nothing -- otherwise the hand cards would quietly
     // reveal exactly what the board is hiding.
+    //
+    // Every effect below alters only the tiles in its span (maskSpanFor) and
+    // leaves the rest of the row telling the truth, so what the board marked
+    // as at-risk before the guess is exactly what comes back altered.
     _applyBossFeedback(word, feedback) {
       const boss = this.state.boss;
-      if (!boss || !this._bossActive()) {
-        return { shown: feedback.slice(), learn: feedback.slice(), counts: null };
-      }
+      const untouched = () => ({ shown: feedback.slice(), learn: feedback.slice(), counts: null, indices: [] });
+      if (!boss || !this._bossActive()) return untouched();
 
-      const unknown = () => feedback.map(() => "unknown");
+      const id = String(boss.id || "");
+      const indices = this.maskSpanFor(id, Number(this.state.guessesUsed) || 0);
+      if (!indices.length) return untouched();
 
-      switch (boss.id) {
+      const shown = feedback.slice();
+      const learn = feedback.slice();
+      const result = { shown, learn, counts: null, indices };
+
+      switch (id) {
         case "countOnly":
-          // You learn the totals, never the positions.
-          return {
-            shown: unknown(),
-            learn: unknown(),
-            counts: {
-              green: feedback.filter(result => result === "green").length,
-              yellow: feedback.filter(result => result === "yellow").length
-            }
+          // Inside the span you learn the totals, never the positions --
+          // and the totals describe the masked tiles alone, since the rest
+          // of the row already shows its real colours.
+          result.counts = {
+            green: indices.filter(index => feedback[index] === "green").length,
+            yellow: indices.filter(index => feedback[index] === "yellow").length
           };
+          indices.forEach(index => { shown[index] = "unknown"; learn[index] = "unknown"; });
+          break;
 
         case "delayedFeedback":
-          // Withheld now, released all at once when the delay expires.
-          return { shown: unknown(), learn: unknown(), counts: null, deferred: true };
+          // Withheld now, released when the delay expires.
+          indices.forEach(index => { shown[index] = "unknown"; learn[index] = "unknown"; });
+          result.deferred = true;
+          break;
 
-        case "hideFeedback": {
-          // Exactly one position stays masked for the entire round.
-          const index = Number(boss.hiddenIndex);
-          const shown = feedback.slice();
-          const learn = feedback.slice();
-          if (Number.isInteger(index) && index >= 0 && index < shown.length) {
-            shown[index] = "unknown";
-            learn[index] = "unknown";
-          }
-          return { shown, learn, counts: null };
-        }
+        case "hideFeedback":
+        case "hiddenMargins":
+          // Masked for the whole round -- these never come back.
+          indices.forEach(index => { shown[index] = "unknown"; learn[index] = "unknown"; });
+          break;
 
-        case "hiddenMargins": {
-          // Two positions stay masked for the entire round instead of one.
-          const indices = Array.isArray(boss.hiddenIndices) ? boss.hiddenIndices : [];
-          const shown = feedback.slice();
-          const learn = feedback.slice();
-          indices.forEach(index => {
-            if (Number.isInteger(index) && index >= 0 && index < shown.length) {
-              shown[index] = "unknown";
-              learn[index] = "unknown";
-            }
-          });
-          return { shown, learn, counts: null };
-        }
-
-        case "blueMode": {
+        case "blueMode":
           // Green and yellow are indistinguishable: you learn the letter is
           // in the secret, but not whether it is in the right place, so the
           // position is never confirmed.
-          const shown = feedback.map(result => (result === "grey" ? "grey" : "blue"));
-          const learn = feedback.map(result => (result === "grey" ? "grey" : "yellow"));
-          return { shown, learn, counts: null };
-        }
-
-        case "fakeFeedback": {
-          // Reuses the multiplayer Falsify Intel idea: the colours lie, so
-          // nothing seen here can be trusted or learned from. Picking
-          // independently of the truth (the old behaviour) let a "lie" land
-          // on the real colour by chance about a third of the time -- pick
-          // only from the two colours that are NOT the true one instead, so
-          // it is always actually wrong.
-          const shown = feedback.map(trueResult => {
-            const options = ["green", "yellow", "grey"].filter(colour => colour !== trueResult);
-            return options[Math.floor(this.random() * options.length)];
+          indices.forEach(index => {
+            if (feedback[index] === "grey") return;
+            shown[index] = "blue";
+            learn[index] = "yellow";
           });
-          return { shown, learn: unknown(), counts: null, fake: true };
+          break;
+
+        case "fakeFeedback":
+        case "singleLie": {
+          // The colours in the span lie, so they teach nothing. Picking
+          // independently of the truth would let a "lie" land on the real
+          // colour by chance about a third of the time -- pick only from the
+          // two colours that are NOT the true one, so it is always wrong.
+          indices.forEach(index => {
+            const options = ["green", "yellow", "grey"].filter(colour => colour !== feedback[index]);
+            shown[index] = options[Math.floor(this.random() * options.length)];
+            learn[index] = "unknown";
+          });
+          result.fake = true;
+          break;
         }
 
         default:
-          return { shown: feedback.slice(), learn: feedback.slice(), counts: null };
+          return untouched();
       }
+
+      return result;
     }
 
     // Letters played into a masked guess go to the "unknown pile": still
     // usable, but drawn with a question mark because their real status is
-    // being withheld.
-    _markUnknownGlyphs(word) {
+    // being withheld. Only the letters actually sitting on masked tiles --
+    // the rest of the row got real feedback and has nothing to withhold.
+    _markUnknownGlyphs(word, indices) {
       const unknown = new Set(this.state.unknownGlyphs || []);
-      word.split("").forEach(letter => unknown.add(glyphForLetter(letter)));
+      const letters = String(word || "").split("");
+      const targets = Array.isArray(indices) && indices.length
+        ? indices.map(index => letters[index])
+        : letters;
+      targets.forEach(letter => { if (letter) unknown.add(glyphForLetter(letter)); });
       this.state.unknownGlyphs = [...unknown].sort();
     }
 
@@ -1199,7 +1336,12 @@
       // whether the constraint applied to THIS guess specifically.
       const bossActiveThisGuess = this._bossActive();
       const masked = this._applyBossFeedback(word, feedback);
-      if (masked.shown.some(result => result === "unknown")) this._markUnknownGlyphs(word);
+      const maskedIndices = Array.isArray(masked.indices) ? masked.indices : [];
+      // Both a withheld tile and a lying one leave their letter unresolved.
+      const unresolvedIndices = maskedIndices.filter(
+        index => masked.shown[index] === "unknown" || masked.learn[index] === "unknown"
+      );
+      if (unresolvedIndices.length) this._markUnknownGlyphs(word, unresolvedIndices);
       this._updateKnowledge(word, masked.learn);
       const infiniteUnlocked = this._syncInfiniteCards();
       // A finite consonant leaves once if it appeared in the submitted word.
@@ -1227,6 +1369,10 @@
         // What the board is allowed to render. Identical to `feedback` in an
         // ordinary round; a boss can mask, recolour or falsify it.
         shownFeedback: masked.shown,
+        // Which tiles the round's effect claimed on this guess, so the board
+        // can keep marking them after the fact exactly as it marked them
+        // before the guess was submitted.
+        maskedIndices,
         bossCounts: masked.counts || null,
         deferred: Boolean(masked.deferred),
         fakeFeedback: Boolean(masked.fake),
@@ -2589,18 +2735,22 @@
     const count = Math.max(1, Number(turns) || 1);
     const guesses = `${count} guess${count === 1 ? "" : "es"}`;
     switch (id) {
+      // The masking bosses below all work on a marked span of tiles rather
+      // than the whole row (see maskSpanFor); the board rings those tiles
+      // before the guess is submitted, so the copy points at the marks
+      // instead of naming a count that changes with difficulty.
       case "countOnly":
-        return `During the first ${guesses}, you only see the total number of green and yellow tiles, not their positions. Normal feedback returns afterward.`;
+        return `During the first ${guesses}, the marked tiles report only how many of them are green and how many yellow, not which is which. Every other tile shows its real colour.`;
       case "delayedFeedback":
-        return `The first ${guesses} reveal no feedback. When the power ends, every withheld result appears at once.`;
+        return `During the first ${guesses}, the marked tiles withhold their colours. When the power ends, every withheld result appears at once.`;
       case "hideFeedback":
-        return `During the first ${guesses}, one board position hides its feedback. That position behaves normally afterward.`;
+        return `During the first ${guesses}, one marked board position hides its feedback. That position behaves normally afterward.`;
       case "hiddenMargins":
-        return `During the first ${guesses}, two board positions hide their feedback. Those positions behave normally afterward.`;
+        return `During the first ${guesses}, two marked board positions hide their feedback. Those positions behave normally afterward.`;
       case "blueMode":
-        return `During the first ${guesses}, every green or yellow result appears blue. The letter stays reusable, but its exact result remains unresolved.`;
+        return `During the first ${guesses}, a green or yellow result on the marked tiles appears blue instead. The letter stays reusable, but its exact result remains unresolved.`;
       case "fakeFeedback":
-        return `During the first ${guesses}, the displayed colours lie. Those purple mystery letters stay reusable until reliable feedback resolves them.`;
+        return `During the first ${guesses}, the marked tiles lie about their colour. Those letters stay reusable until reliable feedback resolves them.`;
       case "quickMode":
         return `During the first ${guesses}, you have one minute per guess. The timer switches off when the power window ends.`;
       case "shortHand":
@@ -3354,6 +3504,8 @@
     BASE_HAND_SIZE,
     BASE_MULLIGANS,
     BASE_MULLIGAN_SIZE,
+    WHOLE_ROUND_BOSSES,
+    MASK_SPAN_EFFECTS,
     VOWELS,
     ALWAYS_AVAILABLE_VOWELS,
     normalizeWords,
@@ -3977,6 +4129,7 @@
 
   const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   const MAX_GUESSES = Number(Engine.MAX_GUESSES) || 6;
+  const WHOLE_ROUND_BOSSES = Engine.WHOLE_ROUND_BOSSES || new Set();
   const RATCHET_QUEST_PENALTY = 5;
 
   function shuffle(items, random = Math.random) {
@@ -4490,7 +4643,7 @@
     if (game.isBossRound()) {
       const boss = state.boss || {};
       // Whole-round bosses never lift, so they claim the entire board.
-      if (boss.id === "shortHand" || boss.id === "noMulligans" || boss.id === "questTrial") {
+      if (WHOLE_ROUND_BOSSES.has(boss.id)) {
         return Math.max(0, Number(state.maxGuesses) || MAX_GUESSES);
       }
       return Math.max(0, Number(boss.turns) || 0);
@@ -4511,15 +4664,32 @@
   // there are simply dropped -- and because the order is shuffled first,
   // which ones survive is random rather than always the lowest-numbered.
   // The boss's own window is never given up to make room.
+  //
+  // EVERY ratchet kind is placed here, not just the feedback masks. Two
+  // reasons: a non-mask ratchet (Quick Mode's zeroed guess, Steady Hand's
+  // blocked mulligan, Short Hand's smaller deck) spoils a row just as
+  // surely and belongs in the same one-negative-per-row accounting; and
+  // this is the only placement anything reads, so leaving a kind out of the
+  // plan stopped it firing at all.
+  //
+  // The plan cache is keyed on the stage's own claimed-row count as well as
+  // the round, because a challenge is attached AFTER the round begins -- a
+  // plan built from the pre-challenge board would otherwise be cached and
+  // reused for guesses the challenge then went on to claim.
   function ratchetRowPlan(game) {
     const mega = ensureMega(game);
     const state = game.state || {};
-    const key = [state.runId || "run", state.round || 0, state.secret || ""].join(":");
+    // submitDraft below swaps state.boss for a synthetic mask boss while a
+    // ratchet's guess is scored. ownNegativeRowCount would read that stand-in
+    // as the stage's own boss and rebuild the plan around a board it doesn't
+    // describe, so the plan is frozen for the duration of the swap.
+    if (mega.ratchetSwapInFlight && mega.ratchetRowPlan) return mega.ratchetRowPlan;
+    const own = ownNegativeRowCount(game);
+    const key = [state.runId || "run", state.round || 0, state.secret || "", own].join(":");
     if (mega.ratchetRowPlanKey === key && mega.ratchetRowPlan) return mega.ratchetRowPlan;
 
-    const debuffs = (mega.ratchetDebuffs || []).filter(item => item && MASK_KINDS.has(item.bossId));
+    const debuffs = (mega.ratchetDebuffs || []).filter(Boolean);
     const claimed = new Set();
-    const own = ownNegativeRowCount(game);
     for (let row = 1; row <= own; row += 1) claimed.add(row);
 
     // An ordinary stage has no guess limit (see submitDraft), so a
@@ -4628,7 +4798,7 @@
     let limit = composedGetHandLimit.call(this);
     limit = Math.max(1, limit - Number(mega.handSizePenaltyThisRound || 0));
     if (!this.isBossRound()) {
-      const debuff = getGuessRatchetDebuff(this, Number(this.state?.guessesUsed || 0) + 1);
+      const debuff = plannedRatchetForGuess(this, Number(this.state?.guessesUsed || 0) + 1);
       if (debuff && (debuff.bossId === "shortHand" || debuff.bossId === "presetWordsTrial")) {
         limit = Math.max(1, limit - 1);
       }
@@ -4639,7 +4809,7 @@
   const composedMulligan = CuddleGame.prototype.mulligan;
   CuddleGame.prototype.mulligan = function mulliganMega(cardIds) {
     if (!this.isBossRound()) {
-      const debuff = getGuessRatchetDebuff(this, Number(this.state?.guessesUsed || 0) + 1);
+      const debuff = plannedRatchetForGuess(this, Number(this.state?.guessesUsed || 0) + 1);
       if (debuff && debuff.bossId === "noMulligans") {
         return { ok: false, error: "A stacked disadvantage blocks a mulligan just before this guess." };
       }
@@ -4692,7 +4862,7 @@
     ensureJokerInHand(this);
 
     const nextGuess = Number(this.state.guessesUsed || 0) + 1;
-    const forced = getGuessRatchetDebuff(this, nextGuess);
+    const forced = plannedRatchetForGuess(this, nextGuess);
     const forceQuestNow = Boolean(forced && forced.bossId === "questTrial");
 
     composedEnsureQuestForNextGuess.call(this);
@@ -4818,6 +4988,7 @@
     let sawMaskRatchet = false;
     if (ratchet && MASK_KINDS.has(ratchet.bossId)) {
       sawMaskRatchet = true;
+      mega.ratchetSwapInFlight = true;
       ratchetBossSwap = this.state.boss || null;
       // Spread the boss being displaced so its identity survives the swap:
       // on a boss stage that keeps gate/title present, so isBossRound()
@@ -4839,9 +5010,18 @@
     };
     const historySnapshotForExtras = (this.state.history || []).slice();
 
-    const result = composedSubmitDraft.call(this);
-
-    if (sawMaskRatchet) this.state.boss = ratchetBossSwap;
+    // finally, not a plain statement after the call: a throw from deeper in
+    // the chain used to leave the synthetic mask boss installed as if it were
+    // the stage's own, and now would also leave the row plan frozen.
+    let result;
+    try {
+      result = composedSubmitDraft.call(this);
+    } finally {
+      if (sawMaskRatchet) {
+        this.state.boss = ratchetBossSwap;
+        mega.ratchetSwapInFlight = false;
+      }
+    }
 
     if (!result?.ok) return result;
 
@@ -4927,7 +5107,7 @@
       this.state.lastMessage = `${this.state.lastMessage || ""} Endurance Trial: -1 hand size this round.`.trim();
     }
     if (entry && entry.questId && !entry.questComplete && !this.isBossRound()) {
-      const enduranceDebuff = getGuessRatchetDebuff(this, this.state.guessesUsed);
+      const enduranceDebuff = plannedRatchetForGuess(this, this.state.guessesUsed);
       if (enduranceDebuff?.bossId === "questEndurance") {
         mega.handSizePenaltyThisRound = Number(mega.handSizePenaltyThisRound || 0) + 1;
         this.state.lastMessage = `${this.state.lastMessage || ""} Stacked disadvantage (Endurance Trial): -1 hand size this round.`.trim();
@@ -5022,8 +5202,20 @@
     if (mega.greenCountUnlocked) lines.push("Green tiles show letter counts");
     const slotBonus = Number(this.state.upgrades.questCadence || 0);
     if (slotBonus) lines.push(`+${slotBonus} concurrent quest${slotBonus === 1 ? "" : "s"}`);
+    // Report the guess a ratchet actually lands on this round, not the one
+    // it was rolled for: ratchetRowPlan slides it off any guess the stage's
+    // own boss or challenge already spoils, so the rolled number is only the
+    // starting preference. Outside a live round there is no plan to read and
+    // the rolled number is the honest answer.
+    const livePlan = this.state?.status === "playing" ? ratchetRowPlan(this) : null;
+    const landedRow = {};
+    Object.keys(livePlan || {}).forEach(row => { landedRow[livePlan[row]] = Number(row); });
     (mega.ratchetDebuffs || []).forEach(debuff => {
-      lines.push(`Stacked disadvantage: guess ${debuff.guessIndex} carries ${RATCHET_LABEL[debuff.bossId] || debuff.bossId}`);
+      const label = RATCHET_LABEL[debuff.bossId] || debuff.bossId;
+      const row = livePlan ? landedRow[debuff.guessIndex] : debuff.guessIndex;
+      lines.push(row
+        ? `Stacked disadvantage: guess ${row} carries ${label}`
+        : `Stacked disadvantage: ${label} (no room on this stage)`);
     });
     return lines.length ? lines : ["No run upgrades yet; base Cuddle rules are active."];
   };
@@ -5031,7 +5223,12 @@
   window.CuddleEngine = Object.freeze({
     ...Engine,
     CUDDLE_JOKER_GLYPH: JOKER_GLYPH,
-    rewardInteractionSynergy
+    rewardInteractionSynergy,
+    // The single answer to "which ratchet debuff spoils guess N of this
+    // round" (N is 1-based). Everything that acts on a ratchet goes through
+    // this, so the icon a row shows in the margin and the effect the engine
+    // applies to that row can never disagree -- they are the same lookup.
+    ratchetForGuess: plannedRatchetForGuess
   });
 }());
 /* UMT_CUDDLE_EXPANSION_V1: ENGINE END */

@@ -193,6 +193,37 @@
   position: relative;
 }
 
+/* The tiles this row's effect claims. Only a subset of the five is ever
+   affected now, so the board has to say WHICH -- marked before the guess
+   is submitted (is-mask-pending, a dashed warning ring that pulses) and
+   kept afterwards as a solid ring, so a finished row still shows which
+   tiles were the ones not to trust. Drawn as an inset ring rather than a
+   border so it layers over the green/yellow/grey result colours without
+   shifting the tile or fighting their own border-color. */
+#cuddleRoot .cuddle-tile.umt-masked-tile {
+  position: relative;
+  box-shadow: inset 0 0 0 2px var(--umt-mask-ring, #c9a5ff);
+}
+
+#cuddleRoot .cuddle-tile.umt-masked-tile.is-mask-pending {
+  --umt-mask-ring: #e0b7ff;
+  border-color: #c9a5ff;
+  background: rgba(201, 165, 255, 0.14);
+  box-shadow: inset 0 0 0 2px var(--umt-mask-ring), 0 0 0.5rem rgba(201, 165, 255, 0.35);
+  animation: umt-mask-pending-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes umt-mask-pending-pulse {
+  0%, 100% { box-shadow: inset 0 0 0 2px var(--umt-mask-ring), 0 0 0.35rem rgba(201, 165, 255, 0.25); }
+  50% { box-shadow: inset 0 0 0 2px var(--umt-mask-ring), 0 0 0.7rem rgba(201, 165, 255, 0.55); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cuddleRoot .cuddle-tile.umt-masked-tile.is-mask-pending {
+    animation: none;
+  }
+}
+
 .umt-row-power-icons {
   position: absolute;
   left: calc(100% + 0.35rem);
@@ -253,19 +284,6 @@
   outline: 2px solid currentColor;
   outline-offset: 2px;
   transform: translateY(-1px);
-}
-
-/* A higher-priority effect (a live boss's own constraint, say) already
-   claims this guess -- this icon's effect isn't actually in play right
-   now, so it's shown dimmed rather than as an equally-live power. */
-.umt-power-icon-button.is-power-inactive {
-  opacity: 0.4;
-  filter: grayscale(65%);
-}
-
-.umt-power-icon-button.is-power-inactive:hover,
-.umt-power-icon-button.is-power-inactive:focus-visible {
-  opacity: 0.7;
 }
 
 .umt-power-info-overlay {

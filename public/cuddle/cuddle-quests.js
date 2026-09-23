@@ -297,7 +297,7 @@
       id: "countOnly",
       icon: "🔢",
       title: "Count Only",
-      description: "For the first three guesses you only learn HOW MANY greens and yellows you hit, not which letters.",
+      description: "For the first three guesses, the marked tiles only tell you HOW MANY of them are green and yellow, not which. The rest of the row reports normally.",
       turns: 3,
       rewardId: "cullRare"
     },
@@ -305,7 +305,7 @@
       id: "delayedFeedback",
       icon: "⏳",
       title: "Delayed Feedback",
-      description: "The first three guesses give no feedback at all. Everything you missed is revealed at once on the fourth.",
+      description: "For the first three guesses, the marked tiles give no feedback. Everything they withheld is revealed at once on the fourth.",
       turns: 3,
       rewardId: "doubleMulligans"
     },
@@ -313,7 +313,7 @@
       id: "hideFeedback",
       icon: "🙈",
       title: "Hide Feedback",
-      description: "One position stays hidden for the whole round. You never learn what it was.",
+      description: "One marked position stays hidden for the whole round. You never learn what it was.",
       turns: 6,
       rewardId: "biggerMulligans"
     },
@@ -321,7 +321,7 @@
       id: "blueMode",
       icon: "🔵",
       title: "Blue Mode",
-      description: "For the first four guesses every hit shows as blue. You learn the letter is in the secret, but not whether it is in the right place.",
+      description: "For the first four guesses, a hit on a marked tile shows as blue. You learn the letter is in the secret, but not whether it is in the right place. The rest of the row reports normally.",
       turns: 4,
       rewardId: "richerColours"
     },
@@ -329,7 +329,7 @@
       id: "fakeFeedback",
       icon: "🃏",
       title: "Fake Feedback",
-      description: "For the first four guesses the colours lie. Trust nothing you see until the fifth.",
+      description: "For the first four guesses, the marked tiles lie about their colour. The rest of the row reports normally.",
       turns: 4,
       rewardId: "freeVowelSweep"
     },
@@ -353,7 +353,7 @@
       id: "hiddenMargins",
       icon: "🕶️",
       title: "Hidden Margins",
-      description: "Two positions stay hidden for the whole round. You never learn what they were.",
+      description: "Two marked positions stay hidden for the whole round. You never learn what they were.",
       turns: 6,
       rewardId: "openingClue"
     },
