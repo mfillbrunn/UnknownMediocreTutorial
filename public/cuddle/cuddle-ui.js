@@ -386,7 +386,7 @@
           <div class="cuddle-header-title">
             <span class="cuddle-eyebrow">SINGLE-PLAYER CAMPAIGN</span>
             <div class="cuddle-header-title-line">
-              <span class="cuddle-header-score cuddle-header-points" aria-label="${state.score} points${game.isBossRound() ? "" : `, goal ${target}`}">${state.score}${game.isBossRound() ? "" : ` / ${target}`}</span>
+              <span class="cuddle-header-score cuddle-header-points" aria-label="${game.bankedScore()} points${game.isBossRound() ? "" : `, goal ${target}`}">${game.bankedScore()}${game.isBossRound() ? "" : ` / ${target}`}</span>
               <span class="cuddle-header-money" aria-label="${Number(state.cuddleMoney || 0)} money">$${Number(state.cuddleMoney || 0).toLocaleString()}</span>
             </div>
             ${bossGoal ? `<span class="cuddle-header-boss-goal" aria-label="${Math.min(bossGoal.score, bossGoal.required)} of ${bossGoal.required} points toward the next boss">Next boss: ${Math.min(bossGoal.score, bossGoal.required)}/${bossGoal.required} pts</span>` : ""}

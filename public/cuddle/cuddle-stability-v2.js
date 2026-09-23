@@ -838,9 +838,14 @@
     // "already banked" until the round actually resolves (see the
     // pendingRoundEnd guard above) -- the header shouldn't count a guess
     // that could still be undone by a mulligan.
-    const amount = roundIsLive
-      ? Math.max(0, Math.round(number(state.score, 0) - provisional))
-      : Math.max(0, Math.round(number(state.score, 0)));
+    // bankedScore() is the same figure the "Next boss" line reads, so the
+    // two can't drift apart; it also counts a stage-start grant (Opening
+    // Verse) straight away instead of holding it back with the guesses.
+    const amount = typeof game.bankedScore === "function"
+      ? Math.round(game.bankedScore())
+      : roundIsLive
+        ? Math.max(0, Math.round(number(state.score, 0) - provisional))
+        : Math.max(0, Math.round(number(state.score, 0)));
     root.querySelectorAll(".cuddle-header-score").forEach(score => {
       score.textContent = amount.toLocaleString();
       score.setAttribute("aria-label", `${amount} points`);

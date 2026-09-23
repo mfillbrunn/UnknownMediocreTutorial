@@ -3004,6 +3004,7 @@
     const state = cuddleV3EnsureState(this);
     state.mysteryGlyphKinds = {};
     state.unknownGlyphs = [];
+    state.roundOpeningPoints = 0;
     if (this.isBossRound()) return;
 
     const notes = [];
@@ -3012,6 +3013,9 @@
     if (openingPoints > 0) {
       state.score += openingPoints;
       state.roundScore += openingPoints;
+      // Granted outright at the start of the stage, not earned by a guess,
+      // so it is banked immediately -- see bankedScore() below.
+      state.roundOpeningPoints = openingPoints;
       notes.push(`Opening scripts added +${openingPoints} points.`);
     }
     const clues = Number(state.cuddleBonuses.openingClue || 0);
@@ -3020,6 +3024,22 @@
       if (message) notes.push(message);
     }
     if (notes.length) state.lastMessage = `${state.lastMessage} ${notes.join(" ")}`.trim();
+  };
+
+  // The one "points so far" figure every display reads: the header's points
+  // counter and its "Next boss: X/Y" line used to disagree mid-round, one
+  // holding back the round's points until it banked and the other counting
+  // them straight away. While a round is live, points earned by its guesses
+  // are still provisional (a no-money stage can void them) and are held
+  // back; points GRANTED at the stage's start (Opening Verse) are not
+  // provisional and count immediately.
+  CuddleGame.prototype.bankedScore = function bankedScore() {
+    const state = this.state || {};
+    const score = Number(state.score) || 0;
+    const live = state.status === "playing" && !state.pendingRoundEnd;
+    if (!live) return Math.max(0, score);
+    const provisional = Math.max(0, (Number(state.roundScore) || 0) - (Number(state.roundOpeningPoints) || 0));
+    return Math.max(0, score - provisional);
   };
 
   const cuddleV3OriginalOpenBossGate = CuddleGame.prototype._openBossGate;
