@@ -18,6 +18,21 @@
   const VOWELS = new Set(ALWAYS_AVAILABLE_VOWELS);
   const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
+  // Bosses whose constraint covers the entire round rather than a window of
+  // the first `turns` guesses. Two shapes end up here for different reasons:
+  // standing setups (Short Hand's smaller deck, Steady Hand's banned
+  // mulligans, the trials' per-guess quests) that were never guess-scoped at
+  // all, and masks whose own copy says "for the whole round" (Hide Feedback,
+  // Hidden Margins) or "every guess" (Quick Mode). The second group carries a
+  // nominal turns:6 that matches a default board only by coincidence, so
+  // reading their window off `turns` stopped constraining the extra rows the
+  // moment a run bought extra guesses. Exported so the row-icon renderer in
+  // cuddle-rebalance-v5.js marks exactly the guesses the engine constrains.
+  const WHOLE_ROUND_BOSSES = new Set([
+    "shortHand", "noMulligans", "questTrial", "presetWordsTrial",
+    "hideFeedback", "hiddenMargins", "quickMode"
+  ]);
+
   // Scoring. Greys are worth nothing (not a penalty), each unused guess on a
   // solve is worth a lot, and mulligans you never spent pay out at round end.
   const YELLOW_POINTS = 1;
@@ -417,17 +432,18 @@
     }
 
     // True while the constraint of the active boss is still in force. Bosses
-    // that run the whole round (hideFeedback, quickMode) always return true.
+    // in WHOLE_ROUND_BOSSES always return true.
     _bossActive() {
       const boss = this.state?.boss;
       if (!boss) return false;
-      // Short Hand's constraint (fewer letters, fewer guesses) isn't a
-      // guess-window feedback mask like the other bosses -- it applies for
-      // the whole round, so it never "lifts" partway through the way a
-      // `turns`-scoped constraint does. Steady Hand (no mulligans) and
-      // Quest Trial (a quest, and its penalty, on every guess) are the
-      // same shape of constraint for the same reason.
-      if (boss.id === "shortHand" || boss.id === "noMulligans" || boss.id === "questTrial") return true;
+      // A whole-round boss never "lifts" partway through the way a
+      // `turns`-scoped constraint does, so its window isn't read off `turns`
+      // at all. Hide Feedback and Hidden Margins nominally carry turns:6 and
+      // so happened to cover a default six-guess board by coincidence -- but
+      // a run carrying +1 guess every round (mega.extraGuesses) pushed the
+      // board past that window and quietly stopped hiding anything on the
+      // extra rows, while the row's power icon still promised it would.
+      if (WHOLE_ROUND_BOSSES.has(boss.id)) return true;
       const turns = Number(boss.turns) || 0;
       return this.state.guessesUsed < turns;
     }
@@ -3354,6 +3370,7 @@
     BASE_HAND_SIZE,
     BASE_MULLIGANS,
     BASE_MULLIGAN_SIZE,
+    WHOLE_ROUND_BOSSES,
     VOWELS,
     ALWAYS_AVAILABLE_VOWELS,
     normalizeWords,
@@ -3977,6 +3994,7 @@
 
   const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   const MAX_GUESSES = Number(Engine.MAX_GUESSES) || 6;
+  const WHOLE_ROUND_BOSSES = Engine.WHOLE_ROUND_BOSSES || new Set();
   const RATCHET_QUEST_PENALTY = 5;
 
   function shuffle(items, random = Math.random) {
@@ -4490,7 +4508,7 @@
     if (game.isBossRound()) {
       const boss = state.boss || {};
       // Whole-round bosses never lift, so they claim the entire board.
-      if (boss.id === "shortHand" || boss.id === "noMulligans" || boss.id === "questTrial") {
+      if (WHOLE_ROUND_BOSSES.has(boss.id)) {
         return Math.max(0, Number(state.maxGuesses) || MAX_GUESSES);
       }
       return Math.max(0, Number(boss.turns) || 0);
@@ -4511,15 +4529,32 @@
   // there are simply dropped -- and because the order is shuffled first,
   // which ones survive is random rather than always the lowest-numbered.
   // The boss's own window is never given up to make room.
+  //
+  // EVERY ratchet kind is placed here, not just the feedback masks. Two
+  // reasons: a non-mask ratchet (Quick Mode's zeroed guess, Steady Hand's
+  // blocked mulligan, Short Hand's smaller deck) spoils a row just as
+  // surely and belongs in the same one-negative-per-row accounting; and
+  // this is the only placement anything reads, so leaving a kind out of the
+  // plan stopped it firing at all.
+  //
+  // The plan cache is keyed on the stage's own claimed-row count as well as
+  // the round, because a challenge is attached AFTER the round begins -- a
+  // plan built from the pre-challenge board would otherwise be cached and
+  // reused for guesses the challenge then went on to claim.
   function ratchetRowPlan(game) {
     const mega = ensureMega(game);
     const state = game.state || {};
-    const key = [state.runId || "run", state.round || 0, state.secret || ""].join(":");
+    // submitDraft below swaps state.boss for a synthetic mask boss while a
+    // ratchet's guess is scored. ownNegativeRowCount would read that stand-in
+    // as the stage's own boss and rebuild the plan around a board it doesn't
+    // describe, so the plan is frozen for the duration of the swap.
+    if (mega.ratchetSwapInFlight && mega.ratchetRowPlan) return mega.ratchetRowPlan;
+    const own = ownNegativeRowCount(game);
+    const key = [state.runId || "run", state.round || 0, state.secret || "", own].join(":");
     if (mega.ratchetRowPlanKey === key && mega.ratchetRowPlan) return mega.ratchetRowPlan;
 
-    const debuffs = (mega.ratchetDebuffs || []).filter(item => item && MASK_KINDS.has(item.bossId));
+    const debuffs = (mega.ratchetDebuffs || []).filter(Boolean);
     const claimed = new Set();
-    const own = ownNegativeRowCount(game);
     for (let row = 1; row <= own; row += 1) claimed.add(row);
 
     // An ordinary stage has no guess limit (see submitDraft), so a
@@ -4628,7 +4663,7 @@
     let limit = composedGetHandLimit.call(this);
     limit = Math.max(1, limit - Number(mega.handSizePenaltyThisRound || 0));
     if (!this.isBossRound()) {
-      const debuff = getGuessRatchetDebuff(this, Number(this.state?.guessesUsed || 0) + 1);
+      const debuff = plannedRatchetForGuess(this, Number(this.state?.guessesUsed || 0) + 1);
       if (debuff && (debuff.bossId === "shortHand" || debuff.bossId === "presetWordsTrial")) {
         limit = Math.max(1, limit - 1);
       }
@@ -4639,7 +4674,7 @@
   const composedMulligan = CuddleGame.prototype.mulligan;
   CuddleGame.prototype.mulligan = function mulliganMega(cardIds) {
     if (!this.isBossRound()) {
-      const debuff = getGuessRatchetDebuff(this, Number(this.state?.guessesUsed || 0) + 1);
+      const debuff = plannedRatchetForGuess(this, Number(this.state?.guessesUsed || 0) + 1);
       if (debuff && debuff.bossId === "noMulligans") {
         return { ok: false, error: "A stacked disadvantage blocks a mulligan just before this guess." };
       }
@@ -4692,7 +4727,7 @@
     ensureJokerInHand(this);
 
     const nextGuess = Number(this.state.guessesUsed || 0) + 1;
-    const forced = getGuessRatchetDebuff(this, nextGuess);
+    const forced = plannedRatchetForGuess(this, nextGuess);
     const forceQuestNow = Boolean(forced && forced.bossId === "questTrial");
 
     composedEnsureQuestForNextGuess.call(this);
@@ -4818,6 +4853,7 @@
     let sawMaskRatchet = false;
     if (ratchet && MASK_KINDS.has(ratchet.bossId)) {
       sawMaskRatchet = true;
+      mega.ratchetSwapInFlight = true;
       ratchetBossSwap = this.state.boss || null;
       // Spread the boss being displaced so its identity survives the swap:
       // on a boss stage that keeps gate/title present, so isBossRound()
@@ -4839,9 +4875,18 @@
     };
     const historySnapshotForExtras = (this.state.history || []).slice();
 
-    const result = composedSubmitDraft.call(this);
-
-    if (sawMaskRatchet) this.state.boss = ratchetBossSwap;
+    // finally, not a plain statement after the call: a throw from deeper in
+    // the chain used to leave the synthetic mask boss installed as if it were
+    // the stage's own, and now would also leave the row plan frozen.
+    let result;
+    try {
+      result = composedSubmitDraft.call(this);
+    } finally {
+      if (sawMaskRatchet) {
+        this.state.boss = ratchetBossSwap;
+        mega.ratchetSwapInFlight = false;
+      }
+    }
 
     if (!result?.ok) return result;
 
@@ -4927,7 +4972,7 @@
       this.state.lastMessage = `${this.state.lastMessage || ""} Endurance Trial: -1 hand size this round.`.trim();
     }
     if (entry && entry.questId && !entry.questComplete && !this.isBossRound()) {
-      const enduranceDebuff = getGuessRatchetDebuff(this, this.state.guessesUsed);
+      const enduranceDebuff = plannedRatchetForGuess(this, this.state.guessesUsed);
       if (enduranceDebuff?.bossId === "questEndurance") {
         mega.handSizePenaltyThisRound = Number(mega.handSizePenaltyThisRound || 0) + 1;
         this.state.lastMessage = `${this.state.lastMessage || ""} Stacked disadvantage (Endurance Trial): -1 hand size this round.`.trim();
@@ -5022,8 +5067,20 @@
     if (mega.greenCountUnlocked) lines.push("Green tiles show letter counts");
     const slotBonus = Number(this.state.upgrades.questCadence || 0);
     if (slotBonus) lines.push(`+${slotBonus} concurrent quest${slotBonus === 1 ? "" : "s"}`);
+    // Report the guess a ratchet actually lands on this round, not the one
+    // it was rolled for: ratchetRowPlan slides it off any guess the stage's
+    // own boss or challenge already spoils, so the rolled number is only the
+    // starting preference. Outside a live round there is no plan to read and
+    // the rolled number is the honest answer.
+    const livePlan = this.state?.status === "playing" ? ratchetRowPlan(this) : null;
+    const landedRow = {};
+    Object.keys(livePlan || {}).forEach(row => { landedRow[livePlan[row]] = Number(row); });
     (mega.ratchetDebuffs || []).forEach(debuff => {
-      lines.push(`Stacked disadvantage: guess ${debuff.guessIndex} carries ${RATCHET_LABEL[debuff.bossId] || debuff.bossId}`);
+      const label = RATCHET_LABEL[debuff.bossId] || debuff.bossId;
+      const row = livePlan ? landedRow[debuff.guessIndex] : debuff.guessIndex;
+      lines.push(row
+        ? `Stacked disadvantage: guess ${row} carries ${label}`
+        : `Stacked disadvantage: ${label} (no room on this stage)`);
     });
     return lines.length ? lines : ["No run upgrades yet; base Cuddle rules are active."];
   };
@@ -5031,7 +5088,12 @@
   window.CuddleEngine = Object.freeze({
     ...Engine,
     CUDDLE_JOKER_GLYPH: JOKER_GLYPH,
-    rewardInteractionSynergy
+    rewardInteractionSynergy,
+    // The single answer to "which ratchet debuff spoils guess N of this
+    // round" (N is 1-based). Everything that acts on a ratchet goes through
+    // this, so the icon a row shows in the margin and the effect the engine
+    // applies to that row can never disagree -- they are the same lookup.
+    ratchetForGuess: plannedRatchetForGuess
   });
 }());
 /* UMT_CUDDLE_EXPANSION_V1: ENGINE END */

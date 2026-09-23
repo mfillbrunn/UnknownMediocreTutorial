@@ -422,6 +422,31 @@
     return null;
   }
 
+  // Both read live off window.CuddleEngine rather than being captured at load
+  // time: this file is layered on top of the engine and its own installer
+  // already retries until the engine is present, so the engine's final frozen
+  // export may not exist yet while this module body runs.
+  //
+  // WHOLE_ROUND_BOSSES: bosses whose constraint covers the entire round
+  // instead of their first `turns` guesses (see _bossActive in the engine).
+  // ratchetForGuess: which ratchet debuff really spoils a given 1-based guess
+  // this round, after ratchetRowPlan has slid them clear of the rows the
+  // stage's own boss or challenge already claims.
+  function wholeRoundBosses() {
+    const set = window.CuddleEngine && window.CuddleEngine.WHOLE_ROUND_BOSSES;
+    return set instanceof Set ? set : new Set();
+  }
+
+  function ratchetForGuess(game, guessNumber) {
+    const lookup = window.CuddleEngine && window.CuddleEngine.ratchetForGuess;
+    if (typeof lookup !== "function") return null;
+    try {
+      return lookup(game, guessNumber) || null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
   function megaState(game) {
     const state = stateOf(game);
     if (!state) return null;
@@ -3126,10 +3151,14 @@
   // (tier -1) always win -- they're what actually happened, recorded once
   // at submit time, and can't be re-derived after the fact. A live boss's
   // own constraint (tier 0) outranks a challenge effect (tier 1), which
-  // outranks a stacked ratchet debuff (tier 2) -- ratchet debuffs don't
-  // even fire during a boss round to begin with (see getGuessRatchetDebuff's
-  // callers, all gated on !isBossRound()), so showing one as equally live
-  // next to the real boss icon was misleading.
+  // outranks a stacked ratchet debuff (tier 2).
+  //
+  // Collisions are now rare by construction: the engine's ratchetRowPlan
+  // gives every negative a row of its own, and this reads that plan rather
+  // than the guess a ratchet was rolled for. Reading the rolled number
+  // instead put the icon on a guess the engine had already slid the ratchet
+  // off -- so that row advertised an effect that did nothing, while the row
+  // the ratchet really landed on hid a position with nothing to explain it.
   function powerIdsForGuess(game, guessIndex, opts) {
     const entries = [];
     const seen = new Set();
@@ -3154,15 +3183,16 @@
     const boss = state.boss;
     if (boss && !boss.__umtSynthetic) {
       const turns = Math.max(0, Math.floor(asNumber(boss.turns, 0)));
-      const wholeRound = ["shortHand", "noMulligans", "questTrial", "presetWordsTrial", "hideFeedback"].includes(String(boss.id || ""));
+      // Same set the engine's _bossActive() reads, so a row is marked with
+      // the boss icon on exactly the guesses the boss still constrains.
+      const wholeRound = wholeRoundBosses().has(String(boss.id || ""));
       if (wholeRound || turns <= 0 || guessIndex < turns) add(boss.id || boss.bossId, 0);
     }
 
-    const mega = megaOfState(state) || {};
-    (Array.isArray(mega.ratchetDebuffs) ? mega.ratchetDebuffs : []).forEach((burden, index) => {
-      const affected = Math.max(1, Math.floor(asNumber(burden.guessIndex, index + 1))) - 1;
-      if (affected === guessIndex) add(burden.bossId || burden.id, 2);
-    });
+    // guessIndex is 0-based here; the engine's plan is keyed by 1-based
+    // guess number.
+    const ratchet = ratchetForGuess(game, guessIndex + 1);
+    if (ratchet) add(ratchet.bossId || ratchet.id, 2);
 
     if (!opts || !opts.withTiers) return entries.map((entry) => entry.id);
     if (!entries.length) return [];
@@ -3309,15 +3339,23 @@
         });
       }
 
-      if (unknownSeen) {
-        unresolved.add(glyph);
-        if (!kinds[glyph]) {
-          kinds[glyph] = "unknown";
-          changed = true;
+      // Reliable evidence outranks a masked sighting, and this used to be
+      // the other way round: a letter that sat under a Hide Feedback /
+      // Hidden Margins mask once was pinned to "?" for the rest of the run,
+      // even after a later row showed it plainly grey. The mask withholds
+      // what THAT row would have taught, not what every later row does --
+      // once any row states the letter's colour outright, the question mark
+      // has been answered and the letter resolves like any other.
+      if (!reliableSeen) {
+        if (unknownSeen) {
+          unresolved.add(glyph);
+          if (!kinds[glyph]) {
+            kinds[glyph] = "unknown";
+            changed = true;
+          }
         }
         return;
       }
-      if (!reliableSeen) return;
 
       if (unresolved.delete(glyph)) changed = true;
       if (Object.prototype.hasOwnProperty.call(kinds, glyph)) {
