@@ -16,7 +16,7 @@ window.OPPONENT_POWER_DESCRIPTIONS =
       "Your opponent hid the positions of your green and yellow tiles. You can see only the totals.",
 
     feedbackLie:
-      "Your opponent made every tile in your result show a false color.",
+      "Your opponent made two tiles in your result show a false color. You don't know which two.",
 
     rouletteSecret:
       "Your opponent forced your next secret to be selected at random.",
