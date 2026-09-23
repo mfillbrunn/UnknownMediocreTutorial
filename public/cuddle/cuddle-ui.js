@@ -132,7 +132,76 @@
     }
   }
 
-  async function openCuddle() {
+  // -- Resume after closing the site ----------------------------------
+  // Closing or reloading the page used to always drop the player back on
+  // the main menu, even seconds later, although the run itself is saved.
+  // While the Cuddle screen is showing, the moment the page is hidden
+  // (tab closed, app switched, reload) is remembered; loading the site
+  // again within the grace window reopens Cuddle where it was -- inside the
+  // run, or on Cuddle's own title page if that's where the player was.
+  // The window matches how long the multiplayer server holds a
+  // disconnected player's seat (cleanupDisconnectedPlayers(io, 60_000) in
+  // server/index.js).
+  const RESUME_KEY = "umtCuddleResume";
+  const RESUME_GRACE_MS = 60 * 1000;
+  // Set while a resume is still loading, so hiding the page again in that
+  // moment remembers the run it was heading back into, not the loader.
+  let resumingInto = null;
+
+  function cuddleScreenActive() {
+    return Boolean(document.getElementById("cuddleScreen")?.classList.contains("active"));
+  }
+
+  function rememberCuddleSession() {
+    try {
+      if (cuddleScreenActive()) {
+        const view = resumingInto || (landing ? "landing" : "run");
+        localStorage.setItem(RESUME_KEY, JSON.stringify({ at: Date.now(), view }));
+      } else {
+        localStorage.removeItem(RESUME_KEY);
+      }
+    } catch (_error) {
+      // Private mode / blocked storage: the site just opens on the menu.
+    }
+  }
+
+  function forgetCuddleSession() {
+    try {
+      localStorage.removeItem(RESUME_KEY);
+    } catch (_error) {
+      // Nothing stored to forget.
+    }
+  }
+
+  function resumeCuddleIfRecent() {
+    let saved = null;
+    try {
+      saved = JSON.parse(localStorage.getItem(RESUME_KEY) || "null");
+      localStorage.removeItem(RESUME_KEY);
+    } catch (_error) {
+      saved = null;
+    }
+    if (!saved || !Number.isFinite(Number(saved.at))) return;
+    if (Date.now() - Number(saved.at) > RESUME_GRACE_MS) return;
+    // A link that opens something specific (a room invite, a join code)
+    // wins over resuming.
+    if (/[?&#](room|roomId|join|invite|code)=/i.test(window.location.search + window.location.hash)) return;
+    openCuddle({ resume: saved.view === "run" });
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") rememberCuddleSession();
+  });
+  window.addEventListener("pagehide", rememberCuddleSession);
+  // After client.js's own DOMContentLoaded handler has put up the main
+  // menu, so resuming is the last word on which screen shows.
+  window.addEventListener("load", () => setTimeout(resumeCuddleIfRecent, 0), { once: true });
+
+  async function openCuddle(options) {
+    // Also bound directly as a click handler, where the first argument is
+    // the click event -- only an explicit { resume: true } resumes.
+    const resume = Boolean(options && options.resume === true);
+    resumingInto = resume ? "run" : null;
     showScreen("cuddleScreen");
     root = document.getElementById(ROOT_ID);
     if (!root) return;
@@ -142,13 +211,17 @@
         if (root) root.innerHTML = renderReconnecting(secondsLeft);
       });
       game = window.CuddleEngine.CuddleGame.load(loadedWords);
-      landing = true;
+      // Resuming a run that was in progress goes straight back into it,
+      // exactly as the landing page's Continue button would.
+      landing = !(resume && game?.state && !["lost", "won"].includes(game.state.status));
+      resumingInto = null;
       detailsOpen = false;
       actionMode = "play";
       selectedCards = new Set();
       uiMessage = "";
       render();
     } catch (error) {
+      resumingInto = null;
       root.innerHTML = renderFatal(error?.message || "Cuddle could not start.");
     }
   }
@@ -1204,6 +1277,8 @@
         skillTreeOpen = false;
         selectedSkillNodeId = null;
         // Cuddle sits on the main menu now, not inside the Play hub.
+        // Leaving on purpose means the next visit starts on the menu.
+        forgetCuddleSession();
         showScreen("startupScreen");
         return false;
       case "run-menu":

@@ -1116,12 +1116,16 @@
     document.addEventListener("click", (event) => {
       const target = event.target instanceof Element ? event.target : null;
       if (!target) return;
-      const legacy = target.closest('[data-action="open-skill-tree"], [data-umt-pt-open]');
+      // The landing page's 🌳 button (data-action="skill-tree") opens this
+      // tree too. With no run to show, it's left to open the old catalogue.
+      const legacy = target.closest('[data-action="skill-tree"], [data-action="open-skill-tree"], [data-umt-pt-open]');
       if (legacy) {
-        event.preventDefault();
-        event.stopPropagation();
         const game = activeGame();
-        if (game && game.state) openTree(game);
+        if (game && game.state) {
+          event.preventDefault();
+          event.stopPropagation();
+          openTree(game);
+        }
         return;
       }
       if (!view.open) return;
