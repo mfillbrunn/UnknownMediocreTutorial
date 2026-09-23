@@ -235,7 +235,6 @@
     const originalCanSubmit = proto.canSubmit;
     const originalMulligan = proto.mulligan;
     const originalSubmitDraft = proto.submitDraft;
-    const originalApplyBossFeedback = proto._applyBossFeedback;
     const originalRenderMapScreen = branchExport.renderMapScreen;
     const originalAfterRender = campaignExport.afterRender;
     const originalHandleUiAction = campaignExport.handleUiAction;
@@ -395,10 +394,10 @@
       const count = Math.max(1, Math.min(3, integer(turns, 1)));
       const guessWord = count === 1 ? "guess" : "guesses";
       const descriptions = {
-        pocketTally: `For the first ${count} ${guessWord}, feedback shows only the total green and yellow counts, not their positions.`,
-        foggedSlot: `One feedback position is hidden on each of the first ${count} ${guessWord}.`,
-        blueHaze: `For the first ${count} ${guessWord}, green and yellow both appear blue.`,
-        singleLie: `Each of the first ${count} feedback ${count === 1 ? "row contains" : "rows contain"} one convincing false tile.`,
+        pocketTally: `For the first ${count} ${guessWord}, the marked tiles show only their green and yellow counts, not which is which. The rest of the row reports normally.`,
+        foggedSlot: `One marked feedback position is hidden on each of the first ${count} ${guessWord}.`,
+        blueHaze: `For the first ${count} ${guessWord}, a green or yellow on the marked tiles appears blue instead.`,
+        singleLie: `The marked tiles in each of the first ${count} feedback ${count === 1 ? "row lie" : "rows lie"} about their colour.`,
         lockedOpener: `Mulligans are locked until ${count === 1 ? "the first guess is" : `the first ${count} guesses are`} submitted.`,
         fiveGuessSprint: `This Wordle has ${count} fewer ${count === 1 ? "guess" : "guesses"} than normal, with a minimum of three.`,
         vowelBudget: `Each of the first ${count} ${guessWord} may contain at most two vowels.`,
@@ -1745,24 +1744,13 @@
       return originalSubmitDraft.apply(this, arguments);
     };
 
-    proto._applyBossFeedback = function applyProgressionChallengeFeedback(word, feedback) {
-      const challenge = activeExpandedChallenge(this);
-      const used = integer(this.state && this.state.guessesUsed, 0);
-      if (!challenge || challenge.effect !== "singleLie" || used <= 0
-          || used >= expandedChallengeTurns(challenge)) {
-        return originalApplyBossFeedback.apply(this, arguments);
-      }
-      const savedUsed = this.state.guessesUsed;
-      const savedFakeIndex = challenge.fakeIndex;
-      this.state.guessesUsed = 0;
-      challenge.fakeIndex = (integer(savedFakeIndex, 0) + used) % 5;
-      try {
-        return originalApplyBossFeedback.apply(this, arguments);
-      } finally {
-        this.state.guessesUsed = savedUsed;
-        challenge.fakeIndex = savedFakeIndex;
-      }
-    };
+    // (removed) applyProgressionChallengeFeedback used to rewind guessesUsed
+    // to 0 and rotate challenge.fakeIndex by hand, so a multi-guess One
+    // Little Lie would land on a different tile each guess instead of
+    // repeating the opener's. The engine re-rolls a guess's marked span from
+    // the guess number itself now, so the rotation is built in -- and the
+    // rewind had become actively wrong, since pinning guessesUsed at 0 would
+    // have handed every guess in the round the SAME span.
 
     function stageImage(meta, className = "umt-expanded-icon") {
       return `<img class="${className}" src="${ICON_ROOT}${escapeHtml(meta.icon)}" alt="" aria-hidden="true">`;

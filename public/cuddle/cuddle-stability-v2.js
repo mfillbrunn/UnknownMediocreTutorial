@@ -1329,21 +1329,12 @@
     }, true);
   }
 
-  function installBlueChallengeFix() {
-    const proto = Game.prototype;
-    if (proto.__umtCuddleFixpackBlue === VERSION || typeof proto._applyBossFeedback !== "function") return;
-    const original = proto._applyBossFeedback;
-    proto._applyBossFeedback = function applyFixedBlueChallenge(word, feedback) {
-      const result = original.apply(this, arguments);
-      const challenge = this.state?.cuddleMoneyMode?.activeChallenge;
-      const withinTurns = challenge && integer(this.state?.guessesUsed, 0) < integer(challenge.turns, 0);
-      if (!withinTurns || challenge.effect !== "blueMode" || !Array.isArray(feedback)) return result;
-      const shown = feedback.map(value => value === "grey" ? "grey" : "blue");
-      const learn = feedback.map(value => value === "grey" ? "grey" : "yellow");
-      return Object.assign({}, result || {}, { shown, learn, counts: null });
-    };
-    Object.defineProperty(proto, "__umtCuddleFixpackBlue", { value: VERSION, configurable: true });
-  }
+  // (removed) installBlueChallengeFix used to re-blue the WHOLE row after the
+  // engine had already handled a Blue Haze challenge, as a backstop for the
+  // effect not landing at all. The money-mode challenge layer now hands every
+  // feedback effect straight to the engine, which blues only the tiles in the
+  // guess's marked span -- so this override did nothing but undo that and put
+  // the full-row version back.
 
   function randomOpenerState(game) {
     const state = game?.state || {};
@@ -1653,7 +1644,6 @@
   function install() {
     installShopMethods();
     installShopClickHandler();
-    installBlueChallengeFix();
     installOpeningWordFix();
     wrapCampaignExport();
     const game = currentGame();
