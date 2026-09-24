@@ -742,6 +742,8 @@
 
   function enhanceShop(game, root) {
     if (game?.state?.status !== "shop") return;
+    // The Wandering Paw (cuddle-shop.js) draws its own wallet and keeper.
+    if (root.querySelector(".umt-shop-v2")) return;
     // The shop spends Money, not Points -- enhanceHeaderMoney (called
     // right before this on every render) already keeps both header spans
     // current, .cuddle-header-score (Points) and .cuddle-header-money

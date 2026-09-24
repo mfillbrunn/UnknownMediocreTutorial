@@ -1,0 +1,445 @@
+/* CUDDLE SHOP -- The Wandering Paw (see cuddle-shop.js). A market stall
+   themed by the current world, with three shelves of goods. */
+
+#cuddleRoot .umt-shop-v2 {
+  --shop-ink: #fff4e2;
+  --shop-muted: rgba(255, 244, 226, .7);
+  --shop-gold: #f6c956;
+  --shop-gold-light: #ffe8a3;
+  --shop-wood: #6b3f1d;
+  background:
+    radial-gradient(120% 60% at 50% 0%, var(--umt-world-tint, rgba(246, 201, 86, .12)), transparent 70%),
+    #0d0b12;
+}
+#cuddleRoot .umt-shop-v2[data-umt-world="woods"] { --umt-world-tint: rgba(62, 207, 142, .14); }
+#cuddleRoot .umt-shop-v2[data-umt-world="caverns"] { --umt-world-tint: rgba(128, 108, 255, .18); }
+#cuddleRoot .umt-shop-v2[data-umt-world="citadel"] { --umt-world-tint: rgba(255, 90, 79, .16); }
+
+#cuddleRoot .umt-shop-page {
+  display: grid;
+  gap: 20px;
+  width: min(580px, calc(100% - 24px));
+  margin: 0 auto;
+  padding: 8px 0 36px;
+  color: var(--shop-ink);
+}
+
+/* ---- the stall ----------------------------------------------------------- */
+
+#cuddleRoot .umt-shop-hero {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 232, 163, .16);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .45);
+}
+#cuddleRoot .umt-shop-scene {
+  position: relative;
+  height: 168px;
+  background:
+    radial-gradient(60% 80% at 50% 85%, rgba(255, 207, 112, .38), transparent 70%),
+    linear-gradient(180deg, var(--sky-top, #1f1a2c), var(--sky-bottom, #120e17));
+}
+#cuddleRoot .umt-shop-awning {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 44px;
+  background: repeating-linear-gradient(90deg, #e8a93c 0 32px, #fff1d0 32px 64px);
+  -webkit-mask:
+    linear-gradient(#000, #000) 0 0 / 100% 30px no-repeat,
+    radial-gradient(circle at 16px 30px, #000 14px, transparent 14.5px) 0 0 / 32px 44px repeat-x;
+  mask:
+    linear-gradient(#000, #000) 0 0 / 100% 30px no-repeat,
+    radial-gradient(circle at 16px 30px, #000 14px, transparent 14.5px) 0 0 / 32px 44px repeat-x;
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, .35));
+}
+#cuddleRoot .umt-shop-counter {
+  position: absolute;
+  inset: auto 0 0;
+  height: 30px;
+  background: linear-gradient(180deg, #8a5428 0 6px, #6b3f1d 6px 100%);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, .35);
+}
+#cuddleRoot .umt-shop-keeper {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  width: 96px;
+  height: 96px;
+  transform: translateX(-18%);
+}
+#cuddleRoot .umt-shop-lantern {
+  position: absolute;
+  top: 44px;
+  width: 14px;
+  height: 20px;
+  border-radius: 5px;
+  background: #ffcf70;
+  box-shadow: 0 0 14px 4px rgba(255, 179, 71, .55);
+  animation: umt-shop-lantern 3.4s ease-in-out infinite;
+}
+#cuddleRoot .umt-shop-lantern::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: -12px;
+  width: 2px;
+  height: 12px;
+  background: #5a3a14;
+}
+#cuddleRoot .umt-shop-lantern.is-left { left: 14%; }
+#cuddleRoot .umt-shop-lantern.is-right { right: 10%; animation-delay: -1.7s; }
+@keyframes umt-shop-lantern {
+  0%, 100% { opacity: .82; }
+  50% { opacity: 1; }
+}
+/* The shop header shows its title again (an older layer hid all but a
+   wallet line, which the stall's own wallet now replaces). */
+#cuddleRoot .umt-shop-v2.cuddle-shop-shell .cuddle-header-title > *:not(.umt-none) {
+  display: revert !important;
+}
+#cuddleRoot .umt-shop-speech {
+  position: absolute;
+  left: 12px;
+  top: 48px;
+  max-width: min(44%, 230px);
+  margin: 0;
+  padding: 8px 11px;
+  border-radius: 12px 12px 12px 3px;
+  background: rgba(255, 246, 228, .95);
+  color: #3a2410;
+  font-size: .8rem;
+  font-weight: 700;
+  line-height: 1.3;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .3);
+}
+#cuddleRoot .umt-shop-wallet {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 14px 5px 6px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #3a2a10, #231806);
+  border: 1.5px solid var(--shop-gold);
+  box-shadow: 0 0 18px rgba(246, 201, 86, .35);
+}
+#cuddleRoot .umt-shop-wallet strong {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--shop-gold-light);
+  font-variant-numeric: tabular-nums;
+}
+#cuddleRoot .umt-shop-coin {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff4c4, #f6c956 55%, #c48a1d);
+  color: #5a3a08;
+  font-size: .85em;
+  font-weight: 900;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .25);
+}
+#cuddleRoot .umt-shop-wallet .umt-shop-coin {
+  font-size: 1rem;
+}
+
+/* ---- shelves ------------------------------------------------------------- */
+
+#cuddleRoot .umt-shop-shelf {
+  --shelf: #3ecf8e;
+  display: grid;
+  gap: 10px;
+}
+#cuddleRoot .umt-shop-shelf.umt-shelf-boss { --shelf: #ff5a6a; }
+#cuddleRoot .umt-shop-shelf.umt-shelf-keep { --shelf: #5ad1ff; }
+
+#cuddleRoot .umt-shop-shelf > header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#cuddleRoot .umt-shop-shelf-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #120e17;
+  border: 2px solid var(--shelf);
+}
+#cuddleRoot .umt-shop-shelf-icon .umt-stage-icon {
+  width: 20px;
+  height: 20px;
+}
+#cuddleRoot .umt-shop-shelf h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 850;
+  letter-spacing: .02em;
+  color: var(--shop-ink);
+}
+#cuddleRoot .umt-shop-shelf header p {
+  margin: 1px 0 0;
+  font-size: .8rem;
+  color: var(--shop-muted);
+}
+
+#cuddleRoot .umt-shop-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+#cuddleRoot .umt-shelf-keep .umt-shop-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+#cuddleRoot .umt-shop-plank {
+  height: 12px;
+  margin: -14px -6px 0;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #8a5428 0 35%, var(--shop-wood) 35% 100%);
+  box-shadow: 0 8px 14px rgba(0, 0, 0, .45);
+}
+
+/* ---- cards --------------------------------------------------------------- */
+
+#cuddleRoot .umt-shop-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0 0 6px;
+  padding: 12px 10px 12px;
+  border-radius: 16px;
+  border: 1.5px solid color-mix(in srgb, var(--shelf) 45%, transparent);
+  background:
+    radial-gradient(90% 55% at 50% 0%, color-mix(in srgb, var(--shelf) 16%, transparent), transparent 75%),
+    linear-gradient(180deg, #221b2d, #16111d);
+  color: var(--shop-ink);
+  text-align: center;
+  font: inherit;
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+#cuddleRoot .umt-shop-card:not(:disabled):hover,
+#cuddleRoot .umt-shop-card:not(:disabled):focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--shelf);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, .4), 0 0 16px color-mix(in srgb, var(--shelf) 40%, transparent);
+  outline: none;
+}
+#cuddleRoot .umt-shop-card:disabled {
+  cursor: default;
+}
+#cuddleRoot .umt-shop-chip {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--shelf) 18%, transparent);
+  color: var(--shelf);
+  font-size: .66rem;
+  font-weight: 850;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+#cuddleRoot .umt-shop-plate {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--shelf) 26%, #120e17), #120e17 74%);
+  border: 2px solid var(--shelf);
+}
+#cuddleRoot .umt-shop-plate img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+#cuddleRoot .umt-shop-name {
+  font-size: .95rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+#cuddleRoot .umt-shop-blurb {
+  flex: 1;
+  font-size: .78rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--shop-muted);
+}
+#cuddleRoot .umt-shop-pips {
+  display: flex;
+  gap: 4px;
+}
+#cuddleRoot .umt-shop-pips i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--shelf) 60%, transparent);
+}
+#cuddleRoot .umt-shop-pips i.is-owned {
+  background: var(--shelf);
+  border-color: var(--shelf);
+}
+#cuddleRoot .umt-shop-pips i.is-next {
+  border-color: var(--shelf);
+  animation: umt-shop-pip 1.4s ease-in-out infinite;
+}
+@keyframes umt-shop-pip {
+  50% { background: color-mix(in srgb, var(--shelf) 55%, transparent); }
+}
+#cuddleRoot .umt-shop-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding: 5px 13px 5px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .06);
+  color: rgba(255, 186, 160, .9);
+  font-size: .82rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+#cuddleRoot .umt-shop-price:not(.is-buyable) {
+  padding-left: 13px;
+}
+#cuddleRoot .umt-shop-price.is-buyable {
+  background: linear-gradient(180deg, var(--shop-gold-light), var(--shop-gold));
+  color: #3a2a0c;
+  font-size: .95rem;
+  box-shadow: 0 3px 0 #a8741c;
+}
+
+#cuddleRoot .umt-shop-card.is-short .umt-shop-plate,
+#cuddleRoot .umt-shop-card.is-short .umt-shop-name {
+  opacity: .7;
+}
+#cuddleRoot .umt-shop-card.is-sold > :not(.umt-shop-stamp) {
+  opacity: .38;
+  filter: grayscale(.7);
+}
+#cuddleRoot .umt-shop-stamp {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  padding: 4px 14px;
+  border: 3px solid #ff7a6b;
+  border-radius: 8px;
+  background: rgba(18, 14, 23, .7);
+  color: #ff8f80;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  transform: translate(-50%, -50%) rotate(-14deg);
+  pointer-events: none;
+}
+#cuddleRoot .umt-shop-card.is-fresh .umt-shop-stamp {
+  animation: umt-shop-stamp .42s cubic-bezier(.2, 1.6, .4, 1) both;
+}
+@keyframes umt-shop-stamp {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(-14deg) scale(2.4); }
+  100% { opacity: 1; transform: translate(-50%, -50%) rotate(-14deg) scale(1); }
+}
+
+/* ---- bag and footer ----------------------------------------------------- */
+
+#cuddleRoot .umt-shop-bag {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px dashed rgba(255, 232, 163, .28);
+  background: rgba(255, 232, 163, .04);
+}
+#cuddleRoot .umt-shop-bag h2 {
+  margin: 0 0 6px;
+  font-size: .72rem;
+  font-weight: 850;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--shop-gold);
+}
+#cuddleRoot .umt-shop-bag ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+#cuddleRoot .umt-shop-bag li {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 232, 163, .12);
+  font-size: .78rem;
+  font-weight: 700;
+}
+#cuddleRoot .umt-shop-bag p {
+  margin: 0;
+  font-size: .8rem;
+  color: var(--shop-muted);
+}
+#cuddleRoot .umt-shop-message {
+  margin: -6px 2px 0;
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--shop-gold-light);
+}
+#cuddleRoot .umt-shop-leave {
+  width: 100%;
+}
+
+/* ---- phone ---------------------------------------------------------------- */
+
+@media (max-width: 560px) {
+  #cuddleRoot .umt-shop-scene {
+    height: 156px;
+  }
+  #cuddleRoot .umt-shop-keeper {
+    transform: translateX(-4%);
+  }
+  /* Permanent upgrades read as a list on a phone: icon, text, price. */
+  #cuddleRoot .umt-shelf-keep .umt-shop-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #cuddleRoot .umt-shelf-keep .umt-shop-card {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "plate name price"
+      "plate chip price"
+      "plate blurb blurb";
+    align-items: center;
+    justify-items: start;
+    column-gap: 10px;
+    row-gap: 3px;
+    text-align: left;
+  }
+  #cuddleRoot .umt-shelf-keep .umt-shop-plate { grid-area: plate; width: 50px; height: 50px; }
+  #cuddleRoot .umt-shelf-keep .umt-shop-name { grid-area: name; }
+  #cuddleRoot .umt-shelf-keep .umt-shop-chip { grid-area: chip; }
+  #cuddleRoot .umt-shelf-keep .umt-shop-pips { display: none; }
+  #cuddleRoot .umt-shelf-keep .umt-shop-blurb { grid-area: blurb; }
+  #cuddleRoot .umt-shelf-keep .umt-shop-price { grid-area: price; align-self: start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cuddleRoot .umt-shop-lantern,
+  #cuddleRoot .umt-shop-pips i.is-next,
+  #cuddleRoot .umt-shop-card.is-fresh .umt-shop-stamp {
+    animation: none;
+  }
+  #cuddleRoot .umt-shop-card {
+    transition: none;
+  }
+}

@@ -136,7 +136,10 @@
     }
     var count = BASE_TILES_MIN
       + (random() < BASE_TILES_EXTRA_CHANCE ? 1 : 0)
-      + bonusLevel(state, "treasureMap");
+      + bonusLevel(state, "treasureMap")
+      // Treasure Trove from the shop: +2 tiles while its stages last
+      // (counted down by cuddle-shop.js once the stage has begun).
+      + (state.cuddleShopV2 && Number(state.cuddleShopV2.tileStages) > 0 ? 2 : 0);
     // One tile per row at most, so they spread across the window instead
     // of stacking into a single lucky guess.
     return rows
