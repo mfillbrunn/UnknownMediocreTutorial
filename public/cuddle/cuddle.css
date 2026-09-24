@@ -1878,12 +1878,15 @@
 /* UMT_CUDDLE_REBALANCE_V3: CSS END */
 
 /* UMT_CUDDLE_BALANCE_REFRESH_HARDMODE_V1: CSS START */
-/* Increase only the five uncommitted board letters; submitted rows stay unchanged.
+/* The five uncommitted board letters read a little larger than submitted
+   ones -- roughly halfway between the two, so a letter doesn't visibly
+   shrink the moment its guess is entered (submitted tiles render ~34px on
+   desktop and ~22px on a phone; drafts sit at ~42px and ~31px).
    !important because #cuddleScreen is also a .game-menu, and the site-wide
    ".game-menu button { font-size: 14px !important }" otherwise wins -- a
    letter being drafted is a <button>, so it was rendering at 14px. */
 #cuddleScreen .cuddle-tile.is-draft-tile {
-  font-size: clamp(2.25rem, 6.8vw, 3.1rem) !important;
+  font-size: clamp(1.75rem, 5.2vw, 2.6rem) !important;
   line-height: 1;
 }
 
@@ -1910,7 +1913,7 @@
 
 @media (max-width: 650px) {
   #cuddleScreen .cuddle-tile.is-draft-tile {
-    font-size: clamp(2.1rem, 10.5vw, 2.75rem) !important;
+    font-size: clamp(1.5rem, 8vw, 2.2rem) !important;
   }
 
   #cuddleScreen .cuddle-upgrade-refresh {

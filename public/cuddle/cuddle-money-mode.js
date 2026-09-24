@@ -111,11 +111,11 @@
     {
       id: "fiveGuessSprint",
       icon: "\uD83C\uDFC1",
-      title: "Five-Guess Sprint",
+      title: "Guess Sprint",
       effect: "guessCap",
       turns: 0,
       baseReward: 18,
-      description: "This round has one fewer guess than it normally would, with a minimum of four guesses."
+      description: "Solve this Wordle within the world's guess limit -- 6 guesses in world one, 5 in world two, 4 in world three -- or the run is lost."
     },
     {
       id: "vowelBudget",
@@ -440,8 +440,11 @@
     mode.challengeOffer = null;
     mode.activeChallenge = challenge;
     mode.acceptedChallenges += 1;
-    if (challenge.effect === "guessCap") {
-      game.state.maxGuesses = Math.max(CONFIG.minimumGuessCap, asInteger(game.state.maxGuesses, 6) - 1);
+    if (challenge.effect === "guessCap" && typeof game._applyStrictGuessLimit === "function") {
+      // Solve inside the world's guess window (6/5/4) or the run is lost --
+      // this used to take one row off the board, which on a normal stage
+      // (no guess cap) didn't actually limit anything.
+      game._applyStrictGuessLimit();
     }
     game.state.lastMessage = challenge.title + " accepted. Solve the Wordle to collect " + formatMoney(challenge.reward) + ".";
     saveGame(game);

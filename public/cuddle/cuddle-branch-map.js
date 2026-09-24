@@ -144,7 +144,7 @@
       id: "borrowedTime",
       icon: "⏳",
       title: "Borrowed Time",
-      description: "Take a free permanent upgrade now, but the next round starts one guess short.",
+      description: "Take a free permanent upgrade now, but the next round must be solved within the world's guess limit (6, 5 or 4) or the run is lost.",
       grantsUpgrade: true,
       cost: "guess"
     },
@@ -493,7 +493,7 @@
         break;
       case "guess":
         branchMap.pendingPenalty = Object.assign({}, branchMap.pendingPenalty, { guess: 1 });
-        messages.push("The next round starts one guess short.");
+        messages.push("The next round must be solved within the world's guess limit, or the run is lost.");
         break;
       case "mulligan":
         branchMap.pendingPenalty = Object.assign({}, branchMap.pendingPenalty, { mulligan: 1 });
@@ -743,8 +743,11 @@
     }
     var penalty = branchMap.pendingPenalty;
     if (penalty) {
-      if (penalty.guess) {
-        this.state.maxGuesses = Math.max(3, Number(this.state.maxGuesses || Engine.MAX_GUESSES || 6) - penalty.guess);
+      if (penalty.guess && typeof this._applyStrictGuessLimit === "function") {
+        // Must be solved inside the world's guess window (6/5/4) or the run
+        // is lost -- this used to hide a row, which on a normal stage (no
+        // guess cap) limited nothing.
+        this._applyStrictGuessLimit();
       }
       if (penalty.mulligan) {
         this.state.mulligansLeft = Math.max(0, Number(this.state.mulligansLeft || 0) - penalty.mulligan);

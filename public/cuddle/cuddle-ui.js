@@ -559,10 +559,19 @@
     // are still genuinely capped at maxGuesses, so this only ever adds
     // rows when there's real history (or a live draft) past it, never
     // pads a normal board with extra empty ones.
-    const rowCount = Math.max(
-      state.maxGuesses,
-      state.history.length + (state.status === "playing" ? 1 : 0)
-    );
+    // A strict stage (Jackpot Run, Guess Sprint, an event's penalty) must be
+    // solved within the world's 6/5/4-guess limit, so it shows exactly that
+    // many rows -- even if another upgrade raised maxGuesses, those rows
+    // could never be played.
+    const strictLimit = !game.isBossRound() && typeof game._hardGuessLimit === "function"
+      ? game._hardGuessLimit()
+      : Infinity;
+    const rowCount = Number.isFinite(strictLimit)
+      ? Math.max(strictLimit, state.history.length)
+      : Math.max(
+        state.maxGuesses,
+        state.history.length + (state.status === "playing" ? 1 : 0)
+      );
     // Special tiles (cuddle-points-money.js) are marked on the board before
     // they are played -- a large faint symbol for their kind -- so they can
     // actually be aimed at, then keep showing what they paid once the guess

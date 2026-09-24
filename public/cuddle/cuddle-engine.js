@@ -533,6 +533,27 @@
       return 4;
     }
 
+    // The guess count a stage must be solved within, or Infinity. Ordinary
+    // stages have none (guessing past the quick-solve window only costs
+    // points); a boss has its own cap; and a "strict" stage must be solved
+    // inside the world's quick-solve window -- 6 guesses in world one, 5 in
+    // world two, 4 in world three -- or the run is lost.
+    _hardGuessLimit() {
+      if (this.isBossRound()) return this._effectiveMaxGuesses();
+      if (this.state?.strictGuessLimit) return this._solveGuessThreshold();
+      return Infinity;
+    }
+
+    // Makes this stage strict (see _hardGuessLimit). Replaces the old
+    // "one row shorter" effects, which on a normal stage only hid a row --
+    // a normal stage has no guess cap, so they never actually limited
+    // anything.
+    _applyStrictGuessLimit() {
+      if (!this.state || this.isBossRound()) return;
+      this.state.strictGuessLimit = true;
+      this.state.maxGuesses = this._solveGuessThreshold();
+    }
+
     _effectiveMaxGuesses() {
       const value = Number(this.state?.maxGuesses);
       return Number.isFinite(value) && value > 0 ? value : MAX_GUESSES;
@@ -830,6 +851,10 @@
       // Cull relies on, so canSubmit()/_baseDeckGlyphs() already treat these
       // exactly like a permanent removal for as long as they're in the set.
       state.maxGuesses = MAX_GUESSES;
+      // Set by the stage effects that used to take a row away (Jackpot Run,
+      // the Sprint challenge, an event's guess penalty) -- see
+      // _applyStrictGuessLimit().
+      state.strictGuessLimit = false;
       if (state.boss?.id === "shortHand") {
         const secretLetters = new Set(state.secret.split(""));
         const alreadyRemoved = new Set(state.removedLetters);
@@ -1287,7 +1312,7 @@
       // that's the one place "out of guesses" is a real defeat rather
       // than just missing this round's solve-speed Points bonus (see
       // _solveGuessThreshold() and the solved branch below).
-      if (this.isBossRound() && this.state.guessesUsed >= this._effectiveMaxGuesses()) {
+      if (this.state.guessesUsed >= this._hardGuessLimit()) {
         return { ok: false, error: "No guesses remain." };
       }
 
@@ -1481,10 +1506,10 @@
           score: this.state.score,
           target: this.getTarget()
         };
-      } else if (this.isBossRound() && this.state.guessesUsed >= this._effectiveMaxGuesses()) {
-        // Non-boss rounds never reach this any more (see submitDraft's own
-        // guard above) -- a normal stage just keeps accepting guesses
-        // until it's solved, however many that takes.
+      } else if (this.state.guessesUsed >= this._hardGuessLimit()) {
+        // Only bosses and strict stages have a limit (see _hardGuessLimit);
+        // a normal stage just keeps accepting guesses until it's solved,
+        // however many that takes.
         this.state.pendingRoundEnd = {
           type: "outOfGuesses",
           secret: this.state.secret,
@@ -1856,10 +1881,11 @@
         // Boss rounds like Short Hand can shorten the cap below the usual
         // six, so the message has to name the guess count that actually
         // applied this round rather than assuming it was always six.
-        const guessLimit = this._effectiveMaxGuesses();
+        const hardLimit = this._hardGuessLimit();
+        const guessLimit = Number.isFinite(hardLimit) ? hardLimit : this._effectiveMaxGuesses();
         this.state.failureReason = this.isBossRound()
           ? `The ${this.state.boss.title} boss kept ${pending.secret} hidden for all ${guessLimit} guesses.`
-          : `You did not find ${pending.secret} in ${guessLimit} guesses.`;
+          : `You did not find ${pending.secret} within this stage's ${guessLimit}-guess limit.`;
         return;
       }
 

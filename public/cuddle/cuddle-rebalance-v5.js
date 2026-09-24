@@ -1353,10 +1353,12 @@
       appendNotice(game, "\uD83C\uDF40 Lucky Start: one position is already yours.");
     } else if (variant.kind === "jackpot") {
       const state = stateOf(game);
-      // The shorter board is the cost of the doubled greens (paid per guess
-      // in applyJackpotBonus).
-      if (state) state.maxGuesses = Math.max(2, asInteger(state.maxGuesses, 6) - 1);
-      appendNotice(game, "\uD83D\uDCB0 Jackpot Run: greens pay double, and the board is one row shorter.");
+      // The cost of the doubled greens (paid per guess in applyJackpotBonus):
+      // this stage must be solved inside the world's guess window (6/5/4)
+      // or the run is lost.
+      if (typeof game._applyStrictGuessLimit === "function") game._applyStrictGuessLimit();
+      const limit = typeof game._hardGuessLimit === "function" ? game._hardGuessLimit() : 6;
+      appendNotice(game, `\uD83D\uDCB0 Jackpot Run: greens pay double, but solve within ${limit} guesses or the run is lost.`);
     } else if (variant.kind === "doubleOrNothing") {
       appendNotice(game, "\u2696\uFE0F Double or Nothing: solve by guess three to double this stage, or lose half of it.");
     }
@@ -1684,10 +1686,55 @@
     const custom = customState(game);
     if (custom) {
       if (!Array.isArray(custom.lastPayoutLines)) custom.lastPayoutLines = [];
-      custom.lastPayoutLines.push({ label, amount: value, roundToken: roundToken(game) });
+      recordPayoutLine(custom.lastPayoutLines, field, label, value, roundToken(game));
     }
     reconcilePendingPayout(game);
     return value;
+  }
+
+  // Bonuses that land once per guess (Jackpot's doubled greens, Hot
+  // Streak) used to add a line each time, so the stage bonus box listed
+  // "2 green tiles doubled", "1 green tile doubled", "3 green tiles
+  // doubled"... Lines of the same kind now fold into one, with their
+  // points summed and -- where the label counts something -- the count
+  // summed too ("6 green tiles doubled").
+  const PAYOUT_COUNT_LABELS = Object.freeze({
+    umtJackpot: (n) => `${n} green tile${n === 1 ? "" : "s"} doubled`,
+    umtVowelBounty: (n) => `${n} vowel${n === 1 ? "" : "s"} in the secret`
+  });
+  // These count something the player HOLDS at the end (rows left, Jokers in
+  // hand), so a second line for them carries the up-to-date count rather
+  // than another amount to add to it.
+  const PAYOUT_ABSOLUTE_COUNTS = new Set(["umtJokerBonus", "umtUnusedRowAdjustment"]);
+
+  function recordPayoutLine(lines, field, label, amount, token) {
+    const text = String(label || "");
+    // Same kind = same bonus field and the same wording once numbers and
+    // plurals are ignored ("1 green tile doubled" / "3 green tiles
+    // doubled"), so "Streak payout" still never merges into "3 stage streak".
+    const key = `${field}|${text.replace(/\d+/g, "#").replace(/s\b/g, "")}`;
+    const lead = text.match(/^(\d+)\s/);
+    const qty = lead ? Number(lead[1]) : null;
+    const existing = lines.find((line) => line && line.key === key && line.roundToken === token);
+    if (!existing) {
+      lines.push({ label: text, amount, roundToken: token, key, field, qty, hits: 1 });
+      return;
+    }
+    existing.amount = asNumber(existing.amount, 0) + amount;
+    existing.hits = asNumber(existing.hits, 1) + 1;
+    if (qty !== null && existing.qty !== null && existing.qty !== undefined) existing.qty += qty;
+    if (PAYOUT_ABSOLUTE_COUNTS.has(field)) {
+      existing.qty = qty;
+      existing.label = text;
+    } else if (field === "umtHotStreak" && /stage streak/.test(text)) {
+      // Streak lengths aren't additive ("2 streak" + "3 streak" is not a
+      // 5 streak) -- say how many guesses paid out instead.
+      existing.label = `Hot Streak (${existing.hits} guesses)`;
+    } else if (PAYOUT_COUNT_LABELS[field] && existing.qty !== null && existing.qty !== undefined) {
+      existing.label = PAYOUT_COUNT_LABELS[field](existing.qty);
+    } else {
+      existing.label = `${text} ×${existing.hits}`;
+    }
   }
 
   function reconcileRoundBonuses(game, snapshot) {
@@ -2837,7 +2884,7 @@
   const POWER_INFO = Object.freeze({
     plain: { title: "Classic Wordle", description: "A standard Wordle with no special rule.", shape: "grid" },
     luckyStart: { title: "Lucky Start", description: "One exact position is revealed before the first guess.", shape: "clover" },
-    jackpot: { title: "Jackpot Run", description: "Greens pay double, with one fewer guess.", shape: "coins" },
+    jackpot: { title: "Jackpot Run", description: "Greens pay double, but the stage must be solved within the world's guess limit (6, 5 or 4) or the run is lost.", shape: "coins" },
     doubleOrNothing: { title: "Double or Nothing", description: "Solve by guess three to double the stage, or lose half of it.", shape: "scales" },
     themedWordle: { title: "Themed Wordle", description: "A round that opens with one of the solution's categories already revealed.", shape: "tag" },
     randomOpener: { title: "Head Start", description: "A random legal word automatically consumes the first guess.", shape: "die" },
