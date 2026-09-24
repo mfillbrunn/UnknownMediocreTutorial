@@ -202,20 +202,24 @@
    shifting the tile or fighting their own border-color. */
 #cuddleRoot .cuddle-tile.umt-masked-tile {
   position: relative;
-  box-shadow: inset 0 0 0 2px var(--umt-mask-ring, #c9a5ff);
+  box-shadow: inset 0 0 0 3px var(--umt-mask-ring, #d6b3ff), 0 0 0.45rem rgba(201, 165, 255, 0.35);
 }
 
+/* Before the guess: a bright double ring -- solid inside, dashed outside --
+   that pulses, so the tiles about to be hidden or twisted can't be missed. */
 #cuddleRoot .cuddle-tile.umt-masked-tile.is-mask-pending {
-  --umt-mask-ring: #e0b7ff;
-  border-color: #c9a5ff;
-  background: rgba(201, 165, 255, 0.14);
-  box-shadow: inset 0 0 0 2px var(--umt-mask-ring), 0 0 0.5rem rgba(201, 165, 255, 0.35);
-  animation: umt-mask-pending-pulse 1.8s ease-in-out infinite;
+  --umt-mask-ring: #ecd2ff;
+  border-color: #d6b3ff;
+  background: rgba(201, 165, 255, 0.2);
+  outline: 2px dashed #e0bcff;
+  outline-offset: 3px;
+  box-shadow: inset 0 0 0 3px var(--umt-mask-ring), 0 0 0.8rem rgba(201, 165, 255, 0.55);
+  animation: umt-mask-pending-pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes umt-mask-pending-pulse {
-  0%, 100% { box-shadow: inset 0 0 0 2px var(--umt-mask-ring), 0 0 0.35rem rgba(201, 165, 255, 0.25); }
-  50% { box-shadow: inset 0 0 0 2px var(--umt-mask-ring), 0 0 0.7rem rgba(201, 165, 255, 0.55); }
+  0%, 100% { box-shadow: inset 0 0 0 3px var(--umt-mask-ring), 0 0 0.5rem rgba(201, 165, 255, 0.4); outline-color: rgba(224, 188, 255, 0.7); }
+  50% { box-shadow: inset 0 0 0 3px var(--umt-mask-ring), 0 0 1.1rem rgba(201, 165, 255, 0.8); outline-color: #f3e2ff; }
 }
 
 @media (prefers-reduced-motion: reduce) {

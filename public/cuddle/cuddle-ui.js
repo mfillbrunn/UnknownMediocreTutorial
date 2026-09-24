@@ -727,12 +727,20 @@
           sourceRank(a.source) - sourceRank(b.source) || a.id.localeCompare(b.id)
         ))
       }));
-    const sortByColorThenLetter = (a, b) => {
-      const aStatus = game.getCardKnowledgeStatus(a.glyph);
-      const bStatus = game.getCardKnowledgeStatus(b.glyph);
-      return (CARD_STATUS_ORDER[aStatus] ?? 99) - (CARD_STATUS_ORDER[bStatus] ?? 99)
-        || a.glyph.localeCompare(b.glyph);
+    // Letters whose result is being withheld ("?" cards) sit together,
+    // right after the known-good ones, instead of scattered alphabetically
+    // among the untried letters. A blue card (in the word, place unknown)
+    // ranks with the yellows it half-resembles.
+    // Same rule the card itself uses to show "?" (see renderHandCard).
+    const cardRank = glyph => {
+      const status = game.getCardKnowledgeStatus(glyph);
+      if (status === "unused" && typeof game.isGlyphUnknown === "function" && game.isGlyphUnknown(glyph)) return 1.8;
+      if (status === "yellow" && typeof game.isGlyphBlue === "function" && game.isGlyphBlue(glyph)) return 1.5;
+      return CARD_STATUS_ORDER[status] ?? 99;
     };
+    const sortByColorThenLetter = (a, b) => (
+      cardRank(a.glyph) - cardRank(b.glyph) || a.glyph.localeCompare(b.glyph)
+    );
     // All consonants stay in one row (sortByColorThenLetter already ranks
     // green and yellow ahead of grey/red), rather than pulling known ones
     // out into a separate row above.
