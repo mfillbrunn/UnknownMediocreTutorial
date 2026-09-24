@@ -500,7 +500,8 @@
       + `<text class="umt-pt-core-sub" dy="1.5em">of ${model.total}</text>`
       + `</g>`;
 
-    return `<svg class="umt-pt-svg" viewBox="${-VIEW} ${-VIEW} ${VIEW * 2} ${VIEW * 2}" role="group" aria-label="Progression tree">`
+    const box = view && view.zoomBox ? view.zoomBox : fullBox();
+    return `<svg class="umt-pt-svg" viewBox="${box.map(round1).join(" ")}" role="group" aria-label="Progression tree">`
       + `<defs><filter id="umtPtGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>`
       + `<radialGradient id="umtPtCore" cx="50%" cy="40%" r="65%"><stop offset="0%" stop-color="#3b2f5c"/><stop offset="100%" stop-color="#15121f"/></radialGradient>${defs.join("")}</defs>`
       + `<g class="umt-pt-rings">${rings}</g>`
@@ -631,7 +632,7 @@
     const selected = view.selectedId ? model.nodes.get(view.selectedId) : null;
     const percent = model.total ? Math.round((model.owned / model.total) * 100) : 0;
     const heading = reveal
-      ? `<span class="umt-pt-kicker">${reveal.entries.length > 1 ? "New talents" : "New talent"}</span><h2 id="umtPtTitle">${esc(reveal.entries.map((e) => e.title).join(" + "))}</h2>`
+      ? `<span class="umt-pt-kicker">Progression</span><h2 id="umtPtTitle">${reveal.entries.length > 1 ? "New talents" : "New talent"} added</h2>`
       : `<span class="umt-pt-kicker">Progression</span><h2 id="umtPtTitle">Your run so far</h2>`;
     return `<div class="umt-pt-overlay${reveal ? " is-reveal" : ""}" role="dialog" aria-modal="true" aria-hidden="false" aria-labelledby="umtPtTitle">`
       + `<div class="umt-pt-backdrop" data-umt-pt-close></div>`
@@ -641,11 +642,17 @@
       + `<span class="umt-pt-count">${model.owned}<small>/${model.total}</small></span>`
       + `<button type="button" class="umt-pt-close" data-umt-pt-close aria-label="Close progression">×</button></header>`
       + `<div class="umt-pt-body">`
-      + `<div class="umt-pt-canvas" data-umt-pt-canvas>${renderTreeSvg(model, view)}</div>`
+      + `<div class="umt-pt-canvas-wrap"><div class="umt-pt-canvas" data-umt-pt-canvas>${renderTreeSvg(model, view)}</div>`
+      + (view.zoomCenter
+        ? `<button type="button" class="umt-pt-zoom" data-umt-pt-zoom>${view.zoomBox ? "Show whole tree" : "Zoom to new pick"}</button>`
+        : "")
+      + `</div>`
       + `<aside class="umt-pt-side">`
       + (reveal ? revealMarkup(model, reveal) : detailMarkup(model, selected))
       + `<h3 class="umt-pt-side-title">Run stats</h3>`
-      + statsMarkup(stats, reveal ? reveal.diff : null)
+      // During a reveal the changes are listed once, under "What changed";
+      // the full stats below stay plain rather than repeating them.
+      + statsMarkup(stats, null)
       + timelineMarkup(model, game)
       + `</aside></div>`
       + (reveal ? `<footer class="umt-pt-foot"><button type="button" class="umt-pt-continue" data-umt-pt-close>Continue</button></footer>` : "")
@@ -696,6 +703,74 @@
     canvas.scrollTop = Math.max(0, targetY - canvas.clientHeight / 2);
   }
 
+  // -- zoom ------------------------------------------------------------------
+  // A reveal eases the tree in on the talent just picked, so it and its
+  // neighbours read at a glance; the button beside the tree toggles back
+  // to the whole tree.
+  const ZOOM_SPAN = 480;
+
+  function fullBox() {
+    return [-VIEW, -VIEW, VIEW * 2, VIEW * 2];
+  }
+
+  // Centred on the pick even near the rim (a little empty background at the
+  // edge beats the pick sitting off in a corner).
+  function zoomBoxAround(center) {
+    const half = ZOOM_SPAN / 2;
+    return [center.x - half, center.y - half, ZOOM_SPAN, ZOOM_SPAN];
+  }
+
+  // A pannable (narrow-screen) canvas keeps the middle of the tree in view,
+  // which is where a zoomed viewBox puts the picked node.
+  // Measured from where the SVG actually sits on screen, like focusCanvas,
+  // since part of an overflowing tree can sit left of the scroll origin.
+  function centreCanvasScroll() {
+    const canvas = host() && host().querySelector(".umt-pt-layer [data-umt-pt-canvas]");
+    const svg = canvas && canvas.querySelector("svg");
+    if (!canvas || !svg) return;
+    const box = svg.getBoundingClientRect();
+    const frame = canvas.getBoundingClientRect();
+    const centreX = canvas.scrollLeft + (box.left + box.width / 2 - frame.left);
+    const centreY = canvas.scrollTop + (box.top + box.height / 2 - frame.top);
+    canvas.scrollLeft = Math.max(0, centreX - canvas.clientWidth / 2);
+    canvas.scrollTop = Math.max(0, centreY - canvas.clientHeight / 2);
+  }
+
+  let zoomFrame = 0;
+  function animateZoom(target, done) {
+    const svg = host() && host().querySelector(".umt-pt-layer .umt-pt-svg");
+    cancelAnimationFrame(zoomFrame);
+    if (!svg) { done(); return; }
+    const from = (svg.getAttribute("viewBox") || "").split(/\s+/).map(Number);
+    const start = from.length === 4 && from.every(Number.isFinite) ? from : fullBox();
+    if (reducedMotion()) {
+      svg.setAttribute("viewBox", target.map(round1).join(" "));
+      done();
+      return;
+    }
+    const began = performance.now();
+    const duration = 850;
+    const step = (now) => {
+      const t = Math.min(1, (now - began) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const box = start.map((value, index) => value + (target[index] - value) * eased);
+      svg.setAttribute("viewBox", box.map(round1).join(" "));
+      if (t < 1) zoomFrame = requestAnimationFrame(step);
+      else done();
+    };
+    zoomFrame = requestAnimationFrame(step);
+  }
+
+  function zoomTo(zoomIn) {
+    if (!view.zoomCenter) return;
+    const target = zoomIn ? zoomBoxAround(view.zoomCenter) : fullBox();
+    animateZoom(target, () => {
+      view.zoomBox = zoomIn ? target : null;
+      renderOverlay();
+      centreCanvasScroll();
+    });
+  }
+
   function openTree(game, options = {}) {
     if (!game || !game.state) return;
     view.game = game;
@@ -705,10 +780,22 @@
     view.freshIds = options.freshIds || new Set();
     view.selectedId = options.selectedId || null;
     view.lastFocus = document.activeElement;
-    renderOverlay();
+    view.zoomBox = null;
+    view.zoomCenter = null;
     const focusId = options.selectedId || (view.freshIds.size ? [...view.freshIds][0] : null);
+    if (options.reveal && focusId) {
+      const picked = buildModel(game).nodes.get(focusId);
+      if (picked && Number.isFinite(picked.x) && Number.isFinite(picked.y)) view.zoomCenter = { x: picked.x, y: picked.y };
+    }
+    renderOverlay();
     requestAnimationFrame(() => {
-      focusCanvas(focusId);
+      if (view.zoomCenter) {
+        centreCanvasScroll();
+        // A beat on the whole tree first, then ease in on the new pick.
+        setTimeout(() => { if (view.open && view.zoomCenter) zoomTo(true); }, 450);
+      } else {
+        focusCanvas(focusId);
+      }
       const closeBtn = host() && host().querySelector(options.reveal ? ".umt-pt-continue" : ".umt-pt-close");
       if (closeBtn) closeBtn.focus({ preventScroll: true });
     });
@@ -1107,6 +1194,9 @@
   function afterRender(root, game, landing) {
     if (!root) return;
     view.game = game || view.game;
+    if (window.CuddleWorlds && typeof window.CuddleWorlds.applyTheme === "function") {
+      window.CuddleWorlds.applyTheme(root, landing ? null : game);
+    }
     if (landing || !game || !game.state) {
       dismissBanner(true);
       return;
@@ -1164,6 +1254,11 @@
       if (target.closest("[data-umt-pt-close]")) {
         event.preventDefault();
         closeTree();
+        return;
+      }
+      if (target.closest(".umt-pt-layer [data-umt-pt-zoom]")) {
+        event.preventDefault();
+        zoomTo(!view.zoomBox);
         return;
       }
       const node = target.closest(".umt-pt-layer [data-umt-node]");
