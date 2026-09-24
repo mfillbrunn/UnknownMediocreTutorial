@@ -475,7 +475,7 @@
 
 /* Special tiles (cuddle-points-money.js). Before they are played, each
    carries a large symbol for its kind at 40% opacity (60% transparent)
-   behind the letter -- gold $ for money, green P for points, and the
+   behind the letter -- gold $ for money, a green dot for points, and the
    unlockable mulligan, joker and hint kinds -- plus a thin ring in the
    same colour, so it's obvious which cells are worth aiming at. The
    symbol sits at z-index -1 inside the tile's own stacking context, so it
@@ -516,10 +516,17 @@
   font-size: 1.05em;
 }
 
-/* The points P reads as a letter; set it apart from typed letters. */
+/* Points are marked with a green dot (and a faint ring around it) rather
+   than a character: a "P" behind the tile read as a letter in the word. */
 .cuddle-tile.is-special-points[data-special]::before {
-  font-family: Georgia, "Times New Roman", serif;
-  font-style: italic;
+  content: "";
+  background:
+    radial-gradient(circle at center,
+      var(--special) 0 17%,
+      transparent 18% 27%,
+      color-mix(in srgb, var(--special) 70%, transparent) 28% 31%,
+      transparent 32%);
+  opacity: 0.55;
 }
 
 .cuddle-tile.is-special-won {
@@ -3147,4 +3154,31 @@
   .cuddle-choice:has(.umt-interaction-badge)::after {
     animation: none;
   }
+}
+
+/* One look for every unknown result, on the board, in the hand and on the
+   cash-out: violet stripes and a "?". Whether a boss withheld the result
+   or a lying row made it untrustworthy, the player knows the same amount
+   -- nothing -- so the two no longer look different (grey vs purple).
+   Blue stays its own colour: it does say the letter is in the word. */
+:root {
+  --cuddle-unknown-a: #6e5d96;
+  --cuddle-unknown-b: #52447a;
+  --cuddle-unknown-edge: #c6a8ff;
+}
+#cuddleScreen .cuddle-tile.is-unknown,
+#cuddleScreen .cuddle-card.is-card-unknown,
+#cuddleScreen .cuddle-card.is-card-unknown.is-mystery-unknown,
+#cuddleScreen .cuddle-card.is-card-unknown.is-mystery-purple,
+#cuddleScreen .cuddle-money-payout-tile.is-unknown {
+  border-color: var(--cuddle-unknown-edge);
+  background: repeating-linear-gradient(
+    135deg,
+    var(--cuddle-unknown-a),
+    var(--cuddle-unknown-a) 7px,
+    var(--cuddle-unknown-b) 7px,
+    var(--cuddle-unknown-b) 14px
+  );
+  color: #f7f1ff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 0 12px rgba(198, 168, 255, 0.22);
 }
