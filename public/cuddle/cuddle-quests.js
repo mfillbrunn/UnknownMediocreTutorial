@@ -305,7 +305,7 @@
       id: "delayedFeedback",
       icon: "⏳",
       title: "Delayed Feedback",
-      description: "For the first three guesses, the marked tiles give no feedback. Everything they withheld is revealed at once on the fourth.",
+      description: "For the first three guesses, the marked tiles hold back their colours for one guess: each row's hidden tiles are revealed when you submit the next guess.",
       turns: 3,
       rewardId: "doubleMulligans"
     },

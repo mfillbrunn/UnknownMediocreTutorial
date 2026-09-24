@@ -205,7 +205,7 @@
 
   const BURDEN_INFO = Object.freeze({
     countOnly: ["Count Only", "That same guess shows only how many letters are correct, every round from now on."],
-    delayedFeedback: ["Delayed Feedback", "That same guess withholds its feedback until later, every round from now on."],
+    delayedFeedback: ["Delayed Feedback", "That same guess reveals its marked tiles one guess late, every round from now on."],
     hideFeedback: ["Hidden Feedback", "That same guess hides tile feedback, every round from now on."],
     hiddenMargins: ["Hidden Margins", "Some feedback positions on that same guess stay concealed, every round from now on."],
     blueMode: ["Blue Mode", "That same guess merges yellow and green into blue feedback, every round from now on."],
@@ -807,9 +807,9 @@
     return CHALLENGES[index];
   }
 
-  function variantForNode(game, node) {
-    if (node.cuddleVariant && node.cuddleVariant.version === VERSION) return node.cuddleVariant;
-    const roll = hash32(`${mapSeed(game)}:variant:${node.row}:${node.col}`) % 100;
+  function variantForNode(game, node, salt = "") {
+    if (!salt && node.cuddleVariant && node.cuddleVariant.version === VERSION) return node.cuddleVariant;
+    const roll = hash32(`${mapSeed(game)}:variant:${node.row}:${node.col}${salt}`) % 100;
     let variant;
     if (roll < CONFIG.regularWordlePercent) {
       variant = {
@@ -851,7 +851,7 @@
         kind: "jackpot",
         icon: "\uD83D\uDCB0",
         title: "Jackpot Run",
-        description: "Green tiles pay double here, but the stage runs one guess short."
+        description: "Green tiles pay double here, but you must solve within the world's guess limit or the run is lost."
       };
     } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent + CONFIG.randomOpenerPercent
         + CONFIG.luckyStartPercent + CONFIG.jackpotPercent + CONFIG.doubleOrNothingPercent) {
@@ -891,10 +891,23 @@
     const rows = new Map();
     let changed = false;
 
+    const variantKey = (variant) => `${variant.kind}:${variant.challengeId || ""}`;
+    const rowKeys = new Map();
     for (const node of nodes) {
       if (!isMapNode(node) || !wordleTypes.has(String(node.type))) continue;
       const previous = JSON.stringify(node.cuddleVariant || null);
-      const variant = variantForNode(game, node);
+      const fresh = !(node.cuddleVariant && node.cuddleVariant.version === VERSION);
+      let variant = variantForNode(game, node);
+      // Two stops side by side offering the same thing is a wasted fork --
+      // a freshly rolled variant that repeats one already in its row is
+      // re-rolled (a few tries; a variant already shown is never changed).
+      const rowKey = Math.floor(Number(node.row));
+      if (!rowKeys.has(rowKey)) rowKeys.set(rowKey, new Set());
+      const taken = rowKeys.get(rowKey);
+      for (let attempt = 1; fresh && taken.has(variantKey(variant)) && attempt <= 8; attempt += 1) {
+        variant = variantForNode(game, node, `:reroll${attempt}`);
+      }
+      taken.add(variantKey(variant));
       const desiredType = variant.kind === "mandatoryChallenge"
         ? "challenge"
         : variant.kind === "themedWordle" ? "theme" : "normal";
@@ -2789,6 +2802,7 @@
       const id = String(element.getAttribute("data-shop-item-id") || "");
       const node = byId.get(id) || byId.get(id.replace(/^node:/, ""));
       if (!node || !node.cuddleVariant) continue;
+      if (element.closest(".umt-stop-preview")) continue;
       const variant = node.cuddleVariant;
       const iconKey = variant.kind === "mandatoryChallenge" ? variant.challengeId : variant.kind;
       // variant.description is a permanent cache set the first time this
@@ -2804,6 +2818,9 @@
       element.title = `${variant.title}: ${displayDescription}`;
       element.setAttribute("aria-label", `${variant.title}: ${displayDescription}`);
 
+      // The world map draws its own icons and captions (cuddle-worlds.js);
+      // only the tooltip text above applies there.
+      if (element.matches(".cuddle-map-node") && element.closest(".umt-map-v2")) continue;
       if (element.matches(".cuddle-map-node")) {
         const oldIcon = element.querySelector(".cuddle-map-node-icon");
         const label = element.querySelector(".cuddle-map-node-label");
@@ -2828,7 +2845,7 @@
         const heading = element.querySelector("strong");
         const description = element.querySelector("small");
         const direction = heading && / · (left|right|middle)$/i.exec(heading.textContent || "");
-        if (icon) {
+        if (icon && !icon.querySelector("[data-umt-stage-icon]")) {
           icon.classList.add("umt-svg-choice-icon");
           icon.innerHTML = powerSvg(iconKey);
         }
@@ -2837,11 +2854,11 @@
       }
 
       const preview = element.closest(".cuddle-branch-preview-overlay");
-      if (preview) {
+      if (preview && !preview.querySelector(".umt-stop-preview")) {
         const icon = preview.querySelector(".cuddle-choice-icon");
         const heading = preview.querySelector("h2");
         const description = preview.querySelector("p");
-        if (icon) {
+        if (icon && !icon.querySelector("[data-umt-stage-icon]")) {
           icon.classList.add("umt-svg-choice-icon");
           icon.innerHTML = powerSvg(iconKey);
         }
@@ -2899,7 +2916,7 @@
     consonantCrunch: { title: "Consonant Crunch", description: "Affected words may contain no more than one vowel.", shape: "consonant" },
     shroudedEdges: { title: "Shrouded Edges", description: "The same marked positions remain hidden on every affected guess.", shape: "edges" },
     countOnly: { title: "Count Only", description: "The marked tiles report only how many of them are green and how many yellow, never which is which. Every other tile in the row shows its real colour.", shape: "count", multiplayerId: "countOnly" },
-    delayedFeedback: { title: "Delayed Feedback", description: "The marked tiles withhold their colours until the delay expires, then release them all at once. Every other tile in the row shows its real colour.", shape: "clock" },
+    delayedFeedback: { title: "Delayed Feedback", description: "The marked tiles hold back their colours for one guess: each row's hidden tiles are revealed when you submit the next guess. Every other tile in the row shows its real colour immediately.", shape: "clock" },
     hideFeedback: { title: "Hidden Feedback", description: "One tile position stays concealed for the whole round, and you never learn what it was.", shape: "blind" },
     hiddenMargins: { title: "Hidden Margins", description: "Two tile positions stay concealed for the whole round, and you never learn what they were.", shape: "edges" },
     blueMode: { title: "Blue Mode", description: "On the marked tiles green and yellow both show as blue, so you learn the letter is in the secret but not whether it is placed right. Every other tile in the row shows its real colour.", shape: "merge" },
@@ -4094,6 +4111,37 @@
       version: VERSION,
       config: CONFIG,
       getActiveGame: publicActiveGame,
+      // Assigns every map stop its Wordle variant (read by the run map's
+      // renderer so labels are right on the very first paint).
+      assignMapVariants: (game) => normalizeMap(game || publicActiveGame()),
+      // Pays points into the stage's itemized "Stage bonus" box (combo
+      // payouts in cuddle-synergies.js ride on this).
+      addStageBonus: (game, amount, field, label) => addScoreBonus(game || publicActiveGame(), amount, field, label),
+      // What a map stop's variant does, for the stop preview: a named
+      // challenge is described at the run's current guess cap and carries
+      // its reward (paid in both points and money on a win).
+      stopVariant: (game, node) => {
+        const variant = node && node.cuddleVariant;
+        if (!variant) return null;
+        if (variant.kind === "mandatoryChallenge") {
+          const challenge = challengeById(variant.challengeId);
+          return {
+            kind: variant.kind,
+            title: variant.title || challenge.title,
+            description: challengeDisplayDescription(game || publicActiveGame(), challenge),
+            reward: Math.max(0, Math.round(asNumber(challenge.reward, 0)))
+          };
+        }
+        return { kind: variant.kind, title: variant.title, description: variant.description };
+      },
+      // The challenge stops the map can roll, described at the run's
+      // current guess cap -- listed by the map key.
+      mapChallenges: (game) => CHALLENGES.map((challenge) => ({
+        id: challenge.id,
+        title: challenge.title,
+        reward: challenge.reward,
+        description: challengeDisplayDescription(game || publicActiveGame(), challenge)
+      })),
       // Generic "how many times has this id been taken" lookup, reused by
       // cuddle-economy-rarity-v8.js's card decorator to print a level tag
       // (e.g. "1/2") on live reward cards without duplicating the several
