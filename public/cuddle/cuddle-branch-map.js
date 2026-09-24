@@ -87,10 +87,15 @@
     var done = (game && game.state && game.state.bossGatesDone) || [];
     var gate = BOSS_GATE_ORDER.find(function (candidate) { return done.indexOf(candidate) === -1; });
     if (!gate) return null;
+    // bankedScore(), not raw state.score: raw score counts the live round's
+    // guess points before they bank, which put this line ahead of the
+    // header's points counter mid-round. Off the map both are the same.
     return {
       gate: gate,
       required: bossPointRequirement(game, gate),
-      score: Number((game && game.state && game.state.score) || 0)
+      score: game && typeof game.bankedScore === "function"
+        ? game.bankedScore()
+        : Number((game && game.state && game.state.score) || 0)
     };
   }
 
@@ -757,7 +762,13 @@
     var round = this.state.round;
     var noMoneyFlag = Number(branchMap.noMoneyRound) === Number(round);
     var rewardsFlag = Number(branchMap.rewardsDisabledRound) === Number(round);
-    var baseline = noMoneyFlag ? Number(this.state.score || 0) - Number(this.state.roundScore || 0) : null;
+    // Voids only what the round's guesses earned: a stage-start grant was
+    // already shown as banked (bankedScore), so taking it back here would
+    // make the header count go backwards.
+    var baseline = noMoneyFlag
+      ? Number(this.state.score || 0)
+        - Math.max(0, Number(this.state.roundScore || 0) - Number(this.state.roundOpeningPoints || 0))
+      : null;
     var result = originalResolvePendingRoundEnd.apply(this, arguments);
     if (noMoneyFlag) {
       this.state.score = baseline;
@@ -1094,10 +1105,28 @@
     }));
   }
 
+  // The map node the player is standing on (the stage being played), with
+  // its type's display info merged in -- read by the stage-intro banner in
+  // cuddle-progression.js. Null before the first stop is entered.
+  function currentStageNode(game) {
+    var state = game && game.state;
+    if (!state || !state.branchMap || !Array.isArray(state.branchMap.rows)) return null;
+    var node = currentNode(state.branchMap);
+    if (!node) return null;
+    var info = NODE_TYPES[node.type] || {};
+    return Object.assign({}, node, {
+      typeIcon: info.icon || "",
+      typeTitle: info.title || "",
+      typeDescription: info.description || "",
+      totalRows: state.branchMap.rows.length
+    });
+  }
+
   window.CuddleBranchMap = Object.freeze({
     STATUS: MAP_STATUS,
     renderMapScreen: renderMapScreen,
     bossPointRequirement: bossPointRequirement,
-    nextBossRequirement: nextBossRequirement
+    nextBossRequirement: nextBossRequirement,
+    currentStageNode: currentStageNode
   });
 }());

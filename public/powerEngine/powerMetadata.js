@@ -50,8 +50,8 @@ window.POWER_METADATA = {
 
   feedbackLie: {
     label: "Feedback Lie",
-    desc: "The Secretkeeper makes every tile in the Guesser's next result show a false color. Nothing in the row can be trusted, and the keyboard shows only \"?\" for those letters since no real info was learned.",
-    short: "Every tile in the Guesser's next result shows a false color.",
+    desc: "The Secretkeeper makes two randomly chosen tiles in the Guesser's next result show a false color. The Guesser isn't told which two, so no single tile in the row can be trusted, and the keyboard shows only \"?\" for those letters.",
+    short: "Two hidden tiles in the Guesser's next result show a false color.",
     icon: "mask",
     emoji: "🤥",
     color: "#6B7280"

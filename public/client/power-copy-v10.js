@@ -27,8 +27,8 @@
       desc: "Helps the Secretkeeper by showing only the total number of green and yellow tiles, not their positions."
     },
     feedbackLie: {
-      short: "Helps the Secretkeeper make every tile in the next result show a false color.",
-      desc: "Helps the Secretkeeper by making every tile in the Guesser's next result show a false color, with the keyboard showing only \"?\" for those letters."
+      short: "Helps the Secretkeeper make two hidden tiles in the next result show a false color.",
+      desc: "Helps the Secretkeeper by making two randomly chosen tiles in the Guesser's next result show a false color. The Guesser isn't told which two, and the keyboard shows only \"?\" for that row's letters."
     },
     rouletteSecret: {
       short: "Helps the Guesser force the Secretkeeper's next secret to be chosen at random.",
@@ -149,7 +149,7 @@
     fieldReport: "Your opponent follows shown conditions to build progress toward a yellow or green clue.",
     fakeFeedback: "Your opponent makes your feedback show one real result and one fake result.",
     countOnly: "Your opponent hides the positions of your green and yellow tiles and shows only the totals.",
-    feedbackLie: "Your opponent makes every tile in your next result show a false color.",
+    feedbackLie: "Your opponent makes two tiles in your next result show a false color, and you won't know which two.",
     rouletteSecret: "Your opponent forces your next legal secret to be selected at random.",
     nonsense: "Your opponent may submit any five letters this turn, even when they do not form a dictionary word.",
     forceGuess: "Your opponent adds a rule that your next guess must follow.",

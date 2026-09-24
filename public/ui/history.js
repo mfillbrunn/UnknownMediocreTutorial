@@ -33,10 +33,10 @@ function computeTileClassKey({isSetter, entryRoundIndex, guessIndex, bsIdx, bsRo
     classes.push("tile-erased");
     return classes.join(" ");
   }
-  // Feedback Lie: every tile the guesser sees is a clean, fully-wrong
-  // color (see feedbackLieServer.js's entry.feedbackLie side channel) --
-  // rendered as a plain colored tile like a real result, since the whole
-  // point is that it reads as trustworthy. fbGuesser itself stays "❓"
+  // Feedback Lie: two randomly chosen tiles show a clean, wrong color and
+  // the rest show the truth (see feedbackLieServer.js's entry.feedbackLie
+  // side channel) -- every tile rendered as a plain colored tile like a
+  // real result, so nothing marks which two are the lies. fbGuesser itself stays "❓"
   // (handled by the erased/uncertain fallback below) so the keyboard and
   // any AI reasoning never treat the lie as real evidence.
   if (!isSetter && Array.isArray(safeEntry.feedbackLie)) {
@@ -859,9 +859,10 @@ function getSetterTileClasses(safeEntry, guessIndex, isBlindSpot) {
     }
   }
   // --- Case 1b: Feedback Lie -- show the setter what the guesser was
-  // shown, same as fakeFeedback's ambiguity hint above, since the lie is
-  // always a single clean color (never equal to the truth by construction
-  // -- see feedbackLieServer.js's buildLieFeedback). ---
+  // shown, same as fakeFeedback's ambiguity hint above. Only the lied
+  // tiles differ from the truth (a lied tile never matches it by
+  // construction -- see feedbackLieServer.js's buildLieFeedback), so this
+  // marks exactly the two the setter's power falsified. ---
   const lieFb = safeEntry.feedbackLie?.[guessIndex];
   if (lieFb && lieFb !== trueFb) {
     secondaryClass = fbToClass(lieFb);

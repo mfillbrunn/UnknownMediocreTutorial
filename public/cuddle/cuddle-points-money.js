@@ -53,18 +53,47 @@
   // baseline every stage pays regardless of what else is unlocked.
   var STAGE_CLEAR_MONEY = 10;
 
-  // Money tiles: a handful of board cells, rolled fresh at the start of
-  // every non-boss round, that pay out for the guess played through them.
-  // A yellow letter on one pays MONEY_TILE_YELLOW and a green one pays
-  // double; grey pays nothing but still spends the tile. They only ever
-  // sit inside the round's quick-solve window (_solveGuessThreshold():
-  // 6 guesses in world one, 5 in world two, 4 in world three), so hunting
-  // one is never a reason to guess past that window and eat the late
-  // penalty cuddle-engine.js charges beyond it.
-  var MONEY_TILE_COUNT = 3;
+  // Special tiles: a few board cells, rolled fresh at the start of every
+  // non-boss round, that pay out for the letter the player lands on them.
+  // Each is marked on the board before it is played (a large faint symbol)
+  // so it can be aimed at. A yellow or green on it pays; a grey spends it
+  // for nothing. Payouts happen inside the engine's scoring step (see
+  // _scoreSpecialTiles, called from cuddle-engine.js's submitDraft) so a
+  // points tile counts toward the row -- and toward a solve -- on the very
+  // guess that lands on it. They only ever sit inside the round's
+  // quick-solve window (_solveGuessThreshold(): 6 guesses in world one, 5
+  // in world two, 4 in world three), one per row at most, so hunting one is
+  // never a reason to guess past that window and eat the late penalty.
+  //
+  // Kinds. A run starts with money and points tiles only; between-round
+  // rewards (cuddle-engine.js's CUDDLE_V3_CUSTOM_REWARDS) unlock the rest,
+  // and taking an unlock again makes that kind more common:
+  //   money    $  gold   +$2 on yellow, +$4 on green
+  //   points   P  green  +5 points on yellow, +10 on green
+  //   mulligan ↻         +1 mulligan (yellow or green alike)
+  //   joker    ★         +1 Joker
+  //   hint     ?         reveals one letter and its exact position (rarest)
   var MONEY_TILE_YELLOW = 2;
   var MONEY_TILE_GREEN = MONEY_TILE_YELLOW * 2;
-  var MONEY_TILE_COLUMNS = 5;
+  var POINTS_TILE_YELLOW = 5;
+  var POINTS_TILE_GREEN = POINTS_TILE_YELLOW * 2;
+  var TILE_COLUMNS = 5;
+
+  // How many a stage gets: one or two (1.5 on average), plus one more per
+  // Treasure Map.
+  var BASE_TILES_MIN = 1;
+  var BASE_TILES_EXTRA_CHANCE = 0.5;
+
+  // Relative odds of each kind for one tile. Money and points are always
+  // in the pool; the unlockable kinds scale with their unlock's level
+  // (level 1 unlocks, 2 and 3 make it more common), hint least of all.
+  var TILE_KINDS = [
+    { kind: "money", weight: function () { return 1; } },
+    { kind: "points", weight: function () { return 1; } },
+    { kind: "mulligan", bonus: "mulliganTiles", weight: function (level) { return 0.45 * level; } },
+    { kind: "joker", bonus: "jokerTiles", weight: function (level) { return 0.3 * level; } },
+    { kind: "hint", bonus: "oracleTiles", weight: function (level) { return 0.15 * level; } }
+  ];
 
   function addMoney(state, amount) {
     state.cuddleMoney = Math.max(0, Number(state.cuddleMoney || 0) + amount);
@@ -74,8 +103,28 @@
     return typeof game.random === "function" ? game.random : Math.random;
   }
 
-  function rollMoneyTiles(game) {
+  function bonusLevel(state, id) {
+    var bonuses = state && state.cuddleBonuses;
+    return Math.max(0, Number(bonuses && bonuses[id]) || 0);
+  }
+
+  function pickKind(state, random) {
+    var pool = TILE_KINDS.map(function weigh(entry) {
+      var level = entry.bonus ? bonusLevel(state, entry.bonus) : 1;
+      return { kind: entry.kind, weight: level > 0 ? entry.weight(level) : 0 };
+    }).filter(function usable(entry) { return entry.weight > 0; });
+    var total = pool.reduce(function sum(acc, entry) { return acc + entry.weight; }, 0);
+    var roll = random() * total;
+    for (var i = 0; i < pool.length; i += 1) {
+      roll -= pool[i].weight;
+      if (roll < 0) return pool[i].kind;
+    }
+    return pool[pool.length - 1].kind;
+  }
+
+  function rollSpecialTiles(game) {
     var random = randomFor(game);
+    var state = game.state || {};
     var threshold = typeof game._solveGuessThreshold === "function" ? game._solveGuessThreshold() : 6;
     var rows = [];
     for (var row = 0; row < threshold; row += 1) rows.push(row);
@@ -85,57 +134,111 @@
       rows[index] = rows[swap];
       rows[swap] = held;
     }
-    // One tile per row at most, so the three of them spread across the
-    // window instead of stacking into a single lucky guess.
+    var count = BASE_TILES_MIN
+      + (random() < BASE_TILES_EXTRA_CHANCE ? 1 : 0)
+      + bonusLevel(state, "treasureMap");
+    // One tile per row at most, so they spread across the window instead
+    // of stacking into a single lucky guess.
     return rows
-      .slice(0, Math.min(MONEY_TILE_COUNT, rows.length))
+      .slice(0, Math.min(count, rows.length))
       .map(function place(chosenRow) {
-        return { row: chosenRow, col: Math.floor(random() * MONEY_TILE_COLUMNS), paid: false, payout: 0 };
+        return {
+          row: chosenRow,
+          col: Math.floor(random() * TILE_COLUMNS),
+          kind: pickKind(state, random),
+          paid: false,
+          payout: 0,
+          label: ""
+        };
       })
       .sort(function byRow(a, b) { return a.row - b.row; });
   }
 
-  function payMoneyTiles(state, row, entry) {
-    var tiles = Array.isArray(state.cuddleMoneyTiles) ? state.cuddleMoneyTiles : null;
-    if (!tiles || !entry) return 0;
-    // The true colours, not the masked ones a boss or challenge shows on
-    // the board: the letter really did land where it landed, whatever the
-    // feedback is willing to admit this guess.
-    var feedback = Array.isArray(entry.feedback) ? entry.feedback : [];
-    var earned = 0;
+  // Pays every special tile on `row` from this guess's TRUE colours -- not
+  // the masked ones a boss or challenge shows on the board: the letter
+  // really did land where it landed, whatever the feedback will admit.
+  // Returns the points to add to this guess's row score; everything else
+  // (money, mulligans, Jokers) is granted directly, and hints are queued
+  // for after the guess so the reveal can't point at a position this very
+  // guess just uncovered.
+  proto._scoreSpecialTiles = function scoreSpecialTiles(row, feedback) {
+    var state = this.state;
+    var tiles = state && Array.isArray(state.cuddleMoneyTiles) ? state.cuddleMoneyTiles : null;
+    if (!tiles || !Array.isArray(feedback)) return 0;
+    var points = 0;
+    var notes = [];
     tiles.forEach(function pay(tile) {
       if (!tile || tile.paid || Number(tile.row) !== row) return;
       var result = feedback[Number(tile.col)];
-      var amount = result === "green" ? MONEY_TILE_GREEN : result === "yellow" ? MONEY_TILE_YELLOW : 0;
+      var hit = result === "green" || result === "yellow";
+      var green = result === "green";
+      var kind = tile.kind || "money";
       tile.paid = true;
-      tile.payout = amount;
-      earned += amount;
+      tile.hit = hit;
+      tile.payout = 0;
+      tile.label = "";
+      if (!hit) return;
+      if (kind === "money") {
+        tile.payout = green ? MONEY_TILE_GREEN : MONEY_TILE_YELLOW;
+        tile.label = "+$" + tile.payout;
+        addMoney(state, tile.payout);
+        notes.push("Money tile +$" + tile.payout);
+      } else if (kind === "points") {
+        tile.payout = green ? POINTS_TILE_GREEN : POINTS_TILE_YELLOW;
+        tile.label = "+" + tile.payout;
+        points += tile.payout;
+        notes.push("Points tile +" + tile.payout);
+      } else if (kind === "mulligan") {
+        tile.payout = 1;
+        tile.label = "+1";
+        state.mulligansLeft = Math.max(0, Number(state.mulligansLeft) || 0) + 1;
+        notes.push("Mulligan tile +1 mulligan");
+      } else if (kind === "joker") {
+        tile.payout = 1;
+        tile.label = "+1";
+        var mega = state.megaState || (state.megaState = {});
+        mega.jokerCharges = Math.max(0, Number(mega.jokerCharges) || 0) + 1;
+        notes.push("Joker tile +1 Joker");
+      } else if (kind === "hint") {
+        tile.payout = 1;
+        tile.label = "Hint";
+        state.pendingTileHints = Math.max(0, Number(state.pendingTileHints) || 0) + 1;
+      }
     });
-    if (earned > 0) addMoney(state, earned);
-    return earned;
-  }
+    if (notes.length) state.pendingTileNotes = (state.pendingTileNotes || []).concat(notes);
+    return points;
+  };
 
   var originalBeginRound = proto._beginRound;
-  proto._beginRound = function beginRoundWithMoneyTiles() {
+  proto._beginRound = function beginRoundWithSpecialTiles() {
     var result = originalBeginRound.apply(this, arguments);
     var state = this.state;
     if (state) {
-      // Bosses are a straight fight -- no money tiles there, only on the
+      state.pendingTileHints = 0;
+      state.pendingTileNotes = [];
+      // Bosses are a straight fight -- no special tiles there, only on the
       // wordle, themed wordle and challenge stops.
-      state.cuddleMoneyTiles = this.isBossRound() ? [] : rollMoneyTiles(this);
+      state.cuddleMoneyTiles = this.isBossRound() ? [] : rollSpecialTiles(this);
     }
     return result;
   };
 
   var originalSubmitDraft = proto.submitDraft;
-  proto.submitDraft = function submitDraftWithMoneyTiles() {
-    var state = this.state;
-    var before = state && Array.isArray(state.history) ? state.history.length : 0;
+  proto.submitDraft = function submitDraftWithSpecialTiles() {
     var result = originalSubmitDraft.apply(this, arguments);
-    if (!state || !Array.isArray(state.history) || state.history.length <= before) return result;
-    var earned = payMoneyTiles(state, before, state.history[before]);
-    if (earned > 0) {
-      state.lastMessage = ((state.lastMessage || "") + " Money tile: +$" + earned + ".").trim();
+    var state = this.state;
+    if (!state) return result;
+    var notes = Array.isArray(state.pendingTileNotes) ? state.pendingTileNotes : [];
+    state.pendingTileNotes = [];
+    var hints = Math.max(0, Number(state.pendingTileHints) || 0);
+    state.pendingTileHints = 0;
+    // Hints only mean something while the round is still being played.
+    if (hints > 0 && state.status === "playing" && typeof this._revealPositionPeek === "function") {
+      for (var i = 0; i < hints; i += 1) notes.push("Oracle tile: " + this._revealPositionPeek());
+    }
+    if (notes.length) {
+      var sentences = notes.map(function trimStop(note) { return String(note).replace(/\.+$/, ""); });
+      state.lastMessage = ((state.lastMessage || "") + " " + sentences.join(". ") + ".").trim();
       if (typeof this.save === "function") this.save();
     }
     return result;

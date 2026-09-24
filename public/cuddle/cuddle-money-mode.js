@@ -528,7 +528,7 @@
         kind: "starter",
         round: 1
       });
-      this.state.rewardBookHistory = this.state.rewardBookHistory.slice(-40);
+      this.state.rewardBookHistory = this.state.rewardBookHistory.slice(-200);
     }
     saveGame(this);
     requestRender(this);
@@ -868,7 +868,11 @@
     // Points: this run's ordinary score. Money (below) is the separate,
     // always-spendable currency the shop and events actually charge --
     // see cuddle-points-money.js.
-    var visiblePoints = Math.max(0, Math.round(roundIsLive ? score - provisional : score));
+    // Same figure as the header's "Next boss" line (engine's bankedScore),
+    // so a stage-start grant like Opening Verse shows in both at once.
+    var visiblePoints = game && typeof game.bankedScore === "function"
+      ? Math.round(game.bankedScore())
+      : Math.max(0, Math.round(roundIsLive ? score - provisional : score));
     var pointsText = visiblePoints.toLocaleString();
     root.querySelectorAll(".cuddle-header-score").forEach(function updateHeader(element) {
       if (element.textContent !== pointsText) element.textContent = pointsText;

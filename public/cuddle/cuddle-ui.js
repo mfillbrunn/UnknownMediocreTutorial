@@ -132,7 +132,76 @@
     }
   }
 
-  async function openCuddle() {
+  // -- Resume after closing the site ----------------------------------
+  // Closing or reloading the page used to always drop the player back on
+  // the main menu, even seconds later, although the run itself is saved.
+  // While the Cuddle screen is showing, the moment the page is hidden
+  // (tab closed, app switched, reload) is remembered; loading the site
+  // again within the grace window reopens Cuddle where it was -- inside the
+  // run, or on Cuddle's own title page if that's where the player was.
+  // The window matches how long the multiplayer server holds a
+  // disconnected player's seat (cleanupDisconnectedPlayers(io, 60_000) in
+  // server/index.js).
+  const RESUME_KEY = "umtCuddleResume";
+  const RESUME_GRACE_MS = 60 * 1000;
+  // Set while a resume is still loading, so hiding the page again in that
+  // moment remembers the run it was heading back into, not the loader.
+  let resumingInto = null;
+
+  function cuddleScreenActive() {
+    return Boolean(document.getElementById("cuddleScreen")?.classList.contains("active"));
+  }
+
+  function rememberCuddleSession() {
+    try {
+      if (cuddleScreenActive()) {
+        const view = resumingInto || (landing ? "landing" : "run");
+        localStorage.setItem(RESUME_KEY, JSON.stringify({ at: Date.now(), view }));
+      } else {
+        localStorage.removeItem(RESUME_KEY);
+      }
+    } catch (_error) {
+      // Private mode / blocked storage: the site just opens on the menu.
+    }
+  }
+
+  function forgetCuddleSession() {
+    try {
+      localStorage.removeItem(RESUME_KEY);
+    } catch (_error) {
+      // Nothing stored to forget.
+    }
+  }
+
+  function resumeCuddleIfRecent() {
+    let saved = null;
+    try {
+      saved = JSON.parse(localStorage.getItem(RESUME_KEY) || "null");
+      localStorage.removeItem(RESUME_KEY);
+    } catch (_error) {
+      saved = null;
+    }
+    if (!saved || !Number.isFinite(Number(saved.at))) return;
+    if (Date.now() - Number(saved.at) > RESUME_GRACE_MS) return;
+    // A link that opens something specific (a room invite, a join code)
+    // wins over resuming.
+    if (/[?&#](room|roomId|join|invite|code)=/i.test(window.location.search + window.location.hash)) return;
+    openCuddle({ resume: saved.view === "run" });
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") rememberCuddleSession();
+  });
+  window.addEventListener("pagehide", rememberCuddleSession);
+  // After client.js's own DOMContentLoaded handler has put up the main
+  // menu, so resuming is the last word on which screen shows.
+  window.addEventListener("load", () => setTimeout(resumeCuddleIfRecent, 0), { once: true });
+
+  async function openCuddle(options) {
+    // Also bound directly as a click handler, where the first argument is
+    // the click event -- only an explicit { resume: true } resumes.
+    const resume = Boolean(options && options.resume === true);
+    resumingInto = resume ? "run" : null;
     showScreen("cuddleScreen");
     root = document.getElementById(ROOT_ID);
     if (!root) return;
@@ -142,13 +211,17 @@
         if (root) root.innerHTML = renderReconnecting(secondsLeft);
       });
       game = window.CuddleEngine.CuddleGame.load(loadedWords);
-      landing = true;
+      // Resuming a run that was in progress goes straight back into it,
+      // exactly as the landing page's Continue button would.
+      landing = !(resume && game?.state && !["lost", "won"].includes(game.state.status));
+      resumingInto = null;
       detailsOpen = false;
       actionMode = "play";
       selectedCards = new Set();
       uiMessage = "";
       render();
     } catch (error) {
+      resumingInto = null;
       root.innerHTML = renderFatal(error?.message || "Cuddle could not start.");
     }
   }
@@ -386,7 +459,7 @@
           <div class="cuddle-header-title">
             <span class="cuddle-eyebrow">SINGLE-PLAYER CAMPAIGN</span>
             <div class="cuddle-header-title-line">
-              <span class="cuddle-header-score cuddle-header-points" aria-label="${state.score} points${game.isBossRound() ? "" : `, goal ${target}`}">${state.score}${game.isBossRound() ? "" : ` / ${target}`}</span>
+              <span class="cuddle-header-score cuddle-header-points" aria-label="${game.bankedScore()} points${game.isBossRound() ? "" : `, goal ${target}`}">${game.bankedScore()}${game.isBossRound() ? "" : ` / ${target}`}</span>
               <span class="cuddle-header-money" aria-label="${Number(state.cuddleMoney || 0)} money">$${Number(state.cuddleMoney || 0).toLocaleString()}</span>
             </div>
             ${bossGoal ? `<span class="cuddle-header-boss-goal" aria-label="${Math.min(bossGoal.score, bossGoal.required)} of ${bossGoal.required} points toward the next boss">Next boss: ${Math.min(bossGoal.score, bossGoal.required)}/${bossGoal.required} pts</span>` : ""}
@@ -467,6 +540,16 @@
       </div>`;
   }
 
+  // What each special-tile kind looks like before it's played, and what a
+  // hover on it says it pays.
+  const SPECIAL_TILE_KINDS = Object.freeze({
+    money: { glyph: "$", title: "Money tile: a yellow here pays $2, a green $4" },
+    points: { glyph: "P", title: "Points tile: a yellow here pays 5 points, a green 10" },
+    mulligan: { glyph: "↻", title: "Mulligan tile: a yellow or green here gives an extra mulligan" },
+    joker: { glyph: "★", title: "Joker tile: a yellow or green here gives you a Joker" },
+    hint: { glyph: "?", title: "Oracle tile: a yellow or green here reveals a letter and its position" }
+  });
+
   function renderBoard(state) {
     const rows = [];
     // A normal round no longer has to fit inside state.maxGuesses -- a
@@ -480,9 +563,10 @@
       state.maxGuesses,
       state.history.length + (state.status === "playing" ? 1 : 0)
     );
-    // Money tiles (cuddle-points-money.js) are marked on the board before
-    // they are played so they can actually be aimed at, then keep showing
-    // what they paid once the guess through them has landed.
+    // Special tiles (cuddle-points-money.js) are marked on the board before
+    // they are played -- a large faint symbol for their kind -- so they can
+    // actually be aimed at, then keep showing what they paid once the guess
+    // through them has landed.
     const moneyTiles = Array.isArray(state.cuddleMoneyTiles) ? state.cuddleMoneyTiles : [];
     for (let row = 0; row < rowCount; row += 1) {
       const history = state.history[row];
@@ -508,14 +592,18 @@
           ? draftCard.glyph === window.CuddleEngine.CUDDLE_JOKER_GLYPH
           : Boolean(history?.jokerRevealed && history.jokerIndex === column);
         const moneyTile = moneyTiles.find(tile => tile && tile.row === row && tile.col === column);
+        const tileKind = moneyTile ? (SPECIAL_TILE_KINDS[moneyTile.kind] ? moneyTile.kind : "money") : null;
         const moneyClass = !moneyTile
           ? ""
-          : moneyTile.paid
-            ? (moneyTile.payout > 0 ? " is-money-tile is-money-won" : " is-money-tile is-money-missed")
-            : " is-money-tile";
+          : ` is-special-tile is-special-${tileKind}`
+            + (moneyTile.paid ? (moneyTile.payout > 0 ? " is-special-won" : " is-special-missed") : "");
+        // data-special draws the unplayed tile's watermark; once paid, the
+        // same attribute carries the payout ("+$4", "+10", "Hint") instead.
         const moneyBadge = !moneyTile || (moneyTile.paid && !moneyTile.payout)
           ? ""
-          : ` data-money="${moneyTile.paid ? `+$${moneyTile.payout}` : "$"}"`;
+          : moneyTile.paid
+            ? ` data-special-paid="${escapeHtml(moneyTile.label || (tileKind === "money" ? `+$${moneyTile.payout}` : `+${moneyTile.payout}`))}"`
+            : ` data-special="${SPECIAL_TILE_KINDS[tileKind].glyph}" title="${escapeHtml(SPECIAL_TILE_KINDS[tileKind].title)}"`;
         const tileClass = (result ? ` is-${result}` : letter ? " is-filled" : "")
           + (isJokerTile ? " is-joker" : "") + moneyClass;
         if (draftCard) {
@@ -1204,6 +1292,8 @@
         skillTreeOpen = false;
         selectedSkillNodeId = null;
         // Cuddle sits on the main menu now, not inside the Play hub.
+        // Leaving on purpose means the next visit starts on the menu.
+        forgetCuddleSession();
         showScreen("startupScreen");
         return false;
       case "run-menu":

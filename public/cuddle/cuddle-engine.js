@@ -1306,7 +1306,14 @@
       const coloursDisabled = Number(scoringUpgrades.zeroColourPoints) > 0;
       const yellowValue = coloursDisabled ? 0 : YELLOW_POINTS + colourBonus;
       const greenValue = coloursDisabled ? 0 : GREEN_POINTS + colourBonus;
-      const scoreDelta = greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue;
+      // Special board tiles (cuddle-points-money.js) pay out here, inside the
+      // scoring step, so a points tile counts toward this guess's row score
+      // -- and toward a solve on this very guess -- before the round
+      // resolves further down.
+      const tilePoints = typeof this._scoreSpecialTiles === "function"
+        ? Math.max(0, Number(this._scoreSpecialTiles(this.state.history.length, feedback)) || 0)
+        : 0;
+      const scoreDelta = greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue + tilePoints;
       if (shielded) this.state.buffs.greyShield -= 1;
 
       const activeQuest = this.state.activeQuest;
@@ -2603,6 +2610,41 @@
       title: "Wide Margins",
       description: "See one additional between-round upgrade choice. Stacks up to two times.",
       max: 2
+    },
+    // Special board tiles (cuddle-points-money.js). A run starts with only
+    // money and points tiles; these add more of them, and unlock the rarer
+    // kinds -- each unlock taken again makes its kind turn up more often.
+    {
+      id: "treasureMap",
+      icon: "🗺️",
+      title: "Treasure Map",
+      tier: "common",
+      description: "One more special tile appears on the board every stage. Stacks up to three times.",
+      max: 3
+    },
+    {
+      id: "mulliganTiles",
+      icon: "🔄",
+      title: "Mulligan Tiles",
+      tier: "common",
+      description: "Special tiles can now be Mulligan tiles: a yellow or green on one gives an extra mulligan. Taking it again makes them more common.",
+      max: 3
+    },
+    {
+      id: "jokerTiles",
+      icon: "🃏",
+      title: "Joker Tiles",
+      tier: "rare",
+      description: "Special tiles can now be Joker tiles: a yellow or green on one gives you a Joker. Taking it again makes them more common.",
+      max: 3
+    },
+    {
+      id: "oracleTiles",
+      icon: "🔮",
+      title: "Oracle Tiles",
+      tier: "legendary",
+      description: "Special tiles can now be Oracle tiles, the rarest kind: a yellow or green on one reveals a letter and its exact position. Taking it again makes them more common.",
+      max: 3
     }
   ]);
   const CUDDLE_V3_SYNERGIES = Object.freeze([
@@ -2690,7 +2732,9 @@
     );
     state.rewardBookHistory = (Array.isArray(state.rewardBookHistory) ? state.rewardBookHistory : [])
       .filter(item => item && typeof item === "object")
-      .slice(-40);
+      // Kept long enough to hold a whole run: the progression tree lights
+      // every node from this ledger, so trimming it would un-light early picks.
+      .slice(-200);
     state.bossRewardHistory = (Array.isArray(state.bossRewardHistory) ? state.bossRewardHistory : [])
       .filter(item => item && typeof item === "object")
       .slice(-12);
@@ -2842,7 +2886,7 @@
       kind,
       round: Number(state.round || 1)
     });
-    state.rewardBookHistory = state.rewardBookHistory.slice(-40);
+    state.rewardBookHistory = state.rewardBookHistory.slice(-200);
   }
   function cuddleV3NormalizeUpgradeChoice(choice) {
     if (!choice || choice.id !== "removeLetter") return choice;
@@ -3004,6 +3048,7 @@
     const state = cuddleV3EnsureState(this);
     state.mysteryGlyphKinds = {};
     state.unknownGlyphs = [];
+    state.roundOpeningPoints = 0;
     if (this.isBossRound()) return;
 
     const notes = [];
@@ -3012,6 +3057,9 @@
     if (openingPoints > 0) {
       state.score += openingPoints;
       state.roundScore += openingPoints;
+      // Granted outright at the start of the stage, not earned by a guess,
+      // so it is banked immediately -- see bankedScore() below.
+      state.roundOpeningPoints = openingPoints;
       notes.push(`Opening scripts added +${openingPoints} points.`);
     }
     const clues = Number(state.cuddleBonuses.openingClue || 0);
@@ -3020,6 +3068,22 @@
       if (message) notes.push(message);
     }
     if (notes.length) state.lastMessage = `${state.lastMessage} ${notes.join(" ")}`.trim();
+  };
+
+  // The one "points so far" figure every display reads: the header's points
+  // counter and its "Next boss: X/Y" line used to disagree mid-round, one
+  // holding back the round's points until it banked and the other counting
+  // them straight away. While a round is live, points earned by its guesses
+  // are still provisional (a no-money stage can void them) and are held
+  // back; points GRANTED at the stage's start (Opening Verse) are not
+  // provisional and count immediately.
+  CuddleGame.prototype.bankedScore = function bankedScore() {
+    const state = this.state || {};
+    const score = Number(state.score) || 0;
+    const live = state.status === "playing" && !state.pendingRoundEnd;
+    if (!live) return Math.max(0, score);
+    const provisional = Math.max(0, (Number(state.roundScore) || 0) - (Number(state.roundOpeningPoints) || 0));
+    return Math.max(0, score - provisional);
   };
 
   const cuddleV3OriginalOpenBossGate = CuddleGame.prototype._openBossGate;
@@ -3650,7 +3714,7 @@
       kind: "round",
       round: Number(state.round || 1)
     });
-    state.rewardBookHistory = state.rewardBookHistory.slice(-40);
+    state.rewardBookHistory = state.rewardBookHistory.slice(-200);
   }
 
   function unlockGoldenTempoIfReady(game) {

@@ -1,0 +1,863 @@
+/* public/cuddle/cuddle-progression.css
+ * Stage-intro banner + radial progression tree (cuddle-progression.js).
+ * Cuddle is a single dark world, so this stays dark too; colours come from
+ * the game's own tokens -- points teal, money gold -- with fallbacks since
+ * the host sits beside #cuddleRoot rather than inside it. */
+
+#cuddleScreen .umt-progress-host {
+  --umt-points: var(--cuddle-points-teal, #3ecf8e);
+  --umt-points-bright: var(--cuddle-points-teal-bright, #8ff7cd);
+  --umt-money: var(--cuddle-money-gold, #f6c956);
+  --umt-money-bright: var(--cuddle-money-gold-bright, #ffe8a3);
+  --umt-hazard: #fb7185;
+  --umt-hazard-soft: #ffc2ca;
+  --umt-violet: var(--cuddle-accent, #d5a6ff);
+  --umt-ink: var(--cuddle-text, #f7f4ff);
+  --umt-muted: var(--cuddle-muted, #aaa5bc);
+  --umt-surface: #16131f;
+  --umt-surface-2: #1e1a2b;
+  --umt-line: rgba(255, 255, 255, 0.1);
+  color: var(--umt-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ */
+/* Standard reward figures: points always green, money always gold.    */
+/* ------------------------------------------------------------------ */
+
+.umt-progress-host .umt-reward-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2rem;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.umt-progress-host .umt-reward-chip.is-points {
+  color: var(--umt-points-bright);
+  background: rgba(62, 207, 142, 0.14);
+  border: 1px solid rgba(62, 207, 142, 0.38);
+}
+
+.umt-progress-host .umt-reward-chip.is-money {
+  color: var(--umt-money-bright);
+  background: rgba(246, 201, 86, 0.13);
+  border: 1px solid rgba(246, 201, 86, 0.42);
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage-intro banner                                                  */
+/* ------------------------------------------------------------------ */
+
+.umt-progress-host .umt-stage-banner-wrap {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 74px);
+  left: 50%;
+  z-index: 99000;
+  width: min(440px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.umt-progress-host .umt-stage-banner {
+  --tone: var(--umt-violet);
+  position: relative;
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem 0.95rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--tone) 42%, transparent);
+  border-radius: 16px;
+  background:
+    radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--tone) 16%, transparent), transparent 60%),
+    linear-gradient(165deg, rgba(38, 32, 58, 0.97), rgba(19, 17, 29, 0.97));
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  pointer-events: auto;
+  cursor: pointer;
+  animation: umt-sb-in 520ms cubic-bezier(0.2, 1.25, 0.3, 1) both;
+}
+
+.umt-progress-host .umt-stage-banner.is-boss { --tone: var(--umt-hazard); }
+.umt-progress-host .umt-stage-banner.is-challenge { --tone: #f6a94a; }
+
+.umt-progress-host .is-leaving .umt-stage-banner {
+  animation: umt-sb-out 400ms cubic-bezier(0.6, 0, 0.9, 0.4) both;
+}
+
+@keyframes umt-sb-in {
+  from { opacity: 0; transform: translateY(-26px) scale(0.94); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+/* The whoosh: off to the right, leaning into the motion. */
+@keyframes umt-sb-out {
+  from { opacity: 1; transform: none; filter: none; }
+  to { opacity: 0; transform: translateX(112%) skewX(-12deg); filter: blur(5px); }
+}
+
+.umt-progress-host .umt-sb-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.12) 50%, transparent 65%);
+  transform: translateX(-100%);
+  animation: umt-sb-sheen 900ms ease-out 180ms both;
+  pointer-events: none;
+}
+
+@keyframes umt-sb-sheen {
+  to { transform: translateX(100%); }
+}
+
+.umt-progress-host .umt-sb-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.umt-progress-host .umt-sb-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid color-mix(in srgb, var(--tone) 45%, transparent);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--tone) 18%, #16131f);
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.umt-progress-host .umt-sb-eyebrow {
+  display: block;
+  color: color-mix(in srgb, var(--tone) 75%, #fff);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.umt-progress-host .umt-sb-title {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 850;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.umt-progress-host .umt-sb-lines {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.umt-progress-host .umt-sb-lines li {
+  display: flex;
+  gap: 0.5rem;
+  color: var(--umt-muted);
+}
+
+.umt-progress-host .umt-sb-lines li > span:first-child {
+  flex: 0 0 1.2em;
+  text-align: center;
+}
+
+.umt-progress-host .umt-sb-lines li.is-hazard { color: var(--umt-hazard-soft); }
+.umt-progress-host .umt-sb-lines li.is-bonus { color: #b9f5dc; }
+
+.umt-progress-host .umt-sb-rewards {
+  display: grid;
+  gap: 0.15rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--umt-line);
+}
+
+.umt-progress-host .umt-reward-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.umt-progress-host .umt-reward-row b {
+  font-size: 1.45rem;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.umt-progress-host .umt-reward-row small {
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.umt-progress-host .umt-reward-row em {
+  margin-left: auto;
+  color: var(--umt-muted);
+  font-size: 0.78rem;
+  font-style: normal;
+}
+
+.umt-progress-host .umt-reward-row.is-points { color: var(--umt-points-bright); }
+.umt-progress-host .umt-reward-row.is-money { color: var(--umt-money-bright); }
+
+.umt-progress-host .umt-sb-win {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--umt-muted);
+  font-size: 0.78rem;
+}
+
+.umt-progress-host .umt-sb-win > span:first-child { margin-right: 0.15rem; }
+
+.umt-progress-host .umt-sb-timer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: color-mix(in srgb, var(--tone) 80%, transparent);
+  transform-origin: left center;
+  animation: umt-sb-timer var(--hold, 3000ms) linear both;
+}
+
+.umt-progress-host .umt-stage-banner.is-paused .umt-sb-timer { animation-play-state: paused; }
+
+@keyframes umt-sb-timer {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Map-header entry button                                             */
+/* ------------------------------------------------------------------ */
+
+#cuddleRoot .umt-pt-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  padding: 0.3rem 0.5rem 0.3rem 0.75rem;
+  border: 1px solid rgba(213, 166, 255, 0.4);
+  border-radius: 999px;
+  color: #f7f4ff;
+  background: rgba(213, 166, 255, 0.1);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+#cuddleRoot .umt-pt-open:hover { background: rgba(213, 166, 255, 0.2); }
+#cuddleRoot .umt-pt-open:focus-visible { outline: 2px solid #d5a6ff; outline-offset: 2px; }
+
+#cuddleRoot .umt-pt-open b {
+  min-width: 1.5rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  color: #04241a;
+  background: #8ff7cd;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  #cuddleRoot .umt-pt-open-label { display: none; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Progression tree overlay                                            */
+/* ------------------------------------------------------------------ */
+
+.umt-progress-host .umt-pt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.umt-progress-host .umt-pt-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 7, 14, 0.74);
+  backdrop-filter: blur(6px);
+  animation: umt-pt-fade 220ms ease-out both;
+}
+
+@keyframes umt-pt-fade { from { opacity: 0; } }
+
+.umt-progress-host .umt-pt-modal {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(1140px, 100%);
+  height: min(840px, calc(100dvh - 32px));
+  overflow: hidden;
+  border: 1px solid rgba(213, 166, 255, 0.2);
+  border-radius: 20px;
+  background: var(--umt-surface);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6);
+  animation: umt-pt-rise 320ms cubic-bezier(0.2, 1, 0.3, 1) both;
+}
+
+@keyframes umt-pt-rise { from { opacity: 0; transform: translateY(14px) scale(0.985); } }
+
+.umt-progress-host .umt-pt-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--umt-line);
+}
+
+.umt-progress-host .umt-pt-head > div:first-child { flex: 1 1 auto; min-width: 0; }
+
+.umt-progress-host .umt-pt-kicker {
+  display: block;
+  color: var(--umt-violet);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.umt-progress-host .is-reveal .umt-pt-kicker { color: var(--umt-points-bright); }
+
+.umt-progress-host .umt-pt-head h2 {
+  margin: 0.1rem 0 0;
+  overflow: hidden;
+  font-size: 1.3rem;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.umt-progress-host .umt-pt-progress {
+  flex: 0 0 150px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.umt-progress-host .umt-pt-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d5a6ff, #8ff7cd);
+}
+
+.umt-progress-host .umt-pt-count {
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.umt-progress-host .umt-pt-count small { color: var(--umt-muted); font-size: 0.8rem; font-weight: 700; }
+
+.umt-progress-host .umt-pt-close {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--umt-line);
+  border-radius: 50%;
+  color: var(--umt-ink);
+  background: var(--umt-surface-2);
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.umt-progress-host .umt-pt-close:hover { border-color: rgba(255, 255, 255, 0.3); }
+.umt-progress-host .umt-pt-close:focus-visible,
+.umt-progress-host .umt-pt-continue:focus-visible,
+.umt-progress-host .umt-pt-chip:focus-visible { outline: 2px solid var(--umt-violet); outline-offset: 2px; }
+
+.umt-progress-host .umt-pt-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  min-height: 0;
+}
+
+.umt-progress-host .umt-pt-canvas {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  overflow: auto;
+  background:
+    radial-gradient(closest-side, rgba(92, 64, 150, 0.28), transparent 75%),
+    #110f19;
+}
+
+.umt-progress-host .umt-pt-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  user-select: none;
+}
+
+.umt-progress-host .umt-pt-side {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  min-height: 0;
+  padding: 1rem 1.1rem 1.25rem;
+  overflow-y: auto;
+  border-left: 1px solid var(--umt-line);
+  background: var(--umt-surface);
+}
+
+.umt-progress-host .umt-pt-side-title {
+  margin: 0.25rem 0 -0.4rem;
+  color: var(--umt-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.umt-progress-host .umt-pt-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.8rem 1.1rem;
+  border-top: 1px solid var(--umt-line);
+}
+
+.umt-progress-host .umt-pt-continue {
+  min-width: 180px;
+  min-height: 44px;
+  padding: 0.6rem 1.4rem;
+  border: 0;
+  border-radius: 12px;
+  color: #10231b;
+  background: linear-gradient(135deg, #8ff7cd, #3ecf8e);
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+/* -- SVG ------------------------------------------------------------ */
+
+.umt-progress-host .umt-pt-orbit {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-dasharray: 2 7;
+}
+
+.umt-progress-host .umt-pt-boss-ring {
+  fill: none;
+  stroke: rgba(251, 113, 133, 0.16);
+  stroke-width: 1.5;
+}
+
+.umt-progress-host .umt-pt-boss-ring.is-lit { stroke: rgba(251, 113, 133, 0.42); }
+
+.umt-progress-host .umt-pt-edge {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.09);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.umt-progress-host .umt-pt-edge.is-lit {
+  stroke: var(--c);
+  stroke-width: 2.6;
+  stroke-dasharray: 6 4;
+  filter: drop-shadow(0 0 3px var(--c));
+  animation: umt-pt-flow 1.8s linear infinite;
+}
+
+@keyframes umt-pt-flow { to { stroke-dashoffset: -20; } }
+
+.umt-progress-host .umt-pt-edge.is-half { stroke-dasharray: 1.5 3; stroke-width: 1.4; }
+.umt-progress-host .umt-pt-edge.is-half.is-lit { opacity: 0.8; animation: none; filter: none; }
+
+/* A connection that just came alive draws itself in from the branch. */
+.umt-progress-host .umt-pt-edge.is-drawing {
+  stroke: var(--c);
+  stroke-width: 3;
+  stroke-dasharray: 100 100;
+  filter: drop-shadow(0 0 5px var(--c));
+  animation: umt-pt-draw 900ms cubic-bezier(0.3, 0, 0.2, 1) 150ms both;
+}
+
+@keyframes umt-pt-draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+
+.umt-progress-host .umt-pt-hub circle {
+  fill: #1b1828;
+  stroke: rgba(255, 255, 255, 0.2);
+  stroke-width: 1.5;
+}
+
+.umt-progress-host .umt-pt-hub.is-lit circle {
+  fill: color-mix(in srgb, var(--c) 22%, #1b1828);
+  stroke: var(--c);
+}
+
+.umt-progress-host .umt-pt-hub text {
+  fill: var(--c);
+  font-size: 13px;
+  font-weight: 800;
+  text-anchor: middle;
+}
+
+.umt-progress-host .umt-pt-branch-label {
+  fill: rgba(255, 255, 255, 0.34);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  paint-order: stroke;
+  stroke: #110f19;
+  stroke-width: 4px;
+}
+
+.umt-progress-host .umt-pt-branch-label.is-lit { fill: var(--c); }
+.umt-progress-host .umt-pt-branch-label.is-locked,
+.umt-progress-host .umt-pt-hub.is-locked { opacity: 0.45; }
+
+.umt-progress-host .umt-pt-core-glow { fill: rgba(213, 166, 255, 0.22); filter: url(#umtPtGlow); }
+.umt-progress-host .umt-pt-core-disc { fill: url(#umtPtCore); stroke: rgba(213, 166, 255, 0.55); stroke-width: 2; }
+.umt-progress-host .umt-pt-core-count { fill: #fff; font-size: 32px; font-weight: 900; text-anchor: middle; }
+.umt-progress-host .umt-pt-core-sub { fill: var(--umt-muted); font-size: 12px; font-weight: 700; text-anchor: middle; }
+
+.umt-progress-host .umt-pt-node { cursor: pointer; outline: none; }
+
+.umt-progress-host .umt-pt-disc {
+  fill: #1a1725;
+  stroke: rgba(255, 255, 255, 0.24);
+  stroke-width: 1.4;
+  transition: stroke 120ms ease;
+}
+
+.umt-progress-host .umt-pt-node.is-owned .umt-pt-disc {
+  fill: color-mix(in srgb, var(--c) 30%, #15121e);
+  stroke: var(--t);
+  stroke-width: 2.4;
+}
+
+.umt-progress-host .umt-pt-halo { fill: var(--c); opacity: 0.3; filter: url(#umtPtGlow); }
+
+.umt-progress-host .umt-pt-glyph {
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.umt-progress-host .umt-pt-node.is-open .umt-pt-glyph { opacity: 0.5; filter: grayscale(1); }
+.umt-progress-host .umt-pt-glyph.is-text { fill: #e9e4f5; font-weight: 850; }
+.umt-progress-host .umt-pt-node.is-owned .umt-pt-glyph.is-text { fill: var(--c); }
+
+.umt-progress-host .umt-pt-label {
+  fill: #f3eefe;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: #110f19;
+  stroke-width: 4px;
+  pointer-events: none;
+}
+
+.umt-progress-host .umt-pt-pip { fill: rgba(255, 255, 255, 0.2); }
+.umt-progress-host .umt-pt-pip.is-on { fill: var(--c); }
+.umt-progress-host .umt-pt-stack { fill: var(--c); font-size: 12px; font-weight: 900; paint-order: stroke; stroke: #110f19; stroke-width: 3px; }
+
+.umt-progress-host .umt-pt-node:hover .umt-pt-disc,
+.umt-progress-host .umt-pt-node:focus-visible .umt-pt-disc { stroke: #fff; stroke-width: 2.6; }
+.umt-progress-host .umt-pt-node.is-selected .umt-pt-disc { stroke: #fff; stroke-width: 3.2; }
+.umt-progress-host .umt-pt-node.is-locked { opacity: 0.35; }
+
+/* A node that was just picked up ignites, with two rings bursting out. */
+.umt-progress-host .umt-pt-node.is-fresh .umt-pt-disc,
+.umt-progress-host .umt-pt-node.is-fresh .umt-pt-halo,
+.umt-progress-host .umt-pt-node.is-fresh .umt-pt-glyph,
+.umt-progress-host .umt-pt-burst {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.umt-progress-host .umt-pt-node.is-fresh .umt-pt-disc,
+.umt-progress-host .umt-pt-node.is-fresh .umt-pt-glyph {
+  animation: umt-pt-ignite 700ms cubic-bezier(0.2, 1.4, 0.3, 1) 700ms both;
+}
+
+.umt-progress-host .umt-pt-node.is-fresh .umt-pt-halo {
+  animation: umt-pt-halo 2.4s ease-in-out 700ms infinite;
+}
+
+.umt-progress-host .umt-pt-burst {
+  fill: none;
+  stroke: var(--c);
+  stroke-width: 3;
+  animation: umt-pt-burst 1.1s ease-out 900ms both;
+}
+
+.umt-progress-host .umt-pt-burst.is-late { animation-delay: 1.2s; stroke-width: 2; }
+
+@keyframes umt-pt-ignite {
+  0% { transform: scale(0.3); opacity: 0.2; }
+  60% { transform: scale(1.28); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes umt-pt-halo {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.25); }
+}
+
+@keyframes umt-pt-burst {
+  0% { transform: scale(1); opacity: 0.95; }
+  100% { transform: scale(3.4); opacity: 0; }
+}
+
+/* -- Side panel ------------------------------------------------------ */
+
+.umt-progress-host .umt-pt-detail {
+  --c: var(--umt-violet);
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.9rem;
+  border: 1px solid var(--umt-line);
+  border-radius: 14px;
+  background: var(--umt-surface-2);
+}
+
+.umt-progress-host .umt-pt-detail.is-owned { border-color: color-mix(in srgb, var(--c) 45%, transparent); }
+.umt-progress-host .umt-pt-detail.is-empty p { margin: 0; color: var(--umt-muted); font-size: 0.88rem; line-height: 1.5; }
+.umt-progress-host .umt-pt-detail p { margin: 0; font-size: 0.9rem; line-height: 1.45; }
+
+.umt-progress-host .umt-pt-detail-head,
+.umt-progress-host .umt-pt-new {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.umt-progress-host .umt-pt-detail-head > div,
+.umt-progress-host .umt-pt-new > div { flex: 1 1 auto; min-width: 0; }
+
+.umt-progress-host .umt-pt-detail-head strong,
+.umt-progress-host .umt-pt-new strong { display: block; font-size: 1.02rem; font-weight: 850; }
+
+.umt-progress-host .umt-pt-detail-meta { color: var(--umt-muted); font-size: 0.78rem; }
+
+.umt-progress-host .umt-pt-detail-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid color-mix(in srgb, var(--c) 50%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--c) 20%, #15121e);
+  font-size: 1.3rem;
+}
+
+.umt-progress-host .umt-pt-state {
+  flex: 0 0 auto;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  color: var(--umt-muted);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.umt-progress-host .umt-pt-state.is-owned { color: #04241a; background: var(--umt-points-bright); }
+.umt-progress-host .umt-pt-when { color: var(--umt-muted); font-size: 0.8rem !important; }
+
+.umt-progress-host .umt-pt-reqs { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; font-size: 0.85rem; }
+.umt-progress-host .umt-pt-reqs li { display: flex; gap: 0.45rem; color: var(--umt-muted); }
+.umt-progress-host .umt-pt-reqs li.is-met { color: var(--umt-points-bright); }
+
+.umt-progress-host .umt-pt-reveal { display: grid; gap: 0.65rem; }
+
+.umt-progress-host .umt-pt-new {
+  --c: var(--umt-violet);
+  padding: 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  border-radius: 14px;
+  background:
+    radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--c) 20%, transparent), transparent 70%),
+    var(--umt-surface-2);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--c) 18%, transparent);
+  animation: umt-pt-rise 420ms cubic-bezier(0.2, 1, 0.3, 1) 250ms both;
+}
+
+.umt-progress-host .umt-pt-new p { margin: 0.2rem 0 0; color: var(--umt-muted); font-size: 0.84rem; line-height: 1.4; }
+.umt-progress-host .umt-pt-combo-note { margin: 0; color: #ffb3d6; font-size: 0.86rem; font-weight: 700; }
+
+.umt-progress-host .umt-pt-reveal h4,
+.umt-progress-host .umt-pt-stats h4,
+.umt-progress-host .umt-pt-timeline h4 {
+  margin: 0 0 0.35rem;
+  color: var(--umt-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.umt-progress-host .umt-pt-changes,
+.umt-progress-host .umt-pt-stats ul {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.umt-progress-host .umt-pt-changes li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(62, 207, 142, 0.1);
+  font-size: 0.92rem;
+  animation: umt-pt-rise 360ms ease-out both;
+}
+
+.umt-progress-host .umt-pt-changes li:nth-child(2) { animation-delay: 80ms; }
+.umt-progress-host .umt-pt-changes li:nth-child(3) { animation-delay: 160ms; }
+.umt-progress-host .umt-pt-changes li.is-down { background: rgba(251, 113, 133, 0.1); }
+.umt-progress-host .umt-pt-changes li > span { flex: 1 1 auto; }
+
+.umt-progress-host .umt-pt-changes b,
+.umt-progress-host .umt-pt-stats b {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  font-weight: 850;
+}
+
+.umt-progress-host .umt-pt-changes s,
+.umt-progress-host .umt-pt-stats s { color: var(--umt-muted); font-weight: 600; }
+.umt-progress-host .umt-pt-changes i,
+.umt-progress-host .umt-pt-stats i { color: var(--umt-muted); font-style: normal; }
+.umt-progress-host .umt-pt-changes small,
+.umt-progress-host .umt-pt-stats small { color: var(--umt-muted); font-size: 0.72em; font-weight: 700; }
+
+.umt-progress-host .umt-pt-changes em {
+  min-width: 2.4rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  color: #04241a;
+  background: var(--umt-points-bright);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 900;
+  text-align: center;
+}
+
+.umt-progress-host .umt-pt-changes li.is-down em { color: #2b0710; background: var(--umt-hazard-soft); }
+.umt-progress-host .umt-pt-ability { margin: 0; color: var(--umt-muted); font-size: 0.86rem; line-height: 1.45; }
+
+.umt-progress-host .umt-pt-stats { display: grid; gap: 0.8rem; }
+
+.umt-progress-host .umt-pt-stats li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.28rem 0.45rem;
+  border-radius: 8px;
+  font-size: 0.86rem;
+}
+
+.umt-progress-host .umt-pt-stats li span { color: var(--umt-muted); }
+.umt-progress-host .umt-pt-stats li.is-up { color: var(--umt-points-bright); background: rgba(62, 207, 142, 0.1); }
+.umt-progress-host .umt-pt-stats li.is-down { color: var(--umt-hazard-soft); background: rgba(251, 113, 133, 0.1); }
+.umt-progress-host .umt-pt-stats li.is-up span,
+.umt-progress-host .umt-pt-stats li.is-down span { color: inherit; }
+
+.umt-progress-host .umt-pt-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+.umt-progress-host .umt-pt-chip {
+  --c: var(--umt-violet);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+  border-radius: 999px;
+  color: var(--umt-ink);
+  background: color-mix(in srgb, var(--c) 10%, transparent);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.umt-progress-host .umt-pt-chip small { color: var(--umt-muted); font-size: 0.68rem; font-weight: 800; }
+
+/* -- Phone ----------------------------------------------------------- */
+
+@media (max-width: 760px) {
+  .umt-progress-host .umt-pt-overlay { padding: 0; }
+
+  .umt-progress-host .umt-pt-modal {
+    width: 100%;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .umt-progress-host .umt-pt-head { gap: 0.6rem; padding: 0.75rem 0.75rem 0.75rem 1rem; }
+  .umt-progress-host .umt-pt-progress { display: none; }
+  .umt-progress-host .umt-pt-head h2 { font-size: 1.1rem; }
+
+  .umt-progress-host .umt-pt-body {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  /* The tree keeps a legible size and pans instead of shrinking to fit. */
+  .umt-progress-host .umt-pt-canvas {
+    flex: 0 0 auto;
+    display: block;
+    height: 56dvh;
+  }
+
+  .umt-progress-host .umt-pt-svg {
+    width: 720px;
+    height: 720px;
+    max-height: none;
+  }
+
+  .umt-progress-host .umt-pt-side {
+    overflow: visible;
+    border-top: 1px solid var(--umt-line);
+    border-left: 0;
+  }
+
+  .umt-progress-host .umt-pt-foot { padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px)); }
+  .umt-progress-host .umt-pt-continue { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .umt-progress-host .umt-stage-banner,
+  .umt-progress-host .is-leaving .umt-stage-banner,
+  .umt-progress-host .umt-pt-modal,
+  .umt-progress-host .umt-pt-backdrop,
+  .umt-progress-host .umt-pt-new,
+  .umt-progress-host .umt-pt-changes li { animation: umt-pt-fade 200ms ease-out both; }
+  .umt-progress-host .umt-sb-sheen,
+  .umt-progress-host .umt-pt-burst { display: none; }
+  .umt-progress-host .umt-pt-edge.is-lit,
+  .umt-progress-host .umt-pt-edge.is-drawing,
+  .umt-progress-host .umt-pt-node.is-fresh .umt-pt-disc,
+  .umt-progress-host .umt-pt-node.is-fresh .umt-pt-glyph,
+  .umt-progress-host .umt-pt-node.is-fresh .umt-pt-halo { animation: none; }
+  .umt-progress-host .umt-pt-edge.is-drawing { stroke-dasharray: none; }
+}
