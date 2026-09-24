@@ -975,9 +975,16 @@
     return gained + win;
   }
 
+  // Money gold, points green -- the same colours as the header counters.
+  function rewardText(text) {
+    return esc(text)
+      .replace(/[+-]?\$\s?\d[\d,]*/g, (match) => `<b class="umt-money">${match}</b>`)
+      .replace(/[+-]?\d[\d,]*\s?(?:points|point|pts)\b/g, (match) => `<b class="umt-points">${match}</b>`);
+  }
+
   function bannerMarkup(content, holdMs) {
     const lines = content.lines.map((line) => (
-      `<li class="is-${line.kind}"><span aria-hidden="true">${esc(line.icon)}</span><span>${esc(line.text)}</span></li>`
+      `<li class="is-${line.kind}"><span aria-hidden="true">${esc(line.icon)}</span><span>${rewardText(line.text)}</span></li>`
     )).join("");
     return `<div class="umt-stage-banner is-${content.tone}" role="status" aria-live="polite" style="--hold:${holdMs}ms">`
       + `<div class="umt-sb-sheen" aria-hidden="true"></div>`

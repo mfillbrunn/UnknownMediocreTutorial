@@ -1277,17 +1277,133 @@
       + "<span class=\"umt-preview-kind\">" + escapeHtml(window.CuddleWorlds.KIND_NAMES[kind] || "Stop") + "</span>";
   }
 
+  // Money reads gold and points read green everywhere in a stop's
+  // briefing, so what a stop pays can be seen at a glance.
+  function rewardText(text) {
+    return escapeHtml(text)
+      .replace(/[+\-]?\$\s?\d[\d,]*/g, function money(match) { return "<b class=\"umt-money\">" + match + "</b>"; })
+      .replace(/[+\-]?\d[\d,]*\s?(?:points|point|pts)\b/g, function points(match) { return "<b class=\"umt-points\">" + match + "</b>"; });
+  }
+
+  var VARIANT_SUMMARIES = {
+    plain: "A standard Wordle, nothing added.",
+    themedWordle: "Starts with a theme of the answer revealed.",
+    randomOpener: "A random word is played for you as your first guess.",
+    luckyStart: "Starts with one letter already in its place.",
+    jackpot: "Greens are worth double here.",
+    doubleOrNothing: "A gamble on a fast solve."
+  };
+
+  // What a stop is, what it pays and what it risks, as separate pieces
+  // rather than one paragraph.
+  function stopBriefing(game, node) {
+    var worlds = window.CuddleWorlds;
+    var kind = worlds ? worlds.kindForNode(node) : node.type;
+    var expanded = window.CuddleExpandedStages;
+    var meta = expanded && typeof expanded.stopMeta === "function" ? expanded.stopMeta(node, game) : null;
+    var rebalance = window.CuddleRebalanceV5;
+    var variant = rebalance && typeof rebalance.stopVariant === "function" ? rebalance.stopVariant(game, node) : null;
+    var brief = { title: nodeTitle(node), summary: "", gets: [], risks: [], options: null };
+    var rules = {};
+    try { rules = game.getRulesSummary() || {}; } catch (_error) { rules = {}; }
+    var limit = typeof game._solveGuessThreshold === "function" ? game._solveGuessThreshold() : 6;
+    function stageBase() {
+      if (rules.greenPoints != null) {
+        brief.gets.push({ type: "points", text: "+" + rules.greenPoints + " pts per green, +" + rules.yellowPoints + " per yellow" });
+      }
+      brief.gets.push({ type: "money", text: "Money for every useful tile" });
+    }
+
+    if (kind === "wordle" || (kind === "challenge" && !variant)) {
+      var variantKind = variant ? variant.kind : node.type === "theme" ? "themedWordle" : "plain";
+      brief.title = variant && variant.title ? variant.title : meta && meta.title ? meta.title : brief.title;
+      brief.summary = VARIANT_SUMMARIES[variantKind] || (meta && meta.description) || "Solve the word to move on.";
+      stageBase();
+      if (variantKind === "jackpot") {
+        brief.gets.unshift({ type: "points", text: "Greens pay double" });
+        brief.risks.push("Solve within " + limit + " guesses or the run is lost");
+      } else if (variantKind === "doubleOrNothing") {
+        brief.gets.unshift({ type: "money", text: "Stage money ×2 if solved by guess 3" });
+        brief.risks.push("Take longer and lose half the stage money");
+      } else if (variantKind === "luckyStart") {
+        brief.gets.unshift({ type: "perk", text: "One letter placed for you" });
+      } else if (variantKind === "randomOpener") {
+        brief.gets.unshift({ type: "perk", text: "Free opening guess" });
+      } else if (variantKind === "themedWordle") {
+        var tier = Math.max(1, Math.min(3, Number(node.expandedThemeRevealTier || node.expandedProgressionTier) || 1));
+        brief.gets.unshift({ type: "perk", text: tier === 1 ? "Every theme revealed" : tier === 2 ? "All themes but one revealed" : "One theme revealed" });
+      }
+      if (kind === "challenge" && meta) {
+        brief.summary = "A Wordle with a rule against you.";
+        brief.risks.push(meta.description);
+      }
+    } else if (kind === "challenge") {
+      brief.title = variant.title;
+      brief.summary = "A Wordle with a rule against you. Beat it for a bonus.";
+      if (variant.reward > 0) {
+        brief.gets.push({ type: "win", text: "On a win: +" + variant.reward + " pts · +$" + variant.reward });
+      }
+      stageBase();
+      brief.risks.push(variant.description);
+    } else if (kind === "event") {
+      var event = expanded && typeof expanded.eventOptions === "function" ? expanded.eventOptions(node) : null;
+      brief.title = meta && meta.title ? meta.title : brief.title;
+      brief.summary = event && event.flavor ? event.flavor + " Choose one:" : "Choose one of two deals.";
+      brief.options = event ? event.options : null;
+      if (!brief.options && meta) brief.summary = meta.description;
+    } else if (kind === "upgrade") {
+      brief.summary = "A quiet waystone. No Wordle here.";
+      brief.gets.push({ type: "perk", text: "Pick 1 of 3 free permanent upgrades" });
+    } else if (kind === "duel") {
+      brief.summary = meta ? meta.description : "Race an AI to the answer.";
+      stageBase();
+    } else if (kind === "mystery") {
+      brief.title = "Unknown Stop";
+      brief.summary = "Hidden until you step onto it. Could be anything on the road.";
+    } else if (kind === "boss" || kind === "final") {
+      brief.title = kind === "final" ? "Final Boss" : node.gate === "before-7" ? "Boss II" : "Boss I";
+      brief.summary = "Choose one of two bosses. The one you leave behind returns later as a burden.";
+      brief.gets.push({ type: "perk", text: "A permanent boss reward" });
+      brief.risks.push("The boss's power works against you");
+    }
+    return brief;
+  }
+
+  function renderBriefing(brief) {
+    var html = "<p class=\"umt-stop-summary\">" + rewardText(brief.summary) + "</p>";
+    if (brief.options && brief.options.length) {
+      html += "<div class=\"umt-stop-options\">" + brief.options.map(function option(item, index) {
+        return "<div class=\"umt-stop-option\"><span class=\"umt-stop-option-tag\">" + (index === 0 ? "Safe" : "Bold") + "</span>"
+          + "<strong>" + escapeHtml(item.title) + "</strong><span>" + rewardText(item.summary) + "</span></div>";
+      }).join("") + "</div>";
+    }
+    if (brief.gets.length) {
+      html += "<div class=\"umt-stop-block\"><h3>You get</h3><ul class=\"umt-stop-chips\">"
+        + brief.gets.map(function chip(item) {
+          var mark = item.type === "money" ? "$" : item.type === "points" ? "P" : item.type === "win" ? "★" : "✦";
+          return "<li class=\"is-" + item.type + "\"><i aria-hidden=\"true\">" + mark + "</i>" + rewardText(item.text) + "</li>";
+        }).join("") + "</ul></div>";
+    }
+    if (brief.risks.length) {
+      html += "<div class=\"umt-stop-block is-risk\"><h3>Watch out</h3><ul class=\"umt-stop-risks\">"
+        + brief.risks.map(function risk(text) { return "<li>" + rewardText(text) + "</li>"; }).join("") + "</ul></div>";
+    }
+    return html;
+  }
+
   function renderPreviewOverlay(game, node) {
     var required = node.type === "boss" ? bossPointRequirement(game, node.gate) : 0;
     var current = Number((game && game.state && game.state.score) || 0);
     var locked = Boolean(required) && current < required;
-    var description = node.type === "boss" ? bossFlavorText(node) : nodeDescription(game, node);
+    var brief = window.CuddleWorlds ? stopBriefing(game, node) : null;
     return (
       "<div class=\"cuddle-overlay cuddle-branch-preview-overlay\">"
-      + "<section class=\"cuddle-modal\"" + previewKindStyle(node) + ">"
+      + "<section class=\"cuddle-modal" + (brief ? " umt-stop-preview" : "") + "\"" + previewKindStyle(node) + ">"
       + previewIcon(node)
-      + "<h2>" + escapeHtml(nodeTitle(node)) + "</h2>"
-      + "<p>" + goldenMoney(escapeHtml(description)) + "</p>"
+      + "<h2>" + escapeHtml(brief ? brief.title : nodeTitle(node)) + "</h2>"
+      + (brief
+        ? renderBriefing(brief)
+        : "<p>" + goldenMoney(escapeHtml(node.type === "boss" ? bossFlavorText(node) : nodeDescription(game, node))) + "</p>")
       + (required ? renderBossLockPanel(game, node, required, current, locked) : "")
       + "<div class=\"cuddle-modal-actions\">"
       + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-ghost\" data-cuddle-campaign-action=\"cancel-branch-node-preview\">Back</button>"

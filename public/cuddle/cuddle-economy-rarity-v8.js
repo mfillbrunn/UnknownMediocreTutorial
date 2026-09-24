@@ -1391,10 +1391,10 @@
       setMaxStack(def, 99);
       replaceHandlers(def, "bigger-mulligan");
     } else if (name === "colour surge" || name === "color surge") {
-      setDescription(def, "Yellow and green tiles gain +$2. Grey tiles are unchanged.");
+      setDescription(def, "Yellow and green tiles are each worth 3 points more. Grey tiles are unchanged.");
       replaceHandlers(def, "colour-surge");
     } else if (name === "grey matters" || name === "gray matters") {
-      setDescription(def, "Grey tiles gain +$1. Yellow and green values are unchanged.");
+      setDescription(def, "Grey tiles are worth 1 point more. Yellow and green values are unchanged.");
       replaceHandlers(def, "grey-matters");
     } else if (name === "wild card") {
       setDescription(def, "Begin every stage with one Joker in the active pouch.");

@@ -851,7 +851,7 @@
         kind: "jackpot",
         icon: "\uD83D\uDCB0",
         title: "Jackpot Run",
-        description: "Green tiles pay double here, but the stage runs one guess short."
+        description: "Green tiles pay double here, but you must solve within the world's guess limit or the run is lost."
       };
     } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent + CONFIG.randomOpenerPercent
         + CONFIG.luckyStartPercent + CONFIG.jackpotPercent + CONFIG.doubleOrNothingPercent) {
@@ -2802,6 +2802,7 @@
       const id = String(element.getAttribute("data-shop-item-id") || "");
       const node = byId.get(id) || byId.get(id.replace(/^node:/, ""));
       if (!node || !node.cuddleVariant) continue;
+      if (element.closest(".umt-stop-preview")) continue;
       const variant = node.cuddleVariant;
       const iconKey = variant.kind === "mandatoryChallenge" ? variant.challengeId : variant.kind;
       // variant.description is a permanent cache set the first time this
@@ -2853,7 +2854,7 @@
       }
 
       const preview = element.closest(".cuddle-branch-preview-overlay");
-      if (preview) {
+      if (preview && !preview.querySelector(".umt-stop-preview")) {
         const icon = preview.querySelector(".cuddle-choice-icon");
         const heading = preview.querySelector("h2");
         const description = preview.querySelector("p");
@@ -4113,6 +4114,26 @@
       // Assigns every map stop its Wordle variant (read by the run map's
       // renderer so labels are right on the very first paint).
       assignMapVariants: (game) => normalizeMap(game || publicActiveGame()),
+      // Pays points into the stage's itemized "Stage bonus" box (combo
+      // payouts in cuddle-synergies.js ride on this).
+      addStageBonus: (game, amount, field, label) => addScoreBonus(game || publicActiveGame(), amount, field, label),
+      // What a map stop's variant does, for the stop preview: a named
+      // challenge is described at the run's current guess cap and carries
+      // its reward (paid in both points and money on a win).
+      stopVariant: (game, node) => {
+        const variant = node && node.cuddleVariant;
+        if (!variant) return null;
+        if (variant.kind === "mandatoryChallenge") {
+          const challenge = challengeById(variant.challengeId);
+          return {
+            kind: variant.kind,
+            title: variant.title || challenge.title,
+            description: challengeDisplayDescription(game || publicActiveGame(), challenge),
+            reward: Math.max(0, Math.round(asNumber(challenge.reward, 0)))
+          };
+        }
+        return { kind: variant.kind, title: variant.title, description: variant.description };
+      },
       // The challenge stops the map can roll, described at the run's
       // current guess cap -- listed by the map key.
       mapChallenges: (game) => CHALLENGES.map((challenge) => ({

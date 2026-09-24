@@ -654,6 +654,18 @@
       return BASE_STAGE_META[node.type] || BASE_STAGE_META.normal;
     }
 
+    // The stop preview on the map (cuddle-branch-map.js) reads a stop's
+    // wording from here, and an event's two choices as separate options.
+    window.CuddleExpandedStages = Object.freeze({
+      stopMeta: (node, game) => metaForNode(node, game),
+      eventOptions: node => {
+        const definition = node && EVENT_BY_ID[node.expandedEventId];
+        return definition
+          ? { flavor: definition.flavor, options: definition.options.map(option => ({ title: option.title, summary: option.summary })) }
+          : null;
+      }
+    });
+
     function revealMystery(node) {
       if (!node || node.type !== "mystery" || !node.mysteryType) return node;
       node.type = node.mysteryType;
@@ -1985,7 +1997,7 @@
         ["Themed", "Opens with some of the solution's categories revealed."],
         ["Head Start", "A random word is played for you as the first guess."],
         ["Lucky Start", "One exact letter position is revealed before you start."],
-        ["Jackpot", "Green tiles pay double, but the stage runs one guess short."],
+        ["Jackpot", "Green tiles pay double, but you must solve within the world's guess limit."],
         ["Double or Nothing", "Solve within three guesses to double the stage's earnings; take longer and lose half."]
       ];
       const catalogue = window.CuddleRebalanceV5 && typeof window.CuddleRebalanceV5.mapChallenges === "function"
@@ -2112,7 +2124,9 @@
         if (description) description.innerHTML = richText(meta.description);
       });
       const preview = root.querySelector(".cuddle-branch-preview-overlay");
-      if (preview) {
+      // The briefing preview (cuddle-branch-map.js) already reads this
+      // layer's wording through CuddleExpandedStages.stopMeta.
+      if (preview && !preview.querySelector(".umt-stop-preview")) {
         const confirm = preview.querySelector("[data-cuddle-campaign-action='confirm-branch-node']");
         const node = nodeFromElement(game, confirm);
         if (node) {

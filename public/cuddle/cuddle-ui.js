@@ -57,6 +57,7 @@
   function pendingSynergyFor(optionId) {
     if (!game) return null;
     const sources = [
+      window.CuddleSynergies?.preview,
       window.CuddleEngine?.rewardInteractionSynergy,
       window.CuddleRebalanceV5?.rewardInteractionSynergy
     ];
@@ -72,13 +73,25 @@
     return null;
   }
 
+  // A card that would complete a combo gets two marks: a glowing flag up
+  // top (the card itself lights up via :has in cuddle.css) and, under the
+  // description, what the combo adds and which earlier pick it pairs with.
   function interactionBonusBadge(optionId) {
     const synergy = pendingSynergyFor(optionId);
     if (!synergy) return "";
     return `<span class="umt-interaction-badge" title="${escapeHtml(synergy.title)}: ${escapeHtml(synergy.description)}">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l3.22 6.53 7.21 1.05-5.22 5.09 1.23 7.18L12 17.9l-6.44 3.45 1.23-7.18-5.22-5.09 7.21-1.05z"/></svg>
-      Interaction bonus!
+      Combo bonus!
     </span>`;
+  }
+
+  function interactionBonusDetail(optionId) {
+    const synergy = pendingSynergyFor(optionId);
+    if (!synergy) return "";
+    const pairing = synergy.partner ? ` <em>with ${escapeHtml(synergy.partner)}</em>` : "";
+    const effect = synergy.effect || synergy.description || "";
+    return `<span class="umt-combo-detail"><b>${escapeHtml(synergy.icon || "✨")} ${escapeHtml(synergy.title)}</b>${pairing}`
+      + `<span>${goldenMoney(escapeHtml(effect))}</span></span>`;
   }
 
   function showScreen(id) {
@@ -550,6 +563,10 @@
     hint: { glyph: "?", title: "Oracle tile: a yellow or green here reveals a letter and its position" }
   });
 
+  // The last "new row" the board animated in, so a re-render of the same
+  // row (every tap redraws the board) doesn't replay the slide.
+  let lastArrivedRowKey = "";
+
   function renderBoard(state) {
     const rows = [];
     // A normal round no longer has to fit inside state.maxGuesses -- a
@@ -577,9 +594,20 @@
     // actually be aimed at, then keep showing what they paid once the guess
     // through them has landed.
     const moneyTiles = Array.isArray(state.cuddleMoneyTiles) ? state.cuddleMoneyTiles : [];
+    // A stage with no guess limit shows only the rows played so far plus
+    // the one being typed: six empty rows read as "you have six guesses",
+    // which isn't true here. The unplayed rows still take their space
+    // (hidden, not removed) so the board keeps its six-row shape, and each
+    // new row slides in as it's reached.
+    const unlimited = !game.isBossRound() && !Number.isFinite(strictLimit);
+    const liveRow = state.status === "playing" ? state.history.length : -1;
+    const arrivalKey = `${state.runId || "run"}:${state.round}:${state.secret || ""}:${liveRow}`;
+    const arriving = unlimited && liveRow > 0 && arrivalKey !== lastArrivedRowKey;
+    if (unlimited) lastArrivedRowKey = arrivalKey;
     for (let row = 0; row < rowCount; row += 1) {
       const history = state.history[row];
       const isDraft = !history && row === state.history.length && state.status === "playing";
+      const hiddenFuture = unlimited && !history && !isDraft;
       const tiles = [];
       for (let column = 0; column < 5; column += 1) {
         // state.draft[column] is read directly (not via getDraftCards(),
@@ -663,7 +691,10 @@
             : `<span class="cuddle-row-score">${row + 1}</span>`;
       // The active row is tagged so a short screen, where the board scrolls
       // inside its own column, can keep it in view after every render.
-      rows.push(`<div class="cuddle-board-row${isDraft ? " is-current-row" : ""}">${tiles.join("")}${score}</div>`);
+      const rowClass = (isDraft ? " is-current-row" : "")
+        + (isDraft && arriving ? " is-arriving" : "")
+        + (hiddenFuture ? " is-future-hidden" : "");
+      rows.push(`<div class="cuddle-board-row${rowClass}"${hiddenFuture ? ' aria-hidden="true"' : ""}>${tiles.join("")}${score}</div>`);
     }
     const removedCount = state.removedLetters?.length || 0;
     const excluded = removedCount
@@ -959,6 +990,7 @@
                 <span class="cuddle-choice-icon">${escapeHtml(reward.icon || "✨")}</span>
                 <strong>${escapeHtml(reward.title)}</strong>
                 <small>${goldenMoney(escapeHtml(reward.description))}</small>
+                ${interactionBonusDetail(reward.id)}
               </button>`).join("")}
           </div>
           <button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-rewards" ${state.questRewardRefreshesLeft > 0 ? "" : "disabled"}>
@@ -1010,6 +1042,7 @@
                 <span class="cuddle-choice-icon">${escapeHtml(choice.icon || "⬆️")}</span>
                 <strong>${escapeHtml(choice.title)}</strong>
                 <small>${goldenMoney(escapeHtml(choice.description))}</small>
+                ${interactionBonusDetail(choice.key || choice.id)}
               </button>`).join("")}
           </div>
           <div class="cuddle-upgrade-refresh">
@@ -1018,10 +1051,6 @@
             </button>
             <small>The first refresh on each between-round reward screen is free. Later refreshes cost $3, $5, $7, $9, and so on.</small>
           </div>
-          <details class="cuddle-upgrade-details">
-            <summary>Current run upgrades</summary>
-            <ul>${game.getUpgradeSummary().map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
-          </details>
         </section>
       </div>`;
   }

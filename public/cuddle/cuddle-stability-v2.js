@@ -970,20 +970,11 @@
     collect.setAttribute("aria-label", `Collect ${total} dollars earned this round`);
   }
 
+  // The card's own "Lv 2 → 3" chip already states the level, so the old
+  // "Current level" pill this used to append is gone -- only stale copies
+  // from a previous render are cleaned up.
   function enhanceUpgradeLevels(game, root) {
-    root.querySelectorAll(".cuddle-choice[data-upgrade-key], .cuddle-money-choice[data-upgrade-key]").forEach(button => {
-      const key = button.dataset.upgradeKey;
-      const choice = (game.state.upgradeChoices || []).find(item => String(item?.key || item?.id) === key);
-      const id = String(choice?.id || choice?.key || key || "");
-      const level = upgradeLevel(game, id);
-      if (level <= 0 || button.querySelector(".umt-current-level")) return;
-      const current = document.createElement("span");
-      current.className = "umt-current-level";
-      const max = integer(choice?.maxLevel ?? choice?.maxCount ?? choice?.max, 0);
-      current.textContent = max > 0 ? `Current level: ${level}/${max}` : `Current level: ${level}`;
-      const copy = button.querySelector("small, .cuddle-choice-copy") || button;
-      copy.appendChild(current);
-    });
+    root.querySelectorAll(".umt-current-level").forEach(element => element.remove());
   }
 
   function kickHeadStart(game) {
