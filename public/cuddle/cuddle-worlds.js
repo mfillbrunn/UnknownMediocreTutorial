@@ -270,6 +270,18 @@
     el.addEventListener("click", finish);
   }
 
+  // Stamps the current world on the Cuddle root, so the play screen can
+  // wear that world's scenery (cuddle-worlds.css). Cleared on the landing.
+  function applyTheme(root, game) {
+    if (!root || !root.dataset) return;
+    const id = game && game.state && game.state.runId ? currentWorld(game).id : "";
+    if (id) {
+      if (root.dataset.umtWorld !== id) root.dataset.umtWorld = id;
+    } else if (root.dataset.umtWorld) {
+      delete root.dataset.umtWorld;
+    }
+  }
+
   window.CuddleWorlds = Object.freeze({
     WORLDS,
     KIND_COLORS,
@@ -280,6 +292,7 @@
     kindForNode,
     iconMarkup,
     iconSvg,
-    playBossEntrance
+    playBossEntrance,
+    applyTheme
   });
 }());
