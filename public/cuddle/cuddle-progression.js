@@ -1060,8 +1060,23 @@
     // offers, interest) before reading what the stage holds.
     setTimeout(() => {
       if (!game.state || game.state.status !== "playing" || game.state.umtStageBannerKey !== key) return;
-      showBanner(game, burdenNotice);
       saveGame(game);
+      // A boss makes an entrance first (cuddle-worlds.js); the briefing
+      // banner follows once it clears.
+      const boss = game.state.boss && !game.state.boss.__umtSynthetic ? game.state.boss : null;
+      const worlds = window.CuddleWorlds;
+      if (boss && worlds && typeof worlds.playBossEntrance === "function") {
+        worlds.playBossEntrance({
+          game,
+          boss,
+          onDone: () => {
+            if (!game.state || game.state.status !== "playing" || game.state.umtStageBannerKey !== key) return;
+            showBanner(game, burdenNotice);
+          }
+        });
+        return;
+      }
+      showBanner(game, burdenNotice);
     }, 140);
   }
 

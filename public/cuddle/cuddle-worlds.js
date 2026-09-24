@@ -181,6 +181,95 @@
       + `aria-hidden="true" focusable="false" data-umt-stage-icon="${key}">${ICONS[key]}</svg>`;
   }
 
+  // -- boss entrance ---------------------------------------------------------
+  // A short full-screen moment when a boss stage begins, different in each
+  // world: roots and falling leaves in the Woods, shattering crystal in the
+  // Caverns, an eclipse over the Citadel. Tap to skip; reduced motion gets
+  // a plain fade.
+
+  function escapeText(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, character => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;"
+    })[character]);
+  }
+
+  function particles(count, className, build) {
+    let html = "";
+    for (let index = 0; index < count; index += 1) html += `<span class="${className}" style="${build(index)}"></span>`;
+    return html;
+  }
+
+  function entranceEffects(world) {
+    const rand = (min, max) => (min + Math.random() * (max - min)).toFixed(2);
+    if (world.id === "woods") {
+      const vines = [
+        "M0 100 C 18 78, 8 60, 30 52 S 42 40, 38 30",
+        "M100 100 C 82 80, 94 62, 70 55 S 58 42, 62 30",
+        "M0 0 C 16 18, 4 30, 24 36 S 34 46, 30 50",
+        "M100 0 C 84 20, 98 30, 76 38 S 66 46, 70 52",
+        "M50 100 C 44 88, 58 80, 50 70",
+        "M0 55 C 12 50, 16 62, 26 58"
+      ];
+      return `<svg class="umt-be-vines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">`
+        + vines.map((d, index) => `<path d="${d}" style="animation-delay:${(0.08 * index).toFixed(2)}s"/>`).join("")
+        + `</svg>`
+        + particles(22, "umt-be-leaf", () => `left:${rand(0, 100)}%;animation-delay:${rand(0, 1.6)}s;animation-duration:${rand(2.2, 3.4)}s;--drift:${rand(-60, 60)}px;--spin:${rand(180, 540)}deg`);
+    }
+    if (world.id === "caverns") {
+      return `<span class="umt-be-shock"></span><span class="umt-be-shock is-late"></span><span class="umt-be-shock is-later"></span>`
+        + particles(18, "umt-be-shard", index => `--angle:${(index * 20 + Number(rand(-6, 6))).toFixed(1)}deg;--reach:${rand(34, 62)}vmin;--size:${rand(16, 30)}px;animation-delay:${rand(0.85, 1.05)}s`);
+    }
+    return `<span class="umt-be-sun"><span class="umt-be-moon"></span></span>`
+      + particles(26, "umt-be-ember", () => `left:${rand(2, 98)}%;animation-delay:${rand(0, 2)}s;animation-duration:${rand(1.8, 3.2)}s;--drift:${rand(-40, 40)}px`);
+  }
+
+  let entranceEl = null;
+
+  function playBossEntrance(options) {
+    const opts = options || {};
+    const done = typeof opts.onDone === "function" ? opts.onDone : () => {};
+    const boss = opts.boss || {};
+    const host = document.getElementById("cuddleRoot") || document.body;
+    if (!host) { done(); return; }
+    if (entranceEl) entranceEl.remove();
+    const world = opts.game ? currentWorld(opts.game) : WORLDS[0];
+    const final = boss.gate === "final";
+    const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const el = document.createElement("div");
+    el.className = `umt-boss-entrance is-${world.id}${final ? " is-final" : ""}${reduced ? " is-reduced" : ""}`;
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-label", `${final ? "Final boss" : "Boss"}: ${boss.title || "Boss"}`);
+    el.innerHTML = `<div class="umt-be-backdrop"></div>`
+      + `<div class="umt-be-fx" aria-hidden="true">${reduced ? "" : entranceEffects(world)}</div>`
+      + `<div class="umt-be-flash" aria-hidden="true"></div>`
+      + `<div class="umt-be-core">`
+      + `<div class="umt-be-medallion"><span class="umt-be-ring"></span>`
+      + `<svg class="umt-be-skull" viewBox="0 0 24 24" aria-hidden="true">${iconMarkup(final ? "final" : "boss")}</svg>`
+      + (boss.icon ? `<span class="umt-be-icon" aria-hidden="true">${escapeText(boss.icon)}</span>` : "")
+      + `</div>`
+      + `<p class="umt-be-eyebrow">${final ? "Final boss" : `World ${world.index + 1} boss`} · ${escapeText(world.name)}</p>`
+      + `<h2 class="umt-be-title">${escapeText(boss.title || "Boss")}</h2>`
+      + `<p class="umt-be-line">${escapeText(final ? "The last answer waits behind the dark." : world.bossLine)}</p>`
+      + `</div>`
+      + `<p class="umt-be-skip">Tap to begin</p>`;
+    host.appendChild(el);
+    entranceEl = el;
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      el.classList.add("is-leaving");
+      setTimeout(() => {
+        el.remove();
+        if (entranceEl === el) entranceEl = null;
+        done();
+      }, reduced ? 120 : 420);
+    };
+    const timer = setTimeout(finish, reduced ? 1600 : final ? 3600 : 3100);
+    el.addEventListener("click", finish);
+  }
+
   window.CuddleWorlds = Object.freeze({
     WORLDS,
     KIND_COLORS,
@@ -190,6 +279,7 @@
     world: clampWorld,
     kindForNode,
     iconMarkup,
-    iconSvg
+    iconSvg,
+    playBossEntrance
   });
 }());
