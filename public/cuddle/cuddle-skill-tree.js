@@ -86,7 +86,13 @@
         { id: "removeLetter", icon: "✂️", title: "Cull", tier: "common", category: "easierStages", description: "Remove rare consonants from the deck and from every future secret." },
         { id: "greenCount", icon: "🔢", title: "Precise Green", tier: "rare", category: "solving", maxLevel: 1, description: "A green tile also shows how many times that letter appears in the secret." },
         { id: "jokerPerRound", icon: "🃏", title: "Wild Card", tier: "rare", category: "easierStages", description: "Begin every stage with one Joker in the active pouch." },
-        { id: "surprise-assignment", icon: "📜", title: "Surprise Assignment", tier: "rare", category: "quests", description: "Add one extra quest at a random turn in every stage. Each copy schedules another quest." }
+        { id: "surprise-assignment", icon: "📜", title: "Surprise Assignment", tier: "rare", category: "quests", description: "Add one extra quest at a random turn in every stage. Each copy schedules another quest." },
+        // Special board tiles (cuddle-points-money.js). Each has its own
+        // counter in cuddleBonuses, so its level reads true.
+        { id: "treasureMap", icon: "🗺️", title: "Treasure Map", tier: "common", category: "economy", maxLevel: 3, description: "One more special tile appears on the board every stage. Stacks up to three times.", level: g => Number(g?.state?.cuddleBonuses?.treasureMap) || 0 },
+        { id: "mulliganTiles", icon: "🔄", title: "Mulligan Tiles", tier: "common", category: "easierStages", maxLevel: 3, description: "Special tiles can be Mulligan tiles: a yellow or green on one gives an extra mulligan. More copies make them more common.", level: g => Number(g?.state?.cuddleBonuses?.mulliganTiles) || 0 },
+        { id: "jokerTiles", icon: "🃏", title: "Joker Tiles", tier: "rare", category: "easierStages", maxLevel: 3, description: "Special tiles can be Joker tiles: a yellow or green on one gives you a Joker. More copies make them more common.", level: g => Number(g?.state?.cuddleBonuses?.jokerTiles) || 0 },
+        { id: "oracleTiles", icon: "🔮", title: "Oracle Tiles", tier: "legendary", category: "solving", maxLevel: 3, description: "Special tiles can be Oracle tiles, the rarest kind: a yellow or green on one reveals a letter and its exact position. More copies make them more common.", level: g => Number(g?.state?.cuddleBonuses?.oracleTiles) || 0 }
       ]
     },
     {

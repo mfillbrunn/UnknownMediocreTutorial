@@ -540,6 +540,16 @@
       </div>`;
   }
 
+  // What each special-tile kind looks like before it's played, and what a
+  // hover on it says it pays.
+  const SPECIAL_TILE_KINDS = Object.freeze({
+    money: { glyph: "$", title: "Money tile: a yellow here pays $2, a green $4" },
+    points: { glyph: "P", title: "Points tile: a yellow here pays 5 points, a green 10" },
+    mulligan: { glyph: "↻", title: "Mulligan tile: a yellow or green here gives an extra mulligan" },
+    joker: { glyph: "★", title: "Joker tile: a yellow or green here gives you a Joker" },
+    hint: { glyph: "?", title: "Oracle tile: a yellow or green here reveals a letter and its position" }
+  });
+
   function renderBoard(state) {
     const rows = [];
     // A normal round no longer has to fit inside state.maxGuesses -- a
@@ -553,9 +563,10 @@
       state.maxGuesses,
       state.history.length + (state.status === "playing" ? 1 : 0)
     );
-    // Money tiles (cuddle-points-money.js) are marked on the board before
-    // they are played so they can actually be aimed at, then keep showing
-    // what they paid once the guess through them has landed.
+    // Special tiles (cuddle-points-money.js) are marked on the board before
+    // they are played -- a large faint symbol for their kind -- so they can
+    // actually be aimed at, then keep showing what they paid once the guess
+    // through them has landed.
     const moneyTiles = Array.isArray(state.cuddleMoneyTiles) ? state.cuddleMoneyTiles : [];
     for (let row = 0; row < rowCount; row += 1) {
       const history = state.history[row];
@@ -581,14 +592,18 @@
           ? draftCard.glyph === window.CuddleEngine.CUDDLE_JOKER_GLYPH
           : Boolean(history?.jokerRevealed && history.jokerIndex === column);
         const moneyTile = moneyTiles.find(tile => tile && tile.row === row && tile.col === column);
+        const tileKind = moneyTile ? (SPECIAL_TILE_KINDS[moneyTile.kind] ? moneyTile.kind : "money") : null;
         const moneyClass = !moneyTile
           ? ""
-          : moneyTile.paid
-            ? (moneyTile.payout > 0 ? " is-money-tile is-money-won" : " is-money-tile is-money-missed")
-            : " is-money-tile";
+          : ` is-special-tile is-special-${tileKind}`
+            + (moneyTile.paid ? (moneyTile.payout > 0 ? " is-special-won" : " is-special-missed") : "");
+        // data-special draws the unplayed tile's watermark; once paid, the
+        // same attribute carries the payout ("+$4", "+10", "Hint") instead.
         const moneyBadge = !moneyTile || (moneyTile.paid && !moneyTile.payout)
           ? ""
-          : ` data-money="${moneyTile.paid ? `+$${moneyTile.payout}` : "$"}"`;
+          : moneyTile.paid
+            ? ` data-special-paid="${escapeHtml(moneyTile.label || (tileKind === "money" ? `+$${moneyTile.payout}` : `+${moneyTile.payout}`))}"`
+            : ` data-special="${SPECIAL_TILE_KINDS[tileKind].glyph}" title="${escapeHtml(SPECIAL_TILE_KINDS[tileKind].title)}"`;
         const tileClass = (result ? ` is-${result}` : letter ? " is-filled" : "")
           + (isJokerTile ? " is-joker" : "") + moneyClass;
         if (draftCard) {

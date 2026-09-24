@@ -473,31 +473,82 @@
   opacity: 0.75;
 }
 
-/* Money tiles (cuddle-points-money.js): marked in gold before they are
-   played so they can be aimed at, then showing what the guess through
-   them actually paid. A spent tile that paid nothing drops the marking
-   entirely rather than keeping a promise it no longer holds. */
-.cuddle-tile.is-money-tile {
-  box-shadow: inset 0 0 0 2px var(--cuddle-money-gold-bright, #e8bf75);
+/* Special tiles (cuddle-points-money.js). Before they are played, each
+   carries a large symbol for its kind at 40% opacity (60% transparent)
+   behind the letter -- gold $ for money, green P for points, and the
+   unlockable mulligan, joker and hint kinds -- plus a thin ring in the
+   same colour, so it's obvious which cells are worth aiming at. The
+   symbol sits at z-index -1 inside the tile's own stacking context, so it
+   paints over the tile background but under the letter typed on top.
+   Once played, a tile that paid shows what it paid in the corner; one
+   that caught a grey drops its marking entirely. */
+.cuddle-tile.is-special-tile {
+  --special: #f6c956;
+  position: relative;
+  isolation: isolate;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--special) 85%, transparent);
 }
 
-.cuddle-tile.is-money-tile::after {
-  content: attr(data-money);
+.cuddle-tile.is-special-money { --special: #f6c956; }
+.cuddle-tile.is-special-points { --special: #3ecf8e; }
+.cuddle-tile.is-special-mulligan { --special: #7cc8ff; }
+.cuddle-tile.is-special-joker { --special: #ff8fc7; }
+.cuddle-tile.is-special-hint { --special: #5ee0e0; }
+
+.cuddle-tile.is-special-tile[data-special]::before {
+  content: attr(data-special);
   position: absolute;
-  top: 2px;
-  right: 4px;
-  color: var(--cuddle-money-gold-bright, #e8bf75);
-  font-size: 0.34em;
+  inset: 0;
+  z-index: -1;
+  display: grid;
+  place-items: center;
+  color: var(--special);
+  font-size: 1.5em;
   font-weight: 900;
   line-height: 1;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Letters being drafted are drawn much larger than submitted ones, so the
+   symbol is scaled down to still fit the same tile. */
+#cuddleScreen .cuddle-tile.is-draft-tile.is-special-tile[data-special]::before {
+  font-size: 1.05em;
+}
+
+/* The points P reads as a letter; set it apart from typed letters. */
+.cuddle-tile.is-special-points[data-special]::before {
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+}
+
+.cuddle-tile.is-special-won {
+  box-shadow: inset 0 0 0 2px var(--special);
+}
+
+/* What the tile paid, as a small dark pill in the corner so it stays
+   legible on green and yellow alike. */
+.cuddle-tile.is-special-won[data-special-paid]::after {
+  content: attr(data-special-paid);
+  position: absolute;
+  top: -7px;
+  right: -6px;
+  z-index: 1;
+  padding: 2px 5px;
+  border: 1px solid var(--special);
+  border-radius: 999px;
+  color: var(--special);
+  background: rgba(14, 12, 22, 0.92);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
 }
 
-.cuddle-tile.is-money-won {
-  box-shadow: inset 0 0 0 2px #f5d68a;
-}
-
-.cuddle-tile.is-money-missed {
+.cuddle-tile.is-special-missed {
   box-shadow: none;
 }
 
@@ -1827,9 +1878,12 @@
 /* UMT_CUDDLE_REBALANCE_V3: CSS END */
 
 /* UMT_CUDDLE_BALANCE_REFRESH_HARDMODE_V1: CSS START */
-/* Increase only the five uncommitted board letters; submitted rows stay unchanged. */
+/* Increase only the five uncommitted board letters; submitted rows stay unchanged.
+   !important because #cuddleScreen is also a .game-menu, and the site-wide
+   ".game-menu button { font-size: 14px !important }" otherwise wins -- a
+   letter being drafted is a <button>, so it was rendering at 14px. */
 #cuddleScreen .cuddle-tile.is-draft-tile {
-  font-size: clamp(2.25rem, 6.8vw, 3.1rem);
+  font-size: clamp(2.25rem, 6.8vw, 3.1rem) !important;
   line-height: 1;
 }
 
@@ -1856,7 +1910,7 @@
 
 @media (max-width: 650px) {
   #cuddleScreen .cuddle-tile.is-draft-tile {
-    font-size: clamp(2.1rem, 10.5vw, 2.75rem);
+    font-size: clamp(2.1rem, 10.5vw, 2.75rem) !important;
   }
 
   #cuddleScreen .cuddle-upgrade-refresh {
