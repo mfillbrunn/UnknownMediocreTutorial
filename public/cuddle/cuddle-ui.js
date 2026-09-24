@@ -557,7 +557,7 @@
   // hover on it says it pays.
   const SPECIAL_TILE_KINDS = Object.freeze({
     money: { glyph: "$", title: "Money tile: a yellow here pays $2, a green $4" },
-    points: { glyph: "P", title: "Points tile: a yellow here pays 5 points, a green 10" },
+    points: { glyph: "●", title: "Points tile (green dot): a yellow here pays 5 points, a green 10" },
     mulligan: { glyph: "↻", title: "Mulligan tile: a yellow or green here gives an extra mulligan" },
     joker: { glyph: "★", title: "Joker tile: a yellow or green here gives you a Joker" },
     hint: { glyph: "?", title: "Oracle tile: a yellow or green here reveals a letter and its position" }
