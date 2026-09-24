@@ -63,10 +63,10 @@
     }),
     Object.freeze({
       id: "fiveGuessSprint",
-      title: "Five-Guess Sprint",
+      title: "Guess Sprint",
       label: "Sprint",
       icon: "challenge-five-guess-sprint.svg",
-      description: "Solve with fewer guesses than a normal round."
+      description: "Solve within the world's guess limit (6, 5 or 4) or the run is lost."
     }),
     Object.freeze({
       id: "vowelBudget",
@@ -399,7 +399,7 @@
         blueHaze: `For the first ${count} ${guessWord}, a green or yellow on the marked tiles appears blue instead.`,
         singleLie: `The marked tiles in each of the first ${count} feedback ${count === 1 ? "row lie" : "rows lie"} about their colour.`,
         lockedOpener: `Mulligans are locked until ${count === 1 ? "the first guess is" : `the first ${count} guesses are`} submitted.`,
-        fiveGuessSprint: `This Wordle has ${count} fewer ${count === 1 ? "guess" : "guesses"} than normal, with a minimum of three.`,
+        fiveGuessSprint: "Solve this Wordle within the world's guess limit -- 6 guesses in world one, 5 in world two, 4 in world three -- or the run is lost.",
         vowelBudget: `Each of the first ${count} ${guessWord} may contain at most two vowels.`,
         cleanLetters: `Each of the first ${count} ${guessWord} must use five different letters.`,
         quickStart: `Each of the first ${count} ${guessWord} has a 50-second clock.`
@@ -931,10 +931,10 @@
     function syncExpandedChallengeRules(game) {
       const challenge = activeExpandedChallenge(game);
       if (!challenge || challenge.effect !== "guessCap" || challenge.expandedCapApplied) return false;
-      const extraReduction = Math.max(0, expandedChallengeTurns(challenge) - 1);
-      if (extraReduction) {
-        game.state.maxGuesses = Math.max(3, integer(game.state.maxGuesses, 6) - extraReduction);
-      }
+      // The Sprint's limit is the world's guess window (6/5/4), the same at
+      // every tier -- it used to shave off more rows here, which on a normal
+      // stage (no guess cap) never actually limited anything.
+      if (typeof game._applyStrictGuessLimit === "function") game._applyStrictGuessLimit();
       challenge.expandedCapApplied = true;
       safeSave(game);
       return true;

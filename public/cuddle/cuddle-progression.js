@@ -856,7 +856,7 @@
   }
 
   const VARIANTS = {
-    jackpot: { icon: "💰", text: "Jackpot Run — greens pay double, one row shorter", kind: "bonus" },
+    jackpot: { icon: "💰", text: "Jackpot Run — greens pay double", kind: "bonus" },
     luckyStart: { icon: "🍀", text: "Lucky Start — one position is already yours", kind: "bonus" },
     doubleOrNothing: { icon: "⚖️", text: "Double or Nothing — solve by guess 3 to double the stage", kind: "hazard" },
     randomOpener: { icon: "🎲", text: "Head Start — a random word plays your first guess", kind: "info" }
@@ -888,6 +888,12 @@
       const tree = window.CuddleSkillTree;
       const reward = boss.rewardId && tree ? resolveCatalogueNode(tree, boss.rewardId) : null;
       if (reward) lines.push({ kind: "bonus", icon: reward.icon || "🎁", text: `Clear it to earn ${reward.title}` });
+    }
+
+    // A strict stage is lost outright if it isn't solved in time -- the
+    // most important thing the banner can say about it.
+    if (!boss && typeof game._hardGuessLimit === "function" && Number.isFinite(game._hardGuessLimit())) {
+      lines.push({ kind: "hazard", icon: "⏱️", text: `Solve within ${game._hardGuessLimit()} guesses or the run is lost` });
     }
 
     const custom = state.cuddleRebalanceV5 || {};
