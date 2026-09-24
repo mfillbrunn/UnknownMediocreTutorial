@@ -705,18 +705,31 @@
       this.state.unknownGlyphs = [...unknown].sort();
     }
 
-    // Delayed Feedback pays out everything it withheld the moment the delay
-    // expires: past rows stop being "unknown" and their real colours land.
+    // Delayed Feedback runs one guess behind: a row's withheld tiles land
+    // when the NEXT guess is submitted, so every affected row is revealed
+    // one late -- including the last one, whether or not the power is
+    // still running. Only the newest row stays withheld.
     _releaseDeferredFeedback() {
+      const history = this.state.history || [];
       let released = 0;
-      this.state.history.forEach(entry => {
-        if (!entry?.deferred) return;
+      history.forEach((entry, index) => {
+        if (!entry?.deferred || index >= history.length - 1) return;
         entry.deferred = false;
         entry.shownFeedback = entry.feedback.slice();
         this._updateKnowledge(entry.word, entry.feedback);
         released += 1;
       });
-      if (released) this.state.unknownGlyphs = [];
+      if (released) {
+        // Letters still sitting on a withheld tile keep their question mark.
+        const stillMasked = new Set();
+        history.forEach(entry => {
+          const shown = entry?.shownFeedback || [];
+          String(entry?.word || "").split("").forEach((letter, index) => {
+            if (shown[index] === "unknown") stillMasked.add(glyphForLetter(letter));
+          });
+        });
+        this.state.unknownGlyphs = (this.state.unknownGlyphs || []).filter(glyph => stillMasked.has(glyph));
+      }
       return released;
     }
 
@@ -1519,9 +1532,10 @@
       }
       this.state.history.push(entry);
 
-      // Delayed Feedback: once the delay expires, everything it withheld
-      // lands at once and the unknown pile clears.
-      if (this.state.boss?.id === "delayedFeedback" && !this._bossActive()) {
+      // Delayed Feedback: the row before this one gets its real colours now.
+      // Runs on every guess, whatever masked the row (boss, challenge or
+      // ratchet), so the last affected row is revealed one late as well.
+      if (this.state.history.some(item => item?.deferred)) {
         const released = this._releaseDeferredFeedback();
         if (released) {
           this._syncInfiniteCards();
@@ -2812,7 +2826,7 @@
       case "countOnly":
         return `During the first ${guesses}, the marked tiles report only how many of them are green and how many yellow, not which is which. Every other tile shows its real colour.`;
       case "delayedFeedback":
-        return `During the first ${guesses}, the marked tiles withhold their colours. When the power ends, every withheld result appears at once.`;
+        return `During the first ${guesses}, the marked tiles run one guess late: each row's hidden colours appear when you submit your next guess.`;
       case "hideFeedback":
         return `During the first ${guesses}, one marked board position hides its feedback. That position behaves normally afterward.`;
       case "hiddenMargins":
@@ -3453,14 +3467,23 @@
       && Number(this.state.round || 1) === roundBefore
     );
     if (sameBossRound) {
-      const delayedReleased = bossBefore.id === "delayedFeedback" && !this._bossActive();
-      const nextKinds = delayedReleased ? {} : { ...oldKinds };
-      if (!delayedReleased) {
-        unique(word.split("").map(glyphForLetter)).forEach(glyph => {
-          if (newMysteries[glyph]) nextKinds[glyph] = newMysteries[glyph];
-          else delete nextKinds[glyph];
+      const nextKinds = { ...oldKinds };
+      unique(word.split("").map(glyphForLetter)).forEach(glyph => {
+        if (newMysteries[glyph]) nextKinds[glyph] = newMysteries[glyph];
+        else delete nextKinds[glyph];
+      });
+      // Delayed Feedback may just have released the previous row; letters
+      // that no longer sit on any withheld tile lose their question mark.
+      const stillMasked = new Set();
+      (this.state.history || []).forEach(item => {
+        const shown = item?.shownFeedback || [];
+        String(item?.word || "").split("").forEach((letter, index) => {
+          if (shown[index] === "unknown") stillMasked.add(glyphForLetter(letter));
         });
-      }
+      });
+      Object.keys(nextKinds).forEach(glyph => {
+        if (nextKinds[glyph] === "unknown" && !stillMasked.has(glyph)) delete nextKinds[glyph];
+      });
       this.state.mysteryGlyphKinds = nextKinds;
       this.state.unknownGlyphs = Object.keys(nextKinds).sort();
       this.state.knownAbsent = (this.state.knownAbsent || [])
@@ -4657,7 +4680,10 @@
     const mega = ensureMega(game);
     if (!mega || !game.state) return;
     if (game.state.status !== "playing") return;
-    if (game.isBossRound()) return;
+    // Boss stages included: a per-round Joker grant (Joker Cache, Wild
+    // Card) is paid into jokerCharges on every _beginRound, bosses too, and
+    // skipping bosses here left those charges stranded -- the player owned
+    // "two Jokers every round" and got none at the boss.
     const hasJoker = (game.state.hand || []).some(card => card.source === "joker" && card.glyph === JOKER_GLYPH);
     if (hasJoker) return;
     if (Number(mega.jokerCharges || 0) <= 0) return;

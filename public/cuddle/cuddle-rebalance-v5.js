@@ -205,7 +205,7 @@
 
   const BURDEN_INFO = Object.freeze({
     countOnly: ["Count Only", "That same guess shows only how many letters are correct, every round from now on."],
-    delayedFeedback: ["Delayed Feedback", "That same guess withholds its feedback until later, every round from now on."],
+    delayedFeedback: ["Delayed Feedback", "That same guess reveals its marked tiles one guess late, every round from now on."],
     hideFeedback: ["Hidden Feedback", "That same guess hides tile feedback, every round from now on."],
     hiddenMargins: ["Hidden Margins", "Some feedback positions on that same guess stay concealed, every round from now on."],
     blueMode: ["Blue Mode", "That same guess merges yellow and green into blue feedback, every round from now on."],
@@ -2899,7 +2899,7 @@
     consonantCrunch: { title: "Consonant Crunch", description: "Affected words may contain no more than one vowel.", shape: "consonant" },
     shroudedEdges: { title: "Shrouded Edges", description: "The same marked positions remain hidden on every affected guess.", shape: "edges" },
     countOnly: { title: "Count Only", description: "The marked tiles report only how many of them are green and how many yellow, never which is which. Every other tile in the row shows its real colour.", shape: "count", multiplayerId: "countOnly" },
-    delayedFeedback: { title: "Delayed Feedback", description: "The marked tiles withhold their colours until the delay expires, then release them all at once. Every other tile in the row shows its real colour.", shape: "clock" },
+    delayedFeedback: { title: "Delayed Feedback", description: "The marked tiles hold back their colours for one guess: each row's hidden tiles are revealed when you submit the next guess. Every other tile in the row shows its real colour immediately.", shape: "clock" },
     hideFeedback: { title: "Hidden Feedback", description: "One tile position stays concealed for the whole round, and you never learn what it was.", shape: "blind" },
     hiddenMargins: { title: "Hidden Margins", description: "Two tile positions stay concealed for the whole round, and you never learn what they were.", shape: "edges" },
     blueMode: { title: "Blue Mode", description: "On the marked tiles green and yellow both show as blue, so you learn the letter is in the secret but not whether it is placed right. Every other tile in the row shows its real colour.", shape: "merge" },
