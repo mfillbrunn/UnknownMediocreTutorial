@@ -2959,7 +2959,16 @@
     const result = {};
     const boss = game?.state?.boss;
     if (!boss || !game._bossActive()) return result;
-    const markAll = kind => word.split("").forEach(letter => { result[glyphForLetter(letter)] = kind; });
+    // Only the tiles in the effect's span are withheld or lied about (see
+    // maskSpanFor); every other tile in the row tells the truth, so only
+    // the letters sitting on span tiles become mysteries. Marking the whole
+    // word used to put an honestly-grey letter on "?" too.
+    const span = typeof game.maskSpanPreview === "function" ? game.maskSpanPreview() : null;
+    const spanIndices = span && Array.isArray(span.indices) && span.indices.length ? span.indices : null;
+    const markAll = kind => word.split("").forEach((letter, index) => {
+      if (spanIndices && !spanIndices.includes(index)) return;
+      result[glyphForLetter(letter)] = kind;
+    });
     switch (boss.id) {
       case "countOnly":
       case "delayedFeedback":
@@ -3053,7 +3062,8 @@
         const shown = Array.isArray(entry?.shownFeedback) ? entry.shownFeedback : [];
         word.split("").forEach((letter, index) => {
           const glyph = glyphForLetter(letter);
-          if (entry?.fakeFeedback) kinds[glyph] = "purple";
+          const lied = entry?.fakeFeedback && (!Array.isArray(entry.maskedIndices) || entry.maskedIndices.includes(index));
+          if (lied) kinds[glyph] = "purple";
           else if (shown[index] === "blue") kinds[glyph] = "blue";
           else if (shown[index] === "unknown") kinds[glyph] = "unknown";
         });

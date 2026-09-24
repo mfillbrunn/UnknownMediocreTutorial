@@ -1304,21 +1304,14 @@
     var rebalance = window.CuddleRebalanceV5;
     var variant = rebalance && typeof rebalance.stopVariant === "function" ? rebalance.stopVariant(game, node) : null;
     var brief = { title: nodeTitle(node), summary: "", gets: [], risks: [], options: null };
-    var rules = {};
-    try { rules = game.getRulesSummary() || {}; } catch (_error) { rules = {}; }
+    // Only what's special about this stop is listed -- the usual per-tile
+    // points and money every Wordle pays aren't repeated on each preview.
     var limit = typeof game._solveGuessThreshold === "function" ? game._solveGuessThreshold() : 6;
-    function stageBase() {
-      if (rules.greenPoints != null) {
-        brief.gets.push({ type: "points", text: "+" + rules.greenPoints + " pts per green, +" + rules.yellowPoints + " per yellow" });
-      }
-      brief.gets.push({ type: "money", text: "Money for every useful tile" });
-    }
 
     if (kind === "wordle" || (kind === "challenge" && !variant)) {
       var variantKind = variant ? variant.kind : node.type === "theme" ? "themedWordle" : "plain";
       brief.title = variant && variant.title ? variant.title : meta && meta.title ? meta.title : brief.title;
       brief.summary = VARIANT_SUMMARIES[variantKind] || (meta && meta.description) || "Solve the word to move on.";
-      stageBase();
       if (variantKind === "jackpot") {
         brief.gets.unshift({ type: "points", text: "Greens pay double" });
         brief.risks.push("Solve within " + limit + " guesses or the run is lost");
@@ -1343,7 +1336,6 @@
       if (variant.reward > 0) {
         brief.gets.push({ type: "win", text: "On a win: +" + variant.reward + " pts · +$" + variant.reward });
       }
-      stageBase();
       brief.risks.push(variant.description);
     } else if (kind === "event") {
       var event = expanded && typeof expanded.eventOptions === "function" ? expanded.eventOptions(node) : null;
@@ -1356,7 +1348,6 @@
       brief.gets.push({ type: "perk", text: "Pick 1 of 3 free permanent upgrades" });
     } else if (kind === "duel") {
       brief.summary = meta ? meta.description : "Race an AI to the answer.";
-      stageBase();
     } else if (kind === "mystery") {
       brief.title = "Unknown Stop";
       brief.summary = "Hidden until you step onto it. Could be anything on the road.";
@@ -1380,7 +1371,7 @@
     if (brief.gets.length) {
       html += "<div class=\"umt-stop-block\"><h3>You get</h3><ul class=\"umt-stop-chips\">"
         + brief.gets.map(function chip(item) {
-          var mark = item.type === "money" ? "$" : item.type === "points" ? "P" : item.type === "win" ? "★" : "✦";
+          var mark = item.type === "money" ? "$" : item.type === "points" ? "●" : item.type === "win" ? "★" : "✦";
           return "<li class=\"is-" + item.type + "\"><i aria-hidden=\"true\">" + mark + "</i>" + rewardText(item.text) + "</li>";
         }).join("") + "</ul></div>";
     }

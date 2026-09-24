@@ -200,9 +200,14 @@
    tiles were the ones not to trust. Drawn as an inset ring rather than a
    border so it layers over the green/yellow/grey result colours without
    shifting the tile or fighting their own border-color. */
+/* After the guess: a solid violet ring OUTSIDE the tile as well as inside
+   it -- an inset ring alone disappeared against yellow and green tiles,
+   while the outer one sits on the dark board where it always shows. */
 #cuddleRoot .cuddle-tile.umt-masked-tile {
   position: relative;
-  box-shadow: inset 0 0 0 3px var(--umt-mask-ring, #d6b3ff), 0 0 0.45rem rgba(201, 165, 255, 0.35);
+  outline: 3px solid #b77cff;
+  outline-offset: 2px;
+  box-shadow: inset 0 0 0 3px var(--umt-mask-ring, #e3c8ff), 0 0 0.7rem rgba(183, 124, 255, 0.55);
 }
 
 /* Before the guess: a bright double ring -- solid inside, dashed outside --

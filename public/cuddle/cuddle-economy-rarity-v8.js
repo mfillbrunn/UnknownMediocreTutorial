@@ -1407,7 +1407,7 @@
       setDescription(def, "Advance the reward received when the Cuddle Meter fills: mulligan, Joker, then hint.");
       setMaxStack(def, 2);
     } else if (name === "joker cache") {
-      setDescription(def, "Begin every stage with two additional Jokers.");
+      setDescription(def, "Two extra Jokers every stage.");
       replaceHandlers(def, "joker-cache");
     }
 

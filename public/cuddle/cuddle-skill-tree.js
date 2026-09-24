@@ -115,7 +115,7 @@
       nodes: [
         { id: "openingInsight", icon: "💡", title: "Opening Insight", tier: "rare", category: "solving", maxLevel: 2, description: "Start every non-boss Wordle with one additional exact-position hint.", level: g => upgradeCount(g, "openingInsight") },
         { id: "quickStudy", icon: "⏳", title: "Quick Study", tier: "common", category: "solving", maxLevel: 2, description: "Automatic hints arrive one guess sooner (minimum: every two guesses).", level: g => upgradeCount(g, "quickStudy") },
-        { id: "jokerCache", icon: "🃏", title: "Joker Cache", tier: "legendary", category: "easierStages", maxLevel: 2, description: "Gain two new Jokers at the beginning of every round. Live Joker cards and reserve charges both count.", level: g => upgradeCount(g, "jokerCache") },
+        { id: "jokerCache", icon: "🃏", title: "Joker Cache", tier: "legendary", category: "easierStages", maxLevel: 2, description: "Two extra Jokers every stage.", level: g => upgradeCount(g, "jokerCache") },
         { id: "reserveDividend", icon: "🏦", title: "Reserve Dividend", tier: "rare", category: "economy", maxLevel: 1, description: "At a win, earn 5 points extra for every unused mulligan and every unused Joker.", level: g => upgradeCount(g, "reserveDividend") },
         { id: "consonantSweep", icon: "🔍", title: "Process of Elimination", tier: "rare", category: "solving", maxLevel: 1, description: "Every guess rules out one consonant that is not in the secret.", level: g => upgradeCount(g, "consonantSweep") }
       ]
