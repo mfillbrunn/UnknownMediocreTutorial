@@ -1,0 +1,350 @@
+/* CUDDLE WORLDS -- the run map as a climb through three themed worlds, plus
+   the shared stop icons (see cuddle-worlds.js). Loaded after every other
+   Cuddle stylesheet. */
+
+/* ---- screen ------------------------------------------------------------ */
+
+#cuddleRoot .cuddle-branch-shell[data-umt-world] {
+  background:
+    radial-gradient(120% 70% at 50% 0%, var(--umt-world-tint, rgba(62, 207, 142, .12)), transparent 70%),
+    #0d0b12;
+}
+#cuddleRoot .cuddle-branch-shell[data-umt-world="woods"] { --umt-world-tint: rgba(62, 207, 142, .14); }
+#cuddleRoot .cuddle-branch-shell[data-umt-world="caverns"] { --umt-world-tint: rgba(128, 108, 255, .18); }
+#cuddleRoot .cuddle-branch-shell[data-umt-world="citadel"] { --umt-world-tint: rgba(255, 90, 79, .16); }
+
+#cuddleRoot .cuddle-world-map {
+  width: min(460px, 100%);
+  max-height: calc(100dvh - 118px);
+  margin: 0 auto 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 244, 226, .09);
+  background: #0a1b15;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .45), inset 0 0 0 1px rgba(0, 0, 0, .4);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 244, 226, .2) transparent;
+}
+
+#cuddleRoot .umt-world-map-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: inherit;
+}
+
+/* ---- world titles ------------------------------------------------------ */
+
+#cuddleRoot .umt-map-world-eyebrow {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .28em;
+}
+#cuddleRoot .umt-map-world-name {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  fill: #fff6e6;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, .5);
+  stroke-width: 3px;
+}
+
+/* ---- trails ------------------------------------------------------------ */
+
+#cuddleRoot .umt-trail-bed {
+  fill: none;
+  stroke: rgba(0, 0, 0, .32);
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+#cuddleRoot .umt-trail {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 2.6;
+}
+#cuddleRoot .umt-trail-ahead {
+  stroke: var(--world-accent, #f4d9a0);
+  stroke-opacity: .42;
+  stroke-dasharray: .1 7.5;
+}
+#cuddleRoot .umt-trail-past {
+  stroke: rgba(255, 244, 226, .12);
+  stroke-dasharray: .1 7.5;
+}
+#cuddleRoot .umt-trail-live {
+  stroke: var(--world-accent, #f4d9a0);
+  stroke-width: 3.4;
+  stroke-dasharray: 8 7;
+  animation: umt-trail-flow 1.1s linear infinite;
+  filter: drop-shadow(0 0 4px var(--world-accent, #f4d9a0));
+}
+#cuddleRoot .umt-trail-walked {
+  stroke: #f4d9a0;
+  stroke-width: 3.8;
+  filter: drop-shadow(0 0 3px rgba(244, 217, 160, .55));
+}
+@keyframes umt-trail-flow {
+  to { stroke-dashoffset: -15; }
+}
+
+/* ---- stops ------------------------------------------------------------- */
+
+#cuddleRoot .umt-node-disc {
+  fill: #120e17;
+  stroke: var(--kind);
+  stroke-width: 2.6;
+}
+#cuddleRoot .umt-node-core {
+  fill: var(--kind);
+  fill-opacity: .14;
+}
+#cuddleRoot .umt-node-icon {
+  pointer-events: none;
+}
+/* The challenge ring colour already marks these; no dashed box. */
+#cuddleRoot .umt-map-v2 [data-umt-variant] {
+  outline: none;
+}
+#cuddleRoot .umt-node-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .01em;
+  fill: #fff4e2;
+  paint-order: stroke;
+  stroke: rgba(8, 6, 12, .88);
+  stroke-width: 3.4px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+#cuddleRoot .umt-kind-boss .umt-node-label,
+#cuddleRoot .umt-kind-final .umt-node-label {
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  fill: var(--kind);
+}
+
+#cuddleRoot .umt-state-locked .umt-node-disc,
+#cuddleRoot .umt-state-locked .umt-node-core,
+#cuddleRoot .umt-state-locked .umt-node-icon {
+  opacity: .66;
+}
+#cuddleRoot .umt-state-locked .umt-node-label {
+  fill-opacity: .62;
+}
+#cuddleRoot .umt-state-skipped {
+  opacity: .3;
+  filter: grayscale(1);
+}
+
+#cuddleRoot .umt-state-open {
+  cursor: pointer;
+  outline: none;
+}
+#cuddleRoot .umt-state-open .umt-node-disc {
+  stroke-width: 3.2;
+  fill: #1c1624;
+  filter: drop-shadow(0 0 6px var(--kind));
+}
+#cuddleRoot .umt-state-open:hover .umt-node-core,
+#cuddleRoot .umt-state-open:focus-visible .umt-node-core {
+  fill-opacity: .34;
+}
+#cuddleRoot .umt-state-open:focus-visible .umt-node-disc {
+  stroke: #fff;
+}
+#cuddleRoot .umt-node-halo {
+  fill: none;
+  stroke: var(--kind);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: umt-node-halo 1.8s ease-out infinite;
+}
+@keyframes umt-node-halo {
+  0% { transform: scale(.86); opacity: .95; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+#cuddleRoot .umt-state-here .umt-node-disc {
+  stroke: #f4d9a0;
+  stroke-width: 3.6;
+  fill: #2a2012;
+}
+#cuddleRoot .umt-map-paw {
+  fill: #f6c956;
+  stroke: #3a2a0c;
+  stroke-width: 1;
+  animation: umt-paw-bob 1.6s ease-in-out infinite;
+}
+@keyframes umt-paw-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+#cuddleRoot .umt-node-check circle {
+  fill: #f4d9a0;
+  stroke: #120e17;
+  stroke-width: 1.5;
+}
+#cuddleRoot .umt-node-check path {
+  fill: none;
+  stroke: #2a1d06;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#cuddleRoot .umt-state-visited .umt-node-disc {
+  stroke: #d8b56e;
+}
+
+/* ---- bosses ------------------------------------------------------------ */
+
+#cuddleRoot .umt-boss-aura {
+  fill: var(--world-glow, #ff5a6a);
+  fill-opacity: .16;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: umt-boss-breathe 3.2s ease-in-out infinite;
+}
+#cuddleRoot .umt-eclipse-corona {
+  fill: #ff5a4f;
+  fill-opacity: .16;
+  filter: blur(6px);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: umt-boss-breathe 3.6s ease-in-out infinite;
+}
+#cuddleRoot .umt-eclipse-ring {
+  fill: #0b0306;
+  stroke: #ffcf70;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 8px #ff8a3d);
+}
+@keyframes umt-boss-breathe {
+  0%, 100% { transform: scale(.94); opacity: .8; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+
+/* ---- ambient sparks ------------------------------------------------------ */
+
+#cuddleRoot .umt-map-spark {
+  animation: umt-spark-twinkle 4s ease-in-out infinite;
+  pointer-events: none;
+}
+#cuddleRoot .umt-map-spark-woods { fill: #e3ff9c; filter: drop-shadow(0 0 3px #d7ff6b); }
+#cuddleRoot .umt-map-spark-caverns { fill: #c9f0ff; filter: drop-shadow(0 0 3px #7fd8ff); }
+#cuddleRoot .umt-map-spark-citadel {
+  fill: #ffb36b;
+  filter: drop-shadow(0 0 3px #ff6a3d);
+  animation-name: umt-spark-rise;
+}
+@keyframes umt-spark-twinkle {
+  0%, 100% { opacity: .15; }
+  50% { opacity: .95; }
+}
+@keyframes umt-spark-rise {
+  0% { opacity: 0; transform: translateY(8px); }
+  40% { opacity: .9; }
+  100% { opacity: 0; transform: translateY(-16px); }
+}
+
+/* ---- stop preview ------------------------------------------------------ */
+
+#cuddleRoot .cuddle-branch-preview-overlay .cuddle-modal[data-umt-stop-kind] {
+  border-top: 3px solid var(--kind);
+}
+#cuddleRoot .cuddle-branch-preview-overlay .umt-preview-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--kind) 22%, #120e17) 0%, #120e17 72%);
+  border: 2.5px solid var(--kind);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--kind) 45%, transparent);
+  font-size: 0;
+}
+#cuddleRoot .cuddle-branch-preview-overlay .umt-preview-icon .umt-stage-icon {
+  width: 38px;
+  height: 38px;
+}
+#cuddleRoot .cuddle-branch-preview-overlay .umt-preview-kind {
+  display: block;
+  margin-bottom: 2px;
+  text-align: center;
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--kind);
+}
+
+/* Inline stop icons wherever they appear in HTML (map key, shop, cards). */
+.umt-stage-icon {
+  display: inline-block;
+  width: 1.4em;
+  height: 1.4em;
+  vertical-align: middle;
+  flex: none;
+}
+
+@media (max-width: 520px) {
+  #cuddleRoot .cuddle-world-map {
+    max-height: calc(100dvh - 104px);
+    border-radius: 16px;
+  }
+  #cuddleRoot .cuddle-branch-shell .cuddle-header-title-line > h1 {
+    font-size: 1rem;
+    line-height: 1.1;
+    letter-spacing: .04em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cuddleRoot .umt-trail-live,
+  #cuddleRoot .umt-node-halo,
+  #cuddleRoot .umt-map-paw,
+  #cuddleRoot .umt-boss-aura,
+  #cuddleRoot .umt-eclipse-corona,
+  #cuddleRoot .umt-map-spark {
+    animation: none;
+  }
+}
+
+/* ---- map key ----------------------------------------------------------- */
+
+.umt-stage-legend .umt-legend-glyph {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #120e17;
+  border: 2.5px solid var(--kind);
+}
+.umt-stage-legend .umt-legend-glyph .umt-stage-icon {
+  width: 26px;
+  height: 26px;
+}
+/* The Wordle variants sit under the Wordle entry, spanning both columns. */
+.umt-stage-legend li.umt-legend-sub {
+  display: block;
+  grid-column: 1 / -1;
+  min-height: 0;
+  padding: 8px 10px;
+}
+.umt-stage-legend li.umt-legend-sub > ul {
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 6px;
+}
+.umt-stage-legend li.umt-legend-sub li {
+  display: block;
+  min-height: 0;
+  padding: 6px 9px;
+  border-left: 3px solid #3ecf8e;
+  border-radius: 10px;
+}

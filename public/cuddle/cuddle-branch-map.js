@@ -869,7 +869,293 @@
     return (NODE_TYPES[node.type] || NODE_TYPES.normal).description;
   }
 
+  // -- world map ------------------------------------------------------------
+  // The run drawn as a climb through three themed worlds (cuddle-worlds.js):
+  // up to three lanes per row, curved trails that weave between them, and
+  // one clear icon per kind of stop. Row 0 still sits at the bottom.
+
+  var WORLD_MAP_WIDTH = 360;
+  var LANE_X = [76, 180, 284];
+  var WORLD_ROW_GAP = 94;
+  var WORLD_BOSS_PAD = 24;
+  var WORLD_HEAD = 62;
+  var STOP_RADIUS = 20;
+  var BOSS_RADIUS = 28;
+
+  var VARIANT_CAPTIONS = {
+    plain: "Classic",
+    themedWordle: "Themed",
+    randomOpener: "Head Start",
+    luckyStart: "Lucky Start",
+    jackpot: "Jackpot",
+    doubleOrNothing: "Double or Nothing"
+  };
+
+  function worldHash(text) {
+    var hash = 2166136261;
+    for (var index = 0; index < text.length; index += 1) {
+      hash ^= text.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  }
+
+  function worldRandom(seedText) {
+    var value = worldHash(seedText) || 0x6d2b79f5;
+    return function next() {
+      value = (value + 0x6d2b79f5) >>> 0;
+      var output = value;
+      output = Math.imul(output ^ (output >>> 15), output | 1);
+      output ^= output + Math.imul(output ^ (output >>> 7), output | 61);
+      return ((output ^ (output >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function stopCaption(node) {
+    var kind = window.CuddleWorlds.kindForNode(node);
+    if (kind === "final") return "Final Boss";
+    if (kind === "boss") return node.gate === "before-7" ? "Boss II" : "Boss I";
+    if (kind === "mystery") return "Unknown";
+    var variant = node.cuddleVariant;
+    if (variant && (kind === "wordle" || kind === "challenge")) {
+      if (variant.kind === "mandatoryChallenge") return variant.title || "Challenge";
+      if (VARIANT_CAPTIONS[variant.kind]) return VARIANT_CAPTIONS[variant.kind];
+    }
+    if (node.type === "theme") return "Themed";
+    if (kind === "upgrade") return "Waystone";
+    return window.CuddleWorlds.KIND_NAMES[kind] || "Wordle";
+  }
+
+  function laneX(row, node, col) {
+    if (Number.isInteger(node.lane)) return LANE_X[Math.max(0, Math.min(2, node.lane))];
+    var count = row.nodes.length;
+    if (count <= 1) return LANE_X[1];
+    if (count === 2) return col === 0 ? 110 : 250;
+    return LANE_X[Math.min(2, col)];
+  }
+
+  // Row positions, bottom-up: each world opens with room for its title,
+  // bosses get a little extra air, and the result is flipped so row 0 lands
+  // at the bottom of the SVG.
+  function worldLayout(branchMap) {
+    var rows = branchMap.rows;
+    var fromBottom = [];
+    var worldOf = [];
+    var worlds = [];
+    var cursor = 20;
+    rows.forEach(function place(row, rowIndex) {
+      var world = window.CuddleWorlds.worldForRow(branchMap, rowIndex).index;
+      worldOf[rowIndex] = world;
+      if (rowIndex === 0 || world !== worldOf[rowIndex - 1]) {
+        worlds.push({ index: world, start: cursor, firstRow: rowIndex });
+        cursor += WORLD_HEAD;
+      }
+      var boss = row.kind === "boss" || row.nodes.some(function isBoss(node) { return node.type === "boss"; });
+      if (boss) cursor += WORLD_BOSS_PAD;
+      fromBottom[rowIndex] = cursor + BOSS_RADIUS;
+      cursor = fromBottom[rowIndex] + WORLD_ROW_GAP - BOSS_RADIUS;
+      if (boss) cursor += WORLD_BOSS_PAD;
+      worlds[worlds.length - 1].end = cursor;
+    });
+    var height = Math.round(fromBottom[rows.length - 1] + 92);
+    worlds.forEach(function flip(world, index) {
+      world.bottom = index === 0 ? height : height - world.start;
+      world.top = index === worlds.length - 1 ? 0 : height - world.end;
+      world.titleY = height - world.start - 30;
+    });
+    return {
+      height: height,
+      worlds: worlds,
+      rowY: function rowY(rowIndex) { return height - fromBottom[rowIndex]; }
+    };
+  }
+
+  function worldDecor(world, band, random) {
+    var parts = [];
+    var span = Math.max(1, band.bottom - band.top);
+    var count = Math.max(4, Math.round(span / 70));
+    for (var index = 0; index < count * 2; index += 1) {
+      var left = index % 2 === 0;
+      var x = left ? 6 + random() * 38 : WORLD_MAP_WIDTH - 6 - random() * 38;
+      var y = band.top + 30 + random() * Math.max(10, span - 50);
+      var scale = 0.65 + random() * 0.7;
+      if (world.id === "woods") {
+        var shade = ["#12382a", "#174632", "#1d5139"][Math.floor(random() * 3)];
+        parts.push("<g transform=\"translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") scale(" + scale.toFixed(2) + ")\">"
+          + "<rect x=\"-2\" y=\"14\" width=\"4\" height=\"7\" fill=\"#0b2118\"/>"
+          + "<path d=\"M0-28-9-10h4l-8 11h5l-9 12h34l-9-12h5l-8-11h4z\" fill=\"" + shade + "\"/></g>");
+      } else if (world.id === "caverns") {
+        var hue = random() < 0.5 ? "#6f5cf0" : "#46b8e8";
+        var tilt = (random() * 40 - 20).toFixed(0);
+        parts.push("<g transform=\"translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") scale(" + scale.toFixed(2) + ") rotate(" + tilt + ")\" opacity=\"0.8\">"
+          + "<path d=\"M0 0-6-16 0-28 6-16z\" fill=\"" + hue + "\"/><path d=\"M0-28 6-16 0 0z\" fill=\"#fff\" fill-opacity=\".22\"/>"
+          + "<path d=\"M-7 2-11-8-8-15-4-7z\" fill=\"" + hue + "\" fill-opacity=\".75\"/></g>");
+      } else {
+        parts.push("<g transform=\"translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") scale(" + scale.toFixed(2) + ")\">"
+          + "<path d=\"M-8 12V-18h-3v-7h4v3h4v-3h6v3h4v-3h4v7h-3v30z\" fill=\"#1f080c\" stroke=\"#5a1a1f\" stroke-width=\"1\"/>"
+          + "<rect x=\"-2\" y=\"-10\" width=\"4\" height=\"6\" rx=\"2\" fill=\"#ffb36b\" fill-opacity=\".75\"/></g>");
+      }
+    }
+    // Ambient sparks: fireflies, crystal glints, rising embers.
+    var sparkCount = Math.max(5, Math.round(span / 55));
+    for (var spark = 0; spark < sparkCount; spark += 1) {
+      var sx = 20 + random() * (WORLD_MAP_WIDTH - 40);
+      var sy = band.top + 20 + random() * Math.max(10, span - 40);
+      var delay = (random() * 4).toFixed(2);
+      parts.push("<circle class=\"umt-map-spark umt-map-spark-" + world.id + "\" cx=\"" + sx.toFixed(1) + "\" cy=\"" + sy.toFixed(1)
+        + "\" r=\"" + (1 + random() * 1.4).toFixed(2) + "\" style=\"animation-delay:-" + delay + "s\"/>");
+    }
+    return parts.join("");
+  }
+
+  function trailPath(x1, y1, x2, y2) {
+    var mid = (y1 + y2) / 2;
+    return "M" + x1 + " " + y1 + " C" + x1 + " " + mid + " " + x2 + " " + mid + " " + x2 + " " + y2;
+  }
+
+  function pawMarker() {
+    return "<g class=\"umt-map-paw\" aria-hidden=\"true\">"
+      + "<ellipse cx=\"0\" cy=\"3\" rx=\"6.2\" ry=\"5.2\"/>"
+      + "<ellipse cx=\"-6.6\" cy=\"-3.6\" rx=\"2.3\" ry=\"2.9\"/><ellipse cx=\"-2.3\" cy=\"-6.8\" rx=\"2.3\" ry=\"2.9\"/>"
+      + "<ellipse cx=\"2.3\" cy=\"-6.8\" rx=\"2.3\" ry=\"2.9\"/><ellipse cx=\"6.6\" cy=\"-3.6\" rx=\"2.3\" ry=\"2.9\"/></g>";
+  }
+
+  function renderWorldMapSvg(game, branchMap) {
+    var Worlds = window.CuddleWorlds;
+    try {
+      if (window.CuddleRebalanceV5 && typeof window.CuddleRebalanceV5.assignMapVariants === "function") {
+        window.CuddleRebalanceV5.assignMapVariants(game);
+      }
+    } catch (_error) {}
+    var rows = branchMap.rows;
+    var layout = worldLayout(branchMap);
+    var reachable = reachableNodes(branchMap);
+    var here = currentNode(branchMap);
+    var hereRow = here ? here.row : -1;
+    var seed = String((game && game.state && game.state.runId) || "run");
+    var defs = [];
+    var bands = [];
+    var trails = [];
+    var nodes = [];
+
+    function isOpen(node) {
+      return reachable.some(function match(candidate) {
+        return candidate.row === node.row && candidate.col === node.col;
+      });
+    }
+    function position(rowIndex, col) {
+      var row = rows[rowIndex];
+      var node = row.nodes[col];
+      var jitter = row.nodes.length > 1 ? (worldHash(seed + ":" + rowIndex + ":" + col) % 13) - 6 : 0;
+      return { x: laneX(row, node, col) + jitter, y: layout.rowY(rowIndex) };
+    }
+
+    layout.worlds.forEach(function drawBand(band, bandIndex) {
+      var world = Worlds.world(band.index);
+      var gradientId = "umtWorldSky" + bandIndex;
+      defs.push("<linearGradient id=\"" + gradientId + "\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">"
+        + "<stop offset=\"0\" stop-color=\"" + world.skyTop + "\"/><stop offset=\"1\" stop-color=\"" + world.skyBottom + "\"/></linearGradient>");
+      bands.push("<g class=\"umt-map-world umt-map-world-" + world.id + "\">"
+        + "<rect x=\"0\" y=\"" + band.top + "\" width=\"" + WORLD_MAP_WIDTH + "\" height=\"" + (band.bottom - band.top) + "\" fill=\"url(#" + gradientId + ")\"/>"
+        + worldDecor(world, band, worldRandom(seed + ":decor:" + world.id))
+        + "<g class=\"umt-map-world-title\" transform=\"translate(" + (WORLD_MAP_WIDTH / 2) + " " + band.titleY + ")\">"
+        + "<path d=\"M-118 0h58M60 0h58\" stroke=\"" + world.accent + "\" stroke-opacity=\".45\" stroke-width=\"1\"/>"
+        + "<text class=\"umt-map-world-eyebrow\" text-anchor=\"middle\" y=\"-8\" fill=\"" + world.accent + "\">WORLD " + (world.index + 1) + "</text>"
+        + "<text class=\"umt-map-world-name\" text-anchor=\"middle\" y=\"10\">" + escapeHtml(world.name) + "</text>"
+        + "</g></g>");
+      if (bandIndex > 0) {
+        // Soft seam where one world gives way to the next.
+        var seamId = "umtWorldSeam" + bandIndex;
+        defs.push("<linearGradient id=\"" + seamId + "\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">"
+          + "<stop offset=\"0\" stop-color=\"#000\" stop-opacity=\"0\"/><stop offset=\".5\" stop-color=\"#000\" stop-opacity=\".45\"/>"
+          + "<stop offset=\"1\" stop-color=\"#000\" stop-opacity=\"0\"/></linearGradient>");
+        bands.push("<rect x=\"0\" y=\"" + (band.bottom - 36) + "\" width=\"" + WORLD_MAP_WIDTH + "\" height=\"72\" fill=\"url(#" + seamId + ")\"/>");
+      }
+    });
+
+    rows.forEach(function drawTrails(row, rowIndex) {
+      var nextRow = rows[rowIndex + 1];
+      if (!nextRow) return;
+      var world = Worlds.worldForRow(branchMap, rowIndex + 1);
+      row.nodes.forEach(function drawFrom(node, col) {
+        var from = position(rowIndex, col);
+        (node.next || []).forEach(function drawTo(targetCol) {
+          var target = nextRow.nodes[targetCol];
+          if (!target) return;
+          var to = position(rowIndex + 1, targetCol);
+          var live = Boolean(here && here.row === node.row && here.col === node.col && isOpen(target));
+          var walked = wasVisited(branchMap, node) && wasVisited(branchMap, target);
+          var state = walked ? "walked" : live ? "live" : rowIndex < hereRow ? "past" : "ahead";
+          var d = trailPath(from.x, from.y, to.x, to.y);
+          trails.push("<path class=\"umt-trail-bed\" d=\"" + d + "\"/>"
+            + "<path class=\"umt-trail umt-trail-" + state + "\" d=\"" + d + "\" style=\"--world-accent:" + world.accent + "\"/>");
+        });
+      });
+    });
+
+    // The final boss sits in front of the eclipse.
+    rows.forEach(function drawNodes(row, rowIndex) {
+      row.nodes.forEach(function drawNode(node, col) {
+        var point = position(rowIndex, col);
+        var kind = Worlds.kindForNode(node);
+        var color = Worlds.KIND_COLORS[kind] || Worlds.KIND_COLORS.wordle;
+        var boss = node.type === "boss";
+        var radius = boss ? BOSS_RADIUS : STOP_RADIUS;
+        var iconSize = boss ? 32 : 24;
+        var visited = wasVisited(branchMap, node);
+        var isHere = Boolean(here && here.row === node.row && here.col === node.col);
+        var open = isOpen(node);
+        var state = isHere ? "here" : open ? "open" : visited ? "visited" : rowIndex < hereRow ? "skipped" : "locked";
+        var classes = ["cuddle-map-node", "umt-node", "umt-kind-" + kind, "umt-state-" + state,
+          boss ? "cuddle-map-node-boss" : "cuddle-map-node-stop",
+          isHere ? "cuddle-map-node-here" : open ? "cuddle-map-node-open" : visited ? "cuddle-map-node-visited" : "cuddle-map-node-locked"];
+        var world = Worlds.worldForRow(branchMap, rowIndex);
+        var caption = stopCaption(node);
+        var title = nodeTitle(node);
+        var extras = "";
+        if (kind === "final") {
+          extras += "<circle class=\"umt-eclipse-corona\" r=\"" + (radius + 26) + "\"/>"
+            + "<circle class=\"umt-eclipse-ring\" r=\"" + (radius + 14) + "\"/>";
+        } else if (boss) {
+          extras += "<circle class=\"umt-boss-aura\" r=\"" + (radius + 18) + "\" style=\"--world-glow:" + world.glow + "\"/>";
+        }
+        if (open) extras += "<circle class=\"umt-node-halo\" r=\"" + (radius + 7) + "\"/>";
+        nodes.push(
+          "<g class=\"" + classes.join(" ") + "\" transform=\"translate(" + point.x + "," + point.y + ")\" style=\"--kind:" + color + "\""
+          + (open
+            ? " data-cuddle-campaign-action=\"preview-branch-node\" data-shop-item-id=\"" + node.row + ":" + node.col + "\""
+              + " role=\"button\" tabindex=\"0\" aria-label=\"" + escapeHtml(caption + " — " + title) + "\""
+            : " data-shop-item-id=\"" + node.row + ":" + node.col + "\" aria-hidden=\"true\"")
+          + ">"
+          + extras
+          + "<circle class=\"umt-node-disc\" r=\"" + radius + "\"/>"
+          + "<circle class=\"umt-node-core\" r=\"" + (radius - 4) + "\"/>"
+          + "<g class=\"umt-node-icon\" transform=\"translate(" + (-iconSize / 2) + " " + (-iconSize / 2) + ") scale(" + (iconSize / 24) + ")\">"
+          + Worlds.iconMarkup(kind) + "</g>"
+          + (visited && !isHere
+            ? "<g class=\"umt-node-check\" transform=\"translate(" + (radius * 0.72) + " " + (-radius * 0.72) + ")\">"
+              + "<circle r=\"6.5\"/><path d=\"M-3 0l2 2.2L3.2-2.4\"/></g>"
+            : "")
+          + (isHere ? "<g transform=\"translate(0 " + (-radius - 15) + ")\">" + pawMarker() + "</g>" : "")
+          + "<text class=\"umt-node-label\" text-anchor=\"middle\" y=\"" + (kind === "final" ? radius + 32 : boss ? radius + 22 : radius + 15) + "\">" + escapeHtml(caption) + "</text>"
+          + "</g>"
+        );
+      });
+    });
+
+    return (
+      "<div class=\"cuddle-world-map umt-map-v2\" data-cuddle-branch-scroll>"
+      + "<svg class=\"umt-world-map-svg\" viewBox=\"0 0 " + WORLD_MAP_WIDTH + " " + layout.height + "\" role=\"img\" aria-label=\"Run map\">"
+      + "<defs>" + defs.join("") + "</defs>"
+      + bands.join("")
+      + "<g class=\"umt-map-trails\">" + trails.join("") + "</g>"
+      + "<g class=\"umt-map-nodes\">" + nodes.join("") + "</g>"
+      + "</svg></div>"
+    );
+  }
+
   function renderMapSvg(game, branchMap) {
+    if (window.CuddleWorlds) return renderWorldMapSvg(game, branchMap);
     var rows = branchMap.rows;
     var reachable = reachableNodes(branchMap);
     var here = currentNode(branchMap);
@@ -976,6 +1262,21 @@
     );
   }
 
+  // The preview wears the stop's category colour and the same icon as the
+  // map node (cuddle-worlds.js), with a chip naming the kind of stop.
+  function previewKindStyle(node) {
+    if (!window.CuddleWorlds) return "";
+    var kind = window.CuddleWorlds.kindForNode(node);
+    return " data-umt-stop-kind=\"" + kind + "\" style=\"--kind:" + window.CuddleWorlds.KIND_COLORS[kind] + "\"";
+  }
+
+  function previewIcon(node) {
+    if (!window.CuddleWorlds) return "<span class=\"cuddle-choice-icon\">" + escapeHtml(nodeIcon(node)) + "</span>";
+    var kind = window.CuddleWorlds.kindForNode(node);
+    return "<span class=\"cuddle-choice-icon umt-preview-icon\">" + window.CuddleWorlds.iconSvg(kind) + "</span>"
+      + "<span class=\"umt-preview-kind\">" + escapeHtml(window.CuddleWorlds.KIND_NAMES[kind] || "Stop") + "</span>";
+  }
+
   function renderPreviewOverlay(game, node) {
     var required = node.type === "boss" ? bossPointRequirement(game, node.gate) : 0;
     var current = Number((game && game.state && game.state.score) || 0);
@@ -983,8 +1284,8 @@
     var description = node.type === "boss" ? bossFlavorText(node) : nodeDescription(game, node);
     return (
       "<div class=\"cuddle-overlay cuddle-branch-preview-overlay\">"
-      + "<section class=\"cuddle-modal\">"
-      + "<span class=\"cuddle-choice-icon\">" + escapeHtml(nodeIcon(node)) + "</span>"
+      + "<section class=\"cuddle-modal\"" + previewKindStyle(node) + ">"
+      + previewIcon(node)
       + "<h2>" + escapeHtml(nodeTitle(node)) + "</h2>"
       + "<p>" + goldenMoney(escapeHtml(description)) + "</p>"
       + (required ? renderBossLockPanel(game, node, required, current, locked) : "")
@@ -1009,7 +1310,9 @@
       ? "You are on the map. Only the stops your current path connects to are open."
       : "The whole run is laid out below. Every path ends at a boss, but no two reach the same stops on the way.";
     return (
-      "<div class=\"cuddle-shell cuddle-branch-shell\">"
+      "<div class=\"cuddle-shell cuddle-branch-shell\""
+      + (window.CuddleWorlds ? " data-umt-world=\"" + window.CuddleWorlds.currentWorld(game).id + "\"" : "")
+      + ">"
       + "<header class=\"cuddle-header\">"
       + "<div class=\"cuddle-header-side\"><button class=\"cuddle-icon-btn\" data-action=\"run-menu\" aria-label=\"Cuddle menu\">←</button></div>"
       + "<div class=\"cuddle-header-title\">"

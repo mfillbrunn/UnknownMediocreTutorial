@@ -807,9 +807,9 @@
     return CHALLENGES[index];
   }
 
-  function variantForNode(game, node) {
-    if (node.cuddleVariant && node.cuddleVariant.version === VERSION) return node.cuddleVariant;
-    const roll = hash32(`${mapSeed(game)}:variant:${node.row}:${node.col}`) % 100;
+  function variantForNode(game, node, salt = "") {
+    if (!salt && node.cuddleVariant && node.cuddleVariant.version === VERSION) return node.cuddleVariant;
+    const roll = hash32(`${mapSeed(game)}:variant:${node.row}:${node.col}${salt}`) % 100;
     let variant;
     if (roll < CONFIG.regularWordlePercent) {
       variant = {
@@ -891,10 +891,23 @@
     const rows = new Map();
     let changed = false;
 
+    const variantKey = (variant) => `${variant.kind}:${variant.challengeId || ""}`;
+    const rowKeys = new Map();
     for (const node of nodes) {
       if (!isMapNode(node) || !wordleTypes.has(String(node.type))) continue;
       const previous = JSON.stringify(node.cuddleVariant || null);
-      const variant = variantForNode(game, node);
+      const fresh = !(node.cuddleVariant && node.cuddleVariant.version === VERSION);
+      let variant = variantForNode(game, node);
+      // Two stops side by side offering the same thing is a wasted fork --
+      // a freshly rolled variant that repeats one already in its row is
+      // re-rolled (a few tries; a variant already shown is never changed).
+      const rowKey = Math.floor(Number(node.row));
+      if (!rowKeys.has(rowKey)) rowKeys.set(rowKey, new Set());
+      const taken = rowKeys.get(rowKey);
+      for (let attempt = 1; fresh && taken.has(variantKey(variant)) && attempt <= 8; attempt += 1) {
+        variant = variantForNode(game, node, `:reroll${attempt}`);
+      }
+      taken.add(variantKey(variant));
       const desiredType = variant.kind === "mandatoryChallenge"
         ? "challenge"
         : variant.kind === "themedWordle" ? "theme" : "normal";
@@ -2804,6 +2817,9 @@
       element.title = `${variant.title}: ${displayDescription}`;
       element.setAttribute("aria-label", `${variant.title}: ${displayDescription}`);
 
+      // The world map draws its own icons and captions (cuddle-worlds.js);
+      // only the tooltip text above applies there.
+      if (element.matches(".cuddle-map-node") && element.closest(".umt-map-v2")) continue;
       if (element.matches(".cuddle-map-node")) {
         const oldIcon = element.querySelector(".cuddle-map-node-icon");
         const label = element.querySelector(".cuddle-map-node-label");
@@ -2828,7 +2844,7 @@
         const heading = element.querySelector("strong");
         const description = element.querySelector("small");
         const direction = heading && / · (left|right|middle)$/i.exec(heading.textContent || "");
-        if (icon) {
+        if (icon && !icon.querySelector("[data-umt-stage-icon]")) {
           icon.classList.add("umt-svg-choice-icon");
           icon.innerHTML = powerSvg(iconKey);
         }
@@ -2841,7 +2857,7 @@
         const icon = preview.querySelector(".cuddle-choice-icon");
         const heading = preview.querySelector("h2");
         const description = preview.querySelector("p");
-        if (icon) {
+        if (icon && !icon.querySelector("[data-umt-stage-icon]")) {
           icon.classList.add("umt-svg-choice-icon");
           icon.innerHTML = powerSvg(iconKey);
         }
@@ -4094,6 +4110,17 @@
       version: VERSION,
       config: CONFIG,
       getActiveGame: publicActiveGame,
+      // Assigns every map stop its Wordle variant (read by the run map's
+      // renderer so labels are right on the very first paint).
+      assignMapVariants: (game) => normalizeMap(game || publicActiveGame()),
+      // The challenge stops the map can roll, described at the run's
+      // current guess cap -- listed by the map key.
+      mapChallenges: (game) => CHALLENGES.map((challenge) => ({
+        id: challenge.id,
+        title: challenge.title,
+        reward: challenge.reward,
+        description: challengeDisplayDescription(game || publicActiveGame(), challenge)
+      })),
       // Generic "how many times has this id been taken" lookup, reused by
       // cuddle-economy-rarity-v8.js's card decorator to print a level tag
       // (e.g. "1/2") on live reward cards without duplicating the several

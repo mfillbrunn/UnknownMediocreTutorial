@@ -445,6 +445,21 @@
       const row = map.rows[0];
       if (!row || !Array.isArray(row.nodes) || !row.nodes.length) return false;
       const rng = seededRandom(`${game.state.runId || "run"}:opening-pair:v1`);
+      // Lane-based routes (three lanes, sometimes two) already wire row 0
+      // into row 1; only the stage types are randomized here.
+      if (row.nodes.every(node => node && Number.isInteger(node.lane))) {
+        const laneTypes = shuffled(OPENING_STAGE_TYPES, rng).slice(0, row.nodes.length);
+        row.nodes.forEach((node, index) => {
+          const next = Array.isArray(node.next) ? node.next.slice() : [];
+          clearOpeningNodeFields(node);
+          node.type = laneTypes[index % laneTypes.length];
+          node.expandedBaseRow = 0;
+          node.next = next;
+        });
+        map.expandedOpeningTypes = laneTypes.slice();
+        map.expandedOpeningConfigured = VERSION;
+        return true;
+      }
       const types = shuffled(OPENING_STAGE_TYPES, rng).slice(0, 2);
       const template = row.nodes[0] || { row: 0, col: 0, next: [] };
       const nodes = row.nodes.slice(0, 2);
@@ -1954,7 +1969,52 @@
       );
     }
 
+    // The map key follows the map's own icon set (cuddle-worlds.js): one
+    // icon per kind of stop, with every Wordle variant under the one
+    // Wordle icon and every named challenge under the one challenge icon.
     function renderLegend() {
+      const Worlds = window.CuddleWorlds;
+      if (!Worlds) return renderLegacyLegend();
+      const game = window.CuddleBranchMap && typeof window.CuddleBranchMap.getActiveGame === "function"
+        ? window.CuddleBranchMap.getActiveGame()
+        : null;
+      const icon = kind => `<span class="umt-legend-glyph" style="--kind:${Worlds.KIND_COLORS[kind]}">${Worlds.iconSvg(kind)}</span>`;
+      const row = (kind, title, text) => `<li>${icon(kind)}<span><strong>${escapeHtml(title)}</strong><small>${richText(text)}</small></span></li>`;
+      const variants = [
+        ["Classic", "A standard Wordle with no special setup."],
+        ["Themed", "Opens with some of the solution's categories revealed."],
+        ["Head Start", "A random word is played for you as the first guess."],
+        ["Lucky Start", "One exact letter position is revealed before you start."],
+        ["Jackpot", "Green tiles pay double, but the stage runs one guess short."],
+        ["Double or Nothing", "Solve within three guesses to double the stage's earnings; take longer and lose half."]
+      ];
+      const catalogue = window.CuddleRebalanceV5 && typeof window.CuddleRebalanceV5.mapChallenges === "function"
+        ? window.CuddleRebalanceV5.mapChallenges(game)
+        : CHALLENGES.map(meta => ({ title: meta.title, description: meta.description }));
+      const stops = [
+        row("wordle", "Wordle", "Solve the word. The name under the icon says which kind:"),
+        `<li class="umt-legend-sub"><ul>${variants.map(([title, text]) => `<li><strong>${escapeHtml(title)}</strong><small>${escapeHtml(text)}</small></li>`).join("")}</ul></li>`,
+        row("challenge", "Challenge", "A Wordle with a rule against you, named under the icon. Beat it for bonus money."),
+        row("event", "Event", "A choice: a safe reward, or a bigger one with a cost."),
+        row("shop", "Shop", "Spend money on supplies for the next stages, the next boss, or the whole run."),
+        row("upgrade", "Waystone", "Choose a free permanent upgrade."),
+        row("duel", "Duel", "Alternate guesses with an AI. The first to solve wins."),
+        row("mystery", "Unknown", "Stays hidden until you step onto it."),
+        row("boss", "Boss", "A boss Wordle guards the end of each world. Its reward is permanent."),
+        row("final", "Final Boss", "The last guardian, at the top of the Eclipse Citadel.")
+      ].join("");
+      const challengeRows = catalogue.map(item => (
+        `<li>${icon("challenge")}<span><strong>${escapeHtml(item.title)}</strong><small>${richText(item.description)}</small></span></li>`
+      )).join("");
+      return (
+        `<div class="cuddle-overlay umt-stage-legend-overlay" role="dialog" aria-modal="true" aria-labelledby="umtStageLegendTitle">`
+        + `<section class="cuddle-modal umt-stage-legend"><header><div><span class="cuddle-eyebrow">MAP KEY</span><h2 id="umtStageLegendTitle">What every stop means</h2></div><button type="button" class="umt-legend-close" data-cuddle-campaign-action="expanded-help-close" aria-label="Close map key">&times;</button></header>`
+        + `<h3>Stops</h3><ul>${stops}</ul><h3>Challenges</h3><ul>${challengeRows}</ul>`
+        + `</section></div>`
+      );
+    }
+
+    function renderLegacyLegend() {
       const standard = ["normal", "theme", "event", "upgrade", "shop", "duel", "mystery", "boss"];
       const standardRows = standard.map(type => {
         const meta = BASE_STAGE_META[type];
@@ -1982,6 +2042,8 @@
 
     function setSvgImage(group, meta) {
       if (!group || !meta) return;
+      // The world map (cuddle-worlds.js) draws its own icons and captions.
+      if (group.closest(".umt-map-v2")) return;
       const namespace = "http://www.w3.org/2000/svg";
       group.querySelectorAll(":scope > image:not(.umt-stage-svg-icon)").forEach(legacy => legacy.remove());
       group.querySelectorAll(":scope > .cuddle-map-node-icon, :scope > .cuddle-map-node-symbol")
@@ -2010,6 +2072,7 @@
 
     function replaceHtmlIcon(container, meta) {
       if (!container || !meta) return;
+      if (container.querySelector("[data-umt-stage-icon]")) return;
       container.replaceChildren();
       const image = document.createElement("img");
       image.className = "umt-expanded-icon";

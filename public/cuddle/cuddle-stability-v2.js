@@ -3,7 +3,7 @@
   "use strict";
 
   const VERSION = "2026.09.09.2";
-  const ROUTE_VERSION = "umt-cuddle-route-2026.09.16.v3";
+  const ROUTE_VERSION = "umt-cuddle-route-2026.09.24.lanes";
   const PATCH_MARK = Symbol.for("umt.cuddle.stability.v2");
   const ROUND_TYPES = new Set(["normal", "theme", "challenge", "boss", "wordle"]);
   const FALLBACK_ICON = "gift.svg";
@@ -177,19 +177,6 @@
     };
   }
 
-  function connectRows(rows) {
-    for (let rowIndex = 0; rowIndex < rows.length - 1; rowIndex += 1) {
-      const from = rows[rowIndex].nodes;
-      const to = rows[rowIndex + 1].nodes;
-      from.forEach((node, index) => {
-        if (to.length === 1) node.next = [0];
-        else if (from.length === 1) node.next = to.map((_item, target) => target);
-        else node.next = Array.from(new Set([index % to.length, Math.min(to.length - 1, index + 1)]));
-      });
-    }
-    return rows;
-  }
-
   function bossPairs(game) {
     const pool = drawDistinctBosses(game, 6);
     if (pool.length < 2) return [];
@@ -204,34 +191,122 @@
     return pairs;
   }
 
+  function routeRandom(game) {
+    let value = hashText(`${game?.state?.runId || "run"}:route-lanes`) || 0x6d2b79f5;
+    return function nextRouteValue() {
+      value = (value + 0x6d2b79f5) >>> 0;
+      let output = value;
+      output = Math.imul(output ^ (output >>> 15), output | 1);
+      output ^= output + Math.imul(output ^ (output >>> 7), output | 61);
+      return ((output ^ (output >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // Which of the three lanes (left 0, middle 1, right 2) a row occupies.
+  // Most rows use all three; about a third drop one, and which one varies,
+  // so the road narrows and shifts instead of running in straight columns.
+  function rowLanes(random) {
+    if (random() < 0.66) return [0, 1, 2];
+    const options = [[0, 2], [0, 1], [1, 2]];
+    return options[Math.floor(random() * options.length)];
+  }
+
+  // Links each stop to its neighbours in the next row (same lane or one
+  // over), then prunes at random so the lanes weave and cross rather than
+  // run side by side. Every stop keeps at least one way in and one way out,
+  // so all of them stay reachable and none is a dead end.
+  function connectLanes(rows, random) {
+    for (let rowIndex = 0; rowIndex < rows.length - 1; rowIndex += 1) {
+      const from = rows[rowIndex].nodes;
+      const to = rows[rowIndex + 1].nodes;
+      if (to.length === 1) { from.forEach(node => { node.next = [0]; }); continue; }
+      if (from.length === 1) { from[0].next = to.map((_node, index) => index); continue; }
+      const laneOf = node => (Number.isInteger(node.lane) ? node.lane : 1);
+      const edges = from.map(node => to
+        .map((target, index) => ({ index, gap: Math.abs(laneOf(target) - laneOf(node)) }))
+        .filter(item => item.gap <= 1)
+        .map(item => item.index));
+      // A stop with no neighbour in range (left lane into a row that only
+      // has the right lane) takes the nearest one instead.
+      from.forEach((node, index) => {
+        if (edges[index].length) return;
+        let best = 0;
+        to.forEach((target, targetIndex) => {
+          if (Math.abs(laneOf(target) - laneOf(node)) < Math.abs(laneOf(to[best]) - laneOf(node))) best = targetIndex;
+        });
+        edges[index].push(best);
+      });
+      to.forEach((target, targetIndex) => {
+        if (edges.some(list => list.includes(targetIndex))) return;
+        let best = 0;
+        from.forEach((node, index) => {
+          if (Math.abs(laneOf(target) - laneOf(node)) < Math.abs(laneOf(target) - laneOf(from[best]))) best = index;
+        });
+        edges[best].push(targetIndex);
+      });
+      const incoming = targetIndex => edges.filter(list => list.includes(targetIndex)).length;
+      from.forEach((_node, index) => {
+        const list = edges[index];
+        while (list.length > 2 || (list.length > 1 && random() < 0.38)) {
+          const removable = list.filter(targetIndex => incoming(targetIndex) > 1);
+          if (!removable.length) break;
+          list.splice(list.indexOf(removable[Math.floor(random() * removable.length)]), 1);
+        }
+        list.sort((a, b) => a - b);
+      });
+      from.forEach((node, index) => { node.next = edges[index]; });
+    }
+    return rows;
+  }
+
   // Every world's three "stops" rows before its boss offer only wordle-type
-  // nodes (normal/theme/challenge) on both sides -- whichever side the
-  // player picks, that guarantees at least 3 played wordles before the
-  // boss. Non-wordle utility stops (shop/upgrade/event) all live in one
-  // dedicated row of their own per world instead, so that guarantee holds
-  // regardless of path, and utility content is neither lost nor able to
-  // starve the wordle count.
+  // nodes (normal/theme/challenge) -- whichever lane the player takes, that
+  // guarantees at least 3 played wordles before the boss. Non-wordle
+  // utility stops (shop/upgrade/event) live in one dedicated row of their
+  // own per world instead, so that guarantee holds regardless of path.
   function buildRoute(game) {
     const pairs = bossPairs(game);
     if (pairs.length < 3) return null;
-    const rows = [
-      { kind: "stops", act: 0, nodes: [routeNode(0, 0, "normal"), routeNode(0, 1, "theme")] },
-      { kind: "stops", act: 0, nodes: [routeNode(1, 0, "challenge"), routeNode(1, 1, "normal")] },
-      { kind: "stops", act: 0, nodes: [routeNode(2, 0, "challenge"), routeNode(2, 1, "theme")] },
-      { kind: "stops", act: 0, nodes: [routeNode(3, 0, "upgrade"), routeNode(3, 1, "event", { eventId: "windfall" })] },
-      { kind: "boss", act: 0, nodes: [bossNode(pairs[0], "before-3", 4)] },
-      { kind: "stops", act: 1, nodes: [routeNode(5, 0, "theme"), routeNode(5, 1, "normal")] },
-      { kind: "stops", act: 1, nodes: [routeNode(6, 0, "theme"), routeNode(6, 1, "challenge")] },
-      { kind: "stops", act: 1, nodes: [routeNode(7, 0, "challenge"), routeNode(7, 1, "normal")] },
-      { kind: "stops", act: 1, nodes: [routeNode(8, 0, "shop", { shopSlot: 4 }), routeNode(8, 1, "event", { eventId: "windfall" })] },
-      { kind: "boss", act: 1, nodes: [bossNode(pairs[1], "before-7", 9)] },
-      { kind: "stops", act: 2, nodes: [routeNode(10, 0, "normal"), routeNode(10, 1, "theme")] },
-      { kind: "stops", act: 2, nodes: [routeNode(11, 0, "challenge"), routeNode(11, 1, "theme")] },
-      { kind: "stops", act: 2, nodes: [routeNode(12, 0, "challenge"), routeNode(12, 1, "normal")] },
-      { kind: "stops", act: 2, nodes: [routeNode(13, 0, "shop", { shopSlot: 8 }), routeNode(13, 1, "upgrade")] },
-      { kind: "boss", act: 2, nodes: [bossNode(pairs[2], "final", 14)] }
+    const random = routeRandom(game);
+    const rows = [];
+    const gates = ["before-3", "before-7", "final"];
+    const utilityPools = [
+      ["upgrade", "event", "normal"],
+      ["shop", "event", "upgrade"],
+      ["shop", "upgrade", "event"]
     ];
-    connectRows(rows);
+    const shopSlots = [0, 4, 8];
+    for (let world = 0; world < 3; world += 1) {
+      for (let step = 0; step < 3; step += 1) {
+        const lanes = rowLanes(random);
+        const types = shuffled(["normal", "theme", "challenge"], random).slice(0, lanes.length);
+        const rowIndex = rows.length;
+        rows.push({
+          kind: "stops",
+          act: world,
+          nodes: lanes.map((lane, col) => routeNode(rowIndex, col, types[col], { lane }))
+        });
+      }
+      const lanes = rowLanes(random);
+      const pool = utilityPools[world];
+      // Worlds two and three always keep their shop in the row.
+      const fixed = world > 0 ? [pool[0]] : [];
+      const rest = shuffled(pool.filter(type => !fixed.includes(type)), random);
+      const types = shuffled(fixed.concat(rest).slice(0, lanes.length), random);
+      const rowIndex = rows.length;
+      rows.push({
+        kind: "stops",
+        act: world,
+        nodes: lanes.map((lane, col) => {
+          const extra = { lane };
+          if (types[col] === "shop") extra.shopSlot = shopSlots[world];
+          if (types[col] === "event") extra.eventId = "windfall";
+          return routeNode(rowIndex, col, types[col], extra);
+        })
+      });
+      rows.push({ kind: "boss", act: world, nodes: [bossNode(pairs[world], gates[world], rows.length)] });
+    }
+    connectLanes(rows, random);
     return {
       routeVersion: ROUTE_VERSION,
       rows,
@@ -255,6 +330,10 @@
       row.nodes.forEach((node, col) => {
         const key = `${rowIndex}:${col}`;
         let type = String(node?.type || "normal");
+        // Wordle stops share a type but differ by variant (Lucky Start,
+        // Jackpot, a named challenge...), which is what tells them apart --
+        // retyping one here only fought the variant layer's own typing.
+        if (["normal", "theme", "challenge"].includes(type)) return;
         if (type === "shop" && rowIndex < 4 && !visited.has(key)) {
           const replacement = safeTypes.find(candidate => !used.has(candidate));
           if (replacement) {
@@ -614,6 +693,7 @@
     const namespace = "http://www.w3.org/2000/svg";
     const flatNodes = (game?.state?.branchMap?.rows || []).flatMap(row => row?.nodes || []);
     root.querySelectorAll(".cuddle-branch-map-svg g.cuddle-map-node").forEach((group, index) => {
+      if (group.closest(".umt-map-v2")) return;
       const node = routeNodeForElement(game, group) || flatNodes[index] || null;
       if (!node) return;
       const final = node.type === "boss" && node.gate === "final";
