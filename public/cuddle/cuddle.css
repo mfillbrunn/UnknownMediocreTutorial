@@ -510,6 +510,12 @@
   pointer-events: none;
 }
 
+/* Once a letter sits on a special tile, its symbol steps aside so the
+   letter reads cleanly; the coloured edge still says what kind it is. */
+#cuddleScreen .cuddle-tile.is-special-tile:is(.is-draft-tile, .is-filled)[data-special]::before {
+  opacity: 0;
+}
+
 /* Letters being drafted are drawn much larger than submitted ones, so the
    symbol is scaled down to still fit the same tile. */
 #cuddleScreen .cuddle-tile.is-draft-tile.is-special-tile[data-special]::before {

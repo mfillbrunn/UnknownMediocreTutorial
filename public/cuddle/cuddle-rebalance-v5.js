@@ -143,7 +143,7 @@
       icon: "🃏",
       title: "Joker Cache",
       name: "Joker Cache",
-      description: "Gain two new Jokers at the beginning of every round. Live Joker cards and reserve charges both count.",
+      description: "Two extra Jokers every stage.",
       maxLevel: 2,
       maxCount: 2,
       kind: "upgrade"
@@ -2492,7 +2492,7 @@
         mega.hasJokerUnlocked = true;
       }
       custom.cuddleUserJokerCachePerRoundLevel = current;
-      appendNotice(game, `Joker Cache now adds ${delta * 2} Jokers at the start of every round.`);
+      appendNotice(game, `Joker Cache: ${current * 2} extra Jokers every stage.`);
     }
     custom.appliedUpgradeEffects[id] = current;
     safeSave(game);
@@ -2933,7 +2933,7 @@
     umtAllThemes: { title: "All-Seeing Atlas", description: "Reveal every available theme at the start of every non-boss Wordle.", shape: "tags" },
     umtOpeningInsight: { title: "Opening Insight", description: "Begin each non-boss Wordle with an extra green position hint.", shape: "greenHint" },
     umtQuickStudy: { title: "Quick Study", description: "Guesser Hints arrive sooner.", shape: "hourglass" },
-    umtJokerCache: { title: "Joker Cache", description: "Gain two real Jokers immediately.", shape: "joker" },
+    umtJokerCache: { title: "Joker Cache", description: "Two extra Jokers every stage.", shape: "joker" },
     umtReserveDividend: { title: "Reserve Dividend", description: "Unused Jokers and mulligans pay an additional end-of-round bonus.", shape: "coins" },
     umtConsonantSweep: { title: "Process of Elimination", description: "Every guess rules out one consonant that is not in the secret.", shape: "eliminate" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
@@ -3417,12 +3417,16 @@
     const kinds = state.mysteryGlyphKinds && typeof state.mysteryGlyphKinds === "object"
       ? state.mysteryGlyphKinds
       : {};
+    // A lying row (fakeFeedback) only lies on the tiles in its span; the
+    // rest of that row is honest evidence like any other.
+    const liedAt = (entry, index) => Boolean(entry.fakeFeedback)
+      && (!Array.isArray(entry.maskedIndices) || entry.maskedIndices.includes(index));
     const tracked = new Set([...(state.unknownGlyphs || []), ...Object.keys(kinds)]);
     for (const entry of state.history || []) {
-      if (!entry || entry.fakeFeedback) continue;
+      if (!entry) continue;
       const word = String(entry.word || "").toUpperCase();
-      word.split("").forEach((glyph) => {
-        if (/^[A-Z]$/.test(glyph)) tracked.add(glyph);
+      word.split("").forEach((glyph, index) => {
+        if (/^[A-Z]$/.test(glyph) && !liedAt(entry, index)) tracked.add(glyph);
       });
     }
     if (!tracked.size) return false;
@@ -3447,13 +3451,17 @@
       let positive = false;
       const greenPositions = [];
       for (const entry of state.history || []) {
-        if (!entry || entry.fakeFeedback) continue;
+        if (!entry) continue;
         const word = String(entry.word || "").toUpperCase();
         const shown = Array.isArray(entry.shownFeedback)
           ? entry.shownFeedback
           : (Array.isArray(entry.feedback) ? entry.feedback : []);
         word.split("").forEach((letter, index) => {
           if (letter !== glyph) return;
+          if (liedAt(entry, index)) {
+            unknownSeen = true;
+            return;
+          }
           const result = shown[index];
           if (result === "unknown" || result == null) {
             unknownSeen = true;
