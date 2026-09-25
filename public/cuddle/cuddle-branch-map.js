@@ -554,6 +554,9 @@
     game.state.upgradePhase = "round";
     game.state.upgradeMilestone = null;
     game.state.upgradeChoices = choices;
+    // A waystone's offer can't be refreshed (see isWaystoneUpgrade in
+    // cuddle-engine.js). Cleared once the pick is made or a round begins.
+    game.state.waystoneOffer = true;
     game.state.lastMessage = "A waystone: take one permanent upgrade.";
   }
 
@@ -730,8 +733,16 @@
     return { ok: true, message: this.state.lastMessage };
   };
 
+  var originalChooseUpgrade = proto.chooseUpgrade;
+  proto.chooseUpgrade = function chooseUpgradeClosingWaystone() {
+    var result = originalChooseUpgrade.apply(this, arguments);
+    if (this.state && this.state.status !== "upgrade") this.state.waystoneOffer = false;
+    return result;
+  };
+
   var originalBeginRound = proto._beginRound;
   proto._beginRound = function beginRoundWithBranchPenalty() {
+    this.state.waystoneOffer = false;
     var result = originalBeginRound.apply(this, arguments);
     var branchMap = ensureBranchMap(this);
     // The map is the between-rounds screen now, so the old round-intro card

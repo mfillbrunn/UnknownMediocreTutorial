@@ -1079,11 +1079,14 @@
       : refreshCost === null
         ? "Refresh unavailable"
         : `Refresh choices ($${refreshCost})`;
+    const waystone = typeof game.isWaystoneUpgrade === "function" && game.isWaystoneUpgrade();
     const kicker = milestone
       ? `POINTS MILESTONE · ${state.upgradeMilestone}`
       : startingRewards
         ? "STARTING REWARDS"
-        : `ROUND ${summary?.round || state.round} CLEARED`;
+        : waystone
+          ? "WAYSTONE"
+          : `ROUND ${summary?.round || state.round} CLEARED`;
     const heading = milestone
       ? "Choose a bonus upgrade"
       : startingRewards
@@ -1112,14 +1115,16 @@
                 ${interactionBonusDetail(choice.key || choice.id)}
               </button>`).join("")}
           </div>
-          <div class="cuddle-upgrade-refresh">
+          <div class="cuddle-upgrade-refresh${refreshCost === null ? " is-no-refresh" : ""}">
             <span class="cuddle-upgrade-wallet" data-upgrade-wallet aria-label="Money: $${Number(state.cuddleMoney || 0)}">
               <span>Money</span><b>$${Number(state.cuddleMoney || 0).toLocaleString()}</b>
             </span>
-            <button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
+            ${refreshCost === null
+              ? `<small>${waystone ? "A waystone's offer is fixed: no refreshes." : "These choices can't be refreshed."}</small>`
+              : `<button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
               ${escapeHtml(refreshLabel)}
             </button>
-            <small>The first refresh on each between-round reward screen is free. Later refreshes cost $3, $5, $7, $9, and so on.</small>
+            <small>The first refresh on each between-round reward screen is free. Later refreshes cost $3, $5, $7, $9, and so on.</small>`}
           </div>
         </section>
       </div>`;

@@ -3334,6 +3334,13 @@
   display: none;
 }
 
+#cuddleScreen .cuddle-modal .cuddle-upgrade-refresh.is-no-refresh small {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: right;
+}
+
 /* Between-round upgrade and quest reward cards: the icon and the upgrade's name share the
    first line; the level, description and combo notes run full width
    underneath. Saves a whole row per card. */
