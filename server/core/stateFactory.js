@@ -154,6 +154,13 @@ const powers = {
       // mid-round secret swap instead of going stale. Redacted from the
       // setter in safeState.
       secretThemesLabel: null,
+      // ALPHABET COMPASS (one-turn guesser reward). While active, every
+      // earlier row on the guesser's board shows L/R/G compass readings
+      // against the current secret instead of colors. Cleared when the
+      // guesser submits (normalTransitions.js). Redacted from the setter.
+      alphabetCompassUsed: false,
+      alphabetCompassActive: false,
+      alphabetCompassRows: null,
       // THEME DOSSIER (round-scoped guesser power, granted as a Rare
       // reward). Every theme the CURRENT secret belongs to, recomputed
       // every turn start like secretThemesLabel above -- but the grant

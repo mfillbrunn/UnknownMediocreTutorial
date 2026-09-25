@@ -115,6 +115,12 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
     delete safe.powers.secretThemesLabel;
   }
 
+  // Alphabet Compass readings are computed from the secret for the
+  // guesser's board only.
+  if (viewerRole !== "guesser") {
+    delete safe.powers.alphabetCompassRows;
+  }
+
   // Double Tap: the setter may know the power fired (doubleGuessPending) but
   // must never see the hidden word, nor which of g1/g2 was the one shown.
   if (viewerRole === "setter") {

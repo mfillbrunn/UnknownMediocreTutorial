@@ -171,6 +171,11 @@ function clearRoundState(state, actingRole) {
     if (state.powers?.countOnlyActive) state.powers.countOnlyActive = false;
     if (state.powers?.forceGuessOptions) state.powers.forceGuessOptions = null;
     if (state.powers?.nonsenseActive) state.powers.nonsenseActive = false;
+    // Alphabet Compass lasts only for the turn it was used on.
+    if (state.powers) {
+      state.powers.alphabetCompassActive = false;
+      state.powers.alphabetCompassRows = null;
+    }
 
     state.activeTimer = state.setter;
     advanceTimer(state, state.guesser);

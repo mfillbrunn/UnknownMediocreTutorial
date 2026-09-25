@@ -158,6 +158,25 @@ function buildHistoryRenderState(state, role) {
       }
     }
 
+    // Alphabet Compass (server/powers/powers/alphabetCompassServer.js): for
+    // the one turn it's active, every row trades its colors for the
+    // server's reading of each tile against the secret -- green when it
+    // matches, otherwise an arrow toward the secret's letter in that spot
+    // (← earlier in the alphabet, → later). Applied last so it wins over
+    // every other presentation, the player's own marks included; it goes
+    // away by itself when the flag clears on submit.
+    const compass = !isSetter && state.powers?.alphabetCompassActive
+      ? state.powers.alphabetCompassRows?.[j]
+      : null;
+    if (Array.isArray(compass)) {
+      for (let i = 0; i < tiles.length; i++) {
+        const reading = compass[i];
+        if (reading === "G") tiles[i].classKey = "history-tile tile-green tile-compass tile-compass-match";
+        else if (reading === "L") tiles[i].classKey = "history-tile tile-compass tile-compass-left";
+        else if (reading === "R") tiles[i].classKey = "history-tile tile-compass tile-compass-right";
+      }
+    }
+
     rows.push({
       key: entry.__historyKey,
       evaluated: !!safeEntry.extraInfo,

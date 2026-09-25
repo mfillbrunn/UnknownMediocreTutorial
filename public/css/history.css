@@ -1108,3 +1108,39 @@ body.hide-constraints .constraint-row {
     animation: none;
   }
 }
+
+/* --- Alphabet Compass (ui/history.js): one turn of arrows instead of
+   colors. Non-matching tiles go neutral so the arrow is the only signal;
+   the arrow sits under the letter, pointing toward where the secret's
+   letter lies in the alphabet. */
+.history-tile.tile-compass-left,
+.history-tile.tile-compass-right {
+  background: #2b2d42 !important;
+  color: #f3f4ff !important;
+  box-shadow: inset 0 0 0 2px rgba(129, 140, 248, 0.75) !important;
+}
+
+.history-tile.tile-compass-left::after,
+.history-tile.tile-compass-right::after {
+  position: absolute;
+  left: 50%;
+  bottom: 6%;
+  z-index: 3;
+  transform: translateX(-50%);
+  color: #c7d2fe;
+  font-size: 0.62em;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.history-tile.tile-compass-left::after { content: "\2190"; }
+.history-tile.tile-compass-right::after { content: "\2192"; }
+
+.history-tile.tile-compass .tile-letter {
+  transform: translateY(-12%);
+}
+
+.history-tile.tile-compass-match .tile-letter {
+  transform: none;
+}

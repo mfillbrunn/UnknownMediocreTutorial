@@ -118,6 +118,10 @@
       short: "Helps the Guesser submit two guesses and receive feedback for both.",
       desc: "Helps the Guesser by submitting two different guesses at once while the Secretkeeper sees only one of them."
     },
+    alphabetCompass: {
+      short: "Helps the Guesser see, for one turn, whether each secret letter comes earlier or later in the alphabet.",
+      desc: "Helps the Guesser by replacing every earlier row's colors for one turn with arrows toward the secret's letter in each spot: ← earlier in the alphabet, → later, green on a match."
+    },
     secretThemes: {
       short: "Helps the Guesser see which category the secret belongs to.",
       desc: "Helps the Guesser by showing an always-on reading of which category the current secret belongs to."

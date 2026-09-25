@@ -140,6 +140,9 @@ const POWER_COPY = {
   // which also means the category visibly changing is the tell that the
   // Secretkeeper just swapped secrets.
   secretThemes: ["🗂️", "Secret Themes", "From now on, see which category the secret belongs to, each of your turns."],
+  // One turn only: every earlier row swaps its colors for arrows pointing
+  // toward the secret's letter in that spot (see alphabetCompassServer.js).
+  alphabetCompass: ["🧭", "Alphabet Compass", "This turn, every earlier guess shows arrows instead of colors: ← the secret's letter in that spot comes earlier in the alphabet, → later, green if it matches."],
 };
 
 function normalizeWord(value) {
@@ -880,7 +883,7 @@ function guesserRewardPool(tier) {
   // Rarity (each option's own .tier) groups these into: Common -- Rule Out
   // Two, Peek Letter, Silly Word, Guess Tip. Rare -- Yellow Intel, Freeze
   // Secret, Time Rewind, Secret Vowel Count, Roulette Secret, Recon Sweep,
-  // Secret Themes. Legendary -- Remove a Point, Informant, First Letter
+  // Secret Themes, Alphabet Compass. Legendary -- Remove a Point, Informant, First Letter
   // Reveal, Magic Mode. Secret Themes is the ONLY theme-revealing reward
   // on purpose -- the standing "one label, every turn, for the rest of the
   // match" pick; no other reward should ever surface theme information. Stealth Guess is deliberately NOT in this pool -- it's still a
@@ -903,7 +906,8 @@ function guesserRewardPool(tier) {
     powerOption("suggestGuess"),
     powerOption("letterProbe"),
     powerOption("firstLetterReveal"),
-    powerOption("secretThemes")
+    powerOption("secretThemes"),
+    powerOption("alphabetCompass")
   ];
   if (tier >= 2) pool.push(powerOption("revealHistory"));
   return pool;
@@ -1763,6 +1767,9 @@ function powerOptionApplicable(state, option) {
       // Magic Mode affects feedback from the upcoming guess, so it remains
       // useful even when no yellow was known before this turn.
       return true;
+    case "alphabetCompass":
+      // Reads earlier rows, so it needs at least one on the board.
+      return !state.powers?.alphabetCompassUsed && (state.history || []).some(entry => entry?.guess);
     case "revealLocation":
     case "letterProfile":
     case "secretThemes":

@@ -94,6 +94,12 @@ window.POWER_PALETTES = Object.freeze({
     "#FACC15"
   ],
 
+  alphabetCompass: [
+    "#818CF8",
+    "#A5B4FC",
+    "#4ADE80"
+  ],
+
   secretThemes: [
     "#FBBF24",
     "#F59E0B",
