@@ -151,7 +151,7 @@
     { id: "quests", title: "Quests", color: "#f6a94a", angle: 90,
       ids: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment"] },
     { id: "hand", title: "Hand & Tools", color: "#d5a6ff", angle: 150,
-      ids: ["extraMulligans", "mulliganSize", "handSizeBoost", "jokerPerRound", "jokerCache", "wideChoice", "rewardEcho", "removeLetter", "greenCount", "categorySense"] }
+      ids: ["extraMulligans", "mulliganSize", "handSizeBoost", "jokerPerRound", "jokerCache", "wideChoice", "rewardEcho", "removeLetter", "greenCount", "categorySense", "alphabet-compass"] }
   ];
   const CATEGORY_WEDGE = { economy: "economy", solving: "solving", quests: "quests", easierStages: "hand" };
   const COMBO_COLOR = "#ff7ab8";

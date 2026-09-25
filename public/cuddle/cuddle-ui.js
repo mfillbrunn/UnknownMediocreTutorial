@@ -657,7 +657,15 @@
           // can drop a card here even though there's nothing yet to tap.
           tiles.push(`<span class="cuddle-tile${tileClass}" data-drag-index="${column}"${moneyBadge}></span>`);
         } else {
-          tiles.push(`<span class="cuddle-tile${tileClass}"${moneyBadge}>${escapeHtml(letter)}</span>`);
+          // Alphabet Compass (cuddle-compass.js): a small arrow toward the
+          // secret's letter in this spot, or a dash when it matches.
+          const compass = Array.isArray(history?.umtCompass)
+            ? history.umtCompass.find(mark => mark && mark.index === column)
+            : null;
+          const compassMark = compass
+            ? `<span class="umt-compass-mark is-${compass.dir === "L" ? "left" : compass.dir === "R" ? "right" : "match"}" title="${compass.dir === "L" ? "The secret's letter here comes earlier in the alphabet" : compass.dir === "R" ? "The secret's letter here comes later in the alphabet" : "This letter matches the secret here"}">${compass.dir === "L" ? "&larr;" : compass.dir === "R" ? "&rarr;" : "&ndash;"}</span>`
+            : "";
+          tiles.push(`<span class="cuddle-tile${tileClass}${compass ? " has-compass" : ""}"${moneyBadge}>${escapeHtml(letter)}${compassMark}</span>`);
         }
       }
       // Count Only replaces the row's score with the only thing it tells you:

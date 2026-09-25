@@ -59,6 +59,7 @@
     ["yellow guesser hint", TIERS.RARE],
     ["bigger cuddle", TIERS.RARE],
     ["surprise assignment", TIERS.RARE],
+    ["alphabet compass", TIERS.RARE],
 
     ["green guesser hint", TIERS.LEGENDARY],
     ["candidate notebook", TIERS.LEGENDARY],
@@ -87,7 +88,7 @@
     "theme sense", "remaining setter box", "guesser hint", "yellow guesser hint",
     "green guesser hint", "softer cuddle meter", "bigger cuddle", "opening insight",
     "quick study", "candidate notebook", "joker cache", "reserve dividend",
-    "surprise assignment"
+    "surprise assignment", "alphabet compass"
   ]);
 
   const KNOWN_BOSS_NAMES = new Set([
@@ -1258,6 +1259,9 @@
       case "random-quest":
         addUpgradeStack(state, "random-quest", 1);
         return true;
+      case "alphabet-compass":
+        addUpgradeStack(state, "alphabet-compass", 1);
+        return true;
       case "wild-card":
         addUpgradeStack(state, "wild-card", 1);
         return callOriginal();
@@ -1417,6 +1421,24 @@
     return [def];
   }
 
+  // Each copy adds one tile per guess that shows an arrow toward the
+  // secret's letter in that spot (cuddle-compass.js draws them). Four
+  // copies is the cap: past that it would read the whole row.
+  const ALPHABET_COMPASS_MAX = 4;
+
+  function makeAlphabetCompassReward(template) {
+    const def = cloneDefinition(template || {});
+    setName(def, "Alphabet Compass");
+    setId(def, "alphabet-compass");
+    setDescription(def, "After every guess, one of its tiles shows an arrow: ← the secret's letter there comes earlier in the alphabet, → later, – it matches. Each copy adds a tile.");
+    setTier(def, TIERS.RARE);
+    setMaxStack(def, ALPHABET_COMPASS_MAX);
+    def.icon = "\u{1F9ED}";
+    def.available = (state) => upgradeStack(state, "alphabet-compass") < ALPHABET_COMPASS_MAX;
+    replaceHandlers(def, "alphabet-compass");
+    return def;
+  }
+
   function makeRandomQuestReward(template) {
     const def = cloneDefinition(template || {});
     setName(def, "Surprise Assignment");
@@ -1443,6 +1465,9 @@
     }
     if (!out.some((def) => norm(getName(def)) === "surprise assignment")) {
       out.push(makeRandomQuestReward(template));
+    }
+    if (!out.some((def) => norm(getName(def)) === "alphabet compass")) {
+      out.push(makeAlphabetCompassReward(template));
     }
     for (const def of out) catalog.ordinary.set(norm(getName(def)), def);
     return out;
@@ -2571,7 +2596,10 @@
       scan: scanGlobals,
       tick,
       grantMeterReward,
-      openPouch: openPouchDialog
+      openPouch: openPouchDialog,
+      // How many copies of a stacking reward the run holds (e.g.
+      // "alphabet-compass"); read by layers that act on those stacks.
+      stack: (state, key) => upgradeStack(state, key)
     };
     scanGlobals();
     installObserver();
