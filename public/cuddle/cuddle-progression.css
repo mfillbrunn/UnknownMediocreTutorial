@@ -674,6 +674,7 @@
 }
 
 .umt-progress-host .umt-pt-state.is-owned { color: #04241a; background: var(--umt-points-bright); }
+.umt-progress-host .umt-pt-state.is-echo { color: #2a0f1d; background: #ffb3d6; margin-right: 6px; }
 .umt-progress-host .umt-pt-when { color: var(--umt-muted); font-size: 0.8rem !important; }
 
 .umt-progress-host .umt-pt-reqs { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; font-size: 0.85rem; }

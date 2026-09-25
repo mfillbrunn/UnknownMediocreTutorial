@@ -110,14 +110,15 @@
     {
       id: "solvingAids",
       title: "Solving Aids",
-      blurb: "Easy difficulty only -- Medium and Hard skip this entire branch.",
-      easyOnly: true,
+      // Only the hint aids are Easy-only; Joker Cache and Reserve Dividend
+      // are offered on every difficulty (see cuddle-rebalance-v5.js).
+      blurb: "The hint aids here are Easy only; Joker Cache and Reserve Dividend appear on every difficulty.",
       nodes: [
-        { id: "openingInsight", icon: "💡", title: "Opening Insight", tier: "rare", category: "solving", maxLevel: 2, description: "Start every non-boss Wordle with one additional exact-position hint.", level: g => upgradeCount(g, "openingInsight") },
-        { id: "quickStudy", icon: "⏳", title: "Quick Study", tier: "common", category: "solving", maxLevel: 2, description: "Automatic hints arrive one guess sooner (minimum: every two guesses).", level: g => upgradeCount(g, "quickStudy") },
+        { id: "openingInsight", icon: "💡", title: "Opening Insight", tier: "rare", category: "solving", maxLevel: 2, description: "Start every non-boss Wordle with one additional exact-position hint.", easyOnly: true, level: g => upgradeCount(g, "openingInsight") },
+        { id: "quickStudy", icon: "⏳", title: "Quick Study", tier: "common", category: "solving", maxLevel: 2, description: "Automatic hints arrive one guess sooner (minimum: every two guesses).", easyOnly: true, level: g => upgradeCount(g, "quickStudy") },
         { id: "jokerCache", icon: "🃏", title: "Joker Cache", tier: "legendary", category: "easierStages", maxLevel: 2, description: "Two extra Jokers every stage.", level: g => upgradeCount(g, "jokerCache") },
         { id: "reserveDividend", icon: "🏦", title: "Reserve Dividend", tier: "rare", category: "economy", maxLevel: 1, description: "At a win, earn 5 points extra for every unused mulligan and every unused Joker.", level: g => upgradeCount(g, "reserveDividend") },
-        { id: "consonantSweep", icon: "🔍", title: "Process of Elimination", tier: "rare", category: "solving", maxLevel: 1, description: "Every guess rules out one consonant that is not in the secret.", level: g => upgradeCount(g, "consonantSweep") }
+        { id: "consonantSweep", icon: "🔍", title: "Process of Elimination", tier: "rare", category: "solving", maxLevel: 1, description: "Every guess rules out one consonant that is not in the secret.", easyOnly: true, level: g => upgradeCount(g, "consonantSweep") }
       ]
     },
     {

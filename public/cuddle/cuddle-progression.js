@@ -143,15 +143,15 @@
     { id: "scoring", title: "Scoring", color: "#8ff7cd", angle: -150,
       ids: ["yellowPoints", "earlyRoundPoint", "storybookStart", "earlySolveBoost", "mulliganValueBoost", "greyPointBoost", "colourTrade", "greyscale"] },
     { id: "economy", title: "Economy", color: "#f6c956", angle: -90,
-      ids: ["rainyDay", "encore", "hotStreak", "vowelBounty", "doubleDown", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"] },
+      ids: ["rainyDay", "encore", "hotStreak", "vowelBounty", "doubleDown", "reserveDividend", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"] },
     { id: "solving", title: "Solving Aids", color: "#7cb8ff", angle: -30, easyOnly: true,
-      ids: ["openingInsight", "quickStudy", "jokerCache", "reserveDividend", "consonantSweep"] },
+      ids: ["openingInsight", "quickStudy", "consonantSweep"] },
     { id: "coach", title: "Cuddle Coach", color: "#ff9ec7", angle: 30,
       ids: ["coachPossibleAnswers", "coachHint", "coachEarlierHint", "coachMeterThreshold", "coachMeterReward"] },
     { id: "quests", title: "Quests", color: "#f6a94a", angle: 90,
       ids: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment"] },
     { id: "hand", title: "Hand & Tools", color: "#d5a6ff", angle: 150,
-      ids: ["extraMulligans", "mulliganSize", "handSizeBoost", "jokerPerRound", "wideChoice", "rewardEcho", "removeLetter", "greenCount", "categorySense"] }
+      ids: ["extraMulligans", "mulliganSize", "handSizeBoost", "jokerPerRound", "jokerCache", "wideChoice", "rewardEcho", "removeLetter", "greenCount", "categorySense"] }
   ];
   const CATEGORY_WEDGE = { economy: "economy", solving: "solving", quests: "quests", easierStages: "hand" };
   const COMBO_COLOR = "#ff7ab8";
@@ -340,7 +340,9 @@
     });
 
     const all = [...nodes.values()].filter((n) => Number.isFinite(n.x));
-    const countable = all.filter((n) => !(n.easyOnly && !easy));
+    // An Easy-only talent drops out of the count on other difficulties --
+    // unless the run owns it anyway, which always counts.
+    const countable = all.filter((n) => !(n.easyOnly && !easy) || n.level > 0);
     return {
       nodes,
       all,
@@ -599,17 +601,32 @@
     return `<div class="umt-pt-timeline"><h4>Your picks, in order</h4><div class="umt-pt-chips">${chips}</div></div>`;
   }
 
+  // The reveal's new ledger entries, one group per talent.
+  function revealGroups(model, reveal) {
+    const tree = window.CuddleSkillTree;
+    const groups = new Map();
+    reveal.entries.forEach((entry) => {
+      const cat = resolveCatalogueNode(tree, entry.id, entry.title);
+      const id = cat ? cat.id : entry.id;
+      const group = groups.get(id);
+      if (group) group.times += 1;
+      else groups.set(id, { entry, node: model.nodes.get(id), times: 1 });
+    });
+    return [...groups.values()];
+  }
+
   function revealMarkup(model, reveal) {
     if (!reveal) return "";
     const tree = window.CuddleSkillTree;
-    const items = reveal.entries.map((entry) => {
-      const cat = resolveCatalogueNode(tree, entry.id, entry.title);
-      const node = model.nodes.get(cat ? cat.id : entry.id);
+    const items = revealGroups(model, reveal).map(({ entry, node, times }) => {
       const color = node ? nodeColor(node) : "#d5a6ff";
       const lvl = node && node.maxLevel > 1 ? `<span class="umt-pt-state is-owned">Lv ${node.level}/${node.maxLevel}</span>` : "";
+      // Reward Echo and the like apply one pick several times; that's one
+      // card with a count, not the same card repeated.
+      const echo = times > 1 ? `<span class="umt-pt-state is-echo">×${times}</span>` : "";
       return `<div class="umt-pt-new" style="--c:${color}"><span class="umt-pt-detail-icon">${esc((node && node.icon) || entry.icon || "✦")}</span>`
         + `<div><strong>${esc(entry.title || (node && node.title) || "Reward")}</strong>`
-        + `<p>${esc((node && node.description) || entry.description || "")}</p></div>${lvl}</div>`;
+        + `<p>${esc((node && node.description) || entry.description || "")}</p></div>${echo}${lvl}</div>`;
     }).join("");
     const combosNow = model.combos.filter((c) => c.level > 0 && reveal.newComboIds && reveal.newComboIds.has(c.id));
     const comboNote = combosNow.length
@@ -632,7 +649,7 @@
     const selected = view.selectedId ? model.nodes.get(view.selectedId) : null;
     const percent = model.total ? Math.round((model.owned / model.total) * 100) : 0;
     const heading = reveal
-      ? `<span class="umt-pt-kicker">Progression</span><h2 id="umtPtTitle">${reveal.entries.length > 1 ? "New talents" : "New talent"} added</h2>`
+      ? `<span class="umt-pt-kicker">Progression</span><h2 id="umtPtTitle">${revealGroups(model, reveal).length > 1 ? "New talents" : "New talent"} added</h2>`
       : `<span class="umt-pt-kicker">Progression</span><h2 id="umtPtTitle">Your run so far</h2>`;
     return `<div class="umt-pt-overlay${reveal ? " is-reveal" : ""}" role="dialog" aria-modal="true" aria-hidden="false" aria-labelledby="umtPtTitle">`
       + `<div class="umt-pt-backdrop" data-umt-pt-close></div>`
