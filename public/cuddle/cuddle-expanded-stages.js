@@ -1377,12 +1377,15 @@
       const legal = unguessedLegalWords(game, duel);
       const fallback = legal.length ? legal : candidates;
       if (!fallback.length) return null;
-      if (candidates.length === 1) return candidates[0];
 
+      // Easy AI is sloppy: only about half its guesses fit the clues, and
+      // even with one word left it sometimes misses it.
       if (duel.difficulty === "easy") {
-        const pool = candidates.length && randomFor(game) < 0.82 ? candidates : fallback;
+        const pool = candidates.length && randomFor(game) < (candidates.length === 1 ? 0.6 : 0.5) ? candidates : fallback;
         return pool[Math.floor(randomFor(game) * pool.length)] || fallback[0];
       }
+
+      if (candidates.length === 1) return candidates[0];
 
       if (duel.difficulty === "hard" && !(duel.history || []).length) {
         const opener = COMMON_OPENERS.find(word => game.guessSet.has(word) && !duel.history.some(entry => entry.word === word));

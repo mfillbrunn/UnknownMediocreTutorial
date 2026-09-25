@@ -1204,8 +1204,12 @@
     }
     // Let every layer finish its own round-start work (variants, challenge
     // offers, interest) before reading what the stage holds.
+    banner.pending = true;
     setTimeout(() => {
-      if (!game.state || game.state.status !== "playing" || game.state.umtStageBannerKey !== key) return;
+      if (!game.state || game.state.status !== "playing" || game.state.umtStageBannerKey !== key) {
+        banner.pending = false;
+        return;
+      }
       saveGame(game);
       // A boss makes an entrance first (cuddle-worlds.js); the briefing
       // banner follows once it clears.
@@ -1216,14 +1220,80 @@
           game,
           boss,
           onDone: () => {
+            banner.pending = false;
             if (!game.state || game.state.status !== "playing" || game.state.umtStageBannerKey !== key) return;
             showBanner(game, burdenNotice);
           }
         });
         return;
       }
+      banner.pending = false;
       showBanner(game, burdenNotice);
     }, 140);
+  }
+
+  // ---------------------------------------------------------------------
+  // Quest banner: when a quest turns up mid-stage, a short "Quest incoming"
+  // banner swooshes in over the board and out again, so it can't be missed.
+  // It waits for the stage banner and any boss entrance to clear first.
+  // ---------------------------------------------------------------------
+
+  const questBanner = { el: null, timer: null, wait: null };
+
+  function questKey(state, quest) {
+    return `${stageKey(state)}|${num(state.guessesUsed)}|${quest.id}|${quest.description}`;
+  }
+
+  function dismissQuestBanner(immediate) {
+    clearTimeout(questBanner.timer);
+    questBanner.timer = null;
+    const el = questBanner.el;
+    questBanner.el = null;
+    if (!el) return;
+    if (immediate || reducedMotion()) {
+      el.remove();
+      return;
+    }
+    el.classList.add("is-leaving");
+    setTimeout(() => el.remove(), 460);
+  }
+
+  function showQuestBanner(quest) {
+    const el = host();
+    if (!el) return;
+    dismissQuestBanner(true);
+    const wrap = document.createElement("div");
+    wrap.className = "umt-quest-banner-wrap";
+    wrap.innerHTML = `<div class="umt-quest-banner" role="status" aria-live="polite">`
+      + `<span class="umt-qb-icon" aria-hidden="true">${esc(quest.icon || "✦")}</span>`
+      + `<div class="umt-qb-text"><span class="umt-qb-eyebrow">Quest incoming</span>`
+      + `<strong>${esc(quest.title || "Quest")}</strong>`
+      + `<span class="umt-qb-desc">${esc(quest.description || "")}</span>`
+      + `<span class="umt-qb-foot">Do it on your next guess for a reward.</span></div>`
+      + `</div>`;
+    el.appendChild(wrap);
+    questBanner.el = wrap;
+    wrap.firstElementChild.addEventListener("click", () => dismissQuestBanner(false));
+    questBanner.timer = setTimeout(() => dismissQuestBanner(false), 2600);
+  }
+
+  function checkForQuest(game) {
+    const state = game && game.state;
+    if (!state || state.status !== "playing" || !state.activeQuest || state.roundIntroPending) {
+      if (questBanner.el && (!state || state.status !== "playing")) dismissQuestBanner(true);
+      return;
+    }
+    const quest = state.activeQuest;
+    const key = questKey(state, quest);
+    if (state.umtQuestBannerKey === key) return;
+    // Let the stage banner and a boss entrance finish first.
+    if (banner.el || banner.pending || document.querySelector(".umt-boss-entrance")) {
+      clearTimeout(questBanner.wait);
+      questBanner.wait = setTimeout(() => checkForQuest(game), 400);
+      return;
+    }
+    state.umtQuestBannerKey = key;
+    showQuestBanner(quest);
   }
 
   // ---------------------------------------------------------------------
@@ -1243,6 +1313,30 @@
     slot.appendChild(button);
   }
 
+  function payoutShowing(game) {
+    const money = game && game.state && game.state.cuddleMoneyMode;
+    return Boolean((money && money.pendingPayout && money.pendingPayout.id !== money.lastAnimatedPayoutId)
+      || document.getElementById("cuddleMoneyPayoutOverlay"));
+  }
+
+  function syncPayoutHold(root, game) {
+    // The cash-out only starts on the play screen (it needs the header).
+    if (payoutShowing(game) && root.querySelector(".cuddle-header")) {
+      view.payoutHold = true;
+      view.payoutSeenAt = Date.now();
+    }
+    if (game.state.status === "playing" || game.state.status === "branchMap") view.payoutHold = false;
+    root.classList.toggle("umt-payout-pending", Boolean(view.payoutHold));
+    if (!view.payoutHold) return;
+    // Never leave the reward screen hidden if the cash-out doesn't appear.
+    clearTimeout(view.payoutCheck);
+    view.payoutCheck = setTimeout(() => {
+      if (!view.payoutHold || payoutShowing(game) || Date.now() - view.payoutSeenAt < 1500) return;
+      view.payoutHold = false;
+      root.classList.remove("umt-payout-pending");
+    }, 1600);
+  }
+
   function afterRender(root, game, landing) {
     if (!root) return;
     view.game = game || view.game;
@@ -1251,11 +1345,19 @@
     }
     if (landing || !game || !game.state) {
       dismissBanner(true);
+      dismissQuestBanner(true);
       return;
     }
+    // A solve renders the reward screen at once, but the cash-out is added a
+    // frame or two later and fades in. Keep the reward screen hidden until
+    // the cash-out has been collected so it doesn't flash first.
+    // (A render can briefly wipe and replay the cash-out, so the hold lasts
+    // until Collect is pressed, not just while the overlay is on screen.)
+    syncPayoutHold(root, game);
     decorateMapHeader(root, game);
     checkForPicks(game);
     checkForStageStart(game);
+    checkForQuest(game);
     if (view.open) renderOverlay();
   }
 
@@ -1285,6 +1387,13 @@
   }
 
   function installEvents() {
+    // Window capture runs before the cash-out's own document-level handler,
+    // so the hold is released before the render it triggers.
+    window.addEventListener("click", (event) => {
+      if (event.target && event.target.closest && event.target.closest("[data-cuddle-money-action='collect-payout']")) {
+        view.payoutHold = false;
+      }
+    }, true);
     // Capture phase so the old flat skill-tree screen never opens: its
     // button (on the landing page) now opens this tree instead.
     document.addEventListener("click", (event) => {
