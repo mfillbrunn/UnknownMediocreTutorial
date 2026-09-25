@@ -306,7 +306,7 @@ window.POWER_METADATA = {
 
   alphabetCompass: {
     label: "Alphabet Compass",
-    desc: "For this turn only, every earlier guess shows arrows instead of colors: ← means the secret's letter in that spot comes earlier in the alphabet, → later, and green means it matches.",
+    desc: "For this turn, until the Guesser submits, every earlier guess shows arrows instead of colors: ← means the secret's letter in that spot comes earlier in the alphabet, → later, and green means it matches.",
     short: "One turn of earlier/later arrows on every earlier guess.",
     icon: "compass",
     emoji: "\u{1F9ED}",

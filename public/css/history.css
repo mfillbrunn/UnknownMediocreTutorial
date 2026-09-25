@@ -1109,38 +1109,44 @@ body.hide-constraints .constraint-row {
   }
 }
 
-/* --- Alphabet Compass (ui/history.js): one turn of arrows instead of
-   colors. Non-matching tiles go neutral so the arrow is the only signal;
-   the arrow sits under the letter, pointing toward where the secret's
-   letter lies in the alphabet. */
+/* --- Alphabet Compass (ui/history.js): for the rest of the guesser's
+   turn every earlier row trades its colors for arrows. Non-matching tiles
+   turn a solid indigo -- a color no real feedback uses -- with a bold
+   white arrow under the letter pointing toward where the secret's letter
+   sits in the alphabet; a match stays green. The arrow is an SVG shape,
+   not a font glyph, so it stays thick and legible on the small tiles of a
+   phone board. */
 .history-tile.tile-compass-left,
 .history-tile.tile-compass-right {
-  background: #2b2d42 !important;
-  color: #f3f4ff !important;
-  box-shadow: inset 0 0 0 2px rgba(129, 140, 248, 0.75) !important;
+  background: #4338ca !important;
+  border-color: #a5b4fc !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
 }
 
 .history-tile.tile-compass-left::after,
 .history-tile.tile-compass-right::after {
+  content: "";
   position: absolute;
   left: 50%;
-  bottom: 6%;
+  bottom: 9%;
   z-index: 3;
+  width: 62%;
+  height: 30%;
   transform: translateX(-50%);
-  color: #c7d2fe;
-  font-size: 0.62em;
-  font-weight: 900;
-  line-height: 1;
+  background: center / contain no-repeat;
   pointer-events: none;
 }
 
-.history-tile.tile-compass-left::after { content: "\2190"; }
-.history-tile.tile-compass-right::after { content: "\2192"; }
-
-.history-tile.tile-compass .tile-letter {
-  transform: translateY(-12%);
+.history-tile.tile-compass-left::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 20'%3E%3Cpath fill='%23fff' d='M1 10 13 1v5.5h26v7H13V19z'/%3E%3C/svg%3E");
 }
 
-.history-tile.tile-compass-match .tile-letter {
-  transform: none;
+.history-tile.tile-compass-right::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 20'%3E%3Cpath fill='%23fff' d='M39 10 27 1v5.5H1v7h26V19z'/%3E%3C/svg%3E");
+}
+
+.history-tile.tile-compass-left .tile-letter,
+.history-tile.tile-compass-right .tile-letter {
+  transform: translateY(-18%);
 }
