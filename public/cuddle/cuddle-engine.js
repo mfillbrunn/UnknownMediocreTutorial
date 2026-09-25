@@ -4680,6 +4680,12 @@
     return null;
   }
 
+  // The letter a Joker in this word would become ({ letter, word } or null),
+  // for screens that build words outside submitDraft (the Word Duel).
+  CuddleGame.prototype.resolveJokerWord = function resolveJokerWordPublic(rawWord) {
+    return resolveJokerWord(this, String(rawWord || ""));
+  };
+
   // A joker charge used to require pressing "Use joker" to place the tile
   // in your hand before you could play it. Now any banked charge places
   // itself straight into the hand tiles automatically -- called from

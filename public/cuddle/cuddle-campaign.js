@@ -997,7 +997,12 @@
       const quests = [state.activeQuest, ...(Array.isArray(state.activeQuests) ? state.activeQuests.slice(1) : [])]
         .filter(Boolean);
       const questText = quests
-        .map(quest => `<span class="cuddle-quest-inline">Quest: ${escapeHtml(quest.description)}</span>`)
+        .map(quest => (
+          `<span class="cuddle-quest-inline">`
+          + `<span class="cuddle-quest-tag"><span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> Quest</span>`
+          + `<span class="cuddle-quest-body"><b>${escapeHtml(quest.title || "Quest")}:</b> <span>${escapeHtml(quest.description)}</span></span>`
+          + `</span>`
+        ))
         .join("");
       // Plain text, deliberately not folded into the theme's pill-chip list
       // (see secretsRemainingInline's comment in cuddle-coach-expansion.js).

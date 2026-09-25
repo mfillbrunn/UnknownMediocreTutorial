@@ -143,15 +143,15 @@
     { id: "scoring", title: "Scoring", color: "#8ff7cd", angle: -150,
       ids: ["yellowPoints", "earlyRoundPoint", "storybookStart", "earlySolveBoost", "mulliganValueBoost", "greyPointBoost", "colourTrade", "greyscale"] },
     { id: "economy", title: "Economy", color: "#f6c956", angle: -90,
-      ids: ["rainyDay", "encore", "hotStreak", "vowelBounty", "doubleDown", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"] },
+      ids: ["rainyDay", "encore", "hotStreak", "vowelBounty", "doubleDown", "reserveDividend", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"] },
     { id: "solving", title: "Solving Aids", color: "#7cb8ff", angle: -30, easyOnly: true,
-      ids: ["openingInsight", "quickStudy", "jokerCache", "reserveDividend", "consonantSweep"] },
+      ids: ["openingInsight", "quickStudy", "consonantSweep"] },
     { id: "coach", title: "Cuddle Coach", color: "#ff9ec7", angle: 30,
       ids: ["coachPossibleAnswers", "coachHint", "coachEarlierHint", "coachMeterThreshold", "coachMeterReward"] },
     { id: "quests", title: "Quests", color: "#f6a94a", angle: 90,
       ids: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment"] },
     { id: "hand", title: "Hand & Tools", color: "#d5a6ff", angle: 150,
-      ids: ["extraMulligans", "mulliganSize", "handSizeBoost", "jokerPerRound", "wideChoice", "rewardEcho", "removeLetter", "greenCount", "categorySense"] }
+      ids: ["extraMulligans", "mulliganSize", "handSizeBoost", "jokerPerRound", "jokerCache", "wideChoice", "rewardEcho", "removeLetter", "greenCount", "categorySense", "alphabet-compass"] }
   ];
   const CATEGORY_WEDGE = { economy: "economy", solving: "solving", quests: "quests", easierStages: "hand" };
   const COMBO_COLOR = "#ff7ab8";
@@ -340,7 +340,9 @@
     });
 
     const all = [...nodes.values()].filter((n) => Number.isFinite(n.x));
-    const countable = all.filter((n) => !(n.easyOnly && !easy));
+    // An Easy-only talent drops out of the count on other difficulties --
+    // unless the run owns it anyway, which always counts.
+    const countable = all.filter((n) => !(n.easyOnly && !easy) || n.level > 0);
     return {
       nodes,
       all,
@@ -500,7 +502,7 @@
       + `<text class="umt-pt-core-sub" dy="1.5em">of ${model.total}</text>`
       + `</g>`;
 
-    const box = view && view.zoomBox ? view.zoomBox : fullBox();
+    const box = view && (view.liveBox || view.zoomBox) ? (view.liveBox || view.zoomBox) : fullBox();
     return `<svg class="umt-pt-svg" viewBox="${box.map(round1).join(" ")}" role="group" aria-label="Progression tree">`
       + `<defs><filter id="umtPtGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>`
       + `<radialGradient id="umtPtCore" cx="50%" cy="40%" r="65%"><stop offset="0%" stop-color="#3b2f5c"/><stop offset="100%" stop-color="#15121f"/></radialGradient>${defs.join("")}</defs>`
@@ -599,17 +601,32 @@
     return `<div class="umt-pt-timeline"><h4>Your picks, in order</h4><div class="umt-pt-chips">${chips}</div></div>`;
   }
 
+  // The reveal's new ledger entries, one group per talent.
+  function revealGroups(model, reveal) {
+    const tree = window.CuddleSkillTree;
+    const groups = new Map();
+    reveal.entries.forEach((entry) => {
+      const cat = resolveCatalogueNode(tree, entry.id, entry.title);
+      const id = cat ? cat.id : entry.id;
+      const group = groups.get(id);
+      if (group) group.times += 1;
+      else groups.set(id, { entry, node: model.nodes.get(id), times: 1 });
+    });
+    return [...groups.values()];
+  }
+
   function revealMarkup(model, reveal) {
     if (!reveal) return "";
     const tree = window.CuddleSkillTree;
-    const items = reveal.entries.map((entry) => {
-      const cat = resolveCatalogueNode(tree, entry.id, entry.title);
-      const node = model.nodes.get(cat ? cat.id : entry.id);
+    const items = revealGroups(model, reveal).map(({ entry, node, times }) => {
       const color = node ? nodeColor(node) : "#d5a6ff";
       const lvl = node && node.maxLevel > 1 ? `<span class="umt-pt-state is-owned">Lv ${node.level}/${node.maxLevel}</span>` : "";
+      // Reward Echo and the like apply one pick several times; that's one
+      // card with a count, not the same card repeated.
+      const echo = times > 1 ? `<span class="umt-pt-state is-echo">×${times}</span>` : "";
       return `<div class="umt-pt-new" style="--c:${color}"><span class="umt-pt-detail-icon">${esc((node && node.icon) || entry.icon || "✦")}</span>`
         + `<div><strong>${esc(entry.title || (node && node.title) || "Reward")}</strong>`
-        + `<p>${esc((node && node.description) || entry.description || "")}</p></div>${lvl}</div>`;
+        + `<p>${esc((node && node.description) || entry.description || "")}</p></div>${echo}${lvl}</div>`;
     }).join("");
     const combosNow = model.combos.filter((c) => c.level > 0 && reveal.newComboIds && reveal.newComboIds.has(c.id));
     const comboNote = combosNow.length
@@ -632,7 +649,7 @@
     const selected = view.selectedId ? model.nodes.get(view.selectedId) : null;
     const percent = model.total ? Math.round((model.owned / model.total) * 100) : 0;
     const heading = reveal
-      ? `<span class="umt-pt-kicker">Progression</span><h2 id="umtPtTitle">${reveal.entries.length > 1 ? "New talents" : "New talent"} added</h2>`
+      ? `<span class="umt-pt-kicker">Progression</span><h2 id="umtPtTitle">${revealGroups(model, reveal).length > 1 ? "New talents" : "New talent"} added</h2>`
       : `<span class="umt-pt-kicker">Progression</span><h2 id="umtPtTitle">Your run so far</h2>`;
     return `<div class="umt-pt-overlay${reveal ? " is-reveal" : ""}" role="dialog" aria-modal="true" aria-hidden="false" aria-labelledby="umtPtTitle">`
       + `<div class="umt-pt-backdrop" data-umt-pt-close></div>`
@@ -736,16 +753,25 @@
     canvas.scrollTop = Math.max(0, centreY - canvas.clientHeight / 2);
   }
 
+  // The overlay re-renders whenever the game does (and the game renders
+  // right after a pick), which replaces the SVG. So the box being animated
+  // lives in view.liveBox -- a re-render mid-zoom draws the tree exactly
+  // where the animation has got to -- and each frame updates whichever SVG
+  // is on screen now, never a stale one.
   let zoomFrame = 0;
+  function currentSvg() {
+    return host() && host().querySelector(".umt-pt-layer .umt-pt-svg");
+  }
+
   function animateZoom(target, done) {
-    const svg = host() && host().querySelector(".umt-pt-layer .umt-pt-svg");
     cancelAnimationFrame(zoomFrame);
-    if (!svg) { done(); return; }
-    const from = (svg.getAttribute("viewBox") || "").split(/\s+/).map(Number);
-    const start = from.length === 4 && from.every(Number.isFinite) ? from : fullBox();
-    if (reducedMotion()) {
-      svg.setAttribute("viewBox", target.map(round1).join(" "));
+    const start = view.liveBox || view.zoomBox || fullBox();
+    const finish = () => {
+      view.liveBox = null;
       done();
+    };
+    if (reducedMotion() || !currentSvg()) {
+      finish();
       return;
     }
     const began = performance.now();
@@ -753,10 +779,11 @@
     const step = (now) => {
       const t = Math.min(1, (now - began) / duration);
       const eased = 1 - Math.pow(1 - t, 3);
-      const box = start.map((value, index) => value + (target[index] - value) * eased);
-      svg.setAttribute("viewBox", box.map(round1).join(" "));
-      if (t < 1) zoomFrame = requestAnimationFrame(step);
-      else done();
+      view.liveBox = start.map((value, index) => value + (target[index] - value) * eased);
+      const svg = currentSvg();
+      if (svg) svg.setAttribute("viewBox", view.liveBox.map(round1).join(" "));
+      if (t < 1 && view.open) zoomFrame = requestAnimationFrame(step);
+      else finish();
     };
     zoomFrame = requestAnimationFrame(step);
   }
@@ -780,7 +807,10 @@
     view.freshIds = options.freshIds || new Set();
     view.selectedId = options.selectedId || null;
     view.lastFocus = document.activeElement;
+    cancelAnimationFrame(zoomFrame);
+    clearTimeout(view.zoomTimer);
     view.zoomBox = null;
+    view.liveBox = null;
     view.zoomCenter = null;
     const focusId = options.selectedId || (view.freshIds.size ? [...view.freshIds][0] : null);
     if (options.reveal && focusId) {
@@ -792,7 +822,7 @@
       if (view.zoomCenter) {
         centreCanvasScroll();
         // A beat on the whole tree first, then ease in on the new pick.
-        setTimeout(() => { if (view.open && view.zoomCenter) zoomTo(true); }, 450);
+        view.zoomTimer = setTimeout(() => { if (view.open && view.zoomCenter) zoomTo(true); }, 450);
       } else {
         focusCanvas(focusId);
       }
@@ -832,6 +862,17 @@
   function ownedComboIds(game) {
     const model = buildModel(game);
     return new Set(model.combos.filter((c) => c.level > 0).map((c) => c.id));
+  }
+
+  // Two stat diffs in a row as one: earliest "from", latest "to".
+  function mergeDiffs(first, second) {
+    const merged = new Map((first || []).map((change) => [change.def.key, { ...change }]));
+    (second || []).forEach((change) => {
+      const existing = merged.get(change.def.key);
+      if (existing) existing.to = change.to;
+      else merged.set(change.def.key, { ...change });
+    });
+    return [...merged.values()].filter((change) => change.to !== change.from);
   }
 
   function checkForPicks(game) {
@@ -880,6 +921,17 @@
     // the run straight on to the map).
     clearTimeout(watch.pending);
     watch.pending = setTimeout(() => {
+      // One pick can land in the ledger more than once, a moment apart (a
+      // reward applied twice). Fold that into the reveal already showing,
+      // rather than opening it again -- which restarted the zoom.
+      if (view.open && view.mode === "reveal" && view.reveal) {
+        view.reveal.entries = view.reveal.entries.concat(fresh);
+        view.reveal.diff = mergeDiffs(view.reveal.diff, diff);
+        newComboIds.forEach((id) => view.reveal.newComboIds.add(id));
+        freshIds.forEach((id) => view.freshIds.add(id));
+        renderOverlay();
+        return;
+      }
       openTree(game, { reveal: { entries: fresh, diff, newComboIds }, freshIds });
     }, 260);
   }
@@ -1152,8 +1204,12 @@
     }
     // Let every layer finish its own round-start work (variants, challenge
     // offers, interest) before reading what the stage holds.
+    banner.pending = true;
     setTimeout(() => {
-      if (!game.state || game.state.status !== "playing" || game.state.umtStageBannerKey !== key) return;
+      if (!game.state || game.state.status !== "playing" || game.state.umtStageBannerKey !== key) {
+        banner.pending = false;
+        return;
+      }
       saveGame(game);
       // A boss makes an entrance first (cuddle-worlds.js); the briefing
       // banner follows once it clears.
@@ -1164,14 +1220,80 @@
           game,
           boss,
           onDone: () => {
+            banner.pending = false;
             if (!game.state || game.state.status !== "playing" || game.state.umtStageBannerKey !== key) return;
             showBanner(game, burdenNotice);
           }
         });
         return;
       }
+      banner.pending = false;
       showBanner(game, burdenNotice);
     }, 140);
+  }
+
+  // ---------------------------------------------------------------------
+  // Quest banner: when a quest turns up mid-stage, a short "Quest incoming"
+  // banner swooshes in over the board and out again, so it can't be missed.
+  // It waits for the stage banner and any boss entrance to clear first.
+  // ---------------------------------------------------------------------
+
+  const questBanner = { el: null, timer: null, wait: null };
+
+  function questKey(state, quest) {
+    return `${stageKey(state)}|${num(state.guessesUsed)}|${quest.id}|${quest.description}`;
+  }
+
+  function dismissQuestBanner(immediate) {
+    clearTimeout(questBanner.timer);
+    questBanner.timer = null;
+    const el = questBanner.el;
+    questBanner.el = null;
+    if (!el) return;
+    if (immediate || reducedMotion()) {
+      el.remove();
+      return;
+    }
+    el.classList.add("is-leaving");
+    setTimeout(() => el.remove(), 460);
+  }
+
+  function showQuestBanner(quest) {
+    const el = host();
+    if (!el) return;
+    dismissQuestBanner(true);
+    const wrap = document.createElement("div");
+    wrap.className = "umt-quest-banner-wrap";
+    wrap.innerHTML = `<div class="umt-quest-banner" role="status" aria-live="polite">`
+      + `<span class="umt-qb-icon" aria-hidden="true">${esc(quest.icon || "✦")}</span>`
+      + `<div class="umt-qb-text"><span class="umt-qb-eyebrow">Quest incoming</span>`
+      + `<strong>${esc(quest.title || "Quest")}</strong>`
+      + `<span class="umt-qb-desc">${esc(quest.description || "")}</span>`
+      + `<span class="umt-qb-foot">Do it on your next guess for a reward.</span></div>`
+      + `</div>`;
+    el.appendChild(wrap);
+    questBanner.el = wrap;
+    wrap.firstElementChild.addEventListener("click", () => dismissQuestBanner(false));
+    questBanner.timer = setTimeout(() => dismissQuestBanner(false), 2600);
+  }
+
+  function checkForQuest(game) {
+    const state = game && game.state;
+    if (!state || state.status !== "playing" || !state.activeQuest || state.roundIntroPending) {
+      if (questBanner.el && (!state || state.status !== "playing")) dismissQuestBanner(true);
+      return;
+    }
+    const quest = state.activeQuest;
+    const key = questKey(state, quest);
+    if (state.umtQuestBannerKey === key) return;
+    // Let the stage banner and a boss entrance finish first.
+    if (banner.el || banner.pending || document.querySelector(".umt-boss-entrance")) {
+      clearTimeout(questBanner.wait);
+      questBanner.wait = setTimeout(() => checkForQuest(game), 400);
+      return;
+    }
+    state.umtQuestBannerKey = key;
+    showQuestBanner(quest);
   }
 
   // ---------------------------------------------------------------------
@@ -1191,6 +1313,30 @@
     slot.appendChild(button);
   }
 
+  function payoutShowing(game) {
+    const money = game && game.state && game.state.cuddleMoneyMode;
+    return Boolean((money && money.pendingPayout && money.pendingPayout.id !== money.lastAnimatedPayoutId)
+      || document.getElementById("cuddleMoneyPayoutOverlay"));
+  }
+
+  function syncPayoutHold(root, game) {
+    // The cash-out only starts on the play screen (it needs the header).
+    if (payoutShowing(game) && root.querySelector(".cuddle-header")) {
+      view.payoutHold = true;
+      view.payoutSeenAt = Date.now();
+    }
+    if (game.state.status === "playing" || game.state.status === "branchMap") view.payoutHold = false;
+    root.classList.toggle("umt-payout-pending", Boolean(view.payoutHold));
+    if (!view.payoutHold) return;
+    // Never leave the reward screen hidden if the cash-out doesn't appear.
+    clearTimeout(view.payoutCheck);
+    view.payoutCheck = setTimeout(() => {
+      if (!view.payoutHold || payoutShowing(game) || Date.now() - view.payoutSeenAt < 1500) return;
+      view.payoutHold = false;
+      root.classList.remove("umt-payout-pending");
+    }, 1600);
+  }
+
   function afterRender(root, game, landing) {
     if (!root) return;
     view.game = game || view.game;
@@ -1199,11 +1345,19 @@
     }
     if (landing || !game || !game.state) {
       dismissBanner(true);
+      dismissQuestBanner(true);
       return;
     }
+    // A solve renders the reward screen at once, but the cash-out is added a
+    // frame or two later and fades in. Keep the reward screen hidden until
+    // the cash-out has been collected so it doesn't flash first.
+    // (A render can briefly wipe and replay the cash-out, so the hold lasts
+    // until Collect is pressed, not just while the overlay is on screen.)
+    syncPayoutHold(root, game);
     decorateMapHeader(root, game);
     checkForPicks(game);
     checkForStageStart(game);
+    checkForQuest(game);
     if (view.open) renderOverlay();
   }
 
@@ -1233,6 +1387,13 @@
   }
 
   function installEvents() {
+    // Window capture runs before the cash-out's own document-level handler,
+    // so the hold is released before the render it triggers.
+    window.addEventListener("click", (event) => {
+      if (event.target && event.target.closest && event.target.closest("[data-cuddle-money-action='collect-payout']")) {
+        view.payoutHold = false;
+      }
+    }, true);
     // Capture phase so the old flat skill-tree screen never opens: its
     // button (on the landing page) now opens this tree instead.
     document.addEventListener("click", (event) => {

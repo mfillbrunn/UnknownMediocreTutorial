@@ -1499,104 +1499,24 @@
     return match ? Math.round(numeric(match[0], 0)) : 0;
   }
 
+  // Only relabels Collect. This used to also move Collect above the rows and
+  // hide the wallet, but that step always threw before it could apply, so
+  // the cash-out players know is the plain one; it stays that way.
   function enhanceCashout(game, root) {
     const scope = root || document;
     const overlay = scope.querySelector?.("#cuddleMoneyPayoutOverlay, .cuddle-money-payout-overlay")
       || document.querySelector("#cuddleMoneyPayoutOverlay, .cuddle-money-payout-overlay");
     if (!overlay) return;
-    const modal = overlay.querySelector(".cuddle-money-modal, .cuddle-money-payout-modal") || overlay;
-    const payload = pendingPayout(game);
-    const total = payoutTotal(payload, overlay);
-
+    const total = payoutTotal(pendingPayout(game), overlay);
     let collect = overlay.querySelector("[data-cuddle-money-action='collect-payout'], [data-action='collect-money-payout'], [data-action='collect-payout']");
     if (!collect) {
       collect = Array.from(overlay.querySelectorAll("button")).find(button => /^\s*collect\b/i.test(button.textContent || "")) || null;
     }
-    if (collect) {
-      collect.textContent = "Collect";
-      collect.setAttribute("aria-label", `Collect ${Math.max(0, total)} points earned this round`);
-      let top = modal.querySelector(":scope > .umt-cashout-top");
-      if (!top) {
-        top = document.createElement("div");
-        top.className = "umt-cashout-top";
-        const heading = modal.querySelector("h1, h2, .cuddle-money-kicker");
-        if (heading?.nextSibling) modal.insertBefore(top, heading.nextSibling);
-        else modal.prepend(top);
-      }
-      if (collect.parentElement !== top) top.appendChild(collect);
-      let roundTotal = top.querySelector(".umt-round-total");
-      if (!roundTotal) {
-        roundTotal = document.createElement("div");
-        roundTotal.className = "umt-round-total";
-        top.appendChild(roundTotal);
-      }
-      roundTotal.innerHTML = `<span>Round total</span><strong>${formatDelta(total)}</strong>`;
-    }
-
-    const walletSelectors = [
-      ".cuddle-money-payout-bank",
-      ".cuddle-money-bank",
-      ".cuddle-money-wallet",
-      ".cuddle-money-payout-wallet",
-      ".cuddle-money-bank-counter",
-      "[data-cuddle-money-bank]"
-    ];
-    overlay.querySelectorAll(walletSelectors.join(",")).forEach(element => {
-      if (!element.closest(".umt-round-total")) element.hidden = true;
-    });
-    overlay.querySelectorAll(".cuddle-money-payout-total").forEach(element => {
-      if (!element.closest(".umt-round-total")) {
-        element.hidden = true;
-        element.classList.add("umt-source-total");
-      }
-    });
-
-    const rows = Array.isArray(payload?.rows) ? payload.rows : null;
-    const allocated = rows
-      ? rows.reduce((sum, row) => sum + Math.round(numeric(row?.amount, 0)), 0)
-      : 0;
-    const stageBonus = Number.isFinite(Number(payload?.stageBonus))
-      ? Math.round(Number(payload.stageBonus))
-      : rows
-        ? Math.round(total - allocated)
-        : 0;
-    const rowsContainer = overlay.querySelector(".cuddle-money-payout-rows, .cuddle-money-payout-list")
-      || overlay.querySelector(".cuddle-money-payout-row")?.parentElement;
-    // cuddle-rebalance-v5.js trims this to the current round inside
-    // reconcileRoundBonuses, so by the time the payout screen shows it
-    // holds only this round's stage-level bonuses (unused mulligans/Jokers,
-    // Reserve Dividend, a mini-challenge clear, etc.) -- itemized, instead
-    // of the one opaque "stage bonus" figure a save from an older build
-    // would leave us to fall back to. None of them are also folded into a
-    // guess row, so rows plus this box add up to the round total exactly.
-    const itemizedLines = Array.isArray(game?.state?.cuddleRebalanceV5?.lastPayoutLines)
-      ? game.state.cuddleRebalanceV5.lastPayoutLines
-          .map(line => ({ label: String(line?.label || ""), amount: Math.round(numeric(line?.amount, 0)) }))
-          .filter(line => line.label && line.amount)
-      : [];
-    const bonusLines = itemizedLines.length
-      ? itemizedLines
-      : (stageBonus ? [{ label: "Other stage rewards", amount: stageBonus }] : []);
-    // A sibling section AFTER the whole rows list (not another child
-    // appended inside it), so it reads as its own area instead of one more
-    // counting row blended into the animated list above it.
-    let bonus = overlay.querySelector(".umt-stage-bonus-section");
-    if (!bonusLines.length) {
-      bonus?.remove();
-    } else if (rowsContainer?.parentElement) {
-      if (!bonus) {
-        bonus = document.createElement("div");
-        bonus.className = "umt-stage-bonus-section";
-        rowsContainer.insertAdjacentElement("afterend", bonus);
-      }
-      const signature = bonusLines.map(line => `${line.label}:${line.amount}`).join("|");
-      if (bonus.dataset.umtSignature !== signature) {
-        bonus.dataset.umtSignature = signature;
-        bonus.innerHTML = `<div class="umt-stage-bonus-title">Stage bonus</div>`
-          + bonusLines.map(line => `<div class="umt-stage-bonus-line"><span>${line.label}</span><strong>${formatDelta(line.amount)}</strong></div>`).join("");
-      }
-    }
+    if (!collect) return;
+    collect.textContent = "Collect";
+    collect.setAttribute("aria-label", `Collect ${Math.max(0, total)} points earned this round`);
   }
+
 
   function removeMeterPopup(game, root) {
     if (game?.state?.coachMeterNotice) game.state.coachMeterNotice = null;

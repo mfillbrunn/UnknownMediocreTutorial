@@ -304,6 +304,15 @@ window.POWER_METADATA = {
     color: "#FBBF24"
   },
 
+  alphabetCompass: {
+    label: "Alphabet Compass",
+    desc: "For this turn only, every earlier guess shows arrows instead of colors: ← means the secret's letter in that spot comes earlier in the alphabet, → later, and green means it matches.",
+    short: "One turn of earlier/later arrows on every earlier guess.",
+    icon: "compass",
+    emoji: "\u{1F9ED}",
+    color: "#818CF8"
+  },
+
   letterProfile: {
     label: "Secret Vowel Count",
     desc: "From now on, the Guesser can always see how many of the secret's 5 letters are vowels.",
