@@ -14,7 +14,7 @@
   <!-- 4. Reusable UI components -->
   <link rel="stylesheet" href="css/components.css?letter-scan-hits=1&responsive-keys=1&secret-themes=3&power-popup-icon=1">
   <!-- 5. Wordle board / history system -->
-  <link rel="stylesheet" href="css/history.css?feedback-lie=1&tile-marks=1&alphabet-compass=1">
+  <link rel="stylesheet" href="css/history.css?feedback-lie=1&tile-marks=1&alphabet-compass=2">
   <!-- 6. Game & UI states -->
   <link rel="stylesheet" href="css/states.css">
   <!-- 7. Animations (keyframes) -->
@@ -121,6 +121,10 @@
 
       <symbol id="icon-letter-profile" viewBox="0 0 120 120"><rect fill="currentColor" x="18" y="17" width="84" height="87" rx="11"/><rect fill="#f4f5f7" x="31" y="63" width="13" height="28" rx="3"/><rect fill="#f4f5f7" x="53" y="45" width="13" height="46" rx="3"/><rect fill="#f4f5f7" x="75" y="30" width="13" height="61" rx="3"/></symbol>
       <symbol id="icon-secret-themes" viewBox="0 0 120 120"><rect fill="#f4f5f7" x="38" y="6" width="44" height="16" rx="6"/><rect fill="#f4f5f7" x="24" y="26" width="72" height="16" rx="6"/><path fill="currentColor" d="M16 38h30l10 12h48a10 10 0 0 1 10 10v40a10 10 0 0 1-10 10H16a10 10 0 0 1-10-10V48a10 10 0 0 1 10-10z"/><rect fill="#f4f5f7" x="26" y="64" width="44" height="9" rx="4.5"/><rect fill="#f4f5f7" x="26" y="82" width="30" height="9" rx="4.5"/></symbol>
+      <!-- Alphabet Compass (guesser Power Choice Rare reward) -- a compass
+           whose needle points only left and right (earlier / later in the
+           alphabet), with a green hub for a match. -->
+      <symbol id="icon-alphabet-compass" viewBox="0 0 120 120"><circle fill="currentColor" cx="60" cy="60" r="50"/><circle fill="#f4f5f7" cx="60" cy="60" r="38"/><rect fill="currentColor" x="56" y="24" width="8" height="12" rx="3"/><rect fill="currentColor" x="56" y="84" width="8" height="12" rx="3"/><path fill="currentColor" d="M18 60 42 42v12h8v12h-8v12z"/><path fill="currentColor" d="M102 60 78 42v12h-8v12h8v12z"/><circle fill="var(--tile-green)" cx="60" cy="60" r="9"/></symbol>
       <!-- Round-start role icons used by the main role reveal and its
            per-role power headers. The Secretkeeper stays hooded and eerie;
            the Guesser is a curious little human with crooked oversized
@@ -1792,7 +1796,7 @@
   
   <script src="client/socket-events.js?v=9-2&reward-overhaul=1&umt-streamlined=1.0.2&guest-play=1&clue-conflict-icon=1"></script>
   <script src="client/power-functions.js"></script>
-  <script src="powerEngine/powerMetadata.js?reward-overhaul=1&feedback-lie=1&secret-themes=3&theme-dossier=1&alphabet-compass=1"></script>
+  <script src="powerEngine/powerMetadata.js?reward-overhaul=2&feedback-lie=1&secret-themes=3&theme-dossier=1&alphabet-compass=1"></script>
   
 
 <script src="powerEngine/powerPalettes.js?reward-overhaul=1&feedback-lie=1&secret-themes=3&theme-dossier=1&alphabet-compass=1"></script>
@@ -1806,7 +1810,7 @@
   <script src="client/letterProfile.js"></script>
   <script src="client/must-contain-box.js"></script>
   <script src="client/power-keyboard.js"></script>
-  <script src="powerEngine/powerEngine.js?secret-themes=3&theme-dossier=1&first-letter-icon=1"></script>
+  <script src="powerEngine/powerEngine.js?alphabet-compass=1&secret-themes=3&theme-dossier=1&first-letter-icon=1"></script>
   <script src="powerEngine/powerRules.js?feedback-lie=1"></script>
   
   <script src="powerEngine/powers/hideTile.js"></script>
@@ -1930,13 +1934,13 @@
 <!-- Guesser quest-complete reveal (#questReward) is built dynamically by
      client/quest-complete-reveal.js?v=typed-quest-2's ensureOverlay() on first use, rather
      than hardcoded here -- see that file. -->
-  <script src="client/power-copy-v10.js?v=10&reward-overhaul=1&wiretap-copy=2&feedback-lie=1&secret-themes=3&theme-dossier=1&alphabet-compass=1"></script>
+  <script src="client/power-copy-v10.js?v=11&reward-overhaul=1&wiretap-copy=2&feedback-lie=1&secret-themes=3&theme-dossier=1&alphabet-compass=1"></script>
   <script src="ui/gameplay-systems-v10.js?v=10&compact-bonus=1&star-bonus-fix=1&mobile-perf=1&guide-no-op-guard=1&role-icon-preserve=1&bonus-cleanup=1"></script>
   <script src="ui/competitive-fixes-v2.js?competitive-fixes=2.2&mobile-perf=1&bonus-cleanup=1"></script>
   <script src="powerEngine/power-tiers.js?v=2.3-card-carousel&reward-overhaul=1&magic-mode-legendary=1&feedback-lie=1&secret-themes=3&theme-dossier=1&theme-reward-rarity-swap=1&alphabet-compass=1"></script> <!-- power-choice-mode-v2.2 -->
   <script src="client/power-choice-mode.js?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&hardmode-copy=1&mobile-perf=1&reward-overhaul=1&optional-note-oneline=1&note-inline-title=1&daily-hide-refresh=1&guide-btn-inline=1&reward-icon-fit=1&spy-rules-short=1&fixed-reward-svg-pack=1&clean-fixed-rewards=1&persistent-power-badge=2&theme-dossier=1&refresh-hide-swap=1&svg-star-icons=1"></script> <!-- power-choice-mode-v2.2 -->
 <!-- UMT_CUDDLE_REBALANCE_V5_JS_BEGIN -->
-<script src="/cuddle/cuddle-rebalance-v5.js?v=5.10.4&challenge-turn-scaling=2&consonant-sweep=1&notebook-removed=1&expose-upgrade-level=1&stage-bonus-cleanup=1&points-money-split=1&special-tiles=1&strict-stages=1"></script>
+<script src="/cuddle/cuddle-rebalance-v5.js?v=5.10.5&challenge-turn-scaling=2&consonant-sweep=1&notebook-removed=1&expose-upgrade-level=1&stage-bonus-cleanup=1&points-money-split=1&special-tiles=1&strict-stages=1"></script>
 <!-- UMT_CUDDLE_REBALANCE_V5_JS_END -->
   <!-- UMT_CUDDLE_USER_PATCH_JS_BEGIN -->
 <script src="cuddle/cuddle-stability-v2.js?v=2026.09.25.1&strict-stages=1&cuddle-fixpack=20260912r2&stage-bonus-itemized=1&points-money-split=1&shop-4th-upgrade=1&shop-lockin-export=1&cuddle-map-fit=20260912r1"></script>

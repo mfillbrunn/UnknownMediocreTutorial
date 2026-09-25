@@ -119,8 +119,8 @@
       desc: "Helps the Guesser by submitting two different guesses at once while the Secretkeeper sees only one of them."
     },
     alphabetCompass: {
-      short: "Helps the Guesser see, for one turn, whether each secret letter comes earlier or later in the alphabet.",
-      desc: "Helps the Guesser by replacing every earlier row's colors for one turn with arrows toward the secret's letter in each spot: ← earlier in the alphabet, → later, green on a match."
+      short: "Helps the Guesser see whether each secret letter comes earlier or later in the alphabet, until they submit.",
+      desc: "Until the Guesser submits their next guess, every earlier row's colors become arrows toward the secret's letter in each spot: ← earlier in the alphabet, → later, green on a match."
     },
     secretThemes: {
       short: "Helps the Guesser see which category the secret belongs to.",

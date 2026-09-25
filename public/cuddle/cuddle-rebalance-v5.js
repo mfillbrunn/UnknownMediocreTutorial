@@ -2937,7 +2937,8 @@
     umtReserveDividend: { title: "Reserve Dividend", description: "Unused Jokers and mulligans pay an additional end-of-round bonus.", shape: "coins" },
     umtConsonantSweep: { title: "Process of Elimination", description: "Every guess rules out one consonant that is not in the secret.", shape: "eliminate" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
-    compass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" }
+    compass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
+    "alphabet-compass": { title: "Alphabet Compass", description: "After every guess, some of its tiles show whether the secret's letter there comes earlier or later in the alphabet.", shape: "alphaCompass" }
   });
 
   function escapeMarkup(value) {
@@ -2990,6 +2991,10 @@
       case "clover": return `<g fill="${green}"><circle cx="60" cy="34" r="19"/><circle cx="34" cy="60" r="19"/><circle cx="86" cy="60" r="19"/><circle cx="60" cy="86" r="19"/></g><circle cx="60" cy="60" r="9" fill="${yellow}"/>`;
       case "scales": return `<path d="M56 16h8v88h-8z" fill="${ink}"/><path d="M22 100h76v9H22z" fill="${ink}"/><path d="M20 40h80v8H20z" fill="${ink}"/><path d="M12 76a20 20 0 0 0 34 0z" fill="${yellow}"/><path d="M74 76a20 20 0 0 0 34 0z" fill="${green}"/>`;
       case "coins": return `<g fill="${yellow}" stroke="${ink}" stroke-width="7"><ellipse cx="45" cy="35" rx="27" ry="14"/><path d="M18 35v25c0 8 12 14 27 14s27-6 27-14V35"/><ellipse cx="76" cy="75" rx="27" ry="14"/><path d="M49 75v20c0 8 12 14 27 14s27-6 27-14V75"/></g>`;
+      // Alphabet Compass: the same drawing as the multiplayer reward's icon
+      // (index.html's #icon-alphabet-compass) -- a needle that only points
+      // left and right, with a green hub for a match.
+      case "alphaCompass": return `<circle cx="60" cy="60" r="50" fill="${ink}"/><circle cx="60" cy="60" r="38" fill="${paper}"/><rect x="56" y="24" width="8" height="12" rx="3" fill="${ink}"/><rect x="56" y="84" width="8" height="12" rx="3" fill="${ink}"/><path d="M18 60 42 42v12h8v12h-8v12z" fill="${ink}"/><path d="M102 60 78 42v12h-8v12h8v12z" fill="${ink}"/><circle cx="60" cy="60" r="9" fill="${green}"/>`;
       case "compass": return `<circle cx="60" cy="60" r="46" fill="${ink}"/><circle cx="60" cy="60" r="32" fill="${paper}"/><path d="m72 32-6 25-25 31 13-29z" fill="${yellow}"/><path d="m48 88 6-29 25-31-13 29z" fill="${green}"/><circle cx="60" cy="60" r="7" fill="${ink}"/>`;
       // Boss-choice monster silhouettes -- deliberately NOT tied to a boss's
       // effect (see bossMonsterSvg), just a varied, consistently-styled
