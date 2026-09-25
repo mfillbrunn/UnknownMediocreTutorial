@@ -502,7 +502,7 @@
       + `<text class="umt-pt-core-sub" dy="1.5em">of ${model.total}</text>`
       + `</g>`;
 
-    const box = view && view.zoomBox ? view.zoomBox : fullBox();
+    const box = view && (view.liveBox || view.zoomBox) ? (view.liveBox || view.zoomBox) : fullBox();
     return `<svg class="umt-pt-svg" viewBox="${box.map(round1).join(" ")}" role="group" aria-label="Progression tree">`
       + `<defs><filter id="umtPtGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>`
       + `<radialGradient id="umtPtCore" cx="50%" cy="40%" r="65%"><stop offset="0%" stop-color="#3b2f5c"/><stop offset="100%" stop-color="#15121f"/></radialGradient>${defs.join("")}</defs>`
@@ -753,16 +753,25 @@
     canvas.scrollTop = Math.max(0, centreY - canvas.clientHeight / 2);
   }
 
+  // The overlay re-renders whenever the game does (and the game renders
+  // right after a pick), which replaces the SVG. So the box being animated
+  // lives in view.liveBox -- a re-render mid-zoom draws the tree exactly
+  // where the animation has got to -- and each frame updates whichever SVG
+  // is on screen now, never a stale one.
   let zoomFrame = 0;
+  function currentSvg() {
+    return host() && host().querySelector(".umt-pt-layer .umt-pt-svg");
+  }
+
   function animateZoom(target, done) {
-    const svg = host() && host().querySelector(".umt-pt-layer .umt-pt-svg");
     cancelAnimationFrame(zoomFrame);
-    if (!svg) { done(); return; }
-    const from = (svg.getAttribute("viewBox") || "").split(/\s+/).map(Number);
-    const start = from.length === 4 && from.every(Number.isFinite) ? from : fullBox();
-    if (reducedMotion()) {
-      svg.setAttribute("viewBox", target.map(round1).join(" "));
+    const start = view.liveBox || view.zoomBox || fullBox();
+    const finish = () => {
+      view.liveBox = null;
       done();
+    };
+    if (reducedMotion() || !currentSvg()) {
+      finish();
       return;
     }
     const began = performance.now();
@@ -770,10 +779,11 @@
     const step = (now) => {
       const t = Math.min(1, (now - began) / duration);
       const eased = 1 - Math.pow(1 - t, 3);
-      const box = start.map((value, index) => value + (target[index] - value) * eased);
-      svg.setAttribute("viewBox", box.map(round1).join(" "));
-      if (t < 1) zoomFrame = requestAnimationFrame(step);
-      else done();
+      view.liveBox = start.map((value, index) => value + (target[index] - value) * eased);
+      const svg = currentSvg();
+      if (svg) svg.setAttribute("viewBox", view.liveBox.map(round1).join(" "));
+      if (t < 1 && view.open) zoomFrame = requestAnimationFrame(step);
+      else finish();
     };
     zoomFrame = requestAnimationFrame(step);
   }
@@ -797,7 +807,10 @@
     view.freshIds = options.freshIds || new Set();
     view.selectedId = options.selectedId || null;
     view.lastFocus = document.activeElement;
+    cancelAnimationFrame(zoomFrame);
+    clearTimeout(view.zoomTimer);
     view.zoomBox = null;
+    view.liveBox = null;
     view.zoomCenter = null;
     const focusId = options.selectedId || (view.freshIds.size ? [...view.freshIds][0] : null);
     if (options.reveal && focusId) {
@@ -809,7 +822,7 @@
       if (view.zoomCenter) {
         centreCanvasScroll();
         // A beat on the whole tree first, then ease in on the new pick.
-        setTimeout(() => { if (view.open && view.zoomCenter) zoomTo(true); }, 450);
+        view.zoomTimer = setTimeout(() => { if (view.open && view.zoomCenter) zoomTo(true); }, 450);
       } else {
         focusCanvas(focusId);
       }
@@ -849,6 +862,17 @@
   function ownedComboIds(game) {
     const model = buildModel(game);
     return new Set(model.combos.filter((c) => c.level > 0).map((c) => c.id));
+  }
+
+  // Two stat diffs in a row as one: earliest "from", latest "to".
+  function mergeDiffs(first, second) {
+    const merged = new Map((first || []).map((change) => [change.def.key, { ...change }]));
+    (second || []).forEach((change) => {
+      const existing = merged.get(change.def.key);
+      if (existing) existing.to = change.to;
+      else merged.set(change.def.key, { ...change });
+    });
+    return [...merged.values()].filter((change) => change.to !== change.from);
   }
 
   function checkForPicks(game) {
@@ -897,6 +921,17 @@
     // the run straight on to the map).
     clearTimeout(watch.pending);
     watch.pending = setTimeout(() => {
+      // One pick can land in the ledger more than once, a moment apart (a
+      // reward applied twice). Fold that into the reveal already showing,
+      // rather than opening it again -- which restarted the zoom.
+      if (view.open && view.mode === "reveal" && view.reveal) {
+        view.reveal.entries = view.reveal.entries.concat(fresh);
+        view.reveal.diff = mergeDiffs(view.reveal.diff, diff);
+        newComboIds.forEach((id) => view.reveal.newComboIds.add(id));
+        freshIds.forEach((id) => view.freshIds.add(id));
+        renderOverlay();
+        return;
+      }
       openTree(game, { reveal: { entries: fresh, diff, newComboIds }, freshIds });
     }, 260);
   }
