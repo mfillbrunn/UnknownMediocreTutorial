@@ -262,7 +262,7 @@
       id: "letterProbe",
       icon: "🔎",
       title: "Letter Count",
-      description: "Show how many times three of your consonants appear in the secret."
+      description: "Show how many times two of your consonants appear in the secret."
     },
     {
       id: "sillyWord",

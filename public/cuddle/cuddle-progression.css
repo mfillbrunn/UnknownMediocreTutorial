@@ -1001,3 +1001,9 @@
 #cuddleRoot:has(#cuddleMoneyPayoutOverlay) .cuddle-overlay:not(.cuddle-rules-overlay):not(.cuddle-skilltree-overlay) {
   visibility: hidden;
 }
+
+/* New run: the map stays hidden until the Starting Bonus is chosen (see
+   afterRender), instead of flashing up before its overlay arrives. */
+#cuddleRoot.umt-starter-pending .cuddle-branch-shell {
+  visibility: hidden;
+}

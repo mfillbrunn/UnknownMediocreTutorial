@@ -1354,6 +1354,12 @@
     // (A render can briefly wipe and replay the cash-out, so the hold lasts
     // until Collect is pressed, not just while the overlay is on screen.)
     syncPayoutHold(root, game);
+    // A new run renders the map first and adds the Starting Bonus overlay
+    // a frame or two later, so the map flashed before the choice appeared.
+    // Keep the map hidden until the bonus has been chosen.
+    const money = game.state.cuddleMoneyMode;
+    root.classList.toggle("umt-starter-pending", Boolean(money && money.starterRewardPending
+      && Array.isArray(money.starterRewardChoices) && money.starterRewardChoices.length));
     decorateMapHeader(root, game);
     checkForPicks(game);
     checkForStageStart(game);

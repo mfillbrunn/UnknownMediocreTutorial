@@ -2457,9 +2457,10 @@
       return "Extra Mulligan added for this round.";
     }
 
-    // Letter Count reports three random consonants from the counted hand
+    // Letter Count reports two random consonants from the counted hand
     // (not the whole hand -- revealing all five at once made this reward
-    // too strong relative to the others).
+    // too strong relative to the others). The card says two; this used to
+    // count three.
     if (rewardId === "letterProbe") {
       const secret = String(this.state.secret || "");
       const glyphs = shuffle(
@@ -2469,7 +2470,7 @@
             .map(card => glyphForLetter(card.glyph))
         ),
         this.random
-      ).slice(0, 3).sort();
+      ).slice(0, 2).sort();
       if (!glyphs.length) return "There were no consonants in hand to count.";
       const parts = glyphs.map(glyph => {
         const count = secret.split("").filter(letter => letter === glyph).length;
