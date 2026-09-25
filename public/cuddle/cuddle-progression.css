@@ -1007,3 +1007,16 @@
 #cuddleRoot.umt-starter-pending .cuddle-branch-shell {
   visibility: hidden;
 }
+
+/* A redraw of an already-open panel (the game re-rendering around a pick)
+   shows its final state at once instead of replaying the entrance -- the
+   fade, rise, path draw, ignite and burst. The looping edge flow and halo
+   keep running. */
+.umt-progress-host .umt-pt-layer.is-settled *:not(.umt-pt-halo):not(.umt-pt-edge.is-lit) {
+  animation-delay: 0s !important;
+  animation-duration: 0.001s !important;
+}
+.umt-progress-host .umt-pt-layer.is-settled .umt-pt-edge.is-drawing {
+  animation-delay: 0s !important;
+  animation-duration: 0.001s !important;
+}

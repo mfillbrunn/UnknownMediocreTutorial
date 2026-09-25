@@ -502,7 +502,10 @@
       + `<text class="umt-pt-core-sub" dy="1.5em">of ${model.total}</text>`
       + `</g>`;
 
-    const box = view && (view.liveBox || view.zoomBox) ? (view.liveBox || view.zoomBox) : fullBox();
+    // The settled box, not the mid-animation one: markup that doesn't
+    // change frame to frame lets renderOverlay skip identical redraws.
+    // renderOverlay applies an in-flight zoom afterwards.
+    const box = view && view.zoomBox ? view.zoomBox : fullBox();
     return `<svg class="umt-pt-svg" viewBox="${box.map(round1).join(" ")}" role="group" aria-label="Progression tree">`
       + `<defs><filter id="umtPtGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>`
       + `<radialGradient id="umtPtCore" cx="50%" cy="40%" r="65%"><stop offset="0%" stop-color="#3b2f5c"/><stop offset="100%" stop-color="#15121f"/></radialGradient>${defs.join("")}</defs>`
@@ -691,7 +694,20 @@
       layer.className = "umt-pt-layer";
       el.appendChild(layer);
     }
-    layer.innerHTML = overlayMarkup(view.game);
+    // The game re-renders around a pick, and every re-render used to
+    // rebuild the whole panel -- replaying its entrance (fade, rise, the new
+    // node's ignite) and reading as the zoom stuttering and starting over.
+    // Skip a redraw that would change nothing, and when something did
+    // change, redraw without replaying the entrance.
+    const markup = overlayMarkup(view.game);
+    if (layer.umtMarkup === markup && layer.umtOpenId === view.openId) return;
+    const settled = layer.umtOpenId === view.openId && Boolean(layer.umtMarkup);
+    layer.innerHTML = markup;
+    layer.umtMarkup = markup;
+    layer.umtOpenId = view.openId;
+    layer.classList.toggle("is-settled", settled);
+    const svg = layer.querySelector(".umt-pt-svg");
+    if (svg && view.liveBox) svg.setAttribute("viewBox", view.liveBox.map(round1).join(" "));
     const canvas = layer.querySelector("[data-umt-pt-canvas]");
     if (canvas && keep) {
       canvas.scrollLeft = keep.left;
@@ -763,9 +779,18 @@
     return host() && host().querySelector(".umt-pt-layer .umt-pt-svg");
   }
 
+  // The box on screen right now, read off the SVG itself -- starting from
+  // a recomputed box instead made the view jump outward for a frame before
+  // zooming in.
+  function shownBox() {
+    const svg = currentSvg();
+    const parts = svg ? String(svg.getAttribute("viewBox") || "").split(/\s+/).map(Number) : [];
+    return parts.length === 4 && parts.every(Number.isFinite) ? parts : null;
+  }
+
   function animateZoom(target, done) {
     cancelAnimationFrame(zoomFrame);
-    const start = view.liveBox || view.zoomBox || fullBox();
+    const start = view.liveBox || shownBox() || view.zoomBox || fullBox();
     const finish = () => {
       view.liveBox = null;
       done();
@@ -775,10 +800,11 @@
       return;
     }
     const began = performance.now();
-    const duration = 850;
+    const duration = 1100;
     const step = (now) => {
       const t = Math.min(1, (now - began) / duration);
-      const eased = 1 - Math.pow(1 - t, 3);
+      // Ease in and out: one smooth glide, no burst-then-crawl.
+      const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
       view.liveBox = start.map((value, index) => value + (target[index] - value) * eased);
       const svg = currentSvg();
       if (svg) svg.setAttribute("viewBox", view.liveBox.map(round1).join(" "));
@@ -793,7 +819,10 @@
     const target = zoomIn ? zoomBoxAround(view.zoomCenter) : fullBox();
     animateZoom(target, () => {
       view.zoomBox = zoomIn ? target : null;
-      renderOverlay();
+      // Only the toggle's label changes; rebuilding the whole overlay here
+      // swapped the tree out right after the zoom landed (a visible blink).
+      const toggle = host() && host().querySelector(".umt-pt-layer [data-umt-pt-zoom]");
+      if (toggle) toggle.textContent = zoomIn ? "Show whole tree" : "Zoom to new pick";
       centreCanvasScroll();
     });
   }
@@ -807,6 +836,7 @@
     view.freshIds = options.freshIds || new Set();
     view.selectedId = options.selectedId || null;
     view.lastFocus = document.activeElement;
+    view.openId = (view.openId || 0) + 1;
     cancelAnimationFrame(zoomFrame);
     clearTimeout(view.zoomTimer);
     view.zoomBox = null;
@@ -821,8 +851,10 @@
     requestAnimationFrame(() => {
       if (view.zoomCenter) {
         centreCanvasScroll();
-        // A beat on the whole tree first, then ease in on the new pick.
-        view.zoomTimer = setTimeout(() => { if (view.open && view.zoomCenter) zoomTo(true); }, 450);
+        // Ease in on the new pick as the panel opens -- one continuous
+        // motion. (A pause on the whole tree first, under the panel's own
+        // pop-in, read as "zoom, stop, zoom again".)
+        view.zoomTimer = setTimeout(() => { if (view.open && view.zoomCenter) zoomTo(true); }, 60);
       } else {
         focusCanvas(focusId);
       }
