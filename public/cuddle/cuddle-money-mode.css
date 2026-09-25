@@ -870,3 +870,24 @@
     transition: none !important;
   }
 }
+
+/* The solved word on the cash-out: a row of small green tiles under the
+   heading. */
+#cuddleScreen .cuddle-money-payout-word {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 2px 0 12px;
+}
+
+#cuddleScreen .cuddle-money-payout-word span {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--cuddle-green, #4ba66a);
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 900;
+}

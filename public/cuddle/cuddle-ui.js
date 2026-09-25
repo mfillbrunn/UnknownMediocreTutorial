@@ -1040,17 +1040,19 @@
       : startingRewards
         ? "Choose a starting reward"
         : "Improve the run";
+    // The solved word now shows on the cash-out just before this screen,
+    // so an ordinary round's reward screen goes straight to the choices.
     const body = milestone
       ? `Your total score reached ${state.upgradeMilestone}. This choice is in addition to the round reward.`
       : startingRewards
         ? "Pick a reward to begin the run with."
-        : `${escapeHtml(summary?.secret || state.secret)} solved in ${summary?.guesses || state.guessesUsed} guesses. Total points: ${state.score}.`;
+        : "";
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleUpgradeTitle">
-        <section class="cuddle-modal cuddle-modal-wide">
+        <section class="cuddle-modal cuddle-modal-wide cuddle-upgrade-modal">
           <span class="cuddle-modal-kicker">${kicker}</span>
           <h2 id="cuddleUpgradeTitle">${heading}</h2>
-          <p>${body}</p>
+          ${body ? `<p>${body}</p>` : ""}
           <div class="cuddle-choice-grid">
             ${state.upgradeChoices.map(choice => `
               <button class="cuddle-choice" data-upgrade-key="${escapeHtml(choice.key)}">
