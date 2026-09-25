@@ -1788,11 +1788,14 @@
 }
 
 /* Small reward and synergy pop-ups. */
+/* Top of the screen, so a notice never sits over the letter tiles or the
+   Submit row; taps go through everything but the × (see cuddle-ui.js:
+   notices also close themselves after a few seconds). */
 #cuddleScreen .cuddle-v3-toast-stack {
   position: fixed;
   z-index: 10040;
   right: 16px;
-  bottom: 16px;
+  top: 16px;
   display: grid;
   gap: 9px;
   width: min(390px, calc(100vw - 24px));
@@ -1809,8 +1812,11 @@
   color: var(--cuddle-text);
   background: rgba(24, 22, 36, 0.98);
   box-shadow: 0 18px 54px rgba(0, 0, 0, 0.42);
-  pointer-events: auto;
+  pointer-events: none;
   animation: cuddleV3ToastIn 220ms ease-out both;
+}
+#cuddleScreen .cuddle-v3-toast button {
+  pointer-events: auto;
 }
 #cuddleScreen .cuddle-v3-toast.is-synergy {
   border-color: rgba(255, 215, 111, 0.48);
@@ -1868,7 +1874,7 @@
   cursor: pointer;
 }
 @keyframes cuddleV3ToastIn {
-  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  from { opacity: 0; transform: translateY(-10px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
@@ -1885,7 +1891,7 @@
   }
   #cuddleScreen .cuddle-v3-toast-stack {
     right: 12px;
-    bottom: 12px;
+    top: 12px;
   }
 }
 /* UMT_CUDDLE_REBALANCE_V3: CSS END */

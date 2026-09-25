@@ -861,7 +861,8 @@
     const span = document.createElement("span");
     span.className = `cuddle-detail-badge umt-user-stat ${className}`.trim();
     const strong = document.createElement("b");
-    strong.textContent = `${label}:`;
+    // The colon comes from cuddle.css (.cuddle-detail-badge b::after).
+    strong.textContent = label;
     span.append(strong, document.createTextNode(` ${value}`));
     container.appendChild(span);
   }
@@ -906,7 +907,9 @@
     // other in-round scoring rule these stat badges describe.
     addStatBadge(badges, "Unused guess", `+${5 * green + extraGuessRate} pts`);
     addStatBadge(badges, "Extra guess points", `+${extraGuessRate}`);
-    addStatBadge(badges, "Hints", hints.total ? `${hints.total} (${hints.detail})` : "0");
+    // "Hints per round": cuddle-coach-expansion.js adds its own "Hints"
+    // badge (used / ready this run) next to it.
+    addStatBadge(badges, "Hints per round", hints.total ? `${hints.total} (${hints.detail})` : "0");
     addStatBadge(badges, "Jokers", String(Math.max(0, integer(mega.jokerPerRoundBonus, 0))));
     addStatBadge(badges, "Cuddle meter max", String(threshold));
     addStatBadge(badges, "Cuddle meter reward", meterReward);

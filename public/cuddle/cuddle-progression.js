@@ -925,6 +925,10 @@
       watch.stats = readStats(game);
       return;
     }
+    // A boss reward lands while its cash-out is still counting up; hold the
+    // reveal (the ledger stays unread) until Collect, instead of opening it
+    // on top of the cash-out.
+    if (payoutShowing(game)) return;
     const fresh = entries.slice(watch.ledgerLength);
     const after = readStats(game);
     const diff = statDiff(watch.stats, after);

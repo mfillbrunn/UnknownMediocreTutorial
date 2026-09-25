@@ -100,7 +100,7 @@
     shop: Object.freeze({ title: "Wandering Paw", label: "Shop", icon: "stage-shop.svg", description: "Spend money on run supplies." }),
     event: Object.freeze({ title: "Mystery Event", label: "Event", icon: "stage-event-choice.svg", description: "Something happens on the road here. You only find out what when you arrive." }),
     boss: Object.freeze({ title: "Boss", label: "Boss", icon: "stage-boss.svg", description: "A boss Wordle with permanent stakes." }),
-    duel: Object.freeze({ title: "Word Duel", label: "Duel", icon: "stage-duel.svg", description: "Alternate guesses with an AI. The first side to solve the word wins." }),
+    duel: Object.freeze({ title: "Word Duel", label: "Duel", icon: "stage-duel.svg", description: "Alternate guesses with an AI. The first side to solve the word wins; if the AI does, the run ends." }),
     mystery: Object.freeze({ title: "Unknown Stop", label: "?", icon: "stage-mystery.svg", description: "This stop stays hidden until you enter it." })
   });
 
@@ -519,22 +519,37 @@
       );
     }
 
+    // Every run has at least one Word Duel, and duels live in the later
+    // worlds (2 and 3): a duel row is slotted between two ordinary rows of
+    // the same world (never next to a boss), and half the time a second one
+    // follows at least two rows further on.
     function addDuelRows(game, map, rng) {
       if (map.expandedDuelRowsInserted || mapHasProgress(map) || map.rows.length < 6) return false;
-      const originalLength = map.rows.length;
-      const count = rng() < 0.5 ? 1 : 2;
-      const early = [];
-      const late = [];
-      for (let insertion = 2; insertion <= originalLength - 2; insertion += 1) {
-        if (insertion <= Math.max(3, Math.floor(originalLength * 0.42))) early.push(insertion);
-        if (insertion >= Math.min(originalLength - 3, Math.ceil(originalLength * 0.55))) late.push(insertion);
-      }
-      const chosen = [];
-      if (early.length) chosen.push(early[Math.floor(rng() * early.length)]);
-      if (count === 2 && late.length) {
-        const candidates = late.filter(value => !chosen.includes(value) && Math.abs(value - chosen[0]) >= 2);
-        const pool = candidates.length ? candidates : late.filter(value => !chosen.includes(value));
-        if (pool.length) chosen.push(pool[Math.floor(rng() * pool.length)]);
+      const isBoss = row => Boolean(row && (row.kind === "boss" || (row.nodes || []).some(node => node && (node.type === "boss" || node.type === "final"))));
+      const worldOf = index => {
+        const row = map.rows[index];
+        if (row && Number.isFinite(Number(row.act))) return Number(row.act);
+        return map.rows.slice(0, index).filter(isBoss).length;
+      };
+      const slots = worldFloor => {
+        const found = [];
+        for (let insertion = 2; insertion <= map.rows.length - 1; insertion += 1) {
+          const before = map.rows[insertion - 1];
+          const after = map.rows[insertion];
+          if (!before || !after || isBoss(before) || isBoss(after)) continue;
+          if (before.kind === "duel" || after.kind === "duel") continue;
+          if (worldOf(insertion - 1) !== worldOf(insertion) || worldOf(insertion) < worldFloor) continue;
+          found.push(insertion);
+        }
+        return found;
+      };
+      let pool = slots(1);
+      if (!pool.length) pool = slots(0);
+      if (!pool.length) return false;
+      const chosen = [pool[Math.floor(rng() * pool.length)]];
+      if (rng() < 0.5) {
+        const second = pool.filter(value => Math.abs(value - chosen[0]) >= 2);
+        if (second.length) chosen.push(second[Math.floor(rng() * second.length)]);
       }
       chosen.sort((a, b) => b - a).forEach((insertion, index) => {
         const nextRow = map.rows[insertion];
@@ -610,7 +625,10 @@
       decorateChallengeNodes(game, map, rng);
       decorateEventNodes(map, rng);
       addMysteryNode(map, rng);
-      if (allowDuelInsertion && !mapHasProgress(map)) addDuelRows(game, map, rng);
+      if (allowDuelInsertion && !mapHasProgress(map) && addDuelRows(game, map, rng)) {
+        reindexRows(map);
+        safeSave(game);
+      }
       else if (!map.expandedDuelRowsInserted && mapHasProgress(map)) map.expandedDuelMigrationDeferred = true;
       reindexRows(map);
       annotateProgression(map);
@@ -1789,7 +1807,9 @@
 
     proto.enterBranchNode = function enterBranchNodeWithExpandedStages(nodeId) {
       if (!this.state || this.state.status !== MAP_STATUS) return { ok: false, error: "The map is not open." };
-      const map = prepareMap(this, false);
+      // Duel rows go in before the first step (addDuelRows refuses once the
+      // map has progress), so a brand-new run gets them on its first render.
+      const map = prepareMap(this, true);
       const parsed = parseNodeId(nodeId);
       let node = nodeAt(map, parsed.row, parsed.col);
       if (!node) return { ok: false, error: "That stop is not on the map." };
@@ -2070,7 +2090,7 @@
       return (
         `<section class="umt-stop-panel umt-duel-choose">`
         + `<div class="umt-stop-head">${stopMedallion("duel")}<h2>Word Duel</h2></div>`
-        + `<p class="umt-stop-lead">Take turns guessing against the AI. The first to solve wins.</p>`
+        + `<p class="umt-stop-lead">Take turns guessing against the AI. The first to solve wins. If the AI solves first, the run ends.</p>`
         + `<div class="umt-duel-options">`
         + `<button type="button" class="umt-duel-option is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium"><b>Medium AI</b><span>${richText("Win +$18")}</span></button>`
         + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard"><b>Hard AI</b><span>${richText("Win +$38 and an upgrade")}</span></button>`
@@ -2143,7 +2163,7 @@
         row("event", "Event", "A choice: a safe reward, or a bigger one with a cost."),
         row("shop", "Shop", "Spend money on supplies for the next stages, the next boss, or the whole run."),
         row("upgrade", "Waystone", "Choose a free permanent upgrade."),
-        row("duel", "Duel", "Alternate guesses with an AI. The first to solve wins."),
+        row("duel", "Duel", "Alternate guesses with an AI. The first to solve wins; losing ends the run. One in every run, in world 2 or 3."),
         row("mystery", "Unknown", "Stays hidden until you step onto it."),
         row("boss", "Boss", "A boss Wordle guards the end of each world. Its reward is permanent."),
         row("final", "Final Boss", "The last guardian, at the top of the Eclipse Citadel.")
@@ -2178,7 +2198,9 @@
     }
 
     function renderMapWithExpandedStages(game) {
-      const map = prepareMap(game, false);
+      // startNew runs before the route exists (cuddle-branch-map.js builds it
+      // lazily), so this first render is where a new run's duels get placed.
+      const map = prepareMap(game, true);
       if (map && map.expandedEvent) return renderEventScreen(game, map);
       if (map && map.expandedDuel) return renderDuelScreen(game, map);
       const html = originalRenderMapScreen(game);
@@ -2338,6 +2360,10 @@
     // opens, says what it is, and the player enters it deliberately. The
     // reveal is not a free peek: it sticks, so backing out of the preview
     // leaves the stop face-up on the map rather than hidden again.
+    // Confirming an Unknown Stop commits to it: it is revealed and entered in
+    // the same step. (It used to stop after the reveal and offer Back, so a
+    // player could peek at it and then take another path.) Returns null so
+    // the ordinary confirm goes on to enter the now-revealed stop.
     function revealMysteryBeforeEntering(game, itemId) {
       if (!game || !game.state || game.state.status !== MAP_STATUS) return null;
       const map = ensureMap(game);
@@ -2350,15 +2376,14 @@
       revealMystery(node);
       const meta = metaForNode(node, game);
       game.state.lastMessage = `Unknown Stop revealed: ${meta.title}.`;
-      safeSave(game);
-      return { ok: true, message: game.state.lastMessage };
+      return null;
     }
 
     function handleExpandedAction(game, action, itemId) {
       switch (action) {
         case "confirm-branch-node":
-          // Returns null for every non-mystery stop, which falls through to
-          // the ordinary confirm below and enters as before.
+          // Always null: every stop, Unknown ones included, falls through to
+          // the ordinary confirm below and is entered.
           return revealMysteryBeforeEntering(game, itemId);
         case "expanded-help-open":
           legendOpen = true;
