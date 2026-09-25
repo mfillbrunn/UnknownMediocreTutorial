@@ -1049,7 +1049,7 @@
         : "";
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleUpgradeTitle">
-        <section class="cuddle-modal cuddle-modal-wide">
+        <section class="cuddle-modal cuddle-modal-wide cuddle-upgrade-modal">
           <span class="cuddle-modal-kicker">${kicker}</span>
           <h2 id="cuddleUpgradeTitle">${heading}</h2>
           ${body ? `<p>${body}</p>` : ""}
