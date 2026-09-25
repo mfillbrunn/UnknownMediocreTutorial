@@ -3940,12 +3940,25 @@
       .filter(Boolean);
     const choiceCount = Math.max(1, currentChoices.length || 3);
     const currentKey = currentChoices.map(choiceIdentity).sort().join("|");
+    // A refresh should show new cards: keep the draw that repeats the
+    // fewest of the cards already on screen, stopping at the first with
+    // none. (Only a draw identical to the current one used to be
+    // rejected, so a card could survive refresh after refresh.)
+    const shownKeys = new Set(currentChoices.map(choiceIdentity));
     let nextChoices = [];
-    for (let attempt = 0; attempt < 12; attempt += 1) {
+    let fewestRepeats = Infinity;
+    for (let attempt = 0; attempt < 16; attempt += 1) {
       const generated = this._generateUpgradeChoices();
-      nextChoices = (Array.isArray(generated) ? generated : []).filter(Boolean);
-      const nextKey = nextChoices.map(choiceIdentity).sort().join("|");
-      if (nextChoices.length && nextKey !== currentKey) break;
+      const drawn = (Array.isArray(generated) ? generated : []).filter(Boolean);
+      if (!drawn.length) continue;
+      const drawnKey = drawn.map(choiceIdentity).sort().join("|");
+      if (drawnKey === currentKey) continue;
+      const repeats = drawn.filter(choice => shownKeys.has(choiceIdentity(choice))).length;
+      if (repeats < fewestRepeats) {
+        nextChoices = drawn;
+        fewestRepeats = repeats;
+      }
+      if (repeats === 0) break;
     }
 
     let nextKey = nextChoices.map(choiceIdentity).sort().join("|");
