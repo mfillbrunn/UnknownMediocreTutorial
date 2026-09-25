@@ -1073,12 +1073,54 @@
         handSizePenaltyThisRound: 0,
         ratchetForcedQuestGuessIndex: null,
         presetWords: null,
-        // One-use and per-round joker rewards stay with ordinary Wordle stages.
-        // The Duel still uses the complete core hand/deck/mulligan mechanics.
-        jokerCharges: 0,
+        // The run's per-stage Jokers (Wild Card, Joker Cache) are dealt into
+        // the Duel like any stage; banked one-use charges stay with the run.
+        jokerCharges: Math.max(0, integer(campaign.megaState && campaign.megaState.jokerPerRoundBonus, 0)),
         jokerPerRoundBonus: 0
       });
       return state;
+    }
+
+    // One Joker card sits in the Duel hand at a time while charges remain,
+    // exactly like an ordinary stage.
+    function topUpDuelJoker(game, state) {
+      const mega = state.megaState || (state.megaState = {});
+      const joker = Engine.CUDDLE_JOKER_GLYPH;
+      if (!joker || integer(mega.jokerCharges, 0) <= 0) return false;
+      if ((state.hand || []).some(card => card && card.source === "joker")) return false;
+      mega.jokerCharges = integer(mega.jokerCharges, 0) - 1;
+      mega.hasJokerUnlocked = true;
+      const id = typeof game._nextId === "function" ? game._nextId("joker") : `joker-${Date.now()}`;
+      state.hand.push({ id, glyph: joker, source: "joker" });
+      return true;
+    }
+
+    // The start-of-stage powers the run owns, applied to the Duel's own
+    // hand and secret (called with game.state swapped to the Duel state).
+    // Returns short notes for the status line.
+    function applyDuelOpeningPowers(game, state) {
+      const notes = [];
+      const rebalance = window.CuddleRebalanceV5;
+      const level = id => (rebalance && typeof rebalance.upgradeLevel === "function" ? integer(rebalance.upgradeLevel(game, id), 0) : 0);
+      const synergies = window.CuddleSynergies;
+      if (synergies && typeof synergies.owns === "function" && synergies.owns(game, "fullHouse")) {
+        state.mulligansLeft = integer(state.mulligansLeft, 0) + 1;
+      }
+      if (integer(state.cuddleBonuses && state.cuddleBonuses.openingClue, 0) > 0 && typeof game._applyOpeningClue === "function") {
+        game._applyOpeningClue();
+        notes.push("Margin Note");
+      }
+      const coach = state.cuddleCoachExpansion || {};
+      const reveals = Math.min(2, level("umtOpeningInsight")) + Math.min(4, Math.max(0, integer(coach.hintsPerRound, 0)));
+      let placed = 0;
+      for (let index = 0; index < reveals && typeof game._revealPositionPeek === "function"; index += 1) {
+        game._revealPositionPeek();
+        placed += 1;
+      }
+      if (placed) notes.push(`${placed} letter${placed === 1 ? "" : "s"} placed`);
+      const jokers = integer(state.megaState && state.megaState.jokerCharges, 0);
+      if (topUpDuelJoker(game, state)) notes.push(`${jokers} Joker${jokers === 1 ? "" : "s"}`);
+      return notes;
     }
 
     function ensureDuelTileState(game, duel) {
@@ -1100,6 +1142,8 @@
       withDuelTileState(game, duel, state => {
         game._prepareInitialHand();
         state.mulligansLeft = game.getMulliganAllowance();
+        const powers = (duel.history || []).length ? [] : applyDuelOpeningPowers(game, state);
+        duel.powerNote = powers.length ? `Your powers: ${powers.join(" · ")}` : "";
         // A saved Duel created by the keyboard version may already have visible
         // guesses. Replay only their public feedback into the fresh tile hand;
         // do not invent historical card consumption.
@@ -1409,6 +1453,7 @@
         if (typeof game._updateKnowledge === "function") game._updateKnowledge(word, visible);
         if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
         if (typeof game.drawToHandLimit === "function") game.drawToHandLimit();
+        topUpDuelJoker(game, state);
         state.draft = [];
         state.lastMessage = duel.message;
       });
@@ -1471,6 +1516,16 @@
           const validation = game.canSubmit();
           if (!validation.ok) return validation;
           word = validation.word;
+          // A Joker becomes whichever letter completes a real word, as it
+          // does on an ordinary stage.
+          const joker = Engine.CUDDLE_JOKER_GLYPH;
+          if (joker && word.includes(joker) && typeof game.resolveJokerWord === "function") {
+            const resolution = game.resolveJokerWord(word);
+            if (!resolution) return { ok: false, error: "No letter completes that into a real word." };
+            const jokerCard = (state.hand || []).find(card => card && card.source === "joker" && (state.draft || []).includes(card.id));
+            if (jokerCard) jokerCard.glyph = resolution.letter;
+            word = resolution.word;
+          }
           if (!/^[A-Z]{5}$/.test(word)) {
             return { ok: false, error: "Duel guesses must resolve to five ordinary letters." };
           }
@@ -1500,7 +1555,7 @@
       if (!ready.ok) return ready;
       const duel = ready.duel;
       const normalized = String(glyph || "").toUpperCase();
-      if (!/^[A-Z]$/.test(normalized)) return { ok: false, error: "That tile is unavailable." };
+      if (!/^[A-Z]$/.test(normalized) && normalized !== Engine.CUDDLE_JOKER_GLYPH) return { ok: false, error: "That tile is unavailable." };
       try {
         const result = withDuelTileState(game, duel, state => {
           const cards = cardsForDuelGlyph(game, state, normalized);
@@ -1783,6 +1838,27 @@
       return `<img class="${className}" src="${ICON_ROOT}${escapeHtml(meta.icon)}" alt="" aria-hidden="true">`;
     }
 
+    // Events and Duels use the same building blocks as every other Cuddle
+    // screen -- the shared header, dark panels, choice cards, the board and
+    // the tile hand -- so they read as part of the game, not a separate app.
+    function shellHeader(game, eyebrow) {
+      return (
+        `<header class="cuddle-header">`
+        + `<div class="cuddle-header-side"><button class="cuddle-icon-btn" data-action="run-menu" aria-label="Cuddle menu">&larr;</button></div>`
+        + `<div class="cuddle-header-title"><span class="cuddle-eyebrow">${escapeHtml(eyebrow)}</span><div class="cuddle-header-title-line">`
+        + `<span class="cuddle-header-score cuddle-header-points">${escapeHtml(typeof game.bankedScore === "function" ? game.bankedScore() : game.state.score)}</span>`
+        + `<span class="cuddle-header-money">$${escapeHtml(Number(game.state.cuddleMoney || 0))}</span></div></div>`
+        + `<div class="cuddle-header-side cuddle-header-side-right"></div>`
+        + `</header>`
+      );
+    }
+
+    function stopMedallion(kind) {
+      const Worlds = window.CuddleWorlds;
+      if (!Worlds) return "";
+      return `<span class="umt-stop-medallion" style="--kind:${Worlds.KIND_COLORS[kind]}">${Worlds.iconSvg(kind)}</span>`;
+    }
+
     function renderEventScreen(game, map) {
       const eventState = map.expandedEvent;
       const definition = eventState && EVENT_BY_ID[eventState.eventId];
@@ -1793,10 +1869,11 @@
       }
       const choices = definition.options.map(option => {
         const available = eventAvailability(game, option, eventState);
+        const tag = option.id === "safe" ? "Safe" : option.id === "bold" ? "Bargain" : "Chance";
         return (
-          `<button type="button" class="umt-event-choice${available.ok ? "" : " is-disabled"}" `
+          `<button type="button" class="cuddle-choice umt-event-choice is-${escapeHtml(option.id)}${available.ok ? "" : " is-disabled"}" `
           + `data-cuddle-campaign-action="expanded-event-choice" data-shop-item-id="${escapeHtml(option.id)}"${available.ok ? "" : " disabled"}>`
-          + `<span class="umt-event-choice-mark">${option.id === "safe" ? "SAFE" : option.id === "bold" ? "BARGAIN" : "RANDOM"}</span>`
+          + `<span class="umt-event-tag">${tag}</span>`
           + `<strong>${escapeHtml(option.title)}</strong>`
           + `<small>${richText(option.summary)}</small>`
           + (available.ok ? "" : `<em>${richText(available.reason)}</em>`)
@@ -1805,42 +1882,52 @@
       }).join("");
       return (
         `<div class="cuddle-shell umt-event-shell">`
-        + `<header class="cuddle-header">`
-        + `<div class="cuddle-header-side"><button class="cuddle-icon-btn" data-action="run-menu" aria-label="Cuddle menu">&larr;</button></div>`
-        + `<div class="cuddle-header-title"><span class="cuddle-eyebrow">CHOICE EVENT</span><div class="cuddle-header-title-line"><h1>${escapeHtml(definition.title)}</h1><span class="cuddle-header-score cuddle-header-points">${escapeHtml(game.state.score)}</span><span class="cuddle-header-money">$${escapeHtml(Number(game.state.cuddleMoney || 0))}</span></div></div>`
-        + `<div class="cuddle-header-side cuddle-header-side-right"></div>`
-        + `</header>`
+        + shellHeader(game, "EVENT")
         + `<main class="umt-event-page">`
-        + `<div class="umt-event-hero">${stageImage(BASE_STAGE_META.event, "umt-event-hero-icon")}<p>${escapeHtml(definition.flavor)}</p></div>`
-        + `<p class="umt-event-instruction">Choose one option. Stronger rewards usually carry a real cost.</p>`
-        + `<div class="umt-event-choice-grid">${choices}</div>`
+        + `<section class="umt-stop-panel">`
+        + `<div class="umt-stop-head">${stopMedallion("event")}<h2>${escapeHtml(definition.title)}</h2></div>`
+        + `<p class="umt-stop-lead">${escapeHtml(definition.flavor)}</p>`
+        + `<div class="cuddle-choice-grid umt-event-choices">${choices}</div>`
+        + `</section>`
         + `</main></div>`
       );
     }
 
-    function renderDuelHistory(duel) {
+    // The Duel board: every guess so far on ordinary board rows (the AI's
+    // tagged "AI"), then the row being built -- your draft, or the AI's
+    // row while it thinks.
+    function renderDuelBoard(game, duel) {
       const rows = (duel.history || []).map(entry => (
-        `<article class="umt-duel-row is-${escapeHtml(entry.actor)}">`
-        + `<div class="umt-duel-actor">${entry.actor === "player" ? "YOU" : "AI"}</div>`
-        + `<div class="umt-duel-tiles">${entry.word.split("").map((letter, index) => `<span class="umt-duel-tile is-${escapeHtml(entry.feedback[index] || "grey")}">${escapeHtml(letter)}</span>`).join("")}</div>`
-        + `</article>`
-      )).join("");
-      const thinking = duel.phase === "playing" && duel.turn === "ai"
-        ? `<article class="umt-duel-row is-ai is-thinking"><div class="umt-duel-actor">AI</div><div class="umt-duel-thinking">Thinking from visible feedback...</div></article>`
-        : "";
-      return rows + thinking;
-    }
-
-    function renderDuelDraft(game, state, enabled) {
-      const cardById = new Map((state.hand || []).map(card => [card.id, card]));
-      const tiles = Array.from({ length: 5 }, (_unused, index) => {
-        const cardId = (state.draft || [])[index];
-        const card = cardId ? cardById.get(cardId) : null;
-        const letter = card ? card.glyph : "";
-        if (!letter) return `<span class="cuddle-tile is-draft-tile umt-duel-draft-tile" aria-hidden="true"></span>`;
-        return `<button type="button" class="cuddle-tile is-draft-tile is-filled umt-duel-draft-tile" data-cuddle-campaign-action="expanded-duel-remove" data-shop-item-id="${index}"${enabled ? "" : " disabled"} aria-label="Remove ${escapeHtml(letter)} from position ${index + 1}">${escapeHtml(letter)}</button>`;
-      }).join("");
-      return `<div class="umt-duel-draft" aria-label="Current Duel word">${tiles}</div>`;
+        `<div class="cuddle-board-row umt-duel-row is-${escapeHtml(entry.actor)}">`
+        + entry.word.split("").map((letter, index) => `<span class="cuddle-tile is-${escapeHtml(entry.feedback[index] || "grey")}">${escapeHtml(letter)}</span>`).join("")
+        + (entry.actor === "ai" ? `<span class="cuddle-row-score umt-duel-who">AI</span>` : `<span class="cuddle-row-score umt-duel-who is-you"></span>`)
+        + `</div>`
+      ));
+      if (duel.phase === "playing" && duel.turn === "ai") {
+        rows.push(
+          `<div class="cuddle-board-row umt-duel-row is-ai is-thinking" aria-label="The AI is thinking">`
+          + Array.from({ length: 5 }, () => `<span class="cuddle-tile"></span>`).join("")
+          + `<span class="cuddle-row-score umt-duel-who">AI</span></div>`
+        );
+      } else if (duel.phase === "playing" && duel.turn === "player") {
+        let draftRow = "";
+        try {
+          draftRow = withDuelTileState(game, duel, state => {
+            const cardById = new Map((state.hand || []).map(card => [card.id, card]));
+            const enabled = !duel.mulliganMode;
+            return Array.from({ length: 5 }, (_unused, index) => {
+              const cardId = (state.draft || [])[index];
+              const card = cardId ? cardById.get(cardId) : null;
+              if (!card) return `<span class="cuddle-tile"></span>`;
+              return `<button type="button" class="cuddle-tile is-draft-tile is-filled" data-cuddle-campaign-action="expanded-duel-remove" data-shop-item-id="${index}"${enabled ? "" : " disabled"} aria-label="Remove ${escapeHtml(card.glyph)} from position ${index + 1}">${escapeHtml(card.glyph)}</button>`;
+            }).join("");
+          });
+        } catch (_error) {
+          draftRow = Array.from({ length: 5 }, () => `<span class="cuddle-tile"></span>`).join("");
+        }
+        rows.push(`<div class="cuddle-board-row umt-duel-row is-current-row">${draftRow}<span class="cuddle-row-score umt-duel-who is-you"></span></div>`);
+      }
+      return `<section class="cuddle-board umt-duel-board" aria-label="Duel board">${rows.join("")}</section>`;
     }
 
     function duelHandGroups(game, state) {
@@ -1926,13 +2013,10 @@
             ? `<p class="cuddle-excluded-letters">Excluded this run: ${escapeHtml(state.removedLetters.join(", "))}</p>`
             : "";
           return (
-            `<section class="cuddle-hand-panel umt-duel-hand-panel" aria-label="Duel Cuddle tile hand">`
-            + `<div class="umt-duel-hand-heading"><strong>Your Cuddle tiles</strong><span>${game.getCountedHandSize()}/${game.getHandLimit()} counted consonants - ${Number(state.mulligansLeft || 0)} mulligan${Number(state.mulligansLeft || 0) === 1 ? "" : "s"} left</span></div>`
-            + renderDuelDraft(game, state, playerTurn && !duel.mulliganMode)
+            `<section class="cuddle-hand-panel umt-duel-hand-panel" aria-label="Your Cuddle tiles">`
             + controls
             + `<div class="cuddle-hand"><div class="cuddle-hand-row cuddle-hand-vowels" aria-label="Unlimited vowels">${vowels}</div><div class="cuddle-hand-row cuddle-hand-consonants" aria-label="Consonant hand">${consonants}</div></div>`
             + removed
-            + `<p class="umt-duel-hand-note">Build exactly as in Cuddle: tap visible tiles, reuse any visible glyph within the word, mulligan finite consonants, and refill after submission. Yellow and green consonants become unlimited. The AI uses ordinary legal words and is never limited by this hand.</p>`
             + `</section>`
           );
         });
@@ -1941,17 +2025,24 @@
       }
     }
 
+    // Short labels for the Easy costs; the full wording is the tooltip.
+    const EASY_COST_LABELS = { pay: "Pay $10", nextGuess: "Next Wordle 1 guess short", boss: "Next boss 1 guess tougher" };
+
     function renderDuelDifficulty(game, duel) {
       duel.easySacrifices = duelSacrifices(game);
-      const easyCosts = duel.easySacrifices.map(item => (
-        `<button type="button" class="umt-duel-cost${item.enabled ? "" : " is-disabled"}" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="easy:${escapeHtml(item.id)}"${item.enabled ? "" : " disabled"}>`
-        + `<strong>${richText(item.title)}</strong><small>${richText(item.description)}</small></button>`
+      const easyCosts = duel.easySacrifices.filter(item => item.enabled || item.id === "pay").map(item => (
+        `<button type="button" class="umt-duel-cost" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="easy:${escapeHtml(item.id)}"${item.enabled ? "" : " disabled"} title="${escapeHtml(item.description)}">`
+        + richText(EASY_COST_LABELS[item.id] || item.title) + `</button>`
       )).join("");
       return (
-        `<section class="umt-duel-difficulty">`
-        + `<article class="umt-duel-level is-easy"><span class="umt-duel-level-tag">EASY AI</span><h2>Choose a sacrifice</h2><p>The AI plays less efficiently. Easy is never free.</p><div class="umt-duel-costs">${easyCosts}</div></article>`
-        + `<button type="button" class="umt-duel-level is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium"><span class="umt-duel-level-tag">MEDIUM AI</span><h2>Standard Duel</h2><p>${richText("No cost. Win to gain +$18.")}</p></button>`
-        + `<button type="button" class="umt-duel-level is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard"><span class="umt-duel-level-tag">HARD AI</span><h2>Expert Duel</h2><p>${richText("A stronger solver. Win to gain +$38 and a random permanent upgrade.")}</p></button>`
+        `<section class="umt-stop-panel umt-duel-choose">`
+        + `<div class="umt-stop-head">${stopMedallion("duel")}<h2>Word Duel</h2></div>`
+        + `<p class="umt-stop-lead">Take turns guessing against the AI. The first to solve wins.</p>`
+        + `<div class="umt-duel-options">`
+        + `<button type="button" class="umt-duel-option is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium"><b>Medium AI</b><span>${richText("Win +$18")}</span></button>`
+        + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard"><b>Hard AI</b><span>${richText("Win +$38 and an upgrade")}</span></button>`
+        + `<div class="umt-duel-option is-easy"><b>Easy AI</b><span>Pay one to start:</span><div class="umt-duel-costs">${easyCosts}</div></div>`
+        + `</div>`
         + `</section>`
       );
     }
@@ -1959,25 +2050,34 @@
     function renderDuelScreen(game, map) {
       const duel = map.expandedDuel;
       const choosing = duel.phase === "choose";
-      const outcome = duel.phase === "won"
-        ? `<section class="umt-duel-outcome is-win"><h2>Duel won</h2><p>${escapeHtml(duel.message)}</p><p>The word was <strong>${escapeHtml(duel.secret)}</strong>.</p><button type="button" class="cuddle-btn" data-cuddle-campaign-action="expanded-duel-continue">Continue on the map</button></section>`
-        : duel.phase === "lost"
-          ? `<section class="umt-duel-outcome is-loss"><h2>Duel lost</h2><p>${escapeHtml(duel.message)}</p><p>The word was <strong>${escapeHtml(duel.secret)}</strong>.</p><button type="button" class="cuddle-btn" data-cuddle-campaign-action="expanded-duel-end">End this run</button></section>`
-          : "";
+      const playing = duel.phase === "playing";
+      const secretTiles = String(duel.secret || "").split("").map(letter => `<span class="cuddle-tile is-green">${escapeHtml(letter)}</span>`).join("");
+      const outcome = duel.phase === "won" || duel.phase === "lost"
+        ? `<section class="umt-stop-panel umt-duel-outcome is-${duel.phase === "won" ? "win" : "loss"}">`
+          + `<h2>${duel.phase === "won" ? "You won the Duel" : "The AI solved it first"}</h2>`
+          + `<div class="cuddle-board-row umt-duel-answer">${secretTiles}</div>`
+          + `<p class="umt-stop-lead">${richText(duel.message)}</p>`
+          + (duel.phase === "won"
+            ? `<button type="button" class="cuddle-btn cuddle-btn-primary" data-cuddle-campaign-action="expanded-duel-continue">Back on the road</button>`
+            : `<button type="button" class="cuddle-btn" data-cuddle-campaign-action="expanded-duel-end">End this run</button>`)
+          + `</section>`
+        : "";
+      const status = playing
+        ? (duel.turn === "ai" ? "The AI is thinking…" : (duel.history || []).length ? "Your turn" : duel.message)
+        : "";
       return (
         `<div class="cuddle-shell umt-duel-shell">`
-        + `<header class="cuddle-header">`
-        + `<div class="cuddle-header-side"><button class="cuddle-icon-btn" data-action="run-menu" aria-label="Cuddle menu">&larr;</button></div>`
-        + `<div class="cuddle-header-title"><span class="cuddle-eyebrow">WORD DUEL</span><div class="cuddle-header-title-line"><h1>First solve wins</h1><span class="cuddle-header-score cuddle-header-points">${escapeHtml(game.state.score)}</span><span class="cuddle-header-money">$${escapeHtml(Number(game.state.cuddleMoney || 0))}</span></div></div>`
-        + `<div class="cuddle-header-side cuddle-header-side-right"></div>`
-        + `</header>`
-        + `<main class="umt-duel-page">`
-        + `<section class="umt-duel-intro">${stageImage(BASE_STAGE_META.duel, "umt-duel-hero-icon")}<div><p>You build each guess from a normal Cuddle tile hand. The AI enters ordinary legal words without hand restrictions.</p><p>Both sides see every feedback row. The AI solver uses only those shared rows and never receives player-only hints or tile knowledge.</p></div></section>`
-        + (choosing ? renderDuelDifficulty(game, duel) : "")
-        + (!choosing ? `<p class="umt-duel-message" role="status">${escapeHtml(duel.message)}</p><div class="umt-duel-history">${renderDuelHistory(duel)}</div>` : "")
-        + (duel.phase === "playing" ? renderDuelTileHand(game, duel) : "")
-        + outcome
-        + `</main></div>`
+        + shellHeader(game, "WORD DUEL")
+        + (choosing || !playing
+          ? `<main class="umt-event-page">${choosing ? renderDuelDifficulty(game, duel) : ""}${!choosing && (duel.history || []).length ? renderDuelBoard(game, duel) : ""}${outcome}</main>`
+          : `<main class="cuddle-play-area umt-duel-play">`
+            + `<section class="cuddle-left-column">`
+            + `<p class="umt-duel-status" role="status">${escapeHtml(status)}${duel.powerNote ? `<span>${escapeHtml(duel.powerNote)}</span>` : ""}</p>`
+            + renderDuelBoard(game, duel)
+            + `</section>`
+            + `<section class="cuddle-right-column">${renderDuelTileHand(game, duel)}</section>`
+            + `</main>`)
+        + `</div>`
       );
     }
 
