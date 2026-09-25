@@ -210,11 +210,60 @@
   // menu, so resuming is the last word on which screen shows.
   window.addEventListener("load", () => setTimeout(resumeCuddleIfRecent, 0), { once: true });
 
+  // -- Stay in Cuddle through a dropped connection ------------------------
+  // The multiplayer reconnect runs even while Cuddle is open: with an old
+  // room id still stored it tries to rejoin, fails, and puts up the main
+  // menu -- throwing the player out of their run after a connection blip
+  // or an app switch. Within RETURN_GRACE_MS of Cuddle last being on
+  // screen, any switch to the main menu that the player didn't ask for
+  // (Cuddle's own Back button) brings Cuddle straight back.
+  const RETURN_GRACE_MS = 30 * 1000;
+  let cuddleSeenAt = 0;
+  let cuddleSeenView = "landing";
+  let leftCuddleOnPurpose = false;
+
+  function noteCuddleSeen() {
+    if (!cuddleScreenActive()) return;
+    cuddleSeenAt = Date.now();
+    cuddleSeenView = resumingInto || (landing ? "landing" : "run");
+  }
+
+  function returnToCuddleIfDropped() {
+    if (leftCuddleOnPurpose || !cuddleSeenAt) return;
+    if (Date.now() - cuddleSeenAt > RETURN_GRACE_MS) return;
+    if (cuddleScreenActive()) return;
+    if (!document.getElementById("startupScreen")?.classList.contains("active")) return;
+    openCuddle({ resume: cuddleSeenView === "run" });
+  }
+
+  setInterval(noteCuddleSeen, 1000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") noteCuddleSeen();
+    else setTimeout(returnToCuddleIfDropped, 0);
+  });
+
+  function guardMainMenu() {
+    const original = window.showScreen;
+    if (typeof original !== "function" || original.__umtCuddleGuard) return;
+    const guarded = function showScreenGuardingCuddle(id) {
+      if (cuddleScreenActive() && id !== "cuddleScreen") noteCuddleSeen();
+      const result = original.apply(this, arguments);
+      // Straight away, before the menu is ever painted.
+      if (id === "startupScreen") returnToCuddleIfDropped();
+      return result;
+    };
+    guarded.__umtCuddleGuard = true;
+    window.showScreen = guarded;
+  }
+  if (document.readyState === "complete") guardMainMenu();
+  else window.addEventListener("load", guardMainMenu, { once: true });
+
   async function openCuddle(options) {
     // Also bound directly as a click handler, where the first argument is
     // the click event -- only an explicit { resume: true } resumes.
     const resume = Boolean(options && options.resume === true);
     resumingInto = resume ? "run" : null;
+    leftCuddleOnPurpose = false;
     showScreen("cuddleScreen");
     root = document.getElementById(ROOT_ID);
     if (!root) return;
@@ -1353,6 +1402,8 @@
         // Cuddle sits on the main menu now, not inside the Play hub.
         // Leaving on purpose means the next visit starts on the menu.
         forgetCuddleSession();
+        leftCuddleOnPurpose = true;
+        cuddleSeenAt = 0;
         showScreen("startupScreen");
         return false;
       case "run-menu":
