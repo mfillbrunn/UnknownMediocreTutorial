@@ -954,7 +954,9 @@
         html = html.replace(headerMarker, `${headerMarker}${hintBadge}${heartBadge}`);
       }
     }
-    if (state.status === "upgrade" || state.status === "questReward") {
+    // The between-round upgrade screen stays on the choices alone; the
+    // theme only matters mid-stage (quest rewards).
+    if (state.status === "questReward") {
       const badge = renderCategoryBadge(ensureCampaign(game));
       if (!badge) return html;
       const modalMatch = html.match(/<section class="cuddle-modal[^"]*">/);

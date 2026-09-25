@@ -773,6 +773,7 @@
     return {
       id: [state.runId, state.round, Date.now(), Math.floor(randomFor(game) * 1000000)].join("-"),
       round: state.round,
+      word: String(state.secret || "").toUpperCase(),
       wasBoss: Boolean(wasBoss),
       from: Math.round(start),
       to: Math.round(finish),
@@ -1127,6 +1128,18 @@
       + "</div>";
   }
 
+  // The word just solved, as a row of green tiles at the top of the
+  // cash-out (it used to sit on the upgrade screen that follows).
+  function payoutWordMarkup(payload) {
+    var word = String(payload && payload.word || "");
+    if (!/^[A-Z]{5}$/.test(word)) return "";
+    return "<div class=\"cuddle-money-payout-word\" aria-label=\"Solved: " + escapeHtml(word) + "\">"
+      + word.split("").map(function wordTile(letter) {
+          return "<span>" + escapeHtml(letter) + "</span>";
+        }).join("")
+      + "</div>";
+  }
+
   function startPendingPayout(game, mode) {
     if (payoutRunning || !mode.pendingPayout) return;
     var root = document.getElementById("cuddleRoot");
@@ -1155,6 +1168,7 @@
       + "<section class=\"cuddle-money-payout-card\">"
       + "<span class=\"cuddle-money-kicker\">" + (payload.wasBoss ? "BOSS DEFEATED &middot; CASH OUT" : "ROUND " + escapeHtml(payload.round) + " CASH OUT") + "</span>"
       + "<h2 id=\"cuddleMoneyPayoutTitle\">Every row pays</h2>"
+      + payoutWordMarkup(payload)
       + challengeLine
       + "<div class=\"cuddle-money-bank\"><span>Wallet</span><strong id=\"cuddleMoneyBankCounter\">" + formatPoints(payload.from) + "</strong></div>"
       + "<div class=\"cuddle-money-payout-rows\">" + payload.rows.map(payoutRowMarkup).join("") + "</div>"
