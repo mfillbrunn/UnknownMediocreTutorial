@@ -504,6 +504,8 @@
     // catalog ids -- not just the base ones -- apply correctly) rather than
     // _applyBossReward -- the two pools don't share an id space.
     var message;
+    var history = this.state.rewardBookHistory;
+    var ledgerBefore = Array.isArray(history) ? history.length : 0;
     if (mode.starterRewardSource === "normal" && typeof this._grantUpgradeChoice === "function") {
       var applied = this._grantUpgradeChoice(reward);
       if (!applied.ok) return applied;
@@ -522,7 +524,17 @@
       message: message || reward.description,
       bossTitle: "Starting Bonus"
     };
-    if (Array.isArray(this.state.rewardBookHistory)) {
+    // The ordinary pick chain above already records the reward in the
+    // ledger; recording it again here counted one pick twice (the reveal
+    // showed "Joker Cache x2 Lv 2/2" for a single copy). Relabel that
+    // entry as the starting bonus instead of adding another.
+    var ledger = this.state.rewardBookHistory;
+    var recorded = Array.isArray(ledger) ? ledger.slice(ledgerBefore).filter(function sameReward(entry) {
+      return entry && entry.id === reward.id;
+    }) : [];
+    if (recorded.length) {
+      recorded.forEach(function markStarter(entry) { entry.kind = "starter"; entry.round = 1; });
+    } else if (Array.isArray(this.state.rewardBookHistory)) {
       this.state.rewardBookHistory.push({
         id: reward.id,
         icon: reward.icon || "\uD83C\uDF81",
