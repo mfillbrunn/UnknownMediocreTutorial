@@ -1044,7 +1044,7 @@
       : "Choose a reward for the current round. It applies immediately and never carries into the next round.";
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleRewardTitle">
-        <section class="cuddle-modal cuddle-modal-wide">
+        <section class="cuddle-modal cuddle-modal-wide cuddle-compact-cards">
           <span class="cuddle-modal-kicker">QUEST COMPLETE</span>
           <h2 id="cuddleRewardTitle">${heading}</h2>
           <p>${subtext}</p>
@@ -1098,7 +1098,7 @@
         : "";
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleUpgradeTitle">
-        <section class="cuddle-modal cuddle-modal-wide cuddle-upgrade-modal">
+        <section class="cuddle-modal cuddle-modal-wide cuddle-upgrade-modal cuddle-compact-cards">
           <span class="cuddle-modal-kicker">${kicker}</span>
           <h2 id="cuddleUpgradeTitle">${heading}</h2>
           ${body ? `<p>${body}</p>` : ""}

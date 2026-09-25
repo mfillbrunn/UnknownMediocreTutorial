@@ -3334,10 +3334,10 @@
   display: none;
 }
 
-/* Between-round upgrade cards: the icon and the upgrade's name share the
+/* Between-round upgrade and quest reward cards: the icon and the upgrade's name share the
    first line; the level, description and combo notes run full width
    underneath. Saves a whole row per card. */
-#cuddleScreen .cuddle-upgrade-modal .cuddle-choice {
+#cuddleScreen .cuddle-compact-cards .cuddle-choice {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
@@ -3345,35 +3345,35 @@
   row-gap: 6px;
 }
 
-#cuddleScreen .cuddle-upgrade-modal .cuddle-choice > * {
+#cuddleScreen .cuddle-compact-cards .cuddle-choice > * {
   grid-column: 1 / -1;
 }
 
-#cuddleScreen .cuddle-upgrade-modal .cuddle-choice > .cuddle-choice-icon {
+#cuddleScreen .cuddle-compact-cards .cuddle-choice > .cuddle-choice-icon {
   grid-column: 1;
   margin: 0;
 }
 
-#cuddleScreen .cuddle-upgrade-modal .cuddle-choice > strong {
+#cuddleScreen .cuddle-compact-cards .cuddle-choice > strong {
   grid-column: 2;
   margin: 0;
   line-height: 1.2;
 }
 
-#cuddleScreen .cuddle-upgrade-modal .cuddle-choice {
+#cuddleScreen .cuddle-compact-cards .cuddle-choice {
   min-height: 0;
   align-content: start;
 }
 
 /* The rarity pill rides the card's top edge, like the category label on
    the left, so it never sits on top of the name. */
-#cuddleScreen .cuddle-upgrade-modal .cuddle-choice .cuddle-v8-rarity-badge {
+#cuddleScreen .cuddle-compact-cards .cuddle-choice .cuddle-v8-rarity-badge {
   top: -11px;
   right: 14px;
 }
 
-#cuddleScreen .cuddle-upgrade-modal .cuddle-choice > .umt-interaction-badge,
-#cuddleScreen .cuddle-upgrade-modal .cuddle-choice > .cuddle-v8-level-tag {
+#cuddleScreen .cuddle-compact-cards .cuddle-choice > .umt-interaction-badge,
+#cuddleScreen .cuddle-compact-cards .cuddle-choice > .cuddle-v8-level-tag {
   justify-self: start;
   margin-bottom: 0;
 }
