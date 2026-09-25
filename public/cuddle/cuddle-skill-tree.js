@@ -19,6 +19,14 @@
     return Number.isFinite(Number(value)) ? Number(value) : 0;
   }
 
+  // Copies taken, from the reward ledger -- for rewards whose upgrade
+  // field holds an amount rather than a count (upgrades.questPoints is
+  // quest points, so Quest Head Start's +10 read as "Lv 10").
+  function ledgerCount(game, id) {
+    const history = game?.state?.rewardBookHistory;
+    return Array.isArray(history) ? history.filter(entry => entry && entry.id === id).length : 0;
+  }
+
   function coachState(game) {
     return game?.state?.cuddleCoachExpansion || null;
   }
@@ -65,7 +73,7 @@
         { id: "yellowPoints", icon: "🟨", title: "Golden Value", tier: "common", category: "economy", description: "Every yellow tile is worth 1 point more.", level: g => upgradeCount(g, "yellowPoints") },
         { id: "earlyRoundPoint", icon: "⏱️", title: "Quick Cuddle", tier: "common", category: "economy", description: "Each unused guess in the solve bonus is worth 1 point more.", level: g => upgradeCount(g, "earlyRoundPoint") },
         { id: "questRefreshes", icon: "♻️", title: "Reward Refresh", tier: "common", category: "quests", description: "Gain one refresh whenever you choose a quest reward.", level: g => upgradeCount(g, "questRefreshes") },
-        { id: "questPoints", icon: "🏅", title: "Quest Value", tier: "common", category: "quests", description: "Quests are worth 5 points more. Stacks every time you take it.", level: g => upgradeCount(g, "questPoints") },
+        { id: "questPoints", icon: "🏅", title: "Quest Value", tier: "common", category: "quests", description: "Quests are worth 5 points more. Stacks every time you take it.", level: g => ledgerCount(g, "questPoints") },
         { id: "questReroll", icon: "🔄", title: "Second Guess Quest", tier: "common", category: "quests", description: "Gain one charge to reroll your active quest for a different one, any turn you like.", level: g => upgradeCount(g, "questReroll") },
         { id: "mulliganSize", icon: "🃏", title: "Bigger Mulligan", tier: "common", category: "easierStages", maxLevel: 2, description: "Each mulligan may replace one additional card.", level: g => upgradeCount(g, "mulliganSize") },
         { id: "categorySense", icon: "🔮", title: "Theme Sense", tier: "rare", category: "solving", maxLevel: 6, description: "From now on, reveal one category at the start of every solution. Stacks.", level: g => Number(campaignState(g)?.categorySense) || 0 },
@@ -155,7 +163,7 @@
         { id: "biggerMulligans", icon: "🖐️", title: "Full Hand Mulligan", tier: "legendary", category: "boss", maxLevel: 1, description: "Every mulligan can now replace up to five cards.", level: g => upgradeCount(g, "mulliganSize") },
         { id: "richerColours", icon: "💰", title: "Richer Colours", tier: "legendary", category: "boss", maxLevel: 1, description: "Every yellow and green tile is worth 2 points more.", level: g => upgradeCount(g, "yellowPoints") },
         { id: "freeVowelSweep", icon: "🅰️", title: "Free Vowel Sweep", tier: "legendary", category: "boss", maxLevel: 1, description: "Each round opens with one random vowel tested for free -- you learn whether it's in the secret, not where.", level: g => upgradeCount(g, "freeVowelSweep") },
-        { id: "questHead", icon: "🏅", title: "Quest Head Start", tier: "legendary", category: "boss", maxLevel: 1, description: "Quests are worth 10 points more for the rest of the run.", level: g => upgradeCount(g, "questPoints") },
+        { id: "questHead", icon: "🏅", title: "Quest Head Start", tier: "legendary", category: "boss", maxLevel: 1, description: "Quests are worth 10 points more for the rest of the run.", level: g => Math.min(1, ledgerCount(g, "questHead")) },
         { id: "revealGreen", icon: "📍", title: "Position Peek", tier: "legendary", category: "boss", maxLevel: 1, description: "Reveal one hidden position and make that letter reusable for this round." },
         { id: "openingClue", icon: "🔮", title: "Margin Note", tier: "legendary", category: "boss", maxLevel: 1, description: "Reveal that one letter is in the secret at the start of every future non-boss stage -- not where.", level: g => Number(g?.state?.cuddleBonuses?.openingClue) || 0 },
         { id: "questDoublePick", icon: "✌️", title: "Double Pick", tier: "legendary", category: "boss", maxLevel: 1, description: "Quest reward screens let you choose two options instead of one, for the rest of the run.", level: g => upgradeCount(g, "questDoublePick") },

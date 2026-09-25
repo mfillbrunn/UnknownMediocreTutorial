@@ -1062,6 +1062,9 @@
               </button>`).join("")}
           </div>
           <div class="cuddle-upgrade-refresh">
+            <span class="cuddle-upgrade-wallet" data-upgrade-wallet aria-label="Money: $${Number(state.cuddleMoney || 0)}">
+              <span>Money</span><b>$${Number(state.cuddleMoney || 0).toLocaleString()}</b>
+            </span>
             <button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
               ${escapeHtml(refreshLabel)}
             </button>
@@ -1452,13 +1455,36 @@
         return true;
       }
       case "refresh-upgrades": {
+        const before = Number(game.state?.cuddleMoney || 0);
         const result = game.refreshUpgradeChoices();
         setUiMessage(result.ok ? (result.message || "") : result.error);
+        const spent = before - Number(game.state?.cuddleMoney || 0);
+        if (result.ok && spent > 0) requestAnimationFrame(() => flyWalletChange(-spent));
         return true;
       }
       default:
         return false;
     }
+  }
+
+  // A short "-$3" that rises off the reward screen's Money chip when a
+  // refresh is paid for. Lives in <body>, not the Cuddle root, so a
+  // re-render mid-flight can't cut it off.
+  function flyWalletChange(amount) {
+    const chip = document.querySelector("#cuddleRoot [data-upgrade-wallet]");
+    if (!chip || !amount) return;
+    const rect = chip.getBoundingClientRect();
+    const fly = document.createElement("span");
+    fly.className = `cuddle-wallet-fly ${amount < 0 ? "is-spend" : "is-gain"}`;
+    fly.textContent = `${amount < 0 ? "-" : "+"}$${Math.abs(amount)}`;
+    fly.setAttribute("aria-hidden", "true");
+    fly.style.left = `${rect.left + rect.width / 2}px`;
+    fly.style.top = `${rect.top}px`;
+    document.body.appendChild(fly);
+    chip.classList.remove("is-bumped");
+    void chip.offsetWidth;
+    chip.classList.add("is-bumped");
+    setTimeout(() => fly.remove(), 1300);
   }
 
   function handleClick(event) {

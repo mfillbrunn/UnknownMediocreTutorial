@@ -2412,14 +2412,22 @@
     return target;
   }
 
+  // While a refresh is running: the cards that were on screen before it.
+  // A refresh must actually change the offer, so the guaranteed aid is
+  // never one of those (it used to be re-picked from the same seed every
+  // time, pinning e.g. Reserve Dividend to the last slot for good).
+  const refreshExclusions = new WeakMap();
+
   function repairUpgradeChoices(game, choices) {
     if (!Array.isArray(choices)) return choices;
     let repaired = choices.filter((item) => !REMOVED_NORMAL_REWARDS.has(normalizedId(item)));
     const hasAid = repaired.some((item) => SOLVING_AID_IDS.has(normalizedId(item)));
     if (!hasAid) {
-      const available = availableSolvingRewards(game);
+      const excluded = refreshExclusions.get(game) || new Set();
+      const available = availableSolvingRewards(game).filter((reward) => !excluded.has(reward.id));
       if (available.length) {
-        const pick = available[hash32(`${mapSeed(game)}:${roundToken(game)}:aid`) % available.length];
+        const refreshes = asInteger((stateOf(game) || {}).upgradeRefreshesUsed, 0);
+        const pick = available[hash32(`${mapSeed(game)}:${roundToken(game)}:${refreshes}:aid`) % available.length];
         if (repaired.length) repaired[repaired.length - 1] = { ...pick };
         else repaired.push({ ...pick });
       }
@@ -2814,9 +2822,12 @@
       const displayDescription = variant.kind === "mandatoryChallenge" && variant.challengeId
         ? `${challengeDisplayDescription(game, challengeById(variant.challengeId))} ${variant.rewardSuffix || ""}`.trim()
         : variant.description;
-      element.dataset.umtVariant = variant.kind;
-      element.title = `${variant.title}: ${displayDescription}`;
-      element.setAttribute("aria-label", `${variant.title}: ${displayDescription}`);
+      // Written only when they change: this runs on every UI pass, and
+      // rewriting identical values kept the map churning under the
+      // progression reveal.
+      setAttrIfChanged(element, "data-umt-variant", variant.kind);
+      setAttrIfChanged(element, "title", `${variant.title}: ${displayDescription}`);
+      setAttrIfChanged(element, "aria-label", `${variant.title}: ${displayDescription}`);
 
       // The world map draws its own icons and captions (cuddle-worlds.js);
       // only the tooltip text above applies there.
@@ -2836,7 +2847,7 @@
           holder.dataset.umtIconKey = iconKey;
           holder.innerHTML = powerSvgBody(iconKey);
         }
-        if (label) label.textContent = variant.title;
+        setTextIfChanged(label, variant.title);
         continue;
       }
 
@@ -2845,12 +2856,13 @@
         const heading = element.querySelector("strong");
         const description = element.querySelector("small");
         const direction = heading && / · (left|right|middle)$/i.exec(heading.textContent || "");
-        if (icon && !icon.querySelector("[data-umt-stage-icon]")) {
+        if (icon && !ownedMapIcon(icon) && icon.dataset.umtIconKey !== iconKey) {
+          icon.dataset.umtIconKey = iconKey;
           icon.classList.add("umt-svg-choice-icon");
           icon.innerHTML = powerSvg(iconKey);
         }
-        if (heading) heading.textContent = variant.title + (direction ? direction[0] : "");
-        if (description) description.textContent = displayDescription;
+        setTextIfChanged(heading, variant.title + (direction ? direction[0] : ""));
+        setTextIfChanged(description, displayDescription);
       }
 
       const preview = element.closest(".cuddle-branch-preview-overlay");
@@ -2858,12 +2870,13 @@
         const icon = preview.querySelector(".cuddle-choice-icon");
         const heading = preview.querySelector("h2");
         const description = preview.querySelector("p");
-        if (icon && !icon.querySelector("[data-umt-stage-icon]")) {
+        if (icon && !ownedMapIcon(icon) && icon.dataset.umtIconKey !== iconKey) {
+          icon.dataset.umtIconKey = iconKey;
           icon.classList.add("umt-svg-choice-icon");
           icon.innerHTML = powerSvg(iconKey);
         }
-        if (heading) heading.textContent = variant.title;
-        if (description) description.textContent = displayDescription;
+        setTextIfChanged(heading, variant.title);
+        setTextIfChanged(description, displayDescription);
       }
     }
   }
@@ -2947,6 +2960,20 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  function setAttrIfChanged(element, name, value) {
+    if (element && element.getAttribute(name) !== String(value)) element.setAttribute(name, value);
+  }
+
+  function setTextIfChanged(element, text) {
+    if (element && element.textContent !== String(text)) element.textContent = text;
+  }
+
+  // An icon another layer has already drawn: the stage icons from
+  // cuddle-expanded-stages.js or cuddle-stability-v2.js's image icons.
+  function ownedMapIcon(icon) {
+    return Boolean(icon.querySelector("[data-umt-stage-icon], img.umt-cuddle-svg-icon"));
   }
 
   function powerInfo(id) {
@@ -3201,6 +3228,10 @@
 
   function renderChoiceIcons(game) {
     document.querySelectorAll(".cuddle-choice").forEach((button) => {
+      // Map stop buttons aren't reward cards; their icons belong to the map
+      // layers. Drawing a reward icon here fought those layers every pass,
+      // swapping the icon back and forth (visible as map flicker).
+      if (button.matches(".cuddle-branch-choice")) return;
       const definition = choiceDefinition(game, button);
       const icon = button.querySelector(":scope > .cuddle-choice-icon");
       if (icon && icon.dataset.umtIconKey !== definition.id) {
@@ -4020,13 +4051,28 @@
 
     for (const name of ["_generateUpgradeChoices", "generateUpgradeChoices", "refreshUpgradeChoices"]) {
       wrapMethod(prototype, name, function (original, args) {
-        const result = original.apply(this, args);
+        const refreshing = name === "refreshUpgradeChoices";
+        if (refreshing) {
+          const shown = (stateOf(this) || {}).upgradeChoices;
+          refreshExclusions.set(this, new Set((Array.isArray(shown) ? shown : []).map(normalizedId)));
+        }
+        let result;
+        try {
+          result = original.apply(this, args);
+        } catch (error) {
+          if (refreshing) refreshExclusions.delete(this);
+          throw error;
+        }
         return afterResult(result, (value) => {
           if (Array.isArray(value)) repairUpgradeChoices(this, value);
           repairStateUpgradeChoices(this);
+          if (refreshing) refreshExclusions.delete(this);
           scheduleUi();
           return value;
-        }, (error) => { throw error; });
+        }, (error) => {
+          if (refreshing) refreshExclusions.delete(this);
+          throw error;
+        });
       });
     }
 

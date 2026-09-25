@@ -1934,7 +1934,8 @@
   }
 
   #cuddleScreen .cuddle-upgrade-refresh .cuddle-btn {
-    width: 100%;
+    flex: 1 1 0;
+    width: auto;
   }
 }
 /* UMT_CUDDLE_BALANCE_REFRESH_HARDMODE_V1: CSS END */
@@ -3249,4 +3250,86 @@
 .umt-compass-mark.is-match {
   border-color: rgba(75, 166, 106, 0.9);
   color: #8be8a8;
+}
+
+
+/* The wallet on the between-round reward screen, beside Refresh, so the
+   price of a refresh can be weighed against what's left. */
+#cuddleScreen .cuddle-upgrade-wallet {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 6px 14px;
+  border: 1px solid rgba(239, 197, 107, 0.55);
+  border-radius: 999px;
+  background: rgba(239, 197, 107, 0.12);
+  color: #f6d68b;
+  font-variant-numeric: tabular-nums;
+}
+
+#cuddleScreen .cuddle-upgrade-wallet span {
+  color: var(--cuddle-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#cuddleScreen .cuddle-upgrade-wallet b {
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+#cuddleScreen .cuddle-upgrade-wallet.is-bumped {
+  animation: cuddle-wallet-bump 420ms ease-out;
+}
+
+@keyframes cuddle-wallet-bump {
+  30% { transform: scale(0.92); border-color: rgba(241, 147, 157, 0.9); }
+  100% { transform: none; }
+}
+
+.cuddle-wallet-fly {
+  position: fixed;
+  z-index: 2147483600;
+  transform: translate(-50%, -100%);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(20, 16, 30, 0.92);
+  font: 900 1.15rem/1.2 system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  animation: cuddle-wallet-fly 1.2s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+.cuddle-wallet-fly.is-spend { color: #f1939d; border: 1px solid rgba(241, 147, 157, 0.6); }
+.cuddle-wallet-fly.is-gain { color: #f6d68b; border: 1px solid rgba(239, 197, 107, 0.6); }
+
+@keyframes cuddle-wallet-fly {
+  0% { opacity: 0; transform: translate(-50%, -60%) scale(0.8); }
+  15% { opacity: 1; transform: translate(-50%, -110%) scale(1.08); }
+  100% { opacity: 0; transform: translate(-50%, -320%) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cuddle-wallet-fly { animation-duration: 0.8s; }
+  #cuddleScreen .cuddle-upgrade-wallet.is-bumped { animation: none; }
+}
+
+/* Money + Refresh stay pinned to the bottom of the reward panel while the
+   cards scroll, so the wallet is always in view when deciding to refresh. */
+#cuddleScreen .cuddle-modal .cuddle-upgrade-refresh {
+  position: sticky;
+  bottom: -1px;
+  z-index: 3;
+  margin: 0 -4px -4px;
+  padding: 10px 4px 12px;
+  background: linear-gradient(to bottom, rgba(33, 29, 48, 0), rgba(33, 29, 48, 0.96) 22%, rgba(33, 29, 48, 0.98));
+}
+
+#cuddleScreen .cuddle-modal .cuddle-upgrade-refresh small {
+  display: none;
 }
