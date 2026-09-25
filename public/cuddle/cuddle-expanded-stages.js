@@ -98,7 +98,7 @@
     theme: Object.freeze({ title: "Themed Wordle", label: "Theme", icon: "stage-theme.svg", description: "Theme reveals scale by act: all, all but one, then one." }),
     upgrade: Object.freeze({ title: "Waystone", label: "Upgrade", icon: "stage-upgrade.svg", description: "Choose a permanent upgrade." }),
     shop: Object.freeze({ title: "Wandering Paw", label: "Shop", icon: "stage-shop.svg", description: "Spend money on run supplies." }),
-    event: Object.freeze({ title: "Choice Event", label: "Event", icon: "stage-event-choice.svg", description: "Choose a safe reward or a stronger bargain with a cost." }),
+    event: Object.freeze({ title: "Mystery Event", label: "Event", icon: "stage-event-choice.svg", description: "Something happens on the road here. You only find out what when you arrive." }),
     boss: Object.freeze({ title: "Boss", label: "Boss", icon: "stage-boss.svg", description: "A boss Wordle with permanent stakes." }),
     duel: Object.freeze({ title: "Word Duel", label: "Duel", icon: "stage-duel.svg", description: "Alternate guesses with an AI. The first side to solve the word wins." }),
     mystery: Object.freeze({ title: "Unknown Stop", label: "?", icon: "stage-mystery.svg", description: "This stop stays hidden until you enter it." })
@@ -634,15 +634,9 @@
         const tier = Math.max(1, Math.min(3, integer(node.expandedThemeRevealTier || node.expandedProgressionTier, 1)));
         return Object.assign({}, BASE_STAGE_META.theme, { description: themeDescription(tier) });
       }
-      if (node.type === "event") {
-        const definition = EVENT_BY_ID[node.expandedEventId];
-        if (definition) {
-          return Object.assign({}, BASE_STAGE_META.event, {
-            title: definition.title,
-            description: definition.options.map(option => option.summary).join(" Or ")
-          });
-        }
-      }
+      // Events stay a mystery on the map: which one it is, and what it
+      // offers, only show once the player arrives (renderEventScreen).
+      if (node.type === "event") return BASE_STAGE_META.event;
       if (node.type === "boss") {
         return {
           title: node.bossTitle || "Boss",
@@ -1862,6 +1856,35 @@
       return `<span class="umt-stop-medallion" style="--kind:${Worlds.KIND_COLORS[kind]}">${Worlds.iconSvg(kind)}</span>`;
     }
 
+    // The event's short entrance (about a second): the medallion spins in
+    // with a burst ring, the title rises, then the two deals. It plays once
+    // per event; a redraw part-way through picks the animation up where it
+    // is (--intro-elapsed) instead of starting it over. Tapping skips it.
+    const EVENT_INTRO_MS = 1300;
+    const eventIntro = { key: "", startedAt: 0 };
+
+    function eventIntroState(game, eventState) {
+      if (reducedMotion()) return null;
+      const key = `${game.state.runId || "run"}:${eventState.nodeId}:${eventState.eventId}`;
+      if (eventIntro.key !== key) {
+        eventIntro.key = key;
+        eventIntro.startedAt = Date.now();
+      }
+      const elapsed = Date.now() - eventIntro.startedAt;
+      return elapsed < EVENT_INTRO_MS ? elapsed : null;
+    }
+
+    function reducedMotion() {
+      return Boolean(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    }
+
+    document.addEventListener("pointerdown", (event) => {
+      const page = event.target && event.target.closest && event.target.closest(".umt-event-page.is-arriving");
+      if (!page) return;
+      eventIntro.startedAt = 0;
+      page.classList.remove("is-arriving");
+    }, true);
+
     function renderEventScreen(game, map) {
       const eventState = map.expandedEvent;
       const definition = eventState && EVENT_BY_ID[eventState.eventId];
@@ -1870,11 +1893,11 @@
         safeSave(game);
         return originalRenderMapScreen(game);
       }
-      const choices = definition.options.map(option => {
+      const choices = definition.options.map((option, index) => {
         const available = eventAvailability(game, option, eventState);
         const tag = option.id === "safe" ? "Safe" : option.id === "bold" ? "Bargain" : "Chance";
         return (
-          `<button type="button" class="cuddle-choice umt-event-choice is-${escapeHtml(option.id)}${available.ok ? "" : " is-disabled"}" `
+          `<button type="button" class="cuddle-choice umt-event-choice is-${escapeHtml(option.id)}${available.ok ? "" : " is-disabled"}" style="--i:${index}" `
           + `data-cuddle-campaign-action="expanded-event-choice" data-shop-item-id="${escapeHtml(option.id)}"${available.ok ? "" : " disabled"}>`
           + `<span class="umt-event-tag">${tag}</span>`
           + `<strong>${escapeHtml(option.title)}</strong>`
@@ -1883,12 +1906,19 @@
           + `</button>`
         );
       }).join("");
+      const elapsed = eventIntroState(game, eventState);
+      const arriving = elapsed !== null;
       return (
         `<div class="cuddle-shell umt-event-shell">`
         + shellHeader(game, "EVENT")
-        + `<main class="umt-event-page">`
-        + `<section class="umt-stop-panel">`
-        + `<div class="umt-stop-head">${stopMedallion("event")}<h2>${escapeHtml(definition.title)}</h2></div>`
+        + `<main class="umt-event-page${arriving ? " is-arriving" : ""}"${arriving ? ` style="--intro-elapsed:${elapsed}ms"` : ""}>`
+        + `<section class="umt-stop-panel umt-event-panel">`
+        + `<div class="umt-event-hero">`
+        + `<span class="umt-event-burst" aria-hidden="true"></span>`
+        + stopMedallion("event")
+        + `<span class="umt-event-eyebrow">Event on the road</span>`
+        + `<h2>${escapeHtml(definition.title)}</h2>`
+        + `</div>`
         + `<p class="umt-stop-lead">${escapeHtml(definition.flavor)}</p>`
         + `<div class="cuddle-choice-grid umt-event-choices">${choices}</div>`
         + `</section>`

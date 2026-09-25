@@ -861,11 +861,8 @@
       }
       return base;
     }
-    if (node.type === "event") {
-      for (var index = 0; index < EVENTS.length; index += 1) {
-        if (EVENTS[index].id === node.eventId) return EVENTS[index].description;
-      }
-    }
+    // Events stay a mystery until the player arrives.
+    if (node.type === "event") return "Something happens on the road here. You only find out what when you arrive.";
     return (NODE_TYPES[node.type] || NODE_TYPES.normal).description;
   }
 
@@ -1338,11 +1335,10 @@
       }
       brief.risks.push(variant.description);
     } else if (kind === "event") {
-      var event = expanded && typeof expanded.eventOptions === "function" ? expanded.eventOptions(node) : null;
-      brief.title = meta && meta.title ? meta.title : brief.title;
-      brief.summary = event && event.flavor ? event.flavor + " Choose one:" : "Choose one of two deals.";
-      brief.options = event ? event.options : null;
-      if (!brief.options && meta) brief.summary = meta.description;
+      // A mystery until the player arrives: no name, no deals.
+      brief.title = "Mystery Event";
+      brief.summary = "Something happens on the road here. You only find out what when you arrive.";
+      brief.options = null;
     } else if (kind === "upgrade") {
       brief.summary = "A quiet waystone. No Wordle here.";
       brief.gets.push({ type: "perk", text: "Pick 1 of 3 free permanent upgrades" });

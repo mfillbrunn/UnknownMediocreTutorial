@@ -308,6 +308,17 @@
       reward: 25,
       vowelBudget: { guesses: 2, max: 1 }
     }),
+    // The secret is drawn from cuddle-rare-words.js instead of the usual
+    // pool -- a real but unusual word -- so it pays the most of any
+    // challenge. See rareStage / the getActiveWords wrapper below.
+    Object.freeze({
+      id: "rareWord",
+      icon: "💎",
+      title: "Rare Word",
+      description: "The secret is a rare, unusual word. Solve it for the biggest challenge bonus.",
+      reward: 40,
+      rareSecret: true
+    }),
     Object.freeze({
       id: "shroudedEdges",
       icon: "🫥",
@@ -1286,6 +1297,26 @@
     const custom = customState(game);
     if (!custom || !custom.activeChallenge) return null;
     return custom.activeChallenge.roundToken === roundToken(game) ? custom.activeChallenge : null;
+  }
+
+  // A Rare Word stage, from the moment its node is entered (the secret is
+  // picked inside _beginRound, before the challenge itself is active) until
+  // the stage ends.
+  function rareStage(game) {
+    const custom = customState(game);
+    const pending = custom && custom.pendingVariant;
+    if (pending && pending.kind === "mandatoryChallenge" && challengeById(pending.challengeId).rareSecret) return true;
+    const active = activeChallenge(game);
+    return Boolean(active && active.rareSecret);
+  }
+
+  function rareWordPool(game) {
+    const state = stateOf(game) || {};
+    const removed = new Set(state.removedLetters || []);
+    const guessable = game && game.guessSet;
+    return (window.CuddleRareWords || []).filter((word) =>
+      (!guessable || typeof guessable.has !== "function" || guessable.has(word))
+      && ![...removed].some((letter) => word.includes(letter)));
   }
 
   function challengeById(id) {
@@ -3897,6 +3928,17 @@
         return original.apply(this, args);
       });
     }
+
+    // On a Rare Word stage the whole candidate pool is the rare list: the
+    // secret is picked from it, and quests and "possible answers" read the
+    // same pool, so none of them contradict the answer.
+    wrapMethod(prototype, "getActiveWords", function (original, args) {
+      if (rareStage(this)) {
+        const pool = rareWordPool(this);
+        if (pool.length) return pool;
+      }
+      return original.apply(this, args);
+    });
 
     wrapMethod(prototype, "_beginRound", function (original, args) {
       normalizeState(this);
