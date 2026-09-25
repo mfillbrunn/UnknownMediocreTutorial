@@ -686,6 +686,47 @@
       </g>`;
   }
 
+  // Quests judged by the colours the secret gives back ("find a green",
+  // "two non-grey tiles"). Previewing those would reveal the answer, so
+  // they only resolve on submit.
+  const FEEDBACK_QUESTS = new Set(["greenLight", "fieldReport"]);
+
+  // Whether the word being built would complete this quest if submitted
+  // now -- from the draft and what's already known, never the secret. Only
+  // a word that could actually be submitted counts.
+  function draftMeetsQuest(game, quest) {
+    if (!game || !quest || FEEDBACK_QUESTS.has(quest.id)) return false;
+    const state = game.state || {};
+    if (state.status !== "playing") return false;
+    const word = typeof game.getDraftWord === "function" ? String(game.getDraftWord() || "") : "";
+    if (!/^[A-Z]{5}$/.test(word)) return false;
+    const submit = typeof game.canSubmit === "function" ? game.canSubmit() : null;
+    if (!submit || !submit.ok) return false;
+    const history = Array.isArray(state.history) ? state.history : [];
+    const requiredLetters = [];
+    history.forEach(entry => {
+      if (!entry || entry.fakeFeedback) return;
+      const shown = Array.isArray(entry.shownFeedback) && entry.shownFeedback.length ? entry.shownFeedback : (entry.feedback || []);
+      String(entry.word || "").split("").forEach((letter, index) => {
+        if (["green", "yellow", "blue"].includes(shown[index])) requiredLetters.push(letter);
+      });
+    });
+    try {
+      return Boolean(window.CuddleQuestBook?.evaluateQuest(quest, {
+        word,
+        feedback: [],
+        history,
+        knownAbsent: state.knownAbsent || [],
+        knownPresent: state.knownPresent || [],
+        revealedPositions: state.revealedPositions || [],
+        requiredLetters,
+        rareLetters: quest.rareLetters || []
+      }));
+    } catch (_error) {
+      return false;
+    }
+  }
+
   function renderCategoryBadge(campaign, extraChipsHtml = "") {
     // Show nothing at all -- not even a "hidden" placeholder -- unless the
     // player has actually engaged the theme mechanic this round (Theme
@@ -999,12 +1040,15 @@
       const quests = [state.activeQuest, ...(Array.isArray(state.activeQuests) ? state.activeQuests.slice(1) : [])]
         .filter(Boolean);
       const questText = quests
-        .map(quest => (
-          `<span class="cuddle-quest-inline">`
-          + `<span class="cuddle-quest-tag"><span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> Quest</span>`
+        .map(quest => {
+          const ready = draftMeetsQuest(game, quest);
+          return (
+          `<span class="cuddle-quest-inline${ready ? " is-ready" : ""}"${ready ? ' title="Your word meets this quest"' : ""}>`
+          + `<span class="cuddle-quest-tag">${ready ? '<span aria-hidden="true">✓</span> Ready' : `<span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> Quest`}</span>`
           + `<span class="cuddle-quest-body"><b>${escapeHtml(quest.title || "Quest")}:</b> <span>${escapeHtml(quest.description)}</span></span>`
           + `</span>`
-        ))
+          );
+        })
         .join("");
       // Plain text, deliberately not folded into the theme's pill-chip list
       // (see secretsRemainingInline's comment in cuddle-coach-expansion.js).

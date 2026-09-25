@@ -3377,3 +3377,31 @@
   justify-self: start;
   margin-bottom: 0;
 }
+
+/* The quest lights up green while the word being built would complete it
+   (cuddle-campaign.js's draftMeetsQuest), so it can be aimed for before
+   submitting. */
+.cuddle-quest-inline.is-ready {
+  border-color: rgba(75, 214, 131, 0.85);
+  background: linear-gradient(135deg, rgba(75, 214, 131, 0.26), rgba(75, 214, 131, 0.1));
+  box-shadow: 0 0 0 1px rgba(75, 214, 131, 0.35), 0 0 18px rgba(75, 214, 131, 0.35);
+  animation: cuddle-quest-ready 1.6s ease-in-out infinite;
+}
+
+.cuddle-quest-inline.is-ready .cuddle-quest-tag {
+  background: #3fcf7f;
+  color: #0c2a18;
+}
+
+.cuddle-quest-inline.is-ready .cuddle-quest-body b {
+  color: #c8f7da;
+}
+
+@keyframes cuddle-quest-ready {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(75, 214, 131, 0.35), 0 0 12px rgba(75, 214, 131, 0.25); }
+  50% { box-shadow: 0 0 0 1px rgba(75, 214, 131, 0.6), 0 0 22px rgba(75, 214, 131, 0.5); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cuddle-quest-inline.is-ready { animation: none; }
+}
