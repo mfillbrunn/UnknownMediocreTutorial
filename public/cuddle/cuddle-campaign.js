@@ -342,9 +342,24 @@
       if (id === CATEGORY_REWARD.id) return { ...CATEGORY_REWARD };
       return originalQuestBook.getReward?.(id) || null;
     }
+    // Category Whisper reveals one more theme, so it isn't offered once
+    // every theme of the current word is known (the hint service said
+    // "No more categories"), or when the word has none -- including Rare
+    // Word secrets, which never have a theme.
+    function categoryWhisperUseful() {
+      const game = window.CuddleBranchMap && typeof window.CuddleBranchMap.getActiveGame === "function"
+        ? window.CuddleBranchMap.getActiveGame()
+        : null;
+      if (!game || !game.state) return true;
+      const secret = String(game.state.secret || "").toUpperCase();
+      if (secret && Array.isArray(window.CuddleRareWords) && window.CuddleRareWords.includes(secret)) return false;
+      const campaign = resetCategoryStateForSecret(game);
+      return !(campaign && (campaign.categoryExhausted || campaign.noCategory));
+    }
     function rewardChoices(count = 3, random = Math.random) {
-      const limit = Math.max(0, Math.min(Math.floor(Number(count) || 0), rewards.length));
-      return shuffle(rewards, random).slice(0, limit).map(item => ({ ...item }));
+      const pool = categoryWhisperUseful() ? rewards : rewards.filter(item => item.id !== CATEGORY_REWARD.id);
+      const limit = Math.max(0, Math.min(Math.floor(Number(count) || 0), pool.length));
+      return shuffle(pool, random).slice(0, limit).map(item => ({ ...item }));
     }
     window.CuddleQuestBook = Object.freeze({
       ...originalQuestBook,

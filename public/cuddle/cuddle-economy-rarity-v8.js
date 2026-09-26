@@ -46,6 +46,9 @@
     ["greyscale", TIERS.COMMON],
     ["grayscale", TIERS.COMMON],
     ["softer cuddle meter", TIERS.COMMON],
+    // Offered by cuddle-rebalance-v5.js as a solving aid (it is not in this
+    // layer's own catalog -- see REMOVED_REWARDS), so its tier lives here.
+    ["reserve dividend", TIERS.COMMON],
 
     ["cull two letters", TIERS.RARE],
     ["grey matters", TIERS.RARE],
@@ -62,6 +65,7 @@
     ["alphabet compass", TIERS.RARE],
 
     ["green guesser hint", TIERS.LEGENDARY],
+    ["quest head start", TIERS.LEGENDARY],
     ["candidate notebook", TIERS.LEGENDARY],
     ["joker cache", TIERS.LEGENDARY]
   ]);
@@ -77,6 +81,70 @@
     "second cup",
     "all seeing atlas",
     "false letter scout"
+  ]);
+
+  // Legendary between-round picks. The boss-grade rewards below were meant
+  // to reach the ordinary offer as Legendary picks through catalog.boss, but
+  // that catalog is never filled from the live game, so no Legendary offer
+  // could ever be rolled (a tier needs three available rewards) and Joker
+  // Cache -- slipped in separately as a solving aid -- was the only
+  // Legendary a player ever saw. These are added to the pool directly; a
+  // "legendary:<id>" pick is applied through the game's own _applyBossReward
+  // (see installLegendaryApply), exactly as a boss clear would.
+  function ownedHistoryCount(state, id) {
+    const history = Array.isArray(state?.rewardBookHistory) ? state.rewardBookHistory : [];
+    return history.filter((entry) => entry && (entry.id === id || entry.rewardId === id)).length;
+  }
+  function coachOwns(state, id) {
+    const owned = state?.cuddleCoachExpansion?.newBossRewardsOwned;
+    return Array.isArray(owned) && owned.includes(id);
+  }
+  function legendaryPick(rewardId, icon, title, description, available) {
+    return {
+      id: rewardId,
+      key: `legendary:${rewardId}`,
+      icon,
+      title,
+      name: title,
+      description,
+      kind: "legendary",
+      __cuddleV8Tier: TIERS.LEGENDARY,
+      __cuddleV8LegendaryReward: rewardId,
+      available: (state) => Boolean(state) && available(state)
+    };
+  }
+  const LEGENDARY_PICKS = Object.freeze([
+    legendaryPick("doubleMulligans", "🔁", "Double Mulligans", "Double the number of mulligans you get each round.",
+      (state) => !(Number(state.upgrades?.doubleMulligans) > 0)),
+    legendaryPick("cullRare", "✂️", "Deep Cull", "Remove rare letters from the deck and from every future secret.",
+      (state) => ownedHistoryCount(state, "cullRare") < 1),
+    legendaryPick("freeVowelSweep", "🅰️", "Free Vowel Sweep", "Each stage opens with one random vowel tested for free: you learn whether it's in the answer, not where.",
+      (state) => !(Number(state.upgrades?.freeVowelSweep) > 0)),
+    legendaryPick("questHead", "🏅", "Quest Head Start", "Quests are worth 10 points more for the rest of the run.",
+      (state) => ownedHistoryCount(state, "questHead") < 2),
+    legendaryPick("questDoublePick", "✌️", "Double Pick", "Quest reward screens let you choose two options instead of one, for the rest of the run.",
+      (state) => !state.upgrades?.questDoublePick),
+    legendaryPick("questPersistReward", "⏳", "Lasting Quests", "Quests stay active for the rest of the stage instead of expiring after one guess.",
+      (state) => !state.megaState?.questPersistsForRound),
+    legendaryPick("goldenCompass", "🧭", "Golden Compass", "Once per stage, reveal the most useful untested letter among the remaining possible answers.",
+      (state) => !coachOwns(state, "goldenCompass")),
+    legendaryPick("secondCup", "☕", "Second Cup", "Once per run, automatically add one rescue row when the final row would fail.",
+      (state) => !coachOwns(state, "secondCup")),
+    legendaryPick("umtAllThemes", "🔮", "All-Seeing Atlas", "Reveal every available theme at the start of every non-boss Wordle.",
+      (state) => !state.cuddleRebalanceV5?.allThemesUnlocked && !coachOwns(state, "umtAllThemes")),
+    // Joker Cache keeps its own id: cuddle-rebalance-v5.js applies it.
+    {
+      id: "umtJokerCache",
+      key: "umtJokerCache",
+      icon: "🃏",
+      title: "Joker Cache",
+      name: "Joker Cache",
+      description: "Two extra Jokers every stage.",
+      kind: "upgrade",
+      __cuddleV8Tier: TIERS.LEGENDARY,
+      available: (state) => Boolean(state)
+        && Math.max(Number(state.cuddleRebalanceV5?.upgrades?.umtJokerCache) || 0, Number(state.upgrades?.umtJokerCache) || 0) < 2
+    }
   ]);
 
   const KNOWN_ORDINARY_NAMES = new Set([
@@ -1568,6 +1636,7 @@
     for (const def of catalog.boss.values()) {
       if (def.__cuddleV8Tier === TIERS.LEGENDARY || LEGENDARY_BOSS_NAMES.has(norm(getName(def)))) ordinary.push(def);
     }
+    ordinary.push(...LEGENDARY_PICKS);
     const unique = new Map();
     for (const def of ordinary) {
       if (!rewardAvailable(def, context, state)) continue;
@@ -2586,8 +2655,30 @@
     observer.observe(document.documentElement, { childList: true, subtree: true });
   }
 
+  // A "legendary:<id>" pick is a boss-grade reward: apply it with the game's
+  // own _applyBossReward (every layer's boss-reward handling included); the
+  // rest of chooseUpgrade -- recording it, clearing the offer, moving on --
+  // runs as for any pick.
+  function installLegendaryApply() {
+    const Game = window.CuddleEngine?.CuddleGame || window.CuddleGame;
+    const proto = Game && Game.prototype;
+    if (!proto || typeof proto._applyUpgradeChoice !== "function" || proto._applyUpgradeChoice.__cuddleV8Legendary) return;
+    const original = proto._applyUpgradeChoice;
+    const wrapped = function applyUpgradeChoiceWithLegendary(choice) {
+      const key = String(choice?.key || "");
+      if (!key.startsWith("legendary:")) return original.apply(this, arguments);
+      const rewardId = key.slice("legendary:".length);
+      if (typeof this._applyBossReward !== "function") return { ok: false, error: "That reward is unavailable." };
+      const message = this._applyBossReward(rewardId);
+      return { ok: true, message: message || `${choice.title || "Legendary reward"} acquired.` };
+    };
+    wrapped.__cuddleV8Legendary = true;
+    proto._applyUpgradeChoice = wrapped;
+  }
+
   function install() {
     if (window.CuddleEconomyRarityV8?.version === VERSION) return;
+    installLegendaryApply();
     window.CuddleEconomyRarityV8 = {
       version: VERSION,
       tiers: TIERS,
