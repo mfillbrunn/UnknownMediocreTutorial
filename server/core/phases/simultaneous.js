@@ -4,6 +4,7 @@ const { scoreGuess } = require("../../game-engine/scoring");
 const { endGame } = require("./gameOver");
 const { addIncrement, resetRoundTimer } = require("../../utils/Timer");
 const { checkSecret, checkGuess } = require("../../game-engine/validation");
+const { isConsistentWithHistory } = require("../../game-engine/history");
 const { emitRoomState } = require("../rooms");
 const questServer = require("../../powers/powers/questServer");
 const singlePlayerHooks = require("../../single-player/hooks");
@@ -80,6 +81,17 @@ function resolveSimultaneousRound(room, state, roomId, context) {
   state.simultaneousAllWrong = entry.fb.every((tile) => tile === "⬛");
   entry.secretLocked = state.simultaneousAllWrong;
   state.history.push(entry);
+
+  // Break Cover fired during the opening (a challenge's forced power) was
+  // given its spin list while history was still empty -- every secret.
+  // The spin lands on the Secretkeeper's next decision, after this row, so
+  // most of those words are no longer legal. Refresh it the same way
+  // hideTile/vowelRefresh do when they change what's consistent.
+  if (state.powers?.rouletteSecretActive && Array.isArray(global.ALLOWED_SECRETS)) {
+    state.powers.rouletteSecretFeasible = global.ALLOWED_SECRETS.filter(
+      secret => isConsistentWithHistory(state.history, secret, state)
+    );
+  }
   // Transition to normal phase with guesser turn
   state.phase = "normal";
   state.turn = state.guesser;
