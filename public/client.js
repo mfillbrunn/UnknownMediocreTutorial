@@ -1709,9 +1709,19 @@ function isSetterDecisionTurnActive() {
 function isSetterEditingBlockedByPower() {
   return !!(
     state.powers?.freezeActive ||
-    state.powers?.rouletteSecretActive ||
+    isRouletteSpinBlockingEdits() ||
     isOpeningMissSecretLocked()
   );
+}
+
+// Break Cover's spinner only runs in the normal phase (see
+// maybeStartRouletteFromState). A challenge can fire it during the
+// simultaneous opening, where there is nothing to spin yet and the opening
+// secret is free anyway -- blocking typing there left the Secretkeeper
+// unable to enter a secret at all. The power still spins their next
+// decision.
+function isRouletteSpinBlockingEdits() {
+  return !!state.powers?.rouletteSecretActive && state.phase === "normal";
 }
 
 // Shared by handleSetterInput (typing) and setSetterDraftLetterAt (Drag
@@ -2225,7 +2235,7 @@ function handleSetterInput(event) {
   // secret" still works while frozen) -- canSetterEditDraftNow() can't be
   // reused for this outer guard since it also folds in that same
   // freeze/roulette check.
-  if (!(state.powers?.freezeActive || state.powers?.rouletteSecretActive)) {
+  if (!(state.powers?.freezeActive || isRouletteSpinBlockingEdits())) {
     if (!isSetterDecisionTurnActive()) return;
 
     const isEditing = event.type === "LETTER" || event.type === "BACKSPACE";
