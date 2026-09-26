@@ -46,6 +46,9 @@
     ["greyscale", TIERS.COMMON],
     ["grayscale", TIERS.COMMON],
     ["softer cuddle meter", TIERS.COMMON],
+    // Offered by cuddle-rebalance-v5.js as a solving aid (it is not in this
+    // layer's own catalog -- see REMOVED_REWARDS), so its tier lives here.
+    ["reserve dividend", TIERS.COMMON],
 
     ["cull two letters", TIERS.RARE],
     ["grey matters", TIERS.RARE],
