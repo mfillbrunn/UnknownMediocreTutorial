@@ -5,6 +5,9 @@ const path = require("path");
 const crypto = require("crypto");
 
 const THEME_DATA_PATH = path.join(__dirname, "..", "wordlists", "cuddle_secret_themes.json");
+// The Rare Word challenge's secrets. They live in the client file (the
+// browser picks the secret) and are read from it here, so there is one list.
+const RARE_WORDS_PATH = path.join(__dirname, "..", "..", "public", "cuddle", "cuddle-rare-words.js");
 let cachedThemeData = null;
 
 function normalizeWord(value) {
@@ -40,6 +43,19 @@ function getRevealableCategories(word) {
       };
     })
     .filter(Boolean);
+}
+
+// Rare Word secrets are real words but not in allowed_secrets.txt; they have
+// no theme entries, so a hint for one honestly answers "No category"
+// instead of the request being refused (which left theme hints failing).
+function loadCuddleRareWords(filePath = RARE_WORDS_PATH) {
+  try {
+    const source = fs.readFileSync(filePath, "utf8");
+    return (source.match(/"[A-Z]{5}"/g) || []).map(token => token.slice(1, -1));
+  } catch (error) {
+    console.warn("Cuddle: could not load the Rare Word list.", error.message);
+    return [];
+  }
 }
 
 // Backward-compatible alias for early local builds of this updater.
@@ -79,12 +95,13 @@ function chooseCategoryHints({ word, knownCategories = [], count = 1 }) {
   };
 }
 
-function registerCuddleWordThemeRoutes(app, { allowedSecrets = [] } = {}) {
+function registerCuddleWordThemeRoutes(app, { allowedSecrets = [], rareSecrets = loadCuddleRareWords() } = {}) {
   if (!app || typeof app.post !== "function") {
     throw new TypeError("registerCuddleWordThemeRoutes needs an Express app.");
   }
   const secretSet = new Set(
     (Array.isArray(allowedSecrets) ? allowedSecrets : [])
+      .concat(Array.isArray(rareSecrets) ? rareSecrets : [])
       .map(normalizeWord)
       .filter(Boolean)
   );
@@ -109,6 +126,7 @@ function registerCuddleWordThemeRoutes(app, { allowedSecrets = [] } = {}) {
 module.exports = {
   THEME_DATA_PATH,
   normalizeWord,
+  loadCuddleRareWords,
   loadThemeData,
   getRevealableCategories,
   getFlavorCategories,

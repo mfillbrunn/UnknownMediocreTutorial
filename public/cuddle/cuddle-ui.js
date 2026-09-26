@@ -1006,7 +1006,7 @@
           <h2 id="cuddleBossTitle">${isFinal ? "One last secret" : "Choose your boss"}</h2>
           <p>${isFinal
             ? "Beat this round to win the run. Its permanent reward is shown below; no ordinary upgrade follows."
-            : "A boss round is pass or fail: nothing scores, you only have to solve it. Clear it and you keep the permanent reward shown below; there is no additional ordinary reward after a boss."}</p>
+            : "A boss round has no points target: you only have to solve it, and it still scores like any stage. Clear it to keep the permanent reward shown below; no ordinary upgrade follows a boss."}</p>
           <div class="cuddle-choice-grid">
             ${options.map(option => `
               <button class="cuddle-choice cuddle-boss-choice" data-boss-id="${escapeHtml(option.id)}">
@@ -1044,7 +1044,7 @@
       : "Choose a reward for the current round. It applies immediately and never carries into the next round.";
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleRewardTitle">
-        <section class="cuddle-modal cuddle-modal-wide">
+        <section class="cuddle-modal cuddle-modal-wide cuddle-compact-cards">
           <span class="cuddle-modal-kicker">QUEST COMPLETE</span>
           <h2 id="cuddleRewardTitle">${heading}</h2>
           <p>${subtext}</p>
@@ -1079,11 +1079,14 @@
       : refreshCost === null
         ? "Refresh unavailable"
         : `Refresh choices ($${refreshCost})`;
+    const waystone = typeof game.isWaystoneUpgrade === "function" && game.isWaystoneUpgrade();
     const kicker = milestone
       ? `POINTS MILESTONE · ${state.upgradeMilestone}`
       : startingRewards
         ? "STARTING REWARDS"
-        : `ROUND ${summary?.round || state.round} CLEARED`;
+        : waystone
+          ? "WAYSTONE"
+          : `ROUND ${summary?.round || state.round} CLEARED`;
     const heading = milestone
       ? "Choose a bonus upgrade"
       : startingRewards
@@ -1098,7 +1101,7 @@
         : "";
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleUpgradeTitle">
-        <section class="cuddle-modal cuddle-modal-wide cuddle-upgrade-modal">
+        <section class="cuddle-modal cuddle-modal-wide cuddle-upgrade-modal cuddle-compact-cards">
           <span class="cuddle-modal-kicker">${kicker}</span>
           <h2 id="cuddleUpgradeTitle">${heading}</h2>
           ${body ? `<p>${body}</p>` : ""}
@@ -1112,14 +1115,16 @@
                 ${interactionBonusDetail(choice.key || choice.id)}
               </button>`).join("")}
           </div>
-          <div class="cuddle-upgrade-refresh">
+          <div class="cuddle-upgrade-refresh${refreshCost === null ? " is-no-refresh" : ""}">
             <span class="cuddle-upgrade-wallet" data-upgrade-wallet aria-label="Money: $${Number(state.cuddleMoney || 0)}">
               <span>Money</span><b>$${Number(state.cuddleMoney || 0).toLocaleString()}</b>
             </span>
-            <button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
+            ${refreshCost === null
+              ? `<small>${waystone ? "A waystone's offer is fixed: no refreshes." : "These choices can't be refreshed."}</small>`
+              : `<button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
               ${escapeHtml(refreshLabel)}
             </button>
-            <small>The first refresh on each between-round reward screen is free. Later refreshes cost $3, $5, $7, $9, and so on.</small>
+            <small>The first refresh on each between-round reward screen is free. Later refreshes cost $3, $5, $7, $9, and so on.</small>`}
           </div>
         </section>
       </div>`;
@@ -1323,9 +1328,9 @@
             <article><strong>2 · Reuse letters in hand</strong><p>Any letter currently shown in your hand can be tapped more than once while building a word. A, E, I, O, and U are bold, always available, and do not use counted hand slots. Yellow or green consonants stay in hand after a guess.</p></article>
             <article><strong>3 · Refill the hand</strong><p>You have ${rules.handSize} counted consonant slots. A finite consonant used in a submitted word leaves once, even when it was repeated in that word, and the draw pile refills open counted slots back toward ${rules.handSize}.</p></article>
             <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards.</p></article>
-            <article><strong>5 · Earn enough points</strong><p>Yellow tiles score ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}, green tiles score ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}, and grey tiles score ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}. Solving within your bonus window (see Stats) adds +${rules.earlyPoint} for every guess still spare, and every mulligan you did not spend is worth +${rules.mulliganPoints}. There is no guess limit -- just keep guessing until you solve it -- but you must also meet the cumulative round points target.</p></article>
+            <article><strong>5 · Earn enough points</strong><p>Yellow tiles score ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}, green tiles score ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}, and grey tiles score ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}. Solving within your bonus window (see Stats) adds +${rules.earlyPoint} for every guess still spare, and every mulligan you did not spend is worth +${rules.mulliganPoints}. An ordinary stage has no guess limit -- just keep guessing until you solve it -- but some stops (a few challenges, events and bargains say so) must be solved within the world's guess limit of 6, 5 or 4, or the run ends. You must also meet the cumulative round points target.</p></article>
             <article><strong>6 · Grow the run</strong><p>Quests appear every few turns and pay bonus points once you own a reward that makes them worth something. Certain boss rewards add extra concurrent quests. Solve the word to choose an upgrade after every round.</p></article>
-            <article><strong>7 · Boss rounds</strong><p>Before rounds 4, 7, and 10 -- and once more after round 12 -- you pick one of two bosses. Their powers last for 2, 2, 3, and 4 guesses respectively. A boss round is pass or fail: nothing scores and no target applies, you just have to solve it. Clear any boss to receive its displayed permanent reward; no ordinary upgrade is added afterward.</p></article>
+            <article><strong>7 · Boss rounds</strong><p>Each world ends at a boss, and the third one decides the run. A boss's power lasts for its first few guesses. A boss round has no points target -- you only have to solve it -- but its guesses and solve bonuses still score. Clear a boss to keep its displayed permanent reward; no ordinary upgrade follows.</p></article>
           </div>
           <p class="cuddle-rule-note"><strong>Campaign targets:</strong> ${window.CuddleEngine.THRESHOLDS.join(" · ")}. Clear round ${scoringRounds()} at ${window.CuddleEngine.THRESHOLDS[scoringRounds() - 1]} points, then beat the final boss to win.</p>
           <button class="cuddle-btn cuddle-btn-primary" data-action="close-rules">Got it</button>
@@ -1657,6 +1662,39 @@
     const shell = root.querySelector(".cuddle-shell") || root;
     const toasts = cuddleV3ToastStack(state);
     if (toasts) shell.insertAdjacentHTML("beforeend", toasts);
+    scheduleToastDismissals(state);
+  }
+
+  // Notices close themselves after a few seconds (the × still closes one
+  // at once). They used to stay until dismissed, sitting over the play
+  // area until the player found the ×.
+  const TOAST_LIFETIME_MS = 6000;
+  const TOAST_KINDS = [
+    ["bossRewardNotice", "dismissBossRewardNotice"],
+    ["burdenNotice", "dismissBurdenNotice"],
+    ["synergyNotice", "dismissSynergyNotice"],
+    ["coachHintNotice", "dismissCoachHintNotice"],
+    ["coachMeterNotice", "dismissCoachMeterNotice"]
+  ];
+  const toastTimers = new Map();
+  function scheduleToastDismissals(state) {
+    TOAST_KINDS.forEach(([field, method]) => {
+      const notice = state && state[field];
+      const key = notice ? JSON.stringify(notice) : "";
+      const pending = toastTimers.get(field);
+      if (pending && pending.key === key) return;
+      if (pending) clearTimeout(pending.timer);
+      if (!notice) { toastTimers.delete(field); return; }
+      const timer = setTimeout(() => {
+        toastTimers.delete(field);
+        const live = currentState();
+        if (!live || !live[field] || JSON.stringify(live[field]) !== key) return;
+        if (typeof game?.[method] !== "function") return;
+        game[method]();
+        render();
+      }, TOAST_LIFETIME_MS);
+      toastTimers.set(field, { key, timer });
+    });
   }
 
   const cuddleV3OriginalSyncQuickModeTimer = syncQuickModeTimer;

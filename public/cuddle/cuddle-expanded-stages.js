@@ -98,9 +98,9 @@
     theme: Object.freeze({ title: "Themed Wordle", label: "Theme", icon: "stage-theme.svg", description: "Theme reveals scale by act: all, all but one, then one." }),
     upgrade: Object.freeze({ title: "Waystone", label: "Upgrade", icon: "stage-upgrade.svg", description: "Choose a permanent upgrade." }),
     shop: Object.freeze({ title: "Wandering Paw", label: "Shop", icon: "stage-shop.svg", description: "Spend money on run supplies." }),
-    event: Object.freeze({ title: "Choice Event", label: "Event", icon: "stage-event-choice.svg", description: "Choose a safe reward or a stronger bargain with a cost." }),
+    event: Object.freeze({ title: "Mystery Event", label: "Event", icon: "stage-event-choice.svg", description: "Something happens on the road here. You only find out what when you arrive." }),
     boss: Object.freeze({ title: "Boss", label: "Boss", icon: "stage-boss.svg", description: "A boss Wordle with permanent stakes." }),
-    duel: Object.freeze({ title: "Word Duel", label: "Duel", icon: "stage-duel.svg", description: "Alternate guesses with an AI. The first side to solve the word wins." }),
+    duel: Object.freeze({ title: "Word Duel", label: "Duel", icon: "stage-duel.svg", description: "Alternate guesses with an AI. The first side to solve the word wins; if the AI does, the run ends." }),
     mystery: Object.freeze({ title: "Unknown Stop", label: "?", icon: "stage-mystery.svg", description: "This stop stays hidden until you enter it." })
   });
 
@@ -519,22 +519,37 @@
       );
     }
 
+    // Every run has at least one Word Duel, and duels live in the later
+    // worlds (2 and 3): a duel row is slotted between two ordinary rows of
+    // the same world (never next to a boss), and half the time a second one
+    // follows at least two rows further on.
     function addDuelRows(game, map, rng) {
       if (map.expandedDuelRowsInserted || mapHasProgress(map) || map.rows.length < 6) return false;
-      const originalLength = map.rows.length;
-      const count = rng() < 0.5 ? 1 : 2;
-      const early = [];
-      const late = [];
-      for (let insertion = 2; insertion <= originalLength - 2; insertion += 1) {
-        if (insertion <= Math.max(3, Math.floor(originalLength * 0.42))) early.push(insertion);
-        if (insertion >= Math.min(originalLength - 3, Math.ceil(originalLength * 0.55))) late.push(insertion);
-      }
-      const chosen = [];
-      if (early.length) chosen.push(early[Math.floor(rng() * early.length)]);
-      if (count === 2 && late.length) {
-        const candidates = late.filter(value => !chosen.includes(value) && Math.abs(value - chosen[0]) >= 2);
-        const pool = candidates.length ? candidates : late.filter(value => !chosen.includes(value));
-        if (pool.length) chosen.push(pool[Math.floor(rng() * pool.length)]);
+      const isBoss = row => Boolean(row && (row.kind === "boss" || (row.nodes || []).some(node => node && (node.type === "boss" || node.type === "final"))));
+      const worldOf = index => {
+        const row = map.rows[index];
+        if (row && Number.isFinite(Number(row.act))) return Number(row.act);
+        return map.rows.slice(0, index).filter(isBoss).length;
+      };
+      const slots = worldFloor => {
+        const found = [];
+        for (let insertion = 2; insertion <= map.rows.length - 1; insertion += 1) {
+          const before = map.rows[insertion - 1];
+          const after = map.rows[insertion];
+          if (!before || !after || isBoss(before) || isBoss(after)) continue;
+          if (before.kind === "duel" || after.kind === "duel") continue;
+          if (worldOf(insertion - 1) !== worldOf(insertion) || worldOf(insertion) < worldFloor) continue;
+          found.push(insertion);
+        }
+        return found;
+      };
+      let pool = slots(1);
+      if (!pool.length) pool = slots(0);
+      if (!pool.length) return false;
+      const chosen = [pool[Math.floor(rng() * pool.length)]];
+      if (rng() < 0.5) {
+        const second = pool.filter(value => Math.abs(value - chosen[0]) >= 2);
+        if (second.length) chosen.push(second[Math.floor(rng() * second.length)]);
       }
       chosen.sort((a, b) => b - a).forEach((insertion, index) => {
         const nextRow = map.rows[insertion];
@@ -610,7 +625,10 @@
       decorateChallengeNodes(game, map, rng);
       decorateEventNodes(map, rng);
       addMysteryNode(map, rng);
-      if (allowDuelInsertion && !mapHasProgress(map)) addDuelRows(game, map, rng);
+      if (allowDuelInsertion && !mapHasProgress(map) && addDuelRows(game, map, rng)) {
+        reindexRows(map);
+        safeSave(game);
+      }
       else if (!map.expandedDuelRowsInserted && mapHasProgress(map)) map.expandedDuelMigrationDeferred = true;
       reindexRows(map);
       annotateProgression(map);
@@ -634,15 +652,9 @@
         const tier = Math.max(1, Math.min(3, integer(node.expandedThemeRevealTier || node.expandedProgressionTier, 1)));
         return Object.assign({}, BASE_STAGE_META.theme, { description: themeDescription(tier) });
       }
-      if (node.type === "event") {
-        const definition = EVENT_BY_ID[node.expandedEventId];
-        if (definition) {
-          return Object.assign({}, BASE_STAGE_META.event, {
-            title: definition.title,
-            description: definition.options.map(option => option.summary).join(" Or ")
-          });
-        }
-      }
+      // Events stay a mystery on the map: which one it is, and what it
+      // offers, only show once the player arrives (renderEventScreen).
+      if (node.type === "event") return BASE_STAGE_META.event;
       if (node.type === "boss") {
         return {
           title: node.bossTitle || "Boss",
@@ -1372,42 +1384,76 @@
       return squareSum / Math.max(1, candidateSample.length) + worst * 0.04;
     }
 
+    // How each AI plays. It always reads its own rows but only sometimes
+    // takes the player's rows into account ("readsYourRows"). "commonWords"
+    // is how often a turn sticks to everyday words (the answer list) the way
+    // a person would, rather than anything in the dictionary; "smart" is how
+    // often a turn uses the scoring heuristic instead of any fitting word;
+    // "missesLastWord" is the chance of fumbling when one word is left; and
+    // "wildGuess" is the chance of ignoring the clues altogether; and once no
+    // more than "goesForIt" everyday words still fit, it plays one of them
+    // instead of a probing word. Tuned by playing real duels against a bot
+    // that reads every row and mulligans for missing letters: it wins about
+    // 95% / 80% / 60% of duels (easy / medium / hard); against the old AI,
+    // which knew the answer list and read every row, it won 55-65%.
+    const AI_STYLE = Object.freeze({
+      easy: Object.freeze({ readsYourRows: 0.25, commonWords: 0.3, smart: 0, missesLastWord: 0.45, wildGuess: 0.45, goesForIt: 0 }),
+      medium: Object.freeze({ readsYourRows: 0.4, commonWords: 0.45, smart: 0.2, missesLastWord: 0.35, wildGuess: 0.1, goesForIt: 2 }),
+      hard: Object.freeze({ readsYourRows: 0.6, commonWords: 0.5, smart: 1, missesLastWord: 0, wildGuess: 0, goesForIt: 4 })
+    });
+
+    // Words the AI never plays even though the dictionary accepts them.
+    // (Anything on the answer list is left alone: the game already uses it.)
+    const AI_NEVER_PLAYS = new Set((
+      "TITTY BOOBS DICKS DICKY PUSSY BITCH WHORE SLUTS CUNTS FUCKS SHITS SHITE TWATS PORNO PORNY PORNS "
+      + "NAZIS RAPED RAPES RAPER DILDO WANKS WANKY TURDS FARTS PENIS VULVA SKANK SPICK CHINK DYKES FAGGY "
+      + "FAGOT HOMOS PIMPS BUTTS ARSES ASSES SEXED SEXES BUTTY COOCH COONS GOOKS HONKY GIMPS SPAZZ LEZZY "
+      + "CRAPS CRAPY PISSY PUBES NUDES BIMBO BOINK HUMPS TESTE KNOBS MINGE SMUTS PERVS PERVY LUBES"
+    ).split(" "));
+
     function chooseAiWord(game, duel) {
-      const candidates = visibleCandidates(game, duel);
-      const legal = unguessedLegalWords(game, duel);
-      const fallback = legal.length ? legal : candidates;
-      if (!fallback.length) return null;
+      const style = AI_STYLE[duel.difficulty] || AI_STYLE.medium;
+      const roll = () => randomFor(game);
+      const pickFrom = words => words[Math.floor(roll() * words.length)] || words[0];
+      const history = duel.history || [];
+      const answers = new Set(game.secrets || []);
+      const legal = unguessedLegalWords(game, duel).filter(word => !AI_NEVER_PLAYS.has(word) || answers.has(word));
+      if (!legal.length) return visibleCandidates(game, duel)[0] || null;
+      if (style.wildGuess && roll() < style.wildGuess) return pickFrom(legal);
 
-      // Easy AI is sloppy: only about half its guesses fit the clues, and
-      // even with one word left it sometimes misses it.
-      if (duel.difficulty === "easy") {
-        const pool = candidates.length && randomFor(game) < (candidates.length === 1 ? 0.6 : 0.5) ? candidates : fallback;
-        return pool[Math.floor(randomFor(game) * pool.length)] || fallback[0];
+      const read = history.filter(entry => entry && (entry.actor === "ai" || roll() < style.readsYourRows));
+      let candidates = legal.filter(word => consistentWithVisibleHistory(word, read));
+      if (!candidates.length) candidates = legal;
+      const everyday = candidates.filter(word => answers.has(word));
+      if (everyday.length && (everyday.length <= style.goesForIt || (style.commonWords && roll() < style.commonWords))) {
+        candidates = everyday;
       }
-
-      if (candidates.length === 1) return candidates[0];
-
-      if (duel.difficulty === "hard" && !(duel.history || []).length) {
-        const opener = COMMON_OPENERS.find(word => game.guessSet.has(word) && !duel.history.some(entry => entry.word === word));
-        if (opener) return opener;
+      if (candidates.length === 1) {
+        if (style.missesLastWord && roll() < style.missesLastWord) {
+          const others = legal.filter(word => word !== candidates[0]);
+          if (others.length) return pickFrom(others);
+        }
+        return candidates[0];
       }
+      if (roll() >= style.smart) return pickFrom(candidates);
 
       if (duel.difficulty === "medium") {
-        const pool = evenlySample(candidates.length ? candidates : fallback, 550);
+        const pool = evenlySample(candidates, 400);
         let best = pool[0];
         let bestScore = -Infinity;
         pool.forEach(word => {
-          const score = mediumScore(word, evenlySample(candidates.length ? candidates : pool, 600));
+          const score = mediumScore(word, pool);
           if (score > bestScore) { best = word; bestScore = score; }
         });
         return best;
       }
 
-      const candidateSample = evenlySample(candidates.length ? candidates : fallback, 190);
-      let guesses = evenlySample(candidates.length ? candidates : fallback, 260);
-      COMMON_OPENERS.forEach(word => {
-        if (game.guessSet.has(word) && !duel.history.some(entry => entry.word === word) && !guesses.includes(word)) guesses.push(word);
-      });
+      if (!history.length) {
+        const opener = COMMON_OPENERS.find(word => game.guessSet.has(word));
+        if (opener) return opener;
+      }
+      const candidateSample = evenlySample(candidates, 190);
+      const guesses = evenlySample(candidates, 200);
       let best = guesses[0];
       let bestScore = Infinity;
       guesses.forEach(word => {
@@ -1423,7 +1469,9 @@
       if (!duel || duel.rewardGranted) return;
       const messages = [];
       const reward = duel.difficulty === "hard" ? 38 : duel.difficulty === "medium" ? 18 : 10;
-      game.state.score = Number(game.state.score || 0) + reward;
+      // Money, as the difficulty buttons promise ("Win +$18") -- it used to
+      // be added to the run's points by mistake.
+      game.state.cuddleMoney = Math.max(0, Number(game.state.cuddleMoney || 0)) + reward;
       messages.push(`+$${reward}.`);
       if (duel.difficulty === "hard") {
         const upgrade = grantRandomUpgrade(game);
@@ -1795,7 +1843,9 @@
 
     proto.enterBranchNode = function enterBranchNodeWithExpandedStages(nodeId) {
       if (!this.state || this.state.status !== MAP_STATUS) return { ok: false, error: "The map is not open." };
-      const map = prepareMap(this, false);
+      // Duel rows go in before the first step (addDuelRows refuses once the
+      // map has progress), so a brand-new run gets them on its first render.
+      const map = prepareMap(this, true);
       const parsed = parseNodeId(nodeId);
       let node = nodeAt(map, parsed.row, parsed.col);
       if (!node) return { ok: false, error: "That stop is not on the map." };
@@ -1862,6 +1912,35 @@
       return `<span class="umt-stop-medallion" style="--kind:${Worlds.KIND_COLORS[kind]}">${Worlds.iconSvg(kind)}</span>`;
     }
 
+    // The event's short entrance (about a second): the medallion spins in
+    // with a burst ring, the title rises, then the two deals. It plays once
+    // per event; a redraw part-way through picks the animation up where it
+    // is (--intro-elapsed) instead of starting it over. Tapping skips it.
+    const EVENT_INTRO_MS = 1300;
+    const eventIntro = { key: "", startedAt: 0 };
+
+    function eventIntroState(game, eventState) {
+      if (reducedMotion()) return null;
+      const key = `${game.state.runId || "run"}:${eventState.nodeId}:${eventState.eventId}`;
+      if (eventIntro.key !== key) {
+        eventIntro.key = key;
+        eventIntro.startedAt = Date.now();
+      }
+      const elapsed = Date.now() - eventIntro.startedAt;
+      return elapsed < EVENT_INTRO_MS ? elapsed : null;
+    }
+
+    function reducedMotion() {
+      return Boolean(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    }
+
+    document.addEventListener("pointerdown", (event) => {
+      const page = event.target && event.target.closest && event.target.closest(".umt-event-page.is-arriving");
+      if (!page) return;
+      eventIntro.startedAt = 0;
+      page.classList.remove("is-arriving");
+    }, true);
+
     function renderEventScreen(game, map) {
       const eventState = map.expandedEvent;
       const definition = eventState && EVENT_BY_ID[eventState.eventId];
@@ -1870,11 +1949,11 @@
         safeSave(game);
         return originalRenderMapScreen(game);
       }
-      const choices = definition.options.map(option => {
+      const choices = definition.options.map((option, index) => {
         const available = eventAvailability(game, option, eventState);
         const tag = option.id === "safe" ? "Safe" : option.id === "bold" ? "Bargain" : "Chance";
         return (
-          `<button type="button" class="cuddle-choice umt-event-choice is-${escapeHtml(option.id)}${available.ok ? "" : " is-disabled"}" `
+          `<button type="button" class="cuddle-choice umt-event-choice is-${escapeHtml(option.id)}${available.ok ? "" : " is-disabled"}" style="--i:${index}" `
           + `data-cuddle-campaign-action="expanded-event-choice" data-shop-item-id="${escapeHtml(option.id)}"${available.ok ? "" : " disabled"}>`
           + `<span class="umt-event-tag">${tag}</span>`
           + `<strong>${escapeHtml(option.title)}</strong>`
@@ -1883,12 +1962,19 @@
           + `</button>`
         );
       }).join("");
+      const elapsed = eventIntroState(game, eventState);
+      const arriving = elapsed !== null;
       return (
         `<div class="cuddle-shell umt-event-shell">`
         + shellHeader(game, "EVENT")
-        + `<main class="umt-event-page">`
-        + `<section class="umt-stop-panel">`
-        + `<div class="umt-stop-head">${stopMedallion("event")}<h2>${escapeHtml(definition.title)}</h2></div>`
+        + `<main class="umt-event-page${arriving ? " is-arriving" : ""}"${arriving ? ` style="--intro-elapsed:${elapsed}ms"` : ""}>`
+        + `<section class="umt-stop-panel umt-event-panel">`
+        + `<div class="umt-event-hero">`
+        + `<span class="umt-event-burst" aria-hidden="true"></span>`
+        + stopMedallion("event")
+        + `<span class="umt-event-eyebrow">Event on the road</span>`
+        + `<h2>${escapeHtml(definition.title)}</h2>`
+        + `</div>`
         + `<p class="umt-stop-lead">${escapeHtml(definition.flavor)}</p>`
         + `<div class="cuddle-choice-grid umt-event-choices">${choices}</div>`
         + `</section>`
@@ -2040,7 +2126,7 @@
       return (
         `<section class="umt-stop-panel umt-duel-choose">`
         + `<div class="umt-stop-head">${stopMedallion("duel")}<h2>Word Duel</h2></div>`
-        + `<p class="umt-stop-lead">Take turns guessing against the AI. The first to solve wins.</p>`
+        + `<p class="umt-stop-lead">Take turns guessing against the AI. The first to solve wins. If the AI solves first, the run ends.</p>`
         + `<div class="umt-duel-options">`
         + `<button type="button" class="umt-duel-option is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium"><b>Medium AI</b><span>${richText("Win +$18")}</span></button>`
         + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard"><b>Hard AI</b><span>${richText("Win +$38 and an upgrade")}</span></button>`
@@ -2113,7 +2199,7 @@
         row("event", "Event", "A choice: a safe reward, or a bigger one with a cost."),
         row("shop", "Shop", "Spend money on supplies for the next stages, the next boss, or the whole run."),
         row("upgrade", "Waystone", "Choose a free permanent upgrade."),
-        row("duel", "Duel", "Alternate guesses with an AI. The first to solve wins."),
+        row("duel", "Duel", "Alternate guesses with an AI. The first to solve wins; losing ends the run. One in every run, in world 2 or 3."),
         row("mystery", "Unknown", "Stays hidden until you step onto it."),
         row("boss", "Boss", "A boss Wordle guards the end of each world. Its reward is permanent."),
         row("final", "Final Boss", "The last guardian, at the top of the Eclipse Citadel.")
@@ -2148,7 +2234,9 @@
     }
 
     function renderMapWithExpandedStages(game) {
-      const map = prepareMap(game, false);
+      // startNew runs before the route exists (cuddle-branch-map.js builds it
+      // lazily), so this first render is where a new run's duels get placed.
+      const map = prepareMap(game, true);
       if (map && map.expandedEvent) return renderEventScreen(game, map);
       if (map && map.expandedDuel) return renderDuelScreen(game, map);
       const html = originalRenderMapScreen(game);
@@ -2308,6 +2396,10 @@
     // opens, says what it is, and the player enters it deliberately. The
     // reveal is not a free peek: it sticks, so backing out of the preview
     // leaves the stop face-up on the map rather than hidden again.
+    // Confirming an Unknown Stop commits to it: it is revealed and entered in
+    // the same step. (It used to stop after the reveal and offer Back, so a
+    // player could peek at it and then take another path.) Returns null so
+    // the ordinary confirm goes on to enter the now-revealed stop.
     function revealMysteryBeforeEntering(game, itemId) {
       if (!game || !game.state || game.state.status !== MAP_STATUS) return null;
       const map = ensureMap(game);
@@ -2320,15 +2412,14 @@
       revealMystery(node);
       const meta = metaForNode(node, game);
       game.state.lastMessage = `Unknown Stop revealed: ${meta.title}.`;
-      safeSave(game);
-      return { ok: true, message: game.state.lastMessage };
+      return null;
     }
 
     function handleExpandedAction(game, action, itemId) {
       switch (action) {
         case "confirm-branch-node":
-          // Returns null for every non-mystery stop, which falls through to
-          // the ordinary confirm below and enters as before.
+          // Always null: every stop, Unknown ones included, falls through to
+          // the ordinary confirm below and is entered.
           return revealMysteryBeforeEntering(game, itemId);
         case "expanded-help-open":
           legendOpen = true;

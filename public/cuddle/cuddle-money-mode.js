@@ -693,16 +693,35 @@
     return "";
   }
 
+  // Rewards for solving the stage, not for what the solving guess itself
+  // did. The cash-out shows them in the "Solving bonus" box under the rows
+  // rather than piled onto the last row.
+  var SOLVE_BONUS_FIELDS = [
+    ["earlyBonus", "Solved early", "unused guesses"],
+    ["earlySolveBonus", "Solved within the window", ""],
+    ["cuddleSolveBonus", "Solve bonus", ""],
+    ["mulliganBonus", "Unused mulligans", ""],
+    ["challengeBonus", "Challenge cleared", ""]
+  ];
+
+  function solveBonusLines(entry) {
+    if (!entry) return [];
+    return SOLVE_BONUS_FIELDS
+      .map(function line(field) {
+        return { label: field[1], detail: field[2], amount: Math.round(asNumber(entry[field[0]], 0)) };
+      })
+      .filter(function keep(line) { return line.amount; });
+  }
+
+  // What the guess itself earned: its tiles, a quest it completed, and any
+  // penalty it took.
   function rowMoney(entry) {
     if (!entry) return 0;
     return asNumber(entry.scoreDelta, 0)
       + asNumber(entry.questBonus, 0)
-      + asNumber(entry.earlyBonus, 0)
-      + asNumber(entry.earlySolveBonus, 0)
-      + asNumber(entry.mulliganBonus, 0)
+      + asNumber(entry.questFinalBonus, 0)
       + asNumber(entry.cuddleQuestBonus, 0)
-      + asNumber(entry.cuddleSolveBonus, 0)
-      + asNumber(entry.challengeBonus, 0)
+      + asNumber(entry.coachDoubleQuestBonus, 0)
       - asNumber(entry.questTrialPenalty, 0)
       - asNumber(entry.ratchetQuestPenalty, 0)
       - asNumber(entry.latePenalty, 0);
@@ -736,15 +755,10 @@
       var value = Math.round(asNumber(amount, 0));
       if (value) lines.push({ label: label, detail: detail || "", amount: value });
     };
-    extra(entry.earlyBonus, "Solved early", "unused guesses");
-    extra(entry.earlySolveBonus, "Solved within the window");
     extra(entry.questBonus, "Quest complete");
     extra(entry.questFinalBonus, "Final quest bonus");
     extra(entry.cuddleQuestBonus, "Quest bonus");
-    extra(entry.cuddleSolveBonus, "Solve bonus");
     extra(entry.coachDoubleQuestBonus, "Double quest bonus");
-    extra(entry.mulliganBonus, "Unused mulligans");
-    extra(entry.challengeBonus, "Challenge cleared");
     extra(-asNumber(entry.questTrialPenalty, 0), "Quest trial missed");
     extra(-asNumber(entry.ratchetQuestPenalty, 0), "Boss burden");
     extra(-asNumber(entry.latePenalty, 0), "Too many guesses");
@@ -1106,22 +1120,35 @@
   // here and only here. Falls back to one lump figure (payload.stageBonus,
   // the round's total minus what the per-guess rows account for) only for
   // a reward source that predates lastPayoutLines.
+  // Everything the stage paid for being solved, below the rows: the solve
+  // rewards recorded on the guesses (solved early / within the window,
+  // unused mulligans...), then the stage-level extras the rebalance layer
+  // itemizes (challenge cleared, combos...), then anything left over.
   function stageBonusMarkup(game, payload) {
     var custom = game && game.state && game.state.cuddleRebalanceV5;
-    var lines = Array.isArray(custom && custom.lastPayoutLines)
+    var history = game && game.state && Array.isArray(game.state.history) ? game.state.history : [];
+    var solveLines = [];
+    history.forEach(function collect(entry) {
+      solveBonusLines(entry).forEach(function merge(line) {
+        var existing = solveLines.find(function same(item) { return item.label === line.label; });
+        if (existing) existing.amount += line.amount;
+        else solveLines.push({ label: line.label, amount: line.amount });
+      });
+    });
+    var stageLines = Array.isArray(custom && custom.lastPayoutLines)
       ? custom.lastPayoutLines
           .map(function normalize(line) {
             return { label: String(line && line.label || ""), amount: Math.round(asNumber(line && line.amount, 0)) };
           })
           .filter(function keep(line) { return line.label && line.amount; })
       : [];
-    if (!lines.length) {
-      var fallback = Math.round(asNumber(payload.stageBonus, 0));
-      if (!fallback) return "";
-      lines = [{ label: "Other stage rewards", amount: fallback }];
-    }
+    var lines = solveLines.concat(stageLines);
+    var listed = lines.reduce(function sum(total, line) { return total + line.amount; }, 0);
+    var remainder = Math.round(asNumber(payload.stageBonus, 0)) - listed;
+    if (remainder && !stageLines.length) lines.push({ label: "Other stage rewards", amount: remainder });
+    if (!lines.length) return "";
     return "<div class=\"umt-stage-bonus-section\">"
-      + "<div class=\"umt-stage-bonus-title\">Stage bonus</div>"
+      + "<div class=\"umt-stage-bonus-title\">Solving bonus</div>"
       + lines.map(function row(line) {
           return "<div class=\"umt-stage-bonus-line\"><span>" + escapeHtml(line.label) + "</span><strong>" + formatPointsDelta(line.amount) + "</strong></div>";
         }).join("")
@@ -1329,6 +1356,7 @@
     // to add its unused-row bonus rows) can keep the tap-to-open breakdown
     // working instead of leaving rows the cash-out screen can't explain.
     rowBreakdown: function payoutRowBreakdown(entry) { return rowBreakdown(entry); },
+    rowMoney: function payoutRowMoney(entry) { return rowMoney(entry); },
     acceptChallenge: function acceptCurrentChallenge() { return activeGame ? acceptChallenge(activeGame) : { ok: false }; },
     declineChallenge: function declineCurrentChallenge() { return activeGame ? declineChallenge(activeGame) : { ok: false }; },
     // Called from cuddle-campaign.js's insertMap while stitching together

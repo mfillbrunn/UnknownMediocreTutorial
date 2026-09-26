@@ -3917,7 +3917,16 @@
     return { ok: true, synergies: unlocked.map(item => item.id) };
   };
 
+  // A waystone (a map stop that hands out one upgrade) is a take-it-or-
+  // leave-it offer: no refreshing. The flag is set when it opens and cleared
+  // when the pick is made (cuddle-branch-map.js).
+  prototype.isWaystoneUpgrade = function isWaystoneUpgrade() {
+    const state = this.state;
+    return Boolean(state && state.status === "upgrade" && state.waystoneOffer);
+  };
+
   prototype.getUpgradeRefreshCost = function getUpgradeRefreshCost() {
+    if (this.isWaystoneUpgrade()) return null;
     const state = ensureBalanceState(this);
     const used = state ? state.upgradeRefreshesUsed : 0;
     return used === 0 ? 0 : used * 2 + 1;
@@ -3926,6 +3935,9 @@
   prototype.refreshUpgradeChoices = function refreshUpgradeChoices() {
     if (this.state?.status !== "upgrade") {
       return { ok: false, error: "No between-round reward choices are open." };
+    }
+    if (this.isWaystoneUpgrade()) {
+      return { ok: false, error: "A waystone's offer can't be refreshed." };
     }
     const state = ensureBalanceState(this);
     const cost = this.getUpgradeRefreshCost();

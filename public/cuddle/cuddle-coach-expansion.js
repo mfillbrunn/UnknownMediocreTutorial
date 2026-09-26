@@ -926,21 +926,24 @@
     return { ok: true, message: game.state.lastMessage };
   }
 
+  // Same split as the money layer's rowMoney: a row shows what that guess
+  // earned; solve rewards go to the cash-out's "Solving bonus" box. (The
+  // unused-row money is paid as its own BONUS rows here.)
   function rowMoneyWithoutUnusedBonus(entry) {
     if (!entry) return 0;
+    if (typeof window.CuddleMoneyMode?.rowMoney === "function") {
+      return window.CuddleMoneyMode.rowMoney(entry);
+    }
     return finite(entry.scoreDelta, 0)
       + finite(entry.questBonus, 0)
       + finite(entry.questFinalBonus, 0)
-      + finite(entry.earlySolveBonus, 0)
-      + finite(entry.mulliganBonus, 0)
       + finite(entry.cuddleQuestBonus, 0)
-      + finite(entry.cuddleSolveBonus, 0)
-      + finite(entry.challengeBonus, 0)
       + finite(entry.coachDoubleQuestBonus, 0)
       - finite(entry.questTrialPenalty, 0)
       - finite(entry.ratchetQuestPenalty, 0)
       - finite(entry.latePenalty, 0);
   }
+
 
   // Each row carries the labelled lines behind its figure so the cash-out
   // screen's tap-to-open breakdown still adds up after this rebuild.
