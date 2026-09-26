@@ -263,7 +263,13 @@
       appendRound(round.history, round.setter, idx, false);
     });
 
-    loadRewards(state.powerChoice?.resolutionLog);
+    // Same double-count as the history note below: on the summary screen
+    // the round that just ended is already archived (its rewards
+    // included, as round.rewards) and was rendered by the loop above,
+    // while state.powerChoice still holds its resolutionLog until the
+    // next round starts -- loading it too logged every reward from that
+    // round a second time at the bottom of the log.
+    loadRewards(state.phase === "gameOver" ? [] : state.powerChoice?.resolutionLog);
 
     // endGame() archives the just-finished round into state.matchRounds
     // (the loop above) but doesn't clear state.history until the player

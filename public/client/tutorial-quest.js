@@ -92,6 +92,35 @@ function questPromptForGuess() {
   window.TutorialCore.setWaiting({ label: "SUBMIT APPLE" });
 }
 
+// Listened for on the document (capture phase) rather than on the
+// Highlight button itself: the button's own pointerup handler (see
+// power-choice-mode.js's bindGuide) re-renders the quest card, replacing
+// the button before the browser dispatches the click that follows, and
+// any draft change re-renders it too. A listener on the button therefore
+// never fired, leaving this step stuck on "Tap Highlight" for good.
+let questHighlightTapStep = null;
+let questHighlightTapBound = false;
+
+function armQuestHighlightTap(api, step) {
+  questHighlightTapStep = step;
+  if (questHighlightTapBound) return;
+  questHighlightTapBound = true;
+  const onTap = event => {
+    if (questHighlightTapStep == null) return;
+    if (!event.target?.closest?.(".pc-guide-highlight-btn")) return;
+    if (api.getStep() !== questHighlightTapStep) return;
+    const armedStep = questHighlightTapStep;
+    questHighlightTapStep = null;
+    api.clearWaiting();
+    api.setStep(armedStep + 1);
+    requestAnimationFrame(() => {
+      window.tutorialSteps?.(window.state, window.myRole);
+    });
+  };
+  document.addEventListener("pointerup", onTap, true);
+  document.addEventListener("click", onTap, true);
+}
+
 function finishQuestTutorial(api, text, current = QUEST_TUTORIAL_TOTAL) {
   questSetRewardGuide(false);
   questTutorialFinished = true;
@@ -211,18 +240,7 @@ function runQuestTutorial(state, role) {
       type: "questHighlight",
       label: "TAP HIGHLIGHT"
     });
-    if (highlightButton.dataset.tutorialQuestHighlightArmed !== "true") {
-      highlightButton.dataset.tutorialQuestHighlightArmed = "true";
-      const armedStep = step;
-      highlightButton.addEventListener("click", () => {
-        if (api.getStep() !== armedStep) return;
-        api.clearWaiting();
-        api.setStep(armedStep + 1);
-        requestAnimationFrame(() => {
-          window.tutorialSteps?.(window.state, window.myRole);
-        });
-      }, { once: true });
-    }
+    armQuestHighlightTap(api, step);
     return;
   }
 

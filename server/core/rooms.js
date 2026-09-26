@@ -329,19 +329,27 @@ function cleanupEmptyRooms() {
   }
 }
 
+// Only a room Quick Play itself opened (see quickJoin), still sitting in
+// its lobby with one waiting human and no AI, is fair game for a stranger.
+// Matching on "exactly one connected human" alone used to also pick up
+// someone's match against the AI (the AI isn't counted), a game already
+// in progress whose opponent had left, a tutorial or Daily Challenge room,
+// and an invite-link room held for a friend -- dropping the Quick Play
+// player into it as an extra, roleless participant.
 function findLastOpenRoom() {
   const roomIds = Object.keys(rooms);
 
   for (let i = roomIds.length - 1; i >= 0; i--) {
     const roomId = roomIds[i];
     const room = rooms[roomId];
+    if (!room || room.status !== "alive" || !room.quickJoinOpen) continue;
+    if (room.state?.phase !== "lobby") continue;
 
-    if (
-      room &&
-      Object.values(room.playersByUserId || {}).filter(
-        (p) => p.connected && !p.isAI
-      ).length === 1
-    ) {
+    const players = Object.values(room.playersByUserId || {});
+    if (players.some((p) => p.isAI)) continue;
+
+    const humans = players.filter((p) => !p.isAI);
+    if (humans.length === 1 && humans[0].connected) {
       return roomId;
     }
   }
