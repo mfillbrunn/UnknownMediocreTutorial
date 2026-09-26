@@ -1384,42 +1384,76 @@
       return squareSum / Math.max(1, candidateSample.length) + worst * 0.04;
     }
 
+    // How each AI plays. It always reads its own rows but only sometimes
+    // takes the player's rows into account ("readsYourRows"). "commonWords"
+    // is how often a turn sticks to everyday words (the answer list) the way
+    // a person would, rather than anything in the dictionary; "smart" is how
+    // often a turn uses the scoring heuristic instead of any fitting word;
+    // "missesLastWord" is the chance of fumbling when one word is left; and
+    // "wildGuess" is the chance of ignoring the clues altogether; and once no
+    // more than "goesForIt" everyday words still fit, it plays one of them
+    // instead of a probing word. Tuned by playing real duels against a bot
+    // that reads every row and mulligans for missing letters: it wins about
+    // 95% / 80% / 60% of duels (easy / medium / hard); against the old AI,
+    // which knew the answer list and read every row, it won 55-65%.
+    const AI_STYLE = Object.freeze({
+      easy: Object.freeze({ readsYourRows: 0.25, commonWords: 0.3, smart: 0, missesLastWord: 0.45, wildGuess: 0.45, goesForIt: 0 }),
+      medium: Object.freeze({ readsYourRows: 0.4, commonWords: 0.45, smart: 0.2, missesLastWord: 0.35, wildGuess: 0.1, goesForIt: 2 }),
+      hard: Object.freeze({ readsYourRows: 0.6, commonWords: 0.5, smart: 1, missesLastWord: 0, wildGuess: 0, goesForIt: 4 })
+    });
+
+    // Words the AI never plays even though the dictionary accepts them.
+    // (Anything on the answer list is left alone: the game already uses it.)
+    const AI_NEVER_PLAYS = new Set((
+      "TITTY BOOBS DICKS DICKY PUSSY BITCH WHORE SLUTS CUNTS FUCKS SHITS SHITE TWATS PORNO PORNY PORNS "
+      + "NAZIS RAPED RAPES RAPER DILDO WANKS WANKY TURDS FARTS PENIS VULVA SKANK SPICK CHINK DYKES FAGGY "
+      + "FAGOT HOMOS PIMPS BUTTS ARSES ASSES SEXED SEXES BUTTY COOCH COONS GOOKS HONKY GIMPS SPAZZ LEZZY "
+      + "CRAPS CRAPY PISSY PUBES NUDES BIMBO BOINK HUMPS TESTE KNOBS MINGE SMUTS PERVS PERVY LUBES"
+    ).split(" "));
+
     function chooseAiWord(game, duel) {
-      const candidates = visibleCandidates(game, duel);
-      const legal = unguessedLegalWords(game, duel);
-      const fallback = legal.length ? legal : candidates;
-      if (!fallback.length) return null;
+      const style = AI_STYLE[duel.difficulty] || AI_STYLE.medium;
+      const roll = () => randomFor(game);
+      const pickFrom = words => words[Math.floor(roll() * words.length)] || words[0];
+      const history = duel.history || [];
+      const answers = new Set(game.secrets || []);
+      const legal = unguessedLegalWords(game, duel).filter(word => !AI_NEVER_PLAYS.has(word) || answers.has(word));
+      if (!legal.length) return visibleCandidates(game, duel)[0] || null;
+      if (style.wildGuess && roll() < style.wildGuess) return pickFrom(legal);
 
-      // Easy AI is sloppy: only about half its guesses fit the clues, and
-      // even with one word left it sometimes misses it.
-      if (duel.difficulty === "easy") {
-        const pool = candidates.length && randomFor(game) < (candidates.length === 1 ? 0.6 : 0.5) ? candidates : fallback;
-        return pool[Math.floor(randomFor(game) * pool.length)] || fallback[0];
+      const read = history.filter(entry => entry && (entry.actor === "ai" || roll() < style.readsYourRows));
+      let candidates = legal.filter(word => consistentWithVisibleHistory(word, read));
+      if (!candidates.length) candidates = legal;
+      const everyday = candidates.filter(word => answers.has(word));
+      if (everyday.length && (everyday.length <= style.goesForIt || (style.commonWords && roll() < style.commonWords))) {
+        candidates = everyday;
       }
-
-      if (candidates.length === 1) return candidates[0];
-
-      if (duel.difficulty === "hard" && !(duel.history || []).length) {
-        const opener = COMMON_OPENERS.find(word => game.guessSet.has(word) && !duel.history.some(entry => entry.word === word));
-        if (opener) return opener;
+      if (candidates.length === 1) {
+        if (style.missesLastWord && roll() < style.missesLastWord) {
+          const others = legal.filter(word => word !== candidates[0]);
+          if (others.length) return pickFrom(others);
+        }
+        return candidates[0];
       }
+      if (roll() >= style.smart) return pickFrom(candidates);
 
       if (duel.difficulty === "medium") {
-        const pool = evenlySample(candidates.length ? candidates : fallback, 550);
+        const pool = evenlySample(candidates, 400);
         let best = pool[0];
         let bestScore = -Infinity;
         pool.forEach(word => {
-          const score = mediumScore(word, evenlySample(candidates.length ? candidates : pool, 600));
+          const score = mediumScore(word, pool);
           if (score > bestScore) { best = word; bestScore = score; }
         });
         return best;
       }
 
-      const candidateSample = evenlySample(candidates.length ? candidates : fallback, 190);
-      let guesses = evenlySample(candidates.length ? candidates : fallback, 260);
-      COMMON_OPENERS.forEach(word => {
-        if (game.guessSet.has(word) && !duel.history.some(entry => entry.word === word) && !guesses.includes(word)) guesses.push(word);
-      });
+      if (!history.length) {
+        const opener = COMMON_OPENERS.find(word => game.guessSet.has(word));
+        if (opener) return opener;
+      }
+      const candidateSample = evenlySample(candidates, 190);
+      const guesses = evenlySample(candidates, 200);
       let best = guesses[0];
       let bestScore = Infinity;
       guesses.forEach(word => {
@@ -1435,7 +1469,9 @@
       if (!duel || duel.rewardGranted) return;
       const messages = [];
       const reward = duel.difficulty === "hard" ? 38 : duel.difficulty === "medium" ? 18 : 10;
-      game.state.score = Number(game.state.score || 0) + reward;
+      // Money, as the difficulty buttons promise ("Win +$18") -- it used to
+      // be added to the run's points by mistake.
+      game.state.cuddleMoney = Math.max(0, Number(game.state.cuddleMoney || 0)) + reward;
       messages.push(`+$${reward}.`);
       if (duel.difficulty === "hard") {
         const upgrade = grantRandomUpgrade(game);

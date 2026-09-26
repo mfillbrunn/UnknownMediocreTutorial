@@ -2306,6 +2306,9 @@
   }
 
   function fallbackPayoutAdjustment(state) {
+    // A Word Duel is not a solved word stage: its "won" phase used to read as
+    // one here and trim the Duel's prize.
+    if (state?.branchMap?.expandedDuel) return;
     const data = customState(state);
     if (!data?.stage || data.stage.payoutAdjusted || !isSolved(state)) return;
     const node = currentNode(state);
