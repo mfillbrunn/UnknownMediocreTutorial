@@ -245,6 +245,20 @@ function pickAISecret(
 
   if (!feasibleSecrets.length) return state.secret;
 
+  // feasibleSecrets is the guesser's view, which Count Only, Fake Feedback,
+  // Feedback Lie and friends make looser than (or different from) the real
+  // feedback. checkSecret only accepts a switch that is consistent with the
+  // TRUE feedback, so anything this function hands back has to pass that
+  // too -- otherwise the pick is rejected and the AI sits on its turn until
+  // a retry happens to keep. The guesser's view still drives the ranking.
+  const legalSecrets = new Set(
+    feasibleSecrets.filter(secret =>
+      isConsistentWithHistory(state.history, secret, state)
+    )
+  );
+  if (!legalSecrets.size) return state.secret;
+  const isLegal = secret => legalSecrets.has(secret);
+
   // Easy/Medium's real weakness, distinct from `randomness` above (which
   // just stalls on the current secret): a switch that ignores which
   // candidate actually dodges the guesser best. Without this, `randomness`
@@ -255,7 +269,8 @@ function pickAISecret(
   // even a shallow evaluated sample tends to contain a decent switch.
   if (Math.random() < randomSecretProb) {
     state.aiSecretChangeCount++;
-    return feasibleSecrets[Math.floor(Math.random() * feasibleSecrets.length)];
+    const legalList = [...legalSecrets];
+    return legalList[Math.floor(Math.random() * legalList.length)];
   }
 
   // computeRemainingForSecret rescans the pool it's given for EVERY
@@ -291,6 +306,7 @@ function pickAISecret(
   // the WORSE its defense measured, on par with a setter that never
   // switches secrets at all.)
   const stallCandidates = samplePool
+    .filter(isLegal)
     .slice(0, Math.min(maxSecretsEvaluated, samplePool.length))
     .map(secret => {
       const remaining =
@@ -338,7 +354,7 @@ function pickAISecret(
           delta: score - currentColorScore
         };
       })
-      .filter(x => x.delta > 0);
+      .filter(x => x.delta > 0 && isLegal(x.secret));
 
     if (colorCandidates.length) {
       const overlapCandidates = colorCandidates.filter(

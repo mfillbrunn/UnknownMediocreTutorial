@@ -78,6 +78,17 @@ if (!Array.isArray(ALLOWED_SECRETS) || !ALLOWED_SECRETS.length) {
   ALLOWED_SECRETS = WORDS.secrets.map((r) => r.word);
 }
 global.ALLOWED_SECRETS = ALLOWED_SECRETS;
+// The AI draws its secrets (and its guesser's candidate set) from
+// WORDS.secrets, but checkSecret validates against ALLOWED_SECRETS --
+// and the tagged list carries ~900 words the secret list doesn't (plurals,
+// proper nouns). Every such pick was rejected, leaving the AI stuck on its
+// turn until the 4s watchdog happened to roll a legal word. Keep the AI's
+// pool to words it is actually allowed to use.
+{
+  const allowedSecretSet = new Set(ALLOWED_SECRETS);
+  const aiSecrets = WORDS.secrets.filter((r) => allowedSecretSet.has(r.word));
+  if (aiSecrets.length) WORDS.secrets = aiSecrets;
+}
 app.get("/api/allowed-secrets", (req, res) => res.json(ALLOWED_SECRETS));
 
 app.get("/api/allowed-guesses", (req, res) => res.json(ALLOWED_GUESSES));

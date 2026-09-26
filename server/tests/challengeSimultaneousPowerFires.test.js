@@ -116,6 +116,15 @@ function run() {
     entry.fbGuesser,
     "the setter's real feedback must differ from what the guesser is shown"
   );
+  assert.ok(
+    (entry.powerEvents || []).some(e => e.id === "countOnly"),
+    "the opening use must be logged on the opening entry itself"
+  );
+  assert.deepStrictEqual(
+    state._pendingPowerEvents,
+    [],
+    "nothing may stay queued to be logged against the next guess instead"
+  );
 
   console.log(
     "PASS challengeSimultaneousPowerFires: a Challenge's forced power now actually activates and masks feedback on round one's opening simultaneous-phase move, not just from turn two onward"

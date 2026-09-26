@@ -18,6 +18,7 @@
 "use strict";
 
 const { COUNTER_ACHIEVEMENTS } = require("./definitions");
+const { isGuestUserId } = require("../../utils/guestUsers");
 
 class AchievementService {
   constructor(supabase) {
@@ -105,7 +106,9 @@ class AchievementService {
   }
 
   async _recordCounterEvent({ userId, eventId, eventType, counterKey, incrementBy = 1, payload }) {
-    if (!this.supabase || !userId) return;
+    // Guests have no account row to hang achievements on (see
+    // utils/guestUsers.js) -- every write for them could only fail.
+    if (!this.supabase || !userId || isGuestUserId(userId)) return;
     const reserved = await this._reserveEvent(userId, eventId, eventType, payload);
     if (!reserved) return;
 

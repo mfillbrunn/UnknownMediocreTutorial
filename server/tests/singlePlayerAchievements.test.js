@@ -139,12 +139,23 @@ async function run() {
   mpCounter = supabase3._tables.user_achievement_counters.get("u3:multiplayer_matches_completed");
   assert.strictEqual(mpCounter.counter_value, 2, "u3's counter must be unaffected by u4's event");
 
+  // Guests have no account, so nothing may be written for them at all.
+  const guestId = "guest-8f1c2a4e-0000-4000-8000-000000000000";
+  await service3.onMultiplayerMatchCompleted({ userId: guestId, matchId: "match-3" });
+  await service3.onPowerUsed({ userId: guestId, isCampaign: false });
+  for (const [name, rows] of Object.entries(supabase3._tables)) {
+    if (name === "achievement_definitions") continue;
+    for (const row of rows.values()) {
+      assert.notStrictEqual(row.user_id, guestId, `a guest must never get a ${name} row`);
+    }
+  }
+
   // ---- 4. A storage failure (no supabase client) must fail closed --
   // never throw.
   const offlineService = new AchievementService(null);
   await assert.doesNotReject(() => offlineService.onPowerUsed({ userId: "u5", isCampaign: false }));
 
-  console.log("PASS singlePlayerAchievements: counters accumulate and unlock at target, duplicate events are idempotent per user, and storage failure never throws");
+  console.log("PASS singlePlayerAchievements: counters accumulate and unlock at target, duplicate events are idempotent per user, guests get no rows, and storage failure never throws");
 }
 
 module.exports = { run };

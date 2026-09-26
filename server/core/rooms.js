@@ -137,16 +137,23 @@ function removePlayerState(room, userId) {
 }
 
 // Who is actually on the clock right now. During the simultaneous opening
-// both players are, so neither is billed -- only clearly-one-sided waits
-// count toward a player's total.
-function activeClockUser(state) {
-  if (!state || state.phase !== "normal") return null;
-  return state.turn || null;
+// both players are, each until they submit their own move (the setter's
+// secret, the guesser's opening guess); after that it's whoever's turn it is.
+function activeClockUsers(state) {
+  if (!state) return [];
+  if (state.phase === "simultaneous") {
+    return [
+      !state.simultaneousSecretSubmitted && state.setter,
+      !state.simultaneousGuessSubmitted && state.guesser
+    ].filter(Boolean);
+  }
+  if (state.phase !== "normal") return [];
+  return state.turn ? [state.turn] : [];
 }
 
 /*
  * Running total of how long each player has spent on their own turns,
- * banked whenever the active player changes. There was no per-player
+ * banked whenever a player goes off the clock. There was no per-player
  * timing before this: state.timeRemaining only exists when the optional
  * chess clock is switched on, so most matches had nothing to report on
  * the summary screen. Accumulating here (rather than in each phase
@@ -156,23 +163,30 @@ function activeClockUser(state) {
 function bankTurnTime(state) {
   if (!state) return;
   const now = Date.now();
-  const current = activeClockUser(state);
-  const clock = state._turnClock;
+  const active = new Set(activeClockUsers(state));
+  const clocks = state._turnClocks || {};
+  const next = {};
 
-  if (clock && clock.userId && clock.userId !== current) {
-    const spent = Math.max(0, now - (Number(clock.at) || now));
+  for (const [userId, at] of Object.entries(clocks)) {
+    if (active.has(userId)) {
+      next[userId] = at;
+      continue;
+    }
+    const spent = Math.max(0, now - (Number(at) || now));
     // Ignore absurd gaps (server restart, a room left idle overnight) so a
     // single stale timestamp can't dominate the total.
     if (spent < 30 * 60 * 1000) {
       state.timeSpentMs ||= {};
-      state.timeSpentMs[clock.userId] =
-        (Number(state.timeSpentMs[clock.userId]) || 0) + spent;
+      state.timeSpentMs[userId] =
+        (Number(state.timeSpentMs[userId]) || 0) + spent;
     }
   }
 
-  if (!clock || clock.userId !== current) {
-    state._turnClock = current ? { userId: current, at: now } : null;
+  for (const userId of active) {
+    if (!(userId in next)) next[userId] = now;
   }
+
+  state._turnClocks = next;
 }
 
 function emitRoomState(roomId, room, io) {
@@ -329,19 +343,27 @@ function cleanupEmptyRooms() {
   }
 }
 
+// Only a room Quick Play itself opened (see quickJoin), still sitting in
+// its lobby with one waiting human and no AI, is fair game for a stranger.
+// Matching on "exactly one connected human" alone used to also pick up
+// someone's match against the AI (the AI isn't counted), a game already
+// in progress whose opponent had left, a tutorial or Daily Challenge room,
+// and an invite-link room held for a friend -- dropping the Quick Play
+// player into it as an extra, roleless participant.
 function findLastOpenRoom() {
   const roomIds = Object.keys(rooms);
 
   for (let i = roomIds.length - 1; i >= 0; i--) {
     const roomId = roomIds[i];
     const room = rooms[roomId];
+    if (!room || room.status !== "alive" || !room.quickJoinOpen) continue;
+    if (room.state?.phase !== "lobby") continue;
 
-    if (
-      room &&
-      Object.values(room.playersByUserId || {}).filter(
-        (p) => p.connected && !p.isAI
-      ).length === 1
-    ) {
+    const players = Object.values(room.playersByUserId || {});
+    if (players.some((p) => p.isAI)) continue;
+
+    const humans = players.filter((p) => !p.isAI);
+    if (humans.length === 1 && humans[0].connected) {
       return roomId;
     }
   }
@@ -534,5 +556,6 @@ module.exports = {
   clearAllReady,
   syncTurnOwners,
   removePlayerState,
+  bankTurnTime,
   emitRoomState
 };

@@ -622,6 +622,7 @@ const results = [
 
       if (!roomId) {
         roomId = createRoom(socket, userId);
+        rooms[roomId].quickJoinOpen = true;
         createdNewRoom = true;
       }
 

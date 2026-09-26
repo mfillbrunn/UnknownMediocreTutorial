@@ -815,7 +815,16 @@ function showTutorial(text, opts = {}) {
 
   tutorialLastStepKey = nextKey;
 
-  if (isNewStep || wasHidden) {
+  // New text that can only be moved past from inside the bubble (Next /
+  // Finish) must not stay tucked away just because the player minimized
+  // the previous message under the same sub-step -- e.g. the Quest
+  // tutorial's "MET" result, which reuses the typing step's key while
+  // the reward cards wait, locked, for its Next.
+  const needsBubbleAction =
+    (opts.mode || tutorialContinueMode) !== "hide" &&
+    textEl.textContent !== text;
+
+  if (isNewStep || wasHidden || needsBubbleAction) {
     tutorialCollapsed = false;
     bubble.classList.remove("collapsed");
   }
@@ -2413,9 +2422,9 @@ window.endTutorial = endTutorial;
 const TUTORIAL_DONE_COPY = {
   quest: `Basics complete! Continue with Quests, or head back to the menu.`,
   star: `Quest tutorial complete! Continue with Stars, or head back to the menu.`,
-  advanced: `Star tutorial complete! Continue with Extra Tools, or head back to the menu.`,
-  tutorial: `Extra Tools complete! Return to Basics, or head back to the menu.`,
-  none: `Extra Tools complete! That's the last of them - head back to the menu.`
+  advanced: `Star tutorial complete! Continue with Advanced UI, or head back to the menu.`,
+  tutorial: `Advanced UI complete! Return to Basics, or head back to the menu.`,
+  none: `Advanced UI complete! That's the last of them - head back to the menu.`
 };
 
 // Maps state.tutorialStage (or its absence) to the same key each
