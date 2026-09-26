@@ -2452,7 +2452,10 @@
   function repairUpgradeChoices(game, choices) {
     if (!Array.isArray(choices)) return choices;
     let repaired = choices.filter((item) => !REMOVED_NORMAL_REWARDS.has(normalizedId(item)));
-    const hasAid = repaired.some((item) => SOLVING_AID_IDS.has(normalizedId(item)));
+    // A Legendary offer (cuddle-economy-rarity-v8.js) is left whole: swapping
+    // a solving aid into it would push one of the three Legendaries out.
+    const legendaryOffer = repaired.length > 0 && repaired.every((item) => item && item.__cuddleV8OfferTier === "legendary");
+    const hasAid = legendaryOffer || repaired.some((item) => SOLVING_AID_IDS.has(normalizedId(item)));
     if (!hasAid) {
       const excluded = refreshExclusions.get(game) || new Set();
       const available = availableSolvingRewards(game).filter((reward) => !excluded.has(reward.id));
@@ -2748,6 +2751,9 @@
       for (const element of document.querySelectorAll(selector)) hide(element);
     }
     for (const button of document.querySelectorAll("button")) {
+      // Reward cards that offer Golden Compass (a Legendary pick, a boss
+      // reward) are not the old compass control -- leave them visible.
+      if (button.matches(".cuddle-choice, [data-upgrade-key], [data-reward-id], [data-boss-id], [data-shop-item-id]")) continue;
       if (/golden compass|use compass/i.test(button.textContent || "")) hide(button);
     }
   }
