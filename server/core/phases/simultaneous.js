@@ -54,6 +54,15 @@ function resolveSimultaneousRound(room, state, roomId, context) {
   // before it's cleared below, same ordering finalizeFeedback.js uses.
   powerEngine.postScore(state, entry, roomId, io);
 
+  // Same drain finalizeFeedback.js does: a challenge's forced opening
+  // power queues its event before this entry exists. Left in the queue it
+  // was logged against the NEXT guess instead, next to that turn's own
+  // use -- "Opp used Counts Only" twice on guess 2, never on guess 1.
+  entry.powerEvents = Array.isArray(state._pendingPowerEvents)
+    ? [...state._pendingPowerEvents]
+    : [];
+  state._pendingPowerEvents = [];
+
   state.pendingGuess = "";
 
   // Campaign stage rules can transform this entry's feedback before win
