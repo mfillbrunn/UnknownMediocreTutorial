@@ -58,7 +58,7 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
 
   // Clean internal power state
   delete safe._pendingPowerEvents;
-  delete safe._turnClock;
+  delete safe._turnClocks;
 
   // Daily Challenge's full deterministic config -- must never reach any
   // client. Contains the AI Secretkeeper's actual fixed secret
