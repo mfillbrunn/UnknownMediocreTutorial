@@ -80,6 +80,14 @@
     return tiers[difficultyOf(game)] || tiers.hard;
   }
 
+  // Points the run has banked (the live round's guess points don't count
+  // until the round ends), as the boss gates compare against.
+  function bankedPoints(game) {
+    return game && typeof game.bankedScore === "function"
+      ? Number(game.bankedScore()) || 0
+      : Number((game && game.state && game.state.score) || 0);
+  }
+
   // The next boss gate the run hasn't cleared yet, and what it costs --
   // used by the HUD (cuddle-ui.js) to show progress toward it up front,
   // not just once the map already put a boss node in reach.
@@ -1128,11 +1136,22 @@
           extras += "<circle class=\"umt-boss-aura\" r=\"" + (radius + 18) + "\" style=\"--world-glow:" + world.glow + "\"/>";
         }
         if (open) extras += "<circle class=\"umt-node-halo\" r=\"" + (radius + 7) + "\"/>";
+        // A boss shows the points it needs right on its icon (green once the
+        // run has banked enough); cleared bosses drop it.
+        var bossNeeds = "";
+        var required = boss && !visited ? bossPointRequirement(game, node.gate) : 0;
+        if (required) {
+          var met = bankedPoints(game) >= required;
+          var pillWidth = String(required).length * 7 + 12;
+          bossNeeds = "<g class=\"umt-boss-needs" + (met ? " is-met" : "") + "\" transform=\"translate(0 " + (iconSize / 2 - 3) + ")\">"
+            + "<rect x=\"" + (-pillWidth / 2) + "\" y=\"-8\" width=\"" + pillWidth + "\" height=\"16\" rx=\"8\"/>"
+            + "<text text-anchor=\"middle\" y=\"4\">" + required + "</text></g>";
+        }
         nodes.push(
           "<g class=\"" + classes.join(" ") + "\" transform=\"translate(" + point.x + "," + point.y + ")\" style=\"--kind:" + color + "\""
           + (open
             ? " data-cuddle-campaign-action=\"preview-branch-node\" data-shop-item-id=\"" + node.row + ":" + node.col + "\""
-              + " role=\"button\" tabindex=\"0\" aria-label=\"" + escapeHtml(caption + " — " + title) + "\""
+              + " role=\"button\" tabindex=\"0\" aria-label=\"" + escapeHtml(caption + " — " + title + (required ? ", needs " + required + " points" : "")) + "\""
             : " data-shop-item-id=\"" + node.row + ":" + node.col + "\" aria-hidden=\"true\"")
           + ">"
           + extras
@@ -1140,6 +1159,7 @@
           + "<circle class=\"umt-node-core\" r=\"" + (radius - 4) + "\"/>"
           + "<g class=\"umt-node-icon\" transform=\"translate(" + (-iconSize / 2) + " " + (-iconSize / 2) + ") scale(" + (iconSize / 24) + ")\">"
           + Worlds.iconMarkup(kind) + "</g>"
+          + bossNeeds
           + (visited && !isHere
             ? "<g class=\"umt-node-check\" transform=\"translate(" + (radius * 0.72) + " " + (-radius * 0.72) + ")\">"
               + "<circle r=\"6.5\"/><path d=\"M-3 0l2 2.2L3.2-2.4\"/></g>"

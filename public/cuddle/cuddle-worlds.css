@@ -184,6 +184,29 @@
   50% { transform: translateY(-3px); }
 }
 
+/* Points a boss needs, laid over the lower half of its icon. */
+#cuddleRoot .umt-boss-needs {
+  pointer-events: none;
+}
+#cuddleRoot .umt-boss-needs rect {
+  fill: #120e17;
+  stroke: var(--kind);
+  stroke-width: 1.4;
+}
+#cuddleRoot .umt-boss-needs text {
+  font-size: 10.5px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  fill: #fff4e2;
+}
+#cuddleRoot .umt-boss-needs.is-met rect {
+  fill: #1f5a3a;
+  stroke: #6bd68f;
+}
+#cuddleRoot .umt-boss-needs.is-met text {
+  fill: #eafff1;
+}
+
 #cuddleRoot .umt-node-check circle {
   fill: #f4d9a0;
   stroke: #120e17;
