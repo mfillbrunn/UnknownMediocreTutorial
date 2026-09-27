@@ -999,7 +999,7 @@
     // claims one of the first three guesses, the second's two of the first four.
     const later = Number(currentState()?.bossesCleared || 0) >= 1;
     const where = later ? "two of your first four guesses" : "one of your first three guesses";
-    return `For the rest of the run, ${where} in every stage carries this boss: ${info[1]}`;
+    return `For the rest of the run, ${where} in every stage carries this boss. ${info[1]}`;
   }
   function renderBossChoiceOverlay(state) {
     const options = state.bossOffer || [];

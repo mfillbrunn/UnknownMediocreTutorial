@@ -94,9 +94,13 @@
   // reading their window off `turns` stopped constraining the extra rows the
   // moment a run bought extra guesses. Exported so the row-icon renderer in
   // cuddle-rebalance-v5.js marks exactly the guesses the engine constrains.
+  // Hide Feedback and Hidden Margins used to be here too, hiding their
+  // tiles for the whole round while their boss card (cuddleV3BossDescription)
+  // promised "during the first N guesses ... behave normally afterward".
+  // They now keep to that window like the other masks -- Hidden Margins in
+  // particular ended most runs as a whole-round first boss.
   const WHOLE_ROUND_BOSSES = new Set([
-    "shortHand", "noMulligans", "questTrial", "presetWordsTrial",
-    "hideFeedback", "hiddenMargins", "quickMode"
+    "shortHand", "noMulligans", "questTrial", "presetWordsTrial", "quickMode"
   ]);
 
   // Scoring. Greys are worth nothing (not a penalty), each unused guess on a

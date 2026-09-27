@@ -313,7 +313,7 @@
       id: "hideFeedback",
       icon: "🙈",
       title: "Hide Feedback",
-      description: "One marked position stays hidden for the whole round. You never learn what it was.",
+      description: "For the first few guesses, one marked position hides its feedback. It behaves normally afterward.",
       turns: 6,
       rewardId: "biggerMulligans"
     },
@@ -353,7 +353,7 @@
       id: "hiddenMargins",
       icon: "🕶️",
       title: "Hidden Margins",
-      description: "Two marked positions stay hidden for the whole round. You never learn what they were.",
+      description: "For the first few guesses, two marked positions hide their feedback. They behave normally afterward.",
       turns: 6,
       rewardId: "openingClue"
     },

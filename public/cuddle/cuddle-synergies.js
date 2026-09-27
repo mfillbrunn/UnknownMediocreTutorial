@@ -1,6 +1,6 @@
 /* CUDDLE SYNERGIES -- combo bonuses between two upgrades.
  * Owning both halves of a pair switches its combo on for the rest of the
- * run. This file adds seven new combos (their effects live here) and, for
+ * run. This file adds its own combos (their effects live here) and, for
  * the upgrade picker, previews EVERY combo a card would complete -- the new
  * ones and the engine's existing ones (Golden Tempo, Quest Binding,
  * Illustrated Start, Endless Margins), whose effects stay in the engine.
@@ -26,8 +26,19 @@
       effect: "Every completed quest also pays +$2." },
     { id: "deepGrey", icon: "🌫️", title: "Deep Grey", requires: [["greyscale"], ["greyPointBoost"]],
       effect: "Every grey tile pays +1 more point." },
-    { id: "fullHouse", icon: "🂡", title: "Full House", requires: [["handSizeBoost"], ["jokerPerRound"]],
+    { id: "fullHouse", icon: "🂡", title: "Full House", requires: [["handSizeBoost"], ["jokerCache"]],
       effect: "Every stage opens with +1 mulligan." },
+    // Combos around the Legendary and boss rewards.
+    { id: "cartographer", icon: "🗺️", title: "Cartographer", requires: [["allThemes"], ["categorySense"]],
+      effect: "Every solved stage pays +10 points." },
+    { id: "questEngine", icon: "⚙️", title: "Quest Engine", requires: [["questPersistReward"], ["questDoublePick"]],
+      effect: "Every completed quest also pays +$3." },
+    { id: "cleanSweep", icon: "🧹", title: "Clean Sweep", requires: [["cullRare"], ["freeVowelSweep"]],
+      effect: "Every stage opens with +1 mulligan." },
+    { id: "safetyNet", icon: "🪢", title: "Safety Net", requires: [["secondCup"], ["doubleMulligans", "backupPlanReward"]],
+      effect: "Solving on your last row pays +20 points." },
+    { id: "compassRose", icon: "🧭", title: "Compass Rose", requires: [["goldenCompass"], ["alphabet-compass"]],
+      effect: "Solving by guess 4 pays +$4." },
     { id: "scholarsEye", icon: "🔎", title: "Scholar's Eye", requires: [["greenCount"], ["categorySense"]],
       effect: "Every solved stage pays +$3." },
     { id: "busyDay", icon: "📋", title: "Busy Day", requires: [["surprise-assignment"], ["questRefreshes"]],
@@ -69,11 +80,17 @@
     if (id === "categorySense") candidates.push(state.cuddleCampaign && state.cuddleCampaign.categorySense);
     const mega = state.megaState || {};
     if (id === "greenCount" && mega.greenCountUnlocked) candidates.push(1);
-    // Wild Card and Joker Cache share one per-stage Joker counter; Joker
-    // Cache's share (two per level) is taken back out to find Wild Card's.
-    if (id === "jokerPerRound") {
-      const cache = num(state.cuddleRebalanceV5 && state.cuddleRebalanceV5.cuddleUserJokerCachePerRoundLevel);
-      candidates.push(num(mega.jokerPerRoundBonus) - 2 * cache);
+    if (Array.isArray(state.umtBossRewardsTaken)
+        && state.umtBossRewardsTaken.some(taken => normalizeId(taken) === id || taken === id)) candidates.push(1);
+    // Boss / Legendary rewards that keep their own flag rather than a counter.
+    const rebalanceState = state.cuddleRebalanceV5 || {};
+    const coachOwned = (state.cuddleCoachExpansion && state.cuddleCoachExpansion.newBossRewardsOwned) || [];
+    if (id === "allThemes" && (rebalanceState.allThemesUnlocked || coachOwned.includes("umtAllThemes"))) candidates.push(1);
+    if (id === "jokerCache") candidates.push(num(rebalanceState.cuddleUserJokerCachePerRoundLevel), num(rebalanceState.upgrades && rebalanceState.upgrades.umtJokerCache));
+    if (id === "questPersistReward" && mega.questPersistsForRound) candidates.push(1);
+    if ((id === "goldenCompass" || id === "secondCup") && coachOwned.includes(id)) candidates.push(1);
+    if (id === "alphabet-compass" && window.CuddleEconomyRarityV8 && typeof window.CuddleEconomyRarityV8.stack === "function") {
+      candidates.push(num(window.CuddleEconomyRarityV8.stack(state, "alphabet-compass")));
     }
     if (rebalance && typeof rebalance.upgradeLevel === "function") {
       try { candidates.push(rebalance.upgradeLevel(game, id)); } catch (_error) { /* not tracked there */ }
@@ -93,10 +110,17 @@
     return combo.requires.every(group => groupOwned(game, group));
   }
 
+  // Names for requirement ids the talent tree files under another id.
+  const TITLES = Object.freeze({
+    allThemes: "All-Seeing Atlas", jokerCache: "Joker Cache", cullRare: "Deep Cull",
+    freeVowelSweep: "Free Vowel Sweep", doubleMulligans: "Double Mulligans", backupPlanReward: "Backup Plan",
+    questPersistReward: "Lasting Quests", questDoublePick: "Double Pick", secondCup: "Second Cup",
+    goldenCompass: "Golden Compass", "alphabet-compass": "Alphabet Compass"
+  });
   function titleFor(id) {
     const tree = window.CuddleSkillTree;
     const node = tree && typeof tree.findNode === "function" ? tree.findNode(id) : null;
-    return (node && node.title) || id;
+    return (node && node.title) || TITLES[id] || id;
   }
 
   function engineComboOwned(game, combo) {
@@ -202,6 +226,20 @@
     return result;
   });
 
+  // A boss reward (or a Legendary pick, applied the same way) can complete a
+  // combo too -- not only a between-round pick.
+  wrap("_applyBossReward", original => function applyBossRewardWithCombos(rewardId) {
+    const result = original.apply(this, arguments);
+    // Some boss rewards (Deep Cull) leave no counter behind, so the ids
+    // granted this way are recorded for ownedLevel.
+    if (this.state && rewardId) {
+      if (!Array.isArray(this.state.umtBossRewardsTaken)) this.state.umtBossRewardsTaken = [];
+      if (!this.state.umtBossRewardsTaken.includes(rewardId)) this.state.umtBossRewardsTaken.push(rewardId);
+    }
+    refresh(this, true);
+    return result;
+  });
+
   wrap("_hydrateState", original => function hydrateWithCombos() {
     const result = original.apply(this, arguments);
     refresh(this, false);
@@ -227,8 +265,9 @@
 
   wrap("_beginRound", original => function beginRoundWithCombos() {
     const result = original.apply(this, arguments);
-    if (this.state && !(typeof this.isBossRound === "function" && this.isBossRound()) && ownsCombo(this, "fullHouse")) {
-      this.state.mulligansLeft = Math.max(0, num(this.state.mulligansLeft)) + 1;
+    if (this.state && !(typeof this.isBossRound === "function" && this.isBossRound())) {
+      const extra = (ownsCombo(this, "fullHouse") ? 1 : 0) + (ownsCombo(this, "cleanSweep") ? 1 : 0);
+      if (extra) this.state.mulligansLeft = Math.max(0, num(this.state.mulligansLeft)) + extra;
     }
     return result;
   });
@@ -250,6 +289,7 @@
     if (entry.questComplete) {
       if (ownsCombo(this, "busyDay")) stageBonus(this, 5, "umtComboBusyDay", "Busy Day");
       if (ownsCombo(this, "questMaster")) moneyBonus(this, 2, "Quest Master: +$2.");
+      if (ownsCombo(this, "questEngine")) moneyBonus(this, 3, "Quest Engine: +$3.");
     }
     if (solved) {
       if (ownsCombo(this, "secondWind")) {
@@ -258,6 +298,12 @@
       }
       if (ownsCombo(this, "fastStory") && history.length <= 3) stageBonus(this, 15, "umtComboFastStory", "Fast Story");
       if (ownsCombo(this, "scholarsEye")) moneyBonus(this, 3, "Scholar's Eye: +$3.");
+      if (ownsCombo(this, "cartographer")) stageBonus(this, 10, "umtComboCartographer", "Cartographer");
+      if (ownsCombo(this, "compassRose") && history.length <= 4) moneyBonus(this, 4, "Compass Rose: +$4.");
+      if (ownsCombo(this, "safetyNet")) {
+        const lastRow = typeof this._effectiveMaxGuesses === "function" ? this._effectiveMaxGuesses() : num(this.state.maxGuesses);
+        if (lastRow && history.length >= lastRow) stageBonus(this, 20, "umtComboSafetyNet", "Safety Net");
+      }
     }
     return result;
   });
