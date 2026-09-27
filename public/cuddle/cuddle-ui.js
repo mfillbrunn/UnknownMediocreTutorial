@@ -994,7 +994,12 @@
     const info = typeof window.CuddleRebalanceV5?.burdenInfo === "function"
       ? window.CuddleRebalanceV5.burdenInfo(option.id)
       : null;
-    return info ? `Skip it and it comes back permanently: ${info[1]}` : "";
+    if (!info) return "";
+    // Mirrors pickRatchetGuessIndices: the first boss's skipped option
+    // claims one of the first three guesses, the second's two of the first four.
+    const later = Number(currentState()?.bossesCleared || 0) >= 1;
+    const where = later ? "two of your first four guesses" : "one of your first three guesses";
+    return `For the rest of the run, ${where} in every stage carries this boss. ${info[1]}`;
   }
   function renderBossChoiceOverlay(state) {
     const options = state.bossOffer || [];
@@ -1020,7 +1025,7 @@
                   </span>` : ""}
                 ${leaveBehindNote(option, isFinal) ? `
                   <span class="cuddle-boss-leave-behind">
-                    <b>⚠️ Leave this behind:</b>
+                    <b>⚠️ If you skip this boss</b>
                     <span>${escapeHtml(leaveBehindNote(option, isFinal))}</span>
                   </span>` : ""}
               </button>`).join("")}

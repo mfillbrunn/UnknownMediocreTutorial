@@ -156,7 +156,15 @@
   const CATEGORY_WEDGE = { economy: "economy", solving: "solving", quests: "quests", easierStages: "hand" };
   const COMBO_COLOR = "#ff7ab8";
   const BOSS_COLOR = "#fb7185";
-  const TIER_STROKE = { common: "#cfcadc", rare: "#7cb8ff", legendary: "#f6c956" };
+  // Bronze / silver / gold, as on the reward cards' rarity badges.
+  const TIER_STROKE = { common: "#c98a4b", rare: "#c6d0de", legendary: "#f6c956" };
+  const TIER_NAME = { common: "Common", rare: "Rare", legendary: "Legendary" };
+  // Talents the shop's permanent shelf sells (cuddle-shop.js KEEP items).
+  const SHOP_TALENTS = new Set(["coachPossibleAnswers", "coachHint", "coachMeterThreshold", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"]);
+  // Boss rewards that can also be a Legendary between-round pick
+  // (cuddle-economy-rarity-v8.js LEGENDARY_PICKS).
+  const LEGENDARY_PICK_IDS = new Set(["doubleMulligans", "cullRare", "freeVowelSweep", "questHead", "questDoublePick",
+    "questPersistReward", "goldenCompass", "secondCup", "allThemesBoss", "umtAllThemes", "jokerCache", "umtJokerCache"]);
 
   const R_CORE = 50;
   const R_HUB = 100;
@@ -255,7 +263,7 @@
       for (const branch of tree.BRANCHES) {
         for (const base of branch.nodes) {
           const kind = branch.id === "bossRewards" ? "boss" : branch.id === "synergyCombos" ? "combo" : "upgrade";
-          addNode(base, { kind, easyOnly: Boolean(base.easyOnly || branch.easyOnly) });
+          addNode(base, { kind, branch: branch.id, easyOnly: Boolean(base.easyOnly || branch.easyOnly) });
         }
       }
     }
@@ -391,6 +399,16 @@
     return out;
   }
 
+  // "1/2" on a half-built combo, "✓" on a complete one.
+  function comboBadge(node, radius) {
+    if (node.kind !== "combo" || !node.requires) return "";
+    const need = node.requires.length;
+    const have = (node.reqNodes || []).filter((req) => req.level > 0).length;
+    const text = node.level > 0 ? "✓" : `${have}/${need}`;
+    return `<g class="umt-pt-combo-badge${node.level > 0 ? " is-done" : have ? " is-half" : ""}" transform="translate(${round1(radius * 0.8)} ${round1(-radius * 0.8)})">`
+      + `<rect x="-11" y="-7.5" width="22" height="15" rx="7.5"/><text dy="0.35em">${text}</text></g>`;
+  }
+
   function curve(from, to, bend) {
     const mx = (from.x + to.x) / 2;
     const my = (from.y + to.y) / 2;
@@ -477,9 +495,8 @@
       const labelY = node.y < -40 ? -(r + 9) : r + (node.maxLevel > 1 ? 21 : 15);
       // Drawn in their own layer above every node, so a neighbouring
       // node can never cover a name.
-      if (owned || node.id === selected) {
-        nodeNames.push(`<text class="umt-pt-label" x="${round1(node.x)}" y="${round1(node.y + labelY)}">${esc(node.title)}</text>`);
-      }
+      // Every talent is named; ones you don't own yet are smaller and dimmer.
+      nodeNames.push(`<text class="umt-pt-label${owned || node.id === selected ? "" : " is-dim"}" x="${round1(node.x)}" y="${round1(node.y + (owned ? labelY : (node.y < -40 ? -(r + 6) : r + (node.maxLevel > 1 ? 16 : 11))))}">${esc(node.title)}</text>`);
       const status = owned
         ? `owned${node.level > 1 ? `, level ${node.level}` : ""}`
         : locked ? "Easy difficulty only" : "not yet picked up";
@@ -491,6 +508,7 @@
         + `<circle class="umt-pt-disc" r="${r}"/>`
         + glyphMarkup(node.icon, owned ? 17 : 12)
         + pipsMarkup(node, r)
+        + comboBadge(node, r)
         + `</g>`
       );
     });
@@ -538,7 +556,7 @@
 
   function detailMarkup(model, node) {
     if (!node) {
-      return `<div class="umt-pt-detail is-empty"><p>Tap any node to see what it does. Lit nodes are yours; the lines show the branch each one grows from.</p></div>`;
+      return `<div class="umt-pt-detail is-empty"><p>Tap any talent to see what it does and how to get it. Lit ones are yours; ring colour is its rarity (see Key).</p></div>`;
     }
     const owned = node.level > 0;
     const wedge = WEDGES.find((w) => w.id === node.wedge);
@@ -555,6 +573,12 @@
       : "";
     const locked = node.easyOnly && !model.easy && !owned
       ? `<p class="umt-pt-when">Only offered on Easy difficulty.</p>` : "";
+    const howTo = howToGet(node);
+    const next = node.maxLevel && node.maxLevel > 1 && node.level < node.maxLevel
+      ? (owned
+        ? `Can be taken ${node.maxLevel - node.level} more time${node.maxLevel - node.level === 1 ? "" : "s"}; each one stacks the effect again.`
+        : `Stacks: can be taken up to ${node.maxLevel} times.`)
+      : node.maxLevel && node.maxLevel > 1 && owned ? "Fully stacked." : "";
     return `<div class="umt-pt-detail${owned ? " is-owned" : ""}" style="--c:${nodeColor(node)}">`
       + `<div class="umt-pt-detail-head"><span class="umt-pt-detail-icon">${esc(node.icon)}</span>`
       + `<div><strong>${esc(node.title)}</strong><span class="umt-pt-detail-meta">${esc(branch)}${tier ? ` · ${esc(tier)}` : ""}</span></div>`
@@ -562,7 +586,48 @@
       + `<p>${esc(node.description || "")}</p>`
       + (owned && node.maxLevel > 1 ? `<p class="umt-pt-when">${esc(levelText)}</p>` : "")
       + when + reqs + locked
+      + `<div class="umt-pt-howto"><h4>How to get it</h4><ul>${howTo.concat(next ? [next] : []).map((line) => `<li>${esc(line)}</li>`).join("")}</ul>`
+      + `</div>`
       + `</div>`;
+  }
+
+  function howToGet(node) {
+    const tier = TIER_NAME[node.tier] || "";
+    const lines = [];
+    if (node.kind === "combo") {
+      const reqs = node.reqNodes || [];
+      const have = reqs.filter((req) => req.level > 0).length;
+      lines.push(`Own both ${reqs.map((req) => req.title).join(" and ")}; it turns on by itself.`);
+      lines.push(node.level > 0 ? "Both halves owned: active." : `${have} of ${node.requires ? node.requires.length : 2} owned.`);
+      return lines;
+    }
+    if (node.kind === "boss") {
+      lines.push("Boss reward: pick the boss that offers it and clear that boss.");
+      if (LEGENDARY_PICK_IDS.has(node.id)) lines.push("Can also show up as a Legendary between-round reward.");
+      return lines;
+    }
+    if (node.branch === "cuddleCoach") {
+      lines.push("Bought in the shop, on its permanent shelf.");
+    } else {
+      lines.push(`Between-round reward${tier ? ` (${tier})` : ""}: offered on the reward screen after a stage.`);
+      if (SHOP_TALENTS.has(node.id)) lines.push("Also sold on the shop's permanent shelf.");
+    }
+    if (LEGENDARY_PICK_IDS.has(node.id) && node.tier !== "legendary") lines.push("Can also show up as a Legendary reward.");
+    if (node.easyOnly) lines.push("Only offered on Easy difficulty.");
+    return lines;
+  }
+
+  // What the colours and lines on the tree mean.
+  function legendMarkup() {
+    const tier = (id) => `<span class="umt-pt-key-ring" style="--t:${TIER_STROKE[id]}"></span>${TIER_NAME[id]}`;
+    return `<details class="umt-pt-key"><summary>Key</summary><ul>`
+      + `<li>${tier("common")}</li><li>${tier("rare")}</li><li>${tier("legendary")}</li>`
+      + `<li><span class="umt-pt-key-dot is-owned"></span>Lit and named in white: yours</li>`
+      + `<li><span class="umt-pt-key-line"></span>Line from a branch hub: which branch it belongs to</li>`
+      + `<li><span class="umt-pt-key-line is-combo"></span>Pink dotted line: one half of a combo (solid once both are owned)</li>`
+      + `<li><span class="umt-pt-key-badge">1/2</span>Combo progress</li>`
+      + `<li><span class="umt-pt-key-dot is-boss"></span>Outer red ring: boss rewards</li>`
+      + `</ul></details>`;
   }
 
   function statsMarkup(stats, changed) {
@@ -666,6 +731,7 @@
       + (view.zoomCenter
         ? `<button type="button" class="umt-pt-zoom" data-umt-pt-zoom>${view.zoomBox ? "Show whole tree" : "Zoom to new pick"}</button>`
         : "")
+      + legendMarkup()
       + `</div>`
       + `<aside class="umt-pt-side">`
       + (reveal ? revealMarkup(model, reveal) : detailMarkup(model, selected))

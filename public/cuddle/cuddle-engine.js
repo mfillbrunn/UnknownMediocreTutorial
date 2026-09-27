@@ -94,9 +94,13 @@
   // reading their window off `turns` stopped constraining the extra rows the
   // moment a run bought extra guesses. Exported so the row-icon renderer in
   // cuddle-rebalance-v5.js marks exactly the guesses the engine constrains.
+  // Hide Feedback and Hidden Margins used to be here too, hiding their
+  // tiles for the whole round while their boss card (cuddleV3BossDescription)
+  // promised "during the first N guesses ... behave normally afterward".
+  // They now keep to that window like the other masks -- Hidden Margins in
+  // particular ended most runs as a whole-round first boss.
   const WHOLE_ROUND_BOSSES = new Set([
-    "shortHand", "noMulligans", "questTrial", "presetWordsTrial",
-    "hideFeedback", "hiddenMargins", "quickMode"
+    "shortHand", "noMulligans", "questTrial", "presetWordsTrial", "quickMode"
   ]);
 
   // Scoring. Greys are worth nothing (not a penalty), each unused guess on a
@@ -2867,6 +2871,10 @@
         // "lasts for the first N guesses" line above, which describes a
         // mechanic this boss doesn't have.
         return "Before this round starts, the secret is narrowed to a short list of candidate words shown on screen -- the real one is among them. Your guess budget is cut by the size of that list.";
+      case "questEndurance":
+        // A standing pressure for the whole round, like shortHand; this case
+        // was missing, so it fell through to the vague line below.
+        return "Every guess this round comes with a quest. Each one you miss shrinks your hand by one letter until the round ends.";
       default:
         return `This boss power lasts for the first ${guesses}.`;
     }
@@ -4932,10 +4940,14 @@
           mega.ratchetDebuffs.push(debuff);
         });
         const info = window.CuddleRebalanceV5?.burdenInfo?.(bossId);
+        const guesses = guessIndices.slice().sort((a, b) => a - b);
+        const which = guesses.length > 1
+          ? `Guesses ${guesses.slice(0, -1).join(", ")} and ${guesses[guesses.length - 1]}`
+          : `Guess ${guesses[0]}`;
         this.state.burdenNotice = {
           bossId,
           title: info ? info[0] : bossId,
-          description: info ? info[1] : "A defeated boss burden now affects future rounds."
+          description: `${which} of every stage from now on: ${info ? info[1] : "a skipped boss's power applies."}`
         };
       }
     }
@@ -5167,6 +5179,7 @@
     }
 
     const extrasBefore = mega.activeQuests.slice(1).filter(Boolean);
+    const primaryQuestBefore = this.state.activeQuest || null;
     const questKnowledgeSnapshot = {
       knownAbsent: (this.state.knownAbsent || []).slice(),
       knownPresent: (this.state.knownPresent || []).slice(),
@@ -5190,6 +5203,15 @@
     if (!result?.ok) return result;
 
     const entry = this.state.history[this.state.history.length - 1];
+
+    // Lasting Quests: a missed quest stays up for the rest of the stage.
+    // The base engine clears the primary quest after every guess, and only
+    // the extra concurrent quests below were being kept -- so with the usual
+    // single quest the reward did nothing.
+    if (mega.questPersistsForRound && primaryQuestBefore && entry && !entry.questComplete
+        && this.state.status === "playing" && !this.isBossRound()) {
+      this.state.activeQuest = primaryQuestBefore;
+    }
 
     if (jokerLetter && entry) {
       entry.jokerLetter = jokerLetter;

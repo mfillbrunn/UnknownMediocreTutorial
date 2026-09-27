@@ -27,7 +27,9 @@
     "quest ink",
     "opening insight",
     "quick study",
-    "reserve dividend"
+    "reserve dividend",
+    // A Joker every stage is now only the Legendary Joker Cache.
+    "wild card"
   ]);
 
   const ORDINARY_TIER_BY_NAME = new Map([
@@ -139,11 +141,11 @@
       icon: "🃏",
       title: "Joker Cache",
       name: "Joker Cache",
-      description: "Two extra Jokers every stage.",
+      description: "One extra Joker every stage.",
       kind: "upgrade",
       __cuddleV8Tier: TIERS.LEGENDARY,
       available: (state) => Boolean(state)
-        && Math.max(Number(state.cuddleRebalanceV5?.upgrades?.umtJokerCache) || 0, Number(state.upgrades?.umtJokerCache) || 0) < 2
+        && Math.max(Number(state.cuddleRebalanceV5?.upgrades?.umtJokerCache) || 0, Number(state.upgrades?.umtJokerCache) || 0) < 1
     }
   ]);
 
@@ -1479,7 +1481,7 @@
       setDescription(def, "Advance the reward received when the Cuddle Meter fills: mulligan, Joker, then hint.");
       setMaxStack(def, 2);
     } else if (name === "joker cache") {
-      setDescription(def, "Two extra Jokers every stage.");
+      setDescription(def, "One extra Joker every stage.");
       replaceHandlers(def, "joker-cache");
     }
 

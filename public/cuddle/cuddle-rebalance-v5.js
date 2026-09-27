@@ -143,9 +143,9 @@
       icon: "🃏",
       title: "Joker Cache",
       name: "Joker Cache",
-      description: "Two extra Jokers every stage.",
-      maxLevel: 2,
-      maxCount: 2,
+      description: "One extra Joker every stage.",
+      maxLevel: 1,
+      maxCount: 1,
       kind: "upgrade"
     }),
     Object.freeze({
@@ -186,7 +186,10 @@
   ]);
 
   const REMOVED_NORMAL_REWARDS = new Set([
-    "coachEarlierHint"
+    "coachEarlierHint",
+    // Wild Card (a Joker every stage) was too strong for a Rare pick; the
+    // single Joker per stage is now the Legendary Joker Cache.
+    "jokerPerRound"
   ]);
 
   const MASK_BOSS_IDS = new Set([
@@ -203,19 +206,24 @@
     "presetWordsTrial"
   ]);
 
+  // What a skipped boss does to the one guess it comes back on (see
+  // cuddle-engine.js's RATCHET_LABEL and submitDraft for the mechanics).
+  // Written to read after "Guess N ·" on the row badge, and after the boss
+  // card's "for the rest of the run, …" lead-in.
   const BURDEN_INFO = Object.freeze({
-    countOnly: ["Count Only", "That same guess shows only how many letters are correct, every round from now on."],
-    delayedFeedback: ["Delayed Feedback", "That same guess reveals its marked tiles one guess late, every round from now on."],
-    hideFeedback: ["Hidden Feedback", "That same guess hides tile feedback, every round from now on."],
-    hiddenMargins: ["Hidden Margins", "Some feedback positions on that same guess stay concealed, every round from now on."],
-    blueMode: ["Blue Mode", "That same guess merges yellow and green into blue feedback, every round from now on."],
-    fakeFeedback: ["False Signal", "That same guess shows misleading feedback, every round from now on."],
-    quickMode: ["Quick Mode", "That same guess is played under a time limit, every round from now on."],
-    noMulligans: ["No Mulligans", "Mulligans are disabled on that same guess, every round from now on."],
-    shortHand: ["Short Hand", "That round's hand or guess allowance is reduced, every round from now on."],
-    questTrial: ["Quest Trial", "A quest is forced on that same guess, every round from now on."],
-    presetWordsTrial: ["Preset Trial", "That round's hand allowance is reduced by a forced-word trial, every round from now on."],
-    questEndurance: ["Endurance Trial", "If that same guess misses its quest, that round's hand size drops by one -- every round from now on."]
+    countOnly: ["Count Only", "That guess only tells you how many letters are right, not which ones."],
+    delayedFeedback: ["Delayed Feedback", "That guess shows its colours one guess late."],
+    hideFeedback: ["Hidden Feedback", "One tile of that guess never shows its colour."],
+    hiddenMargins: ["Hidden Margins", "Two tiles of that guess never show their colour."],
+    blueMode: ["Blue Mode", "A right letter on that guess shows blue, so you can't tell if it's in the right spot."],
+    fakeFeedback: ["False Signal", "Some tiles of that guess show the wrong colour."],
+    quickMode: ["Quick Mode", "That guess scores 0 points."],
+    noMulligans: ["Steady Hand", "You can't mulligan right before that guess."],
+    shortHand: ["Short Hand", "You go into that guess with one fewer letter in your hand."],
+    // Retired as a boss; kept so older runs that already carry it read well.
+    questTrial: ["Quest Trial", "That guess comes with a quest; miss it and lose 5 points."],
+    presetWordsTrial: ["Preset Trial", "You go into that guess with one fewer letter in your hand."],
+    questEndurance: ["Endurance Trial", "That guess comes with a quest; miss it and your hand is one letter smaller for the rest of the stage."]
   });
 
   // "1 guess" vs "N guesses" -- description functions below combine this
@@ -2530,11 +2538,11 @@
       /* UMT_CUDDLE_USER_JOKER_CACHE_PER_ROUND */
       const mega = megaState(game);
       if (mega) {
-        mega.jokerPerRoundBonus = Math.max(0, Math.floor(asNumber(mega.jokerPerRoundBonus, 0))) + (delta * 2);
+        mega.jokerPerRoundBonus = Math.max(0, Math.floor(asNumber(mega.jokerPerRoundBonus, 0))) + delta;
         mega.hasJokerUnlocked = true;
       }
       custom.cuddleUserJokerCachePerRoundLevel = current;
-      appendNotice(game, `Joker Cache: ${current * 2} extra Jokers every stage.`);
+      appendNotice(game, "Joker Cache: one extra Joker every stage.");
     }
     custom.appliedUpgradeEffects[id] = current;
     safeSave(game);
@@ -2983,7 +2991,7 @@
     umtAllThemes: { title: "All-Seeing Atlas", description: "Reveal every available theme at the start of every non-boss Wordle.", shape: "tags" },
     umtOpeningInsight: { title: "Opening Insight", description: "Begin each non-boss Wordle with an extra green position hint.", shape: "greenHint" },
     umtQuickStudy: { title: "Quick Study", description: "Guesser Hints arrive sooner.", shape: "hourglass" },
-    umtJokerCache: { title: "Joker Cache", description: "Two extra Jokers every stage.", shape: "joker" },
+    umtJokerCache: { title: "Joker Cache", description: "One extra Joker every stage.", shape: "joker" },
     umtReserveDividend: { title: "Reserve Dividend", description: "Unused Jokers and mulligans pay an additional end-of-round bonus.", shape: "coins" },
     umtConsonantSweep: { title: "Process of Elimination", description: "Every guess rules out one consonant that is not in the secret.", shape: "eliminate" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
