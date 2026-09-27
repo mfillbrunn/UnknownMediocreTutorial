@@ -2311,6 +2311,12 @@
     if (realLetterCount + card.glyph.length > 5) {
       return { ok: false, error: "That card would take the word past five letters." };
     }
+    // One Joker per word: a second one is refused (the tile keyboard shakes,
+    // see cuddle-ui.js), including tapping the same Joker card twice.
+    if (card.glyph === "★"
+        && this.state.draft.some(id => id && this.getHandCard(id)?.glyph === "★")) {
+      return { ok: false, code: "oneJoker", error: "Only one Joker per word." };
+    }
     // Fill the first tile Drag Mode left open before falling back to
     // appending at the end, so ordinary typing still reads left-to-right
     // around anything already placed by a positional drag.

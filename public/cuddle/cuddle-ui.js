@@ -1595,11 +1595,27 @@
     if (actionMode === "play") {
       const result = choosePlayCard(glyph);
       setUiMessage(result.ok ? "" : result.error);
+      if (result.code === "oneJoker") shakeHand();
     } else {
       chooseUtilityCard(glyph);
     }
     render();
   }
+
+  // A refused tap (a second Joker in one word) shakes the tile keyboard.
+  // Runs a frame later so it lands on the freshly rendered hand; also used
+  // by the Word Duel screen (cuddle-expanded-stages.js).
+  function shakeHand() {
+    window.requestAnimationFrame(() => {
+      const hand = document.querySelector("#cuddleRoot .cuddle-hand");
+      if (!hand) return;
+      hand.classList.remove("is-refusing");
+      void hand.offsetWidth;
+      hand.classList.add("is-refusing");
+      window.setTimeout(() => hand.classList.remove("is-refusing"), 450);
+    });
+  }
+  window.CuddleShakeHand = shakeHand;
 
   /* UMT_CUDDLE_REBALANCE_V3: UI START */
   function cuddleV3ToastStack(state) {
