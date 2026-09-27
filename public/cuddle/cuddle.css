@@ -3418,3 +3418,22 @@
 @media (prefers-reduced-motion: reduce) {
   .cuddle-quest-inline.is-ready { animation: none; }
 }
+
+/* A second Joker in one word is refused: the tile keyboard shakes. */
+#cuddleScreen .cuddle-hand.is-refusing {
+  animation: cuddle-hand-refuse 420ms cubic-bezier(.36, .07, .19, .97) both;
+}
+@keyframes cuddle-hand-refuse {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-7px); }
+  40%, 60% { transform: translateX(7px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #cuddleScreen .cuddle-hand.is-refusing {
+    animation: none;
+    outline: 2px solid #e68a76;
+    outline-offset: 4px;
+    border-radius: 14px;
+  }
+}

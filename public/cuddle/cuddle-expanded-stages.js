@@ -2477,6 +2477,7 @@
       },
       handleUiAction(game, action, itemId) {
         const expanded = handleExpandedAction(game, action, itemId);
+        if (expanded && expanded.code === "oneJoker" && typeof window.CuddleShakeHand === "function") window.CuddleShakeHand();
         if (expanded) return expanded;
         const result = typeof originalHandleUiAction === "function"
           ? originalHandleUiAction(game, action, itemId)
