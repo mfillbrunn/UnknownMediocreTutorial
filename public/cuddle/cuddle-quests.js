@@ -365,14 +365,8 @@
       turns: 0,
       rewardId: "questDoublePick"
     },
-    {
-      id: "questTrial",
-      icon: "🎯",
-      title: "Quest Trial",
-      description: "A quest rides on every guess this round. Miss one and lose 5 points from your total.",
-      turns: 0,
-      rewardId: "questCadence"
-    },
+    // (Quest Trial -- a quest on every guess, 5 points lost for each one
+    // missed -- was retired: more chore than challenge.)
     {
       id: "questEndurance",
       icon: "🏃",

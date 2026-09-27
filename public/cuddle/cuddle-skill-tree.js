@@ -93,7 +93,6 @@
         { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", category: "easierStages", description: "The next round reward you pick is applied three times." },
         { id: "removeLetter", icon: "✂️", title: "Cull", tier: "common", category: "easierStages", description: "Remove rare consonants from the deck and from every future secret." },
         { id: "greenCount", icon: "🔢", title: "Precise Green", tier: "rare", category: "solving", maxLevel: 1, description: "A green tile also shows how many times that letter appears in the secret." },
-        { id: "jokerPerRound", icon: "🃏", title: "Wild Card", tier: "rare", category: "easierStages", description: "Begin every stage with one Joker in the active pouch." },
         { id: "surprise-assignment", icon: "📜", title: "Surprise Assignment", tier: "rare", category: "quests", description: "Add one extra quest at a random turn in every stage. Each copy schedules another quest." },
         // Special board tiles (cuddle-points-money.js). Each has its own
         // counter in cuddleBonuses, so its level reads true.
@@ -124,7 +123,7 @@
       nodes: [
         { id: "openingInsight", icon: "💡", title: "Opening Insight", tier: "rare", category: "solving", maxLevel: 2, description: "Start every non-boss Wordle with one additional exact-position hint.", easyOnly: true, level: g => upgradeCount(g, "openingInsight") },
         { id: "quickStudy", icon: "⏳", title: "Quick Study", tier: "common", category: "solving", maxLevel: 2, description: "Automatic hints arrive one guess sooner (minimum: every two guesses).", easyOnly: true, level: g => upgradeCount(g, "quickStudy") },
-        { id: "jokerCache", icon: "🃏", title: "Joker Cache", tier: "legendary", category: "easierStages", maxLevel: 2, description: "Two extra Jokers every stage.", level: g => upgradeCount(g, "jokerCache") },
+        { id: "jokerCache", icon: "🃏", title: "Joker Cache", tier: "legendary", category: "easierStages", maxLevel: 1, description: "One extra Joker every stage.", level: g => upgradeCount(g, "jokerCache") },
         { id: "reserveDividend", icon: "🏦", title: "Reserve Dividend", tier: "common", category: "economy", maxLevel: 1, description: "At a win, earn 5 points extra for every unused mulligan and every unused Joker.", level: g => upgradeCount(g, "reserveDividend") },
         { id: "alphabet-compass", icon: "🧭", title: "Alphabet Compass", tier: "rare", category: "solving", maxLevel: 4, description: "After every guess, one of its tiles shows an arrow: ← the secret's letter there comes earlier in the alphabet, → later, – it matches. Each copy adds a tile.", level: g => (window.CuddleCompass && g?.state ? window.CuddleCompass.copiesOwned(g.state) : 0) },
         { id: "consonantSweep", icon: "🔍", title: "Process of Elimination", tier: "rare", category: "solving", maxLevel: 1, description: "Every guess rules out one consonant that is not in the secret.", easyOnly: true, level: g => upgradeCount(g, "consonantSweep") }

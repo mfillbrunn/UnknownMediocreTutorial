@@ -2867,6 +2867,10 @@
         // "lasts for the first N guesses" line above, which describes a
         // mechanic this boss doesn't have.
         return "Before this round starts, the secret is narrowed to a short list of candidate words shown on screen -- the real one is among them. Your guess budget is cut by the size of that list.";
+      case "questEndurance":
+        // A standing pressure for the whole round, like shortHand; this case
+        // was missing, so it fell through to the vague line below.
+        return "Every guess this round comes with a quest. Each one you miss shrinks your hand by one letter until the round ends.";
       default:
         return `This boss power lasts for the first ${guesses}.`;
     }
@@ -4932,10 +4936,14 @@
           mega.ratchetDebuffs.push(debuff);
         });
         const info = window.CuddleRebalanceV5?.burdenInfo?.(bossId);
+        const guesses = guessIndices.slice().sort((a, b) => a - b);
+        const which = guesses.length > 1
+          ? `Guesses ${guesses.slice(0, -1).join(", ")} and ${guesses[guesses.length - 1]}`
+          : `Guess ${guesses[0]}`;
         this.state.burdenNotice = {
           bossId,
           title: info ? info[0] : bossId,
-          description: info ? info[1] : "A defeated boss burden now affects future rounds."
+          description: `${which} of every stage from now on: ${info ? info[1] : "a skipped boss's power applies."}`
         };
       }
     }
@@ -5167,6 +5175,7 @@
     }
 
     const extrasBefore = mega.activeQuests.slice(1).filter(Boolean);
+    const primaryQuestBefore = this.state.activeQuest || null;
     const questKnowledgeSnapshot = {
       knownAbsent: (this.state.knownAbsent || []).slice(),
       knownPresent: (this.state.knownPresent || []).slice(),
@@ -5190,6 +5199,15 @@
     if (!result?.ok) return result;
 
     const entry = this.state.history[this.state.history.length - 1];
+
+    // Lasting Quests: a missed quest stays up for the rest of the stage.
+    // The base engine clears the primary quest after every guess, and only
+    // the extra concurrent quests below were being kept -- so with the usual
+    // single quest the reward did nothing.
+    if (mega.questPersistsForRound && primaryQuestBefore && entry && !entry.questComplete
+        && this.state.status === "playing" && !this.isBossRound()) {
+      this.state.activeQuest = primaryQuestBefore;
+    }
 
     if (jokerLetter && entry) {
       entry.jokerLetter = jokerLetter;

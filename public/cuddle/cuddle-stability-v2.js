@@ -437,7 +437,7 @@
     const applied = Math.max(0, integer(custom.cuddleUserJokerCachePerRoundLevel, 0));
     const delta = Math.max(0, level - applied);
     if (!delta) return false;
-    mega.jokerPerRoundBonus = Math.max(0, integer(mega.jokerPerRoundBonus, 0)) + delta * 2;
+    mega.jokerPerRoundBonus = Math.max(0, integer(mega.jokerPerRoundBonus, 0)) + delta;
     mega.hasJokerUnlocked = true;
     custom.cuddleUserJokerCachePerRoundLevel = level;
     safeSave(game);
