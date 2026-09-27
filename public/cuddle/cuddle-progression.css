@@ -625,8 +625,9 @@
 
 .umt-progress-host .umt-pt-disc {
   fill: #1a1725;
-  stroke: rgba(255, 255, 255, 0.24);
-  stroke-width: 1.4;
+  /* Rarity ring (bronze / silver / gold), dimmer until owned. */
+  stroke: color-mix(in srgb, var(--t, #cfcadc) 70%, transparent);
+  stroke-width: 1.8;
   transition: stroke 120ms ease;
 }
 
@@ -1019,4 +1020,64 @@
 .umt-progress-host .umt-pt-layer.is-settled .umt-pt-edge.is-drawing {
   animation-delay: 0s !important;
   animation-duration: 0.001s !important;
+}
+
+/* Names on every talent; unowned ones smaller and dimmer. */
+.umt-progress-host .umt-pt-label.is-dim {
+  fill: #b9b2cc;
+  font-size: 8.5px;
+  font-weight: 650;
+  stroke-width: 3px;
+  opacity: 0.85;
+}
+
+/* Combo progress badge: 1/2 while half-built, a check once active. */
+.umt-progress-host .umt-pt-combo-badge rect { fill: #1a1725; stroke: rgba(255, 122, 184, 0.45); stroke-width: 1.2; }
+.umt-progress-host .umt-pt-combo-badge text { fill: #e9c6da; font-size: 8.5px; font-weight: 850; text-anchor: middle; }
+.umt-progress-host .umt-pt-combo-badge.is-half rect { stroke: #ff7ab8; }
+.umt-progress-host .umt-pt-combo-badge.is-half text { fill: #ff9ec7; }
+.umt-progress-host .umt-pt-combo-badge.is-done rect { fill: #ff7ab8; stroke: #ff7ab8; }
+.umt-progress-host .umt-pt-combo-badge.is-done text { fill: #2a0f1d; }
+
+/* "How to get it" in the talent card. */
+.umt-progress-host .umt-pt-howto { margin-top: 10px; padding-top: 9px; border-top: 1px solid rgba(255, 255, 255, 0.09); }
+.umt-progress-host .umt-pt-howto h4 {
+  margin: 0 0 5px;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--umt-muted, #a79fbd);
+}
+.umt-progress-host .umt-pt-howto ul { margin: 0; padding-left: 1.1em; display: grid; gap: 3px; }
+.umt-progress-host .umt-pt-howto li { font-size: 0.82rem; line-height: 1.35; }
+.umt-progress-host .umt-pt-next { margin: 7px 0 0; font-size: 0.8rem; color: #d9d2ea; }
+
+/* Key under the tree. */
+.umt-progress-host .umt-pt-key {
+  margin: 8px 12px 0;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(20, 17, 30, 0.9);
+  font-size: 0.78rem;
+  color: #d9d2ea;
+}
+.umt-progress-host .umt-pt-key summary { cursor: pointer; font-weight: 800; letter-spacing: 0.04em; }
+.umt-progress-host .umt-pt-key ul { list-style: none; margin: 8px 0 2px; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+.umt-progress-host .umt-pt-key li { display: flex; align-items: center; gap: 7px; line-height: 1.25; }
+.umt-progress-host .umt-pt-key li:nth-child(n+4) { grid-column: 1 / -1; }
+.umt-progress-host .umt-pt-key-ring { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--t); background: #1a1725; flex: none; }
+.umt-progress-host .umt-pt-key-dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+.umt-progress-host .umt-pt-key-dot.is-owned { background: #d5a6ff; box-shadow: 0 0 8px #d5a6ff; }
+.umt-progress-host .umt-pt-key-dot.is-boss { border: 2px solid #fb7185; }
+.umt-progress-host .umt-pt-key-line { width: 18px; height: 0; border-top: 2px solid rgba(213, 166, 255, 0.7); flex: none; }
+.umt-progress-host .umt-pt-key-line.is-combo { border-top: 2px dotted #ff7ab8; }
+.umt-progress-host .umt-pt-key-badge {
+  flex: none;
+  padding: 0 5px;
+  border: 1px solid #ff7ab8;
+  border-radius: 8px;
+  font-size: 0.66rem;
+  font-weight: 850;
+  color: #ff9ec7;
 }

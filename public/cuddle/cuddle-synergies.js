@@ -29,7 +29,7 @@
     { id: "fullHouse", icon: "🂡", title: "Full House", requires: [["handSizeBoost"], ["jokerCache"]],
       effect: "Every stage opens with +1 mulligan." },
     // Combos around the Legendary and boss rewards.
-    { id: "cartographer", icon: "🗺️", title: "Cartographer", requires: [["allThemes"], ["categorySense"]],
+    { id: "cartographer", icon: "🗺️", title: "Cartographer", requires: [["allThemesBoss", "allThemes"], ["categorySense"]],
       effect: "Every solved stage pays +10 points." },
     { id: "questEngine", icon: "⚙️", title: "Quest Engine", requires: [["questPersistReward"], ["questDoublePick"]],
       effect: "Every completed quest also pays +$3." },
@@ -85,7 +85,7 @@
     // Boss / Legendary rewards that keep their own flag rather than a counter.
     const rebalanceState = state.cuddleRebalanceV5 || {};
     const coachOwned = (state.cuddleCoachExpansion && state.cuddleCoachExpansion.newBossRewardsOwned) || [];
-    if (id === "allThemes" && (rebalanceState.allThemesUnlocked || coachOwned.includes("umtAllThemes"))) candidates.push(1);
+    if ((id === "allThemes" || id === "allThemesBoss") && (rebalanceState.allThemesUnlocked || coachOwned.includes("umtAllThemes"))) candidates.push(1);
     if (id === "jokerCache") candidates.push(num(rebalanceState.cuddleUserJokerCachePerRoundLevel), num(rebalanceState.upgrades && rebalanceState.upgrades.umtJokerCache));
     if (id === "questPersistReward" && mega.questPersistsForRound) candidates.push(1);
     if ((id === "goldenCompass" || id === "secondCup") && coachOwned.includes(id)) candidates.push(1);
@@ -112,7 +112,7 @@
 
   // Names for requirement ids the talent tree files under another id.
   const TITLES = Object.freeze({
-    allThemes: "All-Seeing Atlas", jokerCache: "Joker Cache", cullRare: "Deep Cull",
+    allThemes: "All-Seeing Atlas", allThemesBoss: "All-Seeing Atlas", jokerCache: "Joker Cache", cullRare: "Deep Cull",
     freeVowelSweep: "Free Vowel Sweep", doubleMulligans: "Double Mulligans", backupPlanReward: "Backup Plan",
     questPersistReward: "Lasting Quests", questDoublePick: "Double Pick", secondCup: "Second Cup",
     goldenCompass: "Golden Compass", "alphabet-compass": "Alphabet Compass"
