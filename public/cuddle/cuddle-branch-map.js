@@ -1493,6 +1493,7 @@
   // module gets a post-render hook of its own to scroll the map to where the
   // player is actually standing.
   var campaignExport = window.CuddleCampaign;
+  var mapScrollMemory = null;
   if (campaignExport) {
     var originalAfterRender = campaignExport.afterRender;
     var originalHandleUiAction = campaignExport.handleUiAction;
@@ -1503,11 +1504,26 @@
         var scroller = root.querySelector("[data-cuddle-branch-scroll]");
         var marker = root.querySelector(".cuddle-map-node-here") || root.querySelector(".cuddle-map-node-open");
         if (!scroller || !marker || typeof marker.getBoundingClientRect !== "function") return;
+        // Re-centre only when the player has moved (or the map first opens):
+        // any other re-render -- opening a stop's preview, pressing Back --
+        // keeps the map where the player had scrolled it.
+        var branchMap = game.state.branchMap || {};
+        var positionKey = String(game.state.runId || "") + ":" + JSON.stringify(branchMap.position || null);
+        scroller.addEventListener("scroll", function rememberScroll() {
+          mapScrollMemory = { key: positionKey, top: scroller.scrollTop };
+        }, { passive: true });
+        if (mapScrollMemory && mapScrollMemory.key === positionKey) {
+          var keepTop = mapScrollMemory.top;
+          scroller.scrollTop = keepTop;
+          window.requestAnimationFrame(function restoreScroll() { scroller.scrollTop = keepTop; });
+          return;
+        }
         window.requestAnimationFrame(function centerOnPosition() {
           var scrollerBox = scroller.getBoundingClientRect();
           var markerBox = marker.getBoundingClientRect();
           var offset = (markerBox.top + markerBox.height / 2) - (scrollerBox.top + scrollerBox.height / 2);
           scroller.scrollTop = Math.max(0, scroller.scrollTop + offset);
+          mapScrollMemory = { key: positionKey, top: scroller.scrollTop };
         });
       },
       // Tapping a map node used to commit to it immediately. It now only

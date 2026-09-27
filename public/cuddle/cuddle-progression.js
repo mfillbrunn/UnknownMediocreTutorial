@@ -1352,7 +1352,9 @@
   function payoutShowing(game) {
     const money = game && game.state && game.state.cuddleMoneyMode;
     return Boolean((money && money.pendingPayout && money.pendingPayout.id !== money.lastAnimatedPayoutId)
-      || document.getElementById("cuddleMoneyPayoutOverlay"));
+      || document.getElementById("cuddleMoneyPayoutOverlay")
+      || (window.CuddleMoneyMode && typeof window.CuddleMoneyMode.payoutActive === "function"
+        && window.CuddleMoneyMode.payoutActive()));
   }
 
   function syncPayoutHold(root, game) {

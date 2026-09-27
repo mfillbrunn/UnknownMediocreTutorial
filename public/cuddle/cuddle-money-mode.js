@@ -1084,8 +1084,9 @@
 
   async function runPayoutAnimation(payload, overlay) {
     var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    var rowPause = reduceMotion ? 20 : CONFIG.payoutRowPauseMs;
-    var bankDuration = reduceMotion ? 0 : CONFIG.payoutBankDurationMs;
+    var instant = Boolean(payload.replayInstantly);
+    var rowPause = instant ? 0 : reduceMotion ? 20 : CONFIG.payoutRowPauseMs;
+    var bankDuration = instant || reduceMotion ? 0 : CONFIG.payoutBankDurationMs;
     var bank = overlay.querySelector("#cuddleMoneyBankCounter");
     var current = payload.from;
     var rows = Array.from(overlay.querySelectorAll(".cuddle-money-payout-row"));
@@ -1280,6 +1281,9 @@
     if (payoutRunning && !document.getElementById("cuddleMoneyPayoutOverlay")) {
       payoutRunning = false;
       if (runningPayoutPayload) {
+        // Put it straight back, already counted, with Collect showing: the
+        // player has watched it once and shouldn't wait through it again.
+        runningPayoutPayload.replayInstantly = true;
         mode.pendingPayout = runningPayoutPayload;
         mode.lastAnimatedPayoutId = null;
       }
@@ -1351,6 +1355,10 @@
     }),
     challenges: CHALLENGES.map(function cloneChallenge(challenge) { return Object.assign({}, challenge); }),
     getActiveGame: function getActiveGame() { return activeGame; },
+    // True from the moment a cash-out starts until Collect is pressed --
+    // including the frame or two a full re-render spends replaying it, when
+    // the overlay is briefly absent from the page.
+    payoutActive: function payoutActive() { return payoutRunning; },
     // The labelled lines behind one guess's payout figure. Shared so any
     // layer that rebuilds pendingPayout.rows (cuddle-coach-expansion.js does,
     // to add its unused-row bonus rows) can keep the tap-to-open breakdown
