@@ -1102,7 +1102,7 @@
       : startingRewards
         ? "STARTING REWARDS"
         : waystone
-          ? "WAYSTONE"
+          ? "FREE UPGRADE"
           : `ROUND ${summary?.round || state.round} CLEARED`;
     const heading = milestone
       ? "Choose a bonus upgrade"

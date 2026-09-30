@@ -3,7 +3,7 @@
   "use strict";
 
   const VERSION = "2026.09.09.2";
-  const ROUTE_VERSION = "umt-cuddle-route-2026.09.24.lanes";
+  const ROUTE_VERSION = "umt-cuddle-route-2026.10.01.rest-fork";
   const PATCH_MARK = Symbol.for("umt.cuddle.stability.v2");
   const ROUND_TYPES = new Set(["normal", "theme", "challenge", "boss", "wordle"]);
   const FALLBACK_ICON = "gift.svg";
@@ -259,54 +259,55 @@
     return rows;
   }
 
-  // Every world's three "stops" rows before its boss offer only wordle-type
-  // nodes (normal/theme/challenge) -- whichever lane the player takes, that
-  // guarantees at least 3 played wordles before the boss. Non-wordle
-  // utility stops (shop/upgrade/event) live in one dedicated row of their
-  // own per world instead, so that guarantee holds regardless of path.
+  // Each world: three rows of wordle stops (normal/theme/challenge), then a
+  // fork right before the boss -- a Shop on one side, a Free Upgrade on the
+  // other -- so every run gets exactly one of the two before each boss.
+  // Events ride along as an occasional lane in a world's middle row (only
+  // when that row has all three lanes, so two wordle lanes always remain).
+  const REST_LANES = [0, 2];
   function buildRoute(game) {
     const pairs = bossPairs(game);
     if (pairs.length < 3) return null;
     const random = routeRandom(game);
     const rows = [];
     const gates = ["before-3", "before-7", "final"];
-    const utilityPools = [
-      ["upgrade", "event", "normal"],
-      ["shop", "event", "upgrade"],
-      ["shop", "upgrade", "event"]
-    ];
     const shopSlots = [0, 4, 8];
     for (let world = 0; world < 3; world += 1) {
       for (let step = 0; step < 3; step += 1) {
         const lanes = rowLanes(random);
         const types = shuffled(["normal", "theme", "challenge"], random).slice(0, lanes.length);
+        if (step === 1 && lanes.length === 3 && random() < 0.5) types[Math.floor(random() * 3)] = "event";
         const rowIndex = rows.length;
         rows.push({
           kind: "stops",
           act: world,
-          nodes: lanes.map((lane, col) => routeNode(rowIndex, col, types[col], { lane }))
+          nodes: lanes.map((lane, col) => {
+            const extra = { lane };
+            if (types[col] === "event") extra.eventId = "windfall";
+            return routeNode(rowIndex, col, types[col], extra);
+          })
         });
       }
-      const lanes = rowLanes(random);
-      const pool = utilityPools[world];
-      // Worlds two and three always keep their shop in the row.
-      const fixed = world > 0 ? [pool[0]] : [];
-      const rest = shuffled(pool.filter(type => !fixed.includes(type)), random);
-      const types = shuffled(fixed.concat(rest).slice(0, lanes.length), random);
+      const restTypes = shuffled(["shop", "upgrade"], random);
       const rowIndex = rows.length;
       rows.push({
         kind: "stops",
         act: world,
-        nodes: lanes.map((lane, col) => {
-          const extra = { lane };
-          if (types[col] === "shop") extra.shopSlot = shopSlots[world];
-          if (types[col] === "event") extra.eventId = "windfall";
-          return routeNode(rowIndex, col, types[col], extra);
+        restFork: true,
+        nodes: REST_LANES.map((lane, col) => {
+          const extra = { lane, restChoice: true };
+          if (restTypes[col] === "shop") extra.shopSlot = shopSlots[world];
+          return routeNode(rowIndex, col, restTypes[col], extra);
         })
       });
       rows.push({ kind: "boss", act: world, nodes: [bossNode(pairs[world], gates[world], rows.length)] });
     }
     connectLanes(rows, random);
+    // Every stop before a fork reaches both sides of it, so the choice
+    // between the Shop and the Free Upgrade is always open.
+    rows.forEach((row, index) => {
+      if (row.restFork && rows[index - 1]) rows[index - 1].nodes.forEach(node => { node.next = row.nodes.map((_node, col) => col); });
+    });
     return {
       routeVersion: ROUTE_VERSION,
       rows,
@@ -334,6 +335,8 @@
         // Jackpot, a named challenge...), which is what tells them apart --
         // retyping one here only fought the variant layer's own typing.
         if (["normal", "theme", "challenge"].includes(type)) return;
+        // The Shop / Free Upgrade fork before a boss is deliberate.
+        if (node && node.restChoice) return;
         if (type === "shop" && rowIndex < 4 && !visited.has(key)) {
           const replacement = safeTypes.find(candidate => !used.has(candidate));
           if (replacement) {
