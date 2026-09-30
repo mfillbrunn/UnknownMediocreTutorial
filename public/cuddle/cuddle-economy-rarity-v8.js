@@ -9,7 +9,7 @@
   const CONSONANTS = "BCDFGHJKLMNPQRSTVWXYZ".split("");
   const VOWELS = new Set("AEIOU".split(""));
   const TIERS = Object.freeze({ COMMON: "common", RARE: "rare", LEGENDARY: "legendary" });
-  const DEFAULT_WEIGHTS = Object.freeze({ common: 57, rare: 35, legendary: 8 });
+  const DEFAULT_WEIGHTS = Object.freeze({ common: 60, rare: 35, legendary: 5 });
   const BOOSTED_WEIGHTS = Object.freeze({ common: 35, rare: 50, legendary: 15 });
   const SHOP_WEIGHTS = Object.freeze({ common: 50, rare: 35, legendary: 15 });
   const PRICE_RANGES = Object.freeze({
@@ -1630,6 +1630,8 @@
     }
     const name = norm(getName(def));
     if (name === "bigger mulligan" && currentMulliganSize(state) >= currentHandSize(state)) return false;
+    // Greyscale is a one-time pick (the engine keeps its count).
+    if ((name === "greyscale" || name === "grayscale") && Number(state?.balanceRewardCounts?.greyscale) > 0) return false;
     return !REMOVED_REWARDS.has(name);
   }
 
