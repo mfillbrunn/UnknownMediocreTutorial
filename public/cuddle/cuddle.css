@@ -3456,3 +3456,41 @@
   color: rgba(255, 246, 230, 0.88);
   font-size: 0.74rem;
 }
+
+/* Play-screen strip, tidied: a clear gap under the header, the quest
+   across the full width (its reroll button beside it), and the theme on
+   its own labelled line underneath instead of squeezed in next to the
+   quest where it read as a stray button. */
+#cuddleScreen .cuddle-play-strip {
+  gap: 8px;
+  margin: 8px 0 0;
+}
+#cuddleScreen .cuddle-play-strip > .cuddle-quest-inline {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px 12px 8px 8px;
+}
+#cuddleScreen .cuddle-play-strip > .cuddle-play-theme-badge {
+  flex: 1 1 100%;
+  gap: 6px 10px;
+}
+#cuddleScreen .cuddle-play-strip .cuddle-category-chips {
+  align-items: center;
+  gap: 6px;
+}
+#cuddleScreen .cuddle-play-strip .cuddle-category-chips::before {
+  content: "Theme";
+  margin-right: 2px;
+  color: var(--cuddle-muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+#cuddleScreen .cuddle-play-strip .cuddle-category-chips:has(.cuddle-category-chip + .cuddle-category-chip)::before {
+  content: "Themes";
+}
+#cuddleScreen .cuddle-play-strip .cuddle-category-chip {
+  min-height: 24px;
+  padding: 3px 10px;
+}
