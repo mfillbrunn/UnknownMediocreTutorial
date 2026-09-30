@@ -1020,29 +1020,77 @@
           <span class="cuddle-modal-kicker">${isFinal ? "FINAL BOSS" : "BOSS ROUND"}</span>
           <h2 id="cuddleBossTitle">${isFinal ? "One last secret" : "Choose your boss"}</h2>
           <p>${isFinal
-            ? "Beat this round to win the run. Its permanent reward is shown below; no ordinary upgrade follows."
-            : "A boss round has no points target: you only have to solve it, and it still scores like any stage. Clear it to keep the permanent reward shown below; no ordinary upgrade follows a boss."}</p>
+            ? "Beat this round to win the run. Tap + to see the permanent reward it gives."
+            : "Solve the boss to keep its permanent reward. Tap + to see the reward, − to see what the boss you skip costs you later."}</p>
           <div class="cuddle-choice-grid">
-            ${options.map(option => `
-              <button class="cuddle-choice cuddle-boss-choice" data-boss-id="${escapeHtml(option.id)}">
-                <span class="cuddle-choice-icon">${escapeHtml(option.icon || "💀")}</span>
-                <strong>${escapeHtml(option.title)}</strong>
-                <small>${goldenMoney(escapeHtml(option.description))}</small>
-                ${option.reward ? `
-                  <span class="cuddle-boss-reward" data-reward-id="${escapeHtml(option.reward.id || "")}">
-                    ${interactionBonusBadge(option.reward.id)}
-                    <b>${escapeHtml(option.reward.icon || "🎁")} ${escapeHtml(option.reward.title)}</b>
-                    <span>${goldenMoney(escapeHtml(option.reward.description))}</span>
-                    ${interactionBonusDetail(option.reward.id)}
-                  </span>` : ""}
-                ${leaveBehindNote(option, isFinal) ? `
-                  <span class="cuddle-boss-leave-behind">
-                    <b>⚠️ If you skip this boss</b>
-                    <span>${escapeHtml(leaveBehindNote(option, isFinal))}</span>
-                  </span>` : ""}
-              </button>`).join("")}
+            ${options.map(option => bossCardMarkup(option, isFinal)).join("")}
           </div>
         </section>
+      </div>`;
+  }
+
+  // A boss card keeps its name and its rule; what you win and what skipping
+  // it costs sit behind two icons (a plus and a minus) that open a short
+  // note when tapped, so the cards stay light to scan. Fighting is its own
+  // button now that tapping the card opens those notes instead.
+  const BURDEN_ICON = Object.freeze({
+    countOnly: "numbers", delayedFeedback: "hourglass", hideFeedback: "seeNoEvil",
+    hiddenMargins: "fog", blueMode: "blueDot", fakeFeedback: "liar", quickMode: "stopwatch",
+    noMulligans: "noEntry", shortHand: "hand", questTrial: "clipboard",
+    presetWordsTrial: "scroll", questEndurance: "runner"
+  });
+  let bossTraitOpen = { bossId: null, trait: null };
+
+  function rewardIconFile(id) {
+    const slug = String(id || "gift").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();
+    return `cuddle/icons/reward-${slug || "gift"}.svg`;
+  }
+
+  function iconSvgFor(name) {
+    return window.CuddleIcons ? window.CuddleIcons.svg(name) : "";
+  }
+
+  function bossCardMarkup(option, isFinal) {
+    const id = String(option.id);
+    const reward = option.reward || null;
+    const burden = leaveBehindNote(option, isFinal);
+    const open = bossTraitOpen.bossId === id ? bossTraitOpen.trait : null;
+    const bonus = reward ? pendingSynergyFor(reward.id) : null;
+    const trait = (kind, label, iconHtml, extraClass = "") => `
+      <button type="button" class="umt-boss-trait is-${kind}${open === kind ? " is-open" : ""}${extraClass}"
+        data-boss-trait="${kind}" data-boss-trait-for="${escapeHtml(id)}" aria-expanded="${open === kind}"
+        aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">
+        <span class="umt-boss-trait-art">${iconHtml}</span>
+        <span class="umt-boss-trait-sign" aria-hidden="true">${kind === "reward" ? "+" : "−"}</span>
+      </button>`;
+    let info = "";
+    if (open === "reward" && reward) {
+      info = `<div class="umt-boss-trait-info is-reward" role="note">
+          <b>Win: ${escapeHtml(reward.title)}</b>
+          <span>${goldenMoney(escapeHtml(reward.description))}</span>
+          ${interactionBonusDetail(reward.id)}
+        </div>`;
+    } else if (open === "burden" && burden) {
+      info = `<div class="umt-boss-trait-info is-burden" role="note">
+          <b>If you skip this boss</b>
+          <span>${escapeHtml(burden)}</span>
+        </div>`;
+    }
+    const rewardArt = reward
+      ? `<img src="${rewardIconFile(reward.id)}" alt="" onerror="this.onerror=null;this.src='cuddle/icons/reward-gift.svg'">`
+      : "";
+    return `
+      <div class="cuddle-choice cuddle-boss-choice" data-boss-id="${escapeHtml(id)}">
+        <span class="cuddle-choice-icon">${escapeHtml(option.icon || "💀")}</span>
+        <strong>${escapeHtml(option.title)}</strong>
+        <small>${goldenMoney(escapeHtml(option.description))}</small>
+        <div class="umt-boss-traits">
+          ${reward ? trait("reward", `Reward: ${reward.title}. Tap to read.`, rewardArt, bonus ? " has-bonus" : "") : ""}
+          ${burden ? trait("burden", "What skipping this boss costs. Tap to read.", iconSvgFor(BURDEN_ICON[id] || "skull")) : ""}
+          ${bonus ? interactionBonusBadge(reward.id) : ""}
+        </div>
+        ${info}
+        <button type="button" class="cuddle-btn cuddle-btn-primary umt-boss-fight" data-boss-id="${escapeHtml(id)}">Fight ${escapeHtml(option.title)}</button>
       </div>`;
   }
   /* UMT_CUDDLE_SINGLEPLAYER_V2: ROUND INTRO END */
@@ -1571,8 +1619,21 @@
       return;
     }
 
-    const bossButton = event.target.closest("[data-boss-id]");
+    const traitButton = event.target.closest("[data-boss-trait]");
+    if (traitButton) {
+      const id = traitButton.dataset.bossTraitFor;
+      const trait = traitButton.dataset.bossTrait;
+      const same = bossTraitOpen.bossId === id && bossTraitOpen.trait === trait;
+      bossTraitOpen = same ? { bossId: null, trait: null } : { bossId: id, trait };
+      render();
+      return;
+    }
+
+    // Only the Fight button picks a boss; the card itself just holds the
+    // reward / skip notes.
+    const bossButton = event.target.closest("button[data-boss-id]");
     if (bossButton) {
+      bossTraitOpen = { bossId: null, trait: null };
       const result = game.chooseBoss(bossButton.dataset.bossId);
       setUiMessage(result.ok ? "" : result.error);
       resetActionMode();

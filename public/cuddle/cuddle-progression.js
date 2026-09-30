@@ -382,6 +382,9 @@
 
   function glyphMarkup(icon, size) {
     const text = String(icon || "✦");
+    // Emoji icons are drawn from the Cuddle icon set (cuddle-icons.js).
+    const Icons = window.CuddleIcons;
+    if (Icons && Icons.hasEmoji(text)) return Icons.markup(text, round1(size * 1.15), 0, 0);
     // Text badges ("H+") read smaller than an emoji of the same font size.
     const isText = /^[A-Za-z0-9+\/]+$/.test(text);
     const fontSize = isText ? size * (text.length > 2 ? 0.52 : 0.72) : size;

@@ -663,6 +663,10 @@
 
   function enhanceChoiceIcons(game, root) {
     root.querySelectorAll(".cuddle-choice, .cuddle-money-choice").forEach(button => {
+      // Boss cards keep the boss's own monster (cuddle-rebalance-v5.js);
+      // most bosses have no file here, and the gift fallback read as a
+      // third reward icon next to the card's reward and skip icons.
+      if (button.classList.contains("cuddle-boss-choice")) return;
       const definition = definitionForChoice(game, button);
       const icon = button.querySelector(":scope > .cuddle-choice-icon, :scope > .cuddle-money-choice-icon");
       if (icon) replaceIconContents(icon, definition.id, definition.option?.title || definition.id);
