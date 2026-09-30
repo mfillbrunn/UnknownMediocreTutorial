@@ -3437,3 +3437,22 @@
     border-radius: 14px;
   }
 }
+
+/* The Bonus badge inside a boss card's reward preview: a small pill, not a
+   full-width bar (the preview is a grid), and the combo strip keeps its
+   own colours over the preview's muted span rule. */
+.cuddle-boss-reward > .umt-interaction-badge,
+.cuddle-boss-reward > .cuddle-v8-category-badge {
+  justify-self: start;
+  margin: 0 0 2px;
+}
+.cuddle-boss-reward > .cuddle-v8-category-badge {
+  color: #1a1220;
+}
+.cuddle-boss-reward .umt-combo-detail {
+  margin-top: 6px;
+}
+.cuddle-boss-reward .umt-combo-detail > span {
+  color: rgba(255, 246, 230, 0.88);
+  font-size: 0.74rem;
+}
