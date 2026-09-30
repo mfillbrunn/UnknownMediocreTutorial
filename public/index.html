@@ -22,7 +22,7 @@
   <!-- 8. Power-specific effects -->
   <link rel="stylesheet" href="css/powers.css?fake-feedback-reveal-fix=1">
   <!-- 9. Lobby-->
-  <link rel="stylesheet" href="css/game-menu.css?menu-account-spacing=1&umt-fix=20260830-1&umt-streamlined=1.0.2&menu-scroll-fix=1&umt-tutorial-rework=20260901&guest-play=1">
+  <link rel="stylesheet" href="css/game-menu.css?menu-account-spacing=1&umt-fix=20260830-1&umt-streamlined=1.0.2&menu-scroll-fix=1&umt-tutorial-rework=20260901&guest-play=1&menu-refresh=20260930">
     <!-- 10. Account data-->
   <link rel="stylesheet" href="css/account.css">    
   <!-- 11. Leaderboard-->
@@ -355,7 +355,9 @@
 
       <!-- CUDDLE_MODE:MENU START -->
       <button id="cuddleBtn" class="menu-btn menu-action-btn" type="button">
-        <span class="menu-action-icon menu-action-emoji" aria-hidden="true">☁️</span>
+        <span class="menu-action-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false"><path d="M7.5 18.5h9.5a4 4 0 0 0 .7-7.94A5.5 5.5 0 0 0 7.2 9.1 4.7 4.7 0 0 0 7.5 18.5Z"/></svg>
+        </span>
         <span class="menu-action-copy">
           <span class="menu-action-title">Cuddle</span>
           <span class="menu-action-subtitle">A solo card adventure</span>
@@ -381,12 +383,13 @@
         </span>
         <span class="menu-action-copy">
           <span class="menu-action-title">Tutorials</span>
+          <span class="menu-action-subtitle">Learn how to play</span>
         </span>
         <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
       </button>
     </div>
     <div class="menu-footer-links">
-      <button id="bugReportBtn" class="link-btn" type="button">🐞 Report a bug</button>
+      <button id="bugReportBtn" class="link-btn menu-bug-link" type="button">Report a bug</button>
     </div>
   </div>
 </section>
