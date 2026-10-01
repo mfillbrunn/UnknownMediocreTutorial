@@ -300,6 +300,12 @@
       const reqs = node.requires.map((id) => nodes.get(id) || nodes.get(canonicalId(id)));
       node.reqNodes = reqs.filter(Boolean);
       node.level = node.reqNodes.length === node.requires.length && node.reqNodes.every((n) => n.level > 0) ? 1 : 0;
+      // A half granted outside the pick ledger still counts when the combo
+      // registry says the combo is on.
+      const synergies = window.CuddleSynergies;
+      if (!node.level && synergies && typeof synergies.owns === "function") {
+        try { if (synergies.owns(game, node.id)) node.level = 1; } catch (_error) { /* not a registry combo */ }
+      }
     });
 
     // Place upgrades into wedges.
@@ -376,6 +382,9 @@
 
   function glyphMarkup(icon, size) {
     const text = String(icon || "✦");
+    // Emoji icons are drawn from the Cuddle icon set (cuddle-icons.js).
+    const Icons = window.CuddleIcons;
+    if (Icons && Icons.hasEmoji(text)) return Icons.markup(text, round1(size * 1.15), 0, 0);
     // Text badges ("H+") read smaller than an emoji of the same font size.
     const isText = /^[A-Za-z0-9+\/]+$/.test(text);
     const fontSize = isText ? size * (text.length > 2 ? 0.52 : 0.72) : size;
@@ -683,6 +692,32 @@
     return [...groups.values()];
   }
 
+  // A combo unlocked by this pick: its two halves slide together, flash,
+  // and become the combo, with what it now does underneath.
+  function comboEffect(combo) {
+    const listed = window.CuddleSynergies && Array.isArray(window.CuddleSynergies.combos)
+      ? window.CuddleSynergies.combos.find((item) => item.id === combo.id) : null;
+    if (listed && listed.effect) return listed.effect;
+    const text = String(combo.description || "");
+    return text.includes(": ") ? text.slice(text.indexOf(": ") + 2) : text;
+  }
+
+  function fusionMarkup(combo) {
+    const parts = (combo.reqNodes || []).slice(0, 2);
+    const part = (node, side) => `<span class="umt-pt-fusion-part is-${side}" style="--c:${nodeColor(node)}" title="${esc(node.title)}">${esc(node.icon || "✦")}</span>`;
+    const names = parts.map((node) => esc(node.title)).join(" + ");
+    return `<div class="umt-pt-fusion" style="--c:${COMBO_COLOR}" role="status">`
+      + `<div class="umt-pt-fusion-stage" aria-hidden="true">`
+      + (parts[0] ? part(parts[0], "left") : "")
+      + (parts[1] ? part(parts[1], "right") : "")
+      + `<span class="umt-pt-fusion-flash"></span>`
+      + `<span class="umt-pt-fusion-result">${esc(combo.icon || "✨")}</span>`
+      + `</div>`
+      + `<div class="umt-pt-fusion-copy"><small>Combo unlocked</small><strong>${esc(combo.title)}</strong>`
+      + (names ? `<em>${names}</em>` : "")
+      + `<p>${esc(comboEffect(combo))}</p></div></div>`;
+  }
+
   function revealMarkup(model, reveal) {
     if (!reveal) return "";
     const tree = window.CuddleSkillTree;
@@ -697,8 +732,7 @@
         + `<p>${esc((node && node.description) || entry.description || "")}</p></div>${echo}${lvl}</div>`;
     }).join("");
     const combosNow = model.combos.filter((c) => c.level > 0 && reveal.newComboIds && reveal.newComboIds.has(c.id));
-    const comboNote = combosNow.length
-      ? `<p class="umt-pt-combo-note">✨ Combo unlocked: ${combosNow.map((c) => esc(c.title)).join(", ")}</p>` : "";
+    const comboNote = combosNow.map(fusionMarkup).join("");
     const changes = reveal.diff.length
       ? `<ul class="umt-pt-changes">${reveal.diff.map((c) => {
         const up = c.to > c.from;
@@ -1012,11 +1046,17 @@
     newComboIds.forEach((id) => freshIds.add(id));
 
     // The bottom toast used to announce a boss or starting-bonus reward;
-    // the reveal does that now, so retire it rather than show both.
+    // the reveal does that now, so retire it rather than show both. The
+    // same goes for a combo the reveal is about to animate.
     if (state.bossRewardNotice) {
       state.bossRewardNotice = null;
       saveGame(game);
       document.querySelectorAll("#cuddleRoot .cuddle-v3-toast.is-boss").forEach((el) => el.remove());
+    }
+    if (newComboIds.size && state.synergyNotice) {
+      state.synergyNotice = null;
+      saveGame(game);
+      document.querySelectorAll("#cuddleRoot .cuddle-v3-toast.is-synergy").forEach((el) => el.remove());
     }
 
     // Let the pick's own screen change settle first (a pick usually moves

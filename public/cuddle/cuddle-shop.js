@@ -3,6 +3,8 @@
  *   For the road    2 one-time supplies for your next regular stage(s)
  *   For the boss    2 one-time supplies for the next boss
  *   Keeps forever   3 permanent upgrades for the rest of the run
+ *   Trade           money for points on the spot: usually +10 points for
+ *                   $10, sometimes (the rare deal) +30 points for $20
  * The stock is drawn per shop from larger pools (seeded by the run, saved
  * the first time the shop opens, so it never reshuffles), and a permanent
  * upgrade you have already maxed is never offered.
@@ -103,15 +105,27 @@
     })
     : item)));
 
+  // One trade per shop, drawn like the rest of the stock: the Point Chest
+  // turns up in about one shop in five, the Point Pouch otherwise.
+  const TRADE_ITEMS = Object.freeze([
+    { id: "tradePoints10", icon: "shop-points-pouch.svg", title: "Point Pouch", cost: 10, points: 10,
+      blurb: "+10 points right now, toward the next boss." },
+    { id: "tradePoints30", icon: "shop-points-chest.svg", title: "Point Chest", cost: 20, points: 30, rare: true,
+      blurb: "+30 points right now, toward the next boss. A rare deal." }
+  ]);
+  const RARE_TRADE_CHANCE = 0.2;
+
   const SHELVES = Object.freeze([
     { id: "road", items: ROAD_ITEMS, count: 2, kind: "wordle", title: "For the road",
       note: "One-time supplies for your next regular stages" },
     { id: "boss", items: BOSS_ITEMS, count: 2, kind: "boss", title: "For the boss",
       note: "One-time supplies, spent when the next boss begins" },
     { id: "keep", items: KEEP_ITEMS, count: 3, kind: "upgrade", title: "Keeps forever",
-      note: "Permanent upgrades for the rest of this run" }
+      note: "Permanent upgrades for the rest of this run" },
+    { id: "trade", items: TRADE_ITEMS, count: 1, kind: "shop", title: "Trade",
+      note: "Swap money for points on the spot" }
   ]);
-  const ALL_ITEMS = new Map([].concat(ROAD_ITEMS, BOSS_ITEMS, KEEP_ITEMS).map(item => [item.id, item]));
+  const ALL_ITEMS = new Map([].concat(ROAD_ITEMS, BOSS_ITEMS, KEEP_ITEMS, TRADE_ITEMS).map(item => [item.id, item]));
   const SHELF_OF = new Map();
   SHELVES.forEach(shelf => shelf.items.forEach(item => SHELF_OF.set(item.id, shelf)));
 
@@ -177,17 +191,28 @@
     return Boolean(item.max) && item.level(game) >= item.max;
   }
 
+  function tradeFor(game, key) {
+    const random = seeded(`${game.state.runId || "run"}:${key}:wandering-paw:trade`);
+    return [random() < RARE_TRADE_CHANCE ? "tradePoints30" : "tradePoints10"];
+  }
+
   function stockFor(game) {
     const shop = shopState(game);
     const key = shopKey(game);
     const saved = shop.stock[key];
-    if (saved && Array.isArray(saved.road) && Array.isArray(saved.boss) && Array.isArray(saved.keep)) return saved;
+    if (saved && Array.isArray(saved.road) && Array.isArray(saved.boss) && Array.isArray(saved.keep)) {
+      // A shop stocked before the trade shelf existed gets one added.
+      if (!Array.isArray(saved.trade)) saved.trade = tradeFor(game, key);
+      return saved;
+    }
     const random = seeded(`${game.state.runId || "run"}:${key}:wandering-paw`);
     const stock = {};
     SHELVES.forEach(shelf => {
+      if (shelf.id === "trade") return;
       const eligible = shelf.items.filter(item => !(shelf.id === "keep" && isMaxed(game, item)));
       stock[shelf.id] = shuffled(eligible, random).slice(0, shelf.count).map(item => item.id);
     });
+    stock.trade = tradeFor(game, key);
     shop.stock[key] = stock;
     return stock;
   }
@@ -230,6 +255,8 @@
           description: item.blurb,
           cost: item.cost,
           stages: item.stages || 0,
+          points: item.points || 0,
+          rare: Boolean(item.rare),
           level: shelf.id === "keep" ? item.level(this) : null,
           max: item.max || null,
           maxed,
@@ -284,12 +311,16 @@
     } else if (shelf.id === "boss") {
       const coach = coachOf(this);
       coach.inventory[item.kit] = Math.max(0, int(coach.inventory[item.kit])) + 1;
+    } else if (shelf.id === "trade") {
+      this.state.score = Math.max(0, Number(this.state.score) || 0) + item.points;
     } else {
       item.apply(this);
       recordUpgrade(this, item);
     }
     lastBought = id;
-    this.state.lastMessage = `${item.title} bought for $${item.cost}.`;
+    this.state.lastMessage = shelf.id === "trade"
+      ? `${item.title}: +${item.points} points for $${item.cost}.`
+      : `${item.title} bought for $${item.cost}.`;
     safeSave(this);
     return { ok: true, message: this.state.lastMessage, item: { id, title: item.title } };
   }
@@ -365,6 +396,7 @@
   }
 
   function durationChip(entry) {
+    if (entry.shelf === "trade") return entry.rare ? "Rare deal" : "Right now";
     if (entry.shelf === "boss") return "Next boss";
     if (entry.shelf === "road") return entry.stages > 1 ? `Next ${entry.stages} stages` : "Next stage";
     if (entry.maxed) return "Maxed";
@@ -385,6 +417,7 @@
     const disabled = entry.purchased || entry.maxed || !entry.affordable;
     const price = entry.purchased ? "Sold" : entry.maxed ? "Maxed" : entry.affordable ? `$${entry.cost}` : `Need $${entry.cost}`;
     const classes = ["umt-shop-card", `umt-shelf-${entry.shelf}`];
+    if (entry.rare) classes.push("is-rare");
     if (entry.purchased) classes.push("is-sold");
     if (!entry.purchased && !entry.affordable) classes.push("is-short");
     if (entry.purchased && entry.id === lastBought) classes.push("is-fresh");

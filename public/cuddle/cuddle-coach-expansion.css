@@ -98,7 +98,13 @@
 }
 
 .cuddle-coach-shop-heading.is-boss::before {
-  content: "⚔️ ";
+  content: "";
+  display: inline-block;
+  width: 1.1em;
+  height: 1.1em;
+  margin-right: 0.3em;
+  vertical-align: -0.2em;
+  background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%232b2238%22%20stroke-width%3D%221.6%22%20stroke-linejoin%3D%22round%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M5%204l10.5%2010.5M19%204L8.5%2014.5%22%20stroke-width%3D%224.2%22/%3E%3Cpath%20d%3D%22M5%204l10.5%2010.5M19%204L8.5%2014.5%22%20stroke%3D%22%239aa0ab%22%20stroke-width%3D%222.2%22/%3E%3Cpath%20d%3D%22M13%2017l4.5-4.5M11%2017l-4.5-4.5%22%20stroke-width%3D%222.2%22/%3E%3Ccircle%20cx%3D%2218.5%22%20cy%3D%2218.5%22%20r%3D%221.8%22%20fill%3D%22%23f6c956%22/%3E%3Ccircle%20cx%3D%225.5%22%20cy%3D%2218.5%22%20r%3D%221.8%22%20fill%3D%22%23f6c956%22/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 .cuddle-coach-shop-heading.is-permanent::before {

@@ -96,7 +96,7 @@
   const BASE_STAGE_META = Object.freeze({
     normal: Object.freeze({ title: "Wordle", label: "Wordle", icon: "stage-normal.svg", description: "A standard Cuddle Wordle round." }),
     theme: Object.freeze({ title: "Themed Wordle", label: "Theme", icon: "stage-theme.svg", description: "Theme reveals scale by act: all, all but one, then one." }),
-    upgrade: Object.freeze({ title: "Waystone", label: "Upgrade", icon: "stage-upgrade.svg", description: "Choose a permanent upgrade." }),
+    upgrade: Object.freeze({ title: "Free Upgrade", label: "Upgrade", icon: "stage-upgrade.svg", description: "Choose a permanent upgrade." }),
     shop: Object.freeze({ title: "Wandering Paw", label: "Shop", icon: "stage-shop.svg", description: "Spend money on run supplies." }),
     event: Object.freeze({ title: "Mystery Event", label: "Event", icon: "stage-event-choice.svg", description: "Something happens on the road here. You only find out what when you arrive." }),
     boss: Object.freeze({ title: "Boss", label: "Boss", icon: "stage-boss.svg", description: "A boss Wordle with permanent stakes." }),
@@ -601,6 +601,9 @@
       map.rows.forEach((row, rowIndex) => {
         if (rowIndex <= positionRow || rowIndex === 0) return;
         row.nodes.forEach(node => {
+          // Never the Shop / Free Upgrade fork before a boss: its two sides
+          // have to show what they are.
+          if (node.restChoice) return;
           if (["normal", "theme", "challenge", "event", "upgrade"].includes(node.type)) candidates.push(node);
         });
       });
@@ -2198,7 +2201,7 @@
         row("challenge", "Challenge", "A Wordle with a rule against you, named under the icon. Beat it for bonus money."),
         row("event", "Event", "A choice: a safe reward, or a bigger one with a cost."),
         row("shop", "Shop", "Spend money on supplies for the next stages, the next boss, or the whole run."),
-        row("upgrade", "Waystone", "Choose a free permanent upgrade."),
+        row("upgrade", "Free Upgrade", "Choose a free permanent upgrade."),
         row("duel", "Duel", "Alternate guesses with an AI. The first to solve wins; losing ends the run. One in every run, in world 2 or 3."),
         row("mystery", "Unknown", "Stays hidden until you step onto it."),
         row("boss", "Boss", "A boss Wordle guards the end of each world. Its reward is permanent."),

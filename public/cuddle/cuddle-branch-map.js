@@ -112,7 +112,7 @@
     theme: { icon: "🧭", title: "Themed Wordle", label: "Theme", description: "A round that opens with one of the solution's categories already revealed.", playsRound: true },
     challenge: { icon: "⚡", title: "Mini Challenge", label: "Challenge", description: "A round that always offers a challenge: take it for extra money, or wave it off.", playsRound: true },
     shop: { icon: "🛒", title: "The Wandering Paw", label: "Shop", description: "Spend money on one-use supplies. No Wordle here.", playsRound: false },
-    upgrade: { icon: "✨", title: "Waystone", label: "Upgrade", description: "Take a free permanent upgrade. No Wordle here.", playsRound: false },
+    upgrade: { icon: "✨", title: "Free Upgrade", label: "Upgrade", description: "Take a free permanent upgrade. No Wordle here.", playsRound: false },
     event: { icon: "❔", title: "Event", label: "Event", description: "A trade: something gained now for something given up.", playsRound: false },
     boss: { icon: "💀", title: "Boss", label: "Boss", description: "A boss round: pass or fail, and its reward is permanent.", playsRound: true }
   };
@@ -938,7 +938,7 @@
       if (VARIANT_CAPTIONS[variant.kind]) return VARIANT_CAPTIONS[variant.kind];
     }
     if (node.type === "theme") return "Themed";
-    if (kind === "upgrade") return "Waystone";
+    if (kind === "upgrade") return "Free Upgrade";
     return window.CuddleWorlds.KIND_NAMES[kind] || "Wordle";
   }
 

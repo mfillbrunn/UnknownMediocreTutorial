@@ -89,7 +89,7 @@
         { id: "mulliganValueBoost", icon: "💱", title: "Mulligan Dividend", tier: "common", category: "economy", description: "Each unused mulligan is worth 5 points more when you solve." },
         { id: "earlySolveBoost", icon: "🏁", title: "Early Finish", tier: "common", category: "economy", description: "Each unused guess earns 5 points more on an early solve." },
         { id: "colourTrade", icon: "🎨", title: "Colour Surge", tier: "common", category: "economy", description: "Yellow and green tiles are each worth 3 points more." },
-        { id: "greyscale", icon: "⬛", title: "Greyscale", tier: "common", category: "economy", description: "Grey tiles gain 2 points, while yellow and green drop to 0 for the rest of the run." },
+        { id: "greyscale", icon: "⬛", title: "Greyscale", tier: "common", category: "economy", description: "Grey tiles gain 2 points for the rest of the run. Yellow and green keep their value.", maxLevel: 1 },
         { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", category: "easierStages", description: "The next round reward you pick is applied three times." },
         { id: "removeLetter", icon: "✂️", title: "Cull", tier: "common", category: "easierStages", description: "Remove rare consonants from the deck and from every future secret." },
         { id: "greenCount", icon: "🔢", title: "Precise Green", tier: "rare", category: "solving", maxLevel: 1, description: "A green tile also shows how many times that letter appears in the secret." },

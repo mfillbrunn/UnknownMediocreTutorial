@@ -3705,11 +3705,15 @@
       key: "greyscale",
       icon: "GREY",
       title: "Greyscale",
-      description: "Grey gains 2 points, while yellow and green are reduced to 0 for the run."
+      description: "Grey tiles gain 2 points for the rest of the run. Yellow and green keep their value."
     }
   ]);
   const customUpgradeIds = new Set(customUpgradeDefinitions.map(item => item.id));
-  const colourUpgradeIds = new Set(["colourTrade", "greyscale"]);
+  // Greyscale is a one-time pick. (It used to also zero yellow and green,
+  // and shut Colour Surge out after it; it's pure upside now.)
+  function onceOnlyTaken(state, id) {
+    return id === "greyscale" && finiteNumber(state?.balanceRewardCounts?.greyscale) > 0;
+  }
   const goldenTempoDefinition = Object.freeze({
     id: "goldenTempo",
     icon: "⚡",
@@ -3740,7 +3744,7 @@
     upgrades.mulliganPointBonus = finiteNumber(upgrades.mulliganPointBonus);
     upgrades.earlyRoundPoint = finiteNumber(upgrades.earlyRoundPoint);
     upgrades.yellowPoints = finiteNumber(upgrades.yellowPoints);
-    upgrades.zeroColourPoints = finiteNumber(upgrades.zeroColourPoints) > 0 ? 1 : 0;
+    const hadZeroColours = finiteNumber(upgrades.zeroColourPoints) > 0;
 
     state.upgradeRefreshesUsed = Math.max(
       0,
@@ -3759,6 +3763,12 @@
         Math.floor(finiteNumber(savedCounts[definition.id]))
       );
     });
+    // A run saved while Greyscale still zeroed the colours: give yellow and
+    // green back, along with any Colour Surge bonus Greyscale wiped.
+    if (hadZeroColours) {
+      upgrades.yellowPoints = Math.max(upgrades.yellowPoints, state.balanceRewardCounts.colourTrade * 3);
+    }
+    upgrades.zeroColourPoints = 0;
 
     state.rewardBookHistory = (Array.isArray(state.rewardBookHistory)
       ? state.rewardBookHistory
@@ -3814,7 +3824,7 @@
     if (!state || state.status !== "upgrade" || !Array.isArray(state.upgradeChoices)) return;
     const invalidSavedChoice = state.upgradeChoices.some(choice => (
       retiredUpgradeIds.has(choice?.id)
-      || (state.upgrades.zeroColourPoints > 0 && colourUpgradeIds.has(choice?.id))
+      || onceOnlyTaken(state, choice?.id)
     ));
     if (invalidSavedChoice) state.upgradeChoices = this._generateUpgradeChoices();
   };
@@ -3862,7 +3872,7 @@
       !retiredUpgradeIds.has(choice?.id) && !customUpgradeIds.has(choice?.id)
     ));
     const additions = customUpgradeDefinitions.filter(definition => (
-      !(state.upgrades.zeroColourPoints > 0 && colourUpgradeIds.has(definition.id))
+      !onceOnlyTaken(state, definition.id)
     ));
     return [...choices, ...additions].map(choice => ({
       ...choice,
@@ -3886,16 +3896,15 @@
         ? originalChooseUpgrade.call(this, choiceKey)
         : { ok: false, error: "That upgrade is not available." };
     }
-    if (state.upgrades.zeroColourPoints > 0 && colourUpgradeIds.has(choice.id)) {
-      return { ok: false, error: "That colour reward is no longer available after Greyscale." };
+    if (onceOnlyTaken(state, choice.id)) {
+      return { ok: false, error: "You already have Greyscale." };
     }
 
     const upgrades = state.upgrades;
     switch (choice.id) {
       case "greyPointBoost":
         // Pure upside: grey starts paying without costing the colours
-        // anything. Greyscale below is the reward that actually trades
-        // them away, and it alone sets zeroColourPoints.
+        // anything.
         upgrades.greyPoints += 1;
         break;
       case "handSizeBoost":
@@ -3906,8 +3915,6 @@
         break;
       case "greyscale":
         upgrades.greyPoints += 2;
-        upgrades.yellowPoints = 0;
-        upgrades.zeroColourPoints = 1;
         break;
       case "mulliganValueBoost":
         upgrades.mulliganPointBonus += 5;
@@ -4083,9 +4090,6 @@
     }
     if (upgrades.greyPoints) {
       modifications.push(`Grey tiles score ${signed(upgrades.greyPoints)} each`);
-    }
-    if (upgrades.zeroColourPoints) {
-      modifications.push("Yellow and green tiles score 0");
     }
     if (upgrades.mulliganPointBonus) {
       modifications.push(`Unused mulligans are worth +${upgrades.mulliganPointBonus} extra each`);

@@ -443,3 +443,38 @@
     transition: none;
   }
 }
+
+/* ---- trade shelf: money for points --------------------------------------- */
+/* One card, laid out as a row (icon, text, price) so it reads as a quick
+   swap rather than another item to collect. Points are green in the HUD,
+   so the shelf is too; the rare Point Chest gets a gold edge. */
+#cuddleRoot .umt-shop-shelf.umt-shelf-trade { --shelf: #53c47c; }
+#cuddleRoot .umt-shelf-trade .umt-shop-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+#cuddleRoot .umt-shelf-trade .umt-shop-card {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "plate name price"
+    "plate chip price"
+    "plate blurb blurb";
+  align-items: center;
+  justify-items: start;
+  column-gap: 12px;
+  row-gap: 3px;
+  text-align: left;
+}
+#cuddleRoot .umt-shelf-trade .umt-shop-plate { grid-area: plate; width: 50px; height: 50px; }
+#cuddleRoot .umt-shelf-trade .umt-shop-name { grid-area: name; }
+#cuddleRoot .umt-shelf-trade .umt-shop-chip { grid-area: chip; }
+#cuddleRoot .umt-shelf-trade .umt-shop-blurb { grid-area: blurb; }
+#cuddleRoot .umt-shelf-trade .umt-shop-price { grid-area: price; align-self: start; }
+#cuddleRoot .umt-shelf-trade .umt-shop-card.is-rare {
+  border-color: #f6c956;
+  box-shadow: 0 0 0 1px rgba(246, 201, 86, .35), 0 0 18px rgba(246, 201, 86, .22);
+}
+#cuddleRoot .umt-shelf-trade .umt-shop-card.is-rare .umt-shop-chip {
+  background: #f6c956;
+  color: #3a2605;
+}

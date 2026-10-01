@@ -3437,3 +3437,174 @@
     border-radius: 14px;
   }
 }
+
+/* The Bonus badge inside a boss card's reward preview: a small pill, not a
+   full-width bar (the preview is a grid), and the combo strip keeps its
+   own colours over the preview's muted span rule. */
+.cuddle-boss-reward > .umt-interaction-badge,
+.cuddle-boss-reward > .cuddle-v8-category-badge {
+  justify-self: start;
+  margin: 0 0 2px;
+}
+.cuddle-boss-reward > .cuddle-v8-category-badge {
+  color: #1a1220;
+}
+.cuddle-boss-reward .umt-combo-detail {
+  margin-top: 6px;
+}
+.cuddle-boss-reward .umt-combo-detail > span {
+  color: rgba(255, 246, 230, 0.88);
+  font-size: 0.74rem;
+}
+
+/* Play-screen strip, tidied: a clear gap under the header, the quest
+   across the full width (its reroll button beside it), and the theme on
+   its own labelled line underneath instead of squeezed in next to the
+   quest where it read as a stray button. */
+#cuddleScreen .cuddle-play-strip {
+  gap: 8px;
+  margin: 8px 0 0;
+}
+#cuddleScreen .cuddle-play-strip > .cuddle-quest-inline {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px 12px 8px 8px;
+}
+#cuddleScreen .cuddle-play-strip > .cuddle-play-theme-badge {
+  flex: 1 1 100%;
+  gap: 6px 10px;
+}
+#cuddleScreen .cuddle-play-strip .cuddle-category-chips {
+  align-items: center;
+  gap: 6px;
+}
+#cuddleScreen .cuddle-play-strip .cuddle-category-chips::before {
+  content: "Theme";
+  margin-right: 2px;
+  color: var(--cuddle-muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+#cuddleScreen .cuddle-play-strip .cuddle-category-chips:has(.cuddle-category-chip + .cuddle-category-chip)::before {
+  content: "Themes";
+}
+#cuddleScreen .cuddle-play-strip .cuddle-category-chip {
+  min-height: 24px;
+  padding: 3px 10px;
+}
+
+/* Boss cards: the reward (+) and what skipping costs (−) are two round
+   icons; tapping one opens its note under them. Only the Fight button
+   picks the boss. */
+.cuddle-boss-choice {
+  cursor: default;
+}
+.umt-boss-traits {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 10px;
+}
+.umt-boss-trait {
+  --ring: #53c47c;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 2px solid var(--ring);
+  border-radius: 50%;
+  background: rgba(20, 16, 28, 0.9);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 16%, transparent);
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.umt-boss-trait.is-burden { --ring: #ef5a67; }
+.umt-boss-trait:hover { transform: translateY(-1px); }
+.umt-boss-trait.is-open {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ring) 38%, transparent), 0 0 16px color-mix(in srgb, var(--ring) 45%, transparent);
+}
+.umt-boss-trait:focus-visible {
+  outline: 3px solid #fff3dc;
+  outline-offset: 2px;
+}
+.umt-boss-trait-art {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+}
+.umt-boss-trait-art > img,
+.umt-boss-trait-art > svg {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+.umt-boss-trait-sign {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #1b1624;
+  border-radius: 50%;
+  background: var(--ring);
+  color: #1b1624;
+  font-size: 0.9rem;
+  font-weight: 900;
+  line-height: 1;
+}
+.umt-boss-traits > .umt-interaction-badge {
+  margin: 0;
+  align-self: center;
+}
+.umt-boss-trait-info {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-align: left;
+  animation: umt-boss-note-in 160ms ease-out both;
+}
+.umt-boss-trait-info.is-reward {
+  border: 1px solid rgba(83, 196, 124, 0.45);
+  background: rgba(83, 196, 124, 0.1);
+}
+.umt-boss-trait-info.is-burden {
+  border: 1px solid rgba(239, 90, 103, 0.45);
+  background: rgba(239, 90, 103, 0.1);
+}
+.umt-boss-trait-info b {
+  font-size: 0.78rem;
+  color: #fff3dc;
+}
+.umt-boss-trait-info.is-reward b { color: #8fe0a8; }
+.umt-boss-trait-info.is-burden b { color: #ff9aa3; }
+.umt-boss-trait-info > span {
+  color: var(--cuddle-muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+.umt-boss-trait-info .umt-combo-detail > span {
+  color: rgba(255, 246, 230, 0.88);
+  font-size: 0.74rem;
+}
+.umt-boss-fight {
+  width: 100%;
+  margin-top: 12px;
+}
+@keyframes umt-boss-note-in {
+  from { opacity: 0; transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .umt-boss-trait, .umt-boss-trait-info { transition: none; animation: none; }
+}
