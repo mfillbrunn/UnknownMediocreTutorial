@@ -26,6 +26,12 @@
   let actionMode = "play";
   let selectedCards = new Set();
   let uiMessage = "";
+  // The quest reward screen opens with a short "Quest complete" stamp the
+  // first time it shows for a given quest; re-renders of the same screen
+  // (a refresh, Double Pick's second choice) open straight onto the cards.
+  let questStampKey = "";
+  let questStampUntil = 0;
+  const QUEST_STAMP_MS = 950;
   let loadingPromise = null;
   const RECONNECT_GRACE_MS = 30000;
   const RECONNECT_RETRY_MS = 3000;
@@ -1099,8 +1105,32 @@
     const subtext = totalPicks > 1
       ? "Double Pick is active: choose two of these rewards. Effects apply immediately and never carry into the next round."
       : "Choose a reward for the current round. It applies immediately and never carries into the next round.";
+    const history = Array.isArray(state.history) ? state.history : [];
+    const entry = history[history.length - 1] || null;
+    const stampKey = `${state.runId || ""}:${state.round}:${history.length}`;
+    const reducedMotion = typeof window.matchMedia === "function"
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (stampKey !== questStampKey) {
+      questStampKey = stampKey;
+      questStampUntil = reducedMotion ? 0 : Date.now() + QUEST_STAMP_MS;
+    }
+    const stamping = Date.now() < questStampUntil;
+    // Every render rebuilds the overlay; carrying the elapsed time in as a
+    // negative delay keeps a mid-stamp re-render from restarting it.
+    const stampAt = stamping ? Math.max(0, Date.now() - (questStampUntil - QUEST_STAMP_MS)) : 0;
+    const quest = entry && entry.questComplete && entry.questId
+      ? (window.CuddleQuestBook?.QUESTS || []).find(item => item && item.id === entry.questId)
+      : null;
+    const stamp = stamping
+      ? `<div class="cuddle-quest-stamp" aria-hidden="true">`
+        + `<span class="cuddle-quest-stamp-mark"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>`
+        + `<b>Quest complete</b>`
+        + (quest && quest.title ? `<small>${escapeHtml(quest.title)}</small>` : "")
+        + `</div>`
+      : "";
     return `
-      <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleRewardTitle">
+      <div class="cuddle-overlay${stamping ? " is-quest-stamping" : ""}"${stamping ? ` style="--qs-at:-${stampAt}ms"` : ""} role="dialog" aria-modal="true" aria-labelledby="cuddleRewardTitle">
+        ${stamp}
         <section class="cuddle-modal cuddle-modal-wide cuddle-compact-cards">
           <span class="cuddle-modal-kicker">QUEST COMPLETE</span>
           <h2 id="cuddleRewardTitle">${heading}</h2>
@@ -1634,6 +1664,9 @@
     }
 
     const rewardButton = event.target.closest("[data-reward-id]");
+    // The cards are still fading in under the stamp: a tap there was aimed
+    // at the board, not at a reward the player hasn't seen yet.
+    if (rewardButton && Date.now() < questStampUntil) return;
     if (rewardButton) {
       const result = game.chooseQuestReward(rewardButton.dataset.rewardId);
       setUiMessage(result.ok ? "" : result.error);
