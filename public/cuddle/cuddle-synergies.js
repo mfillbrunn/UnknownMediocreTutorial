@@ -36,7 +36,7 @@
     { id: "cleanSweep", icon: "🧹", title: "Clean Sweep", requires: [["cullRare"], ["freeVowelSweep"]],
       effect: "Every stage opens with +1 mulligan." },
     { id: "safetyNet", icon: "🪢", title: "Safety Net", requires: [["secondCup"], ["doubleMulligans", "backupPlanReward"]],
-      effect: "Solving on your last row pays +20 points." },
+      effect: "Solving on the last guess of your bonus window pays +20 points." },
     { id: "compassRose", icon: "🧭", title: "Compass Rose", requires: [["goldenCompass"], ["alphabet-compass"]],
       effect: "Solving by guess 4 pays +$4." },
     { id: "scholarsEye", icon: "🔎", title: "Scholar's Eye", requires: [["greenCount"], ["categorySense"]],
@@ -320,8 +320,10 @@
       if (ownsCombo(this, "cartographer")) stageBonus(this, 10, "umtComboCartographer", "Cartographer");
       if (ownsCombo(this, "compassRose") && history.length <= 4) moneyBonus(this, 4, "Compass Rose: +$4.");
       if (ownsCombo(this, "safetyNet")) {
-        const lastRow = typeof this._effectiveMaxGuesses === "function" ? this._effectiveMaxGuesses() : num(this.state.maxGuesses);
-        if (lastRow && history.length >= lastRow) stageBonus(this, 20, "umtComboSafetyNet", "Safety Net");
+        // The last guess of the bonus window: anything later is a late
+        // guess, which earns nothing but its penalty (returned above).
+        const lastRow = typeof this._solveGuessThreshold === "function" ? this._solveGuessThreshold() : 6;
+        if (lastRow && history.length === lastRow) stageBonus(this, 20, "umtComboSafetyNet", "Safety Net");
       }
     }
     return result;

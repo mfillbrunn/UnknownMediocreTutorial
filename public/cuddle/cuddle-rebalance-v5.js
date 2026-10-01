@@ -39,7 +39,8 @@
     treasureHunter: "umtTreasureHunter",
     patternLens: "umtPatternLens",
     mistakeShield: "umtMistakeShield",
-    lastLight: "umtLastLight"
+    lastLight: "umtLastLight",
+    yellowHint: "umtYellowHint"
   });
 
   const VOWELS = new Set(["A", "E", "I", "O", "U"]);
@@ -52,7 +53,7 @@
     Object.freeze({
       id: IDS.rainyDay, key: IDS.rainyDay, icon: "\uD83C\uDFE6",
       title: "Rainy Day Fund", name: "Rainy Day Fund",
-      description: "Every non-boss stage opens by paying 5% interest on your wallet, up to $25. Stacks.",
+      description: "Every non-boss stage opens by paying 5% interest on your wallet, up to $25. A second copy doubles both.",
       maxLevel: 2, maxCount: 2, kind: "upgrade"
     }),
     Object.freeze({
@@ -64,7 +65,7 @@
     Object.freeze({
       id: IDS.hotStreak, key: IDS.hotStreak, icon: "\uD83D\uDD25",
       title: "Hot Streak", name: "Hot Streak",
-      description: "Each guess in a row that pins a new green pays a growing bonus: 5, then 10, then 15 points. A guess with no new green resets it.",
+      description: "Each guess in a row that pins a new green pays a growing bonus: 5, then 10, then 15 points, and so on. A guess with no new green resets it.",
       maxLevel: 2, maxCount: 2, kind: "upgrade"
     }),
     Object.freeze({
@@ -76,7 +77,7 @@
     Object.freeze({
       id: IDS.doubleDown, key: IDS.doubleDown, icon: "\uD83C\uDFB2",
       title: "Double Down", name: "Double Down",
-      description: "Each stage names a lucky guess, from the 3rd to the 7th. Solve the word on exactly that guess for +50 points.",
+      description: "Each stage names a lucky guess, from the 3rd to the 7th. Solve the word on exactly that guess for +50 points, even if that's past your bonus window.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     // Insight rewards: clues about the answer at the start of a stage,
@@ -123,6 +124,14 @@
       title: "Last Light", name: "Last Light",
       description: "Every non-boss stage opens with the answer's last letter already in place.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
+    }),
+    // An Epic pick (cuddle-economy-rarity-v8.js); granted in
+    // grantStageYellowHints at the start of every non-boss stage.
+    Object.freeze({
+      id: IDS.yellowHint, key: IDS.yellowHint, icon: "\uD83D\uDFE8",
+      title: "Yellow Guesser Hint", name: "Yellow Guesser Hint",
+      description: "Every non-boss stage opens with one letter of the answer shown as in the word, not where. Stacks: one more letter per copy.",
+      maxLevel: 2, maxCount: 2, kind: "upgrade"
     })
   ]);
 
@@ -133,12 +142,12 @@
     Object.freeze({
       id: "compoundCuddle", icon: "\uD83C\uDFE6", title: "Compound Cuddle",
       requires: Object.freeze([IDS.rainyDay, IDS.reserveDividend]),
-      description: "Rainy Day Fund + Reserve Dividend: interest doubles its cap and unused Jokers count toward the balance it pays on."
+      description: "Rainy Day Fund + Reserve Dividend: the interest cap doubles, and each unused Joker counts as $10 toward the balance."
     }),
     Object.freeze({
       id: "goldenStreak", icon: "\uD83D\uDD25", title: "Golden Streak",
-      requires: Object.freeze([IDS.hotStreak, "yellowPoints"]),
-      description: "Hot Streak + Golden Value: a guess that pins a new yellow keeps the streak alive too."
+      requires: Object.freeze([IDS.hotStreak, "greenOnlyPoints"]),
+      description: "Hot Streak + Colour Surge: a guess that finds a new yellow keeps the streak alive too."
     }),
     Object.freeze({
       id: "encoreNight", icon: "\uD83C\uDFAC", title: "Encore Night",
@@ -148,7 +157,7 @@
     Object.freeze({
       id: "allIn", icon: "\uD83C\uDFB2", title: "All In",
       requires: Object.freeze([IDS.doubleDown, IDS.hotStreak]),
-      description: "Double Down + Hot Streak: a solve on the lucky guess also pays the streak bonus at its highest step."
+      description: "Double Down + Hot Streak: a solve on the lucky guess also pays +15 points (+30 with Hot Streak taken twice)."
     }),
   ]);
 
@@ -217,7 +226,7 @@
       icon: "🔍",
       title: "Process of Elimination",
       name: "Process of Elimination",
-      description: "Every guess rules out one consonant that is not in the secret.",
+      description: "In non-boss stages, every guess rules out one consonant that is not in the answer.",
       maxLevel: 1,
       maxCount: 1,
       kind: "upgrade"
@@ -263,12 +272,12 @@
   // Written to read after "Guess N ·" on the row badge, and after the boss
   // card's "for the rest of the run, …" lead-in.
   const BURDEN_INFO = Object.freeze({
-    countOnly: ["Count Only", "That guess only tells you how many letters are right, not which ones."],
-    delayedFeedback: ["Delayed Feedback", "That guess shows its colours one guess late."],
-    hideFeedback: ["Hidden Feedback", "One tile of that guess never shows its colour."],
+    countOnly: ["Count Only", "The marked tiles of that guess only tell you how many of them are green or yellow, not which."],
+    delayedFeedback: ["Delayed Feedback", "The marked tiles of that guess show their colours one guess late."],
+    hideFeedback: ["Hide Feedback", "One tile of that guess never shows its colour."],
     hiddenMargins: ["Hidden Margins", "Two tiles of that guess never show their colour."],
-    blueMode: ["Blue Mode", "A right letter on that guess shows blue, so you can't tell if it's in the right spot."],
-    fakeFeedback: ["False Signal", "Some tiles of that guess show the wrong colour."],
+    blueMode: ["Blue Mode", "A right letter on a marked tile of that guess shows blue, so you can't tell if it's in the right spot."],
+    fakeFeedback: ["Fake Feedback", "The marked tiles of that guess show the wrong colour."],
     quickMode: ["Quick Mode", "That guess scores 0 points."],
     noMulligans: ["Steady Hand", "You can't mulligan right before that guess."],
     shortHand: ["Short Hand", "You go into that guess with one fewer letter in your hand."],
@@ -1262,6 +1271,18 @@
     }
     try { if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards(); } catch (_error) {}
     try { if (typeof game.drawToHandLimit === "function") game.drawToHandLimit(); } catch (_error) {}
+  }
+
+  // Yellow Guesser Hint: one present letter per copy, once per stage
+  // (the round token keeps a reload from granting it twice).
+  function grantStageYellowHints(game) {
+    const level = clamp(upgradeLevel(game, IDS.yellowHint), 0, 2);
+    const custom = customState(game);
+    if (level <= 0 || !custom || trueBossRound(game)) return;
+    const token = roundToken(game);
+    if (custom.yellowHintToken === token) return;
+    custom.yellowHintToken = token;
+    for (let index = 0; index < level; index += 1) grantYellowHint(game, "Yellow Guesser Hint");
   }
 
   function grantYellowHint(game, source) {
@@ -2356,12 +2377,14 @@
     if (custom.interestPaidToken === token) return;
     custom.interestPaidToken = token;
     const compound = hasFunSynergy(game, "compoundCuddle");
-    const balance = Math.max(0, asNumber(state.score, 0)) + (compound ? totalJokerStock(game) * 10 : 0);
+    // Interest on the wallet, paid into the wallet -- it used to read the
+    // run's points and pay points, while promising money.
+    const balance = Math.max(0, asNumber(state.cuddleMoney, 0)) + (compound ? totalJokerStock(game) * 10 : 0);
     const cap = (compound ? 50 : 25) * level;
     const interest = Math.min(cap, Math.floor(balance * 0.05 * level));
     if (interest <= 0) return;
-    addScoreBonus(game, interest, "umtInterest", "Bank interest");
-    appendNotice(game, `\uD83C\uDFE6 Rainy Day Fund paid $${interest} in interest.`);
+    state.cuddleMoney = Math.max(0, asNumber(state.cuddleMoney, 0)) + interest;
+    appendNotice(game, `Rainy Day Fund paid $${interest} in interest.`);
   }
 
   // Runs once per submitted guess: a guess that pins new information keeps
@@ -2392,7 +2415,7 @@
     }
     custom.streakCount = asInteger(custom.streakCount, 0) + 1;
     addScoreBonus(game, custom.streakCount * 5 * level, "umtHotStreak",
-      `${custom.streakCount} stage streak`);
+      `Streak of ${custom.streakCount}`);
   }
 
   // Process of Elimination: rules out one consonant not in the secret after
@@ -2527,6 +2550,7 @@
     applyTrainingWheels(game);
     payStageInterest(game);
     initializeHintSchedule(game);
+    grantStageYellowHints(game);
     doubleDownGuess(game);
     scheduleUi();
     safeSave(game);
@@ -2593,9 +2617,10 @@
   function repairUpgradeChoices(game, choices) {
     if (!Array.isArray(choices)) return choices;
     let repaired = choices.filter((item) => !REMOVED_NORMAL_REWARDS.has(normalizedId(item)));
-    // A Legendary offer (cuddle-economy-rarity-v8.js) is left whole: swapping
-    // a solving aid into it would push one of the three Legendaries out.
-    const legendaryOffer = repaired.length > 0 && repaired.every((item) => item && item.__cuddleV8OfferTier === "legendary");
+    // An Epic or Legendary offer (cuddle-economy-rarity-v8.js) is left whole:
+    // swapping a solving aid into it would push one of its cards out.
+    const legendaryOffer = repaired.length > 0
+      && repaired.every((item) => item && (item.__cuddleV8OfferTier === "legendary" || item.__cuddleV8OfferTier === "epic"));
     const hasAid = legendaryOffer || repaired.some((item) => SOLVING_AID_IDS.has(normalizedId(item)));
     if (!hasAid) {
       const excluded = refreshExclusions.get(game) || new Set();
@@ -3108,11 +3133,11 @@
     shroudedEdges: { title: "Shrouded Edges", description: "The same marked positions remain hidden on every affected guess.", shape: "edges" },
     countOnly: { title: "Count Only", description: "The marked tiles report only how many of them are green and how many yellow, never which is which. Every other tile in the row shows its real colour.", shape: "count", multiplayerId: "countOnly" },
     delayedFeedback: { title: "Delayed Feedback", description: "The marked tiles hold back their colours for one guess: each row's hidden tiles are revealed when you submit the next guess. Every other tile in the row shows its real colour immediately.", shape: "clock" },
-    hideFeedback: { title: "Hidden Feedback", description: "One tile position stays concealed for the whole round, and you never learn what it was.", shape: "blind" },
-    hiddenMargins: { title: "Hidden Margins", description: "Two tile positions stay concealed for the whole round, and you never learn what they were.", shape: "edges" },
+    hideFeedback: { title: "Hide Feedback", description: "One marked tile hides its colour on this guess.", shape: "blind" },
+    hiddenMargins: { title: "Hidden Margins", description: "Two marked tiles hide their colour on this guess.", shape: "edges" },
     blueMode: { title: "Blue Mode", description: "On the marked tiles green and yellow both show as blue, so you learn the letter is in the secret but not whether it is placed right. Every other tile in the row shows its real colour.", shape: "merge" },
-    fakeFeedback: { title: "False Signal", description: "The marked tiles show a colour that is deliberately wrong. Every other tile in the row shows its real colour.", shape: "lie" },
-    quickMode: { title: "Quick Mode", description: "The guess must be made before the timer expires.", shape: "hourglass" },
+    fakeFeedback: { title: "Fake Feedback", description: "The marked tiles show a colour that is deliberately wrong. Every other tile in the row shows its real colour.", shape: "lie" },
+    quickMode: { title: "Quick Mode", description: "In the boss fight: one minute per guess, and a guess you run out of time on is lost. As a curse: that guess scores 0 points.", shape: "hourglass" },
     noMulligans: { title: "No Mulligans", description: "Mulligans are unavailable while this power applies.", shape: "noShield" },
     shortHand: { title: "Short Hand", description: "The round has a smaller hand or fewer guesses.", shape: "hand" },
     questTrial: { title: "Quest Trial", description: "A quest requirement applies to every affected guess.", shape: "scroll" },
@@ -3127,7 +3152,7 @@
     umtQuickStudy: { title: "Quick Study", description: "Guesser Hints arrive sooner.", shape: "hourglass" },
     umtJokerCache: { title: "Joker Cache", description: "One extra Joker every stage.", shape: "joker" },
     umtReserveDividend: { title: "Reserve Dividend", description: "Unused Jokers and mulligans pay an additional end-of-round bonus.", shape: "coins" },
-    umtConsonantSweep: { title: "Process of Elimination", description: "Every guess rules out one consonant that is not in the secret.", shape: "eliminate" },
+    umtConsonantSweep: { title: "Process of Elimination", description: "In non-boss stages, every guess rules out one consonant that is not in the answer.", shape: "eliminate" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
     compass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
     umtDoubleDown: { title: "Double Down", description: "Your lucky guess this stage: solve the word on exactly this guess for +50 points.", shape: "die" },
@@ -4335,7 +4360,7 @@
         result = appendModification(result, `Guesser Hint: ${schedule.nextType} hint in ${Math.max(0, schedule.nextHintGuess - guessesUsed(this))} guesses`);
       }
       if (upgradeLevel(this, IDS.reserveDividend) > 0) {
-        result = appendModification(result, `Reserve Dividend: +$${CONFIG.reserveDividendExtra} per unused mulligan and Joker`);
+        result = appendModification(result, `Reserve Dividend: +${CONFIG.reserveDividendExtra} points per unused mulligan and Joker`);
       }
       const challenge = activeChallenge(this);
       if (challenge) result = appendModification(result, `Mandatory challenge: ${challenge.title}`);

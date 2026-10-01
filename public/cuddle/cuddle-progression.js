@@ -140,7 +140,7 @@
   // Anything not listed falls into a branch by its catalogue category.
   const WEDGES = [
     { id: "scoring", title: "Scoring", color: "#8ff7cd", angle: -150,
-      ids: ["yellowPoints", "earlyRoundPoint", "storybookStart", "earlySolveBoost", "mulliganValueBoost", "greyPointBoost", "colourTrade", "greyscale"] },
+      ids: ["storybookStart", "earlySolveBoost", "mulliganValueBoost", "greyPointBoost", "colourTrade", "greyscale"] },
     { id: "economy", title: "Economy", color: "#f6c956", angle: -90,
       ids: ["rainyDay", "encore", "hotStreak", "vowelBounty", "doubleDown", "reserveDividend", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"] },
     { id: "solving", title: "Solving Aids", color: "#7cb8ff", angle: -30, easyOnly: true,
@@ -158,8 +158,8 @@
   const COMBO_COLOR = "#ff7ab8";
   const BOSS_COLOR = "#fb7185";
   // Bronze / silver / gold, as on the reward cards' rarity badges.
-  const TIER_STROKE = { common: "#c98a4b", rare: "#c6d0de", legendary: "#f6c956" };
-  const TIER_NAME = { common: "Common", rare: "Rare", legendary: "Legendary" };
+  const TIER_STROKE = { common: "#c98a4b", rare: "#c6d0de", epic: "#b98cff", legendary: "#f6c956" };
+  const TIER_NAME = { common: "Common", rare: "Rare", epic: "Epic", legendary: "Legendary" };
   // Talents the shop's permanent shelf sells (cuddle-shop.js KEEP items).
   const SHOP_TALENTS = new Set(["coachPossibleAnswers", "coachHint", "coachMeterThreshold", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"]);
   // Boss rewards that can also be a Legendary between-round pick
@@ -602,6 +602,13 @@
       + `</div>`;
   }
 
+  // Boss rewards that are also between-round picks: these four come up as
+  // Epic, the rest as Legendary (cuddle-economy-rarity-v8.js).
+  const EPIC_PICK_IDS = new Set(["doubleMulligans", "freeVowelSweep", "questHead", "secondCup"]);
+  function pickTierName(id) {
+    return EPIC_PICK_IDS.has(id) ? "an Epic" : "a Legendary";
+  }
+
   function howToGet(node) {
     const tier = TIER_NAME[node.tier] || "";
     const lines = [];
@@ -614,7 +621,7 @@
     }
     if (node.kind === "boss") {
       lines.push("Boss reward: pick the boss that offers it and clear that boss.");
-      if (LEGENDARY_PICK_IDS.has(node.id)) lines.push("Can also show up as a Legendary between-round reward.");
+      if (LEGENDARY_PICK_IDS.has(node.id)) lines.push(`Can also show up as ${pickTierName(node.id)} between-round reward.`);
       return lines;
     }
     if (node.branch === "cuddleCoach") {
@@ -623,7 +630,7 @@
       lines.push(`Between-round reward${tier ? ` (${tier})` : ""}: offered on the reward screen after a stage.`);
       if (SHOP_TALENTS.has(node.id)) lines.push("Also sold on the shop's permanent shelf.");
     }
-    if (LEGENDARY_PICK_IDS.has(node.id) && node.tier !== "legendary") lines.push("Can also show up as a Legendary reward.");
+    if (LEGENDARY_PICK_IDS.has(node.id) && node.tier !== "legendary") lines.push(`Can also show up as ${pickTierName(node.id)} reward.`);
     if (node.easyOnly) lines.push("Only offered on Easy difficulty.");
     return lines;
   }
@@ -636,7 +643,7 @@
       + `<li><span class="umt-pz-key is-fresh"></span>Just picked up</li>`
       + `<li><span class="umt-pz-key is-open"></span>Not yet</li>`
       + `<li><span class="umt-pz-key is-locked"></span>Easy only</li>`
-      + `<li>${tier("common")}</li><li>${tier("rare")}</li><li>${tier("legendary")}</li>`
+      + `<li>${tier("common")}</li><li>${tier("rare")}</li><li>${tier("epic")}</li><li>${tier("legendary")}</li>`
       + `<li><span class="umt-pt-key-badge">1/2</span>Combo: halves owned</li>`
       + `</ul></details>`;
   }

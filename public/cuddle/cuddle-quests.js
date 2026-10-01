@@ -256,7 +256,7 @@
       id: "stealthGuess",
       icon: "🔁",
       title: "Extra Mulligan",
-      description: "Gain one additional mulligan for the current round."
+      description: "Gain one additional mulligan for this stage."
     },
     {
       id: "letterProbe",
@@ -280,7 +280,7 @@
       id: "jokerToken",
       icon: "🃏",
       title: "Joker",
-      description: "Gain a joker charge: a wildcard hand tile that resolves to a real letter on submit."
+      description: "Gain a Joker: a wildcard tile that becomes the right letter when you submit. It stays until you use it."
     }
   ];
 
@@ -345,7 +345,7 @@
       id: "shortHand",
       icon: "🥊",
       title: "Short Hand",
-      description: "Ten random letters are pulled from your deck before this round starts, and you only get four guesses to find the secret.",
+      description: "Ten consonants that aren't in the answer are pulled from your deck before this round starts, and you only get four guesses to find it.",
       turns: 0,
       rewardId: "revealGreen"
     },
@@ -398,7 +398,7 @@
       id: "doubleMulligans",
       icon: "🔁",
       title: "Double Mulligans",
-      description: "Double the number of mulligans you get each round."
+      description: "Double the number of mulligans you get each stage."
     },
     {
       id: "biggerMulligans",
@@ -416,7 +416,7 @@
       id: "freeVowelSweep",
       icon: "🅰️",
       title: "Free Vowel Sweep",
-      description: "Each round opens with one random vowel tested for free -- you learn whether it's in the secret, not where."
+      description: "Each stage opens with one random vowel tested for free: you learn whether it's in the answer, not where."
     },
     {
       id: "questHead",
@@ -428,7 +428,7 @@
       id: "revealGreen",
       icon: "📍",
       title: "Position Peek",
-      description: "Reveal one hidden position and make that letter reusable for this round."
+      description: "The stage after this boss opens with one letter of the answer already in its exact place."
     },
     {
       id: "openingClue",
@@ -446,19 +446,19 @@
       id: "questCadence",
       icon: "❗",
       title: "Quest Cadence",
-      description: "One additional quest is active at the same time, for the rest of the run. Stacks."
+      description: "Quests come more often (every second guess, then every guess) and one more can be active at a time. Stacks twice."
     },
     {
       id: "questPersistReward",
       icon: "⏳",
       title: "Lasting Quests",
-      description: "Quests stay active for the rest of the round instead of expiring after one guess."
+      description: "A quest you don't complete stays active for the rest of the stage instead of expiring after one guess (not in boss fights)."
     },
     {
       id: "backupPlanReward",
       icon: "🧰",
       title: "Backup Plan",
-      description: "Gain one additional mulligan every round."
+      description: "Gain one additional mulligan every stage."
     },
     // Not tied to a fixed boss trial -- Cuddle Coach Expansion injects this
     // one into a boss's offer in place of its normal reward (see

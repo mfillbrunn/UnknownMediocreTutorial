@@ -590,7 +590,7 @@
       maybeOfferChallenge(this, mode);
       var message = String(this.state.lastMessage || "");
       if (/reach\s+-?\d+\s+total\s+points/i.test(message)) {
-        this.state.lastMessage = "Round " + this.state.round + ": solve the fixed secret to continue. Every useful tile and bonus earns money.";
+        this.state.lastMessage = "Solve the word to clear this stage. Every green and yellow tile scores points.";
       }
     }
     return result;

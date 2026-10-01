@@ -83,7 +83,7 @@
       level: game => (coachOf(game).possibleAnswersUnlocked ? 1 : 0),
       apply: game => { coachOf(game).possibleAnswersUnlocked = true; } },
     { id: "keepHint", ledgerId: "coachHint", icon: "reward-coach-shop-hint.svg", title: "Guesser Hint", cost: 50, max: 4,
-      blurb: "One more exact-position hint to spend in every eligible stage.",
+      blurb: "One more automatic hint every non-boss stage: first a letter that's in the answer, then one in its exact place.",
       level: game => Math.max(0, int(coachOf(game).hintsPerRound)),
       apply: game => { const coach = coachOf(game); coach.hintsPerRound = Math.min(4, Math.max(0, int(coach.hintsPerRound)) + 1); } },
     { id: "keepMeter", ledgerId: "coachMeterThreshold", icon: "reward-cuddle-meter-reward.svg", title: "Softer Cuddle Meter", cost: 56, max: 3,

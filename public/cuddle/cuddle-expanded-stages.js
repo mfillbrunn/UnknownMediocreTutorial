@@ -111,7 +111,7 @@
       flavor: "A warm tin box sits beneath a quilted bench.",
       options: Object.freeze([
         Object.freeze({ id: "safe", title: "Take the loose coins", summary: "Gain $8 with no downside.", effects: Object.freeze([{ type: "money", amount: 8 }]) }),
-        Object.freeze({ id: "bold", title: "Open the sealed compartment", summary: "Gain $24, but the next Wordle starts one guess short.", effects: Object.freeze([{ type: "money", amount: 24 }, { type: "nextPenalty", key: "guess", amount: 1 }]) })
+        Object.freeze({ id: "bold", title: "Open the sealed compartment", summary: "Gain $24, but the next Wordle must be solved within the world's guess limit (6, 5 or 4) or the run ends.", effects: Object.freeze([{ type: "money", amount: 24 }, { type: "nextPenalty", key: "guess", amount: 1 }]) })
       ])
     }),
     Object.freeze({
@@ -757,8 +757,7 @@
         { key: "questRefreshes", amount: 1, title: "Reward Refresh" },
         { key: "questCadence", amount: 1, title: "Quest Cadence" },
         { key: "questPoints", amount: 5, title: "Quest Value" },
-        { key: "handSizeBonus", amount: 1, title: "Larger Hand" },
-        { key: "earlyRoundPoint", amount: 1, title: "Quick Cuddle" }
+        { key: "handSizeBonus", amount: 1, title: "Bigger Hand" }
       ];
       return candidates.find(candidate => Number(upgrades[candidate.key] || 0) >= candidate.amount) || null;
     }
@@ -847,7 +846,7 @@
           case "nextPenalty":
             addNextPenalty(map, effect.key, effect.amount || 1);
             messages.push(effect.key === "guess"
-              ? "The next Wordle starts one guess short."
+              ? "The next Wordle must be solved within the world's guess limit, or the run ends."
               : effect.key === "mulligan"
                 ? "The next Wordle starts one mulligan short."
                 : effect.key === "rewards"

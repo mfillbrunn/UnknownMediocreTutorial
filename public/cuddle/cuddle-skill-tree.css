@@ -140,6 +140,7 @@
 
 .cuddle-skilltree-node.is-common { --cuddle-v8-tier-color: var(--cuddle-v8-common); }
 .cuddle-skilltree-node.is-rare { --cuddle-v8-tier-color: var(--cuddle-v8-rare); }
+.cuddle-skilltree-node.is-epic { --cuddle-v8-tier-color: var(--cuddle-v8-epic, #b98cff); }
 .cuddle-skilltree-node.is-legendary { --cuddle-v8-tier-color: var(--cuddle-v8-legendary); }
 
 .cuddle-skilltree-node:not(.is-owned) {

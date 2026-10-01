@@ -2013,7 +2013,7 @@
           return "Mulligans now replace up to five cards.";
         case "richerColours":
           this.state.upgrades.yellowPoints += 2;
-          return "Yellow and green tiles are worth $2 more each.";
+          return "Yellow and green tiles are worth 2 points more each.";
         case "freeVowelSweep":
           this.state.upgrades.freeVowelSweep += 1;
           return "Each round now opens with a free vowel sweep.";
@@ -2036,7 +2036,7 @@
         // fresh secret exists.
         case "questHead":
           this.state.upgrades.questPoints += 10;
-          return "Quests are worth $10 more.";
+          return "Quests are worth 10 points more.";
         case "questDoublePick":
           // Consumed at the top of the "quest completed" branch in
           // submitDraft, where questRewardPicksRemaining is seeded from
@@ -2051,8 +2051,8 @@
           const next = Math.min(2, Number(this.state.upgrades.questCadence || 0) + 1);
           this.state.upgrades.questCadence = next;
           return next >= 2
-            ? "Quest Cadence: a quest now appears on every guess."
-            : "Quest Cadence: quests now appear every second guess instead of every third.";
+            ? "Quest Cadence: a quest now appears on every guess, and one more can be active at a time."
+            : "Quest Cadence: quests now appear every second guess, and one more can be active at a time.";
         }
         default:
           return "";
@@ -2187,7 +2187,7 @@
           id: "extraMulligans",
           icon: "🔄",
           title: "Second Thoughts",
-          description: "Gain one additional mulligan each round."
+          description: "Gain one additional mulligan every stage."
         },
         {
           id: "yellowPoints",
@@ -2205,7 +2205,7 @@
           id: "questRefreshes",
           icon: "♻️",
           title: "Reward Refresh",
-          description: "Gain one refresh whenever you choose a quest reward."
+          description: "Every quest reward screen gets one more free refresh. Stacks."
         },
         {
           id: "questPoints",
@@ -2217,7 +2217,7 @@
           id: "questReroll",
           icon: "🔄",
           title: "Second Guess Quest",
-          description: "Gain one charge to reroll your active quest for a different one, any turn you like."
+          description: "Once per stage, reroll the current quest for free."
         }
       ];
       if (this.state.upgrades.mulliganSize < 2) {
@@ -2719,7 +2719,7 @@
       id: "goldenTempo",
       icon: "⚡",
       title: "Golden Tempo",
-      description: "Golden Value + Quick Cuddle: every solved non-boss stage gives +5 points."
+      description: "Colour Surge or Richer Colours + Early Finish: every solved non-boss stage gives +5 points."
     },
     {
       id: "questBinding",
@@ -2859,16 +2859,16 @@
       case "hiddenMargins":
         return `During the first ${guesses}, two marked board positions hide their feedback. Those positions behave normally afterward.`;
       case "blueMode":
-        return `During the first ${guesses}, a green or yellow result on the marked tiles appears blue instead. The letter stays reusable, but its exact result remains unresolved.`;
+        return `During the first ${guesses}, a green or yellow on the marked tiles shows as blue: the letter is in the answer, but you don't learn whether it's in the right spot. Every other tile shows its real colour.`;
       case "fakeFeedback":
-        return `During the first ${guesses}, the marked tiles lie about their colour. Those letters stay reusable until reliable feedback resolves them.`;
+        return `During the first ${guesses}, the marked tiles show a wrong colour. Every other tile shows its real colour.`;
       case "quickMode":
-        return `During the first ${guesses}, you have one minute per guess. The timer switches off when the power window ends.`;
+        return "You have one minute for each guess this round. A guess you run out of time on is lost.";
       case "shortHand":
         // Not a guess-window constraint like the others -- turns/stage
         // scaling doesn't apply here, so this ignores the passed-in `turns`
         // entirely rather than describing a window that doesn't exist.
-        return "Ten random letters are pulled from your deck before this round starts, and you only get four guesses to find the secret.";
+        return "Ten consonants that aren't in the answer are pulled from your deck before this round starts, and you only get four guesses to find it.";
       case "noMulligans": {
         // Locked for the opening guesses only, one per world (see
         // _steadyHandTurns, which reads the same stage).
@@ -2919,7 +2919,10 @@
     const bonuses = game?.state?.cuddleBonuses || {};
     switch (id) {
       case "goldenTempo":
-        return Number(upgrades.yellowPoints || 0) > 0 && Number(upgrades.earlyRoundPoint || 0) > 0;
+        // Golden Value (yellowPoints) is no longer offered on its own, so a
+        // colour reward here is Colour Surge or Richer Colours.
+        return (Number(upgrades.yellowPoints || 0) > 0 || Number(upgrades.greenOnlyPoints || 0) > 0)
+          && Number(upgrades.earlyRoundPoint || 0) > 0;
       case "questBinding":
         return Number(upgrades.questPoints || 0) >= 5 && Number(bonuses.questSpark || 0) > 0;
       case "illustratedStart":
@@ -3695,7 +3698,7 @@
       key: "handSizeBoost",
       icon: "H+",
       title: "Bigger Hand",
-      description: "Increase the counted hand size by 1 for future rounds."
+      description: "Hold one more consonant in your hand from now on."
     },
     {
       id: "mulliganValueBoost",
@@ -3736,7 +3739,7 @@
     id: "goldenTempo",
     icon: "⚡",
     title: "Golden Tempo",
-    description: "A colour-value reward plus an early-solve reward: every solved non-boss stage gives +5 points."
+    description: "Colour Surge or Richer Colours + Early Finish: every solved non-boss stage gives +5 points."
   });
 
   function finiteNumber(value, fallback = 0) {
@@ -3825,7 +3828,8 @@
     const state = ensureBalanceState(game);
     if (!state || state.rewardSynergies.includes(goldenTempoDefinition.id)) return [];
     const upgrades = state.upgrades;
-    if (!(finiteNumber(upgrades.yellowPoints) > 0 && finiteNumber(upgrades.earlyRoundPoint) > 0)) {
+    if (!((finiteNumber(upgrades.yellowPoints) > 0 || finiteNumber(upgrades.greenOnlyPoints) > 0)
+      && finiteNumber(upgrades.earlyRoundPoint) > 0)) {
       return [];
     }
     state.rewardSynergies.push(goldenTempoDefinition.id);
@@ -4607,7 +4611,7 @@
         key: "greenCount",
         icon: "🔢",
         title: "Precise Green",
-        description: "One-time: from now on, a green tile also shows how many times that letter appears in the secret."
+        description: "From now on, a green tile also shows how many times that letter appears in the secret."
       });
     }
     base.push({
@@ -5407,7 +5411,7 @@
       lines.push(`Difficulty: ${mega.difficulty[0].toUpperCase()}${mega.difficulty.slice(1)}`);
     }
     if (mega.extraGuesses) lines.push(`+${mega.extraGuesses} guess${mega.extraGuesses === 1 ? "" : "es"} every round`);
-    if (mega.questPersistsForRound) lines.push("Quests stay active for the rest of the round");
+    if (mega.questPersistsForRound) lines.push("Missed quests stay active for the rest of the stage");
     if (Number(mega.jokerPerRoundBonus || 0) > 0) {
       lines.push(`🃏 +${mega.jokerPerRoundBonus} joker charge${mega.jokerPerRoundBonus === 1 ? "" : "s"} every round`);
     }
