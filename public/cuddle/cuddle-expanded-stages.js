@@ -100,7 +100,7 @@
     shop: Object.freeze({ title: "Wandering Paw", label: "Shop", icon: "stage-shop.svg", description: "Spend money on run supplies." }),
     event: Object.freeze({ title: "Mystery Event", label: "Event", icon: "stage-event-choice.svg", description: "Something happens on the road here. You only find out what when you arrive." }),
     boss: Object.freeze({ title: "Boss", label: "Boss", icon: "stage-boss.svg", description: "A boss Wordle with permanent stakes." }),
-    duel: Object.freeze({ title: "Word Duel", label: "Duel", icon: "stage-duel.svg", description: "Alternate guesses with an AI. The first side to solve the word wins; if the AI does, the run ends." }),
+    duel: Object.freeze({ title: "Word Duel", label: "Duel", icon: "stage-duel.svg", description: "Alternate guesses with an AI that also builds its words from a hand of letters. The first side to solve the word wins; if the AI does, the run ends." }),
     mystery: Object.freeze({ title: "Unknown Stop", label: "?", icon: "stage-mystery.svg", description: "This stop stays hidden until you enter it." })
   });
 
@@ -1396,9 +1396,10 @@
     // "wildGuess" is the chance of ignoring the clues altogether; and once no
     // more than "goesForIt" everyday words still fit, it plays one of them
     // instead of a probing word. Tuned by playing real duels against a bot
-    // that reads every row and mulligans for missing letters: it wins about
-    // 95% / 80% / 60% of duels (easy / medium / hard); against the old AI,
-    // which knew the answer list and read every row, it won 55-65%.
+    // that reads every row and mulligans for missing letters: since the AI
+    // also plays from a hand of letters (AI_CONSONANTS below), it wins about
+    // 100% / 88% / 66% of duels (easy / medium / hard), up from 95% / 80% /
+    // 60% when the AI could play any word in the dictionary.
     const AI_STYLE = Object.freeze({
       easy: Object.freeze({ readsYourRows: 0.25, commonWords: 0.3, smart: 0, missesLastWord: 0.45, wildGuess: 0.45, goesForIt: 0 }),
       medium: Object.freeze({ readsYourRows: 0.4, commonWords: 0.45, smart: 0.2, missesLastWord: 0.35, wildGuess: 0.1, goesForIt: 2 }),
@@ -1414,13 +1415,55 @@
       + "CRAPS CRAPY PISSY PUBES NUDES BIMBO BOINK HUMPS TESTE KNOBS MINGE SMUTS PERVS PERVY LUBES"
     ).split(" "));
 
+    // The AI plays from a hand of letters too, like the player: every vowel
+    // plus a fresh draw of consonants each turn (it can't mulligan, so it
+    // draws a few more than the player's five). It used to be able to play
+    // any word in the dictionary, which was a big edge over a player who
+    // has to build each word from five consonants.
+    const AI_CONSONANTS = Object.freeze({ easy: 9, medium: 12, hard: 14 });
+    const VOWELS = "AEIOU";
+
+    function consonantWeights(game) {
+      if (game.__umtDuelConsonantWeights) return game.__umtDuelConsonantWeights;
+      const counts = {};
+      (game.secrets || []).forEach(word => {
+        String(word).split("").forEach(letter => {
+          if (/^[A-Z]$/.test(letter) && !VOWELS.includes(letter)) counts[letter] = (counts[letter] || 0) + 1;
+        });
+      });
+      const weights = Object.entries(counts);
+      Object.defineProperty(game, "__umtDuelConsonantWeights", { value: weights, configurable: true });
+      return weights;
+    }
+
+    function drawAiLetters(game, duel) {
+      const count = AI_CONSONANTS[duel.difficulty] || AI_CONSONANTS.medium;
+      const pool = consonantWeights(game).slice();
+      const letters = new Set(VOWELS);
+      for (let drawn = 0; drawn < count && pool.length; drawn += 1) {
+        const total = pool.reduce((sum, [, weight]) => sum + weight, 0);
+        let pick = randomFor(game) * total;
+        let index = 0;
+        while (index < pool.length - 1 && pick >= pool[index][1]) {
+          pick -= pool[index][1];
+          index += 1;
+        }
+        letters.add(pool[index][0]);
+        pool.splice(index, 1);
+      }
+      return letters;
+    }
+
     function chooseAiWord(game, duel) {
       const style = AI_STYLE[duel.difficulty] || AI_STYLE.medium;
       const roll = () => randomFor(game);
       const pickFrom = words => words[Math.floor(roll() * words.length)] || words[0];
       const history = duel.history || [];
       const answers = new Set(game.secrets || []);
-      const legal = unguessedLegalWords(game, duel).filter(word => !AI_NEVER_PLAYS.has(word) || answers.has(word));
+      const dictionary = unguessedLegalWords(game, duel).filter(word => !AI_NEVER_PLAYS.has(word) || answers.has(word));
+      const hand = drawAiLetters(game, duel);
+      const spellable = dictionary.filter(word => word.split("").every(letter => hand.has(letter)));
+      const legal = spellable.length ? spellable : dictionary;
       if (!legal.length) return visibleCandidates(game, duel)[0] || null;
       if (style.wildGuess && roll() < style.wildGuess) return pickFrom(legal);
 
@@ -1452,7 +1495,7 @@
       }
 
       if (!history.length) {
-        const opener = COMMON_OPENERS.find(word => game.guessSet.has(word));
+        const opener = COMMON_OPENERS.find(word => game.guessSet.has(word) && legal.includes(word));
         if (opener) return opener;
       }
       const candidateSample = evenlySample(candidates, 190);

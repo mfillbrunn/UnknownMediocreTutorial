@@ -1456,8 +1456,7 @@
     var compassOwned = hasBossReward(game, "goldenCompass");
     var compassUsed = coach.goldenCompassUsedRoundKey === roundKey(game);
     // The panel used to always render, if only for its "Coach statistics"
-    // summary box -- that box is gone (the running totals it showed live on
-    // under Details instead, via enhanceStatsBadges), the Guesser Hint now
+    // summary box -- that box is gone, the Guesser Hint now
     // auto-fires with its own header badge and pop-up instead of a button
     // here, and Possible Answers moved to the inline "Secrets remaining"
     // readout next to the theme badge (see secretsRemainingInline, consumed
@@ -1612,19 +1611,6 @@
     lastThreadSignature = signature;
   }
 
-  function enhanceStatsBadges(game, coach) {
-    var root = document.getElementById("cuddleRoot");
-    var badges = root && root.querySelector(".cuddle-detail-badges");
-    if (!badges || badges.querySelector(".cuddle-coach-detail-badge")) return;
-    var fragments = [
-      ["Hints", coach.hintsUsed + " used · " + coach.hintCharges + " ready"],
-      ["Unused-row money", formatMoney(coach.unusedRowMoney)]
-    ];
-    fragments.forEach(function add(pair) {
-      badges.insertAdjacentHTML("beforeend", "<span class=\"cuddle-detail-badge cuddle-coach-detail-badge\"><b>" + escapeHtml(pair[0]) + "</b> " + escapeHtml(pair[1]) + "</span>");
-    });
-  }
-
   // A small banner that sweeps across the screen the moment a hint is
   // unlocked, on top of (not instead of) the dismissible corner toast --
   // green for the Guesser Hint's exact-position reveal. Keyed off
@@ -1661,7 +1647,6 @@
     enhanceShop(activeGame, coach);
     enhanceBossChoice(activeGame, coach);
     enhanceUpgradeCopy(activeGame);
-    enhanceStatsBadges(activeGame, coach);
     updateGoldenThread(activeGame, coach);
     renderHintSweepBanner(activeGame);
   }

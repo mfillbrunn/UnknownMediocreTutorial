@@ -166,11 +166,6 @@
   letter-spacing: 0.05em;
 }
 
-.cuddle-detail-badge.cuddle-coach-detail-badge {
-  border-color: rgba(197, 150, 34, 0.28);
-  background: rgba(246, 216, 128, 0.12);
-}
-
 /* The synthetic BONUS rows represent unused solve rows in the gold payout. */
 .cuddle-money-payout-row[data-payout-row^="unused-"] {
   border-color: rgba(229, 177, 38, 0.64);

@@ -812,22 +812,6 @@
     });
   }
 
-  function mergeLoadoutIntoStats(root) {
-    const groups = Array.from(root.querySelectorAll(".cuddle-stat-group, .cuddle-detail-group"));
-    const stats = groups.find(group => /stats/i.test(group.querySelector("h3")?.textContent || ""));
-    const loadout = groups.find(group => /loadout/i.test(group.querySelector("h3")?.textContent || ""));
-    if (!stats || !loadout || stats === loadout) return;
-    const target = stats.querySelector(".cuddle-detail-badges");
-    const source = loadout.querySelector(".cuddle-detail-badges");
-    if (target && source) Array.from(source.children).forEach(child => target.appendChild(child));
-    loadout.remove();
-  }
-
-  function rulesFor(game) {
-    try { return game?.getRulesSummary?.() || {}; }
-    catch (_error) { return {}; }
-  }
-
   function hintPlan(game) {
     const state = game?.state || {};
     const coach = state.cuddleCoachExpansion || {};
@@ -861,7 +845,7 @@
     const total = entries.reduce((sum, entry) => sum + entry[1], 0);
     return {
       total,
-      detail: entries.length ? entries.map(([guess, count]) => `guess ${guess}x${count}`).join(", ") : ""
+      detail: entries.length ? entries.map(([guess, count]) => count > 1 ? `${count} on guess ${guess}` : `guess ${guess}`).join(", ") : ""
     };
   }
 
@@ -875,52 +859,25 @@
     container.appendChild(span);
   }
 
+  // Adds the rows cuddle-ui.js can't work out by itself to the details
+  // panel's "Your hand" group: hints and Jokers each stage (only once the
+  // run has any) and what the Cuddle meter in the header does.
   function enhanceStats(game, root) {
-    mergeLoadoutIntoStats(root);
-    const groups = Array.from(root.querySelectorAll(".cuddle-stat-group, .cuddle-detail-group"));
-    const stats = groups.find(group => /stats/i.test(group.querySelector("h3")?.textContent || ""));
-    const badges = stats?.querySelector(".cuddle-detail-badges") || root.querySelector(".cuddle-detail-badges");
+    const badges = root.querySelector('[data-cuddle-stats="hand"] .cuddle-detail-badges');
     if (!badges) return;
-    Array.from(badges.children).forEach(badge => {
-      const text = (badge.textContent || "").trim();
-      if (/Early solve|Unused guess|Extra guess money|Unused-row money|^Hints\b|^Jokers\b|Cuddle meter max|Cuddle meter reward/i.test(text)) badge.remove();
-    });
-    const rules = rulesFor(game);
-    const green = number(rules.greenPoints, game?.state?.upgrades?.greenPoints || 0);
-    const extraGuessRate = number(rules.earlyPoint, game?.state?.upgrades?.earlyPoint || 0);
+    badges.querySelectorAll(".umt-user-stat").forEach(badge => badge.remove());
     const hints = hintPlan(game);
     const mega = megaState(game) || {};
     const coach = game?.state?.cuddleCoachExpansion || {};
     const threshold = typeof window.CuddleCoachExpansion?.meterThreshold === "function"
       ? integer(window.CuddleCoachExpansion.meterThreshold(), 12)
-      : (() => {
-        const difficulty = String(
-          game?.state?.megaState?.difficulty
-          || game?.state?.difficulty
-          || game?.state?.mode?.difficulty
-          || game?.state?.settings?.difficulty
-          || "medium"
-        ).toLowerCase();
-        const base = /easy|casual/.test(difficulty)
-          ? 10
-          : /hard|expert|difficult/.test(difficulty)
-            ? 15
-            : 12;
-        return Math.max(7, base - integer(coach.cuddleThresholdStacks, 0));
-      })();
-    const rewards = ["Free mulligan", "Joker", "Hint"];
+      : 12;
+    const rewards = ["a free mulligan", "a Joker", "a hint"];
     const meterReward = rewards[Math.max(0, Math.min(2, integer(coach.cuddleRewardTier, 0)))];
-    // Points, not money -- the unused-guess/mulligan bonuses below pay into
-    // state.score (see cuddle-engine.js's submitDraft), same as every
-    // other in-round scoring rule these stat badges describe.
-    addStatBadge(badges, "Unused guess", `+${5 * green + extraGuessRate} pts`);
-    addStatBadge(badges, "Extra guess points", `+${extraGuessRate}`);
-    // "Hints per round": cuddle-coach-expansion.js adds its own "Hints"
-    // badge (used / ready this run) next to it.
-    addStatBadge(badges, "Hints per round", hints.total ? `${hints.total} (${hints.detail})` : "0");
-    addStatBadge(badges, "Jokers", String(Math.max(0, integer(mega.jokerPerRoundBonus, 0))));
-    addStatBadge(badges, "Cuddle meter max", String(threshold));
-    addStatBadge(badges, "Cuddle meter reward", meterReward);
+    if (hints.total) addStatBadge(badges, "Hints each stage", `${hints.total} (${hints.detail})`);
+    const jokers = Math.max(0, integer(mega.jokerPerRoundBonus, 0));
+    if (jokers) addStatBadge(badges, "Jokers each stage", String(jokers));
+    addStatBadge(badges, "Cuddle meter", `fills at ${threshold}, gives ${meterReward}`);
   }
 
   function enhanceHeaderMoney(game, root) {
@@ -1021,7 +978,7 @@
       migrateJokerCache(liveGame);
 
       if (root.querySelector(".cuddle-header-score")) enhanceHeaderMoney(liveGame, root);
-      if (root.querySelector(".cuddle-stat-group, .cuddle-detail-group")) enhanceStats(liveGame, root);
+      if (root.querySelector("[data-cuddle-stats]")) enhanceStats(liveGame, root);
       if (root.querySelector(".cuddle-choice, .cuddle-money-choice")) {
         enhanceChoiceIcons(liveGame, root);
         enhanceUpgradeLevels(liveGame, root);
