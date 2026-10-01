@@ -57,7 +57,7 @@
       key: "coachHint",
       icon: "💡",
       title: "Guesser Hint",
-      description: "Gain one exact letter-and-position hint in every eligible round. Stacks up to four hints per round.",
+      description: "One more automatic hint in every non-boss stage. Hints alternate: first a letter that's in the answer, then a letter in its exact place. Stacks up to four.",
       max: 4
     },
     {
@@ -118,7 +118,7 @@
       id: "coachShopHint",
       icon: "💡",
       title: "Permanent Guesser Hint",
-      description: "PERMANENT: add one exact-position hint to every eligible round.",
+      description: "PERMANENT: one more automatic hint in every non-boss stage (alternating a present letter and an exact position).",
       cost: 50,
       kind: "permanent",
       upgradeId: "coachHint"
@@ -130,13 +130,13 @@
       id: "goldenCompass",
       icon: "🧭",
       title: "Golden Compass",
-      description: "Once per round, reveal the most useful untested letter among the remaining possible answers."
+      description: "Once per stage, reveal the most useful untested letter among the remaining possible answers."
     },
     {
       id: "secondCup",
       icon: "☕",
       title: "Second Cup",
-      description: "Once per run, automatically add one rescue row when the final row would fail."
+      description: "Once per run, when you would run out of guesses in a boss or strict stage, you get one extra guess."
     },
     {
       id: "goldenThread",

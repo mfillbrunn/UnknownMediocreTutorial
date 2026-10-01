@@ -1103,8 +1103,8 @@
       ? (picksRemaining >= totalPicks ? "Choose your first reward" : "Choose your second reward")
       : "Choose one reward";
     const subtext = totalPicks > 1
-      ? "Double Pick is active: choose two of these rewards. Effects apply immediately and never carry into the next round."
-      : "Choose a reward for the current round. It applies immediately and never carries into the next round.";
+      ? "Double Pick is active: choose two of these rewards. They apply right away; each card says how long it lasts."
+      : "Choose a reward. It applies right away; each card says how long it lasts.";
     const history = Array.isArray(state.history) ? state.history : [];
     const entry = history[history.length - 1] || null;
     const stampKey = `${state.runId || ""}:${state.round}:${history.length}`;

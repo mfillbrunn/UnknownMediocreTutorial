@@ -123,9 +123,9 @@
     };
   }
   const LEGENDARY_PICKS = Object.freeze([
-    legendaryPick("doubleMulligans", "🔁", "Double Mulligans", "Double the number of mulligans you get each round.",
+    legendaryPick("doubleMulligans", "🔁", "Double Mulligans", "Double the number of mulligans you get each stage.",
       (state) => !(Number(state.upgrades?.doubleMulligans) > 0)),
-    legendaryPick("cullRare", "✂️", "Deep Cull", "Remove rare letters from the deck and from every future secret.",
+    legendaryPick("cullRare", "✂️", "Deep Cull", "Remove three rare letters from the deck and from every future secret.",
       (state) => ownedHistoryCount(state, "cullRare") < 1),
     legendaryPick("freeVowelSweep", "🅰️", "Free Vowel Sweep", "Each stage opens with one random vowel tested for free: you learn whether it's in the answer, not where.",
       (state) => !(Number(state.upgrades?.freeVowelSweep) > 0)),
@@ -133,11 +133,11 @@
       (state) => ownedHistoryCount(state, "questHead") < 2),
     legendaryPick("questDoublePick", "✌️", "Double Pick", "Quest reward screens let you choose two options instead of one, for the rest of the run.",
       (state) => !state.upgrades?.questDoublePick),
-    legendaryPick("questPersistReward", "⏳", "Lasting Quests", "Quests stay active for the rest of the stage instead of expiring after one guess.",
+    legendaryPick("questPersistReward", "⏳", "Lasting Quests", "A quest you don't complete stays active for the rest of the stage instead of expiring after one guess (not in boss fights).",
       (state) => !state.megaState?.questPersistsForRound),
     legendaryPick("goldenCompass", "🧭", "Golden Compass", "Once per stage, reveal the most useful untested letter among the remaining possible answers.",
       (state) => !coachOwns(state, "goldenCompass")),
-    legendaryPick("secondCup", "☕", "Second Cup", "Once per run, automatically add one rescue row when the final row would fail.",
+    legendaryPick("secondCup", "☕", "Second Cup", "Once per run, when you would run out of guesses in a boss or strict stage, you get one extra guess.",
       (state) => !coachOwns(state, "secondCup")),
     legendaryPick("umtAllThemes", "🔮", "All-Seeing Atlas", "Reveal every available theme at the start of every non-boss Wordle.",
       (state) => !state.cuddleRebalanceV5?.allThemesUnlocked && !coachOwns(state, "umtAllThemes")),
@@ -1483,7 +1483,7 @@
       setDescription(def, "Begin every stage with one Joker in the active pouch.");
       replaceHandlers(def, "wild-card");
     } else if (name === "softer cuddle meter") {
-      setDescription(def, "Reduce the Cuddle Meter requirement by 2 grey tiles.");
+      setDescription(def, "The Cuddle Meter needs one fewer grey tile to fill. Minimum: seven.");
       setMaxStack(def, 6);
       replaceHandlers(def, "soft-meter");
     } else if (name === "bigger cuddle") {
