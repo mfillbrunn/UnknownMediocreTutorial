@@ -891,3 +891,14 @@
   font-size: 1.2rem;
   font-weight: 900;
 }
+
+/* A guess past the guess limit: it only cost points, so the cash-out shows
+   it in red rather than in its tile colours. */
+#cuddleScreen .cuddle-money-payout-tile.is-late {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: #c2414f;
+  color: #fff1f2;
+}
+#cuddleScreen .cuddle-money-payout-row.is-late .cuddle-money-row-increment {
+  color: #ff8a95;
+}

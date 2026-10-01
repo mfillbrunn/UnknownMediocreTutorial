@@ -8,14 +8,13 @@
 //      green, money in gold, always in that order -- then whooshes away by
 //      itself. It replaces the old dismiss-it-yourself toast at the bottom.
 //
-//   2. The progression tree. A radial constellation of every upgrade the
-//      run can collect: six themed branches around a core, synergy combos
-//      wired to the two upgrades they actually need, and boss rewards on the
-//      outer ring. What you own lights up, and the lines that lead to it
-//      light with it. Whenever you pick something up -- a round reward, a
-//      boss reward, the starting bonus, a coach upgrade -- the tree opens on
-//      its own, the new node ignites, and a before/after list shows exactly
-//      which of your stats moved.
+//   2. The talent board. Every upgrade the run can collect, as jigsaw
+//      pieces in one panel per theme (Scoring, Economy, Insight...), plus
+//      panels for the combos and the boss rewards. What you own lights up
+//      in its panel's colour. Whenever you pick something up -- a round
+//      reward, a boss reward, the starting bonus, a coach upgrade -- the
+//      board opens on its own, the new piece drops in gold, and a
+//      before/after list shows exactly which of your stats moved.
 //
 // Cuddle only. Everything here reads game state; the only writes are the
 // banner's "already shown" marker, clearing the notices the banner takes
@@ -151,9 +150,11 @@
     { id: "quests", title: "Quests", color: "#f6a94a", angle: 90,
       ids: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment"] },
     { id: "hand", title: "Hand & Tools", color: "#d5a6ff", angle: 150,
-      ids: ["extraMulligans", "mulliganSize", "handSizeBoost", "jokerPerRound", "jokerCache", "wideChoice", "rewardEcho", "removeLetter", "greenCount", "categorySense", "alphabet-compass"] }
+      ids: ["extraMulligans", "mulliganSize", "handSizeBoost", "jokerPerRound", "jokerCache", "wideChoice", "rewardEcho", "removeLetter", "greenCount", "categorySense", "alphabet-compass"] },
+    { id: "insight", title: "Insight", color: "#9ee86f", angle: 180,
+      ids: ["vowelLamp", "echoFinder", "patternLens", "deadLetter", "lastLight", "treasureHunter", "mistakeShield"] }
   ];
-  const CATEGORY_WEDGE = { economy: "economy", solving: "solving", quests: "quests", easierStages: "hand" };
+  const CATEGORY_WEDGE = { economy: "economy", solving: "solving", quests: "quests", easierStages: "hand", insight: "insight" };
   const COMBO_COLOR = "#ff7ab8";
   const BOSS_COLOR = "#fb7185";
   // Bronze / silver / gold, as on the reward cards' rarity badges.
@@ -166,13 +167,10 @@
   const LEGENDARY_PICK_IDS = new Set(["doubleMulligans", "cullRare", "freeVowelSweep", "questHead", "questDoublePick",
     "questPersistReward", "goldenCompass", "secondCup", "allThemesBoss", "umtAllThemes", "jokerCache", "umtJokerCache"]);
 
-  const R_CORE = 50;
   const R_HUB = 100;
   const ARC_RADII = [178, 246, 314];
   const R_COMBO = 372;
   const R_BOSS = 424;
-  const VIEW = 515;
-  const R_LABEL = 140;
 
   // Reward ids come in a few spellings across the add-on layers
   // ("umtRainyDay" for the tree's "rainyDay"); fold them together.
@@ -380,169 +378,173 @@
     return wedge ? wedge.color : "#d5a6ff";
   }
 
-  function glyphMarkup(icon, size) {
-    const text = String(icon || "✦");
-    // Emoji icons are drawn from the Cuddle icon set (cuddle-icons.js).
-    const Icons = window.CuddleIcons;
-    if (Icons && Icons.hasEmoji(text)) return Icons.markup(text, round1(size * 1.15), 0, 0);
-    // Text badges ("H+") read smaller than an emoji of the same font size.
-    const isText = /^[A-Za-z0-9+\/]+$/.test(text);
-    const fontSize = isText ? size * (text.length > 2 ? 0.52 : 0.72) : size;
-    return `<text class="umt-pt-glyph${isText ? " is-text" : ""}" font-size="${round1(fontSize)}" dy="0.35em">${esc(text)}</text>`;
+  // ---------------------------------------------------------------------
+  // Talent board: one panel per theme, each a little jigsaw of its talents
+  // ---------------------------------------------------------------------
+
+  const PANELS = [
+    { id: "scoring", tagline: "Make every tile count.", icon: "star" },
+    { id: "economy", tagline: "Coins in, coins out.", icon: "moneyBag" },
+    { id: "insight", tagline: "See more. Guess smarter.", icon: "eye" },
+    { id: "hand", tagline: "Better cards, better tools.", icon: "toolbox" },
+    { id: "quests", tagline: "Side goals, real rewards.", icon: "clipboard" },
+    { id: "coach", tagline: "Your coach in the corner.", icon: "pinkHeart" },
+    { id: "solving", tagline: "Gentle nudges, on Easy only.", icon: "bulb" },
+    { id: "combos", title: "Combos", tagline: "Two halves, one bonus.", icon: "link", color: COMBO_COLOR },
+    { id: "bosses", title: "Boss Rewards", tagline: "Taken from the bosses you beat.", icon: "trophy", color: BOSS_COLOR }
+  ];
+
+  // Piece geometry, in board units: a square cell, plus room on every side
+  // for the tabs that stick out of it.
+  const CELL = 100;
+  const TAB = 27;
+  const BOX = CELL + TAB * 2;
+  // One tab, drawn along an edge from u=0 to u=1 and sticking out by v (in
+  // cells). Symmetric about u=0.5, so the neighbour that draws the same
+  // edge the other way round traces exactly the same curve.
+  const TAB_CURVE = [
+    ["L", [0.36, 0]],
+    ["C", [0.40, 0], [0.42, 0.05], [0.39, 0.10]],
+    ["C", [0.34, 0.17], [0.38, 0.25], [0.50, 0.25]],
+    ["C", [0.62, 0.25], [0.66, 0.17], [0.61, 0.10]],
+    ["C", [0.58, 0.05], [0.60, 0], [0.64, 0]],
+    ["L", [1, 0]]
+  ];
+
+  // sign: +1 a tab sticking out, -1 a blank cut in, 0 a flat edge.
+  function edgePath(x0, y0, x1, y1, sign) {
+    if (!sign) return `L${round1(x1)} ${round1(y1)}`;
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const len = Math.hypot(dx, dy) || 1;
+    // The outward normal of a clockwise outline in screen coordinates.
+    const nx = dy / len;
+    const ny = -dx / len;
+    const at = ([u, v]) => `${round1(x0 + dx * u + nx * v * CELL * sign)} ${round1(y0 + dy * u + ny * v * CELL * sign)}`;
+    return TAB_CURVE.map(([cmd, ...points]) => cmd + points.map(at).join(" ")).join("");
   }
 
-  function pipsMarkup(node, radius) {
+  function piecePath(edges) {
+    const a = TAB;
+    const b = TAB + CELL;
+    return `M${a} ${a}` + edgePath(a, a, b, a, edges.top) + edgePath(b, a, b, b, edges.right)
+      + edgePath(b, b, a, b, edges.bottom) + edgePath(a, b, a, a, edges.left) + "Z";
+  }
+
+  function hash32(text) {
+    let hash = 2166136261;
+    for (let i = 0; i < text.length; i += 1) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  }
+
+  // Which way each shared edge's tab points is fixed per panel and edge, so
+  // a panel's puzzle keeps its shape from one opening to the next.
+  function tabSign(panelId, key) {
+    return hash32(`${panelId}:${key}`) % 2 ? 1 : -1;
+  }
+
+  function columnsFor(count) {
+    if (count <= 4) return Math.max(2, count);
+    if (count <= 9) return 3;
+    return 4;
+  }
+
+  // Cells for n pieces: rows filled left to right, a short last row centred.
+  function cellsFor(count, cols) {
+    const cells = [];
+    const rows = Math.ceil(count / cols);
+    for (let row = 0; row < rows; row += 1) {
+      const inRow = Math.min(cols, count - row * cols);
+      const offset = Math.floor((cols - inRow) / 2);
+      for (let i = 0; i < inRow; i += 1) cells.push({ row, col: offset + i });
+    }
+    return { cells, rows };
+  }
+
+  function pieceIcon(icon) {
+    const text = String(icon || "✦");
+    const Icons = window.CuddleIcons;
+    if (Icons && Icons.hasEmoji(text)) return `<span class="umt-pz-icon">${Icons.svg(text)}</span>`;
+    return `<span class="umt-pz-icon is-text">${esc(text)}</span>`;
+  }
+
+  function piecePips(node) {
     const max = node.maxLevel;
-    if (!max || max < 2) {
-      if (node.level > 1) {
-        return `<text class="umt-pt-stack" x="${round1(radius * 0.78)}" y="${round1(-radius * 0.78)}">×${node.level}</text>`;
-      }
-      return "";
-    }
-    const gap = 7;
-    const start = -((max - 1) * gap) / 2;
-    let out = "";
-    for (let i = 0; i < max; i += 1) {
-      out += `<circle class="umt-pt-pip${i < node.level ? " is-on" : ""}" cx="${round1(start + i * gap)}" cy="${round1(radius + 7)}" r="2.4"/>`;
-    }
-    return out;
+    if (!max || max < 2) return node.level > 1 ? `<span class="umt-pz-stack">×${node.level}</span>` : "";
+    let dots = "";
+    for (let i = 0; i < max; i += 1) dots += `<i class="${i < node.level ? "is-on" : ""}"></i>`;
+    return `<span class="umt-pz-pips" aria-hidden="true">${dots}</span>`;
   }
 
   // "1/2" on a half-built combo, "✓" on a complete one.
-  function comboBadge(node, radius) {
+  function pieceBadge(node) {
     if (node.kind !== "combo" || !node.requires) return "";
     const need = node.requires.length;
     const have = (node.reqNodes || []).filter((req) => req.level > 0).length;
-    const text = node.level > 0 ? "✓" : `${have}/${need}`;
-    return `<g class="umt-pt-combo-badge${node.level > 0 ? " is-done" : have ? " is-half" : ""}" transform="translate(${round1(radius * 0.8)} ${round1(-radius * 0.8)})">`
-      + `<rect x="-11" y="-7.5" width="22" height="15" rx="7.5"/><text dy="0.35em">${text}</text></g>`;
+    return `<span class="umt-pz-badge${node.level > 0 ? " is-done" : have ? " is-half" : ""}">${node.level > 0 ? "✓" : `${have}/${need}`}</span>`;
   }
 
-  function curve(from, to, bend) {
-    const mx = (from.x + to.x) / 2;
-    const my = (from.y + to.y) / 2;
-    // Bow the connector toward the core so fans read as growing outward.
-    const len = Math.hypot(mx, my) || 1;
-    const cx = mx - (mx / len) * bend;
-    const cy = my - (my / len) * bend;
-    return `M${round1(from.x)} ${round1(from.y)} Q${round1(cx)} ${round1(cy)} ${round1(to.x)} ${round1(to.y)}`;
-  }
-
-  function edgeMarkup(path, lit, color, isNew) {
-    return `<path class="umt-pt-edge${lit ? " is-lit" : ""}${isNew ? " is-drawing" : ""}" d="${path}" pathLength="100" style="--c:${color}"/>`;
-  }
-
-  function renderTreeSvg(model, view) {
+  function panelMarkup(panel, nodes, model, view) {
+    if (!nodes.length) return "";
     const fresh = view.freshIds || new Set();
-    const edges = [];
-    const nodesOut = [];
-    const labels = [];
-    const defs = [];
-    const nodeNames = [];
+    const cols = columnsFor(nodes.length);
+    const { cells, rows } = cellsFor(nodes.length, cols);
+    // Outer edges are always flat, so the puzzle box is just the cells; each
+    // piece's box overhangs it by a tab's depth on every side.
+    const width = cols * CELL;
+    const height = rows * CELL;
+    const byCell = new Set(cells.map((cell) => `${cell.row}:${cell.col}`));
+    const has = (row, col) => byCell.has(`${row}:${col}`);
+    const owned = nodes.filter((node) => node.level > 0).length;
+    const wedge = WEDGES.find((w) => w.id === panel.id) || {};
+    const color = panel.color || wedge.color || "#d5a6ff";
+    const title = panel.title || wedge.title || panel.id;
+    const Icons = window.CuddleIcons;
+    const pieces = nodes.map((node, index) => {
+      const { row, col } = cells[index];
+      const edges = {
+        top: has(row - 1, col) ? -tabSign(panel.id, `h${row - 1}:${col}`) : 0,
+        bottom: has(row + 1, col) ? tabSign(panel.id, `h${row}:${col}`) : 0,
+        left: has(row, col - 1) ? -tabSign(panel.id, `v${row}:${col - 1}`) : 0,
+        right: has(row, col + 1) ? tabSign(panel.id, `v${row}:${col}`) : 0
+      };
+      const isOwned = node.level > 0;
+      const locked = node.easyOnly && !model.easy && !isOwned;
+      const state = fresh.has(node.id) ? "is-fresh" : isOwned ? "is-owned" : locked ? "is-locked" : "is-open";
+      const status = isOwned ? `yours${node.level > 1 ? `, level ${node.level}` : ""}` : locked ? "Easy difficulty only" : "not yet";
+      const style = `left:${round1(((col * CELL - TAB) / width) * 100)}%;top:${round1(((row * CELL - TAB) / height) * 100)}%;`
+        + `width:${round1((BOX / width) * 100)}%;height:${round1((BOX / height) * 100)}%;`
+        + `--t:${TIER_STROKE[node.tier] || TIER_STROKE.common};--i:${index}`;
+      return `<button type="button" class="umt-pz-piece ${state}${node.id === view.selectedId ? " is-selected" : ""}" data-umt-node="${esc(node.id)}"`
+        + ` style="${style}" aria-label="${esc(node.title)}, ${status}">`
+        + `<svg class="umt-pz-shape" viewBox="0 0 ${BOX} ${BOX}" preserveAspectRatio="none" aria-hidden="true"><path d="${piecePath(edges)}"/></svg>`
+        + `<span class="umt-pz-face">`
+        + (locked ? `<span class="umt-pz-icon">${Icons ? Icons.svg("lock") : ""}</span>` : pieceIcon(node.icon))
+        + `<span class="umt-pz-name">${esc(node.title)}</span>`
+        + piecePips(node)
+        + `</span>`
+        + pieceBadge(node)
+        + `</button>`;
+    }).join("");
+    return `<section class="umt-pz-panel${owned ? " has-owned" : ""}" style="--c:${color}" aria-label="${esc(title)}">`
+      + `<header class="umt-pz-head"><span class="umt-pz-panel-icon">${Icons ? Icons.svg(panel.icon) : ""}</span>`
+      + `<div><h3>${esc(title)}</h3><p>${esc(panel.tagline)}</p></div>`
+      + `<span class="umt-pz-count">${owned}<small>/${nodes.length}</small></span></header>`
+      + `<div class="umt-pz-puzzle" style="aspect-ratio:${width} / ${height};--cols:${cols}">${pieces}</div>`
+      + `</section>`;
+  }
 
-    // Faint orbit rings.
-    const rings = [R_HUB, ...ARC_RADII, R_COMBO]
-      .map((r) => `<circle class="umt-pt-orbit" r="${r}"/>`).join("")
-      + `<circle class="umt-pt-boss-ring${model.bosses.some((b) => b.level > 0) ? " is-lit" : ""}" r="${R_BOSS}"/>`;
-
-    model.wedges.forEach((wedge) => {
-      const lit = wedge.owned > 0;
-      const wedgeFresh = wedge.nodes.some((n) => fresh.has(n.id)) && wedge.owned === wedge.nodes.filter((n) => fresh.has(n.id)).length;
-      edges.push(edgeMarkup(`M0 0 L${round1(wedge.hub.x)} ${round1(wedge.hub.y)}`, lit, wedge.color, wedgeFresh));
-      wedge.nodes.forEach((node) => {
-        edges.push(edgeMarkup(curve(wedge.hub, node, 18), node.level > 0, wedge.color, fresh.has(node.id)));
-      });
-      // Lettered along the orbit between the hub and the first ring, so the
-      // name follows its branch instead of cutting across the fan. Bottom
-      // branches run the arc the other way so the text isn't upside down.
-      const bottom = wedge.angle > 0 && wedge.angle < 180;
-      const span = 40;
-      const a = polar(R_LABEL, wedge.angle + (bottom ? span : -span));
-      const b = polar(R_LABEL, wedge.angle + (bottom ? -span : span));
-      const arcId = `umtPtArc-${wedge.id}`;
-      defs.push(`<path id="${arcId}" d="M${round1(a.x)} ${round1(a.y)} A${R_LABEL} ${R_LABEL} 0 0 ${bottom ? 0 : 1} ${round1(b.x)} ${round1(b.y)}"/>`);
-      labels.push(
-        `<g class="umt-pt-hub${lit ? " is-lit" : ""}${wedge.locked ? " is-locked" : ""}" transform="translate(${round1(wedge.hub.x)} ${round1(wedge.hub.y)})" style="--c:${wedge.color}">`
-        + `<circle r="15"/><text dy="0.35em">${lit ? wedge.owned : ""}</text></g>`
-        + `<text class="umt-pt-branch-label${lit ? " is-lit" : ""}${wedge.locked ? " is-locked" : ""}" dy="${bottom ? "0.9em" : "0.7em"}" style="--c:${wedge.color}">`
-        + `<textPath href="#${arcId}" startOffset="50%" text-anchor="middle">${esc(wedge.title)}</textPath></text>`
-      );
-    });
-
-    // One connector per requirement: flowing once the combo is complete,
-    // dotted in combo colour while only this half is owned (so a half-built
-    // combo shows which side is done), dim otherwise.
-    model.combos.forEach((combo) => {
-      (combo.reqNodes || []).forEach((req) => {
-        if (!Number.isFinite(req.x)) return;
-        const path = curve(req, combo, -26);
-        if (combo.level > 0) {
-          edges.push(edgeMarkup(path, true, COMBO_COLOR, fresh.has(combo.id)));
-        } else {
-          edges.push(`<path class="umt-pt-edge is-half${req.level > 0 ? " is-lit" : ""}" d="${path}" pathLength="100" style="--c:${COMBO_COLOR}"/>`);
-        }
-      });
-    });
-
-    const selected = view.selectedId;
-    model.all.forEach((node) => {
-      const owned = node.level > 0;
-      const locked = node.easyOnly && !model.easy && !owned;
-      const r = owned ? 19 : 13;
-      const color = nodeColor(node);
-      const tier = TIER_STROKE[node.tier] || TIER_STROKE.common;
-      const classes = [
-        "umt-pt-node",
-        `is-${node.kind}`,
-        owned ? "is-owned" : "is-open",
-        locked ? "is-locked" : "",
-        fresh.has(node.id) ? "is-fresh" : "",
-        node.id === selected ? "is-selected" : ""
-      ].filter(Boolean).join(" ");
-      // Names go on the side of the node facing away from the core, so they
-      // never land on the branch lettering between hub and fan.
-      const labelY = node.y < -40 ? -(r + 9) : r + (node.maxLevel > 1 ? 21 : 15);
-      // Drawn in their own layer above every node, so a neighbouring
-      // node can never cover a name.
-      // Every talent is named; ones you don't own yet are smaller and dimmer.
-      nodeNames.push(`<text class="umt-pt-label${owned || node.id === selected ? "" : " is-dim"}" x="${round1(node.x)}" y="${round1(node.y + (owned ? labelY : (node.y < -40 ? -(r + 6) : r + (node.maxLevel > 1 ? 16 : 11))))}">${esc(node.title)}</text>`);
-      const status = owned
-        ? `owned${node.level > 1 ? `, level ${node.level}` : ""}`
-        : locked ? "Easy difficulty only" : "not yet picked up";
-      nodesOut.push(
-        `<g class="${classes}" data-umt-node="${esc(node.id)}" transform="translate(${round1(node.x)} ${round1(node.y)})"`
-        + ` style="--c:${color};--t:${tier}" tabindex="0" role="button" aria-label="${esc(node.title)}, ${status}">`
-        + (owned ? `<circle class="umt-pt-halo" r="${r + 9}"/>` : "")
-        + (fresh.has(node.id) ? `<circle class="umt-pt-burst" r="${r}"/><circle class="umt-pt-burst is-late" r="${r}"/>` : "")
-        + `<circle class="umt-pt-disc" r="${r}"/>`
-        + glyphMarkup(node.icon, owned ? 17 : 12)
-        + pipsMarkup(node, r)
-        + comboBadge(node, r)
-        + `</g>`
-      );
-    });
-
-    const core = `<g class="umt-pt-core">`
-      + `<circle class="umt-pt-core-glow" r="${R_CORE + 14}"/>`
-      + `<circle class="umt-pt-core-disc" r="${R_CORE}"/>`
-      + `<text class="umt-pt-core-count" dy="-0.1em">${model.owned}</text>`
-      + `<text class="umt-pt-core-sub" dy="1.5em">of ${model.total}</text>`
-      + `</g>`;
-
-    // The settled box, not the mid-animation one: markup that doesn't
-    // change frame to frame lets renderOverlay skip identical redraws.
-    // renderOverlay applies an in-flight zoom afterwards.
-    const box = view && view.zoomBox ? view.zoomBox : fullBox();
-    return `<svg class="umt-pt-svg" viewBox="${box.map(round1).join(" ")}" role="group" aria-label="Progression tree">`
-      + `<defs><filter id="umtPtGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>`
-      + `<radialGradient id="umtPtCore" cx="50%" cy="40%" r="65%"><stop offset="0%" stop-color="#3b2f5c"/><stop offset="100%" stop-color="#15121f"/></radialGradient>${defs.join("")}</defs>`
-      + `<g class="umt-pt-rings">${rings}</g>`
-      + `<g class="umt-pt-edges">${edges.join("")}</g>`
-      + labels.join("")
-      + core
-      + `<g class="umt-pt-nodes">${nodesOut.join("")}</g>`
-      + `<g class="umt-pt-names" aria-hidden="true">${nodeNames.join("")}</g>`
-      + `</svg>`;
+  function renderBoard(model, view) {
+    return PANELS.map((panel) => {
+      let nodes;
+      if (panel.id === "combos") nodes = model.combos;
+      else if (panel.id === "bosses") nodes = model.bosses;
+      else nodes = (model.wedges.find((w) => w.id === panel.id) || {}).nodes || [];
+      return panelMarkup(panel, nodes, model, view);
+    }).join("");
   }
 
   // ---------------------------------------------------------------------
@@ -565,7 +567,7 @@
 
   function detailMarkup(model, node) {
     if (!node) {
-      return `<div class="umt-pt-detail is-empty"><p>Tap any talent to see what it does and how to get it. Lit ones are yours; ring colour is its rarity (see Key).</p></div>`;
+      return `<div class="umt-pt-detail is-empty"><p>Tap any piece to see what it does and how to get it. Lit pieces are yours; the edge colour is its rarity (see Key).</p></div>`;
     }
     const owned = node.level > 0;
     const wedge = WEDGES.find((w) => w.id === node.wedge);
@@ -626,16 +628,16 @@
     return lines;
   }
 
-  // What the colours and lines on the tree mean.
+  // What the piece colours mean.
   function legendMarkup() {
-    const tier = (id) => `<span class="umt-pt-key-ring" style="--t:${TIER_STROKE[id]}"></span>${TIER_NAME[id]}`;
+    const tier = (id) => `<span class="umt-pt-key-ring" style="--t:${TIER_STROKE[id]}"></span>${TIER_NAME[id]} edge`;
     return `<details class="umt-pt-key"><summary>Key</summary><ul>`
+      + `<li><span class="umt-pz-key is-owned"></span>Yours</li>`
+      + `<li><span class="umt-pz-key is-fresh"></span>Just picked up</li>`
+      + `<li><span class="umt-pz-key is-open"></span>Not yet</li>`
+      + `<li><span class="umt-pz-key is-locked"></span>Easy only</li>`
       + `<li>${tier("common")}</li><li>${tier("rare")}</li><li>${tier("legendary")}</li>`
-      + `<li><span class="umt-pt-key-dot is-owned"></span>Lit and named in white: yours</li>`
-      + `<li><span class="umt-pt-key-line"></span>Line from a branch hub: which branch it belongs to</li>`
-      + `<li><span class="umt-pt-key-line is-combo"></span>Pink dotted line: one half of a combo (solid once both are owned)</li>`
-      + `<li><span class="umt-pt-key-badge">1/2</span>Combo progress</li>`
-      + `<li><span class="umt-pt-key-dot is-boss"></span>Outer red ring: boss rewards</li>`
+      + `<li><span class="umt-pt-key-badge">1/2</span>Combo: halves owned</li>`
       + `</ul></details>`;
   }
 
@@ -761,11 +763,7 @@
       + `<span class="umt-pt-count">${model.owned}<small>/${model.total}</small></span>`
       + `<button type="button" class="umt-pt-close" data-umt-pt-close aria-label="Close progression">×</button></header>`
       + `<div class="umt-pt-body">`
-      + `<div class="umt-pt-canvas-wrap"><div class="umt-pt-canvas" data-umt-pt-canvas>${renderTreeSvg(model, view)}</div>`
-      + (view.zoomCenter
-        ? `<button type="button" class="umt-pt-zoom" data-umt-pt-zoom>${view.zoomBox ? "Show whole tree" : "Zoom to new pick"}</button>`
-        : "")
-      + legendMarkup()
+      + `<div class="umt-pt-canvas-wrap">${legendMarkup()}<div class="umt-pt-canvas umt-pz-board" data-umt-pt-canvas>${renderBoard(model, view)}</div>`
       + `</div>`
       + `<aside class="umt-pt-side">`
       + (reveal ? revealMarkup(model, reveal) : detailMarkup(model, selected))
@@ -776,6 +774,13 @@
       + timelineMarkup(model, game)
       + `</aside></div>`
       + (reveal ? `<footer class="umt-pt-foot"><button type="button" class="umt-pt-continue" data-umt-pt-close>Continue</button></footer>` : "")
+      // On a phone the details open as a sheet over the board instead of
+      // somewhere below it (hidden on wider screens, where the side panel has them).
+      + (!reveal && selected
+        ? `<div class="umt-pz-sheet" role="dialog" aria-label="${esc(selected.title)}">`
+          + `<button type="button" class="umt-pz-sheet-close" data-umt-pz-deselect aria-label="Close details">×</button>`
+          + detailMarkup(model, selected) + `</div>`
+        : "")
       + `</section></div>`;
   }
 
@@ -796,7 +801,7 @@
     }
     // The game re-renders around a pick, and every re-render used to
     // rebuild the whole panel -- replaying its entrance (fade, rise, the new
-    // node's ignite) and reading as the zoom stuttering and starting over.
+    // piece dropping in) and reading as the board stuttering and starting over.
     // Skip a redraw that would change nothing, and when something did
     // change, redraw without replaying the entrance.
     const markup = overlayMarkup(view.game);
@@ -806,8 +811,6 @@
     layer.umtMarkup = markup;
     layer.umtOpenId = view.openId;
     layer.classList.toggle("is-settled", settled);
-    const svg = layer.querySelector(".umt-pt-svg");
-    if (svg && view.liveBox) svg.setAttribute("viewBox", view.liveBox.map(round1).join(" "));
     const canvas = layer.querySelector("[data-umt-pt-canvas]");
     if (canvas && keep) {
       canvas.scrollLeft = keep.left;
@@ -815,116 +818,15 @@
     }
   }
 
-  // On a narrow screen the tree is pannable rather than squeezed; start it
-  // centred, or on the node that was just picked up.
-  function focusCanvas(nodeId) {
+  // Brings the piece just picked up into view inside the board.
+  function focusPiece(nodeId) {
     const layer = host() && host().querySelector(".umt-pt-layer");
     const canvas = layer && layer.querySelector("[data-umt-pt-canvas]");
-    const svg = canvas && canvas.querySelector("svg");
-    if (!canvas || !svg) return;
-    if (canvas.scrollWidth <= canvas.clientWidth + 2 && canvas.scrollHeight <= canvas.clientHeight + 2) return;
-    let targetX = canvas.scrollWidth / 2;
-    let targetY = canvas.scrollHeight / 2;
-    const node = nodeId && svg.querySelector(`[data-umt-node="${CSS.escape(nodeId)}"]`);
-    if (node) {
-      const box = node.getBoundingClientRect();
-      const frame = canvas.getBoundingClientRect();
-      targetX = canvas.scrollLeft + (box.left + box.width / 2 - frame.left);
-      targetY = canvas.scrollTop + (box.top + box.height / 2 - frame.top);
-    }
-    canvas.scrollLeft = Math.max(0, targetX - canvas.clientWidth / 2);
-    canvas.scrollTop = Math.max(0, targetY - canvas.clientHeight / 2);
-  }
-
-  // -- zoom ------------------------------------------------------------------
-  // A reveal eases the tree in on the talent just picked, so it and its
-  // neighbours read at a glance; the button beside the tree toggles back
-  // to the whole tree.
-  const ZOOM_SPAN = 480;
-
-  function fullBox() {
-    return [-VIEW, -VIEW, VIEW * 2, VIEW * 2];
-  }
-
-  // Centred on the pick even near the rim (a little empty background at the
-  // edge beats the pick sitting off in a corner).
-  function zoomBoxAround(center) {
-    const half = ZOOM_SPAN / 2;
-    return [center.x - half, center.y - half, ZOOM_SPAN, ZOOM_SPAN];
-  }
-
-  // A pannable (narrow-screen) canvas keeps the middle of the tree in view,
-  // which is where a zoomed viewBox puts the picked node.
-  // Measured from where the SVG actually sits on screen, like focusCanvas,
-  // since part of an overflowing tree can sit left of the scroll origin.
-  function centreCanvasScroll() {
-    const canvas = host() && host().querySelector(".umt-pt-layer [data-umt-pt-canvas]");
-    const svg = canvas && canvas.querySelector("svg");
-    if (!canvas || !svg) return;
-    const box = svg.getBoundingClientRect();
+    const piece = nodeId && canvas && canvas.querySelector(`[data-umt-node="${CSS.escape(nodeId)}"]`);
+    if (!piece || canvas.scrollHeight <= canvas.clientHeight + 2) return;
+    const box = piece.getBoundingClientRect();
     const frame = canvas.getBoundingClientRect();
-    const centreX = canvas.scrollLeft + (box.left + box.width / 2 - frame.left);
-    const centreY = canvas.scrollTop + (box.top + box.height / 2 - frame.top);
-    canvas.scrollLeft = Math.max(0, centreX - canvas.clientWidth / 2);
-    canvas.scrollTop = Math.max(0, centreY - canvas.clientHeight / 2);
-  }
-
-  // The overlay re-renders whenever the game does (and the game renders
-  // right after a pick), which replaces the SVG. So the box being animated
-  // lives in view.liveBox -- a re-render mid-zoom draws the tree exactly
-  // where the animation has got to -- and each frame updates whichever SVG
-  // is on screen now, never a stale one.
-  let zoomFrame = 0;
-  function currentSvg() {
-    return host() && host().querySelector(".umt-pt-layer .umt-pt-svg");
-  }
-
-  // The box on screen right now, read off the SVG itself -- starting from
-  // a recomputed box instead made the view jump outward for a frame before
-  // zooming in.
-  function shownBox() {
-    const svg = currentSvg();
-    const parts = svg ? String(svg.getAttribute("viewBox") || "").split(/\s+/).map(Number) : [];
-    return parts.length === 4 && parts.every(Number.isFinite) ? parts : null;
-  }
-
-  function animateZoom(target, done) {
-    cancelAnimationFrame(zoomFrame);
-    const start = view.liveBox || shownBox() || view.zoomBox || fullBox();
-    const finish = () => {
-      view.liveBox = null;
-      done();
-    };
-    if (reducedMotion() || !currentSvg()) {
-      finish();
-      return;
-    }
-    const began = performance.now();
-    const duration = 1100;
-    const step = (now) => {
-      const t = Math.min(1, (now - began) / duration);
-      // Ease in and out: one smooth glide, no burst-then-crawl.
-      const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-      view.liveBox = start.map((value, index) => value + (target[index] - value) * eased);
-      const svg = currentSvg();
-      if (svg) svg.setAttribute("viewBox", view.liveBox.map(round1).join(" "));
-      if (t < 1 && view.open) zoomFrame = requestAnimationFrame(step);
-      else finish();
-    };
-    zoomFrame = requestAnimationFrame(step);
-  }
-
-  function zoomTo(zoomIn) {
-    if (!view.zoomCenter) return;
-    const target = zoomIn ? zoomBoxAround(view.zoomCenter) : fullBox();
-    animateZoom(target, () => {
-      view.zoomBox = zoomIn ? target : null;
-      // Only the toggle's label changes; rebuilding the whole overlay here
-      // swapped the tree out right after the zoom landed (a visible blink).
-      const toggle = host() && host().querySelector(".umt-pt-layer [data-umt-pt-zoom]");
-      if (toggle) toggle.textContent = zoomIn ? "Show whole tree" : "Zoom to new pick";
-      centreCanvasScroll();
-    });
+    canvas.scrollTop = Math.max(0, canvas.scrollTop + (box.top + box.height / 2 - frame.top) - canvas.clientHeight / 2);
   }
 
   function openTree(game, options = {}) {
@@ -937,27 +839,10 @@
     view.selectedId = options.selectedId || null;
     view.lastFocus = document.activeElement;
     view.openId = (view.openId || 0) + 1;
-    cancelAnimationFrame(zoomFrame);
-    clearTimeout(view.zoomTimer);
-    view.zoomBox = null;
-    view.liveBox = null;
-    view.zoomCenter = null;
     const focusId = options.selectedId || (view.freshIds.size ? [...view.freshIds][0] : null);
-    if (options.reveal && focusId) {
-      const picked = buildModel(game).nodes.get(focusId);
-      if (picked && Number.isFinite(picked.x) && Number.isFinite(picked.y)) view.zoomCenter = { x: picked.x, y: picked.y };
-    }
     renderOverlay();
     requestAnimationFrame(() => {
-      if (view.zoomCenter) {
-        centreCanvasScroll();
-        // Ease in on the new pick as the panel opens -- one continuous
-        // motion. (A pause on the whole tree first, under the panel's own
-        // pop-in, read as "zoom, stop, zoom again".)
-        view.zoomTimer = setTimeout(() => { if (view.open && view.zoomCenter) zoomTo(true); }, 60);
-      } else {
-        focusCanvas(focusId);
-      }
+      focusPiece(focusId);
       const closeBtn = host() && host().querySelector(options.reveal ? ".umt-pt-continue" : ".umt-pt-close");
       if (closeBtn) closeBtn.focus({ preventScroll: true });
     });
@@ -1065,7 +950,7 @@
     watch.pending = setTimeout(() => {
       // One pick can land in the ledger more than once, a moment apart (a
       // reward applied twice). Fold that into the reveal already showing,
-      // rather than opening it again -- which restarted the zoom.
+      // rather than opening it again -- which replayed its entrance.
       if (view.open && view.mode === "reveal" && view.reveal) {
         view.reveal.entries = view.reveal.entries.concat(fresh);
         view.reveal.diff = mergeDiffs(view.reveal.diff, diff);
@@ -1222,7 +1107,7 @@
     // toast; it belongs to this stage's briefing now (taken off the state
     // by checkForStageStart the moment the stage began).
     if (burdenNotice && !newBurdenShown) {
-      lines.push({ kind: "hazard", icon: "☠️", text: `New burden: ${burdenNotice.title || "left-behind boss"}` });
+      lines.push({ kind: "hazard", icon: "☠️", text: `New curse: ${burdenNotice.title || "beaten boss"}` });
     }
 
     const opening = num(state.roundOpeningPoints);
@@ -1567,9 +1452,9 @@
         closeTree();
         return;
       }
-      if (target.closest(".umt-pt-layer [data-umt-pt-zoom]")) {
+      if (target.closest(".umt-pt-layer [data-umt-pz-deselect]")) {
         event.preventDefault();
-        zoomTo(!view.zoomBox);
+        selectNode(null);
         return;
       }
       const node = target.closest(".umt-pt-layer [data-umt-node]");

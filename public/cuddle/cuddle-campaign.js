@@ -423,8 +423,7 @@
     if (useHandBonus && campaign.inventory.handSize > 0) campaign.inventory.handSize -= 1;
 
     const notes = [];
-    const mulligansAllowed = this.state.boss?.id !== "noMulligans";
-    if (mulligansAllowed && campaign.inventory.extraMulligan > 0) {
+    if (campaign.inventory.extraMulligan > 0) {
       campaign.inventory.extraMulligan -= 1;
       this.state.mulligansLeft = Number(this.state.mulligansLeft || 0) + 1;
       notes.push("Spare Mulligan added one mulligan for this round.");

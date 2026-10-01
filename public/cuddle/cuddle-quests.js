@@ -361,7 +361,7 @@
       id: "noMulligans",
       icon: "✋",
       title: "Steady Hand",
-      description: "You get no mulligans this round.",
+      description: "Mulligans are locked for your opening guesses.",
       turns: 0,
       rewardId: "questDoublePick"
     },
