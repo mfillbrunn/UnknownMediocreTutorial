@@ -174,6 +174,9 @@
     paw: `<ellipse cx="12" cy="15.5" rx="4.5" ry="3.8" fill="${C.brown}"/>${[[6.5, 10.5], [9.5, 6.8], [14.5, 6.8], [17.5, 10.5]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2" fill="${C.brown}"/>`).join("")}`,
     cat: `<path d="M5 20v-8l-1-7 4.5 3.5h7L20 5l-1 7v8z" fill="${C.orange}"/><circle cx="9.5" cy="13" r="1" fill="${INK}"/><circle cx="14.5" cy="13" r="1" fill="${INK}"/><path d="M11 16h2" />`,
     dollar: `<circle cx="12" cy="12" r="8.5" fill="${C.gold}"/><path d="M14.5 9c-.8-1-5-1.2-5.2.9-.2 2.3 5.4 1.4 5.2 3.9-.2 2-4.3 1.8-5.2.8M12 6.5v11" fill="none" stroke-width="1.6"/>`,
+    lantern: `<path d="M12 2.5v2" ${L(1.8)}/><path d="M8 5h8l1 2H7z" fill="${C.brown}"/><path d="M7.5 7h9c1 2.2 1 9.8 0 12h-9c-1-2.2-1-9.8 0-12z" fill="${C.red}"/><path d="M9.5 9.5v7M14.5 9.5v7" stroke="${C.gold}" stroke-width="1.4"/><path d="M8 19h8l-1 2.2H9z" fill="${C.brown}"/>`,
+    gravestone: `<path d="M6.5 20.5V10a5.5 5.5 0 0 1 11 0v10.5z" fill="${C.grey}"/><path d="M9.5 11.5l5 5M14.5 11.5l-5 5" stroke="${C.red}" stroke-width="2"/><path d="M4 20.5h16" ${L(2)}/>`,
+    candle: `<path d="M12 3c-1.6 2-2.2 3.4-2.2 4.5a2.2 2.2 0 0 0 4.4 0C14.2 6.4 13.6 5 12 3z" fill="${C.gold}"/><path d="M12 10v1.5" ${L(1.4)}/><rect x="8.5" y="11.5" width="7" height="9" rx="1" fill="${C.cream}"/><path d="M6 20.5h12" ${L(2)}/>`,
     plus: `${tile(C.green)}<path d="M12 7.5v9M7.5 12h9" stroke="${C.cream}" stroke-width="2.4"/>`,
     minus: `${tile(C.red)}<path d="M7.5 12h9" stroke="${C.cream}" stroke-width="2.4"/>`
   };
@@ -207,6 +210,7 @@
     "🔨": "hammer", "🛠": "hammer", "🛡": "shield", "🔑": "key", "🗝": "key", "🕐": "clock",
     "⏰": "clock", "🌊": "wave", "❄": "snowflake", "☀": "sun", "☁": "cloud", "🚀": "rocket",
     "🐾": "paw", "🐱": "cat", "🐈": "cat", "💵": "dollar", "💲": "dollar", "➕": "plus", "➖": "minus",
+    "🏮": "lantern", "🪦": "gravestone", "🕯": "candle",
     "🎉": "sparkles", "🎊": "sparkles", "🪄": "sparkles", "🌀": "refresh", "🟥": "minus", "🟦": "blueDot"
   };
 

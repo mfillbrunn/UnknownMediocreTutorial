@@ -32,7 +32,14 @@
     hotStreak: "umtHotStreak",
     vowelBounty: "umtVowelBounty",
     doubleDown: "umtDoubleDown",
-    consonantSweep: "umtConsonantSweep"
+    consonantSweep: "umtConsonantSweep",
+    vowelLamp: "umtVowelLamp",
+    echoFinder: "umtEchoFinder",
+    deadLetter: "umtDeadLetter",
+    treasureHunter: "umtTreasureHunter",
+    patternLens: "umtPatternLens",
+    mistakeShield: "umtMistakeShield",
+    lastLight: "umtLastLight"
   });
 
   const VOWELS = new Set(["A", "E", "I", "O", "U"]);
@@ -70,6 +77,51 @@
       id: IDS.doubleDown, key: IDS.doubleDown, icon: "\uD83C\uDFB2",
       title: "Double Down", name: "Double Down",
       description: "Solve on your very last guess and the whole stage pays double.",
+      maxLevel: 1, maxCount: 1, kind: "upgrade"
+    }),
+    // Insight rewards: clues about the answer at the start of a stage,
+    // plus a treasure hunt and a shield. Their effects live in
+    // cuddle-clues.js; picking one just raises its level here.
+    Object.freeze({
+      id: IDS.vowelLamp, key: IDS.vowelLamp, icon: "\uD83C\uDFEE",
+      title: "Vowel Lamp", name: "Vowel Lamp",
+      description: "Every non-boss stage tells you how many vowels the answer has.",
+      maxLevel: 1, maxCount: 1, kind: "upgrade"
+    }),
+    Object.freeze({
+      id: IDS.echoFinder, key: IDS.echoFinder, icon: "\uD83D\uDC6F",
+      title: "Echo Finder", name: "Echo Finder",
+      description: "Every non-boss stage tells you whether the answer uses a letter twice.",
+      maxLevel: 1, maxCount: 1, kind: "upgrade"
+    }),
+    Object.freeze({
+      id: IDS.deadLetter, key: IDS.deadLetter, icon: "\uD83E\uDEA6",
+      title: "Dead Letter", name: "Dead Letter",
+      description: "Every non-boss stage opens with a letter that isn't in the answer crossed out. Stacks: one more letter per copy.",
+      maxLevel: 3, maxCount: 3, kind: "upgrade"
+    }),
+    Object.freeze({
+      id: IDS.treasureHunter, key: IDS.treasureHunter, icon: "\uD83D\uDC8E",
+      title: "Treasure Hunter", name: "Treasure Hunter",
+      description: "About one stage in three hides a treasure word: solve it for +$8. Stacks: +$8 more per copy.",
+      maxLevel: 2, maxCount: 2, kind: "upgrade"
+    }),
+    Object.freeze({
+      id: IDS.patternLens, key: IDS.patternLens, icon: "\uD83E\uDDE9",
+      title: "Pattern Lens", name: "Pattern Lens",
+      description: "Every non-boss stage shows where the answer's vowels and consonants sit, like C V C C V.",
+      maxLevel: 1, maxCount: 1, kind: "upgrade"
+    }),
+    Object.freeze({
+      id: IDS.mistakeShield, key: IDS.mistakeShield, icon: "\uD83D\uDEE1\uFE0F",
+      title: "Mistake Shield", name: "Mistake Shield",
+      description: "In a boss or a strict stage, the first guess with no green or yellow gives you an extra guess back.",
+      maxLevel: 1, maxCount: 1, kind: "upgrade"
+    }),
+    Object.freeze({
+      id: IDS.lastLight, key: IDS.lastLight, icon: "\uD83D\uDD6F\uFE0F",
+      title: "Last Light", name: "Last Light",
+      description: "Every non-boss stage opens with the answer's last letter already in place.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     })
   ]);

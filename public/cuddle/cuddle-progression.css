@@ -1,5 +1,5 @@
 /* public/cuddle/cuddle-progression.css
- * Stage-intro banner + radial progression tree (cuddle-progression.js).
+ * Stage-intro banner + talent board (cuddle-progression.js).
  * Cuddle is a single dark world, so this stays dark too; colours come from
  * the game's own tokens -- points teal, money gold -- with fallbacks since
  * the host sits beside #cuddleRoot rather than inside it. */
@@ -488,13 +488,6 @@
     #110f19;
 }
 
-.umt-progress-host .umt-pt-svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  max-height: 100%;
-  user-select: none;
-}
 
 .umt-progress-host .umt-pt-side {
   display: grid;
@@ -534,181 +527,6 @@
   font: inherit;
   font-weight: 850;
   cursor: pointer;
-}
-
-/* -- SVG ------------------------------------------------------------ */
-
-.umt-progress-host .umt-pt-orbit {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.05);
-  stroke-dasharray: 2 7;
-}
-
-.umt-progress-host .umt-pt-boss-ring {
-  fill: none;
-  stroke: rgba(251, 113, 133, 0.16);
-  stroke-width: 1.5;
-}
-
-.umt-progress-host .umt-pt-boss-ring.is-lit { stroke: rgba(251, 113, 133, 0.42); }
-
-.umt-progress-host .umt-pt-edge {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.09);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-}
-
-.umt-progress-host .umt-pt-edge.is-lit {
-  stroke: var(--c);
-  stroke-width: 2.6;
-  stroke-dasharray: 6 4;
-  filter: drop-shadow(0 0 3px var(--c));
-  animation: umt-pt-flow 1.8s linear infinite;
-}
-
-@keyframes umt-pt-flow { to { stroke-dashoffset: -20; } }
-
-.umt-progress-host .umt-pt-edge.is-half { stroke-dasharray: 1.5 3; stroke-width: 1.4; }
-.umt-progress-host .umt-pt-edge.is-half.is-lit { opacity: 0.8; animation: none; filter: none; }
-
-/* A connection that just came alive draws itself in from the branch. */
-.umt-progress-host .umt-pt-edge.is-drawing {
-  stroke: var(--c);
-  stroke-width: 3;
-  stroke-dasharray: 100 100;
-  filter: drop-shadow(0 0 5px var(--c));
-  animation: umt-pt-draw 900ms cubic-bezier(0.3, 0, 0.2, 1) 150ms both;
-}
-
-@keyframes umt-pt-draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
-
-.umt-progress-host .umt-pt-hub circle {
-  fill: #1b1828;
-  stroke: rgba(255, 255, 255, 0.2);
-  stroke-width: 1.5;
-}
-
-.umt-progress-host .umt-pt-hub.is-lit circle {
-  fill: color-mix(in srgb, var(--c) 22%, #1b1828);
-  stroke: var(--c);
-}
-
-.umt-progress-host .umt-pt-hub text {
-  fill: var(--c);
-  font-size: 13px;
-  font-weight: 800;
-  text-anchor: middle;
-}
-
-.umt-progress-host .umt-pt-branch-label {
-  fill: rgba(255, 255, 255, 0.34);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  paint-order: stroke;
-  stroke: #110f19;
-  stroke-width: 4px;
-}
-
-.umt-progress-host .umt-pt-branch-label.is-lit { fill: var(--c); }
-.umt-progress-host .umt-pt-branch-label.is-locked,
-.umt-progress-host .umt-pt-hub.is-locked { opacity: 0.45; }
-
-.umt-progress-host .umt-pt-core-glow { fill: rgba(213, 166, 255, 0.22); filter: url(#umtPtGlow); }
-.umt-progress-host .umt-pt-core-disc { fill: url(#umtPtCore); stroke: rgba(213, 166, 255, 0.55); stroke-width: 2; }
-.umt-progress-host .umt-pt-core-count { fill: #fff; font-size: 32px; font-weight: 900; text-anchor: middle; }
-.umt-progress-host .umt-pt-core-sub { fill: var(--umt-muted); font-size: 12px; font-weight: 700; text-anchor: middle; }
-
-.umt-progress-host .umt-pt-node { cursor: pointer; outline: none; }
-
-.umt-progress-host .umt-pt-disc {
-  fill: #1a1725;
-  /* Rarity ring (bronze / silver / gold), dimmer until owned. */
-  stroke: color-mix(in srgb, var(--t, #cfcadc) 70%, transparent);
-  stroke-width: 1.8;
-  transition: stroke 120ms ease;
-}
-
-.umt-progress-host .umt-pt-node.is-owned .umt-pt-disc {
-  fill: color-mix(in srgb, var(--c) 30%, #15121e);
-  stroke: var(--t);
-  stroke-width: 2.4;
-}
-
-.umt-progress-host .umt-pt-halo { fill: var(--c); opacity: 0.3; filter: url(#umtPtGlow); }
-
-.umt-progress-host .umt-pt-glyph {
-  text-anchor: middle;
-  pointer-events: none;
-}
-
-.umt-progress-host .umt-pt-node.is-open .umt-pt-glyph { opacity: 0.5; filter: grayscale(1); }
-.umt-progress-host .umt-pt-glyph.is-text { fill: #e9e4f5; font-weight: 850; }
-.umt-progress-host .umt-pt-node.is-owned .umt-pt-glyph.is-text { fill: var(--c); }
-
-.umt-progress-host .umt-pt-label {
-  fill: #f3eefe;
-  font-size: 12.5px;
-  font-weight: 700;
-  text-anchor: middle;
-  paint-order: stroke;
-  stroke: #110f19;
-  stroke-width: 4px;
-  pointer-events: none;
-}
-
-.umt-progress-host .umt-pt-pip { fill: rgba(255, 255, 255, 0.2); }
-.umt-progress-host .umt-pt-pip.is-on { fill: var(--c); }
-.umt-progress-host .umt-pt-stack { fill: var(--c); font-size: 12px; font-weight: 900; paint-order: stroke; stroke: #110f19; stroke-width: 3px; }
-
-.umt-progress-host .umt-pt-node:hover .umt-pt-disc,
-.umt-progress-host .umt-pt-node:focus-visible .umt-pt-disc { stroke: #fff; stroke-width: 2.6; }
-.umt-progress-host .umt-pt-node.is-selected .umt-pt-disc { stroke: #fff; stroke-width: 3.2; }
-.umt-progress-host .umt-pt-node.is-locked { opacity: 0.35; }
-
-/* A node that was just picked up ignites, with two rings bursting out. */
-.umt-progress-host .umt-pt-node.is-fresh .umt-pt-disc,
-.umt-progress-host .umt-pt-node.is-fresh .umt-pt-halo,
-.umt-progress-host .umt-pt-node.is-fresh .umt-pt-glyph,
-.umt-progress-host .umt-pt-burst {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.umt-progress-host .umt-pt-node.is-fresh .umt-pt-disc,
-.umt-progress-host .umt-pt-node.is-fresh .umt-pt-glyph {
-  animation: umt-pt-ignite 700ms cubic-bezier(0.2, 1.4, 0.3, 1) 700ms both;
-}
-
-.umt-progress-host .umt-pt-node.is-fresh .umt-pt-halo {
-  animation: umt-pt-halo 2.4s ease-in-out 700ms infinite;
-}
-
-.umt-progress-host .umt-pt-burst {
-  fill: none;
-  stroke: var(--c);
-  stroke-width: 3;
-  animation: umt-pt-burst 1.1s ease-out 900ms both;
-}
-
-.umt-progress-host .umt-pt-burst.is-late { animation-delay: 1.2s; stroke-width: 2; }
-
-@keyframes umt-pt-ignite {
-  0% { transform: scale(0.3); opacity: 0.2; }
-  60% { transform: scale(1.28); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes umt-pt-halo {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.25); }
-}
-
-@keyframes umt-pt-burst {
-  0% { transform: scale(1); opacity: 0.95; }
-  100% { transform: scale(3.4); opacity: 0; }
 }
 
 /* -- Side panel ------------------------------------------------------ */
@@ -1048,11 +866,6 @@
     height: 56dvh;
   }
 
-  .umt-progress-host .umt-pt-svg {
-    width: 720px;
-    height: 720px;
-    max-height: none;
-  }
 
   .umt-progress-host .umt-pt-side {
     overflow: visible;
@@ -1081,7 +894,7 @@
   .umt-progress-host .umt-pt-edge.is-drawing { stroke-dasharray: none; }
 }
 
-/* The tree sits in a wrapper so the zoom toggle can float over it. */
+/* The board and its Key share one wrapper. */
 .umt-progress-host .umt-pt-canvas-wrap {
   position: relative;
   display: grid;
@@ -1092,28 +905,6 @@
 }
 .umt-progress-host .umt-pt-canvas-wrap > .umt-pt-canvas {
   min-height: 0;
-}
-.umt-progress-host .umt-pt-zoom {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  z-index: 2;
-  padding: 7px 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(213, 166, 255, 0.55);
-  background: rgba(22, 18, 32, 0.88);
-  color: #efe4ff;
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 800;
-  cursor: pointer;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-}
-.umt-progress-host .umt-pt-zoom:hover,
-.umt-progress-host .umt-pt-zoom:focus-visible {
-  border-color: #d5a6ff;
-  outline: none;
 }
 @media (max-width: 760px) {
   .umt-progress-host .umt-pt-canvas-wrap {
@@ -1206,4 +997,307 @@
   font-size: 0.66rem;
   font-weight: 850;
   color: #ff9ec7;
+}
+
+/* ================================================================== */
+/* Talent board: one panel per theme, each a little jigsaw of pieces    */
+/* (cuddle-progression.js renderBoard).                                 */
+/* ================================================================== */
+
+.umt-progress-host .umt-pt-canvas-wrap {
+  grid-template: auto minmax(0, 1fr) / minmax(0, 1fr);
+}
+.umt-progress-host .umt-pt-canvas-wrap > .umt-pt-key {
+  margin: 10px 14px 0;
+}
+.umt-progress-host .umt-pt-key li:nth-child(n+4) { grid-column: auto; }
+.umt-progress-host .umt-pt-key li:last-child { grid-column: 1 / -1; }
+.umt-progress-host .umt-pz-key {
+  flex: none;
+  width: 16px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  background: #262132;
+}
+.umt-progress-host .umt-pz-key.is-owned { background: #b892f0; border-color: #e7d6ff; box-shadow: 0 0 8px rgba(213, 166, 255, 0.6); }
+.umt-progress-host .umt-pz-key.is-fresh { background: #f6c956; border-color: #fff3c4; box-shadow: 0 0 8px rgba(246, 201, 86, 0.7); }
+.umt-progress-host .umt-pz-key.is-locked { background: #1a1723; border-color: rgba(255, 255, 255, 0.08); }
+
+.umt-progress-host .umt-pt-canvas.umt-pz-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  align-content: start;
+  align-items: start;
+  place-items: stretch;
+  gap: 14px;
+  padding: 14px;
+  overflow-y: auto;
+  background:
+    radial-gradient(90% 60% at 50% 0%, rgba(92, 64, 150, 0.22), transparent 70%),
+    #110f19;
+}
+
+.umt-progress-host .umt-pz-panel {
+  --c: #d5a6ff;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  border: 1px solid color-mix(in srgb, var(--c) 32%, transparent);
+  border-radius: 16px;
+  background:
+    radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--c) 15%, transparent), transparent 62%),
+    linear-gradient(180deg, #1c1828, #15121e);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.04), 0 10px 24px rgba(0, 0, 0, 0.3);
+}
+.umt-progress-host .umt-pz-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.umt-progress-host .umt-pz-panel-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border: 1px solid color-mix(in srgb, var(--c) 50%, transparent);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--c) 16%, #14111c);
+}
+.umt-progress-host .umt-pz-panel-icon svg { width: 24px; height: 24px; }
+.umt-progress-host .umt-pz-head > div { min-width: 0; }
+.umt-progress-host .umt-pz-head h3 {
+  margin: 0;
+  color: var(--c);
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.umt-progress-host .umt-pz-head p {
+  margin: 1px 0 0;
+  color: var(--umt-muted);
+  font-size: 0.76rem;
+}
+.umt-progress-host .umt-pz-count {
+  margin-left: auto;
+  font-size: 1rem;
+  font-weight: 900;
+}
+.umt-progress-host .umt-pz-count small { color: var(--umt-muted); font-size: 0.75rem; font-weight: 700; }
+
+/* The puzzle: pieces are placed in % of its box, and its text scales with
+   its width (container units), so it reads the same at any panel size. */
+.umt-progress-host .umt-pz-puzzle {
+  position: relative;
+  width: 100%;
+  margin: 6px 0 4px;
+  container-type: inline-size;
+}
+.umt-progress-host .umt-pz-piece {
+  --fill: #262132;
+  --edge: color-mix(in srgb, var(--t) 45%, transparent);
+  --ink: rgba(232, 224, 244, 0.62);
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  /* Only the painted piece takes clicks, so a neighbour's tab never
+     steals a tap meant for this one. */
+  pointer-events: none;
+  cursor: pointer;
+}
+.umt-progress-host .umt-pz-shape {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.umt-progress-host .umt-pz-shape path {
+  pointer-events: visiblePainted;
+  fill: var(--fill);
+  stroke: var(--edge);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  transition: fill 160ms ease, stroke 160ms ease;
+}
+.umt-progress-host .umt-pz-piece.is-owned {
+  --fill: color-mix(in srgb, var(--c) 80%, #1b1624);
+  --edge: var(--t);
+  --ink: #1b1624;
+}
+.umt-progress-host .umt-pz-piece.is-owned .umt-pz-shape {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 45%, transparent));
+}
+.umt-progress-host .umt-pz-piece.is-fresh {
+  --fill: #f6c956;
+  --edge: #fff3c4;
+  --ink: #2a1c05;
+  animation: umt-pz-drop 620ms cubic-bezier(0.2, 1.3, 0.4, 1) 300ms both;
+}
+.umt-progress-host .umt-pz-piece.is-fresh .umt-pz-shape {
+  animation: umt-pz-glow 1.6s ease-in-out 900ms infinite;
+}
+.umt-progress-host .umt-pz-piece.is-locked {
+  --fill: #1a1723;
+  --edge: rgba(255, 255, 255, 0.08);
+  --ink: rgba(232, 224, 244, 0.38);
+}
+.umt-progress-host .umt-pz-piece.is-selected {
+  --edge: #ffffff;
+}
+.umt-progress-host .umt-pz-piece.is-selected .umt-pz-shape path { stroke-width: 3; }
+.umt-progress-host .umt-pz-piece:hover .umt-pz-shape path { filter: brightness(1.15); }
+.umt-progress-host .umt-pz-piece:focus-visible { outline: none; }
+.umt-progress-host .umt-pz-piece:focus-visible .umt-pz-shape path { stroke: #ffffff; stroke-width: 3; }
+
+.umt-progress-host .umt-pz-face {
+  position: absolute;
+  inset: 17.5%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3%;
+  text-align: center;
+  pointer-events: none;
+  /* Above every piece's shape, so a neighbour's tab never covers a name. */
+  z-index: 4;
+}
+.umt-progress-host .umt-pz-piece.is-selected .umt-pz-shape,
+.umt-progress-host .umt-pz-piece:focus-visible .umt-pz-shape { z-index: 3; }
+.umt-progress-host .umt-pz-badge { z-index: 5; }
+.umt-progress-host .umt-pz-icon {
+  display: grid;
+  place-items: center;
+  width: calc(26cqi / var(--cols));
+  height: calc(26cqi / var(--cols));
+  flex: none;
+}
+.umt-progress-host .umt-pz-icon svg { width: 100%; height: 100%; overflow: visible; }
+.umt-progress-host .umt-pz-icon.is-text {
+  font-size: calc(10cqi / var(--cols));
+  font-weight: 900;
+}
+.umt-progress-host .umt-pz-piece.is-open .umt-pz-icon { opacity: 0.6; filter: saturate(0.6); }
+.umt-progress-host .umt-pz-piece.is-locked .umt-pz-icon { opacity: 0.45; }
+.umt-progress-host .umt-pz-name {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: clamp(9px, calc(11.5cqi / var(--cols)), 13px);
+  font-weight: 800;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+.umt-progress-host .umt-pz-pips {
+  display: flex;
+  gap: 3px;
+}
+.umt-progress-host .umt-pz-pips i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+}
+.umt-progress-host .umt-pz-piece.is-owned .umt-pz-pips i,
+.umt-progress-host .umt-pz-piece.is-fresh .umt-pz-pips i { background: rgba(27, 22, 36, 0.25); }
+.umt-progress-host .umt-pz-piece.is-owned .umt-pz-pips i.is-on,
+.umt-progress-host .umt-pz-piece.is-fresh .umt-pz-pips i.is-on { background: #1b1624; }
+.umt-progress-host .umt-pz-stack {
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+.umt-progress-host .umt-pz-badge {
+  position: absolute;
+  top: 15%;
+  right: 13%;
+  padding: 1px 5px;
+  border: 1px solid rgba(255, 122, 184, 0.7);
+  border-radius: 8px;
+  background: #1b1624;
+  color: #ff9ec7;
+  font-size: 0.62rem;
+  font-weight: 900;
+  line-height: 1.3;
+  pointer-events: none;
+}
+.umt-progress-host .umt-pz-badge.is-done { border-color: #8ff7cd; color: #8ff7cd; }
+
+@keyframes umt-pz-drop {
+  0% { opacity: 0; transform: translateY(-22%) scale(1.18) rotate(-7deg); }
+  60% { opacity: 1; transform: translateY(2%) scale(0.98) rotate(1deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes umt-pz-glow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(246, 201, 86, 0.55)); }
+  50% { filter: drop-shadow(0 0 12px rgba(246, 201, 86, 0.95)); }
+}
+
+/* Phone: the details open as a sheet over the board. */
+.umt-progress-host .umt-pz-sheet { display: none; }
+
+@media (max-width: 760px) {
+  .umt-progress-host .umt-pt-canvas.umt-pz-board {
+    height: auto;
+    overflow: visible;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px;
+  }
+  .umt-progress-host .umt-pt-canvas-wrap,
+  .umt-progress-host .umt-pt-side { flex: 0 0 auto; }
+  /* A reveal on a phone: the "new talent" note first, then the board with
+     the new piece, then the run stats -- not all the stats first. */
+  .umt-progress-host .umt-pt-overlay.is-reveal .umt-pt-side { display: contents; }
+  .umt-progress-host .umt-pt-overlay.is-reveal .umt-pt-side > * { margin-inline: 1rem; }
+  .umt-progress-host .umt-pt-overlay.is-reveal .umt-pt-reveal { order: -1; margin-top: 1rem; }
+  .umt-progress-host .umt-pt-overlay.is-reveal .umt-pt-side > .umt-pt-side-title { margin-top: 1rem; }
+  .umt-progress-host .umt-pt-overlay.is-reveal .umt-pt-side > :last-child { margin-bottom: 1.25rem; }
+  .umt-progress-host .umt-pt-side > .umt-pt-detail { display: none; }
+  .umt-progress-host .umt-pz-sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    display: block;
+    max-height: 62%;
+    overflow-y: auto;
+    padding: 16px 14px calc(16px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid rgba(213, 166, 255, 0.3);
+    border-radius: 18px 18px 0 0;
+    background: var(--umt-surface);
+    box-shadow: 0 -14px 34px rgba(0, 0, 0, 0.55);
+    animation: umt-pz-sheet-in 220ms cubic-bezier(0.2, 1, 0.3, 1) both;
+  }
+  .umt-progress-host .umt-pz-sheet .umt-pt-detail { padding-right: 36px; }
+  .umt-progress-host .umt-pz-sheet-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--umt-line);
+    border-radius: 50%;
+    background: var(--umt-surface-2);
+    color: var(--umt-ink);
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+}
+@keyframes umt-pz-sheet-in { from { transform: translateY(100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .umt-progress-host .umt-pz-piece.is-fresh,
+  .umt-progress-host .umt-pz-piece.is-fresh .umt-pz-shape,
+  .umt-progress-host .umt-pz-sheet { animation: none; }
 }

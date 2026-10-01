@@ -3608,3 +3608,34 @@
 @media (prefers-reduced-motion: reduce) {
   .umt-boss-trait, .umt-boss-trait-info { transition: none; animation: none; }
 }
+
+/* Insight clues (cuddle-clues.js): a row of small chips in the play strip,
+   under the quest and theme. */
+#cuddleScreen .cuddle-play-strip > .umt-clues {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.umt-clue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 3px 10px 3px 6px;
+  border: 1px solid rgba(169, 139, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(169, 139, 255, 0.12);
+  color: #efe8ff;
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.1;
+}
+.umt-clue .umt-ico { font-size: 0.95rem; }
+.umt-clue-text.is-mono { letter-spacing: 0.08em; font-variant-numeric: tabular-nums; }
+.umt-clue.is-money {
+  border-color: rgba(246, 201, 86, 0.5);
+  background: rgba(246, 201, 86, 0.14);
+  color: #ffe8a3;
+}
+.umt-clue.is-spent { opacity: 0.55; }

@@ -45,6 +45,11 @@
       effect: "Every completed quest pays +5 more points." },
     { id: "fastStory", icon: "📚", title: "Fast Story", requires: [["storybookStart"], ["earlySolveBoost"]],
       effect: "Solve by guess 3 for +15 points." },
+    // Insight combos (rewards in cuddle-clues.js).
+    { id: "lamplighter", icon: "🏮", title: "Lamplighter", requires: [["vowelLamp"], ["patternLens"]],
+      effect: "Every stage opens with +1 mulligan." },
+    { id: "graveRobber", icon: "🪦", title: "Grave Robber", requires: [["deadLetter"], ["treasureHunter"]],
+      effect: "Treasure words pay +$5 more." },
     // Existing engine combos: previewed here, applied by the engine.
     { id: "goldenTempo", icon: "⚡", title: "Golden Tempo", engine: true, requires: [["colourTrade", "yellowPoints"], ["earlySolveBoost", "earlyRoundPoint"]],
       effect: "Every solved stage gives +5 points." },
@@ -115,7 +120,8 @@
     allThemes: "All-Seeing Atlas", allThemesBoss: "All-Seeing Atlas", jokerCache: "Joker Cache", cullRare: "Deep Cull",
     freeVowelSweep: "Free Vowel Sweep", doubleMulligans: "Double Mulligans", backupPlanReward: "Backup Plan",
     questPersistReward: "Lasting Quests", questDoublePick: "Double Pick", secondCup: "Second Cup",
-    goldenCompass: "Golden Compass", "alphabet-compass": "Alphabet Compass"
+    goldenCompass: "Golden Compass", "alphabet-compass": "Alphabet Compass",
+    vowelLamp: "Vowel Lamp", patternLens: "Pattern Lens", deadLetter: "Dead Letter", treasureHunter: "Treasure Hunter"
   });
   function titleFor(id) {
     const tree = window.CuddleSkillTree;
@@ -266,7 +272,8 @@
   wrap("_beginRound", original => function beginRoundWithCombos() {
     const result = original.apply(this, arguments);
     if (this.state && !(typeof this.isBossRound === "function" && this.isBossRound())) {
-      const extra = (ownsCombo(this, "fullHouse") ? 1 : 0) + (ownsCombo(this, "cleanSweep") ? 1 : 0);
+      const extra = (ownsCombo(this, "fullHouse") ? 1 : 0) + (ownsCombo(this, "cleanSweep") ? 1 : 0)
+        + (ownsCombo(this, "lamplighter") ? 1 : 0);
       if (extra) this.state.mulligansLeft = Math.max(0, num(this.state.mulligansLeft)) + extra;
     }
     return result;

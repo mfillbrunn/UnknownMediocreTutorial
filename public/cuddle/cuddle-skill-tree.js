@@ -27,6 +27,15 @@
     return Array.isArray(history) ? history.filter(entry => entry && entry.id === id).length : 0;
   }
 
+  // Level of a reward kept by cuddle-rebalance-v5.js under its "umt" id.
+  function v5Level(game, id) {
+    try {
+      return Number(window.CuddleRebalanceV5?.upgradeLevel?.(game, id)) || 0;
+    } catch (_error) {
+      return 0;
+    }
+  }
+
   function coachState(game) {
     return game?.state?.cuddleCoachExpansion || null;
   }
@@ -112,6 +121,20 @@
         { id: "hotStreak", icon: "🔥", title: "Hot Streak", tier: "rare", category: "economy", maxLevel: 2, description: "Each guess in a row that pins a new green pays a growing bonus: 5, then 10, then 15 points. A guess with no new green resets it.", level: g => upgradeCount(g, "hotStreak") },
         { id: "vowelBounty", icon: "🅰️", title: "Vowel Bounty", tier: "common", category: "economy", maxLevel: 2, description: "Every vowel in a secret you solve pays 5 points.", level: g => upgradeCount(g, "vowelBounty") },
         { id: "doubleDown", icon: "🎲", title: "Double Down", tier: "legendary", category: "economy", maxLevel: 1, description: "Solve on your very last guess and the whole stage pays double.", level: g => upgradeCount(g, "doubleDown") }
+      ]
+    },
+    {
+      id: "insightTools",
+      title: "Insight",
+      blurb: "Clues about the answer before you guess, and a little luck. Effects in cuddle-clues.js.",
+      nodes: [
+        { id: "vowelLamp", icon: "🏮", title: "Vowel Lamp", tier: "common", category: "insight", maxLevel: 1, description: "Every non-boss stage tells you how many vowels the answer has.", level: g => v5Level(g, "umtVowelLamp") },
+        { id: "echoFinder", icon: "👯", title: "Echo Finder", tier: "common", category: "insight", maxLevel: 1, description: "Every non-boss stage tells you whether the answer uses a letter twice.", level: g => v5Level(g, "umtEchoFinder") },
+        { id: "deadLetter", icon: "🪦", title: "Dead Letter", tier: "common", category: "insight", maxLevel: 3, description: "Every non-boss stage opens with a letter that isn't in the answer crossed out. Stacks: one more letter per copy.", level: g => v5Level(g, "umtDeadLetter") },
+        { id: "treasureHunter", icon: "💎", title: "Treasure Hunter", tier: "common", category: "insight", maxLevel: 2, description: "About one stage in three hides a treasure word: solve it for +$8. Stacks: +$8 more per copy.", level: g => v5Level(g, "umtTreasureHunter") },
+        { id: "patternLens", icon: "🧩", title: "Pattern Lens", tier: "rare", category: "insight", maxLevel: 1, description: "Every non-boss stage shows where the answer's vowels and consonants sit, like C V C C V.", level: g => v5Level(g, "umtPatternLens") },
+        { id: "mistakeShield", icon: "🛡️", title: "Mistake Shield", tier: "rare", category: "insight", maxLevel: 1, description: "In a boss or a strict stage, the first guess with no green or yellow gives you an extra guess back.", level: g => v5Level(g, "umtMistakeShield") },
+        { id: "lastLight", icon: "🕯️", title: "Last Light", tier: "legendary", category: "insight", maxLevel: 1, description: "Every non-boss stage opens with the answer's last letter already in place.", level: g => v5Level(g, "umtLastLight") }
       ]
     },
     {

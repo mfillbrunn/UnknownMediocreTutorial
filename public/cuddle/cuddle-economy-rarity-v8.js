@@ -51,7 +51,13 @@
     // Offered by cuddle-rebalance-v5.js as a solving aid (it is not in this
     // layer's own catalog -- see REMOVED_REWARDS), so its tier lives here.
     ["reserve dividend", TIERS.COMMON],
+    ["vowel lamp", TIERS.COMMON],
+    ["echo finder", TIERS.COMMON],
+    ["dead letter", TIERS.COMMON],
+    ["treasure hunter", TIERS.COMMON],
 
+    ["pattern lens", TIERS.RARE],
+    ["mistake shield", TIERS.RARE],
     ["cull two letters", TIERS.RARE],
     ["grey matters", TIERS.RARE],
     ["gray matters", TIERS.RARE],
@@ -69,7 +75,8 @@
     ["green guesser hint", TIERS.LEGENDARY],
     ["quest head start", TIERS.LEGENDARY],
     ["candidate notebook", TIERS.LEGENDARY],
-    ["joker cache", TIERS.LEGENDARY]
+    ["joker cache", TIERS.LEGENDARY],
+    ["last light", TIERS.LEGENDARY]
   ]);
 
   const LEGENDARY_BOSS_NAMES = new Set([
@@ -158,7 +165,8 @@
     "theme sense", "remaining setter box", "guesser hint", "yellow guesser hint",
     "green guesser hint", "softer cuddle meter", "bigger cuddle", "opening insight",
     "quick study", "candidate notebook", "joker cache", "reserve dividend",
-    "surprise assignment", "alphabet compass"
+    "surprise assignment", "alphabet compass", "vowel lamp", "echo finder", "dead letter",
+    "treasure hunter", "pattern lens", "mistake shield", "last light"
   ]);
 
   const KNOWN_BOSS_NAMES = new Set([
