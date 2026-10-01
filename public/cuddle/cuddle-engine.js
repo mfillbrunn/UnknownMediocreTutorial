@@ -1694,10 +1694,11 @@
       if (this.state.status !== "playing" || this.state.activeQuest) return;
       const nextGuess = this.state.guessesUsed + 1;
       if (nextGuess > this._effectiveMaxGuesses()) return;
-      // Quest Trial forces a quest on every guess, regardless of the
-      // player's own Quest Cadence upgrades -- that constant pressure
-      // (and its penalty for missing one) is the whole fight.
-      const cadence = this.state.boss?.id === "questTrial"
+      // Quest Trial and Endurance Trial force a quest on every guess,
+      // regardless of the player's own Quest Cadence upgrades -- that
+      // constant pressure (and its penalty for missing one) is the whole
+      // fight.
+      const cadence = ["questTrial", "questEndurance"].includes(this.state.boss?.id)
         ? 1
         : Math.max(1, 3 - this.state.upgrades.questCadence);
       // Fires one turn earlier than a plain multiple of cadence would --
@@ -5064,7 +5065,9 @@
 
     const nextGuess = Number(this.state.guessesUsed || 0) + 1;
     const forced = plannedRatchetForGuess(this, nextGuess);
-    const forceQuestNow = Boolean(forced && forced.bossId === "questTrial");
+    // A quest curse's row has to carry a quest, or there is nothing to miss
+    // and the row's icon promises an effect that never happens.
+    const forceQuestNow = Boolean(forced && ["questTrial", "questEndurance"].includes(forced.bossId));
 
     composedEnsureQuestForNextGuess.call(this);
 
