@@ -140,7 +140,7 @@
   // Anything not listed falls into a branch by its catalogue category.
   const WEDGES = [
     { id: "scoring", title: "Scoring", color: "#8ff7cd", angle: -150,
-      ids: ["yellowPoints", "earlyRoundPoint", "storybookStart", "earlySolveBoost", "mulliganValueBoost", "greyPointBoost", "colourTrade", "greyscale"] },
+      ids: ["storybookStart", "earlySolveBoost", "mulliganValueBoost", "greyPointBoost", "colourTrade", "greyscale"] },
     { id: "economy", title: "Economy", color: "#f6c956", angle: -90,
       ids: ["rainyDay", "encore", "hotStreak", "vowelBounty", "doubleDown", "reserveDividend", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"] },
     { id: "solving", title: "Solving Aids", color: "#7cb8ff", angle: -30, easyOnly: true,

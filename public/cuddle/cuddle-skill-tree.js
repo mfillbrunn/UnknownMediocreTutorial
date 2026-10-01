@@ -79,8 +79,6 @@
       blurb: "Offered after most non-boss stages.",
       nodes: [
         { id: "extraMulligans", icon: "🔄", title: "Second Thoughts", tier: "common", category: "easierStages", description: "Gain one additional mulligan every stage.", level: g => upgradeCount(g, "extraMulligans") },
-        { id: "yellowPoints", icon: "🟨", title: "Golden Value", tier: "common", category: "economy", description: "Every yellow tile is worth 1 point more.", level: g => upgradeCount(g, "yellowPoints") },
-        { id: "earlyRoundPoint", icon: "⏱️", title: "Quick Cuddle", tier: "common", category: "economy", description: "Each unused guess in the solve bonus is worth 1 point more.", level: g => upgradeCount(g, "earlyRoundPoint") },
         { id: "questRefreshes", icon: "♻️", title: "Reward Refresh", tier: "common", category: "quests", description: "Every quest reward screen gets one more free refresh. Stacks.", level: g => upgradeCount(g, "questRefreshes") },
         { id: "questPoints", icon: "🏅", title: "Quest Value", tier: "common", category: "quests", description: "Quests are worth 5 points more. Stacks every time you take it.", level: g => ledgerCount(g, "questPoints") },
         { id: "questReroll", icon: "🔄", title: "Second Guess Quest", tier: "common", category: "quests", description: "Once per stage, reroll the current quest for free.", level: g => upgradeCount(g, "questReroll") },

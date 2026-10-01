@@ -757,8 +757,7 @@
         { key: "questRefreshes", amount: 1, title: "Reward Refresh" },
         { key: "questCadence", amount: 1, title: "Quest Cadence" },
         { key: "questPoints", amount: 5, title: "Quest Value" },
-        { key: "handSizeBonus", amount: 1, title: "Larger Hand" },
-        { key: "earlyRoundPoint", amount: 1, title: "Quick Cuddle" }
+        { key: "handSizeBonus", amount: 1, title: "Bigger Hand" }
       ];
       return candidates.find(candidate => Number(upgrades[candidate.key] || 0) >= candidate.amount) || null;
     }
