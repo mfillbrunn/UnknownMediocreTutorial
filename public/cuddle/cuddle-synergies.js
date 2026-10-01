@@ -201,8 +201,18 @@
   function applyPoolOnlyChoice(game, choiceKey) {
     const state = game.state;
     const choice = (state.upgradeChoices || []).find(item => item && item.key === choiceKey);
-    if (!choice || typeof choice.apply !== "function") return null;
-    try { choice.apply(game); }
+    if (!choice) return null;
+    // apply() is a function and is lost when the run is saved and reloaded
+    // on its reward screen; the rarity layer can still run the effect from
+    // the id it left on the card.
+    const v8 = window.CuddleEconomyRarityV8;
+    const run = typeof choice.apply === "function"
+      ? () => choice.apply(game)
+      : choice.__cuddleV8Effect && v8 && typeof v8.applyEffect === "function"
+        ? () => v8.applyEffect(choice.__cuddleV8Effect, game)
+        : null;
+    if (!run) return null;
+    try { run(); }
     catch (error) {
       console.warn("Cuddle Synergies: could not apply", choice.id, error);
       return null;
@@ -289,6 +299,8 @@
     const entry = history[history.length - 1];
     const solved = Boolean(entry && this.state.secret && entry.word === this.state.secret);
 
+    // A guess past the quick-solve window earns nothing but its penalty.
+    if (num(entry.latePenalty) > 0) return result;
     if (ownsCombo(this, "deepGrey")) {
       const greys = (entry.feedback || []).filter(value => value === "grey").length;
       if (greys) stageBonus(this, greys, "umtComboDeepGrey", "Deep Grey");

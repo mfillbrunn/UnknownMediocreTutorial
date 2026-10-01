@@ -988,28 +988,21 @@
 
   // Every boss choice shows its permanent reward, including the final boss.
   // Bosses never add a second ordinary post-round reward.
-  // What happens to the OTHER boss's effect once this one is picked and
-  // this option is left behind -- surfaced on each card so the choice also
-  // weighs the negative the skipped boss leaves for later (see
-  // CuddleEngine's _clearBoss/_chooseBoss ratchetSourceId handling, and
-  // cuddle-stability-v2.js's commitUnchosenBossPenalty, which is where this
-  // actually takes effect once the chosen boss is defeated). Permanent, not
-  // one-and-done: BURDEN_INFO's own copy already says "every round from now
-  // on", so this just names which guess(es) that applies to.
-  function leaveBehindNote(option, isFinal) {
-    // The final boss never leaves a ratchet burden behind (see
-    // CuddleEngine's _clearBoss: it explicitly skips bossBefore.gate ===
-    // "final"), so the note would describe something that can't happen.
+  // The curse a boss leaves on the run once it's beaten -- its own power,
+  // on one or two of the first guesses of every later stage (see
+  // cuddle-stability-v2.js commitBossCurse and the engine's _clearBoss).
+  // The final boss has none: no stage follows it.
+  function bossCurseNote(option, isFinal) {
     if (!option || isFinal) return "";
     const info = typeof window.CuddleRebalanceV5?.burdenInfo === "function"
       ? window.CuddleRebalanceV5.burdenInfo(option.id)
       : null;
     if (!info) return "";
-    // Mirrors pickRatchetGuessIndices: the first boss's skipped option
-    // claims one of the first three guesses, the second's two of the first four.
+    // Mirrors pickRatchetGuessIndices: the first boss's curse claims one of
+    // the first three guesses, the second's two of the first four.
     const later = Number(currentState()?.bossesCleared || 0) >= 1;
-    const where = later ? "two of your first four guesses" : "one of your first three guesses";
-    return `For the rest of the run, ${where} in every stage carries this boss. ${info[1]}`;
+    const where = later ? "Two of your first four guesses" : "One of your first three guesses";
+    return `${where} in every stage: ${info[1].charAt(0).toLowerCase()}${info[1].slice(1)}`;
   }
   function renderBossChoiceOverlay(state) {
     const options = state.bossOffer || [];
@@ -1021,7 +1014,7 @@
           <h2 id="cuddleBossTitle">${isFinal ? "One last secret" : "Choose your boss"}</h2>
           <p>${isFinal
             ? "Beat this round to win the run. Tap + to see the permanent reward it gives."
-            : "Solve the boss to keep its permanent reward. Tap + to see the reward, − to see what the boss you skip costs you later."}</p>
+            : "Beat a boss to keep its reward (+). Its curse (−) comes with it for the rest of the run."}</p>
           <div class="cuddle-choice-grid">
             ${options.map(option => bossCardMarkup(option, isFinal)).join("")}
           </div>
@@ -1053,7 +1046,7 @@
   function bossCardMarkup(option, isFinal) {
     const id = String(option.id);
     const reward = option.reward || null;
-    const burden = leaveBehindNote(option, isFinal);
+    const burden = bossCurseNote(option, isFinal);
     const open = bossTraitOpen.bossId === id ? bossTraitOpen.trait : null;
     const bonus = reward ? pendingSynergyFor(reward.id) : null;
     const trait = (kind, label, iconHtml, extraClass = "") => `
@@ -1072,7 +1065,7 @@
         </div>`;
     } else if (open === "burden" && burden) {
       info = `<div class="umt-boss-trait-info is-burden" role="note">
-          <b>If you skip this boss</b>
+          <b>Curse, for the rest of the run</b>
           <span>${escapeHtml(burden)}</span>
         </div>`;
     }
@@ -1086,7 +1079,7 @@
         <small>${goldenMoney(escapeHtml(option.description))}</small>
         <div class="umt-boss-traits">
           ${reward ? trait("reward", `Reward: ${reward.title}. Tap to read.`, rewardArt, bonus ? " has-bonus" : "") : ""}
-          ${burden ? trait("burden", "What skipping this boss costs. Tap to read.", iconSvgFor(BURDEN_ICON[id] || "skull")) : ""}
+          ${burden ? trait("burden", "Its curse for the rest of the run. Tap to read.", iconSvgFor(BURDEN_ICON[id] || "skull")) : ""}
           ${bonus ? interactionBonusBadge(reward.id) : ""}
         </div>
         ${info}
@@ -1167,6 +1160,9 @@
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleUpgradeTitle">
         <section class="cuddle-modal cuddle-modal-wide cuddle-upgrade-modal cuddle-compact-cards">
+          <span class="cuddle-upgrade-wallet" data-upgrade-wallet aria-label="Money: $${Number(state.cuddleMoney || 0)}">
+            <span>Money</span><b>$${Number(state.cuddleMoney || 0).toLocaleString()}</b>
+          </span>
           <span class="cuddle-modal-kicker">${kicker}</span>
           <h2 id="cuddleUpgradeTitle">${heading}</h2>
           ${body ? `<p>${body}</p>` : ""}
@@ -1181,11 +1177,8 @@
               </button>`).join("")}
           </div>
           <div class="cuddle-upgrade-refresh${refreshCost === null ? " is-no-refresh" : ""}">
-            <span class="cuddle-upgrade-wallet" data-upgrade-wallet aria-label="Money: $${Number(state.cuddleMoney || 0)}">
-              <span>Money</span><b>$${Number(state.cuddleMoney || 0).toLocaleString()}</b>
-            </span>
             ${refreshCost === null
-              ? `<small>${waystone ? "A waystone's offer is fixed: no refreshes." : "These choices can't be refreshed."}</small>`
+              ? `<small>${waystone ? "A free upgrade's offer is fixed: no refreshes." : "These choices can't be refreshed."}</small>`
               : `<button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
               ${escapeHtml(refreshLabel)}
             </button>
@@ -1717,7 +1710,7 @@
         ${burden ? `
           <section class="cuddle-v3-toast is-burden" role="status">
             <span class="cuddle-v3-toast-icon">${burdenIcon}</span>
-            <div><small>Left-behind boss</small><strong>${escapeHtml(burden.title || "Negative bonus active")}</strong><p>${escapeHtml(burden.description || "A future guess carries this burden.")}</p></div>
+            <div><small>Boss curse</small><strong>${escapeHtml(burden.title || "Negative bonus active")}</strong><p>${escapeHtml(burden.description || "A future guess carries this burden.")}</p></div>
             <button type="button" data-cuddle-v3-action="dismiss-burden" aria-label="Dismiss burden notice">×</button>
           </section>` : ""}
         ${synergy ? `

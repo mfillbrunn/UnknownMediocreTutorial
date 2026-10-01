@@ -229,7 +229,10 @@
     const opts = options || {};
     const done = typeof opts.onDone === "function" ? opts.onDone : () => {};
     const boss = opts.boss || {};
-    const host = document.getElementById("cuddleRoot") || document.body;
+    // On the Cuddle screen, not inside #cuddleRoot: the game redraws that
+    // root on every render, which would wipe an entrance still waiting for
+    // its tap.
+    const host = document.getElementById("cuddleScreen") || document.body;
     if (!host) { done(); return; }
     if (entranceEl) entranceEl.remove();
     const world = opts.game ? currentWorld(opts.game) : WORLDS[0];
@@ -238,7 +241,8 @@
     const el = document.createElement("div");
     el.className = `umt-boss-entrance is-${world.id}${final ? " is-final" : ""}${reduced ? " is-reduced" : ""}`;
     el.setAttribute("role", "dialog");
-    el.setAttribute("aria-label", `${final ? "Final boss" : "Boss"}: ${boss.title || "Boss"}`);
+    el.setAttribute("aria-label", `${final ? "Final boss" : "Boss"}: ${boss.title || "Boss"}. Tap to begin.`);
+    el.tabIndex = 0;
     el.innerHTML = `<div class="umt-be-backdrop"></div>`
       + `<div class="umt-be-fx" aria-hidden="true">${reduced ? "" : entranceEffects(world)}</div>`
       + `<div class="umt-be-flash" aria-hidden="true"></div>`
@@ -254,11 +258,25 @@
       + `<p class="umt-be-skip">Tap to begin</p>`;
     host.appendChild(el);
     entranceEl = el;
+    el.focus({ preventScroll: true });
+    // It stays until the player taps: once the entrance has played, it
+    // settles into a slow idle loop (cuddle-worlds.css .is-idle).
+    const idleTimer = setTimeout(() => el.classList.add("is-idle"), reduced ? 300 : 2300);
     let finished = false;
+    const onKey = (event) => {
+      if (!el.isConnected) { document.removeEventListener("keydown", onKey, true); return; }
+      // Keys never reach the word-building underneath while it's up.
+      event.stopPropagation();
+      if (event.key === "Enter" || event.key === " " || event.key === "Escape") {
+        event.preventDefault();
+        finish();
+      }
+    };
     const finish = () => {
       if (finished) return;
       finished = true;
-      clearTimeout(timer);
+      clearTimeout(idleTimer);
+      document.removeEventListener("keydown", onKey, true);
       el.classList.add("is-leaving");
       setTimeout(() => {
         el.remove();
@@ -266,8 +284,8 @@
         done();
       }, reduced ? 120 : 420);
     };
-    const timer = setTimeout(finish, reduced ? 1600 : final ? 3600 : 3100);
     el.addEventListener("click", finish);
+    document.addEventListener("keydown", onKey, true);
   }
 
   // Stamps the current world on the Cuddle root, so the play screen can

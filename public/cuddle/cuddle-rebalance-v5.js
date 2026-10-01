@@ -348,7 +348,10 @@
       id: "noSafetyNet",
       icon: "🚫",
       title: "No Safety Net",
-      description: "Mulligans are disabled for this Wordle.",
+      // Locks mulligans for the world's number of opening guesses (see
+      // mulliganLockTurns); described with that number by
+      // challengeDisplayDescription.
+      description: (count) => `Mulligans are locked until you've made ${count === 1 ? "your first guess" : `your first ${count} guesses`}.`,
       reward: 23,
       noMulligans: true
     }),
@@ -1011,6 +1014,47 @@
         changed = true;
       }
     }
+    if (ensureRareWordStages(game)) changed = true;
+    return changed;
+  }
+
+  // Every world offers at least one Rare Word stage. It's one challenge of
+  // many, rolled for a few stops a run, so plenty of runs never showed one;
+  // a world without one gets a stop turned into it -- only a stop the
+  // player hasn't reached yet, never the opening row or the fork before a
+  // boss.
+  function ensureRareWordStages(game) {
+    const map = stateOf(game) && stateOf(game).branchMap;
+    if (!map || !Array.isArray(map.rows)) return false;
+    const rare = CHALLENGES.find((challenge) => challenge.rareSecret);
+    if (!rare) return false;
+    const here = map.position ? Math.floor(Number(map.position.row)) : -1;
+    const worlds = new Map();
+    map.rows.forEach((row, index) => {
+      if (!row || row.kind !== "stops" || row.restFork || !Array.isArray(row.nodes)) return;
+      const world = Math.floor(Number(row.act)) || 0;
+      if (!worlds.has(world)) worlds.set(world, []);
+      row.nodes.forEach((node) => worlds.get(world).push({ node, index }));
+    });
+    let changed = false;
+    for (const [world, entries] of worlds) {
+      if (entries.some(({ node }) => node.cuddleVariant && node.cuddleVariant.challengeId === rare.id)) continue;
+      const candidates = entries.filter(({ node, index }) => index > 0 && index > here
+        && ["normal", "theme", "challenge"].includes(String(node.type)));
+      if (!candidates.length) continue;
+      const { node } = candidates[hash32(`${mapSeed(game)}:rare-word:${world}`) % candidates.length];
+      node.cuddleVariant = {
+        version: VERSION,
+        kind: "mandatoryChallenge",
+        challengeId: rare.id,
+        icon: rare.icon,
+        title: rare.title,
+        description: `${challengeDisplayDescription(game, rare)} Pays $${rare.reward}.`,
+        rewardSuffix: `Pays $${rare.reward}.`
+      };
+      node.type = "challenge";
+      changed = true;
+    }
     return changed;
   }
 
@@ -1400,8 +1444,17 @@
   // count is a function of that count, called with however many of its
   // designed guesses actually fire this early in the run, so the sentence
   // itself states the right number instead of an appended correction.
+  // No Safety Net's lock: the first guess in world one, the first two in
+  // world two, the first three in world three.
+  function mulliganLockTurns(game) {
+    const state = stateOf(game);
+    const cleared = state && Array.isArray(state.bossGatesDone) ? state.bossGatesDone.length : 0;
+    return Math.max(1, Math.min(3, cleared + 1));
+  }
+
   function challengeDisplayDescription(game, challenge) {
     if (typeof challenge.description !== "function") return challenge.description;
+    if (challenge.noMulligans) return challenge.description(mulliganLockTurns(game));
     const cap = challengeTurnCap(game);
     const designedLength = Array.isArray(challenge.masks) ? challenge.masks.length
       : (challenge.vowelBudget ? challenge.vowelBudget.guesses : cap);
@@ -2322,6 +2375,13 @@
     if (custom.streakToken !== token) {
       custom.streakToken = token;
       custom.streakCount = 0;
+    }
+    // A guess past the quick-solve window earns nothing but its penalty,
+    // and breaks the streak.
+    const latest = Array.isArray(state.history) ? state.history[state.history.length - 1] : null;
+    if (latest && asNumber(latest.latePenalty, 0) > 0) {
+      custom.streakCount = 0;
+      return;
     }
     const gainedGreen = knownPositionCount(game) > asInteger(before.greens, 0);
     const gainedYellow = hasFunSynergy(game, "goldenStreak")
@@ -3378,7 +3438,7 @@
     const challenge = activeChallenge(game);
     if (challenge) {
       if (Array.isArray(challenge.masks) && challenge.masks[guessIndex]) add(challenge.masks[guessIndex], 1);
-      if (challenge.noMulligans) add("noMulligans", 1);
+      if (challenge.noMulligans && guessIndex < mulliganLockTurns(game)) add("noMulligans", 1);
       if (challenge.uniqueFirst && guessIndex === 0) add("perfectOpener", 1);
       if (challenge.vowelBudget && guessIndex < asNumber(challenge.vowelBudget.guesses, 0)) add("consonantCrunch", 1);
     }
@@ -4113,16 +4173,17 @@
 
     wrapMethod(prototype, "mulligan", function (original, args) {
       const challenge = activeChallenge(this);
-      if (challenge && challenge.noMulligans) {
-        return rejectAction(this, "No Safety Net disables mulligans for this Wordle.");
+      if (challenge && challenge.noMulligans && guessesUsed(this) < mulliganLockTurns(this)) {
+        const turns = mulliganLockTurns(this);
+        return rejectAction(this, `No Safety Net: mulligans unlock after ${turns === 1 ? "your first guess" : `your first ${turns} guesses`}.`);
       }
       return original.apply(this, args);
     });
 
     wrapMethod(prototype, "forfeitGuess", function (original, args) {
       const challenge = activeChallenge(this);
-      if (challenge && challenge.noMulligans) {
-        return rejectAction(this, "No Safety Net disables skipped guesses for this Wordle.");
+      if (challenge && challenge.noMulligans && guessesUsed(this) < mulliganLockTurns(this)) {
+        return rejectAction(this, "No Safety Net: you can't skip a guess while mulligans are locked.");
       }
       const before = guessesUsed(this);
       const state = stateOf(this);

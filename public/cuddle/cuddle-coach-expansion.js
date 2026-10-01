@@ -967,6 +967,7 @@
         word: String(entry && entry.word || "").toUpperCase(),
         feedback: (entry && (entry.shownFeedback || entry.feedback) || []).slice(),
         timedOut: Boolean(entry && entry.timedOut),
+        late: Boolean(entry && finite(entry.latePenalty, 0) > 0),
         amount: Math.round(rowMoneyWithoutUnusedBonus(entry)),
         breakdown: breakdownFor(entry)
       };

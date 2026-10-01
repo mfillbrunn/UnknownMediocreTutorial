@@ -171,7 +171,7 @@
       bossIds: [first?.id, second?.id].filter(Boolean),
       bossTitle: "Choose one of two bosses",
       bossIcon: first?.icon || "💀",
-      bossDescription: "Choose which boss to fight. The boss left behind becomes a later disadvantage.",
+      bossDescription: "Choose which boss to fight. Beat it for its reward; its curse stays with you after.",
       gate,
       next: []
     };
@@ -490,13 +490,15 @@
     return true;
   }
 
-  function rememberUnchosenBoss(game, offer, chosenId) {
-    const unchosen = (Array.isArray(offer) ? offer : []).find(option => option && option.id !== chosenId);
-    if (!unchosen || !game?.state?.boss) return null;
-    game.state.boss.ratchetSourceId = unchosen.id;
-    game.state.boss.ratchetSourceTitle = unchosen.title || unchosen.id;
+  // The boss you pick is the one whose curse stays with you once it's
+  // beaten (it used to be the boss you skipped, which read backwards).
+  function rememberChosenBoss(game, offer, chosenId) {
+    const chosen = (Array.isArray(offer) ? offer : []).find(option => option && option.id === chosenId);
+    if (!chosen || !game?.state?.boss) return null;
+    game.state.boss.ratchetSourceId = chosen.id;
+    game.state.boss.ratchetSourceTitle = chosen.title || chosen.id;
     safeSave(game);
-    return unchosen;
+    return chosen;
   }
 
   // Random guess slot(s) for a newly-created ratchet debuff, drawn from
@@ -510,17 +512,16 @@
     return shuffled(pool, game?.random || Math.random).slice(0, count);
   }
 
-  // The declined boss's effect is permanent from here on -- every future
-  // round, not just the next one -- and which guess(es) it haunts is
-  // random: the first boss's decline claims one random guess among the
-  // first three of every future round, the second boss's decline claims
-  // two among the first four (never reusing a slot the first boss's
-  // decline already claimed). No ratchet is ever created for the final
+  // A beaten boss's curse is permanent from here on -- every future round,
+  // not just the next one -- and which guess(es) it haunts is random: the
+  // first boss's curse claims one random guess among the first three of
+  // every future round, the second boss's claims two among the first four
+  // (never reusing a slot the first boss's curse already claimed). No ratchet is ever created for the final
   // boss -- no round follows it. mega.ratchetOrdinalsApplied guards
   // against double-applying the same boss stage's penalty (guessIndex is
   // no longer 1:1 with the ordinal, so it can't double as that guard by
   // itself the way it used to).
-  function commitUnchosenBossPenalty(game, boss) {
+  function commitBossCurse(game, boss) {
     if (!boss?.ratchetSourceId || boss.gate === "final") return false;
     const mega = megaState(game);
     if (!mega) return false;
@@ -574,10 +575,10 @@
       const result = original.apply(this, args);
       return afterResult(result, value => {
         if (value?.ok !== false && this.state?.boss) {
-          const unchosen = rememberUnchosenBoss(this, offer, chosenId);
-          if (unchosen) {
-            const suffix = ` ${unchosen.title || "The unchosen boss"} will become a stacked disadvantage.`;
-            if (!String(this.state.lastMessage || "").includes("stacked disadvantage")) {
+          const chosen = rememberChosenBoss(this, offer, chosenId);
+          if (chosen && chosen.gate !== "final") {
+            const suffix = ` Beat it and its curse stays with you.`;
+            if (!String(this.state.lastMessage || "").includes("curse stays with you")) {
               this.state.lastMessage = `${this.state.lastMessage || ""}${suffix}`.trim();
             }
           }
@@ -588,7 +589,7 @@
 
     wrapMethod(prototype, "_clearBoss", function (original, args) {
       const boss = this.state?.boss ? { ...this.state.boss } : null;
-      commitUnchosenBossPenalty(this, boss);
+      commitBossCurse(this, boss);
       return original.apply(this, args);
     });
 

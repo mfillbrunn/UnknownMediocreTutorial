@@ -214,9 +214,12 @@
     "🎉": "sparkles", "🎊": "sparkles", "🪄": "sparkles", "🌀": "refresh", "🟥": "minus", "🟦": "blueDot"
   };
 
-  // Symbols that are typography, not emoji: arrows, the Joker tile's star,
-  // ticks and crosses already drawn in the page's own font.
-  const KEEP = new Set(["©", "®", "™", "↔", "↕", "↖", "↗", "↘", "↙", "↩", "↪", "▪", "▫", "▶", "◀", "◻", "◼", "◽", "◾", "〰", "〽", "㊗", "㊙", "ℹ", "Ⓜ"]);
+  // Symbols that are typography, not emoji, unless they carry the emoji
+  // variation selector (U+FE0F): arrows, ticks, card suits, and above all
+  // the Joker tile's ★, which is a playing card's glyph, not a picture.
+  // (Chromium's regex counts ★ and the suits as pictographic; Node's doesn't.)
+  const KEEP = new Set(["©", "®", "™", "↔", "↕", "↖", "↗", "↘", "↙", "↩", "↪", "▪", "▫", "▶", "◀", "◻", "◼", "◽", "◾", "〰", "〽", "㊗", "㊙", "ℹ", "Ⓜ",
+    "★", "☆", "✔", "♥", "♦", "♣", "♠", "☰"]);
   const PATTERN = /\p{Extended_Pictographic}(?:️|⃣|[\u{1F3FB}-\u{1F3FF}]|‍\p{Extended_Pictographic}️?)*/gu;
   const STRIP_VARIANTS = /[️⃣‍]|[\u{1F3FB}-\u{1F3FF}]/gu;
 
@@ -250,7 +253,8 @@
 
   function isEmoji(match) {
     const base = match.replace(STRIP_VARIANTS, "");
-    return base && !KEEP.has(base);
+    if (!base) return false;
+    return !KEEP.has(base) || match.includes("\uFE0F");
   }
 
   function hasEmoji(text) {

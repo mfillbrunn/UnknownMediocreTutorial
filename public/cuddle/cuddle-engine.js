@@ -468,8 +468,10 @@
         freeVowels: ALWAYS_AVAILABLE_VOWELS.length,
         mulligans: this.getMulliganAllowance(),
         mulliganSize: this.getMulliganLimit(),
-        yellowPoints: YELLOW_POINTS + this.state.upgrades.yellowPoints,
-        greenPoints: GREEN_POINTS + this.state.upgrades.yellowPoints,
+        // yellowPoints raises both colours (Richer Colours, Golden Value);
+        // yellowOnlyPoints / greenOnlyPoints raise one (Greyscale, Colour Surge).
+        yellowPoints: YELLOW_POINTS + this.state.upgrades.yellowPoints + (Number(this.state.upgrades.yellowOnlyPoints) || 0),
+        greenPoints: GREEN_POINTS + this.state.upgrades.yellowPoints + (Number(this.state.upgrades.greenOnlyPoints) || 0),
         earlyPoint: EARLY_GUESS_POINTS + this.state.upgrades.earlyRoundPoint,
         mulliganPoints: UNUSED_MULLIGAN_POINTS,
         questPoints: Number(this.state.upgrades.questPoints) || 0,
@@ -886,11 +888,9 @@
         state.removedLetters = unique([...state.removedLetters, ...picked]).sort();
         state.maxGuesses = 4;
       }
-      // Steady Hand: no mulligans for this round. The Mulligan button
-      // already disables itself at 0 remaining, so nothing else to wire up.
-      if (state.boss?.id === "noMulligans") {
-        state.mulligansLeft = 0;
-      }
+      // Steady Hand locks mulligans for the opening guesses only (see
+      // _steadyHandTurns and mulligan below); the rest of the fight plays
+      // with the run's usual mulligans.
 
       this._prepareInitialHand();
 
@@ -1346,16 +1346,20 @@
       const colourBonus = Number(scoringUpgrades.yellowPoints) || 0;
       const greyValue = Number(scoringUpgrades.greyPoints) || 0;
       const coloursDisabled = Number(scoringUpgrades.zeroColourPoints) > 0;
-      const yellowValue = coloursDisabled ? 0 : YELLOW_POINTS + colourBonus;
-      const greenValue = coloursDisabled ? 0 : GREEN_POINTS + colourBonus;
+      const yellowValue = coloursDisabled ? 0 : YELLOW_POINTS + colourBonus + (Number(scoringUpgrades.yellowOnlyPoints) || 0);
+      const greenValue = coloursDisabled ? 0 : GREEN_POINTS + colourBonus + (Number(scoringUpgrades.greenOnlyPoints) || 0);
       // Special board tiles (cuddle-points-money.js) pay out here, inside the
       // scoring step, so a points tile counts toward this guess's row score
       // -- and toward a solve on this very guess -- before the round
       // resolves further down.
-      const tilePoints = typeof this._scoreSpecialTiles === "function"
+      // A guess past the round's quick-solve window (see latePenalty below)
+      // earns nothing -- no tiles, no special tiles, no quest -- only its
+      // penalty.
+      const lateGuess = this.state.guessesUsed + 1 > this._solveGuessThreshold();
+      const tilePoints = !lateGuess && typeof this._scoreSpecialTiles === "function"
         ? Math.max(0, Number(this._scoreSpecialTiles(this.state.history.length, feedback)) || 0)
         : 0;
-      const scoreDelta = greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue + tilePoints;
+      const scoreDelta = lateGuess ? 0 : greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue + tilePoints;
       if (shielded) this.state.buffs.greyShield -= 1;
 
       const activeQuest = this.state.activeQuest;
@@ -1403,7 +1407,7 @@
 
       // Past the round's quick-solve window, every extra guess costs
       // points instead of just missing the solve-speed bonus below.
-      const latePenalty = this.state.guessesUsed > this._solveGuessThreshold() ? LATE_GUESS_PENALTY : 0;
+      const latePenalty = lateGuess ? LATE_GUESS_PENALTY : 0;
       if (latePenalty > 0) {
         this.state.score -= latePenalty;
         this.state.roundScore -= latePenalty;
@@ -1450,7 +1454,7 @@
       };
 
       let questComplete = false;
-      if (activeQuest) {
+      if (activeQuest && !lateGuess) {
         const requiredLetters = [];
         this.state.history.forEach(previous => {
           previous.word.split("").forEach((letter, index) => {
@@ -1594,8 +1598,19 @@
       return BASE_MULLIGAN_SIZE + this.state.upgrades.mulliganSize;
     }
 
+    // Steady Hand: mulligans stay locked until this many guesses are in --
+    // one in world one, two in world two, three in world three.
+    _steadyHandTurns() {
+      const stage = Number(this.state?.boss?.stage) || (Array.isArray(this.state?.bossGatesDone) ? this.state.bossGatesDone.length + 1 : 1);
+      return Math.max(1, Math.min(3, stage));
+    }
+
     mulligan(cardIds) {
       if (this.state.status !== "playing") return { ok: false, error: "The round is paused." };
+      if (this.state.boss?.id === "noMulligans" && Number(this.state.guessesUsed || 0) < this._steadyHandTurns()) {
+        const turns = this._steadyHandTurns();
+        return { ok: false, error: `Steady Hand: mulligans unlock after ${turns === 1 ? "your first guess" : `your first ${turns} guesses`}.` };
+      }
       const ids = unique(cardIds || []);
       if (this.state.mulligansLeft <= 0) return { ok: false, error: "No mulligans remain this round." };
       if (!ids.length || ids.length > this.getMulliganLimit()) {
@@ -2826,7 +2841,7 @@
     if (explicit) return explicit;
     return Math.max(1, Math.min(4, Number(bossesCleared || 0) + 1));
   }
-  function cuddleV3BossDescription(id, turns) {
+  function cuddleV3BossDescription(id, turns, stage = 1) {
     const count = Math.max(1, Number(turns) || 1);
     const guesses = `${count} guess${count === 1 ? "" : "es"}`;
     switch (id) {
@@ -2853,10 +2868,12 @@
         // scaling doesn't apply here, so this ignores the passed-in `turns`
         // entirely rather than describing a window that doesn't exist.
         return "Ten random letters are pulled from your deck before this round starts, and you only get four guesses to find the secret.";
-      case "noMulligans":
-        // Same reasoning as shortHand: a standing resource denial, not a
-        // guess-window mask, so `turns` is ignored here too.
-        return "You get no mulligans this round.";
+      case "noMulligans": {
+        // Locked for the opening guesses only, one per world (see
+        // _steadyHandTurns, which reads the same stage).
+        const locked = Math.max(1, Math.min(3, Number(stage) || 1));
+        return `Mulligans are locked until you've made ${locked === 1 ? "your first guess" : `your first ${locked} guesses`}.`;
+      }
       case "questTrial":
         // Same reasoning as shortHand: a standing pressure for the whole
         // round, not a guess-window mask, so `turns` is ignored here too.
@@ -2889,7 +2906,7 @@
       ...option,
       turns,
       stage,
-      description: cuddleV3BossDescription(option?.id, turns),
+      description: cuddleV3BossDescription(option?.id, turns, stage),
       reward
     };
   }
@@ -3696,16 +3713,16 @@
     {
       id: "colourTrade",
       key: "colourTrade",
-      icon: "Y/G",
+      icon: "G+",
       title: "Colour Surge",
-      description: "Yellow and green gain 3 points each. Grey tiles keep their value. This reward stacks."
+      description: "Green tiles are worth 1 point more. This reward stacks."
     },
     {
       id: "greyscale",
       key: "greyscale",
       icon: "GREY",
       title: "Greyscale",
-      description: "Grey tiles gain 2 points for the rest of the run. Yellow and green keep their value."
+      description: "Grey tiles gain 2 points and yellow tiles 1 point for the rest of the run."
     }
   ]);
   const customUpgradeIds = new Set(customUpgradeDefinitions.map(item => item.id));
@@ -3744,6 +3761,8 @@
     upgrades.mulliganPointBonus = finiteNumber(upgrades.mulliganPointBonus);
     upgrades.earlyRoundPoint = finiteNumber(upgrades.earlyRoundPoint);
     upgrades.yellowPoints = finiteNumber(upgrades.yellowPoints);
+    upgrades.yellowOnlyPoints = finiteNumber(upgrades.yellowOnlyPoints);
+    upgrades.greenOnlyPoints = finiteNumber(upgrades.greenOnlyPoints);
     const hadZeroColours = finiteNumber(upgrades.zeroColourPoints) > 0;
 
     state.upgradeRefreshesUsed = Math.max(
@@ -3852,10 +3871,10 @@
       greyPoints: finiteNumber(upgrades.greyPoints),
       yellowPoints: coloursDisabled
         ? 0
-        : finiteNumber(rules.yellowPoints, 1 + finiteNumber(upgrades.yellowPoints)),
+        : finiteNumber(rules.yellowPoints, 1 + finiteNumber(upgrades.yellowPoints) + finiteNumber(upgrades.yellowOnlyPoints)),
       greenPoints: coloursDisabled
         ? 0
-        : finiteNumber(rules.greenPoints, 2 + finiteNumber(upgrades.yellowPoints)),
+        : finiteNumber(rules.greenPoints, 2 + finiteNumber(upgrades.yellowPoints) + finiteNumber(upgrades.greenOnlyPoints)),
       earlyPoint: finiteNumber(rules.earlyPoint, 10 + finiteNumber(upgrades.earlyRoundPoint)),
       mulliganPoints: finiteNumber(rules.mulliganPoints, 3)
         + finiteNumber(upgrades.mulliganPointBonus)
@@ -3911,10 +3930,11 @@
         upgrades.handSizeBonus += 1;
         break;
       case "colourTrade":
-        upgrades.yellowPoints += 3;
+        upgrades.greenOnlyPoints += 1;
         break;
       case "greyscale":
         upgrades.greyPoints += 2;
+        upgrades.yellowOnlyPoints += 1;
         break;
       case "mulliganValueBoost":
         upgrades.mulliganPointBonus += 5;
@@ -4910,8 +4930,9 @@
     const offerBefore = Array.isArray(this.state?.bossOffer) ? this.state.bossOffer.slice() : [];
     const result = composedChooseBoss.call(this, bossId);
     if (result?.ok && this.state?.boss) {
-      const unpicked = offerBefore.find(option => option.id !== bossId);
-      this.state.boss.ratchetSourceId = unpicked ? unpicked.id : null;
+      // The boss you pick is the one whose power stays with you once it's
+      // beaten (it used to be the boss you skipped, which read backwards).
+      this.state.boss.ratchetSourceId = offerBefore.some(option => option.id === bossId) ? bossId : null;
       if (this.state.boss.id === "presetWordsTrial") setupPresetWordsBoss(this);
       this.save();
     }
@@ -4951,7 +4972,7 @@
         this.state.burdenNotice = {
           bossId,
           title: info ? info[0] : bossId,
-          description: `${which} of every stage from now on: ${info ? info[1] : "a skipped boss's power applies."}`
+          description: `${which} of every stage from now on: ${info ? info[1] : "the beaten boss's power applies."}`
         };
       }
     }
@@ -4991,7 +5012,7 @@
     if (!this.isBossRound()) {
       const debuff = plannedRatchetForGuess(this, Number(this.state?.guessesUsed || 0) + 1);
       if (debuff && debuff.bossId === "noMulligans") {
-        return { ok: false, error: "A stacked disadvantage blocks a mulligan just before this guess." };
+        return { ok: false, error: "A boss curse blocks a mulligan just before this guess." };
       }
     }
     return composedMulligan.call(this, cardIds);
@@ -5231,7 +5252,7 @@
         this.state.roundScore -= delta;
         entry.scoreDelta = 0;
         entry.ratchetZeroed = true;
-        this.state.lastMessage = `${this.state.lastMessage || ""} Stacked disadvantage (Quick Mode): that guess scored 0.`.trim();
+        this.state.lastMessage = `${this.state.lastMessage || ""} Boss curse (Quick Mode): that guess scored 0.`.trim();
       }
     }
 
@@ -5248,7 +5269,7 @@
       if (penalty > 0) {
         this.state.score -= penalty;
         entry.ratchetQuestPenalty = penalty;
-        this.state.lastMessage = `${this.state.lastMessage || ""} Stacked disadvantage (Quest Trial): -${penalty} points.`.trim();
+        this.state.lastMessage = `${this.state.lastMessage || ""} Boss curse (Quest Trial): -${penalty} points.`.trim();
       }
     }
     if (mega.ratchetForcedQuestGuessIndex === nextGuessIndex) mega.ratchetForcedQuestGuessIndex = null;
@@ -5300,7 +5321,7 @@
       const enduranceDebuff = plannedRatchetForGuess(this, this.state.guessesUsed);
       if (enduranceDebuff?.bossId === "questEndurance") {
         mega.handSizePenaltyThisRound = Number(mega.handSizePenaltyThisRound || 0) + 1;
-        this.state.lastMessage = `${this.state.lastMessage || ""} Stacked disadvantage (Endurance Trial): -1 hand size this round.`.trim();
+        this.state.lastMessage = `${this.state.lastMessage || ""} Boss curse (Endurance Trial): -1 hand size this round.`.trim();
       }
     }
 
@@ -5404,8 +5425,8 @@
       const label = RATCHET_LABEL[debuff.bossId] || debuff.bossId;
       const row = livePlan ? landedRow[debuff.guessIndex] : debuff.guessIndex;
       lines.push(row
-        ? `Stacked disadvantage: guess ${row} carries ${label}`
-        : `Stacked disadvantage: ${label} (no room on this stage)`);
+        ? `Boss curse: guess ${row} carries ${label}`
+        : `Boss curse: ${label} (no room on this stage)`);
     });
     return lines.length ? lines : ["No run upgrades yet; base Cuddle rules are active."];
   };

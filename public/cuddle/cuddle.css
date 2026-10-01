@@ -3259,8 +3259,9 @@
 }
 
 
-/* The wallet on the between-round reward screen, beside Refresh, so the
-   price of a refresh can be weighed against what's left. */
+/* The wallet on the between-round reward screen. It sits in the panel's
+   top right corner (it used to be beside Refresh, where it caught taps
+   meant for the button), and stays in view while the cards scroll. */
 #cuddleScreen .cuddle-upgrade-wallet {
   display: inline-flex;
   align-items: center;
@@ -3639,3 +3640,15 @@
   color: #ffe8a3;
 }
 .umt-clue.is-spent { opacity: 0.55; }
+
+#cuddleScreen .cuddle-upgrade-modal > .cuddle-upgrade-wallet {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  float: right;
+  min-height: 36px;
+  margin: -6px -6px 8px 12px;
+  padding: 4px 12px;
+  background: rgba(46, 38, 24, 0.95);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}

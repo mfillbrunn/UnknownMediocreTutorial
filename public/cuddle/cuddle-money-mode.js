@@ -733,6 +733,10 @@
   // move those rates mid-run.
   function rowBreakdown(entry) {
     if (!entry) return [];
+    // A guess past the quick-solve window earns nothing but its penalty.
+    if (asNumber(entry.latePenalty, 0) > 0) {
+      return [{ label: "Too many guesses", detail: "Past the guess limit: no tile points", amount: -Math.round(asNumber(entry.latePenalty, 0)) }];
+    }
     var lines = [];
     var rates = entry.tileRates || {};
     var tile = function addTile(count, rate, label) {
@@ -776,6 +780,7 @@
         word: String(entry && entry.word || "").toUpperCase(),
         feedback: (entry && (entry.shownFeedback || entry.feedback) || []).slice(),
         timedOut: Boolean(entry && entry.timedOut),
+        late: Boolean(entry && asNumber(entry.latePenalty, 0) > 0),
         amount: Math.round(rowMoney(entry)),
         breakdown: rowBreakdown(entry)
       };
@@ -1016,7 +1021,7 @@
   }
 
   function tileMarkup(letter, result) {
-    var safeResult = ["green", "yellow", "grey", "blue", "unknown"].indexOf(result) >= 0 ? result : "";
+    var safeResult = ["green", "yellow", "grey", "blue", "unknown", "late"].indexOf(result) >= 0 ? result : "";
     return "<span class=\"cuddle-money-payout-tile" + (safeResult ? " is-" + safeResult : "") + "\">" + escapeHtml(letter || "") + "</span>";
   }
 
@@ -1041,13 +1046,14 @@
 
   function payoutRowMarkup(row) {
     var word = row.timedOut ? "TIME!" : (row.word || "     ").padEnd(5, " ").slice(0, 5);
+    // A guess past the limit shows red: it only cost points.
     var tiles = word.split("").map(function payoutTile(letter, index) {
-      return tileMarkup(letter === " " ? "" : letter, row.feedback[index] || "");
+      return tileMarkup(letter === " " ? "" : letter, row.late ? "late" : (row.feedback[index] || ""));
     }).join("");
     var label = row.timedOut ? "timed-out guess" : "guess " + (asNumber(row.index, 0) + 1);
     // The row's main line is a button so the breakdown is reachable by
     // keyboard and reads as tappable; the delegated handler does the toggle.
-    return "<div class=\"cuddle-money-payout-row\" data-payout-row=\"" + row.index + "\">"
+    return "<div class=\"cuddle-money-payout-row" + (row.late ? " is-late" : "") + "\" data-payout-row=\"" + row.index + "\">"
       + "<button type=\"button\" class=\"cuddle-money-payout-row-main\""
       + " data-cuddle-money-action=\"toggle-payout-row\""
       + " aria-expanded=\"false\" aria-label=\"Show what " + escapeHtml(label) + " paid\">"

@@ -1107,7 +1107,7 @@
     // toast; it belongs to this stage's briefing now (taken off the state
     // by checkForStageStart the moment the stage began).
     if (burdenNotice && !newBurdenShown) {
-      lines.push({ kind: "hazard", icon: "☠️", text: `New burden: ${burdenNotice.title || "left-behind boss"}` });
+      lines.push({ kind: "hazard", icon: "☠️", text: `New curse: ${burdenNotice.title || "beaten boss"}` });
     }
 
     const opening = num(state.roundOpeningPoints);
