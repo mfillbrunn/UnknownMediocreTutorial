@@ -280,6 +280,45 @@
   color: #6ec888;
 }
 
+/* The three tile values side by side, each in its tile's colour. */
+.cuddle-detail-tiles {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cuddle-detail-tile {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.cuddle-detail-tile b {
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.cuddle-detail-tile.is-green {
+  color: #6ec888;
+  background: rgba(110, 200, 136, 0.13);
+}
+
+.cuddle-detail-tile.is-yellow {
+  color: #f0ca5e;
+  background: rgba(240, 202, 94, 0.13);
+}
+
+.cuddle-detail-tile.is-grey {
+  color: #c2beca;
+  background: rgba(194, 190, 202, 0.12);
+}
+
 /* RPG-style stat sheet groups inside the details panel. */
 .cuddle-stat-group {
   display: grid;

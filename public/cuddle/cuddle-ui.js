@@ -518,7 +518,6 @@
     const rules = game.getRulesSummary();
     const target = game.getTarget();
     const drawPile = state.deck.length;
-    const recyclable = state.discard.length;
     const bossGoal = window.CuddleBranchMap && typeof window.CuddleBranchMap.nextBossRequirement === "function"
       ? window.CuddleBranchMap.nextBossRequirement(game)
       : null;
@@ -548,38 +547,8 @@
 
 
         ${detailsOpen ? `
-          <section id="cuddleRunDetails" class="cuddle-details-panel" aria-label="Additional run information">
-            ${renderProgress(state)}
-
-            <div class="cuddle-stat-group">
-              <h3 class="cuddle-stat-group-title">Stats</h3>
-              <div class="cuddle-detail-badges">
-                <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}</span>
-                <span class="cuddle-detail-badge is-green"><b>Green</b> ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}</span>
-                <span class="cuddle-detail-badge is-grey"><b>Grey</b> ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}</span>
-                ${game.isBossRound()
-                  ? `<span class="cuddle-detail-badge"><b>Guesses left</b> ${Math.max(0, (state.maxGuesses || window.CuddleEngine.MAX_GUESSES) - state.guessesUsed)}</span>`
-                  // Normal rounds no longer run out of guesses -- what's
-                  // worth showing instead is the window that still earns
-                  // the solve-speed Points bonus below, which shrinks as
-                  // boss gates clear (see _solveGuessThreshold()).
-                  : `<span class="cuddle-detail-badge"><b>Bonus within</b> ${game._solveGuessThreshold ? game._solveGuessThreshold() : 6} guesses</span>`}
-                <span class="cuddle-detail-badge"><b>Unused guess</b> +${(5 * rules.greenPoints) + rules.earlyPoint}</span>
-                <span class="cuddle-detail-badge"><b>Unused mulligan</b> +${rules.mulliganPoints}</span>
-                <span class="cuddle-detail-badge"><b>Quest</b> +${rules.questPoints}</span>
-              </div>
-            </div>
-
-            <div class="cuddle-stat-group">
-              <h3 class="cuddle-stat-group-title">Loadout</h3>
-              <div class="cuddle-detail-badges">
-                <span class="cuddle-detail-badge"><b>Hand size</b> ${rules.handSize}</span>
-                <span class="cuddle-detail-badge"><b>Mulligans</b> ${state.mulligansLeft}/${rules.mulligans} · up to ${rules.mulliganSize}</span>
-                <span class="cuddle-detail-badge"><b>Concurrent quests</b> ${rules.questSlots || 1}</span>
-                <span class="cuddle-detail-badge"><b>Draw / discard</b> ${drawPile} / ${recyclable}</span>
-              </div>
-            </div>
-
+          <section id="cuddleRunDetails" class="cuddle-details-panel" aria-label="Run details">
+            ${renderRunDetails(state, rules, drawPile)}
           </section>` : ""}
 
         <main class="cuddle-play-area">
@@ -597,18 +566,48 @@
       </div>`;
   }
 
-  function renderProgress(state) {
+  // The run's numbers, each one something the player can act on. Rows that
+  // don't apply yet (no quest bonus, a single quest at a time) are left out
+  // rather than shown as a zero. cuddle-stability-v2.js adds the hint,
+  // Joker and Cuddle meter rows to "Your hand", and cuddle-rebalance-v5.js
+  // adds the boss curses as their own group.
+  function renderRunDetails(state, rules, drawPile) {
+    const signed = value => `${value > 0 ? "+" : ""}${value}`;
+    const row = (label, value, className = "") =>
+      `<span class="cuddle-detail-badge ${className}"><b>${escapeHtml(label)}</b> ${escapeHtml(value)}</span>`;
+    const boss = game.isBossRound();
+    const bonusWindow = game._solveGuessThreshold ? game._solveGuessThreshold() : 6;
+    // A spare guess in an ordinary stage pays as five greens on top of the
+    // early-guess rate (cuddle-coach-expansion.js's applyUnusedRowMoney);
+    // a boss round pays only the early-guess rate.
+    const perSpare = boss ? rules.earlyPoint : 5 * rules.greenPoints + rules.earlyPoint;
+    const scoring = [
+      `<span class="cuddle-detail-tiles">`
+        + `<span class="cuddle-detail-tile is-green"><b>Green</b> ${signed(rules.greenPoints)}</span>`
+        + `<span class="cuddle-detail-tile is-yellow"><b>Yellow</b> ${signed(rules.yellowPoints)}</span>`
+        + `<span class="cuddle-detail-tile is-grey"><b>Grey</b> ${signed(rules.greyPoints)}</span>`
+        + `</span>`,
+      boss
+        ? row("Guesses left", String(Math.max(0, (state.maxGuesses || window.CuddleEngine?.MAX_GUESSES || 6) - state.guessesUsed)))
+        : row("Bonus window", `solve within ${bonusWindow} guesses`),
+      row("Each spare guess", `${signed(perSpare)} pts`),
+      row("Each unused mulligan", `${signed(rules.mulliganPoints)} pts`),
+      rules.questPoints > 0 ? row("Each quest", `${signed(rules.questPoints)} pts`) : ""
+    ];
+    const hand = [
+      row("Letters in hand", `all vowels + ${rules.handSize} consonants`),
+      row("Mulligans", `${state.mulligansLeft} of ${rules.mulligans} left · swap up to ${rules.mulliganSize}`),
+      row("Letters left in deck", String(drawPile)),
+      (rules.questSlots || 1) > 1 ? row("Quests at once", String(rules.questSlots)) : ""
+    ];
     return `
-      <div class="cuddle-progress" aria-label="Campaign progress">
-        ${window.CuddleEngine.THRESHOLDS.map((threshold, index) => {
-          const round = index + 1;
-          const classes = [
-            "cuddle-progress-node",
-            round < state.round ? "is-cleared" : "",
-            round === state.round ? "is-current" : ""
-          ].filter(Boolean).join(" ");
-          return `<span class="${classes}" title="Round ${round}: ${threshold} points">${round}</span>`;
-        }).join("")}
+      <div class="cuddle-stat-group" data-cuddle-stats="scoring">
+        <h3 class="cuddle-stat-group-title">Scoring</h3>
+        <div class="cuddle-detail-badges">${scoring.join("")}</div>
+      </div>
+      <div class="cuddle-stat-group" data-cuddle-stats="hand">
+        <h3 class="cuddle-stat-group-title">Your hand</h3>
+        <div class="cuddle-detail-badges">${hand.join("")}</div>
       </div>`;
   }
 
@@ -1386,7 +1385,7 @@
             <article><strong>2 · Reuse letters in hand</strong><p>Any letter currently shown in your hand can be tapped more than once while building a word. A, E, I, O, and U are bold, always available, and do not use counted hand slots. Yellow or green consonants stay in hand after a guess.</p></article>
             <article><strong>3 · Refill the hand</strong><p>You have ${rules.handSize} counted consonant slots. A finite consonant used in a submitted word leaves once, even when it was repeated in that word, and the draw pile refills open counted slots back toward ${rules.handSize}.</p></article>
             <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards.</p></article>
-            <article><strong>5 · Earn enough points</strong><p>Yellow tiles score ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}, green tiles score ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}, and grey tiles score ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}. Solving within your bonus window (see Stats) adds +${rules.earlyPoint} for every guess still spare, and every mulligan you did not spend is worth +${rules.mulliganPoints}. An ordinary stage has no guess limit -- just keep guessing until you solve it -- but some stops (a few challenges, events and bargains say so) must be solved within the world's guess limit of 6, 5 or 4, or the run ends. You must also meet the cumulative round points target.</p></article>
+            <article><strong>5 · Earn enough points</strong><p>Yellow tiles score ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}, green tiles score ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}, and grey tiles score ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}. Solving within your bonus window (see Details) adds +${5 * rules.greenPoints + rules.earlyPoint} for every guess still spare, and every mulligan you did not spend is worth +${rules.mulliganPoints}. An ordinary stage has no guess limit -- just keep guessing until you solve it -- but some stops (a few challenges, events and bargains say so) must be solved within the world's guess limit of 6, 5 or 4, or the run ends. You must also meet the cumulative round points target.</p></article>
             <article><strong>6 · Grow the run</strong><p>Quests appear every few turns and pay bonus points once you own a reward that makes them worth something. Certain boss rewards add extra concurrent quests. Solve the word to choose an upgrade after every round.</p></article>
             <article><strong>7 · Boss rounds</strong><p>Each world ends at a boss, and the third one decides the run. A boss's power lasts for its first few guesses. A boss round has no points target -- you only have to solve it -- but its guesses and solve bonuses still score. Clear a boss to keep its displayed permanent reward; no ordinary upgrade follows.</p></article>
           </div>
