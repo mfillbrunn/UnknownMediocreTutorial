@@ -1,14 +1,16 @@
 
 :root {
-  /* The three reward tiers read as metals on the card: common = bronze,
-     rare = silver, legendary = gold. Lifted well above the true metal
+  /* The reward tiers read as metals on the card: common = bronze,
+     rare = silver, epic = amethyst, legendary = gold. Lifted well above the true metal
      hexes (#cd7f32 / #c0c0c0 / #d4af37) so each one still carries on the
      dark panel behind the cards. */
   --cuddle-v8-common: #e2a06a;
   --cuddle-v8-rare: #d5dee8;
+  --cuddle-v8-epic: #b98cff;
   --cuddle-v8-legendary: #f5c542;
   --cuddle-v8-common-wash: rgba(226, 160, 106, 0.14);
   --cuddle-v8-rare-wash: rgba(213, 222, 232, 0.14);
+  --cuddle-v8-epic-wash: rgba(185, 140, 255, 0.2);
   --cuddle-v8-legendary-wash: rgba(245, 197, 66, 0.16);
   --cuddle-v8-panel: #2a1e39;
   --cuddle-v8-panel-2: #3a294d;
@@ -65,6 +67,15 @@
   box-shadow: 0 3px 10px var(--cuddle-v8-rare-wash), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
+.cuddle-v8-epic .cuddle-v8-rarity-badge {
+  /* Amethyst: between silver and gold, and the one tier with a colour of
+     its own, so it never reads as a dull rare. */
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(48, 16, 92, 0.6);
+  background: linear-gradient(155deg, #ead9ff 0%, var(--cuddle-v8-epic) 42%, #6b3fc4 100%);
+  box-shadow: 0 3px 10px var(--cuddle-v8-epic-wash), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
 .cuddle-v8-legendary .cuddle-v8-rarity-badge {
   background: linear-gradient(155deg, #fff2c4 0%, var(--cuddle-v8-legendary) 45%, #c08f18 100%);
   box-shadow: 0 3px 10px var(--cuddle-v8-legendary-wash), inset 0 1px 0 rgba(255, 255, 255, 0.5);
@@ -79,6 +90,7 @@
 
 .cuddle-v8-common { --cuddle-v8-tier-color: var(--cuddle-v8-common); }
 .cuddle-v8-rare { --cuddle-v8-tier-color: var(--cuddle-v8-rare); }
+.cuddle-v8-epic { --cuddle-v8-tier-color: var(--cuddle-v8-epic); }
 .cuddle-v8-legendary { --cuddle-v8-tier-color: var(--cuddle-v8-legendary); }
 
 /* Category theming: what KIND of reward a card is (Economy, Solving Aid,
@@ -90,7 +102,8 @@
    keep these in sync with it if either changes. */
 .cuddle-v8-cat-economy { --cuddle-v8-category-color: #5cd6a0; }
 .cuddle-v8-cat-solving { --cuddle-v8-category-color: #5aa9ff; }
-.cuddle-v8-cat-easierStages { --cuddle-v8-category-color: #b98cff; }
+.cuddle-v8-cat-easierStages { --cuddle-v8-category-color: #a3e635; }
+.cuddle-v8-cat-insight { --cuddle-v8-category-color: #5eead4; }
 .cuddle-v8-cat-quests { --cuddle-v8-category-color: #f6a94a; }
 .cuddle-v8-cat-combo { --cuddle-v8-category-color: #ff6fb0; }
 .cuddle-v8-cat-boss { --cuddle-v8-category-color: #fb7185; }

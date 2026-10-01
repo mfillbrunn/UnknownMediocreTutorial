@@ -39,7 +39,8 @@
     treasureHunter: "umtTreasureHunter",
     patternLens: "umtPatternLens",
     mistakeShield: "umtMistakeShield",
-    lastLight: "umtLastLight"
+    lastLight: "umtLastLight",
+    yellowHint: "umtYellowHint"
   });
 
   const VOWELS = new Set(["A", "E", "I", "O", "U"]);
@@ -123,6 +124,14 @@
       title: "Last Light", name: "Last Light",
       description: "Every non-boss stage opens with the answer's last letter already in place.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
+    }),
+    // An Epic pick (cuddle-economy-rarity-v8.js); granted in
+    // grantStageYellowHints at the start of every non-boss stage.
+    Object.freeze({
+      id: IDS.yellowHint, key: IDS.yellowHint, icon: "\uD83D\uDFE8",
+      title: "Yellow Guesser Hint", name: "Yellow Guesser Hint",
+      description: "Every non-boss stage opens with one letter of the answer shown as in the word, not where. Stacks: one more letter per copy.",
+      maxLevel: 2, maxCount: 2, kind: "upgrade"
     })
   ]);
 
@@ -1262,6 +1271,18 @@
     }
     try { if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards(); } catch (_error) {}
     try { if (typeof game.drawToHandLimit === "function") game.drawToHandLimit(); } catch (_error) {}
+  }
+
+  // Yellow Guesser Hint: one present letter per copy, once per stage
+  // (the round token keeps a reload from granting it twice).
+  function grantStageYellowHints(game) {
+    const level = clamp(upgradeLevel(game, IDS.yellowHint), 0, 2);
+    const custom = customState(game);
+    if (level <= 0 || !custom || trueBossRound(game)) return;
+    const token = roundToken(game);
+    if (custom.yellowHintToken === token) return;
+    custom.yellowHintToken = token;
+    for (let index = 0; index < level; index += 1) grantYellowHint(game, "Yellow Guesser Hint");
   }
 
   function grantYellowHint(game, source) {
@@ -2529,6 +2550,7 @@
     applyTrainingWheels(game);
     payStageInterest(game);
     initializeHintSchedule(game);
+    grantStageYellowHints(game);
     doubleDownGuess(game);
     scheduleUi();
     safeSave(game);
@@ -2595,9 +2617,10 @@
   function repairUpgradeChoices(game, choices) {
     if (!Array.isArray(choices)) return choices;
     let repaired = choices.filter((item) => !REMOVED_NORMAL_REWARDS.has(normalizedId(item)));
-    // A Legendary offer (cuddle-economy-rarity-v8.js) is left whole: swapping
-    // a solving aid into it would push one of the three Legendaries out.
-    const legendaryOffer = repaired.length > 0 && repaired.every((item) => item && item.__cuddleV8OfferTier === "legendary");
+    // An Epic or Legendary offer (cuddle-economy-rarity-v8.js) is left whole:
+    // swapping a solving aid into it would push one of its cards out.
+    const legendaryOffer = repaired.length > 0
+      && repaired.every((item) => item && (item.__cuddleV8OfferTier === "legendary" || item.__cuddleV8OfferTier === "epic"));
     const hasAid = legendaryOffer || repaired.some((item) => SOLVING_AID_IDS.has(normalizedId(item)));
     if (!hasAid) {
       const excluded = refreshExclusions.get(game) || new Set();

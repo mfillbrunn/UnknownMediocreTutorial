@@ -8,13 +8,17 @@
   const MONEY_PATTERN = /(?:money|cash|coins?|wallet|balance)/i;
   const CONSONANTS = "BCDFGHJKLMNPQRSTVWXYZ".split("");
   const VOWELS = new Set("AEIOU".split(""));
-  const TIERS = Object.freeze({ COMMON: "common", RARE: "rare", LEGENDARY: "legendary" });
-  const DEFAULT_WEIGHTS = Object.freeze({ common: 60, rare: 35, legendary: 5 });
-  const BOOSTED_WEIGHTS = Object.freeze({ common: 35, rare: 50, legendary: 15 });
-  const SHOP_WEIGHTS = Object.freeze({ common: 50, rare: 35, legendary: 15 });
+  const TIERS = Object.freeze({ COMMON: "common", RARE: "rare", EPIC: "epic", LEGENDARY: "legendary" });
+  const TIER_ORDER = Object.freeze([TIERS.COMMON, TIERS.RARE, TIERS.EPIC, TIERS.LEGENDARY]);
+  // Odds of each tier for a between-round offer (all cards in one offer
+  // share a tier). Rarity Lens shifts them up; the shop leans a bit rarer.
+  const DEFAULT_WEIGHTS = Object.freeze({ common: 50, rare: 30, epic: 15, legendary: 5 });
+  const BOOSTED_WEIGHTS = Object.freeze({ common: 30, rare: 35, epic: 22, legendary: 13 });
+  const SHOP_WEIGHTS = Object.freeze({ common: 42, rare: 30, epic: 18, legendary: 10 });
   const PRICE_RANGES = Object.freeze({
     common: [25, 40],
-    rare: [50, 75],
+    rare: [50, 70],
+    epic: [75, 100],
     legendary: [100, 150]
   });
   const CHALLENGE_RANGES = Object.freeze({
@@ -55,6 +59,8 @@
     ["echo finder", TIERS.COMMON],
     ["dead letter", TIERS.COMMON],
     ["treasure hunter", TIERS.COMMON],
+    ["vowel bounty", TIERS.COMMON],
+    ["bigger mulligan", TIERS.COMMON],
 
     ["pattern lens", TIERS.RARE],
     ["mistake shield", TIERS.RARE],
@@ -67,13 +73,23 @@
     ["wild card", TIERS.RARE],
     ["theme sense", TIERS.RARE],
     ["remaining setter box", TIERS.RARE],
-    ["yellow guesser hint", TIERS.RARE],
+    ["guesser hint", TIERS.RARE],
     ["bigger cuddle", TIERS.RARE],
     ["surprise assignment", TIERS.RARE],
-    ["alphabet compass", TIERS.RARE],
+    ["hot streak", TIERS.RARE],
+    ["encore", TIERS.RARE],
+    ["rainy day fund", TIERS.RARE],
 
-    ["green guesser hint", TIERS.LEGENDARY],
-    ["quest head start", TIERS.LEGENDARY],
+    // Epic: a clue every stage, or a payout, a little short of Legendary.
+    ["yellow guesser hint", TIERS.EPIC],
+    ["alphabet compass", TIERS.EPIC],
+    ["free vowel sweep", TIERS.EPIC],
+    ["quest head start", TIERS.EPIC],
+    ["second cup", TIERS.EPIC],
+    ["double mulligans", TIERS.EPIC],
+    ["double down", TIERS.EPIC],
+    ["process of elimination", TIERS.EPIC],
+
     ["candidate notebook", TIERS.LEGENDARY],
     ["joker cache", TIERS.LEGENDARY],
     ["last light", TIERS.LEGENDARY]
@@ -109,6 +125,7 @@
     return Array.isArray(owned) && owned.includes(id);
   }
   function legendaryPick(rewardId, icon, title, description, available) {
+    const tier = ORDINARY_TIER_BY_NAME.get(norm(title)) || TIERS.LEGENDARY;
     return {
       id: rewardId,
       key: `legendary:${rewardId}`,
@@ -117,7 +134,7 @@
       name: title,
       description,
       kind: "legendary",
-      __cuddleV8Tier: TIERS.LEGENDARY,
+      __cuddleV8Tier: tier,
       __cuddleV8LegendaryReward: rewardId,
       available: (state) => Boolean(state) && available(state)
     };
@@ -288,7 +305,7 @@
     return min + Math.floor(unit * (max - min + 1));
   }
 
-  function weightedTier(weights, availableTiers = [TIERS.COMMON, TIERS.RARE, TIERS.LEGENDARY], seed = null) {
+  function weightedTier(weights, availableTiers = TIER_ORDER, seed = null) {
     const allowed = availableTiers.filter((tier) => (weights[tier] ?? 0) > 0);
     if (!allowed.length) return TIERS.COMMON;
     const total = allowed.reduce((sum, tier) => sum + Number(weights[tier] || 0), 0);
@@ -1446,25 +1463,6 @@
       return [common, rare];
     }
 
-    if (name === "guesser hint" || name === "yellow guesser hint") {
-      const yellow = def;
-      setName(yellow, "Yellow Guesser Hint");
-      setId(yellow, "yellow-guesser-hint");
-      setDescription(yellow, "At the start of every eligible stage, reveal one answer letter without its position.");
-      setTier(yellow, TIERS.RARE);
-      setMaxStack(yellow, 4);
-      replaceHandlers(yellow, "yellow-hint");
-
-      const green = cloneDefinition(def);
-      setName(green, "Green Guesser Hint");
-      setId(green, "green-guesser-hint");
-      setDescription(green, "At the start of every eligible stage, reveal one answer letter in its exact position.");
-      setTier(green, TIERS.LEGENDARY);
-      setMaxStack(green, 4);
-      replaceHandlers(green, "green-hint");
-      return [yellow, green];
-    }
-
     if (name === "second guess quest") {
       setDescription(def, "Once per stage, reroll the current quest for free. The reroll resets when a new stage begins.");
       setMaxStack(def, 1);
@@ -1510,7 +1508,7 @@
     setName(def, "Alphabet Compass");
     setId(def, "alphabet-compass");
     setDescription(def, "After every guess, one of its tiles shows an arrow: ← the secret's letter there comes earlier in the alphabet, → later, – it matches. Each copy adds a tile.");
-    setTier(def, TIERS.RARE);
+    setTier(def, TIERS.EPIC);
     setMaxStack(def, ALPHABET_COMPASS_MAX);
     def.icon = "\u{1F9ED}";
     def.available = (state) => upgradeStack(state, "alphabet-compass") < ALPHABET_COMPASS_MAX;
@@ -1595,7 +1593,7 @@
     } else if (name === "clear sight") {
       setName(def, "Rarity Lens");
       setId(def, "rarity-lens");
-      setDescription(def, "Future reward rolls use 35% common, 50% rare, and 15% legendary odds.");
+      setDescription(def, "Future reward rolls use 30% common, 35% rare, 22% epic and 13% legendary odds.");
       replaceHandlers(def, "rarity-lens");
       name = "rarity lens";
     }
@@ -1641,6 +1639,9 @@
     if (name === "bigger mulligan" && currentMulliganSize(state) >= currentHandSize(state)) return false;
     // Greyscale is a one-time pick (the engine keeps its count).
     if ((name === "greyscale" || name === "grayscale") && Number(state?.balanceRewardCounts?.greyscale) > 0) return false;
+    // Rules out a letter every guess: Easy only, like the other hint aids
+    // (cuddle-rebalance-v5.js HINT_SOLVING_REWARD_IDS).
+    if (name === "process of elimination" && currentDifficulty(state) !== "easy") return false;
     return !REMOVED_REWARDS.has(name);
   }
 
@@ -1663,6 +1664,7 @@
     const grouped = {
       common: pool.filter((def) => def.__cuddleV8Tier === TIERS.COMMON),
       rare: pool.filter((def) => def.__cuddleV8Tier === TIERS.RARE),
+      epic: pool.filter((def) => def.__cuddleV8Tier === TIERS.EPIC),
       legendary: pool.filter((def) => def.__cuddleV8Tier === TIERS.LEGENDARY)
     };
     const enough = Object.keys(grouped).filter((tier) => grouped[tier].length >= count);
@@ -1860,6 +1862,7 @@
     const grouped = {
       common: pool.filter((def) => def.__cuddleV8Tier === TIERS.COMMON),
       rare: pool.filter((def) => def.__cuddleV8Tier === TIERS.RARE),
+      epic: pool.filter((def) => def.__cuddleV8Tier === TIERS.EPIC),
       legendary: pool.filter((def) => def.__cuddleV8Tier === TIERS.LEGENDARY)
     };
     const selected = [];
@@ -2442,6 +2445,7 @@
   const TIER_METAL = Object.freeze({
     [TIERS.COMMON]: "bronze",
     [TIERS.RARE]: "silver",
+    [TIERS.EPIC]: "amethyst",
     [TIERS.LEGENDARY]: "gold"
   });
 
