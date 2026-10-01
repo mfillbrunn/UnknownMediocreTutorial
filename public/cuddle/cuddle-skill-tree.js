@@ -120,7 +120,7 @@
         { id: "encore", icon: "🎬", title: "Encore", tier: "rare", category: "economy", maxLevel: 1, description: "Every third stage you solve pays a 75-point encore bonus.", level: g => upgradeCount(g, "encore") },
         { id: "hotStreak", icon: "🔥", title: "Hot Streak", tier: "rare", category: "economy", maxLevel: 2, description: "Each guess in a row that pins a new green pays a growing bonus: 5, then 10, then 15 points. A guess with no new green resets it.", level: g => upgradeCount(g, "hotStreak") },
         { id: "vowelBounty", icon: "🅰️", title: "Vowel Bounty", tier: "common", category: "economy", maxLevel: 2, description: "Every vowel in a secret you solve pays 5 points.", level: g => upgradeCount(g, "vowelBounty") },
-        { id: "doubleDown", icon: "🎲", title: "Double Down", tier: "legendary", category: "economy", maxLevel: 1, description: "Solve on your very last guess and the whole stage pays double.", level: g => upgradeCount(g, "doubleDown") }
+        { id: "doubleDown", icon: "🎲", title: "Double Down", tier: "legendary", category: "economy", maxLevel: 1, description: "Each stage names a lucky guess, from the 3rd to the 7th. Solve the word on exactly that guess for +50 points.", level: g => upgradeCount(g, "doubleDown") }
       ]
     },
     {
@@ -172,7 +172,7 @@
         { id: "compoundCuddle", icon: "🏦", title: "Compound Cuddle", tier: "legendary", category: "combo", maxLevel: 1, description: "Rainy Day Fund + Reserve Dividend: interest doubles its cap and unused Jokers count toward the balance it pays on.", requires: ["rainyDay", "reserveDividend"], level: g => (upgradeCount(g, "rainyDay") > 0 && upgradeCount(g, "reserveDividend") > 0) ? 1 : 0 },
         { id: "goldenStreak", icon: "🔥", title: "Golden Streak", tier: "legendary", category: "combo", maxLevel: 1, description: "Hot Streak + Golden Value: a guess that pins a new yellow keeps the streak alive too.", requires: ["hotStreak", "yellowPoints"], level: g => (upgradeCount(g, "hotStreak") > 0 && upgradeCount(g, "yellowPoints") > 0) ? 1 : 0 },
         { id: "encoreNight", icon: "🎬", title: "Encore Night", tier: "legendary", category: "combo", maxLevel: 1, description: "Encore + Vowel Bounty: every encore also pays 10 points for each vowel in that stage's secret.", requires: ["encore", "vowelBounty"], level: g => (upgradeCount(g, "encore") > 0 && upgradeCount(g, "vowelBounty") > 0) ? 1 : 0 },
-        { id: "allIn", icon: "🎲", title: "All In", tier: "legendary", category: "combo", maxLevel: 1, description: "Double Down + Hot Streak: a last-guess solve also pays the streak bonus at its highest step.", requires: ["doubleDown", "hotStreak"], level: g => (upgradeCount(g, "doubleDown") > 0 && upgradeCount(g, "hotStreak") > 0) ? 1 : 0 }
+        { id: "allIn", icon: "🎲", title: "All In", tier: "legendary", category: "combo", maxLevel: 1, description: "Double Down + Hot Streak: a solve on the lucky guess also pays the streak bonus at its highest step.", requires: ["doubleDown", "hotStreak"], level: g => (upgradeCount(g, "doubleDown") > 0 && upgradeCount(g, "hotStreak") > 0) ? 1 : 0 }
       ]
     },
     {

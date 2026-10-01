@@ -76,7 +76,7 @@
     Object.freeze({
       id: IDS.doubleDown, key: IDS.doubleDown, icon: "\uD83C\uDFB2",
       title: "Double Down", name: "Double Down",
-      description: "Solve on your very last guess and the whole stage pays double.",
+      description: "Each stage names a lucky guess, from the 3rd to the 7th. Solve the word on exactly that guess for +50 points.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     // Insight rewards: clues about the answer at the start of a stage,
@@ -148,7 +148,7 @@
     Object.freeze({
       id: "allIn", icon: "\uD83C\uDFB2", title: "All In",
       requires: Object.freeze([IDS.doubleDown, IDS.hotStreak]),
-      description: "Double Down + Hot Streak: a last-guess solve also pays the streak bonus at its highest step."
+      description: "Double Down + Hot Streak: a solve on the lucky guess also pays the streak bonus at its highest step."
     }),
   ]);
 
@@ -2452,6 +2452,28 @@
     return String(state.secret || "").toUpperCase().split("").filter((letter) => VOWELS.has(letter)).length;
   }
 
+  // Double Down: every ordinary stage names a lucky guess, rolled once per
+  // stage and kept with the run's save, and solving on exactly that guess
+  // pays a flat bonus. The row it lands on carries a die icon (see
+  // renderRowPowerIcons). 0 when the reward isn't owned or the stage
+  // doesn't pay out (a boss, a no-money stop).
+  const DOUBLE_DOWN_POINTS = 50;
+  const DOUBLE_DOWN_FIRST = 3;
+  const DOUBLE_DOWN_LAST = 7;
+
+  function doubleDownGuess(game) {
+    if (upgradeLevel(game, IDS.doubleDown) <= 0 || trueBossRound(game) || noMoneyRound(game)) return 0;
+    const custom = customState(game);
+    if (!custom) return 0;
+    const token = roundToken(game);
+    const saved = custom.doubleDown;
+    if (saved && saved.token === token && asInteger(saved.guess, 0) >= DOUBLE_DOWN_FIRST) return asInteger(saved.guess, 0);
+    const roll = typeof game.random === "function" ? game.random() : Math.random();
+    const guess = DOUBLE_DOWN_FIRST + Math.min(DOUBLE_DOWN_LAST - DOUBLE_DOWN_FIRST, Math.floor(roll * (DOUBLE_DOWN_LAST - DOUBLE_DOWN_FIRST + 1)));
+    custom.doubleDown = { token, guess };
+    return guess;
+  }
+
   // Runs once when a stage is solved, after the engine has settled the round.
   function applySolveRewards(game) {
     const state = stateOf(game);
@@ -2483,13 +2505,11 @@
       }
     }
 
-    if (upgradeLevel(game, IDS.doubleDown) > 0) {
-      const limit = typeof game._effectiveMaxGuesses === "function"
-        ? asInteger(game._effectiveMaxGuesses(), 6)
-        : asInteger(state.maxGuesses, 6);
-      if (asInteger(state.guessesUsed, 0) >= limit) {
-        const earned = Math.max(0, Math.round(asNumber(state.roundScore, 0)));
-        if (earned > 0) addScoreBonus(game, earned, "umtDoubleDown", "Solved on the last guess");
+    const luckyGuess = doubleDownGuess(game);
+    if (luckyGuess) {
+      if (asInteger(state.guessesUsed, 0) === luckyGuess) {
+        addScoreBonus(game, DOUBLE_DOWN_POINTS, "umtDoubleDown", `Solved on lucky guess ${luckyGuess}`);
+        appendNotice(game, `Double Down: solved on guess ${luckyGuess}, +${DOUBLE_DOWN_POINTS} points.`);
         if (hasFunSynergy(game, "allIn")) {
           addScoreBonus(game, 15 * Math.max(1, upgradeLevel(game, IDS.hotStreak)), "umtHotStreak",
             "Streak payout");
@@ -2507,6 +2527,7 @@
     applyTrainingWheels(game);
     payStageInterest(game);
     initializeHintSchedule(game);
+    doubleDownGuess(game);
     scheduleUi();
     safeSave(game);
   }
@@ -3109,6 +3130,7 @@
     umtConsonantSweep: { title: "Process of Elimination", description: "Every guess rules out one consonant that is not in the secret.", shape: "eliminate" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
     compass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
+    umtDoubleDown: { title: "Double Down", description: "Your lucky guess this stage: solve the word on exactly this guess for +50 points.", shape: "die" },
     "alphabet-compass": { title: "Alphabet Compass", description: "After every guess, some of its tiles show whether the secret's letter there comes earlier or later in the alphabet.", shape: "alphaCompass" }
   });
 
@@ -3502,11 +3524,14 @@
     rows.forEach((row, index) => {
       let stack = row.querySelector(":scope > .umt-row-power-icons");
       const history = state?.history?.[index] || null;
-      const ids = activePowersForGuess(game, index);
+      const effects = activePowersForGuess(game, index);
       // The ring is computed even when the icons below are suppressed: a
       // finished row still has to show which of its tiles were the affected
       // ones, or the player can't tell what the counts referred to.
-      const span = ids.length ? rowMaskSpan(game, index) : [];
+      const span = effects.length ? rowMaskSpan(game, index) : [];
+      // Double Down's lucky guess rides along with whatever else the row
+      // carries; it claims no tiles.
+      const ids = doubleDownGuess(game) === index + 1 ? effects.concat("umtDoubleDown") : effects;
       markMaskedTiles(row, span, Boolean(history));
 
       // Once a guess's Count Only result is in (the row's own score column
@@ -4381,6 +4406,17 @@
       // the boss-choice screen (cuddle-ui.js's renderBossChoiceOverlay) so
       // both surfaces describe the same burdens identically.
       burdenInfo: (id) => BURDEN_INFO[id] || null,
+      // Double Down's chip on the live play strip (cuddle-campaign.js's
+      // insertMap): the stage's lucky guess, shown until it has been played.
+      luckyGuessBadge: (game) => {
+        const active = game || publicActiveGame();
+        const guess = doubleDownGuess(active);
+        const state = stateOf(active) || {};
+        if (!guess || state.status !== "playing" || asInteger(state.guessesUsed, 0) >= guess) return "";
+        return `<span class="umt-lucky-guess" title="Double Down: solve the word on exactly guess ${guess} for +${DOUBLE_DOWN_POINTS} points">`
+          + `<span class="umt-lucky-guess-die" aria-hidden="true">${powerSvg("umtDoubleDown")}</span>`
+          + `Lucky guess <b>${guess}</b> <small>+${DOUBLE_DOWN_POINTS}</small></span>`;
+      },
       // Consumed by cuddle-ui.js's reward cards for the "Interaction bonus!"
       // badge, alongside the engine's own synergy preview.
       synergies: FUN_SYNERGIES.map((item) => ({ ...item, requires: item.requires.slice() })),

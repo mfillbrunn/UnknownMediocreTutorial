@@ -1041,10 +1041,7 @@
       const challengeBanner = typeof window.CuddleMoneyMode?.renderChallengeBanner === "function"
         ? window.CuddleMoneyMode.renderChallengeBanner(game)
         : "";
-      const feasibleChip = typeof window.CuddleRebalanceV5?.feasibleBadge === "function"
-        ? window.CuddleRebalanceV5.feasibleBadge(game)
-        : "";
-      const themeBadge = renderCategoryBadge(ensureCampaign(game), feasibleChip);
+      const themeBadge = renderCategoryBadge(ensureCampaign(game));
       // The active quest used to be its own bordered card between the boss
       // banner and the board -- now it's just plain text riding in this
       // strip next to the theme badge, so it reads at a glance instead of
@@ -1072,8 +1069,11 @@
       const themeArea = themeBadge || secretsRemaining
         ? `<div class="cuddle-map-badge-standalone cuddle-play-theme-badge">${themeBadge}${secretsRemaining}</div>`
         : "";
-      const strip = themeArea || questText
-        ? `<div class="cuddle-play-strip">${questText}${themeArea}</div>`
+      const luckyGuess = typeof window.CuddleRebalanceV5?.luckyGuessBadge === "function"
+        ? window.CuddleRebalanceV5.luckyGuessBadge(game)
+        : "";
+      const strip = themeArea || questText || luckyGuess
+        ? `<div class="cuddle-play-strip">${questText}${themeArea}${luckyGuess}</div>`
         : "";
       const extra = challengeBanner + strip;
       if (!extra) return html;
