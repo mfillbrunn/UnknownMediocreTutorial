@@ -434,7 +434,7 @@
       id: "openingClue",
       icon: "🔮",
       title: "Margin Note",
-      description: "Reveal that one letter is in the secret at the start of every future non-boss stage -- not where."
+      description: "Every non-boss stage from now on opens with one letter of the answer shown as in the word, not where."
     },
     {
       id: "questDoublePick",

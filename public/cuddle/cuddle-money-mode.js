@@ -59,8 +59,40 @@
     "questDoublePick",
     "questCadence",
     "questPersistReward",
-    "backupPlanReward"
+    "backupPlanReward",
+    "umtAllThemes"
   ];
+
+  // Every starting bonus has a rarity, and the three on offer always share
+  // one (rolled first, like a between-round offer). Tiers match the same
+  // rewards' rarity elsewhere (cuddle-economy-rarity-v8.js).
+  var STARTER_TIER = {
+    biggerMulligans: "rare",
+    questCadence: "rare",
+    backupPlanReward: "rare",
+    doubleMulligans: "epic",
+    richerColours: "epic",
+    freeVowelSweep: "epic",
+    questHead: "epic",
+    openingClue: "epic",
+    questDoublePick: "legendary",
+    questPersistReward: "legendary",
+    umtAllThemes: "legendary"
+  };
+  var STARTER_TIER_WEIGHTS = {
+    easy: { rare: 30, epic: 55, legendary: 15 },
+    medium: { rare: 55, epic: 35, legendary: 10 }
+  };
+
+  function rollStarterTier(weights, available, game) {
+    var total = available.reduce(function sum(acc, tier) { return acc + (weights[tier] || 0); }, 0);
+    var roll = randomFor(game) * total;
+    for (var index = 0; index < available.length; index += 1) {
+      roll -= weights[available[index]] || 0;
+      if (roll < 0) return available[index];
+    }
+    return available[available.length - 1];
+  }
 
   var CHALLENGES = [
     {
@@ -328,8 +360,14 @@
   // opening pick. It draws from the ordinary round-clear catalog instead.
   function starterRewardChoices(game) {
     var difficulty = String(game.state && game.state.megaState && game.state.megaState.difficulty || "hard");
-    if (difficulty === "hard" && typeof game._upgradeCatalog === "function") {
-      return { source: "normal", choices: shuffled(game._upgradeCatalog(), game).slice(0, 3) };
+    if (difficulty === "hard" && typeof game._generateUpgradeChoices === "function") {
+      // An ordinary between-round offer: cuddle-economy-rarity-v8.js rolls
+      // one tier and draws every card from it.
+      var offer = (game._generateUpgradeChoices() || []).slice(0, 3).map(function withTier(choice) {
+        var tier = choice && (choice.__cuddleV8OfferTier || choice.__cuddleV8Tier);
+        return tier ? Object.assign({}, choice, { starterTier: tier }) : choice;
+      });
+      return { source: "normal", choices: offer };
     }
     var questBook = window.CuddleQuestBook;
     // "Margin Note" (openingClue) reveals a letter at the start of every
@@ -341,9 +379,16 @@
       return id !== "openingClue";
     });
     var choices = ids.map(function rewardForId(id) {
-      return questBook && typeof questBook.getBossReward === "function" ? questBook.getBossReward(id) : null;
+      var reward = questBook && typeof questBook.getBossReward === "function" ? questBook.getBossReward(id) : null;
+      return reward ? Object.assign({}, reward, { starterTier: STARTER_TIER[id] || "rare" }) : null;
     }).filter(Boolean);
-    return { source: "boss", choices: shuffled(choices, game).slice(0, 3) };
+    var weights = STARTER_TIER_WEIGHTS[difficulty] || STARTER_TIER_WEIGHTS.medium;
+    var available = ["rare", "epic", "legendary"].filter(function fullSet(tier) {
+      return choices.filter(function inTier(choice) { return choice.starterTier === tier; }).length >= 3;
+    });
+    var tier = available.length ? rollStarterTier(weights, available, game) : null;
+    var pool = tier ? choices.filter(function inTier(choice) { return choice.starterTier === tier; }) : choices;
+    return { source: "boss", choices: shuffled(pool, game).slice(0, 3) };
   }
 
   function resetModeForNewRun(game) {
@@ -959,10 +1004,15 @@
     if (!root || !root.querySelector(".cuddle-header")) return;
     if (document.getElementById("cuddleMoneyStarterOverlay")) return;
     var cards = mode.starterRewardChoices.map(function rewardCard(reward) {
-      return "<button type=\"button\" class=\"cuddle-money-choice\" data-cuddle-money-action=\"starter\" data-reward-id=\"" + escapeHtml(reward.id) + "\">"
+      var tier = /^(common|rare|epic|legendary)$/.test(String(reward.starterTier || "")) ? reward.starterTier : "";
+      return "<button type=\"button\" class=\"cuddle-money-choice" + (tier ? " cuddle-v8-rarity cuddle-v8-" + tier : "") + "\" data-cuddle-money-action=\"starter\" data-reward-id=\"" + escapeHtml(reward.id) + "\">"
         + "<span class=\"cuddle-money-choice-icon\">" + escapeHtml(reward.icon || "\uD83C\uDF81") + "</span>"
         + "<span><strong>" + escapeHtml(reward.title) + "</strong><small>" + goldenMoney(escapeHtml(reward.description)) + "</small></span>"
-        + "<b>FREE</b></button>";
+        + "<b>FREE</b>"
+        // Last, so the text keeps its place as the card's second child
+        // (cuddle-money-mode.css); it is pinned to the corner anyway.
+        + (tier ? "<span class=\"cuddle-v8-rarity-badge\" role=\"img\" aria-label=\"" + tier + " rarity\">" + tier + "</span>" : "")
+        + "</button>";
     }).join("");
     root.insertAdjacentHTML("beforeend",
       "<div id=\"cuddleMoneyStarterOverlay\" class=\"cuddle-money-overlay\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"cuddleMoneyStarterTitle\">"
