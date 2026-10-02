@@ -1402,8 +1402,14 @@
       const history = Array.isArray(live.history) ? live.history : [];
       if (history.length > initialHistory) {
         openingJobs.delete(game);
-        safeSave(game);
-        requestRender(game);
+        // Every render re-arms this watch, so a player who taps their last
+        // letter and submits quickly lands here too. Only redraw while the
+        // stage is still being played: a solve has already moved on to the
+        // cash-out, and a full redraw then wipes the counting animation.
+        if (live.status === "playing" && !live.pendingRoundEnd && !window.CuddleMoneyMode?.payoutActive?.()) {
+          safeSave(game);
+          requestRender(game);
+        }
         return;
       }
       if (live.status !== "playing" || live.roundIntroPending || live.pendingRoundEnd) {

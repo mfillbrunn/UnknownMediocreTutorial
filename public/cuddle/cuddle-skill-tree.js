@@ -139,7 +139,7 @@
         { id: "jokerCache", icon: "🃏", title: "Small Joker Cache", tier: "rare", category: "easierStages", maxLevel: 1, description: "One extra Joker every stage.", level: g => v5Level(g, "umtJokerCache") },
         { id: "jokerCacheLarge", icon: "🃏", title: "Large Joker Cache", tier: "legendary", category: "easierStages", maxLevel: 1, description: "Two Jokers every stage. Replaces Small Joker Cache.", level: g => v5Level(g, "umtJokerCacheLarge") },
         { id: "alphabet-compass", icon: "🧭", title: "Alphabet Compass", tier: "epic", category: "solving", maxLevel: 3, description: "After every guess, a tile shows whether the answer's letter there comes earlier or later in the alphabet. Level 2 adds a tile; level 3 is the Legendary Full Alphabet Compass: every tile.", level: g => (window.CuddleCompass && g?.state ? window.CuddleCompass.copiesOwned(g.state) : 0) },
-        { id: "consonantSweep", icon: "🔍", title: "Process of Elimination", tier: "epic", category: "solving", maxLevel: 1, description: "In non-boss stages, every guess rules out one consonant that is not in the answer.", level: g => upgradeCount(g, "consonantSweep") }
+        { id: "consonantSweep", icon: "🔍", title: "Process of Elimination", tier: "epic", category: "solving", maxLevel: 1, description: "Every guess, boss fights included, rules out one consonant that is not in the answer.", level: g => upgradeCount(g, "consonantSweep") }
       ]
     },
     {
@@ -168,7 +168,7 @@
         { id: "cullRare", icon: "✂️", title: "Deep Cull", tier: "legendary", category: "boss", maxLevel: 1, description: "Remove four rare letters from the deck and from every future secret." },
         { id: "doubleMulligans", icon: "🔁", title: "Double Mulligans", tier: "epic", category: "boss", maxLevel: 1, description: "Double the number of mulligans you get each stage.", level: g => upgradeCount(g, "doubleMulligans") },
         { id: "biggerMulligans", icon: "🖐️", title: "Full Hand Mulligan", tier: "epic", category: "boss", maxLevel: 1, description: "Every mulligan can now replace up to five cards.", level: g => upgradeCount(g, "mulliganSize") },
-        { id: "freeVowelSweep", icon: "🅰️", title: "Free Vowel Sweep", tier: "epic", category: "boss", maxLevel: 1, description: "Each stage opens with one random vowel tested for free: you learn whether it's in the answer, not where.", level: g => upgradeCount(g, "freeVowelSweep") },
+        { id: "freeVowelSweep", icon: "🅰️", title: "Free Vowel Sweep", tier: "legendary", category: "boss", maxLevel: 1, description: "Each stage opens with one random vowel tested for free: you learn whether it's in the answer, not where.", level: g => upgradeCount(g, "freeVowelSweep") },
         { id: "revealGreen", icon: "📍", title: "Position Peek", tier: "common", category: "boss", maxLevel: 1, description: "Your next stage opens with one letter of the answer already in its exact place. One time." },
         { id: "questDoublePick", icon: "✌️", title: "Double Pick", tier: "legendary", category: "boss", maxLevel: 1, description: "Quest reward screens let you choose two options instead of one, for the rest of the run.", level: g => upgradeCount(g, "questDoublePick") },
         { id: "questCadence", icon: "❗", title: "Quest Cadence", tier: "epic", category: "boss", maxLevel: 2, description: "Quests come more often (every second guess, then every guess) and one more can be active at a time. Stacks twice.", level: g => upgradeCount(g, "questCadence") },

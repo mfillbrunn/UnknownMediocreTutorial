@@ -214,7 +214,7 @@
       icon: "🔍",
       title: "Process of Elimination",
       name: "Process of Elimination",
-      description: "In non-boss stages, every guess rules out one consonant that is not in the answer.",
+      description: "Every guess, boss fights included, rules out one consonant that is not in the answer.",
       maxLevel: 1,
       maxCount: 1,
       kind: "upgrade"
@@ -2411,11 +2411,11 @@
   }
 
   // Process of Elimination: rules out one consonant not in the secret after
-  // every guess (including a forfeited one) -- unlike Free Vowel Sweep
-  // (round start only, vowels only), this fires every guess and only ever
-  // narrows the alphabet, never reveals a position.
+  // every guess (including a forfeited one), boss fights included -- unlike
+  // Free Vowel Sweep (round start only, vowels only), this fires every guess
+  // and only ever narrows the alphabet, never reveals a position.
   function applyConsonantSweep(game) {
-    if (upgradeLevel(game, IDS.consonantSweep) < 1 || trueBossRound(game)) return;
+    if (upgradeLevel(game, IDS.consonantSweep) < 1) return;
     const state = stateOf(game);
     if (!state) return;
     const secret = String(state.secret || "").toUpperCase();
@@ -3168,7 +3168,7 @@
     umtQuickStudy: { title: "Quick Study", description: "Guesser Hints arrive sooner.", shape: "hourglass" },
     umtJokerCache: { title: "Joker Cache", description: "One extra Joker every stage.", shape: "joker" },
     umtReserveDividend: { title: "Reserve Dividend", description: "Unused Jokers and mulligans pay an additional end-of-round bonus.", shape: "coins" },
-    umtConsonantSweep: { title: "Process of Elimination", description: "In non-boss stages, every guess rules out one consonant that is not in the answer.", shape: "eliminate" },
+    umtConsonantSweep: { title: "Process of Elimination", description: "Every guess, boss fights included, rules out one consonant that is not in the answer.", shape: "eliminate" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
     compass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
     umtDoubleDown: { title: "Double Down", description: "Your lucky guess this stage: solve the word on exactly this guess for +50 points.", shape: "die" },

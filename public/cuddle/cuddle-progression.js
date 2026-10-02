@@ -599,7 +599,7 @@
 
   // Boss rewards that are also between-round picks: these four come up as
   // Epic, the rest as Legendary (cuddle-economy-rarity-v8.js).
-  const EPIC_PICK_IDS = new Set(["doubleMulligans", "freeVowelSweep", "biggerMulligans", "questCadence", "secondCup"]);
+  const EPIC_PICK_IDS = new Set(["doubleMulligans", "biggerMulligans", "questCadence", "secondCup"]);
   function pickTierName(id) {
     if (id === "revealGreen") return "a Common";
     return EPIC_PICK_IDS.has(id) ? "an Epic" : "a Legendary";

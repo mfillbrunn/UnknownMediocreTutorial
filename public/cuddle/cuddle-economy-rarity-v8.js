@@ -79,7 +79,6 @@
     // Epic: a clue every stage, or a payout, a little short of Legendary.
     ["yellow guesser hint", TIERS.EPIC],
     ["alphabet compass", TIERS.EPIC],
-    ["free vowel sweep", TIERS.EPIC],
     ["second cup", TIERS.EPIC],
     ["double mulligans", TIERS.EPIC],
     ["double down", TIERS.EPIC],
@@ -90,6 +89,7 @@
 
     ["candidate notebook", TIERS.LEGENDARY],
     ["large joker cache", TIERS.LEGENDARY],
+    ["free vowel sweep", TIERS.LEGENDARY],
     ["last light", TIERS.LEGENDARY],
     ["full alphabet compass", TIERS.LEGENDARY],
     ["clear sight", TIERS.LEGENDARY],
