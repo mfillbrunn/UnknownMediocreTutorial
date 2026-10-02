@@ -79,9 +79,10 @@
 
   // How many a stage gets: one or two (1.5 on average), plus one more per
   // Treasure Map.
-  // Two or three special tiles a stage before Treasure Map (one per row).
-  var BASE_TILES_MIN = 2;
-  var BASE_TILES_EXTRA_CHANCE = 0.6;
+  // Each guess in the bonus window has about a one-in-four chance of a
+  // special tile (one per row at most); Treasure Map and Treasure Trove add
+  // tiles on top of that.
+  var TILE_CHANCE_PER_GUESS = 0.25;
 
   // Relative odds of each kind for one tile. Money and points are always
   // in the pool; the unlockable kinds scale with their unlock's level
@@ -134,8 +135,7 @@
       rows[index] = rows[swap];
       rows[swap] = held;
     }
-    var count = BASE_TILES_MIN
-      + (random() < BASE_TILES_EXTRA_CHANCE ? 1 : 0)
+    var count = rows.filter(function roll() { return random() < TILE_CHANCE_PER_GUESS; }).length
       + bonusLevel(state, "treasureMap")
       // Treasure Trove from the shop: +2 tiles while its stages last
       // (counted down by cuddle-shop.js once the stage has begun).
@@ -226,6 +226,33 @@
     return result;
   };
 
+  function revealTileHints(game, count) {
+    var notes = [];
+    if (typeof game._revealPositionPeek !== "function") return notes;
+    for (var i = 0; i < count; i += 1) notes.push("Oracle tile: " + game._revealPositionPeek());
+    return notes;
+  }
+
+  var originalChooseQuestReward = proto.chooseQuestReward;
+  if (typeof originalChooseQuestReward === "function") {
+    proto.chooseQuestReward = function chooseQuestRewardThenTileHints() {
+      var result = originalChooseQuestReward.apply(this, arguments);
+      var state = this.state;
+      var hints = state ? Math.max(0, Number(state.pendingTileHints) || 0) : 0;
+      if (hints > 0 && state.status === "playing") {
+        state.pendingTileHints = 0;
+        var notes = revealTileHints(this, hints);
+        if (notes.length) {
+          state.lastMessage = ((state.lastMessage || "") + " " + notes.map(function trimStop(note) {
+            return String(note).replace(/\.+$/, "");
+          }).join(". ") + ".").trim();
+        }
+        if (typeof this.save === "function") this.save();
+      }
+      return result;
+    };
+  }
+
   var originalSubmitDraft = proto.submitDraft;
   proto.submitDraft = function submitDraftWithSpecialTiles() {
     var result = originalSubmitDraft.apply(this, arguments);
@@ -235,9 +262,14 @@
     state.pendingTileNotes = [];
     var hints = Math.max(0, Number(state.pendingTileHints) || 0);
     state.pendingTileHints = 0;
-    // Hints only mean something while the round is still being played.
-    if (hints > 0 && state.status === "playing" && typeof this._revealPositionPeek === "function") {
-      for (var i = 0; i < hints; i += 1) notes.push("Oracle tile: " + this._revealPositionPeek());
+    // Hints only mean something while the round is still being played. A
+    // guess that also completes a quest opens the quest reward first: the
+    // hint waits for it (revealTileHints, after chooseQuestReward) instead
+    // of being thrown away.
+    if (hints > 0 && state.status === "playing") {
+      revealTileHints(this, hints).forEach(function add(note) { notes.push(note); });
+    } else if (hints > 0 && state.status === "questReward") {
+      state.pendingTileHints = hints;
     }
     if (notes.length) {
       var sentences = notes.map(function trimStop(note) { return String(note).replace(/\.+$/, ""); });

@@ -58,6 +58,8 @@
     ["echo finder", TIERS.COMMON],
     ["treasure hunter", TIERS.COMMON],
     ["vowel bounty", TIERS.COMMON],
+    // A one-time letter, so Common.
+    ["position peek", TIERS.COMMON],
 
     ["vowel lamp", TIERS.RARE],
     ["pattern lens", TIERS.RARE],
@@ -73,7 +75,6 @@
     ["encore", TIERS.RARE],
     ["rainy day fund", TIERS.RARE],
     ["small joker cache", TIERS.RARE],
-    ["position peek", TIERS.RARE],
 
     // Epic: a clue every stage, or a payout, a little short of Legendary.
     ["yellow guesser hint", TIERS.EPIC],
