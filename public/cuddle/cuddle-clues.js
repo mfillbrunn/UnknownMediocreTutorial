@@ -3,9 +3,9 @@
  *
  *   Vowel Lamp       every stage: how many vowels the answer has
  *   Echo Finder      every stage: does the answer repeat a letter
- *   Pattern Lens     every non-boss stage: vowel/consonant pattern (C V C C V)
- *   Dead Letter      every non-boss stage opens with 1-3 absent letters crossed out
- *   Last Light       every non-boss stage opens with the last letter in place
+ *   Pattern Lens     every stage: vowel/consonant pattern (C V C C V)
+ *   Dead Letter      every stage opens with 1-3 absent letters crossed out
+ *   Last Light       every stage opens with the last letter in place
  *   Treasure Hunter  about one stage in three is a treasure stage: +$8 per copy on a solve
  *   Mistake Shield   in a boss or strict stage, the first guess with no green
  *                    or yellow gives a guess back
@@ -139,7 +139,7 @@
     try {
       if (!this.state || !this.state.secret) return result;
       const record = clues(this);
-      if (isBoss(this)) return result;
+      // Every stage, boss fights included.
       const dead = level(this, IDS.deadLetter);
       if (dead > 0 && !record.dead.length) {
         record.dead = deadLetters(this, Math.min(3, dead));
@@ -245,7 +245,7 @@
     if (secret.length !== 5) return [];
     const record = clues(game);
     const chips = [];
-    // Vowel Lamp and Echo Finder work in every stage, boss fights included.
+    // Every clue works in every stage, boss fights included.
     if (level(game, IDS.vowelLamp) > 0) {
       const count = [...secret].filter(letter => VOWELS.has(letter)).length;
       chips.push({ icon: "lantern", label: "Vowel Lamp", text: `${count} vowel${count === 1 ? "" : "s"}` });
@@ -254,17 +254,15 @@
       const repeats = new Set(secret).size < 5;
       chips.push({ icon: "twoPeople", label: "Echo Finder", text: repeats ? "Repeats a letter" : "No repeated letters" });
     }
-    if (!isBoss(game)) {
-      if (level(game, IDS.patternLens) > 0) {
-        chips.push({ icon: "puzzle", label: "Pattern Lens", text: [...secret].map(letter => (VOWELS.has(letter) ? "V" : "C")).join(" "), mono: true });
-      }
-      if (record.dead.length) chips.push({ icon: "gravestone", label: "Dead Letter", text: `Not ${record.dead.join(", ")}` });
-      if (record.treasure) {
-        chips.push({
-          icon: "gem", label: "Treasure word", tone: "money",
-          text: record.treasurePaid ? "Treasure claimed" : `Solve for +$${TREASURE_PER_COPY * level(game, IDS.treasureHunter) + graveRobberBonus(game)}`
-        });
-      }
+    if (level(game, IDS.patternLens) > 0) {
+      chips.push({ icon: "puzzle", label: "Pattern Lens", text: [...secret].map(letter => (VOWELS.has(letter) ? "V" : "C")).join(" "), mono: true });
+    }
+    if (record.dead.length) chips.push({ icon: "gravestone", label: "Dead Letter", text: `Not ${record.dead.join(", ")}` });
+    if (record.treasure) {
+      chips.push({
+        icon: "gem", label: "Treasure word", tone: "money",
+        text: record.treasurePaid ? "Treasure claimed" : `Solve for +$${TREASURE_PER_COPY * level(game, IDS.treasureHunter) + graveRobberBonus(game)}`
+      });
     }
     if (level(game, IDS.mistakeShield) > 0 && shieldApplies(game)) {
       chips.push({ icon: "shield", label: "Mistake Shield", text: record.shieldUsed ? "Shield used" : "Shield ready", tone: record.shieldUsed ? "spent" : "" });

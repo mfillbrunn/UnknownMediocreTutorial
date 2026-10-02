@@ -54,7 +54,7 @@
   var STAGE_CLEAR_MONEY = 10;
 
   // Special tiles: a few board cells, rolled fresh at the start of every
-  // non-boss round, that pay out for the letter the player lands on them.
+  // round, boss fights included, that pay out for the letter the player lands on them.
   // Each is marked on the board before it is played (a large faint symbol)
   // so it can be aimed at. A yellow or green on it pays; a grey spends it
   // for nothing. Payouts happen inside the engine's scoring step (see
@@ -221,9 +221,8 @@
     if (state) {
       state.pendingTileHints = 0;
       state.pendingTileNotes = [];
-      // Bosses are a straight fight -- no special tiles there, only on the
-      // wordle, themed wordle and challenge stops.
-      state.cuddleMoneyTiles = this.isBossRound() ? [] : rollSpecialTiles(this);
+      // Every stage rolls them, boss fights included.
+      state.cuddleMoneyTiles = rollSpecialTiles(this);
     }
     return result;
   };

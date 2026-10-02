@@ -272,7 +272,8 @@
 
   wrap("_beginRound", original => function beginRoundWithCombos() {
     const result = original.apply(this, arguments);
-    if (this.state && !(typeof this.isBossRound === "function" && this.isBossRound())) {
+    // Combos work in every stage, boss fights included.
+    if (this.state) {
       const extra = (ownsCombo(this, "fullHouse") ? 1 : 0) + (ownsCombo(this, "cleanSweep") ? 1 : 0)
         + (ownsCombo(this, "lamplighter") ? 1 : 0);
       const gained = extra && typeof this.mulliganGain === "function" ? this.mulliganGain(extra) : extra;
@@ -284,10 +285,9 @@
   wrap("submitDraft", original => function submitDraftWithCombos() {
     const state = this.state;
     const before = state && Array.isArray(state.history) ? state.history.length : 0;
-    const boss = Boolean(this.isBossRound && this.isBossRound());
     const result = original.apply(this, arguments);
     const history = this.state && Array.isArray(this.state.history) ? this.state.history : [];
-    if (!result || !result.ok || boss || history.length <= before) return result;
+    if (!result || !result.ok || history.length <= before) return result;
     const entry = history[history.length - 1];
     const solved = Boolean(entry && this.state.secret && entry.word === this.state.secret);
 

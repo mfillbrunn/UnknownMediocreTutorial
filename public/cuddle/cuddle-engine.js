@@ -2670,7 +2670,7 @@
       id: "storybookStart",
       icon: "📖",
       title: "Opening Verse",
-      description: "Start every non-boss stage with +10 points. Stacks up to three times.",
+      description: "Start every stage with +10 points. Stacks up to three times.",
       max: 3
     },
     {
@@ -2728,7 +2728,7 @@
       id: "goldenTempo",
       icon: "⚡",
       title: "Golden Tempo",
-      description: "Colour Surge or Richer Colours + Early Finish: every solved non-boss stage gives +5 points."
+      description: "Colour Surge or Richer Colours + Early Finish: every solved stage gives +5 points."
     },
     {
       id: "questBinding",
@@ -2740,7 +2740,7 @@
       id: "illustratedStart",
       icon: "🌟",
       title: "Illustrated Start",
-      description: "Opening Verse + Margin Note: non-boss stages open with another +5 points."
+      description: "Opening Verse + Margin Note: stages open with another +5 points."
     },
     {
       id: "endlessMargins",
@@ -3144,8 +3144,7 @@
     state.mysteryGlyphKinds = {};
     state.unknownGlyphs = [];
     state.roundOpeningPoints = 0;
-    if (this.isBossRound()) return;
-
+    // Opening Verse and Margin Note work in every stage, boss fights included.
     const notes = [];
     const openingPoints = Number(state.cuddleBonuses.storybookStart || 0) * 10
       + (cuddleV3HasSynergy(this, "illustratedStart") ? 5 : 0);
@@ -3751,7 +3750,7 @@
     id: "goldenTempo",
     icon: "⚡",
     title: "Golden Tempo",
-    description: "Colour Surge or Richer Colours + Early Finish: every solved non-boss stage gives +5 points."
+    description: "Colour Surge or Richer Colours + Early Finish: every solved stage gives +5 points."
   });
 
   function finiteNumber(value, fallback = 0) {
@@ -5109,7 +5108,7 @@
     if (this.state.activeQuest) mega.activeQuests[0] = this.state.activeQuest;
 
     const slots = 1 + Math.max(0, Number(this.state.upgrades.questCadence || 0));
-    if (this.state.activeQuest && !this.isBossRound()) {
+    if (this.state.activeQuest) {
       let guard = 0;
       while (mega.activeQuests.filter(Boolean).length < slots && guard < 8) {
         guard += 1;

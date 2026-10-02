@@ -166,7 +166,7 @@
       (state) => !coachOwns(state, "secondCup")),
     legendaryPick("goldenThread", "🧵", "Golden Thread", "A full five-letter draft pulses and vibrates when it contains an answer letter you have not learned yet.",
       (state) => !coachOwns(state, "goldenThread")),
-    legendaryPick("umtAllThemes", "🔮", "All-Seeing Atlas", "Reveal every available theme at the start of every non-boss Wordle.",
+    legendaryPick("umtAllThemes", "🔮", "All-Seeing Atlas", "Reveal every available theme at the start of every Wordle.",
       (state) => !state.cuddleRebalanceV5?.allThemesUnlocked && !coachOwns(state, "umtAllThemes"))
   ]);
 
