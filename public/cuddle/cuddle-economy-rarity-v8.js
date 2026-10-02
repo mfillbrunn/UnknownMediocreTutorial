@@ -66,9 +66,9 @@
     ["reward echo", TIERS.RARE],
     ["precise green", TIERS.RARE],
     ["theme sense", TIERS.RARE],
-    ["remaining setter box", TIERS.RARE],
-    ["guesser hint", TIERS.RARE],
+    ["secrets counter", TIERS.RARE],
     ["bigger cuddle", TIERS.RARE],
+    ["treasure map", TIERS.RARE],
     ["surprise assignment", TIERS.RARE],
     ["encore", TIERS.RARE],
     ["rainy day fund", TIERS.RARE],
@@ -1453,7 +1453,7 @@
       setDescription(def, "Begin every stage with one Joker in the active pouch.");
       replaceHandlers(def, "wild-card");
     } else if (name === "softer cuddle meter") {
-      setDescription(def, "The Cuddle Meter needs one fewer grey tile to fill. Minimum: seven.");
+      setDescription(def, "The Cuddle Meter fills one tile sooner. Up to 3 levels (minimum: five).");
       setMaxStack(def, 6);
       replaceHandlers(def, "soft-meter");
     } else if (name === "bigger cuddle") {
@@ -2213,7 +2213,9 @@
   function patchBaseConfig(state) {
     const threshold = meterThreshold(state);
     const data = customState(state);
-    setMatchingNumbers(state, (key) => /cuddle.*(?:threshold|target|required)|meter.*(?:threshold|target|required)/.test(key), threshold, 4);
+    // (The Cuddle Meter's threshold is cuddle-coach-expansion.js's alone: a
+    // name match here used to overwrite its upgrade counter,
+    // cuddleThresholdStacks, with the threshold itself.)
 
     const rowSlots = findNumberSlots(state, (key) => /unused.*row.*(?:base|value|cash|money|reward)|(?:base|value).*unused.*row/.test(key), 4);
     if (rowSlots.length) {
@@ -2683,7 +2685,7 @@
   function install() {
     if (window.CuddleEconomyRarityV8?.version === VERSION) return;
     installLegendaryApply();
-    window.CuddleEconomyRarityV8 = {
+    const api = {
       version: VERSION,
       tiers: TIERS,
       defaultWeights: DEFAULT_WEIGHTS,
@@ -2698,6 +2700,29 @@
       // How many copies of a stacking reward the run holds (e.g.
       // "alphabet-compass"); read by layers that act on those stacks.
       stack: (state, key) => upgradeStack(state, key),
+      // The shop's permanent shelf: `count` different rewards from the whole
+      // pool, any rarity, each priced at random within its rarity's range.
+      // Plain data, so the stock survives a save; buying goes through the
+      // game's own pick path (_grantUpgradeChoice).
+      shopRewards(game, count, seedText) {
+        const state = game && game.state;
+        if (!state) return [];
+        const pool = allOrdinaryCandidates(game, state).filter((def) => TIER_ORDER.includes(def.__cuddleV8Tier));
+        return shuffle(pool, String(seedText || "shop")).slice(0, count).map((def) => {
+          const tier = def.__cuddleV8Tier;
+          const id = getId(def);
+          return {
+            id,
+            key: String(def.key || id),
+            title: getName(def),
+            description: String(def.description ?? def.desc ?? ""),
+            icon: def.icon || "",
+            tier,
+            price: priceForTier(tier, `${seedText}:price:${id}`),
+            __cuddleV8Effect: def.__cuddleV8Effect || null
+          };
+        });
+      },
       // Runs a pool reward's effect by its saved id (choice.__cuddleV8Effect).
       // A reward card's apply() function doesn't survive a save, so a run
       // reloaded on its reward screen picks through this instead.
@@ -2709,6 +2734,10 @@
         return result;
       }
     };
+    // This layer's own API is never one of the game objects it patches:
+    // wrapping it turned shopRewards' list into a same-tier offer.
+    patchedObjects.add(api);
+    window.CuddleEconomyRarityV8 = api;
     scanGlobals();
     installObserver();
     scanTimer = window.setInterval(scanGlobals, 1000);

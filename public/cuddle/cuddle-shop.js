@@ -120,8 +120,9 @@
       note: "One-time supplies for your next regular stages" },
     { id: "boss", items: BOSS_ITEMS, count: 2, kind: "boss", title: "For the boss",
       note: "One-time supplies, spent when the next boss begins" },
-    { id: "keep", items: KEEP_ITEMS, count: 3, kind: "upgrade", title: "Keeps forever",
-      note: "Permanent upgrades for the rest of this run" },
+    // Stocked from the whole reward pool, not a fixed list (keepStock).
+    { id: "keep", items: [], count: 3, kind: "upgrade", title: "Keeps forever",
+      note: "Any reward from the run's pool, priced by its rarity" },
     { id: "trade", items: TRADE_ITEMS, count: 1, kind: "shop", title: "Trade",
       note: "Swap money for points on the spot" }
   ]);
@@ -196,22 +197,36 @@
     return [random() < RARE_TRADE_CHANCE ? "tradePoints30" : "tradePoints10"];
   }
 
+  // Three rewards from the whole pool (any rarity), each with a price
+  // rolled inside its rarity's range (cuddle-economy-rarity-v8.js).
+  function keepStock(game, key) {
+    const economy = window.CuddleEconomyRarityV8;
+    if (!economy || typeof economy.shopRewards !== "function") return [];
+    return economy.shopRewards(game, 3, `${game.state.runId || "run"}:${key}:wandering-paw:keep`);
+  }
+
+  function isKeepEntry(entry) {
+    return Boolean(entry) && typeof entry === "object" && typeof entry.key === "string";
+  }
+
   function stockFor(game) {
     const shop = shopState(game);
     const key = shopKey(game);
     const saved = shop.stock[key];
     if (saved && Array.isArray(saved.road) && Array.isArray(saved.boss) && Array.isArray(saved.keep)) {
-      // A shop stocked before the trade shelf existed gets one added.
+      // A shop stocked before the trade shelf existed gets one added, and
+      // one from before the pool-wide keep shelf gets a fresh keep shelf.
       if (!Array.isArray(saved.trade)) saved.trade = tradeFor(game, key);
+      if (!saved.keep.every(isKeepEntry)) saved.keep = keepStock(game, key);
       return saved;
     }
     const random = seeded(`${game.state.runId || "run"}:${key}:wandering-paw`);
     const stock = {};
     SHELVES.forEach(shelf => {
-      if (shelf.id === "trade") return;
-      const eligible = shelf.items.filter(item => !(shelf.id === "keep" && isMaxed(game, item)));
-      stock[shelf.id] = shuffled(eligible, random).slice(0, shelf.count).map(item => item.id);
+      if (shelf.id === "trade" || shelf.id === "keep") return;
+      stock[shelf.id] = shuffled(shelf.items, random).slice(0, shelf.count).map(item => item.id);
     });
+    stock.keep = keepStock(game, key);
     stock.trade = tradeFor(game, key);
     shop.stock[key] = stock;
     return stock;
@@ -241,6 +256,31 @@
     const wallet = money(this);
     const items = [];
     SHELVES.forEach(shelf => {
+      if (shelf.id === "keep") {
+        (stock.keep || []).filter(isKeepEntry).forEach(entry => {
+          const id = `keep:${entry.key}`;
+          const purchased = bought.has(id);
+          items.push({
+            id,
+            shelf: "keep",
+            kind: "upgrade",
+            icon: entry.icon,
+            tier: entry.tier,
+            title: entry.title,
+            description: entry.description,
+            cost: entry.price,
+            stages: 0,
+            points: 0,
+            rare: false,
+            level: null,
+            max: null,
+            maxed: false,
+            purchased,
+            affordable: !purchased && wallet >= entry.price
+          });
+        });
+        return;
+      }
       (stock[shelf.id] || []).forEach(id => {
         const item = ALL_ITEMS.get(id);
         if (!item) return;
@@ -290,9 +330,30 @@
     state.rewardBookHistory = state.rewardBookHistory.slice(-200);
   }
 
+  function buyKeepReward(game, id) {
+    const stock = stockFor(game);
+    const entry = (stock.keep || []).filter(isKeepEntry).find(item => `keep:${item.key}` === id);
+    if (!entry) return { ok: false, error: "That isn't on the shelves here." };
+    const bought = boughtHere(game);
+    if (bought.includes(id)) return { ok: false, error: `${entry.title} is sold out here.` };
+    if (money(game) < entry.price) return { ok: false, error: `You need $${entry.price} for ${entry.title}.` };
+    if (typeof game._grantUpgradeChoice !== "function") return { ok: false, error: "That reward can't be bought right now." };
+    // The same path a reward-screen pick takes, so every layer applies it.
+    const { price, tier, ...choice } = entry;
+    const result = game._grantUpgradeChoice(choice);
+    if (!result || !result.ok) return { ok: false, error: (result && result.error) || `${entry.title} can't be taken right now.` };
+    game.state.cuddleMoney = money(game) - entry.price;
+    bought.push(id);
+    lastBought = id;
+    game.state.lastMessage = `${entry.title} bought for $${entry.price}.`;
+    safeSave(game);
+    return { ok: true, message: game.state.lastMessage, item: { id, title: entry.title } };
+  }
+
   function buyCuddleShopItem(itemId) {
     if (!this.state || this.state.status !== "shop") return { ok: false, error: "No shop is open." };
     const id = String(itemId || "");
+    if (id.startsWith("keep:")) return buyKeepReward(this, id);
     const item = ALL_ITEMS.get(id);
     const shelf = SHELF_OF.get(id);
     const stock = stockFor(this);
@@ -395,7 +456,18 @@
     })[character]);
   }
 
+  // Supplies carry their own drawing; a pool reward uses the shared icon set.
+  function plateIcon(entry) {
+    const icon = String(entry.icon || "");
+    if (/\.svg$/i.test(icon)) return `<img src="${ICON_ROOT}${escapeHtml(icon)}" alt="" aria-hidden="true">`;
+    const Icons = window.CuddleIcons;
+    if (Icons && icon && Icons.hasEmoji(icon)) return `<span class="umt-shop-plate-ico">${Icons.svg(icon)}</span>`;
+    return `<span class="umt-shop-plate-ico is-text">${escapeHtml(icon || "✦")}</span>`;
+  }
+
   function durationChip(entry) {
+    // A pool reward's chip names its rarity, in that rarity's colour.
+    if (entry.shelf === "keep" && entry.tier) return `${entry.tier} · keeps`;
     if (entry.shelf === "trade") return entry.rare ? "Rare deal" : "Right now";
     if (entry.shelf === "boss") return "Next boss";
     if (entry.shelf === "road") return entry.stages > 1 ? `Next ${entry.stages} stages` : "Next stage";
@@ -417,6 +489,7 @@
     const disabled = entry.purchased || entry.maxed || !entry.affordable;
     const price = entry.purchased ? "Sold" : entry.maxed ? "Maxed" : entry.affordable ? `$${entry.cost}` : `Need $${entry.cost}`;
     const classes = ["umt-shop-card", `umt-shelf-${entry.shelf}`];
+    if (entry.tier) classes.push("cuddle-v8-rarity", `cuddle-v8-${entry.tier}`);
     if (entry.rare) classes.push("is-rare");
     if (entry.purchased) classes.push("is-sold");
     if (!entry.purchased && !entry.affordable) classes.push("is-short");
@@ -426,7 +499,7 @@
       + ` data-shop-item-id="${escapeHtml(entry.id)}"${disabled ? " disabled" : ""}`
       + ` aria-label="${escapeHtml(`${entry.title}, ${durationChip(entry)}, ${price}`)}">`
       + `<span class="umt-shop-chip">${escapeHtml(durationChip(entry))}</span>`
-      + `<span class="umt-shop-plate"><img src="${ICON_ROOT}${escapeHtml(entry.icon)}" alt="" aria-hidden="true"></span>`
+      + `<span class="umt-shop-plate">${plateIcon(entry)}</span>`
       + `<strong class="umt-shop-name">${escapeHtml(entry.title)}</strong>`
       + levelPips(entry)
       + `<span class="umt-shop-blurb">${escapeHtml(entry.description)}</span>`

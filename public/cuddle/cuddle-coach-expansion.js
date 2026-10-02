@@ -24,8 +24,8 @@
 
   var VERSION = 1;
   var STATE_KEY = "cuddleCoachExpansion";
-  var BASE_METER_THRESHOLD = 12;
-  var MIN_METER_THRESHOLD = 7;
+  var BASE_METER_THRESHOLD = 10;
+  var MIN_METER_THRESHOLD = 5;
   var ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   var VOWELS = new Set("AEIOU".split(""));
   var HINT_UPGRADE_IDS = new Set(["coachHint", "coachEarlierHint"]);
@@ -48,32 +48,16 @@
       id: "coachPossibleAnswers",
       key: "coachPossibleAnswers",
       icon: "🎧",
-      title: "Remaining Setter Box",
-      description: "Unlock an exact Secrets Remaining counter next to the theme readout.",
+      title: "Secrets Counter",
+      description: "Always see how many possible answers are left, next to the theme.",
       max: 1
-    },
-    {
-      id: "coachHint",
-      key: "coachHint",
-      icon: "💡",
-      title: "Guesser Hint",
-      description: "One more automatic hint in every non-boss stage. Hints alternate: first a letter that's in the answer, then a letter in its exact place. Stacks up to four.",
-      max: 4
-    },
-    {
-      id: "coachEarlierHint",
-      key: "coachEarlierHint",
-      icon: "⏪",
-      title: "Earlier Hints",
-      description: "Unlock your first Guesser Hint for the next round if needed, then move its permanent start earlier. Stacks until round 1.",
-      max: 3
     },
     {
       id: "coachMeterThreshold",
       key: "coachMeterThreshold",
       icon: "🩶",
       title: "Softer Cuddle Meter",
-      description: "The Cuddle Meter needs one fewer visible grey tile to fill per stack. Minimum: seven.",
+      description: "The Cuddle Meter fills one tile sooner. Up to 3 levels (minimum: five).",
       max: 3
     },
     {
@@ -81,7 +65,7 @@
       key: "coachMeterReward",
       icon: "🫶",
       title: "Bigger Cuddle",
-      description: "Improve a full meter's reward in order: mulligan → joker → hint.",
+      description: "A full Cuddle Meter gives a Joker instead of a mulligan; at level 2, a letter in its exact place.",
       max: 2
     }
   ]);
@@ -113,15 +97,6 @@
       cost: 44,
       kind: "permanent",
       upgradeId: "coachPossibleAnswers"
-    },
-    {
-      id: "coachShopHint",
-      icon: "💡",
-      title: "Permanent Guesser Hint",
-      description: "PERMANENT: one more automatic hint in every non-boss stage (alternating a present letter and an exact position).",
-      cost: 50,
-      kind: "permanent",
-      upgradeId: "coachHint"
     }
   ]);
 
@@ -370,9 +345,9 @@
       || "medium";
     var difficulty = String(rawDifficulty).toLowerCase();
     var base = difficulty.indexOf("easy") >= 0 || difficulty.indexOf("casual") >= 0
-      ? 10
+      ? 8
       : difficulty.indexOf("hard") >= 0 || difficulty.indexOf("expert") >= 0 || difficulty.indexOf("difficult") >= 0
-        ? 15
+        ? 12
         : BASE_METER_THRESHOLD;
     return Math.max(MIN_METER_THRESHOLD, base - integer(coach.cuddleThresholdStacks, 0));
   }
@@ -389,7 +364,7 @@
     if (!coach) return "";
     var threshold = meterThreshold(coach);
     var remaining = Math.max(0, threshold - Math.max(0, integer(coach.cuddleProgress, 0)));
-    var title = remaining + " more grey tile" + (remaining === 1 ? "" : "s") + " for " + meterRewardName(coach).toLowerCase();
+    var title = remaining + " more grey or yellow tile" + (remaining === 1 ? "" : "s") + " for " + meterRewardName(coach).toLowerCase();
 
     return "<div class=\"cuddle-heart-badge\" title=\"" + escapeHtml(title) + "\">"
       + "<span class=\"cuddle-heart-chip\" role=\"img\" aria-label=\"" + escapeHtml(title) + "\">"
@@ -663,7 +638,8 @@
     (game.state.history || []).forEach(function countEntry(entry) {
       if (!entry) return;
       var shown = Array.isArray(entry.shownFeedback) ? entry.shownFeedback : (entry.feedback || []);
-      var visibleGreys = shown.filter(function grey(value) { return value === "grey"; }).length;
+      // Grey and yellow tiles both fill the meter.
+      var visibleGreys = shown.filter(function fills(value) { return value === "grey" || value === "yellow"; }).length;
       var alreadyCounted = Math.max(0, integer(entry.cuddleCoachGreyCounted, 0));
       if (visibleGreys <= alreadyCounted) return;
       newlyVisible += visibleGreys - alreadyCounted;
@@ -1165,7 +1141,6 @@
   var originalUpgradeCatalog = proto._upgradeCatalog;
   proto._upgradeCatalog = function upgradeCatalogCuddleCoachExpansion() {
     var base = typeof originalUpgradeCatalog === "function" ? originalUpgradeCatalog.apply(this, arguments) : [];
-    if (this.state?.upgradePhase !== "round") return base;
     var existing = new Set((base || []).map(function id(item) { return item && item.id; }));
     return (base || []).concat(eligibleUpgrades(this).filter(function notDuplicate(item) { return !existing.has(item.id); }));
   };
@@ -1180,35 +1155,8 @@
   proto._generateUpgradeChoices = function generateUpgradeChoicesCuddleCoachExpansion() {
     var choices = typeof originalGenerateUpgradeChoices === "function" ? originalGenerateUpgradeChoices.apply(this, arguments) : [];
     choices = Array.isArray(choices) ? choices.slice() : [];
-    var coach = ensureCoach(this);
-    var clearedRound = integer(this.state?.lastRoundSummary?.round, 0);
-    if (isNormalRoundThreeReward(this) && clearedRound === 3 && coach.hintsPerRound <= 0 && isEasyDifficulty(this)) {
-      var forced = UPGRADE_DEFINITIONS.find(function hint(item) { return item.id === "coachHint"; });
-      if (!choices.some(function already(item) { return item && item.id === forced.id; })) {
-        if (choices.length) choices[choices.length - 1] = Object.assign({}, forced);
-        else choices.push(Object.assign({}, forced));
-      }
-      coach.roundThreeHintForced = true;
-    }
     return choices;
   };
-
-  var originalRefreshUpgradeChoices = proto.refreshUpgradeChoices;
-  if (typeof originalRefreshUpgradeChoices === "function") {
-    proto.refreshUpgradeChoices = function refreshUpgradeChoicesCuddleCoachExpansion() {
-      var result = originalRefreshUpgradeChoices.apply(this, arguments);
-      if (result?.ok && isNormalRoundThreeReward(this)
-          && ensureCoach(this).hintsPerRound <= 0 && isEasyDifficulty(this)) {
-        var forced = UPGRADE_DEFINITIONS.find(function hint(item) { return item.id === "coachHint"; });
-        if (!this.state.upgradeChoices.some(function already(item) { return item && item.id === forced.id; })) {
-          if (this.state.upgradeChoices.length) this.state.upgradeChoices[this.state.upgradeChoices.length - 1] = Object.assign({}, forced);
-          else this.state.upgradeChoices.push(Object.assign({}, forced));
-          save(this);
-        }
-      }
-      return result;
-    };
-  }
 
   var originalChooseUpgrade = proto.chooseUpgrade;
   proto.chooseUpgrade = function chooseUpgradeCuddleCoachExpansion(choiceKey) {
@@ -1217,7 +1165,6 @@
     var custom = choice && UPGRADE_DEFINITIONS.find(function match(item) { return item.id === choice.id; });
     if (!custom) return originalChooseUpgrade.apply(this, arguments);
     var phase = this.state.upgradePhase;
-    if (phase !== "round") return { ok: false, error: "This Cuddle Coach reward is only offered between completed rounds." };
     var echoArmed = Boolean(this.state.pendingRewardEcho);
     var result = applyUpgrade(this, custom.id, "round", true);
     if (!result.ok) return result;

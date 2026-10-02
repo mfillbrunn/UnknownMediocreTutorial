@@ -97,9 +97,6 @@
     { key: "mulliganPoints", group: "Scoring", label: "Per unused mulligan", unit: "pts", get: (r) => r.mulliganPoints },
     { key: "openingPoints", group: "Scoring", label: "Stage-start points", unit: "pts", get: (r, s) => num((s.cuddleBonuses || {}).storybookStart) * 10 },
     { key: "specialTiles", group: "Board", label: "Extra special tiles", get: (r, s) => num((s.cuddleBonuses || {}).treasureMap) },
-    { key: "mulliganTiles", group: "Board", label: "Mulligan tiles", get: (r, s) => num((s.cuddleBonuses || {}).mulliganTiles) },
-    { key: "jokerTiles", group: "Board", label: "Joker tiles", get: (r, s) => num((s.cuddleBonuses || {}).jokerTiles) },
-    { key: "oracleTiles", group: "Board", label: "Oracle tiles", get: (r, s) => num((s.cuddleBonuses || {}).oracleTiles) },
     { key: "questPoints", group: "Quests", label: "Quest value", unit: "pts", get: (r) => r.questPoints },
     { key: "questSlots", group: "Quests", label: "Quests at once", get: (r) => r.questSlots },
     { key: "questRefreshes", group: "Quests", label: "Reward refreshes", get: (r) => r.questRefreshes }
@@ -142,11 +139,11 @@
     { id: "scoring", title: "Scoring", color: "#8ff7cd", angle: -150,
       ids: ["storybookStart", "earlySolveBoost", "mulliganValueBoost", "colourTrade", "greyscale"] },
     { id: "economy", title: "Economy", color: "#f6c956", angle: -90,
-      ids: ["rainyDay", "encore", "vowelBounty", "doubleDown", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"] },
+      ids: ["rainyDay", "encore", "vowelBounty", "doubleDown", "treasureMap"] },
     { id: "solving", title: "Solving Aids", color: "#7cb8ff", angle: -30,
       ids: ["consonantSweep", "alphabet-compass"] },
     { id: "coach", title: "Cuddle Coach", color: "#ff9ec7", angle: 30,
-      ids: ["coachPossibleAnswers", "coachHint", "coachEarlierHint", "coachMeterThreshold", "coachMeterReward"] },
+      ids: ["coachPossibleAnswers", "coachMeterThreshold", "coachMeterReward"] },
     { id: "quests", title: "Quests", color: "#f6a94a", angle: 90,
       ids: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment"] },
     { id: "hand", title: "Hand & Tools", color: "#d5a6ff", angle: 150,
@@ -160,8 +157,6 @@
   // Bronze / silver / gold, as on the reward cards' rarity badges.
   const TIER_STROKE = { common: "#c98a4b", rare: "#c6d0de", epic: "#b98cff", legendary: "#f6c956" };
   const TIER_NAME = { common: "Common", rare: "Rare", epic: "Epic", legendary: "Legendary" };
-  // Talents the shop's permanent shelf sells (cuddle-shop.js KEEP items).
-  const SHOP_TALENTS = new Set(["coachPossibleAnswers", "coachHint", "coachMeterThreshold", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"]);
   // Boss rewards that also come up as between-round picks
   // (cuddle-economy-rarity-v8.js LEGENDARY_PICKS); pickTierName says which tier.
   const LEGENDARY_PICK_IDS = new Set(["doubleMulligans", "cullRare", "freeVowelSweep", "biggerMulligans", "questCadence", "revealGreen", "goldenThread", "questDoublePick",
@@ -625,12 +620,8 @@
       if (LEGENDARY_PICK_IDS.has(node.id)) lines.push(`Can also show up as ${pickTierName(node.id)} between-round reward.`);
       return lines;
     }
-    if (node.branch === "cuddleCoach") {
-      lines.push("Bought in the shop, on its permanent shelf.");
-    } else {
-      lines.push(`Between-round reward${tier ? ` (${tier})` : ""}: offered on the reward screen after a stage.`);
-      if (SHOP_TALENTS.has(node.id)) lines.push("Also sold on the shop's permanent shelf.");
-    }
+    lines.push(`Between-round reward${tier ? ` (${tier})` : ""}: offered on the reward screen after a stage.`);
+    lines.push("Can also turn up on the shop's permanent shelf, priced by rarity.");
     if (LEGENDARY_PICK_IDS.has(node.id) && node.tier !== "legendary") lines.push(`Can also show up as ${pickTierName(node.id)} reward.`);
     if (node.easyOnly) lines.push("Only offered on Easy difficulty.");
     return lines;

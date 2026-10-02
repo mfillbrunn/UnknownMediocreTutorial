@@ -2656,6 +2656,7 @@
   // CuddleGame prototype; no multiplayer state, sockets, or shared powers are
   // changed here.
   const CUDDLE_V3_BOSS_TURNS = Object.freeze([2, 2, 3, 4]);
+  const RETIRED_TILE_REWARDS = new Set(["mulliganTiles", "jokerTiles", "oracleTiles"]);
   const CUDDLE_V3_CUSTOM_REWARDS = Object.freeze([
     {
       id: "storybookStart",
@@ -3279,7 +3280,10 @@
     const base = cuddleV3OriginalUpgradeCatalog.call(this)
       .map(cuddleV3NormalizeUpgradeChoice)
       .filter(Boolean);
+    // Mulligan, Joker and Oracle tiles are standard special tiles now
+    // (cuddle-points-money.js), so their rewards are no longer offered.
     const extras = CUDDLE_V3_CUSTOM_REWARDS
+      .filter(definition => !RETIRED_TILE_REWARDS.has(definition.id))
       .filter(definition => Number(state.cuddleBonuses[definition.id] || 0) < definition.max)
       .map(definition => ({ ...definition, key: definition.id }));
     return [...base, ...extras];

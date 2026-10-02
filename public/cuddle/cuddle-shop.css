@@ -478,3 +478,22 @@
   background: #f6c956;
   color: #3a2605;
 }
+
+/* A pool reward on the permanent shelf: the shared icon set in the plate,
+   and the reward's rarity badge in the corner (cuddle-economy-rarity-v8.css). */
+#cuddleRoot .umt-shop-plate-ico {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+#cuddleRoot .umt-shop-plate-ico svg {
+  width: 100%;
+  height: 100%;
+}
+#cuddleRoot .umt-shop-card.cuddle-v8-rarity .umt-shop-chip {
+  color: #1d1528;
+  background: var(--cuddle-v8-tier-color, #d5dee8);
+}

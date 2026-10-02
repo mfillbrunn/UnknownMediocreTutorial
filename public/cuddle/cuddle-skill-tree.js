@@ -102,12 +102,8 @@
         { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", category: "easierStages", description: "The next round reward you pick is applied three times." },
         { id: "greenCount", icon: "🔢", title: "Precise Green", tier: "rare", category: "solving", maxLevel: 1, description: "A green tile also shows how many times that letter appears in the secret." },
         { id: "surprise-assignment", icon: "📜", title: "Surprise Assignment", tier: "rare", category: "quests", description: "Add one extra quest at a random turn in every stage. Each copy schedules another quest." },
-        // Special board tiles (cuddle-points-money.js). Each has its own
-        // counter in cuddleBonuses, so its level reads true.
-        { id: "treasureMap", icon: "🗺️", title: "Treasure Map", tier: "common", category: "economy", maxLevel: 3, description: "One more special tile appears on the board every stage. Stacks up to three times.", level: g => Number(g?.state?.cuddleBonuses?.treasureMap) || 0 },
-        { id: "mulliganTiles", icon: "🔄", title: "Mulligan Tiles", tier: "common", category: "easierStages", maxLevel: 3, description: "Special tiles can be Mulligan tiles: a yellow or green on one gives an extra mulligan. More copies make them more common.", level: g => Number(g?.state?.cuddleBonuses?.mulliganTiles) || 0 },
-        { id: "jokerTiles", icon: "🃏", title: "Joker Tiles", tier: "rare", category: "easierStages", maxLevel: 3, description: "Special tiles can be Joker tiles: a yellow or green on one gives you a Joker. More copies make them more common.", level: g => Number(g?.state?.cuddleBonuses?.jokerTiles) || 0 },
-        { id: "oracleTiles", icon: "🔮", title: "Oracle Tiles", tier: "legendary", category: "solving", maxLevel: 3, description: "Special tiles can be Oracle tiles, the rarest kind: a yellow or green on one reveals a letter and its exact position. More copies make them more common.", level: g => Number(g?.state?.cuddleBonuses?.oracleTiles) || 0 }
+        // More special board tiles (cuddle-points-money.js).
+        { id: "treasureMap", icon: "🗺️", title: "Treasure Map", tier: "rare", category: "economy", maxLevel: 3, description: "One more special tile on the board every stage. Up to 3 levels.", level: g => Number(g?.state?.cuddleBonuses?.treasureMap) || 0 }
       ]
     },
     {
@@ -149,13 +145,11 @@
     {
       id: "cuddleCoach",
       title: "Cuddle Coach",
-      blurb: "Permanent upgrades bought from the Coach. Guesser Hint and Earlier Hints are Easy only.",
+      blurb: "The Cuddle Meter and the Secrets Counter.",
       nodes: [
-        { id: "coachPossibleAnswers", icon: "🎧", title: "Remaining Setter Box", tier: "common", category: "solving", maxLevel: 1, description: "Unlock an exact Secrets Remaining counter next to the theme readout.", level: g => (coachState(g)?.possibleAnswersUnlocked ? 1 : 0) },
-        { id: "coachHint", icon: "💡", title: "Guesser Hint", tier: "rare", category: "solving", maxLevel: 4, description: "One more automatic hint in every non-boss stage. Hints alternate: first a letter that's in the answer, then a letter in its exact place. Stacks up to four.", easyOnly: true, level: g => Number(coachState(g)?.hintsPerRound) || 0 },
-        { id: "coachEarlierHint", icon: "⏪", title: "Earlier Hints", tier: "rare", category: "solving", maxLevel: 3, description: "Unlock your first Guesser Hint for the next round if needed, then move its permanent start earlier. Stacks until round 1.", easyOnly: true, level: g => Math.max(0, 4 - (Number(coachState(g)?.hintStartRound ?? 4))) },
-        { id: "coachMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", tier: "common", category: "easierStages", maxLevel: 3, description: "The Cuddle Meter needs one fewer visible grey tile to fill per stack. Minimum: seven.", level: g => Number(coachState(g)?.cuddleThresholdStacks) || 0 },
-        { id: "coachMeterReward", icon: "🫶", title: "Bigger Cuddle", tier: "common", category: "easierStages", maxLevel: 2, description: "Improve a full meter's reward in order: mulligan → joker → hint.", level: g => Number(coachState(g)?.cuddleRewardTier) || 0 }
+        { id: "coachPossibleAnswers", icon: "🎧", title: "Secrets Counter", tier: "rare", category: "solving", maxLevel: 1, description: "Always see how many possible answers are left, next to the theme.", level: g => (coachState(g)?.possibleAnswersUnlocked ? 1 : 0) },
+        { id: "coachMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", tier: "common", category: "easierStages", maxLevel: 3, description: "The Cuddle Meter fills one tile sooner. Up to 3 levels (minimum: five).", level: g => Number(coachState(g)?.cuddleThresholdStacks) || 0 },
+        { id: "coachMeterReward", icon: "🫶", title: "Bigger Cuddle", tier: "rare", category: "easierStages", maxLevel: 2, description: "A full Cuddle Meter gives a Joker instead of a mulligan; at level 2, a letter in its exact place.", level: g => Number(coachState(g)?.cuddleRewardTier) || 0 }
       ]
     },
     {

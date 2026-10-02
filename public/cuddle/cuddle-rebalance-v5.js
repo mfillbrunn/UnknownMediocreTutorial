@@ -187,28 +187,6 @@
 
   const SOLVING_REWARDS = Object.freeze([
     Object.freeze({
-      id: IDS.openingInsight,
-      key: IDS.openingInsight,
-      icon: "💡",
-      title: "Opening Insight",
-      name: "Opening Insight",
-      description: "Start every non-boss Wordle with one additional exact-position hint.",
-      maxLevel: 2,
-      maxCount: 2,
-      kind: "upgrade"
-    }),
-    Object.freeze({
-      id: IDS.quickStudy,
-      key: IDS.quickStudy,
-      icon: "⏳",
-      title: "Quick Study",
-      name: "Quick Study",
-      description: "Automatic hints arrive one guess sooner (minimum: every two guesses).",
-      maxLevel: 2,
-      maxCount: 2,
-      kind: "upgrade"
-    }),
-    Object.freeze({
       id: IDS.jokerCache,
       key: IDS.jokerCache,
       icon: "🃏",
