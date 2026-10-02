@@ -657,9 +657,10 @@
       var popLabel = "";
       if (tier === 0) {
         if (game.state.status === "playing" && !game.state.pendingRoundEnd) {
-          game.state.mulligansLeft = Math.max(0, integer(game.state.mulligansLeft, 0)) + 1;
-          messages.push("Cuddle Meter full: +1 free mulligan.");
-          popLabel = "+1 mulligan";
+          var gained = typeof game.mulliganGain === "function" ? game.mulliganGain(1) : 1;
+          game.state.mulligansLeft = Math.max(0, integer(game.state.mulligansLeft, 0)) + gained;
+          messages.push("Cuddle Meter full: +" + gained + " free mulligan" + (gained === 1 ? "" : "s") + ".");
+          popLabel = "+" + gained + " mulligan" + (gained === 1 ? "" : "s");
         } else {
           coach.bankedMulligans += 1;
           messages.push("Cuddle Meter full: a free mulligan is banked for the next round.");
@@ -694,8 +695,9 @@
 
   function applyBankedCuddles(game, coach, notes) {
     if (coach.bankedMulligans > 0) {
-      game.state.mulligansLeft = Math.max(0, integer(game.state.mulligansLeft, 0)) + coach.bankedMulligans;
-      notes.push("Banked Cuddle Meter: +" + coach.bankedMulligans + " mulligan" + (coach.bankedMulligans === 1 ? "" : "s") + ".");
+      var banked = typeof game.mulliganGain === "function" ? game.mulliganGain(coach.bankedMulligans) : coach.bankedMulligans;
+      game.state.mulligansLeft = Math.max(0, integer(game.state.mulligansLeft, 0)) + banked;
+      notes.push("Banked Cuddle Meter: +" + banked + " mulligan" + (banked === 1 ? "" : "s") + ".");
       coach.bankedMulligans = 0;
     }
     while (coach.bankedFreeLetters > 0 && hiddenPositions(game).length) {

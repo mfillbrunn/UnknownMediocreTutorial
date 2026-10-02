@@ -2325,7 +2325,10 @@
 
     const state = stateOf(game);
     if (plan.guesses > 0) state.maxGuesses = Math.max(1, asInteger(state.maxGuesses, 6) + plan.guesses);
-    if (plan.mulligans > 0) state.mulligansLeft = Math.max(0, asInteger(state.mulligansLeft, 0)) + plan.mulligans;
+    if (plan.mulligans > 0) {
+      const gained = typeof game.mulliganGain === "function" ? game.mulliganGain(plan.mulligans) : plan.mulligans;
+      state.mulligansLeft = Math.max(0, asInteger(state.mulligansLeft, 0)) + gained;
+    }
     try {
       if (plan.exactHint && typeof game._revealPositionPeek === "function") game._revealPositionPeek();
       else if (plan.letterHint && typeof game._applyOpeningClue === "function") game._applyOpeningClue();

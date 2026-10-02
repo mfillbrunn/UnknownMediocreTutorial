@@ -1866,8 +1866,9 @@
       if (!bonus) return result;
       const messages = [];
       if (bonus.mulligan) {
-        this.state.mulligansLeft = Number(this.state.mulligansLeft || 0) + Number(bonus.mulligan || 0);
-        messages.push(`+${bonus.mulligan} mulligan${Number(bonus.mulligan) === 1 ? "" : "s"}`);
+        const gained = typeof this.mulliganGain === "function" ? this.mulliganGain(bonus.mulligan) : Number(bonus.mulligan || 0);
+        this.state.mulligansLeft = Number(this.state.mulligansLeft || 0) + gained;
+        messages.push(`+${gained} mulligan${gained === 1 ? "" : "s"}`);
       }
       if (bonus.cards && typeof this._drawRewardCards === "function") {
         const drawn = this._drawRewardCards(Number(bonus.cards || 0));

@@ -275,7 +275,8 @@
     if (this.state && !(typeof this.isBossRound === "function" && this.isBossRound())) {
       const extra = (ownsCombo(this, "fullHouse") ? 1 : 0) + (ownsCombo(this, "cleanSweep") ? 1 : 0)
         + (ownsCombo(this, "lamplighter") ? 1 : 0);
-      if (extra) this.state.mulligansLeft = Math.max(0, num(this.state.mulligansLeft)) + extra;
+      const gained = extra && typeof this.mulliganGain === "function" ? this.mulliganGain(extra) : extra;
+      if (gained) this.state.mulligansLeft = Math.max(0, num(this.state.mulligansLeft)) + gained;
     }
     return result;
   });

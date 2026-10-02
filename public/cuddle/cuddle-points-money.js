@@ -165,6 +165,7 @@
   // for after the guess so the reveal can't point at a position this very
   // guess just uncovered.
   proto._scoreSpecialTiles = function scoreSpecialTiles(row, feedback) {
+    var game = this;
     var state = this.state;
     var tiles = state && Array.isArray(state.cuddleMoneyTiles) ? state.cuddleMoneyTiles : null;
     if (!tiles || !Array.isArray(feedback)) return 0;
@@ -192,10 +193,11 @@
         points += tile.payout;
         notes.push("Points tile +" + tile.payout);
       } else if (kind === "mulligan") {
-        tile.payout = 1;
-        tile.label = "+1";
-        state.mulligansLeft = Math.max(0, Number(state.mulligansLeft) || 0) + 1;
-        notes.push("Mulligan tile +1 mulligan");
+        var gained = typeof game.mulliganGain === "function" ? game.mulliganGain(1) : 1;
+        tile.payout = gained;
+        tile.label = "+" + gained;
+        state.mulligansLeft = Math.max(0, Number(state.mulligansLeft) || 0) + gained;
+        notes.push("Mulligan tile +" + gained + " mulligan" + (gained === 1 ? "" : "s"));
       } else if (kind === "joker") {
         tile.payout = 1;
         tile.label = "+1";

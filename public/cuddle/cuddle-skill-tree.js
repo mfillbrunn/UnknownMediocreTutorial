@@ -170,7 +170,7 @@
       blurb: "Permanent rewards for clearing a boss round. No ordinary upgrade is offered afterward.",
       nodes: [
         { id: "cullRare", icon: "✂️", title: "Deep Cull", tier: "legendary", category: "boss", maxLevel: 1, description: "Remove four rare letters from the deck and from every future secret." },
-        { id: "doubleMulligans", icon: "🔁", title: "Double Mulligans", tier: "epic", category: "boss", maxLevel: 1, description: "Double the number of mulligans you get each stage.", level: g => upgradeCount(g, "doubleMulligans") },
+        { id: "doubleMulligans", icon: "🔁", title: "Double Mulligans", tier: "epic", category: "boss", maxLevel: 1, description: "Permanently doubles every mulligan you get: each stage's starting mulligans and every one you gain along the way.", level: g => upgradeCount(g, "doubleMulligans") },
         { id: "biggerMulligans", icon: "🖐️", title: "Full Hand Mulligan", tier: "epic", category: "boss", maxLevel: 1, description: "Every mulligan can now replace up to five cards.", level: g => upgradeCount(g, "mulliganSize") },
         { id: "freeVowelSweep", icon: "🅰️", title: "Free Vowel Sweep", tier: "legendary", category: "boss", maxLevel: 1, description: "Each stage opens with one random vowel tested for free: you learn whether it's in the answer, not where.", level: g => upgradeCount(g, "freeVowelSweep") },
         { id: "revealGreen", icon: "📍", title: "Position Peek", tier: "common", category: "boss", maxLevel: 1, description: "Your next stage opens with one letter of the answer already in its exact place. One time." },

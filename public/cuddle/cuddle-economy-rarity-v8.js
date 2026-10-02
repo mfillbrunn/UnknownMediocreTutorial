@@ -146,7 +146,7 @@
   // in its own tier (ORDINARY_TIER_BY_NAME). Applied with the game's own
   // _applyBossReward (installLegendaryApply), exactly as a boss clear would.
   const LEGENDARY_PICKS = Object.freeze([
-    legendaryPick("doubleMulligans", "🔁", "Double Mulligans", "Double the number of mulligans you get each stage.",
+    legendaryPick("doubleMulligans", "🔁", "Double Mulligans", "Permanently doubles every mulligan you get: each stage's starting mulligans and every one you gain along the way.",
       (state) => !(Number(state.upgrades?.doubleMulligans) > 0)),
     legendaryPick("cullRare", "✂️", "Deep Cull", "Remove four rare letters from the deck and from every future secret.",
       (state) => ownedHistoryCount(state, "cullRare") < 1),
