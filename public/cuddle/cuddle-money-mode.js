@@ -956,7 +956,6 @@
       return "<button type=\"button\" class=\"cuddle-money-choice" + (tier ? " cuddle-v8-rarity cuddle-v8-" + tier : "") + "\" data-cuddle-money-action=\"starter\" data-reward-id=\"" + escapeHtml(reward.id) + "\">"
         + "<span class=\"cuddle-money-choice-icon\">" + escapeHtml(reward.icon || "\uD83C\uDF81") + "</span>"
         + "<span><strong>" + escapeHtml(reward.title) + "</strong><small>" + goldenMoney(escapeHtml(reward.description)) + "</small></span>"
-        + "<b>FREE</b>"
         // Last, so the text keeps its place as the card's second child
         // (cuddle-money-mode.css); it is pinned to the corner anyway.
         + (tier ? "<span class=\"cuddle-v8-rarity-badge\" role=\"img\" aria-label=\"" + tier + " rarity\">" + tier + "</span>" : "")
@@ -1094,17 +1093,33 @@
     var bank = overlay.querySelector("#cuddleMoneyBankCounter");
     var current = payload.from;
     var rows = Array.from(overlay.querySelectorAll(".cuddle-money-payout-row"));
-    for (var index = 0; index < rows.length; index += 1) {
+    // A redraw mid-count rebuilds the overlay and starts a new run of this
+    // function; it picks up at the first row the old one hadn't settled,
+    // and the old one (still holding the detached overlay) stops.
+    var token = (payload.animationToken || 0) + 1;
+    payload.animationToken = token;
+    var startAt = instant ? 0 : Math.min(rows.length, Math.max(0, payload.settledRows || 0));
+    for (var settled = 0; settled < startAt; settled += 1) {
+      rows[settled].classList.add("is-settled");
+      var shown = rows[settled].querySelector(".cuddle-money-row-increment");
+      if (shown) shown.classList.add("is-visible");
+      current += payload.rows[settled].amount;
+    }
+    if (bank) bank.textContent = formatPoints(current);
+    for (var index = startAt; index < rows.length; index += 1) {
       var rowElement = rows[index];
       var row = payload.rows[index];
       rowElement.classList.add("is-counting");
       var increment = rowElement.querySelector(".cuddle-money-row-increment");
       if (increment) increment.classList.add("is-visible");
       await animateBank(bank, current, current + row.amount, bankDuration);
+      if (payload.animationToken !== token) return;
       current += row.amount;
       rowElement.classList.remove("is-counting");
       rowElement.classList.add("is-settled");
+      payload.settledRows = index + 1;
       await delay(rowPause);
+      if (payload.animationToken !== token) return;
     }
     if (bank) bank.textContent = formatPoints(payload.to);
     var total = overlay.querySelector(".cuddle-money-payout-total");
@@ -1280,14 +1295,14 @@
     if (!root || !activeGame || !activeGame.state) return;
     var mode = ensureMode(activeGame);
     // The campaign can re-render the whole Cuddle root when an asynchronous
-    // category hint arrives. If that happens during cash-out, replay the
-    // animation instead of leaving later payouts permanently blocked.
+    // category hint arrives. If that happens during cash-out, put the
+    // overlay back instead of leaving later payouts permanently blocked.
     if (payoutRunning && !document.getElementById("cuddleMoneyPayoutOverlay")) {
       payoutRunning = false;
       if (runningPayoutPayload) {
-        // Put it straight back, already counted, with Collect showing: the
-        // player has watched it once and shouldn't wait through it again.
-        runningPayoutPayload.replayInstantly = true;
+        // Rows already counted come back settled and the count carries on
+        // from the next one (runPayoutAnimation reads payload.settledRows),
+        // so a redraw never skips the cash-out or makes it start over.
         mode.pendingPayout = runningPayoutPayload;
         mode.lastAnimatedPayoutId = null;
       }
