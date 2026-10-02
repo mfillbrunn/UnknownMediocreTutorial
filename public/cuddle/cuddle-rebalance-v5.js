@@ -16,6 +16,10 @@
     luckyStartPercent: 10,
     jackpotPercent: 10,
     doubleOrNothingPercent: 8,
+    // A Classic Wordle gets no head start, so clearing one pays a bonus --
+    // more than the helped stages (Themed, Head Start, Lucky Start: none)
+    // and less than a challenge ($20-$40), in both Points and Money.
+    classicClearBonus: 12,
     unusedJokerBonus: 3,
     reserveDividendExtra: 5,
     hints: Object.freeze({"easy":{"first":1,"cadence":2},"medium":{"first":2,"cadence":3},"hard":{"first":3,"cadence":4}})
@@ -882,8 +886,14 @@
     return CHALLENGES[index];
   }
 
+  const CLASSIC_DESCRIPTION = `A standard Wordle with no help. Clear it for a $${CONFIG.classicClearBonus} bonus.`;
+
   function variantForNode(game, node, salt = "") {
-    if (!salt && node.cuddleVariant && node.cuddleVariant.version === VERSION) return node.cuddleVariant;
+    if (!salt && node.cuddleVariant && node.cuddleVariant.version === VERSION) {
+      // Stops rolled before the Classic bonus existed keep their old text.
+      if (node.cuddleVariant.kind === "plain") node.cuddleVariant.description = CLASSIC_DESCRIPTION;
+      return node.cuddleVariant;
+    }
     const roll = hash32(`${mapSeed(game)}:variant:${node.row}:${node.col}${salt}`) % 100;
     let variant;
     if (roll < CONFIG.regularWordlePercent) {
@@ -892,7 +902,7 @@
         kind: "plain",
         icon: "🟩",
         title: "Classic Wordle",
-        description: "A rare standard Wordle with no special setup."
+        description: CLASSIC_DESCRIPTION
       };
     } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent) {
       variant = {
@@ -1976,6 +1986,18 @@
       challenge.paid = true;
       const liveChallenge = activeChallenge(game);
       if (liveChallenge) liveChallenge.paid = true;
+    }
+
+    const variant = activeVariant(game);
+    if (variant && variant.kind === "plain" && !variant.classicPaid) {
+      const bonus = CONFIG.classicClearBonus;
+      addScoreBonus(game, bonus, "umtClassicBonus", `Classic Wordle cleared (+$${bonus} money)`, entry);
+      const paidState = stateOf(game);
+      if (paidState) {
+        paidState.cuddleMoney = Math.max(0, asNumber(paidState.cuddleMoney, 0) + bonus);
+        if (entry) entry.classicBonusMoney = asNumber(entry.classicBonusMoney, 0) + bonus;
+      }
+      variant.classicPaid = true;
     }
 
     /* UMT_CUDDLE_USER_CONSUME_JOKERS */
@@ -3131,7 +3153,7 @@
 
 
   const POWER_INFO = Object.freeze({
-    plain: { title: "Classic Wordle", description: "A standard Wordle with no special rule.", shape: "grid" },
+    plain: { title: "Classic Wordle", description: `A standard Wordle with no help. Clear it for a ${CONFIG.classicClearBonus}-point and $${CONFIG.classicClearBonus} bonus.`, shape: "grid" },
     luckyStart: { title: "Lucky Start", description: "One exact position is revealed before the first guess.", shape: "clover" },
     jackpot: { title: "Jackpot Run", description: "Greens pay double, but the stage must be solved within the world's guess limit (6, 5 or 4) or the run is lost.", shape: "coins" },
     doubleOrNothing: { title: "Double or Nothing", description: "Solve by guess three to double the stage, or lose half of it.", shape: "scales" },

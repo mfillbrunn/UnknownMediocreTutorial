@@ -2227,7 +2227,7 @@
       const icon = kind => `<span class="umt-legend-glyph" style="--kind:${Worlds.KIND_COLORS[kind]}">${Worlds.iconSvg(kind)}</span>`;
       const row = (kind, title, text) => `<li>${icon(kind)}<span><strong>${escapeHtml(title)}</strong><small>${richText(text)}</small></span></li>`;
       const variants = [
-        ["Classic", "A standard Wordle with no special setup."],
+        ["Classic", "A standard Wordle with no help. Clearing it pays a bonus: more than the helped stages, less than a challenge."],
         ["Themed", "Opens with some of the solution's categories revealed."],
         ["Head Start", "A random word is played for you as the first guess."],
         ["Lucky Start", "One exact letter position is revealed before you start."],
