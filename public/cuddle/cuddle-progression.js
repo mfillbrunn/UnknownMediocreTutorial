@@ -1259,8 +1259,9 @@
   }
 
   // ---------------------------------------------------------------------
-  // Quest banner: when a quest turns up mid-stage, a short "Quest incoming"
-  // banner swooshes in over the board and out again, so it can't be missed.
+  // Quest banner: when a quest turns up mid-stage, a small "Quest!" pill
+  // swooshes in over the board and straight out again -- just the alert;
+  // what the quest asks stays in the quest strip above the board.
   // It waits for the stage banner and any boss entrance to clear first.
   // ---------------------------------------------------------------------
 
@@ -1281,26 +1282,24 @@
       return;
     }
     el.classList.add("is-leaving");
-    setTimeout(() => el.remove(), 460);
+    setTimeout(() => el.remove(), 340);
   }
 
-  function showQuestBanner(quest) {
+  function showQuestBanner() {
     const el = host();
     if (!el) return;
     dismissQuestBanner(true);
     const wrap = document.createElement("div");
     wrap.className = "umt-quest-banner-wrap";
+    const Icons = window.CuddleIcons;
     wrap.innerHTML = `<div class="umt-quest-banner" role="status" aria-live="polite">`
-      + `<span class="umt-qb-icon" aria-hidden="true">${esc(quest.icon || "✦")}</span>`
-      + `<div class="umt-qb-text"><span class="umt-qb-eyebrow">Quest incoming</span>`
-      + `<strong>${esc(quest.title || "Quest")}</strong>`
-      + `<span class="umt-qb-desc">${esc(quest.description || "")}</span>`
-      + `<span class="umt-qb-foot">Do it on your next guess for a reward.</span></div>`
+      + `<span class="umt-qb-icon" aria-hidden="true">${Icons ? Icons.svg("📜") : ""}</span>`
+      + `<strong>Quest!</strong>`
       + `</div>`;
     el.appendChild(wrap);
     questBanner.el = wrap;
     wrap.firstElementChild.addEventListener("click", () => dismissQuestBanner(false));
-    questBanner.timer = setTimeout(() => dismissQuestBanner(false), 2600);
+    questBanner.timer = setTimeout(() => dismissQuestBanner(false), 1000);
   }
 
   function checkForQuest(game) {
@@ -1319,7 +1318,7 @@
       return;
     }
     state.umtQuestBannerKey = key;
-    showQuestBanner(quest);
+    showQuestBanner();
   }
 
   // ---------------------------------------------------------------------
