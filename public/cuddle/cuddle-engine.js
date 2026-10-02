@@ -119,7 +119,7 @@
   const EARLY_SOLVE_BONUS = 5;
   // Quests start at zero and are only worth anything once the Quest Value
   // reward (+5 a pick, stacking) or the Quest Head Start boss reward is taken.
-  const QUEST_POINTS_PER_PICK = 5;
+  const QUEST_POINTS_PER_PICK = 10;
   // Quest Trial boss: missing the forced quest on a guess costs this many
   // points from the running total (never below zero).
   const QUEST_TRIAL_PENALTY = 5;
@@ -2211,7 +2211,7 @@
           id: "questPoints",
           icon: "🏅",
           title: "Quest Value",
-          description: "Quests are worth 5 points more. Stacks every time you take it."
+          description: "Quests are worth 10 points more. Stacks."
         },
         {
           id: "questReroll",
@@ -2656,6 +2656,7 @@
   // CuddleGame prototype; no multiplayer state, sockets, or shared powers are
   // changed here.
   const CUDDLE_V3_BOSS_TURNS = Object.freeze([2, 2, 3, 4]);
+  const RETIRED_TILE_REWARDS = new Set(["mulliganTiles", "jokerTiles", "oracleTiles"]);
   const CUDDLE_V3_CUSTOM_REWARDS = Object.freeze([
     {
       id: "storybookStart",
@@ -3196,7 +3197,7 @@
   const cuddleV3OriginalApplyBossReward = CuddleGame.prototype._applyBossReward;
   CuddleGame.prototype._applyBossReward = function applyCuddleV3BossReward(rewardId) {
     if (rewardId !== "cullRare") return cuddleV3OriginalApplyBossReward.call(this, rewardId);
-    const letters = this._removalCandidates(3);
+    const letters = this._removalCandidates(4);
     if (!letters.length) return "No letters were safe to remove.";
     this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
     return `Deep Cull removed ${letters.join(", ")}.`;
@@ -3279,7 +3280,10 @@
     const base = cuddleV3OriginalUpgradeCatalog.call(this)
       .map(cuddleV3NormalizeUpgradeChoice)
       .filter(Boolean);
+    // Mulligan, Joker and Oracle tiles are standard special tiles now
+    // (cuddle-points-money.js), so their rewards are no longer offered.
     const extras = CUDDLE_V3_CUSTOM_REWARDS
+      .filter(definition => !RETIRED_TILE_REWARDS.has(definition.id))
       .filter(definition => Number(state.cuddleBonuses[definition.id] || 0) < definition.max)
       .map(definition => ({ ...definition, key: definition.id }));
     return [...base, ...extras];
@@ -3319,7 +3323,7 @@
         state.upgrades[choice.id] = Number(state.upgrades[choice.id] || 0) + 1;
         return { ok: true };
       case "questPoints":
-        state.upgrades.questPoints = Number(state.upgrades.questPoints || 0) + 5;
+        state.upgrades.questPoints = Number(state.upgrades.questPoints || 0) + QUEST_POINTS_PER_PICK;
         return { ok: true };
       case "questReroll":
         this._applyRewardEffect("questReroll");
@@ -3719,21 +3723,24 @@
       key: "colourTrade",
       icon: "G+",
       title: "Colour Surge",
-      description: "Green tiles are worth 1 point more. This reward stacks."
+      description: "Green tiles are worth 1 point more (2 more at level 3). Up to 3 levels."
     },
     {
       id: "greyscale",
       key: "greyscale",
       icon: "GREY",
       title: "Greyscale",
-      description: "Grey tiles gain 2 points and yellow tiles 1 point for the rest of the run."
+      description: "Grey tiles gain 2 points and yellow tiles 1 (grey 3 and yellow 2 at level 3). Up to 3 levels."
     }
   ]);
   const customUpgradeIds = new Set(customUpgradeDefinitions.map(item => item.id));
   // Greyscale is a one-time pick. (It used to also zero yellow and green,
   // and shut Colour Surge out after it; it's pure upside now.)
+  // Colour Surge and Greyscale go up to three levels; the third pays more.
+  const COLOUR_REWARD_MAX = 3;
   function onceOnlyTaken(state, id) {
-    return id === "greyscale" && finiteNumber(state?.balanceRewardCounts?.greyscale) > 0;
+    return (id === "greyscale" || id === "colourTrade")
+      && finiteNumber(state?.balanceRewardCounts?.[id]) >= COLOUR_REWARD_MAX;
   }
   const goldenTempoDefinition = Object.freeze({
     id: "goldenTempo",
@@ -3921,7 +3928,7 @@
         : { ok: false, error: "That upgrade is not available." };
     }
     if (onceOnlyTaken(state, choice.id)) {
-      return { ok: false, error: "You already have Greyscale." };
+      return { ok: false, error: `${choice.title || "That reward"} is already at its top level.` };
     }
 
     const upgrades = state.upgrades;
@@ -3934,13 +3941,17 @@
       case "handSizeBoost":
         upgrades.handSizeBonus += 1;
         break;
-      case "colourTrade":
-        upgrades.greenOnlyPoints += 1;
+      case "colourTrade": {
+        const finalLevel = finiteNumber(state.balanceRewardCounts.colourTrade) + 1 >= COLOUR_REWARD_MAX;
+        upgrades.greenOnlyPoints += finalLevel ? 2 : 1;
         break;
-      case "greyscale":
-        upgrades.greyPoints += 2;
-        upgrades.yellowOnlyPoints += 1;
+      }
+      case "greyscale": {
+        const finalLevel = finiteNumber(state.balanceRewardCounts.greyscale) + 1 >= COLOUR_REWARD_MAX;
+        upgrades.greyPoints += finalLevel ? 3 : 2;
+        upgrades.yellowOnlyPoints += finalLevel ? 2 : 1;
         break;
+      }
       case "mulliganValueBoost":
         upgrades.mulliganPointBonus += 5;
         break;
@@ -4634,7 +4645,7 @@
     const mega = ensureMega(this);
     let message;
     if (rewardId === "cullRare") {
-      const letters = this._removalCandidates(3);
+      const letters = this._removalCandidates(4);
       message = letters.length
         ? (() => {
           this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
@@ -5241,7 +5252,7 @@
     // the extra concurrent quests below were being kept -- so with the usual
     // single quest the reward did nothing.
     if (mega.questPersistsForRound && primaryQuestBefore && entry && !entry.questComplete
-        && this.state.status === "playing" && !this.isBossRound()) {
+        && this.state.status === "playing") {
       this.state.activeQuest = primaryQuestBefore;
     }
 
@@ -5305,7 +5316,7 @@
         }));
         if (completed) {
           handleExtraQuestCompletion(this, quest, entry);
-        } else if (mega.questPersistsForRound && !this.isBossRound()) {
+        } else if (mega.questPersistsForRound) {
           remaining.push(quest);
         }
       });

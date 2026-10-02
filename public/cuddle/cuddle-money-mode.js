@@ -49,18 +49,14 @@
     payoutCoinCount: 8
   });
 
-  var STARTER_REWARD_IDS = [
-    "doubleMulligans",
-    "biggerMulligans",
-    "richerColours",
-    "freeVowelSweep",
-    "questHead",
-    "openingClue",
-    "questDoublePick",
-    "questCadence",
-    "questPersistReward",
-    "backupPlanReward"
-  ];
+  // Starting bonuses come from the ordinary reward pool, all three of one
+  // rarity, and the allowed rarities depend on difficulty: the easier the
+  // run, the stronger the start.
+  var STARTER_TIERS = {
+    hard: ["rare", "epic"],
+    medium: ["epic", "legendary"],
+    easy: ["legendary"]
+  };
 
   var CHALLENGES = [
     {
@@ -319,31 +315,28 @@
     return mode;
   }
 
-  // Every other difficulty's Starting Bonus is drawn from the shared boss
-  // reward book -- a free taste of a reward tier the player would otherwise
-  // have to clear a boss to earn. Hard mode already gets no compensation
-  // picks the way easy/medium do (see startNewMega's difficultyStart
-  // branch), so handing it a boss-tier reward for free on top of that was
-  // backwards: the hardest difficulty ended up with the single strongest
-  // opening pick. It draws from the ordinary round-clear catalog instead.
   function starterRewardChoices(game) {
     var difficulty = String(game.state && game.state.megaState && game.state.megaState.difficulty || "hard");
-    if (difficulty === "hard" && typeof game._upgradeCatalog === "function") {
-      return { source: "normal", choices: shuffled(game._upgradeCatalog(), game).slice(0, 3) };
+    var allowed = STARTER_TIERS[difficulty] || STARTER_TIERS.hard;
+    if (typeof game._generateUpgradeChoices !== "function") return { source: "normal", choices: [] };
+    // Each draw is an ordinary between-round offer: one rarity rolled by
+    // cuddle-economy-rarity-v8.js, every card from it. Redraw until the
+    // rarity is one this difficulty allows (Easy's Legendary is the long
+    // shot, about one draw in twenty).
+    var offer = [];
+    var tier = "";
+    for (var attempt = 0; attempt < 400; attempt += 1) {
+      offer = (game._generateUpgradeChoices() || []).slice(0, 3);
+      tier = offer.length && offer[0] ? String(offer[0].__cuddleV8OfferTier || offer[0].__cuddleV8Tier || "") : "";
+      var sameTier = offer.every(function inTier(choice) {
+        return choice && String(choice.__cuddleV8OfferTier || choice.__cuddleV8Tier || "") === tier;
+      });
+      if (offer.length === 3 && sameTier && allowed.indexOf(tier) >= 0) break;
     }
-    var questBook = window.CuddleQuestBook;
-    // "Margin Note" (openingClue) reveals a letter at the start of every
-    // future stage -- a standing hint. Free hints are Easy's whole reason
-    // to exist (see trainingWheelsFor in cuddle-rebalance-v5.js), so
-    // Medium's Starting Bonus draw excludes it rather than risk handing a
-    // Medium run the same free-hint value Easy is built around.
-    var ids = difficulty === "easy" ? STARTER_REWARD_IDS : STARTER_REWARD_IDS.filter(function notAHint(id) {
-      return id !== "openingClue";
-    });
-    var choices = ids.map(function rewardForId(id) {
-      return questBook && typeof questBook.getBossReward === "function" ? questBook.getBossReward(id) : null;
-    }).filter(Boolean);
-    return { source: "boss", choices: shuffled(choices, game).slice(0, 3) };
+    return {
+      source: "normal",
+      choices: offer.map(function withTier(choice) { return Object.assign({}, choice, { starterTier: tier }); })
+    };
   }
 
   function resetModeForNewRun(game) {
@@ -959,10 +952,15 @@
     if (!root || !root.querySelector(".cuddle-header")) return;
     if (document.getElementById("cuddleMoneyStarterOverlay")) return;
     var cards = mode.starterRewardChoices.map(function rewardCard(reward) {
-      return "<button type=\"button\" class=\"cuddle-money-choice\" data-cuddle-money-action=\"starter\" data-reward-id=\"" + escapeHtml(reward.id) + "\">"
+      var tier = /^(common|rare|epic|legendary)$/.test(String(reward.starterTier || "")) ? reward.starterTier : "";
+      return "<button type=\"button\" class=\"cuddle-money-choice" + (tier ? " cuddle-v8-rarity cuddle-v8-" + tier : "") + "\" data-cuddle-money-action=\"starter\" data-reward-id=\"" + escapeHtml(reward.id) + "\">"
         + "<span class=\"cuddle-money-choice-icon\">" + escapeHtml(reward.icon || "\uD83C\uDF81") + "</span>"
         + "<span><strong>" + escapeHtml(reward.title) + "</strong><small>" + goldenMoney(escapeHtml(reward.description)) + "</small></span>"
-        + "<b>FREE</b></button>";
+        + "<b>FREE</b>"
+        // Last, so the text keeps its place as the card's second child
+        // (cuddle-money-mode.css); it is pinned to the corner anyway.
+        + (tier ? "<span class=\"cuddle-v8-rarity-badge\" role=\"img\" aria-label=\"" + tier + " rarity\">" + tier + "</span>" : "")
+        + "</button>";
     }).join("");
     root.insertAdjacentHTML("beforeend",
       "<div id=\"cuddleMoneyStarterOverlay\" class=\"cuddle-money-overlay\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"cuddleMoneyStarterTitle\">"

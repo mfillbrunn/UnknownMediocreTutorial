@@ -40,7 +40,11 @@
     patternLens: "umtPatternLens",
     mistakeShield: "umtMistakeShield",
     lastLight: "umtLastLight",
-    yellowHint: "umtYellowHint"
+    yellowHint: "umtYellowHint",
+    clearSight: "umtClearSight",
+    jokerCacheLarge: "umtJokerCacheLarge",
+    cullOne: "umtCullOne",
+    cullTwo: "umtCullTwo"
   });
 
   const VOWELS = new Set(["A", "E", "I", "O", "U"]);
@@ -53,20 +57,14 @@
     Object.freeze({
       id: IDS.rainyDay, key: IDS.rainyDay, icon: "\uD83C\uDFE6",
       title: "Rainy Day Fund", name: "Rainy Day Fund",
-      description: "Every non-boss stage opens by paying 5% interest on your wallet, up to $25. A second copy doubles both.",
+      description: "Every non-boss stage opens by paying 10% interest on your wallet, up to $25. A second copy doubles both.",
       maxLevel: 2, maxCount: 2, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.encore, key: IDS.encore, icon: "\uD83C\uDFAC",
       title: "Encore", name: "Encore",
-      description: "Every third stage you solve pays a 75-point encore bonus.",
+      description: "Every third stage you solve pays a 50-point encore bonus.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
-    }),
-    Object.freeze({
-      id: IDS.hotStreak, key: IDS.hotStreak, icon: "\uD83D\uDD25",
-      title: "Hot Streak", name: "Hot Streak",
-      description: "Each guess in a row that pins a new green pays a growing bonus: 5, then 10, then 15 points, and so on. A guess with no new green resets it.",
-      maxLevel: 2, maxCount: 2, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.vowelBounty, key: IDS.vowelBounty, icon: "\uD83C\uDD70\uFE0F",
@@ -86,20 +84,14 @@
     Object.freeze({
       id: IDS.vowelLamp, key: IDS.vowelLamp, icon: "\uD83C\uDFEE",
       title: "Vowel Lamp", name: "Vowel Lamp",
-      description: "Every non-boss stage tells you how many vowels the answer has.",
+      description: "Every stage, boss fights included, tells you how many vowels the answer has.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.echoFinder, key: IDS.echoFinder, icon: "\uD83D\uDC6F",
       title: "Echo Finder", name: "Echo Finder",
-      description: "Every non-boss stage tells you whether the answer uses a letter twice.",
+      description: "Every stage, boss fights included, tells you whether the answer uses a letter twice.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
-    }),
-    Object.freeze({
-      id: IDS.deadLetter, key: IDS.deadLetter, icon: "\uD83E\uDEA6",
-      title: "Dead Letter", name: "Dead Letter",
-      description: "Every non-boss stage opens with a letter that isn't in the answer crossed out. Stacks: one more letter per copy.",
-      maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.treasureHunter, key: IDS.treasureHunter, icon: "\uD83D\uDC8E",
@@ -130,8 +122,36 @@
     Object.freeze({
       id: IDS.yellowHint, key: IDS.yellowHint, icon: "\uD83D\uDFE8",
       title: "Yellow Guesser Hint", name: "Yellow Guesser Hint",
-      description: "Every non-boss stage opens with one letter of the answer shown as in the word, not where. Stacks: one more letter per copy.",
-      maxLevel: 2, maxCount: 2, kind: "upgrade"
+      description: "Every stage, boss fights included, opens with one letter of the answer shown as in the word, not where.",
+      maxLevel: 1, maxCount: 1, kind: "upgrade"
+    }),
+    // Yellow Guesser Hint's second stage (Legendary): the same letter now
+    // comes with its exact place.
+    Object.freeze({
+      id: IDS.clearSight, key: IDS.clearSight, icon: "\uD83D\uDFE9",
+      title: "Clear Sight", name: "Clear Sight",
+      description: "Upgrades Yellow Guesser Hint: every stage's letter now comes already in its exact place.",
+      maxLevel: 1, maxCount: 1, kind: "upgrade", requires: IDS.yellowHint
+    }),
+    Object.freeze({
+      id: IDS.jokerCacheLarge, key: IDS.jokerCacheLarge, icon: "\uD83C\uDCCF",
+      title: "Large Joker Cache", name: "Large Joker Cache",
+      description: "Two Jokers every stage. Replaces Small Joker Cache.",
+      maxLevel: 1, maxCount: 1, kind: "upgrade"
+    }),
+    // Letter culls, picked from the letters the engine can safely take out
+    // of the deck and every future answer (_removalCandidates).
+    Object.freeze({
+      id: IDS.cullOne, key: IDS.cullOne, icon: "\u2702\uFE0F",
+      title: "Cull One Letter", name: "Cull One Letter",
+      description: "Permanently remove one rare consonant from your deck and every future answer. Can be taken again.",
+      maxLevel: 6, maxCount: 6, kind: "upgrade", cull: 1
+    }),
+    Object.freeze({
+      id: IDS.cullTwo, key: IDS.cullTwo, icon: "\u2702\uFE0F",
+      title: "Cull Two Letters", name: "Cull Two Letters",
+      description: "Permanently remove two rare consonants from your deck and every future answer. Can be taken again.",
+      maxLevel: 3, maxCount: 3, kind: "upgrade", cull: 2
     })
   ]);
 
@@ -145,19 +165,9 @@
       description: "Rainy Day Fund + Reserve Dividend: the interest cap doubles, and each unused Joker counts as $10 toward the balance."
     }),
     Object.freeze({
-      id: "goldenStreak", icon: "\uD83D\uDD25", title: "Golden Streak",
-      requires: Object.freeze([IDS.hotStreak, "greenOnlyPoints"]),
-      description: "Hot Streak + Colour Surge: a guess that finds a new yellow keeps the streak alive too."
-    }),
-    Object.freeze({
       id: "encoreNight", icon: "\uD83C\uDFAC", title: "Encore Night",
       requires: Object.freeze([IDS.encore, IDS.vowelBounty]),
       description: "Encore + Vowel Bounty: every encore also pays 10 points for each vowel in that stage's secret."
-    }),
-    Object.freeze({
-      id: "allIn", icon: "\uD83C\uDFB2", title: "All In",
-      requires: Object.freeze([IDS.doubleDown, IDS.hotStreak]),
-      description: "Double Down + Hot Streak: a solve on the lucky guess also pays +15 points (+30 with Hot Streak taken twice)."
     }),
   ]);
 
@@ -177,33 +187,11 @@
 
   const SOLVING_REWARDS = Object.freeze([
     Object.freeze({
-      id: IDS.openingInsight,
-      key: IDS.openingInsight,
-      icon: "💡",
-      title: "Opening Insight",
-      name: "Opening Insight",
-      description: "Start every non-boss Wordle with one additional exact-position hint.",
-      maxLevel: 2,
-      maxCount: 2,
-      kind: "upgrade"
-    }),
-    Object.freeze({
-      id: IDS.quickStudy,
-      key: IDS.quickStudy,
-      icon: "⏳",
-      title: "Quick Study",
-      name: "Quick Study",
-      description: "Automatic hints arrive one guess sooner (minimum: every two guesses).",
-      maxLevel: 2,
-      maxCount: 2,
-      kind: "upgrade"
-    }),
-    Object.freeze({
       id: IDS.jokerCache,
       key: IDS.jokerCache,
       icon: "🃏",
-      title: "Joker Cache",
-      name: "Joker Cache",
+      title: "Small Joker Cache",
+      name: "Small Joker Cache",
       description: "One extra Joker every stage.",
       maxLevel: 1,
       maxCount: 1,
@@ -248,6 +236,10 @@
 
   const REMOVED_NORMAL_REWARDS = new Set([
     "coachEarlierHint",
+    // Grey Matters is gone (Greyscale covers grey); the engine's "Cull X & Y"
+    // is replaced by Cull One / Cull Two Letters below.
+    "greyPointBoost",
+    "removeLetter",
     // Wild Card (a Joker every stage) was too strong for a Rare pick; the
     // single Joker per stage is now the Legendary Joker Cache.
     "jokerPerRound"
@@ -1276,17 +1268,17 @@
   // Yellow Guesser Hint: one present letter per copy, once per stage
   // (the round token keeps a reload from granting it twice).
   function grantStageYellowHints(game) {
-    const level = clamp(upgradeLevel(game, IDS.yellowHint), 0, 2);
     const custom = customState(game);
-    if (level <= 0 || !custom || trueBossRound(game)) return;
+    if (upgradeLevel(game, IDS.yellowHint) <= 0 || !custom) return;
     const token = roundToken(game);
     if (custom.yellowHintToken === token) return;
     custom.yellowHintToken = token;
-    for (let index = 0; index < level; index += 1) grantYellowHint(game, "Yellow Guesser Hint");
+    if (upgradeLevel(game, IDS.clearSight) > 0) grantGreenHint(game, "Clear Sight", true);
+    else grantYellowHint(game, "Yellow Guesser Hint", true);
   }
 
-  function grantYellowHint(game, source) {
-    if (!game || trueBossRound(game)) return false;
+  function grantYellowHint(game, source, allowBoss) {
+    if (!game || (trueBossRound(game) && !allowBoss)) return false;
     const state = stateOf(game);
     const secret = secretWord(game);
     if (!state || !/^[A-Z]{5}$/.test(secret)) return false;
@@ -1306,8 +1298,8 @@
     return true;
   }
 
-  function grantGreenHint(game, source) {
-    if (!game || trueBossRound(game)) return false;
+  function grantGreenHint(game, source, allowBoss) {
+    if (!game || (trueBossRound(game) && !allowBoss)) return false;
     const state = stateOf(game);
     const secret = secretWord(game);
     if (!state || !/^[A-Z]{5}$/.test(secret)) return false;
@@ -2381,7 +2373,7 @@
     // run's points and pay points, while promising money.
     const balance = Math.max(0, asNumber(state.cuddleMoney, 0)) + (compound ? totalJokerStock(game) * 10 : 0);
     const cap = (compound ? 50 : 25) * level;
-    const interest = Math.min(cap, Math.floor(balance * 0.05 * level));
+    const interest = Math.min(cap, Math.floor(balance * 0.1 * level));
     if (interest <= 0) return;
     state.cuddleMoney = Math.max(0, asNumber(state.cuddleMoney, 0)) + interest;
     appendNotice(game, `Rainy Day Fund paid $${interest} in interest.`);
@@ -2518,7 +2510,7 @@
     if (upgradeLevel(game, IDS.encore) > 0) {
       custom.encoreSolves = asInteger(custom.encoreSolves, 0) + 1;
       if (custom.encoreSolves % 3 === 0) {
-        addScoreBonus(game, 75, "umtEncore", "Every third stage solved");
+        addScoreBonus(game, 50, "umtEncore", "Every third stage solved");
         if (hasFunSynergy(game, "encoreNight")) {
           const vowels = secretVowelCount(game);
           if (vowels > 0) addScoreBonus(game, vowels * 10, "umtEncore",
@@ -2572,16 +2564,19 @@
   // secret info every guess, so it's gated the same way. Joker Cache and
   // Reserve Dividend aren't hints (cards, a payout bonus) and stay
   // available on every difficulty.
-  const HINT_SOLVING_REWARD_IDS = new Set([IDS.openingInsight, IDS.quickStudy, IDS.consonantSweep]);
+  const HINT_SOLVING_REWARD_IDS = new Set([IDS.openingInsight, IDS.quickStudy]);
 
   function availableSolvingRewards(game) {
     const easy = difficultyName(game) === "easy";
     return SOLVING_REWARDS.filter((reward) =>
-      (easy || !HINT_SOLVING_REWARD_IDS.has(reward.id)) && upgradeLevel(game, reward.id) < rewardMax(reward));
+      (easy || !HINT_SOLVING_REWARD_IDS.has(reward.id)) && upgradeLevel(game, reward.id) < rewardMax(reward)
+      // Small Joker Cache has nothing to add once Large is owned.
+      && !(reward.id === IDS.jokerCache && upgradeLevel(game, IDS.jokerCacheLarge) > 0));
   }
 
   function availableFunRewards(game) {
-    return FUN_REWARDS.filter((reward) => upgradeLevel(game, reward.id) < rewardMax(reward));
+    return FUN_REWARDS.filter((reward) => upgradeLevel(game, reward.id) < rewardMax(reward)
+      && (!reward.requires || upgradeLevel(game, reward.requires) > 0));
   }
 
   // Every custom reward this layer can grant -- the solving aids that
@@ -2700,7 +2695,24 @@
         mega.hasJokerUnlocked = true;
       }
       custom.cuddleUserJokerCachePerRoundLevel = current;
-      appendNotice(game, "Joker Cache: one extra Joker every stage.");
+      appendNotice(game, "Small Joker Cache: one extra Joker every stage.");
+    }
+    if (id === IDS.jokerCacheLarge) {
+      const mega = megaState(game);
+      if (mega) {
+        mega.jokerPerRoundBonus = Math.max(2, Math.floor(asNumber(mega.jokerPerRoundBonus, 0)));
+        mega.hasJokerUnlocked = true;
+      }
+      appendNotice(game, "Large Joker Cache: two Jokers every stage.");
+    }
+    const cullReward = customRewardById(id);
+    if (cullReward && cullReward.cull && typeof game._removalCandidates === "function") {
+      const state = stateOf(game);
+      const letters = game._removalCandidates(cullReward.cull * delta);
+      if (state && letters.length) {
+        state.removedLetters = Array.from(new Set([...(state.removedLetters || []), ...letters])).sort();
+        appendNotice(game, `${cullReward.title}: ${letters.join(", ")} ${letters.length === 1 ? "is" : "are"} gone for good.`);
+      }
     }
     custom.appliedUpgradeEffects[id] = current;
     safeSave(game);
@@ -2759,6 +2771,10 @@
   }
 
   function ensureBossGateOffersAllThemes(game) {
+    // Retired: every boss now offers its own reward (cuddle-quests.js), and
+    // All-Seeing Atlas is the Preset Trial's.
+    return;
+    // eslint-disable-next-line no-unreachable
     if (ownsAllThemes(game)) return;
     for (const options of bossGateOptionArrays(game)) {
       if (!options.length) continue;

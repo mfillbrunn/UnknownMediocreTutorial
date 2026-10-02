@@ -1,8 +1,8 @@
 /* CUDDLE CLUES -- the Insight rewards (picked like any round reward; see
  * FUN_REWARDS in cuddle-rebalance-v5.js, which only tracks their levels).
  *
- *   Vowel Lamp       every non-boss stage: how many vowels the answer has
- *   Echo Finder      every non-boss stage: does the answer repeat a letter
+ *   Vowel Lamp       every stage: how many vowels the answer has
+ *   Echo Finder      every stage: does the answer repeat a letter
  *   Pattern Lens     every non-boss stage: vowel/consonant pattern (C V C C V)
  *   Dead Letter      every non-boss stage opens with 1-3 absent letters crossed out
  *   Last Light       every non-boss stage opens with the last letter in place
@@ -245,15 +245,16 @@
     if (secret.length !== 5) return [];
     const record = clues(game);
     const chips = [];
+    // Vowel Lamp and Echo Finder work in every stage, boss fights included.
+    if (level(game, IDS.vowelLamp) > 0) {
+      const count = [...secret].filter(letter => VOWELS.has(letter)).length;
+      chips.push({ icon: "lantern", label: "Vowel Lamp", text: `${count} vowel${count === 1 ? "" : "s"}` });
+    }
+    if (level(game, IDS.echoFinder) > 0) {
+      const repeats = new Set(secret).size < 5;
+      chips.push({ icon: "twoPeople", label: "Echo Finder", text: repeats ? "Repeats a letter" : "No repeated letters" });
+    }
     if (!isBoss(game)) {
-      if (level(game, IDS.vowelLamp) > 0) {
-        const count = [...secret].filter(letter => VOWELS.has(letter)).length;
-        chips.push({ icon: "lantern", label: "Vowel Lamp", text: `${count} vowel${count === 1 ? "" : "s"}` });
-      }
-      if (level(game, IDS.echoFinder) > 0) {
-        const repeats = new Set(secret).size < 5;
-        chips.push({ icon: "twoPeople", label: "Echo Finder", text: repeats ? "Repeats a letter" : "No repeated letters" });
-      }
       if (level(game, IDS.patternLens) > 0) {
         chips.push({ icon: "puzzle", label: "Pattern Lens", text: [...secret].map(letter => (VOWELS.has(letter) ? "V" : "C")).join(" "), mono: true });
       }

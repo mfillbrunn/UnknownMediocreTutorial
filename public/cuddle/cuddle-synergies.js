@@ -24,9 +24,7 @@
       effect: "Each unused mulligan pays +3 more points when you solve." },
     { id: "questMaster", icon: "🎖️", title: "Quest Master", requires: [["questPoints"], ["questReroll"]],
       effect: "Every completed quest also pays +$2." },
-    { id: "deepGrey", icon: "🌫️", title: "Deep Grey", requires: [["greyscale"], ["greyPointBoost"]],
-      effect: "Every grey tile pays +1 more point." },
-    { id: "fullHouse", icon: "🂡", title: "Full House", requires: [["handSizeBoost"], ["jokerCache"]],
+    { id: "fullHouse", icon: "🂡", title: "Full House", requires: [["handSizeBoost"], ["jokerCache", "jokerCacheLarge"]],
       effect: "Every stage opens with +1 mulligan." },
     // Combos around the Legendary and boss rewards.
     { id: "cartographer", icon: "🗺️", title: "Cartographer", requires: [["allThemesBoss", "allThemes"], ["categorySense"]],
@@ -35,10 +33,8 @@
       effect: "Every completed quest also pays +$3." },
     { id: "cleanSweep", icon: "🧹", title: "Clean Sweep", requires: [["cullRare"], ["freeVowelSweep"]],
       effect: "Every stage opens with +1 mulligan." },
-    { id: "safetyNet", icon: "🪢", title: "Safety Net", requires: [["secondCup"], ["doubleMulligans", "backupPlanReward"]],
+    { id: "safetyNet", icon: "🪢", title: "Safety Net", requires: [["secondCup"], ["doubleMulligans"]],
       effect: "Solving on the last guess of your bonus window pays +20 points." },
-    { id: "compassRose", icon: "🧭", title: "Compass Rose", requires: [["goldenCompass"], ["alphabet-compass"]],
-      effect: "Solving by guess 4 pays +$4." },
     { id: "scholarsEye", icon: "🔎", title: "Scholar's Eye", requires: [["greenCount"], ["categorySense"]],
       effect: "Every solved stage pays +$3." },
     { id: "busyDay", icon: "📋", title: "Busy Day", requires: [["surprise-assignment"], ["questRefreshes"]],
@@ -48,15 +44,9 @@
     // Insight combos (rewards in cuddle-clues.js).
     { id: "lamplighter", icon: "🏮", title: "Lamplighter", requires: [["vowelLamp"], ["patternLens"]],
       effect: "Every stage opens with +1 mulligan." },
-    { id: "graveRobber", icon: "🪦", title: "Grave Robber", requires: [["deadLetter"], ["treasureHunter"]],
-      effect: "Treasure words pay +$5 more." },
     // Existing engine combos: previewed here, applied by the engine.
     { id: "goldenTempo", icon: "⚡", title: "Golden Tempo", engine: true, requires: [["colourTrade", "yellowPoints"], ["earlySolveBoost", "earlyRoundPoint"]],
       effect: "Every solved stage gives +5 points." },
-    { id: "questBinding", icon: "🔗", title: "Quest Binding", engine: true, requires: [["questPoints"], ["questSpark"]],
-      effect: "Completed quests give another +5 points." },
-    { id: "illustratedStart", icon: "🌟", title: "Illustrated Start", engine: true, requires: [["storybookStart"], ["openingClue"]],
-      effect: "Stages open with another +5 points." },
     { id: "endlessMargins", icon: "🖋️", title: "Endless Margins", engine: true, requires: [["wideChoice"], ["questRefreshes"]],
       effect: "Quest reward screens show one extra option." }
   ]);
@@ -92,6 +82,7 @@
     const coachOwned = (state.cuddleCoachExpansion && state.cuddleCoachExpansion.newBossRewardsOwned) || [];
     if ((id === "allThemes" || id === "allThemesBoss") && (rebalanceState.allThemesUnlocked || coachOwned.includes("umtAllThemes"))) candidates.push(1);
     if (id === "jokerCache") candidates.push(num(rebalanceState.cuddleUserJokerCachePerRoundLevel), num(rebalanceState.upgrades && rebalanceState.upgrades.umtJokerCache));
+    if (id === "jokerCacheLarge") candidates.push(num(rebalanceState.upgrades && rebalanceState.upgrades.umtJokerCacheLarge));
     if (id === "questPersistReward" && mega.questPersistsForRound) candidates.push(1);
     if ((id === "goldenCompass" || id === "secondCup") && coachOwned.includes(id)) candidates.push(1);
     if (id === "alphabet-compass" && window.CuddleEconomyRarityV8 && typeof window.CuddleEconomyRarityV8.stack === "function") {
@@ -117,7 +108,7 @@
 
   // Names for requirement ids the talent tree files under another id.
   const TITLES = Object.freeze({
-    allThemes: "All-Seeing Atlas", allThemesBoss: "All-Seeing Atlas", jokerCache: "Joker Cache", cullRare: "Deep Cull",
+    allThemes: "All-Seeing Atlas", allThemesBoss: "All-Seeing Atlas", jokerCache: "Small Joker Cache", jokerCacheLarge: "Large Joker Cache", cullRare: "Deep Cull",
     freeVowelSweep: "Free Vowel Sweep", doubleMulligans: "Double Mulligans", backupPlanReward: "Backup Plan",
     questPersistReward: "Lasting Quests", questDoublePick: "Double Pick", secondCup: "Second Cup",
     goldenCompass: "Golden Compass", "alphabet-compass": "Alphabet Compass",

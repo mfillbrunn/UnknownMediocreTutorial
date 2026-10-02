@@ -65,9 +65,7 @@
   // in world two, 4 in world three), one per row at most, so hunting one is
   // never a reason to guess past that window and eat the late penalty.
   //
-  // Kinds. A run starts with money and points tiles only; between-round
-  // rewards (cuddle-engine.js's CUDDLE_V3_CUSTOM_REWARDS) unlock the rest,
-  // and taking an unlock again makes that kind more common:
+  // Kinds, all available from the start:
   //   money    $  gold   +$2 on yellow, +$4 on green
   //   points   P  green  +5 points on yellow, +10 on green
   //   mulligan ↻         +1 mulligan (yellow or green alike)
@@ -81,8 +79,9 @@
 
   // How many a stage gets: one or two (1.5 on average), plus one more per
   // Treasure Map.
-  var BASE_TILES_MIN = 1;
-  var BASE_TILES_EXTRA_CHANCE = 0.5;
+  // Two or three special tiles a stage before Treasure Map (one per row).
+  var BASE_TILES_MIN = 2;
+  var BASE_TILES_EXTRA_CHANCE = 0.6;
 
   // Relative odds of each kind for one tile. Money and points are always
   // in the pool; the unlockable kinds scale with their unlock's level
@@ -90,9 +89,10 @@
   var TILE_KINDS = [
     { kind: "money", weight: function () { return 1; } },
     { kind: "points", weight: function () { return 1; } },
-    { kind: "mulligan", bonus: "mulliganTiles", weight: function (level) { return 0.45 * level; } },
-    { kind: "joker", bonus: "jokerTiles", weight: function (level) { return 0.3 * level; } },
-    { kind: "hint", bonus: "oracleTiles", weight: function (level) { return 0.15 * level; } }
+    // Standard kinds now, no reward needed; the hint (Oracle) tile stays rarest.
+    { kind: "mulligan", weight: function () { return 0.6; } },
+    { kind: "joker", weight: function () { return 0.45; } },
+    { kind: "hint", weight: function () { return 0.3; } }
   ];
 
   function addMoney(state, amount) {
