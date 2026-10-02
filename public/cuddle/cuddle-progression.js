@@ -8,12 +8,13 @@
 //      green, money in gold, always in that order -- then whooshes away by
 //      itself. It replaces the old dismiss-it-yourself toast at the bottom.
 //
-//   2. The talent board. Every upgrade the run can collect, as jigsaw
-//      pieces in one panel per theme (Scoring, Economy, Insight...), plus
-//      panels for the combos and the boss rewards. What you own lights up
-//      in its panel's colour. Whenever you pick something up -- a round
-//      reward, a boss reward, the starting bonus, a coach upgrade -- the
-//      board opens on its own, the new piece drops in gold, and a
+//   2. The talent board, styled as a crossword. Every upgrade the run can
+//      collect is a numbered square in one "Across" entry per theme
+//      (Scoring, Economy, Insight...), plus entries for the combos and the
+//      boss rewards. What you own turns Wordle green. Whenever you pick
+//      something up -- a round reward, a boss reward, the starting bonus, a
+//      coach upgrade -- the board opens on its own, the new square flips
+//      over in yellow, and a
 //      before/after list shows exactly which of your stats moved.
 //
 // Cuddle only. Everything here reads game state; the only writes are the
@@ -189,10 +190,6 @@
   function polar(radius, degrees) {
     const rad = (degrees * Math.PI) / 180;
     return { x: radius * Math.cos(rad), y: radius * Math.sin(rad) };
-  }
-
-  function round1(value) {
-    return Math.round(value * 10) / 10;
   }
 
   // Spread n nodes over the wedge's three arcs, innermost first, with the
@@ -392,89 +389,19 @@
     { id: "bosses", title: "Boss Rewards", tagline: "Taken from the bosses you beat.", icon: "trophy", color: BOSS_COLOR }
   ];
 
-  // Piece geometry, in board units: a square cell, plus room on every side
-  // for the tabs that stick out of it.
-  const CELL = 100;
-  const TAB = 27;
-  const BOX = CELL + TAB * 2;
-  // One tab, drawn along an edge from u=0 to u=1 and sticking out by v (in
-  // cells). Symmetric about u=0.5, so the neighbour that draws the same
-  // edge the other way round traces exactly the same curve.
-  const TAB_CURVE = [
-    ["L", [0.36, 0]],
-    ["C", [0.40, 0], [0.42, 0.05], [0.39, 0.10]],
-    ["C", [0.34, 0.17], [0.38, 0.25], [0.50, 0.25]],
-    ["C", [0.62, 0.25], [0.66, 0.17], [0.61, 0.10]],
-    ["C", [0.58, 0.05], [0.60, 0], [0.64, 0]],
-    ["L", [1, 0]]
-  ];
-
-  // sign: +1 a tab sticking out, -1 a blank cut in, 0 a flat edge.
-  function edgePath(x0, y0, x1, y1, sign) {
-    if (!sign) return `L${round1(x1)} ${round1(y1)}`;
-    const dx = x1 - x0;
-    const dy = y1 - y0;
-    const len = Math.hypot(dx, dy) || 1;
-    // The outward normal of a clockwise outline in screen coordinates.
-    const nx = dy / len;
-    const ny = -dx / len;
-    const at = ([u, v]) => `${round1(x0 + dx * u + nx * v * CELL * sign)} ${round1(y0 + dy * u + ny * v * CELL * sign)}`;
-    return TAB_CURVE.map(([cmd, ...points]) => cmd + points.map(at).join(" ")).join("");
-  }
-
-  function piecePath(edges) {
-    const a = TAB;
-    const b = TAB + CELL;
-    return `M${a} ${a}` + edgePath(a, a, b, a, edges.top) + edgePath(b, a, b, b, edges.right)
-      + edgePath(b, b, a, b, edges.bottom) + edgePath(a, b, a, a, edges.left) + "Z";
-  }
-
-  function hash32(text) {
-    let hash = 2166136261;
-    for (let i = 0; i < text.length; i += 1) {
-      hash ^= text.charCodeAt(i);
-      hash = Math.imul(hash, 16777619);
-    }
-    return hash >>> 0;
-  }
-
-  // Which way each shared edge's tab points is fixed per panel and edge, so
-  // a panel's puzzle keeps its shape from one opening to the next.
-  function tabSign(panelId, key) {
-    return hash32(`${panelId}:${key}`) % 2 ? 1 : -1;
-  }
-
-  function columnsFor(count) {
-    if (count <= 4) return Math.max(2, count);
-    if (count <= 9) return 3;
-    return 4;
-  }
-
-  // Cells for n pieces: rows filled left to right, a short last row centred.
-  function cellsFor(count, cols) {
-    const cells = [];
-    const rows = Math.ceil(count / cols);
-    for (let row = 0; row < rows; row += 1) {
-      const inRow = Math.min(cols, count - row * cols);
-      const offset = Math.floor((cols - inRow) / 2);
-      for (let i = 0; i < inRow; i += 1) cells.push({ row, col: offset + i });
-    }
-    return { cells, rows };
-  }
-
   function pieceIcon(icon) {
     const text = String(icon || "✦");
     const Icons = window.CuddleIcons;
-    if (Icons && Icons.hasEmoji(text)) return `<span class="umt-pz-icon">${Icons.svg(text)}</span>`;
-    return `<span class="umt-pz-icon is-text">${esc(text)}</span>`;
+    if (Icons && Icons.hasEmoji(text)) return `<span class="umt-cw-icon">${Icons.svg(text)}</span>`;
+    return `<span class="umt-cw-icon is-text">${esc(text)}</span>`;
   }
 
   function piecePips(node) {
     const max = node.maxLevel;
-    if (!max || max < 2) return node.level > 1 ? `<span class="umt-pz-stack">×${node.level}</span>` : "";
+    if (!max || max < 2) return node.level > 1 ? `<span class="umt-cw-stack">×${node.level}</span>` : "";
     let dots = "";
     for (let i = 0; i < max; i += 1) dots += `<i class="${i < node.level ? "is-on" : ""}"></i>`;
-    return `<span class="umt-pz-pips" aria-hidden="true">${dots}</span>`;
+    return `<span class="umt-cw-pips" aria-hidden="true">${dots}</span>`;
   }
 
   // "1/2" on a half-built combo, "✓" on a complete one.
@@ -482,66 +409,75 @@
     if (node.kind !== "combo" || !node.requires) return "";
     const need = node.requires.length;
     const have = (node.reqNodes || []).filter((req) => req.level > 0).length;
-    return `<span class="umt-pz-badge${node.level > 0 ? " is-done" : have ? " is-half" : ""}">${node.level > 0 ? "✓" : `${have}/${need}`}</span>`;
+    return `<span class="umt-cw-badge${node.level > 0 ? " is-done" : have ? " is-half" : ""}">${node.level > 0 ? "✓" : `${have}/${need}`}</span>`;
   }
 
-  function panelMarkup(panel, nodes, model, view) {
+  // The panel's name as a row of letter tiles, turning green from the left
+  // as the theme fills up -- a word being solved.
+  function titleTiles(title, owned, total) {
+    const letters = String(title).toUpperCase().replace(/[^A-Z ]/g, "").split("");
+    const count = letters.filter((ch) => ch !== " ").length;
+    let solved = total ? Math.round((owned / total) * count) : 0;
+    if (owned > 0 && solved === 0) solved = 1;
+    let seen = 0;
+    return `<span class="umt-cw-word" aria-hidden="true">${letters.map((ch) => {
+      if (ch === " ") return `<span class="umt-cw-gap"></span>`;
+      seen += 1;
+      return `<span class="umt-cw-letter${seen <= solved ? " is-solved" : ""}">${ch}</span>`;
+    }).join("")}</span>`;
+  }
+
+  // One crossword entry per theme: the clue (number, name in letter tiles,
+  // tagline), then a grid of numbered squares, one per talent. Squares are
+  // Wordle colours -- green yours, yellow just picked up, empty not yet --
+  // and the corner shows the talent's rarity.
+  function panelMarkup(panel, nodes, model, view, clueNumber, firstSquare) {
     if (!nodes.length) return "";
     const fresh = view.freshIds || new Set();
-    const cols = columnsFor(nodes.length);
-    const { cells, rows } = cellsFor(nodes.length, cols);
-    // Outer edges are always flat, so the puzzle box is just the cells; each
-    // piece's box overhangs it by a tab's depth on every side.
-    const width = cols * CELL;
-    const height = rows * CELL;
-    const byCell = new Set(cells.map((cell) => `${cell.row}:${cell.col}`));
-    const has = (row, col) => byCell.has(`${row}:${col}`);
     const owned = nodes.filter((node) => node.level > 0).length;
     const wedge = WEDGES.find((w) => w.id === panel.id) || {};
     const color = panel.color || wedge.color || "#d5a6ff";
     const title = panel.title || wedge.title || panel.id;
     const Icons = window.CuddleIcons;
-    const pieces = nodes.map((node, index) => {
-      const { row, col } = cells[index];
-      const edges = {
-        top: has(row - 1, col) ? -tabSign(panel.id, `h${row - 1}:${col}`) : 0,
-        bottom: has(row + 1, col) ? tabSign(panel.id, `h${row}:${col}`) : 0,
-        left: has(row, col - 1) ? -tabSign(panel.id, `v${row}:${col - 1}`) : 0,
-        right: has(row, col + 1) ? tabSign(panel.id, `v${row}:${col}`) : 0
-      };
+    const squares = nodes.map((node, index) => {
       const isOwned = node.level > 0;
       const locked = node.easyOnly && !model.easy && !isOwned;
       const state = fresh.has(node.id) ? "is-fresh" : isOwned ? "is-owned" : locked ? "is-locked" : "is-open";
       const status = isOwned ? `yours${node.level > 1 ? `, level ${node.level}` : ""}` : locked ? "Easy difficulty only" : "not yet";
-      const style = `left:${round1(((col * CELL - TAB) / width) * 100)}%;top:${round1(((row * CELL - TAB) / height) * 100)}%;`
-        + `width:${round1((BOX / width) * 100)}%;height:${round1((BOX / height) * 100)}%;`
-        + `--t:${TIER_STROKE[node.tier] || TIER_STROKE.common};--i:${index}`;
-      return `<button type="button" class="umt-pz-piece ${state}${node.id === view.selectedId ? " is-selected" : ""}" data-umt-node="${esc(node.id)}"`
-        + ` style="${style}" aria-label="${esc(node.title)}, ${status}">`
-        + `<svg class="umt-pz-shape" viewBox="0 0 ${BOX} ${BOX}" preserveAspectRatio="none" aria-hidden="true"><path d="${piecePath(edges)}"/></svg>`
-        + `<span class="umt-pz-face">`
-        + (locked ? `<span class="umt-pz-icon">${Icons ? Icons.svg("lock") : ""}</span>` : pieceIcon(node.icon))
-        + `<span class="umt-pz-name">${esc(node.title)}</span>`
+      const tier = TIER_NAME[node.tier] || "";
+      return `<button type="button" class="umt-cw-cell ${state}${node.id === view.selectedId ? " is-selected" : ""}" data-umt-node="${esc(node.id)}"`
+        + ` style="--t:${TIER_STROKE[node.tier] || TIER_STROKE.common};--i:${index}" aria-label="${esc(node.title)}${tier ? `, ${tier}` : ""}, ${status}">`
+        + `<span class="umt-cw-num" aria-hidden="true">${firstSquare + index}</span>`
+        + (locked ? `<span class="umt-cw-icon">${Icons ? Icons.svg("lock") : ""}</span>` : pieceIcon(node.icon))
+        + `<span class="umt-cw-name">${esc(node.title)}</span>`
         + piecePips(node)
-        + `</span>`
         + pieceBadge(node)
         + `</button>`;
     }).join("");
-    return `<section class="umt-pz-panel${owned ? " has-owned" : ""}" style="--c:${color}" aria-label="${esc(title)}">`
-      + `<header class="umt-pz-head"><span class="umt-pz-panel-icon">${Icons ? Icons.svg(panel.icon) : ""}</span>`
-      + `<div><h3>${esc(title)}</h3><p>${esc(panel.tagline)}</p></div>`
-      + `<span class="umt-pz-count">${owned}<small>/${nodes.length}</small></span></header>`
-      + `<div class="umt-pz-puzzle" style="aspect-ratio:${width} / ${height};--cols:${cols}">${pieces}</div>`
+    return `<section class="umt-cw-panel${owned ? " has-owned" : ""}" style="--c:${color}" aria-label="${esc(title)}, ${owned} of ${nodes.length} collected">`
+      + `<header class="umt-cw-head">`
+      + `<span class="umt-cw-clue">${clueNumber} Across</span>`
+      + `<span class="umt-pz-count">${owned}<small>/${nodes.length}</small></span>`
+      + titleTiles(title, owned, nodes.length)
+      + `<p><span class="umt-cw-panel-icon" aria-hidden="true">${Icons ? Icons.svg(panel.icon) : ""}</span>${esc(panel.tagline)}</p>`
+      + `</header>`
+      + `<div class="umt-cw-grid">${squares}</div>`
       + `</section>`;
   }
 
   function renderBoard(model, view) {
+    let clue = 0;
+    let square = 1;
     return PANELS.map((panel) => {
       let nodes;
       if (panel.id === "combos") nodes = model.combos;
       else if (panel.id === "bosses") nodes = model.bosses;
       else nodes = (model.wedges.find((w) => w.id === panel.id) || {}).nodes || [];
-      return panelMarkup(panel, nodes, model, view);
+      if (!nodes.length) return "";
+      clue += 1;
+      const markup = panelMarkup(panel, nodes, model, view, clue, square);
+      square += nodes.length;
+      return markup;
     }).join("");
   }
 
@@ -565,7 +501,7 @@
 
   function detailMarkup(model, node) {
     if (!node) {
-      return `<div class="umt-pt-detail is-empty"><p>Tap any piece to see what it does and how to get it. Lit pieces are yours; the edge colour is its rarity (see Key).</p></div>`;
+      return `<div class="umt-pt-detail is-empty"><p>Tap any square to see what it does and how to get it. Green squares are yours; the corner colour is its rarity (see Key).</p></div>`;
     }
     const owned = node.level > 0;
     const wedge = WEDGES.find((w) => w.id === node.wedge);
@@ -630,14 +566,14 @@
     return lines;
   }
 
-  // What the piece colours mean.
+  // What the square colours mean.
   function legendMarkup() {
-    const tier = (id) => `<span class="umt-pt-key-ring" style="--t:${TIER_STROKE[id]}"></span>${TIER_NAME[id]} edge`;
+    const tier = (id) => `<span class="umt-cw-key is-open is-corner" style="--t:${TIER_STROKE[id]}"></span>${TIER_NAME[id]}`;
     return `<details class="umt-pt-key"><summary>Key</summary><ul>`
-      + `<li><span class="umt-pz-key is-owned"></span>Yours</li>`
-      + `<li><span class="umt-pz-key is-fresh"></span>Just picked up</li>`
-      + `<li><span class="umt-pz-key is-open"></span>Not yet</li>`
-      + `<li><span class="umt-pz-key is-locked"></span>Easy only</li>`
+      + `<li><span class="umt-cw-key is-owned"></span>Yours</li>`
+      + `<li><span class="umt-cw-key is-fresh"></span>Just picked up</li>`
+      + `<li><span class="umt-cw-key is-open"></span>Not yet</li>`
+      + `<li><span class="umt-cw-key is-locked"></span>Easy only</li>`
       + `<li>${tier("common")}</li><li>${tier("rare")}</li><li>${tier("epic")}</li><li>${tier("legendary")}</li>`
       + `<li><span class="umt-pt-key-badge">1/2</span>Combo: halves owned</li>`
       + `</ul></details>`;
@@ -820,7 +756,7 @@
     }
   }
 
-  // Brings the piece just picked up into view inside the board.
+  // Brings the square just picked up into view inside the board.
   function focusPiece(nodeId) {
     const layer = host() && host().querySelector(".umt-pt-layer");
     const canvas = layer && layer.querySelector("[data-umt-pt-canvas]");
