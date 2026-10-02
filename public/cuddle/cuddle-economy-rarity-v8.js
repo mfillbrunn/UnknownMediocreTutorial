@@ -60,6 +60,7 @@
     ["vowel bounty", TIERS.COMMON],
     // A one-time letter, so Common.
     ["position peek", TIERS.COMMON],
+    ["mulligan tiles", TIERS.COMMON],
 
     ["vowel lamp", TIERS.RARE],
     ["pattern lens", TIERS.RARE],
@@ -75,6 +76,7 @@
     ["encore", TIERS.RARE],
     ["rainy day fund", TIERS.RARE],
     ["small joker cache", TIERS.RARE],
+    ["joker tiles", TIERS.RARE],
 
     // Epic: a clue every stage, or a payout, a little short of Legendary.
     ["yellow guesser hint", TIERS.EPIC],
@@ -86,6 +88,7 @@
     ["cull two letters", TIERS.EPIC],
     ["full hand mulligan", TIERS.EPIC],
     ["quest cadence", TIERS.EPIC],
+    ["oracle tiles", TIERS.EPIC],
 
     ["candidate notebook", TIERS.LEGENDARY],
     ["large joker cache", TIERS.LEGENDARY],

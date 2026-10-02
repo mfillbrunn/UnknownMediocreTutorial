@@ -103,7 +103,11 @@
         { id: "greenCount", icon: "🔢", title: "Precise Green", tier: "rare", category: "solving", maxLevel: 1, description: "A green tile also shows how many times that letter appears in the secret." },
         { id: "surprise-assignment", icon: "📜", title: "Surprise Assignment", tier: "rare", category: "quests", description: "Add one extra quest at a random turn in every stage. Each copy schedules another quest." },
         // More special board tiles (cuddle-points-money.js).
-        { id: "treasureMap", icon: "🗺️", title: "Treasure Map", tier: "rare", category: "economy", maxLevel: 3, description: "One more special tile on the board every stage. Up to 3 levels.", level: g => Number(g?.state?.cuddleBonuses?.treasureMap) || 0 }
+        { id: "treasureMap", icon: "🗺️", title: "Treasure Map", tier: "rare", category: "economy", maxLevel: 3, description: "One more special tile on the board every stage. Up to 3 levels.", level: g => Number(g?.state?.cuddleBonuses?.treasureMap) || 0 },
+        // Board tiles beyond money and points each need their unlock.
+        { id: "mulliganTiles", icon: "🔄", title: "Mulligan Tiles", tier: "common", category: "easierStages", maxLevel: 3, description: "Special tiles can be Mulligan tiles: a yellow or green on one gives an extra mulligan. More copies make them more common.", level: g => Number(g?.state?.cuddleBonuses?.mulliganTiles) || 0 },
+        { id: "jokerTiles", icon: "🃏", title: "Joker Tiles", tier: "rare", category: "easierStages", maxLevel: 3, description: "Special tiles can be Joker tiles: a yellow or green on one gives you a Joker. More copies make them more common.", level: g => Number(g?.state?.cuddleBonuses?.jokerTiles) || 0 },
+        { id: "oracleTiles", icon: "🔮", title: "Oracle Tiles", tier: "epic", category: "solving", maxLevel: 3, description: "Special tiles can be Oracle tiles, the rarest kind: a yellow or green on one reveals a letter and its exact position. More copies make them more common.", level: g => Number(g?.state?.cuddleBonuses?.oracleTiles) || 0 }
       ]
     },
     {
