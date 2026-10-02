@@ -956,7 +956,6 @@
       return "<button type=\"button\" class=\"cuddle-money-choice" + (tier ? " cuddle-v8-rarity cuddle-v8-" + tier : "") + "\" data-cuddle-money-action=\"starter\" data-reward-id=\"" + escapeHtml(reward.id) + "\">"
         + "<span class=\"cuddle-money-choice-icon\">" + escapeHtml(reward.icon || "\uD83C\uDF81") + "</span>"
         + "<span><strong>" + escapeHtml(reward.title) + "</strong><small>" + goldenMoney(escapeHtml(reward.description)) + "</small></span>"
-        + "<b>FREE</b>"
         // Last, so the text keeps its place as the card's second child
         // (cuddle-money-mode.css); it is pinned to the corner anyway.
         + (tier ? "<span class=\"cuddle-v8-rarity-badge\" role=\"img\" aria-label=\"" + tier + " rarity\">" + tier + "</span>" : "")
