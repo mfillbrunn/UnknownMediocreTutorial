@@ -601,7 +601,7 @@
   // Epic, the rest as Legendary (cuddle-economy-rarity-v8.js).
   const EPIC_PICK_IDS = new Set(["doubleMulligans", "freeVowelSweep", "biggerMulligans", "questCadence", "secondCup"]);
   function pickTierName(id) {
-    if (id === "revealGreen") return "a Rare";
+    if (id === "revealGreen") return "a Common";
     return EPIC_PICK_IDS.has(id) ? "an Epic" : "a Legendary";
   }
 
