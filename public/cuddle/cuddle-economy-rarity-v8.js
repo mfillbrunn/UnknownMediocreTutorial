@@ -12,7 +12,7 @@
   const TIER_ORDER = Object.freeze([TIERS.COMMON, TIERS.RARE, TIERS.EPIC, TIERS.LEGENDARY]);
   // Odds of each tier for a between-round offer (all cards in one offer
   // share a tier). Rarity Lens shifts them up; the shop leans a bit rarer.
-  const DEFAULT_WEIGHTS = Object.freeze({ common: 50, rare: 30, epic: 15, legendary: 5 });
+  const DEFAULT_WEIGHTS = Object.freeze({ common: 50, rare: 33, epic: 12, legendary: 5 });
   const BOOSTED_WEIGHTS = Object.freeze({ common: 30, rare: 35, epic: 22, legendary: 13 });
   const SHOP_WEIGHTS = Object.freeze({ common: 42, rare: 30, epic: 18, legendary: 10 });
   const PRICE_RANGES = Object.freeze({
