@@ -323,7 +323,7 @@
       title: "Blue Mode",
       description: "For the first four guesses, a hit on a marked tile shows as blue. You learn the letter is in the secret, but not whether it is in the right place. The rest of the row reports normally.",
       turns: 4,
-      rewardId: "richerColours"
+      rewardId: "questCadence"
     },
     {
       id: "fakeFeedback",
@@ -339,7 +339,7 @@
       title: "Quick Mode",
       description: "One minute per guess. Run out of time and the guess is lost.",
       turns: 6,
-      rewardId: "questHead"
+      rewardId: "secondCup"
     },
     {
       id: "shortHand",
@@ -355,7 +355,7 @@
       title: "Hidden Margins",
       description: "For the first few guesses, two marked positions hide their feedback. They behave normally afterward.",
       turns: 6,
-      rewardId: "openingClue"
+      rewardId: "goldenThread"
     },
     {
       id: "noMulligans",
@@ -381,7 +381,7 @@
       title: "Preset Trial",
       description: "A handful of candidate words are chosen for you up front -- the secret is one of them. Only your remaining guesses are left to land it.",
       turns: 0,
-      rewardId: "backupPlanReward"
+      rewardId: "umtAllThemes"
     }
   ];
 
@@ -392,7 +392,7 @@
       id: "cullRare",
       icon: "✂️",
       title: "Deep Cull",
-      description: "Remove three rare letters from the deck and from every future secret."
+      description: "Remove four rare letters from the deck and from every future secret."
     },
     {
       id: "doubleMulligans",
@@ -404,13 +404,7 @@
       id: "biggerMulligans",
       icon: "🖐️",
       title: "Full Hand Mulligan",
-      description: "Every mulligan can now replace up to five cards."
-    },
-    {
-      id: "richerColours",
-      icon: "💰",
-      title: "Richer Colours",
-      description: "Every yellow and green tile is worth 2 points more."
+      description: "Every mulligan can now replace up to five letters."
     },
     {
       id: "freeVowelSweep",
@@ -419,22 +413,10 @@
       description: "Each stage opens with one random vowel tested for free: you learn whether it's in the answer, not where."
     },
     {
-      id: "questHead",
-      icon: "🏅",
-      title: "Quest Head Start",
-      description: "Quests are worth 10 points more for the rest of the run."
-    },
-    {
       id: "revealGreen",
       icon: "📍",
       title: "Position Peek",
       description: "The stage after this boss opens with one letter of the answer already in its exact place."
-    },
-    {
-      id: "openingClue",
-      icon: "🔮",
-      title: "Margin Note",
-      description: "Every non-boss stage from now on opens with one letter of the answer shown as in the word, not where."
     },
     {
       id: "questDoublePick",
@@ -452,27 +434,10 @@
       id: "questPersistReward",
       icon: "⏳",
       title: "Lasting Quests",
-      description: "A quest you don't complete stays active for the rest of the stage instead of expiring after one guess (not in boss fights)."
-    },
-    {
-      id: "backupPlanReward",
-      icon: "🧰",
-      title: "Backup Plan",
-      description: "Gain one additional mulligan every stage."
-    },
-    // Not tied to a fixed boss trial -- Cuddle Coach Expansion injects this
-    // one into a boss's offer in place of its normal reward (see
-    // cuddle-coach-expansion.js's decorateBossOffer/nextCustomBossReward),
-    // only once Margin Note (openingClue) has already been picked. Listed
-    // here too so getBossReward() below -- used for the post-clear reward
-    // notice and history -- resolves its real icon/title/description
-    // instead of falling back to a generic "Boss reward".
-    {
-      id: "clearSight",
-      icon: "🟢",
-      title: "Clear Sight",
-      description: "Upgrade Margin Note: it now reveals a letter's exact position instead of just that it's present."
+      description: "A quest you don't complete stays active for the rest of the stage instead of expiring after one guess, boss fights included."
     }
+    // Second Cup and Golden Thread are listed by cuddle-coach-expansion.js,
+    // All-Seeing Atlas by cuddle-rebalance-v5.js.
   ];
 
   function getBoss(id) {

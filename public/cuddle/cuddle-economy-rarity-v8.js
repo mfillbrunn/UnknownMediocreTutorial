@@ -55,57 +55,56 @@
     // Offered by cuddle-rebalance-v5.js as a solving aid (it is not in this
     // layer's own catalog -- see REMOVED_REWARDS), so its tier lives here.
     ["reserve dividend", TIERS.COMMON],
-    ["vowel lamp", TIERS.COMMON],
     ["echo finder", TIERS.COMMON],
-    ["dead letter", TIERS.COMMON],
     ["treasure hunter", TIERS.COMMON],
     ["vowel bounty", TIERS.COMMON],
-    ["bigger mulligan", TIERS.COMMON],
 
+    ["vowel lamp", TIERS.RARE],
     ["pattern lens", TIERS.RARE],
     ["mistake shield", TIERS.RARE],
-    ["cull two letters", TIERS.RARE],
-    ["grey matters", TIERS.RARE],
-    ["gray matters", TIERS.RARE],
     ["bigger hand", TIERS.RARE],
     ["reward echo", TIERS.RARE],
     ["precise green", TIERS.RARE],
-    ["wild card", TIERS.RARE],
     ["theme sense", TIERS.RARE],
     ["remaining setter box", TIERS.RARE],
     ["guesser hint", TIERS.RARE],
     ["bigger cuddle", TIERS.RARE],
     ["surprise assignment", TIERS.RARE],
-    ["hot streak", TIERS.RARE],
     ["encore", TIERS.RARE],
     ["rainy day fund", TIERS.RARE],
+    ["small joker cache", TIERS.RARE],
+    ["position peek", TIERS.RARE],
 
     // Epic: a clue every stage, or a payout, a little short of Legendary.
     ["yellow guesser hint", TIERS.EPIC],
     ["alphabet compass", TIERS.EPIC],
     ["free vowel sweep", TIERS.EPIC],
-    ["quest head start", TIERS.EPIC],
     ["second cup", TIERS.EPIC],
     ["double mulligans", TIERS.EPIC],
     ["double down", TIERS.EPIC],
     ["process of elimination", TIERS.EPIC],
+    ["cull two letters", TIERS.EPIC],
+    ["full hand mulligan", TIERS.EPIC],
+    ["quest cadence", TIERS.EPIC],
 
     ["candidate notebook", TIERS.LEGENDARY],
-    ["joker cache", TIERS.LEGENDARY],
-    ["last light", TIERS.LEGENDARY]
+    ["large joker cache", TIERS.LEGENDARY],
+    ["last light", TIERS.LEGENDARY],
+    ["full alphabet compass", TIERS.LEGENDARY],
+    ["clear sight", TIERS.LEGENDARY],
+    ["deep cull", TIERS.LEGENDARY],
+    ["double pick", TIERS.LEGENDARY],
+    ["lasting quests", TIERS.LEGENDARY],
+    ["all seeing atlas", TIERS.LEGENDARY],
+    ["golden thread", TIERS.LEGENDARY]
   ]);
 
   const LEGENDARY_BOSS_NAMES = new Set([
     "deep cull",
-    "double mulligans",
-    "free vowel sweep",
-    "quest head start",
     "double pick",
     "lasting quests",
-    "golden compass",
-    "second cup",
     "all seeing atlas",
-    "false letter scout"
+    "golden thread"
   ]);
 
   // Legendary between-round picks. The boss-grade rewards below were meant
@@ -139,38 +138,32 @@
       available: (state) => Boolean(state) && available(state)
     };
   }
+  // Boss rewards that also come up as ordinary between-round picks, each
+  // in its own tier (ORDINARY_TIER_BY_NAME). Applied with the game's own
+  // _applyBossReward (installLegendaryApply), exactly as a boss clear would.
   const LEGENDARY_PICKS = Object.freeze([
     legendaryPick("doubleMulligans", "🔁", "Double Mulligans", "Double the number of mulligans you get each stage.",
       (state) => !(Number(state.upgrades?.doubleMulligans) > 0)),
-    legendaryPick("cullRare", "✂️", "Deep Cull", "Remove three rare letters from the deck and from every future secret.",
+    legendaryPick("cullRare", "✂️", "Deep Cull", "Remove four rare letters from the deck and from every future secret.",
       (state) => ownedHistoryCount(state, "cullRare") < 1),
     legendaryPick("freeVowelSweep", "🅰️", "Free Vowel Sweep", "Each stage opens with one random vowel tested for free: you learn whether it's in the answer, not where.",
       (state) => !(Number(state.upgrades?.freeVowelSweep) > 0)),
-    legendaryPick("questHead", "🏅", "Quest Head Start", "Quests are worth 10 points more for the rest of the run.",
-      (state) => ownedHistoryCount(state, "questHead") < 2),
+    legendaryPick("biggerMulligans", "✋", "Full Hand Mulligan", "Every mulligan can now replace up to five letters.",
+      (state) => Number(state.upgrades?.mulliganSize || 0) < 2),
+    legendaryPick("questCadence", "❗", "Quest Cadence", "Quests come more often (every second guess, then every guess) and one more can be active at a time. Stacks twice.",
+      (state) => Number(state.upgrades?.questCadence || 0) < 2),
+    legendaryPick("revealGreen", "📍", "Position Peek", "Your next stage opens with one letter of the answer already in its exact place. One time.",
+      (state) => !state.pendingPositionPeek),
     legendaryPick("questDoublePick", "✌️", "Double Pick", "Quest reward screens let you choose two options instead of one, for the rest of the run.",
       (state) => !state.upgrades?.questDoublePick),
-    legendaryPick("questPersistReward", "⏳", "Lasting Quests", "A quest you don't complete stays active for the rest of the stage instead of expiring after one guess (not in boss fights).",
+    legendaryPick("questPersistReward", "⏳", "Lasting Quests", "A quest you don't complete stays active for the rest of the stage instead of expiring after one guess, boss fights included.",
       (state) => !state.megaState?.questPersistsForRound),
-    legendaryPick("goldenCompass", "🧭", "Golden Compass", "Once per stage, reveal the most useful untested letter among the remaining possible answers.",
-      (state) => !coachOwns(state, "goldenCompass")),
     legendaryPick("secondCup", "☕", "Second Cup", "Once per run, when you would run out of guesses in a boss or strict stage, you get one extra guess.",
       (state) => !coachOwns(state, "secondCup")),
+    legendaryPick("goldenThread", "🧵", "Golden Thread", "A full five-letter draft pulses and vibrates when it contains an answer letter you have not learned yet.",
+      (state) => !coachOwns(state, "goldenThread")),
     legendaryPick("umtAllThemes", "🔮", "All-Seeing Atlas", "Reveal every available theme at the start of every non-boss Wordle.",
-      (state) => !state.cuddleRebalanceV5?.allThemesUnlocked && !coachOwns(state, "umtAllThemes")),
-    // Joker Cache keeps its own id: cuddle-rebalance-v5.js applies it.
-    {
-      id: "umtJokerCache",
-      key: "umtJokerCache",
-      icon: "🃏",
-      title: "Joker Cache",
-      name: "Joker Cache",
-      description: "One extra Joker every stage.",
-      kind: "upgrade",
-      __cuddleV8Tier: TIERS.LEGENDARY,
-      available: (state) => Boolean(state)
-        && Math.max(Number(state.cuddleRebalanceV5?.upgrades?.umtJokerCache) || 0, Number(state.upgrades?.umtJokerCache) || 0) < 1
-    }
+      (state) => !state.cuddleRebalanceV5?.allThemesUnlocked && !coachOwns(state, "umtAllThemes"))
   ]);
 
   const KNOWN_ORDINARY_NAMES = new Set([
@@ -1446,33 +1439,12 @@
     if (REMOVED_REWARDS.has(name)) return [];
     rememberOriginal(def);
 
-    if (name === "cull x y" || name === "cull x and y" || name === "cull two letters") {
-      const rare = def;
-      setName(rare, "Cull Two Letters");
-      setId(rare, "cull-two-letters");
-      setDescription(rare, "Permanently remove two eligible consonants from the deck and future secrets.");
-      setTier(rare, TIERS.RARE);
-      replaceHandlers(rare, "cull-two");
-
-      const common = cloneDefinition(def);
-      setName(common, "Cull One Letter");
-      setId(common, "cull-one-letter");
-      setDescription(common, "Permanently remove one eligible consonant from the deck and future secrets.");
-      setTier(common, TIERS.COMMON);
-      replaceHandlers(common, "cull-one");
-      return [common, rare];
-    }
-
     if (name === "second guess quest") {
       setDescription(def, "Once per stage, reroll the current quest for free. The reroll resets when a new stage begins.");
       setMaxStack(def, 1);
       replaceHandlers(def, "quest-reroll-stage");
-    } else if (name === "bigger mulligan") {
-      setDescription(def, "Each mulligan may replace one additional tile, up to the current hand size.");
-      setMaxStack(def, 99);
-      replaceHandlers(def, "bigger-mulligan");
     } else if (name === "colour surge" || name === "color surge") {
-      setDescription(def, "Green tiles are worth 1 point more. This reward stacks.");
+      setDescription(def, "Green tiles are worth 1 point more (2 more at level 3). Up to 3 levels.");
       replaceHandlers(def, "colour-surge");
     } else if (name === "grey matters" || name === "gray matters") {
       setDescription(def, "Grey tiles are worth 1 point more. Yellow and green values are unchanged.");
@@ -1501,18 +1473,28 @@
   // Each copy adds one tile per guess that shows an arrow toward the
   // secret's letter in that spot (cuddle-compass.js draws them). Four
   // copies is the cap: past that it would read the whole row.
-  const ALPHABET_COMPASS_MAX = 4;
+  const ALPHABET_COMPASS_MAX = 3;
 
   function makeAlphabetCompassReward(template) {
     const def = cloneDefinition(template || {});
     setName(def, "Alphabet Compass");
     setId(def, "alphabet-compass");
-    setDescription(def, "After every guess, one of its tiles shows an arrow: ← the secret's letter there comes earlier in the alphabet, → later, – it matches. Each copy adds a tile.");
+    setDescription(def, "After every guess, one of its tiles shows an arrow: ← the answer's letter there comes earlier in the alphabet, → later, – it matches. A second copy adds a tile.");
     setTier(def, TIERS.EPIC);
     setMaxStack(def, ALPHABET_COMPASS_MAX);
     def.icon = "\u{1F9ED}";
-    def.available = (state) => upgradeStack(state, "alphabet-compass") < ALPHABET_COMPASS_MAX;
+    def.available = (state) => upgradeStack(state, "alphabet-compass") < ALPHABET_COMPASS_MAX - 1;
     replaceHandlers(def, "alphabet-compass");
+    return def;
+  }
+
+  // The third copy: every tile of every guess gets an arrow (cuddle-compass.js).
+  function makeFullAlphabetCompassReward(template) {
+    const def = makeAlphabetCompassReward(template);
+    setName(def, "Full Alphabet Compass");
+    setDescription(def, "Completes the Alphabet Compass: after every guess, every tile shows whether the answer's letter there comes earlier or later in the alphabet.");
+    setTier(def, TIERS.LEGENDARY);
+    def.available = (state) => upgradeStack(state, "alphabet-compass") === ALPHABET_COMPASS_MAX - 1;
     return def;
   }
 
@@ -1545,6 +1527,9 @@
     }
     if (!out.some((def) => norm(getName(def)) === "alphabet compass")) {
       out.push(makeAlphabetCompassReward(template));
+    }
+    if (!out.some((def) => norm(getName(def)) === "full alphabet compass")) {
+      out.push(makeFullAlphabetCompassReward(template));
     }
     for (const def of out) catalog.ordinary.set(norm(getName(def)), def);
     return out;
@@ -1636,12 +1621,9 @@
       }
     }
     const name = norm(getName(def));
-    if (name === "bigger mulligan" && currentMulliganSize(state) >= currentHandSize(state)) return false;
     // Greyscale is a one-time pick (the engine keeps its count).
-    if ((name === "greyscale" || name === "grayscale") && Number(state?.balanceRewardCounts?.greyscale) > 0) return false;
-    // Rules out a letter every guess: Easy only, like the other hint aids
-    // (cuddle-rebalance-v5.js HINT_SOLVING_REWARD_IDS).
-    if (name === "process of elimination" && currentDifficulty(state) !== "easy") return false;
+    if ((name === "greyscale" || name === "grayscale") && Number(state?.balanceRewardCounts?.greyscale) >= 3) return false;
+    if ((name === "colour surge" || name === "color surge") && Number(state?.balanceRewardCounts?.colourTrade) >= 3) return false;
     return !REMOVED_REWARDS.has(name);
   }
 
@@ -2685,6 +2667,11 @@
       const key = String(choice?.key || "");
       if (!key.startsWith("legendary:")) return original.apply(this, arguments);
       const rewardId = key.slice("legendary:".length);
+      if (rewardId === "revealGreen") {
+        // Fires once the next stage's answer exists (_beginRound).
+        this.state.pendingPositionPeek = true;
+        return { ok: true, message: "Position Peek: your next stage opens with one letter in its exact place." };
+      }
       if (typeof this._applyBossReward !== "function") return { ok: false, error: "That reward is unavailable." };
       const message = this._applyBossReward(rewardId);
       return { ok: true, message: message || `${choice.title || "Legendary reward"} acquired.` };

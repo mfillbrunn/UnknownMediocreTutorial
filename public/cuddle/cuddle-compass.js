@@ -15,13 +15,15 @@
   "use strict";
 
   const STACK_KEY = "alphabet-compass";
-  const MAX_TILES = 4;
+  // Copies held: one or two tiles per guess, and the third copy (Full
+  // Alphabet Compass) covers all five.
+  const MAX_COPIES = 3;
 
   function copiesOwned(state) {
     const economy = window.CuddleEconomyRarityV8;
     const stacked = economy && typeof economy.stack === "function" ? Number(economy.stack(state, STACK_KEY)) || 0 : 0;
     const picked = (state.rewardBookHistory || []).filter(entry => entry && entry.id === STACK_KEY).length;
-    return Math.min(MAX_TILES, Math.max(stacked, picked));
+    return Math.min(MAX_COPIES, Math.max(stacked, picked));
   }
 
   function reading(secretLetter, guessLetter) {
@@ -40,7 +42,8 @@
 
   function markEntry(game, entry) {
     const state = game.state;
-    const count = copiesOwned(state);
+    const copies = copiesOwned(state);
+    const count = copies >= MAX_COPIES ? 5 : copies;
     if (!count || !entry || entry.umtCompass) return;
     const secret = String(state.secret || "").toUpperCase();
     const word = String(entry.word || "").toUpperCase();

@@ -81,9 +81,11 @@
       nodes: [
         { id: "extraMulligans", icon: "🔄", title: "Second Thoughts", tier: "common", category: "easierStages", description: "Gain one additional mulligan every stage.", level: g => upgradeCount(g, "extraMulligans") },
         { id: "questRefreshes", icon: "♻️", title: "Reward Refresh", tier: "common", category: "quests", description: "Every quest reward screen gets one more free refresh. Stacks.", level: g => upgradeCount(g, "questRefreshes") },
-        { id: "questPoints", icon: "🏅", title: "Quest Value", tier: "common", category: "quests", description: "Quests are worth 5 points more. Stacks every time you take it.", level: g => ledgerCount(g, "questPoints") },
+        { id: "questPoints", icon: "🏅", title: "Quest Value", tier: "common", category: "quests", description: "Quests are worth 10 points more. Stacks.", level: g => ledgerCount(g, "questPoints") },
         { id: "questReroll", icon: "🔄", title: "Second Guess Quest", tier: "common", category: "quests", description: "Once per stage, reroll the current quest for free.", level: g => upgradeCount(g, "questReroll") },
         { id: "mulliganSize", icon: "🃏", title: "Bigger Mulligan", tier: "common", category: "easierStages", maxLevel: 2, description: "Each mulligan may replace one additional card.", level: g => upgradeCount(g, "mulliganSize") },
+        { id: "cullOne", icon: "✂️", title: "Cull One Letter", tier: "common", category: "easierStages", maxLevel: 6, description: "Permanently remove one rare consonant from your deck and every future answer. Can be taken again.", level: g => v5Level(g, "umtCullOne") },
+        { id: "cullTwo", icon: "✂️", title: "Cull Two Letters", tier: "epic", category: "easierStages", maxLevel: 3, description: "Permanently remove two rare consonants from your deck and every future answer. Can be taken again.", level: g => v5Level(g, "umtCullTwo") },
         { id: "categorySense", icon: "🔮", title: "Theme Sense", tier: "rare", category: "solving", maxLevel: 6, description: "From now on, reveal one category at the start of every solution. Stacks.", level: g => Number(campaignState(g)?.categorySense) || 0 },
         // Round rewards the live pool offers that this catalogue used to be
         // missing entirely (so they never appeared on the tree). Icons are
@@ -92,14 +94,12 @@
         // state what the engine actually applies.
         { id: "storybookStart", icon: "📖", title: "Opening Verse", tier: "common", category: "economy", maxLevel: 3, description: "Start every non-boss stage with +10 points, banked straight away. Stacks up to three times.", level: g => Number(g?.state?.cuddleBonuses?.storybookStart) || 0 },
         { id: "wideChoice", icon: "🌈", title: "Wide Margins", tier: "common", category: "easierStages", maxLevel: 2, description: "See one additional between-round upgrade choice. Stacks up to two times." },
-        { id: "greyPointBoost", icon: "🩶", title: "Grey Matters", tier: "rare", category: "economy", description: "Grey tiles are worth 1 point more. Yellow and green values are unchanged." },
         { id: "handSizeBoost", icon: "✋", title: "Bigger Hand", tier: "rare", category: "easierStages", description: "Hold one more consonant in your hand from now on." },
         { id: "mulliganValueBoost", icon: "💱", title: "Mulligan Dividend", tier: "common", category: "economy", description: "Each unused mulligan is worth 5 points more when you solve." },
         { id: "earlySolveBoost", icon: "🏁", title: "Early Finish", tier: "common", category: "economy", description: "Each unused guess earns 5 points more on an early solve." },
-        { id: "colourTrade", icon: "🎨", title: "Colour Surge", tier: "common", category: "economy", description: "Green tiles are worth 1 point more. Stacks.", level: g => upgradeCount(g, "greenOnlyPoints") },
-        { id: "greyscale", icon: "⬛", title: "Greyscale", tier: "common", category: "economy", description: "Grey tiles gain 2 points and yellow tiles 1 point for the rest of the run.", maxLevel: 1 },
+        { id: "colourTrade", icon: "🎨", title: "Colour Surge", tier: "common", maxLevel: 3, category: "economy", description: "Green tiles are worth 1 point more per level, 2 more at level 3.", level: g => Number(g?.state?.balanceRewardCounts?.colourTrade) || 0 },
+        { id: "greyscale", icon: "⬛", title: "Greyscale", tier: "common", category: "economy", description: "Grey tiles gain 2 points and yellow 1 per level; grey 3 and yellow 2 at level 3.", maxLevel: 3, level: g => Number(g?.state?.balanceRewardCounts?.greyscale) || 0 },
         { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", category: "easierStages", description: "The next round reward you pick is applied three times." },
-        { id: "removeLetter", icon: "✂️", title: "Cull", tier: "common", category: "easierStages", description: "Remove rare consonants from the deck and from every future secret." },
         { id: "greenCount", icon: "🔢", title: "Precise Green", tier: "rare", category: "solving", maxLevel: 1, description: "A green tile also shows how many times that letter appears in the secret." },
         { id: "surprise-assignment", icon: "📜", title: "Surprise Assignment", tier: "rare", category: "quests", description: "Add one extra quest at a random turn in every stage. Each copy schedules another quest." },
         // Special board tiles (cuddle-points-money.js). Each has its own
@@ -115,9 +115,8 @@
       title: "Economy Engines",
       blurb: "Reward pool that pays out for how you play a round, not just for finishing it.",
       nodes: [
-        { id: "rainyDay", icon: "🏦", title: "Rainy Day Fund", tier: "rare", category: "economy", maxLevel: 2, description: "Every non-boss stage opens by paying 5% interest on your wallet, up to $25. A second copy doubles both.", level: g => upgradeCount(g, "rainyDay") },
-        { id: "encore", icon: "🎬", title: "Encore", tier: "rare", category: "economy", maxLevel: 1, description: "Every third stage you solve pays a 75-point encore bonus.", level: g => upgradeCount(g, "encore") },
-        { id: "hotStreak", icon: "🔥", title: "Hot Streak", tier: "rare", category: "economy", maxLevel: 2, description: "Each guess in a row that pins a new green pays a growing bonus: 5, then 10, then 15 points, and so on. A guess with no new green resets it.", level: g => upgradeCount(g, "hotStreak") },
+        { id: "rainyDay", icon: "🏦", title: "Rainy Day Fund", tier: "rare", category: "economy", maxLevel: 2, description: "Every non-boss stage opens by paying 10% interest on your wallet, up to $25. A second copy doubles both.", level: g => upgradeCount(g, "rainyDay") },
+        { id: "encore", icon: "🎬", title: "Encore", tier: "rare", category: "economy", maxLevel: 1, description: "Every third stage you solve pays a 50-point encore bonus.", level: g => upgradeCount(g, "encore") },
         { id: "vowelBounty", icon: "🅰️", title: "Vowel Bounty", tier: "common", category: "economy", maxLevel: 2, description: "Every vowel in a secret you solve pays 5 points.", level: g => upgradeCount(g, "vowelBounty") },
         { id: "doubleDown", icon: "🎲", title: "Double Down", tier: "epic", category: "economy", maxLevel: 1, description: "Each stage names a lucky guess, from the 3rd to the 7th. Solve the word on exactly that guess for +50 points, even if that's past your bonus window.", level: g => upgradeCount(g, "doubleDown") }
       ]
@@ -127,29 +126,24 @@
       title: "Insight",
       blurb: "Clues about the answer before you guess, and a little luck. Effects in cuddle-clues.js.",
       nodes: [
-        { id: "vowelLamp", icon: "🏮", title: "Vowel Lamp", tier: "common", category: "insight", maxLevel: 1, description: "Every non-boss stage tells you how many vowels the answer has.", level: g => v5Level(g, "umtVowelLamp") },
-        { id: "echoFinder", icon: "👯", title: "Echo Finder", tier: "common", category: "insight", maxLevel: 1, description: "Every non-boss stage tells you whether the answer uses a letter twice.", level: g => v5Level(g, "umtEchoFinder") },
-        { id: "deadLetter", icon: "🪦", title: "Dead Letter", tier: "common", category: "insight", maxLevel: 3, description: "Every non-boss stage opens with a letter that isn't in the answer crossed out. Stacks: one more letter per copy.", level: g => v5Level(g, "umtDeadLetter") },
+        { id: "vowelLamp", icon: "🏮", title: "Vowel Lamp", tier: "rare", category: "insight", maxLevel: 1, description: "Every stage, boss fights included, tells you how many vowels the answer has.", level: g => v5Level(g, "umtVowelLamp") },
+        { id: "echoFinder", icon: "👯", title: "Echo Finder", tier: "common", category: "insight", maxLevel: 1, description: "Every stage, boss fights included, tells you whether the answer uses a letter twice.", level: g => v5Level(g, "umtEchoFinder") },
         { id: "treasureHunter", icon: "💎", title: "Treasure Hunter", tier: "common", category: "insight", maxLevel: 2, description: "About one stage in three hides a treasure word: solve it for +$8. Stacks: +$8 more per copy.", level: g => v5Level(g, "umtTreasureHunter") },
         { id: "patternLens", icon: "🧩", title: "Pattern Lens", tier: "rare", category: "insight", maxLevel: 1, description: "Every non-boss stage shows where the answer's vowels and consonants sit, like C V C C V.", level: g => v5Level(g, "umtPatternLens") },
         { id: "mistakeShield", icon: "🛡️", title: "Mistake Shield", tier: "rare", category: "insight", maxLevel: 1, description: "In a boss or a strict stage, the first guess with no green or yellow gives you an extra guess back.", level: g => v5Level(g, "umtMistakeShield") },
         { id: "lastLight", icon: "🕯️", title: "Last Light", tier: "legendary", category: "insight", maxLevel: 1, description: "Every non-boss stage opens with the answer's last letter already in place.", level: g => v5Level(g, "umtLastLight") },
-        { id: "yellowHint", icon: "🟨", title: "Yellow Guesser Hint", tier: "epic", category: "insight", maxLevel: 2, description: "Every non-boss stage opens with one letter of the answer shown as in the word, not where. Stacks: one more letter per copy.", level: g => v5Level(g, "umtYellowHint") }
+        { id: "yellowHint", icon: "🟨", title: "Yellow Guesser Hint", tier: "epic", category: "insight", maxLevel: 2, description: "Every stage, boss fights included, opens with one letter of the answer shown as in the word. Level 2 is Clear Sight (Legendary): the letter comes in its exact place.", level: g => v5Level(g, "umtYellowHint") + v5Level(g, "umtClearSight") }
       ]
     },
     {
       id: "solvingAids",
       title: "Solving Aids",
-      // Only the hint aids are Easy-only; Joker Cache and Reserve Dividend
-      // are offered on every difficulty (see cuddle-rebalance-v5.js).
-      blurb: "The hint aids here are Easy only; Joker Cache and Reserve Dividend appear on every difficulty.",
+      blurb: "Jokers and letter tools, offered on every difficulty.",
       nodes: [
-        { id: "openingInsight", icon: "💡", title: "Opening Insight", tier: "rare", category: "solving", maxLevel: 2, description: "Start every non-boss Wordle with one additional exact-position hint.", easyOnly: true, level: g => upgradeCount(g, "openingInsight") },
-        { id: "quickStudy", icon: "⏳", title: "Quick Study", tier: "common", category: "solving", maxLevel: 2, description: "Automatic hints arrive one guess sooner (minimum: every two guesses).", easyOnly: true, level: g => upgradeCount(g, "quickStudy") },
-        { id: "jokerCache", icon: "🃏", title: "Joker Cache", tier: "legendary", category: "easierStages", maxLevel: 1, description: "One extra Joker every stage.", level: g => upgradeCount(g, "jokerCache") },
-        { id: "reserveDividend", icon: "🏦", title: "Reserve Dividend", tier: "common", category: "economy", maxLevel: 1, description: "At a win, earn 5 points extra for every unused mulligan and every unused Joker.", level: g => upgradeCount(g, "reserveDividend") },
-        { id: "alphabet-compass", icon: "🧭", title: "Alphabet Compass", tier: "epic", category: "solving", maxLevel: 4, description: "After every guess, one of its tiles shows an arrow: ← the secret's letter there comes earlier in the alphabet, → later, – it matches. Each copy adds a tile.", level: g => (window.CuddleCompass && g?.state ? window.CuddleCompass.copiesOwned(g.state) : 0) },
-        { id: "consonantSweep", icon: "🔍", title: "Process of Elimination", tier: "epic", category: "solving", maxLevel: 1, description: "In non-boss stages, every guess rules out one consonant that is not in the answer.", easyOnly: true, level: g => upgradeCount(g, "consonantSweep") }
+        { id: "jokerCache", icon: "🃏", title: "Small Joker Cache", tier: "rare", category: "easierStages", maxLevel: 1, description: "One extra Joker every stage.", level: g => v5Level(g, "umtJokerCache") },
+        { id: "jokerCacheLarge", icon: "🃏", title: "Large Joker Cache", tier: "legendary", category: "easierStages", maxLevel: 1, description: "Two Jokers every stage. Replaces Small Joker Cache.", level: g => v5Level(g, "umtJokerCacheLarge") },
+        { id: "alphabet-compass", icon: "🧭", title: "Alphabet Compass", tier: "epic", category: "solving", maxLevel: 3, description: "After every guess, a tile shows whether the answer's letter there comes earlier or later in the alphabet. Level 2 adds a tile; level 3 is the Legendary Full Alphabet Compass: every tile.", level: g => (window.CuddleCompass && g?.state ? window.CuddleCompass.copiesOwned(g.state) : 0) },
+        { id: "consonantSweep", icon: "🔍", title: "Process of Elimination", tier: "epic", category: "solving", maxLevel: 1, description: "In non-boss stages, every guess rules out one consonant that is not in the answer.", level: g => upgradeCount(g, "consonantSweep") }
       ]
     },
     {
@@ -169,10 +163,7 @@
       title: "Synergy Combos",
       blurb: "Owning both halves of a pair turns the combo on permanently.",
       nodes: [
-        { id: "compoundCuddle", icon: "🏦", title: "Compound Cuddle", tier: "legendary", category: "combo", maxLevel: 1, description: "Rainy Day Fund + Reserve Dividend: the interest cap doubles, and each unused Joker counts as $10 toward the balance.", requires: ["rainyDay", "reserveDividend"], level: g => (upgradeCount(g, "rainyDay") > 0 && upgradeCount(g, "reserveDividend") > 0) ? 1 : 0 },
-        { id: "goldenStreak", icon: "🔥", title: "Golden Streak", tier: "legendary", category: "combo", maxLevel: 1, description: "Hot Streak + Colour Surge: a guess that finds a new yellow keeps the streak alive too.", requires: ["hotStreak", "colourTrade"], level: g => (upgradeCount(g, "hotStreak") > 0 && upgradeCount(g, "greenOnlyPoints") > 0) ? 1 : 0 },
-        { id: "encoreNight", icon: "🎬", title: "Encore Night", tier: "legendary", category: "combo", maxLevel: 1, description: "Encore + Vowel Bounty: every encore also pays 10 points for each vowel in that stage's secret.", requires: ["encore", "vowelBounty"], level: g => (upgradeCount(g, "encore") > 0 && upgradeCount(g, "vowelBounty") > 0) ? 1 : 0 },
-        { id: "allIn", icon: "🎲", title: "All In", tier: "legendary", category: "combo", maxLevel: 1, description: "Double Down + Hot Streak: a solve on the lucky guess also pays +15 points (+30 with Hot Streak taken twice).", requires: ["doubleDown", "hotStreak"], level: g => (upgradeCount(g, "doubleDown") > 0 && upgradeCount(g, "hotStreak") > 0) ? 1 : 0 }
+        { id: "encoreNight", icon: "🎬", title: "Encore Night", tier: "legendary", category: "combo", maxLevel: 1, description: "Encore + Vowel Bounty: every encore also pays 10 points for each vowel in that stage's secret.", requires: ["encore", "vowelBounty"], level: g => (upgradeCount(g, "encore") > 0 && upgradeCount(g, "vowelBounty") > 0) ? 1 : 0 }
       ]
     },
     {
@@ -180,21 +171,15 @@
       title: "Boss Rewards",
       blurb: "Permanent rewards for clearing a boss round. No ordinary upgrade is offered afterward.",
       nodes: [
-        { id: "cullRare", icon: "✂️", title: "Deep Cull", tier: "legendary", category: "boss", maxLevel: 1, description: "Remove three rare letters from the deck and from every future secret." },
+        { id: "cullRare", icon: "✂️", title: "Deep Cull", tier: "legendary", category: "boss", maxLevel: 1, description: "Remove four rare letters from the deck and from every future secret." },
         { id: "doubleMulligans", icon: "🔁", title: "Double Mulligans", tier: "epic", category: "boss", maxLevel: 1, description: "Double the number of mulligans you get each stage.", level: g => upgradeCount(g, "doubleMulligans") },
-        { id: "biggerMulligans", icon: "🖐️", title: "Full Hand Mulligan", tier: "legendary", category: "boss", maxLevel: 1, description: "Every mulligan can now replace up to five cards.", level: g => upgradeCount(g, "mulliganSize") },
-        { id: "richerColours", icon: "💰", title: "Richer Colours", tier: "legendary", category: "boss", maxLevel: 1, description: "Every yellow and green tile is worth 2 points more.", level: g => upgradeCount(g, "yellowPoints") },
+        { id: "biggerMulligans", icon: "🖐️", title: "Full Hand Mulligan", tier: "epic", category: "boss", maxLevel: 1, description: "Every mulligan can now replace up to five cards.", level: g => upgradeCount(g, "mulliganSize") },
         { id: "freeVowelSweep", icon: "🅰️", title: "Free Vowel Sweep", tier: "epic", category: "boss", maxLevel: 1, description: "Each stage opens with one random vowel tested for free: you learn whether it's in the answer, not where.", level: g => upgradeCount(g, "freeVowelSweep") },
-        { id: "questHead", icon: "🏅", title: "Quest Head Start", tier: "epic", category: "boss", maxLevel: 1, description: "Quests are worth 10 points more for the rest of the run.", level: g => Math.min(1, ledgerCount(g, "questHead")) },
-        { id: "revealGreen", icon: "📍", title: "Position Peek", tier: "legendary", category: "boss", maxLevel: 1, description: "The stage after this boss opens with one letter of the answer already in its exact place." },
-        { id: "openingClue", icon: "🔮", title: "Margin Note", tier: "legendary", category: "boss", maxLevel: 1, description: "Every non-boss stage from now on opens with one letter of the answer shown as in the word, not where.", level: g => Number(g?.state?.cuddleBonuses?.openingClue) || 0 },
+        { id: "revealGreen", icon: "📍", title: "Position Peek", tier: "rare", category: "boss", maxLevel: 1, description: "Your next stage opens with one letter of the answer already in its exact place. One time." },
         { id: "questDoublePick", icon: "✌️", title: "Double Pick", tier: "legendary", category: "boss", maxLevel: 1, description: "Quest reward screens let you choose two options instead of one, for the rest of the run.", level: g => upgradeCount(g, "questDoublePick") },
-        { id: "questCadence", icon: "❗", title: "Quest Cadence", tier: "legendary", category: "boss", maxLevel: 2, description: "Quests come more often (every second guess, then every guess) and one more can be active at a time. Stacks twice.", level: g => upgradeCount(g, "questCadence") },
-        { id: "questPersistReward", icon: "⏳", title: "Lasting Quests", tier: "legendary", category: "boss", maxLevel: 1, description: "A quest you don't complete stays active for the rest of the stage instead of expiring after one guess (not in boss fights).", level: g => (g?.state?.megaState?.questPersistsForRound ? 1 : 0) },
-        { id: "backupPlanReward", icon: "🧰", title: "Backup Plan", tier: "legendary", category: "boss", maxLevel: 1, description: "Gain one additional mulligan every stage.", level: g => upgradeCount(g, "extraMulligans") },
-        { id: "clearSight", icon: "🟢", title: "Clear Sight", tier: "legendary", category: "boss", maxLevel: 1, description: "Upgrade Margin Note: it now reveals a letter's exact position instead of just that it's present.", level: g => (bossRewardOwned(g, "clearSight") ? 1 : 0) },
+        { id: "questCadence", icon: "❗", title: "Quest Cadence", tier: "epic", category: "boss", maxLevel: 2, description: "Quests come more often (every second guess, then every guess) and one more can be active at a time. Stacks twice.", level: g => upgradeCount(g, "questCadence") },
+        { id: "questPersistReward", icon: "⏳", title: "Lasting Quests", tier: "legendary", category: "boss", maxLevel: 1, description: "A quest you don't complete stays active for the rest of the stage instead of expiring after one guess, boss fights included.", level: g => (g?.state?.megaState?.questPersistsForRound ? 1 : 0) },
         { id: "allThemesBoss", icon: "🔮", title: "All-Seeing Atlas", tier: "legendary", category: "boss", maxLevel: 1, description: "Reveal every available theme at the start of every non-boss Wordle.", level: g => (bossRewardOwned(g, "umtAllThemes") ? 1 : 0) },
-        { id: "goldenCompass", icon: "🧭", title: "Golden Compass", tier: "legendary", category: "boss", maxLevel: 1, description: "Once per stage, reveal the most useful untested letter among the remaining possible answers.", level: g => (bossRewardOwned(g, "goldenCompass") ? 1 : 0) },
         { id: "secondCup", icon: "☕", title: "Second Cup", tier: "epic", category: "boss", maxLevel: 1, description: "Once per run, when you would run out of guesses in a boss or strict stage, you get one extra guess.", level: g => (bossRewardOwned(g, "secondCup") ? 1 : 0) },
         { id: "goldenThread", icon: "🧵", title: "Golden Thread", tier: "legendary", category: "boss", maxLevel: 1, description: "A full five-letter draft pulses and vibrates when it contains an answer letter you have not learned yet.", level: g => (bossRewardOwned(g, "goldenThread") ? 1 : 0) }
       ]

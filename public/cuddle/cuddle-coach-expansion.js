@@ -125,13 +125,10 @@
     }
   ]);
 
+  // Boss rewards this layer owns the effects of. (Golden Compass is
+  // retired; Clear Sight is now Yellow Guesser Hint's second stage, in
+  // cuddle-rebalance-v5.js.)
   var BOSS_REWARDS = Object.freeze([
-    {
-      id: "goldenCompass",
-      icon: "🧭",
-      title: "Golden Compass",
-      description: "Once per stage, reveal the most useful untested letter among the remaining possible answers."
-    },
     {
       id: "secondCup",
       icon: "☕",
@@ -143,17 +140,6 @@
       icon: "🧵",
       title: "Golden Thread",
       description: "A full five-letter draft pulses and vibrates when it contains an answer letter you have not learned yet."
-    },
-    // Only meaningful once Margin Note (the "hiddenMargins" boss's fixed
-    // openingClue reward) has already been picked -- nextCustomBossReward
-    // below excludes it from the rotation until then. Effect lives in the
-    // _applyOpeningClue override further down: every future Margin Note
-    // trigger becomes a full position reveal instead of a presence-only one.
-    {
-      id: "clearSight",
-      icon: "🟢",
-      title: "Clear Sight",
-      description: "Upgrade Margin Note: it now reveals a letter's exact position instead of just that it's present."
     }
   ]);
 
@@ -869,31 +855,46 @@
     return { ok: true, message: game.state.lastMessage };
   }
 
-  function nextCustomBossReward(game) {
+  // Every boss offers its own reward (cuddle-quests.js). One the run
+  // already has would be a wasted fight, so it is swapped for another boss
+  // reward the run doesn't have yet.
+  var BOSS_REWARD_POOL = ["cullRare", "doubleMulligans", "biggerMulligans", "questCadence", "freeVowelSweep",
+    "secondCup", "revealGreen", "goldenThread", "questDoublePick", "questPersistReward", "umtAllThemes"];
+
+  function bossRewardOwned(game, id) {
+    var state = game.state || {};
+    var upgrades = state.upgrades || {};
     var coach = ensureCoach(game);
-    // Clear Sight upgrades a reveal Margin Note (openingClue) already made
-    // permanent -- offering it before that pick exists would be a dead
-    // choice, so it stays out of the rotation entirely until the player has
-    // at least one openingClue stack.
-    var pool = BOSS_REWARDS.filter(function eligible(reward) {
-      if (reward.id !== "clearSight") return true;
-      return Number(game.state?.cuddleBonuses?.openingClue || 0) > 0;
-    });
-    if (!pool.length) pool = BOSS_REWARDS.slice();
-    var missing = pool.filter(function missingReward(reward) {
-      return !coach.newBossRewardsOwned.includes(reward.id);
-    });
-    if (!missing.length) missing = pool.slice();
-    var index = Math.max(0, integer(game.state.bossesCleared, 0)) % missing.length;
-    return missing[index] || missing[0];
+    switch (id) {
+      case "doubleMulligans": return integer(upgrades.doubleMulligans, 0) > 0;
+      case "biggerMulligans": return integer(upgrades.mulliganSize, 0) >= 2;
+      case "questCadence": return integer(upgrades.questCadence, 0) >= 2;
+      case "freeVowelSweep": return integer(upgrades.freeVowelSweep, 0) > 0;
+      case "questDoublePick": return Boolean(upgrades.questDoublePick);
+      case "questPersistReward": return Boolean(state.megaState && state.megaState.questPersistsForRound);
+      case "umtAllThemes": return Boolean(state.cuddleRebalanceV5 && state.cuddleRebalanceV5.allThemesUnlocked);
+      case "secondCup":
+      case "goldenThread": return coach.newBossRewardsOwned.includes(id);
+      case "cullRare": return (state.rewardBookHistory || []).some(function took(entry) {
+        return entry && (entry.id === "cullRare" || entry.rewardId === "cullRare");
+      });
+      default: return false;
+    }
   }
 
   function decorateBossOffer(game) {
     if (game.state.status !== "bossChoice" || !Array.isArray(game.state.bossOffer) || !game.state.bossOffer.length) return;
-    var reward = nextCustomBossReward(game);
-    game.state.bossOffer = game.state.bossOffer.map(function decorate(option, index) {
-      if (index !== 0) return option;
-      return Object.assign({}, option, { rewardId: reward.id, reward: Object.assign({}, reward) });
+    var book = window.CuddleQuestBook;
+    if (!book || typeof book.getBossReward !== "function") return;
+    var taken = game.state.bossOffer.map(function rewardOf(option) { return option.rewardId; });
+    game.state.bossOffer = game.state.bossOffer.map(function decorate(option) {
+      if (!bossRewardOwned(game, option.rewardId)) return option;
+      var swap = BOSS_REWARD_POOL.find(function fresh(id) {
+        return taken.indexOf(id) < 0 && !bossRewardOwned(game, id) && book.getBossReward(id);
+      });
+      if (!swap) return option;
+      taken.push(swap);
+      return Object.assign({}, option, { rewardId: swap, reward: Object.assign({}, book.getBossReward(swap)) });
     });
   }
 

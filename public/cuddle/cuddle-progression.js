@@ -140,19 +140,19 @@
   // Anything not listed falls into a branch by its catalogue category.
   const WEDGES = [
     { id: "scoring", title: "Scoring", color: "#8ff7cd", angle: -150,
-      ids: ["storybookStart", "earlySolveBoost", "mulliganValueBoost", "greyPointBoost", "colourTrade", "greyscale"] },
+      ids: ["storybookStart", "earlySolveBoost", "mulliganValueBoost", "colourTrade", "greyscale"] },
     { id: "economy", title: "Economy", color: "#f6c956", angle: -90,
-      ids: ["rainyDay", "encore", "hotStreak", "vowelBounty", "doubleDown", "reserveDividend", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"] },
-    { id: "solving", title: "Solving Aids", color: "#7cb8ff", angle: -30, easyOnly: true,
-      ids: ["openingInsight", "quickStudy", "consonantSweep"] },
+      ids: ["rainyDay", "encore", "vowelBounty", "doubleDown", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"] },
+    { id: "solving", title: "Solving Aids", color: "#7cb8ff", angle: -30,
+      ids: ["consonantSweep", "alphabet-compass"] },
     { id: "coach", title: "Cuddle Coach", color: "#ff9ec7", angle: 30,
       ids: ["coachPossibleAnswers", "coachHint", "coachEarlierHint", "coachMeterThreshold", "coachMeterReward"] },
     { id: "quests", title: "Quests", color: "#f6a94a", angle: 90,
       ids: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment"] },
     { id: "hand", title: "Hand & Tools", color: "#d5a6ff", angle: 150,
-      ids: ["extraMulligans", "mulliganSize", "handSizeBoost", "jokerPerRound", "jokerCache", "wideChoice", "rewardEcho", "removeLetter", "greenCount", "categorySense", "alphabet-compass"] },
+      ids: ["extraMulligans", "mulliganSize", "handSizeBoost", "jokerCache", "jokerCacheLarge", "wideChoice", "rewardEcho", "cullOne", "cullTwo", "greenCount", "categorySense"] },
     { id: "insight", title: "Insight", color: "#9ee86f", angle: 180,
-      ids: ["vowelLamp", "echoFinder", "patternLens", "deadLetter", "lastLight", "treasureHunter", "mistakeShield"] }
+      ids: ["vowelLamp", "echoFinder", "patternLens", "yellowHint", "lastLight", "treasureHunter", "mistakeShield"] }
   ];
   const CATEGORY_WEDGE = { economy: "economy", solving: "solving", quests: "quests", easierStages: "hand", insight: "insight" };
   const COMBO_COLOR = "#ff7ab8";
@@ -162,10 +162,10 @@
   const TIER_NAME = { common: "Common", rare: "Rare", epic: "Epic", legendary: "Legendary" };
   // Talents the shop's permanent shelf sells (cuddle-shop.js KEEP items).
   const SHOP_TALENTS = new Set(["coachPossibleAnswers", "coachHint", "coachMeterThreshold", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"]);
-  // Boss rewards that can also be a Legendary between-round pick
-  // (cuddle-economy-rarity-v8.js LEGENDARY_PICKS).
-  const LEGENDARY_PICK_IDS = new Set(["doubleMulligans", "cullRare", "freeVowelSweep", "questHead", "questDoublePick",
-    "questPersistReward", "goldenCompass", "secondCup", "allThemesBoss", "umtAllThemes", "jokerCache", "umtJokerCache"]);
+  // Boss rewards that also come up as between-round picks
+  // (cuddle-economy-rarity-v8.js LEGENDARY_PICKS); pickTierName says which tier.
+  const LEGENDARY_PICK_IDS = new Set(["doubleMulligans", "cullRare", "freeVowelSweep", "biggerMulligans", "questCadence", "revealGreen", "goldenThread", "questDoublePick",
+    "questPersistReward", "secondCup", "allThemesBoss", "umtAllThemes"]);
 
   const R_HUB = 100;
   const ARC_RADII = [178, 246, 314];
@@ -389,7 +389,7 @@
     { id: "hand", tagline: "Better cards, better tools.", icon: "toolbox" },
     { id: "quests", tagline: "Side goals, real rewards.", icon: "clipboard" },
     { id: "coach", tagline: "Your coach in the corner.", icon: "pinkHeart" },
-    { id: "solving", tagline: "Gentle nudges, on Easy only.", icon: "bulb" },
+    { id: "solving", tagline: "Gentle nudges for tough words.", icon: "bulb" },
     { id: "combos", title: "Combos", tagline: "Two halves, one bonus.", icon: "link", color: COMBO_COLOR },
     { id: "bosses", title: "Boss Rewards", tagline: "Taken from the bosses you beat.", icon: "trophy", color: BOSS_COLOR }
   ];
@@ -604,8 +604,9 @@
 
   // Boss rewards that are also between-round picks: these four come up as
   // Epic, the rest as Legendary (cuddle-economy-rarity-v8.js).
-  const EPIC_PICK_IDS = new Set(["doubleMulligans", "freeVowelSweep", "questHead", "secondCup"]);
+  const EPIC_PICK_IDS = new Set(["doubleMulligans", "freeVowelSweep", "biggerMulligans", "questCadence", "secondCup"]);
   function pickTierName(id) {
+    if (id === "revealGreen") return "a Rare";
     return EPIC_PICK_IDS.has(id) ? "an Epic" : "a Legendary";
   }
 

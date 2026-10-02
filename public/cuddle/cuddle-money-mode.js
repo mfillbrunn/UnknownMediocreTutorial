@@ -49,50 +49,14 @@
     payoutCoinCount: 8
   });
 
-  var STARTER_REWARD_IDS = [
-    "doubleMulligans",
-    "biggerMulligans",
-    "richerColours",
-    "freeVowelSweep",
-    "questHead",
-    "openingClue",
-    "questDoublePick",
-    "questCadence",
-    "questPersistReward",
-    "backupPlanReward",
-    "umtAllThemes"
-  ];
-
-  // Every starting bonus has a rarity, and the three on offer always share
-  // one (rolled first, like a between-round offer). Tiers match the same
-  // rewards' rarity elsewhere (cuddle-economy-rarity-v8.js).
-  var STARTER_TIER = {
-    biggerMulligans: "rare",
-    questCadence: "rare",
-    backupPlanReward: "rare",
-    doubleMulligans: "epic",
-    richerColours: "epic",
-    freeVowelSweep: "epic",
-    questHead: "epic",
-    openingClue: "epic",
-    questDoublePick: "legendary",
-    questPersistReward: "legendary",
-    umtAllThemes: "legendary"
+  // Starting bonuses come from the ordinary reward pool, all three of one
+  // rarity, and the allowed rarities depend on difficulty: the easier the
+  // run, the stronger the start.
+  var STARTER_TIERS = {
+    hard: ["rare", "epic"],
+    medium: ["epic", "legendary"],
+    easy: ["legendary"]
   };
-  var STARTER_TIER_WEIGHTS = {
-    easy: { rare: 30, epic: 55, legendary: 15 },
-    medium: { rare: 55, epic: 35, legendary: 10 }
-  };
-
-  function rollStarterTier(weights, available, game) {
-    var total = available.reduce(function sum(acc, tier) { return acc + (weights[tier] || 0); }, 0);
-    var roll = randomFor(game) * total;
-    for (var index = 0; index < available.length; index += 1) {
-      roll -= weights[available[index]] || 0;
-      if (roll < 0) return available[index];
-    }
-    return available[available.length - 1];
-  }
 
   var CHALLENGES = [
     {
@@ -351,44 +315,28 @@
     return mode;
   }
 
-  // Every other difficulty's Starting Bonus is drawn from the shared boss
-  // reward book -- a free taste of a reward tier the player would otherwise
-  // have to clear a boss to earn. Hard mode already gets no compensation
-  // picks the way easy/medium do (see startNewMega's difficultyStart
-  // branch), so handing it a boss-tier reward for free on top of that was
-  // backwards: the hardest difficulty ended up with the single strongest
-  // opening pick. It draws from the ordinary round-clear catalog instead.
   function starterRewardChoices(game) {
     var difficulty = String(game.state && game.state.megaState && game.state.megaState.difficulty || "hard");
-    if (difficulty === "hard" && typeof game._generateUpgradeChoices === "function") {
-      // An ordinary between-round offer: cuddle-economy-rarity-v8.js rolls
-      // one tier and draws every card from it.
-      var offer = (game._generateUpgradeChoices() || []).slice(0, 3).map(function withTier(choice) {
-        var tier = choice && (choice.__cuddleV8OfferTier || choice.__cuddleV8Tier);
-        return tier ? Object.assign({}, choice, { starterTier: tier }) : choice;
+    var allowed = STARTER_TIERS[difficulty] || STARTER_TIERS.hard;
+    if (typeof game._generateUpgradeChoices !== "function") return { source: "normal", choices: [] };
+    // Each draw is an ordinary between-round offer: one rarity rolled by
+    // cuddle-economy-rarity-v8.js, every card from it. Redraw until the
+    // rarity is one this difficulty allows (Easy's Legendary is the long
+    // shot, about one draw in twenty).
+    var offer = [];
+    var tier = "";
+    for (var attempt = 0; attempt < 400; attempt += 1) {
+      offer = (game._generateUpgradeChoices() || []).slice(0, 3);
+      tier = offer.length && offer[0] ? String(offer[0].__cuddleV8OfferTier || offer[0].__cuddleV8Tier || "") : "";
+      var sameTier = offer.every(function inTier(choice) {
+        return choice && String(choice.__cuddleV8OfferTier || choice.__cuddleV8Tier || "") === tier;
       });
-      return { source: "normal", choices: offer };
+      if (offer.length === 3 && sameTier && allowed.indexOf(tier) >= 0) break;
     }
-    var questBook = window.CuddleQuestBook;
-    // "Margin Note" (openingClue) reveals a letter at the start of every
-    // future stage -- a standing hint. Free hints are Easy's whole reason
-    // to exist (see trainingWheelsFor in cuddle-rebalance-v5.js), so
-    // Medium's Starting Bonus draw excludes it rather than risk handing a
-    // Medium run the same free-hint value Easy is built around.
-    var ids = difficulty === "easy" ? STARTER_REWARD_IDS : STARTER_REWARD_IDS.filter(function notAHint(id) {
-      return id !== "openingClue";
-    });
-    var choices = ids.map(function rewardForId(id) {
-      var reward = questBook && typeof questBook.getBossReward === "function" ? questBook.getBossReward(id) : null;
-      return reward ? Object.assign({}, reward, { starterTier: STARTER_TIER[id] || "rare" }) : null;
-    }).filter(Boolean);
-    var weights = STARTER_TIER_WEIGHTS[difficulty] || STARTER_TIER_WEIGHTS.medium;
-    var available = ["rare", "epic", "legendary"].filter(function fullSet(tier) {
-      return choices.filter(function inTier(choice) { return choice.starterTier === tier; }).length >= 3;
-    });
-    var tier = available.length ? rollStarterTier(weights, available, game) : null;
-    var pool = tier ? choices.filter(function inTier(choice) { return choice.starterTier === tier; }) : choices;
-    return { source: "boss", choices: shuffled(pool, game).slice(0, 3) };
+    return {
+      source: "normal",
+      choices: offer.map(function withTier(choice) { return Object.assign({}, choice, { starterTier: tier }); })
+    };
   }
 
   function resetModeForNewRun(game) {
