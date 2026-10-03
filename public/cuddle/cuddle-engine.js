@@ -4195,7 +4195,7 @@
 /* UMT_CUDDLE_REWARD_ECHO_V1: ENGINE START */
 // Adds one special round-reward card, "Reward Echo": picking it arms a flag
 // instead of doing anything itself, and the very next round-reward pick
-// (from whichever layer actually handles it) gets replayed twice more on
+// (from whichever layer actually handles it) gets replayed once more on
 // top of its own single application. Appended last, after every other
 // engine layer, so this sees and can consume every possible pick -- an
 // earlier position would miss picks the balance-refresh layer's own new
@@ -4213,7 +4213,7 @@
     key: "rewardEcho",
     icon: "🔁",
     title: "Reward Echo",
-    description: "The next round reward you pick is applied three times."
+    description: "The next round reward you pick is applied twice."
   });
 
   // Fields safe to diff-and-replay: pure accumulators everywhere they're
@@ -4257,7 +4257,7 @@
       state.upgradeChoices = [];
       state.upgradePhase = null;
       state.upgradeMilestone = null;
-      state.lastMessage = "Reward Echo armed: your next round reward will be applied three times.";
+      state.lastMessage = "Reward Echo armed: your next round reward will be applied twice.";
       this._advanceRound();
       this.save();
       return { ok: true };
@@ -4283,7 +4283,7 @@
         const delta = Number(state.cuddleBonuses[key] || 0) - Number(beforeBonuses[key] || 0);
         if (!delta) continue;
         const cap = this._cuddleV3RewardDefinition?.(key)?.max ?? Infinity;
-        const replayed = Number(state.cuddleBonuses[key] || 0) + delta * 2;
+        const replayed = Number(state.cuddleBonuses[key] || 0) + delta;
         state.cuddleBonuses[key] = Math.min(cap, replayed);
         echoed = true;
       }
@@ -4295,13 +4295,13 @@
         const after = Number(state.upgrades[key] || 0);
         const delta = after - before;
         if (!delta) continue;
-        state.upgrades[key] = after + delta * 2;
+        state.upgrades[key] = after + delta;
         echoed = true;
       }
     }
 
     if (echoed) {
-      state.lastMessage = `${state.lastMessage || ""} Reward Echo: ${choice?.title || "that reward"} applied three times total.`.trim();
+      state.lastMessage = `${state.lastMessage || ""} Reward Echo: ${choice?.title || "that reward"} applied twice.`.trim();
       this.save();
     }
 

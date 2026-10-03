@@ -99,7 +99,7 @@
         { id: "earlySolveBoost", icon: "🏁", title: "Early Finish", tier: "common", category: "economy", description: "Each unused guess earns 5 points more on an early solve." },
         { id: "colourTrade", icon: "🎨", title: "Colour Surge", tier: "common", maxLevel: 3, category: "economy", description: "Green tiles are worth 1 point more per level, 2 more at level 3.", level: g => Number(g?.state?.balanceRewardCounts?.colourTrade) || 0 },
         { id: "greyscale", icon: "⬛", title: "Greyscale", tier: "common", category: "economy", description: "Grey tiles gain 2 points and yellow 1 per level; grey 3 and yellow 2 at level 3.", maxLevel: 3, level: g => Number(g?.state?.balanceRewardCounts?.greyscale) || 0 },
-        { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", category: "easierStages", description: "The next round reward you pick is applied three times." },
+        { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", category: "easierStages", description: "The next round reward you pick is applied twice." },
         { id: "greenCount", icon: "🔢", title: "Precise Green", tier: "rare", category: "solving", maxLevel: 1, description: "A green tile also shows how many times that letter appears in the secret." },
         { id: "surprise-assignment", icon: "📜", title: "Surprise Assignment", tier: "rare", category: "quests", description: "Add one extra quest at a random turn in every stage. Each copy schedules another quest." },
         // More special board tiles (cuddle-points-money.js).
