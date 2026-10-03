@@ -425,8 +425,9 @@
     const notes = [];
     if (campaign.inventory.extraMulligan > 0) {
       campaign.inventory.extraMulligan -= 1;
-      this.state.mulligansLeft = Number(this.state.mulligansLeft || 0) + 1;
-      notes.push("Spare Mulligan added one mulligan for this round.");
+      const gained = typeof this.mulliganGain === "function" ? this.mulliganGain(1) : 1;
+      this.state.mulligansLeft = Number(this.state.mulligansLeft || 0) + gained;
+      notes.push(gained === 1 ? "Spare Mulligan added one mulligan for this round." : `Spare Mulligan added ${gained} mulligans for this round.`);
     }
     if (campaign.inventory.yellowDetector > 0) {
       const detectorMessage = applyYellowDetector(this);

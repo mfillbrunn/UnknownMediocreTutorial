@@ -54,7 +54,7 @@
   var STAGE_CLEAR_MONEY = 10;
 
   // Special tiles: a few board cells, rolled fresh at the start of every
-  // non-boss round, that pay out for the letter the player lands on them.
+  // round, boss fights included, that pay out for the letter the player lands on them.
   // Each is marked on the board before it is played (a large faint symbol)
   // so it can be aimed at. A yellow or green on it pays; a grey spends it
   // for nothing. Payouts happen inside the engine's scoring step (see
@@ -65,7 +65,8 @@
   // in world two, 4 in world three), one per row at most, so hunting one is
   // never a reason to guess past that window and eat the late penalty.
   //
-  // Kinds, all available from the start:
+  // Kinds. A run starts with money and points tiles only; the other three
+  // each need their unlock reward (Mulligan / Joker / Oracle Tiles):
   //   money    $  gold   +$2 on yellow, +$4 on green
   //   points   P  green  +5 points on yellow, +10 on green
   //   mulligan ↻         +1 mulligan (yellow or green alike)
@@ -90,10 +91,9 @@
   var TILE_KINDS = [
     { kind: "money", weight: function () { return 1; } },
     { kind: "points", weight: function () { return 1; } },
-    // Standard kinds now, no reward needed; the hint (Oracle) tile stays rarest.
-    { kind: "mulligan", weight: function () { return 0.6; } },
-    { kind: "joker", weight: function () { return 0.45; } },
-    { kind: "hint", weight: function () { return 0.3; } }
+    { kind: "mulligan", bonus: "mulliganTiles", weight: function (level) { return 0.45 * level; } },
+    { kind: "joker", bonus: "jokerTiles", weight: function (level) { return 0.3 * level; } },
+    { kind: "hint", bonus: "oracleTiles", weight: function (level) { return 0.15 * level; } }
   ];
 
   function addMoney(state, amount) {
@@ -165,6 +165,7 @@
   // for after the guess so the reveal can't point at a position this very
   // guess just uncovered.
   proto._scoreSpecialTiles = function scoreSpecialTiles(row, feedback) {
+    var game = this;
     var state = this.state;
     var tiles = state && Array.isArray(state.cuddleMoneyTiles) ? state.cuddleMoneyTiles : null;
     if (!tiles || !Array.isArray(feedback)) return 0;
@@ -192,10 +193,11 @@
         points += tile.payout;
         notes.push("Points tile +" + tile.payout);
       } else if (kind === "mulligan") {
-        tile.payout = 1;
-        tile.label = "+1";
-        state.mulligansLeft = Math.max(0, Number(state.mulligansLeft) || 0) + 1;
-        notes.push("Mulligan tile +1 mulligan");
+        var gained = typeof game.mulliganGain === "function" ? game.mulliganGain(1) : 1;
+        tile.payout = gained;
+        tile.label = "+" + gained;
+        state.mulligansLeft = Math.max(0, Number(state.mulligansLeft) || 0) + gained;
+        notes.push("Mulligan tile +" + gained + " mulligan" + (gained === 1 ? "" : "s"));
       } else if (kind === "joker") {
         tile.payout = 1;
         tile.label = "+1";
@@ -219,9 +221,8 @@
     if (state) {
       state.pendingTileHints = 0;
       state.pendingTileNotes = [];
-      // Bosses are a straight fight -- no special tiles there, only on the
-      // wordle, themed wordle and challenge stops.
-      state.cuddleMoneyTiles = this.isBossRound() ? [] : rollSpecialTiles(this);
+      // Every stage rolls them, boss fights included.
+      state.cuddleMoneyTiles = rollSpecialTiles(this);
     }
     return result;
   };

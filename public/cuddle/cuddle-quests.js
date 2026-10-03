@@ -398,7 +398,7 @@
       id: "doubleMulligans",
       icon: "🔁",
       title: "Double Mulligans",
-      description: "Double the number of mulligans you get each stage."
+      description: "Permanently doubles every mulligan you get: each stage's starting mulligans and every one you gain along the way."
     },
     {
       id: "biggerMulligans",

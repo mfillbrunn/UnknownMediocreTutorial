@@ -486,8 +486,16 @@
     // reward) doubles whatever the base plus per-round upgrades come to.
     getMulliganAllowance() {
       const base = BASE_MULLIGANS + (Number(this.state?.upgrades?.extraMulligans) || 0);
-      const doubles = Number(this.state?.upgrades?.doubleMulligans) || 0;
-      return doubles > 0 ? base * 2 : base;
+      return this.mulliganGain(base);
+    }
+
+    // Mulligans gained on top of the allowance -- the Cuddle Meter, Mulligan
+    // tiles, shop supplies, combos -- go through here too, so Double
+    // Mulligans stays a permanent x2 on every mulligan, not just the
+    // stage's starting count.
+    mulliganGain(count) {
+      const amount = Math.max(0, Number(count) || 0);
+      return (Number(this.state?.upgrades?.doubleMulligans) || 0) > 0 ? amount * 2 : amount;
     }
 
     isBossRound() {
@@ -2003,7 +2011,7 @@
         }
         case "doubleMulligans":
           this.state.upgrades.doubleMulligans += 1;
-          return "Mulligans per round are now doubled.";
+          return "Every mulligan you get is now doubled.";
         case "biggerMulligans":
           // Enough headroom that a mulligan can swap the whole counted hand.
           this.state.upgrades.mulliganSize = Math.max(
@@ -2447,7 +2455,7 @@
       modifications.push(`Quests are worth ${Number(upgrades.questPoints)} points`);
     }
     if (Number(upgrades.doubleMulligans || 0)) {
-      modifications.push("Mulligans per round are doubled");
+      modifications.push("Every mulligan you get is doubled");
     }
     if (Number(upgrades.freeVowelSweep || 0)) {
       modifications.push("Each round opens with a free vowel sweep");
@@ -2479,8 +2487,9 @@
   const cuddleV2OriginalRewardEffect = CuddleGame.prototype._applyRewardEffect;
   CuddleGame.prototype._applyRewardEffect = function applyCuddleV2Reward(rewardId) {
     if (rewardId === "stealthGuess") {
-      this.state.mulligansLeft = Number(this.state.mulligansLeft || 0) + 1;
-      return "Extra Mulligan added for this round.";
+      const gained = this.mulliganGain(1);
+      this.state.mulligansLeft = Number(this.state.mulligansLeft || 0) + gained;
+      return gained === 1 ? "Extra Mulligan added for this round." : `${gained} extra mulligans added for this round.`;
     }
 
     // Letter Count reports two random consonants from the counted hand
@@ -2656,13 +2665,12 @@
   // CuddleGame prototype; no multiplayer state, sockets, or shared powers are
   // changed here.
   const CUDDLE_V3_BOSS_TURNS = Object.freeze([2, 2, 3, 4]);
-  const RETIRED_TILE_REWARDS = new Set(["mulliganTiles", "jokerTiles", "oracleTiles"]);
   const CUDDLE_V3_CUSTOM_REWARDS = Object.freeze([
     {
       id: "storybookStart",
       icon: "📖",
       title: "Opening Verse",
-      description: "Start every non-boss stage with +10 points. Stacks up to three times.",
+      description: "Start every stage with +10 points. Stacks up to three times.",
       max: 3
     },
     {
@@ -2710,7 +2718,7 @@
       id: "oracleTiles",
       icon: "🔮",
       title: "Oracle Tiles",
-      tier: "legendary",
+      tier: "epic",
       description: "Special tiles can now be Oracle tiles, the rarest kind: a yellow or green on one reveals a letter and its exact position. Taking it again makes them more common.",
       max: 3
     }
@@ -2720,7 +2728,7 @@
       id: "goldenTempo",
       icon: "⚡",
       title: "Golden Tempo",
-      description: "Colour Surge or Richer Colours + Early Finish: every solved non-boss stage gives +5 points."
+      description: "Colour Surge or Richer Colours + Early Finish: every solved stage gives +5 points."
     },
     {
       id: "questBinding",
@@ -2732,7 +2740,7 @@
       id: "illustratedStart",
       icon: "🌟",
       title: "Illustrated Start",
-      description: "Opening Verse + Margin Note: non-boss stages open with another +5 points."
+      description: "Opening Verse + Margin Note: stages open with another +5 points."
     },
     {
       id: "endlessMargins",
@@ -3136,8 +3144,7 @@
     state.mysteryGlyphKinds = {};
     state.unknownGlyphs = [];
     state.roundOpeningPoints = 0;
-    if (this.isBossRound()) return;
-
+    // Opening Verse and Margin Note work in every stage, boss fights included.
     const notes = [];
     const openingPoints = Number(state.cuddleBonuses.storybookStart || 0) * 10
       + (cuddleV3HasSynergy(this, "illustratedStart") ? 5 : 0);
@@ -3280,10 +3287,7 @@
     const base = cuddleV3OriginalUpgradeCatalog.call(this)
       .map(cuddleV3NormalizeUpgradeChoice)
       .filter(Boolean);
-    // Mulligan, Joker and Oracle tiles are standard special tiles now
-    // (cuddle-points-money.js), so their rewards are no longer offered.
     const extras = CUDDLE_V3_CUSTOM_REWARDS
-      .filter(definition => !RETIRED_TILE_REWARDS.has(definition.id))
       .filter(definition => Number(state.cuddleBonuses[definition.id] || 0) < definition.max)
       .map(definition => ({ ...definition, key: definition.id }));
     return [...base, ...extras];
@@ -3746,7 +3750,7 @@
     id: "goldenTempo",
     icon: "⚡",
     title: "Golden Tempo",
-    description: "Colour Surge or Richer Colours + Early Finish: every solved non-boss stage gives +5 points."
+    description: "Colour Surge or Richer Colours + Early Finish: every solved stage gives +5 points."
   });
 
   function finiteNumber(value, fallback = 0) {
@@ -4657,7 +4661,7 @@
       message = "Quests now stay active for the rest of the round instead of expiring after one guess.";
     } else if (rewardId === "backupPlanReward") {
       this.state.upgrades.extraMulligans = Number(this.state.upgrades.extraMulligans || 0) + 1;
-      this.state.mulligansLeft = Number(this.state.mulligansLeft || 0) + 1;
+      this.state.mulligansLeft = Number(this.state.mulligansLeft || 0) + this.mulliganGain(1);
       message = "Gained one additional mulligan every round.";
     } else {
       message = composedApplyBossReward.call(this, rewardId);
@@ -5104,7 +5108,7 @@
     if (this.state.activeQuest) mega.activeQuests[0] = this.state.activeQuest;
 
     const slots = 1 + Math.max(0, Number(this.state.upgrades.questCadence || 0));
-    if (this.state.activeQuest && !this.isBossRound()) {
+    if (this.state.activeQuest) {
       let guard = 0;
       while (mega.activeQuests.filter(Boolean).length < slots && guard < 8) {
         guard += 1;

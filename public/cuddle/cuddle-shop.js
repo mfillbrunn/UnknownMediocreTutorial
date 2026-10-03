@@ -83,7 +83,7 @@
       level: game => (coachOf(game).possibleAnswersUnlocked ? 1 : 0),
       apply: game => { coachOf(game).possibleAnswersUnlocked = true; } },
     { id: "keepHint", ledgerId: "coachHint", icon: "reward-coach-shop-hint.svg", title: "Guesser Hint", cost: 50, max: 4,
-      blurb: "One more automatic hint every non-boss stage: first a letter that's in the answer, then one in its exact place.",
+      blurb: "One more automatic hint every stage: first a letter that's in the answer, then one in its exact place.",
       level: game => Math.max(0, int(coachOf(game).hintsPerRound)),
       apply: game => { const coach = coachOf(game); coach.hintsPerRound = Math.min(4, Math.max(0, int(coach.hintsPerRound)) + 1); } },
     { id: "keepMeter", ledgerId: "coachMeterThreshold", icon: "reward-cuddle-meter-reward.svg", title: "Softer Cuddle Meter", cost: 56, max: 3,
@@ -437,8 +437,9 @@
       if (note) notes.push(note);
     }
     if (spendPending(shop, "roadMulligans")) {
-      this.state.mulligansLeft = Math.max(0, int(this.state.mulligansLeft)) + 1;
-      notes.push("Spare Mulligans: +1 mulligan this stage.");
+      const gained = typeof this.mulliganGain === "function" ? this.mulliganGain(1) : 1;
+      this.state.mulligansLeft = Math.max(0, int(this.state.mulligansLeft)) + gained;
+      notes.push(`Spare Mulligans: +${gained} mulligan${gained === 1 ? "" : "s"} this stage.`);
     }
     if (spendPending(shop, "roadWhisper") && typeof window.CuddleCampaign.queueCategoryReveal === "function") {
       const note = window.CuddleCampaign.queueCategoryReveal(this, 1, "shop");

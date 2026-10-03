@@ -1866,8 +1866,9 @@
       if (!bonus) return result;
       const messages = [];
       if (bonus.mulligan) {
-        this.state.mulligansLeft = Number(this.state.mulligansLeft || 0) + Number(bonus.mulligan || 0);
-        messages.push(`+${bonus.mulligan} mulligan${Number(bonus.mulligan) === 1 ? "" : "s"}`);
+        const gained = typeof this.mulliganGain === "function" ? this.mulliganGain(bonus.mulligan) : Number(bonus.mulligan || 0);
+        this.state.mulligansLeft = Number(this.state.mulligansLeft || 0) + gained;
+        messages.push(`+${gained} mulligan${gained === 1 ? "" : "s"}`);
       }
       if (bonus.cards && typeof this._drawRewardCards === "function") {
         const drawn = this._drawRewardCards(Number(bonus.cards || 0));
@@ -2227,7 +2228,7 @@
       const icon = kind => `<span class="umt-legend-glyph" style="--kind:${Worlds.KIND_COLORS[kind]}">${Worlds.iconSvg(kind)}</span>`;
       const row = (kind, title, text) => `<li>${icon(kind)}<span><strong>${escapeHtml(title)}</strong><small>${richText(text)}</small></span></li>`;
       const variants = [
-        ["Classic", "A standard Wordle with no special setup."],
+        ["Classic", "A standard Wordle with no help. Clearing it pays a bonus: more than the helped stages, less than a challenge."],
         ["Themed", "Opens with some of the solution's categories revealed."],
         ["Head Start", "A random word is played for you as the first guess."],
         ["Lucky Start", "One exact letter position is revealed before you start."],

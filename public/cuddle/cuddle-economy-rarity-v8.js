@@ -60,6 +60,7 @@
     ["vowel bounty", TIERS.COMMON],
     // A one-time letter, so Common.
     ["position peek", TIERS.COMMON],
+    ["mulligan tiles", TIERS.COMMON],
 
     ["vowel lamp", TIERS.RARE],
     ["pattern lens", TIERS.RARE],
@@ -75,6 +76,7 @@
     ["encore", TIERS.RARE],
     ["rainy day fund", TIERS.RARE],
     ["small joker cache", TIERS.RARE],
+    ["joker tiles", TIERS.RARE],
 
     // Epic: a clue every stage, or a payout, a little short of Legendary.
     ["yellow guesser hint", TIERS.EPIC],
@@ -86,6 +88,7 @@
     ["cull two letters", TIERS.EPIC],
     ["full hand mulligan", TIERS.EPIC],
     ["quest cadence", TIERS.EPIC],
+    ["oracle tiles", TIERS.EPIC],
 
     ["candidate notebook", TIERS.LEGENDARY],
     ["large joker cache", TIERS.LEGENDARY],
@@ -143,7 +146,7 @@
   // in its own tier (ORDINARY_TIER_BY_NAME). Applied with the game's own
   // _applyBossReward (installLegendaryApply), exactly as a boss clear would.
   const LEGENDARY_PICKS = Object.freeze([
-    legendaryPick("doubleMulligans", "🔁", "Double Mulligans", "Double the number of mulligans you get each stage.",
+    legendaryPick("doubleMulligans", "🔁", "Double Mulligans", "Permanently doubles every mulligan you get: each stage's starting mulligans and every one you gain along the way.",
       (state) => !(Number(state.upgrades?.doubleMulligans) > 0)),
     legendaryPick("cullRare", "✂️", "Deep Cull", "Remove four rare letters from the deck and from every future secret.",
       (state) => ownedHistoryCount(state, "cullRare") < 1),
@@ -163,7 +166,7 @@
       (state) => !coachOwns(state, "secondCup")),
     legendaryPick("goldenThread", "🧵", "Golden Thread", "A full five-letter draft pulses and vibrates when it contains an answer letter you have not learned yet.",
       (state) => !coachOwns(state, "goldenThread")),
-    legendaryPick("umtAllThemes", "🔮", "All-Seeing Atlas", "Reveal every available theme at the start of every non-boss Wordle.",
+    legendaryPick("umtAllThemes", "🔮", "All-Seeing Atlas", "Reveal every available theme at the start of every Wordle.",
       (state) => !state.cuddleRebalanceV5?.allThemesUnlocked && !coachOwns(state, "umtAllThemes"))
   ]);
 

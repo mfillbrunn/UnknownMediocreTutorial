@@ -16,6 +16,10 @@
     luckyStartPercent: 10,
     jackpotPercent: 10,
     doubleOrNothingPercent: 8,
+    // A Classic Wordle gets no head start, so clearing one pays a bonus --
+    // more than the helped stages (Themed, Head Start, Lucky Start: none)
+    // and less than a challenge ($20-$40), in both Points and Money.
+    classicClearBonus: 12,
     unusedJokerBonus: 3,
     reserveDividendExtra: 5,
     hints: Object.freeze({"easy":{"first":1,"cadence":2},"medium":{"first":2,"cadence":3},"hard":{"first":3,"cadence":4}})
@@ -57,7 +61,7 @@
     Object.freeze({
       id: IDS.rainyDay, key: IDS.rainyDay, icon: "\uD83C\uDFE6",
       title: "Rainy Day Fund", name: "Rainy Day Fund",
-      description: "Every non-boss stage opens by paying 10% interest on your wallet, up to $25. A second copy doubles both.",
+      description: "Every stage opens by paying 10% interest on your wallet, up to $25. A second copy doubles both.",
       maxLevel: 2, maxCount: 2, kind: "upgrade"
     }),
     Object.freeze({
@@ -102,7 +106,7 @@
     Object.freeze({
       id: IDS.patternLens, key: IDS.patternLens, icon: "\uD83E\uDDE9",
       title: "Pattern Lens", name: "Pattern Lens",
-      description: "Every non-boss stage shows where the answer's vowels and consonants sit, like C V C C V.",
+      description: "Every stage shows where the answer's vowels and consonants sit, like C V C C V.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     Object.freeze({
@@ -114,11 +118,11 @@
     Object.freeze({
       id: IDS.lastLight, key: IDS.lastLight, icon: "\uD83D\uDD6F\uFE0F",
       title: "Last Light", name: "Last Light",
-      description: "Every non-boss stage opens with the answer's last letter already in place.",
+      description: "Every stage opens with the answer's last letter already in place.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     // An Epic pick (cuddle-economy-rarity-v8.js); granted in
-    // grantStageYellowHints at the start of every non-boss stage.
+    // grantStageYellowHints at the start of every stage.
     Object.freeze({
       id: IDS.yellowHint, key: IDS.yellowHint, icon: "\uD83D\uDFE8",
       title: "Yellow Guesser Hint", name: "Yellow Guesser Hint",
@@ -136,7 +140,7 @@
     Object.freeze({
       id: IDS.jokerCacheLarge, key: IDS.jokerCacheLarge, icon: "\uD83C\uDCCF",
       title: "Large Joker Cache", name: "Large Joker Cache",
-      description: "Two Jokers every stage. Replaces Small Joker Cache.",
+      description: "Two more Jokers every stage, on top of Small Joker Cache if you have it.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     // Letter culls, picked from the letters the engine can safely take out
@@ -177,8 +181,8 @@
     icon: "🔮",
     title: "All-Seeing Atlas",
     name: "All-Seeing Atlas",
-    description: "Reveal every available theme at the start of every non-boss Wordle.",
-    detail: "All themes are revealed automatically for every future non-boss Wordle.",
+    description: "Reveal every available theme at the start of every Wordle.",
+    detail: "All themes are revealed automatically for every future Wordle.",
     maxLevel: 1,
     maxCount: 1,
     kind: "bossReward",
@@ -882,8 +886,14 @@
     return CHALLENGES[index];
   }
 
+  const CLASSIC_DESCRIPTION = `A standard Wordle with no help. Clear it for a $${CONFIG.classicClearBonus} bonus.`;
+
   function variantForNode(game, node, salt = "") {
-    if (!salt && node.cuddleVariant && node.cuddleVariant.version === VERSION) return node.cuddleVariant;
+    if (!salt && node.cuddleVariant && node.cuddleVariant.version === VERSION) {
+      // Stops rolled before the Classic bonus existed keep their old text.
+      if (node.cuddleVariant.kind === "plain") node.cuddleVariant.description = CLASSIC_DESCRIPTION;
+      return node.cuddleVariant;
+    }
     const roll = hash32(`${mapSeed(game)}:variant:${node.row}:${node.col}${salt}`) % 100;
     let variant;
     if (roll < CONFIG.regularWordlePercent) {
@@ -892,7 +902,7 @@
         kind: "plain",
         icon: "🟩",
         title: "Classic Wordle",
-        description: "A rare standard Wordle with no special setup."
+        description: CLASSIC_DESCRIPTION
       };
     } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent) {
       variant = {
@@ -1273,12 +1283,13 @@
     const token = roundToken(game);
     if (custom.yellowHintToken === token) return;
     custom.yellowHintToken = token;
-    if (upgradeLevel(game, IDS.clearSight) > 0) grantGreenHint(game, "Clear Sight", true);
-    else grantYellowHint(game, "Yellow Guesser Hint", true);
+    if (upgradeLevel(game, IDS.clearSight) > 0) grantGreenHint(game, "Clear Sight");
+    else grantYellowHint(game, "Yellow Guesser Hint");
   }
 
-  function grantYellowHint(game, source, allowBoss) {
-    if (!game || (trueBossRound(game) && !allowBoss)) return false;
+  // Hints land in every stage, boss fights included.
+  function grantYellowHint(game, source) {
+    if (!game) return false;
     const state = stateOf(game);
     const secret = secretWord(game);
     if (!state || !/^[A-Z]{5}$/.test(secret)) return false;
@@ -1298,8 +1309,8 @@
     return true;
   }
 
-  function grantGreenHint(game, source, allowBoss) {
-    if (!game || (trueBossRound(game) && !allowBoss)) return false;
+  function grantGreenHint(game, source) {
+    if (!game) return false;
     const state = stateOf(game);
     const secret = secretWord(game);
     if (!state || !/^[A-Z]{5}$/.test(secret)) return false;
@@ -1346,7 +1357,7 @@
     // Opening Insight is independent of Guesser Hint, but is paid once per
     // round token so loading a save never grants it twice.
     const openingCount = clamp(upgradeLevel(game, IDS.openingInsight), 0, 2);
-    if (!trueBossRound(game) && custom.openingHintsGrantedToken !== token) {
+    if (custom.openingHintsGrantedToken !== token) {
       custom.openingHintsGrantedToken = token;
       for (let index = 0; index < openingCount; index += 1) {
         grantGreenHint(game, "Opening Insight");
@@ -1354,7 +1365,7 @@
     }
 
     const unlock = hintUnlock(game);
-    if (trueBossRound(game) || !unlock.active) {
+    if (!unlock.active) {
       custom.hintSchedule = null;
       return;
     }
@@ -1379,7 +1390,7 @@
     const custom = customState(game);
     const schedule = custom && custom.hintSchedule;
     if (!schedule || schedule.mode !== "v5" || schedule.roundToken !== roundToken(game) ||
-        trueBossRound(game) || resultSolved(game, null) || schedule.granted >= schedule.budget) return;
+        resultSolved(game, null) || schedule.granted >= schedule.budget) return;
     const used = guessesUsed(game);
     let guard = 0;
     while (used >= schedule.nextHintGuess && schedule.granted < schedule.budget && guard < 5) {
@@ -1978,6 +1989,18 @@
       if (liveChallenge) liveChallenge.paid = true;
     }
 
+    const variant = activeVariant(game);
+    if (variant && variant.kind === "plain" && !variant.classicPaid) {
+      const bonus = CONFIG.classicClearBonus;
+      addScoreBonus(game, bonus, "umtClassicBonus", `Classic Wordle cleared (+$${bonus} money)`, entry);
+      const paidState = stateOf(game);
+      if (paidState) {
+        paidState.cuddleMoney = Math.max(0, asNumber(paidState.cuddleMoney, 0) + bonus);
+        if (entry) entry.classicBonusMoney = asNumber(entry.classicBonusMoney, 0) + bonus;
+      }
+      variant.classicPaid = true;
+    }
+
     /* UMT_CUDDLE_USER_CONSUME_JOKERS */
     const spentJokerIds = new Set();
     for (const hand of handArrays(game)) {
@@ -2303,7 +2326,10 @@
 
     const state = stateOf(game);
     if (plan.guesses > 0) state.maxGuesses = Math.max(1, asInteger(state.maxGuesses, 6) + plan.guesses);
-    if (plan.mulligans > 0) state.mulligansLeft = Math.max(0, asInteger(state.mulligansLeft, 0)) + plan.mulligans;
+    if (plan.mulligans > 0) {
+      const gained = typeof game.mulliganGain === "function" ? game.mulliganGain(plan.mulligans) : plan.mulligans;
+      state.mulligansLeft = Math.max(0, asInteger(state.mulligansLeft, 0)) + gained;
+    }
     try {
       if (plan.exactHint && typeof game._revealPositionPeek === "function") game._revealPositionPeek();
       else if (plan.letterHint && typeof game._applyOpeningClue === "function") game._applyOpeningClue();
@@ -2364,7 +2390,7 @@
     const level = upgradeLevel(game, IDS.rainyDay);
     const state = stateOf(game);
     const custom = customState(game);
-    if (level <= 0 || !state || !custom || trueBossRound(game) || noMoneyRound(game)) return;
+    if (level <= 0 || !state || !custom || noMoneyRound(game)) return;
     const token = roundToken(game);
     if (custom.interestPaidToken === token) return;
     custom.interestPaidToken = token;
@@ -2385,7 +2411,7 @@
     const level = upgradeLevel(game, IDS.hotStreak);
     const custom = customState(game);
     const state = stateOf(game);
-    if (level <= 0 || !custom || !state || trueBossRound(game) || noMoneyRound(game)) return;
+    if (level <= 0 || !custom || !state || noMoneyRound(game)) return;
     const token = roundToken(game);
     if (custom.streakToken !== token) {
       custom.streakToken = token;
@@ -2477,7 +2503,7 @@
   const DOUBLE_DOWN_LAST = 7;
 
   function doubleDownGuess(game) {
-    if (upgradeLevel(game, IDS.doubleDown) <= 0 || trueBossRound(game) || noMoneyRound(game)) return 0;
+    if (upgradeLevel(game, IDS.doubleDown) <= 0 || noMoneyRound(game)) return 0;
     const custom = customState(game);
     if (!custom) return 0;
     const token = roundToken(game);
@@ -2489,11 +2515,12 @@
     return guess;
   }
 
-  // Runs once when a stage is solved, after the engine has settled the round.
+  // Runs once when a stage is solved -- boss fights included -- after the
+  // engine has settled the round.
   function applySolveRewards(game) {
     const state = stateOf(game);
     const custom = customState(game);
-    if (!state || !custom || trueBossRound(game) || noMoneyRound(game)) return;
+    if (!state || !custom || noMoneyRound(game)) return;
     const token = roundToken(game);
     if (custom.funSolveToken === token) return;
     custom.funSolveToken = token;
@@ -2569,9 +2596,7 @@
   function availableSolvingRewards(game) {
     const easy = difficultyName(game) === "easy";
     return SOLVING_REWARDS.filter((reward) =>
-      (easy || !HINT_SOLVING_REWARD_IDS.has(reward.id)) && upgradeLevel(game, reward.id) < rewardMax(reward)
-      // Small Joker Cache has nothing to add once Large is owned.
-      && !(reward.id === IDS.jokerCache && upgradeLevel(game, IDS.jokerCacheLarge) > 0));
+      (easy || !HINT_SOLVING_REWARD_IDS.has(reward.id)) && upgradeLevel(game, reward.id) < rewardMax(reward));
   }
 
   function availableFunRewards(game) {
@@ -2700,10 +2725,11 @@
     if (id === IDS.jokerCacheLarge) {
       const mega = megaState(game);
       if (mega) {
-        mega.jokerPerRoundBonus = Math.max(2, Math.floor(asNumber(mega.jokerPerRoundBonus, 0)));
+        // Adds on top of Small Joker Cache rather than replacing it.
+        mega.jokerPerRoundBonus = Math.max(0, Math.floor(asNumber(mega.jokerPerRoundBonus, 0))) + 2 * delta;
         mega.hasJokerUnlocked = true;
       }
-      appendNotice(game, "Large Joker Cache: two Jokers every stage.");
+      appendNotice(game, "Large Joker Cache: two more Jokers every stage.");
     }
     const cullReward = customRewardById(id);
     if (cullReward && cullReward.cull && typeof game._removalCandidates === "function") {
@@ -3131,7 +3157,7 @@
 
 
   const POWER_INFO = Object.freeze({
-    plain: { title: "Classic Wordle", description: "A standard Wordle with no special rule.", shape: "grid" },
+    plain: { title: "Classic Wordle", description: `A standard Wordle with no help. Clear it for a ${CONFIG.classicClearBonus}-point and $${CONFIG.classicClearBonus} bonus.`, shape: "grid" },
     luckyStart: { title: "Lucky Start", description: "One exact position is revealed before the first guess.", shape: "clover" },
     jackpot: { title: "Jackpot Run", description: "Greens pay double, but the stage must be solved within the world's guess limit (6, 5 or 4) or the run is lost.", shape: "coins" },
     doubleOrNothing: { title: "Double or Nothing", description: "Solve by guess three to double the stage, or lose half of it.", shape: "scales" },
@@ -3163,8 +3189,8 @@
     coachHint: { title: "Guesser Hint", description: "Alternates yellow presence hints and green position hints during a round.", shape: "hint" },
     revealLocation: { title: "Position Hint", description: "Reveal one correct letter and its exact position.", shape: "greenHint" },
     jokerToken: { title: "Joker", description: "Gain a wildcard letter card.", shape: "joker" },
-    umtAllThemes: { title: "All-Seeing Atlas", description: "Reveal every available theme at the start of every non-boss Wordle.", shape: "tags" },
-    umtOpeningInsight: { title: "Opening Insight", description: "Begin each non-boss Wordle with an extra green position hint.", shape: "greenHint" },
+    umtAllThemes: { title: "All-Seeing Atlas", description: "Reveal every available theme at the start of every Wordle.", shape: "tags" },
+    umtOpeningInsight: { title: "Opening Insight", description: "Begin each Wordle with an extra green position hint.", shape: "greenHint" },
     umtQuickStudy: { title: "Quick Study", description: "Guesser Hints arrive sooner.", shape: "hourglass" },
     umtJokerCache: { title: "Joker Cache", description: "One extra Joker every stage.", shape: "joker" },
     umtReserveDividend: { title: "Reserve Dividend", description: "Unused Jokers and mulligans pay an additional end-of-round bonus.", shape: "coins" },
@@ -3308,7 +3334,7 @@
   function ensureLiveHintSchedule(game) {
     const state = stateOf(game);
     const custom = customState(game);
-    if (!state || !custom || state.status !== "playing" || trueBossRound(game)) return;
+    if (!state || !custom || state.status !== "playing") return;
     const token = roundToken(game);
     const schedule = custom.hintSchedule;
     if (schedule && schedule.mode === "v5" && schedule.roundToken === token) return;
@@ -3326,7 +3352,7 @@
     const custom = customState(game);
     const schedule = custom && custom.hintSchedule;
     const eligible = schedule && schedule.mode === "v5" && schedule.roundToken === roundToken(game) &&
-      schedule.granted < schedule.budget && !trueBossRound(game) && !resultSolved(game, null);
+      schedule.granted < schedule.budget && !resultSolved(game, null);
     if (!eligible) {
       if (indicator) indicator.remove();
       return;

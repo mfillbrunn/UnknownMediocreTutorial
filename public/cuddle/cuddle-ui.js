@@ -1093,18 +1093,6 @@
   }
   /* UMT_CUDDLE_SINGLEPLAYER_V2: ROUND INTRO END */
   function renderQuestRewardOverlay(state) {
-    // Double Pick (a boss reward) lets the player choose twice from the
-    // same offer instead of once -- questRewardPicksRemaining tracks which
-    // pick this is, so the heading/copy can say so instead of always
-    // reading "choose one" while a second pick is still pending.
-    const totalPicks = state.upgrades?.questDoublePick ? 2 : 1;
-    const picksRemaining = Math.max(1, Number(state.questRewardPicksRemaining) || 1);
-    const heading = totalPicks > 1
-      ? (picksRemaining >= totalPicks ? "Choose your first reward" : "Choose your second reward")
-      : "Choose one reward";
-    const subtext = totalPicks > 1
-      ? "Double Pick is active: choose two of these rewards. They apply right away; each card says how long it lasts."
-      : "Choose a reward. It applies right away; each card says how long it lasts.";
     const history = Array.isArray(state.history) ? state.history : [];
     const entry = history[history.length - 1] || null;
     const stampKey = `${state.runId || ""}:${state.round}:${history.length}`;
@@ -1132,9 +1120,7 @@
       <div class="cuddle-overlay${stamping ? " is-quest-stamping" : ""}"${stamping ? ` style="--qs-at:-${stampAt}ms"` : ""} role="dialog" aria-modal="true" aria-labelledby="cuddleRewardTitle">
         ${stamp}
         <section class="cuddle-modal cuddle-modal-wide cuddle-compact-cards">
-          <span class="cuddle-modal-kicker">QUEST COMPLETE</span>
-          <h2 id="cuddleRewardTitle">${heading}</h2>
-          <p>${subtext}</p>
+          <h2 id="cuddleRewardTitle">Quest reward</h2>
           <div class="cuddle-choice-grid">
             ${state.questRewardChoices.map(reward => `
               <button class="cuddle-choice" data-reward-id="${escapeHtml(reward.id)}">

@@ -996,233 +996,232 @@
 }
 .umt-progress-host .umt-pt-key li:nth-child(n+4) { grid-column: auto; }
 .umt-progress-host .umt-pt-key li:last-child { grid-column: 1 / -1; }
-.umt-progress-host .umt-pz-key {
+/* Key swatches: tiny versions of the board's squares. */
+.umt-progress-host .umt-cw-key {
+  position: relative;
   flex: none;
   width: 16px;
-  height: 14px;
-  border-radius: 4px;
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
-  background: #262132;
+  height: 16px;
+  border-radius: 3px;
+  border: 1.5px solid #4a4652;
+  background: #1a1820;
+  overflow: hidden;
 }
-.umt-progress-host .umt-pz-key.is-owned { background: #b892f0; border-color: #e7d6ff; box-shadow: 0 0 8px rgba(213, 166, 255, 0.6); }
-.umt-progress-host .umt-pz-key.is-fresh { background: #f6c956; border-color: #fff3c4; box-shadow: 0 0 8px rgba(246, 201, 86, 0.7); }
-.umt-progress-host .umt-pz-key.is-locked { background: #1a1723; border-color: rgba(255, 255, 255, 0.08); }
+.umt-progress-host .umt-cw-key.is-owned { background: #538d4e; border-color: #538d4e; }
+.umt-progress-host .umt-cw-key.is-fresh { background: #c9b458; border-color: #c9b458; }
+.umt-progress-host .umt-cw-key.is-locked { background: #2c2a33; border-color: #2c2a33; }
+.umt-progress-host .umt-cw-key.is-corner::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  border-style: solid;
+  border-width: 0 9px 9px 0;
+  border-color: transparent var(--t) transparent transparent;
+}
 
+/* The board: a sheet of crossword entries. */
 .umt-progress-host .umt-pt-canvas.umt-pz-board {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   align-content: start;
   align-items: start;
-  place-items: stretch;
+  justify-items: stretch;
   gap: 14px;
   padding: 14px;
   overflow-y: auto;
-  background:
-    radial-gradient(90% 60% at 50% 0%, rgba(92, 64, 150, 0.22), transparent 70%),
-    #110f19;
+  background: #121115;
 }
 
-.umt-progress-host .umt-pz-panel {
+.umt-progress-host .umt-cw-panel {
   --c: #d5a6ff;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   display: grid;
   align-content: start;
-  gap: 8px;
-  padding: 12px 12px 10px;
-  border: 1px solid color-mix(in srgb, var(--c) 32%, transparent);
-  border-radius: 16px;
-  background:
-    radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--c) 15%, transparent), transparent 62%),
-    linear-gradient(180deg, #1c1828, #15121e);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.04), 0 10px 24px rgba(0, 0, 0, 0.3);
-}
-.umt-progress-host .umt-pz-head {
-  display: flex;
-  align-items: center;
   gap: 10px;
+  padding: 12px;
+  border: 1px solid #2e2b36;
+  border-radius: 12px;
+  background: #18171d;
 }
-.umt-progress-host .umt-pz-panel-icon {
+
+/* The clue: number, the theme spelled out in letter tiles, and its hint. */
+.umt-progress-host .umt-cw-head {
   display: grid;
-  place-items: center;
-  flex: none;
-  width: 38px;
-  height: 38px;
-  border: 1px solid color-mix(in srgb, var(--c) 50%, transparent);
-  border-radius: 11px;
-  background: color-mix(in srgb, var(--c) 16%, #14111c);
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 10px;
 }
-.umt-progress-host .umt-pz-panel-icon svg { width: 24px; height: 24px; }
-.umt-progress-host .umt-pz-head > div { min-width: 0; }
-.umt-progress-host .umt-pz-head h3 {
-  margin: 0;
+.umt-progress-host .umt-cw-clue {
   color: var(--c);
-  font-size: 0.95rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-.umt-progress-host .umt-pz-head p {
-  margin: 1px 0 0;
-  color: var(--umt-muted);
-  font-size: 0.76rem;
-}
-.umt-progress-host .umt-pz-count {
-  margin-left: auto;
+.umt-progress-host .umt-cw-head .umt-pz-count {
   font-size: 1rem;
   font-weight: 900;
+  font-variant-numeric: tabular-nums;
 }
-.umt-progress-host .umt-pz-count small { color: var(--umt-muted); font-size: 0.75rem; font-weight: 700; }
-
-/* The puzzle: pieces are placed in % of its box, and its text scales with
-   its width (container units), so it reads the same at any panel size. */
-.umt-progress-host .umt-pz-puzzle {
-  position: relative;
-  width: 100%;
-  margin: 6px 0 4px;
-  container-type: inline-size;
+.umt-progress-host .umt-cw-head .umt-pz-count small { color: var(--umt-muted); font-size: 0.75rem; font-weight: 700; }
+.umt-progress-host .umt-cw-word {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
 }
-.umt-progress-host .umt-pz-piece {
-  --fill: #262132;
-  --edge: color-mix(in srgb, var(--t) 45%, transparent);
-  --ink: rgba(232, 224, 244, 0.62);
-  position: absolute;
+.umt-progress-host .umt-cw-letter {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #3a3a3c;
+  border-radius: 2px;
+  color: #f2f0f5;
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.umt-progress-host .umt-cw-letter.is-solved { border-color: #538d4e; background: #538d4e; }
+.umt-progress-host .umt-cw-gap { width: 8px; }
+.umt-progress-host .umt-cw-head p {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--ink);
-  font: inherit;
-  /* Only the painted piece takes clicks, so a neighbour's tab never
-     steals a tap meant for this one. */
-  pointer-events: none;
-  cursor: pointer;
+  color: #b9b4c4;
+  font-size: 0.82rem;
+  font-style: italic;
 }
-.umt-progress-host .umt-pz-shape {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-.umt-progress-host .umt-pz-shape path {
-  pointer-events: visiblePainted;
-  fill: var(--fill);
-  stroke: var(--edge);
-  stroke-width: 2;
-  vector-effect: non-scaling-stroke;
-  transition: fill 160ms ease, stroke 160ms ease;
-}
-.umt-progress-host .umt-pz-piece.is-owned {
-  --fill: color-mix(in srgb, var(--c) 80%, #1b1624);
-  --edge: var(--t);
-  --ink: #1b1624;
-}
-.umt-progress-host .umt-pz-piece.is-owned .umt-pz-shape {
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 45%, transparent));
-}
-.umt-progress-host .umt-pz-piece.is-fresh {
-  --fill: #f6c956;
-  --edge: #fff3c4;
-  --ink: #2a1c05;
-  animation: umt-pz-drop 620ms cubic-bezier(0.2, 1.3, 0.4, 1) 300ms both;
-}
-.umt-progress-host .umt-pz-piece.is-fresh .umt-pz-shape {
-  animation: umt-pz-glow 1.6s ease-in-out 900ms infinite;
-}
-.umt-progress-host .umt-pz-piece.is-locked {
-  --fill: #1a1723;
-  --edge: rgba(255, 255, 255, 0.08);
-  --ink: rgba(232, 224, 244, 0.38);
-}
-.umt-progress-host .umt-pz-piece.is-selected {
-  --edge: #ffffff;
-}
-.umt-progress-host .umt-pz-piece.is-selected .umt-pz-shape path { stroke-width: 3; }
-.umt-progress-host .umt-pz-piece:hover .umt-pz-shape path { filter: brightness(1.15); }
-.umt-progress-host .umt-pz-piece:focus-visible { outline: none; }
-.umt-progress-host .umt-pz-piece:focus-visible .umt-pz-shape path { stroke: #ffffff; stroke-width: 3; }
+.umt-progress-host .umt-cw-panel-icon { display: inline-grid; width: 18px; height: 18px; flex: none; font-style: normal; }
+.umt-progress-host .umt-cw-panel-icon svg { width: 100%; height: 100%; }
 
-.umt-progress-host .umt-pz-face {
-  position: absolute;
-  inset: 17.5%;
+/* The grid: black lines between squares; any empty slot at the end of the
+   last row shows as a black square, as in a crossword. */
+.umt-progress-host .umt-cw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 2px;
+  padding: 2px;
+  border-radius: 4px;
+  background: #050506;
+}
+.umt-progress-host .umt-cw-cell {
+  --bg: #1f1d25;
+  --ink: #e6e2ee;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3%;
+  gap: 5px;
+  min-height: 104px;
+  margin: 0;
+  padding: 18px 6px 8px;
+  border: 0;
+  border-radius: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
   text-align: center;
-  pointer-events: none;
-  /* Above every piece's shape, so a neighbour's tab never covers a name. */
-  z-index: 4;
+  cursor: pointer;
+  overflow: hidden;
+  transition: filter 140ms ease;
 }
-.umt-progress-host .umt-pz-piece.is-selected .umt-pz-shape,
-.umt-progress-host .umt-pz-piece:focus-visible .umt-pz-shape { z-index: 3; }
-.umt-progress-host .umt-pz-badge { z-index: 5; }
-.umt-progress-host .umt-pz-icon {
+.umt-progress-host .umt-cw-cell::after {
+  /* Rarity: the folded corner, top right. */
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  border-style: solid;
+  border-width: 0 16px 16px 0;
+  border-color: transparent var(--t) transparent transparent;
+}
+.umt-progress-host .umt-cw-cell.is-owned { --bg: #538d4e; --ink: #ffffff; }
+.umt-progress-host .umt-cw-cell.is-fresh {
+  --bg: #c9b458;
+  --ink: #17140a;
+  animation: umt-cw-flip 640ms ease-in-out 300ms both;
+}
+.umt-progress-host .umt-cw-cell.is-locked { --bg: #2c2a33; --ink: #8e8999; }
+.umt-progress-host .umt-cw-cell:hover { filter: brightness(1.12); }
+.umt-progress-host .umt-cw-cell.is-selected,
+.umt-progress-host .umt-cw-cell:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: -3px;
+  z-index: 1;
+}
+.umt-progress-host .umt-cw-num {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+.umt-progress-host .umt-cw-icon {
   display: grid;
   place-items: center;
-  width: calc(26cqi / var(--cols));
-  height: calc(26cqi / var(--cols));
+  width: 28px;
+  height: 28px;
   flex: none;
 }
-.umt-progress-host .umt-pz-icon svg { width: 100%; height: 100%; overflow: visible; }
-.umt-progress-host .umt-pz-icon.is-text {
-  font-size: calc(10cqi / var(--cols));
-  font-weight: 900;
-}
-.umt-progress-host .umt-pz-piece.is-open .umt-pz-icon { opacity: 0.6; filter: saturate(0.6); }
-.umt-progress-host .umt-pz-piece.is-locked .umt-pz-icon { opacity: 0.45; }
-.umt-progress-host .umt-pz-name {
+.umt-progress-host .umt-cw-icon svg { width: 100%; height: 100%; overflow: visible; }
+.umt-progress-host .umt-cw-icon.is-text { font-size: 1.2rem; font-weight: 900; }
+.umt-progress-host .umt-cw-cell.is-open .umt-cw-icon { opacity: 0.7; filter: saturate(0.6); }
+.umt-progress-host .umt-cw-cell.is-locked .umt-cw-icon { opacity: 0.5; }
+.umt-progress-host .umt-cw-name {
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  font-size: clamp(9px, calc(11.5cqi / var(--cols)), 13px);
-  font-weight: 800;
-  line-height: 1.12;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.2;
   overflow-wrap: anywhere;
 }
-.umt-progress-host .umt-pz-pips {
+.umt-progress-host .umt-cw-pips {
   display: flex;
   gap: 3px;
 }
-.umt-progress-host .umt-pz-pips i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
+.umt-progress-host .umt-cw-pips i {
+  width: 7px;
+  height: 7px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.18);
 }
-.umt-progress-host .umt-pz-piece.is-owned .umt-pz-pips i,
-.umt-progress-host .umt-pz-piece.is-fresh .umt-pz-pips i { background: rgba(27, 22, 36, 0.25); }
-.umt-progress-host .umt-pz-piece.is-owned .umt-pz-pips i.is-on,
-.umt-progress-host .umt-pz-piece.is-fresh .umt-pz-pips i.is-on { background: #1b1624; }
-.umt-progress-host .umt-pz-stack {
-  font-size: 0.68rem;
-  font-weight: 900;
-}
-.umt-progress-host .umt-pz-badge {
+.umt-progress-host .umt-cw-pips i.is-on { background: #6aaa64; }
+.umt-progress-host .umt-cw-cell.is-owned .umt-cw-pips i,
+.umt-progress-host .umt-cw-cell.is-fresh .umt-cw-pips i { background: rgba(0, 0, 0, 0.22); }
+.umt-progress-host .umt-cw-cell.is-owned .umt-cw-pips i.is-on { background: #ffffff; }
+.umt-progress-host .umt-cw-cell.is-fresh .umt-cw-pips i.is-on { background: #17140a; }
+.umt-progress-host .umt-cw-stack { font-size: 0.72rem; font-weight: 900; }
+.umt-progress-host .umt-cw-badge {
   position: absolute;
-  top: 15%;
-  right: 13%;
+  bottom: 4px;
+  right: 5px;
   padding: 1px 5px;
-  border: 1px solid rgba(255, 122, 184, 0.7);
-  border-radius: 8px;
-  background: #1b1624;
-  color: #ff9ec7;
-  font-size: 0.62rem;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #ffd1e6;
+  font-size: 0.66rem;
   font-weight: 900;
   line-height: 1.3;
-  pointer-events: none;
 }
-.umt-progress-host .umt-pz-badge.is-done { border-color: #8ff7cd; color: #8ff7cd; }
+.umt-progress-host .umt-cw-badge.is-done { color: #b7f5c9; }
 
-@keyframes umt-pz-drop {
-  0% { opacity: 0; transform: translateY(-22%) scale(1.18) rotate(-7deg); }
-  60% { opacity: 1; transform: translateY(2%) scale(0.98) rotate(1deg); }
-  100% { opacity: 1; transform: none; }
-}
-@keyframes umt-pz-glow {
-  0%, 100% { filter: drop-shadow(0 0 4px rgba(246, 201, 86, 0.55)); }
-  50% { filter: drop-shadow(0 0 12px rgba(246, 201, 86, 0.95)); }
+/* A new square flips over like a Wordle tile, landing yellow. */
+@keyframes umt-cw-flip {
+  0% { transform: rotateX(0); }
+  50% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0); }
 }
 
 /* Phone: the details open as a sheet over the board. */
@@ -1281,7 +1280,6 @@
 @keyframes umt-pz-sheet-in { from { transform: translateY(100%); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .umt-progress-host .umt-pz-piece.is-fresh,
-  .umt-progress-host .umt-pz-piece.is-fresh .umt-pz-shape,
+  .umt-progress-host .umt-cw-cell.is-fresh,
   .umt-progress-host .umt-pz-sheet { animation: none; }
 }
