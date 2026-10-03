@@ -2703,6 +2703,20 @@
     return { ok: true, chosen: id, level: before + 1 };
   }
 
+  // Reward Echo (cuddle-engine.js) replays a pick by diffing the engine's
+  // own upgrade fields, which this layer's rewards don't live in -- so an
+  // armed Echo would pass them by and wait for a later pick. Apply it here
+  // instead: one more level, up to the reward's maximum.
+  function applyRewardEcho(game, id, reward, echoArmed, value) {
+    const state = stateOf(game);
+    if (!echoArmed || !state || !state.pendingRewardEcho || !value || !value.ok) return;
+    state.pendingRewardEcho = false;
+    const level = upgradeLevel(game, id);
+    if (level < rewardMax(reward)) applyCustomUpgradeEffects(game, id, level);
+    appendNotice(game, `Reward Echo: ${reward.title || reward.name || "that reward"} applied twice.`);
+    safeSave(game);
+  }
+
   function applyCustomUpgradeEffects(game, id, oldLevel) {
     const custom = customState(game);
     if (!custom) return;
@@ -4356,6 +4370,7 @@
         }, (error) => { throw error; });
       }
       const oldLevel = upgradeLevel(this, id);
+      const echoArmed = Boolean(state.pendingRewardEcho);
       let result;
       try {
         result = original.apply(this, args);
@@ -4365,6 +4380,7 @@
       return afterResult(result, (value) => {
         if (upgradeLevel(this, id) <= oldLevel) value = fallbackChooseCustom(this, id);
         applyCustomUpgradeEffects(this, id, oldLevel);
+        applyRewardEcho(this, id, customReward, echoArmed, value);
         refreshFunSynergies(this);
         scheduleUi();
         return value;

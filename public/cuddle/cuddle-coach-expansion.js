@@ -1176,7 +1176,7 @@
       // Reward Echo lives in the existing engine. Custom Coach rewards are
       // handled by this outer extension, so replay their effect explicitly
       // rather than silently consuming or bypassing an armed Echo.
-      for (var echo = 0; echo < 2; echo += 1) {
+      for (var echo = 0; echo < 1; echo += 1) {
         var repeated = applyUpgrade(this, custom.id, "echo", false);
         if (!repeated.ok) break;
         applications += 1;

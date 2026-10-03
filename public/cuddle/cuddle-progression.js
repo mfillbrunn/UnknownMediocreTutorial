@@ -8,14 +8,15 @@
 //      green, money in gold, always in that order -- then whooshes away by
 //      itself. It replaces the old dismiss-it-yourself toast at the bottom.
 //
-//   2. The talent board, styled as a crossword. Every upgrade the run can
-//      collect is a numbered square in one "Across" entry per theme
-//      (Scoring, Economy, Insight...), plus entries for the combos and the
-//      boss rewards. What you own turns Wordle green. Whenever you pick
-//      something up -- a round reward, a boss reward, the starting bonus, a
-//      coach upgrade -- the board opens on its own, the new square flips
-//      over in yellow, and a
-//      before/after list shows exactly which of your stats moved.
+//   2. The rune map. Every upgrade the run can collect is a rune in one
+//      cluster per theme (Scoring, Economy, Insight...) plus the boss
+//      relics, ringed round the theme's sigil and tied to it by a string.
+//      Related runes share a dotted string; a combo's two runes share a
+//      rose one, with the bonus as a knot halfway along. What you own
+//      lights up. Drag, pinch or scroll to move around. Whenever you pick
+//      something up the map opens on its own, flies in to the new rune and
+//      ignites it -- and if that completed a combo, draws the combo's
+//      string and shows its bonus.
 //
 // Cuddle only. Everything here reads game state; the only writes are the
 // banner's "already shown" marker, clearing the notices the banner takes
@@ -82,56 +83,6 @@
   }
 
   // ---------------------------------------------------------------------
-  // Stats -- what a pick can move, and how the reveal reports it
-  // ---------------------------------------------------------------------
-
-  const STAT_DEFS = [
-    { key: "handSize", group: "Hand", label: "Hand size", get: (r) => r.handSize },
-    { key: "mulligans", group: "Hand", label: "Mulligans per stage", get: (r) => r.mulligans },
-    { key: "mulliganSize", group: "Hand", label: "Cards per mulligan", get: (r) => r.mulliganSize },
-    { key: "guessRows", group: "Hand", label: "Guess rows", get: (r, s) => 6 + num((s.megaState || {}).extraGuesses) },
-    { key: "jokers", group: "Hand", label: "Jokers per stage", get: (r, s) => num((s.megaState || {}).jokerPerRoundBonus) },
-    { key: "greenPoints", group: "Scoring", label: "Green tile", unit: "pts", get: (r) => r.greenPoints },
-    { key: "yellowPoints", group: "Scoring", label: "Yellow tile", unit: "pts", get: (r) => r.yellowPoints },
-    { key: "greyPoints", group: "Scoring", label: "Grey tile", unit: "pts", get: (r) => r.greyPoints },
-    { key: "earlyPoint", group: "Scoring", label: "Per spare guess", unit: "pts", get: (r) => r.earlyPoint },
-    { key: "mulliganPoints", group: "Scoring", label: "Per unused mulligan", unit: "pts", get: (r) => r.mulliganPoints },
-    { key: "openingPoints", group: "Scoring", label: "Stage-start points", unit: "pts", get: (r, s) => num((s.cuddleBonuses || {}).storybookStart) * 10 },
-    { key: "specialTiles", group: "Board", label: "Extra special tiles", get: (r, s) => num((s.cuddleBonuses || {}).treasureMap) },
-    { key: "mulliganTiles", group: "Board", label: "Mulligan tiles", get: (r, s) => num((s.cuddleBonuses || {}).mulliganTiles) },
-    { key: "jokerTiles", group: "Board", label: "Joker tiles", get: (r, s) => num((s.cuddleBonuses || {}).jokerTiles) },
-    { key: "oracleTiles", group: "Board", label: "Oracle tiles", get: (r, s) => num((s.cuddleBonuses || {}).oracleTiles) },
-    { key: "questPoints", group: "Quests", label: "Quest value", unit: "pts", get: (r) => r.questPoints },
-    { key: "questSlots", group: "Quests", label: "Quests at once", get: (r) => r.questSlots },
-    { key: "questRefreshes", group: "Quests", label: "Reward refreshes", get: (r) => r.questRefreshes }
-  ];
-
-  function readStats(game) {
-    const out = {};
-    if (!game || !game.state) return out;
-    let rules = {};
-    try {
-      rules = game.getRulesSummary() || {};
-    } catch (_error) {
-      rules = {};
-    }
-    for (const def of STAT_DEFS) {
-      try {
-        out[def.key] = num(def.get(rules, game.state));
-      } catch (_error) {
-        out[def.key] = 0;
-      }
-    }
-    return out;
-  }
-
-  function statDiff(before, after) {
-    return STAT_DEFS
-      .filter((def) => before && after && before[def.key] !== after[def.key])
-      .map((def) => ({ def, from: before[def.key], to: after[def.key] }));
-  }
-
-  // ---------------------------------------------------------------------
   // Tree model
   // ---------------------------------------------------------------------
 
@@ -155,9 +106,28 @@
     { id: "insight", title: "Insight", color: "#9ee86f", angle: 180,
       ids: ["vowelLamp", "echoFinder", "patternLens", "yellowHint", "lastLight", "treasureHunter", "mistakeShield"] }
   ];
+  // The rune clusters, in their order around the map: themes alternate
+  // big and small so the ring stays even. Boss relics are their own cluster.
+  const CLUSTER_STYLE = {
+    scoring: { icon: "star", tagline: "Make every tile count." },
+    hand: { icon: "toolbox", tagline: "Better cards, better tools." },
+    quests: { icon: "clipboard", tagline: "Side goals, real rewards." },
+    economy: { icon: "moneyBag", tagline: "Coins in, coins out." },
+    coach: { icon: "pinkHeart", tagline: "Your coach in the corner." },
+    insight: { icon: "eye", tagline: "See more. Guess smarter." },
+    solving: { icon: "bulb", tagline: "Gentle nudges for tough words." },
+    bosses: { icon: "trophy", tagline: "Taken from the bosses you beat." }
+  };
+  const CLUSTER_ORDER = ["scoring", "hand", "quests", "economy", "coach", "insight", "solving", "bosses"];
   const CATEGORY_WEDGE = { economy: "economy", solving: "solving", quests: "quests", easierStages: "hand", insight: "insight" };
   const COMBO_COLOR = "#ff7ab8";
   const BOSS_COLOR = "#fb7185";
+  const CLUSTERS = CLUSTER_ORDER.map((id) => {
+    const wedge = WEDGES.find((w) => w.id === id);
+    return wedge
+      ? { id, title: wedge.title, color: wedge.color, ids: wedge.ids, ...CLUSTER_STYLE[id] }
+      : { id, title: "Boss Relics", color: BOSS_COLOR, ids: [], ...CLUSTER_STYLE[id] };
+  });
   // Bronze / silver / gold, as on the reward cards' rarity badges.
   const TIER_STROKE = { common: "#c98a4b", rare: "#c6d0de", epic: "#b98cff", legendary: "#f6c956" };
   const TIER_NAME = { common: "Common", rare: "Rare", epic: "Epic", legendary: "Legendary" };
@@ -165,11 +135,6 @@
   // (cuddle-economy-rarity-v8.js LEGENDARY_PICKS); pickTierName says which tier.
   const LEGENDARY_PICK_IDS = new Set(["doubleMulligans", "cullRare", "freeVowelSweep", "biggerMulligans", "questCadence", "revealGreen", "goldenThread", "questDoublePick",
     "questPersistReward", "secondCup", "allThemesBoss", "umtAllThemes"]);
-
-  const R_HUB = 100;
-  const ARC_RADII = [178, 246, 314];
-  const R_COMBO = 372;
-  const R_BOSS = 424;
 
   // Reward ids come in a few spellings across the add-on layers
   // ("umtRainyDay" for the tree's "rainyDay"); fold them together.
@@ -187,45 +152,129 @@
       || null;
   }
 
-  function polar(radius, degrees) {
-    const rad = (degrees * Math.PI) / 180;
-    return { x: radius * Math.cos(rad), y: radius * Math.sin(rad) };
+  // Pairs of runes that belong together without being a combo: a string
+  // ties them on the map. Combos draw their own (rose) string.
+  const RELATED = [
+    ["jokerCache", "jokerCacheLarge"],
+    ["cullOne", "cullTwo"],
+    ["cullTwo", "cullRare"],
+    ["treasureMap", "mulliganTiles"],
+    ["treasureMap", "jokerTiles"],
+    ["treasureMap", "oracleTiles"],
+    ["colourTrade", "greyscale"],
+    ["extraMulligans", "doubleMulligans"],
+    ["mulliganSize", "biggerMulligans"],
+    ["questPoints", "questCadence"],
+    ["questReroll", "questDoublePick"],
+    ["coachMeterThreshold", "coachMeterReward"],
+    ["vowelLamp", "freeVowelSweep"],
+    ["categorySense", "allThemesBoss"],
+    ["lastLight", "revealGreen"],
+    ["alphabet-compass", "consonantSweep"],
+    ["treasureHunter", "vowelBounty"],
+    ["mistakeShield", "secondCup"]
+  ];
+
+  // Map geometry, in world units. Each cluster is a ring of runes around
+  // its sigil. On a wide view the clusters sit on one big ring around the
+  // run's core; on a tall one (a phone) they stack in two columns with the
+  // core between them, so the overview fills the screen.
+  const RUNE_SPACING = 116;
+  const CLUSTER_GAP = 150;
+  const GRID_ORDER = [["hand", "scoring"], ["bosses", "quests"], ["economy", "coach"], ["insight", "solving"]];
+
+  function ringRadius(count) {
+    return Math.max(128, (RUNE_SPACING * count) / (2 * Math.PI));
   }
 
-  // Spread n nodes over the wedge's three arcs, innermost first, with the
-  // arcs offset from each other so the fan reads as grown rather than
-  // gridded.
-  function layoutWedge(wedge, count) {
-    const perArc = [0, 0, 0];
-    for (let i = 0; i < count; i += 1) perArc[i % 3] += 1;
-    perArc.sort((a, b) => a - b);
-    const spots = [];
-    perArc.forEach((onArc, arcIndex) => {
-      const spread = onArc >= 4 ? 25 : onArc === 3 ? 21 : onArc === 2 ? 12 : 0;
-      const stagger = arcIndex === 1 && onArc > 1 ? 3 : arcIndex === 2 && onArc > 1 ? -3 : 0;
-      for (let j = 0; j < onArc; j += 1) {
-        const t = onArc === 1 ? 0 : (j / (onArc - 1)) * 2 - 1;
-        const angle = wedge.angle + t * spread + stagger;
-        spots.push({ ...polar(ARC_RADII[arcIndex], angle), angle, radius: ARC_RADII[arcIndex] });
+  function placeRunes(cluster, outward) {
+    const count = cluster.nodes.length;
+    // The string in from the core arrives between two runes, not on one.
+    const start = outward + Math.PI + Math.PI / Math.max(1, count);
+    cluster.nodes.forEach((node, i) => {
+      const a = start + (i * 2 * Math.PI) / Math.max(1, count);
+      node.x = cluster.x + cluster.ring * Math.cos(a);
+      node.y = cluster.y + cluster.ring * Math.sin(a);
+    });
+  }
+
+  function layoutRing(clusters) {
+    const arcs = clusters.map((cluster) => cluster.reach * 2 + CLUSTER_GAP);
+    const radius = Math.max(380, arcs.reduce((sum, arc) => sum + arc, 0) / (2 * Math.PI));
+    let cursor = -Math.PI / 2 - arcs[0] / radius / 2;
+    clusters.forEach((cluster, index) => {
+      const angle = cursor + arcs[index] / radius / 2;
+      cursor += arcs[index] / radius;
+      cluster.x = radius * Math.cos(angle);
+      cluster.y = radius * Math.sin(angle);
+      placeRunes(cluster, angle);
+    });
+  }
+
+  function layoutColumns(clusters) {
+    const byId = new Map(clusters.map((cluster) => [cluster.id, cluster]));
+    const rows = GRID_ORDER.map((ids) => ids.map((id) => byId.get(id)).filter(Boolean)).filter((row) => row.length);
+    clusters.filter((cluster) => !GRID_ORDER.flat().includes(cluster.id)).forEach((cluster) => rows.push([cluster]));
+    const heights = rows.map((row) => Math.max(...row.map((cluster) => cluster.reach)) * 2);
+    const middle = Math.floor(rows.length / 2);
+    const gaps = rows.map((_, i) => (i === middle ? 230 : 70));
+    const total = heights.reduce((sum, h) => sum + h, 0) + gaps.slice(1).reduce((sum, g) => sum + g, 0);
+    let y = -total / 2;
+    let coreY = 0;
+    rows.forEach((row, i) => {
+      if (i > 0) {
+        if (i === middle) coreY = y + gaps[i] / 2;
+        y += gaps[i];
       }
+      const cy = y + heights[i] / 2;
+      row.forEach((cluster, side) => {
+        const left = row.length === 1 ? 0 : side === 0 ? -1 : 1;
+        cluster.x = left * (cluster.reach + 40);
+        cluster.y = cy;
+        placeRunes(cluster, Math.atan2(cy - 0, cluster.x || 0.001));
+      });
+      y += heights[i];
     });
-    return spots;
+    clusters.forEach((cluster) => { cluster.y -= coreY; cluster.nodes.forEach((node) => { node.y -= coreY; }); });
   }
 
-  function circularMean(angles) {
-    let x = 0;
-    let y = 0;
-    angles.forEach((a) => {
-      x += Math.cos((a * Math.PI) / 180);
-      y += Math.sin((a * Math.PI) / 180);
+  function layoutClusters(clusters, tall) {
+    clusters.forEach((cluster) => {
+      cluster.ring = ringRadius(cluster.nodes.length);
+      cluster.reach = cluster.ring + 80;
     });
-    return (Math.atan2(y, x) * 180) / Math.PI;
+    if (tall) layoutColumns(clusters);
+    else layoutRing(clusters);
+  }
+
+  // A gentle curve between two points, bowed away from (cx, cy).
+  function curveBetween(a, b, bow, cx = 0, cy = 0) {
+    const mx = (a.x + b.x) / 2;
+    const my = (a.y + b.y) / 2;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len = Math.hypot(dx, dy) || 1;
+    let nx = -dy / len;
+    let ny = dx / len;
+    if ((mx - cx) * nx + (my - cy) * ny < 0) { nx = -nx; ny = -ny; }
+    const qx = mx + nx * len * bow;
+    const qy = my + ny * len * bow;
+    return {
+      d: `M${r1(a.x)} ${r1(a.y)}Q${r1(qx)} ${r1(qy)} ${r1(b.x)} ${r1(b.y)}`,
+      // The curve's own midpoint (t = 0.5), where a combo's knot sits.
+      mid: { x: 0.25 * a.x + 0.5 * qx + 0.25 * b.x, y: 0.25 * a.y + 0.5 * qy + 0.25 * b.y }
+    };
+  }
+
+  function r1(value) {
+    return Math.round(value * 10) / 10;
   }
 
   // Everything the tree draws, derived fresh each time: the catalogue plus
   // everything this run has actually picked up -- so a pick can never be
   // missing from the tree just because the catalogue didn't know about it.
-  function buildModel(game) {
+  // aspect: the map view's width / height, which picks the layout.
+  function buildModel(game, aspect = 1.2) {
     const tree = window.CuddleSkillTree;
     const nodes = new Map();
     const easy = difficultyOf(game) === "easy";
@@ -301,50 +350,58 @@
       }
     });
 
-    // Place upgrades into wedges.
-    const wedgeNodes = new Map(WEDGES.map((w) => [w.id, []]));
+    // Every rune goes into a cluster: one per theme, plus the boss relics.
+    const clusters = CLUSTERS.map((def) => ({ ...def, nodes: [] }));
+    const clusterById = new Map(clusters.map((cluster) => [cluster.id, cluster]));
     nodes.forEach((node) => {
-      if (node.kind !== "upgrade") return;
-      const canon = canonicalId(node.id);
-      const listed = WEDGES.find((w) => w.ids.includes(node.id) || w.ids.includes(canon));
-      const wedgeId = listed ? listed.id : (CATEGORY_WEDGE[node.category] || (node.easyOnly ? "solving" : "hand"));
-      node.wedge = wedgeId;
-      wedgeNodes.get(wedgeId).push(node);
+      if (node.kind === "combo") return;
+      let clusterId = "bosses";
+      if (node.kind !== "boss") {
+        const canon = canonicalId(node.id);
+        const listed = WEDGES.find((w) => w.ids.includes(node.id) || w.ids.includes(canon));
+        clusterId = listed ? listed.id : (CATEGORY_WEDGE[node.category] || (node.easyOnly ? "solving" : "hand"));
+      }
+      node.wedge = clusterId;
+      clusterById.get(clusterId).nodes.push(node);
     });
-    WEDGES.forEach((wedge) => {
-      const list = wedgeNodes.get(wedge.id);
-      // Catalogue order within the listed ids, extras after.
-      list.sort((a, b) => {
-        const ai = wedge.ids.indexOf(a.id) >= 0 ? wedge.ids.indexOf(a.id) : wedge.ids.indexOf(canonicalId(a.id));
-        const bi = wedge.ids.indexOf(b.id) >= 0 ? wedge.ids.indexOf(b.id) : wedge.ids.indexOf(canonicalId(b.id));
-        return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
-      });
-      const spots = layoutWedge(wedge, list.length);
-      list.forEach((node, i) => Object.assign(node, spots[i]));
-      wedge.hub = polar(R_HUB, wedge.angle);
-      wedge.nodes = list;
-      wedge.locked = Boolean(wedge.easyOnly && !easy);
-      wedge.owned = list.filter((n) => n.level > 0).length;
+    clusters.forEach((cluster) => {
+      const ids = cluster.ids || [];
+      const rank = (node) => {
+        const at = ids.indexOf(node.id) >= 0 ? ids.indexOf(node.id) : ids.indexOf(canonicalId(node.id));
+        return at < 0 ? 99 : at;
+      };
+      cluster.nodes.sort((a, b) => rank(a) - rank(b));
+      cluster.owned = cluster.nodes.filter((n) => n.level > 0).length;
     });
+    const placed = clusters.filter((cluster) => cluster.nodes.length);
+    layoutClusters(placed, aspect < 0.85);
 
-    // Combos sit outside the fans, between the two upgrades they need.
+    // Combos are strings between their two halves, with the bonus as a
+    // knot halfway along.
     const combos = [...nodes.values()].filter((n) => n.kind === "combo");
     combos.forEach((combo) => {
-      const angles = (combo.reqNodes || []).filter((n) => Number.isFinite(n.angle)).map((n) => n.angle);
-      combo.angle = angles.length ? circularMean(angles) : -90;
+      const halves = (combo.reqNodes || []).filter((n) => Number.isFinite(n.x));
+      if (halves.length < 2) return;
+      const curve = curveBetween(halves[0], halves[1], 0.2);
+      combo.path = curve.d;
+      combo.x = curve.mid.x;
+      combo.y = curve.mid.y;
+      combo.halves = halves.slice(0, 2);
+      combo.wedge = "combos";
     });
-    combos.sort((a, b) => a.angle - b.angle);
-    for (let i = 1; i < combos.length; i += 1) {
-      if (combos[i].angle - combos[i - 1].angle < 15) combos[i].angle = combos[i - 1].angle + 15;
-    }
-    combos.forEach((combo) => Object.assign(combo, polar(R_COMBO, combo.angle), { radius: R_COMBO }));
-
-    // Boss rewards ring the whole tree.
-    const bosses = [...nodes.values()].filter((n) => n.kind === "boss");
-    bosses.forEach((boss, i) => {
-      const angle = -90 + (360 / Math.max(1, bosses.length)) * (i + 0.5);
-      Object.assign(boss, polar(R_BOSS, angle), { angle, radius: R_BOSS });
-    });
+    const comboPairs = new Set(combos.filter((c) => c.halves).map((c) => c.halves.map((h) => h.id).sort().join("|")));
+    const related = RELATED
+      .map(([a, b]) => [nodes.get(a), nodes.get(b)])
+      .filter(([a, b]) => a && b && Number.isFinite(a.x) && Number.isFinite(b.x)
+        && !comboPairs.has([a.id, b.id].sort().join("|")))
+      .map(([a, b]) => ({ a, b, d: curveBetween(a, b, 0.14).d }));
+    const bosses = clusterById.get("bosses").nodes;
+    const bounds = {
+      minX: Math.min(-90, ...placed.map((c) => c.x - c.reach)) - 20,
+      maxX: Math.max(90, ...placed.map((c) => c.x + c.reach)) + 20,
+      minY: Math.min(-90, ...placed.map((c) => c.y - c.reach)) - 20,
+      maxY: Math.max(90, ...placed.map((c) => c.y + c.reach)) + 20
+    };
 
     const all = [...nodes.values()].filter((n) => Number.isFinite(n.x));
     // An Easy-only talent drops out of the count on other difficulties --
@@ -354,7 +411,10 @@
       nodes,
       all,
       wedges: WEDGES,
-      combos,
+      clusters: placed,
+      combos: combos.filter((c) => c.halves),
+      related,
+      bounds,
       bosses,
       owned: countable.filter((n) => n.level > 0).length,
       total: countable.length,
@@ -374,111 +434,325 @@
   }
 
   // ---------------------------------------------------------------------
-  // Talent board: one panel per theme, each a little jigsaw of its talents
+  // Rune map: clusters of runes around their sigils, tied by strings
   // ---------------------------------------------------------------------
 
-  const PANELS = [
-    { id: "scoring", tagline: "Make every tile count.", icon: "star" },
-    { id: "economy", tagline: "Coins in, coins out.", icon: "moneyBag" },
-    { id: "insight", tagline: "See more. Guess smarter.", icon: "eye" },
-    { id: "hand", tagline: "Better cards, better tools.", icon: "toolbox" },
-    { id: "quests", tagline: "Side goals, real rewards.", icon: "clipboard" },
-    { id: "coach", tagline: "Your coach in the corner.", icon: "pinkHeart" },
-    { id: "solving", tagline: "Gentle nudges for tough words.", icon: "bulb" },
-    { id: "combos", title: "Combos", tagline: "Two halves, one bonus.", icon: "link", color: COMBO_COLOR },
-    { id: "bosses", title: "Boss Rewards", tagline: "Taken from the bosses you beat.", icon: "trophy", color: BOSS_COLOR }
-  ];
-
-  function pieceIcon(icon) {
+  function iconMarkup(icon, size) {
     const text = String(icon || "✦");
     const Icons = window.CuddleIcons;
-    if (Icons && Icons.hasEmoji(text)) return `<span class="umt-cw-icon">${Icons.svg(text)}</span>`;
-    return `<span class="umt-cw-icon is-text">${esc(text)}</span>`;
+    if (Icons && (Icons.hasEmoji(text) || /^[a-z][a-zA-Z]+$/.test(text))) return Icons.markup(text, size, 0, 0);
+    return `<text class="umt-rn-glyph" y="${r1(size * 0.32)}" font-size="${size * 0.8}">${esc(text)}</text>`;
   }
 
-  function piecePips(node) {
-    const max = node.maxLevel;
-    if (!max || max < 2) return node.level > 1 ? `<span class="umt-cw-stack">×${node.level}</span>` : "";
-    let dots = "";
-    for (let i = 0; i < max; i += 1) dots += `<i class="${i < node.level ? "is-on" : ""}"></i>`;
-    return `<span class="umt-cw-pips" aria-hidden="true">${dots}</span>`;
+  // A rune's name on one line, or split into two near the middle.
+  function labelLines(title) {
+    const text = String(title || "");
+    if (text.length <= 13 || !text.includes(" ")) return [text];
+    const words = text.split(" ");
+    let best = [text];
+    let bestGap = Infinity;
+    for (let i = 1; i < words.length; i += 1) {
+      const first = words.slice(0, i).join(" ");
+      const second = words.slice(i).join(" ");
+      const gap = Math.abs(first.length - second.length);
+      if (gap < bestGap) { bestGap = gap; best = [first, second]; }
+    }
+    return best;
   }
 
-  // "1/2" on a half-built combo, "✓" on a complete one.
-  function pieceBadge(node) {
-    if (node.kind !== "combo" || !node.requires) return "";
-    const need = node.requires.length;
-    const have = (node.reqNodes || []).filter((req) => req.level > 0).length;
-    return `<span class="umt-cw-badge${node.level > 0 ? " is-done" : have ? " is-half" : ""}">${node.level > 0 ? "✓" : `${have}/${need}`}</span>`;
+  function runeState(node, model, fresh) {
+    const owned = node.level > 0;
+    const locked = node.easyOnly && !model.easy && !owned;
+    return { owned, locked, cls: fresh.has(node.id) ? "is-fresh is-owned" : owned ? "is-owned" : locked ? "is-locked" : "is-open" };
   }
 
-  // The panel's name as a row of letter tiles, turning green from the left
-  // as the theme fills up -- a word being solved.
-  function titleTiles(title, owned, total) {
-    const letters = String(title).toUpperCase().replace(/[^A-Z ]/g, "").split("");
-    const count = letters.filter((ch) => ch !== " ").length;
-    let solved = total ? Math.round((owned / total) * count) : 0;
-    if (owned > 0 && solved === 0) solved = 1;
-    let seen = 0;
-    return `<span class="umt-cw-word" aria-hidden="true">${letters.map((ch) => {
-      if (ch === " ") return `<span class="umt-cw-gap"></span>`;
-      seen += 1;
-      return `<span class="umt-cw-letter${seen <= solved ? " is-solved" : ""}">${ch}</span>`;
-    }).join("")}</span>`;
+  function runeMarkup(node, model, view, fresh) {
+    const { owned, locked, cls } = runeState(node, model, fresh);
+    const tier = TIER_NAME[node.tier] || "";
+    const status = owned ? `yours${node.level > 1 ? `, level ${node.level}` : ""}` : locked ? "Easy difficulty only" : "not yet";
+    const pips = node.maxLevel && node.maxLevel > 1
+      ? Array.from({ length: node.maxLevel }, (_, i) => {
+        const x = (i - (node.maxLevel - 1) / 2) * 9;
+        return `<circle class="umt-rn-pip${i < node.level ? " is-on" : ""}" cx="${r1(x)}" cy="31" r="2.8"/>`;
+      }).join("")
+      : "";
+    const lines = labelLines(node.title);
+    const label = lines.map((line, i) => `<tspan x="0" dy="${i ? 13 : 0}">${esc(line)}</tspan>`).join("");
+    return `<g class="umt-rn-rune ${cls}${node.id === view.selectedId ? " is-selected" : ""}" data-umt-node="${esc(node.id)}"`
+      + ` transform="translate(${r1(node.x)} ${r1(node.y)})" style="--c:${nodeColor(node)};--t:${TIER_STROKE[node.tier] || TIER_STROKE.common}"`
+      + ` tabindex="0" role="button" aria-label="${esc(node.title)}${tier ? `, ${tier}` : ""}, ${status}">`
+      + `<circle class="umt-rn-halo" r="36"/>`
+      + `<circle class="umt-rn-ring" r="25"/>`
+      + `<circle class="umt-rn-stone" r="21"/>`
+      + `<circle class="umt-rn-ignite" r="25" pathLength="1"/>`
+      + `<g class="umt-rn-icon">${locked ? iconMarkup("lock", 20) : iconMarkup(node.icon, 22)}</g>`
+      + `<g class="umt-rn-burst" aria-hidden="true">${Array.from({ length: 8 }, (_, i) => `<line x1="0" y1="-30" x2="0" y2="-40" transform="rotate(${i * 45})"/>`).join("")}</g>`
+      + pips
+      + `<text class="umt-rn-label" y="${pips ? 50 : 44}">${label}</text>`
+      + `</g>`;
   }
 
-  // One crossword entry per theme: the clue (number, name in letter tiles,
-  // tagline), then a grid of numbered squares, one per talent. Squares are
-  // Wordle colours -- green yours, yellow just picked up, empty not yet --
-  // and the corner shows the talent's rarity.
-  function panelMarkup(panel, nodes, model, view, clueNumber, firstSquare) {
-    if (!nodes.length) return "";
+  function knotMarkup(combo, view, fresh) {
+    const have = combo.halves.filter((h) => h.level > 0).length;
+    const state = combo.level > 0 ? "is-active" : have ? "is-half" : "is-idle";
+    return `<g class="umt-rn-knot ${state}${fresh.has(combo.id) ? " is-fresh" : ""}${combo.id === view.selectedId ? " is-selected" : ""}"`
+      + ` data-umt-node="${esc(combo.id)}" transform="translate(${r1(combo.x)} ${r1(combo.y)})"`
+      + ` tabindex="0" role="button" aria-label="Combo: ${esc(combo.title)}, ${combo.level > 0 ? "active" : `${have} of 2 halves owned`}">`
+      + `<circle class="umt-rn-knot-flash" r="16"/>`
+      + `<rect class="umt-rn-knot-shape" x="-11" y="-11" width="22" height="22" rx="4" transform="rotate(45)"/>`
+      + `<g class="umt-rn-knot-icon">${iconMarkup(combo.icon, 13)}</g>`
+      + `<text class="umt-rn-knot-label" y="30">${esc(combo.title)}</text>`
+      + `</g>`;
+  }
+
+  function sigilMarkup(cluster) {
+    return `<g class="umt-rn-sigil" data-umt-cluster="${esc(cluster.id)}" transform="translate(${r1(cluster.x)} ${r1(cluster.y)})"`
+      + ` style="--c:${cluster.color}" role="button" tabindex="0" aria-label="${esc(cluster.title)}: ${cluster.owned} of ${cluster.nodes.length} runes lit. Zoom in.">`
+      + `<circle class="umt-rn-sigil-glow" r="44"/>`
+      + `<circle class="umt-rn-sigil-disc" r="31"/>`
+      + `<g class="umt-rn-sigil-icon">${iconMarkup(cluster.icon, 28)}</g>`
+      + `<text class="umt-rn-sigil-title" y="-42">${esc(cluster.title)}</text>`
+      + `<text class="umt-rn-sigil-count" y="50">${cluster.owned} / ${cluster.nodes.length}</text>`
+      + `</g>`;
+  }
+
+  function mapMarkup(model, view) {
     const fresh = view.freshIds || new Set();
-    const owned = nodes.filter((node) => node.level > 0).length;
-    const wedge = WEDGES.find((w) => w.id === panel.id) || {};
-    const color = panel.color || wedge.color || "#d5a6ff";
-    const title = panel.title || wedge.title || panel.id;
-    const Icons = window.CuddleIcons;
-    const squares = nodes.map((node, index) => {
-      const isOwned = node.level > 0;
-      const locked = node.easyOnly && !model.easy && !isOwned;
-      const state = fresh.has(node.id) ? "is-fresh" : isOwned ? "is-owned" : locked ? "is-locked" : "is-open";
-      const status = isOwned ? `yours${node.level > 1 ? `, level ${node.level}` : ""}` : locked ? "Easy difficulty only" : "not yet";
-      const tier = TIER_NAME[node.tier] || "";
-      return `<button type="button" class="umt-cw-cell ${state}${node.id === view.selectedId ? " is-selected" : ""}" data-umt-node="${esc(node.id)}"`
-        + ` style="--t:${TIER_STROKE[node.tier] || TIER_STROKE.common};--i:${index}" aria-label="${esc(node.title)}${tier ? `, ${tier}` : ""}, ${status}">`
-        + `<span class="umt-cw-num" aria-hidden="true">${firstSquare + index}</span>`
-        + (locked ? `<span class="umt-cw-icon">${Icons ? Icons.svg("lock") : ""}</span>` : pieceIcon(node.icon))
-        + `<span class="umt-cw-name">${esc(node.title)}</span>`
-        + piecePips(node)
-        + pieceBadge(node)
-        + `</button>`;
+    const clusters = model.clusters;
+    const core = clusters.map((cluster) => `<path class="umt-rn-string is-trunk${cluster.owned ? " is-lit" : ""}" style="--c:${cluster.color}"`
+      + ` d="M0 0L${r1(cluster.x)} ${r1(cluster.y)}"/>`).join("");
+    const spokes = clusters.map((cluster) => cluster.nodes.map((node) => {
+      const lit = node.level > 0;
+      return `<path class="umt-rn-string is-spoke${lit ? " is-lit" : ""}${fresh.has(node.id) ? " is-fresh" : ""}" style="--c:${cluster.color}"`
+        + ` pathLength="1" d="M${r1(cluster.x)} ${r1(cluster.y)}L${r1(node.x)} ${r1(node.y)}"/>`;
+    }).join("")).join("");
+    const related = model.related.map(({ a, b, d }) => {
+      const lit = a.level > 0 && b.level > 0;
+      return `<path class="umt-rn-string is-related${lit ? " is-lit" : ""}" d="${d}"/>`;
     }).join("");
-    return `<section class="umt-cw-panel${owned ? " has-owned" : ""}" style="--c:${color}" aria-label="${esc(title)}, ${owned} of ${nodes.length} collected">`
-      + `<header class="umt-cw-head">`
-      + `<span class="umt-cw-clue">${clueNumber} Across</span>`
-      + `<span class="umt-pz-count">${owned}<small>/${nodes.length}</small></span>`
-      + titleTiles(title, owned, nodes.length)
-      + `<p><span class="umt-cw-panel-icon" aria-hidden="true">${Icons ? Icons.svg(panel.icon) : ""}</span>${esc(panel.tagline)}</p>`
-      + `</header>`
-      + `<div class="umt-cw-grid">${squares}</div>`
-      + `</section>`;
+    const combos = model.combos.map((combo) => {
+      const have = combo.halves.filter((h) => h.level > 0).length;
+      const state = combo.level > 0 ? "is-active" : have ? "is-half" : "is-idle";
+      return `<path class="umt-rn-string is-combo ${state}${fresh.has(combo.id) ? " is-fresh" : ""}" pathLength="1" d="${combo.path}"/>`;
+    }).join("");
+    const titles = clusters.map((cluster) => `<text class="umt-rn-far-title" style="--c:${cluster.color}" x="${r1(cluster.x)}" y="${r1(cluster.y + 14)}">${esc(cluster.title)}</text>`).join("");
+    const b = model.bounds;
+    return `<div class="umt-rn-map" data-umt-rn-map>`
+      + `<svg class="umt-rn-svg" data-lod="far" role="group" aria-label="Talent runes. Drag to move, pinch or scroll to zoom."`
+      + ` data-bounds="${r1(b.minX)} ${r1(b.minY)} ${r1(b.maxX)} ${r1(b.maxY)}">`
+      + `<g class="umt-rn-world" data-umt-rn-world>`
+      + `<g class="umt-rn-strings">${core}${spokes}${related}${combos}</g>`
+      + `<g class="umt-rn-core"><circle class="umt-rn-core-glow" r="78"/><circle class="umt-rn-core-disc" r="52"/>`
+      + `<text class="umt-rn-core-count" y="6">${model.owned}<tspan class="umt-rn-core-total"> / ${model.total}</tspan></text>`
+      + `<text class="umt-rn-core-caption" y="26">runes lit</text></g>`
+      + `<g class="umt-rn-sigils">${clusters.map(sigilMarkup).join("")}</g>`
+      + `<g class="umt-rn-runes">${clusters.map((cluster) => cluster.nodes.map((node) => runeMarkup(node, model, view, fresh)).join("")).join("")}</g>`
+      + `<g class="umt-rn-knots">${model.combos.map((combo) => knotMarkup(combo, view, fresh)).join("")}</g>`
+      + `<g class="umt-rn-far" aria-hidden="true">${titles}</g>`
+      + `</g></svg>`
+      + `<div class="umt-rn-zoom" role="group" aria-label="Zoom">`
+      + `<button type="button" data-umt-rn-zoom="in" aria-label="Zoom in">+</button>`
+      + `<button type="button" data-umt-rn-zoom="out" aria-label="Zoom out">−</button>`
+      + `<button type="button" data-umt-rn-zoom="fit" aria-label="Show the whole map">⤢</button>`
+      + `</div></div>`;
   }
 
-  function renderBoard(model, view) {
-    let clue = 0;
-    let square = 1;
-    return PANELS.map((panel) => {
-      let nodes;
-      if (panel.id === "combos") nodes = model.combos;
-      else if (panel.id === "bosses") nodes = model.bosses;
-      else nodes = (model.wedges.find((w) => w.id === panel.id) || {}).nodes || [];
-      if (!nodes.length) return "";
-      clue += 1;
-      const markup = panelMarkup(panel, nodes, model, view, clue, square);
-      square += nodes.length;
-      return markup;
-    }).join("");
+  // ---------------------------------------------------------------------
+  // Camera: where the map is looking (a world point at the centre of the
+  // view, and a scale), plus pan / pinch / wheel zoom and smooth flights.
+  // ---------------------------------------------------------------------
+
+  const camera = { cx: 0, cy: 0, s: 0.3, anim: null, fitted: false };
+  const MAX_SCALE = 2.2;
+  const LOD_NEAR = 0.52;
+
+  function mapParts() {
+    const layer = host() && host().querySelector(".umt-pt-layer");
+    const map = layer && layer.querySelector("[data-umt-rn-map]");
+    const svg = map && map.querySelector(".umt-rn-svg");
+    const world = svg && svg.querySelector("[data-umt-rn-world]");
+    if (!world) return null;
+    const box = map.getBoundingClientRect();
+    const [minX, minY, maxX, maxY] = (svg.getAttribute("data-bounds") || "-800 -800 800 800").split(" ").map(Number);
+    return { layer, map, svg, world, w: box.width, h: box.height, bounds: { minX, minY, maxX, maxY } };
+  }
+
+  function fitScale(parts, bounds, pad = 24) {
+    const bw = bounds.maxX - bounds.minX;
+    const bh = bounds.maxY - bounds.minY;
+    return Math.min((parts.w - pad * 2) / bw, (parts.h - pad * 2) / bh);
+  }
+
+  function minScale(parts) {
+    return fitScale(parts, parts.bounds) * 0.85;
+  }
+
+  function applyCamera() {
+    const parts = mapParts();
+    if (!parts || !parts.w) return;
+    camera.s = Math.min(MAX_SCALE, Math.max(minScale(parts), camera.s));
+    const tx = parts.w / 2 - camera.s * camera.cx;
+    const ty = parts.h / 2 - camera.s * camera.cy;
+    parts.world.setAttribute("transform", `translate(${r1(tx)} ${r1(ty)}) scale(${camera.s.toFixed(4)})`);
+    parts.svg.setAttribute("data-lod", camera.s >= LOD_NEAR ? "near" : "far");
+  }
+
+  function stopFlight() {
+    if (camera.anim) cancelAnimationFrame(camera.anim);
+    camera.anim = null;
+  }
+
+  // Smoothly to a new view; zooms in log space so it doesn't lurch.
+  function flyTo(target, ms, done) {
+    stopFlight();
+    const from = { cx: camera.cx, cy: camera.cy, s: camera.s };
+    if (!ms || reducedMotion()) {
+      Object.assign(camera, { cx: target.cx, cy: target.cy, s: target.s });
+      applyCamera();
+      if (done) done();
+      return;
+    }
+    const start = performance.now();
+    const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / ms);
+      const k = ease(t);
+      camera.cx = from.cx + (target.cx - from.cx) * k;
+      camera.cy = from.cy + (target.cy - from.cy) * k;
+      camera.s = Math.exp(Math.log(from.s) + (Math.log(target.s) - Math.log(from.s)) * k);
+      applyCamera();
+      if (t < 1) camera.anim = requestAnimationFrame(step);
+      else {
+        camera.anim = null;
+        if (done) done();
+      }
+    };
+    camera.anim = requestAnimationFrame(step);
+  }
+
+  function viewOf(bounds, pad) {
+    const parts = mapParts();
+    if (!parts) return null;
+    return {
+      cx: (bounds.minX + bounds.maxX) / 2,
+      cy: (bounds.minY + bounds.maxY) / 2,
+      s: Math.min(MAX_SCALE, fitScale(parts, bounds, pad))
+    };
+  }
+
+  function fitAll(ms) {
+    const parts = mapParts();
+    if (!parts) return;
+    const target = viewOf(parts.bounds, 16);
+    if (target) flyTo(target, ms);
+    camera.fitted = true;
+  }
+
+  // Close enough that a rune and its name read comfortably.
+  function viewOnPoint(x, y, scale) {
+    const parts = mapParts();
+    const s = Math.min(MAX_SCALE, Math.max(scale, parts ? minScale(parts) : scale));
+    return { cx: x, cy: y, s };
+  }
+
+  function zoomAt(factor, px, py) {
+    const parts = mapParts();
+    if (!parts) return;
+    stopFlight();
+    const sx = px == null ? parts.w / 2 : px;
+    const sy = py == null ? parts.h / 2 : py;
+    const tx = parts.w / 2 - camera.s * camera.cx;
+    const ty = parts.h / 2 - camera.s * camera.cy;
+    const wx = (sx - tx) / camera.s;
+    const wy = (sy - ty) / camera.s;
+    const s = Math.min(MAX_SCALE, Math.max(minScale(parts), camera.s * factor));
+    camera.s = s;
+    camera.cx = (parts.w / 2 - (sx - s * wx)) / s;
+    camera.cy = (parts.h / 2 - (sy - s * wy)) / s;
+    applyCamera();
+  }
+
+  function nodePoint(id) {
+    const model = view.game ? buildModel(view.game, view.aspect) : null;
+    const node = model && model.nodes.get(id);
+    return node && Number.isFinite(node.x) ? node : null;
+  }
+
+  function clusterBounds(cluster) {
+    return {
+      minX: cluster.x - cluster.reach, maxX: cluster.x + cluster.reach,
+      minY: cluster.y - cluster.reach, maxY: cluster.y + cluster.reach
+    };
+  }
+
+  // Pointer gestures on the map: drag to pan, two fingers to pinch, wheel
+  // to zoom. A press that barely moves stays a tap (selection).
+  const gesture = { pointers: new Map(), moved: false, startDist: 0, startScale: 1, suppressClick: false };
+
+  function installMapGestures() {
+    document.addEventListener("pointerdown", (event) => {
+      const map = event.target instanceof Element && event.target.closest(".umt-pt-layer [data-umt-rn-map]");
+      if (!map || event.target.closest(".umt-rn-zoom")) return;
+      gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (gesture.pointers.size === 1) gesture.moved = false;
+      if (gesture.pointers.size === 2) {
+        const [a, b] = [...gesture.pointers.values()];
+        gesture.startDist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+        gesture.startScale = camera.s;
+      }
+    });
+    document.addEventListener("pointermove", (event) => {
+      if (!gesture.pointers.has(event.pointerId)) return;
+      const prev = gesture.pointers.get(event.pointerId);
+      const next = { x: event.clientX, y: event.clientY };
+      gesture.pointers.set(event.pointerId, next);
+      const parts = mapParts();
+      if (!parts) return;
+      if (gesture.pointers.size >= 2) {
+        const [a, b] = [...gesture.pointers.values()];
+        const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+        const box = parts.map.getBoundingClientRect();
+        const factor = (gesture.startScale * (dist / gesture.startDist)) / camera.s;
+        zoomAt(factor, (a.x + b.x) / 2 - box.left, (a.y + b.y) / 2 - box.top);
+        gesture.moved = true;
+        return;
+      }
+      const dx = next.x - prev.x;
+      const dy = next.y - prev.y;
+      if (!gesture.moved && Math.hypot(next.x - prev.x, next.y - prev.y) < 0.5) return;
+      gesture.moved = gesture.moved || Math.abs(dx) + Math.abs(dy) > 0;
+      stopFlight();
+      camera.cx -= dx / camera.s;
+      camera.cy -= dy / camera.s;
+      applyCamera();
+    });
+    const end = (event) => {
+      if (!gesture.pointers.has(event.pointerId)) return;
+      gesture.pointers.delete(event.pointerId);
+      if (!gesture.pointers.size && gesture.moved) {
+        // A drag ends in a click on whatever it started on; swallow that one.
+        gesture.suppressClick = true;
+        setTimeout(() => { gesture.suppressClick = false; }, 0);
+      }
+    };
+    document.addEventListener("pointerup", end);
+    document.addEventListener("pointercancel", end);
+    document.addEventListener("wheel", (event) => {
+      const map = event.target instanceof Element && event.target.closest(".umt-pt-layer [data-umt-rn-map]");
+      if (!map) return;
+      event.preventDefault();
+      const box = map.getBoundingClientRect();
+      zoomAt(Math.exp(-event.deltaY * 0.0016), event.clientX - box.left, event.clientY - box.top);
+    }, { passive: false });
+    window.addEventListener("resize", () => {
+      if (!view.open) return;
+      const aspect = mapAspect();
+      if ((aspect < 0.85) !== (view.aspect < 0.85)) {
+        view.aspect = aspect;
+        renderOverlay();
+        fitAll(0);
+      } else applyCamera();
+    });
   }
 
   // ---------------------------------------------------------------------
@@ -492,7 +766,10 @@
     freshIds: new Set(),
     reveal: null,
     game: null,
-    lastFocus: null
+    lastFocus: null,
+    // The reveal's choreography: which step it is on, and its timers.
+    stage: null,
+    timers: []
   };
 
   function stageLabel(round) {
@@ -501,7 +778,7 @@
 
   function detailMarkup(model, node) {
     if (!node) {
-      return `<div class="umt-pt-detail is-empty"><p>Tap any square to see what it does and how to get it. Green squares are yours; the corner colour is its rarity (see Key).</p></div>`;
+      return `<div class="umt-pt-detail is-empty"><p>Tap a rune to see what it does and how to get it. Lit runes are yours; the ring colour is its rarity. Rose strings join a combo: own both ends and its knot lights up with the bonus.</p></div>`;
     }
     const owned = node.level > 0;
     const wedge = WEDGES.find((w) => w.id === node.wedge);
@@ -525,6 +802,7 @@
         : `Stacks: can be taken up to ${node.maxLevel} times.`)
       : node.maxLevel && node.maxLevel > 1 && owned ? "Fully stacked." : "";
     return `<div class="umt-pt-detail${owned ? " is-owned" : ""}" style="--c:${nodeColor(node)}">`
+      + `<button type="button" class="umt-rn-deselect" data-umt-pz-deselect aria-label="Close details">×</button>`
       + `<div class="umt-pt-detail-head"><span class="umt-pt-detail-icon">${esc(node.icon)}</span>`
       + `<div><strong>${esc(node.title)}</strong><span class="umt-pt-detail-meta">${esc(branch)}${tier ? ` · ${esc(tier)}` : ""}</span></div>`
       + `<span class="umt-pt-state ${owned ? "is-owned" : ""}">${owned ? (levelText || "Owned") : "Not yet"}</span></div>`
@@ -566,41 +844,17 @@
     return lines;
   }
 
-  // What the square colours mean.
+  // What the map's marks mean.
   function legendMarkup() {
-    const tier = (id) => `<span class="umt-cw-key is-open is-corner" style="--t:${TIER_STROKE[id]}"></span>${TIER_NAME[id]}`;
-    return `<details class="umt-pt-key"><summary>Key</summary><ul>`
-      + `<li><span class="umt-cw-key is-owned"></span>Yours</li>`
-      + `<li><span class="umt-cw-key is-fresh"></span>Just picked up</li>`
-      + `<li><span class="umt-cw-key is-open"></span>Not yet</li>`
-      + `<li><span class="umt-cw-key is-locked"></span>Easy only</li>`
-      + `<li>${tier("common")}</li><li>${tier("rare")}</li><li>${tier("epic")}</li><li>${tier("legendary")}</li>`
-      + `<li><span class="umt-pt-key-badge">1/2</span>Combo: halves owned</li>`
+    const tier = (id) => `<li><span class="umt-rn-key-ring" style="--t:${TIER_STROKE[id]}"></span>${TIER_NAME[id]}</li>`;
+    return `<details class="umt-pt-key umt-rn-key"><summary>Key</summary><ul>`
+      + `<li><span class="umt-rn-key-rune is-owned"></span>Yours</li>`
+      + `<li><span class="umt-rn-key-rune"></span>Not yet</li>`
+      + `<li class="is-wide"><span class="umt-rn-key-line is-combo"></span><span class="umt-rn-key-knot"></span>Combo: own both ends for its bonus</li>`
+      + `<li class="is-wide"><span class="umt-rn-key-line"></span>Related runes</li>`
+      + `<li class="is-wide is-label">Ring colour = rarity</li>`
+      + tier("common") + tier("rare") + tier("epic") + tier("legendary")
       + `</ul></details>`;
-  }
-
-  function statsMarkup(stats, changed) {
-    const changedKeys = new Map((changed || []).map((c) => [c.def.key, c]));
-    const groups = [];
-    for (const def of STAT_DEFS) {
-      let group = groups.find((g) => g.name === def.group);
-      if (!group) {
-        group = { name: def.group, rows: [] };
-        groups.push(group);
-      }
-      const change = changedKeys.get(def.key);
-      const value = stats[def.key];
-      const unit = def.unit ? `<small>${def.unit}</small>` : "";
-      const delta = change ? change.to - change.from : 0;
-      group.rows.push(
-        `<li class="${change ? (delta > 0 ? "is-up" : "is-down") : ""}"><span>${esc(def.label)}</span>`
-        + (change
-          ? `<b><s>${change.from}</s><i aria-hidden="true">→</i>${change.to}${unit}</b>`
-          : `<b>${value}${unit}</b>`)
-        + `</li>`
-      );
-    }
-    return `<div class="umt-pt-stats">${groups.map((g) => `<section><h4>${esc(g.name)}</h4><ul>${g.rows.join("")}</ul></section>`).join("")}</div>`;
   }
 
   function timelineMarkup(model, game) {
@@ -672,53 +926,35 @@
         + `<p>${esc((node && node.description) || entry.description || "")}</p></div>${echo}${lvl}</div>`;
     }).join("");
     const combosNow = model.combos.filter((c) => c.level > 0 && reveal.newComboIds && reveal.newComboIds.has(c.id));
-    const comboNote = combosNow.map(fusionMarkup).join("");
-    const changes = reveal.diff.length
-      ? `<ul class="umt-pt-changes">${reveal.diff.map((c) => {
-        const up = c.to > c.from;
-        return `<li class="${up ? "is-up" : "is-down"}"><span>${esc(c.def.label)}</span>`
-          + `<b><s>${c.from}</s><i aria-hidden="true">→</i>${c.to}${c.def.unit ? `<small>${c.def.unit}</small>` : ""}</b>`
-          + `<em>${up ? "+" : ""}${c.to - c.from}</em></li>`;
-      }).join("")}</ul>`
-      : `<p class="umt-pt-ability">New ability — it changes how stages play rather than a number.</p>`;
-    return `<section class="umt-pt-reveal">${items}${comboNote}<h4>${reveal.diff.length ? "What changed" : "Effect"}</h4>${changes}</section>`;
+    const comboNote = combosNow.length
+      ? `<div class="umt-rn-bonus"><h4>Bonus unlocked</h4>${combosNow.map(fusionMarkup).join("")}</div>`
+      : "";
+    return `<section class="umt-pt-reveal">${items}${comboNote}</section>`;
   }
 
   function overlayMarkup(game) {
-    const model = buildModel(game);
-    const stats = readStats(game);
+    const model = buildModel(game, view.aspect);
     const reveal = view.mode === "reveal" ? view.reveal : null;
     const selected = view.selectedId ? model.nodes.get(view.selectedId) : null;
     const percent = model.total ? Math.round((model.owned / model.total) * 100) : 0;
     const heading = reveal
-      ? `<span class="umt-pt-kicker">Progression</span><h2 id="umtPtTitle">${revealGroups(model, reveal).length > 1 ? "New talents" : "New talent"} added</h2>`
-      : `<span class="umt-pt-kicker">Progression</span><h2 id="umtPtTitle">Your run so far</h2>`;
+      ? `<span class="umt-pt-kicker">Progression</span><h2 id="umtPtTitle">${revealGroups(model, reveal).length > 1 ? "New runes" : "New rune"} lit</h2>`
+      : `<span class="umt-pt-kicker">Progression</span><h2 id="umtPtTitle">Your runes</h2>`;
+    const side = reveal
+      ? revealMarkup(model, reveal)
+      : detailMarkup(model, selected) + (selected ? "" : timelineMarkup(model, game));
     return `<div class="umt-pt-overlay${reveal ? " is-reveal" : ""}" role="dialog" aria-modal="true" aria-hidden="false" aria-labelledby="umtPtTitle">`
       + `<div class="umt-pt-backdrop" data-umt-pt-close></div>`
-      + `<section class="umt-pt-modal">`
+      + `<section class="umt-pt-modal umt-rn-modal">`
       + `<header class="umt-pt-head"><div>${heading}</div>`
-      + `<div class="umt-pt-progress" title="${model.owned} of ${model.total} talents collected"><span style="width:${percent}%"></span></div>`
+      + `<div class="umt-pt-progress" title="${model.owned} of ${model.total} runes lit"><span style="width:${percent}%"></span></div>`
       + `<span class="umt-pt-count">${model.owned}<small>/${model.total}</small></span>`
       + `<button type="button" class="umt-pt-close" data-umt-pt-close aria-label="Close progression">×</button></header>`
-      + `<div class="umt-pt-body">`
-      + `<div class="umt-pt-canvas-wrap">${legendMarkup()}<div class="umt-pt-canvas umt-pz-board" data-umt-pt-canvas>${renderBoard(model, view)}</div>`
+      + `<div class="umt-pt-body umt-rn-body${reveal || selected ? " has-detail" : ""}">`
+      + `<div class="umt-rn-stage">${legendMarkup()}${mapMarkup(model, view)}</div>`
+      + `<aside class="umt-pt-side umt-rn-side">${side}</aside>`
       + `</div>`
-      + `<aside class="umt-pt-side">`
-      + (reveal ? revealMarkup(model, reveal) : detailMarkup(model, selected))
-      + `<h3 class="umt-pt-side-title">Run stats</h3>`
-      // During a reveal the changes are listed once, under "What changed";
-      // the full stats below stay plain rather than repeating them.
-      + statsMarkup(stats, null)
-      + timelineMarkup(model, game)
-      + `</aside></div>`
       + (reveal ? `<footer class="umt-pt-foot"><button type="button" class="umt-pt-continue" data-umt-pt-close>Continue</button></footer>` : "")
-      // On a phone the details open as a sheet over the board instead of
-      // somewhere below it (hidden on wider screens, where the side panel has them).
-      + (!reveal && selected
-        ? `<div class="umt-pz-sheet" role="dialog" aria-label="${esc(selected.title)}">`
-          + `<button type="button" class="umt-pz-sheet-close" data-umt-pz-deselect aria-label="Close details">×</button>`
-          + detailMarkup(model, selected) + `</div>`
-        : "")
       + `</section></div>`;
   }
 
@@ -730,18 +966,16 @@
       if (layer) layer.remove();
       return;
     }
-    const canvasScroll = layer && layer.querySelector("[data-umt-pt-canvas]");
-    const keep = canvasScroll ? { left: canvasScroll.scrollLeft, top: canvasScroll.scrollTop } : null;
     if (!layer) {
       layer = document.createElement("div");
       layer.className = "umt-pt-layer";
       el.appendChild(layer);
     }
     // The game re-renders around a pick, and every re-render used to
-    // rebuild the whole panel -- replaying its entrance (fade, rise, the new
-    // piece dropping in) and reading as the board stuttering and starting over.
-    // Skip a redraw that would change nothing, and when something did
-    // change, redraw without replaying the entrance.
+    // rebuild the whole panel -- replaying its entrance. Skip a redraw that
+    // would change nothing, and when something did change, redraw without
+    // replaying the entrance. The camera and the reveal's step live outside
+    // the markup, so they carry straight over.
     const markup = overlayMarkup(view.game);
     if (layer.umtMarkup === markup && layer.umtOpenId === view.openId) return;
     const settled = layer.umtOpenId === view.openId && Boolean(layer.umtMarkup);
@@ -749,26 +983,80 @@
     layer.umtMarkup = markup;
     layer.umtOpenId = view.openId;
     layer.classList.toggle("is-settled", settled);
-    const canvas = layer.querySelector("[data-umt-pt-canvas]");
-    if (canvas && keep) {
-      canvas.scrollLeft = keep.left;
-      canvas.scrollTop = keep.top;
-    }
+    if (view.stage) layer.setAttribute("data-stage", view.stage);
+    else layer.removeAttribute("data-stage");
+    applyCamera();
   }
 
-  // Brings the square just picked up into view inside the board.
-  function focusPiece(nodeId) {
+  // The map's shape before it exists, from the window (the modal's layout:
+  // full screen on a phone, a side panel beside the map on wider screens).
+  function mapAspect() {
+    const w = window.innerWidth || 1024;
+    const h = window.innerHeight || 768;
+    if (w <= 760) return w / Math.max(1, h - 70);
+    return (Math.min(1140, w - 32) - 340) / Math.max(1, Math.min(840, h - 32) - 70);
+  }
+
+  function setStage(stage) {
+    view.stage = stage;
     const layer = host() && host().querySelector(".umt-pt-layer");
-    const canvas = layer && layer.querySelector("[data-umt-pt-canvas]");
-    const piece = nodeId && canvas && canvas.querySelector(`[data-umt-node="${CSS.escape(nodeId)}"]`);
-    if (!piece || canvas.scrollHeight <= canvas.clientHeight + 2) return;
-    const box = piece.getBoundingClientRect();
-    const frame = canvas.getBoundingClientRect();
-    canvas.scrollTop = Math.max(0, canvas.scrollTop + (box.top + box.height / 2 - frame.top) - canvas.clientHeight / 2);
+    if (!layer) return;
+    if (stage) layer.setAttribute("data-stage", stage);
+    else layer.removeAttribute("data-stage");
+  }
+
+  function clearReveal() {
+    view.timers.forEach((timer) => clearTimeout(timer));
+    view.timers = [];
+    stopFlight();
+  }
+
+  function later(ms, fn) {
+    view.timers.push(setTimeout(fn, reducedMotion() ? 0 : ms));
+  }
+
+  // The reveal: the whole map first, then a flight in to the new rune,
+  // which ignites; if it completed a combo, the view pulls back to both
+  // ends, the combo string draws itself and the knot pops with the bonus.
+  function playReveal() {
+    clearReveal();
+    const model = buildModel(view.game, view.aspect);
+    const fresh = [...view.freshIds].map((id) => model.nodes.get(id)).filter((n) => n && Number.isFinite(n.x));
+    const rune = fresh.find((n) => n.kind !== "combo") || fresh[0];
+    const combo = model.combos.find((c) => view.reveal && view.reveal.newComboIds && view.reveal.newComboIds.has(c.id));
+    setStage("overview");
+    fitAll(0);
+    if (!rune) {
+      setStage("done");
+      return;
+    }
+    later(300, () => {
+      setStage("fly");
+      flyTo(viewOnPoint(rune.x, rune.y, 1.35), 850, () => {
+        setStage("ignite");
+        if (!combo) {
+          later(1200, () => setStage("done"));
+          return;
+        }
+        later(1100, () => {
+          setStage("combo-fly");
+          const ends = combo.halves.concat([combo]);
+          const box = {
+            minX: Math.min(...ends.map((n) => n.x)) - 90, maxX: Math.max(...ends.map((n) => n.x)) + 90,
+            minY: Math.min(...ends.map((n) => n.y)) - 90, maxY: Math.max(...ends.map((n) => n.y)) + 90
+          };
+          flyTo(viewOf(box, 20), 750, () => {
+            setStage("combo");
+            later(1600, () => setStage("done"));
+          });
+        });
+      });
+    });
   }
 
   function openTree(game, options = {}) {
     if (!game || !game.state) return;
+    clearReveal();
     view.game = game;
     view.open = true;
     view.mode = options.reveal ? "reveal" : "browse";
@@ -777,10 +1065,16 @@
     view.selectedId = options.selectedId || null;
     view.lastFocus = document.activeElement;
     view.openId = (view.openId || 0) + 1;
-    const focusId = options.selectedId || (view.freshIds.size ? [...view.freshIds][0] : null);
+    view.stage = null;
+    view.aspect = mapAspect();
     renderOverlay();
     requestAnimationFrame(() => {
-      focusPiece(focusId);
+      if (view.mode === "reveal") playReveal();
+      else {
+        fitAll(0);
+        const focus = view.selectedId && nodePoint(view.selectedId);
+        if (focus) flyTo(viewOnPoint(focus.x, focus.y, 1.1), 600);
+      }
       const closeBtn = host() && host().querySelector(options.reveal ? ".umt-pt-continue" : ".umt-pt-close");
       if (closeBtn) closeBtn.focus({ preventScroll: true });
     });
@@ -788,8 +1082,10 @@
 
   function closeTree() {
     if (!view.open) return;
+    clearReveal();
     view.open = false;
     view.reveal = null;
+    view.stage = null;
     view.freshIds = new Set();
     renderOverlay();
     if (view.lastFocus && typeof view.lastFocus.focus === "function" && document.contains(view.lastFocus)) {
@@ -801,33 +1097,35 @@
     view.selectedId = id;
     if (view.mode === "reveal") {
       // Tapping around after a reveal turns it into ordinary browsing.
+      clearReveal();
       view.mode = "browse";
       view.reveal = null;
+      view.stage = null;
       view.freshIds = new Set();
     }
     renderOverlay();
+    // From far out, a tap also brings the rune close enough to read.
+    const point = id && nodePoint(id);
+    if (point && camera.s < 0.8) flyTo(viewOnPoint(point.x, point.y, 1.1), 650);
+  }
+
+  function zoomToCluster(id) {
+    const model = buildModel(view.game, view.aspect);
+    const cluster = model.clusters.find((c) => c.id === id);
+    if (!cluster) return;
+    const target = viewOf(clusterBounds(cluster), 12);
+    if (target) flyTo(target, 650);
   }
 
   // ---------------------------------------------------------------------
   // Pick detection -> reveal
   // ---------------------------------------------------------------------
 
-  const watch = { runId: null, ledgerLength: 0, stats: null, comboOwned: new Set(), pending: null };
+  const watch = { runId: null, ledgerLength: 0, comboOwned: new Set(), pending: null };
 
   function ownedComboIds(game) {
     const model = buildModel(game);
     return new Set(model.combos.filter((c) => c.level > 0).map((c) => c.id));
-  }
-
-  // Two stat diffs in a row as one: earliest "from", latest "to".
-  function mergeDiffs(first, second) {
-    const merged = new Map((first || []).map((change) => [change.def.key, { ...change }]));
-    (second || []).forEach((change) => {
-      const existing = merged.get(change.def.key);
-      if (existing) existing.to = change.to;
-      else merged.set(change.def.key, { ...change });
-    });
-    return [...merged.values()].filter((change) => change.to !== change.from);
   }
 
   function checkForPicks(game) {
@@ -840,25 +1138,18 @@
       // news. Start watching from here.
       watch.runId = runId;
       watch.ledgerLength = entries.length;
-      watch.stats = readStats(game);
       watch.comboOwned = ownedComboIds(game);
       return;
     }
-    if (entries.length === watch.ledgerLength) {
-      watch.stats = readStats(game);
-      return;
-    }
+    if (entries.length === watch.ledgerLength) return;
     // A boss reward lands while its cash-out is still counting up; hold the
     // reveal (the ledger stays unread) until Collect, instead of opening it
     // on top of the cash-out.
     if (payoutShowing(game)) return;
     const fresh = entries.slice(watch.ledgerLength);
-    const after = readStats(game);
-    const diff = statDiff(watch.stats, after);
     const combosNow = ownedComboIds(game);
     const newComboIds = new Set([...combosNow].filter((id) => !watch.comboOwned.has(id)));
     watch.ledgerLength = entries.length;
-    watch.stats = after;
     watch.comboOwned = combosNow;
 
     const tree = window.CuddleSkillTree;
@@ -891,13 +1182,15 @@
       // rather than opening it again -- which replayed its entrance.
       if (view.open && view.mode === "reveal" && view.reveal) {
         view.reveal.entries = view.reveal.entries.concat(fresh);
-        view.reveal.diff = mergeDiffs(view.reveal.diff, diff);
+        const comboNews = [...newComboIds].some((id) => !view.reveal.newComboIds.has(id));
         newComboIds.forEach((id) => view.reveal.newComboIds.add(id));
         freshIds.forEach((id) => view.freshIds.add(id));
         renderOverlay();
+        // A combo completed by the second application gets its own moment.
+        if (comboNews) playReveal();
         return;
       }
-      openTree(game, { reveal: { entries: fresh, diff, newComboIds }, freshIds });
+      openTree(game, { reveal: { entries: fresh, newComboIds }, freshIds });
     }, 260);
   }
 
@@ -1384,9 +1677,28 @@
         return;
       }
       if (!view.open) return;
+      if (gesture.suppressClick && target.closest(".umt-pt-layer [data-umt-rn-map]")) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       if (target.closest("[data-umt-pt-close]")) {
         event.preventDefault();
         closeTree();
+        return;
+      }
+      const zoom = target.closest(".umt-pt-layer [data-umt-rn-zoom]");
+      if (zoom) {
+        event.preventDefault();
+        const how = zoom.dataset.umtRnZoom;
+        if (how === "fit") fitAll(500);
+        else zoomAt(how === "in" ? 1.45 : 1 / 1.45);
+        return;
+      }
+      const sigil = target.closest(".umt-pt-layer [data-umt-cluster]");
+      if (sigil) {
+        event.preventDefault();
+        zoomToCluster(sigil.dataset.umtCluster);
         return;
       }
       if (target.closest(".umt-pt-layer [data-umt-pz-deselect]")) {
@@ -1407,6 +1719,13 @@
         event.preventDefault();
         event.stopPropagation();
         closeTree();
+        return;
+      }
+      const sigil = event.target instanceof Element && event.target.closest(".umt-pt-layer [data-umt-cluster]");
+      if (sigil && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        event.stopPropagation();
+        zoomToCluster(sigil.dataset.umtCluster);
         return;
       }
       const node = event.target instanceof Element && event.target.closest(".umt-pt-layer [data-umt-node]");
@@ -1443,6 +1762,7 @@
   }
 
   installEvents();
+  installMapGestures();
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", install, { once: true });
   } else {
@@ -1452,7 +1772,6 @@
   window.CuddleProgression = Object.freeze({
     openTree: (game) => openTree(game || activeGame()),
     closeTree,
-    buildModel,
-    readStats
+    buildModel
   });
 })();
