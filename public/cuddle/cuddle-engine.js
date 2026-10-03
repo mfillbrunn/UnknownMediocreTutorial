@@ -375,8 +375,18 @@
     _isStateUsable() {
       const state = this.state;
       if (!state || state.round < 1 || state.round > THRESHOLDS.length) return false;
-      if (!this.secretSet.has(state.secret) && !["upgrade", "won", "lost"].includes(state.status)) return false;
+      if (!this._isKnownSecret(state.secret) && !["upgrade", "won", "lost"].includes(state.status)) return false;
       return true;
+    }
+
+    // A saved secret is fine if it's any legal word, not only one from the
+    // ordinary answer pool: the Rare Word challenge draws its answer from
+    // cuddle-rare-words.js, and checking the pool alone threw every run
+    // saved during (or right after) one away as "No saved run".
+    _isKnownSecret(secret) {
+      const word = String(secret || "").toUpperCase();
+      return this.secretSet.has(word) || this.guessSet.has(word)
+        || (Array.isArray(window.CuddleRareWords) && window.CuddleRareWords.includes(word));
     }
 
     save() {
