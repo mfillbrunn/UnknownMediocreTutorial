@@ -719,7 +719,6 @@
 }
 
 .umt-progress-host .umt-pt-reveal h4,
-.umt-progress-host .umt-pt-stats h4,
 .umt-progress-host .umt-pt-timeline h4 {
   margin: 0 0 0.35rem;
   color: var(--umt-muted);
@@ -728,78 +727,6 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-
-.umt-progress-host .umt-pt-changes,
-.umt-progress-host .umt-pt-stats ul {
-  display: grid;
-  gap: 0.2rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.umt-progress-host .umt-pt-changes li {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.65rem;
-  border-radius: 10px;
-  background: rgba(62, 207, 142, 0.1);
-  font-size: 0.92rem;
-  animation: umt-pt-rise 360ms ease-out both;
-}
-
-.umt-progress-host .umt-pt-changes li:nth-child(2) { animation-delay: 80ms; }
-.umt-progress-host .umt-pt-changes li:nth-child(3) { animation-delay: 160ms; }
-.umt-progress-host .umt-pt-changes li.is-down { background: rgba(251, 113, 133, 0.1); }
-.umt-progress-host .umt-pt-changes li > span { flex: 1 1 auto; }
-
-.umt-progress-host .umt-pt-changes b,
-.umt-progress-host .umt-pt-stats b {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.3rem;
-  font-weight: 850;
-}
-
-.umt-progress-host .umt-pt-changes s,
-.umt-progress-host .umt-pt-stats s { color: var(--umt-muted); font-weight: 600; }
-.umt-progress-host .umt-pt-changes i,
-.umt-progress-host .umt-pt-stats i { color: var(--umt-muted); font-style: normal; }
-.umt-progress-host .umt-pt-changes small,
-.umt-progress-host .umt-pt-stats small { color: var(--umt-muted); font-size: 0.72em; font-weight: 700; }
-
-.umt-progress-host .umt-pt-changes em {
-  min-width: 2.4rem;
-  padding: 0.05rem 0.4rem;
-  border-radius: 999px;
-  color: #04241a;
-  background: var(--umt-points-bright);
-  font-size: 0.78rem;
-  font-style: normal;
-  font-weight: 900;
-  text-align: center;
-}
-
-.umt-progress-host .umt-pt-changes li.is-down em { color: #2b0710; background: var(--umt-hazard-soft); }
-.umt-progress-host .umt-pt-ability { margin: 0; color: var(--umt-muted); font-size: 0.86rem; line-height: 1.45; }
-
-.umt-progress-host .umt-pt-stats { display: grid; gap: 0.8rem; }
-
-.umt-progress-host .umt-pt-stats li {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.28rem 0.45rem;
-  border-radius: 8px;
-  font-size: 0.86rem;
-}
-
-.umt-progress-host .umt-pt-stats li span { color: var(--umt-muted); }
-.umt-progress-host .umt-pt-stats li.is-up { color: var(--umt-points-bright); background: rgba(62, 207, 142, 0.1); }
-.umt-progress-host .umt-pt-stats li.is-down { color: var(--umt-hazard-soft); background: rgba(251, 113, 133, 0.1); }
-.umt-progress-host .umt-pt-stats li.is-up span,
-.umt-progress-host .umt-pt-stats li.is-down span { color: inherit; }
 
 .umt-progress-host .umt-pt-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 
@@ -866,8 +793,7 @@
   .umt-progress-host .is-leaving .umt-stage-banner,
   .umt-progress-host .umt-pt-modal,
   .umt-progress-host .umt-pt-backdrop,
-  .umt-progress-host .umt-pt-new,
-  .umt-progress-host .umt-pt-changes li { animation: umt-pt-fade 200ms ease-out both; }
+  .umt-progress-host .umt-pt-new { animation: umt-pt-fade 200ms ease-out both; }
   .umt-progress-host .umt-sb-sheen,
   .umt-progress-host .umt-pt-burst { display: none; }
   .umt-progress-host .umt-pt-edge.is-lit,
@@ -923,23 +849,6 @@
   animation-duration: 0.001s !important;
 }
 
-/* Names on every talent; unowned ones smaller and dimmer. */
-.umt-progress-host .umt-pt-label.is-dim {
-  fill: #b9b2cc;
-  font-size: 8.5px;
-  font-weight: 650;
-  stroke-width: 3px;
-  opacity: 0.85;
-}
-
-/* Combo progress badge: 1/2 while half-built, a check once active. */
-.umt-progress-host .umt-pt-combo-badge rect { fill: #1a1725; stroke: rgba(255, 122, 184, 0.45); stroke-width: 1.2; }
-.umt-progress-host .umt-pt-combo-badge text { fill: #e9c6da; font-size: 8.5px; font-weight: 850; text-anchor: middle; }
-.umt-progress-host .umt-pt-combo-badge.is-half rect { stroke: #ff7ab8; }
-.umt-progress-host .umt-pt-combo-badge.is-half text { fill: #ff9ec7; }
-.umt-progress-host .umt-pt-combo-badge.is-done rect { fill: #ff7ab8; stroke: #ff7ab8; }
-.umt-progress-host .umt-pt-combo-badge.is-done text { fill: #2a0f1d; }
-
 /* "How to get it" in the talent card. */
 .umt-progress-host .umt-pt-howto { margin-top: 10px; padding-top: 9px; border-top: 1px solid rgba(255, 255, 255, 0.09); }
 .umt-progress-host .umt-pt-howto h4 {
@@ -983,303 +892,318 @@
   color: #ff9ec7;
 }
 
+
 /* ================================================================== */
-/* Talent board: one panel per theme, each a little jigsaw of pieces    */
-/* (cuddle-progression.js renderBoard).                                 */
+/* Rune map (cuddle-progression.js mapMarkup): clusters of runes around */
+/* their sigils, strings between them, combo knots. World units scale  */
+/* with the camera; data-lod="far" swaps names for big cluster titles.  */
 /* ================================================================== */
 
-.umt-progress-host .umt-pt-canvas-wrap {
-  grid-template: auto minmax(0, 1fr) / minmax(0, 1fr);
+.umt-progress-host .umt-rn-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  min-height: 0;
+  overflow: hidden;
 }
-.umt-progress-host .umt-pt-canvas-wrap > .umt-pt-key {
-  margin: 10px 14px 0;
-}
-.umt-progress-host .umt-pt-key li:nth-child(n+4) { grid-column: auto; }
-.umt-progress-host .umt-pt-key li:last-child { grid-column: 1 / -1; }
-/* Key swatches: tiny versions of the board's squares. */
-.umt-progress-host .umt-cw-key {
+.umt-progress-host .umt-rn-stage {
   position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.umt-progress-host .umt-rn-map {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(60% 55% at 50% 48%, #1b1631 0%, #110e1d 55%, #09080f 100%);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.umt-progress-host .umt-rn-map:active { cursor: grabbing; }
+.umt-progress-host .umt-rn-svg { display: block; width: 100%; height: 100%; }
+.umt-progress-host .umt-rn-svg text { font-family: inherit; text-anchor: middle; paint-order: stroke; stroke: #0c0a14; stroke-linejoin: round; }
+
+/* -- Strings -- */
+.umt-progress-host .umt-rn-string { fill: none; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.umt-progress-host .umt-rn-string.is-trunk { stroke: color-mix(in srgb, var(--c) 18%, transparent); stroke-width: 2; }
+.umt-progress-host .umt-rn-string.is-trunk.is-lit { stroke: color-mix(in srgb, var(--c) 42%, transparent); }
+.umt-progress-host .umt-rn-string.is-spoke { stroke: rgba(206, 198, 232, 0.13); stroke-width: 1.5; }
+.umt-progress-host .umt-rn-string.is-spoke.is-lit { stroke: color-mix(in srgb, var(--c) 75%, transparent); stroke-width: 2.2; }
+.umt-progress-host .umt-rn-string.is-related { stroke: rgba(206, 198, 232, 0.17); stroke-width: 1.6; stroke-dasharray: 1.5 6; }
+.umt-progress-host .umt-rn-string.is-related.is-lit { stroke: rgba(240, 234, 255, 0.75); }
+.umt-progress-host .umt-rn-string.is-combo { stroke: rgba(255, 122, 184, 0.18); stroke-width: 1.8; stroke-dasharray: 6 6; }
+.umt-progress-host .umt-rn-string.is-combo.is-half { stroke: rgba(255, 122, 184, 0.62); stroke-width: 2.2; }
+.umt-progress-host .umt-rn-string.is-combo.is-active {
+  stroke: #ff7ab8;
+  stroke-width: 3;
+  stroke-dasharray: none;
+  filter: drop-shadow(0 0 4px rgba(255, 122, 184, 0.7));
+}
+
+/* -- Core and sigils -- */
+.umt-progress-host .umt-rn-core-glow { fill: rgba(213, 166, 255, 0.07); }
+.umt-progress-host .umt-rn-core-disc { fill: #17132a; stroke: rgba(213, 166, 255, 0.4); stroke-width: 1.5; }
+.umt-progress-host .umt-rn-core-count { fill: #ffffff; font-size: 26px; font-weight: 900; stroke-width: 0; }
+.umt-progress-host .umt-rn-core-total { fill: #9d96b2; font-size: 15px; font-weight: 750; }
+.umt-progress-host .umt-rn-core-caption { fill: #9d96b2; font-size: 10px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; stroke-width: 0; }
+
+.umt-progress-host .umt-rn-sigil { cursor: zoom-in; outline: none; }
+.umt-progress-host .umt-rn-sigil-glow { fill: color-mix(in srgb, var(--c) 9%, transparent); }
+.umt-progress-host .umt-rn-sigil-disc { fill: color-mix(in srgb, var(--c) 18%, #14111c); stroke: var(--c); stroke-width: 1.6; }
+.umt-progress-host .umt-rn-sigil:hover .umt-rn-sigil-disc,
+.umt-progress-host .umt-rn-sigil:focus-visible .umt-rn-sigil-disc { stroke-width: 3; }
+.umt-progress-host .umt-rn-sigil-title { fill: var(--c); font-size: 15px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; stroke-width: 4px; }
+.umt-progress-host .umt-rn-sigil-count { fill: #c9c2dc; font-size: 12px; font-weight: 800; stroke-width: 3.5px; }
+
+/* -- Runes -- */
+.umt-progress-host .umt-rn-rune { cursor: pointer; outline: none; }
+.umt-progress-host .umt-rn-halo { fill: color-mix(in srgb, var(--c) 22%, transparent); opacity: 0; transition: opacity 200ms ease; }
+.umt-progress-host .umt-rn-ring { fill: none; stroke: color-mix(in srgb, var(--t) 55%, transparent); stroke-width: 2.5; }
+.umt-progress-host .umt-rn-stone { fill: #1c1828; stroke: rgba(255, 255, 255, 0.06); stroke-width: 1; }
+.umt-progress-host .umt-rn-ignite { fill: none; stroke: transparent; stroke-width: 4; }
+.umt-progress-host .umt-rn-icon { opacity: 0.55; filter: saturate(0.45); transform-box: fill-box; transform-origin: center; }
+.umt-progress-host .umt-rn-glyph { fill: #e9e4f5; stroke-width: 0; }
+.umt-progress-host .umt-rn-burst line { stroke: var(--c); stroke-width: 2.5; stroke-linecap: round; opacity: 0; }
+.umt-progress-host .umt-rn-pip { fill: rgba(255, 255, 255, 0.18); }
+.umt-progress-host .umt-rn-pip.is-on { fill: var(--c); }
+.umt-progress-host .umt-rn-label { fill: #b9b2cc; font-size: 11.5px; font-weight: 700; stroke-width: 3.5px; }
+
+.umt-progress-host .umt-rn-rune.is-owned .umt-rn-halo { opacity: 1; }
+.umt-progress-host .umt-rn-rune.is-owned .umt-rn-ring { stroke: var(--t); stroke-width: 3; }
+.umt-progress-host .umt-rn-rune.is-owned .umt-rn-stone { fill: color-mix(in srgb, var(--c) 34%, #1c1828); stroke: color-mix(in srgb, var(--c) 70%, transparent); }
+.umt-progress-host .umt-rn-rune.is-owned .umt-rn-icon { opacity: 1; filter: none; }
+.umt-progress-host .umt-rn-rune.is-owned .umt-rn-label { fill: #ffffff; }
+.umt-progress-host .umt-rn-rune.is-locked .umt-rn-stone { fill: #141219; }
+.umt-progress-host .umt-rn-rune.is-locked .umt-rn-ring { stroke: #2d2a38; }
+.umt-progress-host .umt-rn-rune.is-locked .umt-rn-label { fill: #7c768c; }
+.umt-progress-host .umt-rn-rune:hover .umt-rn-ring { stroke-width: 4; }
+.umt-progress-host .umt-rn-rune.is-selected .umt-rn-ring,
+.umt-progress-host .umt-rn-rune:focus-visible .umt-rn-ring { stroke: #ffffff; stroke-width: 3.5; }
+
+/* -- Combo knots -- */
+.umt-progress-host .umt-rn-knot { cursor: pointer; outline: none; }
+.umt-progress-host .umt-rn-knot-shape { fill: #1d1422; stroke: rgba(255, 122, 184, 0.5); stroke-width: 1.6; }
+.umt-progress-host .umt-rn-knot-flash { fill: rgba(255, 231, 168, 0.9); opacity: 0; transform-box: fill-box; transform-origin: center; }
+.umt-progress-host .umt-rn-knot-icon { opacity: 0.5; filter: saturate(0.4); transform-box: fill-box; transform-origin: center; }
+.umt-progress-host .umt-rn-knot-label { fill: #e9b9d0; font-size: 10.5px; font-weight: 800; stroke-width: 3.5px; opacity: 0.85; }
+.umt-progress-host .umt-rn-knot.is-half .umt-rn-knot-shape { stroke: #ff7ab8; }
+.umt-progress-host .umt-rn-knot.is-active .umt-rn-knot-shape {
+  fill: #ff7ab8;
+  stroke: #ffd6e8;
+  filter: drop-shadow(0 0 5px rgba(255, 122, 184, 0.85));
+}
+.umt-progress-host .umt-rn-knot.is-active .umt-rn-knot-icon { opacity: 1; filter: none; }
+.umt-progress-host .umt-rn-knot.is-active .umt-rn-knot-label { fill: #ffd6e8; opacity: 1; }
+.umt-progress-host .umt-rn-knot.is-selected .umt-rn-knot-shape,
+.umt-progress-host .umt-rn-knot:focus-visible .umt-rn-knot-shape { stroke: #ffffff; stroke-width: 2.5; }
+
+/* -- Level of detail: far out, names give way to big cluster titles. -- */
+.umt-progress-host .umt-rn-far-title { fill: var(--c); font-size: 56px; font-weight: 900; letter-spacing: 0.04em; stroke-width: 12px; opacity: 0.95; pointer-events: none; }
+.umt-progress-host .umt-rn-svg[data-lod="near"] .umt-rn-far { display: none; }
+.umt-progress-host .umt-rn-svg[data-lod="far"] .umt-rn-label,
+.umt-progress-host .umt-rn-svg[data-lod="far"] .umt-rn-knot-label,
+.umt-progress-host .umt-rn-svg[data-lod="far"] .umt-rn-sigil-title,
+.umt-progress-host .umt-rn-svg[data-lod="far"] .umt-rn-sigil-count { display: none; }
+
+/* -- Zoom buttons and key -- */
+.umt-progress-host .umt-rn-zoom {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  display: grid;
+  gap: 6px;
+}
+.umt-progress-host .umt-rn-zoom button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(213, 166, 255, 0.28);
+  border-radius: 12px;
+  background: rgba(23, 19, 38, 0.92);
+  color: #f1ecfb;
+  font: inherit;
+  font-size: 1.2rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.umt-progress-host .umt-rn-zoom button:hover { border-color: rgba(213, 166, 255, 0.6); }
+.umt-progress-host .umt-rn-zoom button:focus-visible { outline: 2px solid var(--umt-violet); outline-offset: 2px; }
+
+.umt-progress-host .umt-rn-stage > .umt-rn-key {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  max-width: min(280px, calc(100% - 20px));
+  margin: 0;
+}
+.umt-progress-host .umt-rn-key ul { grid-template-columns: 1fr 1fr; }
+.umt-progress-host .umt-rn-key li.is-wide { grid-column: 1 / -1; }
+.umt-progress-host .umt-rn-key li.is-label { color: #a79fbd; font-size: 0.72rem; margin-top: 2px; }
+.umt-progress-host .umt-rn-key-rune {
   flex: none;
   width: 16px;
   height: 16px;
-  border-radius: 3px;
-  border: 1.5px solid #4a4652;
-  background: #1a1820;
-  overflow: hidden;
+  border-radius: 50%;
+  border: 2px solid rgba(201, 138, 75, 0.55);
+  background: #1c1828;
 }
-.umt-progress-host .umt-cw-key.is-owned { background: #538d4e; border-color: #538d4e; }
-.umt-progress-host .umt-cw-key.is-fresh { background: #c9b458; border-color: #c9b458; }
-.umt-progress-host .umt-cw-key.is-locked { background: #2c2a33; border-color: #2c2a33; }
-.umt-progress-host .umt-cw-key.is-corner::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  border-style: solid;
-  border-width: 0 9px 9px 0;
-  border-color: transparent var(--t) transparent transparent;
-}
-
-/* The board: a sheet of crossword entries. */
-.umt-progress-host .umt-pt-canvas.umt-pz-board {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  align-content: start;
-  align-items: start;
-  justify-items: stretch;
-  gap: 14px;
-  padding: 14px;
-  overflow-y: auto;
-  background: #121115;
-}
-
-.umt-progress-host .umt-cw-panel {
-  --c: #d5a6ff;
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  display: grid;
-  align-content: start;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid #2e2b36;
-  border-radius: 12px;
-  background: #18171d;
-}
-
-/* The clue: number, the theme spelled out in letter tiles, and its hint. */
-.umt-progress-host .umt-cw-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 6px 10px;
-}
-.umt-progress-host .umt-cw-clue {
-  color: var(--c);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.umt-progress-host .umt-cw-head .umt-pz-count {
-  font-size: 1rem;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-}
-.umt-progress-host .umt-cw-head .umt-pz-count small { color: var(--umt-muted); font-size: 0.75rem; font-weight: 700; }
-.umt-progress-host .umt-cw-word {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-}
-.umt-progress-host .umt-cw-letter {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border: 2px solid #3a3a3c;
-  border-radius: 2px;
-  color: #f2f0f5;
-  font-size: 0.8rem;
-  font-weight: 800;
-  line-height: 1;
-}
-.umt-progress-host .umt-cw-letter.is-solved { border-color: #538d4e; background: #538d4e; }
-.umt-progress-host .umt-cw-gap { width: 8px; }
-.umt-progress-host .umt-cw-head p {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  color: #b9b4c4;
-  font-size: 0.82rem;
-  font-style: italic;
-}
-.umt-progress-host .umt-cw-panel-icon { display: inline-grid; width: 18px; height: 18px; flex: none; font-style: normal; }
-.umt-progress-host .umt-cw-panel-icon svg { width: 100%; height: 100%; }
-
-/* The grid: black lines between squares; any empty slot at the end of the
-   last row shows as a black square, as in a crossword. */
-.umt-progress-host .umt-cw-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: 2px;
-  padding: 2px;
-  border-radius: 4px;
-  background: #050506;
-}
-.umt-progress-host .umt-cw-cell {
-  --bg: #1f1d25;
-  --ink: #e6e2ee;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  min-height: 104px;
-  margin: 0;
-  padding: 18px 6px 8px;
-  border: 0;
-  border-radius: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font: inherit;
-  text-align: center;
-  cursor: pointer;
-  overflow: hidden;
-  transition: filter 140ms ease;
-}
-.umt-progress-host .umt-cw-cell::after {
-  /* Rarity: the folded corner, top right. */
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  border-style: solid;
-  border-width: 0 16px 16px 0;
-  border-color: transparent var(--t) transparent transparent;
-}
-.umt-progress-host .umt-cw-cell.is-owned { --bg: #538d4e; --ink: #ffffff; }
-.umt-progress-host .umt-cw-cell.is-fresh {
-  --bg: #c9b458;
-  --ink: #17140a;
-  animation: umt-cw-flip 640ms ease-in-out 300ms both;
-}
-.umt-progress-host .umt-cw-cell.is-locked { --bg: #2c2a33; --ink: #8e8999; }
-.umt-progress-host .umt-cw-cell:hover { filter: brightness(1.12); }
-.umt-progress-host .umt-cw-cell.is-selected,
-.umt-progress-host .umt-cw-cell:focus-visible {
-  outline: 3px solid #ffffff;
-  outline-offset: -3px;
-  z-index: 1;
-}
-.umt-progress-host .umt-cw-num {
-  position: absolute;
-  top: 4px;
-  left: 6px;
-  font-size: 0.68rem;
-  font-weight: 800;
-  line-height: 1;
-  opacity: 0.75;
-  font-variant-numeric: tabular-nums;
-}
-.umt-progress-host .umt-cw-icon {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
+.umt-progress-host .umt-rn-key-rune.is-owned { border-color: #c98a4b; background: #4a3a6b; box-shadow: 0 0 8px rgba(213, 166, 255, 0.6); }
+.umt-progress-host .umt-rn-key-ring { flex: none; width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--t); }
+.umt-progress-host .umt-rn-key-line { flex: none; width: 22px; border-top: 2px dotted rgba(240, 234, 255, 0.7); }
+.umt-progress-host .umt-rn-key-line.is-combo { border-top: 2px solid #ff7ab8; }
+.umt-progress-host .umt-rn-key-knot {
   flex: none;
-}
-.umt-progress-host .umt-cw-icon svg { width: 100%; height: 100%; overflow: visible; }
-.umt-progress-host .umt-cw-icon.is-text { font-size: 1.2rem; font-weight: 900; }
-.umt-progress-host .umt-cw-cell.is-open .umt-cw-icon { opacity: 0.7; filter: saturate(0.6); }
-.umt-progress-host .umt-cw-cell.is-locked .umt-cw-icon { opacity: 0.5; }
-.umt-progress-host .umt-cw-name {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  font-size: 0.8rem;
-  font-weight: 700;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
-}
-.umt-progress-host .umt-cw-pips {
-  display: flex;
-  gap: 3px;
-}
-.umt-progress-host .umt-cw-pips i {
-  width: 7px;
-  height: 7px;
-  border-radius: 1px;
-  background: rgba(255, 255, 255, 0.18);
-}
-.umt-progress-host .umt-cw-pips i.is-on { background: #6aaa64; }
-.umt-progress-host .umt-cw-cell.is-owned .umt-cw-pips i,
-.umt-progress-host .umt-cw-cell.is-fresh .umt-cw-pips i { background: rgba(0, 0, 0, 0.22); }
-.umt-progress-host .umt-cw-cell.is-owned .umt-cw-pips i.is-on { background: #ffffff; }
-.umt-progress-host .umt-cw-cell.is-fresh .umt-cw-pips i.is-on { background: #17140a; }
-.umt-progress-host .umt-cw-stack { font-size: 0.72rem; font-weight: 900; }
-.umt-progress-host .umt-cw-badge {
-  position: absolute;
-  bottom: 4px;
-  right: 5px;
-  padding: 1px 5px;
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.45);
-  color: #ffd1e6;
-  font-size: 0.66rem;
-  font-weight: 900;
-  line-height: 1.3;
-}
-.umt-progress-host .umt-cw-badge.is-done { color: #b7f5c9; }
-
-/* A new square flips over like a Wordle tile, landing yellow. */
-@keyframes umt-cw-flip {
-  0% { transform: rotateX(0); }
-  50% { transform: rotateX(90deg); }
-  100% { transform: rotateX(0); }
+  width: 9px;
+  height: 9px;
+  margin-left: -15px;
+  margin-right: 6px;
+  background: #ff7ab8;
+  transform: rotate(45deg);
 }
 
-/* Phone: the details open as a sheet over the board. */
-.umt-progress-host .umt-pz-sheet { display: none; }
+/* -- Side panel -- */
+.umt-progress-host .umt-rn-side { position: relative; }
+.umt-progress-host .umt-rn-side .umt-pt-detail { position: relative; }
+.umt-progress-host .umt-rn-deselect { display: none; }
+.umt-progress-host .umt-rn-bonus { display: grid; gap: 0.5rem; }
 
+/* ------------------------------------------------------------------ */
+/* The reveal: overview -> fly in -> ignite -> (combo) -> done.         */
+/* ------------------------------------------------------------------ */
+
+/* Until it ignites, the new rune and its spoke look unlit. */
+.umt-progress-host .umt-pt-layer:is([data-stage="overview"], [data-stage="fly"]) .umt-rn-rune.is-fresh .umt-rn-halo { opacity: 0; }
+.umt-progress-host .umt-pt-layer:is([data-stage="overview"], [data-stage="fly"]) .umt-rn-rune.is-fresh .umt-rn-stone { fill: #1c1828; stroke: rgba(255, 255, 255, 0.06); }
+.umt-progress-host .umt-pt-layer:is([data-stage="overview"], [data-stage="fly"]) .umt-rn-rune.is-fresh .umt-rn-ring { stroke: color-mix(in srgb, var(--t) 55%, transparent); stroke-width: 2.5; }
+.umt-progress-host .umt-pt-layer:is([data-stage="overview"], [data-stage="fly"]) .umt-rn-rune.is-fresh .umt-rn-icon { opacity: 0.55; filter: saturate(0.45); }
+.umt-progress-host .umt-pt-layer:is([data-stage="overview"], [data-stage="fly"]) .umt-rn-string.is-spoke.is-fresh { stroke: rgba(206, 198, 232, 0.13); stroke-width: 1.5; }
+/* ...and the panel waits for it. */
+.umt-progress-host .umt-pt-layer:is([data-stage="overview"], [data-stage="fly"]) .umt-pt-reveal { visibility: hidden; }
+
+/* Ignite: a ring of light draws round it, it flashes, the glyph pops,
+   sparks fly out and its spoke lights up toward the sigil. */
+.umt-progress-host .umt-pt-layer[data-stage="ignite"] .umt-rn-rune.is-fresh .umt-rn-ignite {
+  stroke: #ffffff;
+  stroke-dasharray: 1;
+  animation: umt-rn-draw 650ms ease-out both, umt-rn-fade-out 400ms ease-in 900ms both;
+}
+.umt-progress-host .umt-pt-layer[data-stage="ignite"] .umt-rn-rune.is-fresh .umt-rn-stone { animation: umt-rn-flash 900ms ease-out 450ms both; }
+.umt-progress-host .umt-pt-layer[data-stage="ignite"] .umt-rn-rune.is-fresh .umt-rn-icon { animation: umt-rn-pop 600ms cubic-bezier(0.3, 1.6, 0.5, 1) 500ms both; }
+.umt-progress-host .umt-pt-layer[data-stage="ignite"] .umt-rn-rune.is-fresh .umt-rn-halo { animation: umt-rn-halo 1.2s ease-out 500ms both; }
+.umt-progress-host .umt-pt-layer[data-stage="ignite"] .umt-rn-rune.is-fresh .umt-rn-burst line { animation: umt-rn-spark 700ms ease-out 550ms both; }
+.umt-progress-host .umt-pt-layer[data-stage="ignite"] .umt-rn-string.is-spoke.is-fresh {
+  stroke-dasharray: 1;
+  animation: umt-rn-draw-back 700ms ease-out 600ms both;
+}
+
+/* Combo: until its moment the new combo still reads as half-built. */
+.umt-progress-host .umt-pt-layer[data-stage]:not([data-stage="combo"]):not([data-stage="done"]) .umt-rn-string.is-combo.is-fresh {
+  stroke: rgba(255, 122, 184, 0.62);
+  stroke-width: 2.2;
+  stroke-dasharray: 6 6;
+  filter: none;
+}
+.umt-progress-host .umt-pt-layer[data-stage]:not([data-stage="combo"]):not([data-stage="done"]) .umt-rn-knot.is-fresh .umt-rn-knot-shape {
+  fill: #1d1422;
+  stroke: #ff7ab8;
+  filter: none;
+}
+.umt-progress-host .umt-pt-layer[data-stage]:not([data-stage="combo"]):not([data-stage="done"]) .umt-rn-knot.is-fresh .umt-rn-knot-icon { opacity: 0.5; filter: saturate(0.4); }
+.umt-progress-host .umt-pt-layer[data-stage="combo"] .umt-rn-string.is-combo.is-fresh {
+  stroke-dasharray: 1;
+  animation: umt-rn-draw 900ms ease-in-out both;
+}
+.umt-progress-host .umt-pt-layer[data-stage="combo"] .umt-rn-knot.is-fresh .umt-rn-knot-flash { animation: umt-rn-knot-flash 800ms ease-out 800ms both; }
+.umt-progress-host .umt-pt-layer[data-stage="combo"] .umt-rn-knot.is-fresh .umt-rn-knot-shape,
+.umt-progress-host .umt-pt-layer[data-stage="combo"] .umt-rn-knot.is-fresh .umt-rn-knot-icon {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: umt-rn-pop 600ms cubic-bezier(0.3, 1.6, 0.5, 1) 850ms both;
+}
+/* The bonus card appears with the knot. */
+.umt-progress-host .umt-pt-layer:not([data-stage="combo"]):not([data-stage="done"]) .umt-rn-bonus { display: none; }
+
+@keyframes umt-rn-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes umt-rn-draw-back { from { stroke-dashoffset: -1; } to { stroke-dashoffset: 0; } }
+@keyframes umt-rn-fade-out { to { opacity: 0; } }
+@keyframes umt-rn-flash {
+  0% { fill: #ffffff; }
+  100% { fill: color-mix(in srgb, var(--c) 34%, #1c1828); }
+}
+@keyframes umt-rn-pop {
+  0% { transform: scale(0.4); opacity: 0.4; }
+  60% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes umt-rn-halo {
+  0% { opacity: 0; transform: scale(0.6); }
+  40% { opacity: 1; transform: scale(1.35); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.umt-progress-host .umt-rn-halo { transform-box: fill-box; transform-origin: center; }
+@keyframes umt-rn-spark {
+  0% { opacity: 0; transform: translateY(6px); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+.umt-progress-host .umt-rn-burst line { transform-box: fill-box; }
+@keyframes umt-rn-knot-flash {
+  0% { opacity: 0; transform: scale(0.2); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: scale(2.6); }
+}
+
+/* -- Phone: the map fills the screen; details slide up under it. -- */
 @media (max-width: 760px) {
-  .umt-progress-host .umt-pt-canvas.umt-pz-board {
-    height: auto;
-    overflow: visible;
-    grid-template-columns: minmax(0, 1fr);
-    padding: 12px;
+  .umt-progress-host .umt-pt-body.umt-rn-body {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
-  .umt-progress-host .umt-pt-canvas-wrap,
-  .umt-progress-host .umt-pt-side { flex: 0 0 auto; }
-  /* A reveal on a phone: the "new talent" note first, then the board with
-     the new piece, then the run stats -- not all the stats first. */
-  .umt-progress-host .umt-pt-overlay.is-reveal .umt-pt-side { display: contents; }
-  .umt-progress-host .umt-pt-overlay.is-reveal .umt-pt-side > * { margin-inline: 1rem; }
-  .umt-progress-host .umt-pt-overlay.is-reveal .umt-pt-reveal { order: -1; margin-top: 1rem; }
-  .umt-progress-host .umt-pt-overlay.is-reveal .umt-pt-side > .umt-pt-side-title { margin-top: 1rem; }
-  .umt-progress-host .umt-pt-overlay.is-reveal .umt-pt-side > :last-child { margin-bottom: 1.25rem; }
-  .umt-progress-host .umt-pt-side > .umt-pt-detail { display: none; }
-  .umt-progress-host .umt-pz-sheet {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 5;
-    display: block;
-    max-height: 62%;
+  .umt-progress-host .umt-rn-stage { flex: 1 1 auto; min-height: 240px; }
+  .umt-progress-host .umt-rn-side { display: none; }
+  .umt-progress-host .umt-rn-body.has-detail .umt-rn-side {
+    display: grid;
+    flex: 0 0 auto;
+    max-height: 46%;
     overflow-y: auto;
-    padding: 16px 14px calc(16px + env(safe-area-inset-bottom, 0px));
-    border-top: 1px solid rgba(213, 166, 255, 0.3);
-    border-radius: 18px 18px 0 0;
-    background: var(--umt-surface);
-    box-shadow: 0 -14px 34px rgba(0, 0, 0, 0.55);
-    animation: umt-pz-sheet-in 220ms cubic-bezier(0.2, 1, 0.3, 1) both;
+    border-top: 1px solid var(--umt-line);
+    border-left: 0;
   }
-  .umt-progress-host .umt-pz-sheet .umt-pt-detail { padding-right: 36px; }
-  .umt-progress-host .umt-pz-sheet-close {
+  .umt-progress-host .umt-rn-deselect {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 8px;
+    right: 8px;
     display: grid;
     place-items: center;
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     border: 1px solid var(--umt-line);
     border-radius: 50%;
-    background: var(--umt-surface-2);
+    background: var(--umt-surface);
     color: var(--umt-ink);
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     cursor: pointer;
   }
+  .umt-progress-host .umt-rn-side .umt-pt-detail { padding-right: 44px; }
 }
-@keyframes umt-pz-sheet-in { from { transform: translateY(100%); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .umt-progress-host .umt-cw-cell.is-fresh,
-  .umt-progress-host .umt-pz-sheet { animation: none; }
+  .umt-progress-host .umt-pt-layer[data-stage] .umt-rn-rune.is-fresh *,
+  .umt-progress-host .umt-pt-layer[data-stage] .umt-rn-string.is-fresh,
+  .umt-progress-host .umt-pt-layer[data-stage] .umt-rn-knot.is-fresh * { animation: none !important; }
+}
+
+/* The new combo keeps its name on screen even when the reveal zooms out
+   to show both of its ends. */
+.umt-progress-host .umt-pt-layer[data-stage] .umt-rn-svg[data-lod="far"] .umt-rn-knot.is-fresh .umt-rn-knot-label {
+  display: inline;
+  font-size: 22px;
+  stroke-width: 6px;
 }
