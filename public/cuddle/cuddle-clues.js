@@ -264,6 +264,12 @@
         text: record.treasurePaid ? "Treasure claimed" : `Solve for +$${TREASURE_PER_COPY * level(game, IDS.treasureHunter) + graveRobberBonus(game)}`
       });
     }
+    // Process of Elimination (cuddle-rebalance-v5.js): every consonant it
+    // has ruled out this stage, the newest one picked out.
+    const sweep = state.cuddleRebalanceV5 && state.cuddleRebalanceV5.consonantSweep;
+    if (sweep && sweep.secret === secret && Array.isArray(sweep.letters) && sweep.letters.length) {
+      chips.push({ icon: "🔍", label: "Process of Elimination", text: "Not", letters: sweep.letters, tone: "sweep" });
+    }
     if (level(game, IDS.mistakeShield) > 0 && shieldApplies(game)) {
       chips.push({ icon: "shield", label: "Mistake Shield", text: record.shieldUsed ? "Shield used" : "Shield ready", tone: record.shieldUsed ? "spent" : "" });
     }
@@ -277,7 +283,9 @@
     if (!chips.length) return;
     const markup = `<div class="umt-clues" aria-label="Clues">${chips.map(chip => (
       `<span class="umt-clue${chip.tone ? ` is-${chip.tone}` : ""}" title="${escapeHtml(chip.label)}">`
-      + `${icon(chip.icon)}<span class="umt-clue-text${chip.mono ? " is-mono" : ""}">${escapeHtml(chip.text)}</span></span>`
+      + `${icon(chip.icon)}<span class="umt-clue-text${chip.mono ? " is-mono" : ""}">${escapeHtml(chip.text)}`
+      + (chip.letters ? chip.letters.map((letter, i) => `<b class="umt-clue-letter${i === chip.letters.length - 1 ? " is-new" : ""}">${escapeHtml(letter)}</b>`).join("") : "")
+      + `</span></span>`
     )).join("")}</div>`;
     let strip = root.querySelector(".cuddle-play-strip");
     if (!strip) {

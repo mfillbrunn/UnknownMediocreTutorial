@@ -3679,6 +3679,27 @@
   color: #ffe8a3;
 }
 .umt-clue.is-spent { opacity: 0.55; }
+/* Process of Elimination: each ruled-out consonant as a small grey tile,
+   the one just ruled out flipping in. */
+.umt-clue.is-sweep .umt-clue-text { display: inline-flex; align-items: center; gap: 4px; }
+.umt-clue-letter {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 3px;
+  border-radius: 4px;
+  background: #3a3a3c;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+.umt-clue-letter.is-new { background: #6a6a70; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35); animation: umt-clue-letter-in 520ms ease-out both; }
+@keyframes umt-clue-letter-in {
+  0% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0); }
+}
+@media (prefers-reduced-motion: reduce) { .umt-clue-letter.is-new { animation: none; } }
 
 #cuddleScreen .cuddle-upgrade-modal > .cuddle-upgrade-wallet {
   position: sticky;

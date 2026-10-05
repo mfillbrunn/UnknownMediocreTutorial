@@ -126,7 +126,7 @@
     jokerCache: "+1 Joker each stage",
     jokerCacheLarge: "+2 Jokers each stage",
     "alphabet-compass": "Earlier / later hints",
-    consonantSweep: "Rules out a consonant",
+    consonantSweep: "Rules out 1 consonant per guess",
     coachPossibleAnswers: "Shows answers left",
     coachMeterThreshold: "Cuddle Meter fills sooner",
     coachMeterReward: "Bigger meter reward",
@@ -307,30 +307,22 @@
     // A combo that just formed makes its two badges light up as it arrives.
     const linking = new Set();
     model.combos.filter((combo) => fresh.has(combo.id)).forEach((combo) => combo.halves.forEach((h) => linking.add(h.id)));
-    const newBadges = model.badges.filter((n) => fresh.has(n.id));
-    const newCombos = model.combos.filter((n) => fresh.has(n.id));
-    const title = reveal
-      ? (newBadges.length > 1 ? "New badges" : newBadges.length ? `New badge: ${newBadges[0].title}` : "New badge")
-      : "Your badges";
-    const note = reveal && newCombos.length
-      ? `<p class="umt-bd-note"><span>Combo unlocked:</span> ${newCombos.map((c) => `<b>${esc(c.title)}</b> — ${esc(comboEffect(c))}`).join("; ")}</p>`
-      : "";
     const grid = model.badges.length
       ? `<div class="umt-bd-grid">${model.badges.map((node) => badgeMarkup(node, fresh, linking)).join("")}</div>`
       : `<p class="umt-bd-empty">No badges yet. Every reward you pick up lands here.</p>`;
+    // The combo column only appears once there is a combo to show.
     const combos = model.combos.length
-      ? `<div class="umt-bd-combo-list">${model.combos.map((node) => badgeMarkup(node, fresh, linking)).join("")}</div>`
-      : `<p class="umt-bd-empty is-small">Collect the right pair of badges to form a combo.</p>`;
+      ? `<aside class="umt-bd-combos" aria-label="Combos"><h3>Combos</h3><div class="umt-bd-combo-list">${model.combos.map((node) => badgeMarkup(node, fresh, linking)).join("")}</div></aside>`
+      : "";
     return `<div class="umt-pt-overlay umt-bd-overlay${reveal ? " is-reveal" : ""}" role="dialog" aria-modal="true" aria-labelledby="umtPtTitle">`
       + `<div class="umt-pt-backdrop" data-umt-pt-close></div>`
       + `<section class="umt-pt-modal umt-bd-modal">`
-      + `<header class="umt-pt-head"><div><span class="umt-pt-kicker">Badges</span><h2 id="umtPtTitle">${esc(title)}</h2></div>`
+      + `<header class="umt-pt-head"><div><h2 id="umtPtTitle">Badges</h2></div>`
       + `<span class="umt-pt-count">${model.badges.length}<small> badge${model.badges.length === 1 ? "" : "s"}</small></span>`
       + `<button type="button" class="umt-pt-close" data-umt-pt-close aria-label="Close badges">×</button></header>`
-      + note
-      + `<div class="umt-bd-body">`
+      + `<div class="umt-bd-body${combos ? " has-combos" : ""}">`
       + `<section class="umt-bd-main" aria-label="Badges, in the order you got them">${grid}</section>`
-      + `<aside class="umt-bd-combos" aria-label="Combos"><h3>Combos</h3>${combos}</aside>`
+      + combos
       + `</div>`
       + (reveal ? `<footer class="umt-pt-foot"><button type="button" class="umt-pt-continue" data-umt-pt-close>Continue</button></footer>` : "")
       + `<div class="umt-bd-card" role="tooltip" hidden></div>`
@@ -617,6 +609,10 @@
     const custom = state.cuddleRebalanceV5 || {};
     const variant = custom.activeVariant && custom.activeVariant.roundToken === token ? custom.activeVariant : null;
     if (variant && VARIANTS[variant.kind]) lines.push(VARIANTS[variant.kind]);
+    // A Classic Wordle pays its own clear bonus, in both currencies.
+    if (variant && variant.kind === "plain" && num(variant.clearBonus) > 0) {
+      content.onWin = { points: num(variant.clearBonus), money: num(variant.clearBonus), label: "Classic Wordle cleared" };
+    }
 
     const mandatory = custom.activeChallenge && custom.activeChallenge.roundToken === token ? custom.activeChallenge : null;
     const mode = state.cuddleMoneyMode || {};

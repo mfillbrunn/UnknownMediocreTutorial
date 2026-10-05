@@ -369,9 +369,8 @@
 
 .umt-progress-host .umt-pt-modal {
   position: relative;
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
-  grid-template-columns: minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   width: min(980px, 100%);
   height: min(760px, calc(100dvh - 32px));
   overflow: hidden;
@@ -391,15 +390,6 @@
   border-bottom: 1px solid var(--umt-line);
 }
 .umt-progress-host .umt-pt-head > div:first-child { flex: 1 1 auto; min-width: 0; }
-.umt-progress-host .umt-pt-kicker {
-  display: block;
-  color: var(--umt-violet);
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-.umt-progress-host .is-reveal .umt-pt-kicker { color: var(--umt-money); }
 .umt-progress-host .umt-pt-head h2 {
   margin: 0.1rem 0 0;
   overflow: hidden;
@@ -445,24 +435,15 @@
   cursor: pointer;
 }
 
-/* "Combo unlocked: ..." under the heading, during a reveal. */
-.umt-progress-host .umt-bd-note {
-  margin: 0;
-  padding: 0.55rem 1.25rem;
-  border-bottom: 1px solid var(--umt-line);
-  background: rgba(255, 122, 184, 0.08);
-  color: #f3dbe7;
-  font-size: 0.88rem;
-  line-height: 1.4;
-  animation: umt-pt-fade 300ms ease-out 1.3s both;
-}
-.umt-progress-host .umt-bd-note span { color: #ff9ec7; font-weight: 850; }
-
+.umt-progress-host .umt-pt-head,
+.umt-progress-host .umt-pt-foot { flex: none; }
 .umt-progress-host .umt-bd-body {
+  flex: 1 1 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 216px;
+  grid-template-columns: minmax(0, 1fr);
   min-height: 0;
 }
+.umt-progress-host .umt-bd-body.has-combos { grid-template-columns: minmax(0, 1fr) 216px; }
 .umt-progress-host .umt-bd-main {
   min-height: 0;
   overflow-y: auto;
@@ -671,7 +652,8 @@
   }
   .umt-progress-host .umt-pt-head { gap: 0.6rem; padding: 0.75rem 0.75rem 0.75rem 1rem; }
   .umt-progress-host .umt-pt-head h2 { font-size: 1.1rem; }
-  .umt-progress-host .umt-bd-body { display: flex; flex-direction: column; }
+  .umt-progress-host .umt-bd-body,
+  .umt-progress-host .umt-bd-body.has-combos { display: flex; flex-direction: column; }
   .umt-progress-host .umt-bd-combos {
     order: -1;
     flex: none;
@@ -692,7 +674,6 @@
 @media (prefers-reduced-motion: reduce) {
   .umt-progress-host .umt-pt-modal,
   .umt-progress-host .umt-pt-backdrop,
-  .umt-progress-host .umt-bd-note,
   .umt-progress-host .umt-bd-badge.is-new,
   .umt-progress-host .umt-bd-badge.is-linking { animation: umt-pt-fade 200ms ease-out both; }
   .umt-progress-host .umt-bd-badge.is-new::after,
