@@ -218,7 +218,7 @@
       icon: "🔍",
       title: "Process of Elimination",
       name: "Process of Elimination",
-      description: "Every guess, boss fights included, rules out one consonant that is not in the answer.",
+      description: "One consonant that isn't in the answer is ruled out before every guess, boss fights included: one before your first guess, another before each guess after.",
       maxLevel: 1,
       maxCount: 1,
       kind: "upgrade"
@@ -2442,23 +2442,42 @@
       `Streak of ${custom.streakCount}`);
   }
 
-  // Process of Elimination: rules out one consonant not in the secret after
-  // every guess (including a forfeited one), boss fights included -- unlike
-  // Free Vowel Sweep (round start only, vowels only), this fires every guess
-  // and only ever narrows the alphabet, never reveals a position.
-  function applyConsonantSweep(game) {
+  // Process of Elimination: rules out one consonant not in the secret as the
+  // stage begins and again after every guess (a forfeited one included),
+  // boss fights included -- so guess N goes in with N ruled out. Unlike Free
+  // Vowel Sweep (round start only, vowels only) it only ever narrows the
+  // alphabet, never reveals a position. Each letter is announced and listed
+  // in the clue strip (cuddle-clues.js).
+  // `opening`: the one ruled out as the stage begins, before the first
+  // guess (once per stage, however often the stage start is re-run).
+  function applyConsonantSweep(game, opening) {
     if (upgradeLevel(game, IDS.consonantSweep) < 1) return;
     const state = stateOf(game);
-    if (!state) return;
+    const custom = customState(game);
+    if (!state || !custom) return;
     const secret = String(state.secret || "").toUpperCase();
+    const token = roundToken(game);
+    let record = custom.consonantSweep;
+    if (!record || record.token !== token) record = custom.consonantSweep = { token, secret, letters: [], opened: false };
+    if (opening) {
+      if (record.opened) return;
+      record.opened = true;
+    }
     const known = new Set(state.knownAbsent || []);
     const removed = new Set(state.removedLetters || []);
     const pool = ALPHABET.filter((letter) =>
       !VOWELS.has(letter) && !secret.includes(letter) && !known.has(letter) && !removed.has(letter));
     if (!pool.length) return;
+    // Letters actually in the deck first: ruling those out is what helps.
+    const cards = [].concat(state.hand || [], state.deck || [], state.discard || []);
+    const inDeck = new Set(cards.map((card) => String(card && (card.glyph || card.letter) || "").toUpperCase()));
+    const useful = pool.filter((letter) => inDeck.has(letter));
+    const choices = useful.length ? useful : pool;
     const roll = typeof game.random === "function" ? game.random() : Math.random();
-    const letter = pool[Math.floor(roll * pool.length)];
+    const letter = choices[Math.floor(roll * choices.length)];
     state.knownAbsent = [...known, letter].sort();
+    record.letters.push(letter);
+    appendNotice(game, `Process of Elimination: ${letter} is not in the answer.`);
   }
 
   function activeVariantKind(game) {
@@ -2577,6 +2596,7 @@
     initializeHintSchedule(game);
     grantStageYellowHints(game);
     doubleDownGuess(game);
+    applyConsonantSweep(game, true);
     scheduleUi();
     safeSave(game);
   }
@@ -3214,7 +3234,7 @@
     umtQuickStudy: { title: "Quick Study", description: "Guesser Hints arrive sooner.", shape: "hourglass" },
     umtJokerCache: { title: "Joker Cache", description: "One extra Joker every stage.", shape: "joker" },
     umtReserveDividend: { title: "Reserve Dividend", description: "Unused Jokers and mulligans pay an additional end-of-round bonus.", shape: "coins" },
-    umtConsonantSweep: { title: "Process of Elimination", description: "Every guess, boss fights included, rules out one consonant that is not in the answer.", shape: "eliminate" },
+    umtConsonantSweep: { title: "Process of Elimination", description: "One consonant that isn't in the answer is ruled out before every guess, boss fights included: one before your first guess, another before each guess after.", shape: "eliminate" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
     compass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
     umtDoubleDown: { title: "Double Down", description: "Your lucky guess this stage: solve the word on exactly this guess for +50 points.", shape: "die" },

@@ -126,7 +126,7 @@
     jokerCache: "+1 Joker each stage",
     jokerCacheLarge: "+2 Jokers each stage",
     "alphabet-compass": "Earlier / later hints",
-    consonantSweep: "Rules out a consonant",
+    consonantSweep: "Rules out 1 consonant per guess",
     coachPossibleAnswers: "Shows answers left",
     coachMeterThreshold: "Cuddle Meter fills sooner",
     coachMeterReward: "Bigger meter reward",
