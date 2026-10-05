@@ -218,7 +218,7 @@
       icon: "🔍",
       title: "Process of Elimination",
       name: "Process of Elimination",
-      description: "One consonant that isn't in the answer is ruled out before every guess, boss fights included: one before your first guess, another before each guess after.",
+      description: "After every guess, boss fights included, one more consonant that isn't in the answer is ruled out and shown: one after your first guess, a second after your second, and so on.",
       maxLevel: 1,
       maxCount: 1,
       kind: "upgrade"
@@ -2442,15 +2442,13 @@
       `Streak of ${custom.streakCount}`);
   }
 
-  // Process of Elimination: rules out one consonant not in the secret as the
-  // stage begins and again after every guess (a forfeited one included),
-  // boss fights included -- so guess N goes in with N ruled out. Unlike Free
+  // Process of Elimination: rules out one more consonant not in the secret
+  // after every guess (a forfeited one included), boss fights included --
+  // one after the first guess, two after the second, and so on. Unlike Free
   // Vowel Sweep (round start only, vowels only) it only ever narrows the
   // alphabet, never reveals a position. Each letter is announced and listed
   // in the clue strip (cuddle-clues.js).
-  // `opening`: the one ruled out as the stage begins, before the first
-  // guess (once per stage, however often the stage start is re-run).
-  function applyConsonantSweep(game, opening) {
+  function applyConsonantSweep(game) {
     if (upgradeLevel(game, IDS.consonantSweep) < 1) return;
     const state = stateOf(game);
     const custom = customState(game);
@@ -2458,11 +2456,7 @@
     const secret = String(state.secret || "").toUpperCase();
     const token = roundToken(game);
     let record = custom.consonantSweep;
-    if (!record || record.token !== token) record = custom.consonantSweep = { token, secret, letters: [], opened: false };
-    if (opening) {
-      if (record.opened) return;
-      record.opened = true;
-    }
+    if (!record || record.token !== token) record = custom.consonantSweep = { token, secret, letters: [] };
     const known = new Set(state.knownAbsent || []);
     const removed = new Set(state.removedLetters || []);
     const pool = ALPHABET.filter((letter) =>
@@ -2596,7 +2590,6 @@
     initializeHintSchedule(game);
     grantStageYellowHints(game);
     doubleDownGuess(game);
-    applyConsonantSweep(game, true);
     scheduleUi();
     safeSave(game);
   }
@@ -3234,7 +3227,7 @@
     umtQuickStudy: { title: "Quick Study", description: "Guesser Hints arrive sooner.", shape: "hourglass" },
     umtJokerCache: { title: "Joker Cache", description: "One extra Joker every stage.", shape: "joker" },
     umtReserveDividend: { title: "Reserve Dividend", description: "Unused Jokers and mulligans pay an additional end-of-round bonus.", shape: "coins" },
-    umtConsonantSweep: { title: "Process of Elimination", description: "One consonant that isn't in the answer is ruled out before every guess, boss fights included: one before your first guess, another before each guess after.", shape: "eliminate" },
+    umtConsonantSweep: { title: "Process of Elimination", description: "After every guess, boss fights included, one more consonant that isn't in the answer is ruled out and shown: one after your first guess, a second after your second, and so on.", shape: "eliminate" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
     compass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
     umtDoubleDown: { title: "Double Down", description: "Your lucky guess this stage: solve the word on exactly this guess for +50 points.", shape: "die" },

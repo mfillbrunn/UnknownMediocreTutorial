@@ -143,7 +143,7 @@
         { id: "jokerCache", icon: "🃏", title: "Small Joker Cache", tier: "rare", category: "easierStages", maxLevel: 1, description: "One extra Joker every stage.", level: g => v5Level(g, "umtJokerCache") },
         { id: "jokerCacheLarge", icon: "🃏", title: "Large Joker Cache", tier: "legendary", category: "easierStages", maxLevel: 1, description: "Two more Jokers every stage, on top of Small Joker Cache if you have it.", level: g => v5Level(g, "umtJokerCacheLarge") },
         { id: "alphabet-compass", icon: "🧭", title: "Alphabet Compass", tier: "epic", category: "solving", maxLevel: 3, description: "After every guess, a tile shows whether the answer's letter there comes earlier or later in the alphabet. Level 2 adds a tile; level 3 is the Legendary Full Alphabet Compass: every tile.", level: g => (window.CuddleCompass && g?.state ? window.CuddleCompass.copiesOwned(g.state) : 0) },
-        { id: "consonantSweep", icon: "🔍", title: "Process of Elimination", tier: "epic", category: "solving", maxLevel: 1, description: "One consonant that isn't in the answer is ruled out before every guess, boss fights included: one before your first guess, another before each guess after.", level: g => upgradeCount(g, "consonantSweep") }
+        { id: "consonantSweep", icon: "🔍", title: "Process of Elimination", tier: "epic", category: "solving", maxLevel: 1, description: "After every guess, boss fights included, one more consonant that isn't in the answer is ruled out and shown: one after your first guess, a second after your second, and so on.", level: g => upgradeCount(g, "consonantSweep") }
       ]
     },
     {
