@@ -388,6 +388,18 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* A bonus that also pays money (Classic Wordle) shows it in gold, right
+   beside the points. */
+#cuddleRoot .umt-stage-bonus-line span { flex: 1 1 auto; }
+#cuddleRoot .umt-stage-bonus-money {
+  flex: 0 0 auto;
+  color: var(--cuddle-money-gold, #f6c956);
+  font-style: normal;
+  font-weight: 800;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 #cuddleRoot [hidden],
 #cuddleRoot .umt-source-total[hidden] {
   display: none !important;

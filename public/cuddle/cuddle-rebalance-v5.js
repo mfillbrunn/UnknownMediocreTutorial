@@ -886,7 +886,7 @@
     return CHALLENGES[index];
   }
 
-  const CLASSIC_DESCRIPTION = `A standard Wordle with no help. Clear it for a $${CONFIG.classicClearBonus} bonus.`;
+  const CLASSIC_DESCRIPTION = `A standard Wordle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${CONFIG.classicClearBonus}.`;
 
   function variantForNode(game, node, salt = "") {
     if (!salt && node.cuddleVariant && node.cuddleVariant.version === VERSION) {
@@ -1499,6 +1499,8 @@
     const custom = customState(game);
     if (!custom) return;
     const variant = pending ? { ...pending, roundToken: roundToken(game) } : null;
+    // What clearing a Classic Wordle pays, for the stage banner to show.
+    if (variant && variant.kind === "plain") variant.clearBonus = CONFIG.classicClearBonus;
     custom.activeVariant = variant;
     custom.pendingVariant = null;
     custom.activeChallenge = null;
@@ -1992,12 +1994,16 @@
     const variant = activeVariant(game);
     if (variant && variant.kind === "plain" && !variant.classicPaid) {
       const bonus = CONFIG.classicClearBonus;
-      addScoreBonus(game, bonus, "umtClassicBonus", `Classic Wordle cleared (+$${bonus} money)`, entry);
+      addScoreBonus(game, bonus, "umtClassicBonus", "Classic Wordle cleared", entry);
       const paidState = stateOf(game);
       if (paidState) {
         paidState.cuddleMoney = Math.max(0, asNumber(paidState.cuddleMoney, 0) + bonus);
         if (entry) entry.classicBonusMoney = asNumber(entry.classicBonusMoney, 0) + bonus;
       }
+      // The cash-out shows the money beside the points on the same line.
+      const line = (customState(game) && customState(game).lastPayoutLines || [])
+        .find((item) => item && item.field === "umtClassicBonus" && item.roundToken === roundToken(game));
+      if (line) line.money = asNumber(line.money, 0) + bonus;
       variant.classicPaid = true;
     }
 
@@ -3171,7 +3177,7 @@
 
 
   const POWER_INFO = Object.freeze({
-    plain: { title: "Classic Wordle", description: `A standard Wordle with no help. Clear it for a ${CONFIG.classicClearBonus}-point and $${CONFIG.classicClearBonus} bonus.`, shape: "grid" },
+    plain: { title: "Classic Wordle", description: `A standard Wordle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${CONFIG.classicClearBonus}.`, shape: "grid" },
     luckyStart: { title: "Lucky Start", description: "One exact position is revealed before the first guess.", shape: "clover" },
     jackpot: { title: "Jackpot Run", description: "Greens pay double, but the stage must be solved within the world's guess limit (6, 5 or 4) or the run is lost.", shape: "coins" },
     doubleOrNothing: { title: "Double or Nothing", description: "Solve by guess three to double the stage, or lose half of it.", shape: "scales" },

@@ -1158,7 +1158,7 @@
     var stageLines = Array.isArray(custom && custom.lastPayoutLines)
       ? custom.lastPayoutLines
           .map(function normalize(line) {
-            return { label: String(line && line.label || ""), amount: Math.round(asNumber(line && line.amount, 0)) };
+            return { label: String(line && line.label || ""), amount: Math.round(asNumber(line && line.amount, 0)), money: Math.round(asNumber(line && line.money, 0)) };
           })
           .filter(function keep(line) { return line.label && line.amount; })
       : [];
@@ -1170,7 +1170,9 @@
     return "<div class=\"umt-stage-bonus-section\">"
       + "<div class=\"umt-stage-bonus-title\">Solving bonus</div>"
       + lines.map(function row(line) {
-          return "<div class=\"umt-stage-bonus-line\"><span>" + escapeHtml(line.label) + "</span><strong>" + formatPointsDelta(line.amount) + "</strong></div>";
+          return "<div class=\"umt-stage-bonus-line\"><span>" + escapeHtml(line.label) + "</span>"
+            + (line.money ? "<em class=\"umt-stage-bonus-money\">+$" + line.money + "</em>" : "")
+            + "<strong>" + formatPointsDelta(line.amount) + "</strong></div>";
         }).join("")
       + "</div>";
   }
