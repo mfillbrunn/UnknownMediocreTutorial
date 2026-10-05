@@ -8,15 +8,11 @@
 //      green, money in gold, always in that order -- then whooshes away by
 //      itself. It replaces the old dismiss-it-yourself toast at the bottom.
 //
-//   2. The rune map. Every upgrade the run can collect is a rune in one
-//      cluster per theme (Scoring, Economy, Insight...) plus the boss
-//      relics, ringed round the theme's sigil and tied to it by a string.
-//      Related runes share a dotted string; a combo's two runes share a
-//      rose one, with the bonus as a knot halfway along. What you own
-//      lights up. Drag, pinch or scroll to move around. Whenever you pick
-//      something up the map opens on its own, flies in to the new rune and
-//      ignites it -- and if that completed a combo, draws the combo's
-//      string and shows its bonus.
+//   2. The badge page. Every reward the run picks up becomes a hexagon
+//      badge -- its name and what it does in a few words -- in the order
+//      it came; hover or tap one for its full card. Combos formed by two
+//      badges sit in their own column. Picking something up opens the page
+//      by itself and the new badge unlocks with a sparkle.
 //
 // Cuddle only. Everything here reads game state; the only writes are the
 // banner's "already shown" marker, clearing the notices the banner takes
@@ -83,61 +79,72 @@
   }
 
   // ---------------------------------------------------------------------
-  // Tree model
+  // Badge model: the rewards this run has collected, in the order they
+  // came, plus the combos they've formed
   // ---------------------------------------------------------------------
 
-  // The six branches the radial tree fans into. These are themes, not the
-  // catalogue's own grouping by where a reward comes from: "Round Rewards"
-  // alone holds twenty-odd upgrades, far too many for one branch to read.
-  // Anything not listed falls into a branch by its catalogue category.
-  const WEDGES = [
-    { id: "scoring", title: "Scoring", color: "#8ff7cd", angle: -150,
-      ids: ["storybookStart", "earlySolveBoost", "mulliganValueBoost", "colourTrade", "greyscale"] },
-    { id: "economy", title: "Economy", color: "#f6c956", angle: -90,
-      ids: ["rainyDay", "encore", "vowelBounty", "doubleDown", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"] },
-    { id: "solving", title: "Solving Aids", color: "#7cb8ff", angle: -30,
-      ids: ["consonantSweep", "alphabet-compass"] },
-    { id: "coach", title: "Cuddle Coach", color: "#ff9ec7", angle: 30,
-      ids: ["coachPossibleAnswers", "coachMeterThreshold", "coachMeterReward"] },
-    { id: "quests", title: "Quests", color: "#f6a94a", angle: 90,
-      ids: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment"] },
-    { id: "hand", title: "Hand & Tools", color: "#d5a6ff", angle: 150,
-      ids: ["extraMulligans", "mulliganSize", "handSizeBoost", "jokerCache", "jokerCacheLarge", "wideChoice", "rewardEcho", "cullOne", "cullTwo", "greenCount", "categorySense"] },
-    { id: "insight", title: "Insight", color: "#9ee86f", angle: 180,
-      ids: ["vowelLamp", "echoFinder", "patternLens", "yellowHint", "lastLight", "treasureHunter", "mistakeShield"] }
-  ];
-  // The rune clusters, in their order around the map: themes alternate
-  // big and small so the ring stays even. Boss relics are their own cluster.
-  const CLUSTER_STYLE = {
-    scoring: { icon: "star", tagline: "Make every tile count." },
-    hand: { icon: "toolbox", tagline: "Better cards, better tools." },
-    quests: { icon: "clipboard", tagline: "Side goals, real rewards." },
-    economy: { icon: "moneyBag", tagline: "Coins in, coins out." },
-    coach: { icon: "pinkHeart", tagline: "Your coach in the corner." },
-    insight: { icon: "eye", tagline: "See more. Guess smarter." },
-    solving: { icon: "bulb", tagline: "Gentle nudges for tough words." },
-    bosses: { icon: "trophy", tagline: "Taken from the bosses you beat." }
-  };
-  const CLUSTER_ORDER = ["scoring", "hand", "quests", "economy", "coach", "insight", "solving", "bosses"];
-  const CATEGORY_WEDGE = { economy: "economy", solving: "solving", quests: "quests", easierStages: "hand", insight: "insight" };
-  const COMBO_COLOR = "#ff7ab8";
-  const BOSS_COLOR = "#fb7185";
-  const CLUSTERS = CLUSTER_ORDER.map((id) => {
-    const wedge = WEDGES.find((w) => w.id === id);
-    return wedge
-      ? { id, title: wedge.title, color: wedge.color, ids: wedge.ids, ...CLUSTER_STYLE[id] }
-      : { id, title: "Boss Relics", color: BOSS_COLOR, ids: [], ...CLUSTER_STYLE[id] };
-  });
-  // Bronze / silver / gold, as on the reward cards' rarity badges.
+  // Bronze / silver / purple / gold, as on the reward cards' rarity badges.
   const TIER_STROKE = { common: "#c98a4b", rare: "#c6d0de", epic: "#b98cff", legendary: "#f6c956" };
   const TIER_NAME = { common: "Common", rare: "Rare", epic: "Epic", legendary: "Legendary" };
-  // Boss rewards that also come up as between-round picks
-  // (cuddle-economy-rarity-v8.js LEGENDARY_PICKS); pickTierName says which tier.
-  const LEGENDARY_PICK_IDS = new Set(["doubleMulligans", "cullRare", "freeVowelSweep", "biggerMulligans", "questCadence", "revealGreen", "goldenThread", "questDoublePick",
-    "questPersistReward", "secondCup", "allThemesBoss", "umtAllThemes"]);
+  const COMBO_COLOR = "#ff7ab8";
+
+  // What each badge does, in a few words.
+  const SHORT = {
+    extraMulligans: "+1 mulligan each stage",
+    questRefreshes: "+1 reward refresh",
+    questPoints: "+10 points per quest",
+    questReroll: "Free quest reroll",
+    mulliganSize: "Mulligans swap +1",
+    cullOne: "Cuts 1 rare letter",
+    cullTwo: "Cuts 2 rare letters",
+    categorySense: "+1 theme shown",
+    storybookStart: "+10 points per stage",
+    wideChoice: "+1 reward choice",
+    handSizeBoost: "+1 card in hand",
+    mulliganValueBoost: "+5 per spare mulligan",
+    earlySolveBoost: "+5 per spare guess",
+    colourTrade: "Greens worth more",
+    greyscale: "Greys and yellows up",
+    rewardEcho: "Next reward counts twice",
+    greenCount: "Greens show count",
+    "surprise-assignment": "+1 surprise quest",
+    treasureMap: "+1 special tile",
+    mulliganTiles: "Unlocks mulligan tiles",
+    jokerTiles: "Unlocks Joker tiles",
+    oracleTiles: "Unlocks hint tiles",
+    rainyDay: "10% interest per stage",
+    encore: "+50 every 3rd solve",
+    vowelBounty: "+5 per vowel solved",
+    doubleDown: "+50 on lucky guess",
+    vowelLamp: "Shows the vowel count",
+    echoFinder: "Shows repeat letters",
+    treasureHunter: "Treasure words +$8",
+    patternLens: "Shows vowel pattern",
+    mistakeShield: "First miss refunded",
+    lastLight: "Last letter revealed",
+    yellowHint: "Reveals 1 letter",
+    jokerCache: "+1 Joker each stage",
+    jokerCacheLarge: "+2 Jokers each stage",
+    "alphabet-compass": "Earlier / later hints",
+    consonantSweep: "Rules out a consonant",
+    coachPossibleAnswers: "Shows answers left",
+    coachMeterThreshold: "Cuddle Meter fills sooner",
+    coachMeterReward: "Bigger meter reward",
+    cullRare: "Cuts 4 rare letters",
+    doubleMulligans: "Mulligans doubled",
+    biggerMulligans: "Mulligans swap 5",
+    freeVowelSweep: "Free vowel test",
+    revealGreen: "Next stage: 1 letter",
+    questDoublePick: "Pick 2 quest rewards",
+    questCadence: "More quests at once",
+    questPersistReward: "Quests last all stage",
+    allThemesBoss: "All themes revealed",
+    secondCup: "1 rescue guess per run",
+    goldenThread: "Hums on new letters"
+  };
 
   // Reward ids come in a few spellings across the add-on layers
-  // ("umtRainyDay" for the tree's "rainyDay"); fold them together.
+  // ("umtRainyDay" for the catalogue's "rainyDay"); fold them together.
   function canonicalId(id) {
     const raw = String(id || "");
     const stripped = raw.replace(/^umt(?=[A-Z])/, "");
@@ -152,742 +159,13 @@
       || null;
   }
 
-  // Pairs of runes that belong together without being a combo: a string
-  // ties them on the map. Combos draw their own (rose) string.
-  const RELATED = [
-    ["jokerCache", "jokerCacheLarge"],
-    ["cullOne", "cullTwo"],
-    ["cullTwo", "cullRare"],
-    ["treasureMap", "mulliganTiles"],
-    ["treasureMap", "jokerTiles"],
-    ["treasureMap", "oracleTiles"],
-    ["colourTrade", "greyscale"],
-    ["extraMulligans", "doubleMulligans"],
-    ["mulliganSize", "biggerMulligans"],
-    ["questPoints", "questCadence"],
-    ["questReroll", "questDoublePick"],
-    ["coachMeterThreshold", "coachMeterReward"],
-    ["vowelLamp", "freeVowelSweep"],
-    ["categorySense", "allThemesBoss"],
-    ["lastLight", "revealGreen"],
-    ["alphabet-compass", "consonantSweep"],
-    ["treasureHunter", "vowelBounty"],
-    ["mistakeShield", "secondCup"]
-  ];
-
-  // Map geometry, in world units. Each cluster is a ring of runes around
-  // its sigil. On a wide view the clusters sit on one big ring around the
-  // run's core; on a tall one (a phone) they stack in two columns with the
-  // core between them, so the overview fills the screen.
-  const RUNE_SPACING = 116;
-  const CLUSTER_GAP = 150;
-  const GRID_ORDER = [["hand", "scoring"], ["bosses", "quests"], ["economy", "coach"], ["insight", "solving"]];
-
-  function ringRadius(count) {
-    return Math.max(128, (RUNE_SPACING * count) / (2 * Math.PI));
+  function shortText(node) {
+    if (SHORT[node.id]) return SHORT[node.id];
+    if (SHORT[canonicalId(node.id)]) return SHORT[canonicalId(node.id)];
+    const text = String(node.description || "").split(/(?<=\.)\s/)[0].replace(/\.$/, "");
+    return text.length > 44 ? `${text.slice(0, 42).replace(/\s+\S*$/, "")}…` : text;
   }
 
-  function placeRunes(cluster, outward) {
-    const count = cluster.nodes.length;
-    // The string in from the core arrives between two runes, not on one.
-    const start = outward + Math.PI + Math.PI / Math.max(1, count);
-    cluster.nodes.forEach((node, i) => {
-      const a = start + (i * 2 * Math.PI) / Math.max(1, count);
-      node.x = cluster.x + cluster.ring * Math.cos(a);
-      node.y = cluster.y + cluster.ring * Math.sin(a);
-    });
-  }
-
-  function layoutRing(clusters) {
-    const arcs = clusters.map((cluster) => cluster.reach * 2 + CLUSTER_GAP);
-    const radius = Math.max(380, arcs.reduce((sum, arc) => sum + arc, 0) / (2 * Math.PI));
-    let cursor = -Math.PI / 2 - arcs[0] / radius / 2;
-    clusters.forEach((cluster, index) => {
-      const angle = cursor + arcs[index] / radius / 2;
-      cursor += arcs[index] / radius;
-      cluster.x = radius * Math.cos(angle);
-      cluster.y = radius * Math.sin(angle);
-      placeRunes(cluster, angle);
-    });
-  }
-
-  function layoutColumns(clusters) {
-    const byId = new Map(clusters.map((cluster) => [cluster.id, cluster]));
-    const rows = GRID_ORDER.map((ids) => ids.map((id) => byId.get(id)).filter(Boolean)).filter((row) => row.length);
-    clusters.filter((cluster) => !GRID_ORDER.flat().includes(cluster.id)).forEach((cluster) => rows.push([cluster]));
-    const heights = rows.map((row) => Math.max(...row.map((cluster) => cluster.reach)) * 2);
-    const middle = Math.floor(rows.length / 2);
-    const gaps = rows.map((_, i) => (i === middle ? 230 : 70));
-    const total = heights.reduce((sum, h) => sum + h, 0) + gaps.slice(1).reduce((sum, g) => sum + g, 0);
-    let y = -total / 2;
-    let coreY = 0;
-    rows.forEach((row, i) => {
-      if (i > 0) {
-        if (i === middle) coreY = y + gaps[i] / 2;
-        y += gaps[i];
-      }
-      const cy = y + heights[i] / 2;
-      row.forEach((cluster, side) => {
-        const left = row.length === 1 ? 0 : side === 0 ? -1 : 1;
-        cluster.x = left * (cluster.reach + 40);
-        cluster.y = cy;
-        placeRunes(cluster, Math.atan2(cy - 0, cluster.x || 0.001));
-      });
-      y += heights[i];
-    });
-    clusters.forEach((cluster) => { cluster.y -= coreY; cluster.nodes.forEach((node) => { node.y -= coreY; }); });
-  }
-
-  function layoutClusters(clusters, tall) {
-    clusters.forEach((cluster) => {
-      cluster.ring = ringRadius(cluster.nodes.length);
-      cluster.reach = cluster.ring + 80;
-    });
-    if (tall) layoutColumns(clusters);
-    else layoutRing(clusters);
-  }
-
-  // A gentle curve between two points, bowed away from (cx, cy).
-  function curveBetween(a, b, bow, cx = 0, cy = 0) {
-    const mx = (a.x + b.x) / 2;
-    const my = (a.y + b.y) / 2;
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const len = Math.hypot(dx, dy) || 1;
-    let nx = -dy / len;
-    let ny = dx / len;
-    if ((mx - cx) * nx + (my - cy) * ny < 0) { nx = -nx; ny = -ny; }
-    const qx = mx + nx * len * bow;
-    const qy = my + ny * len * bow;
-    return {
-      d: `M${r1(a.x)} ${r1(a.y)}Q${r1(qx)} ${r1(qy)} ${r1(b.x)} ${r1(b.y)}`,
-      // The curve's own midpoint (t = 0.5), where a combo's knot sits.
-      mid: { x: 0.25 * a.x + 0.5 * qx + 0.25 * b.x, y: 0.25 * a.y + 0.5 * qy + 0.25 * b.y }
-    };
-  }
-
-  function r1(value) {
-    return Math.round(value * 10) / 10;
-  }
-
-  // Everything the tree draws, derived fresh each time: the catalogue plus
-  // everything this run has actually picked up -- so a pick can never be
-  // missing from the tree just because the catalogue didn't know about it.
-  // aspect: the map view's width / height, which picks the layout.
-  function buildModel(game, aspect = 1.2) {
-    const tree = window.CuddleSkillTree;
-    const nodes = new Map();
-    const easy = difficultyOf(game) === "easy";
-
-    const addNode = (base, extra) => {
-      if (!base || nodes.has(base.id)) return nodes.get(base && base.id);
-      const node = {
-        id: base.id,
-        title: base.title || base.id,
-        icon: base.icon || "✦",
-        tier: base.tier || "common",
-        category: base.category || "",
-        description: base.description || "",
-        maxLevel: Number.isFinite(base.maxLevel) ? base.maxLevel : null,
-        requires: Array.isArray(base.requires) ? base.requires.slice() : null,
-        easyOnly: Boolean(base.easyOnly),
-        kind: "upgrade",
-        wedge: null,
-        level: 0,
-        picks: [],
-        ...extra
-      };
-      nodes.set(node.id, node);
-      return node;
-    };
-
-    if (tree) {
-      for (const branch of tree.BRANCHES) {
-        for (const base of branch.nodes) {
-          const kind = branch.id === "bossRewards" ? "boss" : branch.id === "synergyCombos" ? "combo" : "upgrade";
-          addNode(base, { kind, branch: branch.id, easyOnly: Boolean(base.easyOnly || branch.easyOnly) });
-        }
-      }
-    }
-
-    // Deliberately NOT unioned with game._upgradeCatalog(): building that
-    // list draws from the run's seeded random stream (a Cull's letters are
-    // rolled every call), so reading it on every render would change what
-    // the run offers later. Anything picked that the catalogue doesn't know
-    // still appears -- the ledger pass below adds it.
-
-    // Light it all from the acquisition ledger -- not from the upgrade
-    // counters, several of which are shared between two different rewards
-    // (Golden Value and Richer Colours both add to yellowPoints) and would
-    // light a node the player never picked.
-    ledger(game).forEach((entry, index) => {
-      if (!entry) return;
-      let node = resolveCatalogueNode(tree, entry.id, entry.title);
-      node = node ? nodes.get(node.id) : null;
-      if (!node) {
-        node = nodes.get(entry.id) || addNode({
-          id: entry.id,
-          title: entry.title,
-          icon: entry.icon,
-          description: entry.description
-        }, { kind: entry.kind === "boss" ? "boss" : "upgrade" });
-      }
-      node.level += 1;
-      node.picks.push({ round: num(entry.round, 1), kind: entry.kind || "round", order: index });
-    });
-
-    // Combos are owned when both halves are.
-    nodes.forEach((node) => {
-      if (node.kind !== "combo" || !node.requires) return;
-      const reqs = node.requires.map((id) => nodes.get(id) || nodes.get(canonicalId(id)));
-      node.reqNodes = reqs.filter(Boolean);
-      node.level = node.reqNodes.length === node.requires.length && node.reqNodes.every((n) => n.level > 0) ? 1 : 0;
-      // A half granted outside the pick ledger still counts when the combo
-      // registry says the combo is on.
-      const synergies = window.CuddleSynergies;
-      if (!node.level && synergies && typeof synergies.owns === "function") {
-        try { if (synergies.owns(game, node.id)) node.level = 1; } catch (_error) { /* not a registry combo */ }
-      }
-    });
-
-    // Every rune goes into a cluster: one per theme, plus the boss relics.
-    const clusters = CLUSTERS.map((def) => ({ ...def, nodes: [] }));
-    const clusterById = new Map(clusters.map((cluster) => [cluster.id, cluster]));
-    nodes.forEach((node) => {
-      if (node.kind === "combo") return;
-      let clusterId = "bosses";
-      if (node.kind !== "boss") {
-        const canon = canonicalId(node.id);
-        const listed = WEDGES.find((w) => w.ids.includes(node.id) || w.ids.includes(canon));
-        clusterId = listed ? listed.id : (CATEGORY_WEDGE[node.category] || (node.easyOnly ? "solving" : "hand"));
-      }
-      node.wedge = clusterId;
-      clusterById.get(clusterId).nodes.push(node);
-    });
-    clusters.forEach((cluster) => {
-      const ids = cluster.ids || [];
-      const rank = (node) => {
-        const at = ids.indexOf(node.id) >= 0 ? ids.indexOf(node.id) : ids.indexOf(canonicalId(node.id));
-        return at < 0 ? 99 : at;
-      };
-      cluster.nodes.sort((a, b) => rank(a) - rank(b));
-      cluster.owned = cluster.nodes.filter((n) => n.level > 0).length;
-    });
-    const placed = clusters.filter((cluster) => cluster.nodes.length);
-    layoutClusters(placed, aspect < 0.85);
-
-    // Combos are strings between their two halves, with the bonus as a
-    // knot halfway along.
-    const combos = [...nodes.values()].filter((n) => n.kind === "combo");
-    combos.forEach((combo) => {
-      const halves = (combo.reqNodes || []).filter((n) => Number.isFinite(n.x));
-      if (halves.length < 2) return;
-      const curve = curveBetween(halves[0], halves[1], 0.2);
-      combo.path = curve.d;
-      combo.x = curve.mid.x;
-      combo.y = curve.mid.y;
-      combo.halves = halves.slice(0, 2);
-      combo.wedge = "combos";
-    });
-    const comboPairs = new Set(combos.filter((c) => c.halves).map((c) => c.halves.map((h) => h.id).sort().join("|")));
-    const related = RELATED
-      .map(([a, b]) => [nodes.get(a), nodes.get(b)])
-      .filter(([a, b]) => a && b && Number.isFinite(a.x) && Number.isFinite(b.x)
-        && !comboPairs.has([a.id, b.id].sort().join("|")))
-      .map(([a, b]) => ({ a, b, d: curveBetween(a, b, 0.14).d }));
-    const bosses = clusterById.get("bosses").nodes;
-    const bounds = {
-      minX: Math.min(-90, ...placed.map((c) => c.x - c.reach)) - 20,
-      maxX: Math.max(90, ...placed.map((c) => c.x + c.reach)) + 20,
-      minY: Math.min(-90, ...placed.map((c) => c.y - c.reach)) - 20,
-      maxY: Math.max(90, ...placed.map((c) => c.y + c.reach)) + 20
-    };
-
-    const all = [...nodes.values()].filter((n) => Number.isFinite(n.x));
-    // An Easy-only talent drops out of the count on other difficulties --
-    // unless the run owns it anyway, which always counts.
-    const countable = all.filter((n) => !(n.easyOnly && !easy) || n.level > 0);
-    return {
-      nodes,
-      all,
-      wedges: WEDGES,
-      clusters: placed,
-      combos: combos.filter((c) => c.halves),
-      related,
-      bounds,
-      bosses,
-      owned: countable.filter((n) => n.level > 0).length,
-      total: countable.length,
-      easy
-    };
-  }
-
-  // ---------------------------------------------------------------------
-  // Tree SVG
-  // ---------------------------------------------------------------------
-
-  function nodeColor(node) {
-    if (node.kind === "boss") return BOSS_COLOR;
-    if (node.kind === "combo") return COMBO_COLOR;
-    const wedge = WEDGES.find((w) => w.id === node.wedge);
-    return wedge ? wedge.color : "#d5a6ff";
-  }
-
-  // ---------------------------------------------------------------------
-  // Rune map: clusters of runes around their sigils, tied by strings
-  // ---------------------------------------------------------------------
-
-  function iconMarkup(icon, size) {
-    const text = String(icon || "✦");
-    const Icons = window.CuddleIcons;
-    if (Icons && (Icons.hasEmoji(text) || /^[a-z][a-zA-Z]+$/.test(text))) return Icons.markup(text, size, 0, 0);
-    return `<text class="umt-rn-glyph" y="${r1(size * 0.32)}" font-size="${size * 0.8}">${esc(text)}</text>`;
-  }
-
-  // A rune's name on one line, or split into two near the middle.
-  function labelLines(title) {
-    const text = String(title || "");
-    if (text.length <= 13 || !text.includes(" ")) return [text];
-    const words = text.split(" ");
-    let best = [text];
-    let bestGap = Infinity;
-    for (let i = 1; i < words.length; i += 1) {
-      const first = words.slice(0, i).join(" ");
-      const second = words.slice(i).join(" ");
-      const gap = Math.abs(first.length - second.length);
-      if (gap < bestGap) { bestGap = gap; best = [first, second]; }
-    }
-    return best;
-  }
-
-  function runeState(node, model, fresh) {
-    const owned = node.level > 0;
-    const locked = node.easyOnly && !model.easy && !owned;
-    return { owned, locked, cls: fresh.has(node.id) ? "is-fresh is-owned" : owned ? "is-owned" : locked ? "is-locked" : "is-open" };
-  }
-
-  function runeMarkup(node, model, view, fresh) {
-    const { owned, locked, cls } = runeState(node, model, fresh);
-    const tier = TIER_NAME[node.tier] || "";
-    const status = owned ? `yours${node.level > 1 ? `, level ${node.level}` : ""}` : locked ? "Easy difficulty only" : "not yet";
-    const pips = node.maxLevel && node.maxLevel > 1
-      ? Array.from({ length: node.maxLevel }, (_, i) => {
-        const x = (i - (node.maxLevel - 1) / 2) * 9;
-        return `<circle class="umt-rn-pip${i < node.level ? " is-on" : ""}" cx="${r1(x)}" cy="31" r="2.8"/>`;
-      }).join("")
-      : "";
-    const lines = labelLines(node.title);
-    const label = lines.map((line, i) => `<tspan x="0" dy="${i ? 13 : 0}">${esc(line)}</tspan>`).join("");
-    return `<g class="umt-rn-rune ${cls}${node.id === view.selectedId ? " is-selected" : ""}" data-umt-node="${esc(node.id)}"`
-      + ` transform="translate(${r1(node.x)} ${r1(node.y)})" style="--c:${nodeColor(node)};--t:${TIER_STROKE[node.tier] || TIER_STROKE.common}"`
-      + ` tabindex="0" role="button" aria-label="${esc(node.title)}${tier ? `, ${tier}` : ""}, ${status}">`
-      + `<circle class="umt-rn-halo" r="36"/>`
-      + `<circle class="umt-rn-ring" r="25"/>`
-      + `<circle class="umt-rn-stone" r="21"/>`
-      + `<circle class="umt-rn-ignite" r="25" pathLength="1"/>`
-      + `<g class="umt-rn-icon">${locked ? iconMarkup("lock", 20) : iconMarkup(node.icon, 22)}</g>`
-      + `<g class="umt-rn-burst" aria-hidden="true">${Array.from({ length: 8 }, (_, i) => `<line x1="0" y1="-30" x2="0" y2="-40" transform="rotate(${i * 45})"/>`).join("")}</g>`
-      + pips
-      + `<text class="umt-rn-label" y="${pips ? 50 : 44}">${label}</text>`
-      + `</g>`;
-  }
-
-  function knotMarkup(combo, view, fresh) {
-    const have = combo.halves.filter((h) => h.level > 0).length;
-    const state = combo.level > 0 ? "is-active" : have ? "is-half" : "is-idle";
-    return `<g class="umt-rn-knot ${state}${fresh.has(combo.id) ? " is-fresh" : ""}${combo.id === view.selectedId ? " is-selected" : ""}"`
-      + ` data-umt-node="${esc(combo.id)}" transform="translate(${r1(combo.x)} ${r1(combo.y)})"`
-      + ` tabindex="0" role="button" aria-label="Combo: ${esc(combo.title)}, ${combo.level > 0 ? "active" : `${have} of 2 halves owned`}">`
-      + `<circle class="umt-rn-knot-flash" r="16"/>`
-      + `<rect class="umt-rn-knot-shape" x="-11" y="-11" width="22" height="22" rx="4" transform="rotate(45)"/>`
-      + `<g class="umt-rn-knot-icon">${iconMarkup(combo.icon, 13)}</g>`
-      + `<text class="umt-rn-knot-label" y="30">${esc(combo.title)}</text>`
-      + `</g>`;
-  }
-
-  function sigilMarkup(cluster) {
-    return `<g class="umt-rn-sigil" data-umt-cluster="${esc(cluster.id)}" transform="translate(${r1(cluster.x)} ${r1(cluster.y)})"`
-      + ` style="--c:${cluster.color}" role="button" tabindex="0" aria-label="${esc(cluster.title)}: ${cluster.owned} of ${cluster.nodes.length} runes lit. Zoom in.">`
-      + `<circle class="umt-rn-sigil-glow" r="44"/>`
-      + `<circle class="umt-rn-sigil-disc" r="31"/>`
-      + `<g class="umt-rn-sigil-icon">${iconMarkup(cluster.icon, 28)}</g>`
-      + `<text class="umt-rn-sigil-title" y="-42">${esc(cluster.title)}</text>`
-      + `<text class="umt-rn-sigil-count" y="50">${cluster.owned} / ${cluster.nodes.length}</text>`
-      + `</g>`;
-  }
-
-  function mapMarkup(model, view) {
-    const fresh = view.freshIds || new Set();
-    const clusters = model.clusters;
-    const core = clusters.map((cluster) => `<path class="umt-rn-string is-trunk${cluster.owned ? " is-lit" : ""}" style="--c:${cluster.color}"`
-      + ` d="M0 0L${r1(cluster.x)} ${r1(cluster.y)}"/>`).join("");
-    const spokes = clusters.map((cluster) => cluster.nodes.map((node) => {
-      const lit = node.level > 0;
-      return `<path class="umt-rn-string is-spoke${lit ? " is-lit" : ""}${fresh.has(node.id) ? " is-fresh" : ""}" style="--c:${cluster.color}"`
-        + ` pathLength="1" d="M${r1(cluster.x)} ${r1(cluster.y)}L${r1(node.x)} ${r1(node.y)}"/>`;
-    }).join("")).join("");
-    const related = model.related.map(({ a, b, d }) => {
-      const lit = a.level > 0 && b.level > 0;
-      return `<path class="umt-rn-string is-related${lit ? " is-lit" : ""}" d="${d}"/>`;
-    }).join("");
-    const combos = model.combos.map((combo) => {
-      const have = combo.halves.filter((h) => h.level > 0).length;
-      const state = combo.level > 0 ? "is-active" : have ? "is-half" : "is-idle";
-      return `<path class="umt-rn-string is-combo ${state}${fresh.has(combo.id) ? " is-fresh" : ""}" pathLength="1" d="${combo.path}"/>`;
-    }).join("");
-    const titles = clusters.map((cluster) => `<text class="umt-rn-far-title" style="--c:${cluster.color}" x="${r1(cluster.x)}" y="${r1(cluster.y + 14)}">${esc(cluster.title)}</text>`).join("");
-    const b = model.bounds;
-    return `<div class="umt-rn-map" data-umt-rn-map>`
-      + `<svg class="umt-rn-svg" data-lod="far" role="group" aria-label="Talent runes. Drag to move, pinch or scroll to zoom."`
-      + ` data-bounds="${r1(b.minX)} ${r1(b.minY)} ${r1(b.maxX)} ${r1(b.maxY)}">`
-      + `<g class="umt-rn-world" data-umt-rn-world>`
-      + `<g class="umt-rn-strings">${core}${spokes}${related}${combos}</g>`
-      + `<g class="umt-rn-core"><circle class="umt-rn-core-glow" r="78"/><circle class="umt-rn-core-disc" r="52"/>`
-      + `<text class="umt-rn-core-count" y="6">${model.owned}<tspan class="umt-rn-core-total"> / ${model.total}</tspan></text>`
-      + `<text class="umt-rn-core-caption" y="26">runes lit</text></g>`
-      + `<g class="umt-rn-sigils">${clusters.map(sigilMarkup).join("")}</g>`
-      + `<g class="umt-rn-runes">${clusters.map((cluster) => cluster.nodes.map((node) => runeMarkup(node, model, view, fresh)).join("")).join("")}</g>`
-      + `<g class="umt-rn-knots">${model.combos.map((combo) => knotMarkup(combo, view, fresh)).join("")}</g>`
-      + `<g class="umt-rn-far" aria-hidden="true">${titles}</g>`
-      + `</g></svg>`
-      + `<div class="umt-rn-zoom" role="group" aria-label="Zoom">`
-      + `<button type="button" data-umt-rn-zoom="in" aria-label="Zoom in">+</button>`
-      + `<button type="button" data-umt-rn-zoom="out" aria-label="Zoom out">−</button>`
-      + `<button type="button" data-umt-rn-zoom="fit" aria-label="Show the whole map">⤢</button>`
-      + `</div></div>`;
-  }
-
-  // ---------------------------------------------------------------------
-  // Camera: where the map is looking (a world point at the centre of the
-  // view, and a scale), plus pan / pinch / wheel zoom and smooth flights.
-  // ---------------------------------------------------------------------
-
-  const camera = { cx: 0, cy: 0, s: 0.3, anim: null, fitted: false };
-  const MAX_SCALE = 2.2;
-  const LOD_NEAR = 0.52;
-
-  function mapParts() {
-    const layer = host() && host().querySelector(".umt-pt-layer");
-    const map = layer && layer.querySelector("[data-umt-rn-map]");
-    const svg = map && map.querySelector(".umt-rn-svg");
-    const world = svg && svg.querySelector("[data-umt-rn-world]");
-    if (!world) return null;
-    const box = map.getBoundingClientRect();
-    const [minX, minY, maxX, maxY] = (svg.getAttribute("data-bounds") || "-800 -800 800 800").split(" ").map(Number);
-    return { layer, map, svg, world, w: box.width, h: box.height, bounds: { minX, minY, maxX, maxY } };
-  }
-
-  function fitScale(parts, bounds, pad = 24) {
-    const bw = bounds.maxX - bounds.minX;
-    const bh = bounds.maxY - bounds.minY;
-    return Math.min((parts.w - pad * 2) / bw, (parts.h - pad * 2) / bh);
-  }
-
-  function minScale(parts) {
-    return fitScale(parts, parts.bounds) * 0.85;
-  }
-
-  function applyCamera() {
-    const parts = mapParts();
-    if (!parts || !parts.w) return;
-    camera.s = Math.min(MAX_SCALE, Math.max(minScale(parts), camera.s));
-    const tx = parts.w / 2 - camera.s * camera.cx;
-    const ty = parts.h / 2 - camera.s * camera.cy;
-    parts.world.setAttribute("transform", `translate(${r1(tx)} ${r1(ty)}) scale(${camera.s.toFixed(4)})`);
-    parts.svg.setAttribute("data-lod", camera.s >= LOD_NEAR ? "near" : "far");
-  }
-
-  function stopFlight() {
-    if (camera.anim) cancelAnimationFrame(camera.anim);
-    camera.anim = null;
-  }
-
-  // Smoothly to a new view; zooms in log space so it doesn't lurch.
-  function flyTo(target, ms, done) {
-    stopFlight();
-    const from = { cx: camera.cx, cy: camera.cy, s: camera.s };
-    if (!ms || reducedMotion()) {
-      Object.assign(camera, { cx: target.cx, cy: target.cy, s: target.s });
-      applyCamera();
-      if (done) done();
-      return;
-    }
-    const start = performance.now();
-    const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-    const step = (now) => {
-      const t = Math.min(1, (now - start) / ms);
-      const k = ease(t);
-      camera.cx = from.cx + (target.cx - from.cx) * k;
-      camera.cy = from.cy + (target.cy - from.cy) * k;
-      camera.s = Math.exp(Math.log(from.s) + (Math.log(target.s) - Math.log(from.s)) * k);
-      applyCamera();
-      if (t < 1) camera.anim = requestAnimationFrame(step);
-      else {
-        camera.anim = null;
-        if (done) done();
-      }
-    };
-    camera.anim = requestAnimationFrame(step);
-  }
-
-  function viewOf(bounds, pad) {
-    const parts = mapParts();
-    if (!parts) return null;
-    return {
-      cx: (bounds.minX + bounds.maxX) / 2,
-      cy: (bounds.minY + bounds.maxY) / 2,
-      s: Math.min(MAX_SCALE, fitScale(parts, bounds, pad))
-    };
-  }
-
-  function fitAll(ms) {
-    const parts = mapParts();
-    if (!parts) return;
-    const target = viewOf(parts.bounds, 16);
-    if (target) flyTo(target, ms);
-    camera.fitted = true;
-  }
-
-  // Close enough that a rune and its name read comfortably.
-  function viewOnPoint(x, y, scale) {
-    const parts = mapParts();
-    const s = Math.min(MAX_SCALE, Math.max(scale, parts ? minScale(parts) : scale));
-    return { cx: x, cy: y, s };
-  }
-
-  function zoomAt(factor, px, py) {
-    const parts = mapParts();
-    if (!parts) return;
-    stopFlight();
-    const sx = px == null ? parts.w / 2 : px;
-    const sy = py == null ? parts.h / 2 : py;
-    const tx = parts.w / 2 - camera.s * camera.cx;
-    const ty = parts.h / 2 - camera.s * camera.cy;
-    const wx = (sx - tx) / camera.s;
-    const wy = (sy - ty) / camera.s;
-    const s = Math.min(MAX_SCALE, Math.max(minScale(parts), camera.s * factor));
-    camera.s = s;
-    camera.cx = (parts.w / 2 - (sx - s * wx)) / s;
-    camera.cy = (parts.h / 2 - (sy - s * wy)) / s;
-    applyCamera();
-  }
-
-  function nodePoint(id) {
-    const model = view.game ? buildModel(view.game, view.aspect) : null;
-    const node = model && model.nodes.get(id);
-    return node && Number.isFinite(node.x) ? node : null;
-  }
-
-  function clusterBounds(cluster) {
-    return {
-      minX: cluster.x - cluster.reach, maxX: cluster.x + cluster.reach,
-      minY: cluster.y - cluster.reach, maxY: cluster.y + cluster.reach
-    };
-  }
-
-  // Pointer gestures on the map: drag to pan, two fingers to pinch, wheel
-  // to zoom. A press that barely moves stays a tap (selection).
-  const gesture = { pointers: new Map(), moved: false, startDist: 0, startScale: 1, suppressClick: false };
-
-  function installMapGestures() {
-    document.addEventListener("pointerdown", (event) => {
-      const map = event.target instanceof Element && event.target.closest(".umt-pt-layer [data-umt-rn-map]");
-      if (!map || event.target.closest(".umt-rn-zoom")) return;
-      gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-      if (gesture.pointers.size === 1) gesture.moved = false;
-      if (gesture.pointers.size === 2) {
-        const [a, b] = [...gesture.pointers.values()];
-        gesture.startDist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
-        gesture.startScale = camera.s;
-      }
-    });
-    document.addEventListener("pointermove", (event) => {
-      if (!gesture.pointers.has(event.pointerId)) return;
-      const prev = gesture.pointers.get(event.pointerId);
-      const next = { x: event.clientX, y: event.clientY };
-      gesture.pointers.set(event.pointerId, next);
-      const parts = mapParts();
-      if (!parts) return;
-      if (gesture.pointers.size >= 2) {
-        const [a, b] = [...gesture.pointers.values()];
-        const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
-        const box = parts.map.getBoundingClientRect();
-        const factor = (gesture.startScale * (dist / gesture.startDist)) / camera.s;
-        zoomAt(factor, (a.x + b.x) / 2 - box.left, (a.y + b.y) / 2 - box.top);
-        gesture.moved = true;
-        return;
-      }
-      const dx = next.x - prev.x;
-      const dy = next.y - prev.y;
-      if (!gesture.moved && Math.hypot(next.x - prev.x, next.y - prev.y) < 0.5) return;
-      gesture.moved = gesture.moved || Math.abs(dx) + Math.abs(dy) > 0;
-      stopFlight();
-      camera.cx -= dx / camera.s;
-      camera.cy -= dy / camera.s;
-      applyCamera();
-    });
-    const end = (event) => {
-      if (!gesture.pointers.has(event.pointerId)) return;
-      gesture.pointers.delete(event.pointerId);
-      if (!gesture.pointers.size && gesture.moved) {
-        // A drag ends in a click on whatever it started on; swallow that one.
-        gesture.suppressClick = true;
-        setTimeout(() => { gesture.suppressClick = false; }, 0);
-      }
-    };
-    document.addEventListener("pointerup", end);
-    document.addEventListener("pointercancel", end);
-    document.addEventListener("wheel", (event) => {
-      const map = event.target instanceof Element && event.target.closest(".umt-pt-layer [data-umt-rn-map]");
-      if (!map) return;
-      event.preventDefault();
-      const box = map.getBoundingClientRect();
-      zoomAt(Math.exp(-event.deltaY * 0.0016), event.clientX - box.left, event.clientY - box.top);
-    }, { passive: false });
-    window.addEventListener("resize", () => {
-      if (!view.open) return;
-      const aspect = mapAspect();
-      if ((aspect < 0.85) !== (view.aspect < 0.85)) {
-        view.aspect = aspect;
-        renderOverlay();
-        fitAll(0);
-      } else applyCamera();
-    });
-  }
-
-  // ---------------------------------------------------------------------
-  // Tree overlay (browse + reveal)
-  // ---------------------------------------------------------------------
-
-  const view = {
-    open: false,
-    mode: "browse",
-    selectedId: null,
-    freshIds: new Set(),
-    reveal: null,
-    game: null,
-    lastFocus: null,
-    // The reveal's choreography: which step it is on, and its timers.
-    stage: null,
-    timers: []
-  };
-
-  function stageLabel(round) {
-    return `Stage ${Math.max(1, num(round, 1))}`;
-  }
-
-  function detailMarkup(model, node) {
-    if (!node) {
-      return `<div class="umt-pt-detail is-empty"><p>Tap a rune to see what it does and how to get it. Lit runes are yours; the ring colour is its rarity. Rose strings join a combo: own both ends and its knot lights up with the bonus.</p></div>`;
-    }
-    const owned = node.level > 0;
-    const wedge = WEDGES.find((w) => w.id === node.wedge);
-    const branch = node.kind === "boss" ? "Boss reward" : node.kind === "combo" ? "Synergy combo" : (wedge ? wedge.title : "Upgrade");
-    const tier = node.tier ? node.tier.charAt(0).toUpperCase() + node.tier.slice(1) : "";
-    const levelText = node.maxLevel && node.maxLevel > 1
-      ? `Level ${node.level} of ${node.maxLevel}`
-      : owned ? (node.level > 1 ? `Taken ${node.level} times` : "Owned") : "";
-    const when = node.picks.length
-      ? `<p class="umt-pt-when">Picked up on ${node.picks.map((p) => stageLabel(p.round)).join(", ")}</p>`
-      : "";
-    const reqs = node.kind === "combo" && node.reqNodes
-      ? `<ul class="umt-pt-reqs">${node.reqNodes.map((req) => `<li class="${req.level > 0 ? "is-met" : ""}"><span aria-hidden="true">${req.level > 0 ? "✓" : "○"}</span>${esc(req.title)}</li>`).join("")}</ul>`
-      : "";
-    const locked = node.easyOnly && !model.easy && !owned
-      ? `<p class="umt-pt-when">Only offered on Easy difficulty.</p>` : "";
-    const howTo = howToGet(node);
-    const next = node.maxLevel && node.maxLevel > 1 && node.level < node.maxLevel
-      ? (owned
-        ? `Can be taken ${node.maxLevel - node.level} more time${node.maxLevel - node.level === 1 ? "" : "s"}; each one stacks the effect again.`
-        : `Stacks: can be taken up to ${node.maxLevel} times.`)
-      : node.maxLevel && node.maxLevel > 1 && owned ? "Fully stacked." : "";
-    return `<div class="umt-pt-detail${owned ? " is-owned" : ""}" style="--c:${nodeColor(node)}">`
-      + `<button type="button" class="umt-rn-deselect" data-umt-pz-deselect aria-label="Close details">×</button>`
-      + `<div class="umt-pt-detail-head"><span class="umt-pt-detail-icon">${esc(node.icon)}</span>`
-      + `<div><strong>${esc(node.title)}</strong><span class="umt-pt-detail-meta">${esc(branch)}${tier ? ` · ${esc(tier)}` : ""}</span></div>`
-      + `<span class="umt-pt-state ${owned ? "is-owned" : ""}">${owned ? (levelText || "Owned") : "Not yet"}</span></div>`
-      + `<p>${esc(node.description || "")}</p>`
-      + (owned && node.maxLevel > 1 ? `<p class="umt-pt-when">${esc(levelText)}</p>` : "")
-      + when + reqs + locked
-      + `<div class="umt-pt-howto"><h4>How to get it</h4><ul>${howTo.concat(next ? [next] : []).map((line) => `<li>${esc(line)}</li>`).join("")}</ul>`
-      + `</div>`
-      + `</div>`;
-  }
-
-  // Boss rewards that are also between-round picks: these four come up as
-  // Epic, the rest as Legendary (cuddle-economy-rarity-v8.js).
-  const EPIC_PICK_IDS = new Set(["doubleMulligans", "biggerMulligans", "questCadence", "secondCup"]);
-  function pickTierName(id) {
-    if (id === "revealGreen") return "a Common";
-    return EPIC_PICK_IDS.has(id) ? "an Epic" : "a Legendary";
-  }
-
-  function howToGet(node) {
-    const tier = TIER_NAME[node.tier] || "";
-    const lines = [];
-    if (node.kind === "combo") {
-      const reqs = node.reqNodes || [];
-      const have = reqs.filter((req) => req.level > 0).length;
-      lines.push(`Own both ${reqs.map((req) => req.title).join(" and ")}; it turns on by itself.`);
-      lines.push(node.level > 0 ? "Both halves owned: active." : `${have} of ${node.requires ? node.requires.length : 2} owned.`);
-      return lines;
-    }
-    if (node.kind === "boss") {
-      lines.push("Boss reward: pick the boss that offers it and clear that boss.");
-      if (LEGENDARY_PICK_IDS.has(node.id)) lines.push(`Can also show up as ${pickTierName(node.id)} between-round reward.`);
-      return lines;
-    }
-    lines.push(`Between-round reward${tier ? ` (${tier})` : ""}: offered on the reward screen after a stage.`);
-    lines.push("Can also turn up on the shop's permanent shelf, priced by rarity.");
-    if (LEGENDARY_PICK_IDS.has(node.id) && node.tier !== "legendary") lines.push(`Can also show up as ${pickTierName(node.id)} reward.`);
-    if (node.easyOnly) lines.push("Only offered on Easy difficulty.");
-    return lines;
-  }
-
-  // What the map's marks mean.
-  function legendMarkup() {
-    const tier = (id) => `<li><span class="umt-rn-key-ring" style="--t:${TIER_STROKE[id]}"></span>${TIER_NAME[id]}</li>`;
-    return `<details class="umt-pt-key umt-rn-key"><summary>Key</summary><ul>`
-      + `<li><span class="umt-rn-key-rune is-owned"></span>Yours</li>`
-      + `<li><span class="umt-rn-key-rune"></span>Not yet</li>`
-      + `<li class="is-wide"><span class="umt-rn-key-line is-combo"></span><span class="umt-rn-key-knot"></span>Combo: own both ends for its bonus</li>`
-      + `<li class="is-wide"><span class="umt-rn-key-line"></span>Related runes</li>`
-      + `<li class="is-wide is-label">Ring colour = rarity</li>`
-      + tier("common") + tier("rare") + tier("epic") + tier("legendary")
-      + `</ul></details>`;
-  }
-
-  function timelineMarkup(model, game) {
-    const entries = ledger(game);
-    if (!entries.length) return "";
-    const tree = window.CuddleSkillTree;
-    const chips = entries.map((entry) => {
-      const cat = resolveCatalogueNode(tree, entry.id, entry.title);
-      const id = cat ? cat.id : entry.id;
-      const node = model.nodes.get(id);
-      const color = node ? nodeColor(node) : "#d5a6ff";
-      return `<button type="button" class="umt-pt-chip" data-umt-node="${esc(id)}" style="--c:${color}">`
-        + `<small>S${Math.max(1, num(entry.round, 1))}</small><span aria-hidden="true">${esc((node && node.icon) || entry.icon || "✦")}</span>${esc(entry.title || "Reward")}</button>`;
-    }).join("");
-    return `<div class="umt-pt-timeline"><h4>Your picks, in order</h4><div class="umt-pt-chips">${chips}</div></div>`;
-  }
-
-  // The reveal's new ledger entries, one group per talent.
-  function revealGroups(model, reveal) {
-    const tree = window.CuddleSkillTree;
-    const groups = new Map();
-    reveal.entries.forEach((entry) => {
-      const cat = resolveCatalogueNode(tree, entry.id, entry.title);
-      const id = cat ? cat.id : entry.id;
-      const group = groups.get(id);
-      if (group) group.times += 1;
-      else groups.set(id, { entry, node: model.nodes.get(id), times: 1 });
-    });
-    return [...groups.values()];
-  }
-
-  // A combo unlocked by this pick: its two halves slide together, flash,
-  // and become the combo, with what it now does underneath.
   function comboEffect(combo) {
     const listed = window.CuddleSynergies && Array.isArray(window.CuddleSynergies.combos)
       ? window.CuddleSynergies.combos.find((item) => item.id === combo.id) : null;
@@ -896,65 +174,166 @@
     return text.includes(": ") ? text.slice(text.indexOf(": ") + 2) : text;
   }
 
-  function fusionMarkup(combo) {
-    const parts = (combo.reqNodes || []).slice(0, 2);
-    const part = (node, side) => `<span class="umt-pt-fusion-part is-${side}" style="--c:${nodeColor(node)}" title="${esc(node.title)}">${esc(node.icon || "✦")}</span>`;
-    const names = parts.map((node) => esc(node.title)).join(" + ");
-    return `<div class="umt-pt-fusion" style="--c:${COMBO_COLOR}" role="status">`
-      + `<div class="umt-pt-fusion-stage" aria-hidden="true">`
-      + (parts[0] ? part(parts[0], "left") : "")
-      + (parts[1] ? part(parts[1], "right") : "")
-      + `<span class="umt-pt-fusion-flash"></span>`
-      + `<span class="umt-pt-fusion-result">${esc(combo.icon || "✨")}</span>`
-      + `</div>`
-      + `<div class="umt-pt-fusion-copy"><small>Combo unlocked</small><strong>${esc(combo.title)}</strong>`
-      + (names ? `<em>${names}</em>` : "")
-      + `<p>${esc(comboEffect(combo))}</p></div></div>`;
+  // The catalogue gives every reward its name, icon and wording; the run's
+  // pick ledger says which ones this run has and in what order.
+  function buildModel(game) {
+    const tree = window.CuddleSkillTree;
+    const nodes = new Map();
+    const addNode = (base, extra) => {
+      if (!base || nodes.has(base.id)) return nodes.get(base && base.id);
+      const node = {
+        id: base.id,
+        title: base.title || base.id,
+        icon: base.icon || "✦",
+        tier: base.tier || "common",
+        description: base.description || "",
+        maxLevel: Number.isFinite(base.maxLevel) ? base.maxLevel : null,
+        requires: Array.isArray(base.requires) ? base.requires.slice() : null,
+        kind: "upgrade",
+        level: 0,
+        picks: [],
+        first: Infinity,
+        ...extra
+      };
+      nodes.set(node.id, node);
+      return node;
+    };
+    if (tree) {
+      for (const branch of tree.BRANCHES) {
+        for (const base of branch.nodes) {
+          addNode(base, { kind: branch.id === "bossRewards" ? "boss" : branch.id === "synergyCombos" ? "combo" : "upgrade" });
+        }
+      }
+    }
+    ledger(game).forEach((entry, index) => {
+      if (!entry) return;
+      let node = resolveCatalogueNode(tree, entry.id, entry.title);
+      node = node ? nodes.get(node.id) : null;
+      if (!node) {
+        node = nodes.get(entry.id) || addNode({ id: entry.id, title: entry.title, icon: entry.icon, description: entry.description },
+          { kind: entry.kind === "boss" ? "boss" : "upgrade" });
+      }
+      node.level += 1;
+      node.first = Math.min(node.first, index);
+      node.picks.push({ round: num(entry.round, 1), order: index });
+    });
+    const badges = [...nodes.values()].filter((n) => n.kind !== "combo" && n.level > 0).sort((a, b) => a.first - b.first);
+    // A combo is earned once both of its halves are; it joins the list at
+    // the moment the second half arrived.
+    const synergies = window.CuddleSynergies;
+    const combos = [...nodes.values()].filter((n) => n.kind === "combo" && n.requires).map((combo) => {
+      combo.halves = combo.requires.map((id) => nodes.get(id) || nodes.get(canonicalId(id))).filter(Boolean);
+      let owned = combo.halves.length === combo.requires.length && combo.halves.every((n) => n.level > 0);
+      if (!owned && synergies && typeof synergies.owns === "function") {
+        try { owned = Boolean(synergies.owns(game, combo.id)); } catch (_error) { owned = false; }
+      }
+      combo.level = owned ? 1 : 0;
+      combo.first = Math.max(...combo.halves.map((n) => n.first).filter(Number.isFinite), -1);
+      return combo;
+    }).filter((combo) => combo.level > 0).sort((a, b) => a.first - b.first);
+    return { nodes, badges, combos };
   }
 
-  function revealMarkup(model, reveal) {
-    if (!reveal) return "";
-    const tree = window.CuddleSkillTree;
-    const items = revealGroups(model, reveal).map(({ entry, node, times }) => {
-      const color = node ? nodeColor(node) : "#d5a6ff";
-      const lvl = node && node.maxLevel > 1 ? `<span class="umt-pt-state is-owned">Lv ${node.level}/${node.maxLevel}</span>` : "";
-      // Reward Echo and the like apply one pick several times; that's one
-      // card with a count, not the same card repeated.
-      const echo = times > 1 ? `<span class="umt-pt-state is-echo">×${times}</span>` : "";
-      return `<div class="umt-pt-new" style="--c:${color}"><span class="umt-pt-detail-icon">${esc((node && node.icon) || entry.icon || "✦")}</span>`
-        + `<div><strong>${esc(entry.title || (node && node.title) || "Reward")}</strong>`
-        + `<p>${esc((node && node.description) || entry.description || "")}</p></div>${echo}${lvl}</div>`;
-    }).join("");
-    const combosNow = model.combos.filter((c) => c.level > 0 && reveal.newComboIds && reveal.newComboIds.has(c.id));
-    const comboNote = combosNow.length
-      ? `<div class="umt-rn-bonus"><h4>Bonus unlocked</h4>${combosNow.map(fusionMarkup).join("")}</div>`
-      : "";
-    return `<section class="umt-pt-reveal">${items}${comboNote}</section>`;
+  // ---------------------------------------------------------------------
+  // Badge page: collected badges in the order they came, combos beside
+  // them, a card on hover or tap
+  // ---------------------------------------------------------------------
+
+  // A pointy-topped hexagon, a little taller than it is wide.
+  const HEX = "M50 2 L96 28 L96 88 L50 114 L4 88 L4 28 Z";
+  const HEX_INNER = "M50 9 L90 32 L90 84 L50 107 L10 84 L10 32 Z";
+
+  function iconMarkup(icon) {
+    const text = String(icon || "✦");
+    const Icons = window.CuddleIcons;
+    if (Icons && Icons.hasEmoji(text)) return Icons.svg(text);
+    return `<span class="umt-bd-glyph">${esc(text)}</span>`;
   }
+
+  function sparkles() {
+    return `<span class="umt-bd-sparks" aria-hidden="true">${Array.from({ length: 8 }, (_, i) => `<i style="--a:${i * 45}deg;--d:${(i % 2) * 70}ms"></i>`).join("")}</span>`;
+  }
+
+  function badgeMarkup(node, fresh, linking) {
+    const color = node.kind === "combo" ? COMBO_COLOR : TIER_STROKE[node.tier] || TIER_STROKE.common;
+    const level = node.maxLevel && node.maxLevel > 1
+      ? `<span class="umt-bd-level">${node.level}/${node.maxLevel}</span>`
+      : node.level > 1 ? `<span class="umt-bd-level">×${node.level}</span>` : "";
+    const classes = ["umt-bd-badge", node.kind === "combo" ? "is-combo" : "", fresh.has(node.id) ? "is-new" : "", linking.has(node.id) ? "is-linking" : ""].filter(Boolean).join(" ");
+    return `<button type="button" class="${classes}" data-umt-badge="${esc(node.id)}" style="--t:${color}"`
+      + ` aria-label="${esc(node.title)}${node.kind === "combo" ? " (combo)" : ""}. ${esc(shortText(node))}.">`
+      + `<svg class="umt-bd-hex" viewBox="0 0 100 116" aria-hidden="true"><path class="umt-bd-hex-fill" d="${HEX}"/><path class="umt-bd-hex-line" d="${HEX_INNER}"/></svg>`
+      + `<span class="umt-bd-face"><span class="umt-bd-icon" aria-hidden="true">${iconMarkup(node.icon)}</span>`
+      + `<strong class="umt-bd-name">${esc(node.title)}</strong>`
+      + (node.kind === "combo" ? "" : `<small class="umt-bd-short">${esc(shortText(node))}</small>`)
+      + `</span>${level}${sparkles()}</button>`;
+  }
+
+  function cardMarkup(model, node) {
+    if (!node) return "";
+    const tier = node.kind === "combo" ? "Combo" : `${TIER_NAME[node.tier] || "Common"}${node.kind === "boss" ? " · Boss reward" : ""}`;
+    const color = node.kind === "combo" ? COMBO_COLOR : TIER_STROKE[node.tier] || TIER_STROKE.common;
+    const levelText = node.kind === "combo" ? ""
+      : node.maxLevel && node.maxLevel > 1 ? `Level ${node.level} of ${node.maxLevel}`
+        : node.level > 1 ? `Taken ${node.level} times` : "";
+    const when = node.picks && node.picks.length
+      ? `Picked up on ${[...new Set(node.picks.map((p) => `stage ${Math.max(1, p.round)}`))].join(", ")}` : "";
+    const body = node.kind === "combo"
+      ? `<p class="umt-bd-card-halves">${(node.halves || []).map((h) => esc(h.title)).join(" + ")}</p><p>${esc(comboEffect(node))}</p>`
+      : `<p>${esc(node.description)}</p>`;
+    return `<div class="umt-bd-card-inner" style="--t:${color}">`
+      + `<div class="umt-bd-card-head"><span class="umt-bd-card-icon" aria-hidden="true">${iconMarkup(node.icon)}</span>`
+      + `<div><strong>${esc(node.title)}</strong><span class="umt-bd-card-tier">${esc(tier)}</span></div></div>`
+      + body
+      + (levelText || when ? `<p class="umt-bd-card-meta">${esc([levelText, when].filter(Boolean).join(" · "))}</p>` : "")
+      + `</div>`;
+  }
+
+  const view = {
+    open: false,
+    mode: "browse",
+    freshIds: new Set(),
+    reveal: null,
+    game: null,
+    lastFocus: null,
+    cardId: null,
+    cardPinned: false
+  };
 
   function overlayMarkup(game) {
-    const model = buildModel(game, view.aspect);
+    const model = buildModel(game);
     const reveal = view.mode === "reveal" ? view.reveal : null;
-    const selected = view.selectedId ? model.nodes.get(view.selectedId) : null;
-    const percent = model.total ? Math.round((model.owned / model.total) * 100) : 0;
-    const heading = reveal
-      ? `<span class="umt-pt-kicker">Progression</span><h2 id="umtPtTitle">${revealGroups(model, reveal).length > 1 ? "New runes" : "New rune"} lit</h2>`
-      : `<span class="umt-pt-kicker">Progression</span><h2 id="umtPtTitle">Your runes</h2>`;
-    const side = reveal
-      ? revealMarkup(model, reveal)
-      : detailMarkup(model, selected) + (selected ? "" : timelineMarkup(model, game));
-    return `<div class="umt-pt-overlay${reveal ? " is-reveal" : ""}" role="dialog" aria-modal="true" aria-hidden="false" aria-labelledby="umtPtTitle">`
+    const fresh = view.freshIds || new Set();
+    // A combo that just formed makes its two badges light up as it arrives.
+    const linking = new Set();
+    model.combos.filter((combo) => fresh.has(combo.id)).forEach((combo) => combo.halves.forEach((h) => linking.add(h.id)));
+    const newBadges = model.badges.filter((n) => fresh.has(n.id));
+    const newCombos = model.combos.filter((n) => fresh.has(n.id));
+    const title = reveal
+      ? (newBadges.length > 1 ? "New badges" : newBadges.length ? `New badge: ${newBadges[0].title}` : "New badge")
+      : "Your badges";
+    const note = reveal && newCombos.length
+      ? `<p class="umt-bd-note"><span>Combo unlocked:</span> ${newCombos.map((c) => `<b>${esc(c.title)}</b> — ${esc(comboEffect(c))}`).join("; ")}</p>`
+      : "";
+    const grid = model.badges.length
+      ? `<div class="umt-bd-grid">${model.badges.map((node) => badgeMarkup(node, fresh, linking)).join("")}</div>`
+      : `<p class="umt-bd-empty">No badges yet. Every reward you pick up lands here.</p>`;
+    const combos = model.combos.length
+      ? `<div class="umt-bd-combo-list">${model.combos.map((node) => badgeMarkup(node, fresh, linking)).join("")}</div>`
+      : `<p class="umt-bd-empty is-small">Collect the right pair of badges to form a combo.</p>`;
+    return `<div class="umt-pt-overlay umt-bd-overlay${reveal ? " is-reveal" : ""}" role="dialog" aria-modal="true" aria-labelledby="umtPtTitle">`
       + `<div class="umt-pt-backdrop" data-umt-pt-close></div>`
-      + `<section class="umt-pt-modal umt-rn-modal">`
-      + `<header class="umt-pt-head"><div>${heading}</div>`
-      + `<div class="umt-pt-progress" title="${model.owned} of ${model.total} runes lit"><span style="width:${percent}%"></span></div>`
-      + `<span class="umt-pt-count">${model.owned}<small>/${model.total}</small></span>`
-      + `<button type="button" class="umt-pt-close" data-umt-pt-close aria-label="Close progression">×</button></header>`
-      + `<div class="umt-pt-body umt-rn-body${reveal || selected ? " has-detail" : ""}">`
-      + `<div class="umt-rn-stage">${legendMarkup()}${mapMarkup(model, view)}</div>`
-      + `<aside class="umt-pt-side umt-rn-side">${side}</aside>`
+      + `<section class="umt-pt-modal umt-bd-modal">`
+      + `<header class="umt-pt-head"><div><span class="umt-pt-kicker">Badges</span><h2 id="umtPtTitle">${esc(title)}</h2></div>`
+      + `<span class="umt-pt-count">${model.badges.length}<small> badge${model.badges.length === 1 ? "" : "s"}</small></span>`
+      + `<button type="button" class="umt-pt-close" data-umt-pt-close aria-label="Close badges">×</button></header>`
+      + note
+      + `<div class="umt-bd-body">`
+      + `<section class="umt-bd-main" aria-label="Badges, in the order you got them">${grid}</section>`
+      + `<aside class="umt-bd-combos" aria-label="Combos"><h3>Combos</h3>${combos}</aside>`
       + `</div>`
       + (reveal ? `<footer class="umt-pt-foot"><button type="button" class="umt-pt-continue" data-umt-pt-close>Continue</button></footer>` : "")
+      + `<div class="umt-bd-card" role="tooltip" hidden></div>`
       + `</section></div>`;
   }
 
@@ -971,11 +350,8 @@
       layer.className = "umt-pt-layer";
       el.appendChild(layer);
     }
-    // The game re-renders around a pick, and every re-render used to
-    // rebuild the whole panel -- replaying its entrance. Skip a redraw that
-    // would change nothing, and when something did change, redraw without
-    // replaying the entrance. The camera and the reveal's step live outside
-    // the markup, so they carry straight over.
+    // The game re-renders around a pick; skip a redraw that would change
+    // nothing, and redraw without replaying the unlock when one did.
     const markup = overlayMarkup(view.game);
     if (layer.umtMarkup === markup && layer.umtOpenId === view.openId) return;
     const settled = layer.umtOpenId === view.openId && Boolean(layer.umtMarkup);
@@ -983,138 +359,86 @@
     layer.umtMarkup = markup;
     layer.umtOpenId = view.openId;
     layer.classList.toggle("is-settled", settled);
-    if (view.stage) layer.setAttribute("data-stage", view.stage);
-    else layer.removeAttribute("data-stage");
-    applyCamera();
+    if (view.cardId) showCard(view.cardId, view.cardPinned);
   }
 
-  // The map's shape before it exists, from the window (the modal's layout:
-  // full screen on a phone, a side panel beside the map on wider screens).
-  function mapAspect() {
-    const w = window.innerWidth || 1024;
-    const h = window.innerHeight || 768;
-    if (w <= 760) return w / Math.max(1, h - 70);
-    return (Math.min(1140, w - 32) - 340) / Math.max(1, Math.min(840, h - 32) - 70);
-  }
-
-  function setStage(stage) {
-    view.stage = stage;
+  // The card: one floating panel, placed beside whichever badge it's for.
+  function showCard(id, pinned) {
     const layer = host() && host().querySelector(".umt-pt-layer");
-    if (!layer) return;
-    if (stage) layer.setAttribute("data-stage", stage);
-    else layer.removeAttribute("data-stage");
-  }
-
-  function clearReveal() {
-    view.timers.forEach((timer) => clearTimeout(timer));
-    view.timers = [];
-    stopFlight();
-  }
-
-  function later(ms, fn) {
-    view.timers.push(setTimeout(fn, reducedMotion() ? 0 : ms));
-  }
-
-  // The reveal: the whole map first, then a flight in to the new rune,
-  // which ignites; if it completed a combo, the view pulls back to both
-  // ends, the combo string draws itself and the knot pops with the bonus.
-  function playReveal() {
-    clearReveal();
-    const model = buildModel(view.game, view.aspect);
-    const fresh = [...view.freshIds].map((id) => model.nodes.get(id)).filter((n) => n && Number.isFinite(n.x));
-    const rune = fresh.find((n) => n.kind !== "combo") || fresh[0];
-    const combo = model.combos.find((c) => view.reveal && view.reveal.newComboIds && view.reveal.newComboIds.has(c.id));
-    setStage("overview");
-    fitAll(0);
-    if (!rune) {
-      setStage("done");
-      return;
-    }
-    later(300, () => {
-      setStage("fly");
-      flyTo(viewOnPoint(rune.x, rune.y, 1.35), 850, () => {
-        setStage("ignite");
-        if (!combo) {
-          later(1200, () => setStage("done"));
-          return;
-        }
-        later(1100, () => {
-          setStage("combo-fly");
-          const ends = combo.halves.concat([combo]);
-          const box = {
-            minX: Math.min(...ends.map((n) => n.x)) - 90, maxX: Math.max(...ends.map((n) => n.x)) + 90,
-            minY: Math.min(...ends.map((n) => n.y)) - 90, maxY: Math.max(...ends.map((n) => n.y)) + 90
-          };
-          flyTo(viewOf(box, 20), 750, () => {
-            setStage("combo");
-            later(1600, () => setStage("done"));
-          });
-        });
+    const card = layer && layer.querySelector(".umt-bd-card");
+    const badge = layer && layer.querySelector(`[data-umt-badge="${CSS.escape(id)}"]`);
+    if (!card || !badge) return;
+    const model = buildModel(view.game);
+    card.innerHTML = cardMarkup(model, model.nodes.get(id));
+    card.hidden = false;
+    view.cardId = id;
+    view.cardPinned = Boolean(pinned);
+    layer.querySelectorAll(".umt-bd-badge.is-active, .umt-bd-badge.is-half").forEach((el) => el.classList.remove("is-active", "is-half"));
+    badge.classList.add("is-active");
+    // Hovering a combo points out its two badges.
+    const node = model.nodes.get(id);
+    if (node && node.kind === "combo") {
+      (node.halves || []).forEach((h) => {
+        const half = layer.querySelector(`.umt-bd-main [data-umt-badge="${CSS.escape(h.id)}"]`);
+        if (half) half.classList.add("is-half");
       });
-    });
+    }
+    const modal = layer.querySelector(".umt-bd-modal").getBoundingClientRect();
+    const box = badge.getBoundingClientRect();
+    const w = Math.min(300, modal.width - 24);
+    card.style.width = `${w}px`;
+    const h = card.offsetHeight;
+    let left = box.left + box.width / 2 - w / 2;
+    left = Math.max(modal.left + 12, Math.min(modal.right - w - 12, left));
+    let top = box.top - h - 10;
+    if (top < modal.top + 12) top = box.bottom + 10;
+    if (top + h > modal.bottom - 12) top = Math.max(modal.top + 12, modal.bottom - h - 12);
+    card.style.left = `${left - modal.left}px`;
+    card.style.top = `${top - modal.top}px`;
+  }
+
+  function hideCard(force) {
+    if (view.cardPinned && !force) return;
+    const layer = host() && host().querySelector(".umt-pt-layer");
+    const card = layer && layer.querySelector(".umt-bd-card");
+    if (card) card.hidden = true;
+    if (layer) layer.querySelectorAll(".umt-bd-badge.is-active, .umt-bd-badge.is-half").forEach((el) => el.classList.remove("is-active", "is-half"));
+    view.cardId = null;
+    view.cardPinned = false;
   }
 
   function openTree(game, options = {}) {
     if (!game || !game.state) return;
-    clearReveal();
     view.game = game;
     view.open = true;
     view.mode = options.reveal ? "reveal" : "browse";
     view.reveal = options.reveal || null;
     view.freshIds = options.freshIds || new Set();
-    view.selectedId = options.selectedId || null;
+    view.cardId = null;
+    view.cardPinned = false;
     view.lastFocus = document.activeElement;
     view.openId = (view.openId || 0) + 1;
-    view.stage = null;
-    view.aspect = mapAspect();
     renderOverlay();
     requestAnimationFrame(() => {
-      if (view.mode === "reveal") playReveal();
-      else {
-        fitAll(0);
-        const focus = view.selectedId && nodePoint(view.selectedId);
-        if (focus) flyTo(viewOnPoint(focus.x, focus.y, 1.1), 600);
-      }
-      const closeBtn = host() && host().querySelector(options.reveal ? ".umt-pt-continue" : ".umt-pt-close");
+      const layer = host() && host().querySelector(".umt-pt-layer");
+      const first = layer && layer.querySelector(".umt-bd-main .umt-bd-badge.is-new, .umt-bd-badge.is-new");
+      if (first) first.scrollIntoView({ block: "nearest", behavior: reducedMotion() ? "auto" : "smooth" });
+      const closeBtn = layer && layer.querySelector(options.reveal ? ".umt-pt-continue" : ".umt-pt-close");
       if (closeBtn) closeBtn.focus({ preventScroll: true });
     });
   }
 
   function closeTree() {
     if (!view.open) return;
-    clearReveal();
     view.open = false;
     view.reveal = null;
-    view.stage = null;
     view.freshIds = new Set();
+    view.cardId = null;
+    view.cardPinned = false;
     renderOverlay();
     if (view.lastFocus && typeof view.lastFocus.focus === "function" && document.contains(view.lastFocus)) {
       view.lastFocus.focus({ preventScroll: true });
     }
-  }
-
-  function selectNode(id) {
-    view.selectedId = id;
-    if (view.mode === "reveal") {
-      // Tapping around after a reveal turns it into ordinary browsing.
-      clearReveal();
-      view.mode = "browse";
-      view.reveal = null;
-      view.stage = null;
-      view.freshIds = new Set();
-    }
-    renderOverlay();
-    // From far out, a tap also brings the rune close enough to read.
-    const point = id && nodePoint(id);
-    if (point && camera.s < 0.8) flyTo(viewOnPoint(point.x, point.y, 1.1), 650);
-  }
-
-  function zoomToCluster(id) {
-    const model = buildModel(view.game, view.aspect);
-    const cluster = model.clusters.find((c) => c.id === id);
-    if (!cluster) return;
-    const target = viewOf(clusterBounds(cluster), 12);
-    if (target) flyTo(target, 650);
   }
 
   // ---------------------------------------------------------------------
@@ -1182,12 +506,9 @@
       // rather than opening it again -- which replayed its entrance.
       if (view.open && view.mode === "reveal" && view.reveal) {
         view.reveal.entries = view.reveal.entries.concat(fresh);
-        const comboNews = [...newComboIds].some((id) => !view.reveal.newComboIds.has(id));
         newComboIds.forEach((id) => view.reveal.newComboIds.add(id));
         freshIds.forEach((id) => view.freshIds.add(id));
         renderOverlay();
-        // A combo completed by the second application gets its own moment.
-        if (comboNews) playReveal();
         return;
       }
       openTree(game, { reveal: { entries: fresh, newComboIds }, freshIds });
@@ -1554,7 +875,7 @@
   }
 
   // ---------------------------------------------------------------------
-  // Entry points: map-header button, landing tree button, render hook
+  // Entry points: map-header Badges button, render hook
   // ---------------------------------------------------------------------
 
   function decorateMapHeader(root, game) {
@@ -1565,8 +886,8 @@
     button.type = "button";
     button.className = "umt-pt-open";
     button.dataset.umtPtOpen = "1";
-    button.setAttribute("aria-label", `Open progression tree, ${model.owned} of ${model.total} talents`);
-    button.innerHTML = `<span aria-hidden="true">✦</span><span class="umt-pt-open-label">Progression</span><b>${model.owned}</b>`;
+    button.setAttribute("aria-label", `Open badges, ${model.badges.length} collected`);
+    button.innerHTML = `<span aria-hidden="true">⬢</span><span class="umt-pt-open-label">Badges</span><b>${model.badges.length}</b>`;
     slot.appendChild(button);
   }
 
@@ -1659,15 +980,12 @@
         view.payoutHold = false;
       }
     }, true);
-    // Capture phase so the old flat skill-tree screen never opens: its
-    // button (on the landing page) now opens this tree instead.
+    // Capture phase, ahead of the game's own click handling.
     document.addEventListener("click", (event) => {
       const target = event.target instanceof Element ? event.target : null;
       if (!target) return;
-      // The landing page's 🌳 button (data-action="skill-tree") opens this
-      // tree too. With no run to show, it's left to open the old catalogue.
-      const legacy = target.closest('[data-action="skill-tree"], [data-action="open-skill-tree"], [data-umt-pt-open]');
-      if (legacy) {
+      const open = target.closest("[data-umt-pt-open]");
+      if (open) {
         const game = activeGame();
         if (game && game.state) {
           event.preventDefault();
@@ -1677,41 +995,45 @@
         return;
       }
       if (!view.open) return;
-      if (gesture.suppressClick && target.closest(".umt-pt-layer [data-umt-rn-map]")) {
-        event.preventDefault();
-        event.stopPropagation();
-        return;
-      }
       if (target.closest("[data-umt-pt-close]")) {
         event.preventDefault();
         closeTree();
         return;
       }
-      const zoom = target.closest(".umt-pt-layer [data-umt-rn-zoom]");
-      if (zoom) {
+      // Tap a badge to pin its card open (tap it again, or anywhere else,
+      // to let it go).
+      const badge = target.closest(".umt-pt-layer [data-umt-badge]");
+      if (badge) {
         event.preventDefault();
-        const how = zoom.dataset.umtRnZoom;
-        if (how === "fit") fitAll(500);
-        else zoomAt(how === "in" ? 1.45 : 1 / 1.45);
+        const id = badge.dataset.umtBadge;
+        if (view.cardPinned && view.cardId === id) hideCard(true);
+        else showCard(id, true);
         return;
       }
-      const sigil = target.closest(".umt-pt-layer [data-umt-cluster]");
-      if (sigil) {
-        event.preventDefault();
-        zoomToCluster(sigil.dataset.umtCluster);
-        return;
-      }
-      if (target.closest(".umt-pt-layer [data-umt-pz-deselect]")) {
-        event.preventDefault();
-        selectNode(null);
-        return;
-      }
-      const node = target.closest(".umt-pt-layer [data-umt-node]");
-      if (node) {
-        event.preventDefault();
-        selectNode(node.dataset.umtNode);
-      }
+      if (view.cardPinned && !target.closest(".umt-bd-card")) hideCard(true);
     }, true);
+
+    // Hover (mouse) or keyboard focus shows a badge's card for as long as
+    // the pointer or focus stays on it.
+    document.addEventListener("pointerover", (event) => {
+      if (!view.open || event.pointerType === "touch") return;
+      const badge = event.target instanceof Element && event.target.closest(".umt-pt-layer [data-umt-badge]");
+      if (badge && !view.cardPinned) showCard(badge.dataset.umtBadge, false);
+    });
+    document.addEventListener("pointerout", (event) => {
+      if (!view.open || event.pointerType === "touch") return;
+      const badge = event.target instanceof Element && event.target.closest(".umt-pt-layer [data-umt-badge]");
+      const into = event.relatedTarget instanceof Element && event.relatedTarget.closest("[data-umt-badge]");
+      if (badge && into !== badge) hideCard(false);
+    });
+    document.addEventListener("focusin", (event) => {
+      const badge = view.open && event.target instanceof Element && event.target.closest(".umt-pt-layer [data-umt-badge]");
+      if (badge && !view.cardPinned) showCard(badge.dataset.umtBadge, false);
+    });
+    document.addEventListener("focusout", (event) => {
+      const badge = view.open && event.target instanceof Element && event.target.closest(".umt-pt-layer [data-umt-badge]");
+      if (badge) hideCard(false);
+    });
 
     document.addEventListener("keydown", (event) => {
       if (!view.open) return;
@@ -1721,21 +1043,7 @@
         closeTree();
         return;
       }
-      const sigil = event.target instanceof Element && event.target.closest(".umt-pt-layer [data-umt-cluster]");
-      if (sigil && (event.key === "Enter" || event.key === " ")) {
-        event.preventDefault();
-        event.stopPropagation();
-        zoomToCluster(sigil.dataset.umtCluster);
-        return;
-      }
-      const node = event.target instanceof Element && event.target.closest(".umt-pt-layer [data-umt-node]");
-      if (node && (event.key === "Enter" || event.key === " ")) {
-        event.preventDefault();
-        event.stopPropagation();
-        selectNode(node.dataset.umtNode);
-        return;
-      }
-      // Keep typing inside the tree from reaching the word-building keys.
+      // Keep typing inside the badge page from reaching the word-building keys.
       if (event.target instanceof Element && event.target.closest(".umt-pt-layer")) event.stopPropagation();
     }, true);
   }
@@ -1762,7 +1070,6 @@
   }
 
   installEvents();
-  installMapGestures();
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", install, { once: true });
   } else {
