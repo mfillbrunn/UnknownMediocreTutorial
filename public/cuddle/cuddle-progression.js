@@ -568,7 +568,7 @@
   const VARIANTS = {
     jackpot: { icon: "💰", text: "Jackpot Run — greens pay double", kind: "bonus" },
     luckyStart: { icon: "🍀", text: "Lucky Start — one position is already yours", kind: "bonus" },
-    doubleOrNothing: { icon: "⚖️", text: "Double or Nothing — solve by guess 3 to double the stage", kind: "hazard" },
+    doubleOrNothing: { icon: "⚖️", text: "Double or Nothing — solve fast to double the stage", kind: "hazard" },
     randomOpener: { icon: "🎲", text: "Head Start — a random word plays your first guess", kind: "info" }
   };
 
@@ -606,7 +606,10 @@
 
     const custom = state.cuddleRebalanceV5 || {};
     const variant = custom.activeVariant && custom.activeVariant.roundToken === token ? custom.activeVariant : null;
-    if (variant && VARIANTS[variant.kind]) lines.push(VARIANTS[variant.kind]);
+    if (variant && variant.kind === "doubleOrNothing") {
+      const limit = window.CuddleRebalanceV5?.doubleOrNothingLimit?.(game) || 3;
+      lines.push({ ...VARIANTS.doubleOrNothing, text: `Double or Nothing — solve by guess ${limit} to double the stage` });
+    } else if (variant && VARIANTS[variant.kind]) lines.push(VARIANTS[variant.kind]);
     // A Classic Wordle pays its own clear bonus, in both currencies.
     if (variant && variant.kind === "plain" && num(variant.clearBonus) > 0) {
       content.onWin = { points: num(variant.clearBonus), money: num(variant.clearBonus), label: "Classic Wordle cleared" };

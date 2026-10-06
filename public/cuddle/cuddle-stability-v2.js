@@ -495,7 +495,8 @@
   function rememberChosenBoss(game, offer, chosenId) {
     const chosen = (Array.isArray(offer) ? offer : []).find(option => option && option.id === chosenId);
     if (!chosen || !game?.state?.boss) return null;
-    game.state.boss.ratchetSourceId = chosen.id;
+    // A mixed boss curses with the one constraint it named.
+    game.state.boss.ratchetSourceId = chosen.curseId || chosen.id;
     game.state.boss.ratchetSourceTitle = chosen.title || chosen.id;
     safeSave(game);
     return chosen;

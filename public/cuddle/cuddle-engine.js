@@ -2171,7 +2171,10 @@
         // of one -- picked once, up front, distinct from each other.
         hiddenIndices: chosen.id === "hiddenMargins" ? shuffle([0, 1, 2, 3, 4], this.random).slice(0, 2) : null,
         // Quick Mode is the only boss the UI has to run a clock for.
-        secondsPerGuess: chosen.id === "quickMode" ? 60 : null
+        secondsPerGuess: chosen.id === "quickMode" ? 60 : null,
+        // A mixed boss: one constraint per guess, and the one it curses with.
+        plan: Array.isArray(chosen.plan) ? chosen.plan.slice() : undefined,
+        curseId: chosen.curseId || null
       };
       this.state.bossesSeen = unique([...(this.state.bossesSeen || []), chosen.id]);
       this.state.bossOffer = [];
@@ -2946,6 +2949,17 @@
     const reward = option?.reward ? { ...option.reward } : option?.reward;
     if (reward?.id === "cullRare") {
       reward.description = "Remove three rare letters from the deck and from every future secret.";
+    }
+    if (Array.isArray(option?.plan)) {
+      const plan = option.plan.slice(0, Math.max(2, turns));
+      return {
+        ...option,
+        plan,
+        turns: plan.length,
+        stage,
+        description: window.CuddleQuestBook?.mixedBossDescription?.(plan) || option.description,
+        reward
+      };
     }
     return {
       ...option,
@@ -4858,7 +4872,7 @@
     countOnly: "Count Only",
     delayedFeedback: "Delayed Feedback",
     hideFeedback: "Hide Feedback",
-    hiddenMargins: "Hidden Margins",
+    hiddenMargins: "Hidden Tiles",
     blueMode: "Blue Mode",
     arrowMode: "Arrow Signs",
     fakeFeedback: "Fake Feedback",
@@ -4977,7 +4991,9 @@
     if (result?.ok && this.state?.boss) {
       // The boss you pick is the one whose power stays with you once it's
       // beaten (it used to be the boss you skipped, which read backwards).
-      this.state.boss.ratchetSourceId = offerBefore.some(option => option.id === bossId) ? bossId : null;
+      this.state.boss.ratchetSourceId = offerBefore.some(option => option.id === bossId)
+        ? (this.state.boss.curseId || bossId)
+        : null;
       if (this.state.boss.id === "presetWordsTrial") setupPresetWordsBoss(this);
       this.save();
     }
@@ -5112,10 +5128,13 @@
     // A quest curse's row has to carry a quest, or there is nothing to miss
     // and the row's icon promises an effect that never happens.
     const forceQuestNow = Boolean(forced && ["questTrial", "questEndurance"].includes(forced.bossId));
+    // An Endurance Trial guess from the stage's own challenge or a mixed
+    // boss carries a quest too, boss fight or not.
+    const planForced = window.CuddleRebalanceV5?.planEffect?.(this, nextGuess - 1) === "questEndurance";
 
     composedEnsureQuestForNextGuess.call(this);
 
-    if (!this.state.activeQuest && forceQuestNow && nextGuess <= this._effectiveMaxGuesses() && !this.isBossRound()) {
+    if (!this.state.activeQuest && ((forceQuestNow && !this.isBossRound()) || planForced) && nextGuess <= this._effectiveMaxGuesses()) {
       const feasibleWords = this.getFeasibleWords();
       this.state.activeQuest = window.CuddleQuestBook?.createQuest({
         feasibleWords,
@@ -5205,11 +5224,26 @@
   // same stand-in boss submitDraft below scores the guess through, so the
   // marked tiles are exactly the ones that come back hidden.
   const baseMaskSpanPreview = CuddleGame.prototype.maskSpanPreview;
+  function stageMaskPreview(game) {
+    if (game.state?.boss?.__umtSynthetic) return null;
+    const used = Number(game.state.guessesUsed || 0);
+    const synthetic = window.CuddleRebalanceV5?.syntheticBossForGuess?.(game, used);
+    if (!synthetic) return null;
+    const own = game.state.boss || null;
+    game.state.boss = Object.assign({}, own, synthetic);
+    let indices;
+    try {
+      indices = game.maskSpanFor(synthetic.id, used);
+    } finally {
+      game.state.boss = own;
+    }
+    return indices.length ? { effectId: synthetic.id, title: RATCHET_LABEL[synthetic.id] || "", icon: "", indices } : null;
+  }
   CuddleGame.prototype.maskSpanPreview = function maskSpanPreviewWithRatchet() {
     const mega = ensureMega(this);
     if (mega.ratchetSwapInFlight || this.state?.status !== "playing") return baseMaskSpanPreview.call(this);
     const ratchet = plannedRatchetForGuess(this, Number(this.state.guessesUsed || 0) + 1);
-    if (!ratchet || !MASK_KINDS.has(ratchet.bossId)) return baseMaskSpanPreview.call(this);
+    if (!ratchet || !MASK_KINDS.has(ratchet.bossId)) return stageMaskPreview(this) || baseMaskSpanPreview.call(this);
     const own = this.state.boss || null;
     this.state.boss = Object.assign({}, own, {
       id: ratchet.bossId,
@@ -5235,6 +5269,7 @@
   CuddleGame.prototype.submitDraft = function submitDraftMega() {
     const mega = ensureMega(this);
     const rawWord = this.getDraftWord();
+    const enduranceGuess = window.CuddleRebalanceV5?.planEffect?.(this, Number(this.state.guessesUsed || 0)) === "questEndurance";
 
     let jokerLetter = null;
     let jokerIndex = -1;
@@ -5385,7 +5420,7 @@
       mega.jokerCharges = Number(mega.jokerCharges || 0) + 1;
     }
 
-    if (this.isBossRound() && this.state.boss?.id === "questEndurance"
+    if (((this.isBossRound() && this.state.boss?.id === "questEndurance") || enduranceGuess)
         && entry && entry.questId && !entry.questComplete) {
       mega.handSizePenaltyThisRound = Number(mega.handSizePenaltyThisRound || 0) + 1;
       this.state.lastMessage = `${this.state.lastMessage || ""} Endurance Trial: -1 hand size this round.`.trim();

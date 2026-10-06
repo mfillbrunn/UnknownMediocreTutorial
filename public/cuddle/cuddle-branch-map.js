@@ -60,6 +60,7 @@
   // entered at all -- on top of a path actually reaching it. All three
   // scale with difficulty, hard most steeply.
   var BOSS_GATE_ORDER = ["before-3", "before-7", "final"];
+  var MIXED_BOSS_CHANCE = 0.35;
   var BOSS_POINT_REQUIREMENTS = {
     "before-3": { easy: 50, medium: 100, hard: 200 },
     "before-7": { easy: 250, medium: 300, hard: 475 },
@@ -597,6 +598,13 @@
     }
     if (book && Array.isArray(book.BOSSES)) shuffled(book.BOSSES, game).forEach(addCandidate);
     candidates = candidates.slice(0, 2);
+    // One boss in three is mixed: every guess of its window carries a
+    // different constraint from the shared list (cuddle-quests.js).
+    var random = typeof game.random === "function" ? function roll() { return game.random(); } : Math.random;
+    if (candidates.length === 2 && book && typeof book.mixedBoss === "function" && random() < MIXED_BOSS_CHANCE) {
+      var turns = node.gate === "final" ? 3 : 2;
+      candidates[random() < 0.5 ? 0 : 1] = book.mixedBoss(random, turns);
+    }
     if (candidates.length < 2) {
       game.state.lastMessage = "Two distinct bosses could not be prepared.";
       returnToMap(game);
@@ -928,6 +936,11 @@
       output ^= output + Math.imul(output ^ (output >>> 7), output | 61);
       return ((output ^ (output >>> 14)) >>> 0) / 4294967296;
     };
+  }
+
+  function branchMapRowOf(game, node) {
+    var map = game && game.state && game.state.branchMap;
+    return map && Array.isArray(map.rows) && node ? map.rows[Number(node.row)] : null;
   }
 
   function stopCaption(node) {
@@ -1355,7 +1368,10 @@
         brief.gets.unshift({ type: "points", text: "Greens pay double" });
         brief.risks.push("Solve within " + limit + " guesses or the run is lost");
       } else if (variantKind === "doubleOrNothing") {
-        brief.gets.unshift({ type: "money", text: "Stage money ×2 if solved by guess 3" });
+        var donRow = branchMapRowOf(game, node);
+        var donLimit = rebalance && typeof rebalance.doubleOrNothingLimit === "function"
+          ? rebalance.doubleOrNothingLimit(game, donRow && donRow.act) : 3;
+        brief.gets.unshift({ type: "money", text: "Stage money ×2 if solved by guess " + donLimit });
         brief.risks.push("Take longer and lose half the stage money");
       } else if (variantKind === "luckyStart") {
         brief.gets.unshift({ type: "perk", text: "One letter placed for you" });

@@ -432,7 +432,10 @@
 
   function syncQuickModeTimer() {
     const state = currentState();
-    const seconds = Number(state?.boss?.secondsPerGuess) || 0;
+    // A Quick Mode boss runs the clock all fight; a Quick Mode guess of a
+    // challenge or a mixed boss runs it for that guess only.
+    const planSeconds = () => Number(window.CuddleRebalanceV5?.guessTimerSeconds?.(game)) || 0;
+    const seconds = Number(state?.boss?.secondsPerGuess) || planSeconds();
     const running = Boolean(
       seconds && state.status === "playing" && !state.roundIntroPending && !state.pendingRoundEnd
     );
@@ -449,7 +452,7 @@
     if (quickModeTimer) return;
     quickModeTimer = setInterval(() => {
       const live = currentState();
-      if (!live || live.status !== "playing" || !live.boss?.secondsPerGuess) {
+      if (!live || live.status !== "playing" || !(live.boss?.secondsPerGuess || planSeconds())) {
         clearQuickModeTimer();
         return;
       }
@@ -1000,7 +1003,7 @@
   function bossCurseNote(option, isFinal) {
     if (!option || isFinal) return "";
     const info = typeof window.CuddleRebalanceV5?.burdenInfo === "function"
-      ? window.CuddleRebalanceV5.burdenInfo(option.id)
+      ? window.CuddleRebalanceV5.burdenInfo(option.curseId || option.id)
       : null;
     if (!info) return "";
     // Mirrors pickRatchetGuessIndices: the first boss's curse claims one of
@@ -1086,7 +1089,7 @@
         <small>${goldenMoney(escapeHtml(option.description))}</small>
         <div class="umt-boss-traits">
           ${reward ? trait("reward", `Reward: ${reward.title}. Tap to read.`, rewardArt, bonus ? " has-bonus" : "") : ""}
-          ${burden ? trait("burden", "Its curse for the rest of the run. Tap to read.", iconSvgFor(BURDEN_ICON[id] || "skull")) : ""}
+          ${burden ? trait("burden", "Its curse for the rest of the run. Tap to read.", iconSvgFor(BURDEN_ICON[option.curseId || id] || "skull")) : ""}
           ${bonus ? interactionBonusBadge(reward.id) : ""}
         </div>
         ${info}
