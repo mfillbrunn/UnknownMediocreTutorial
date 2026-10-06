@@ -91,21 +91,21 @@
       id: "fullSweep",
       icon: "🧹",
       title: "Full Sweep",
-      description: "Play a word with five different letters.",
+      description: "Five different letters.",
       test: ({ word }) => new Set(word).size === 5
     },
     {
       id: "rareLetters",
       icon: "💎",
       title: "Rare Find",
-      description: quest => `Use at least one rare letter: ${quest.rareLetters.join(", ")}.`,
+      description: quest => `Use a rare letter: ${quest.rareLetters.join(", ")}.`,
       test: ({ word, quest }) => quest.rareLetters.some(letter => word.includes(letter))
     },
     {
       id: "inOrder",
       icon: "📈",
       title: "In Order",
-      description: "Include an alphabetically rising run of three letters.",
+      description: "Three letters in a row rising A→Z.",
       test: ({ word }) => {
         for (let i = 0; i <= word.length - 3; i += 1) {
           if (word.charCodeAt(i) < word.charCodeAt(i + 1)
@@ -118,28 +118,28 @@
       id: "doubleTrouble",
       icon: "👯",
       title: "Double Trouble",
-      description: "Play a word containing a repeated letter.",
+      description: "Use a letter twice.",
       test: ({ word }) => new Set(word).size < word.length
     },
     {
       id: "wordChain",
       icon: "🔗",
       title: "Word Chain",
-      description: quest => `Start with ${quest.chainLetter}, the final letter of your previous guess.`,
+      description: quest => `Start with ${quest.chainLetter} (your last word's end).`,
       test: ({ word, quest }) => word.startsWith(quest.chainLetter)
     },
     {
       id: "fieldReport",
       icon: "📋",
       title: "Field Report",
-      description: "Reveal at least two colored tiles (green or yellow).",
+      description: "Get 2+ greens or yellows.",
       test: ({ feedback }) => feedback.filter(result => result !== "grey").length >= 2
     },
     {
       id: "hardModeStreak",
       icon: "🔥",
       title: "Hold the Clues",
-      description: "Keep every known green in place, move known yellows away from ruled-out positions, and avoid eliminated grey letters.",
+      description: "Keep greens, move yellows, skip greys.",
       test: ({
         word,
         history = [],
@@ -237,14 +237,14 @@
       id: "vowelRun",
       icon: "🎵",
       title: "Vowel Run",
-      description: "Play a word containing at least three vowels.",
+      description: "Use 3+ vowels.",
       test: ({ word }) => word.split("").filter(letter => VOWELS.has(letter)).length >= 3
     },
     {
       id: "greenLight",
       icon: "🟩",
       title: "Green Light",
-      description: "Find at least one green tile.",
+      description: "Get a green.",
       test: ({ feedback }) => feedback.includes("green")
     }
   ];
@@ -574,7 +574,7 @@
         id: "validPlay",
         icon: "🃏",
         title: "Make It Count",
-        description: "Submit any valid five-letter word this turn."
+        description: "Any valid word."
       };
     }
     return candidates[Math.floor(random() * candidates.length)];

@@ -1736,7 +1736,7 @@
         id: "validPlay",
         icon: "🃏",
         title: "Make It Count",
-        description: "Submit any valid five-letter word this turn."
+        description: "Any valid word."
       };
     }
 
@@ -5111,7 +5111,7 @@
         revealedPositions: this.state.revealedPositions,
         rareLetters: this.getRareLetters(),
         random: this.random
-      }) || { id: "validPlay", icon: "🃏", title: "Make It Count", description: "Submit any valid five-letter word this turn." };
+      }) || { id: "validPlay", icon: "🃏", title: "Make It Count", description: "Any valid word." };
       mega.ratchetForcedQuestGuessIndex = nextGuess;
     }
 

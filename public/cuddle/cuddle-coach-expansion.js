@@ -1302,7 +1302,7 @@
       id: "coachAutoQuest",
       icon: "✅",
       title: "Quest Autopilot",
-      description: "Submit any valid five-letter word. This quest auto-completes."
+      description: "Any valid word. Auto-completes."
     };
     return result;
   };
