@@ -5185,6 +5185,32 @@
     return result;
   };
 
+  // A boss curse that masks the next guess marks its tiles before that
+  // guess is entered, just like a boss's own mask. The preview wears the
+  // same stand-in boss submitDraft below scores the guess through, so the
+  // marked tiles are exactly the ones that come back hidden.
+  const baseMaskSpanPreview = CuddleGame.prototype.maskSpanPreview;
+  CuddleGame.prototype.maskSpanPreview = function maskSpanPreviewWithRatchet() {
+    const mega = ensureMega(this);
+    if (mega.ratchetSwapInFlight || this.state?.status !== "playing") return baseMaskSpanPreview.call(this);
+    const ratchet = plannedRatchetForGuess(this, Number(this.state.guessesUsed || 0) + 1);
+    if (!ratchet || !MASK_KINDS.has(ratchet.bossId)) return baseMaskSpanPreview.call(this);
+    const own = this.state.boss || null;
+    this.state.boss = Object.assign({}, own, {
+      id: ratchet.bossId,
+      hiddenIndex: ratchet.hiddenIndex,
+      hiddenIndices: ratchet.hiddenIndices
+    });
+    let indices;
+    try {
+      indices = this.maskSpanFor(ratchet.bossId, Number(this.state.guessesUsed) || 0);
+    } finally {
+      this.state.boss = own;
+    }
+    if (!indices.length) return baseMaskSpanPreview.call(this);
+    return { effectId: ratchet.bossId, title: RATCHET_LABEL[ratchet.bossId] || "", icon: "", indices };
+  };
+
   // ------------------------------------------------------------------
   // submitDraft: joker resolution, the ratchet's per-guess effects, the
   // green-letter-count reward, the two new bosses' one-shot decline
