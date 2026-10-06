@@ -2750,6 +2750,9 @@
     if (revealAllThemes) queueAllThemes(game);
     clearNativeChallengeOffer(game);
     beginVariant(game, pending);
+    // Now that the stage's challenge is known, keep special tiles off the
+    // tiles it will mark (cuddle-points-money.js).
+    if (typeof game._avoidMaskedSpecialTiles === "function") game._avoidMaskedSpecialTiles();
     applyTrainingWheels(game);
     payStageInterest(game);
     initializeHintSchedule(game);
