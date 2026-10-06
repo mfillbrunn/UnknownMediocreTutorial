@@ -1110,31 +1110,27 @@ body.hide-constraints .constraint-row {
 }
 
 /* --- Alphabet Compass (ui/history.js): for the rest of the guesser's
-   turn every earlier row trades its colors for arrows. Non-matching tiles
-   turn a solid indigo -- a color no real feedback uses -- with a bold
-   white arrow under the letter pointing toward where the secret's letter
-   sits in the alphabet; a match stays green. The arrow is an SVG shape,
-   not a font glyph, so it stays thick and legible on the small tiles of a
-   phone board. */
-.history-tile.tile-compass-left,
-.history-tile.tile-compass-right {
-  background: #4338ca !important;
-  border-color: #a5b4fc !important;
-  color: #ffffff !important;
-  box-shadow: none !important;
-}
-
+   turn every non-matching tile of an earlier row gets an arrow under its
+   letter pointing toward where the secret's letter sits in the alphabet.
+   The tile keeps its own feedback colour; the arrow sits on a small dark
+   pill so it reads on green, yellow and grey alike. The arrow is an SVG
+   shape, not a font glyph, so it stays thick and legible on the small
+   tiles of a phone board. */
 .history-tile.tile-compass-left::after,
 .history-tile.tile-compass-right::after {
   content: "";
   position: absolute;
   left: 50%;
-  bottom: 9%;
+  bottom: 7%;
   z-index: 3;
   width: 62%;
   height: 30%;
   transform: translateX(-50%);
-  background: center / contain no-repeat;
+  border-radius: 999px;
+  background-color: rgba(17, 16, 28, 0.78);
+  background-position: center;
+  background-size: 72% 70%;
+  background-repeat: no-repeat;
   pointer-events: none;
 }
 

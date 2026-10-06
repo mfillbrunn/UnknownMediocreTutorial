@@ -2,8 +2,8 @@
 //
 // No button: it only ever arrives as a Power Choice reward and fires on
 // the spot (server/powers/powers/alphabetCompassServer.js). The board
-// itself draws the arrows (ui/history.js); this just labels the turn so
-// the arrows read as a power, not a glitch.
+// itself draws the arrows (ui/history.js); this just labels the board so
+// the arrows read as a power, not a glitch, for as long as it lasts.
 InfoBadgeEngine.register((state, role) => {
   if (role !== "guesser" || !state.powers?.alphabetCompassActive) return null;
   const meta = POWER_METADATA.alphabetCompass;

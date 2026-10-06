@@ -1,3 +1,4 @@
+const { refreshCompass } = require("../../utils/alphabetCompass.js");
 const { endGame } = require("../phases/gameOver");
 const { emitRoomState } = require("../rooms");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
@@ -154,6 +155,9 @@ function clearActivePowers(state) {
 
 function clearRoundState(state, actingRole) {
   clearActivePowers(state);
+  // Alphabet Compass runs until the word is guessed: after every turn, new
+  // rows get their arrow and a changed secret is read again.
+  refreshCompass(state);
 
   if (actingRole === "setter") {
     if (state.powers?.stealthGuessActive) state.powers.stealthGuessActive = false;
@@ -171,11 +175,6 @@ function clearRoundState(state, actingRole) {
     if (state.powers?.countOnlyActive) state.powers.countOnlyActive = false;
     if (state.powers?.forceGuessOptions) state.powers.forceGuessOptions = null;
     if (state.powers?.nonsenseActive) state.powers.nonsenseActive = false;
-    // Alphabet Compass lasts only for the turn it was used on.
-    if (state.powers) {
-      state.powers.alphabetCompassActive = false;
-      state.powers.alphabetCompassRows = null;
-    }
 
     state.activeTimer = state.setter;
     advanceTimer(state, state.guesser);

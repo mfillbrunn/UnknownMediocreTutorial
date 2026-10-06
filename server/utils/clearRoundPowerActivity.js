@@ -55,6 +55,7 @@ function clearRoundPowerActivity(state) {
 
   powers.alphabetCompassActive = false;
   powers.alphabetCompassRows = null;
+  powers.alphabetCompassPicks = null;
 
   powers.vowelRefreshLetters = null;
   powers.vowelRefreshPending = false;
