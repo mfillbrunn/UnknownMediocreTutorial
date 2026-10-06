@@ -119,6 +119,7 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
   // guesser's board only.
   if (viewerRole !== "guesser") {
     delete safe.powers.alphabetCompassRows;
+    delete safe.powers.alphabetCompassPicks;
   }
 
   // Double Tap: the setter may know the power fired (doubleGuessPending) but

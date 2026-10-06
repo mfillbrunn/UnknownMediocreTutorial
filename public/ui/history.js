@@ -158,11 +158,10 @@ function buildHistoryRenderState(state, role) {
       }
     }
 
-    // Alphabet Compass (server/powers/powers/alphabetCompassServer.js): for
-    // the one turn it's active, every non-matching tile gets an arrow
-    // toward the secret's letter in that spot (← earlier in the alphabet,
-    // → later) on top of its usual colour, which stays as it was. It goes
-    // away by itself when the flag clears on submit.
+    // Alphabet Compass (server/utils/alphabetCompass.js): until the word is
+    // solved, one non-green tile of every row gets an arrow toward the
+    // secret's letter in that spot (← earlier in the alphabet, → later) on
+    // top of its usual colour, which stays as it was.
     const compass = !isSetter && state.powers?.alphabetCompassActive
       ? state.powers.alphabetCompassRows?.[j]
       : null;

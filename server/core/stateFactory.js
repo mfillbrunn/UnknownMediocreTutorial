@@ -161,6 +161,7 @@ const powers = {
       alphabetCompassUsed: false,
       alphabetCompassActive: false,
       alphabetCompassRows: null,
+      alphabetCompassPicks: null,
       // THEME DOSSIER (round-scoped guesser power, granted as a Rare
       // reward). Every theme the CURRENT secret belongs to, recomputed
       // every turn start like secretThemesLabel above -- but the grant

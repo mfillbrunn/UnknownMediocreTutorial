@@ -142,7 +142,7 @@ const POWER_COPY = {
   secretThemes: ["🗂️", "Secret Themes", "From now on, see which category the secret belongs to, each of your turns."],
   // One turn only: every earlier row swaps its colors for arrows pointing
   // toward the secret's letter in that spot (see alphabetCompassServer.js).
-  alphabetCompass: ["🧭", "Alphabet Compass", "This turn, earlier guesses also show arrows: ← the secret's letter there is earlier in the alphabet, → later."],
+  alphabetCompass: ["🧭", "Alphabet Compass", "Until you solve the word, one tile of every guess (never a green one) shows an arrow: ← the secret's letter there is earlier in the alphabet, → later."],
 };
 
 function normalizeWord(value) {

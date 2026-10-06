@@ -1,7 +1,6 @@
-// Alphabet Compass (Rare guesser Power Choice reward): for the one turn it
-// is used, every earlier row reads ← / → / green against the CURRENT
-// secret instead of its colors, and it switches off when the guesser
-// submits.
+// Alphabet Compass (Rare guesser Power Choice reward): from the turn it is
+// picked until the word is solved, one non-green tile of every guess --
+// earlier rows and new ones -- reads ← / → against the CURRENT secret.
 const assert = require("assert");
 const engine = require("../powers/powerEngineServer.js");
 const { compassReading } = require("../powers/powers/alphabetCompassServer.js");
@@ -40,16 +39,24 @@ function run() {
     assert.deepStrictEqual(compassReading("ZZZZZ", "AAAAA"), ["R", "R", "R", "R", "R"]);
   }
 
-  // Applying reads every earlier row against the current secret.
+  // Applying gives every earlier row exactly one arrow, never on a green.
+  const full = [["L", "G", "L", "R", "L"], ["G", "R", "G", "R", "L"]];
+  const checkRows = (rows, expected) => {
+    assert.strictEqual(rows.length, expected.length, "one entry per guess");
+    rows.forEach((row, index) => {
+      const marked = row.map((value, tile) => (value ? tile : -1)).filter(tile => tile >= 0);
+      assert.strictEqual(marked.length, 1, `row ${index + 1} has one arrow`);
+      const tile = marked[0];
+      assert.ok(["L", "R"].includes(row[tile]), "an arrow, not a green");
+      assert.strictEqual(row[tile], expected[index][tile], "the arrow matches the secret");
+    });
+  };
   {
     const state = makeState();
     const result = engine.powers.alphabetCompass.apply(state, {}, "room-1", io);
     assert.notStrictEqual(result, false, "applies with rows on the board");
     assert.strictEqual(state.powers.alphabetCompassActive, true);
-    assert.deepStrictEqual(state.powers.alphabetCompassRows, [
-      ["L", "G", "L", "R", "L"],
-      ["G", "R", "G", "R", "L"]
-    ]);
+    checkRows(state.powers.alphabetCompassRows, full);
     assert.strictEqual(engine.powers.alphabetCompass.apply(state, {}, "room-1", io), false, "one use per round");
   }
 
@@ -63,13 +70,18 @@ function run() {
     assert.strictEqual(optionApplicable(makeState({ powers: { alphabetCompassUsed: true } }), option), false, "not offered after use");
   }
 
-  // One turn only: the guesser's submit switches it off.
+  // It lasts: turns keep it on, each row keeps its tile, and a new guess
+  // gets its own arrow. Only the end of the round switches it off.
   {
     const state = makeState();
     engine.powers.alphabetCompass.apply(state, {}, "room-1", io);
+    const picksBefore = state.powers.alphabetCompassPicks.slice();
     clearRoundState(state, "guesser");
-    assert.strictEqual(state.powers.alphabetCompassActive, false);
-    assert.strictEqual(state.powers.alphabetCompassRows, null);
+    assert.strictEqual(state.powers.alphabetCompassActive, true, "still on after the guesser submits");
+    state.history.push({ guess: "SLATE", fb: [], fbGuesser: [] });
+    clearRoundState(state, "setter");
+    checkRows(state.powers.alphabetCompassRows, full.concat([["L", "R", "G", "L", "G"]]));
+    assert.deepStrictEqual(state.powers.alphabetCompassPicks.slice(0, 2), picksBefore, "earlier rows keep their tile");
 
     const roundEnd = makeState({ powers: { alphabetCompassActive: true, alphabetCompassRows: [["G"]] } });
     clearRoundPowerActivity(roundEnd);
@@ -91,11 +103,11 @@ function run() {
       assert.ok(option, `offered at tier ${tier}`);
       assert.strictEqual(option.tier, 2, "Rare (tier 2)");
       assert.strictEqual(option.category, "information");
-      assert.ok(/this turn/i.test(option.description), "the card reads as a one-turn effect");
+      assert.ok(/until you solve the word/i.test(option.description), "the card says it lasts until the word is solved");
     }
   }
 
-  console.log("PASS alphabetCompassReward: every earlier row reads ←/→/green against the current secret for one turn, clears on submit, stays private to the guesser, and is a Rare guesser reward");
+  console.log("PASS alphabetCompassReward: one non-green tile per guess reads ←/→ against the current secret until the round ends, rows keep their tile, it stays private to the guesser, and is a Rare guesser reward");
 }
 
 module.exports = { run };

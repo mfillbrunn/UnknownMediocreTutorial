@@ -91,7 +91,7 @@ window.OPPONENT_POWER_DESCRIPTIONS =
       "Your opponent can see how many of the secret's letters are vowels.",
 
     alphabetCompass:
-      "This turn, your opponent sees whether each secret letter is earlier or later in the alphabet than their guess.",
+      "Until they solve the word, one tile of each of your opponent's guesses shows whether the secret's letter there is earlier or later in the alphabet.",
 
     secretThemes:
       "Your opponent can see which category the current secret belongs to, and will notice when you change it to a secret in another category.",

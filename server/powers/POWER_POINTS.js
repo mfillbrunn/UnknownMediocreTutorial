@@ -46,7 +46,7 @@ const GUESSER_POWER_POINTS = {
   letterProfile: 1.5,    // Letter Profile — always-on passive category breakdown
   firstLetterReveal: 2.5, // First Letter Reveal — one-time permanent green at position 1
   secretThemes: 2.5,     // Secret Themes — always-on category of the current secret
-  alphabetCompass: 2.5   // Alphabet Compass — one turn of earlier/later arrows on every row
+  alphabetCompass: 2.5   // Alphabet Compass — one earlier/later arrow per guess until the word is solved
 };
 
 const POWER_POINTS = { ...SETTER_POWER_POINTS, ...GUESSER_POWER_POINTS };
