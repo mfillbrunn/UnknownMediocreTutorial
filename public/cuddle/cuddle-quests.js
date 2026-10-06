@@ -92,6 +92,7 @@
       icon: "🧹",
       title: "Full Sweep",
       description: "Five different letters.",
+      detail: "Play a word whose five letters are all different: no letter may appear twice.",
       test: ({ word }) => new Set(word).size === 5
     },
     {
@@ -99,6 +100,7 @@
       icon: "💎",
       title: "Rare Find",
       description: quest => `Use a rare letter: ${quest.rareLetters.join(", ")}.`,
+      detail: quest => `Include at least one of these rare letters anywhere in your word: ${quest.rareLetters.join(", ")}. They are the least common letters still in your deck.`,
       test: ({ word, quest }) => quest.rareLetters.some(letter => word.includes(letter))
     },
     {
@@ -106,6 +108,7 @@
       icon: "📈",
       title: "In Order",
       description: "Three letters in a row rising A→Z.",
+      detail: "Somewhere in your word, three neighbouring letters must climb through the alphabet, each later than the one before. In GHOST, G → H → O does it.",
       test: ({ word }) => {
         for (let i = 0; i <= word.length - 3; i += 1) {
           if (word.charCodeAt(i) < word.charCodeAt(i + 1)
@@ -119,6 +122,7 @@
       icon: "👯",
       title: "Double Trouble",
       description: "Use a letter twice.",
+      detail: "Play a word that uses at least one letter more than once, like LEVEL or APPLE.",
       test: ({ word }) => new Set(word).size < word.length
     },
     {
@@ -126,6 +130,7 @@
       icon: "🔗",
       title: "Word Chain",
       description: quest => `Start with ${quest.chainLetter} (your last word's end).`,
+      detail: quest => `Your word must start with ${quest.chainLetter}, the last letter of your previous guess.`,
       test: ({ word, quest }) => word.startsWith(quest.chainLetter)
     },
     {
@@ -133,6 +138,7 @@
       icon: "📋",
       title: "Field Report",
       description: "Get 2+ greens or yellows.",
+      detail: "Your guess must turn at least two tiles green or yellow.",
       test: ({ feedback }) => feedback.filter(result => result !== "grey").length >= 2
     },
     {
@@ -140,6 +146,7 @@
       icon: "🔥",
       title: "Hold the Clues",
       description: "Keep greens, move yellows, skip greys.",
+      detail: "Play by hard-mode rules: every letter you have seen green stays in its spot, every letter you have seen yellow is used again but not where it was yellow, and no letter you have seen grey is played again.",
       test: ({
         word,
         history = [],
@@ -238,13 +245,71 @@
       icon: "🎵",
       title: "Vowel Run",
       description: "Use 3+ vowels.",
+      detail: "Use at least three vowels (A, E, I, O, U) in your word. Repeats count, so EERIE has four.",
       test: ({ word }) => word.split("").filter(letter => VOWELS.has(letter)).length >= 3
+    },
+    {
+      id: "freshLetters",
+      icon: "🌳",
+      title: "Fresh Letters",
+      description: "No letter you've played this stage.",
+      detail: "Use five letters that appear in none of your earlier guesses this stage.",
+      needsHistory: true,
+      test: ({ word, history = [] }) => {
+        const played = new Set();
+        history.forEach(entry => {
+          const earlier = String(entry?.word || "").toUpperCase();
+          if (earlier && earlier !== word) earlier.split("").forEach(letter => played.add(letter));
+        });
+        return played.size > 0 && word.split("").every(letter => !played.has(letter));
+      }
+    },
+    {
+      id: "vowelStart",
+      icon: "🅰",
+      title: "Open Vowel",
+      description: "Start with a vowel.",
+      detail: "Your word must begin with A, E, I, O or U.",
+      test: ({ word }) => VOWELS.has(word[0])
+    },
+    {
+      id: "oneVowel",
+      icon: "🥨",
+      title: "Lean Word",
+      description: "At most one vowel.",
+      detail: "Use no more than one vowel (A, E, I, O, U) in the whole word. Y does not count as a vowel, so NYMPH and CRYPT pass.",
+      test: ({ word }) => word.split("").filter(letter => VOWELS.has(letter)).length <= 1
+    },
+    {
+      id: "sameEnds",
+      icon: "📚",
+      title: "Bookends",
+      description: "Same first and last letter.",
+      detail: "Your word must start and end with the same letter, like SALTS or TRACT.",
+      test: ({ word }) => word.length === 5 && word[0] === word[4]
+    },
+    {
+      id: "newGreen",
+      icon: "🎯",
+      title: "New Ground",
+      description: "Find a new green.",
+      detail: "Turn a tile green in a position you had not pinned down yet. A green you already knew does not count.",
+      test: ({ feedback, revealedPositions = [] }) => feedback.some((result, index) => result === "green" && !revealedPositions[index])
+    },
+    {
+      id: "yellowPair",
+      icon: "🟨",
+      title: "Two Yellows",
+      description: "Get 2+ yellows.",
+      detail: "Your guess must show at least two yellow tiles: letters that are in the word but in the wrong spot.",
+      test: ({ feedback }) => feedback.filter(result => result === "yellow").length >= 2
     },
     {
       id: "greenLight",
       icon: "🟩",
       title: "Green Light",
       description: "Get a green.",
+      detail: "Your guess must turn at least one tile green: a right letter in the right spot.",
       test: ({ feedback }) => feedback.includes("green")
     }
   ];
@@ -551,8 +616,22 @@
       description: typeof definition.description === "function"
         ? definition.description(extra)
         : definition.description,
+      detail: typeof definition.detail === "function"
+        ? definition.detail(extra)
+        : definition.detail || null,
       ...extra
     };
+  }
+
+  // The full explanation of a live quest, shown when it is tapped. Quests
+  // saved before details existed are rebuilt from their definition.
+  function questDetail(quest) {
+    if (!quest) return "";
+    if (quest.detail) return quest.detail;
+    if (quest.id === "validPlay") return "Any real five-letter word completes this quest.";
+    const definition = QUESTS.find(item => item.id === quest.id);
+    if (!definition || !definition.detail) return quest.description || "";
+    return typeof definition.detail === "function" ? definition.detail(quest) : definition.detail;
   }
 
   function buildContext(word, secret, history, rareLetters, quest, knowledge = {}) {
@@ -626,6 +705,7 @@
         if (!previous) return;
         extra.chainLetter = previous.word.slice(-1);
       }
+      if (definition.needsHistory && !(history || []).some(entry => entry?.word)) return;
       const meta = questMeta(definition, extra);
       const possible = feasibleWords.some(word => definition.test(
         buildContext(word, secret, history, rareLetters, meta, {
@@ -642,7 +722,8 @@
         id: "validPlay",
         icon: "🃏",
         title: "Make It Count",
-        description: "Any valid word."
+        description: "Any valid word.",
+        detail: "Any real five-letter word completes this quest."
       };
     }
     return candidates[Math.floor(random() * candidates.length)];
@@ -677,6 +758,7 @@
     mixedBossDescription,
     createQuest,
     evaluateQuest,
+    questDetail,
     getReward,
     rewardChoices,
     getBoss,

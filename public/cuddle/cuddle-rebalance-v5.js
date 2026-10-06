@@ -3652,7 +3652,8 @@
     const quest = strip && strip.querySelector(".cuddle-quest-inline");
     if (!strip || !quest) return;
     button.classList.add("umt-quest-reroll");
-    quest.insertAdjacentElement("afterend", button);
+    // Inside the quest's own chip: nothing else shares a quest's line.
+    if (button.parentElement !== quest) quest.appendChild(button);
     document.querySelectorAll(".cuddle-utility-row").forEach((row) => {
       if (!row.children.length || !(row.textContent || "").trim()) row.remove();
     });
