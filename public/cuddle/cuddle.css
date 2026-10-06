@@ -3510,9 +3510,68 @@
   min-width: 0;
   padding: 8px 12px 8px 8px;
 }
-/* Concurrent quests stack one per line; the first keeps its reroll beside it. */
-#cuddleScreen .cuddle-play-strip > .cuddle-quest-inline ~ .cuddle-quest-inline {
+/* Every quest takes a whole line to itself: concurrent quests stack, and
+   the theme, the lucky guess and the clues all start on lines below. The
+   reroll button sits inside the first quest's own chip. */
+#cuddleScreen .cuddle-play-strip > .cuddle-quest-inline {
   flex-basis: 100%;
+  cursor: pointer;
+}
+#cuddleScreen .cuddle-play-strip > .cuddle-quest-inline:focus-visible {
+  outline: 2px solid rgba(246, 201, 86, 0.8);
+  outline-offset: 2px;
+}
+#cuddleScreen .cuddle-quest-inline .umt-quest-reroll { margin-left: auto; flex: 0 0 auto; }
+#cuddleScreen .cuddle-play-strip > .umt-lucky-guess { flex: 0 0 auto; }
+
+/* A quest's full explanation, opened by tapping it. */
+.cuddle-quest-info-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10040;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(9, 8, 16, 0.6);
+}
+.cuddle-quest-info {
+  position: relative;
+  width: min(380px, 100%);
+  padding: 20px 20px 18px;
+  border: 1px solid rgba(246, 201, 86, 0.5);
+  border-radius: 18px;
+  background: linear-gradient(160deg, #2c2540, #1d1a2b);
+  color: var(--cuddle-text, #f7f4ff);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.cuddle-quest-info-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(246, 201, 86, 0.18);
+  color: #f6c956;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cuddle-quest-info h2 { margin: 10px 0 6px; font-size: 1.3rem; color: #fff3cf; }
+.cuddle-quest-info p { margin: 0 0 10px; line-height: 1.45; }
+.cuddle-quest-info small { color: var(--cuddle-muted, #b8b2c8); font-size: 0.76rem; }
+.cuddle-quest-info-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font-size: 1.1rem;
+  cursor: pointer;
 }
 #cuddleScreen .cuddle-play-strip > .cuddle-play-theme-badge {
   flex: 1 1 100%;

@@ -704,7 +704,58 @@
   // Quests judged by the colours the secret gives back ("find a green",
   // "two non-grey tiles"). Previewing those would reveal the answer, so
   // they only resolve on submit.
-  const FEEDBACK_QUESTS = new Set(["greenLight", "fieldReport"]);
+  // Quests judged on the colours a guess gets back, which a draft can't show.
+  const FEEDBACK_QUESTS = new Set(["greenLight", "fieldReport", "newGreen", "yellowPair"]);
+
+  // The full explanation of a quest, opened by tapping it on the play
+  // strip. It lives outside #cuddleRoot so re-renders don't close it.
+  function closeQuestInfo() {
+    document.querySelectorAll(".cuddle-quest-info-overlay").forEach(element => element.remove());
+  }
+
+  function openQuestInfo(game, index) {
+    const state = game && game.state;
+    if (!state) return;
+    const quests = [state.activeQuest, ...(Array.isArray(state.activeQuests) ? state.activeQuests.slice(1) : [])].filter(Boolean);
+    const quest = quests[index];
+    if (!quest) return;
+    closeQuestInfo();
+    const detail = window.CuddleQuestBook?.questDetail?.(quest) || quest.description || "";
+    const overlay = document.createElement("div");
+    overlay.className = "cuddle-quest-info-overlay";
+    overlay.setAttribute("role", "presentation");
+    overlay.innerHTML = `<section class="cuddle-quest-info" role="dialog" aria-modal="true" aria-labelledby="cuddleQuestInfoTitle">
+        <button type="button" class="cuddle-quest-info-close" data-close-quest-info aria-label="Close">×</button>
+        <span class="cuddle-quest-info-kicker"><span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> Quest</span>
+        <h2 id="cuddleQuestInfoTitle">${escapeHtml(quest.title || "Quest")}</h2>
+        <p>${escapeHtml(detail)}</p>
+        <small>Complete it with this guess to earn a quest reward.</small>
+      </section>`;
+    (document.getElementById("cuddleScreen") || document.body).appendChild(overlay);
+    overlay.querySelector("[data-close-quest-info]")?.focus();
+  }
+
+  document.addEventListener("click", event => {
+    if (event.target.closest("[data-close-quest-info]") || event.target.classList?.contains("cuddle-quest-info-overlay")) {
+      closeQuestInfo();
+      return;
+    }
+    const chip = event.target.closest("[data-quest-info]");
+    if (!chip || event.target.closest("button, [data-action]")) return;
+    const game = window.CuddleBranchMap?.getActiveGame?.() || null;
+    openQuestInfo(game, Number(chip.dataset.questInfo));
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && document.querySelector(".cuddle-quest-info-overlay")) {
+      closeQuestInfo();
+      return;
+    }
+    const chip = event.target.closest?.("[data-quest-info]");
+    if (chip && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault();
+      openQuestInfo(window.CuddleBranchMap?.getActiveGame?.() || null, Number(chip.dataset.questInfo));
+    }
+  });
 
   // Whether the word being built would complete this quest if submitted
   // now -- from the draft and what's already known, never the secret. Only
@@ -1052,10 +1103,12 @@
       const quests = [state.activeQuest, ...(Array.isArray(state.activeQuests) ? state.activeQuests.slice(1) : [])]
         .filter(Boolean);
       const questText = quests
-        .map(quest => {
+        .map((quest, index) => {
           const ready = draftMeetsQuest(game, quest);
+          // Tapping a quest opens its full explanation (openQuestInfo).
           return (
-          `<span class="cuddle-quest-inline${ready ? " is-ready" : ""}"${ready ? ' title="Your word meets this quest"' : ""}>`
+          `<span class="cuddle-quest-inline${ready ? " is-ready" : ""}" role="button" tabindex="0" data-quest-info="${index}"`
+          + ` title="${ready ? "Your word meets this quest. " : ""}Tap for details">`
           + `<span class="cuddle-quest-tag">${ready ? '<span aria-hidden="true">✓</span> Ready' : `<span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> Quest`}</span>`
           + `<span class="cuddle-quest-body"><b>${escapeHtml(quest.title || "Quest")}:</b> <span>${escapeHtml(quest.description)}</span></span>`
           + `</span>`
