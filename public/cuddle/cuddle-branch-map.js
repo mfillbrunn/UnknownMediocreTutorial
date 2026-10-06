@@ -57,14 +57,13 @@
     : [2, 5, 8, 11]);
 
   // How many cumulative run points are needed before a boss row can be
-  // entered at all -- on top of a path actually reaching it. The first
-  // boss is the same threshold on every difficulty; the later two scale
-  // with difficulty since a harder run also earns points faster.
+  // entered at all -- on top of a path actually reaching it. All three
+  // scale with difficulty, hard most steeply.
   var BOSS_GATE_ORDER = ["before-3", "before-7", "final"];
   var BOSS_POINT_REQUIREMENTS = {
-    "before-3": { easy: 50, medium: 100, hard: 150 },
-    "before-7": { easy: 250, medium: 300, hard: 350 },
-    "final": { easy: 550, medium: 600, hard: 650 }
+    "before-3": { easy: 50, medium: 100, hard: 200 },
+    "before-7": { easy: 250, medium: 300, hard: 475 },
+    "final": { easy: 550, medium: 600, hard: 850 }
   };
 
   function difficultyOf(game) {
