@@ -276,6 +276,11 @@
     return chips;
   }
 
+  // The clue strip is rebuilt on every render (each tile added or removed),
+  // so the newest ruled-out letter's flip is played once per letter, not on
+  // every redraw.
+  let flippedSweepKey = "";
+
   function renderClues(root, game) {
     if (!root || !game || !game.state || game.state.status !== "playing") return;
     const chips = clueChips(game);
@@ -284,7 +289,13 @@
     const markup = `<div class="umt-clues" aria-label="Clues">${chips.map(chip => (
       `<span class="umt-clue${chip.tone ? ` is-${chip.tone}` : ""}" title="${escapeHtml(chip.label)}">`
       + `${icon(chip.icon)}<span class="umt-clue-text${chip.mono ? " is-mono" : ""}">${escapeHtml(chip.text)}`
-      + (chip.letters ? chip.letters.map((letter, i) => `<b class="umt-clue-letter${i === chip.letters.length - 1 ? " is-new" : ""}">${escapeHtml(letter)}</b>`).join("") : "")
+      + (chip.letters ? chip.letters.map((letter, i) => {
+        const latest = i === chip.letters.length - 1;
+        const key = `${game.state.secret}:${chip.letters.join("")}`;
+        const flip = latest && key !== flippedSweepKey;
+        if (flip) flippedSweepKey = key;
+        return `<b class="umt-clue-letter${latest ? " is-new" : ""}${flip ? " is-flipping" : ""}">${escapeHtml(letter)}</b>`;
+      }).join("") : "")
       + `</span></span>`
     )).join("")}</div>`;
     let strip = root.querySelector(".cuddle-play-strip");
