@@ -3829,3 +3829,17 @@
   }
   .cuddle-quest-stamp { display: none; }
 }
+
+/* Arrow Signs (boss or challenge): the tile carries no colour, only the
+   alphabet arrow -- so it drops the withheld-result "?" and its stripes,
+   and the arrow is drawn larger than the Alphabet Compass reward's pill. */
+#cuddleScreen .cuddle-tile.is-unknown.is-arrow-sign {
+  border-color: rgba(165, 180, 252, 0.7);
+  background: rgba(36, 33, 58, 0.95);
+}
+#cuddleScreen .cuddle-tile.is-arrow-sign::after { content: none; }
+.cuddle-tile.is-arrow-sign .umt-compass-mark {
+  min-width: 30px;
+  height: 20px;
+  font-size: 16px;
+}

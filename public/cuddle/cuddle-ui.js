@@ -718,13 +718,18 @@
         } else {
           // Alphabet Compass (cuddle-compass.js): a small arrow toward the
           // secret's letter in this spot, or a dash when it matches.
-          const compass = Array.isArray(history?.umtCompass)
-            ? history.umtCompass.find(mark => mark && mark.index === column)
+          // Arrow Signs (a boss or challenge) puts the same marks on its
+          // tiles in place of their colours.
+          const arrow = Array.isArray(history?.umtArrows)
+            ? history.umtArrows.find(mark => mark && mark.index === column)
             : null;
+          const compass = arrow || (Array.isArray(history?.umtCompass)
+            ? history.umtCompass.find(mark => mark && mark.index === column)
+            : null);
           const compassMark = compass
             ? `<span class="umt-compass-mark is-${compass.dir === "L" ? "left" : compass.dir === "R" ? "right" : "match"}" title="${compass.dir === "L" ? "The secret's letter here comes earlier in the alphabet" : compass.dir === "R" ? "The secret's letter here comes later in the alphabet" : "This letter matches the secret here"}">${compass.dir === "L" ? "&larr;" : compass.dir === "R" ? "&rarr;" : "&ndash;"}</span>`
             : "";
-          tiles.push(`<span class="cuddle-tile${tileClass}${compass ? " has-compass" : ""}"${moneyBadge}>${escapeHtml(letter)}${compassMark}</span>`);
+          tiles.push(`<span class="cuddle-tile${tileClass}${compass ? " has-compass" : ""}${arrow ? " is-arrow-sign" : ""}"${moneyBadge}>${escapeHtml(letter)}${compassMark}</span>`);
         }
       }
       // Count Only replaces the row's score with the only thing it tells you:
@@ -1028,7 +1033,7 @@
   // button now that tapping the card opens those notes instead.
   const BURDEN_ICON = Object.freeze({
     countOnly: "numbers", delayedFeedback: "hourglass", hideFeedback: "seeNoEvil",
-    hiddenMargins: "fog", blueMode: "blueDot", fakeFeedback: "liar", quickMode: "stopwatch",
+    hiddenMargins: "fog", blueMode: "blueDot", fakeFeedback: "liar", arrowMode: "compass", quickMode: "stopwatch",
     noMulligans: "noEntry", shortHand: "hand", questTrial: "clipboard",
     presetWordsTrial: "scroll", questEndurance: "runner"
   });

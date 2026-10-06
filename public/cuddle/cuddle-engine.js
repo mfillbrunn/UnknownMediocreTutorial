@@ -55,7 +55,7 @@
   // trials constrain the round, not the colours).
   const MASK_SPAN_EFFECTS = new Set([
     "countOnly", "delayedFeedback", "hideFeedback",
-    "hiddenMargins", "blueMode", "fakeFeedback", "singleLie"
+    "hiddenMargins", "blueMode", "fakeFeedback", "singleLie", "arrowMode"
   ]);
 
   // FNV-1a. A hash, deliberately not this.random(): a span has to be
@@ -692,6 +692,23 @@
             learn[index] = "yellow";
           });
           break;
+
+        case "arrowMode": {
+          // No colour at all on the marked tiles: an arrow says whether the
+          // answer's letter in that spot comes earlier or later in the
+          // alphabet, and a dash that it matches -- the one thing learned.
+          const secret = String(this.state.secret || "").toUpperCase();
+          const guess = String(word || "").toUpperCase();
+          result.arrows = indices.map(index => ({
+            index,
+            dir: secret[index] === guess[index] ? "G" : secret[index] < guess[index] ? "L" : "R"
+          }));
+          indices.forEach(index => {
+            shown[index] = "unknown";
+            learn[index] = feedback[index] === "green" ? "green" : "unknown";
+          });
+          break;
+        }
 
         case "fakeFeedback":
         case "singleLie": {
@@ -1445,6 +1462,8 @@
         // before the guess was submitted.
         maskedIndices,
         bossCounts: masked.counts || null,
+        // Arrow Signs: the arrows its marked tiles show instead of colours.
+        umtArrows: masked.arrows || null,
         deferred: Boolean(masked.deferred),
         fakeFeedback: Boolean(masked.fake),
         // Whether the active boss's constraint actually applied to this
@@ -2881,6 +2900,8 @@
         return `During the first ${guesses}, a green or yellow on the marked tiles shows as blue: the letter is in the answer, but you don't learn whether it's in the right spot. Every other tile shows its real colour.`;
       case "fakeFeedback":
         return `During the first ${guesses}, the marked tiles show a wrong colour. Every other tile shows its real colour.`;
+      case "arrowMode":
+        return `During the first ${guesses}, the marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.`;
       case "quickMode":
         return "You have one minute for each guess this round. A guess you run out of time on is lost.";
       case "shortHand":
@@ -3057,6 +3078,13 @@
         break;
       case "fakeFeedback":
         markAll("purple");
+        break;
+      case "arrowMode":
+        // A dash teaches green; an arrow leaves the letter's colour unknown.
+        word.split("").forEach((letter, index) => {
+          if (spanIndices && !spanIndices.includes(index)) return;
+          if (feedback[index] !== "green") result[glyphForLetter(letter)] = "unknown";
+        });
         break;
       default:
         break;
@@ -4825,13 +4853,14 @@
   // slot the first boss's decline already claimed. (No ratchet is ever
   // created for the final boss -- no round follows it.)
   // ------------------------------------------------------------------
-  const MASK_KINDS = new Set(["countOnly", "delayedFeedback", "hideFeedback", "hiddenMargins", "blueMode", "fakeFeedback"]);
+  const MASK_KINDS = new Set(["countOnly", "delayedFeedback", "hideFeedback", "hiddenMargins", "blueMode", "fakeFeedback", "arrowMode"]);
   const RATCHET_LABEL = {
     countOnly: "Count Only",
     delayedFeedback: "Delayed Feedback",
     hideFeedback: "Hide Feedback",
     hiddenMargins: "Hidden Margins",
     blueMode: "Blue Mode",
+    arrowMode: "Arrow Signs",
     fakeFeedback: "Fake Feedback",
     quickMode: "Quick Mode (that guess scores 0)",
     noMulligans: "Steady Hand (no mulligan just before it)",

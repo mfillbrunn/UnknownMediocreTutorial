@@ -256,6 +256,7 @@
     "hiddenMargins",
     "blueMode",
     "fakeFeedback",
+    "arrowMode",
     "quickMode",
     "noMulligans",
     "shortHand",
@@ -274,6 +275,7 @@
     hiddenMargins: ["Hidden Margins", "Two tiles of that guess never show their colour."],
     blueMode: ["Blue Mode", "A right letter on a marked tile of that guess shows blue, so you can't tell if it's in the right spot."],
     fakeFeedback: ["Fake Feedback", "The marked tiles of that guess show the wrong colour."],
+    arrowMode: ["Arrow Signs", "The marked tiles of that guess show only an alphabet arrow, or a dash for green."],
     quickMode: ["Quick Mode", "That guess scores 0 points."],
     noMulligans: ["Steady Hand", "You can't mulligan right before that guess."],
     shortHand: ["Short Hand", "You go into that guess with one fewer letter in your hand."],
@@ -313,6 +315,15 @@
       description: count => `On the first ${guessPhrase(count)}, the marked tiles merge green and yellow into blue. The rest of the row reports normally.`,
       reward: 26,
       masks: ["blueMode", "blueMode", "blueMode"]
+    }),
+    // The same effect as the Arrow Signs boss.
+    Object.freeze({
+      id: "arrowSigns",
+      icon: "🧭",
+      title: "Arrow Signs",
+      description: count => `On the first ${guessPhrase(count)}, the marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.`,
+      reward: 26,
+      masks: ["arrowMode", "arrowMode", "arrowMode"]
     }),
     Object.freeze({
       id: "littleLie",
@@ -3403,6 +3414,8 @@
     hideFeedback: { title: "Hide Feedback", description: "One marked tile hides its colour on this guess.", shape: "blind" },
     hiddenMargins: { title: "Hidden Margins", description: "Two marked tiles hide their colour on this guess.", shape: "edges" },
     blueMode: { title: "Blue Mode", description: "On the marked tiles green and yellow both show as blue, so you learn the letter is in the secret but not whether it is placed right. Every other tile in the row shows its real colour.", shape: "merge" },
+    arrowMode: { title: "Arrow Signs", description: "The marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.", shape: "alphaCompass" },
+    arrowSigns: { title: "Arrow Signs", description: "The marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.", shape: "alphaCompass" },
     fakeFeedback: { title: "Fake Feedback", description: "The marked tiles show a colour that is deliberately wrong. Every other tile in the row shows its real colour.", shape: "lie" },
     quickMode: { title: "Quick Mode", description: "In the boss fight: one minute per guess, and a guess you run out of time on is lost. As a curse: that guess scores 0 points.", shape: "hourglass" },
     noMulligans: { title: "No Mulligans", description: "Mulligans are unavailable while this power applies.", shape: "noShield" },

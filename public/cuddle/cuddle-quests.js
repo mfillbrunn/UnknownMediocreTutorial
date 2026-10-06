@@ -318,6 +318,14 @@
       rewardId: "biggerMulligans"
     },
     {
+      id: "arrowMode",
+      icon: "🧭",
+      title: "Arrow Signs",
+      description: "For the first guesses, the marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.",
+      turns: 3,
+      rewardId: "questCadence"
+    },
+    {
       id: "blueMode",
       icon: "🔵",
       title: "Blue Mode",

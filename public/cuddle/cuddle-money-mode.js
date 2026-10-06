@@ -155,7 +155,8 @@
     hiddenMargins: true,
     blueMode: true,
     fakeFeedback: true,
-    singleLie: true
+    singleLie: true,
+    arrowMode: true
   };
 
   function asNumber(value, fallback) {
