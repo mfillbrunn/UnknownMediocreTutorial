@@ -223,8 +223,36 @@
       state.pendingTileNotes = [];
       // Every stage rolls them, boss fights included.
       state.cuddleMoneyTiles = rollSpecialTiles(this);
+      this._avoidMaskedSpecialTiles();
     }
     return result;
+  };
+
+  // A special tile never sits on a tile a boss, challenge or curse will
+  // mark: it moves to an unmarked tile of the same guess, or is dropped
+  // when that guess has none. Run again once the stage's challenge is
+  // known (cuddle-rebalance-v5.js finishBeginRound).
+  proto._avoidMaskedSpecialTiles = function avoidMaskedSpecialTiles() {
+    var game = this;
+    var state = this.state;
+    var tiles = state && Array.isArray(state.cuddleMoneyTiles) ? state.cuddleMoneyTiles : null;
+    if (!tiles || typeof this.maskedColumnsForGuess !== "function") return;
+    var random = randomFor(this);
+    state.cuddleMoneyTiles = tiles.filter(function keepClear(tile) {
+      if (!tile || tile.paid) return true;
+      var masked;
+      try {
+        masked = game.maskedColumnsForGuess(Number(tile.row)) || [];
+      } catch (error) {
+        return true;
+      }
+      if (masked.indexOf(Number(tile.col)) === -1) return true;
+      var open = [];
+      for (var col = 0; col < TILE_COLUMNS; col += 1) if (masked.indexOf(col) === -1) open.push(col);
+      if (!open.length) return false;
+      tile.col = open[Math.floor(random() * open.length)];
+      return true;
+    });
   };
 
   function revealTileHints(game, count) {

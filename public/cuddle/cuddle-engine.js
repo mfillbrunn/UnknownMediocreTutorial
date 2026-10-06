@@ -5239,6 +5239,39 @@
     }
     return indices.length ? { effectId: synthetic.id, title: RATCHET_LABEL[synthetic.id] || "", icon: "", indices } : null;
   }
+  // Which tiles of guess `guessIndex` (0-based) a curse, the stage's
+  // challenge or mixed boss, or the boss's own window will mark -- for
+  // anything that must stay off them, like special tiles.
+  CuddleGame.prototype.maskedColumnsForGuess = function maskedColumnsForGuess(guessIndex) {
+    const state = this.state;
+    if (!state) return [];
+    const withBoss = (stand, id) => {
+      const own = state.boss;
+      state.boss = stand;
+      try {
+        return this.maskSpanFor(id, guessIndex);
+      } finally {
+        state.boss = own;
+      }
+    };
+    const ratchet = plannedRatchetForGuess(this, guessIndex + 1);
+    if (ratchet && MASK_KINDS.has(ratchet.bossId)) {
+      return withBoss(Object.assign({}, state.boss, {
+        id: ratchet.bossId,
+        hiddenIndex: ratchet.hiddenIndex,
+        hiddenIndices: ratchet.hiddenIndices
+      }), ratchet.bossId);
+    }
+    const synthetic = window.CuddleRebalanceV5?.syntheticBossForGuess?.(this, guessIndex);
+    if (synthetic) return withBoss(Object.assign({}, state.boss, synthetic), synthetic.id);
+    const boss = state.boss;
+    if (boss && !Array.isArray(boss.plan)) {
+      const turns = Number(boss.turns) || 0;
+      if (WHOLE_ROUND_BOSSES.has(boss.id) || turns <= 0 || guessIndex < turns) return this.maskSpanFor(boss.id, guessIndex);
+    }
+    return [];
+  };
+
   CuddleGame.prototype.maskSpanPreview = function maskSpanPreviewWithRatchet() {
     const mega = ensureMega(this);
     if (mega.ratchetSwapInFlight || this.state?.status !== "playing") return baseMaskSpanPreview.call(this);
