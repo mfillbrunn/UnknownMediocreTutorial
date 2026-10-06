@@ -256,6 +256,7 @@
     "hiddenMargins",
     "blueMode",
     "fakeFeedback",
+    "arrowMode",
     "quickMode",
     "noMulligans",
     "shortHand",
@@ -271,9 +272,10 @@
     countOnly: ["Count Only", "The marked tiles of that guess only tell you how many of them are green or yellow, not which."],
     delayedFeedback: ["Delayed Feedback", "The marked tiles of that guess show their colours one guess late."],
     hideFeedback: ["Hide Feedback", "One tile of that guess never shows its colour."],
-    hiddenMargins: ["Hidden Margins", "Two tiles of that guess never show their colour."],
+    hiddenMargins: ["Hidden Tiles", "Two tiles of that guess never show their colour."],
     blueMode: ["Blue Mode", "A right letter on a marked tile of that guess shows blue, so you can't tell if it's in the right spot."],
     fakeFeedback: ["Fake Feedback", "The marked tiles of that guess show the wrong colour."],
+    arrowMode: ["Arrow Signs", "The marked tiles of that guess show only an alphabet arrow, or a dash for green."],
     quickMode: ["Quick Mode", "That guess scores 0 points."],
     noMulligans: ["Steady Hand", "You can't mulligan right before that guess."],
     shortHand: ["Short Hand", "You go into that guess with one fewer letter in your hand."],
@@ -289,113 +291,30 @@
     return count === 1 ? "guess" : `${count} guesses`;
   }
 
-  const CHALLENGES = Object.freeze([
-    Object.freeze({
-      id: "deepFog",
-      icon: "🌫️",
-      title: "Deep Fog",
-      description: count => `The first ${guessPhrase(count)} hide${count === 1 ? "s" : ""} the same two marked tile positions.`,
-      reward: 24,
-      masks: ["hiddenMargins", "hiddenMargins"]
-    }),
-    Object.freeze({
-      id: "countedSteps",
-      icon: "🔢",
-      title: "Counted Steps",
-      description: count => `On the first ${guessPhrase(count)}, the marked tiles reveal only a count of correct letters. The rest of the row reports normally.`,
-      reward: 28,
-      masks: ["countOnly", "countOnly", "countOnly"]
-    }),
-    Object.freeze({
-      id: "blueMoon",
-      icon: "🔵",
-      title: "Blue Moon",
-      description: count => `On the first ${guessPhrase(count)}, the marked tiles merge green and yellow into blue. The rest of the row reports normally.`,
-      reward: 26,
-      masks: ["blueMode", "blueMode", "blueMode"]
-    }),
-    Object.freeze({
-      id: "littleLie",
-      icon: "🤥",
-      title: "Little Lies",
-      description: "The marked tiles on the first guess show a false colour. The rest of the row reports normally.",
-      reward: 20,
-      masks: ["fakeFeedback"]
-    }),
-    Object.freeze({
-      id: "doubleBlind",
-      icon: "🕶️",
-      title: "Double Blind",
-      // Two DIFFERENT effects, one per guess -- if only the first guess is
-      // actually in play this early in the run, guess two's effect never
-      // happens, so it has no business being mentioned at all.
-      description: count => count >= 2
-        ? "Guess one's marked tiles are count-only; guess two hides two marked positions."
-        : "Guess one's marked tiles are count-only.",
-      reward: 27,
-      masks: ["countOnly", "hiddenMargins"]
-    }),
-    Object.freeze({
-      id: "signalStorm",
-      icon: "⛈️",
-      title: "Signal Storm",
-      // Same reasoning as Double Blind: each guess has its own distinct
-      // effect, so only describe as many of the sequence as actually fire.
-      description: count => {
-        if (count >= 3) return "The first three guesses cycle their marked tiles through blue, false, and hidden.";
-        if (count === 2) return "The first two guesses cycle their marked tiles through blue, then a false signal.";
-        return "The first guess shows blue on its marked tiles.";
-      },
-      reward: 32,
-      masks: ["blueMode", "fakeFeedback", "hiddenMargins"]
-    }),
-    Object.freeze({
-      id: "noSafetyNet",
-      icon: "🚫",
-      title: "No Safety Net",
-      // Locks mulligans for the world's number of opening guesses (see
-      // mulliganLockTurns); described with that number by
-      // challengeDisplayDescription.
-      description: (count) => `Mulligans are locked until you've made ${count === 1 ? "your first guess" : `your first ${count} guesses`}.`,
-      reward: 23,
-      noMulligans: true
-    }),
-    Object.freeze({
-      id: "perfectOpener",
-      icon: "🧩",
-      title: "Perfect Opener",
-      description: "Your first submitted word must use five different letters.",
-      reward: 22,
-      uniqueFirst: true
-    }),
-    Object.freeze({
-      id: "consonantCrunch",
-      icon: "🥨",
-      title: "Consonant Crunch",
-      description: count => count === 1 ? "Your first guess may contain at most one vowel." : `Each of your first ${count} guesses may contain at most one vowel.`,
-      reward: 25,
-      vowelBudget: { guesses: 2, max: 1 }
-    }),
-    // The secret is drawn from cuddle-rare-words.js instead of the usual
-    // pool -- a real but unusual word -- so it pays the most of any
-    // challenge. See rareStage / the getActiveWords wrapper below.
-    Object.freeze({
-      id: "rareWord",
-      icon: "💎",
-      title: "Rare Word",
-      description: "The secret is a rare, unusual word. Solve it for the biggest challenge bonus.",
-      reward: 40,
-      rareSecret: true
-    }),
-    Object.freeze({
-      id: "shroudedEdges",
-      icon: "🫥",
-      title: "Shrouded Edges",
-      description: count => `The same two marked tile positions stay hidden on ${count === 1 ? "your first guess" : `each of your first ${count} guesses`}.`,
-      reward: 24,
-      masks: ["hiddenMargins", "hiddenMargins"]
-    })
-  ]);
+  // Stage challenges are the "challenge" kinds of the shared constraint
+  // list (cuddle-quests.js CONSTRAINTS), so a challenge and the boss of the
+  // same name are one and the same effect. A challenge's `kind` is that
+  // constraint's: "mask" changes what tiles show, "rule" limits the word or
+  // the turn, "round" shapes the whole stage (Rare Word).
+  const CHALLENGES = Object.freeze(
+    ((window.CuddleQuestBook && window.CuddleQuestBook.CONSTRAINTS) || [])
+      .filter((item) => item.challenge)
+      .map((item) => Object.freeze({
+        id: item.id,
+        icon: item.icon,
+        title: item.title,
+        kind: item.kind,
+        reward: item.reward,
+        text: item.text,
+        rareSecret: item.id === "rareWord"
+      }))
+  );
+  // Challenge ids from before the shared list, kept so saved maps still read.
+  const CHALLENGE_ALIASES = Object.freeze({
+    deepFog: "hiddenMargins", shroudedEdges: "hiddenMargins", hideFeedback: "hiddenMargins",
+    countedSteps: "countOnly", doubleBlind: "countOnly", blueMoon: "blueMode", signalStorm: "blueMode",
+    littleLie: "fakeFeedback", arrowSigns: "arrowMode", noSafetyNet: "noMulligans"
+  });
 
   let activeGame = null;
   let uiObserver = null;
@@ -888,11 +807,178 @@
 
   const CLASSIC_DESCRIPTION = `A standard Wordle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${CONFIG.classicClearBonus}.`;
 
+  // -- Stage difficulty (worlds 2 and 3) --------------------------------
+  // A Wordle stop's difficulty is the sum of its parts: +1 per challenge,
+  // +1.5 for a Rare Word, 0 for a regular Wordle and -1 for an easier one
+  // (a revealed theme or a Lucky Start letter). World 1 keeps its old mix.
+  // From world 2 on each stop is built to a target difficulty, and parts
+  // combine: two challenges, a challenge on an easier Wordle, a Rare Word
+  // with a challenge. World 2 never goes below 0, world 3 never below 1,
+  // and both lean harder towards their boss.
+  const EASE_PARTS = Object.freeze({
+    themedWordle: { title: "Themed", icon: "🧭", text: "One of the answer's themes is revealed." },
+    luckyStart: { title: "Lucky Start", icon: "\uD83C\uDF40", text: "One letter starts in its exact place." }
+  });
+  const NEUTRAL_KINDS = Object.freeze(["plain", "randomOpener", "jackpot", "doubleOrNothing"]);
+  const DIFFICULTY_MIX = Object.freeze({
+    // [first stop row of the world, last stop row]: weight per difficulty.
+    // Rare Words (0.5, 1.5, 2.5) stay a seasoning: every world already
+    // gets one (ensureRareWordStages).
+    1: [{ 0: 50, 0.5: 4, 1: 32, 1.5: 6, 2: 8, 2.5: 0 }, { 0: 20, 0.5: 4, 1: 40, 1.5: 8, 2: 22, 2.5: 6 }],
+    2: [{ 0: 0, 0.5: 0, 1: 55, 1.5: 8, 2: 32, 2.5: 5 }, { 0: 0, 0.5: 0, 1: 25, 1.5: 8, 2: 55, 2.5: 12 }]
+  });
+
+  function stagePartDifficulty(variant) {
+    if (!variant) return 0;
+    const ids = variantChallengeIds(variant);
+    let total = ids.reduce((sum, id) => sum + (challengeById(id).rareSecret ? 1.5 : 1), 0);
+    const ease = variant.ease || (EASE_PARTS[variant.kind] ? variant.kind : null);
+    if (ease) total -= 1;
+    return total;
+  }
+
+  function variantChallengeIds(variant) {
+    if (!variant || variant.kind !== "mandatoryChallenge") return [];
+    if (Array.isArray(variant.challengeIds) && variant.challengeIds.length) return variant.challengeIds.slice();
+    return variant.challengeId ? [variant.challengeId] : [];
+  }
+
+  // Where a stop sits: its world (the row's act) and how far through that
+  // world's Wordle rows it is, 0 at the first and 1 at the last.
+  function stopPlacement(game, node) {
+    const map = stateOf(game) && stateOf(game).branchMap;
+    if (!map || !Array.isArray(map.rows)) return null;
+    const rowIndex = Math.floor(Number(node.row));
+    const row = map.rows[rowIndex];
+    if (!row) return null;
+    const act = Math.floor(Number(row.act)) || 0;
+    const stopRows = [];
+    map.rows.forEach((candidate, index) => {
+      if (candidate && candidate.kind === "stops" && !candidate.restFork && (Math.floor(Number(candidate.act)) || 0) === act) stopRows.push(index);
+    });
+    const position = stopRows.indexOf(rowIndex);
+    const progress = stopRows.length > 1 && position >= 0 ? position / (stopRows.length - 1) : 0;
+    return { act, progress };
+  }
+
+  function rollDifficulty(act, progress, seed) {
+    const [start, end] = DIFFICULTY_MIX[Math.min(2, act)];
+    const levels = Object.keys(start).map(Number).sort((a, b) => a - b);
+    const weights = levels.map((level) => start[level] + (end[level] - start[level]) * progress);
+    const total = weights.reduce((sum, weight) => sum + weight, 0);
+    let roll = (hash32(seed) % 10000) / 10000 * total;
+    for (let index = 0; index < levels.length; index += 1) {
+      roll -= weights[index];
+      if (roll < 0) return levels[index];
+    }
+    return levels[levels.length - 1];
+  }
+
+  // The challenges that can be stacked: at most one of them masks tiles,
+  // so a combined stop never hides feedback on more guesses than one
+  // challenge plus a rule.
+  function stackableChallenges() {
+    const all = CHALLENGES.filter((challenge) => !challenge.rareSecret);
+    return {
+      all,
+      rules: all.filter((challenge) => challenge.kind !== "mask"),
+      rare: CHALLENGES.find((challenge) => challenge.rareSecret)
+    };
+  }
+
+  function composeStop(target, seed) {
+    const pick = (list, key) => list[hash32(`${seed}:${key}`) % list.length];
+    const { all, rules, rare } = stackableChallenges();
+    const ease = pick(Object.keys(EASE_PARTS), "ease");
+    const oneChallenge = (key) => pick(all, key);
+    const twoChallenges = () => {
+      const first = oneChallenge("c1");
+      const pool = (first.kind === "mask" ? rules : all).filter((item) => item.id !== first.id);
+      return [first, pick(pool, "c2")];
+    };
+    const coin = hash32(`${seed}:shape`) % 100;
+    let parts;
+    if (target <= 0) {
+      parts = coin < 50 ? { neutral: pick(NEUTRAL_KINDS, "neutral") } : { ease, challenges: [oneChallenge("c1")] };
+    } else if (target === 0.5) {
+      // Rare words carry no themes, so their easier half is always the
+      // placed letter.
+      parts = { ease: "luckyStart", challenges: [rare] };
+    } else if (target === 1) {
+      parts = coin < 70 ? { challenges: [oneChallenge("c1")] } : { ease, challenges: twoChallenges() };
+    } else if (target === 1.5) {
+      parts = { challenges: [rare] };
+    } else if (target === 2) {
+      parts = { challenges: twoChallenges() };
+    } else {
+      parts = { challenges: [rare, oneChallenge("c1")] };
+    }
+    return parts;
+  }
+
+  function stackedDescription(game, variant) {
+    const ease = variant.ease && EASE_PARTS[variant.ease];
+    const lines = variantChallengeIds(variant).map((id) => challengeDisplayDescription(game, challengeById(id)));
+    if (ease) lines.unshift(ease.text);
+    return lines.join(" ");
+  }
+
+  function stackedReward(variant) {
+    return variantChallengeIds(variant).reduce((sum, id) => sum + Math.max(0, asNumber(challengeById(id).reward, 0)), 0);
+  }
+
+  function plannedVariant(game, node, salt) {
+    const placement = stopPlacement(game, node);
+    if (!placement || placement.act < 1) return null;
+    const seed = `${mapSeed(game)}:plan:${node.row}:${node.col}${salt}`;
+    const target = rollDifficulty(placement.act, placement.progress, `${seed}:target`);
+    const parts = composeStop(target, seed);
+    if (parts.neutral) {
+      const variant = neutralVariant(parts.neutral);
+      variant.difficulty = 0;
+      return variant;
+    }
+    const challenges = parts.challenges;
+    const ids = challenges.map((challenge) => challenge.id);
+    const variant = {
+      version: VERSION,
+      kind: "mandatoryChallenge",
+      challengeId: ids[0],
+      challengeIds: ids,
+      ease: parts.ease || null,
+      icon: challenges[0].icon,
+      title: [parts.ease ? EASE_PARTS[parts.ease].title : null].concat(challenges.map((challenge) => challenge.title)).filter(Boolean).join(" + ")
+    };
+    const reward = stackedReward(variant);
+    variant.rewardSuffix = `Pays $${reward}.`;
+    variant.description = `${stackedDescription(game, variant)} ${variant.rewardSuffix}`;
+    variant.difficulty = stagePartDifficulty(variant);
+    return variant;
+  }
+
+  function neutralVariant(kind) {
+    switch (kind) {
+      case "randomOpener":
+        return { version: VERSION, kind, icon: "🎲", title: "Head Start", description: "A random legal word is played automatically as the first guess, consuming row one." };
+      case "jackpot":
+        return { version: VERSION, kind, icon: "\uD83D\uDCB0", title: "Jackpot Run", description: "Green tiles pay double here, but you must solve within the world's guess limit or the run is lost." };
+      case "doubleOrNothing":
+        return { version: VERSION, kind, icon: "\u2696\uFE0F", title: "Double or Nothing", description: "Solve fast and the stage's earnings double (by guess 5 in world 1, 4 in world 2, 3 in world 3). Take longer and you lose half of them." };
+      default:
+        return { version: VERSION, kind: "plain", icon: "🟩", title: "Classic Wordle", description: CLASSIC_DESCRIPTION };
+    }
+  }
+
   function variantForNode(game, node, salt = "") {
     if (!salt && node.cuddleVariant && node.cuddleVariant.version === VERSION) {
       // Stops rolled before the Classic bonus existed keep their old text.
       if (node.cuddleVariant.kind === "plain") node.cuddleVariant.description = CLASSIC_DESCRIPTION;
       return node.cuddleVariant;
+    }
+    const planned = plannedVariant(game, node, salt);
+    if (planned) {
+      node.cuddleVariant = planned;
+      return planned;
     }
     const roll = hash32(`${mapSeed(game)}:variant:${node.row}:${node.col}${salt}`) % 100;
     let variant;
@@ -945,7 +1031,7 @@
         kind: "doubleOrNothing",
         icon: "\u2696\uFE0F",
         title: "Double or Nothing",
-        description: "Solve within three guesses and the stage's earnings double. Take longer and you lose half of them."
+        description: "Solve fast and the stage's earnings double (by guess 5 in world 1, 4 in world 2, 3 in world 3). Take longer and you lose half of them."
       };
     } else {
       const challenge = challengeForNode(game, node);
@@ -976,7 +1062,7 @@
     const rows = new Map();
     let changed = false;
 
-    const variantKey = (variant) => `${variant.kind}:${variant.challengeId || ""}`;
+    const variantKey = (variant) => `${variant.kind}:${variantChallengeIds(variant).join("+")}:${variant.ease || ""}`;
     const rowKeys = new Map();
     for (const node of nodes) {
       if (!isMapNode(node) || !wordleTypes.has(String(node.type))) continue;
@@ -1433,7 +1519,7 @@
   function rareStage(game) {
     const custom = customState(game);
     const pending = custom && custom.pendingVariant;
-    if (pending && pending.kind === "mandatoryChallenge" && challengeById(pending.challengeId).rareSecret) return true;
+    if (pending && variantChallengeIds(pending).some((id) => challengeById(id).rareSecret)) return true;
     const active = activeChallenge(game);
     return Boolean(active && active.rareSecret);
   }
@@ -1448,8 +1534,32 @@
   }
 
   function challengeById(id) {
-    return CHALLENGES.find((challenge) => challenge.id === id) || CHALLENGES[0];
+    const wanted = CHALLENGE_ALIASES[id] || id;
+    return CHALLENGES.find((challenge) => challenge.id === wanted) || CHALLENGES[0];
   }
+
+  // How many opening guesses a challenge covers this run.
+  function challengeTurns(game, challenge) {
+    if (!challenge || challenge.rareSecret) return 0;
+    if (challenge.id === "perfectOpener") return 1;
+    if (challenge.id === "noMulligans") return mulliganLockTurns(game);
+    if (challenge.id === "questEndurance") return challengeTurnCap(game) + 1;
+    return challengeTurnCap(game);
+  }
+
+  // A challenge as one constraint per guess, like a mixed boss's plan.
+  function challengePlan(game, challenge) {
+    return Array.from({ length: challengeTurns(game, challenge) }, () => challenge.id);
+  }
+
+  const CHALLENGE_PHRASES = Object.freeze({
+    noMulligans: (n) => `Mulligans are locked until you've made ${n === 1 ? "your first guess" : `your first ${n} guesses`}.`,
+    perfectOpener: () => "Your first word must use five different letters.",
+    consonantCrunch: (n) => n === 1 ? "Your first guess may contain at most one vowel." : `Each of your first ${n} guesses may contain at most one vowel.`,
+    questEndurance: (n) => `Each of your first ${n} guesses carries a quest; miss one and your hand is one letter smaller for the stage.`,
+    quickMode: (n) => n === 1 ? "You have one minute for your first guess; run out and it's lost." : `You have one minute for each of your first ${n} guesses; run out and the guess is lost.`,
+    rareWord: () => "The answer is a rare, unusual word. Solve it for the biggest challenge bonus."
+  });
 
   // How many of a challenge's designed guesses actually carry its extra
   // difficulty this run: 1 before the first boss, 2 between the first and
@@ -1477,12 +1587,11 @@
   }
 
   function challengeDisplayDescription(game, challenge) {
-    if (typeof challenge.description !== "function") return challenge.description;
-    if (challenge.noMulligans) return challenge.description(mulliganLockTurns(game));
-    const cap = challengeTurnCap(game);
-    const designedLength = Array.isArray(challenge.masks) ? challenge.masks.length
-      : (challenge.vowelBudget ? challenge.vowelBudget.guesses : cap);
-    return challenge.description(Math.min(cap, designedLength));
+    const turns = challengeTurns(game, challenge);
+    const phrase = CHALLENGE_PHRASES[challenge.id];
+    if (phrase) return phrase(turns);
+    const lead = turns === 1 ? "On your first guess" : `On each of your first ${turns} guesses`;
+    return `${lead}, ${challenge.text}`;
   }
 
   function clearNativeChallengeOffer(game) {
@@ -1507,24 +1616,51 @@
 
     if (!variant) return;
     if (variant.kind === "mandatoryChallenge") {
-      const challenge = challengeById(variant.challengeId);
-      const cap = challengeTurnCap(game);
-      const masks = Array.isArray(challenge.masks) ? challenge.masks.slice(0, cap) : challenge.masks;
-      const vowelBudget = challenge.vowelBudget
-        ? { ...challenge.vowelBudget, guesses: Math.min(challenge.vowelBudget.guesses, cap) }
-        : challenge.vowelBudget;
+      // A stacked stop runs every challenge in it at once: their masked
+      // guesses follow one another, their rules all apply, and their
+      // bonuses add up.
+      const merged = variantChallengeIds(variant).map(challengeById).reduce((sum, challenge) => {
+        const plan = (sum.plan || []).concat(challengePlan(game, challenge));
+        return {
+          ...sum,
+          ...challenge,
+          id: sum.id || challenge.id,
+          icon: sum.icon || challenge.icon,
+          // One constraint per guess, in order; `masks` is the same list
+          // under the name the engine counts claimed rows by.
+          plan,
+          masks: plan,
+          rareSecret: Boolean(sum.rareSecret || challenge.rareSecret),
+          reward: asNumber(sum.reward, 0) + asNumber(challenge.reward, 0)
+        };
+      }, {});
+      const stacked = variantChallengeIds(variant).length > 1 || variant.ease;
       custom.activeChallenge = {
-        ...challenge,
-        masks,
-        vowelBudget,
-        description: challengeDisplayDescription(game, challenge),
+        ...merged,
+        title: stacked ? variant.title : merged.title,
+        description: stacked ? stackedDescription(game, variant) : challengeDisplayDescription(game, challengeById(variant.challengeId)),
         nodeId: variant.nodeId,
         roundToken: roundToken(game),
         paid: false,
         mandatory: true
       };
       clearNativeChallengeOffer(game);
-      appendNotice(game, `${challenge.icon} ${challenge.title} accepted automatically. Win for a $${challenge.reward} bonus.`);
+      if (variant.ease === "luckyStart") {
+        try {
+          if (typeof game._revealPositionPeek === "function") game._revealPositionPeek();
+        } catch (error) {
+          log("lucky start reveal failed", error);
+        }
+      } else if (variant.ease === "themedWordle" && window.CuddleCampaign
+          && typeof window.CuddleCampaign.queueCategoryReveal === "function") {
+        window.CuddleCampaign.queueCategoryReveal(game, 1, "branch");
+      }
+      appendNotice(game, `${merged.icon} ${custom.activeChallenge.title} accepted automatically. Win for a $${merged.reward} bonus.`);
+      const opening = stateOf(game);
+      if (merged.plan && merged.plan[0] === "questEndurance" && opening && !opening.activeQuest
+          && typeof game._ensureQuestForNextGuess === "function") {
+        game._ensureQuestForNextGuess();
+      }
     } else if (variant.kind === "randomOpener") {
       scheduleRandomOpener(game);
     } else if (variant.kind === "luckyStart") {
@@ -1543,7 +1679,7 @@
       const limit = typeof game._hardGuessLimit === "function" ? game._hardGuessLimit() : 6;
       appendNotice(game, `\uD83D\uDCB0 Jackpot Run: greens pay double, but solve within ${limit} guesses or the run is lost.`);
     } else if (variant.kind === "doubleOrNothing") {
-      appendNotice(game, "\u2696\uFE0F Double or Nothing: solve by guess three to double this stage, or lose half of it.");
+      appendNotice(game, `\u2696\uFE0F Double or Nothing: solve by guess ${doubleOrNothingLimit(game)} to double this stage, or lose half of it.`);
     }
     // "themedWordle" needs no special handling here: normalizeMap already
     // set the node's type to "theme", and the branch map's own enterNode
@@ -1561,25 +1697,43 @@
     return String(state.draftWord || (state.megaState && state.megaState.draftWord || state.mega && state.mega.draftWord) || "").toUpperCase();
   }
 
-  function challengeValidation(game, challenge, used) {
+  // The constraint on a guess (0-based) of this stage: a mixed boss's plan
+  // in a boss fight, the stage challenge's plan otherwise.
+  function stagePlan(game) {
+    const state = stateOf(game) || {};
+    const boss = state.boss;
+    if (boss && !boss.__umtSynthetic && Array.isArray(boss.plan)) return boss.plan;
+    const challenge = activeChallenge(game);
+    return challenge && Array.isArray(challenge.plan) ? challenge.plan : null;
+  }
+
+  function planEffect(game, used) {
+    const plan = stagePlan(game);
+    return plan ? plan[used] || null : null;
+  }
+
+  function isMaskConstraint(id) {
+    const item = window.CuddleQuestBook && window.CuddleQuestBook.getConstraint && window.CuddleQuestBook.getConstraint(id);
+    return Boolean(item && item.kind === "mask");
+  }
+
+  function challengeValidation(game, _challenge, used) {
     const word = draftWord(game);
     if (!word) return null;
-    if (challenge.uniqueFirst && used === 0 && new Set(word.split("")).size !== word.length) {
-      return "Perfect Opener requires five different letters in the first word.";
+    const effect = planEffect(game, used);
+    if (effect === "perfectOpener" && new Set(word.split("")).size !== word.length) {
+      return "Perfect Opener: this word must use five different letters.";
     }
-    if (challenge.vowelBudget && used < challenge.vowelBudget.guesses) {
-      const vowels = (word.match(/[AEIOU]/g) || []).length;
-      if (vowels > challenge.vowelBudget.max) {
-        return `Consonant Crunch allows at most ${challenge.vowelBudget.max} vowel in each of the first ${challenge.vowelBudget.guesses} guesses.`;
-      }
+    if (effect === "consonantCrunch" && (word.match(/[AEIOU]/g) || []).length > 1) {
+      return "Consonant Crunch: this word may contain at most one vowel.";
     }
     return null;
   }
 
   function syntheticBossForChallenge(game, challenge, used) {
-    const id = challenge && Array.isArray(challenge.masks) ? challenge.masks[used] : null;
-    if (!id) return null;
-    const seed = `${mapSeed(game)}:${challenge.nodeId || challenge.id}:${roundToken(game)}`;
+    const id = planEffect(game, used);
+    if (!id || !isMaskConstraint(id)) return null;
+    const seed = `${mapSeed(game)}:${(challenge && (challenge.nodeId || challenge.id)) || "boss"}:${roundToken(game)}`;
     const first = hash32(`${seed}:hidden`) % 5;
     return {
       id,
@@ -2492,13 +2646,24 @@
 
   // Double or Nothing settles on the solve: fast enough doubles the stage's
   // earnings so far, slow loses half of them.
+  // The guess a Double or Nothing stage must be solved by: 5 in world 1,
+  // 4 in world 2, 3 in world 3. `world` is 0-based; it defaults to the
+  // world the run is in.
+  function doubleOrNothingLimit(game, world) {
+    const state = stateOf(game) || {};
+    const index = Number.isFinite(Number(world))
+      ? Number(world)
+      : (Array.isArray(state.bossGatesDone) ? state.bossGatesDone.length : 0);
+    return [5, 4, 3][Math.max(0, Math.min(2, index))];
+  }
+
   function settleDoubleOrNothing(game) {
     if (activeVariantKind(game) !== "doubleOrNothing") return;
     const state = stateOf(game);
     if (!state || trueBossRound(game) || noMoneyRound(game)) return;
     const earned = Math.round(asNumber(state.roundScore, 0));
     if (earned === 0) return;
-    if (asInteger(state.guessesUsed, 0) <= 3) {
+    if (asInteger(state.guessesUsed, 0) <= doubleOrNothingLimit(game)) {
       addScoreBonus(game, earned, "umtDoubleOrNothing", "Stage doubled");
       appendNotice(game, "\u2696\uFE0F Double or Nothing paid off: this stage's earnings doubled.");
     } else {
@@ -3098,7 +3263,7 @@
       // once that boss clears, overstating) how many guesses it actually
       // affects by the time the player reaches it.
       const displayDescription = variant.kind === "mandatoryChallenge" && variant.challengeId
-        ? `${challengeDisplayDescription(game, challengeById(variant.challengeId))} ${variant.rewardSuffix || ""}`.trim()
+        ? `${stackedDescription(game, variant)} ${variant.rewardSuffix || ""}`.trim()
         : variant.description;
       // Written only when they change: this runs on every UI pass, and
       // rewriting identical values kept the map churning under the
@@ -3193,7 +3358,7 @@
     plain: { title: "Classic Wordle", description: `A standard Wordle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${CONFIG.classicClearBonus}.`, shape: "grid" },
     luckyStart: { title: "Lucky Start", description: "One exact position is revealed before the first guess.", shape: "clover" },
     jackpot: { title: "Jackpot Run", description: "Greens pay double, but the stage must be solved within the world's guess limit (6, 5 or 4) or the run is lost.", shape: "coins" },
-    doubleOrNothing: { title: "Double or Nothing", description: "Solve by guess three to double the stage, or lose half of it.", shape: "scales" },
+    doubleOrNothing: { title: "Double or Nothing", description: "Solve by guess 5 (world 1), 4 (world 2) or 3 (world 3) to double the stage, or lose half of it.", shape: "scales" },
     themedWordle: { title: "Themed Wordle", description: "A round that opens with one of the solution's categories already revealed.", shape: "tag" },
     randomOpener: { title: "Head Start", description: "A random legal word automatically consumes the first guess.", shape: "die" },
     deepFog: { title: "Deep Fog", description: "The marked tiles are hidden on each affected guess.", shape: "fog" },
@@ -3203,21 +3368,25 @@
     doubleBlind: { title: "Double Blind", description: "The first guesses combine count-only and hidden-position feedback on their marked tiles.", shape: "blind" },
     signalStorm: { title: "Signal Storm", description: "Affected guesses cycle through several feedback disruptions on their marked tiles.", shape: "storm" },
     noSafetyNet: { title: "No Safety Net", description: "Mulligans and skipped guesses are disabled for this Wordle.", shape: "noShield" },
-    perfectOpener: { title: "Perfect Opener", description: "The first word must use five different letters.", shape: "unique" },
-    consonantCrunch: { title: "Consonant Crunch", description: "Affected words may contain no more than one vowel.", shape: "consonant" },
+    perfectOpener: { title: "Perfect Opener", description: "This word must use five different letters.", shape: "unique" },
+    consonantCrunch: { title: "Consonant Crunch", description: "This word may contain at most one vowel.", shape: "consonant" },
     shroudedEdges: { title: "Shrouded Edges", description: "The same marked positions remain hidden on every affected guess.", shape: "edges" },
     countOnly: { title: "Count Only", description: "The marked tiles report only how many of them are green and how many yellow, never which is which. Every other tile in the row shows its real colour.", shape: "count", multiplayerId: "countOnly" },
     delayedFeedback: { title: "Delayed Feedback", description: "The marked tiles hold back their colours for one guess: each row's hidden tiles are revealed when you submit the next guess. Every other tile in the row shows its real colour immediately.", shape: "clock" },
     hideFeedback: { title: "Hide Feedback", description: "One marked tile hides its colour on this guess.", shape: "blind" },
-    hiddenMargins: { title: "Hidden Margins", description: "Two marked tiles hide their colour on this guess.", shape: "edges" },
+    hiddenMargins: { title: "Hidden Tiles", description: "Two marked tiles hide their colour on this guess.", shape: "edges" },
+    chimera: { title: "Chimera", description: "A mixed boss: each guess of its window carries a different constraint.", shape: "storm" },
+    rareWord: { title: "Rare Word", description: "The answer is a rare, unusual word.", shape: "unique" },
     blueMode: { title: "Blue Mode", description: "On the marked tiles green and yellow both show as blue, so you learn the letter is in the secret but not whether it is placed right. Every other tile in the row shows its real colour.", shape: "merge" },
+    arrowMode: { title: "Arrow Signs", description: "The marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.", shape: "alphaCompass" },
+    arrowSigns: { title: "Arrow Signs", description: "The marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.", shape: "alphaCompass" },
     fakeFeedback: { title: "Fake Feedback", description: "The marked tiles show a colour that is deliberately wrong. Every other tile in the row shows its real colour.", shape: "lie" },
-    quickMode: { title: "Quick Mode", description: "In the boss fight: one minute per guess, and a guess you run out of time on is lost. As a curse: that guess scores 0 points.", shape: "hourglass" },
-    noMulligans: { title: "No Mulligans", description: "Mulligans are unavailable while this power applies.", shape: "noShield" },
+    quickMode: { title: "Quick Mode", description: "One minute for this guess; run out of time and it is lost. As a curse: that guess scores 0 points.", shape: "hourglass" },
+    noMulligans: { title: "Steady Hand", description: "No mulligans before this guess.", shape: "noShield" },
     shortHand: { title: "Short Hand", description: "The round has a smaller hand or fewer guesses.", shape: "hand" },
     questTrial: { title: "Quest Trial", description: "A quest requirement applies to every affected guess.", shape: "scroll" },
     questEndurance: { title: "Endurance Trial", description: "This guess comes with a quest. Miss it and your hand is one letter smaller for the rest of the stage.", shape: "hand" },
-    presetWordsTrial: { title: "Preset Trial", description: "Preset words constrain the affected boss round.", shape: "list" },
+    presetWordsTrial: { title: "Preset Trial", description: "The answer is one of a few words shown on screen, but you get that many fewer guesses.", shape: "list" },
     categorySense: { title: "Theme Sense", description: "Reveal one theme at the beginning of each solution.", shape: "tag" },
     coachHint: { title: "Guesser Hint", description: "Alternates yellow presence hints and green position hints during a round.", shape: "hint" },
     revealLocation: { title: "Position Hint", description: "Reveal one correct letter and its exact position.", shape: "greenHint" },
@@ -3560,14 +3729,13 @@
 
     const challenge = activeChallenge(game);
     if (challenge) {
-      if (Array.isArray(challenge.masks) && challenge.masks[guessIndex]) add(challenge.masks[guessIndex], 1);
-      if (challenge.noMulligans && guessIndex < mulliganLockTurns(game)) add("noMulligans", 1);
-      if (challenge.uniqueFirst && guessIndex === 0) add("perfectOpener", 1);
-      if (challenge.vowelBudget && guessIndex < asNumber(challenge.vowelBudget.guesses, 0)) add("consonantCrunch", 1);
+      if (Array.isArray(challenge.plan) && challenge.plan[guessIndex]) add(challenge.plan[guessIndex], 1);
     }
 
     const boss = state.boss;
-    if (boss && !boss.__umtSynthetic) {
+    if (boss && !boss.__umtSynthetic && Array.isArray(boss.plan)) {
+      if (boss.plan[guessIndex]) add(boss.plan[guessIndex], 0);
+    } else if (boss && !boss.__umtSynthetic) {
       const turns = Math.max(0, Math.floor(asNumber(boss.turns, 0)));
       // Same set the engine's _bossActive() reads, so a row is marked with
       // the boss icon on exactly the guesses the boss still constrains.
@@ -3619,6 +3787,13 @@
   function renderRowPowerIcons(game) {
     const root = rootElement();
     if (!root) return;
+    // A Duel is a self-contained round: the run's curses and stage powers
+    // don't apply to it, so its board gets none of their markers (they
+    // promised a Blue Mode the Duel never ran).
+    if (root.querySelector(".umt-duel-board")) {
+      root.querySelectorAll(".umt-duel-board .umt-row-power-icons").forEach((el) => el.remove());
+      return;
+    }
     const state = stateOf(game);
     const rows = Array.from(root.querySelectorAll(".cuddle-board-row"));
     rows.forEach((row, index) => {
@@ -3868,7 +4043,7 @@
   function enhanceDragTargets(game) {
     const root = rootElement();
     const state = stateOf(game);
-    if (!root || !state || state.status !== "playing") return;
+    if (!root || !state || state.status !== "playing" || root.querySelector(".umt-duel-board")) return;
     const rows = Array.from(root.querySelectorAll(".cuddle-board-row"));
     const row = rows[(state.history || []).length];
     if (!row) return;
@@ -4241,13 +4416,15 @@
       const activePowers = powerIdsForGuess(this, used);
       const state = stateOf(this);
       const historyLength = state && Array.isArray(state.history) ? state.history.length : 0;
-      if (challenge) {
+      if (stagePlan(this)) {
         const validation = challengeValidation(this, challenge, used);
         if (validation) return rejectAction(this, validation);
       }
       const previousBoss = state && state.boss;
-      const synthetic = !trueBossRound(this) ? syntheticBossForChallenge(this, challenge, used) : null;
-      if (state && synthetic) state.boss = synthetic;
+      // A mixed boss keeps its own identity (gate, title) through the swap,
+      // so the fight's pass/fail rules still apply to this guess.
+      const synthetic = syntheticBossForChallenge(this, challenge, used);
+      if (state && synthetic) state.boss = trueBossRound(this) ? { ...previousBoss, ...synthetic } : synthetic;
       // What this guess is measured against for Hot Streak: how much was
       // already pinned down before it was submitted.
       const knowledgeBefore = {
@@ -4298,18 +4475,15 @@
     });
 
     wrapMethod(prototype, "mulligan", function (original, args) {
-      const challenge = activeChallenge(this);
-      if (challenge && challenge.noMulligans && guessesUsed(this) < mulliganLockTurns(this)) {
-        const turns = mulliganLockTurns(this);
-        return rejectAction(this, `No Safety Net: mulligans unlock after ${turns === 1 ? "your first guess" : `your first ${turns} guesses`}.`);
+      if (planEffect(this, guessesUsed(this)) === "noMulligans") {
+        return rejectAction(this, "Steady Hand: no mulligans before this guess.");
       }
       return original.apply(this, args);
     });
 
     wrapMethod(prototype, "forfeitGuess", function (original, args) {
-      const challenge = activeChallenge(this);
-      if (challenge && challenge.noMulligans && guessesUsed(this) < mulliganLockTurns(this)) {
-        return rejectAction(this, "No Safety Net: you can't skip a guess while mulligans are locked.");
+      if (planEffect(this, guessesUsed(this)) === "noMulligans") {
+        return rejectAction(this, "Steady Hand: you can't skip this guess.");
       }
       const before = guessesUsed(this);
       const state = stateOf(this);
@@ -4476,6 +4650,15 @@
       // What a map stop's variant does, for the stop preview: a named
       // challenge is described at the run's current guess cap and carries
       // its reward (paid in both points and money on a win).
+      // The constraint on a guess (0-based) of the live stage -- its
+      // challenge's, or a mixed boss's -- for the engine and the timer.
+      planEffect: (game, used) => planEffect(game || publicActiveGame(), used),
+      guessTimerSeconds: (game) => {
+        const live = game || publicActiveGame();
+        return live && planEffect(live, guessesUsed(live)) === "quickMode" ? 60 : 0;
+      },
+      syntheticBossForGuess: (game, used) => syntheticBossForChallenge(game, activeChallenge(game), used),
+      doubleOrNothingLimit: (game, world) => doubleOrNothingLimit(game || publicActiveGame(), world),
       stopVariant: (game, node) => {
         const variant = node && node.cuddleVariant;
         if (!variant) return null;
@@ -4484,11 +4667,13 @@
           return {
             kind: variant.kind,
             title: variant.title || challenge.title,
-            description: challengeDisplayDescription(game || publicActiveGame(), challenge),
-            reward: Math.max(0, Math.round(asNumber(challenge.reward, 0)))
+            description: stackedDescription(game || publicActiveGame(), variant),
+            reward: Math.round(stackedReward(variant)),
+            ease: variant.ease || null,
+            difficulty: stagePartDifficulty(variant)
           };
         }
-        return { kind: variant.kind, title: variant.title, description: variant.description };
+        return { kind: variant.kind, title: variant.title, description: variant.description, difficulty: stagePartDifficulty(variant) };
       },
       // The challenge stops the map can roll, described at the run's
       // current guess cap -- listed by the map key.

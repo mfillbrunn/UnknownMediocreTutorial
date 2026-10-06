@@ -53,9 +53,10 @@
   // rarity, and the allowed rarities depend on difficulty: the easier the
   // run, the stronger the start.
   var STARTER_TIERS = {
-    hard: ["rare", "epic"],
-    medium: ["epic", "legendary"],
-    easy: ["legendary"]
+    // Legendary rewards only come from beating a boss.
+    hard: ["rare"],
+    medium: ["rare", "epic"],
+    easy: ["epic"]
   };
 
   var CHALLENGES = [
@@ -154,7 +155,8 @@
     hiddenMargins: true,
     blueMode: true,
     fakeFeedback: true,
-    singleLie: true
+    singleLie: true,
+    arrowMode: true
   };
 
   function asNumber(value, fallback) {
@@ -321,8 +323,8 @@
     if (typeof game._generateUpgradeChoices !== "function") return { source: "normal", choices: [] };
     // Each draw is an ordinary between-round offer: one rarity rolled by
     // cuddle-economy-rarity-v8.js, every card from it. Redraw until the
-    // rarity is one this difficulty allows (Easy's Legendary is the long
-    // shot, about one draw in twenty).
+    // rarity is one this difficulty allows (Easy's Epic is the long
+    // shot, about one draw in ten).
     var offer = [];
     var tier = "";
     for (var attempt = 0; attempt < 400; attempt += 1) {
@@ -1215,8 +1217,7 @@
       "<div id=\"cuddleMoneyPayoutOverlay\" class=\"cuddle-money-overlay cuddle-money-payout-overlay\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"cuddleMoneyPayoutTitle\">"
       + "<div class=\"cuddle-money-confetti\" aria-hidden=\"true\">" + confetti + "</div>"
       + "<section class=\"cuddle-money-payout-card\">"
-      + "<span class=\"cuddle-money-kicker\">" + (payload.wasBoss ? "BOSS DEFEATED &middot; CASH OUT" : "ROUND " + escapeHtml(payload.round) + " CASH OUT") + "</span>"
-      + "<h2 id=\"cuddleMoneyPayoutTitle\">Every row pays</h2>"
+      + "<span class=\"cuddle-money-kicker\" id=\"cuddleMoneyPayoutTitle\">" + (payload.wasBoss ? "BOSS DEFEATED &middot; CASH OUT" : "ROUND " + escapeHtml(payload.round) + " CASH OUT") + "</span>"
       + payoutWordMarkup(payload)
       + challengeLine
       + "<div class=\"cuddle-money-bank\"><span>Wallet</span><strong id=\"cuddleMoneyBankCounter\">" + formatPoints(payload.from) + "</strong></div>"

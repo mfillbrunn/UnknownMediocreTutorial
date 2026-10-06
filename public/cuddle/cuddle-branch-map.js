@@ -57,14 +57,14 @@
     : [2, 5, 8, 11]);
 
   // How many cumulative run points are needed before a boss row can be
-  // entered at all -- on top of a path actually reaching it. The first
-  // boss is the same threshold on every difficulty; the later two scale
-  // with difficulty since a harder run also earns points faster.
+  // entered at all -- on top of a path actually reaching it. All three
+  // scale with difficulty, hard most steeply.
   var BOSS_GATE_ORDER = ["before-3", "before-7", "final"];
+  var MIXED_BOSS_CHANCE = 0.35;
   var BOSS_POINT_REQUIREMENTS = {
-    "before-3": { easy: 50, medium: 100, hard: 150 },
-    "before-7": { easy: 250, medium: 300, hard: 350 },
-    "final": { easy: 550, medium: 600, hard: 650 }
+    "before-3": { easy: 50, medium: 100, hard: 200 },
+    "before-7": { easy: 250, medium: 300, hard: 475 },
+    "final": { easy: 550, medium: 600, hard: 850 }
   };
 
   function difficultyOf(game) {
@@ -598,6 +598,13 @@
     }
     if (book && Array.isArray(book.BOSSES)) shuffled(book.BOSSES, game).forEach(addCandidate);
     candidates = candidates.slice(0, 2);
+    // One boss in three is mixed: every guess of its window carries a
+    // different constraint from the shared list (cuddle-quests.js).
+    var random = typeof game.random === "function" ? function roll() { return game.random(); } : Math.random;
+    if (candidates.length === 2 && book && typeof book.mixedBoss === "function" && random() < MIXED_BOSS_CHANCE) {
+      var turns = node.gate === "final" ? 3 : 2;
+      candidates[random() < 0.5 ? 0 : 1] = book.mixedBoss(random, turns);
+    }
     if (candidates.length < 2) {
       game.state.lastMessage = "Two distinct bosses could not be prepared.";
       returnToMap(game);
@@ -744,13 +751,17 @@
   var originalChooseUpgrade = proto.chooseUpgrade;
   proto.chooseUpgrade = function chooseUpgradeClosingWaystone() {
     var result = originalChooseUpgrade.apply(this, arguments);
-    if (this.state && this.state.status !== "upgrade") this.state.waystoneOffer = false;
+    if (this.state && this.state.status !== "upgrade") {
+      this.state.waystoneOffer = false;
+      this.state.legendaryOffer = false;
+    }
     return result;
   };
 
   var originalBeginRound = proto._beginRound;
   proto._beginRound = function beginRoundWithBranchPenalty() {
     this.state.waystoneOffer = false;
+    this.state.legendaryOffer = false;
     var result = originalBeginRound.apply(this, arguments);
     var branchMap = ensureBranchMap(this);
     // The map is the between-rounds screen now, so the old round-intro card
@@ -927,6 +938,11 @@
     };
   }
 
+  function branchMapRowOf(game, node) {
+    var map = game && game.state && game.state.branchMap;
+    return map && Array.isArray(map.rows) && node ? map.rows[Number(node.row)] : null;
+  }
+
   function stopCaption(node) {
     var kind = window.CuddleWorlds.kindForNode(node);
     if (kind === "final") return "Final Boss";
@@ -934,7 +950,15 @@
     if (kind === "mystery") return "Unknown";
     var variant = node.cuddleVariant;
     if (variant && (kind === "wordle" || kind === "challenge")) {
-      if (variant.kind === "mandatoryChallenge") return variant.title || "Challenge";
+      if (variant.kind === "mandatoryChallenge") {
+        // A stacked stop's full name ("Lucky Start + Little Lies + No
+        // Safety Net") overruns its neighbours; the map names its main
+        // challenge and counts the rest. The preview spells them all out.
+        var parts = String(variant.title || "Challenge").split(" + ");
+        if (parts.length < 2) return parts[0];
+        var main = parts.filter(function notEase(part) { return part !== "Lucky Start" && part !== "Themed"; })[0] || parts[0];
+        return main + " +" + (parts.length - 1);
+      }
       if (VARIANT_CAPTIONS[variant.kind]) return VARIANT_CAPTIONS[variant.kind];
     }
     if (node.type === "theme") return "Themed";
@@ -1344,7 +1368,10 @@
         brief.gets.unshift({ type: "points", text: "Greens pay double" });
         brief.risks.push("Solve within " + limit + " guesses or the run is lost");
       } else if (variantKind === "doubleOrNothing") {
-        brief.gets.unshift({ type: "money", text: "Stage money ×2 if solved by guess 3" });
+        var donRow = branchMapRowOf(game, node);
+        var donLimit = rebalance && typeof rebalance.doubleOrNothingLimit === "function"
+          ? rebalance.doubleOrNothingLimit(game, donRow && donRow.act) : 3;
+        brief.gets.unshift({ type: "money", text: "Stage money ×2 if solved by guess " + donLimit });
         brief.risks.push("Take longer and lose half the stage money");
       } else if (variantKind === "luckyStart") {
         brief.gets.unshift({ type: "perk", text: "One letter placed for you" });
@@ -1361,6 +1388,8 @@
     } else if (kind === "challenge") {
       brief.title = variant.title;
       brief.summary = "A Wordle with a rule against you. Beat it for a bonus.";
+      if (variant.ease === "luckyStart") brief.gets.push({ type: "perk", text: "One letter placed for you" });
+      if (variant.ease === "themedWordle") brief.gets.push({ type: "perk", text: "One theme revealed" });
       if (variant.reward > 0) {
         brief.gets.push({ type: "win", text: "On a win: +" + variant.reward + " pts · +$" + variant.reward });
       }
@@ -1380,8 +1409,12 @@
       brief.summary = "Hidden until you step onto it. Could be anything on the road.";
     } else if (kind === "boss" || kind === "final") {
       brief.title = kind === "final" ? "Final Boss" : node.gate === "before-7" ? "Boss II" : "Boss I";
-      brief.summary = "Choose one of two bosses. Beat it to keep its reward; its curse stays with you after.";
-      brief.gets.push({ type: "perk", text: "A permanent boss reward" });
+      if (kind === "final") {
+        brief.summary = "The last secret. Beat it to win the run.";
+      } else {
+        brief.summary = "Choose one of two bosses. Beat it to pick a legendary reward; its curse stays with you after.";
+        brief.gets.push({ type: "perk", text: "Pick 1 of 3 legendary rewards" });
+      }
       brief.risks.push("The boss's power works against you");
     }
     return brief;

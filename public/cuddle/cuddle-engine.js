@@ -55,7 +55,7 @@
   // trials constrain the round, not the colours).
   const MASK_SPAN_EFFECTS = new Set([
     "countOnly", "delayedFeedback", "hideFeedback",
-    "hiddenMargins", "blueMode", "fakeFeedback", "singleLie"
+    "hiddenMargins", "blueMode", "fakeFeedback", "singleLie", "arrowMode"
   ]);
 
   // FNV-1a. A hash, deliberately not this.random(): a span has to be
@@ -692,6 +692,23 @@
             learn[index] = "yellow";
           });
           break;
+
+        case "arrowMode": {
+          // No colour at all on the marked tiles: an arrow says whether the
+          // answer's letter in that spot comes earlier or later in the
+          // alphabet, and a dash that it matches -- the one thing learned.
+          const secret = String(this.state.secret || "").toUpperCase();
+          const guess = String(word || "").toUpperCase();
+          result.arrows = indices.map(index => ({
+            index,
+            dir: secret[index] === guess[index] ? "G" : secret[index] < guess[index] ? "L" : "R"
+          }));
+          indices.forEach(index => {
+            shown[index] = "unknown";
+            learn[index] = feedback[index] === "green" ? "green" : "unknown";
+          });
+          break;
+        }
 
         case "fakeFeedback":
         case "singleLie": {
@@ -1445,6 +1462,8 @@
         // before the guess was submitted.
         maskedIndices,
         bossCounts: masked.counts || null,
+        // Arrow Signs: the arrows its marked tiles show instead of colours.
+        umtArrows: masked.arrows || null,
         deferred: Boolean(masked.deferred),
         fakeFeedback: Boolean(masked.fake),
         // Whether the active boss's constraint actually applied to this
@@ -1736,7 +1755,7 @@
         id: "validPlay",
         icon: "🃏",
         title: "Make It Count",
-        description: "Submit any valid five-letter word this turn."
+        description: "Any valid word."
       };
     }
 
@@ -2152,7 +2171,10 @@
         // of one -- picked once, up front, distinct from each other.
         hiddenIndices: chosen.id === "hiddenMargins" ? shuffle([0, 1, 2, 3, 4], this.random).slice(0, 2) : null,
         // Quick Mode is the only boss the UI has to run a clock for.
-        secondsPerGuess: chosen.id === "quickMode" ? 60 : null
+        secondsPerGuess: chosen.id === "quickMode" ? 60 : null,
+        // A mixed boss: one constraint per guess, and the one it curses with.
+        plan: Array.isArray(chosen.plan) ? chosen.plan.slice() : undefined,
+        curseId: chosen.curseId || null
       };
       this.state.bossesSeen = unique([...(this.state.bossesSeen || []), chosen.id]);
       this.state.bossOffer = [];
@@ -2881,6 +2903,8 @@
         return `During the first ${guesses}, a green or yellow on the marked tiles shows as blue: the letter is in the answer, but you don't learn whether it's in the right spot. Every other tile shows its real colour.`;
       case "fakeFeedback":
         return `During the first ${guesses}, the marked tiles show a wrong colour. Every other tile shows its real colour.`;
+      case "arrowMode":
+        return `During the first ${guesses}, the marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.`;
       case "quickMode":
         return "You have one minute for each guess this round. A guess you run out of time on is lost.";
       case "shortHand":
@@ -2907,7 +2931,11 @@
         // missing, so every Preset Trial offer fell through to the generic
         // "lasts for the first N guesses" line above, which describes a
         // mechanic this boss doesn't have.
-        return "Before this round starts, the secret is narrowed to a short list of candidate words shown on screen -- the real one is among them. Your guess budget is cut by the size of that list.";
+        {
+          // Mirrors setupPresetWordsBoss's list size.
+          const words = Number(stage) <= 2 ? 2 : Number(stage) === 3 ? 3 : 4;
+          return `The answer is one of ${words} words shown on screen, but you get ${words} fewer guesses.`;
+        }
       case "questEndurance":
         // A standing pressure for the whole round, like shortHand; this case
         // was missing, so it fell through to the vague line below.
@@ -2921,6 +2949,17 @@
     const reward = option?.reward ? { ...option.reward } : option?.reward;
     if (reward?.id === "cullRare") {
       reward.description = "Remove three rare letters from the deck and from every future secret.";
+    }
+    if (Array.isArray(option?.plan)) {
+      const plan = option.plan.slice(0, Math.max(2, turns));
+      return {
+        ...option,
+        plan,
+        turns: plan.length,
+        stage,
+        description: window.CuddleQuestBook?.mixedBossDescription?.(plan) || option.description,
+        reward
+      };
     }
     return {
       ...option,
@@ -3053,6 +3092,13 @@
         break;
       case "fakeFeedback":
         markAll("purple");
+        break;
+      case "arrowMode":
+        // A dash teaches green; an arrow leaves the letter's colour unknown.
+        word.split("").forEach((letter, index) => {
+          if (spanIndices && !spanIndices.includes(index)) return;
+          if (feedback[index] !== "green") result[glyphForLetter(letter)] = "unknown";
+        });
         break;
       default:
         break;
@@ -3242,48 +3288,30 @@
     state.bossGatesDone = unique([...(state.bossGatesDone || []), boss.gate].filter(Boolean));
     state.lastClearedBossGate = boss.gate || null;
 
-    const reward = window.CuddleQuestBook?.getBossReward?.(boss.rewardId) || {
-      id: boss.rewardId,
-      icon: "🎁",
-      title: "Boss reward",
-      description: ""
-    };
-    if (reward.id === "cullRare") {
-      reward.description = "Remove three rare letters from the deck and from every future secret.";
-    }
-    // Position Peek can't do anything useful against the secret that was
-    // JUST solved to beat this boss -- bank it instead (via its own flag,
-    // NOT state.deferredRewards -- see _beginRound's note on why that array
-    // is a dead end here), so it actually fires once the next round's fresh
-    // secret exists.
-    let rewardMessage;
-    if (boss.rewardId === "revealGreen") {
-      state.pendingPositionPeek = true;
-      rewardMessage = "Position Peek will reveal a letter once your next round begins.";
-    } else {
-      rewardMessage = this._applyBossReward(boss.rewardId);
-    }
-    const record = {
-      ...reward,
-      bossTitle: boss.title,
-      round: Number(state.round || 1),
-      message: rewardMessage
-    };
-    state.bossRewardHistory.push(record);
-    state.bossRewardHistory = state.bossRewardHistory.slice(-12);
-    cuddleV3RecordReward(this, reward, "boss");
-    state.bossRewardNotice = {
-      icon: reward.icon || "🎁",
-      title: reward.title || "Boss reward",
-      bossTitle: boss.title || "Boss",
-      message: rewardMessage || reward.description || "Permanent boss reward received."
-    };
-    cuddleV3RefreshSynergies(this, true);
-
+    // The final boss ends the run, so it grants no reward: nothing follows
+    // it for a power to act on.
     if (finalBoss) {
       state.status = "won";
       state.failureReason = null;
-      state.lastMessage = `You beat the final boss: ${boss.title}.${rewardMessage ? ` ${rewardMessage}` : ""}`;
+      state.lastMessage = `You beat the final boss: ${boss.title}.`;
+      this.save();
+      return;
+    }
+
+    // A beaten boss no longer hands over a reward of its own: the player
+    // picks one of three Legendary rewards instead -- the only place a
+    // Legendary can come from. The offer can't be refreshed.
+    const legendary = window.CuddleEconomyRarityV8?.legendaryChoices?.(
+      this, 3, `${state.runId || "run"}:${state.bossesCleared}:legendary`
+    ) || [];
+    if (legendary.length) {
+      state.status = "upgrade";
+      state.upgradePhase = "round";
+      state.upgradeMilestone = null;
+      state.upgradeChoices = legendary;
+      state.waystoneOffer = true;
+      state.legendaryOffer = true;
+      state.lastMessage = `${boss.title || "Boss"} defeated. Choose a legendary reward.`;
       this.save();
       return;
     }
@@ -4839,13 +4867,14 @@
   // slot the first boss's decline already claimed. (No ratchet is ever
   // created for the final boss -- no round follows it.)
   // ------------------------------------------------------------------
-  const MASK_KINDS = new Set(["countOnly", "delayedFeedback", "hideFeedback", "hiddenMargins", "blueMode", "fakeFeedback"]);
+  const MASK_KINDS = new Set(["countOnly", "delayedFeedback", "hideFeedback", "hiddenMargins", "blueMode", "fakeFeedback", "arrowMode"]);
   const RATCHET_LABEL = {
     countOnly: "Count Only",
     delayedFeedback: "Delayed Feedback",
     hideFeedback: "Hide Feedback",
-    hiddenMargins: "Hidden Margins",
+    hiddenMargins: "Hidden Tiles",
     blueMode: "Blue Mode",
+    arrowMode: "Arrow Signs",
     fakeFeedback: "Fake Feedback",
     quickMode: "Quick Mode (that guess scores 0)",
     noMulligans: "Steady Hand (no mulligan just before it)",
@@ -4962,7 +4991,9 @@
     if (result?.ok && this.state?.boss) {
       // The boss you pick is the one whose power stays with you once it's
       // beaten (it used to be the boss you skipped, which read backwards).
-      this.state.boss.ratchetSourceId = offerBefore.some(option => option.id === bossId) ? bossId : null;
+      this.state.boss.ratchetSourceId = offerBefore.some(option => option.id === bossId)
+        ? (this.state.boss.curseId || bossId)
+        : null;
       if (this.state.boss.id === "presetWordsTrial") setupPresetWordsBoss(this);
       this.save();
     }
@@ -5097,10 +5128,13 @@
     // A quest curse's row has to carry a quest, or there is nothing to miss
     // and the row's icon promises an effect that never happens.
     const forceQuestNow = Boolean(forced && ["questTrial", "questEndurance"].includes(forced.bossId));
+    // An Endurance Trial guess from the stage's own challenge or a mixed
+    // boss carries a quest too, boss fight or not.
+    const planForced = window.CuddleRebalanceV5?.planEffect?.(this, nextGuess - 1) === "questEndurance";
 
     composedEnsureQuestForNextGuess.call(this);
 
-    if (!this.state.activeQuest && forceQuestNow && nextGuess <= this._effectiveMaxGuesses() && !this.isBossRound()) {
+    if (!this.state.activeQuest && ((forceQuestNow && !this.isBossRound()) || planForced) && nextGuess <= this._effectiveMaxGuesses()) {
       const feasibleWords = this.getFeasibleWords();
       this.state.activeQuest = window.CuddleQuestBook?.createQuest({
         feasibleWords,
@@ -5111,7 +5145,7 @@
         revealedPositions: this.state.revealedPositions,
         rareLetters: this.getRareLetters(),
         random: this.random
-      }) || { id: "validPlay", icon: "🃏", title: "Make It Count", description: "Submit any valid five-letter word this turn." };
+      }) || { id: "validPlay", icon: "🃏", title: "Make It Count", description: "Any valid word." };
       mega.ratchetForcedQuestGuessIndex = nextGuess;
     }
 
@@ -5185,6 +5219,47 @@
     return result;
   };
 
+  // A boss curse that masks the next guess marks its tiles before that
+  // guess is entered, just like a boss's own mask. The preview wears the
+  // same stand-in boss submitDraft below scores the guess through, so the
+  // marked tiles are exactly the ones that come back hidden.
+  const baseMaskSpanPreview = CuddleGame.prototype.maskSpanPreview;
+  function stageMaskPreview(game) {
+    if (game.state?.boss?.__umtSynthetic) return null;
+    const used = Number(game.state.guessesUsed || 0);
+    const synthetic = window.CuddleRebalanceV5?.syntheticBossForGuess?.(game, used);
+    if (!synthetic) return null;
+    const own = game.state.boss || null;
+    game.state.boss = Object.assign({}, own, synthetic);
+    let indices;
+    try {
+      indices = game.maskSpanFor(synthetic.id, used);
+    } finally {
+      game.state.boss = own;
+    }
+    return indices.length ? { effectId: synthetic.id, title: RATCHET_LABEL[synthetic.id] || "", icon: "", indices } : null;
+  }
+  CuddleGame.prototype.maskSpanPreview = function maskSpanPreviewWithRatchet() {
+    const mega = ensureMega(this);
+    if (mega.ratchetSwapInFlight || this.state?.status !== "playing") return baseMaskSpanPreview.call(this);
+    const ratchet = plannedRatchetForGuess(this, Number(this.state.guessesUsed || 0) + 1);
+    if (!ratchet || !MASK_KINDS.has(ratchet.bossId)) return stageMaskPreview(this) || baseMaskSpanPreview.call(this);
+    const own = this.state.boss || null;
+    this.state.boss = Object.assign({}, own, {
+      id: ratchet.bossId,
+      hiddenIndex: ratchet.hiddenIndex,
+      hiddenIndices: ratchet.hiddenIndices
+    });
+    let indices;
+    try {
+      indices = this.maskSpanFor(ratchet.bossId, Number(this.state.guessesUsed) || 0);
+    } finally {
+      this.state.boss = own;
+    }
+    if (!indices.length) return baseMaskSpanPreview.call(this);
+    return { effectId: ratchet.bossId, title: RATCHET_LABEL[ratchet.bossId] || "", icon: "", indices };
+  };
+
   // ------------------------------------------------------------------
   // submitDraft: joker resolution, the ratchet's per-guess effects, the
   // green-letter-count reward, the two new bosses' one-shot decline
@@ -5194,6 +5269,7 @@
   CuddleGame.prototype.submitDraft = function submitDraftMega() {
     const mega = ensureMega(this);
     const rawWord = this.getDraftWord();
+    const enduranceGuess = window.CuddleRebalanceV5?.planEffect?.(this, Number(this.state.guessesUsed || 0)) === "questEndurance";
 
     let jokerLetter = null;
     let jokerIndex = -1;
@@ -5344,7 +5420,7 @@
       mega.jokerCharges = Number(mega.jokerCharges || 0) + 1;
     }
 
-    if (this.isBossRound() && this.state.boss?.id === "questEndurance"
+    if (((this.isBossRound() && this.state.boss?.id === "questEndurance") || enduranceGuess)
         && entry && entry.questId && !entry.questComplete) {
       mega.handSizePenaltyThisRound = Number(mega.handSizePenaltyThisRound || 0) + 1;
       this.state.lastMessage = `${this.state.lastMessage || ""} Endurance Trial: -1 hand size this round.`.trim();

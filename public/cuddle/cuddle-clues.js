@@ -270,11 +270,21 @@
     if (sweep && sweep.secret === secret && Array.isArray(sweep.letters) && sweep.letters.length) {
       chips.push({ icon: "🔍", label: "Process of Elimination", text: "Not", letters: sweep.letters, tone: "sweep" });
     }
+    // Preset Trial boss: the answer is one of these words.
+    const preset = state.megaState && state.megaState.presetWords;
+    if (state.boss && state.boss.id === "presetWordsTrial" && Array.isArray(preset) && preset.length) {
+      chips.push({ icon: "scroll", label: "Preset Trial", text: "Answer is one of", words: preset, tone: "preset" });
+    }
     if (level(game, IDS.mistakeShield) > 0 && shieldApplies(game)) {
       chips.push({ icon: "shield", label: "Mistake Shield", text: record.shieldUsed ? "Shield used" : "Shield ready", tone: record.shieldUsed ? "spent" : "" });
     }
     return chips;
   }
+
+  // The clue strip is rebuilt on every render (each tile added or removed),
+  // so the newest ruled-out letter's flip is played once per letter, not on
+  // every redraw.
+  let flippedSweepKey = "";
 
   function renderClues(root, game) {
     if (!root || !game || !game.state || game.state.status !== "playing") return;
@@ -284,7 +294,14 @@
     const markup = `<div class="umt-clues" aria-label="Clues">${chips.map(chip => (
       `<span class="umt-clue${chip.tone ? ` is-${chip.tone}` : ""}" title="${escapeHtml(chip.label)}">`
       + `${icon(chip.icon)}<span class="umt-clue-text${chip.mono ? " is-mono" : ""}">${escapeHtml(chip.text)}`
-      + (chip.letters ? chip.letters.map((letter, i) => `<b class="umt-clue-letter${i === chip.letters.length - 1 ? " is-new" : ""}">${escapeHtml(letter)}</b>`).join("") : "")
+      + (chip.letters ? chip.letters.map((letter, i) => {
+        const latest = i === chip.letters.length - 1;
+        const key = `${game.state.secret}:${chip.letters.join("")}`;
+        const flip = latest && key !== flippedSweepKey;
+        if (flip) flippedSweepKey = key;
+        return `<b class="umt-clue-letter${latest ? " is-new" : ""}${flip ? " is-flipping" : ""}">${escapeHtml(letter)}</b>`;
+      }).join("") : "")
+      + (chip.words ? chip.words.map(word => `<b class="umt-clue-word">${escapeHtml(String(word).toUpperCase())}</b>`).join("") : "")
       + `</span></span>`
     )).join("")}</div>`;
     let strip = root.querySelector(".cuddle-play-strip");

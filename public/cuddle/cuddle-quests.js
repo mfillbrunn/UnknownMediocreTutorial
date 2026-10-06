@@ -91,21 +91,21 @@
       id: "fullSweep",
       icon: "🧹",
       title: "Full Sweep",
-      description: "Play a word with five different letters.",
+      description: "Five different letters.",
       test: ({ word }) => new Set(word).size === 5
     },
     {
       id: "rareLetters",
       icon: "💎",
       title: "Rare Find",
-      description: quest => `Use at least one rare letter: ${quest.rareLetters.join(", ")}.`,
+      description: quest => `Use a rare letter: ${quest.rareLetters.join(", ")}.`,
       test: ({ word, quest }) => quest.rareLetters.some(letter => word.includes(letter))
     },
     {
       id: "inOrder",
       icon: "📈",
       title: "In Order",
-      description: "Include an alphabetically rising run of three letters.",
+      description: "Three letters in a row rising A→Z.",
       test: ({ word }) => {
         for (let i = 0; i <= word.length - 3; i += 1) {
           if (word.charCodeAt(i) < word.charCodeAt(i + 1)
@@ -118,28 +118,28 @@
       id: "doubleTrouble",
       icon: "👯",
       title: "Double Trouble",
-      description: "Play a word containing a repeated letter.",
+      description: "Use a letter twice.",
       test: ({ word }) => new Set(word).size < word.length
     },
     {
       id: "wordChain",
       icon: "🔗",
       title: "Word Chain",
-      description: quest => `Start with ${quest.chainLetter}, the final letter of your previous guess.`,
+      description: quest => `Start with ${quest.chainLetter} (your last word's end).`,
       test: ({ word, quest }) => word.startsWith(quest.chainLetter)
     },
     {
       id: "fieldReport",
       icon: "📋",
       title: "Field Report",
-      description: "Reveal at least two colored tiles (green or yellow).",
+      description: "Get 2+ greens or yellows.",
       test: ({ feedback }) => feedback.filter(result => result !== "grey").length >= 2
     },
     {
       id: "hardModeStreak",
       icon: "🔥",
       title: "Hold the Clues",
-      description: "Keep every known green in place, move known yellows away from ruled-out positions, and avoid eliminated grey letters.",
+      description: "Keep greens, move yellows, skip greys.",
       test: ({
         word,
         history = [],
@@ -237,14 +237,14 @@
       id: "vowelRun",
       icon: "🎵",
       title: "Vowel Run",
-      description: "Play a word containing at least three vowels.",
+      description: "Use 3+ vowels.",
       test: ({ word }) => word.split("").filter(letter => VOWELS.has(letter)).length >= 3
     },
     {
       id: "greenLight",
       icon: "🟩",
       title: "Green Light",
-      description: "Find at least one green tile.",
+      description: "Get a green.",
       test: ({ feedback }) => feedback.includes("green")
     }
   ];
@@ -284,6 +284,74 @@
     }
   ];
 
+  // The one list of constraints bosses and challenges are built from. Each
+  // works on single guesses (the "per guess" kinds) or on a whole round:
+  //   boss      -- can be a boss on its own
+  //   challenge -- can be a stage challenge (reward = its $ bonus)
+  //   mix       -- can be one guess of a mixed boss (Chimera)
+  //   curse     -- can be the curse a beaten boss leaves on later stages
+  // `text` reads after "Guess N:" or "On your first guesses,".
+  const CONSTRAINTS = Object.freeze([
+    { id: "countOnly", icon: "🔢", title: "Count Only", kind: "mask", boss: true, challenge: true, mix: true, curse: true, reward: 28,
+      text: "the marked tiles only say how many of them are green and yellow, not which." },
+    { id: "delayedFeedback", icon: "⏳", title: "Delayed Feedback", kind: "mask", boss: true, challenge: true, mix: true, curse: true, reward: 26,
+      text: "the marked tiles show their colours one guess late." },
+    { id: "hiddenMargins", icon: "🫥", title: "Hidden Tiles", kind: "mask", boss: true, challenge: true, mix: true, curse: true, reward: 24,
+      text: "two marked positions show no colour (the same two all stage)." },
+    { id: "blueMode", icon: "🔵", title: "Blue Mode", kind: "mask", boss: true, challenge: true, mix: true, curse: true, reward: 26,
+      text: "a green or yellow on the marked tiles shows blue: in the word, place unknown." },
+    { id: "fakeFeedback", icon: "🤥", title: "Fake Feedback", kind: "mask", boss: true, challenge: true, mix: true, curse: true, reward: 20,
+      text: "the marked tiles show a wrong colour." },
+    { id: "arrowMode", icon: "🧭", title: "Arrow Signs", kind: "mask", boss: true, challenge: true, mix: true, curse: true, reward: 26,
+      text: "the marked tiles show only an alphabet arrow toward the answer's letter; a dash means green." },
+    { id: "quickMode", icon: "⏱️", title: "Quick Mode", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 24,
+      text: "you have one minute; run out and the guess is lost." },
+    { id: "noMulligans", icon: "✋", title: "Steady Hand", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 23,
+      text: "no mulligans before it." },
+    { id: "questEndurance", icon: "🏃", title: "Endurance Trial", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 26,
+      text: "a quest rides on it; miss it and your hand is one letter smaller for the stage." },
+    { id: "perfectOpener", icon: "🧩", title: "Perfect Opener", kind: "rule", boss: false, challenge: true, mix: true, curse: false, reward: 22,
+      text: "the word must use five different letters." },
+    { id: "consonantCrunch", icon: "🥨", title: "Consonant Crunch", kind: "rule", boss: false, challenge: true, mix: true, curse: false, reward: 25,
+      text: "the word may contain at most one vowel." },
+    { id: "shortHand", icon: "✂️", title: "Short Hand", kind: "round", boss: true, challenge: false, mix: false, curse: true, reward: 0,
+      text: "ten consonants not in the answer leave your deck, and you get four guesses." },
+    { id: "presetWordsTrial", icon: "🎴", title: "Preset Trial", kind: "round", boss: true, challenge: false, mix: false, curse: true, reward: 0,
+      text: "the answer is one of a few words shown on screen, but you get that many fewer guesses." },
+    { id: "rareWord", icon: "💎", title: "Rare Word", kind: "round", boss: false, challenge: true, mix: false, curse: false, reward: 40,
+      text: "the answer is a rare, unusual word." }
+  ]);
+
+  function getConstraint(id) {
+    return CONSTRAINTS.find(item => item.id === id) || null;
+  }
+
+  // A mixed boss: every guess of its window carries a different
+  // constraint, drawn from the "mix" kinds. Its curse is one of them.
+  function mixedBoss(random = Math.random, turns = 2) {
+    const pool = CONSTRAINTS.filter(item => item.mix);
+    const plan = shuffle(pool, random).slice(0, Math.max(2, turns)).map(item => item.id);
+    const cursable = plan.filter(id => getConstraint(id).curse);
+    const curseId = cursable[Math.floor(random() * cursable.length)] || "countOnly";
+    return {
+      id: "chimera",
+      icon: "🧬",
+      title: "Chimera",
+      plan,
+      curseId,
+      turns: plan.length,
+      description: mixedBossDescription(plan),
+      rewardId: "questCadence"
+    };
+  }
+
+  function mixedBossDescription(plan) {
+    return plan.map((id, index) => {
+      const item = getConstraint(id);
+      return item ? `Guess ${index + 1}: ${item.title} -- ${item.text}` : "";
+    }).filter(Boolean).join(" ");
+  }
+
   // Boss rounds. Each one applies a feedback/timing constraint for part of
   // the round and carries a fixed permanent reward, shown on the option card
   // before the player commits -- so the choice is between two known
@@ -310,12 +378,12 @@
       rewardId: "doubleMulligans"
     },
     {
-      id: "hideFeedback",
-      icon: "🙈",
-      title: "Hide Feedback",
-      description: "For the first few guesses, one marked position hides its feedback. It behaves normally afterward.",
-      turns: 6,
-      rewardId: "biggerMulligans"
+      id: "arrowMode",
+      icon: "🧭",
+      title: "Arrow Signs",
+      description: "For the first guesses, the marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.",
+      turns: 3,
+      rewardId: "questCadence"
     },
     {
       id: "blueMode",
@@ -351,8 +419,8 @@
     },
     {
       id: "hiddenMargins",
-      icon: "🕶️",
-      title: "Hidden Margins",
+      icon: "🫥",
+      title: "Hidden Tiles",
       description: "For the first few guesses, two marked positions hide their feedback. They behave normally afterward.",
       turns: 6,
       rewardId: "goldenThread"
@@ -379,7 +447,7 @@
       id: "presetWordsTrial",
       icon: "🎴",
       title: "Preset Trial",
-      description: "A handful of candidate words are chosen for you up front -- the secret is one of them. Only your remaining guesses are left to land it.",
+      description: "The answer is one of a few words shown on screen, but you get that many fewer guesses.",
       turns: 0,
       rewardId: "umtAllThemes"
     }
@@ -574,7 +642,7 @@
         id: "validPlay",
         icon: "🃏",
         title: "Make It Count",
-        description: "Submit any valid five-letter word this turn."
+        description: "Any valid word."
       };
     }
     return candidates[Math.floor(random() * candidates.length)];
@@ -603,6 +671,10 @@
     REWARDS,
     BOSSES,
     BOSS_REWARDS,
+    CONSTRAINTS,
+    getConstraint,
+    mixedBoss,
+    mixedBossDescription,
     createQuest,
     evaluateQuest,
     getReward,

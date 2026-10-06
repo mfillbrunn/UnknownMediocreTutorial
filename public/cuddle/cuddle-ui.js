@@ -432,7 +432,10 @@
 
   function syncQuickModeTimer() {
     const state = currentState();
-    const seconds = Number(state?.boss?.secondsPerGuess) || 0;
+    // A Quick Mode boss runs the clock all fight; a Quick Mode guess of a
+    // challenge or a mixed boss runs it for that guess only.
+    const planSeconds = () => Number(window.CuddleRebalanceV5?.guessTimerSeconds?.(game)) || 0;
+    const seconds = Number(state?.boss?.secondsPerGuess) || planSeconds();
     const running = Boolean(
       seconds && state.status === "playing" && !state.roundIntroPending && !state.pendingRoundEnd
     );
@@ -449,7 +452,7 @@
     if (quickModeTimer) return;
     quickModeTimer = setInterval(() => {
       const live = currentState();
-      if (!live || live.status !== "playing" || !live.boss?.secondsPerGuess) {
+      if (!live || live.status !== "playing" || !(live.boss?.secondsPerGuess || planSeconds())) {
         clearQuickModeTimer();
         return;
       }
@@ -472,6 +475,15 @@
     const left = Math.max(0, Math.ceil((quickModeDeadline - Date.now()) / 1000));
     el.textContent = `${left}s`;
     el.classList.toggle("is-urgent", left <= 10);
+  }
+
+  function bestWinsLine() {
+    const best = bestWins();
+    const keys = Object.keys(DIFFICULTY_NAMES).filter(key => key in best);
+    if (!keys.length) return "";
+    return `<p class="cuddle-best-wins"><span>Best wins</span>${Object.keys(DIFFICULTY_NAMES).map(key => (
+      `<b>${DIFFICULTY_NAMES[key]} ${key in best ? Number(best[key]).toLocaleString() : "—"}</b>`
+    )).join("")}</p>`;
   }
 
   function renderLanding() {
@@ -509,6 +521,7 @@
               <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-medium">Medium</button>
               <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-hard">Hard</button>
             </div>
+            ${bestWinsLine()}
           </div>
         </section>
         ${rulesOpen ? renderRulesOverlay() : ""}
@@ -718,13 +731,18 @@
         } else {
           // Alphabet Compass (cuddle-compass.js): a small arrow toward the
           // secret's letter in this spot, or a dash when it matches.
-          const compass = Array.isArray(history?.umtCompass)
-            ? history.umtCompass.find(mark => mark && mark.index === column)
+          // Arrow Signs (a boss or challenge) puts the same marks on its
+          // tiles in place of their colours.
+          const arrow = Array.isArray(history?.umtArrows)
+            ? history.umtArrows.find(mark => mark && mark.index === column)
             : null;
+          const compass = arrow || (Array.isArray(history?.umtCompass)
+            ? history.umtCompass.find(mark => mark && mark.index === column)
+            : null);
           const compassMark = compass
             ? `<span class="umt-compass-mark is-${compass.dir === "L" ? "left" : compass.dir === "R" ? "right" : "match"}" title="${compass.dir === "L" ? "The secret's letter here comes earlier in the alphabet" : compass.dir === "R" ? "The secret's letter here comes later in the alphabet" : "This letter matches the secret here"}">${compass.dir === "L" ? "&larr;" : compass.dir === "R" ? "&rarr;" : "&ndash;"}</span>`
             : "";
-          tiles.push(`<span class="cuddle-tile${tileClass}${compass ? " has-compass" : ""}"${moneyBadge}>${escapeHtml(letter)}${compassMark}</span>`);
+          tiles.push(`<span class="cuddle-tile${tileClass}${compass ? " has-compass" : ""}${arrow ? " is-arrow-sign" : ""}"${moneyBadge}>${escapeHtml(letter)}${compassMark}</span>`);
         }
       }
       // Count Only replaces the row's score with the only thing it tells you:
@@ -906,8 +924,8 @@
         title="${escapeHtml(details)}">
         <span class="cuddle-card-letter">${escapeHtml(group.glyph)}</span>
         ${unknown ? `<span class="cuddle-card-unknown" aria-hidden="true">?</span>` : ""}
-        ${positionIndex >= 0 ? `<span class="cuddle-card-position" aria-hidden="true">${positionIndex + 1}</span>` : ""}
-        ${showBadge ? `<span class="cuddle-card-count" aria-hidden="true">${badgeValue}</span>` : ""}
+        ${positionIndex >= 0 ? `<span class="cuddle-card-position" aria-hidden="true">#${positionIndex + 1}</span>` : ""}
+        ${showBadge ? `<span class="cuddle-card-count" aria-hidden="true">×${badgeValue}</span>` : ""}
       </button>`;
   }
 
@@ -995,7 +1013,7 @@
   function bossCurseNote(option, isFinal) {
     if (!option || isFinal) return "";
     const info = typeof window.CuddleRebalanceV5?.burdenInfo === "function"
-      ? window.CuddleRebalanceV5.burdenInfo(option.id)
+      ? window.CuddleRebalanceV5.burdenInfo(option.curseId || option.id)
       : null;
     if (!info) return "";
     // Mirrors pickRatchetGuessIndices: the first boss's curse claims one of
@@ -1013,8 +1031,8 @@
           <span class="cuddle-modal-kicker">${isFinal ? "FINAL BOSS" : "BOSS ROUND"}</span>
           <h2 id="cuddleBossTitle">${isFinal ? "One last secret" : "Choose your boss"}</h2>
           <p>${isFinal
-            ? "Beat this round to win the run. Tap + to see the permanent reward it gives."
-            : "Beat a boss to keep its reward (+). Its curse (−) comes with it for the rest of the run."}</p>
+            ? "Beat this round to win the run."
+            : "Beat a boss to choose 1 of 3 legendary rewards. Its curse (−) stays with you for the rest of the run."}</p>
           <div class="cuddle-choice-grid">
             ${options.map(option => bossCardMarkup(option, isFinal)).join("")}
           </div>
@@ -1028,7 +1046,7 @@
   // button now that tapping the card opens those notes instead.
   const BURDEN_ICON = Object.freeze({
     countOnly: "numbers", delayedFeedback: "hourglass", hideFeedback: "seeNoEvil",
-    hiddenMargins: "fog", blueMode: "blueDot", fakeFeedback: "liar", quickMode: "stopwatch",
+    hiddenMargins: "fog", blueMode: "blueDot", fakeFeedback: "liar", arrowMode: "compass", quickMode: "stopwatch",
     noMulligans: "noEntry", shortHand: "hand", questTrial: "clipboard",
     presetWordsTrial: "scroll", questEndurance: "runner"
   });
@@ -1045,8 +1063,10 @@
 
   function bossCardMarkup(option, isFinal) {
     const id = String(option.id);
-    const reward = option.reward || null;
-    const burden = bossCurseNote(option, isFinal);
+    // A boss's reward is no longer its own: beating any boss opens a pick
+    // of three Legendary rewards, so the card shows only its curse.
+    const reward = null;
+    const burden = isFinal ? "" : bossCurseNote(option, isFinal);
     const open = bossTraitOpen.bossId === id ? bossTraitOpen.trait : null;
     const bonus = reward ? pendingSynergyFor(reward.id) : null;
     const trait = (kind, label, iconHtml, extraClass = "") => `
@@ -1079,7 +1099,7 @@
         <small>${goldenMoney(escapeHtml(option.description))}</small>
         <div class="umt-boss-traits">
           ${reward ? trait("reward", `Reward: ${reward.title}. Tap to read.`, rewardArt, bonus ? " has-bonus" : "") : ""}
-          ${burden ? trait("burden", "Its curse for the rest of the run. Tap to read.", iconSvgFor(BURDEN_ICON[id] || "skull")) : ""}
+          ${burden ? trait("burden", "Its curse for the rest of the run. Tap to read.", iconSvgFor(BURDEN_ICON[option.curseId || id] || "skull")) : ""}
           ${bonus ? interactionBonusBadge(reward.id) : ""}
         </div>
         ${info}
@@ -1148,14 +1168,19 @@
         ? "Refresh unavailable"
         : `Refresh choices ($${refreshCost})`;
     const waystone = typeof game.isWaystoneUpgrade === "function" && game.isWaystoneUpgrade();
-    const kicker = milestone
+    const legendary = Boolean(state.legendaryOffer);
+    const kicker = legendary
+      ? "BOSS DEFEATED"
+      : milestone
       ? `POINTS MILESTONE · ${state.upgradeMilestone}`
       : startingRewards
         ? "STARTING REWARDS"
         : waystone
           ? "FREE UPGRADE"
           : `ROUND ${summary?.round || state.round} CLEARED`;
-    const heading = milestone
+    const heading = legendary
+      ? "Choose a legendary reward"
+      : milestone
       ? "Choose a bonus upgrade"
       : startingRewards
         ? "Choose a starting reward"
@@ -1188,7 +1213,7 @@
           </div>
           <div class="cuddle-upgrade-refresh${refreshCost === null ? " is-no-refresh" : ""}">
             ${refreshCost === null
-              ? `<small>${waystone ? "A free upgrade's offer is fixed: no refreshes." : "These choices can't be refreshed."}</small>`
+              ? `<small>${legendary ? "Legendary picks can't be refreshed." : waystone ? "A free upgrade's offer is fixed: no refreshes." : "These choices can't be refreshed."}</small>`
               : `<button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
               ${escapeHtml(refreshLabel)}
             </button>
@@ -1273,7 +1298,243 @@
     }
   }
 
+  // -- Winning a run -------------------------------------------------------
+  // Every won run is kept in this browser (score, money, difficulty, date),
+  // apart from the run save itself so a new run never wipes it. The win
+  // screen compares against the best earlier win on the same difficulty.
+  var RECORDS_KEY = "umtCuddleRecords";
+  var DIFFICULTY_NAMES = { easy: "Easy", medium: "Medium", hard: "Hard" };
+
+  function readRecords() {
+    try {
+      const list = JSON.parse(localStorage.getItem(RECORDS_KEY) || "[]");
+      return Array.isArray(list) ? list.filter(item => item && Number.isFinite(Number(item.score))) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writeRecords(list) {
+    try {
+      localStorage.setItem(RECORDS_KEY, JSON.stringify(list.slice(0, 60)));
+    } catch {
+      // Private mode or full storage: the win still shows, it just isn't kept.
+    }
+  }
+
+  function runDifficulty(state) {
+    const value = String(state?.megaState?.difficulty || "hard").toLowerCase();
+    return DIFFICULTY_NAMES[value] ? value : "hard";
+  }
+
+  // Records a won run once (keyed by its run id) and says how it ranks.
+  function recordWin(state) {
+    const records = readRecords();
+    const runId = String(state.runId || state.startedAt || "run");
+    const difficulty = runDifficulty(state);
+    let entry = records.find(item => item.runId === runId);
+    if (!entry) {
+      entry = {
+        runId,
+        score: Number(state.score) || 0,
+        money: Number(state.cuddleMoney) || 0,
+        difficulty,
+        at: Date.now(),
+        celebrated: false
+      };
+      records.push(entry);
+      records.sort((a, b) => b.score - a.score);
+      writeRecords(records);
+    }
+    const sameDifficulty = records.filter(item => item.difficulty === difficulty);
+    const earlier = sameDifficulty.filter(item => item.runId !== runId);
+    const previousBest = earlier.reduce((best, item) => Math.max(best, Number(item.score) || 0), 0);
+    return {
+      entry,
+      records,
+      difficulty,
+      previousBest,
+      isBest: !earlier.length || entry.score > previousBest,
+      top: sameDifficulty.slice(0, 3)
+    };
+  }
+
+  function bestWins() {
+    const best = {};
+    readRecords().forEach(item => {
+      if (!(item.difficulty in best) || item.score > best[item.difficulty]) best[item.difficulty] = item.score;
+    });
+    return best;
+  }
+
+  // The celebration plays once per won run, the first time its screen is
+  // free of the final cash-out. Renders rebuild the overlay, so every
+  // animation carries the elapsed time as a negative delay (--win-t) and
+  // resumes instead of restarting.
+  var WIN_TIMING = Object.freeze({ tiles: 200, tileStep: 260, countFrom: 1900, countFor: 1500 });
+  var winCelebration = { runId: null, startedAt: 0, frame: 0 };
+  function reducedMotion() {
+    return typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  function finalPayoutShowing() {
+    const money = currentState()?.cuddleMoneyMode;
+    return Boolean((money && money.pendingPayout && money.pendingPayout.id !== money.lastAnimatedPayoutId)
+      || document.getElementById("cuddleMoneyPayoutOverlay")
+      || window.CuddleMoneyMode?.payoutActive?.());
+  }
+
+  // Milliseconds into the celebration, or null when it isn't playing.
+  function winElapsed(state, standing) {
+    const runId = String(state.runId || state.startedAt || "run");
+    if (winCelebration.runId === runId) return Date.now() - winCelebration.startedAt;
+    if (standing.entry.celebrated || reducedMotion() || finalPayoutShowing()) return null;
+    standing.entry.celebrated = true;
+    writeRecords(standing.records);
+    winCelebration.runId = runId;
+    winCelebration.startedAt = Date.now();
+    setTimeout(launchWinConfetti, WIN_TIMING.countFrom - 150);
+    cancelAnimationFrame(winCelebration.frame);
+    winCelebration.frame = requestAnimationFrame(tickWinScore);
+    return 0;
+  }
+
+  function tickWinScore() {
+    const el = document.querySelector("[data-win-score]");
+    const elapsed = Date.now() - winCelebration.startedAt;
+    const progress = Math.max(0, Math.min(1, (elapsed - WIN_TIMING.countFrom) / WIN_TIMING.countFor));
+    if (el) {
+      const final = Number(el.dataset.winScore) || 0;
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(final * eased).toLocaleString();
+    }
+    if (progress < 1) winCelebration.frame = requestAnimationFrame(tickWinScore);
+  }
+
+  // Confetti in the board's own colours: small rounded tiles bursting up
+  // from the middle of the screen, then drifting down.
+  function launchWinConfetti() {
+    // On the page itself: inside the Cuddle screen it sat under the
+    // overlay's dimmed backdrop.
+    const host = document.body;
+    if (!host || reducedMotion()) return;
+    document.querySelectorAll(".cuddle-win-confetti").forEach(el => el.remove());
+    const canvas = document.createElement("canvas");
+    canvas.className = "cuddle-win-confetti";
+    canvas.setAttribute("aria-hidden", "true");
+    host.appendChild(canvas);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) { canvas.remove(); return; }
+    const ratio = Math.min(2, window.devicePixelRatio || 1);
+    const size = () => {
+      canvas.width = Math.round(window.innerWidth * ratio);
+      canvas.height = Math.round(window.innerHeight * ratio);
+    };
+    size();
+    const colours = ["#6bd68f", "#3aa76d", "#f6c956", "#c6a8ff", "#fff3cf"];
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const pieces = Array.from({ length: 150 }, (_, index) => {
+      const fromLeft = index % 2 === 0;
+      return {
+        x: width * (fromLeft ? 0.06 : 0.94),
+        y: height * 0.72,
+        vx: (fromLeft ? 1 : -1) * (0.8 + Math.random() * 3.6),
+        vy: -(6 + Math.random() * 7),
+        size: 6 + Math.random() * 7,
+        spin: (Math.random() - 0.5) * 0.3,
+        turn: Math.random() * Math.PI,
+        sway: Math.random() * Math.PI * 2,
+        colour: colours[index % colours.length]
+      };
+    });
+    const started = performance.now();
+    const life = 4200;
+    const step = (now) => {
+      const t = now - started;
+      if (t > life || !canvas.isConnected) { canvas.remove(); return; }
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+      ctx.globalAlpha = t > life - 800 ? Math.max(0, (life - t) / 800) : 1;
+      pieces.forEach(piece => {
+        piece.vy += 0.22;
+        piece.vx *= 0.985;
+        piece.vy = Math.min(piece.vy, 4.2);
+        piece.sway += 0.06;
+        piece.x += piece.vx + Math.sin(piece.sway) * 0.6;
+        piece.y += piece.vy;
+        piece.turn += piece.spin;
+        ctx.save();
+        ctx.translate(piece.x, piece.y);
+        ctx.rotate(piece.turn);
+        ctx.scale(1, Math.abs(Math.cos(piece.turn * 1.7)) * 0.7 + 0.3);
+        ctx.fillStyle = piece.colour;
+        ctx.beginPath();
+        if (typeof ctx.roundRect === "function") ctx.roundRect(-piece.size / 2, -piece.size / 2, piece.size, piece.size, 2);
+        else ctx.rect(-piece.size / 2, -piece.size / 2, piece.size, piece.size);
+        ctx.fill();
+        ctx.restore();
+      });
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  function renderWinOverlay(state) {
+    const totalRounds = window.CuddleEngine.THRESHOLDS.length;
+    const removedLetters = state.removedLetters || [];
+    const standing = recordWin(state);
+    const elapsed = winElapsed(state, standing);
+    const playing = elapsed !== null && elapsed < WIN_TIMING.countFrom + WIN_TIMING.countFor + 1600;
+    const score = Number(state.score) || 0;
+    const shownScore = playing && elapsed < WIN_TIMING.countFrom ? 0 : score;
+    const difficultyName = DIFFICULTY_NAMES[standing.difficulty];
+    const best = standing.isBest
+      ? `<p class="cuddle-win-best is-new">New best on ${difficultyName}${standing.previousBest ? ` · was ${standing.previousBest.toLocaleString()}` : ""}</p>`
+      : `<p class="cuddle-win-best">Best on ${difficultyName}: ${standing.previousBest.toLocaleString()}</p>`;
+    const top = standing.top.length > 1
+      ? `<ol class="cuddle-win-records" aria-label="Best ${difficultyName} wins">${standing.top.map(item => `
+          <li class="${item.runId === standing.entry.runId ? "is-this-run" : ""}">
+            <b>${Number(item.score).toLocaleString()}</b>
+            <span>${new Date(item.at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+          </li>`).join("")}</ol>`
+      : "";
+    return `
+      <div class="cuddle-overlay cuddle-win-overlay${playing ? " is-celebrating" : ""}" role="dialog" aria-modal="true" aria-labelledby="cuddleEndTitle"
+        style="--win-t:${playing ? -elapsed : -99999}ms">
+        <section class="cuddle-modal cuddle-end-modal cuddle-win-modal">
+          <span class="cuddle-modal-kicker">${totalRounds} ROUNDS CLEARED · ${difficultyName.toUpperCase()}</span>
+          <div class="cuddle-win-row" aria-hidden="true">
+            ${"CHAMP".split("").map((letter, index) => `<span class="cuddle-win-tile" style="--i:${index}">${letter}</span>`).join("")}
+          </div>
+          <h2 id="cuddleEndTitle">You beat Cuddle</h2>
+          <div class="cuddle-win-score">
+            <span>Final score</span>
+            <strong data-win-score="${score}">${shownScore.toLocaleString()}</strong>
+          </div>
+          ${best}
+          ${top}
+          <div class="cuddle-end-stats">
+            <div><span>Money</span><strong>$${Number(state.cuddleMoney || 0).toLocaleString()}</strong></div>
+            <div><span>Rounds</span><strong>${state.round}/${totalRounds}</strong></div>
+            <div><span>Removed letters</span><strong>${removedLetters.length ? escapeHtml(removedLetters.join(" ")) : "—"}</strong></div>
+          </div>
+          <details class="cuddle-upgrade-details">
+            <summary>Final upgrades</summary>
+            <ul>${game.getUpgradeSummary().map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
+          </details>
+          <p id="cuddleShareStatus" class="cuddle-share-status" role="status" aria-live="polite"></p>
+          <div class="cuddle-modal-actions">
+            <button class="cuddle-btn cuddle-btn-primary" data-action="share-run">Share round</button>
+            <button class="cuddle-btn" data-action="run-menu">Start another run</button>
+            <button class="cuddle-btn cuddle-btn-ghost" data-action="back">Main menu</button>
+          </div>
+        </section>
+      </div>`;
+  }
+
   function renderEndOverlay(state, won) {
+    if (won) return renderWinOverlay(state);
     const totalRounds = window.CuddleEngine.THRESHOLDS.length;
     const removedLetters = state.removedLetters || [];
     return `

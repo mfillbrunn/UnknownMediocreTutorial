@@ -3510,6 +3510,10 @@
   min-width: 0;
   padding: 8px 12px 8px 8px;
 }
+/* Concurrent quests stack one per line; the first keeps its reroll beside it. */
+#cuddleScreen .cuddle-play-strip > .cuddle-quest-inline ~ .cuddle-quest-inline {
+  flex-basis: 100%;
+}
 #cuddleScreen .cuddle-play-strip > .cuddle-play-theme-badge {
   flex: 1 1 100%;
   gap: 6px 10px;
@@ -3682,6 +3686,15 @@
 /* Process of Elimination: each ruled-out consonant as a small grey tile,
    the one just ruled out flipping in. */
 .umt-clue.is-sweep .umt-clue-text { display: inline-flex; align-items: center; gap: 4px; }
+.umt-clue.is-preset .umt-clue-text { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.umt-clue-word {
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: rgba(246, 201, 86, 0.18);
+  color: #fff3cf;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
 .umt-clue-letter {
   display: inline-grid;
   place-items: center;
@@ -3694,12 +3707,13 @@
   font-size: 0.72rem;
   font-weight: 900;
 }
-.umt-clue-letter.is-new { background: #6a6a70; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35); animation: umt-clue-letter-in 520ms ease-out both; }
+.umt-clue-letter.is-new { background: #6a6a70; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35); }
+.umt-clue-letter.is-flipping { animation: umt-clue-letter-in 520ms ease-out both; }
 @keyframes umt-clue-letter-in {
   0% { transform: rotateX(90deg); }
   100% { transform: rotateX(0); }
 }
-@media (prefers-reduced-motion: reduce) { .umt-clue-letter.is-new { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .umt-clue-letter.is-flipping { animation: none; } }
 
 #cuddleScreen .cuddle-upgrade-modal > .cuddle-upgrade-wallet {
   position: sticky;
@@ -3815,3 +3829,203 @@
   }
   .cuddle-quest-stamp { display: none; }
 }
+
+/* Arrow Signs (boss or challenge): the tile carries no colour, only the
+   alphabet arrow -- so it drops the withheld-result "?" and its stripes,
+   and the arrow is drawn larger than the Alphabet Compass reward's pill. */
+#cuddleScreen .cuddle-tile.is-unknown.is-arrow-sign {
+  border-color: rgba(165, 180, 252, 0.7);
+  background: rgba(36, 33, 58, 0.95);
+}
+#cuddleScreen .cuddle-tile.is-arrow-sign::after { content: none; }
+.cuddle-tile.is-arrow-sign .umt-compass-mark {
+  min-width: 30px;
+  height: 20px;
+  font-size: 16px;
+}
+
+/* Winning a run (cuddle-ui.js renderWinOverlay): five tiles spell CHAMP and
+   flip green one after another, confetti bursts, and the final score
+   counts up. Every delay is offset by --win-t (negative ms already played)
+   so a re-render resumes the sequence instead of restarting it. */
+.cuddle-win-overlay {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(246, 201, 86, 0.22), transparent 55%),
+    rgba(9, 8, 16, 0.82);
+}
+.cuddle-win-modal {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(246, 201, 86, 0.55);
+  box-shadow: 0 0 0 1px rgba(246, 201, 86, 0.15), 0 24px 80px rgba(0, 0, 0, 0.55), 0 0 60px rgba(246, 201, 86, 0.18);
+}
+.cuddle-win-row {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin: 18px 0 14px;
+}
+.cuddle-win-tile {
+  display: grid;
+  place-items: center;
+  width: clamp(44px, 13vw, 58px);
+  aspect-ratio: 1;
+  border: 2px solid #6bd68f;
+  border-radius: 10px;
+  background: #3aa76d;
+  color: #fff;
+  font-size: clamp(1.35rem, 5vw, 1.7rem);
+  font-weight: 900;
+  box-shadow: 0 6px 18px rgba(58, 167, 109, 0.35);
+}
+.cuddle-win-modal h2 { margin: 6px 0 2px; }
+.cuddle-win-score {
+  display: grid;
+  gap: 2px;
+  margin: 12px 0 6px;
+}
+.cuddle-win-score span {
+  color: var(--cuddle-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.cuddle-win-score strong {
+  color: #f6c956;
+  font-size: clamp(2.6rem, 12vw, 3.6rem);
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 24px rgba(246, 201, 86, 0.35);
+}
+.cuddle-win-best {
+  display: inline-block;
+  margin: 4px 0 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: var(--cuddle-muted);
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+.cuddle-win-best.is-new {
+  border: 1px solid rgba(107, 214, 143, 0.6);
+  background: rgba(107, 214, 143, 0.14);
+  color: #8be8a8;
+}
+.cuddle-win-records {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: win-rank;
+}
+.cuddle-win-records li {
+  display: grid;
+  gap: 1px;
+  min-width: 72px;
+  padding: 6px 10px;
+  border: 1px solid var(--cuddle-border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.72rem;
+  counter-increment: win-rank;
+}
+.cuddle-win-records li::before {
+  content: "#" counter(win-rank);
+  color: var(--cuddle-muted);
+  font-weight: 800;
+}
+.cuddle-win-records b { color: var(--cuddle-text); font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+.cuddle-win-records span { color: var(--cuddle-muted); }
+.cuddle-win-records li.is-this-run { border-color: rgba(246, 201, 86, 0.6); }
+.cuddle-win-records li.is-this-run b { color: #f6c956; }
+
+.cuddle-win-confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.cuddle-best-wins {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 12px;
+  margin: 10px 0 0;
+  color: var(--cuddle-muted);
+  font-size: 0.78rem;
+}
+.cuddle-best-wins span {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.cuddle-best-wins b { color: var(--cuddle-text); font-weight: 750; font-variant-numeric: tabular-nums; }
+
+@keyframes cuddle-win-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.96); }
+}
+@keyframes cuddle-win-flip {
+  0% { transform: rotateX(0); background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.25); box-shadow: none; }
+  49% { transform: rotateX(90deg); background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.25); box-shadow: none; }
+  50% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0); }
+}
+@keyframes cuddle-win-bounce {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-9px); }
+}
+@keyframes cuddle-win-pop {
+  from { opacity: 0; transform: scale(0.6); }
+  70% { transform: scale(1.08); }
+}
+@keyframes cuddle-win-fade {
+  from { opacity: 0; transform: translateY(6px); }
+}
+.cuddle-win-overlay.is-celebrating .cuddle-win-modal {
+  animation: cuddle-win-in 420ms cubic-bezier(0.2, 0.8, 0.25, 1) both;
+  animation-delay: var(--win-t);
+}
+.cuddle-win-overlay.is-celebrating .cuddle-win-tile {
+  animation:
+    cuddle-win-flip 520ms ease-in-out both,
+    cuddle-win-bounce 420ms ease-out both;
+  animation-delay:
+    calc(200ms + var(--i) * 260ms + var(--win-t)),
+    calc(1700ms + var(--i) * 70ms + var(--win-t));
+}
+.cuddle-win-overlay.is-celebrating .cuddle-win-modal h2,
+.cuddle-win-overlay.is-celebrating .cuddle-win-score {
+  animation: cuddle-win-fade 420ms ease-out both;
+  animation-delay: calc(1650ms + var(--win-t));
+}
+.cuddle-win-overlay.is-celebrating .cuddle-win-best {
+  animation: cuddle-win-pop 480ms cubic-bezier(0.2, 0.8, 0.25, 1) both;
+  animation-delay: calc(3450ms + var(--win-t));
+}
+.cuddle-win-overlay.is-celebrating .cuddle-win-records,
+.cuddle-win-overlay.is-celebrating .cuddle-end-stats,
+.cuddle-win-overlay.is-celebrating .cuddle-upgrade-details,
+.cuddle-win-overlay.is-celebrating .cuddle-modal-actions {
+  animation: cuddle-win-fade 420ms ease-out both;
+  animation-delay: calc(3700ms + var(--win-t));
+}
+@media (prefers-reduced-motion: reduce) {
+  .cuddle-win-overlay.is-celebrating * { animation: none !important; }
+}
+
+/* The win screen keeps its three stats side by side, even on a phone. */
+#cuddleScreen .cuddle-win-modal .cuddle-end-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin: 16px 0 10px;
+}
+#cuddleScreen .cuddle-win-modal .cuddle-end-stats > div { padding: 9px 10px; }
+#cuddleScreen .cuddle-win-modal .cuddle-end-stats span { font-size: 0.6rem; }
