@@ -938,6 +938,29 @@
     };
   }
 
+  // Harder Wordle stops carry small red skulls on the map: one for
+  // difficulty 1 to 1.5 (a challenge, or a Rare Word), two from 2 (stacked
+  // challenges). Difficulty is cuddle-rebalance-v5.js's stop score.
+  function stopSkulls(game, node) {
+    if (!node || node.type === "mystery" || node.mysteryType) return 0;
+    var rebalance = window.CuddleRebalanceV5;
+    var variant = rebalance && typeof rebalance.stopVariant === "function" ? rebalance.stopVariant(game, node) : null;
+    var difficulty = variant ? Number(variant.difficulty) || 0 : 0;
+    return difficulty >= 1 ? Math.min(3, Math.floor(difficulty)) : 0;
+  }
+
+  function skullBadge(count, radius) {
+    var marks = "";
+    for (var index = 0; index < count; index += 1) {
+      marks += "<g transform=\"translate(" + (-index * 10) + " 0)\">"
+        + "<path class=\"umt-skull-head\" d=\"M0 -6.2a4.6 4.6 0 0 0-4.6 4.6c0 1.6.8 2.6 1.9 3.2v1.7a.7.7 0 0 0 .7.7h4a.7.7 0 0 0 .7-.7V1.6c1.1-.6 1.9-1.6 1.9-3.2A4.6 4.6 0 0 0 0 -6.2z\"/>"
+        + "<circle class=\"umt-skull-eye\" cx=\"-1.7\" cy=\"-1.6\" r=\"1.15\"/>"
+        + "<circle class=\"umt-skull-eye\" cx=\"1.7\" cy=\"-1.6\" r=\"1.15\"/>"
+        + "</g>";
+    }
+    return "<g class=\"umt-node-skulls\" transform=\"translate(" + (-radius * 0.72) + " " + (-radius * 0.72) + ")\">" + marks + "</g>";
+  }
+
   function branchMapRowOf(game, node) {
     var map = game && game.state && game.state.branchMap;
     return map && Array.isArray(map.rows) && node ? map.rows[Number(node.row)] : null;
@@ -1171,11 +1194,13 @@
             + "<rect x=\"" + (-pillWidth / 2) + "\" y=\"-8\" width=\"" + pillWidth + "\" height=\"16\" rx=\"8\"/>"
             + "<text text-anchor=\"middle\" y=\"4\">" + required + "</text></g>";
         }
+        var skulls = boss ? 0 : stopSkulls(game, node);
+        var skullMarks = skulls ? skullBadge(skulls, radius) : "";
         nodes.push(
           "<g class=\"" + classes.join(" ") + "\" transform=\"translate(" + point.x + "," + point.y + ")\" style=\"--kind:" + color + "\""
           + (open
             ? " data-cuddle-campaign-action=\"preview-branch-node\" data-shop-item-id=\"" + node.row + ":" + node.col + "\""
-              + " role=\"button\" tabindex=\"0\" aria-label=\"" + escapeHtml(caption + " — " + title + (required ? ", needs " + required + " points" : "")) + "\""
+              + " role=\"button\" tabindex=\"0\" aria-label=\"" + escapeHtml(caption + " — " + title + (required ? ", needs " + required + " points" : "") + (skulls ? ", hard stage" : "")) + "\""
             : " data-shop-item-id=\"" + node.row + ":" + node.col + "\" aria-hidden=\"true\"")
           + ">"
           + extras
@@ -1184,6 +1209,7 @@
           + "<g class=\"umt-node-icon\" transform=\"translate(" + (-iconSize / 2) + " " + (-iconSize / 2) + ") scale(" + (iconSize / 24) + ")\">"
           + Worlds.iconMarkup(kind) + "</g>"
           + bossNeeds
+          + skullMarks
           + (visited && !isHere
             ? "<g class=\"umt-node-check\" transform=\"translate(" + (radius * 0.72) + " " + (-radius * 0.72) + ")\">"
               + "<circle r=\"6.5\"/><path d=\"M-3 0l2 2.2L3.2-2.4\"/></g>"

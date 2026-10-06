@@ -895,3 +895,16 @@
   .umt-boss-entrance.is-idle .umt-be-title,
   .umt-boss-entrance.is-idle .umt-be-skip { animation: none; }
 }
+
+/* Harder stops (cuddle-branch-map.js stopSkulls): small red skulls on the
+   node's top-left, one per difficulty step. */
+#cuddleRoot .umt-node-skulls { pointer-events: none; }
+#cuddleRoot .umt-skull-head {
+  fill: #e5484d;
+  stroke: #1b1020;
+  stroke-width: 1.1;
+  paint-order: stroke;
+}
+#cuddleRoot .umt-skull-eye { fill: #1b1020; }
+#cuddleRoot .umt-state-visited .umt-node-skulls,
+#cuddleRoot .umt-state-skipped .umt-node-skulls { opacity: 0.45; }
