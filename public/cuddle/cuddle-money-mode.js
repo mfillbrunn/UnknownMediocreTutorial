@@ -1215,8 +1215,7 @@
       "<div id=\"cuddleMoneyPayoutOverlay\" class=\"cuddle-money-overlay cuddle-money-payout-overlay\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"cuddleMoneyPayoutTitle\">"
       + "<div class=\"cuddle-money-confetti\" aria-hidden=\"true\">" + confetti + "</div>"
       + "<section class=\"cuddle-money-payout-card\">"
-      + "<span class=\"cuddle-money-kicker\">" + (payload.wasBoss ? "BOSS DEFEATED &middot; CASH OUT" : "ROUND " + escapeHtml(payload.round) + " CASH OUT") + "</span>"
-      + "<h2 id=\"cuddleMoneyPayoutTitle\">Every row pays</h2>"
+      + "<span class=\"cuddle-money-kicker\" id=\"cuddleMoneyPayoutTitle\">" + (payload.wasBoss ? "BOSS DEFEATED &middot; CASH OUT" : "ROUND " + escapeHtml(payload.round) + " CASH OUT") + "</span>"
       + payoutWordMarkup(payload)
       + challengeLine
       + "<div class=\"cuddle-money-bank\"><span>Wallet</span><strong id=\"cuddleMoneyBankCounter\">" + formatPoints(payload.from) + "</strong></div>"
