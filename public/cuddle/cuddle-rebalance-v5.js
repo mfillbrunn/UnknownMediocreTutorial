@@ -3619,6 +3619,13 @@
   function renderRowPowerIcons(game) {
     const root = rootElement();
     if (!root) return;
+    // A Duel is a self-contained round: the run's curses and stage powers
+    // don't apply to it, so its board gets none of their markers (they
+    // promised a Blue Mode the Duel never ran).
+    if (root.querySelector(".umt-duel-board")) {
+      root.querySelectorAll(".umt-duel-board .umt-row-power-icons").forEach((el) => el.remove());
+      return;
+    }
     const state = stateOf(game);
     const rows = Array.from(root.querySelectorAll(".cuddle-board-row"));
     rows.forEach((row, index) => {
@@ -3868,7 +3875,7 @@
   function enhanceDragTargets(game) {
     const root = rootElement();
     const state = stateOf(game);
-    if (!root || !state || state.status !== "playing") return;
+    if (!root || !state || state.status !== "playing" || root.querySelector(".umt-duel-board")) return;
     const rows = Array.from(root.querySelectorAll(".cuddle-board-row"));
     const row = rows[(state.history || []).length];
     if (!row) return;
