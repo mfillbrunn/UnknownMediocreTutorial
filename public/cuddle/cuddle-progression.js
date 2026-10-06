@@ -595,9 +595,7 @@
 
     if (boss) {
       if (boss.description) lines.push({ kind: "hazard", icon: "⚠️", text: boss.description });
-      const tree = window.CuddleSkillTree;
-      const reward = boss.rewardId && tree && boss.gate !== "final" ? resolveCatalogueNode(tree, boss.rewardId) : null;
-      if (reward) lines.push({ kind: "bonus", icon: reward.icon || "🎁", text: `Clear it to earn ${reward.title}` });
+      if (boss.gate !== "final") lines.push({ kind: "bonus", icon: "🎁", text: "Clear it to pick 1 of 3 legendary rewards" });
     }
 
     // A strict stage is lost outright if it isn't solved in time -- the

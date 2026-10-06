@@ -12,9 +12,11 @@
   const TIER_ORDER = Object.freeze([TIERS.COMMON, TIERS.RARE, TIERS.EPIC, TIERS.LEGENDARY]);
   // Odds of each tier for a between-round offer (all cards in one offer
   // share a tier). Rarity Lens shifts them up; the shop leans a bit rarer.
-  const DEFAULT_WEIGHTS = Object.freeze({ common: 50, rare: 33, epic: 12, legendary: 5 });
-  const BOOSTED_WEIGHTS = Object.freeze({ common: 30, rare: 35, epic: 22, legendary: 13 });
-  const SHOP_WEIGHTS = Object.freeze({ common: 42, rare: 30, epic: 18, legendary: 10 });
+  // Legendary rewards are never rolled here: they come only from the pick
+  // of three after each boss (legendaryChoices below).
+  const DEFAULT_WEIGHTS = Object.freeze({ common: 55, rare: 35, epic: 10, legendary: 0 });
+  const BOOSTED_WEIGHTS = Object.freeze({ common: 35, rare: 40, epic: 25, legendary: 0 });
+  const SHOP_WEIGHTS = Object.freeze({ common: 45, rare: 35, epic: 20, legendary: 0 });
   const PRICE_RANGES = Object.freeze({
     common: [25, 40],
     rare: [50, 70],
@@ -1582,7 +1584,7 @@
     } else if (name === "clear sight") {
       setName(def, "Rarity Lens");
       setId(def, "rarity-lens");
-      setDescription(def, "Future reward rolls use 30% common, 35% rare, 22% epic and 13% legendary odds.");
+      setDescription(def, "Future reward rolls use 35% common, 40% rare and 25% epic odds.");
       replaceHandlers(def, "rarity-lens");
       name = "rarity lens";
     }
@@ -2711,7 +2713,8 @@
       shopRewards(game, count, seedText) {
         const state = game && game.state;
         if (!state) return [];
-        const pool = allOrdinaryCandidates(game, state).filter((def) => TIER_ORDER.includes(def.__cuddleV8Tier));
+        const pool = allOrdinaryCandidates(game, state)
+          .filter((def) => TIER_ORDER.includes(def.__cuddleV8Tier) && def.__cuddleV8Tier !== TIERS.LEGENDARY);
         return shuffle(pool, String(seedText || "shop")).slice(0, count).map((def) => {
           const tier = def.__cuddleV8Tier;
           const id = getId(def);
@@ -2723,6 +2726,28 @@
             icon: def.icon || "",
             tier,
             price: priceForTier(tier, `${seedText}:price:${id}`),
+            __cuddleV8Effect: def.__cuddleV8Effect || null
+          };
+        });
+      },
+      // The pick after a boss: `count` different Legendary rewards, the
+      // only way to get one. Same plain shape as the shop's stock, so the
+      // offer survives a save and picks through chooseUpgrade.
+      legendaryChoices(game, count, seedText) {
+        const state = game && game.state;
+        if (!state) return [];
+        const pool = allOrdinaryCandidates(game, state).filter((def) => def.__cuddleV8Tier === TIERS.LEGENDARY);
+        return shuffle(pool, String(seedText || "legendary")).slice(0, count).map((def) => {
+          const id = getId(def);
+          return {
+            id,
+            key: String(def.key || id),
+            title: getName(def),
+            description: String(def.description ?? def.desc ?? ""),
+            icon: def.icon || "",
+            tier: TIERS.LEGENDARY,
+            __cuddleV8Tier: TIERS.LEGENDARY,
+            __cuddleV8OfferTier: TIERS.LEGENDARY,
             __cuddleV8Effect: def.__cuddleV8Effect || null
           };
         });

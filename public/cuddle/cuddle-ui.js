@@ -1014,7 +1014,7 @@
           <h2 id="cuddleBossTitle">${isFinal ? "One last secret" : "Choose your boss"}</h2>
           <p>${isFinal
             ? "Beat this round to win the run."
-            : "Beat a boss to keep its reward (+). Its curse (−) comes with it for the rest of the run."}</p>
+            : "Beat a boss to choose 1 of 3 legendary rewards. Its curse (−) stays with you for the rest of the run."}</p>
           <div class="cuddle-choice-grid">
             ${options.map(option => bossCardMarkup(option, isFinal)).join("")}
           </div>
@@ -1045,8 +1045,9 @@
 
   function bossCardMarkup(option, isFinal) {
     const id = String(option.id);
-    // Nothing follows the final boss, so it carries no reward or curse.
-    const reward = isFinal ? null : option.reward || null;
+    // A boss's reward is no longer its own: beating any boss opens a pick
+    // of three Legendary rewards, so the card shows only its curse.
+    const reward = null;
     const burden = isFinal ? "" : bossCurseNote(option, isFinal);
     const open = bossTraitOpen.bossId === id ? bossTraitOpen.trait : null;
     const bonus = reward ? pendingSynergyFor(reward.id) : null;
@@ -1149,14 +1150,19 @@
         ? "Refresh unavailable"
         : `Refresh choices ($${refreshCost})`;
     const waystone = typeof game.isWaystoneUpgrade === "function" && game.isWaystoneUpgrade();
-    const kicker = milestone
+    const legendary = Boolean(state.legendaryOffer);
+    const kicker = legendary
+      ? "BOSS DEFEATED"
+      : milestone
       ? `POINTS MILESTONE · ${state.upgradeMilestone}`
       : startingRewards
         ? "STARTING REWARDS"
         : waystone
           ? "FREE UPGRADE"
           : `ROUND ${summary?.round || state.round} CLEARED`;
-    const heading = milestone
+    const heading = legendary
+      ? "Choose a legendary reward"
+      : milestone
       ? "Choose a bonus upgrade"
       : startingRewards
         ? "Choose a starting reward"
@@ -1189,7 +1195,7 @@
           </div>
           <div class="cuddle-upgrade-refresh${refreshCost === null ? " is-no-refresh" : ""}">
             ${refreshCost === null
-              ? `<small>${waystone ? "A free upgrade's offer is fixed: no refreshes." : "These choices can't be refreshed."}</small>`
+              ? `<small>${legendary ? "Legendary picks can't be refreshed." : waystone ? "A free upgrade's offer is fixed: no refreshes." : "These choices can't be refreshed."}</small>`
               : `<button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
               ${escapeHtml(refreshLabel)}
             </button>

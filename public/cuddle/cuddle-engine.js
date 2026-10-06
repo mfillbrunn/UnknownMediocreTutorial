@@ -3256,43 +3256,23 @@
       return;
     }
 
-    const reward = window.CuddleQuestBook?.getBossReward?.(boss.rewardId) || {
-      id: boss.rewardId,
-      icon: "🎁",
-      title: "Boss reward",
-      description: ""
-    };
-    if (reward.id === "cullRare") {
-      reward.description = "Remove three rare letters from the deck and from every future secret.";
+    // A beaten boss no longer hands over a reward of its own: the player
+    // picks one of three Legendary rewards instead -- the only place a
+    // Legendary can come from. The offer can't be refreshed.
+    const legendary = window.CuddleEconomyRarityV8?.legendaryChoices?.(
+      this, 3, `${state.runId || "run"}:${state.bossesCleared}:legendary`
+    ) || [];
+    if (legendary.length) {
+      state.status = "upgrade";
+      state.upgradePhase = "round";
+      state.upgradeMilestone = null;
+      state.upgradeChoices = legendary;
+      state.waystoneOffer = true;
+      state.legendaryOffer = true;
+      state.lastMessage = `${boss.title || "Boss"} defeated. Choose a legendary reward.`;
+      this.save();
+      return;
     }
-    // Position Peek can't do anything useful against the secret that was
-    // JUST solved to beat this boss -- bank it instead (via its own flag,
-    // NOT state.deferredRewards -- see _beginRound's note on why that array
-    // is a dead end here), so it actually fires once the next round's fresh
-    // secret exists.
-    let rewardMessage;
-    if (boss.rewardId === "revealGreen") {
-      state.pendingPositionPeek = true;
-      rewardMessage = "Position Peek will reveal a letter once your next round begins.";
-    } else {
-      rewardMessage = this._applyBossReward(boss.rewardId);
-    }
-    const record = {
-      ...reward,
-      bossTitle: boss.title,
-      round: Number(state.round || 1),
-      message: rewardMessage
-    };
-    state.bossRewardHistory.push(record);
-    state.bossRewardHistory = state.bossRewardHistory.slice(-12);
-    cuddleV3RecordReward(this, reward, "boss");
-    state.bossRewardNotice = {
-      icon: reward.icon || "🎁",
-      title: reward.title || "Boss reward",
-      bossTitle: boss.title || "Boss",
-      message: rewardMessage || reward.description || "Permanent boss reward received."
-    };
-    cuddleV3RefreshSynergies(this, true);
 
     this._advanceRound();
   };

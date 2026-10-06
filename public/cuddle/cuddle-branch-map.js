@@ -744,13 +744,17 @@
   var originalChooseUpgrade = proto.chooseUpgrade;
   proto.chooseUpgrade = function chooseUpgradeClosingWaystone() {
     var result = originalChooseUpgrade.apply(this, arguments);
-    if (this.state && this.state.status !== "upgrade") this.state.waystoneOffer = false;
+    if (this.state && this.state.status !== "upgrade") {
+      this.state.waystoneOffer = false;
+      this.state.legendaryOffer = false;
+    }
     return result;
   };
 
   var originalBeginRound = proto._beginRound;
   proto._beginRound = function beginRoundWithBranchPenalty() {
     this.state.waystoneOffer = false;
+    this.state.legendaryOffer = false;
     var result = originalBeginRound.apply(this, arguments);
     var branchMap = ensureBranchMap(this);
     // The map is the between-rounds screen now, so the old round-intro card
@@ -934,7 +938,15 @@
     if (kind === "mystery") return "Unknown";
     var variant = node.cuddleVariant;
     if (variant && (kind === "wordle" || kind === "challenge")) {
-      if (variant.kind === "mandatoryChallenge") return variant.title || "Challenge";
+      if (variant.kind === "mandatoryChallenge") {
+        // A stacked stop's full name ("Lucky Start + Little Lies + No
+        // Safety Net") overruns its neighbours; the map names its main
+        // challenge and counts the rest. The preview spells them all out.
+        var parts = String(variant.title || "Challenge").split(" + ");
+        if (parts.length < 2) return parts[0];
+        var main = parts.filter(function notEase(part) { return part !== "Lucky Start" && part !== "Themed"; })[0] || parts[0];
+        return main + " +" + (parts.length - 1);
+      }
       if (VARIANT_CAPTIONS[variant.kind]) return VARIANT_CAPTIONS[variant.kind];
     }
     if (node.type === "theme") return "Themed";
@@ -1361,6 +1373,8 @@
     } else if (kind === "challenge") {
       brief.title = variant.title;
       brief.summary = "A Wordle with a rule against you. Beat it for a bonus.";
+      if (variant.ease === "luckyStart") brief.gets.push({ type: "perk", text: "One letter placed for you" });
+      if (variant.ease === "themedWordle") brief.gets.push({ type: "perk", text: "One theme revealed" });
       if (variant.reward > 0) {
         brief.gets.push({ type: "win", text: "On a win: +" + variant.reward + " pts · +$" + variant.reward });
       }
@@ -1383,8 +1397,8 @@
       if (kind === "final") {
         brief.summary = "The last secret. Beat it to win the run.";
       } else {
-        brief.summary = "Choose one of two bosses. Beat it to keep its reward; its curse stays with you after.";
-        brief.gets.push({ type: "perk", text: "A permanent boss reward" });
+        brief.summary = "Choose one of two bosses. Beat it to pick a legendary reward; its curse stays with you after.";
+        brief.gets.push({ type: "perk", text: "Pick 1 of 3 legendary rewards" });
       }
       brief.risks.push("The boss's power works against you");
     }

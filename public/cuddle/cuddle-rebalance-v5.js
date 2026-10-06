@@ -888,11 +888,178 @@
 
   const CLASSIC_DESCRIPTION = `A standard Wordle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${CONFIG.classicClearBonus}.`;
 
+  // -- Stage difficulty (worlds 2 and 3) --------------------------------
+  // A Wordle stop's difficulty is the sum of its parts: +1 per challenge,
+  // +1.5 for a Rare Word, 0 for a regular Wordle and -1 for an easier one
+  // (a revealed theme or a Lucky Start letter). World 1 keeps its old mix.
+  // From world 2 on each stop is built to a target difficulty, and parts
+  // combine: two challenges, a challenge on an easier Wordle, a Rare Word
+  // with a challenge. World 2 never goes below 0, world 3 never below 1,
+  // and both lean harder towards their boss.
+  const EASE_PARTS = Object.freeze({
+    themedWordle: { title: "Themed", icon: "🧭", text: "One of the answer's themes is revealed." },
+    luckyStart: { title: "Lucky Start", icon: "\uD83C\uDF40", text: "One letter starts in its exact place." }
+  });
+  const NEUTRAL_KINDS = Object.freeze(["plain", "randomOpener", "jackpot", "doubleOrNothing"]);
+  const DIFFICULTY_MIX = Object.freeze({
+    // [first stop row of the world, last stop row]: weight per difficulty.
+    // Rare Words (0.5, 1.5, 2.5) stay a seasoning: every world already
+    // gets one (ensureRareWordStages).
+    1: [{ 0: 50, 0.5: 4, 1: 32, 1.5: 6, 2: 8, 2.5: 0 }, { 0: 20, 0.5: 4, 1: 40, 1.5: 8, 2: 22, 2.5: 6 }],
+    2: [{ 0: 0, 0.5: 0, 1: 55, 1.5: 8, 2: 32, 2.5: 5 }, { 0: 0, 0.5: 0, 1: 25, 1.5: 8, 2: 55, 2.5: 12 }]
+  });
+
+  function stagePartDifficulty(variant) {
+    if (!variant) return 0;
+    const ids = variantChallengeIds(variant);
+    let total = ids.reduce((sum, id) => sum + (challengeById(id).rareSecret ? 1.5 : 1), 0);
+    const ease = variant.ease || (EASE_PARTS[variant.kind] ? variant.kind : null);
+    if (ease) total -= 1;
+    return total;
+  }
+
+  function variantChallengeIds(variant) {
+    if (!variant || variant.kind !== "mandatoryChallenge") return [];
+    if (Array.isArray(variant.challengeIds) && variant.challengeIds.length) return variant.challengeIds.slice();
+    return variant.challengeId ? [variant.challengeId] : [];
+  }
+
+  // Where a stop sits: its world (the row's act) and how far through that
+  // world's Wordle rows it is, 0 at the first and 1 at the last.
+  function stopPlacement(game, node) {
+    const map = stateOf(game) && stateOf(game).branchMap;
+    if (!map || !Array.isArray(map.rows)) return null;
+    const rowIndex = Math.floor(Number(node.row));
+    const row = map.rows[rowIndex];
+    if (!row) return null;
+    const act = Math.floor(Number(row.act)) || 0;
+    const stopRows = [];
+    map.rows.forEach((candidate, index) => {
+      if (candidate && candidate.kind === "stops" && !candidate.restFork && (Math.floor(Number(candidate.act)) || 0) === act) stopRows.push(index);
+    });
+    const position = stopRows.indexOf(rowIndex);
+    const progress = stopRows.length > 1 && position >= 0 ? position / (stopRows.length - 1) : 0;
+    return { act, progress };
+  }
+
+  function rollDifficulty(act, progress, seed) {
+    const [start, end] = DIFFICULTY_MIX[Math.min(2, act)];
+    const levels = Object.keys(start).map(Number).sort((a, b) => a - b);
+    const weights = levels.map((level) => start[level] + (end[level] - start[level]) * progress);
+    const total = weights.reduce((sum, weight) => sum + weight, 0);
+    let roll = (hash32(seed) % 10000) / 10000 * total;
+    for (let index = 0; index < levels.length; index += 1) {
+      roll -= weights[index];
+      if (roll < 0) return levels[index];
+    }
+    return levels[levels.length - 1];
+  }
+
+  // The challenges that can be stacked: at most one of them masks tiles,
+  // so a combined stop never hides feedback on more guesses than one
+  // challenge plus a rule.
+  function stackableChallenges() {
+    const all = CHALLENGES.filter((challenge) => !challenge.rareSecret);
+    return {
+      all,
+      rules: all.filter((challenge) => !Array.isArray(challenge.masks)),
+      rare: CHALLENGES.find((challenge) => challenge.rareSecret)
+    };
+  }
+
+  function composeStop(target, seed) {
+    const pick = (list, key) => list[hash32(`${seed}:${key}`) % list.length];
+    const { all, rules, rare } = stackableChallenges();
+    const ease = pick(Object.keys(EASE_PARTS), "ease");
+    const oneChallenge = (key) => pick(all, key);
+    const twoChallenges = () => {
+      const first = oneChallenge("c1");
+      const pool = (Array.isArray(first.masks) ? rules : all).filter((item) => item.id !== first.id);
+      return [first, pick(pool, "c2")];
+    };
+    const coin = hash32(`${seed}:shape`) % 100;
+    let parts;
+    if (target <= 0) {
+      parts = coin < 50 ? { neutral: pick(NEUTRAL_KINDS, "neutral") } : { ease, challenges: [oneChallenge("c1")] };
+    } else if (target === 0.5) {
+      // Rare words carry no themes, so their easier half is always the
+      // placed letter.
+      parts = { ease: "luckyStart", challenges: [rare] };
+    } else if (target === 1) {
+      parts = coin < 70 ? { challenges: [oneChallenge("c1")] } : { ease, challenges: twoChallenges() };
+    } else if (target === 1.5) {
+      parts = { challenges: [rare] };
+    } else if (target === 2) {
+      parts = { challenges: twoChallenges() };
+    } else {
+      parts = { challenges: [rare, oneChallenge("c1")] };
+    }
+    return parts;
+  }
+
+  function stackedDescription(game, variant) {
+    const ease = variant.ease && EASE_PARTS[variant.ease];
+    const lines = variantChallengeIds(variant).map((id) => challengeDisplayDescription(game, challengeById(id)));
+    if (ease) lines.unshift(ease.text);
+    return lines.join(" ");
+  }
+
+  function stackedReward(variant) {
+    return variantChallengeIds(variant).reduce((sum, id) => sum + Math.max(0, asNumber(challengeById(id).reward, 0)), 0);
+  }
+
+  function plannedVariant(game, node, salt) {
+    const placement = stopPlacement(game, node);
+    if (!placement || placement.act < 1) return null;
+    const seed = `${mapSeed(game)}:plan:${node.row}:${node.col}${salt}`;
+    const target = rollDifficulty(placement.act, placement.progress, `${seed}:target`);
+    const parts = composeStop(target, seed);
+    if (parts.neutral) {
+      const variant = neutralVariant(parts.neutral);
+      variant.difficulty = 0;
+      return variant;
+    }
+    const challenges = parts.challenges;
+    const ids = challenges.map((challenge) => challenge.id);
+    const variant = {
+      version: VERSION,
+      kind: "mandatoryChallenge",
+      challengeId: ids[0],
+      challengeIds: ids,
+      ease: parts.ease || null,
+      icon: challenges[0].icon,
+      title: [parts.ease ? EASE_PARTS[parts.ease].title : null].concat(challenges.map((challenge) => challenge.title)).filter(Boolean).join(" + ")
+    };
+    const reward = stackedReward(variant);
+    variant.rewardSuffix = `Pays $${reward}.`;
+    variant.description = `${stackedDescription(game, variant)} ${variant.rewardSuffix}`;
+    variant.difficulty = stagePartDifficulty(variant);
+    return variant;
+  }
+
+  function neutralVariant(kind) {
+    switch (kind) {
+      case "randomOpener":
+        return { version: VERSION, kind, icon: "🎲", title: "Head Start", description: "A random legal word is played automatically as the first guess, consuming row one." };
+      case "jackpot":
+        return { version: VERSION, kind, icon: "\uD83D\uDCB0", title: "Jackpot Run", description: "Green tiles pay double here, but you must solve within the world's guess limit or the run is lost." };
+      case "doubleOrNothing":
+        return { version: VERSION, kind, icon: "\u2696\uFE0F", title: "Double or Nothing", description: "Solve within three guesses and the stage's earnings double. Take longer and you lose half of them." };
+      default:
+        return { version: VERSION, kind: "plain", icon: "🟩", title: "Classic Wordle", description: CLASSIC_DESCRIPTION };
+    }
+  }
+
   function variantForNode(game, node, salt = "") {
     if (!salt && node.cuddleVariant && node.cuddleVariant.version === VERSION) {
       // Stops rolled before the Classic bonus existed keep their old text.
       if (node.cuddleVariant.kind === "plain") node.cuddleVariant.description = CLASSIC_DESCRIPTION;
       return node.cuddleVariant;
+    }
+    const planned = plannedVariant(game, node, salt);
+    if (planned) {
+      node.cuddleVariant = planned;
+      return planned;
     }
     const roll = hash32(`${mapSeed(game)}:variant:${node.row}:${node.col}${salt}`) % 100;
     let variant;
@@ -976,7 +1143,7 @@
     const rows = new Map();
     let changed = false;
 
-    const variantKey = (variant) => `${variant.kind}:${variant.challengeId || ""}`;
+    const variantKey = (variant) => `${variant.kind}:${variantChallengeIds(variant).join("+")}:${variant.ease || ""}`;
     const rowKeys = new Map();
     for (const node of nodes) {
       if (!isMapNode(node) || !wordleTypes.has(String(node.type))) continue;
@@ -1433,7 +1600,7 @@
   function rareStage(game) {
     const custom = customState(game);
     const pending = custom && custom.pendingVariant;
-    if (pending && pending.kind === "mandatoryChallenge" && challengeById(pending.challengeId).rareSecret) return true;
+    if (pending && variantChallengeIds(pending).some((id) => challengeById(id).rareSecret)) return true;
     const active = activeChallenge(game);
     return Boolean(active && active.rareSecret);
   }
@@ -1507,24 +1674,49 @@
 
     if (!variant) return;
     if (variant.kind === "mandatoryChallenge") {
-      const challenge = challengeById(variant.challengeId);
       const cap = challengeTurnCap(game);
-      const masks = Array.isArray(challenge.masks) ? challenge.masks.slice(0, cap) : challenge.masks;
-      const vowelBudget = challenge.vowelBudget
-        ? { ...challenge.vowelBudget, guesses: Math.min(challenge.vowelBudget.guesses, cap) }
-        : challenge.vowelBudget;
+      // A stacked stop runs every challenge in it at once: their masked
+      // guesses follow one another, their rules all apply, and their
+      // bonuses add up.
+      const merged = variantChallengeIds(variant).map(challengeById).reduce((sum, challenge) => {
+        const masks = Array.isArray(challenge.masks) ? challenge.masks.slice(0, cap) : null;
+        return {
+          ...sum,
+          ...challenge,
+          id: sum.id || challenge.id,
+          icon: sum.icon || challenge.icon,
+          masks: masks ? (sum.masks || []).concat(masks) : sum.masks,
+          vowelBudget: challenge.vowelBudget
+            ? { ...challenge.vowelBudget, guesses: Math.min(challenge.vowelBudget.guesses, cap) }
+            : sum.vowelBudget,
+          noMulligans: Boolean(sum.noMulligans || challenge.noMulligans),
+          uniqueFirst: Boolean(sum.uniqueFirst || challenge.uniqueFirst),
+          rareSecret: Boolean(sum.rareSecret || challenge.rareSecret),
+          reward: asNumber(sum.reward, 0) + asNumber(challenge.reward, 0)
+        };
+      }, {});
+      const stacked = variantChallengeIds(variant).length > 1 || variant.ease;
       custom.activeChallenge = {
-        ...challenge,
-        masks,
-        vowelBudget,
-        description: challengeDisplayDescription(game, challenge),
+        ...merged,
+        title: stacked ? variant.title : merged.title,
+        description: stacked ? stackedDescription(game, variant) : challengeDisplayDescription(game, challengeById(variant.challengeId)),
         nodeId: variant.nodeId,
         roundToken: roundToken(game),
         paid: false,
         mandatory: true
       };
       clearNativeChallengeOffer(game);
-      appendNotice(game, `${challenge.icon} ${challenge.title} accepted automatically. Win for a $${challenge.reward} bonus.`);
+      if (variant.ease === "luckyStart") {
+        try {
+          if (typeof game._revealPositionPeek === "function") game._revealPositionPeek();
+        } catch (error) {
+          log("lucky start reveal failed", error);
+        }
+      } else if (variant.ease === "themedWordle" && window.CuddleCampaign
+          && typeof window.CuddleCampaign.queueCategoryReveal === "function") {
+        window.CuddleCampaign.queueCategoryReveal(game, 1, "branch");
+      }
+      appendNotice(game, `${merged.icon} ${custom.activeChallenge.title} accepted automatically. Win for a $${merged.reward} bonus.`);
     } else if (variant.kind === "randomOpener") {
       scheduleRandomOpener(game);
     } else if (variant.kind === "luckyStart") {
@@ -3098,7 +3290,7 @@
       // once that boss clears, overstating) how many guesses it actually
       // affects by the time the player reaches it.
       const displayDescription = variant.kind === "mandatoryChallenge" && variant.challengeId
-        ? `${challengeDisplayDescription(game, challengeById(variant.challengeId))} ${variant.rewardSuffix || ""}`.trim()
+        ? `${stackedDescription(game, variant)} ${variant.rewardSuffix || ""}`.trim()
         : variant.description;
       // Written only when they change: this runs on every UI pass, and
       // rewriting identical values kept the map churning under the
@@ -4491,11 +4683,13 @@
           return {
             kind: variant.kind,
             title: variant.title || challenge.title,
-            description: challengeDisplayDescription(game || publicActiveGame(), challenge),
-            reward: Math.max(0, Math.round(asNumber(challenge.reward, 0)))
+            description: stackedDescription(game || publicActiveGame(), variant),
+            reward: Math.round(stackedReward(variant)),
+            ease: variant.ease || null,
+            difficulty: stagePartDifficulty(variant)
           };
         }
-        return { kind: variant.kind, title: variant.title, description: variant.description };
+        return { kind: variant.kind, title: variant.title, description: variant.description, difficulty: stagePartDifficulty(variant) };
       },
       // The challenge stops the map can roll, described at the run's
       // current guess cap -- listed by the map key.
