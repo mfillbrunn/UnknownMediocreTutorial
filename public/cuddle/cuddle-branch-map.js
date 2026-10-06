@@ -1380,8 +1380,12 @@
       brief.summary = "Hidden until you step onto it. Could be anything on the road.";
     } else if (kind === "boss" || kind === "final") {
       brief.title = kind === "final" ? "Final Boss" : node.gate === "before-7" ? "Boss II" : "Boss I";
-      brief.summary = "Choose one of two bosses. Beat it to keep its reward; its curse stays with you after.";
-      brief.gets.push({ type: "perk", text: "A permanent boss reward" });
+      if (kind === "final") {
+        brief.summary = "The last secret. Beat it to win the run.";
+      } else {
+        brief.summary = "Choose one of two bosses. Beat it to keep its reward; its curse stays with you after.";
+        brief.gets.push({ type: "perk", text: "A permanent boss reward" });
+      }
       brief.risks.push("The boss's power works against you");
     }
     return brief;

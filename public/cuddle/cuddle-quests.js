@@ -379,7 +379,7 @@
       id: "presetWordsTrial",
       icon: "🎴",
       title: "Preset Trial",
-      description: "A handful of candidate words are chosen for you up front -- the secret is one of them. Only your remaining guesses are left to land it.",
+      description: "The answer is one of a few words shown on screen, but you get that many fewer guesses.",
       turns: 0,
       rewardId: "umtAllThemes"
     }

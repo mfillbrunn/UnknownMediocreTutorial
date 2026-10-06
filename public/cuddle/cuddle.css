@@ -3686,6 +3686,15 @@
 /* Process of Elimination: each ruled-out consonant as a small grey tile,
    the one just ruled out flipping in. */
 .umt-clue.is-sweep .umt-clue-text { display: inline-flex; align-items: center; gap: 4px; }
+.umt-clue.is-preset .umt-clue-text { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.umt-clue-word {
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: rgba(246, 201, 86, 0.18);
+  color: #fff3cf;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
 .umt-clue-letter {
   display: inline-grid;
   place-items: center;

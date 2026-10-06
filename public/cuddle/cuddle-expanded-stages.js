@@ -2115,10 +2115,10 @@
       const badge = infinite
         ? `<span class="cuddle-card-count is-infinite" aria-hidden="true">&infin;</span>`
         : group.cards.length > 1
-          ? `<span class="cuddle-card-count" aria-hidden="true">${group.cards.length}</span>`
+          ? `<span class="cuddle-card-count" aria-hidden="true">×${group.cards.length}</span>`
           : "";
       const position = positionIndex >= 0
-        ? `<span class="cuddle-card-position" aria-hidden="true">${positionIndex + 1}</span>`
+        ? `<span class="cuddle-card-position" aria-hidden="true">#${positionIndex + 1}</span>`
         : "";
       const modeText = duel.mulliganMode
         ? `${selectedCount} selected; ${eligible.length} finite available; limit ${limit}`

@@ -2907,7 +2907,11 @@
         // missing, so every Preset Trial offer fell through to the generic
         // "lasts for the first N guesses" line above, which describes a
         // mechanic this boss doesn't have.
-        return "Before this round starts, the secret is narrowed to a short list of candidate words shown on screen -- the real one is among them. Your guess budget is cut by the size of that list.";
+        {
+          // Mirrors setupPresetWordsBoss's list size.
+          const words = Number(stage) <= 2 ? 2 : Number(stage) === 3 ? 3 : 4;
+          return `The answer is one of ${words} words shown on screen, but you get ${words} fewer guesses.`;
+        }
       case "questEndurance":
         // A standing pressure for the whole round, like shortHand; this case
         // was missing, so it fell through to the vague line below.
@@ -3242,6 +3246,16 @@
     state.bossGatesDone = unique([...(state.bossGatesDone || []), boss.gate].filter(Boolean));
     state.lastClearedBossGate = boss.gate || null;
 
+    // The final boss ends the run, so it grants no reward: nothing follows
+    // it for a power to act on.
+    if (finalBoss) {
+      state.status = "won";
+      state.failureReason = null;
+      state.lastMessage = `You beat the final boss: ${boss.title}.`;
+      this.save();
+      return;
+    }
+
     const reward = window.CuddleQuestBook?.getBossReward?.(boss.rewardId) || {
       id: boss.rewardId,
       icon: "🎁",
@@ -3279,14 +3293,6 @@
       message: rewardMessage || reward.description || "Permanent boss reward received."
     };
     cuddleV3RefreshSynergies(this, true);
-
-    if (finalBoss) {
-      state.status = "won";
-      state.failureReason = null;
-      state.lastMessage = `You beat the final boss: ${boss.title}.${rewardMessage ? ` ${rewardMessage}` : ""}`;
-      this.save();
-      return;
-    }
 
     this._advanceRound();
   };

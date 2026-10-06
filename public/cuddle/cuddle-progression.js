@@ -596,7 +596,7 @@
     if (boss) {
       if (boss.description) lines.push({ kind: "hazard", icon: "⚠️", text: boss.description });
       const tree = window.CuddleSkillTree;
-      const reward = boss.rewardId && tree ? resolveCatalogueNode(tree, boss.rewardId) : null;
+      const reward = boss.rewardId && tree && boss.gate !== "final" ? resolveCatalogueNode(tree, boss.rewardId) : null;
       if (reward) lines.push({ kind: "bonus", icon: reward.icon || "🎁", text: `Clear it to earn ${reward.title}` });
     }
 

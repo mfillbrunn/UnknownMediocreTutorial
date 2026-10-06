@@ -906,8 +906,8 @@
         title="${escapeHtml(details)}">
         <span class="cuddle-card-letter">${escapeHtml(group.glyph)}</span>
         ${unknown ? `<span class="cuddle-card-unknown" aria-hidden="true">?</span>` : ""}
-        ${positionIndex >= 0 ? `<span class="cuddle-card-position" aria-hidden="true">${positionIndex + 1}</span>` : ""}
-        ${showBadge ? `<span class="cuddle-card-count" aria-hidden="true">${badgeValue}</span>` : ""}
+        ${positionIndex >= 0 ? `<span class="cuddle-card-position" aria-hidden="true">#${positionIndex + 1}</span>` : ""}
+        ${showBadge ? `<span class="cuddle-card-count" aria-hidden="true">×${badgeValue}</span>` : ""}
       </button>`;
   }
 
@@ -1013,7 +1013,7 @@
           <span class="cuddle-modal-kicker">${isFinal ? "FINAL BOSS" : "BOSS ROUND"}</span>
           <h2 id="cuddleBossTitle">${isFinal ? "One last secret" : "Choose your boss"}</h2>
           <p>${isFinal
-            ? "Beat this round to win the run. Tap + to see the permanent reward it gives."
+            ? "Beat this round to win the run."
             : "Beat a boss to keep its reward (+). Its curse (−) comes with it for the rest of the run."}</p>
           <div class="cuddle-choice-grid">
             ${options.map(option => bossCardMarkup(option, isFinal)).join("")}
@@ -1045,8 +1045,9 @@
 
   function bossCardMarkup(option, isFinal) {
     const id = String(option.id);
-    const reward = option.reward || null;
-    const burden = bossCurseNote(option, isFinal);
+    // Nothing follows the final boss, so it carries no reward or curse.
+    const reward = isFinal ? null : option.reward || null;
+    const burden = isFinal ? "" : bossCurseNote(option, isFinal);
     const open = bossTraitOpen.bossId === id ? bossTraitOpen.trait : null;
     const bonus = reward ? pendingSynergyFor(reward.id) : null;
     const trait = (kind, label, iconHtml, extraClass = "") => `

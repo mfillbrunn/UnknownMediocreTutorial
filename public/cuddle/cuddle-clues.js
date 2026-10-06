@@ -270,6 +270,11 @@
     if (sweep && sweep.secret === secret && Array.isArray(sweep.letters) && sweep.letters.length) {
       chips.push({ icon: "🔍", label: "Process of Elimination", text: "Not", letters: sweep.letters, tone: "sweep" });
     }
+    // Preset Trial boss: the answer is one of these words.
+    const preset = state.megaState && state.megaState.presetWords;
+    if (state.boss && state.boss.id === "presetWordsTrial" && Array.isArray(preset) && preset.length) {
+      chips.push({ icon: "scroll", label: "Preset Trial", text: "Answer is one of", words: preset, tone: "preset" });
+    }
     if (level(game, IDS.mistakeShield) > 0 && shieldApplies(game)) {
       chips.push({ icon: "shield", label: "Mistake Shield", text: record.shieldUsed ? "Shield used" : "Shield ready", tone: record.shieldUsed ? "spent" : "" });
     }
@@ -296,6 +301,7 @@
         if (flip) flippedSweepKey = key;
         return `<b class="umt-clue-letter${latest ? " is-new" : ""}${flip ? " is-flipping" : ""}">${escapeHtml(letter)}</b>`;
       }).join("") : "")
+      + (chip.words ? chip.words.map(word => `<b class="umt-clue-word">${escapeHtml(String(word).toUpperCase())}</b>`).join("") : "")
       + `</span></span>`
     )).join("")}</div>`;
     let strip = root.querySelector(".cuddle-play-strip");
