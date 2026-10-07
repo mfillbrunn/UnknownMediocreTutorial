@@ -104,14 +104,22 @@
     mystery: Object.freeze({ title: "Unknown Stop", label: "?", icon: "stage-mystery.svg", description: "This stop stays hidden until you enter it." })
   });
 
+  // Road events. Money written $[n] grows with the world (x1, x1.5, x2 --
+  // see scaledMoney), so a world-three event still matters. Option ids:
+  // "safe" (no downside), "bold" (a bargain with a real cost), "gamble"
+  // (a coin flip, odds shown).
+  const opt = (id, title, summary, effects, requires) => Object.freeze(Object.assign(
+    { id, title, summary, effects: Object.freeze(effects) },
+    requires ? { requires: Object.freeze(requires) } : {}
+  ));
   const EVENTS = Object.freeze([
     Object.freeze({
       id: "firesideCache",
       title: "Fireside Cache",
       flavor: "A warm tin box sits beneath a quilted bench.",
       options: Object.freeze([
-        Object.freeze({ id: "safe", title: "Take the loose coins", summary: "Gain $8 with no downside.", effects: Object.freeze([{ type: "money", amount: 8 }]) }),
-        Object.freeze({ id: "bold", title: "Open the sealed compartment", summary: "Gain $24, but the next Wordle must be solved within the world's guess limit (6, 5 or 4) or the run ends.", effects: Object.freeze([{ type: "money", amount: 24 }, { type: "nextPenalty", key: "guess", amount: 1 }]) })
+        opt("safe", "Take the loose coins", "Gain $[15].", [{ type: "money", amount: 15 }]),
+        opt("bold", "Open the sealed compartment", "Gain $[45], but the next Wordle must be solved within the world's guess limit (6, 5 or 4) or the run ends.", [{ type: "money", amount: 45 }, { type: "nextPenalty", key: "guess", amount: 1 }])
       ])
     }),
     Object.freeze({
@@ -119,8 +127,8 @@
       title: "Velvet Shortcut",
       flavor: "A soft path promises speed now and a bill later.",
       options: Object.freeze([
-        Object.freeze({ id: "safe", title: "Follow the marked trail", summary: "Gain $7 with no downside.", effects: Object.freeze([{ type: "money", amount: 7 }]) }),
-        Object.freeze({ id: "bold", title: "Cut through the velvet gate", summary: "Gain $25, but the next solved Wordle pays $0.", effects: Object.freeze([{ type: "money", amount: 25 }, { type: "nextPenalty", key: "noMoney", amount: 1 }]) })
+        opt("safe", "Follow the marked trail", "Gain $[10] and one opening clue in the next Wordle.", [{ type: "money", amount: 10 }, { type: "nextBonus", key: "clue", amount: 1 }]),
+        opt("bold", "Cut through the velvet gate", "Gain a random **Rare** upgrade, but the next Wordle pays $0 and gives no upgrade reward.", [{ type: "upgradeTier", tier: "rare" }, { type: "nextPenalty", key: "noMoney", amount: 1 }, { type: "nextPenalty", key: "rewards", amount: 1 }])
       ])
     }),
     Object.freeze({
@@ -128,8 +136,8 @@
       title: "Lantern Loan",
       flavor: "A lantern keeper offers light against future pressure.",
       options: Object.freeze([
-        Object.freeze({ id: "safe", title: "Borrow a small lantern", summary: "Gain one extra mulligan in the next Wordle.", effects: Object.freeze([{ type: "nextBonus", key: "mulligan", amount: 1 }]) }),
-        Object.freeze({ id: "bold", title: "Take the keeper's purse", summary: "Gain $20, but the next boss is one guess tougher.", effects: Object.freeze([{ type: "money", amount: 20 }, { type: "bossPenalty", amount: 1 }]) })
+        opt("safe", "Borrow a small lantern", "Two extra mulligans in the next Wordle.", [{ type: "nextBonus", key: "mulligan", amount: 2 }]),
+        opt("bold", "Take the keeper's purse", "Gain $[50], but the next boss is one guess tougher.", [{ type: "money", amount: 50 }, { type: "bossPenalty", amount: 1 }])
       ])
     }),
     Object.freeze({
@@ -137,8 +145,8 @@
       title: "Quiet Forge",
       flavor: "A tiny forge can shape one permanent advantage.",
       options: Object.freeze([
-        Object.freeze({ id: "safe", title: "Sell the spare metal", summary: "Gain $6 with no downside.", effects: Object.freeze([{ type: "money", amount: 6 }]) }),
-        Object.freeze({ id: "bold", title: "Forge an upgrade", summary: "Gain a random permanent upgrade, but the next Wordle gives no normal upgrade reward.", effects: Object.freeze([{ type: "upgrade" }, { type: "nextPenalty", key: "rewards", amount: 1 }]) })
+        opt("safe", "Sell the spare metal", "Gain $[14].", [{ type: "money", amount: 14 }]),
+        opt("bold", "Work the forge all night", "Choose one of three **Rare** upgrades, but the next Wordle gives no upgrade reward.", [{ type: "nextPenalty", key: "rewards", amount: 1 }, { type: "pickTier", tier: "rare" }])
       ])
     }),
     Object.freeze({
@@ -146,8 +154,8 @@
       title: "Travelling Tailor",
       flavor: "A tailor has letter cards tucked into every pocket.",
       options: Object.freeze([
-        Object.freeze({ id: "safe", title: "Accept one sample", summary: "Draw one reward card at the start of the next Wordle.", effects: Object.freeze([{ type: "nextBonus", key: "cards", amount: 1 }]) }),
-        Object.freeze({ id: "bold", title: "Take the full bundle", summary: "Draw three reward cards next Wordle, but start it with one fewer mulligan.", effects: Object.freeze([{ type: "nextBonus", key: "cards", amount: 3 }, { type: "nextPenalty", key: "mulligan", amount: 1 }]) })
+        opt("safe", "Accept a sample", "Gain $[8] and two reward cards at the start of the next Wordle.", [{ type: "money", amount: 8 }, { type: "nextBonus", key: "cards", amount: 2 }]),
+        opt("bold", "Commission a suit", "Pay $[30] and choose one of three **Epic** upgrades.", [{ type: "money", amount: -30 }, { type: "pickTier", tier: "epic" }], { money: 30 })
       ])
     }),
     Object.freeze({
@@ -155,8 +163,8 @@
       title: "Patchwork Bargain",
       flavor: "The seamstress can unpick one old trick to sew in a new one.",
       options: Object.freeze([
-        Object.freeze({ id: "safe", title: "Take a spare patch", summary: "Draw one reward card at the start of the next Wordle.", effects: Object.freeze([{ type: "nextBonus", key: "cards", amount: 1 }]) }),
-        Object.freeze({ id: "bold", title: "Trade an upgrade", summary: "Give up one reversible upgrade, gain $18, and receive a different random permanent upgrade.", requires: Object.freeze({ upgrade: true }), effects: Object.freeze([{ type: "surrenderUpgrade" }, { type: "money", amount: 18 }, { type: "upgrade" }]) })
+        opt("safe", "Take a spare patch", "Gain $[10] and one opening clue in the next Wordle.", [{ type: "money", amount: 10 }, { type: "nextBonus", key: "clue", amount: 1 }]),
+        opt("bold", "Trade an upgrade", "Give up one upgrade (see below) for a random **Epic** upgrade.", [{ type: "surrenderUpgrade" }, { type: "upgradeTier", tier: "epic" }], { upgrade: true })
       ])
     }),
     Object.freeze({
@@ -164,25 +172,26 @@
       title: "Bridge Keeper",
       flavor: "The keeper values a sure fee, but values old magic more.",
       options: Object.freeze([
-        Object.freeze({ id: "safe", title: "Take the travel stipend", summary: "Gain $9 with no downside.", effects: Object.freeze([{ type: "money", amount: 9 }]) }),
-        Object.freeze({ id: "bold", title: "Sell an old technique", summary: "Give up one reversible upgrade and gain $30.", requires: Object.freeze({ upgrade: true }), effects: Object.freeze([{ type: "surrenderUpgrade" }, { type: "money", amount: 30 }]) })
+        opt("safe", "Take the travel stipend", "Gain $[16].", [{ type: "money", amount: 16 }]),
+        opt("bold", "Sell an old technique", "Give up one upgrade (see below) and gain $[65].", [{ type: "surrenderUpgrade" }, { type: "money", amount: 65 }], { upgrade: true })
       ])
     }),
     Object.freeze({
       id: "honeyedCompass",
       title: "Honeyed Compass",
-      flavor: "The compass can reveal a direction, or two at a price.",
+      flavor: "The compass can reveal a direction, or every direction at a price.",
       options: Object.freeze([
-        Object.freeze({ id: "safe", title: "Ask for one bearing", summary: "Reveal one opening clue in the next Wordle.", effects: Object.freeze([{ type: "nextBonus", key: "clue", amount: 1 }]) }),
-        Object.freeze({ id: "bold", title: "Demand the full route", summary: "Reveal two opening clues next Wordle, but the next boss is one guess tougher.", effects: Object.freeze([{ type: "nextBonus", key: "clue", amount: 2 }, { type: "bossPenalty", amount: 1 }]) })
+        opt("safe", "Ask for a bearing", "Two opening clues in the next Wordle.", [{ type: "nextBonus", key: "clue", amount: 2 }]),
+        opt("bold", "Demand the full route", "Four opening clues in the next Wordle, but the next boss is one guess tougher.", [{ type: "nextBonus", key: "clue", amount: 4 }, { type: "bossPenalty", amount: 1 }])
       ])
     }),
     Object.freeze({
       id: "wrappedParcel",
       title: "Wrapped Parcel",
-      flavor: "Nobody remembers who left the parcel here.",
+      flavor: "Nobody remembers who left the parcel here. Something inside is ticking.",
       options: Object.freeze([
-        Object.freeze({ id: "open", title: "Open the parcel", summary: "Receive a random helpful reward.", effects: Object.freeze([{ type: "randomMinor" }]) })
+        opt("safe", "Shake out the loose coins", "Gain $[12].", [{ type: "money", amount: 12 }]),
+        opt("gamble", "Tear it open", "70%: a random **Rare** upgrade. 30%: it snaps shut and you lose $[20].", [{ type: "gamble", chance: 0.7, win: [{ type: "upgradeTier", tier: "rare" }], lose: [{ type: "money", amount: -20 }] }])
       ])
     }),
     Object.freeze({
@@ -190,8 +199,8 @@
       title: "Mystery Crate",
       flavor: "The small drawer is free; the locked drawer asks for coin.",
       options: Object.freeze([
-        Object.freeze({ id: "safe", title: "Take the visible coins", summary: "Gain $5 with no downside.", effects: Object.freeze([{ type: "money", amount: 5 }]) }),
-        Object.freeze({ id: "bold", title: "Pay for the locked drawer", summary: "Pay $8 for a random major reward.", requires: Object.freeze({ money: 8 }), effects: Object.freeze([{ type: "money", amount: -8 }, { type: "randomMajor" }]) })
+        opt("safe", "Take the visible coins", "Gain $[10].", [{ type: "money", amount: 10 }]),
+        opt("bold", "Pay for the locked drawer", "Pay $[25] for a major prize: an **Epic** upgrade, a **Rare** upgrade and $[20], $[60], or (rarely) a **Legendary** upgrade.", [{ type: "money", amount: -25 }, { type: "randomMajor" }], { money: 25 })
       ])
     }),
     Object.freeze({
@@ -199,8 +208,44 @@
       title: "Moonlit Market",
       flavor: "A quiet stall sells certainty and gives samples away.",
       options: Object.freeze([
-        Object.freeze({ id: "safe", title: "Take the free sample", summary: "Draw one reward card at the start of the next Wordle.", effects: Object.freeze([{ type: "nextBonus", key: "cards", amount: 1 }]) }),
-        Object.freeze({ id: "bold", title: "Buy the hidden pattern", summary: "Pay $15 and gain a random permanent upgrade.", requires: Object.freeze({ money: 15 }), effects: Object.freeze([{ type: "money", amount: -15 }, { type: "upgrade" }]) })
+        opt("safe", "Take the free samples", "Two reward cards at the start of the next Wordle and one extra mulligan.", [{ type: "nextBonus", key: "cards", amount: 2 }, { type: "nextBonus", key: "mulligan", amount: 1 }]),
+        opt("bold", "Buy from the back room", "Pay $[20] and choose one of three **Rare** upgrades.", [{ type: "money", amount: -20 }, { type: "pickTier", tier: "rare" }], { money: 20 })
+      ])
+    }),
+    Object.freeze({
+      id: "cursedIdol",
+      title: "Cursed Idol",
+      flavor: "A golden idol hums on a mossy plinth. It wants to come with you.",
+      options: Object.freeze([
+        opt("safe", "Pry off a gem", "Gain $[18].", [{ type: "money", amount: 18 }]),
+        opt("bold", "Take the idol", "Gain a random **Legendary** upgrade, but a curse hides feedback on one guess of every stage for the rest of the run.", [{ type: "upgradeTier", tier: "legendary" }, { type: "curse" }])
+      ])
+    }),
+    Object.freeze({
+      id: "gamblersDen",
+      title: "Gambler's Den",
+      flavor: "Dice clatter behind a curtain. The house always smiles.",
+      options: Object.freeze([
+        opt("gamble", "A friendly bet", "Stake $[15]. 50%: win $[45] back.", [{ type: "money", amount: -15 }, { type: "gamble", chance: 0.5, win: [{ type: "money", amount: 45 }], lose: [] }], { money: 15 }),
+        opt("risk", "Bet it all on red", "Stake $[35]. 50%: an **Epic** upgrade and $[50] back. Lose, and the next Wordle must be solved within the guess limit.", [{ type: "money", amount: -35 }, { type: "gamble", chance: 0.5, win: [{ type: "upgradeTier", tier: "epic" }, { type: "money", amount: 50 }], lose: [{ type: "nextPenalty", key: "guess", amount: 1 }] }], { money: 35 })
+      ])
+    }),
+    Object.freeze({
+      id: "bloodMoonAltar",
+      title: "Blood Moon Altar",
+      flavor: "The altar takes what you've earned and gives back something stranger.",
+      options: Object.freeze([
+        opt("safe", "Leave an offering of coins", "Pay $[10] for two extra mulligans and one opening clue in the next Wordle.", [{ type: "money", amount: -10 }, { type: "nextBonus", key: "mulligan", amount: 2 }, { type: "nextBonus", key: "clue", amount: 1 }], { money: 10 }),
+        opt("bold", "Offer your points", "Lose [60] points and choose one of three **Epic** upgrades.", [{ type: "points", amount: -60 }, { type: "pickTier", tier: "epic" }])
+      ])
+    }),
+    Object.freeze({
+      id: "wanderingScholar",
+      title: "Wandering Scholar",
+      flavor: "A scholar offers to cross a few letters off the list for good.",
+      options: Object.freeze([
+        opt("safe", "Listen to a lecture", "Two opening clues in the next Wordle.", [{ type: "nextBonus", key: "clue", amount: 2 }]),
+        opt("bold", "Study through the night", "Two rare letters leave the deck and every future answer for good, but the next Wordle must be solved within the guess limit.", [{ type: "upgradeId", id: "umtCullTwo" }, { type: "nextPenalty", key: "guess", amount: 1 }])
       ])
     })
   ]);
@@ -308,6 +353,31 @@
 
     function richText(value) {
       return goldenMoney(escapeHtml(value));
+    }
+
+    // Event money and points grow with the world: x1, x1.5, x2.
+    const EVENT_WORLD_SCALE = Object.freeze([1, 1.5, 2]);
+    function eventScale(game) {
+      const cleared = game && game.state && Array.isArray(game.state.bossGatesDone) ? game.state.bossGatesDone.length : 0;
+      return EVENT_WORLD_SCALE[Math.max(0, Math.min(EVENT_WORLD_SCALE.length - 1, cleared))];
+    }
+    function scaledMoney(game, amount) {
+      const value = Number(amount) || 0;
+      return Math.sign(value) * Math.round(Math.abs(value) * eventScale(game));
+    }
+
+    // An event's text: "$[n]" and "[n]" become the world-scaled figure, and
+    // **Rare** / **Epic** / **Legendary** are tinted with their tier.
+    function plainEventText(game, value) {
+      return String(value || "")
+        .replace(/\$\[(\d+)\]/g, (_match, amount) => `$${scaledMoney(game, Number(amount))}`)
+        .replace(/\[(\d+)\]/g, (_match, amount) => String(scaledMoney(game, Number(amount))));
+    }
+
+    function eventText(game, value) {
+      const text = plainEventText(game, value);
+      return richText(text).replace(/\*\*(Common|Rare|Epic|Legendary)\*\*/g,
+        (_match, tier) => `<b class="umt-event-tier is-${tier.toLowerCase()}">${tier}</b>`);
     }
 
     function hashText(value) {
@@ -711,7 +781,14 @@
       eventOptions: node => {
         const definition = node && EVENT_BY_ID[node.expandedEventId];
         return definition
-          ? { flavor: definition.flavor, options: definition.options.map(option => ({ title: option.title, summary: option.summary })) }
+          ? {
+            flavor: definition.flavor,
+            options: definition.options.map(option => {
+              const game = window.CuddleBranchMap && typeof window.CuddleBranchMap.getActiveGame === "function"
+                ? window.CuddleBranchMap.getActiveGame() : null;
+              return { title: option.title, summary: plainEventText(game, option.summary).replace(/\*\*/g, "") };
+            })
+          }
           : null;
       }
     });
@@ -843,18 +920,93 @@
       return pools[Math.floor(randomFor(game) * pools.length)];
     }
 
+    // Mystery Crate's locked drawer: weighted, with a small Legendary shot.
     function randomMajorEffects(game) {
       const pools = [
-        [{ type: "money", amount: 24 }],
-        [{ type: "upgrade" }],
-        [{ type: "nextBonus", key: "cards", amount: 2 }],
-        [{ type: "nextBonus", key: "clue", amount: 2 }],
-        [{ type: "money", amount: 12 }, { type: "nextBonus", key: "mulligan", amount: 2 }]
+        [35, [{ type: "upgradeTier", tier: "epic" }]],
+        [30, [{ type: "upgradeTier", tier: "rare" }, { type: "money", amount: 20 }]],
+        [27, [{ type: "money", amount: 60 }]],
+        [8, [{ type: "upgradeTier", tier: "legendary" }]]
       ];
-      return pools[Math.floor(randomFor(game) * pools.length)];
+      let roll = randomFor(game) * pools.reduce((sum, entry) => sum + entry[0], 0);
+      for (const [weight, effects] of pools) {
+        roll -= weight;
+        if (roll < 0) return effects;
+      }
+      return pools[0][1];
     }
 
-    function applyEffects(game, effects, context) {
+    // A random upgrade of one tier (falling back a tier when none is left).
+    function grantTierUpgrade(game, tier) {
+      const api = window.CuddleEconomyRarityV8;
+      if (!api || typeof api.packRewards !== "function" || typeof game._grantUpgradeChoice !== "function") {
+        return grantRandomUpgrade(game);
+      }
+      const cards = api.packRewards(game, tier, `${game.state.runId || "run"}:${game.state.round || 0}:event:${tier}:${Math.floor(randomFor(game) * 1e9)}`) || [];
+      const card = cards[cards.length - 1];
+      if (!card) return grantRandomUpgrade(game);
+      const { price, tier: cardTier, ...choice } = card;
+      try {
+        const result = game._grantUpgradeChoice(choice);
+        if (result && result.ok) return { ok: true, message: `${tierLabel(cardTier)} upgrade: ${card.title}.` };
+      } catch (_error) {}
+      return grantRandomUpgrade(game);
+    }
+
+    // Three different upgrades of one tier, to choose from on the reward
+    // screen (no refreshes), like a waystone.
+    function tierChoices(game, tier) {
+      const api = window.CuddleEconomyRarityV8;
+      if (!api || typeof api.packRewards !== "function") return [];
+      const seen = new Set();
+      const choices = [];
+      for (let attempt = 0; attempt < 6 && choices.length < 3; attempt += 1) {
+        const cards = api.packRewards(game, tier, `${game.state.runId || "run"}:${game.state.round || 0}:pick:${tier}:${attempt}`) || [];
+        const card = cards[cards.length - 1];
+        if (card && !seen.has(card.id)) {
+          seen.add(card.id);
+          const { price, ...choice } = card;
+          choices.push(Object.assign(choice, { key: choice.key || choice.id }));
+        }
+      }
+      return choices;
+    }
+
+    function tierLabel(tier) {
+      const name = String(tier || "common");
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+
+    // A permanent curse, like a beaten boss leaves: one guess of every
+    // stage from now on has its feedback masked.
+    const EVENT_CURSES = Object.freeze(["hiddenMargins", "countOnly", "blueMode", "arrowMode"]);
+    const EVENT_CURSE_NAMES = Object.freeze({ hiddenMargins: "Hidden Tiles", countOnly: "Count Only", blueMode: "Blue Mode", arrowMode: "Arrow Signs" });
+    function addEventCurse(game) {
+      const mega = game.state.megaState || (game.state.megaState = {});
+      if (!Array.isArray(mega.ratchetDebuffs)) mega.ratchetDebuffs = [];
+      const used = new Set(mega.ratchetDebuffs.map(item => Number(item && item.guessIndex) || 0));
+      const open = [1, 2, 3, 4].filter(index => !used.has(index));
+      const guessIndex = open.length ? open[Math.floor(randomFor(game) * open.length)] : Math.max(4, ...used) + 1;
+      const bossId = EVENT_CURSES[Math.floor(randomFor(game) * EVENT_CURSES.length)];
+      const debuff = { bossId, guessIndex, source: "event" };
+      if (bossId === "hiddenMargins") debuff.hiddenIndices = shuffled([0, 1, 2, 3, 4], () => randomFor(game)).slice(0, 2);
+      mega.ratchetDebuffs.push(debuff);
+      return `Curse: ${EVENT_CURSE_NAMES[bossId]} now haunts guess ${guessIndex} of every stage.`;
+    }
+
+    function grantUpgradeById(game, id) {
+      if (typeof game._upgradeCatalog !== "function" || typeof game._grantUpgradeChoice !== "function") return null;
+      const choice = (game._upgradeCatalog() || []).find(item => item && (item.id === id || item.key === id));
+      if (!choice) return null;
+      try {
+        const result = game._grantUpgradeChoice(choice);
+        return result && result.ok ? `${choice.title || "Upgrade"} acquired.` : null;
+      } catch (_error) {
+        return null;
+      }
+    }
+
+    function applyEffects(game, effects, context = {}) {
       const map = ensureMap(game);
       const messages = [];
       const queue = (effects || []).slice();
@@ -863,9 +1015,43 @@
         if (!effect || !effect.type) continue;
         switch (effect.type) {
           case "money": {
-            const amount = Number(effect.amount || 0);
+            const amount = scaledMoney(game, effect.amount);
             game.state.cuddleMoney = Math.max(0, Number(game.state.cuddleMoney || 0) + amount);
             messages.push(amount >= 0 ? `+$${amount}.` : `Paid $${Math.abs(amount)}.`);
+            break;
+          }
+          case "points": {
+            const amount = scaledMoney(game, effect.amount);
+            game.state.score = Math.max(0, Number(game.state.score || 0) + amount);
+            messages.push(amount >= 0 ? `+${amount} points.` : `Lost ${Math.abs(amount)} points.`);
+            break;
+          }
+          case "upgradeTier":
+            messages.push(grantTierUpgrade(game, effect.tier).message);
+            break;
+          case "upgradeId": {
+            const message = grantUpgradeById(game, effect.id);
+            messages.push(message || grantTierUpgrade(game, "rare").message);
+            break;
+          }
+          case "pickTier": {
+            const choices = tierChoices(game, effect.tier);
+            if (choices.length) {
+              context.pendingPick = { tier: effect.tier, choices };
+              messages.push(`Choose one of ${choices.length} ${tierLabel(effect.tier)} upgrades.`);
+            } else {
+              messages.push(grantTierUpgrade(game, effect.tier).message);
+            }
+            break;
+          }
+          case "curse":
+            messages.push(addEventCurse(game));
+            break;
+          case "gamble": {
+            const won = randomFor(game) < Number(effect.chance || 0.5);
+            context.gambleResult = won ? "won" : "lost";
+            messages.push(won ? "The gamble paid off!" : "The gamble didn't pay off.");
+            queue.unshift(...((won ? effect.win : effect.lose) || []));
             break;
           }
           case "nextBonus":
@@ -873,7 +1059,7 @@
             messages.push(effect.key === "guess"
               ? `The next Wordle gains ${effect.amount || 1} guess.`
               : effect.key === "mulligan"
-                ? `The next Wordle gains ${effect.amount || 1} mulligan.`
+                ? `The next Wordle gains ${effect.amount || 1} mulligan${Number(effect.amount || 1) === 1 ? "" : "s"}.`
                 : effect.key === "cards"
                   ? `${effect.amount || 1} reward card${Number(effect.amount || 1) === 1 ? "" : "s"} will arrive next Wordle.`
                   : `${effect.amount || 1} opening clue${Number(effect.amount || 1) === 1 ? "" : "s"} banked.`);
@@ -917,8 +1103,9 @@
 
     function eventAvailability(game, option, eventState) {
       if (!option || !option.requires) return { ok: true, reason: "" };
-      if (Number(option.requires.money || 0) > Number(game.state.cuddleMoney || 0)) {
-        return { ok: false, reason: `Needs $${option.requires.money}.` };
+      const needed = scaledMoney(game, option.requires.money || 0);
+      if (needed > Number(game.state.cuddleMoney || 0)) {
+        return { ok: false, reason: `Needs $${needed}.` };
       }
       if (option.requires.upgrade && !(eventState && eventState.sacrificeUpgrade)) {
         return { ok: false, reason: "No reversible upgrade is available." };
@@ -949,10 +1136,29 @@
       if (!definition || !option) return { ok: false, error: "That event choice is no longer available." };
       const availability = eventAvailability(game, option, eventState);
       if (!availability.ok) return { ok: false, error: availability.reason };
-      const messages = applyEffects(game, option.effects, eventState);
+      const context = Object.assign({}, eventState);
+      const messages = applyEffects(game, option.effects, context);
       map.expandedEvent = null;
-      game.state.status = MAP_STATUS;
       game.state.lastMessage = `${definition.title} - ${option.title}: ${messages.join(" ")}`;
+      map.expandedEventResult = {
+        title: definition.title,
+        option: option.title,
+        lines: messages,
+        gamble: context.gambleResult || null,
+        at: Date.now()
+      };
+      if (context.pendingPick) {
+        // Choose-one-of-three: the reward screen, fixed like a waystone's.
+        map.expandedEventResult = null;
+        game.state.status = "upgrade";
+        game.state.upgradePhase = "round";
+        game.state.upgradeMilestone = null;
+        game.state.upgradeChoices = context.pendingPick.choices;
+        game.state.waystoneOffer = true;
+        game.state.umtEventPick = { title: definition.title, tier: context.pendingPick.tier };
+      } else {
+        game.state.status = MAP_STATUS;
+      }
       safeSave(game);
       return { ok: true, message: game.state.lastMessage };
     }
@@ -2184,14 +2390,18 @@
       }
       const choices = definition.options.map((option, index) => {
         const available = eventAvailability(game, option, eventState);
-        const tag = option.id === "safe" ? "Safe" : option.id === "bold" ? "Bargain" : "Chance";
+        const tag = option.id === "safe" ? "Safe" : option.id === "bold" ? "Bargain"
+          : option.id === "gamble" ? "Gamble" : option.id === "risk" ? "High stakes" : "Chance";
+        const gives = (option.effects || []).some(effect => effect.type === "surrenderUpgrade") && eventState.sacrificeUpgrade
+          ? `<em class="umt-event-gives">Gives up: ${escapeHtml(eventState.sacrificeUpgrade.title)}</em>`
+          : "";
         return (
           `<button type="button" class="cuddle-choice umt-event-choice is-${escapeHtml(option.id)}${available.ok ? "" : " is-disabled"}" style="--i:${index}" `
           + `data-cuddle-campaign-action="expanded-event-choice" data-shop-item-id="${escapeHtml(option.id)}"${available.ok ? "" : " disabled"}>`
           + `<span class="umt-event-tag">${tag}</span>`
           + `<strong>${escapeHtml(option.title)}</strong>`
-          + `<small>${richText(option.summary)}</small>`
-          + (available.ok ? "" : `<em>${richText(available.reason)}</em>`)
+          + `<small>${eventText(game, option.summary)}</small>`
+          + (available.ok ? gives : `<em>${richText(available.reason)}</em>`)
           + `</button>`
         );
       }).join("");
@@ -2606,11 +2816,33 @@
       );
     }
 
+    // What an event choice did, shown before the road goes on: a gamble's
+    // win or loss and every gain and cost, one per line.
+    function renderEventResult(game, map) {
+      const result = map.expandedEventResult;
+      const mood = result.gamble === "won" ? " is-won" : result.gamble === "lost" ? " is-lost" : "";
+      const banner = result.gamble === "won" ? "Fortune smiles" : result.gamble === "lost" ? "Bad luck" : "Done";
+      const lines = (result.lines || []).filter(line => !/^The gamble /.test(line))
+        .map(line => `<li>${eventText(game, line)}</li>`).join("");
+      return (
+        `<div class="cuddle-shell umt-event-shell">`
+        + shellHeader(game, "EVENT")
+        + `<main class="umt-event-page">`
+        + `<section class="umt-stop-panel umt-event-panel umt-event-result${mood}">`
+        + `<span class="umt-event-eyebrow">${escapeHtml(result.title)} · ${escapeHtml(result.option)}</span>`
+        + `<h2 class="umt-event-result-title">${banner}</h2>`
+        + `<ul class="umt-event-result-lines">${lines}</ul>`
+        + `<button type="button" class="cuddle-btn cuddle-btn-primary" data-cuddle-campaign-action="expanded-event-done">Back on the road</button>`
+        + `</section></main></div>`
+      );
+    }
+
     function renderMapWithExpandedStages(game) {
       // startNew runs before the route exists (cuddle-branch-map.js builds it
       // lazily), so this first render is where a new run's duels get placed.
       const map = prepareMap(game, true);
       if (map && map.expandedEvent) return renderEventScreen(game, map);
+      if (map && map.expandedEventResult) return renderEventResult(game, map);
       if (map && map.expandedDuel) return renderDuelScreen(game, map);
       const html = originalRenderMapScreen(game);
       return legendOpen ? html + renderLegend() : html;
@@ -2668,7 +2900,7 @@
     function decorateMapDom(root, game) {
       if (!root || !game || game.state.status !== MAP_STATUS) return;
       const map = ensureMap(game);
-      if (!map || map.expandedEvent || map.expandedDuel) return;
+      if (!map || map.expandedEvent || map.expandedEventResult || map.expandedDuel) return;
       const flatNodes = map.rows.flatMap(row => row.nodes || []);
       root.querySelectorAll(".cuddle-branch-map-svg g.cuddle-map-node").forEach((group, index) => {
         const node = nodeFromElement(game, group) || flatNodes[index];
@@ -2802,6 +3034,12 @@
           return { ok: true };
         case "expanded-event-choice":
           return chooseExpandedEvent(game, itemId);
+        case "expanded-event-done": {
+          const map = ensureMap(game);
+          if (map) map.expandedEventResult = null;
+          safeSave(game);
+          return { ok: true };
+        }
         case "expanded-duel-start": {
           const started = startDuel(game, itemId);
           if (started && started.ok !== false) introduceRival(game);

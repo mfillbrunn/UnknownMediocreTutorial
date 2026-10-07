@@ -465,6 +465,8 @@
     // So does an Upgrade Pack on offer or being opened (cuddle-packs.js):
     // the pack shows its own cards, then the badges follow.
     if (state.umtPackOffer) return;
+    // And an event's outcome screen (cuddle-expanded-stages.js).
+    if (state.branchMap && state.branchMap.expandedEventResult) return;
     const fresh = entries.slice(watch.ledgerLength);
     const combosNow = ownedComboIds(game);
     const newComboIds = new Set([...combosNow].filter((id) => !watch.comboOwned.has(id)));

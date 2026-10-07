@@ -1251,7 +1251,12 @@
         : `Refresh choices ($${refreshCost})`;
     const waystone = typeof game.isWaystoneUpgrade === "function" && game.isWaystoneUpgrade();
     const legendary = Boolean(state.legendaryOffer);
-    const kicker = legendary
+    // An event's choose-one-of-three (cuddle-expanded-stages.js).
+    const eventPick = waystone && state.umtEventPick ? state.umtEventPick : null;
+    const eventTier = eventPick ? String(eventPick.tier || "").replace(/^./, c => c.toUpperCase()) : "";
+    const kicker = eventPick
+      ? `EVENT · ${String(eventPick.title || "").toUpperCase()}`
+      : legendary
       ? "BOSS DEFEATED"
       : milestone
       ? `POINTS MILESTONE · ${state.upgradeMilestone}`
@@ -1260,7 +1265,9 @@
         : waystone
           ? "FREE UPGRADE"
           : `ROUND ${summary?.round || state.round} CLEARED`;
-    const heading = legendary
+    const heading = eventPick
+      ? `Choose ${/^[AEIOU]/.test(eventTier) ? "an" : "a"} ${eventTier} upgrade`
+      : legendary
       ? "Choose a legendary reward"
       : milestone
       ? "Choose a bonus upgrade"

@@ -47,7 +47,7 @@
   var MID_BOSS_GATE = "before-7";
   var FINAL_BOSS_GATE = "final";
   var EVENT_MONEY_COST = 15;
-  var EVENT_WINDFALL_AMOUNT = 12;
+  var EVENT_WINDFALL_AMOUNT = 20;
   // The shop's saved state (activeShopRound, shopPurchases) is keyed by the
   // round numbers cuddle-campaign.js already whitelists, and ensureCampaign
   // wipes anything outside that list -- so each shop node borrows one of
@@ -524,7 +524,7 @@
       messages.push(drawn.length ? "Drew a fresh reward card." : "No fresh cards were available.");
     }
     if (definition.luck === "money") {
-      game.state.score = Number(game.state.score || 0) + EVENT_WINDFALL_AMOUNT;
+      game.state.cuddleMoney = Number(game.state.cuddleMoney || 0) + EVENT_WINDFALL_AMOUNT;
       messages.push("+$" + EVENT_WINDFALL_AMOUNT + ", free.");
     }
 
@@ -754,6 +754,7 @@
     if (this.state && this.state.status !== "upgrade") {
       this.state.waystoneOffer = false;
       this.state.legendaryOffer = false;
+      this.state.umtEventPick = null;
     }
     return result;
   };
@@ -762,6 +763,7 @@
   proto._beginRound = function beginRoundWithBranchPenalty() {
     this.state.waystoneOffer = false;
     this.state.legendaryOffer = false;
+    this.state.umtEventPick = null;
     var result = originalBeginRound.apply(this, arguments);
     var branchMap = ensureBranchMap(this);
     // The map is the between-rounds screen now, so the old round-intro card
