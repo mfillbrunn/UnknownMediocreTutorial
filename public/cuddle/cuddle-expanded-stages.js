@@ -217,6 +217,33 @@
   // turn instead of on every re-render.
   let turnFlash = { key: "", at: 0 };
   const AI_TYPE_STEP_MS = 170;
+  // The Duel's rival, one per AI difficulty: introduced like a boss, and
+  // its face stands in for the AI on the turn box and the result.
+  const RIVALS = Object.freeze({
+    easy: { name: "Pip", title: "Pip the Apprentice", line: "Still learning the letters, but eager to beat you.", robe: "#3aa76d", eyes: "#d8ffe6" },
+    medium: { name: "Vex", title: "Vex the Wordsmith", line: "Quick, careful, and hungry for your answer.", robe: "#7c5cc4", eyes: "#f1e6ff" },
+    hard: { name: "Grimm", title: "Grimm the Grandmaster", line: "Has never lost a Duel. Not yet.", robe: "#b8323b", eyes: "#ffd7d9" }
+  });
+  let rivalIntroOpen = false;
+  let duelWinFx = { id: "", at: 0 };
+  const DUEL_WIN_FX_MS = 3200;
+
+  function rivalOf(duel) {
+    return RIVALS[duel && duel.difficulty] || RIVALS.medium;
+  }
+
+  // A hooded rival holding a letter tile, eyes glowing out of the hood.
+  function rivalSvg(rival) {
+    return `<svg class="umt-rival" viewBox="0 0 24 24" aria-hidden="true">`
+      + `<path d="M12 2.3c-4.7 0-7.6 3.7-7.6 8.4V22h15.2V10.7c0-4.7-2.9-8.4-7.6-8.4z" fill="${rival.robe}"/>`
+      + `<path d="M12 2.3c-4.7 0-7.6 3.7-7.6 8.4V22h2.2V11c0-3.8 2.1-6.9 5.4-7.6z" fill="#000" opacity=".18"/>`
+      + `<path d="M12 5.6c-3.1 0-5 2.5-5 5.5 0 3.1 2.1 5.4 5 5.4s5-2.3 5-5.4c0-3-1.9-5.5-5-5.5z" fill="#140f1f"/>`
+      + `<circle class="umt-rival-eye" cx="9.9" cy="11.2" r="1.15" fill="${rival.eyes}"/>`
+      + `<circle class="umt-rival-eye" cx="14.1" cy="11.2" r="1.15" fill="${rival.eyes}"/>`
+      + `<rect x="8.4" y="16.6" width="7.2" height="5.4" rx="1.3" fill="#f6c956" stroke="#140f1f" stroke-width=".7"/>`
+      + `<text x="12" y="20.7" text-anchor="middle" font-family="system-ui,sans-serif" font-size="4.4" font-weight="900" fill="#140f1f">?</text>`
+      + `</svg>`;
+  }
   const TURN_FLASH_MS = 1500;
   let challengeObserver = null;
 
@@ -1563,7 +1590,7 @@
       });
     }
 
-    function recordDuelGuess(game, actor, word) {
+    function recordDuelGuess(game, actor, word, jokerIndex = -1) {
       const duel = ensureMap(game).expandedDuel;
       if (!duel || duel.phase !== "playing") return { ok: false, error: "The Duel is not active." };
       const feedback = Engine.evaluateFeedback(duel.secret, word);
@@ -1584,7 +1611,9 @@
             ? "The AI is studying the visible feedback."
             : "Your turn. Build a word from your Cuddle tiles.";
         }
-        duel.history.push({ actor, word, feedback: feedback.slice() });
+        duel.history.push(jokerIndex >= 0
+          ? { actor, word, feedback: feedback.slice(), jokerIndex }
+          : { actor, word, feedback: feedback.slice() });
         syncVisibleGuessToDuelHand(game, duel, actor, word, feedback);
         duel.mulliganMode = false;
         duel.mulliganSelection = [];
@@ -1614,6 +1643,7 @@
       if (duel.mulliganMode) return { ok: false, error: "Finish or cancel the mulligan first." };
       const tileSnapshot = cloneForDuel(duel.tileState, null);
       let word = "";
+      let jokerIndex = -1;
       let result;
       try {
         result = withDuelTileState(game, duel, state => {
@@ -1623,6 +1653,7 @@
           // A Joker becomes whichever letter completes a real word, as it
           // does on an ordinary stage.
           const joker = Engine.CUDDLE_JOKER_GLYPH;
+          jokerIndex = joker ? word.indexOf(joker) : -1;
           if (joker && word.includes(joker) && typeof game.resolveJokerWord === "function") {
             const resolution = game.resolveJokerWord(word);
             if (!resolution) return { ok: false, error: "No letter completes that into a real word." };
@@ -1649,7 +1680,7 @@
         return { ok: false, error: error && error.message ? error.message : "The Duel guess could not be submitted." };
       }
       if (!result || !result.ok) return result || { ok: false, error: "The Duel guess could not be submitted." };
-      const recorded = recordDuelGuess(game, "player", word);
+      const recorded = recordDuelGuess(game, "player", word, jokerIndex);
       if (!recorded.ok && tileSnapshot) duel.tileState = tileSnapshot;
       return recorded;
     }
@@ -1824,9 +1855,30 @@
       requestRender(game);
     }
 
+    function introduceRival(game) {
+      const duel = game && game.state && game.state.branchMap && game.state.branchMap.expandedDuel;
+      const worlds = window.CuddleWorlds;
+      if (!duel || duel.phase !== "playing" || !worlds || typeof worlds.playBossEntrance !== "function") return;
+      const rival = rivalOf(duel);
+      rivalIntroOpen = true;
+      worlds.playBossEntrance({
+        game,
+        boss: { title: rival.title },
+        figure: rivalSvg(rival),
+        eyebrow: "Word Duel · Your rival",
+        line: rival.line,
+        extraClass: `is-rival is-rival-${duel.difficulty || "medium"}`,
+        onDone() {
+          rivalIntroOpen = false;
+          requestRender(game);
+        }
+      });
+    }
+
     function scheduleAiMove(game) {
       const duel = game && game.state && game.state.branchMap && game.state.branchMap.expandedDuel;
       if (!duel || duel.phase !== "playing" || duel.turn !== "ai") return;
+      if (rivalIntroOpen) return;
       const token = `${game.state.runId}:${duel.id}:${duel.history.length}:${duel.aiMoveNumber || 0}`;
       if (scheduledAiToken === token && duelAiTimer) return;
       scheduledAiToken = token;
@@ -2084,7 +2136,7 @@
     function renderDuelBoard(game, duel) {
       const rows = (duel.history || []).map(entry => (
         `<div class="cuddle-board-row umt-duel-row is-${escapeHtml(entry.actor)}">`
-        + entry.word.split("").map((letter, index) => `<span class="cuddle-tile is-${escapeHtml(entry.feedback[index] || "grey")}">${escapeHtml(letter)}</span>`).join("")
+        + entry.word.split("").map((letter, index) => `<span class="cuddle-tile is-${escapeHtml(entry.feedback[index] || "grey")}${entry.jokerIndex === index ? " is-joker" : ""}">${escapeHtml(letter)}</span>`).join("")
         + (entry.actor === "ai" ? `<span class="cuddle-row-score umt-duel-who is-ai">AI</span>` : `<span class="cuddle-row-score umt-duel-who is-you"></span>`)
         + `</div>`
       ));
@@ -2107,7 +2159,7 @@
               const cardId = (state.draft || [])[index];
               const card = cardId ? cardById.get(cardId) : null;
               if (!card) return `<span class="cuddle-tile"></span>`;
-              return `<button type="button" class="cuddle-tile is-draft-tile is-filled" data-cuddle-campaign-action="expanded-duel-remove" data-shop-item-id="${index}"${enabled ? "" : " disabled"} aria-label="Remove ${escapeHtml(card.glyph)} from position ${index + 1}">${escapeHtml(card.glyph)}</button>`;
+              return `<button type="button" class="cuddle-tile is-draft-tile is-filled${card.source === "joker" || card.glyph === Engine.CUDDLE_JOKER_GLYPH ? " is-joker" : ""}" data-cuddle-campaign-action="expanded-duel-remove" data-shop-item-id="${index}"${enabled ? "" : " disabled"} aria-label="Remove ${escapeHtml(card.glyph)} from position ${index + 1}">${escapeHtml(card.glyph)}</button>`;
             }).join("");
           });
         } catch (_error) {
@@ -2163,6 +2215,7 @@
         VOWEL_SET.has(group.glyph) ? "is-vowel" : "",
         draftedCount ? "has-drafted" : "",
         selectedCount ? "is-selected" : "",
+        group.glyph === Engine.CUDDLE_JOKER_GLYPH ? "is-joker" : "",
         "umt-duel-hand-card"
       ].filter(Boolean).join(" ");
       const badge = infinite
@@ -2239,10 +2292,21 @@
       const duel = map.expandedDuel;
       const choosing = duel.phase === "choose";
       const playing = duel.phase === "playing";
-      const secretTiles = String(duel.secret || "").split("").map(letter => `<span class="cuddle-tile is-green">${escapeHtml(letter)}</span>`).join("");
+      const secretTiles = String(duel.secret || "").split("").map((letter, index) => `<span class="cuddle-tile is-green" style="--i:${index}">${escapeHtml(letter)}</span>`).join("");
+      let winFx = "";
+      if (duel.phase === "won") {
+        if (duelWinFx.id !== duel.id) duelWinFx = { id: duel.id, at: Date.now() };
+        const elapsed = Date.now() - duelWinFx.at;
+        if (elapsed < DUEL_WIN_FX_MS) winFx = ` is-celebrating" style="--win-t:-${elapsed}ms`;
+      }
+      const rival = rivalOf(duel);
+      const sparks = duel.phase === "won"
+        ? `<span class="umt-duel-sparks" aria-hidden="true">${Array.from({ length: 10 }, (_unused, index) => `<i style="--a:${index * 36}deg"></i>`).join("")}</span>`
+        : "";
       const outcome = duel.phase === "won" || duel.phase === "lost"
-        ? `<section class="umt-stop-panel umt-duel-outcome is-${duel.phase === "won" ? "win" : "loss"}">`
-          + `<h2>${duel.phase === "won" ? "You won the Duel" : "The AI solved it first"}</h2>`
+        ? `<section class="umt-stop-panel umt-duel-outcome is-${duel.phase === "won" ? "win" : "loss"}${winFx}">`
+          + `<div class="umt-duel-outcome-rival${duel.phase === "won" ? " is-defeated" : " is-gloating"}">${sparks}${rivalSvg(rival)}</div>`
+          + `<h2>${duel.phase === "won" ? `You beat ${escapeHtml(rival.name)}` : `${escapeHtml(rival.name)} solved it first`}</h2>`
           + `<div class="cuddle-board-row umt-duel-answer">${secretTiles}</div>`
           + `<p class="umt-stop-lead">${richText(duel.message)}</p>`
           + (duel.phase === "won"
@@ -2254,12 +2318,12 @@
       const mine = (duel.history || []).filter(entry => entry.actor === (aiTurn ? "ai" : "player")).length + 1;
       const statusTitle = aiTurn ? "AI's turn" : "Your turn";
       const statusLine = aiTurn
-        ? `The AI is thinking<span class="umt-duel-dots" aria-hidden="true"><i></i><i></i><i></i></span>`
+        ? `${escapeHtml(rivalOf(duel).name)} is thinking<span class="umt-duel-dots" aria-hidden="true"><i></i><i></i><i></i></span>`
         : escapeHtml(duel.mulliganMode
           ? "Pick tiles to swap, then confirm."
           : (duel.history || []).length ? "Build a word from your tiles." : duel.message || "Build a word from your tiles.");
       const statusIcon = aiTurn
-        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="7" width="14" height="11" rx="3"/><path d="M12 3.5V7M9 11.5h.01M15 11.5h.01M9.5 15h5"/></svg>`
+        ? rivalSvg(rivalOf(duel))
         : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>`;
       let flash = "";
       if (playing && duel.turn === "player") {
@@ -2547,8 +2611,11 @@
           return { ok: true };
         case "expanded-event-choice":
           return chooseExpandedEvent(game, itemId);
-        case "expanded-duel-start":
-          return startDuel(game, itemId);
+        case "expanded-duel-start": {
+          const started = startDuel(game, itemId);
+          if (started && started.ok !== false) introduceRival(game);
+          return started;
+        }
         case "expanded-duel-card":
           return toggleDuelCard(game, itemId);
         case "expanded-duel-remove":

@@ -786,3 +786,82 @@ button.umt-duel-option:focus-visible {
   background: rgba(var(--turn), .12);
   color: rgb(var(--turn));
 }
+
+/* The rival's face on the AI's turn badge (it brings its own colours). */
+.umt-duel-status-badge svg.umt-rival { width: 30px; height: 30px; stroke: none; }
+
+/* Duel result: the rival above the title -- toppled on a win, smug on a
+   loss. A win also flips the answer in tile by tile with a burst of
+   sparkles; that plays once (--win-t carries the time already played). */
+.umt-duel-outcome { position: relative; }
+.umt-duel-outcome-rival {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 6px;
+}
+.umt-duel-outcome-rival svg.umt-rival { width: 72px; height: 72px; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .5)); }
+.umt-duel-outcome-rival.is-defeated svg.umt-rival { transform: rotate(-16deg) translateY(4px); filter: grayscale(.65) drop-shadow(0 6px 12px rgba(0, 0, 0, .5)); opacity: .75; }
+.umt-duel-sparks { position: absolute; inset: 0; pointer-events: none; }
+.umt-duel-sparks i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px;
+  border-radius: 2px;
+  background: #f6c956;
+  opacity: 0;
+}
+.umt-duel-sparks i:nth-child(3n) { background: #6bd68f; }
+.umt-duel-sparks i:nth-child(3n + 1) { background: #c6a8ff; }
+
+.umt-duel-outcome.is-celebrating .umt-duel-outcome-rival svg.umt-rival {
+  animation: umt-duel-rival-fall 900ms cubic-bezier(.3, 1.4, .5, 1) both;
+  animation-delay: calc(200ms + var(--win-t));
+}
+@keyframes umt-duel-rival-fall {
+  0% { transform: none; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .5)); opacity: 1; }
+  25% { transform: translateX(-4px) rotate(6deg); }
+  45% { transform: translateX(4px) rotate(-8deg); }
+}
+.umt-duel-outcome.is-celebrating .umt-duel-sparks i {
+  animation: umt-duel-spark 900ms ease-out both;
+  animation-delay: calc(1300ms + var(--win-t));
+}
+@keyframes umt-duel-spark {
+  0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(.4); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-58px) scale(1); }
+}
+.umt-duel-outcome.is-celebrating h2 {
+  animation: umt-duel-title-pop 520ms cubic-bezier(.2, .9, .3, 1.3) both;
+  animation-delay: calc(1250ms + var(--win-t));
+}
+@keyframes umt-duel-title-pop {
+  from { opacity: 0; transform: scale(.7); }
+}
+.umt-duel-outcome.is-celebrating .umt-duel-answer .cuddle-tile {
+  animation: umt-duel-answer-flip 480ms ease-in-out both;
+  animation-delay: calc(1500ms + var(--i) * 160ms + var(--win-t));
+}
+@keyframes umt-duel-answer-flip {
+  0% { transform: rotateX(0); background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .25); color: transparent; }
+  49% { transform: rotateX(90deg); background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .25); color: transparent; }
+  50% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0); }
+}
+.umt-duel-outcome.is-celebrating > p,
+.umt-duel-outcome.is-celebrating > .cuddle-btn {
+  animation: umt-duel-fade 420ms ease-out both;
+  animation-delay: calc(2500ms + var(--win-t));
+}
+@keyframes umt-duel-fade {
+  from { opacity: 0; transform: translateY(6px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .umt-duel-outcome.is-celebrating * { animation: none !important; }
+}

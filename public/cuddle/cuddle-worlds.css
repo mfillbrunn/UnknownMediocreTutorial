@@ -928,3 +928,21 @@
 #cuddleRoot .umt-stop-skulls svg { width: 15px; height: 16px; }
 #cuddleRoot .umt-stop-difficulty b { color: #ff8a8e; }
 #cuddleRoot .umt-stop-difficulty small { color: var(--cuddle-muted, #b8b2c8); }
+
+/* The Duel's rival standing in the boss entrance's medallion. */
+.umt-be-figure {
+  display: grid;
+  place-items: center;
+  width: 62%;
+  height: 62%;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6));
+}
+.umt-be-figure svg { width: 100%; height: 100%; }
+.umt-boss-entrance.is-rival .umt-rival-eye { animation: umt-rival-blink 3.2s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+@keyframes umt-rival-blink {
+  0%, 44%, 50%, 100% { transform: scaleY(1); }
+  47% { transform: scaleY(.15); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .umt-boss-entrance.is-rival .umt-rival-eye { animation: none; }
+}

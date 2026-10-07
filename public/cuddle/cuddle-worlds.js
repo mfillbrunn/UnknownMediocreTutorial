@@ -239,21 +239,24 @@
     const final = boss.gate === "final";
     const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const el = document.createElement("div");
-    el.className = `umt-boss-entrance is-${world.id}${final ? " is-final" : ""}${reduced ? " is-reduced" : ""}`;
+    el.className = `umt-boss-entrance is-${world.id}${final ? " is-final" : ""}${reduced ? " is-reduced" : ""}${opts.extraClass ? ` ${opts.extraClass}` : ""}`;
     el.setAttribute("role", "dialog");
-    el.setAttribute("aria-label", `${final ? "Final boss" : "Boss"}: ${boss.title || "Boss"}. Tap to begin.`);
+    el.setAttribute("aria-label", `${opts.eyebrow || (final ? "Final boss" : "Boss")}: ${boss.title || "Boss"}. Tap to begin.`);
     el.tabIndex = 0;
     el.innerHTML = `<div class="umt-be-backdrop"></div>`
       + `<div class="umt-be-fx" aria-hidden="true">${reduced ? "" : entranceEffects(world)}</div>`
       + `<div class="umt-be-flash" aria-hidden="true"></div>`
       + `<div class="umt-be-core">`
       + `<div class="umt-be-medallion"><span class="umt-be-ring"></span>`
-      + `<svg class="umt-be-skull" viewBox="0 0 24 24" aria-hidden="true">${iconMarkup(final ? "final" : "boss")}</svg>`
-      + (boss.icon ? `<span class="umt-be-icon" aria-hidden="true">${escapeText(boss.icon)}</span>` : "")
+      // Another figure (the Duel's rival) can stand in for the skull.
+      + (opts.figure
+        ? `<span class="umt-be-figure" aria-hidden="true">${opts.figure}</span>`
+        : `<svg class="umt-be-skull" viewBox="0 0 24 24" aria-hidden="true">${iconMarkup(final ? "final" : "boss")}</svg>`)
+      + (boss.icon && !opts.figure ? `<span class="umt-be-icon" aria-hidden="true">${escapeText(boss.icon)}</span>` : "")
       + `</div>`
-      + `<p class="umt-be-eyebrow">${final ? "Final boss" : `World ${world.index + 1} boss`} · ${escapeText(world.name)}</p>`
+      + `<p class="umt-be-eyebrow">${escapeText(opts.eyebrow || (final ? "Final boss" : `World ${world.index + 1} boss`))} · ${escapeText(world.name)}</p>`
       + `<h2 class="umt-be-title">${escapeText(boss.title || "Boss")}</h2>`
-      + `<p class="umt-be-line">${escapeText(final ? "The last answer waits behind the dark." : world.bossLine)}</p>`
+      + `<p class="umt-be-line">${escapeText(opts.line || (final ? "The last answer waits behind the dark." : world.bossLine))}</p>`
       + `</div>`
       + `<p class="umt-be-skip">Tap to begin</p>`;
     host.appendChild(el);
