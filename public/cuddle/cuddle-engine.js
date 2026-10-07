@@ -110,11 +110,13 @@
   const EARLY_GUESS_POINTS = 10;
   const UNUSED_MULLIGAN_POINTS = 3;
   // A guess past the round's "quick solve" window (_solveGuessThreshold(),
-  // 6/5/4 as boss gates clear) costs this many points, flat -- 10 in world
-  // one, 20 in world two, 40 in world three (see _lateGuessPenalty) --
-  // separate from EARLY_GUESS_POINTS above, which only ever pays out on the
-  // guesses a solve never needed.
-  const LATE_GUESS_PENALTIES = [10, 20, 40];
+  // 6/5/4 as boss gates clear) costs points (see _lateGuessPenalty): a
+  // flat 10 each in world one, a flat 20 each in world two, and in world
+  // three 30 for the first, then 10 more for every guess after it --
+  // separate from EARLY_GUESS_POINTS above, which only ever pays out on
+  // the guesses a solve never needed.
+  const LATE_GUESS_PENALTIES = [10, 20, 30];
+  const LATE_GUESS_STEP_WORLD_THREE = 10;
   // A flat bonus for solving within that same window at all, in addition
   // to the scaled-by-unused-guesses EARLY_GUESS_POINTS payout above.
   const EARLY_SOLVE_BONUS = 5;
@@ -558,12 +560,18 @@
       return 4;
     }
 
-    // What each guess past that window costs, by world (same gates).
-    _lateGuessPenalty() {
+    // What guess number `guess` (1-based; the next guess by default) costs
+    // for being past that window, by world (same gates). 0 inside it.
+    _lateGuessPenalty(guess) {
+      const number = Number.isFinite(Number(guess)) ? Number(guess) : (Number(this.state?.guessesUsed) || 0) + 1;
+      const over = number - this._solveGuessThreshold();
+      if (over <= 0) return 0;
       const cleared = Array.isArray(this.state?.bossGatesDone)
         ? this.state.bossGatesDone.length
         : 0;
-      return LATE_GUESS_PENALTIES[Math.max(0, Math.min(LATE_GUESS_PENALTIES.length - 1, cleared))];
+      const world = Math.max(0, Math.min(LATE_GUESS_PENALTIES.length - 1, cleared));
+      const base = LATE_GUESS_PENALTIES[world];
+      return world === LATE_GUESS_PENALTIES.length - 1 ? base + (over - 1) * LATE_GUESS_STEP_WORLD_THREE : base;
     }
 
     // The guess count a stage must be solved within, or Infinity. Ordinary
@@ -1451,7 +1459,7 @@
 
       // Past the round's quick-solve window, every extra guess costs
       // points instead of just missing the solve-speed bonus below.
-      const latePenalty = lateGuess ? this._lateGuessPenalty() : 0;
+      const latePenalty = lateGuess ? this._lateGuessPenalty(this.state.guessesUsed) : 0;
       if (latePenalty > 0) {
         this.state.score -= latePenalty;
         this.state.roundScore -= latePenalty;

@@ -4092,3 +4092,68 @@
 }
 #cuddleScreen .cuddle-win-modal .cuddle-end-stats > div { padding: 9px 10px; }
 #cuddleScreen .cuddle-win-modal .cuddle-end-stats span { font-size: 0.6rem; }
+
+/* Past the stage's quick-solve window: each guess costs points. A red
+   rail marks those rows, the guess being built gets a red frame and its
+   cost in place of the row number, and a banner above the board says so. */
+.cuddle-board-row.is-late-row {
+  position: relative;
+}
+
+.cuddle-board-row.is-late-row::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: -8px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--cuddle-danger);
+  opacity: 0.85;
+}
+
+.cuddle-board-row.is-late-row.is-current-row .cuddle-tile:not(.is-special-tile) {
+  border-color: color-mix(in srgb, var(--cuddle-danger) 70%, transparent);
+}
+
+.cuddle-row-score.is-late,
+#cuddleScreen .cuddle-row-score.is-late {
+  color: var(--cuddle-danger);
+  font-size: 0.86rem;
+}
+
+.cuddle-late-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--cuddle-danger) 55%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--cuddle-danger) 14%, transparent);
+  color: var(--cuddle-text);
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.cuddle-late-banner b {
+  color: var(--cuddle-danger);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.cuddle-late-banner em {
+  color: var(--cuddle-danger);
+  font-style: normal;
+  font-weight: 800;
+}
+
+.cuddle-late-banner.is-last {
+  border-color: rgba(240, 202, 94, 0.5);
+  background: rgba(240, 202, 94, 0.1);
+}
+
+.cuddle-late-banner.is-last b {
+  color: #f0ca5e;
+}

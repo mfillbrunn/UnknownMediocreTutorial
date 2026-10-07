@@ -2402,6 +2402,23 @@
     }
 
     // The live quest and the run's clue chips, read from the Duel's state.
+    // "Guess N", turning red with its cost once the player's guess is past
+    // the stage's quick-solve window (the same points penalty as a stage).
+    function renderDuelGuessCount(game, duel, mine, playerTurn) {
+      let late = null;
+      try {
+        late = playerTurn && duel.tileState && typeof game._lateGuessPenalty === "function"
+          ? withDuelTileState(game, duel, () => ({ window: game._solveGuessThreshold(), cost: game._lateGuessPenalty(mine) }))
+          : null;
+      } catch (_error) {
+        late = null;
+      }
+      if (late && late.cost > 0) {
+        return `<span class="umt-duel-status-count is-late" title="Past the ${late.window}-guess window">Guess ${mine} · -${late.cost}</span>`;
+      }
+      return `<span class="umt-duel-status-count">Guess ${mine}</span>`;
+    }
+
     function renderDuelStrip(game, duel) {
       const tile = duel.tileState;
       if (!tile) return "";
@@ -2510,7 +2527,7 @@
             + `<div class="umt-duel-status ${aiTurn ? "is-ai" : "is-player"}${flash}" role="status">`
             + `<span class="umt-duel-status-badge">${statusIcon}</span>`
             + `<span class="umt-duel-status-text"><b>${statusTitle}</b><small>${statusLine}</small></span>`
-            + `<span class="umt-duel-status-count">Guess ${mine}</span>`
+            + renderDuelGuessCount(game, duel, mine, !aiTurn)
             + `</div>`
             + renderDuelStrip(game, duel)
             + renderDuelBoard(game, duel)

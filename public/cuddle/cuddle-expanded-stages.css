@@ -878,3 +878,9 @@ button.umt-duel-option:focus-visible {
 }
 .umt-duel-strip .umt-duel-earned .is-points { color: #7fe0a5; }
 .umt-duel-strip .umt-duel-earned .is-money { color: var(--cuddle-money-gold-bright, #e8bf75); }
+
+/* Past the quick-solve window: the counter turns red with the guess's cost. */
+#cuddleRoot .umt-duel-status-count.is-late {
+  background: rgba(241, 147, 157, .16);
+  color: var(--cuddle-danger, #f1939d);
+}
