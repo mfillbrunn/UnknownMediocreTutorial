@@ -623,7 +623,18 @@
     const challenge = mandatory || mini;
     if (challenge) {
       const description = typeof challenge.description === "string" ? challenge.description : "";
-      lines.push({ kind: "hazard", icon: challenge.icon || "⚡", text: `${challenge.title || "Challenge"}${description ? ` — ${description}` : ""}` });
+      // A stage's own challenge(s): how hard it is, then each challenge on
+      // its own line (and the easier half of a stacked stop, if any).
+      const stop = mandatory && node && window.CuddleRebalanceV5?.stopVariant?.(game, node);
+      const skulls = stop ? Number(stop.skulls) || 0 : 0;
+      if (skulls) lines.push({ kind: "hazard", icon: "💀", text: `Difficulty: ${["", "Tricky", "Hard", "Brutal"][skulls]} (${skulls} of 3 skulls)` });
+      if (stop && stop.ease === "luckyStart") lines.push({ kind: "bonus", icon: "🍀", text: "Lucky Start — one letter starts in its exact place" });
+      if (stop && stop.ease === "themedWordle") lines.push({ kind: "bonus", icon: "🧭", text: "Themed — one of the answer's themes is revealed" });
+      if (stop && Array.isArray(stop.parts) && stop.parts.length) {
+        stop.parts.forEach((part) => lines.push({ kind: "hazard", icon: "⚡", text: `${part.title} — ${part.text}` }));
+      } else {
+        lines.push({ kind: "hazard", icon: challenge.icon || "⚡", text: `${challenge.title || "Challenge"}${description ? ` — ${description}` : ""}` });
+      }
       const reward = num(challenge.reward);
       if (reward > 0) {
         // Challenges pay both currencies on a win.

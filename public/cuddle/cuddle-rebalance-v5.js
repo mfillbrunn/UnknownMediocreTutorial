@@ -837,6 +837,15 @@
     return total;
   }
 
+  // Map skulls for a stop's difficulty: 1 for a single challenge, 2 for a
+  // Rare Word or two challenges, 3 for a Rare Word with a challenge.
+  function difficultySkulls(difficulty) {
+    const value = asNumber(difficulty, 0);
+    if (value >= 2.5) return 3;
+    if (value >= 1.5) return 2;
+    return value >= 1 ? 1 : 0;
+  }
+
   function variantChallengeIds(variant) {
     if (!variant || variant.kind !== "mandatoryChallenge") return [];
     if (Array.isArray(variant.challengeIds) && variant.challengeIds.length) return variant.challengeIds.slice();
@@ -4668,16 +4677,25 @@
         if (!variant) return null;
         if (variant.kind === "mandatoryChallenge") {
           const challenge = challengeById(variant.challengeId);
+          const live = game || publicActiveGame();
+          const difficulty = stagePartDifficulty(variant);
           return {
             kind: variant.kind,
             title: variant.title || challenge.title,
-            description: stackedDescription(game || publicActiveGame(), variant),
+            description: stackedDescription(live, variant),
             reward: Math.round(stackedReward(variant)),
             ease: variant.ease || null,
-            difficulty: stagePartDifficulty(variant)
+            // Each challenge on its own, for previews that list them.
+            parts: variantChallengeIds(variant).map((id) => {
+              const part = challengeById(id);
+              return { id: part.id, title: part.title, text: challengeDisplayDescription(live, part) };
+            }),
+            difficulty,
+            skulls: difficultySkulls(difficulty)
           };
         }
-        return { kind: variant.kind, title: variant.title, description: variant.description, difficulty: stagePartDifficulty(variant) };
+        const difficulty = stagePartDifficulty(variant);
+        return { kind: variant.kind, title: variant.title, description: variant.description, difficulty, skulls: difficultySkulls(difficulty) };
       },
       // The challenge stops the map can roll, described at the run's
       // current guess cap -- listed by the map key.

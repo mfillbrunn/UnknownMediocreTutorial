@@ -908,3 +908,23 @@
 #cuddleRoot .umt-skull-eye { fill: #1b1020; }
 #cuddleRoot .umt-state-visited .umt-node-skulls,
 #cuddleRoot .umt-state-skipped .umt-node-skulls { opacity: 0.45; }
+
+/* Stop preview: the difficulty row under the summary. */
+#cuddleRoot .umt-stop-difficulty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 2px;
+  font-size: 0.82rem;
+}
+#cuddleRoot .umt-stop-difficulty > span:first-child {
+  color: var(--cuddle-muted, #b8b2c8);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+#cuddleRoot .umt-stop-skulls { display: inline-flex; gap: 3px; }
+#cuddleRoot .umt-stop-skulls svg { width: 15px; height: 16px; }
+#cuddleRoot .umt-stop-difficulty b { color: #ff8a8e; }
+#cuddleRoot .umt-stop-difficulty small { color: var(--cuddle-muted, #b8b2c8); }
