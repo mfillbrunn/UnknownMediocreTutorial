@@ -1,8 +1,9 @@
 /* Cuddle: Upgrade Packs.
  *
- * After a stage is solved (not a boss, not a Duel), there is a chance that
- * an Upgrade Pack is offered on the way back to the map -- only if the
- * player can afford one. It comes in three sizes, picked at random from
+ * Once per world, after one of its first few solved stages (not a boss,
+ * not a Duel), an Upgrade Pack is offered on the way back to the map --
+ * only if the player can afford one; if not, it waits for a later stage of
+ * the same world. It comes in three sizes, picked at random from
  * the ones the wallet covers:
  *   Small   1 Common + 1 special
  *   Medium  1 Common + 2 specials
@@ -24,7 +25,8 @@
   if (proto.__cuddlePacks) return;
   proto.__cuddlePacks = true;
 
-  var OFFER_CHANCE = 0.3;
+  // A world offers one pack, on one of its first OFFER_WINDOW solved stages.
+  var OFFER_WINDOW = 3;
   // Three sizes, each priced by world (well under what the same cards
   // cost in the shop). Only sizes the player can afford are offered; the
   // offer picks one of those at random.
@@ -50,6 +52,15 @@
   function worldIndex(state) {
     var cleared = Array.isArray(state && state.bossGatesDone) ? state.bossGatesDone.length : 0;
     return Math.max(0, Math.min(2, cleared));
+  }
+
+  // Per world: solved stages seen, and whether its pack was offered.
+  function packTrack(state) {
+    var track = state.umtPackTrack;
+    if (!track || typeof track !== "object" || !Array.isArray(track.seen) || !Array.isArray(track.offered)) {
+      track = state.umtPackTrack = { seen: [0, 0, 0], offered: [false, false, false] };
+    }
+    return track;
   }
 
   function randomFor(game) {
@@ -100,12 +111,20 @@
     var state = this.state;
     if (state && state.umtPackEligible && state.status === "branchMap") {
       state.umtPackEligible = false;
-      if (!state.umtPackOffer && randomFor(this)() < OFFER_CHANCE) {
-        var world = worldIndex(state);
+      var world = worldIndex(state);
+      var track = packTrack(state);
+      var seen = track.seen[world] || 0;
+      track.seen[world] = seen + 1;
+      // One pack per world, on one of its first few solved stages (evenly
+      // spread): 1 in 3 on the first, 1 in 2 on the second, then certain.
+      if (!state.umtPackOffer && !track.offered[world]
+          && randomFor(this)() < 1 / Math.max(1, OFFER_WINDOW - seen)) {
         var wallet = Number(state.cuddleMoney) || 0;
         var affordable = SIZES.filter(function canPay(size) { return size.prices[world] <= wallet; });
+        // Short of money: the pack waits for a later stage of this world.
         if (affordable.length) {
           var size = affordable[Math.floor(randomFor(this)() * affordable.length)];
+          track.offered[world] = true;
           state.umtPackOffer = {
             id: (state.runId || "run") + ":" + (state.round || 0) + ":pack",
             size: size.id,
