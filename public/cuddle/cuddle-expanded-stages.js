@@ -1172,6 +1172,13 @@
       return notes;
     }
 
+    // The player's own guess count: the quick-solve window, quests, curses
+    // and the solve bonus all run on it, so the AI's rows never use up
+    // the player's guesses.
+    function duelPlayerGuesses(state) {
+      return (state.history || []).filter(entry => entry && entry.actor !== "ai").length;
+    }
+
     function ensureDuelTileState(game, duel) {
       assertDuelTileCapabilities(game);
       if (duel && duel.tileState && duel.tileState.secret === duel.secret
@@ -1184,15 +1191,45 @@
       }
       if (!duel) throw new Error("No Duel is active.");
       duel.tileState = buildDuelTileState(game, duel);
+      // What the run had going in, so a won Duel can pay out what was
+      // earned inside it (points, money tiles, interest...).
+      duel.tileBase = {
+        score: Number(game.state && game.state.score) || 0,
+        money: Number(game.state && game.state.cuddleMoney) || 0
+      };
       duel.tileStateVersion = VERSION;
       duel.mulliganMode = false;
       duel.mulliganSelection = [];
       duel.draft = "";
       withDuelTileState(game, duel, state => {
-        game._prepareInitialHand();
-        state.mulligansLeft = game.getMulliganAllowance();
-        const powers = (duel.history || []).length ? [] : applyDuelOpeningPowers(game, state);
-        duel.powerNote = powers.length ? `Your powers: ${powers.join(" · ")}` : "";
+        // The same stage start every Wordle gets -- every layer's upgrades,
+        // special tiles and the first quest -- with the Duel's own answer.
+        const ownPick = Object.prototype.hasOwnProperty.call(game, "_pickSecret");
+        const previousPick = game._pickSecret;
+        game._pickSecret = () => duel.secret;
+        let started = false;
+        try {
+          game._beginRound();
+          started = true;
+        } catch (error) {
+          started = false;
+        } finally {
+          if (ownPick) game._pickSecret = previousPick;
+          else delete game._pickSecret;
+        }
+        if (!started) {
+          game._prepareInitialHand();
+          state.mulligansLeft = game.getMulliganAllowance();
+          if (!(duel.history || []).length) applyDuelOpeningPowers(game, state);
+        }
+        if (state.roundIntroPending && typeof game.dismissRoundIntro === "function") game.dismissRoundIntro();
+        state.secret = duel.secret;
+        state.usedSecrets = [duel.secret];
+        state.status = "playing";
+        // Turns alternate with the AI until someone solves: no guess limit.
+        state.maxGuesses = Number.MAX_SAFE_INTEGER;
+        state.strictGuessLimit = false;
+        duel.powerNote = "";
         // A saved Duel created by the keyboard version may already have visible
         // guesses. Replay only their public feedback into the fresh tile hand;
         // do not invent historical card consumption.
@@ -1208,7 +1245,7 @@
           if (typeof game._updateKnowledge === "function") game._updateKnowledge(entry.word, feedback);
           if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
         });
-        state.guessesUsed = state.history.length;
+        state.guessesUsed = duelPlayerGuesses(state);
         if (typeof game.drawToHandLimit === "function") game.drawToHandLimit();
         state.lastMessage = "Build your Duel guess from the Cuddle tile hand.";
       });
@@ -1553,6 +1590,18 @@
       // be added to the run's points by mistake.
       game.state.cuddleMoney = Math.max(0, Number(game.state.cuddleMoney || 0)) + reward;
       messages.push(`+$${reward}.`);
+      const tile = duel.tileState || {};
+      const base = duel.tileBase || {};
+      const earnedPoints = Math.max(0, Math.round((Number(tile.score) || 0) - (Number(base.score) || 0)));
+      const earnedMoney = Math.max(0, Math.round((Number(tile.cuddleMoney) || 0) - (Number(base.money) || 0)));
+      if (earnedPoints) {
+        game.state.score = (Number(game.state.score) || 0) + earnedPoints;
+        messages.push(`+${earnedPoints} points earned in the Duel.`);
+      }
+      if (earnedMoney) {
+        game.state.cuddleMoney += earnedMoney;
+        messages.push(`+$${earnedMoney} from tiles and powers.`);
+      }
       if (duel.difficulty === "hard") {
         const upgrade = grantRandomUpgrade(game);
         messages.push(upgrade.message);
@@ -1579,18 +1628,29 @@
       ensureDuelTileState(game, duel);
       withDuelTileState(game, duel, state => {
         const visible = feedback.slice();
+        // Special tiles are for the player's guesses: one sitting on the
+        // row the AI just took moves along with the rest still to come.
+        if (actor === "ai" && Array.isArray(state.cuddleMoneyTiles)) {
+          const aiRow = state.history.length;
+          state.cuddleMoneyTiles.forEach(tile => {
+            if (tile && !tile.paid && Number(tile.row) >= aiRow) tile.row = Number(tile.row) + 1;
+          });
+        }
         state.history.push({ actor, word, feedback: visible, shownFeedback: visible.slice() });
-        state.guessesUsed = state.history.length;
+        state.guessesUsed = duelPlayerGuesses(state);
         if (typeof game._updateKnowledge === "function") game._updateKnowledge(word, visible);
         if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
         if (typeof game.drawToHandLimit === "function") game.drawToHandLimit();
         topUpDuelJoker(game, state);
         state.draft = [];
         state.lastMessage = duel.message;
+        if (state.status === "playing" && typeof game._ensureQuestForNextGuess === "function") {
+          try { game._ensureQuestForNextGuess(); } catch (_error) { /* a quest is a bonus, never a blocker */ }
+        }
       });
     }
 
-    function recordDuelGuess(game, actor, word, jokerIndex = -1) {
+    function recordDuelGuess(game, actor, word, jokerIndex = -1, synced = false) {
       const duel = ensureMap(game).expandedDuel;
       if (!duel || duel.phase !== "playing") return { ok: false, error: "The Duel is not active." };
       const feedback = Engine.evaluateFeedback(duel.secret, word);
@@ -1614,7 +1674,7 @@
         duel.history.push(jokerIndex >= 0
           ? { actor, word, feedback: feedback.slice(), jokerIndex }
           : { actor, word, feedback: feedback.slice() });
-        syncVisibleGuessToDuelHand(game, duel, actor, word, feedback);
+        if (!synced) syncVisibleGuessToDuelHand(game, duel, actor, word, feedback);
         duel.mulliganMode = false;
         duel.mulliganSelection = [];
         if (solved) {
@@ -1636,6 +1696,10 @@
       return { ok: true, solved };
     }
 
+    // The player's guess goes through the game's own submitDraft (with the
+    // Duel's state swapped in), so every layer's per-guess effects run as
+    // on any stage: scoring, special tiles, quests, clues, compass marks,
+    // Process of Elimination and the rest.
     function submitDuelTiles(game) {
       const ready = requirePlayerDuel(game);
       if (!ready.ok) return ready;
@@ -1647,42 +1711,51 @@
       let result;
       try {
         result = withDuelTileState(game, duel, state => {
+          if (state.status !== "playing") return { ok: false, error: "Choose your quest reward first." };
+          state.guessesUsed = duelPlayerGuesses(state);
           const validation = game.canSubmit();
           if (!validation.ok) return validation;
-          word = validation.word;
-          // A Joker becomes whichever letter completes a real word, as it
-          // does on an ordinary stage.
-          const joker = Engine.CUDDLE_JOKER_GLYPH;
-          jokerIndex = joker ? word.indexOf(joker) : -1;
-          if (joker && word.includes(joker) && typeof game.resolveJokerWord === "function") {
-            const resolution = game.resolveJokerWord(word);
-            if (!resolution) return { ok: false, error: "No letter completes that into a real word." };
-            const jokerCard = (state.hand || []).find(card => card && card.source === "joker" && (state.draft || []).includes(card.id));
-            if (jokerCard) jokerCard.glyph = resolution.letter;
-            word = resolution.word;
+          if ((duel.history || []).some(entry => entry.word === validation.word)) {
+            return { ok: false, error: `${validation.word} was already played in this Duel.` };
           }
-          if (!/^[A-Z]{5}$/.test(word)) {
-            return { ok: false, error: "Duel guesses must resolve to five ordinary letters." };
-          }
-          if ((duel.history || []).some(entry => entry.word === word)) {
-            return { ok: false, error: `${word} was already played in this Duel.` };
-          }
-          // Match ordinary Cuddle consumption: a finite card used in a word
-          // leaves once, even if that visible card was tapped more than once.
-          const draftIds = [...new Set((state.draft || []).filter(Boolean))];
-          game._discardCards(draftIds);
-          state.draft = [];
-          state.hand = (state.hand || []).filter(card => card && card.source !== "extra");
+          const before = state.history.length;
+          const submitted = game.submitDraft();
+          if (!submitted || submitted.ok === false) return submitted || { ok: false, error: "The Duel guess could not be submitted." };
+          const entry = state.history[state.history.length - 1];
+          if (state.history.length === before || !entry) return { ok: false, error: "The Duel guess could not be submitted." };
+          entry.actor = "player";
+          word = String(entry.word || "").toUpperCase();
+          jokerIndex = Number.isInteger(entry.jokerIndex) ? entry.jokerIndex : -1;
+          // A solve ends the Duel itself; the stage-end cash-out stays out.
+          if (word === duel.secret) state.pendingRoundEnd = null;
+          if (state.status !== "questReward") state.status = "playing";
           return { ok: true, word };
         });
       } catch (error) {
         if (tileSnapshot) duel.tileState = tileSnapshot;
         return { ok: false, error: error && error.message ? error.message : "The Duel guess could not be submitted." };
       }
-      if (!result || !result.ok) return result || { ok: false, error: "The Duel guess could not be submitted." };
-      const recorded = recordDuelGuess(game, "player", word, jokerIndex);
+      if (!result || !result.ok) {
+        if (tileSnapshot) duel.tileState = tileSnapshot;
+        return result || { ok: false, error: "The Duel guess could not be submitted." };
+      }
+      if (!/^[A-Z]{5}$/.test(word)) {
+        if (tileSnapshot) duel.tileState = tileSnapshot;
+        return { ok: false, error: "Duel guesses must resolve to five ordinary letters." };
+      }
+      const recorded = recordDuelGuess(game, "player", word, jokerIndex, true);
       if (!recorded.ok && tileSnapshot) duel.tileState = tileSnapshot;
       return recorded;
+    }
+
+    function chooseDuelQuestReward(game, rewardId) {
+      const duel = ensureMap(game).expandedDuel;
+      if (!duel || duel.phase !== "playing" || !duel.tileState) return { ok: false, error: "No Duel quest reward is open." };
+      const result = withDuelTileState(game, duel, () => (
+        typeof game.chooseQuestReward === "function" ? game.chooseQuestReward(rewardId) : { ok: false, error: "Quest rewards are unavailable." }
+      ));
+      safeSave(game);
+      return result;
     }
 
     function toggleDuelCard(game, glyph) {
@@ -1879,6 +1952,7 @@
       const duel = game && game.state && game.state.branchMap && game.state.branchMap.expandedDuel;
       if (!duel || duel.phase !== "playing" || duel.turn !== "ai") return;
       if (rivalIntroOpen) return;
+      if (duel.tileState && duel.tileState.status === "questReward") return;
       const token = `${game.state.runId}:${duel.id}:${duel.history.length}:${duel.aiMoveNumber || 0}`;
       if (scheduledAiToken === token && duelAiTimer) return;
       scheduledAiToken = token;
@@ -2143,10 +2217,37 @@
     // The Duel board: every guess so far on ordinary board rows (the AI's
     // tagged "AI"), then the row being built -- your draft, or the AI's
     // row while it thinks.
+    // Special tiles (cuddle-points-money.js) as the main board draws them:
+    // a faint symbol before the guess, the payout after.
+    const DUEL_SPECIAL_GLYPHS = Object.freeze({ money: "$", points: "●", mulligan: "↻", joker: "★", hint: "?" });
+    function duelSpecialTile(duel, row, column) {
+      const tiles = duel.tileState && Array.isArray(duel.tileState.cuddleMoneyTiles) ? duel.tileState.cuddleMoneyTiles : [];
+      const tile = tiles.find(item => item && Number(item.row) === row && Number(item.col) === column);
+      if (!tile) return { cls: "", attr: "" };
+      const kind = DUEL_SPECIAL_GLYPHS[tile.kind] ? tile.kind : "money";
+      const cls = ` is-special-tile is-special-${kind}` + (tile.paid ? (tile.payout > 0 ? " is-special-won" : " is-special-missed") : "");
+      const attr = tile.paid
+        ? (tile.payout > 0 ? ` data-special-paid="${escapeHtml(tile.label || (kind === "money" ? `+$${tile.payout}` : `+${tile.payout}`))}"` : "")
+        : ` data-special="${DUEL_SPECIAL_GLYPHS[kind]}"`;
+      return { cls, attr };
+    }
+
+    function duelCompassMark(duel, row, column) {
+      const entry = duel.tileState && Array.isArray(duel.tileState.history) ? duel.tileState.history[row] : null;
+      const mark = entry && Array.isArray(entry.umtCompass) ? entry.umtCompass.find(item => item && item.index === column) : null;
+      if (!mark) return "";
+      const side = mark.dir === "L" ? "left" : mark.dir === "R" ? "right" : "match";
+      return `<span class="umt-compass-mark is-${side}">${mark.dir === "L" ? "&larr;" : mark.dir === "R" ? "&rarr;" : "&ndash;"}</span>`;
+    }
+
     function renderDuelBoard(game, duel) {
-      const rows = (duel.history || []).map(entry => (
+      const rows = (duel.history || []).map((entry, rowIndex) => (
         `<div class="cuddle-board-row umt-duel-row is-${escapeHtml(entry.actor)}">`
-        + entry.word.split("").map((letter, index) => `<span class="cuddle-tile is-${escapeHtml(entry.feedback[index] || "grey")}${entry.jokerIndex === index ? " is-joker" : ""}">${escapeHtml(letter)}</span>`).join("")
+        + entry.word.split("").map((letter, index) => {
+          const special = duelSpecialTile(duel, rowIndex, index);
+          const compass = duelCompassMark(duel, rowIndex, index);
+          return `<span class="cuddle-tile is-${escapeHtml(entry.feedback[index] || "grey")}${entry.jokerIndex === index ? " is-joker" : ""}${special.cls}${compass ? " has-compass" : ""}"${special.attr}>${escapeHtml(letter)}${compass}</span>`;
+        }).join("")
         + (entry.actor === "ai" ? `<span class="cuddle-row-score umt-duel-who is-ai">AI</span>` : `<span class="cuddle-row-score umt-duel-who is-you"></span>`)
         + `</div>`
       ));
@@ -2165,11 +2266,13 @@
           draftRow = withDuelTileState(game, duel, state => {
             const cardById = new Map((state.hand || []).map(card => [card.id, card]));
             const enabled = !duel.mulliganMode;
+            const draftRow = (duel.history || []).length;
             return Array.from({ length: 5 }, (_unused, index) => {
               const cardId = (state.draft || [])[index];
               const card = cardId ? cardById.get(cardId) : null;
-              if (!card) return `<span class="cuddle-tile"></span>`;
-              return `<button type="button" class="cuddle-tile is-draft-tile is-filled${card.source === "joker" || card.glyph === Engine.CUDDLE_JOKER_GLYPH ? " is-joker" : ""}" data-cuddle-campaign-action="expanded-duel-remove" data-shop-item-id="${index}"${enabled ? "" : " disabled"} aria-label="Remove ${escapeHtml(card.glyph)} from position ${index + 1}">${escapeHtml(card.glyph)}</button>`;
+              const special = duelSpecialTile(duel, draftRow, index);
+              if (!card) return `<span class="cuddle-tile${special.cls}"${special.attr}></span>`;
+              return `<button type="button" class="cuddle-tile is-draft-tile is-filled${card.source === "joker" || card.glyph === Engine.CUDDLE_JOKER_GLYPH ? " is-joker" : ""}${special.cls}"${special.attr} data-cuddle-campaign-action="expanded-duel-remove" data-shop-item-id="${index}"${enabled ? "" : " disabled"} aria-label="Remove ${escapeHtml(card.glyph)} from position ${index + 1}">${escapeHtml(card.glyph)}</button>`;
             }).join("");
           });
         } catch (_error) {
@@ -2298,6 +2401,78 @@
       );
     }
 
+    // The live quest and the run's clue chips, read from the Duel's state.
+    // "Guess N", turning red with its cost once the player's guess is past
+    // the stage's quick-solve window (the same points penalty as a stage).
+    function renderDuelGuessCount(game, duel, mine, playerTurn) {
+      let late = null;
+      try {
+        late = playerTurn && duel.tileState && typeof game._lateGuessPenalty === "function"
+          ? withDuelTileState(game, duel, () => ({ window: game._solveGuessThreshold(), cost: game._lateGuessPenalty(mine) }))
+          : null;
+      } catch (_error) {
+        late = null;
+      }
+      if (late && late.cost > 0) {
+        return `<span class="umt-duel-status-count is-late" title="Past the ${late.window}-guess window">Guess ${mine} · -${late.cost}</span>`;
+      }
+      return `<span class="umt-duel-status-count">Guess ${mine}</span>`;
+    }
+
+    function renderDuelStrip(game, duel) {
+      const tile = duel.tileState;
+      if (!tile) return "";
+      const parts = [];
+      const quests = [tile.activeQuest, ...(Array.isArray(tile.activeQuests) ? tile.activeQuests.slice(1) : [])].filter(Boolean);
+      quests.forEach((quest, index) => {
+        // Tap for the full rules (openQuestInfo in cuddle-campaign.js).
+        parts.push(`<span class="cuddle-quest-inline" role="button" tabindex="0" data-quest-info="${index}" data-quest-source="duel" title="Tap for details">`
+          + `<span class="cuddle-quest-tag"><span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> Quest</span>`
+          + `<span class="cuddle-quest-body"><b>${escapeHtml(quest.title || "Quest")}:</b> <span>${escapeHtml(quest.description || "")}</span></span></span>`);
+      });
+      let chips = [];
+      try {
+        chips = window.CuddleClues && typeof window.CuddleClues.clueChips === "function"
+          ? withDuelTileState(game, duel, () => window.CuddleClues.clueChips(game)) : [];
+      } catch (_error) {
+        chips = [];
+      }
+      if (chips.length) {
+        const icon = name => (window.CuddleIcons ? `<span class="umt-ico">${window.CuddleIcons.svg(name)}</span>` : "");
+        parts.push(`<div class="umt-clues" aria-label="Clues">${chips.map(chip => (
+          `<span class="umt-clue${chip.tone ? ` is-${chip.tone}` : ""}" title="${escapeHtml(chip.label)}">${icon(chip.icon)}`
+          + `<span class="umt-clue-text${chip.mono ? " is-mono" : ""}">${escapeHtml(chip.text)}`
+          + (chip.letters ? chip.letters.map(letter => `<b class="umt-clue-letter">${escapeHtml(letter)}</b>`).join("") : "")
+          + (chip.words ? chip.words.map(word => `<b class="umt-clue-word">${escapeHtml(word)}</b>`).join("") : "")
+          + `</span></span>`
+        )).join("")}</div>`);
+      }
+      // What the Duel has earned so far; it joins the run on a win.
+      const base = duel.tileBase || {};
+      const points = Math.round((Number(tile.score) || 0) - (Number(base.score) || 0));
+      const money = Math.round((Number(tile.cuddleMoney) || 0) - (Number(base.money) || 0));
+      if (points > 0 || money > 0) {
+        parts.push(`<span class="umt-duel-earned" title="Paid into your run if you win the Duel">Win to bank`
+          + (points > 0 ? ` <b class="is-points">+${points}</b>` : "")
+          + (money > 0 ? ` <b class="is-money">+$${money}</b>` : "")
+          + `</span>`);
+      }
+      return parts.length ? `<div class="cuddle-play-strip umt-duel-strip">${parts.join("")}</div>` : "";
+    }
+
+    function renderDuelQuestReward(duel) {
+      const tile = duel.tileState;
+      if (!tile || tile.status !== "questReward") return "";
+      const choices = Array.isArray(tile.questRewardChoices) ? tile.questRewardChoices : [];
+      return `<div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="umtDuelQuestTitle">`
+        + `<section class="cuddle-modal cuddle-modal-wide cuddle-compact-cards"><h2 id="umtDuelQuestTitle">Quest reward</h2>`
+        + `<div class="cuddle-choice-grid">${choices.map(choice => (
+          `<button type="button" class="cuddle-choice" data-cuddle-campaign-action="expanded-duel-quest-reward" data-shop-item-id="${escapeHtml(choice.id)}">`
+          + `<span class="cuddle-choice-icon">${escapeHtml(choice.icon || "🎁")}</span><strong>${escapeHtml(choice.title || "Reward")}</strong>`
+          + `<small>${richText(choice.description || "")}</small></button>`
+        )).join("")}</div></section></div>`;
+    }
+
     function renderDuelScreen(game, map) {
       const duel = map.expandedDuel;
       const choosing = duel.phase === "choose";
@@ -2352,12 +2527,14 @@
             + `<div class="umt-duel-status ${aiTurn ? "is-ai" : "is-player"}${flash}" role="status">`
             + `<span class="umt-duel-status-badge">${statusIcon}</span>`
             + `<span class="umt-duel-status-text"><b>${statusTitle}</b><small>${statusLine}</small></span>`
-            + `<span class="umt-duel-status-count">Guess ${mine}</span>`
+            + renderDuelGuessCount(game, duel, mine, !aiTurn)
             + `</div>`
+            + renderDuelStrip(game, duel)
             + renderDuelBoard(game, duel)
             + `</section>`
             + `<section class="cuddle-right-column">${renderDuelTileHand(game, duel)}</section>`
-            + `</main>`)
+            + `</main>`
+            + renderDuelQuestReward(duel))
         + `</div>`
       );
     }
@@ -2628,6 +2805,8 @@
         }
         case "expanded-duel-card":
           return toggleDuelCard(game, itemId);
+        case "expanded-duel-quest-reward":
+          return chooseDuelQuestReward(game, itemId);
         case "expanded-duel-remove":
           return removeDuelDraftTile(game, itemId);
         case "expanded-duel-backspace":

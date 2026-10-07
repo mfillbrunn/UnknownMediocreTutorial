@@ -713,8 +713,11 @@
     document.querySelectorAll(".cuddle-quest-info-overlay").forEach(element => element.remove());
   }
 
-  function openQuestInfo(game, index) {
-    const state = game && game.state;
+  function openQuestInfo(game, index, source) {
+    // A Duel keeps its own stage state (cuddle-expanded-stages.js).
+    const state = source === "duel"
+      ? game && game.state && game.state.branchMap && game.state.branchMap.expandedDuel && game.state.branchMap.expandedDuel.tileState
+      : game && game.state;
     if (!state) return;
     const quests = [state.activeQuest, ...(Array.isArray(state.activeQuests) ? state.activeQuests.slice(1) : [])].filter(Boolean);
     const quest = quests[index];
@@ -743,7 +746,7 @@
     const chip = event.target.closest("[data-quest-info]");
     if (!chip || event.target.closest("button, [data-action]")) return;
     const game = window.CuddleBranchMap?.getActiveGame?.() || null;
-    openQuestInfo(game, Number(chip.dataset.questInfo));
+    openQuestInfo(game, Number(chip.dataset.questInfo), chip.dataset.questSource);
   });
   document.addEventListener("keydown", event => {
     if (event.key === "Escape" && document.querySelector(".cuddle-quest-info-overlay")) {
@@ -753,7 +756,7 @@
     const chip = event.target.closest?.("[data-quest-info]");
     if (chip && (event.key === "Enter" || event.key === " ")) {
       event.preventDefault();
-      openQuestInfo(window.CuddleBranchMap?.getActiveGame?.() || null, Number(chip.dataset.questInfo));
+      openQuestInfo(window.CuddleBranchMap?.getActiveGame?.() || null, Number(chip.dataset.questInfo), chip.dataset.questSource);
     }
   });
 

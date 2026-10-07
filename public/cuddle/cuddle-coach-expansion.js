@@ -32,7 +32,6 @@
   var activeGame = null;
   var observer = null;
   var uiQueued = false;
-  var lastThreadSignature = "";
 
   // Free hints (Guesser Hint / Earlier Hints, and the forced round-3 offer
   // below) are Easy's whole reason to exist -- see trainingWheelsFor in
@@ -109,13 +108,9 @@
       icon: "☕",
       title: "Second Cup",
       description: "Once per run, when you would run out of guesses in a boss or strict stage, you get one extra guess."
-    },
-    {
-      id: "goldenThread",
-      icon: "🧵",
-      title: "Golden Thread",
-      description: "A full five-letter draft pulses and vibrates when it contains an answer letter you have not learned yet."
     }
+    // Golden Thread was removed: toggling letters in and out of a full
+    // draft read off exactly which letters were in the answer.
   ]);
 
   function finite(value, fallback) {
@@ -839,7 +834,7 @@
   // already has would be a wasted fight, so it is swapped for another boss
   // reward the run doesn't have yet.
   var BOSS_REWARD_POOL = ["cullRare", "doubleMulligans", "biggerMulligans", "questCadence", "freeVowelSweep",
-    "secondCup", "revealGreen", "goldenThread", "questDoublePick", "questPersistReward", "umtAllThemes"];
+    "secondCup", "revealGreen", "questDoublePick", "questPersistReward", "umtAllThemes"];
 
   function bossRewardOwned(game, id) {
     var state = game.state || {};
@@ -853,8 +848,7 @@
       case "questDoublePick": return Boolean(upgrades.questDoublePick);
       case "questPersistReward": return Boolean(state.megaState && state.megaState.questPersistsForRound);
       case "umtAllThemes": return Boolean(state.cuddleRebalanceV5 && state.cuddleRebalanceV5.allThemesUnlocked);
-      case "secondCup":
-      case "goldenThread": return coach.newBossRewardsOwned.includes(id);
+      case "secondCup": return coach.newBossRewardsOwned.includes(id);
       case "cullRare": return (state.rewardBookHistory || []).some(function took(entry) {
         return entry && (entry.id === "cullRare" || entry.rewardId === "cullRare");
       });
@@ -1544,32 +1538,11 @@
     }
   }
 
-  function updateGoldenThread(game, coach) {
-    var root = document.getElementById("cuddleRoot");
-    if (!root) return;
-    var board = root.querySelector(".cuddle-board");
-    if (!board || !hasBossReward(game, "goldenThread") || game.state.status !== "playing") {
-      if (board) board.classList.remove("is-golden-thread-live");
-      lastThreadSignature = "";
-      return;
-    }
-    var draft = typeof game.getDraftWord === "function" ? String(game.getDraftWord()).toUpperCase() : "";
-    var known = new Set([].concat(game.state.knownPresent || [], (game.state.revealedPositions || []).filter(Boolean)));
-    var secret = String(game.state.secret || "").toUpperCase();
-    var live = draft.length === 5 && draft.split("").some(function unknownCorrect(letter) {
-      return secret.includes(letter) && !known.has(letter);
-    });
-    board.classList.toggle("is-golden-thread-live", live);
-    var signature = roundKey(game) + ":" + draft + ":" + live;
-    if (live && signature !== lastThreadSignature) {
-      coach.goldenThreadSignals += 1;
-      try {
-        if (navigator.vibrate) navigator.vibrate([28, 42, 28]);
-      } catch (_) {
-        // Vibration is optional and commonly unavailable on desktop.
-      }
-    }
-    lastThreadSignature = signature;
+  // Golden Thread is retired (a full draft's hum gave the answer's letters
+  // away); this only clears the glow from a run saved while it was owned.
+  function updateGoldenThread() {
+    var board = document.querySelector("#cuddleRoot .cuddle-board.is-golden-thread-live");
+    if (board) board.classList.remove("is-golden-thread-live");
   }
 
   // A small banner that sweeps across the screen the moment a hint is

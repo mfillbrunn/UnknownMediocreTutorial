@@ -585,6 +585,29 @@
   // rather than shown as a zero. cuddle-stability-v2.js adds the hint,
   // Joker and Cuddle meter rows to "Your hand", and cuddle-rebalance-v5.js
   // adds the boss curses as their own group.
+  // What guesses past the window cost: "10", or "30, 40, 50…" where the
+  // cost climbs with each guess (world three).
+  function latePenaltyAmounts(window) {
+    const first = game._lateGuessPenalty(window + 1);
+    const second = game._lateGuessPenalty(window + 2);
+    if (first === second) return String(first);
+    return `${first}, ${second}, ${game._lateGuessPenalty(window + 3)}…`;
+  }
+
+  // Shown above the board once the next guess is past the stage's
+  // quick-solve window (or is the last one inside it): what it will cost.
+  function renderLateBanner(state, strictLimit) {
+    if (state.status !== "playing" || game.isBossRound() || Number.isFinite(strictLimit)
+        || typeof game._lateGuessPenalty !== "function") return "";
+    const window = game._solveGuessThreshold();
+    const next = (Number(state.guessesUsed) || 0) + 1;
+    if (next < window) return "";
+    if (next === window) {
+      return `<p class="cuddle-late-banner is-last" role="note"><b>Last guess in the window</b><span>Guesses after ${window} cost ${latePenaltyAmounts(window)} points${game._lateGuessPenalty(window + 1) === game._lateGuessPenalty(window + 2) ? " each" : ""}</span></p>`;
+    }
+    return `<p class="cuddle-late-banner" role="note"><b>Over ${window} guesses</b><span>This guess <em>-${game._lateGuessPenalty(next)}</em> points</span></p>`;
+  }
+
   function renderRunDetails(state, rules, drawPile) {
     const signed = value => `${value > 0 ? "+" : ""}${value}`;
     const row = (label, value, className = "") =>
@@ -604,6 +627,7 @@
       boss
         ? row("Guesses left", String(Math.max(0, (state.maxGuesses || window.CuddleEngine?.MAX_GUESSES || 6) - state.guessesUsed)))
         : row("Bonus window", `solve within ${bonusWindow} guesses`),
+      boss || !game._lateGuessPenalty ? "" : row(`Each guess past ${bonusWindow}`, `-${latePenaltyAmounts(bonusWindow).replace(/, /g, ", -")} pts`, "is-penalty"),
       row("Each spare guess", `${signed(perSpare)} pts`),
       row("Each unused mulligan", `${signed(rules.mulliganPoints)} pts`),
       rules.questPoints > 0 ? row("Each quest", `${signed(rules.questPoints)} pts`) : ""
@@ -672,6 +696,7 @@
     // (hidden, not removed) so the board keeps its six-row shape, and each
     // new row slides in as it's reached.
     const unlimited = !game.isBossRound() && !Number.isFinite(strictLimit);
+    const lateWindow = unlimited && typeof game._lateGuessPenalty === "function" ? game._solveGuessThreshold() : 0;
     const liveRow = state.status === "playing" ? state.history.length : -1;
     const arrivalKey = `${state.runId || "run"}:${state.round}:${state.secret || ""}:${liveRow}`;
     const arriving = unlimited && liveRow > 0 && arrivalKey !== lastArrivedRowKey;
@@ -679,6 +704,8 @@
     for (let row = 0; row < rowCount; row += 1) {
       const history = state.history[row];
       const isDraft = !history && row === state.history.length && state.status === "playing";
+      // Past the quick-solve window: every such guess costs points.
+      const lateRow = lateWindow > 0 && row + 1 > lateWindow && (history || isDraft);
       const hiddenFuture = unlimited && !history && !isDraft;
       const tiles = [];
       // Tiles a boss, challenge or curse marks on this row, drawn with the
@@ -792,10 +819,13 @@
           ? bossBadge
           : history
             ? `<span class="cuddle-row-score ${history.scoreDelta < 0 ? "is-negative" : ""}">${history.scoreDelta >= 0 ? "+" : ""}${history.scoreDelta}${rowBonus ? `<small> +${rowBonus}</small>` : ""}${rowPenalty ? `<small class="is-negative"> -${rowPenalty}</small>` : ""}</span>`
-            : `<span class="cuddle-row-score">${row + 1}</span>`;
+            : lateRow && isDraft
+              ? `<span class="cuddle-row-score is-late" title="This guess is past the ${lateWindow}-guess window">-${game._lateGuessPenalty(row + 1)}</span>`
+              : `<span class="cuddle-row-score">${row + 1}</span>`;
       // The active row is tagged so a short screen, where the board scrolls
       // inside its own column, can keep it in view after every render.
       const rowClass = (isDraft ? " is-current-row" : "")
+        + (lateRow ? " is-late-row" : "")
         + (isDraft && arriving ? " is-arriving" : "")
         + (hiddenFuture ? " is-future-hidden" : "");
       rows.push(`<div class="cuddle-board-row${rowClass}"${hiddenFuture ? ' aria-hidden="true"' : ""}>${tiles.join("")}${score}</div>`);
@@ -804,7 +834,7 @@
     const excluded = removedCount
       ? `<p class="cuddle-excluded-letters">${removedCount} letter${removedCount === 1 ? "" : "s"} excluded: ${escapeHtml(state.removedLetters.join(", "))}</p>`
       : "";
-    return `<section class="cuddle-board" aria-label="Guess board">${rows.join("")}</section>${excluded}`;
+    return `${renderLateBanner(state, strictLimit)}<section class="cuddle-board" aria-label="Guess board">${rows.join("")}</section>${excluded}`;
   }
 
   function renderStatusAnnouncement(state) {

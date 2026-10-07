@@ -865,3 +865,22 @@ button.umt-duel-option:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .umt-duel-outcome.is-celebrating * { animation: none !important; }
 }
+
+/* What the Duel has earned so far, banked on a win. */
+.umt-duel-strip .umt-duel-earned {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(226, 220, 255, 0.72);
+}
+.umt-duel-strip .umt-duel-earned .is-points { color: #7fe0a5; }
+.umt-duel-strip .umt-duel-earned .is-money { color: var(--cuddle-money-gold-bright, #e8bf75); }
+
+/* Past the quick-solve window: the counter turns red with the guess's cost. */
+#cuddleRoot .umt-duel-status-count.is-late {
+  background: rgba(241, 147, 157, .16);
+  color: var(--cuddle-danger, #f1939d);
+}
