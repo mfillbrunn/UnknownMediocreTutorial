@@ -69,7 +69,7 @@
     ["mulligan tiles", TIERS.COMMON],
 
     ["vowel lamp", TIERS.RARE],
-    ["pattern lens", TIERS.RARE],
+    ["pattern lens", TIERS.EPIC],
     ["mistake shield", TIERS.RARE],
     ["bigger hand", TIERS.RARE],
     ["reward echo", TIERS.RARE],
