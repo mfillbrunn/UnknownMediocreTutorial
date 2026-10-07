@@ -50,13 +50,12 @@
   });
 
   // Starting bonuses come from the ordinary reward pool, all three of one
-  // rarity, and the allowed rarities depend on difficulty. Hard gets an
-  // Epic start to soften its steeper boss targets.
+  // rarity, and the rarity depends on difficulty: Hard starts with an Epic,
+  // Medium and Easy with a Legendary (otherwise only a beaten boss gives one).
   var STARTER_TIERS = {
-    // Legendary rewards only come from beating a boss.
     hard: ["epic"],
-    medium: ["rare", "epic"],
-    easy: ["epic"]
+    medium: ["legendary"],
+    easy: ["legendary"]
   };
 
   var CHALLENGES = [
@@ -320,11 +319,20 @@
   function starterRewardChoices(game) {
     var difficulty = String(game.state && game.state.megaState && game.state.megaState.difficulty || "hard");
     var allowed = STARTER_TIERS[difficulty] || STARTER_TIERS.hard;
+    var rarity = window.CuddleEconomyRarityV8;
+    if (allowed.indexOf("legendary") >= 0 && rarity && typeof rarity.legendaryChoices === "function") {
+      var legendary = rarity.legendaryChoices(game, 3, (game.state.runId || "run") + ":starter:legendary") || [];
+      if (legendary.length) {
+        return {
+          source: "normal",
+          choices: legendary.map(function withTier(choice) { return Object.assign({}, choice, { starterTier: "legendary" }); })
+        };
+      }
+    }
     if (typeof game._generateUpgradeChoices !== "function") return { source: "normal", choices: [] };
     // Each draw is an ordinary between-round offer: one rarity rolled by
     // cuddle-economy-rarity-v8.js, every card from it. Redraw until the
-    // rarity is one this difficulty allows (Easy's Epic is the long
-    // shot, about one draw in ten).
+    // rarity is one this difficulty allows.
     var offer = [];
     var tier = "";
     for (var attempt = 0; attempt < 400; attempt += 1) {
