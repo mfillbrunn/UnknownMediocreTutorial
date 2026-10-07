@@ -78,31 +78,11 @@
     return value === "easy" || value === "medium" ? value : "hard";
   }
 
-  // A themed route (cuddle-worlds.js) can have more or fewer Wordle rows
-  // than the standard three per world, so a gate scales with how many
-  // stops the worlds up to it actually had -- a short world asks for fewer
-  // points, a long one for more -- and with each theme's own factor.
-  function gateScale(game, gate) {
-    var map = game && game.state && game.state.branchMap;
-    if (!map || !Array.isArray(map.themes) || !Array.isArray(map.rows) || !window.CuddleWorlds) return 1;
-    var gateIndex = BOSS_GATE_ORDER.indexOf(gate);
-    if (gateIndex < 0) return 1;
-    var stops = 0;
-    map.rows.forEach(function countStops(row) {
-      if (row && row.kind === "stops" && !row.restFork && (Number(row.act) || 0) <= gateIndex) stops += 1;
-    });
-    var factor = stops / (3 * (gateIndex + 1));
-    for (var world = 0; world <= gateIndex; world += 1) {
-      factor *= Number(window.CuddleWorlds.themedWorld(map, world).gate) || 1;
-    }
-    return factor > 0 ? factor : 1;
-  }
-
   function bossPointRequirement(game, gate) {
     var tiers = BOSS_POINT_REQUIREMENTS[gate];
     if (!tiers) return 0;
-    var base = tiers[difficultyOf(game)] || tiers.hard;
-    return Math.round(base * gateScale(game, gate) / 5) * 5;
+    // Fixed per difficulty: the same target every run, whatever the theme.
+    return tiers[difficultyOf(game)] || tiers.hard;
   }
 
   // Points the run has banked (the live round's guess points don't count
