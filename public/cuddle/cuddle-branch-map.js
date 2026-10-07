@@ -66,9 +66,9 @@
     // honest bot playing whole runs with the gates switched off) so about
     // 75% of runs reach the first boss, 40% the second and 15% the final
     // -- boss losses included. Easy and medium never bind for a sound run.
-    "before-3": { easy: 50, medium: 100, hard: 175 },
-    "before-7": { easy: 250, medium: 300, hard: 570 },
-    "final": { easy: 550, medium: 600, hard: 1040 }
+    "before-3": { easy: 50, medium: 100, hard: 170 },
+    "before-7": { easy: 250, medium: 300, hard: 560 },
+    "final": { easy: 550, medium: 600, hard: 1100 }
   };
 
   function difficultyOf(game) {
