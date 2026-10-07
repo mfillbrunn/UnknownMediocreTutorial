@@ -1855,6 +1855,7 @@
         if (!result || !result.ok) return result || { ok: false, error: "The Duel mulligan failed." };
         duel.mulliganMode = false;
         duel.mulliganSelection = [];
+        if (window.CuddleDeckFx) window.CuddleDeckFx.shuffle();
         duel.message = `Mulligan: replaced ${result.replacements} tile${result.replacements === 1 ? "" : "s"}. Build your guess.`;
         safeSave(game);
         return result;
@@ -2343,7 +2344,7 @@
         ? `${selectedCount} selected; ${eligible.length} finite available; limit ${limit}`
         : `${draftedCount} in the current word; reusable while visible`;
       return (
-        `<button type="button" class="${classes}" data-cuddle-campaign-action="expanded-duel-card" data-shop-item-id="${escapeHtml(group.glyph)}"${disabled ? " disabled" : ""} aria-pressed="${draftedCount > 0 || selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(group.glyph)}: ${escapeHtml(modeText)}">`
+        `<button type="button" class="${classes}" data-cuddle-campaign-action="expanded-duel-card" data-shop-item-id="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${group.cards.length}"${disabled ? " disabled" : ""} aria-pressed="${draftedCount > 0 || selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(group.glyph)}: ${escapeHtml(modeText)}">`
         + `<span class="cuddle-card-letter">${escapeHtml(group.glyph)}</span>${position}${badge}</button>`
       );
     }
@@ -2360,9 +2361,12 @@
           const groups = duelHandGroups(game, state);
           const vowels = groups.vowels.map(group => renderDuelHandCard(game, duel, state, group, playerTurn, selected, limit)).join("");
           const consonants = groups.consonants.map(group => renderDuelHandCard(game, duel, state, group, playerTurn, selected, limit)).join("");
+          // The deck beside Mulligan (cuddle-deck-fx.js deals tiles out of it).
+          const deck = window.CuddleDeckFx ? window.CuddleDeckFx.deckHtml((state.deck || []).length, `duel:${duel.id || "duel"}`) : "";
+          const deckClass = deck ? " has-deck" : "";
           const controls = duel.mulliganMode
-            ? `<div class="cuddle-submit-row is-mulligan-mode"><button type="button" class="cuddle-btn cuddle-btn-primary cuddle-mulligan cuddle-mulligan-confirm" data-cuddle-campaign-action="expanded-duel-mulligan-confirm"${playerTurn && selected.size >= 1 && selected.size <= limit ? "" : " disabled"}>Confirm mulligan <span>${selected.size}/${limit} selected</span></button><button type="button" class="cuddle-btn cuddle-backspace" data-cuddle-campaign-action="expanded-duel-mulligan-cancel"${playerTurn ? "" : " disabled"} aria-label="Cancel mulligan" title="Cancel mulligan">&#215;</button></div>`
-            : `<div class="cuddle-submit-row"><button type="button" class="cuddle-btn cuddle-mulligan" data-cuddle-campaign-action="expanded-duel-mulligan"${playerTurn && Number(state.mulligansLeft || 0) > 0 ? "" : " disabled"} title="Mulligan up to ${limit} finite tiles">Mulligan <span>${Number(state.mulligansLeft || 0)}</span></button><button type="button" class="cuddle-btn cuddle-btn-primary cuddle-submit" data-cuddle-campaign-action="expanded-duel-submit"${playerTurn && submit.ok ? "" : " disabled"}>Submit word</button><button type="button" class="cuddle-btn cuddle-backspace" data-cuddle-campaign-action="expanded-duel-backspace"${playerTurn && (state.draft || []).some(Boolean) ? "" : " disabled"} aria-label="Remove last tile" title="Remove last tile">&#9003;</button></div>`;
+            ? `<div class="cuddle-submit-row is-mulligan-mode${deckClass}">${deck}<button type="button" class="cuddle-btn cuddle-btn-primary cuddle-mulligan cuddle-mulligan-confirm" data-cuddle-campaign-action="expanded-duel-mulligan-confirm"${playerTurn && selected.size >= 1 && selected.size <= limit ? "" : " disabled"}>Confirm mulligan <span>${selected.size}/${limit} selected</span></button><button type="button" class="cuddle-btn cuddle-backspace" data-cuddle-campaign-action="expanded-duel-mulligan-cancel"${playerTurn ? "" : " disabled"} aria-label="Cancel mulligan" title="Cancel mulligan">&#215;</button></div>`
+            : `<div class="cuddle-submit-row${deckClass}">${deck}<button type="button" class="cuddle-btn cuddle-mulligan" data-cuddle-campaign-action="expanded-duel-mulligan"${playerTurn && Number(state.mulligansLeft || 0) > 0 ? "" : " disabled"} title="Mulligan up to ${limit} finite tiles">Mulligan <span>${Number(state.mulligansLeft || 0)}</span></button><button type="button" class="cuddle-btn cuddle-btn-primary cuddle-submit" data-cuddle-campaign-action="expanded-duel-submit"${playerTurn && submit.ok ? "" : " disabled"}>Submit word</button><button type="button" class="cuddle-btn cuddle-backspace" data-cuddle-campaign-action="expanded-duel-backspace"${playerTurn && (state.draft || []).some(Boolean) ? "" : " disabled"} aria-label="Remove last tile" title="Remove last tile">&#9003;</button></div>`;
           const removed = Array.isArray(state.removedLetters) && state.removedLetters.length
             ? `<p class="cuddle-excluded-letters">Excluded this run: ${escapeHtml(state.removedLetters.join(", "))}</p>`
             : "";

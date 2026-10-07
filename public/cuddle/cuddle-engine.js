@@ -4875,9 +4875,9 @@
     fakeFeedback: "Fake Feedback",
     quickMode: "Quick Mode (that guess scores 0)",
     noMulligans: "Steady Hand (no mulligan just before it)",
-    shortHand: "Short Hand (-1 hand slot going in)",
+    shortHand: "Short Hand (-1 consonant, -2 on Hard)",
     questTrial: "Quest Trial (forces a quest)",
-    presetWordsTrial: "Preset Trial (-1 hand slot going in)",
+    presetWordsTrial: "Preset Trial (last guess: pick the answer from a list)",
     questEndurance: "Endurance Trial (-1 hand size if that guess misses its quest)"
   };
 
@@ -4928,6 +4928,11 @@
   // the round, because a challenge is attached AFTER the round begins -- a
   // plan built from the pre-challenge board would otherwise be cached and
   // reused for guesses the challenge then went on to claim.
+  // Preset Trial's curse: never before guess 3, drawn from guesses 3-5.
+  const PRESET_CURSE_ID = "presetWordsTrial";
+  const PRESET_CURSE_FIRST = 3;
+  const PRESET_CURSE_LAST = 5;
+
   function ratchetRowPlan(game) {
     const mega = ensureMega(game);
     const state = game.state || {};
@@ -4952,7 +4957,7 @@
 
     const plan = {};
     shuffle(debuffs.slice(), game.random || Math.random).forEach(debuff => {
-      let row = Math.max(1, Number(debuff.guessIndex) || 1);
+      let row = Math.max(debuff.bossId === PRESET_CURSE_ID ? PRESET_CURSE_FIRST : 1, Number(debuff.guessIndex) || 1);
       while (row <= lastRow && claimed.has(row)) row += 1;
       if (row > lastRow) return;
       claimed.add(row);
@@ -4972,10 +4977,14 @@
 
   // Random guess slot(s) for a newly-created ratchet debuff, drawn from
   // 1..poolMax and never reusing a slot an existing debuff already claims.
-  function pickRatchetGuessIndices(game, mega, count, poolMax) {
+  // Preset Trial's curse ends the stage on its guess, so it takes one slot
+  // from guess 3 to 5 instead (see cuddle-curses.js).
+  function pickRatchetGuessIndices(game, mega, count, poolMax, bossId) {
     const used = new Set((mega.ratchetDebuffs || []).map(item => Number(item?.guessIndex) || 0));
     const pool = [];
-    for (let index = 1; index <= poolMax; index += 1) {
+    const preset = bossId === PRESET_CURSE_ID;
+    if (preset) count = 1;
+    for (let index = preset ? PRESET_CURSE_FIRST : 1; index <= (preset ? PRESET_CURSE_LAST : poolMax); index += 1) {
       if (!used.has(index)) pool.push(index);
     }
     return shuffle(pool, game?.random || Math.random).slice(0, count);
@@ -5015,7 +5024,7 @@
         const bossId = bossBefore.ratchetSourceId;
         const slotCount = ordinal >= 2 ? 2 : 1;
         const poolMax = ordinal >= 2 ? 4 : 3;
-        const guessIndices = pickRatchetGuessIndices(this, mega, slotCount, poolMax);
+        const guessIndices = pickRatchetGuessIndices(this, mega, slotCount, poolMax, bossId);
         guessIndices.forEach(guessIndex => {
           const debuff = { bossId, guessIndex };
           if (bossId === "hideFeedback") debuff.hiddenIndex = Math.floor(this.random() * 5);
@@ -5063,9 +5072,10 @@
     let limit = composedGetHandLimit.call(this);
     limit = Math.max(1, limit - Number(mega.handSizePenaltyThisRound || 0));
     if (!this.isBossRound()) {
+      // Short Hand's curse: one consonant fewer on its guess, two on Hard.
       const debuff = plannedRatchetForGuess(this, Number(this.state?.guessesUsed || 0) + 1);
-      if (debuff && (debuff.bossId === "shortHand" || debuff.bossId === "presetWordsTrial")) {
-        limit = Math.max(1, limit - 1);
+      if (debuff && debuff.bossId === "shortHand") {
+        limit = Math.max(1, limit - (mega.difficulty === "hard" ? 2 : 1));
       }
     }
     return limit;
