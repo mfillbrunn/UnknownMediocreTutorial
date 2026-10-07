@@ -3756,7 +3756,7 @@
       key: "mulliganValueBoost",
       icon: "M+",
       title: "Mulligan Dividend",
-      description: "Each unused mulligan is worth 5 points more when you solve."
+      description: "Each unused mulligan is worth 3 points more when you solve. Stacks."
     },
     {
       id: "earlySolveBoost",
@@ -3770,14 +3770,14 @@
       key: "colourTrade",
       icon: "G+",
       title: "Colour Surge",
-      description: "Green tiles are worth 1 point more (2 more at level 3). Up to 3 levels."
+      description: "Green tiles are worth 2 points more (3 more at level 3). Up to 3 levels."
     },
     {
       id: "greyscale",
       key: "greyscale",
       icon: "GREY",
       title: "Greyscale",
-      description: "Grey tiles gain 2 points and yellow tiles 1 (grey 3 and yellow 2 at level 3). Up to 3 levels."
+      description: "Grey tiles gain 1 point (2 at level 3, which also gives yellow tiles 1). Up to 3 levels."
     }
   ]);
   const customUpgradeIds = new Set(customUpgradeDefinitions.map(item => item.id));
@@ -3990,17 +3990,21 @@
         break;
       case "colourTrade": {
         const finalLevel = finiteNumber(state.balanceRewardCounts.colourTrade) + 1 >= COLOUR_REWARD_MAX;
-        upgrades.greenOnlyPoints += finalLevel ? 2 : 1;
+        // Balance pass (full-run sims): greens are the rarest colour, so
+        // Colour Surge pays more per tile than Greyscale does.
+        upgrades.greenOnlyPoints += finalLevel ? 3 : 2;
         break;
       }
       case "greyscale": {
         const finalLevel = finiteNumber(state.balanceRewardCounts.greyscale) + 1 >= COLOUR_REWARD_MAX;
-        upgrades.greyPoints += finalLevel ? 3 : 2;
-        upgrades.yellowOnlyPoints += finalLevel ? 2 : 1;
+        // Was grey +2 / yellow +1 a level (+7 / +4 at three): about 35
+        // points a stage from one Common, far above any other.
+        upgrades.greyPoints += finalLevel ? 2 : 1;
+        if (finalLevel) upgrades.yellowOnlyPoints += 1;
         break;
       }
       case "mulliganValueBoost":
-        upgrades.mulliganPointBonus += 5;
+        upgrades.mulliganPointBonus += 3;
         break;
       case "earlySolveBoost":
         upgrades.earlyRoundPoint += 5;

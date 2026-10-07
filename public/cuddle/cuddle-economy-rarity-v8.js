@@ -1452,7 +1452,7 @@
       setMaxStack(def, 1);
       replaceHandlers(def, "quest-reroll-stage");
     } else if (name === "colour surge" || name === "color surge") {
-      setDescription(def, "Green tiles are worth 1 point more (2 more at level 3). Up to 3 levels.");
+      setDescription(def, "Green tiles are worth 2 points more (3 more at level 3). Up to 3 levels.");
       replaceHandlers(def, "colour-surge");
     } else if (name === "grey matters" || name === "gray matters") {
       setDescription(def, "Grey tiles are worth 1 point more. Yellow and green values are unchanged.");
@@ -1754,9 +1754,35 @@
     return def?.__cuddleV8Tier || "";
   }
 
-  function priceForTier(tier, seed) {
+  // Where an upgrade sits inside its rarity's price range (0 = cheapest,
+  // 1 = dearest), from a value pass over full-run simulations plus each
+  // reward's rules: flat point payers by their measured points a stage,
+  // clue rewards by how much of the answer they give away. Unlisted
+  // rewards sit in the middle. A small seeded wobble (+/- $2) keeps two
+  // shops from reading identically.
+  const PRICE_POSITION = Object.freeze({
+    // Common ($25-40)
+    extraMulligans: 0.6, questRefreshes: 0.15, questPoints: 0.5, questReroll: 0.15,
+    mulliganSize: 0.5, storybookStart: 0.6, wideChoice: 0.55, mulliganTiles: 0.35,
+    mulliganValueBoost: 0.6, earlySolveBoost: 0.35, colourTrade: 0.5, greyscale: 0.7,
+    coachMeterThreshold: 0.45, umtVowelBounty: 0.55, umtEchoFinder: 0.3,
+    umtTreasureHunter: 0.5, umtHaggler: 0.2, umtCullOne: 0.45,
+    // Rare ($50-70)
+    treasureMap: 0.55, jokerTiles: 0.5, handSizeBoost: 0.9, greenCount: 0.25,
+    categorySense: 0.6, coachPossibleAnswers: 0.7, coachMeterReward: 0.35,
+    "surprise-assignment": 0.3, umtJokerCache: 0.75, umtRainyDay: 0.6, umtEncore: 0.7,
+    umtVowelLamp: 0.5, umtMistakeShield: 0.35,
+    // Epic ($75-100)
+    oracleTiles: 0.45, "alphabet-compass": 0.6, umtConsonantSweep: 0.8, umtDoubleDown: 0.35,
+    umtYellowHint: 0.95, umtCullTwo: 0.6, umtPatternLens: 0.7
+  });
+
+  function priceForTier(tier, seed, id) {
     const range = PRICE_RANGES[tier] || PRICE_RANGES.common;
-    return randomInt(range[0], range[1], seed);
+    const position = id != null && Object.prototype.hasOwnProperty.call(PRICE_POSITION, id) ? PRICE_POSITION[id] : 0.5;
+    const base = range[0] + (range[1] - range[0]) * position;
+    const wobble = randomInt(-2, 2, `${seed}:wobble`);
+    return Math.max(range[0], Math.min(range[1], Math.round(base + wobble)));
   }
 
   function shopPriceKey(item) {
@@ -1863,7 +1889,7 @@
       const choices = shuffle(grouped[tier], `${seedBase}:choice:${index}`);
       const def = choices.find((candidate) => !selected.some((existing) => existing.definition === candidate));
       if (!def) continue;
-      const price = priceForTier(tier, `${seedBase}:price:${index}:${getId(def)}`);
+      const price = priceForTier(tier, `${seedBase}:price:${index}:${getId(def)}`, getId(def));
       const item = makeShopItem(
         template,
         `permanent-${getId(def)}`,
@@ -2727,7 +2753,7 @@
             description: String(def.description ?? def.desc ?? ""),
             icon: def.icon || "",
             tier,
-            price: priceForTier(tier, `${seedText}:price:${id}`),
+            price: priceForTier(tier, `${seedText}:price:${id}`, id),
             __cuddleV8Effect: def.__cuddleV8Effect || null
           };
         });
