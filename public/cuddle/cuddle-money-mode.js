@@ -50,11 +50,11 @@
   });
 
   // Starting bonuses come from the ordinary reward pool, all three of one
-  // rarity, and the allowed rarities depend on difficulty: the easier the
-  // run, the stronger the start.
+  // rarity, and the allowed rarities depend on difficulty. Hard gets an
+  // Epic start to soften its steeper boss targets.
   var STARTER_TIERS = {
     // Legendary rewards only come from beating a boss.
-    hard: ["rare"],
+    hard: ["epic"],
     medium: ["rare", "epic"],
     easy: ["epic"]
   };
