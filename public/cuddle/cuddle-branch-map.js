@@ -488,6 +488,8 @@
   function endRunIfGateUnreachable(game) {
     var state = game && game.state;
     if (!state || state.status !== MAP_STATUS) return false;
+    // Balance simulations measure scores past a missed gate.
+    if (window.__umtSimIgnoreGates) return false;
     var branchMap = ensureBranchMap(game);
     var ahead = reachableNodes(branchMap);
     if (!ahead.length || !ahead.every(function isBoss(node) { return node.type === "boss"; })) return false;
@@ -883,7 +885,7 @@
     if (node.type === "boss") {
       var required = bossPointRequirement(this, node.gate);
       var current = Number(this.state.score || 0);
-      if (required && current < required) {
+      if (required && current < required && !window.__umtSimIgnoreGates) {
         return {
           ok: false,
           error: "You need " + required + " points to challenge this boss (you have " + current + ")."
