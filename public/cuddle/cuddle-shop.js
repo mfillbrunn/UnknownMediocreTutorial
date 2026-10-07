@@ -138,6 +138,21 @@
     "Take your time. The boss isn't going anywhere."
   ]);
 
+  // The last shop, before the final boss: permanent upgrades are cheaper
+  // (little run is left to use them), and the one-time supplies cost more
+  // (the boss is all that's left to spend them on).
+  const FINAL_SHOP_PRICE = Object.freeze({ keep: 0.75, road: 1.5, boss: 1.5 });
+
+  function isFinalShop(game) {
+    const done = Array.isArray(game.state.bossGatesDone) ? game.state.bossGatesDone : [];
+    return done.includes("before-3") && done.includes("before-7");
+  }
+
+  function priceOf(game, shelfId, base) {
+    const factor = isFinalShop(game) ? FINAL_SHOP_PRICE[shelfId] || 1 : 1;
+    return Math.max(1, Math.round((Number(base) || 0) * factor));
+  }
+
   let lastBought = null;
 
   // -- state ------------------------------------------------------------------
@@ -259,6 +274,7 @@
       if (shelf.id === "keep") {
         (stock.keep || []).filter(isKeepEntry).forEach(entry => {
           const id = `keep:${entry.key}`;
+          const cost = priceOf(this, "keep", entry.price);
           const purchased = bought.has(id);
           items.push({
             id,
@@ -268,7 +284,7 @@
             tier: entry.tier,
             title: entry.title,
             description: entry.description,
-            cost: entry.price,
+            cost,
             stages: 0,
             points: 0,
             rare: false,
@@ -276,7 +292,7 @@
             max: null,
             maxed: false,
             purchased,
-            affordable: !purchased && wallet >= entry.price
+            affordable: !purchased && wallet >= cost
           });
         });
         return;
@@ -285,6 +301,7 @@
         const item = ALL_ITEMS.get(id);
         if (!item) return;
         const maxed = shelf.id === "keep" && isMaxed(this, item);
+        const cost = priceOf(this, shelf.id, item.cost);
         const purchased = bought.has(id);
         items.push({
           id,
@@ -293,7 +310,7 @@
           icon: item.icon,
           title: item.title,
           description: item.blurb,
-          cost: item.cost,
+          cost,
           stages: item.stages || 0,
           points: item.points || 0,
           rare: Boolean(item.rare),
@@ -301,7 +318,7 @@
           max: item.max || null,
           maxed,
           purchased,
-          affordable: !purchased && !maxed && wallet >= item.cost
+          affordable: !purchased && !maxed && wallet >= cost
         });
       });
     });
@@ -336,16 +353,17 @@
     if (!entry) return { ok: false, error: "That isn't on the shelves here." };
     const bought = boughtHere(game);
     if (bought.includes(id)) return { ok: false, error: `${entry.title} is sold out here.` };
-    if (money(game) < entry.price) return { ok: false, error: `You need $${entry.price} for ${entry.title}.` };
+    const cost = priceOf(game, "keep", entry.price);
+    if (money(game) < cost) return { ok: false, error: `You need $${cost} for ${entry.title}.` };
     if (typeof game._grantUpgradeChoice !== "function") return { ok: false, error: "That reward can't be bought right now." };
     // The same path a reward-screen pick takes, so every layer applies it.
     const { price, tier, ...choice } = entry;
     const result = game._grantUpgradeChoice(choice);
     if (!result || !result.ok) return { ok: false, error: (result && result.error) || `${entry.title} can't be taken right now.` };
-    game.state.cuddleMoney = money(game) - entry.price;
+    game.state.cuddleMoney = money(game) - cost;
     bought.push(id);
     lastBought = id;
-    game.state.lastMessage = `${entry.title} bought for $${entry.price}.`;
+    game.state.lastMessage = `${entry.title} bought for $${cost}.`;
     safeSave(game);
     return { ok: true, message: game.state.lastMessage, item: { id, title: entry.title } };
   }
@@ -361,9 +379,10 @@
     const bought = boughtHere(this);
     if (bought.includes(id)) return { ok: false, error: `${item.title} is sold out here.` };
     if (shelf.id === "keep" && isMaxed(this, item)) return { ok: false, error: `${item.title} is already maxed.` };
-    if (money(this) < item.cost) return { ok: false, error: `You need $${item.cost} for ${item.title}.` };
+    const cost = priceOf(this, shelf.id, item.cost);
+    if (money(this) < cost) return { ok: false, error: `You need $${cost} for ${item.title}.` };
 
-    this.state.cuddleMoney = money(this) - item.cost;
+    this.state.cuddleMoney = money(this) - cost;
     bought.push(id);
     const shop = shopState(this);
     if (shelf.id === "road") {
@@ -380,8 +399,8 @@
     }
     lastBought = id;
     this.state.lastMessage = shelf.id === "trade"
-      ? `${item.title}: +${item.points} points for $${item.cost}.`
-      : `${item.title} bought for $${item.cost}.`;
+      ? `${item.title}: +${item.points} points for $${cost}.`
+      : `${item.title} bought for $${cost}.`;
     safeSave(this);
     return { ok: true, message: this.state.lastMessage, item: { id, title: item.title } };
   }
@@ -540,6 +559,16 @@
     );
   }
 
+  function finalNote(game, shelfId) {
+    if (!isFinalShop(game)) return "";
+    const factor = FINAL_SHOP_PRICE[shelfId];
+    if (!factor || factor === 1) return "";
+    const percent = Math.round(Math.abs(factor - 1) * 100);
+    return factor < 1
+      ? ` <b class="umt-shop-final-note is-cheaper">Final shop: ${percent}% off</b>`
+      : ` <b class="umt-shop-final-note is-dearer">Final shop: +${percent}%</b>`;
+  }
+
   function renderShop(game) {
     const state = game.state;
     const shop = game.getCuddleShop();
@@ -553,7 +582,7 @@
       return (
         `<section class="umt-shop-shelf umt-shelf-${shelf.id}" aria-label="${escapeHtml(shelf.title)}">`
         + `<header><span class="umt-shop-shelf-icon">${icon}</span><div><h2>${escapeHtml(shelf.title)}</h2>`
-        + `<p>${escapeHtml(shelf.note)}</p></div></header>`
+        + `<p>${escapeHtml(shelf.note)}${finalNote(game, shelf.id)}</p></div></header>`
         + `<div class="umt-shop-row">${entries.map(renderCard).join("")}</div>`
         + `<div class="umt-shop-plank" aria-hidden="true"></div>`
         + `</section>`
