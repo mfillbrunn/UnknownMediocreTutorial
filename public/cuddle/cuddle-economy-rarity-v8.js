@@ -2732,6 +2732,44 @@
           };
         });
       },
+      // An Upgrade Pack (cuddle-packs.js): two Commons and one special of
+      // `specialTier`, all different. A tier with nothing left falls back
+      // to the next one down (Legendary -> Epic -> Rare -> Common). Plain
+      // data like the shop's stock; each card is granted through
+      // _grantUpgradeChoice.
+      packRewards(game, specialTier, seedText) {
+        const state = game && game.state;
+        if (!state) return [];
+        const seed = String(seedText || "pack");
+        const pool = allOrdinaryCandidates(game, state);
+        const plain = (def, tier) => {
+          const id = getId(def);
+          return {
+            id,
+            key: String(def.key || id),
+            title: getName(def),
+            description: String(def.description ?? def.desc ?? ""),
+            icon: def.icon || "",
+            tier,
+            __cuddleV8Effect: def.__cuddleV8Effect || null
+          };
+        };
+        const taken = new Set();
+        const draw = (tier, count, salt) => shuffle(pool.filter((def) => def.__cuddleV8Tier === tier && !taken.has(getId(def))), `${seed}:${salt}`)
+          .slice(0, count)
+          .map((def) => {
+            taken.add(getId(def));
+            return plain(def, tier);
+          });
+        const ladder = [TIERS.LEGENDARY, TIERS.EPIC, TIERS.RARE, TIERS.COMMON];
+        const start = Math.max(0, ladder.indexOf(specialTier));
+        let special = [];
+        for (let index = start; index < ladder.length && !special.length; index += 1) {
+          special = draw(ladder[index], 1, `special:${ladder[index]}`);
+        }
+        const commons = draw(TIERS.COMMON, 2, "common");
+        return commons.concat(special);
+      },
       // The pick after a boss: `count` different Legendary rewards, the
       // only way to get one. Same plain shape as the shop's stock, so the
       // offer survives a save and picks through chooseUpgrade.
