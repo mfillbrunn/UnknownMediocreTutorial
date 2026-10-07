@@ -967,7 +967,7 @@
       selectedCount ? `${selectedCount} selected` : ""
     ].filter(Boolean).join(" · ");
     return `
-      <button class="${classes}" data-card-glyph="${escapeHtml(group.glyph)}" ${disabled ? "disabled" : ""}
+      <button class="${classes}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${count}" ${disabled ? "disabled" : ""}
         aria-pressed="${draftedCount > 0 || selectedCount > 0 ? "true" : "false"}"
         aria-label="${escapeHtml(group.glyph)}: ${escapeHtml(details)}"
         title="${escapeHtml(details)}">
@@ -978,7 +978,34 @@
       </button>`;
   }
 
+  // Preset Trial's curse (cuddle-curses.js): the stage's last guess is a
+  // pick from a short list instead of tiles. A tap selects a word; "Lock
+  // in" plays it, since a wrong pick ends the run.
+  let presetSelection = { key: "", word: "" };
+
+  function renderPresetPick(pick) {
+    if (presetSelection.key !== pick.key) presetSelection = { key: pick.key, word: "" };
+    const chosen = presetSelection.word;
+    const words = pick.words.map(word => (
+      `<button type="button" class="cuddle-preset-word${word === chosen ? " is-selected" : ""}" data-action="preset-select" data-word="${escapeHtml(word)}" aria-pressed="${word === chosen ? "true" : "false"}">`
+      + word.split("").map(letter => `<span>${escapeHtml(letter)}</span>`).join("")
+      + `</button>`
+    )).join("");
+    return `
+      <section class="cuddle-hand-panel cuddle-preset-pick" aria-labelledby="cuddlePresetTitle">
+        <div class="cuddle-preset-head">
+          <span class="cuddle-preset-kicker">Preset Trial · last guess</span>
+          <h3 id="cuddlePresetTitle">The answer is one of these ${pick.words.length} words</h3>
+          <p>Use the feedback on the board. A wrong pick ends the run.</p>
+        </div>
+        <div class="cuddle-preset-words">${words}</div>
+        <button type="button" class="cuddle-btn cuddle-btn-primary cuddle-preset-lock" data-action="preset-lock"${chosen ? "" : " disabled"}>${chosen ? `Lock in ${escapeHtml(chosen)}` : "Pick a word"}</button>
+      </section>`;
+  }
+
   function renderHand(state, rules) {
+    const presetPick = state.status === "playing" && typeof game.presetPick === "function" ? game.presetPick() : null;
+    if (presetPick) return renderPresetPick(presetPick);
     const unlimitedMulligans = typeof game.hasUnlimitedMulligans === "function" && game.hasUnlimitedMulligans();
     const limit = game.getMulliganLimit();
     const groups = groupedHand(state);
@@ -990,10 +1017,15 @@
     const showSubmitRow = isPlaying && (actionMode === "play" || isMulliganMode);
     const selectedCount = selectedCards.size;
     const mulliganValid = selectedCount >= 1 && selectedCount <= limit;
+    // The deck beside Mulligan (cuddle-deck-fx.js deals tiles out of it).
+    const deck = window.CuddleDeckFx
+      ? window.CuddleDeckFx.deckHtml((state.deck || []).length, `${state.runId || "run"}:${state.round || 0}:${(state.usedSecrets || []).length}`)
+      : "";
     return `
       <section class="cuddle-hand-panel">
         ${showSubmitRow ? `
-          <div class="cuddle-submit-row ${isMulliganMode ? "is-mulligan-mode" : ""}">
+          <div class="cuddle-submit-row ${isMulliganMode ? "is-mulligan-mode" : ""}${deck ? " has-deck" : ""}">
+            ${deck}
             ${isMulliganMode ? `
               <button class="cuddle-btn cuddle-btn-primary cuddle-mulligan cuddle-mulligan-confirm" data-action="confirm-mulligan" ${mulliganValid ? "" : "disabled"}>
                 Confirm mulligan <span>${selectedCount}/${limit} selected</span>
@@ -1772,6 +1804,18 @@
         void shareFinishedRun();
         return false;
       /* UMT_CUDDLE_SINGLEPLAYER_V2: ACTIONS END */
+      case "preset-select":
+        presetSelection = { key: presetSelection.key, word: String(dataset.word || "") };
+        return true;
+      case "preset-lock": {
+        const word = presetSelection.word;
+        if (!word || typeof game.submitPresetPick !== "function") return true;
+        const result = game.submitPresetPick(word);
+        setUiMessage(result.ok ? "" : result.error);
+        presetSelection = { key: "", word: "" };
+        resetActionMode();
+        return true;
+      }
       case "submit": {
         const result = game.submitDraft();
         if (!result.ok) setUiMessage(result.error);
@@ -1800,6 +1844,7 @@
         return true;
       case "confirm-mulligan": {
         const result = game.mulligan([...selectedCards]);
+        if (result.ok && window.CuddleDeckFx) window.CuddleDeckFx.shuffle();
         setUiMessage(result.ok ? "" : result.error);
         resetActionMode();
         return true;

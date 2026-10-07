@@ -4157,3 +4157,146 @@
 .cuddle-late-banner.is-last b {
   color: #f0ca5e;
 }
+
+/* Preset Trial's curse: the stage's last guess is a pick from a list. */
+.cuddle-preset-pick {
+  display: grid;
+  gap: 12px;
+  border-color: rgba(213, 166, 255, 0.4);
+}
+
+.cuddle-preset-head {
+  display: grid;
+  gap: 3px;
+}
+
+.cuddle-preset-kicker {
+  color: var(--cuddle-accent);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cuddle-preset-head h3 {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.cuddle-preset-head p {
+  margin: 0;
+  color: var(--cuddle-muted);
+  font-size: 0.8rem;
+}
+
+.cuddle-preset-words {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.cuddle-preset-word {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--cuddle-border);
+  border-radius: 12px;
+  background: var(--cuddle-surface-2);
+  color: var(--cuddle-text);
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease, transform 120ms ease;
+}
+
+.cuddle-preset-word span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.cuddle-preset-word:hover {
+  border-color: rgba(213, 166, 255, 0.45);
+}
+
+.cuddle-preset-word:focus-visible {
+  outline: 2px solid var(--cuddle-accent);
+  outline-offset: 2px;
+}
+
+.cuddle-preset-word.is-selected {
+  border-color: var(--cuddle-accent);
+  background: rgba(213, 166, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+.cuddle-preset-word.is-selected span {
+  background: rgba(213, 166, 255, 0.22);
+}
+
+.cuddle-preset-lock {
+  width: 100%;
+}
+
+/* The tile deck beside Mulligan (cuddle-deck-fx.js deals out of it). */
+.cuddle-submit-row.has-deck {
+  grid-template-columns: 42px minmax(0, 35fr) minmax(0, 50fr) minmax(0, 15fr);
+}
+
+.cuddle-submit-row.has-deck.is-mulligan-mode {
+  grid-template-columns: 42px minmax(0, 85fr) minmax(0, 15fr);
+}
+
+.cuddle-deck {
+  position: relative;
+  align-self: center;
+  justify-self: center;
+  width: 34px;
+  height: 42px;
+}
+
+.cuddle-deck-card {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(213, 166, 255, 0.5);
+  border-radius: 7px;
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0 3px, transparent 3px 7px),
+    linear-gradient(160deg, #4b3a74, #2c2346);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.cuddle-deck-card:nth-child(1) { transform: translate(-3px, 3px) rotate(-4deg); }
+.cuddle-deck-card:nth-child(2) { transform: translate(2px, 1px) rotate(3deg); }
+
+.cuddle-deck-count {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--cuddle-text);
+  font-size: 0.82rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.cuddle-deck.is-empty .cuddle-deck-card {
+  border-style: dashed;
+  background: transparent;
+  box-shadow: none;
+}
+
+.cuddle-deck.is-empty .cuddle-deck-card:nth-child(-n + 2) {
+  display: none;
+}
+
+.cuddle-deck.is-empty .cuddle-deck-count {
+  color: var(--cuddle-muted);
+}

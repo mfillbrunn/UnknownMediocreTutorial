@@ -504,10 +504,13 @@
 
   // Random guess slot(s) for a newly-created ratchet debuff, drawn from
   // 1..poolMax and never reusing a slot an existing debuff already claims.
-  function pickRatchetGuessIndices(game, mega, count, poolMax) {
+  // Preset Trial's curse ends the stage on its guess: one slot, guess 3-5.
+  function pickRatchetGuessIndices(game, mega, count, poolMax, bossId) {
     const used = new Set((mega.ratchetDebuffs || []).map(item => integer(item?.guessIndex, 0)));
     const pool = [];
-    for (let index = 1; index <= poolMax; index += 1) {
+    const preset = bossId === "presetWordsTrial";
+    if (preset) count = 1;
+    for (let index = preset ? 3 : 1; index <= (preset ? 5 : poolMax); index += 1) {
       if (!used.has(index)) pool.push(index);
     }
     return shuffled(pool, game?.random || Math.random).slice(0, count);
@@ -534,7 +537,7 @@
     const bossId = boss.ratchetSourceId;
     const slotCount = ordinal >= 2 ? 2 : 1;
     const poolMax = ordinal >= 2 ? 4 : 3;
-    const guessIndices = pickRatchetGuessIndices(game, mega, slotCount, poolMax);
+    const guessIndices = pickRatchetGuessIndices(game, mega, slotCount, poolMax, bossId);
     guessIndices.forEach(guessIndex => {
       const debuff = { bossId, guessIndex };
       if (bossId === "hideFeedback") debuff.hiddenIndex = Math.floor((game?.random || Math.random)() * 5);

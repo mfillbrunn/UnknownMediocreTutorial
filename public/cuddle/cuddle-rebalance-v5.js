@@ -278,10 +278,10 @@
     arrowMode: ["Arrow Signs", "Marked tiles show only an alphabet arrow (dash = green)."],
     quickMode: ["Quick Mode", "That guess scores 0 points."],
     noMulligans: ["Steady Hand", "No mulligan right before it."],
-    shortHand: ["Short Hand", "One fewer letter in your hand."],
+    shortHand: ["Short Hand", "One fewer consonant in your hand (two on Hard)."],
     // Retired as a boss; kept so older runs that already carry it read well.
     questTrial: ["Quest Trial", "A quest; miss it and lose 5 points."],
-    presetWordsTrial: ["Preset Trial", "One fewer letter in your hand."],
+    presetWordsTrial: ["Preset Trial", "Stage ends on this guess: pick the answer from as many words as its number."],
     questEndurance: ["Endurance Trial", "A quest; miss it and lose 1 hand size for the stage."]
   });
 
