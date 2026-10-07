@@ -949,6 +949,7 @@
   }
 
   function renderHand(state, rules) {
+    const unlimitedMulligans = typeof game.hasUnlimitedMulligans === "function" && game.hasUnlimitedMulligans();
     const limit = game.getMulliganLimit();
     const groups = groupedHand(state);
     const vowels = groups.vowels.map(group => renderHandCard(group, state, limit)).join("");
@@ -969,9 +970,9 @@
               </button>
               <button class="cuddle-btn cuddle-backspace" data-action="cancel-mode" aria-label="Cancel mulligan" title="Cancel mulligan">✕</button>
             ` : `
-              <button class="cuddle-btn cuddle-mulligan" data-action="mulligan-mode" ${state.mulligansLeft > 0 ? "" : "disabled"}
-                title="Mulligan: ${state.mulligansLeft} left, up to ${rules.mulliganSize} cards">
-                Mulligan <span>${state.mulligansLeft}</span>
+              <button class="cuddle-btn cuddle-mulligan" data-action="mulligan-mode" ${state.mulligansLeft > 0 || unlimitedMulligans ? "" : "disabled"}
+                title="Mulligan: ${unlimitedMulligans ? "unlimited" : `${state.mulligansLeft} left`}, up to ${rules.mulliganSize} cards">
+                Mulligan <span>${unlimitedMulligans ? "&infin;" : state.mulligansLeft}</span>
               </button>
               <button class="cuddle-btn cuddle-btn-primary cuddle-submit" data-action="submit" ${submit.ok ? "" : "disabled"}>Submit word</button>
               <button class="cuddle-btn cuddle-backspace" data-action="backspace" ${state.draft.length ? "" : "disabled"}

@@ -382,7 +382,7 @@
     { id: "shortHand", icon: "✂️", title: "Short Hand", kind: "round", boss: true, challenge: false, mix: false, curse: true, reward: 0,
       text: "10 consonants not in the answer leave your deck; only 4 guesses." },
     { id: "presetWordsTrial", icon: "🎴", title: "Preset Trial", kind: "round", boss: true, challenge: false, mix: false, curse: true, reward: 0,
-      text: "the answer is one of a few words shown; that many fewer guesses." },
+      text: "the answer is one of 10 words shown; only 3 guesses." },
     { id: "rareWord", icon: "💎", title: "Rare Word", kind: "round", boss: false, challenge: true, mix: false, curse: false, reward: 40,
       text: "the answer is a rare word." }
   ]);
@@ -512,7 +512,7 @@
       id: "presetWordsTrial",
       icon: "🎴",
       title: "Preset Trial",
-      description: "The answer is one of a few words shown on screen, but you get that many fewer guesses.",
+      description: "The answer is one of 10 words shown on screen, and you get only 3 guesses.",
       turns: 0,
       rewardId: "umtAllThemes"
     }

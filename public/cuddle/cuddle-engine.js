@@ -2914,11 +2914,9 @@
       }
       case "questTrial":
         return `Every guess: a quest; miss one and lose $${QUEST_TRIAL_PENALTY}.`;
-      case "presetWordsTrial": {
-        // Mirrors setupPresetWordsBoss's list size.
-        const words = Number(stage) <= 2 ? 2 : Number(stage) === 3 ? 3 : 4;
-        return `Whole fight: the answer is one of ${words} words shown; ${words} fewer guesses.`;
-      }
+      case "presetWordsTrial":
+        // Mirrors setupPresetWordsBoss.
+        return "Whole fight: the answer is one of 10 words shown; only 3 guesses.";
       case "questEndurance":
         return "Every guess: a quest; miss one, lose 1 hand size for the fight.";
       default:
@@ -5022,17 +5020,23 @@
     return composedClearBoss.call(this);
   };
 
+  // Preset Trial: the answer is one of ten words shown up front, and the
+  // fight allows exactly three guesses -- enough to narrow ten down with
+  // good play, not enough to try them one by one.
+  const PRESET_WORD_COUNT = 10;
+  const PRESET_GUESSES = 3;
   function setupPresetWordsBoss(game) {
     const state = game.state;
     const mega = ensureMega(game);
-    const stage = Number(state.boss?.stage) || 1;
-    const count = stage <= 2 ? 2 : stage === 3 ? 3 : 4;
     const secret = state.secret;
-    const pool = game.getFeasibleWords().filter(word => word !== secret);
-    const others = shuffle(pool, game.random).slice(0, Math.max(0, count - 1));
+    const answers = typeof game.getActiveWords === "function" ? game.getActiveWords() : [];
+    const pool = (answers && answers.length ? answers : game.getFeasibleWords())
+      .map(word => String(word).toUpperCase())
+      .filter(word => /^[A-Z]{5}$/.test(word) && word !== secret);
+    const others = shuffle([...new Set(pool)], game.random).slice(0, PRESET_WORD_COUNT - 1);
     const words = shuffle([secret, ...others], game.random);
     mega.presetWords = words;
-    state.maxGuesses = Math.max(1, (Number(state.maxGuesses) || MAX_GUESSES) - words.length);
+    state.maxGuesses = PRESET_GUESSES;
     state.lastMessage = `${state.lastMessage || ""} Preset Trial: the secret is one of ${words.join(", ")}.`.trim();
   }
 

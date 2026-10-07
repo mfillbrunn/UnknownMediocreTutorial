@@ -765,7 +765,9 @@
       notes.push("Ten-Letter Cull removed " + active.culledLetters.join(", ") + " for this boss.");
     }
     if (active.unlimitedMulligans) {
-      game.state.mulligansLeft = 999;
+      // The real count stays as it is: mulligans just cost nothing while
+      // this is active (see mulligan below), so anything that pays for
+      // leftover mulligans counts the normal number, never a placeholder.
       notes.push("Unlimited mulligans are active for this boss.");
     }
     if (active.revealThemes && window.CuddleCampaign?.queueCategoryReveal) {
@@ -1307,21 +1309,30 @@
     return result;
   };
 
+  // Regular Wordle Hands (a boss supply): mulligans are free this fight.
+  proto.hasUnlimitedMulligans = function hasUnlimitedMulligans() {
+    var coach = ensureCoach(this);
+    return Boolean(coach?.activeBossKit?.unlimitedMulligans && this.isBossRound && this.isBossRound());
+  };
+
   var originalMulligan = proto.mulligan;
   proto.mulligan = function mulliganCuddleCoachExpansion(cardIds) {
     var coach = ensureCoach(this);
     var unlimited = Boolean(coach?.activeBossKit?.unlimitedMulligans && this.isBossRound && this.isBossRound());
     if (!unlimited) return originalMulligan.apply(this, arguments);
     var oldBoss = this.state.boss;
-    var oldMulligans = this.state.mulligansLeft;
-    this.state.mulligansLeft = Math.max(999, integer(oldMulligans, 0));
+    var oldMulligans = integer(this.state.mulligansLeft, 0);
+    // Saves from before this fix parked 999 here; give back the usual count.
+    if (oldMulligans >= 999 && typeof this.getMulliganAllowance === "function") oldMulligans = this.getMulliganAllowance();
+    this.state.mulligansLeft = oldMulligans + 1;
     if (oldBoss?.id === "noMulligans") this.state.boss = Object.assign({}, oldBoss, { id: "coachUnlimitedMulligans" });
     var result;
     try {
       result = originalMulligan.call(this, cardIds);
     } finally {
       this.state.boss = oldBoss;
-      this.state.mulligansLeft = 999;
+      // A free mulligan: the count is exactly what it was.
+      this.state.mulligansLeft = oldMulligans;
     }
     if (result?.ok) {
       this.state.lastMessage = "Unlimited boss mulligan used.";
