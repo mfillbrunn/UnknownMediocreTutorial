@@ -2250,9 +2250,17 @@
             : `<button type="button" class="cuddle-btn" data-cuddle-campaign-action="expanded-duel-end">End this run</button>`)
           + `</section>`
         : "";
-      const status = playing
-        ? (duel.turn === "ai" ? "The AI is thinking…" : (duel.history || []).length ? "Your turn" : duel.message)
-        : "";
+      const aiTurn = duel.turn === "ai";
+      const mine = (duel.history || []).filter(entry => entry.actor === (aiTurn ? "ai" : "player")).length + 1;
+      const statusTitle = aiTurn ? "AI's turn" : "Your turn";
+      const statusLine = aiTurn
+        ? `The AI is thinking<span class="umt-duel-dots" aria-hidden="true"><i></i><i></i><i></i></span>`
+        : escapeHtml(duel.mulliganMode
+          ? "Pick tiles to swap, then confirm."
+          : (duel.history || []).length ? "Build a word from your tiles." : duel.message || "Build a word from your tiles.");
+      const statusIcon = aiTurn
+        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="7" width="14" height="11" rx="3"/><path d="M12 3.5V7M9 11.5h.01M15 11.5h.01M9.5 15h5"/></svg>`
+        : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>`;
       let flash = "";
       if (playing && duel.turn === "player") {
         const key = `${duel.id}:${(duel.history || []).length}`;
@@ -2267,7 +2275,11 @@
           ? `<main class="umt-event-page">${choosing ? renderDuelDifficulty(game, duel) : ""}${!choosing && (duel.history || []).length ? renderDuelBoard(game, duel) : ""}${outcome}</main>`
           : `<main class="cuddle-play-area umt-duel-play">`
             + `<section class="cuddle-left-column">`
-            + `<p class="umt-duel-status${flash}" role="status">${escapeHtml(status)}</p>`
+            + `<div class="umt-duel-status ${aiTurn ? "is-ai" : "is-player"}${flash}" role="status">`
+            + `<span class="umt-duel-status-badge">${statusIcon}</span>`
+            + `<span class="umt-duel-status-text"><b>${statusTitle}</b><small>${statusLine}</small></span>`
+            + `<span class="umt-duel-status-count">Guess ${mine}</span>`
+            + `</div>`
             + renderDuelBoard(game, duel)
             + `</section>`
             + `<section class="cuddle-right-column">${renderDuelTileHand(game, duel)}</section>`
