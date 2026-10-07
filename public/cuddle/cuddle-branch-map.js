@@ -1432,7 +1432,7 @@
         brief.gets.push({ type: "win", text: "On a win: +" + variant.reward + " pts · +$" + variant.reward });
       }
       if (Array.isArray(variant.parts) && variant.parts.length) {
-        variant.parts.forEach(function eachPart(part) { brief.risks.push(part.title + " — " + part.text); });
+        variant.parts.forEach(function eachPart(part) { brief.risks.push((part.label ? part.label + " · " : "") + part.title + " — " + part.text); });
       } else {
         brief.risks.push(variant.description);
       }

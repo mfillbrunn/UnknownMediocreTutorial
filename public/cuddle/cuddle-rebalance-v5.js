@@ -269,20 +269,20 @@
   // Written to read after "Guess N ·" on the row badge, and after the boss
   // card's "for the rest of the run, …" lead-in.
   const BURDEN_INFO = Object.freeze({
-    countOnly: ["Count Only", "The marked tiles of that guess only tell you how many of them are green or yellow, not which."],
-    delayedFeedback: ["Delayed Feedback", "The marked tiles of that guess show their colours one guess late."],
-    hideFeedback: ["Hide Feedback", "One tile of that guess never shows its colour."],
-    hiddenMargins: ["Hidden Tiles", "Two tiles of that guess never show their colour."],
-    blueMode: ["Blue Mode", "A right letter on a marked tile of that guess shows blue, so you can't tell if it's in the right spot."],
-    fakeFeedback: ["Fake Feedback", "The marked tiles of that guess show the wrong colour."],
-    arrowMode: ["Arrow Signs", "The marked tiles of that guess show only an alphabet arrow, or a dash for green."],
+    countOnly: ["Count Only", "Marked tiles show only how many are green or yellow."],
+    delayedFeedback: ["Delayed Feedback", "Marked tiles show their colours one guess late."],
+    hideFeedback: ["Hide Feedback", "One marked tile shows no colour."],
+    hiddenMargins: ["Hidden Tiles", "Two marked tiles show no colour."],
+    blueMode: ["Blue Mode", "Green or yellow on a marked tile shows as blue."],
+    fakeFeedback: ["Fake Feedback", "Marked tiles show a wrong colour."],
+    arrowMode: ["Arrow Signs", "Marked tiles show only an alphabet arrow (dash = green)."],
     quickMode: ["Quick Mode", "That guess scores 0 points."],
-    noMulligans: ["Steady Hand", "You can't mulligan right before that guess."],
-    shortHand: ["Short Hand", "You go into that guess with one fewer letter in your hand."],
+    noMulligans: ["Steady Hand", "No mulligan right before it."],
+    shortHand: ["Short Hand", "One fewer letter in your hand."],
     // Retired as a boss; kept so older runs that already carry it read well.
-    questTrial: ["Quest Trial", "That guess comes with a quest; miss it and lose 5 points."],
-    presetWordsTrial: ["Preset Trial", "You go into that guess with one fewer letter in your hand."],
-    questEndurance: ["Endurance Trial", "That guess comes with a quest; miss it and your hand is one letter smaller for the rest of the stage."]
+    questTrial: ["Quest Trial", "A quest; miss it and lose 5 points."],
+    presetWordsTrial: ["Preset Trial", "One fewer letter in your hand."],
+    questEndurance: ["Endurance Trial", "A quest; miss it and lose 1 hand size for the stage."]
   });
 
   // "1 guess" vs "N guesses" -- description functions below combine this
@@ -927,8 +927,8 @@
 
   function stackedDescription(game, variant) {
     const ease = variant.ease && EASE_PARTS[variant.ease];
-    const lines = variantChallengeIds(variant).map((id) => challengeDisplayDescription(game, challengeById(id)));
-    if (ease) lines.unshift(ease.text);
+    const lines = planLines(game, variant).map((line) => `${line.label}: ${line.title}, ${line.text.charAt(0).toLowerCase()}${line.text.slice(1)}`);
+    if (ease) lines.unshift(`Start: ${ease.text}`);
     return lines.join(" ");
   }
 
@@ -1561,15 +1561,6 @@
     return Array.from({ length: challengeTurns(game, challenge) }, () => challenge.id);
   }
 
-  const CHALLENGE_PHRASES = Object.freeze({
-    noMulligans: (n) => `Mulligans are locked until you've made ${n === 1 ? "your first guess" : `your first ${n} guesses`}.`,
-    perfectOpener: () => "Your first word must use five different letters.",
-    consonantCrunch: (n) => n === 1 ? "Your first guess may contain at most one vowel." : `Each of your first ${n} guesses may contain at most one vowel.`,
-    questEndurance: (n) => `Each of your first ${n} guesses carries a quest; miss one and your hand is one letter smaller for the stage.`,
-    quickMode: (n) => n === 1 ? "You have one minute for your first guess; run out and it's lost." : `You have one minute for each of your first ${n} guesses; run out and the guess is lost.`,
-    rareWord: () => "The answer is a rare, unusual word. Solve it for the biggest challenge bonus."
-  });
-
   // How many of a challenge's designed guesses actually carry its extra
   // difficulty this run: 1 before the first boss, 2 between the first and
   // second, 4 from the second boss on. A challenge whose own masks/vowel
@@ -1595,12 +1586,38 @@
     return Math.max(1, Math.min(3, cleared + 1));
   }
 
+  function guessRange(from, to) {
+    return from >= to ? `Guess ${from}` : `Guesses ${from}–${to}`;
+  }
+
+  function sentence(text) {
+    const value = String(text || "");
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+
+  // A challenge in one systematic line: which guesses, then what happens.
   function challengeDisplayDescription(game, challenge) {
-    const turns = challengeTurns(game, challenge);
-    const phrase = CHALLENGE_PHRASES[challenge.id];
-    if (phrase) return phrase(turns);
-    const lead = turns === 1 ? "On your first guess" : `On each of your first ${turns} guesses`;
-    return `${lead}, ${challenge.text}`;
+    if (challenge.rareSecret) return `Whole stage: ${challenge.text}`;
+    const turns = Math.max(1, challengeTurns(game, challenge));
+    return `${guessRange(1, turns)}: ${challenge.text}`;
+  }
+
+  // A stop's challenges guess by guess, in the order the stage plays them
+  // (beginVariant chains their plans the same way).
+  function planLines(game, variant) {
+    const lines = [];
+    let guess = 1;
+    variantChallengeIds(variant).forEach((id) => {
+      const challenge = challengeById(id);
+      if (challenge.rareSecret) {
+        lines.push({ id: challenge.id, label: "Whole stage", title: challenge.title, text: sentence(challenge.text) });
+        return;
+      }
+      const turns = Math.max(1, challengeTurns(game, challenge));
+      lines.push({ id: challenge.id, label: guessRange(guess, guess + turns - 1), title: challenge.title, text: sentence(challenge.text) });
+      guess += turns;
+    });
+    return lines;
   }
 
   function clearNativeChallengeOffer(game) {
@@ -1647,7 +1664,7 @@
       custom.activeChallenge = {
         ...merged,
         title: stacked ? variant.title : merged.title,
-        description: stacked ? stackedDescription(game, variant) : challengeDisplayDescription(game, challengeById(variant.challengeId)),
+        description: stackedDescription(game, variant),
         nodeId: variant.nodeId,
         roundToken: roundToken(game),
         paid: false,
@@ -3889,8 +3906,14 @@
     const claimed = new Set(span);
     Array.from(row.querySelectorAll(".cuddle-tile")).forEach((tile, column) => {
       const wanted = claimed.has(column);
-      tile.classList.toggle("umt-masked-tile", wanted);
-      tile.classList.toggle("is-mask-pending", wanted && !played);
+      const pending = wanted && !played;
+      // Only touch classes that change: re-adding one restarts the pulse.
+      if (tile.classList.contains("umt-masked-tile") !== wanted) tile.classList.toggle("umt-masked-tile", wanted);
+      if (tile.classList.contains("is-mask-pending") !== pending) {
+        tile.classList.toggle("is-mask-pending", pending);
+        // Locked to the clock, like the board's own markup (cuddle-ui.js).
+        if (pending) tile.style.animationDelay = `-${Date.now() % 1600}ms`;
+      }
     });
   }
 
@@ -4686,10 +4709,7 @@
             reward: Math.round(stackedReward(variant)),
             ease: variant.ease || null,
             // Each challenge on its own, for previews that list them.
-            parts: variantChallengeIds(variant).map((id) => {
-              const part = challengeById(id);
-              return { id: part.id, title: part.title, text: challengeDisplayDescription(live, part) };
-            }),
+            parts: planLines(live, variant),
             difficulty,
             skulls: difficultySkulls(difficulty)
           };

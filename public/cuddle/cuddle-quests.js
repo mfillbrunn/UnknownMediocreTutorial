@@ -358,33 +358,33 @@
   // `text` reads after "Guess N:" or "On your first guesses,".
   const CONSTRAINTS = Object.freeze([
     { id: "countOnly", icon: "🔢", title: "Count Only", kind: "mask", boss: true, challenge: true, mix: true, curse: true, reward: 28,
-      text: "the marked tiles only say how many of them are green and yellow, not which." },
+      text: "marked tiles show only how many are green or yellow." },
     { id: "delayedFeedback", icon: "⏳", title: "Delayed Feedback", kind: "mask", boss: true, challenge: true, mix: true, curse: true, reward: 26,
-      text: "the marked tiles show their colours one guess late." },
+      text: "marked tiles show their colours one guess late." },
     { id: "hiddenMargins", icon: "🫥", title: "Hidden Tiles", kind: "mask", boss: true, challenge: true, mix: true, curse: true, reward: 24,
-      text: "two marked positions show no colour (the same two all stage)." },
+      text: "two marked tiles show no colour." },
     { id: "blueMode", icon: "🔵", title: "Blue Mode", kind: "mask", boss: true, challenge: true, mix: true, curse: true, reward: 26,
-      text: "a green or yellow on the marked tiles shows blue: in the word, place unknown." },
+      text: "green or yellow on a marked tile shows as blue." },
     { id: "fakeFeedback", icon: "🤥", title: "Fake Feedback", kind: "mask", boss: true, challenge: true, mix: true, curse: true, reward: 20,
-      text: "the marked tiles show a wrong colour." },
+      text: "marked tiles show a wrong colour." },
     { id: "arrowMode", icon: "🧭", title: "Arrow Signs", kind: "mask", boss: true, challenge: true, mix: true, curse: true, reward: 26,
-      text: "the marked tiles show only an alphabet arrow toward the answer's letter; a dash means green." },
+      text: "marked tiles show only an alphabet arrow (dash = green)." },
     { id: "quickMode", icon: "⏱️", title: "Quick Mode", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 24,
-      text: "you have one minute; run out and the guess is lost." },
+      text: "60 seconds per guess, or it's lost." },
     { id: "noMulligans", icon: "✋", title: "Steady Hand", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 23,
-      text: "no mulligans before it." },
+      text: "no mulligans." },
     { id: "questEndurance", icon: "🏃", title: "Endurance Trial", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 26,
-      text: "a quest rides on it; miss it and your hand is one letter smaller for the stage." },
+      text: "a quest each guess; miss one, lose 1 hand size." },
     { id: "perfectOpener", icon: "🧩", title: "Perfect Opener", kind: "rule", boss: false, challenge: true, mix: true, curse: false, reward: 22,
-      text: "the word must use five different letters." },
+      text: "five different letters." },
     { id: "consonantCrunch", icon: "🥨", title: "Consonant Crunch", kind: "rule", boss: false, challenge: true, mix: true, curse: false, reward: 25,
-      text: "the word may contain at most one vowel." },
+      text: "at most one vowel." },
     { id: "shortHand", icon: "✂️", title: "Short Hand", kind: "round", boss: true, challenge: false, mix: false, curse: true, reward: 0,
-      text: "ten consonants not in the answer leave your deck, and you get four guesses." },
+      text: "10 consonants not in the answer leave your deck; only 4 guesses." },
     { id: "presetWordsTrial", icon: "🎴", title: "Preset Trial", kind: "round", boss: true, challenge: false, mix: false, curse: true, reward: 0,
-      text: "the answer is one of a few words shown on screen, but you get that many fewer guesses." },
+      text: "the answer is one of a few words shown; that many fewer guesses." },
     { id: "rareWord", icon: "💎", title: "Rare Word", kind: "round", boss: false, challenge: true, mix: false, curse: false, reward: 40,
-      text: "the answer is a rare, unusual word." }
+      text: "the answer is a rare word." }
   ]);
 
   function getConstraint(id) {
@@ -413,7 +413,7 @@
   function mixedBossDescription(plan) {
     return plan.map((id, index) => {
       const item = getConstraint(id);
-      return item ? `Guess ${index + 1}: ${item.title} -- ${item.text}` : "";
+      return item ? `Guess ${index + 1}: ${item.title}, ${item.text}` : "";
     }).filter(Boolean).join(" ");
   }
 

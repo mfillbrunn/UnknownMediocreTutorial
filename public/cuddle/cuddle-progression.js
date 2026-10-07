@@ -631,7 +631,7 @@
       if (stop && stop.ease === "luckyStart") lines.push({ kind: "bonus", icon: "🍀", text: "Lucky Start — one letter starts in its exact place" });
       if (stop && stop.ease === "themedWordle") lines.push({ kind: "bonus", icon: "🧭", text: "Themed — one of the answer's themes is revealed" });
       if (stop && Array.isArray(stop.parts) && stop.parts.length) {
-        stop.parts.forEach((part) => lines.push({ kind: "hazard", icon: "⚡", text: `${part.title} — ${part.text}` }));
+        stop.parts.forEach((part) => lines.push({ kind: "hazard", icon: "⚡", text: `${part.label ? `${part.label} · ` : ""}${part.title} — ${part.text}` }));
       } else {
         lines.push({ kind: "hazard", icon: challenge.icon || "⚡", text: `${challenge.title || "Challenge"}${description ? ` — ${description}` : ""}` });
       }

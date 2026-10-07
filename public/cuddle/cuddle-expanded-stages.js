@@ -1900,8 +1900,18 @@
       const duel = map && map.expandedDuel;
       if (!duel || duel.phase !== "won") return { ok: false, error: "The Duel has not been won." };
       map.expandedDuel = null;
-      game.state.status = MAP_STATUS;
       game.state.lastMessage = duel.message;
+      // A won Duel ends like a cleared stage: pick an upgrade, then the
+      // road (chooseUpgrade returns to the map).
+      const choices = typeof game._generateUpgradeChoices === "function" ? game._generateUpgradeChoices() : [];
+      if (Array.isArray(choices) && choices.length) {
+        game.state.status = "upgrade";
+        game.state.upgradePhase = "round";
+        game.state.upgradeMilestone = null;
+        game.state.upgradeChoices = choices;
+      } else {
+        game.state.status = MAP_STATUS;
+      }
       safeSave(game);
       return { ok: true };
     }
@@ -2280,8 +2290,8 @@
         + `<div class="umt-stop-head">${stopMedallion("duel")}<h2>Word Duel</h2></div>`
         + `<p class="umt-stop-lead">Take turns guessing against the AI. The first to solve wins. If the AI solves first, the run ends.</p>`
         + `<div class="umt-duel-options">`
-        + `<button type="button" class="umt-duel-option is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium"><b>Medium AI</b><span>${richText("Win +$18")}</span></button>`
-        + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard"><b>Hard AI</b><span>${richText("Win +$38 and an upgrade")}</span></button>`
+        + `<button type="button" class="umt-duel-option is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium"><b>Medium AI</b><span>${richText("Win +$18 · pick an upgrade")}</span></button>`
+        + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard"><b>Hard AI</b><span>${richText("Win +$38 · bonus upgrade + pick")}</span></button>`
         + `<div class="umt-duel-option is-easy"><b>Easy AI</b><span>Pay one to start:</span><div class="umt-duel-costs">${easyCosts}</div></div>`
         + `</div>`
         + `</section>`

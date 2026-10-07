@@ -681,6 +681,22 @@
       const isDraft = !history && row === state.history.length && state.status === "playing";
       const hiddenFuture = unlimited && !history && !isDraft;
       const tiles = [];
+      // Tiles a boss, challenge or curse marks on this row, drawn with the
+      // row itself (not added a moment later) so typing a letter doesn't
+      // make them flicker. The pending pulse is locked to the clock, so a
+      // re-render picks it up mid-beat instead of restarting it.
+      let maskCols = [];
+      if (history && Array.isArray(history.maskedIndices)) {
+        maskCols = history.maskedIndices;
+      } else if (isDraft && typeof game.maskSpanPreview === "function") {
+        try {
+          const preview = game.maskSpanPreview();
+          maskCols = preview && Array.isArray(preview.indices) ? preview.indices : [];
+        } catch {
+          maskCols = [];
+        }
+      }
+      const maskPulse = isDraft ? ` style="animation-delay:-${Date.now() % 1600}ms"` : "";
       for (let column = 0; column < 5; column += 1) {
         // state.draft[column] is read directly (not via getDraftCards(),
         // which compacts gaps away) so a card Drag Mode dropped at a
@@ -713,11 +729,14 @@
           : moneyTile.paid
             ? ` data-special-paid="${escapeHtml(moneyTile.label || (tileKind === "money" ? `+$${moneyTile.payout}` : `+${moneyTile.payout}`))}"`
             : ` data-special="${SPECIAL_TILE_KINDS[tileKind].glyph}" title="${escapeHtml(SPECIAL_TILE_KINDS[tileKind].title)}"`;
+        const masked = maskCols.includes(column);
         const tileClass = (result ? ` is-${result}` : letter ? " is-filled" : "")
-          + (isJokerTile ? " is-joker" : "") + moneyClass;
+          + (isJokerTile ? " is-joker" : "") + moneyClass
+          + (masked ? ` umt-masked-tile${isDraft ? " is-mask-pending" : ""}` : "");
+        const maskStyle = masked ? maskPulse : "";
         if (draftCard) {
           tiles.push(`
-            <button type="button" class="cuddle-tile is-draft-tile${tileClass}"
+            <button type="button" class="cuddle-tile is-draft-tile${tileClass}"${maskStyle}
               data-draft-index="${column}" data-draft-card-id="${escapeHtml(draftCard.id)}"
               data-drag-index="${column}"${moneyBadge}
               aria-label="Remove ${escapeHtml(draftCard.glyph)} from the current word"
@@ -727,7 +746,7 @@
         } else if (isDraft) {
           // Empty, but still a live target -- Drag Mode (cuddle-drag-mode.js)
           // can drop a card here even though there's nothing yet to tap.
-          tiles.push(`<span class="cuddle-tile${tileClass}" data-drag-index="${column}"${moneyBadge}></span>`);
+          tiles.push(`<span class="cuddle-tile${tileClass}"${maskStyle} data-drag-index="${column}"${moneyBadge}></span>`);
         } else {
           // Alphabet Compass (cuddle-compass.js): a small arrow toward the
           // secret's letter in this spot, or a dash when it matches.
