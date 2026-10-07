@@ -51,6 +51,58 @@
     })
   ]);
 
+  // Each world slot draws one of three themes per run (stored on the route
+  // as map.themes). A theme keeps its slot's look family (`id`: the boss
+  // entrance and play-screen scenery) but brings its own name, colours and
+  // map decor, and its own shape:
+  //   rows    Wordle rows before the Shop/Upgrade fork (3 is standard)
+  //   lanes   "wide" (always three), "linear" (two at most) or "mixed"
+  //   ease    -1 easier stops, +1 harder ones
+  //   gate    extra factor on the boss's points gate (it already scales
+  //           with how many stops the worlds so far had)
+  const THEMES = Object.freeze([
+    Object.freeze([
+      Object.freeze({ theme: "woods", decor: "woods", rows: 3, lanes: "mixed", ease: 0, gate: 1, blurb: "Three rows of forks through old trees." }),
+      Object.freeze({ theme: "meadow", decor: "meadow", name: "Sunlit Meadow", tagline: "Gentle hills, gentle words", accent: "#ffe08a", glow: "#9be15d",
+        skyTop: "#21361a", skyBottom: "#132411", bossTitle: "The Meadow Hushes", bossLine: "The wind stops. Every flower turns to watch.",
+        rows: 3, lanes: "wide", ease: -1, gate: 1.1, blurb: "Wide open and kinder: more easy stops, a slightly higher boss target." }),
+      Object.freeze({ theme: "marsh", decor: "marsh", name: "Misty Marsh", tagline: "One narrow boardwalk", accent: "#9fe3d0", glow: "#5fbfa8",
+        skyTop: "#14282a", skyBottom: "#0b1719", bossTitle: "The Marsh Rises", bossLine: "Something long and patient stirs under the reeds.",
+        rows: 4, lanes: "linear", ease: 0, gate: 1, blurb: "A long, narrow walk: one more stop, fewer forks." })
+    ]),
+    Object.freeze([
+      Object.freeze({ theme: "caverns", decor: "caverns", rows: 3, lanes: "mixed", ease: 0, gate: 1, blurb: "Three rows of glowing forks." }),
+      Object.freeze({ theme: "frost", decor: "frost", name: "Frostbite Peaks", tagline: "A short, sharp climb", accent: "#cfefff", glow: "#7cc8ff",
+        skyTop: "#14243a", skyBottom: "#0b1424", bossTitle: "The Peaks Crack", bossLine: "Ice splits from the summit and something climbs down.",
+        rows: 2, lanes: "mixed", ease: 1, gate: 0.9, blurb: "Short and harsh: one stop fewer, tougher stops, a lower boss target." }),
+      Object.freeze({ theme: "library", decor: "library", name: "Sunken Library", tagline: "Every shelf a different path", accent: "#e8c98a", glow: "#7fd6c2",
+        skyTop: "#1d1a30", skyBottom: "#100e1d", bossTitle: "The Pages Turn", bossLine: "Every book opens at once and reads your name.",
+        rows: 4, lanes: "wide", ease: 0, gate: 1, blurb: "A long maze of shelves: one more stop, always three paths." })
+    ]),
+    Object.freeze([
+      Object.freeze({ theme: "citadel", decor: "citadel", rows: 3, lanes: "mixed", ease: 0, gate: 1, blurb: "The last climb, three rows high." }),
+      Object.freeze({ theme: "storm", decor: "storm", name: "Storm Spire", tagline: "Straight up through the lightning", accent: "#d6c7ff", glow: "#8f7dff",
+        skyTop: "#1a1633", skyBottom: "#0c0a1c", bossTitle: "The Spire Strikes", bossLine: "Thunder answers before you can speak.",
+        rows: 2, lanes: "linear", ease: 1, gate: 0.85, blurb: "A short, straight ascent: fewer stops, harder ones, a lower boss target." }),
+      Object.freeze({ theme: "forge", decor: "forge", name: "Ember Forge", tagline: "Long halls of molten words", accent: "#ffc46b", glow: "#ff7a2f",
+        skyTop: "#2c140a", skyBottom: "#160904", bossTitle: "The Forge Roars", bossLine: "The furnace opens and the smith steps out.",
+        rows: 4, lanes: "wide", ease: 0, gate: 1, blurb: "Long halls: one more stop and three paths every row." })
+    ])
+  ]);
+
+  function themeOptions(index) {
+    return THEMES[Math.max(0, Math.min(2, Math.trunc(Number(index)) || 0))];
+  }
+
+  // The world in slot `index` as this run's route themed it.
+  function themedWorld(map, index) {
+    const base = clampWorld(index);
+    const ids = map && Array.isArray(map.themes) ? map.themes : null;
+    const options = themeOptions(base.index);
+    const theme = (ids && options.find(option => option.theme === ids[base.index])) || options[0];
+    return Object.freeze(Object.assign({}, base, theme, { id: base.id, index: base.index }));
+  }
+
   // Category colours: the medallion ring and the stop's accent everywhere.
   const KIND_COLORS = Object.freeze({
     wordle: "#3ecf8e",
@@ -134,13 +186,13 @@
   function worldForRow(map, rowIndex) {
     const rows = map && Array.isArray(map.rows) ? map.rows : [];
     const row = rows[rowIndex];
-    if (row && Number.isFinite(Number(row.act))) return clampWorld(row.act);
+    if (row && Number.isFinite(Number(row.act))) return themedWorld(map, row.act);
     let bosses = 0;
     for (let index = 0; index < rowIndex && index < rows.length; index += 1) {
       const candidate = rows[index];
       if (candidate && (candidate.kind === "boss" || (candidate.nodes || []).some(node => node && node.type === "boss"))) bosses += 1;
     }
-    return clampWorld(bosses);
+    return themedWorld(map, bosses);
   }
 
   // The world the player is in right now: one per boss gate cleared.
@@ -152,7 +204,7 @@
       return worldForRow(map, Number(map.position.row));
     }
     const gates = Array.isArray(state.bossGatesDone) ? state.bossGatesDone.length : 0;
-    return clampWorld(gates);
+    return themedWorld(map, gates);
   }
 
   function kindForNode(node) {
@@ -240,6 +292,11 @@
     const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const el = document.createElement("div");
     el.className = `umt-boss-entrance is-${world.id}${final ? " is-final" : ""}${reduced ? " is-reduced" : ""}${opts.extraClass ? ` ${opts.extraClass}` : ""}`;
+    // A themed world wears its own colours over its slot's entrance.
+    if (world.theme && world.theme !== world.id) {
+      el.style.setProperty("--be-accent", world.accent);
+      el.style.setProperty("--be-glow", world.glow);
+    }
     el.setAttribute("role", "dialog");
     el.setAttribute("aria-label", `${opts.eyebrow || (final ? "Final boss" : "Boss")}: ${boss.title || "Boss"}. Tap to begin.`);
     el.tabIndex = 0;
@@ -295,11 +352,15 @@
   // wear that world's scenery (cuddle-worlds.css). Cleared on the landing.
   function applyTheme(root, game) {
     if (!root || !root.dataset) return;
-    const id = game && game.state && game.state.runId ? currentWorld(game).id : "";
+    const world = game && game.state && game.state.runId ? currentWorld(game) : null;
+    const id = world ? world.id : "";
+    const theme = world ? world.theme || world.id : "";
     if (id) {
       if (root.dataset.umtWorld !== id) root.dataset.umtWorld = id;
-    } else if (root.dataset.umtWorld) {
-      delete root.dataset.umtWorld;
+      if (root.dataset.umtTheme !== theme) root.dataset.umtTheme = theme;
+    } else {
+      if (root.dataset.umtWorld) delete root.dataset.umtWorld;
+      if (root.dataset.umtTheme) delete root.dataset.umtTheme;
     }
   }
 
@@ -310,6 +371,9 @@
     worldForRow,
     currentWorld,
     world: clampWorld,
+    THEMES,
+    themeOptions,
+    themedWorld,
     kindForNode,
     iconMarkup,
     iconSvg,

@@ -101,10 +101,10 @@
     storybookStart: "+10 points per stage",
     wideChoice: "+1 reward choice",
     handSizeBoost: "+1 card in hand",
-    mulliganValueBoost: "+5 per spare mulligan",
+    mulliganValueBoost: "+3 per spare mulligan",
     earlySolveBoost: "+5 per spare guess",
     colourTrade: "Greens worth more",
-    greyscale: "Greys and yellows up",
+    greyscale: "Greys worth more",
     rewardEcho: "Next reward counts twice",
     greenCount: "Greens show count",
     "surprise-assignment": "+1 surprise quest",
@@ -465,6 +465,8 @@
     // So does an Upgrade Pack on offer or being opened (cuddle-packs.js):
     // the pack shows its own cards, then the badges follow.
     if (state.umtPackOffer) return;
+    // And an event's outcome screen (cuddle-expanded-stages.js).
+    if (state.branchMap && state.branchMap.expandedEventResult) return;
     const fresh = entries.slice(watch.ledgerLength);
     const combosNow = ownedComboIds(game);
     const newComboIds = new Set([...combosNow].filter((id) => !watch.comboOwned.has(id)));
