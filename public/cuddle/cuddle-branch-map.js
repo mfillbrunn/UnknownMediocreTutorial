@@ -938,6 +938,39 @@
     };
   }
 
+  // Harder Wordle stops carry one to three small red skulls on the map
+  // (cuddle-rebalance-v5.js difficultySkulls): one for a single challenge,
+  // two for a Rare Word or two challenges, three for a Rare Word with a
+  // challenge.
+  var SKULL_WORDS = ["", "Tricky", "Hard", "Brutal"];
+  function stopSkulls(game, node) {
+    if (!node || node.type === "mystery" || node.mysteryType) return 0;
+    var rebalance = window.CuddleRebalanceV5;
+    var variant = rebalance && typeof rebalance.stopVariant === "function" ? rebalance.stopVariant(game, node) : null;
+    return variant ? Math.max(0, Math.min(3, Number(variant.skulls) || 0)) : 0;
+  }
+
+  function skullIcons(count) {
+    var html = "";
+    for (var index = 0; index < count; index += 1) {
+      html += "<svg viewBox=\"-6 -7 12 13\" aria-hidden=\"true\"><path class=\"umt-skull-head\" d=\"M0 -6.2a4.6 4.6 0 0 0-4.6 4.6c0 1.6.8 2.6 1.9 3.2v1.7a.7.7 0 0 0 .7.7h4a.7.7 0 0 0 .7-.7V1.6c1.1-.6 1.9-1.6 1.9-3.2A4.6 4.6 0 0 0 0 -6.2z\"/>"
+        + "<circle class=\"umt-skull-eye\" cx=\"-1.7\" cy=\"-1.6\" r=\"1.15\"/><circle class=\"umt-skull-eye\" cx=\"1.7\" cy=\"-1.6\" r=\"1.15\"/></svg>";
+    }
+    return html;
+  }
+
+  function skullBadge(count, radius) {
+    var marks = "";
+    for (var index = 0; index < count; index += 1) {
+      marks += "<g transform=\"translate(" + (-index * 10) + " 0)\">"
+        + "<path class=\"umt-skull-head\" d=\"M0 -6.2a4.6 4.6 0 0 0-4.6 4.6c0 1.6.8 2.6 1.9 3.2v1.7a.7.7 0 0 0 .7.7h4a.7.7 0 0 0 .7-.7V1.6c1.1-.6 1.9-1.6 1.9-3.2A4.6 4.6 0 0 0 0 -6.2z\"/>"
+        + "<circle class=\"umt-skull-eye\" cx=\"-1.7\" cy=\"-1.6\" r=\"1.15\"/>"
+        + "<circle class=\"umt-skull-eye\" cx=\"1.7\" cy=\"-1.6\" r=\"1.15\"/>"
+        + "</g>";
+    }
+    return "<g class=\"umt-node-skulls\" transform=\"translate(" + (-radius * 0.72) + " " + (-radius * 0.72) + ")\">" + marks + "</g>";
+  }
+
   function branchMapRowOf(game, node) {
     var map = game && game.state && game.state.branchMap;
     return map && Array.isArray(map.rows) && node ? map.rows[Number(node.row)] : null;
@@ -955,9 +988,7 @@
         // Safety Net") overruns its neighbours; the map names its main
         // challenge and counts the rest. The preview spells them all out.
         var parts = String(variant.title || "Challenge").split(" + ");
-        if (parts.length < 2) return parts[0];
-        var main = parts.filter(function notEase(part) { return part !== "Lucky Start" && part !== "Themed"; })[0] || parts[0];
-        return main + " +" + (parts.length - 1);
+        return parts.filter(function notEase(part) { return part !== "Lucky Start" && part !== "Themed"; })[0] || parts[0];
       }
       if (VARIANT_CAPTIONS[variant.kind]) return VARIANT_CAPTIONS[variant.kind];
     }
@@ -1171,11 +1202,13 @@
             + "<rect x=\"" + (-pillWidth / 2) + "\" y=\"-8\" width=\"" + pillWidth + "\" height=\"16\" rx=\"8\"/>"
             + "<text text-anchor=\"middle\" y=\"4\">" + required + "</text></g>";
         }
+        var skulls = boss ? 0 : stopSkulls(game, node);
+        var skullMarks = skulls ? skullBadge(skulls, radius) : "";
         nodes.push(
           "<g class=\"" + classes.join(" ") + "\" transform=\"translate(" + point.x + "," + point.y + ")\" style=\"--kind:" + color + "\""
           + (open
             ? " data-cuddle-campaign-action=\"preview-branch-node\" data-shop-item-id=\"" + node.row + ":" + node.col + "\""
-              + " role=\"button\" tabindex=\"0\" aria-label=\"" + escapeHtml(caption + " — " + title + (required ? ", needs " + required + " points" : "")) + "\""
+              + " role=\"button\" tabindex=\"0\" aria-label=\"" + escapeHtml(caption + " — " + title + (required ? ", needs " + required + " points" : "") + (skulls ? ", hard stage" : "")) + "\""
             : " data-shop-item-id=\"" + node.row + ":" + node.col + "\" aria-hidden=\"true\"")
           + ">"
           + extras
@@ -1184,6 +1217,7 @@
           + "<g class=\"umt-node-icon\" transform=\"translate(" + (-iconSize / 2) + " " + (-iconSize / 2) + ") scale(" + (iconSize / 24) + ")\">"
           + Worlds.iconMarkup(kind) + "</g>"
           + bossNeeds
+          + skullMarks
           + (visited && !isHere
             ? "<g class=\"umt-node-check\" transform=\"translate(" + (radius * 0.72) + " " + (-radius * 0.72) + ")\">"
               + "<circle r=\"6.5\"/><path d=\"M-3 0l2 2.2L3.2-2.4\"/></g>"
@@ -1387,13 +1421,21 @@
       }
     } else if (kind === "challenge") {
       brief.title = variant.title;
-      brief.summary = "A Wordle with a rule against you. Beat it for a bonus.";
+      var partCount = Array.isArray(variant.parts) ? variant.parts.length : 1;
+      brief.summary = partCount > 1
+        ? partCount + " challenges at once, one after the other. Beat it for all their bonuses."
+        : "A Wordle with a rule against you. Beat it for a bonus.";
+      brief.difficulty = Number(variant.skulls) || 0;
       if (variant.ease === "luckyStart") brief.gets.push({ type: "perk", text: "One letter placed for you" });
       if (variant.ease === "themedWordle") brief.gets.push({ type: "perk", text: "One theme revealed" });
       if (variant.reward > 0) {
         brief.gets.push({ type: "win", text: "On a win: +" + variant.reward + " pts · +$" + variant.reward });
       }
-      brief.risks.push(variant.description);
+      if (Array.isArray(variant.parts) && variant.parts.length) {
+        variant.parts.forEach(function eachPart(part) { brief.risks.push((part.label ? part.label + " · " : "") + part.title + " — " + part.text); });
+      } else {
+        brief.risks.push(variant.description);
+      }
     } else if (kind === "event") {
       // A mystery until the player arrives: no name, no deals.
       brief.title = "Mystery Event";
@@ -1422,6 +1464,11 @@
 
   function renderBriefing(brief) {
     var html = "<p class=\"umt-stop-summary\">" + rewardText(brief.summary) + "</p>";
+    if (brief.difficulty) {
+      html += "<p class=\"umt-stop-difficulty\"><span>Difficulty</span><span class=\"umt-stop-skulls\">"
+        + skullIcons(brief.difficulty) + "</span><b>" + SKULL_WORDS[brief.difficulty] + "</b><small>"
+        + brief.difficulty + " of 3</small></p>";
+    }
     if (brief.options && brief.options.length) {
       html += "<div class=\"umt-stop-options\">" + brief.options.map(function option(item, index) {
         return "<div class=\"umt-stop-option\"><span class=\"umt-stop-option-tag\">" + (index === 0 ? "Safe" : "Bold") + "</span>"

@@ -210,6 +210,41 @@
   let legendOpen = false;
   let duelAiTimer = null;
   let scheduledAiToken = null;
+  // The AI's guess being typed into its row, letter by letter, before it
+  // is scored ({ token, word, typed }). Kept out of the save on purpose.
+  let aiTyping = null;
+  // When the player's turn last began, so the turn box flashes once per
+  // turn instead of on every re-render.
+  let turnFlash = { key: "", at: 0 };
+  const AI_TYPE_STEP_MS = 170;
+  // The Duel's rival, one per AI difficulty: introduced like a boss, and
+  // its face stands in for the AI on the turn box and the result.
+  const RIVALS = Object.freeze({
+    easy: { name: "Pip", title: "Pip the Apprentice", line: "Still learning the letters, but eager to beat you.", robe: "#3aa76d", eyes: "#d8ffe6" },
+    medium: { name: "Vex", title: "Vex the Wordsmith", line: "Quick, careful, and hungry for your answer.", robe: "#7c5cc4", eyes: "#f1e6ff" },
+    hard: { name: "Grimm", title: "Grimm the Grandmaster", line: "Has never lost a Duel. Not yet.", robe: "#b8323b", eyes: "#ffd7d9" }
+  });
+  let rivalIntroOpen = false;
+  let duelWinFx = { id: "", at: 0 };
+  const DUEL_WIN_FX_MS = 3200;
+
+  function rivalOf(duel) {
+    return RIVALS[duel && duel.difficulty] || RIVALS.medium;
+  }
+
+  // A hooded rival holding a letter tile, eyes glowing out of the hood.
+  function rivalSvg(rival) {
+    return `<svg class="umt-rival" viewBox="0 0 24 24" aria-hidden="true">`
+      + `<path d="M12 2.3c-4.7 0-7.6 3.7-7.6 8.4V22h15.2V10.7c0-4.7-2.9-8.4-7.6-8.4z" fill="${rival.robe}"/>`
+      + `<path d="M12 2.3c-4.7 0-7.6 3.7-7.6 8.4V22h2.2V11c0-3.8 2.1-6.9 5.4-7.6z" fill="#000" opacity=".18"/>`
+      + `<path d="M12 5.6c-3.1 0-5 2.5-5 5.5 0 3.1 2.1 5.4 5 5.4s5-2.3 5-5.4c0-3-1.9-5.5-5-5.5z" fill="#140f1f"/>`
+      + `<circle class="umt-rival-eye" cx="9.9" cy="11.2" r="1.15" fill="${rival.eyes}"/>`
+      + `<circle class="umt-rival-eye" cx="14.1" cy="11.2" r="1.15" fill="${rival.eyes}"/>`
+      + `<rect x="8.4" y="16.6" width="7.2" height="5.4" rx="1.3" fill="#f6c956" stroke="#140f1f" stroke-width=".7"/>`
+      + `<text x="12" y="20.7" text-anchor="middle" font-family="system-ui,sans-serif" font-size="4.4" font-weight="900" fill="#140f1f">?</text>`
+      + `</svg>`;
+  }
+  const TURN_FLASH_MS = 1500;
   let challengeObserver = null;
 
   function install() {
@@ -1555,7 +1590,7 @@
       });
     }
 
-    function recordDuelGuess(game, actor, word) {
+    function recordDuelGuess(game, actor, word, jokerIndex = -1) {
       const duel = ensureMap(game).expandedDuel;
       if (!duel || duel.phase !== "playing") return { ok: false, error: "The Duel is not active." };
       const feedback = Engine.evaluateFeedback(duel.secret, word);
@@ -1576,7 +1611,9 @@
             ? "The AI is studying the visible feedback."
             : "Your turn. Build a word from your Cuddle tiles.";
         }
-        duel.history.push({ actor, word, feedback: feedback.slice() });
+        duel.history.push(jokerIndex >= 0
+          ? { actor, word, feedback: feedback.slice(), jokerIndex }
+          : { actor, word, feedback: feedback.slice() });
         syncVisibleGuessToDuelHand(game, duel, actor, word, feedback);
         duel.mulliganMode = false;
         duel.mulliganSelection = [];
@@ -1606,6 +1643,7 @@
       if (duel.mulliganMode) return { ok: false, error: "Finish or cancel the mulligan first." };
       const tileSnapshot = cloneForDuel(duel.tileState, null);
       let word = "";
+      let jokerIndex = -1;
       let result;
       try {
         result = withDuelTileState(game, duel, state => {
@@ -1615,6 +1653,7 @@
           // A Joker becomes whichever letter completes a real word, as it
           // does on an ordinary stage.
           const joker = Engine.CUDDLE_JOKER_GLYPH;
+          jokerIndex = joker ? word.indexOf(joker) : -1;
           if (joker && word.includes(joker) && typeof game.resolveJokerWord === "function") {
             const resolution = game.resolveJokerWord(word);
             if (!resolution) return { ok: false, error: "No letter completes that into a real word." };
@@ -1641,7 +1680,7 @@
         return { ok: false, error: error && error.message ? error.message : "The Duel guess could not be submitted." };
       }
       if (!result || !result.ok) return result || { ok: false, error: "The Duel guess could not be submitted." };
-      const recorded = recordDuelGuess(game, "player", word);
+      const recorded = recordDuelGuess(game, "player", word, jokerIndex);
       if (!recorded.ok && tileSnapshot) duel.tileState = tileSnapshot;
       return recorded;
     }
@@ -1764,6 +1803,48 @@
         requestRender(game);
         return;
       }
+      // Type the word into the AI's row one letter at a time, then score it.
+      const token = `${duel.id}:${duel.history.length}`;
+      if (!aiTyping || aiTyping.token !== token) {
+        aiTyping = { token, word, typed: 0 };
+        const typeNext = () => {
+          if (!aiTyping || aiTyping.token !== token) return;
+          const live = game.state && game.state.branchMap && game.state.branchMap.expandedDuel;
+          if (!live || live.phase !== "playing" || live.turn !== "ai") { aiTyping = null; return; }
+          aiTyping.typed += 1;
+          paintAiTyping();
+          if (aiTyping.typed < aiTyping.word.length) {
+            window.setTimeout(typeNext, AI_TYPE_STEP_MS);
+          } else {
+            window.setTimeout(() => {
+              if (!aiTyping || aiTyping.token !== token) return;
+              aiTyping = null;
+              finishAiMove(game, word);
+            }, 320);
+          }
+        };
+        window.setTimeout(typeNext, AI_TYPE_STEP_MS);
+      }
+    }
+
+    // Writes the letters typed so far into the AI's row without a full
+    // re-render (a re-render draws them from aiTyping too).
+    function paintAiTyping() {
+      if (!aiTyping) return;
+      const tiles = document.querySelectorAll(".umt-duel-row.is-thinking .cuddle-tile");
+      tiles.forEach((tile, index) => {
+        const letter = index < aiTyping.typed ? aiTyping.word[index] : "";
+        if (tile.textContent !== letter) {
+          tile.textContent = letter;
+          tile.classList.toggle("is-typed", Boolean(letter));
+        }
+      });
+    }
+
+    function finishAiMove(game, word) {
+      const map = ensureMap(game);
+      const duel = map && map.expandedDuel;
+      if (!duel || duel.phase !== "playing" || duel.turn !== "ai") return;
       duel.aiMoveNumber = Number(duel.aiMoveNumber || 0) + 1;
       const result = recordDuelGuess(game, "ai", word);
       if (!result.ok) {
@@ -1774,9 +1855,30 @@
       requestRender(game);
     }
 
+    function introduceRival(game) {
+      const duel = game && game.state && game.state.branchMap && game.state.branchMap.expandedDuel;
+      const worlds = window.CuddleWorlds;
+      if (!duel || duel.phase !== "playing" || !worlds || typeof worlds.playBossEntrance !== "function") return;
+      const rival = rivalOf(duel);
+      rivalIntroOpen = true;
+      worlds.playBossEntrance({
+        game,
+        boss: { title: rival.title },
+        figure: rivalSvg(rival),
+        eyebrow: "Word Duel · Your rival",
+        line: rival.line,
+        extraClass: `is-rival is-rival-${duel.difficulty || "medium"}`,
+        onDone() {
+          rivalIntroOpen = false;
+          requestRender(game);
+        }
+      });
+    }
+
     function scheduleAiMove(game) {
       const duel = game && game.state && game.state.branchMap && game.state.branchMap.expandedDuel;
       if (!duel || duel.phase !== "playing" || duel.turn !== "ai") return;
+      if (rivalIntroOpen) return;
       const token = `${game.state.runId}:${duel.id}:${duel.history.length}:${duel.aiMoveNumber || 0}`;
       if (scheduledAiToken === token && duelAiTimer) return;
       scheduledAiToken = token;
@@ -1798,8 +1900,18 @@
       const duel = map && map.expandedDuel;
       if (!duel || duel.phase !== "won") return { ok: false, error: "The Duel has not been won." };
       map.expandedDuel = null;
-      game.state.status = MAP_STATUS;
       game.state.lastMessage = duel.message;
+      // A won Duel ends like a cleared stage: pick an upgrade, then the
+      // road (chooseUpgrade returns to the map).
+      const choices = typeof game._generateUpgradeChoices === "function" ? game._generateUpgradeChoices() : [];
+      if (Array.isArray(choices) && choices.length) {
+        game.state.status = "upgrade";
+        game.state.upgradePhase = "round";
+        game.state.upgradeMilestone = null;
+        game.state.upgradeChoices = choices;
+      } else {
+        game.state.status = MAP_STATUS;
+      }
       safeSave(game);
       return { ok: true };
     }
@@ -2034,15 +2146,18 @@
     function renderDuelBoard(game, duel) {
       const rows = (duel.history || []).map(entry => (
         `<div class="cuddle-board-row umt-duel-row is-${escapeHtml(entry.actor)}">`
-        + entry.word.split("").map((letter, index) => `<span class="cuddle-tile is-${escapeHtml(entry.feedback[index] || "grey")}">${escapeHtml(letter)}</span>`).join("")
-        + (entry.actor === "ai" ? `<span class="cuddle-row-score umt-duel-who">AI</span>` : `<span class="cuddle-row-score umt-duel-who is-you"></span>`)
+        + entry.word.split("").map((letter, index) => `<span class="cuddle-tile is-${escapeHtml(entry.feedback[index] || "grey")}${entry.jokerIndex === index ? " is-joker" : ""}">${escapeHtml(letter)}</span>`).join("")
+        + (entry.actor === "ai" ? `<span class="cuddle-row-score umt-duel-who is-ai">AI</span>` : `<span class="cuddle-row-score umt-duel-who is-you"></span>`)
         + `</div>`
       ));
       if (duel.phase === "playing" && duel.turn === "ai") {
         rows.push(
-          `<div class="cuddle-board-row umt-duel-row is-ai is-thinking" aria-label="The AI is thinking">`
-          + Array.from({ length: 5 }, () => `<span class="cuddle-tile"></span>`).join("")
-          + `<span class="cuddle-row-score umt-duel-who">AI</span></div>`
+          `<div class="cuddle-board-row umt-duel-row is-ai is-thinking" aria-label="The AI is typing its guess">`
+          + Array.from({ length: 5 }, (_unused, index) => {
+            const letter = aiTyping && index < aiTyping.typed ? aiTyping.word[index] : "";
+            return `<span class="cuddle-tile${letter ? " is-typed" : ""}">${escapeHtml(letter)}</span>`;
+          }).join("")
+          + `<span class="cuddle-row-score umt-duel-who is-ai">AI</span></div>`
         );
       } else if (duel.phase === "playing" && duel.turn === "player") {
         let draftRow = "";
@@ -2054,7 +2169,7 @@
               const cardId = (state.draft || [])[index];
               const card = cardId ? cardById.get(cardId) : null;
               if (!card) return `<span class="cuddle-tile"></span>`;
-              return `<button type="button" class="cuddle-tile is-draft-tile is-filled" data-cuddle-campaign-action="expanded-duel-remove" data-shop-item-id="${index}"${enabled ? "" : " disabled"} aria-label="Remove ${escapeHtml(card.glyph)} from position ${index + 1}">${escapeHtml(card.glyph)}</button>`;
+              return `<button type="button" class="cuddle-tile is-draft-tile is-filled${card.source === "joker" || card.glyph === Engine.CUDDLE_JOKER_GLYPH ? " is-joker" : ""}" data-cuddle-campaign-action="expanded-duel-remove" data-shop-item-id="${index}"${enabled ? "" : " disabled"} aria-label="Remove ${escapeHtml(card.glyph)} from position ${index + 1}">${escapeHtml(card.glyph)}</button>`;
             }).join("");
           });
         } catch (_error) {
@@ -2110,6 +2225,7 @@
         VOWEL_SET.has(group.glyph) ? "is-vowel" : "",
         draftedCount ? "has-drafted" : "",
         selectedCount ? "is-selected" : "",
+        group.glyph === Engine.CUDDLE_JOKER_GLYPH ? "is-joker" : "",
         "umt-duel-hand-card"
       ].filter(Boolean).join(" ");
       const badge = infinite
@@ -2174,8 +2290,8 @@
         + `<div class="umt-stop-head">${stopMedallion("duel")}<h2>Word Duel</h2></div>`
         + `<p class="umt-stop-lead">Take turns guessing against the AI. The first to solve wins. If the AI solves first, the run ends.</p>`
         + `<div class="umt-duel-options">`
-        + `<button type="button" class="umt-duel-option is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium"><b>Medium AI</b><span>${richText("Win +$18")}</span></button>`
-        + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard"><b>Hard AI</b><span>${richText("Win +$38 and an upgrade")}</span></button>`
+        + `<button type="button" class="umt-duel-option is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium"><b>Medium AI</b><span>${richText("Win +$18 · pick an upgrade")}</span></button>`
+        + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard"><b>Hard AI</b><span>${richText("Win +$38 · bonus upgrade + pick")}</span></button>`
         + `<div class="umt-duel-option is-easy"><b>Easy AI</b><span>Pay one to start:</span><div class="umt-duel-costs">${easyCosts}</div></div>`
         + `</div>`
         + `</section>`
@@ -2186,10 +2302,21 @@
       const duel = map.expandedDuel;
       const choosing = duel.phase === "choose";
       const playing = duel.phase === "playing";
-      const secretTiles = String(duel.secret || "").split("").map(letter => `<span class="cuddle-tile is-green">${escapeHtml(letter)}</span>`).join("");
+      const secretTiles = String(duel.secret || "").split("").map((letter, index) => `<span class="cuddle-tile is-green" style="--i:${index}">${escapeHtml(letter)}</span>`).join("");
+      let winFx = "";
+      if (duel.phase === "won") {
+        if (duelWinFx.id !== duel.id) duelWinFx = { id: duel.id, at: Date.now() };
+        const elapsed = Date.now() - duelWinFx.at;
+        if (elapsed < DUEL_WIN_FX_MS) winFx = ` is-celebrating" style="--win-t:-${elapsed}ms`;
+      }
+      const rival = rivalOf(duel);
+      const sparks = duel.phase === "won"
+        ? `<span class="umt-duel-sparks" aria-hidden="true">${Array.from({ length: 10 }, (_unused, index) => `<i style="--a:${index * 36}deg"></i>`).join("")}</span>`
+        : "";
       const outcome = duel.phase === "won" || duel.phase === "lost"
-        ? `<section class="umt-stop-panel umt-duel-outcome is-${duel.phase === "won" ? "win" : "loss"}">`
-          + `<h2>${duel.phase === "won" ? "You won the Duel" : "The AI solved it first"}</h2>`
+        ? `<section class="umt-stop-panel umt-duel-outcome is-${duel.phase === "won" ? "win" : "loss"}${winFx}">`
+          + `<div class="umt-duel-outcome-rival${duel.phase === "won" ? " is-defeated" : " is-gloating"}">${sparks}${rivalSvg(rival)}</div>`
+          + `<h2>${duel.phase === "won" ? `You beat ${escapeHtml(rival.name)}` : `${escapeHtml(rival.name)} solved it first`}</h2>`
           + `<div class="cuddle-board-row umt-duel-answer">${secretTiles}</div>`
           + `<p class="umt-stop-lead">${richText(duel.message)}</p>`
           + (duel.phase === "won"
@@ -2197,9 +2324,24 @@
             : `<button type="button" class="cuddle-btn" data-cuddle-campaign-action="expanded-duel-end">End this run</button>`)
           + `</section>`
         : "";
-      const status = playing
-        ? (duel.turn === "ai" ? "The AI is thinking…" : (duel.history || []).length ? "Your turn" : duel.message)
-        : "";
+      const aiTurn = duel.turn === "ai";
+      const mine = (duel.history || []).filter(entry => entry.actor === (aiTurn ? "ai" : "player")).length + 1;
+      const statusTitle = aiTurn ? "AI's turn" : "Your turn";
+      const statusLine = aiTurn
+        ? `${escapeHtml(rivalOf(duel).name)} is thinking<span class="umt-duel-dots" aria-hidden="true"><i></i><i></i><i></i></span>`
+        : escapeHtml(duel.mulliganMode
+          ? "Pick tiles to swap, then confirm."
+          : (duel.history || []).length ? "Build a word from your tiles." : duel.message || "Build a word from your tiles.");
+      const statusIcon = aiTurn
+        ? rivalSvg(rivalOf(duel))
+        : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>`;
+      let flash = "";
+      if (playing && duel.turn === "player") {
+        const key = `${duel.id}:${(duel.history || []).length}`;
+        if (turnFlash.key !== key) turnFlash = { key, at: Date.now() };
+        const elapsed = Date.now() - turnFlash.at;
+        if (elapsed < TURN_FLASH_MS) flash = ` is-your-turn" style="--flash-t:-${elapsed}ms`;
+      }
       return (
         `<div class="cuddle-shell umt-duel-shell">`
         + shellHeader(game, "WORD DUEL")
@@ -2207,7 +2349,11 @@
           ? `<main class="umt-event-page">${choosing ? renderDuelDifficulty(game, duel) : ""}${!choosing && (duel.history || []).length ? renderDuelBoard(game, duel) : ""}${outcome}</main>`
           : `<main class="cuddle-play-area umt-duel-play">`
             + `<section class="cuddle-left-column">`
-            + `<p class="umt-duel-status" role="status">${escapeHtml(status)}${duel.powerNote ? `<span>${escapeHtml(duel.powerNote)}</span>` : ""}</p>`
+            + `<div class="umt-duel-status ${aiTurn ? "is-ai" : "is-player"}${flash}" role="status">`
+            + `<span class="umt-duel-status-badge">${statusIcon}</span>`
+            + `<span class="umt-duel-status-text"><b>${statusTitle}</b><small>${statusLine}</small></span>`
+            + `<span class="umt-duel-status-count">Guess ${mine}</span>`
+            + `</div>`
             + renderDuelBoard(game, duel)
             + `</section>`
             + `<section class="cuddle-right-column">${renderDuelTileHand(game, duel)}</section>`
@@ -2233,7 +2379,7 @@
         ["Head Start", "A random word is played for you as the first guess."],
         ["Lucky Start", "One exact letter position is revealed before you start."],
         ["Jackpot", "Green tiles pay double, but you must solve within the world's guess limit."],
-        ["Double or Nothing", "Solve within three guesses to double the stage's earnings; take longer and lose half."]
+        ["Double or Nothing", "Solve fast to double the stage's earnings (by guess 5 in world 1, 4 in world 2, 3 in world 3); take longer and lose half."]
       ];
       const catalogue = window.CuddleRebalanceV5 && typeof window.CuddleRebalanceV5.mapChallenges === "function"
         ? window.CuddleRebalanceV5.mapChallenges(game)
@@ -2475,8 +2621,11 @@
           return { ok: true };
         case "expanded-event-choice":
           return chooseExpandedEvent(game, itemId);
-        case "expanded-duel-start":
-          return startDuel(game, itemId);
+        case "expanded-duel-start": {
+          const started = startDuel(game, itemId);
+          if (started && started.ok !== false) introduceRival(game);
+          return started;
+        }
         case "expanded-duel-card":
           return toggleDuelCard(game, itemId);
         case "expanded-duel-remove":

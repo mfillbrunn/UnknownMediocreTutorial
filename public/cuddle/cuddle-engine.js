@@ -2883,67 +2883,47 @@
     if (explicit) return explicit;
     return Math.max(1, Math.min(4, Number(bossesCleared || 0) + 1));
   }
+  // Boss descriptions in the same systematic form as stage challenges:
+  // which guesses, then what happens (the shared constraint list's words).
   function cuddleV3BossDescription(id, turns, stage = 1) {
     const count = Math.max(1, Number(turns) || 1);
-    const guesses = `${count} guess${count === 1 ? "" : "es"}`;
+    const range = (n) => (n <= 1 ? "Guess 1" : `Guesses 1–${n}`);
+    const text = (cid) => {
+      const value = window.CuddleQuestBook?.getConstraint?.(cid)?.text || "";
+      return value.charAt(0).toUpperCase() + value.slice(1);
+    };
     switch (id) {
-      // The masking bosses below all work on a marked span of tiles rather
-      // than the whole row (see maskSpanFor); the board rings those tiles
-      // before the guess is submitted, so the copy points at the marks
-      // instead of naming a count that changes with difficulty.
       case "countOnly":
-        return `During the first ${guesses}, the marked tiles report only how many of them are green and how many yellow, not which is which. Every other tile shows its real colour.`;
       case "delayedFeedback":
-        return `During the first ${guesses}, the marked tiles run one guess late: each row's hidden colours appear when you submit your next guess.`;
-      case "hideFeedback":
-        return `During the first ${guesses}, one marked board position hides its feedback. That position behaves normally afterward.`;
       case "hiddenMargins":
-        return `During the first ${guesses}, two marked board positions hide their feedback. Those positions behave normally afterward.`;
       case "blueMode":
-        return `During the first ${guesses}, a green or yellow on the marked tiles shows as blue: the letter is in the answer, but you don't learn whether it's in the right spot. Every other tile shows its real colour.`;
       case "fakeFeedback":
-        return `During the first ${guesses}, the marked tiles show a wrong colour. Every other tile shows its real colour.`;
       case "arrowMode":
-        return `During the first ${guesses}, the marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.`;
+        return `${range(count)}: ${text(id)}`;
+      case "hideFeedback":
+        return `${range(count)}: One marked tile shows no colour.`;
       case "quickMode":
-        return "You have one minute for each guess this round. A guess you run out of time on is lost.";
+        return "Every guess: 60 seconds, or it's lost.";
       case "shortHand":
-        // Not a guess-window constraint like the others -- turns/stage
-        // scaling doesn't apply here, so this ignores the passed-in `turns`
-        // entirely rather than describing a window that doesn't exist.
-        return "Ten consonants that aren't in the answer are pulled from your deck before this round starts, and you only get four guesses to find it.";
+        return "Whole fight: 10 consonants not in the answer leave your deck; only 4 guesses.";
       case "noMulligans": {
         // Locked for the opening guesses only, one per world (see
         // _steadyHandTurns, which reads the same stage).
         const locked = Math.max(1, Math.min(3, Number(stage) || 1));
-        return `Mulligans are locked until you've made ${locked === 1 ? "your first guess" : `your first ${locked} guesses`}.`;
+        return `${range(locked)}: No mulligans.`;
       }
       case "questTrial":
-        // Same reasoning as shortHand: a standing pressure for the whole
-        // round, not a guess-window mask, so `turns` is ignored here too.
-        return `A quest rides on every guess this round. Miss one and lose $${QUEST_TRIAL_PENALTY} from your total.`;
+        return `Every guess: a quest; miss one and lose $${QUEST_TRIAL_PENALTY}.`;
       case "presetWordsTrial":
-        // Same reasoning as shortHand: setupPresetWordsBoss narrows the
-        // secret to a short list up front and shortens the guess budget by
-        // that list's size -- a standing setup for the whole round, not a
-        // guess-window mask, so `turns` (which describes neither of those
-        // things for this boss) is ignored here too. This case was simply
-        // missing, so every Preset Trial offer fell through to the generic
-        // "lasts for the first N guesses" line above, which describes a
-        // mechanic this boss doesn't have.
-        {
-          // Mirrors setupPresetWordsBoss's list size.
-          const words = Number(stage) <= 2 ? 2 : Number(stage) === 3 ? 3 : 4;
-          return `The answer is one of ${words} words shown on screen, but you get ${words} fewer guesses.`;
-        }
+        // Mirrors setupPresetWordsBoss.
+        return "Whole fight: the answer is one of 10 words shown; only 3 guesses.";
       case "questEndurance":
-        // A standing pressure for the whole round, like shortHand; this case
-        // was missing, so it fell through to the vague line below.
-        return "Every guess this round comes with a quest. Each one you miss shrinks your hand by one letter until the round ends.";
+        return "Every guess: a quest; miss one, lose 1 hand size for the fight.";
       default:
-        return `This boss power lasts for the first ${guesses}.`;
+        return `${range(count)}: boss power active.`;
     }
   }
+
   function cuddleV3RetimeBoss(option, stage) {
     const turns = CUDDLE_V3_BOSS_TURNS[Math.max(0, Math.min(3, stage - 1))];
     const reward = option?.reward ? { ...option.reward } : option?.reward;
@@ -5040,17 +5020,23 @@
     return composedClearBoss.call(this);
   };
 
+  // Preset Trial: the answer is one of ten words shown up front, and the
+  // fight allows exactly three guesses -- enough to narrow ten down with
+  // good play, not enough to try them one by one.
+  const PRESET_WORD_COUNT = 10;
+  const PRESET_GUESSES = 3;
   function setupPresetWordsBoss(game) {
     const state = game.state;
     const mega = ensureMega(game);
-    const stage = Number(state.boss?.stage) || 1;
-    const count = stage <= 2 ? 2 : stage === 3 ? 3 : 4;
     const secret = state.secret;
-    const pool = game.getFeasibleWords().filter(word => word !== secret);
-    const others = shuffle(pool, game.random).slice(0, Math.max(0, count - 1));
+    const answers = typeof game.getActiveWords === "function" ? game.getActiveWords() : [];
+    const pool = (answers && answers.length ? answers : game.getFeasibleWords())
+      .map(word => String(word).toUpperCase())
+      .filter(word => /^[A-Z]{5}$/.test(word) && word !== secret);
+    const others = shuffle([...new Set(pool)], game.random).slice(0, PRESET_WORD_COUNT - 1);
     const words = shuffle([secret, ...others], game.random);
     mega.presetWords = words;
-    state.maxGuesses = Math.max(1, (Number(state.maxGuesses) || MAX_GUESSES) - words.length);
+    state.maxGuesses = PRESET_GUESSES;
     state.lastMessage = `${state.lastMessage || ""} Preset Trial: the secret is one of ${words.join(", ")}.`.trim();
   }
 
