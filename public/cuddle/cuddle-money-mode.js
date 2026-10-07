@@ -49,16 +49,6 @@
     payoutCoinCount: 8
   });
 
-  // Starting bonuses come from the ordinary reward pool, all three of one
-  // rarity, and the allowed rarities depend on difficulty: the easier the
-  // run, the stronger the start.
-  var STARTER_TIERS = {
-    // Legendary rewards only come from beating a boss.
-    hard: ["rare"],
-    medium: ["rare", "epic"],
-    easy: ["epic"]
-  };
-
   var CHALLENGES = [
     {
       id: "pocketTally",
@@ -317,38 +307,22 @@
     return mode;
   }
 
-  function starterRewardChoices(game) {
-    var difficulty = String(game.state && game.state.megaState && game.state.megaState.difficulty || "hard");
-    var allowed = STARTER_TIERS[difficulty] || STARTER_TIERS.hard;
-    if (typeof game._generateUpgradeChoices !== "function") return { source: "normal", choices: [] };
-    // Each draw is an ordinary between-round offer: one rarity rolled by
-    // cuddle-economy-rarity-v8.js, every card from it. Redraw until the
-    // rarity is one this difficulty allows (Easy's Epic is the long
-    // shot, about one draw in ten).
-    var offer = [];
-    var tier = "";
-    for (var attempt = 0; attempt < 400; attempt += 1) {
-      offer = (game._generateUpgradeChoices() || []).slice(0, 3);
-      tier = offer.length && offer[0] ? String(offer[0].__cuddleV8OfferTier || offer[0].__cuddleV8Tier || "") : "";
-      var sameTier = offer.every(function inTier(choice) {
-        return choice && String(choice.__cuddleV8OfferTier || choice.__cuddleV8Tier || "") === tier;
-      });
-      if (offer.length === 3 && sameTier && allowed.indexOf(tier) >= 0) break;
-    }
-    return {
-      source: "normal",
-      choices: offer.map(function withTier(choice) { return Object.assign({}, choice, { starterTier: tier }); })
-    };
-  }
-
   function resetModeForNewRun(game) {
     var state = game.state;
     var mode = defaultModeState(false);
-    var starter = starterRewardChoices(game);
-    mode.starterRewardPending = true;
-    mode.starterRewardClaimed = false;
-    mode.starterRewardChoices = starter.choices;
-    mode.starterRewardSource = starter.source;
+    // Every difficulty starts with the same free Large Upgrade Pack
+    // (cuddle-packs.js) instead of a pick of three.
+    mode.starterRewardPending = false;
+    mode.starterRewardClaimed = true;
+    mode.starterRewardChoices = [];
+    state.umtPackOffer = {
+      id: (state.runId || "run") + ":starter-pack",
+      size: "large",
+      price: 0,
+      world: 1,
+      starter: true,
+      cards: null
+    };
     mode.roundStartingMoney = asNumber(state.score, 0) - asNumber(state.roundScore, 0);
     mode.lastRoundKey = [state.runId, state.round, state.secret].join(":");
     state[MODE_KEY] = mode;

@@ -497,3 +497,14 @@
   color: #1d1528;
   background: var(--cuddle-v8-tier-color, #d5dee8);
 }
+
+/* The last shop before the final boss reprices two kinds of shelf. */
+#cuddleRoot .umt-shop-final-note {
+  display: inline-block;
+  margin-left: 4px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+#cuddleRoot .umt-shop-final-note.is-cheaper { color: #7ee2a0; }
+#cuddleRoot .umt-shop-final-note.is-dearer { color: #ffb070; }
