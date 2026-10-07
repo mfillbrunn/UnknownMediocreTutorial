@@ -62,13 +62,13 @@
   var BOSS_GATE_ORDER = ["before-3", "before-7", "final"];
   var MIXED_BOSS_CHANCE = 0.35;
   var BOSS_POINT_REQUIREMENTS = {
-    // Hard was tuned down after full-run simulations (honest bot, ~65-85
-    // points a stop on Hard): 200 / 475 / 850 stopped about a third of
-    // otherwise-sound runs at a gate. These pass ~90% of them; a gate
-    // still bites after a bad bargain or a blown stage.
-    "before-3": { easy: 50, medium: 100, hard: 150 },
-    "before-7": { easy: 250, medium: 300, hard: 390 },
-    "final": { easy: 550, medium: 600, hard: 680 }
+    // Hard is meant to be hard: calibrated with full-run simulations (an
+    // honest bot playing whole runs with the gates switched off) so about
+    // 75% of runs reach the first boss, 40% the second and 15% the final
+    // -- boss losses included. Easy and medium never bind for a sound run.
+    "before-3": { easy: 50, medium: 100, hard: 170 },
+    "before-7": { easy: 250, medium: 300, hard: 570 },
+    "final": { easy: 550, medium: 600, hard: 600 }
   };
 
   function difficultyOf(game) {
