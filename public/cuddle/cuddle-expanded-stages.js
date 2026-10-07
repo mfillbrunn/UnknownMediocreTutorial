@@ -210,6 +210,14 @@
   let legendOpen = false;
   let duelAiTimer = null;
   let scheduledAiToken = null;
+  // The AI's guess being typed into its row, letter by letter, before it
+  // is scored ({ token, word, typed }). Kept out of the save on purpose.
+  let aiTyping = null;
+  // When the player's turn last began, so the turn box flashes once per
+  // turn instead of on every re-render.
+  let turnFlash = { key: "", at: 0 };
+  const AI_TYPE_STEP_MS = 170;
+  const TURN_FLASH_MS = 1500;
   let challengeObserver = null;
 
   function install() {
@@ -1764,6 +1772,48 @@
         requestRender(game);
         return;
       }
+      // Type the word into the AI's row one letter at a time, then score it.
+      const token = `${duel.id}:${duel.history.length}`;
+      if (!aiTyping || aiTyping.token !== token) {
+        aiTyping = { token, word, typed: 0 };
+        const typeNext = () => {
+          if (!aiTyping || aiTyping.token !== token) return;
+          const live = game.state && game.state.branchMap && game.state.branchMap.expandedDuel;
+          if (!live || live.phase !== "playing" || live.turn !== "ai") { aiTyping = null; return; }
+          aiTyping.typed += 1;
+          paintAiTyping();
+          if (aiTyping.typed < aiTyping.word.length) {
+            window.setTimeout(typeNext, AI_TYPE_STEP_MS);
+          } else {
+            window.setTimeout(() => {
+              if (!aiTyping || aiTyping.token !== token) return;
+              aiTyping = null;
+              finishAiMove(game, word);
+            }, 320);
+          }
+        };
+        window.setTimeout(typeNext, AI_TYPE_STEP_MS);
+      }
+    }
+
+    // Writes the letters typed so far into the AI's row without a full
+    // re-render (a re-render draws them from aiTyping too).
+    function paintAiTyping() {
+      if (!aiTyping) return;
+      const tiles = document.querySelectorAll(".umt-duel-row.is-thinking .cuddle-tile");
+      tiles.forEach((tile, index) => {
+        const letter = index < aiTyping.typed ? aiTyping.word[index] : "";
+        if (tile.textContent !== letter) {
+          tile.textContent = letter;
+          tile.classList.toggle("is-typed", Boolean(letter));
+        }
+      });
+    }
+
+    function finishAiMove(game, word) {
+      const map = ensureMap(game);
+      const duel = map && map.expandedDuel;
+      if (!duel || duel.phase !== "playing" || duel.turn !== "ai") return;
       duel.aiMoveNumber = Number(duel.aiMoveNumber || 0) + 1;
       const result = recordDuelGuess(game, "ai", word);
       if (!result.ok) {
@@ -2035,14 +2085,17 @@
       const rows = (duel.history || []).map(entry => (
         `<div class="cuddle-board-row umt-duel-row is-${escapeHtml(entry.actor)}">`
         + entry.word.split("").map((letter, index) => `<span class="cuddle-tile is-${escapeHtml(entry.feedback[index] || "grey")}">${escapeHtml(letter)}</span>`).join("")
-        + (entry.actor === "ai" ? `<span class="cuddle-row-score umt-duel-who">AI</span>` : `<span class="cuddle-row-score umt-duel-who is-you"></span>`)
+        + (entry.actor === "ai" ? `<span class="cuddle-row-score umt-duel-who is-ai">AI</span>` : `<span class="cuddle-row-score umt-duel-who is-you"></span>`)
         + `</div>`
       ));
       if (duel.phase === "playing" && duel.turn === "ai") {
         rows.push(
-          `<div class="cuddle-board-row umt-duel-row is-ai is-thinking" aria-label="The AI is thinking">`
-          + Array.from({ length: 5 }, () => `<span class="cuddle-tile"></span>`).join("")
-          + `<span class="cuddle-row-score umt-duel-who">AI</span></div>`
+          `<div class="cuddle-board-row umt-duel-row is-ai is-thinking" aria-label="The AI is typing its guess">`
+          + Array.from({ length: 5 }, (_unused, index) => {
+            const letter = aiTyping && index < aiTyping.typed ? aiTyping.word[index] : "";
+            return `<span class="cuddle-tile${letter ? " is-typed" : ""}">${escapeHtml(letter)}</span>`;
+          }).join("")
+          + `<span class="cuddle-row-score umt-duel-who is-ai">AI</span></div>`
         );
       } else if (duel.phase === "playing" && duel.turn === "player") {
         let draftRow = "";
@@ -2200,6 +2253,13 @@
       const status = playing
         ? (duel.turn === "ai" ? "The AI is thinking…" : (duel.history || []).length ? "Your turn" : duel.message)
         : "";
+      let flash = "";
+      if (playing && duel.turn === "player") {
+        const key = `${duel.id}:${(duel.history || []).length}`;
+        if (turnFlash.key !== key) turnFlash = { key, at: Date.now() };
+        const elapsed = Date.now() - turnFlash.at;
+        if (elapsed < TURN_FLASH_MS) flash = ` is-your-turn" style="--flash-t:-${elapsed}ms`;
+      }
       return (
         `<div class="cuddle-shell umt-duel-shell">`
         + shellHeader(game, "WORD DUEL")
@@ -2207,7 +2267,7 @@
           ? `<main class="umt-event-page">${choosing ? renderDuelDifficulty(game, duel) : ""}${!choosing && (duel.history || []).length ? renderDuelBoard(game, duel) : ""}${outcome}</main>`
           : `<main class="cuddle-play-area umt-duel-play">`
             + `<section class="cuddle-left-column">`
-            + `<p class="umt-duel-status" role="status">${escapeHtml(status)}${duel.powerNote ? `<span>${escapeHtml(duel.powerNote)}</span>` : ""}</p>`
+            + `<p class="umt-duel-status${flash}" role="status">${escapeHtml(status)}</p>`
             + renderDuelBoard(game, duel)
             + `</section>`
             + `<section class="cuddle-right-column">${renderDuelTileHand(game, duel)}</section>`
@@ -2233,7 +2293,7 @@
         ["Head Start", "A random word is played for you as the first guess."],
         ["Lucky Start", "One exact letter position is revealed before you start."],
         ["Jackpot", "Green tiles pay double, but you must solve within the world's guess limit."],
-        ["Double or Nothing", "Solve within three guesses to double the stage's earnings; take longer and lose half."]
+        ["Double or Nothing", "Solve fast to double the stage's earnings (by guess 5 in world 1, 4 in world 2, 3 in world 3); take longer and lose half."]
       ];
       const catalogue = window.CuddleRebalanceV5 && typeof window.CuddleRebalanceV5.mapChallenges === "function"
         ? window.CuddleRebalanceV5.mapChallenges(game)

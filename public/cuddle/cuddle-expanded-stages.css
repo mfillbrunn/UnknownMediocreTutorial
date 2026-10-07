@@ -646,3 +646,45 @@ button.umt-duel-option:focus-visible {
   z-index: 1;
   text-shadow: 0 2px 10px rgba(10, 8, 18, 0.9), 0 0 2px rgba(10, 8, 18, 0.9);
 }
+
+/* Duel: the AI's rows carry a clear "AI" tag. */
+.umt-duel-who.is-ai {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  height: 22px;
+  padding: 0 7px;
+  border: 1px solid rgba(198, 168, 255, 0.6);
+  border-radius: 999px;
+  background: rgba(198, 168, 255, 0.16);
+  color: #e3d4ff;
+  font-size: .7rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+/* The AI types its guess in, one letter at a time. */
+.umt-duel-row.is-thinking .cuddle-tile.is-typed {
+  animation: umt-duel-type .18s ease-out both;
+  border-color: rgba(198, 168, 255, 0.7);
+  color: var(--cuddle-text);
+}
+@keyframes umt-duel-type {
+  from { transform: scale(.82); }
+  60% { transform: scale(1.08); }
+}
+
+/* "Your turn": the box glows briefly when the turn comes back. */
+.umt-duel-status.is-your-turn {
+  animation: umt-duel-your-turn 1.5s ease-out both;
+  animation-delay: var(--flash-t, 0ms);
+}
+@keyframes umt-duel-your-turn {
+  0% { border-color: var(--cuddle-border); box-shadow: none; background: rgba(255, 255, 255, .04); }
+  15%, 45% { border-color: rgba(107, 214, 143, .9); box-shadow: 0 0 0 3px rgba(107, 214, 143, .25), 0 0 18px rgba(107, 214, 143, .35); background: rgba(107, 214, 143, .14); }
+  30% { box-shadow: 0 0 0 1px rgba(107, 214, 143, .2); }
+  100% { border-color: var(--cuddle-border); box-shadow: none; background: rgba(255, 255, 255, .04); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .umt-duel-status.is-your-turn, .umt-duel-row.is-thinking .cuddle-tile.is-typed { animation: none; }
+}
