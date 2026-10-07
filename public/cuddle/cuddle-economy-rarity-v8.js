@@ -2758,12 +2758,12 @@
           };
         });
       },
-      // An Upgrade Pack (cuddle-packs.js): two Commons and one special of
-      // `specialTier`, all different. A tier with nothing left falls back
-      // to the next one down (Legendary -> Epic -> Rare -> Common). Plain
-      // data like the shop's stock; each card is granted through
-      // _grantUpgradeChoice.
-      packRewards(game, specialTier, seedText) {
+      // An Upgrade Pack (cuddle-packs.js): `commons` Commons (2 by default)
+      // and one special per tier in `specialTiers` (a tier or a list), all
+      // different. A tier with nothing left falls back to the next one down
+      // (Legendary -> Epic -> Rare -> Common). Plain data like the shop's
+      // stock; each card is granted through _grantUpgradeChoice.
+      packRewards(game, specialTiers, seedText, commons = 2) {
         const state = game && game.state;
         if (!state) return [];
         const seed = String(seedText || "pack");
@@ -2788,13 +2788,16 @@
             return plain(def, tier);
           });
         const ladder = [TIERS.LEGENDARY, TIERS.EPIC, TIERS.RARE, TIERS.COMMON];
-        const start = Math.max(0, ladder.indexOf(specialTier));
-        let special = [];
-        for (let index = start; index < ladder.length && !special.length; index += 1) {
-          special = draw(ladder[index], 1, `special:${ladder[index]}`);
-        }
-        const commons = draw(TIERS.COMMON, 2, "common");
-        return commons.concat(special);
+        const specials = [];
+        (Array.isArray(specialTiers) ? specialTiers : [specialTiers]).forEach((tier, slot) => {
+          let card = [];
+          for (let index = Math.max(0, ladder.indexOf(tier)); index < ladder.length && !card.length; index += 1) {
+            card = draw(ladder[index], 1, `special:${slot}:${ladder[index]}`);
+          }
+          specials.push(...card);
+        });
+        const commonCards = draw(TIERS.COMMON, Math.max(0, Number(commons) || 0), "common");
+        return commonCards.concat(specials);
       },
       // The pick after a boss: `count` different Legendary rewards, the
       // only way to get one. Same plain shape as the shop's stock, so the

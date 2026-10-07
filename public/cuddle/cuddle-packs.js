@@ -1,10 +1,16 @@
 /* Cuddle: Upgrade Packs.
  *
- * After a stage is solved (not a boss, not a Duel), there is a chance that
- * an Upgrade Pack is offered on the way back to the map. It is sealed:
- * two Common upgrades plus one special, which is Rare (most often), Epic
- * (less often) or Legendary (rarely). Buying it opens it and keeps all
- * three. The price rises with the world.
+ * Once per world, after one of its first few solved stages (not a boss,
+ * not a Duel), an Upgrade Pack is offered on the way back to the map --
+ * only if the player can afford one; if not, it waits for a later stage of
+ * the same world. It comes in three sizes, picked at random from
+ * the ones the wallet covers:
+ *   Small   1 Common + 1 special
+ *   Medium  1 Common + 2 specials
+ *   Large   3 specials
+ * Each special is rolled on its own: Rare (most often), Epic (less often)
+ * or Legendary (rarely). Buying opens the pack and keeps every card. Prices
+ * rise with the world.
  *
  * The offer lives on the run (state.umtPackOffer), so a reload shows it
  * again, and its overlay sits outside #cuddleRoot so re-renders leave it
@@ -19,8 +25,16 @@
   if (proto.__cuddlePacks) return;
   proto.__cuddlePacks = true;
 
-  var OFFER_CHANCE = 0.3;
-  var PRICES = [40, 55, 70];
+  // A world offers one pack, on one of its first OFFER_WINDOW solved stages.
+  var OFFER_WINDOW = 3;
+  // Three sizes, each priced by world (well under what the same cards
+  // cost in the shop). Only sizes the player can afford are offered; the
+  // offer picks one of those at random.
+  var SIZES = Object.freeze([
+    Object.freeze({ id: "small", name: "Small", commons: 1, specials: 1, prices: [35, 45, 55] }),
+    Object.freeze({ id: "medium", name: "Medium", commons: 1, specials: 2, prices: [55, 70, 85] }),
+    Object.freeze({ id: "large", name: "Large", commons: 0, specials: 3, prices: [75, 95, 115] })
+  ]);
   var SPECIAL_ODDS = [["rare", 75], ["epic", 20], ["legendary", 5]];
   var TIER_LABEL = { common: "Common", rare: "Rare", epic: "Epic", legendary: "Legendary" };
   var REVEAL_STEP_MS = 520;
@@ -37,11 +51,26 @@
 
   function worldIndex(state) {
     var cleared = Array.isArray(state && state.bossGatesDone) ? state.bossGatesDone.length : 0;
-    return Math.max(0, Math.min(PRICES.length - 1, cleared));
+    return Math.max(0, Math.min(2, cleared));
+  }
+
+  // Per world: solved stages seen, and whether its pack was offered.
+  function packTrack(state) {
+    var track = state.umtPackTrack;
+    if (!track || typeof track !== "object" || !Array.isArray(track.seen) || !Array.isArray(track.offered)) {
+      track = state.umtPackTrack = { seen: [0, 0, 0], offered: [false, false, false] };
+    }
+    return track;
   }
 
   function randomFor(game) {
     return typeof game.random === "function" ? game.random : Math.random;
+  }
+
+  // Offers saved before sizes existed were the old 2 Commons + 1 special.
+  function sizeOf(offer) {
+    for (var i = 0; i < SIZES.length; i += 1) if (offer && SIZES[i].id === offer.size) return SIZES[i];
+    return { id: "classic", name: "", commons: 2, specials: 1, prices: [] };
   }
 
   function rollSpecialTier(random) {
@@ -82,14 +111,28 @@
     var state = this.state;
     if (state && state.umtPackEligible && state.status === "branchMap") {
       state.umtPackEligible = false;
-      if (!state.umtPackOffer && randomFor(this)() < OFFER_CHANCE) {
-        var world = worldIndex(state);
-        state.umtPackOffer = {
-          id: (state.runId || "run") + ":" + (state.round || 0) + ":pack",
-          price: PRICES[world],
-          world: world + 1,
-          cards: null
-        };
+      var world = worldIndex(state);
+      var track = packTrack(state);
+      var seen = track.seen[world] || 0;
+      track.seen[world] = seen + 1;
+      // One pack per world, on one of its first few solved stages (evenly
+      // spread): 1 in 3 on the first, 1 in 2 on the second, then certain.
+      if (!state.umtPackOffer && !track.offered[world]
+          && randomFor(this)() < 1 / Math.max(1, OFFER_WINDOW - seen)) {
+        var wallet = Number(state.cuddleMoney) || 0;
+        var affordable = SIZES.filter(function canPay(size) { return size.prices[world] <= wallet; });
+        // Short of money: the pack waits for a later stage of this world.
+        if (affordable.length) {
+          var size = affordable[Math.floor(randomFor(this)() * affordable.length)];
+          track.offered[world] = true;
+          state.umtPackOffer = {
+            id: (state.runId || "run") + ":" + (state.round || 0) + ":pack",
+            size: size.id,
+            price: size.prices[world],
+            world: world + 1,
+            cards: null
+          };
+        }
       }
       save(this);
       schedule();
@@ -107,8 +150,11 @@
     if (!api || typeof api.packRewards !== "function" || typeof this._grantUpgradeChoice !== "function") {
       return { ok: false, error: "Packs can't be opened right now." };
     }
-    var special = rollSpecialTier(randomFor(this));
-    var cards = api.packRewards(this, special, offer.id + ":" + special) || [];
+    var size = sizeOf(offer);
+    var random = randomFor(this);
+    var specials = [];
+    for (var slot = 0; slot < size.specials; slot += 1) specials.push(rollSpecialTier(random));
+    var cards = api.packRewards(this, specials, offer.id + ":" + specials.join("-"), size.commons) || [];
     if (!cards.length) return { ok: false, error: "There are no upgrades left to put in a pack." };
     var game = this;
     var kept = [];
@@ -173,15 +219,21 @@
 
   function sealedHtml(offer, wallet) {
     var short = wallet < offer.price;
+    var size = sizeOf(offer);
+    var total = size.commons + size.specials;
+    var words = ["no", "one", "two", "three"];
+    var lines = "";
+    if (size.commons) lines += '<li><b class="is-common">' + size.commons + " Common</b> upgrade" + (size.commons === 1 ? "" : "s") + "</li>";
+    lines += '<li><b class="is-special">' + size.specials + " special" + (size.specials === 1 ? "" : "s") + "</b>"
+      + (size.specials > 1 ? " (each rolled)" : "") + ': <span class="is-rare">Rare</span> 75% · <span class="is-epic">Epic</span> 20% · <span class="is-legendary">Legendary</span> 5%</li>';
+    lines += "<li>" + (total === 2 ? "You keep both." : "You keep all " + (words[total] || total) + ".") + "</li>";
+    var title = size.name ? "A " + size.name + " Upgrade Pack is for sale" : "An Upgrade Pack is for sale";
     return '<section class="umt-pack-dialog" role="dialog" aria-modal="true" aria-labelledby="umtPackTitle">'
       + '<span class="umt-pack-kicker">Stage cleared · World ' + offer.world + "</span>"
-      + '<h2 id="umtPackTitle">An Upgrade Pack is for sale</h2>'
-      + '<div class="umt-pack-sealed" aria-hidden="true"><span class="umt-pack-foil"></span>'
-      + '<span class="umt-pack-name">Upgrade<br>Pack</span><span class="umt-pack-count">3 upgrades</span></div>'
-      + '<ul class="umt-pack-odds">'
-      + '<li><b class="is-common">2 Common</b> upgrades</li>'
-      + '<li><b class="is-special">1 special</b>: <span class="is-rare">Rare</span> 75% · <span class="is-epic">Epic</span> 20% · <span class="is-legendary">Legendary</span> 5%</li>'
-      + "<li>You keep all three.</li></ul>"
+      + '<h2 id="umtPackTitle">' + title + "</h2>"
+      + '<div class="umt-pack-sealed is-' + size.id + '" aria-hidden="true"><span class="umt-pack-foil"></span>'
+      + '<span class="umt-pack-name">' + (size.name ? size.name + "<br>" : "") + "Pack</span><span class=\"umt-pack-count\">" + total + " upgrades</span></div>"
+      + '<ul class="umt-pack-odds">' + lines + "</ul>"
       + '<div class="umt-pack-actions">'
       + '<button type="button" class="cuddle-btn cuddle-btn-primary" data-umt-pack="buy"' + (short ? " disabled" : "") + ">Buy for $" + offer.price + "</button>"
       + '<button type="button" class="cuddle-btn cuddle-btn-ghost" data-umt-pack="skip">No thanks</button>'
@@ -203,7 +255,7 @@
     }).join("");
     return '<section class="umt-pack-dialog is-opened" role="dialog" aria-modal="true" aria-labelledby="umtPackTitle">'
       + '<span class="umt-pack-kicker">Upgrade Pack opened</span>'
-      + '<h2 id="umtPackTitle">All three are yours</h2>'
+      + '<h2 id="umtPackTitle">' + (offer.cards.length === 2 ? "Both are yours" : offer.cards.length === 1 ? "It's yours" : "All " + (["", "", "two", "three"][offer.cards.length] || offer.cards.length) + " are yours") + "</h2>"
       + '<div class="umt-pack-cards">' + cards + "</div>"
       + '<div class="umt-pack-actions"><button type="button" class="cuddle-btn cuddle-btn-primary" data-umt-pack="close">Back to the map</button></div>'
       + "</section>";
