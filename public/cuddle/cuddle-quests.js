@@ -488,7 +488,7 @@
       title: "Hidden Tiles",
       description: "For the first few guesses, two marked positions hide their feedback. They behave normally afterward.",
       turns: 6,
-      rewardId: "goldenThread"
+      rewardId: "secondCup"
     },
     {
       id: "noMulligans",

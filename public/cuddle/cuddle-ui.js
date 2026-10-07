@@ -604,6 +604,7 @@
       boss
         ? row("Guesses left", String(Math.max(0, (state.maxGuesses || window.CuddleEngine?.MAX_GUESSES || 6) - state.guessesUsed)))
         : row("Bonus window", `solve within ${bonusWindow} guesses`),
+      boss || !game._lateGuessPenalty ? "" : row(`Each guess past ${bonusWindow}`, `-${game._lateGuessPenalty()} pts`, "is-penalty"),
       row("Each spare guess", `${signed(perSpare)} pts`),
       row("Each unused mulligan", `${signed(rules.mulliganPoints)} pts`),
       rules.questPoints > 0 ? row("Each quest", `${signed(rules.questPoints)} pts`) : ""

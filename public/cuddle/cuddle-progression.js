@@ -140,7 +140,6 @@
     questPersistReward: "Quests last all stage",
     allThemesBoss: "All themes revealed",
     secondCup: "1 rescue guess per run",
-    goldenThread: "Hums on new letters"
   };
 
   // Reward ids come in a few spellings across the add-on layers

@@ -178,8 +178,7 @@
         { id: "questCadence", icon: "❗", title: "Quest Cadence", tier: "epic", category: "boss", maxLevel: 2, description: "Quests come more often (every second guess, then every guess) and one more can be active at a time. Stacks twice.", level: g => upgradeCount(g, "questCadence") },
         { id: "questPersistReward", icon: "⏳", title: "Lasting Quests", tier: "legendary", category: "boss", maxLevel: 1, description: "A quest you don't complete stays active for the rest of the stage instead of expiring after one guess, boss fights included.", level: g => (g?.state?.megaState?.questPersistsForRound ? 1 : 0) },
         { id: "allThemesBoss", icon: "🔮", title: "All-Seeing Atlas", tier: "legendary", category: "boss", maxLevel: 1, description: "Reveal every available theme at the start of every Wordle.", level: g => (bossRewardOwned(g, "umtAllThemes") ? 1 : 0) },
-        { id: "secondCup", icon: "☕", title: "Second Cup", tier: "epic", category: "boss", maxLevel: 1, description: "Once per run, when you would run out of guesses in a boss or strict stage, you get one extra guess.", level: g => (bossRewardOwned(g, "secondCup") ? 1 : 0) },
-        { id: "goldenThread", icon: "🧵", title: "Golden Thread", tier: "legendary", category: "boss", maxLevel: 1, description: "A full five-letter draft pulses and vibrates when it contains an answer letter you have not learned yet.", level: g => (bossRewardOwned(g, "goldenThread") ? 1 : 0) }
+        { id: "secondCup", icon: "☕", title: "Second Cup", tier: "epic", category: "boss", maxLevel: 1, description: "Once per run, when you would run out of guesses in a boss or strict stage, you get one extra guess.", level: g => (bossRewardOwned(g, "secondCup") ? 1 : 0) }
       ]
     }
   ]);

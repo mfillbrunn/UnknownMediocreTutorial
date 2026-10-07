@@ -280,6 +280,10 @@
   color: #6ec888;
 }
 
+.cuddle-detail-badge.is-penalty {
+  color: #f08a7e;
+}
+
 /* The three tile values side by side, each in its tile's colour. */
 .cuddle-detail-tiles {
   grid-column: 1 / -1;

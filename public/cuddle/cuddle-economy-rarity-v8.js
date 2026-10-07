@@ -169,8 +169,6 @@
       (state) => !state.megaState?.questPersistsForRound),
     legendaryPick("secondCup", "☕", "Second Cup", "Once per run, when you would run out of guesses in a boss or strict stage, you get one extra guess.",
       (state) => !coachOwns(state, "secondCup")),
-    legendaryPick("goldenThread", "🧵", "Golden Thread", "A full five-letter draft pulses and vibrates when it contains an answer letter you have not learned yet.",
-      (state) => !coachOwns(state, "goldenThread")),
     legendaryPick("umtAllThemes", "🔮", "All-Seeing Atlas", "Reveal every available theme at the start of every Wordle.",
       (state) => !state.cuddleRebalanceV5?.allThemesUnlocked && !coachOwns(state, "umtAllThemes"))
   ]);
