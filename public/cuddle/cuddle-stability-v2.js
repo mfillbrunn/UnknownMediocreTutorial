@@ -3,7 +3,7 @@
   "use strict";
 
   const VERSION = "2026.09.09.2";
-  const ROUTE_VERSION = "umt-cuddle-route-2026.10.01.rest-fork";
+  const ROUTE_VERSION = "umt-cuddle-route-2026.10.07.themes";
   const PATCH_MARK = Symbol.for("umt.cuddle.stability.v2");
   const ROUND_TYPES = new Set(["normal", "theme", "challenge", "boss", "wordle"]);
   const FALLBACK_ICON = "gift.svg";
@@ -272,11 +272,28 @@
     const rows = [];
     const gates = ["before-3", "before-7", "final"];
     const shopSlots = [0, 4, 8];
+    // One theme per world (cuddle-worlds.js): its own look, and its own
+    // shape -- how many Wordle rows, how many lanes, easier or harder stops.
+    const Worlds = window.CuddleWorlds;
+    const themes = [0, 1, 2].map(world => {
+      const options = Worlds && typeof Worlds.themeOptions === "function" ? Worlds.themeOptions(world) : null;
+      return options && options.length ? options[Math.floor(random() * options.length)] : null;
+    });
     for (let world = 0; world < 3; world += 1) {
-      for (let step = 0; step < 3; step += 1) {
-        const lanes = rowLanes(random);
+      const theme = themes[world] || { rows: 3, lanes: "mixed", ease: 0 };
+      const stepCount = Math.max(1, Math.min(5, Number(theme.rows) || 3));
+      for (let step = 0; step < stepCount; step += 1) {
+        const lanes = theme.lanes === "wide" ? [0, 1, 2]
+          : theme.lanes === "linear" ? (random() < 0.5 ? [0, 2] : random() < 0.5 ? [0, 1] : [1, 2])
+            : rowLanes(random);
         const types = shuffled(["normal", "theme", "challenge"], random).slice(0, lanes.length);
-        if (step === 1 && lanes.length === 3 && random() < 0.5) types[Math.floor(random() * 3)] = "event";
+        // An easier theme swaps some challenges for themed Wordles; a
+        // harder one swaps some plain Wordles for challenges.
+        types.forEach((type, index) => {
+          if (theme.ease < 0 && type === "challenge" && random() < 0.6) types[index] = "theme";
+          if (theme.ease > 0 && type === "normal" && random() < 0.6) types[index] = "challenge";
+        });
+        if (step === Math.floor(stepCount / 2) && lanes.length === 3 && random() < 0.5) types[Math.floor(random() * 3)] = "event";
         const rowIndex = rows.length;
         rows.push({
           kind: "stops",
@@ -310,6 +327,7 @@
     });
     return {
       routeVersion: ROUTE_VERSION,
+      themes: themes.map((theme, index) => (theme && theme.theme) || ["woods", "caverns", "citadel"][index]),
       rows,
       position: null,
       visited: [],

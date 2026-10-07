@@ -948,7 +948,18 @@
     const placement = stopPlacement(game, node);
     if (!placement || placement.act < 1) return null;
     const seed = `${mapSeed(game)}:plan:${node.row}:${node.col}${salt}`;
-    const target = rollDifficulty(placement.act, placement.progress, `${seed}:target`);
+    let target = rollDifficulty(placement.act, placement.progress, `${seed}:target`);
+    // A themed world (cuddle-worlds.js) can lean easier or harder: about
+    // half its stops move one step that way (never below plain).
+    const map = stateOf(game) && stateOf(game).branchMap;
+    const theme = window.CuddleWorlds && typeof window.CuddleWorlds.themedWorld === "function"
+      ? window.CuddleWorlds.themedWorld(map, placement.act) : null;
+    const lean = theme ? Number(theme.ease) || 0 : 0;
+    if (lean && hash32(`${seed}:lean`) % 100 < 50) {
+      const steps = [0, 0.5, 1, 1.5, 2, 2.5];
+      const at = Math.max(0, steps.indexOf(target));
+      target = steps[Math.max(0, Math.min(steps.length - 1, at + (lean > 0 ? 2 : -2)))];
+    }
     const parts = composeStop(target, seed);
     if (parts.neutral) {
       const variant = neutralVariant(parts.neutral);
@@ -4468,7 +4479,19 @@
       // A mixed boss keeps its own identity (gate, title) through the swap,
       // so the fight's pass/fail rules still apply to this guess.
       const synthetic = syntheticBossForChallenge(this, challenge, used);
-      if (state && synthetic) state.boss = trueBossRound(this) ? { ...previousBoss, ...synthetic } : synthetic;
+      // In a real boss fight the stand-in is still that boss (isGateBoss,
+      // not synthetic), or winning on this guess would end the fight as an
+      // ordinary stage: no boss cleared, no gate recorded.
+      const standIn = state && synthetic
+        ? (trueBossRound(this) ? { ...previousBoss, ...synthetic, __umtSynthetic: false, isGateBoss: true } : synthetic)
+        : null;
+      if (standIn) state.boss = standIn;
+      // Put the stage's own boss back only if the stand-in is still there:
+      // a guess that wins a boss fight clears state.boss (and may open the
+      // next screen), and restoring then brought the beaten boss back --
+      // a Chimera at the second gate made the final boss's win look like
+      // the second gate's.
+      const restore = () => { if (standIn && state.boss === standIn) state.boss = previousBoss; };
       // What this guess is measured against for Hot Streak: how much was
       // already pinned down before it was submitted.
       const knowledgeBefore = {
@@ -4479,11 +4502,11 @@
       try {
         result = original.apply(this, args);
       } catch (error) {
-        if (state && synthetic) state.boss = previousBoss;
+        restore();
         throw error;
       }
       return afterResult(result, (value) => {
-        if (state && synthetic) state.boss = previousBoss;
+        restore();
         const history = state && Array.isArray(state.history) ? state.history : [];
         if (history.length > historyLength) history[history.length - 1].umtPowerIds = activePowers;
         reconcileMysteryKnowledge(this);
@@ -4504,7 +4527,7 @@
         scheduleUi();
         return value;
       }, (error) => {
-        if (state && synthetic) state.boss = previousBoss;
+        restore();
         throw error;
       });
     });

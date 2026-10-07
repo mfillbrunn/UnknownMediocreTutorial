@@ -1289,10 +1289,14 @@
 
     _updateKnowledge(word, feedback) {
       const statusesByLetter = Object.create(null);
+      const maskedLetters = new Set();
       word.split("").forEach((letter, index) => {
         // "unknown" is a boss mask, not a result -- it must teach nothing, or
         // the hand would reveal what the board is deliberately hiding.
-        if (feedback[index] === "unknown") return;
+        if (feedback[index] === "unknown") {
+          maskedLetters.add(letter);
+          return;
+        }
         (statusesByLetter[letter] ||= []).push(feedback[index]);
         if (feedback[index] === "green") this.state.revealedPositions[index] = letter;
       });
@@ -1302,7 +1306,11 @@
         if (statuses.some(status => status !== "grey")) {
           present.add(letter);
           absent.delete(letter);
-        } else if (!present.has(letter)) {
+        } else if (!present.has(letter) && !maskedLetters.has(letter)) {
+          // A grey copy only proves absence when no other copy of the
+          // letter in this word was hidden: BELLE with its first L masked
+          // and the second grey can still have an L (PULSE). Marking it
+          // absent dropped every L card from the deck for the stage.
           absent.add(letter);
         }
       });
@@ -5366,8 +5374,9 @@
         turns: 999,
         hiddenIndex: ratchet.hiddenIndex,
         hiddenIndices: ratchet.hiddenIndices
-      });
+      }, ratchetBossSwap && ratchetBossSwap.gate ? { isGateBoss: true } : {});
     }
+    const ratchetStandIn = sawMaskRatchet ? this.state.boss : null;
 
     const extrasBefore = mega.activeQuests.slice(1).filter(Boolean);
     const primaryQuestBefore = this.state.activeQuest || null;
@@ -5386,7 +5395,10 @@
       result = composedSubmitDraft.call(this);
     } finally {
       if (sawMaskRatchet) {
-        this.state.boss = ratchetBossSwap;
+        // Only if the stand-in is still there: a guess that wins a boss
+        // fight clears state.boss, and restoring then revived the beaten
+        // boss.
+        if (this.state.boss === ratchetStandIn) this.state.boss = ratchetBossSwap;
         mega.ratchetSwapInFlight = false;
       }
     }

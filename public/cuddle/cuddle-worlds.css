@@ -41,6 +41,17 @@
   font-weight: 800;
   letter-spacing: .28em;
 }
+#cuddleRoot .umt-map-world-tagline {
+  font-size: 9.5px;
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: .04em;
+  fill-opacity: .85;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, .55);
+  stroke-width: 2.5px;
+}
+
 #cuddleRoot .umt-map-world-name {
   font-size: 15px;
   font-weight: 800;
@@ -945,4 +956,37 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .umt-boss-entrance.is-rival .umt-rival-eye { animation: none; }
+}
+
+/* Themed worlds (cuddle-worlds.js THEMES): each theme tints the map shell
+   and the play screen on top of its slot's base scenery, and brings its
+   own map sparkles. */
+#cuddleRoot .cuddle-branch-shell[data-umt-theme="meadow"],
+#cuddleRoot[data-umt-theme="meadow"] { --umt-world-tint: rgba(255, 214, 102, .14); --umt-world-glow: rgba(155, 225, 93, .11); }
+#cuddleRoot .cuddle-branch-shell[data-umt-theme="marsh"],
+#cuddleRoot[data-umt-theme="marsh"] { --umt-world-tint: rgba(95, 191, 168, .14); --umt-world-glow: rgba(159, 227, 208, .09); }
+#cuddleRoot .cuddle-branch-shell[data-umt-theme="frost"],
+#cuddleRoot[data-umt-theme="frost"] { --umt-world-tint: rgba(124, 200, 255, .16); --umt-world-glow: rgba(207, 239, 255, .10); }
+#cuddleRoot .cuddle-branch-shell[data-umt-theme="library"],
+#cuddleRoot[data-umt-theme="library"] { --umt-world-tint: rgba(232, 201, 138, .13); --umt-world-glow: rgba(127, 214, 194, .09); }
+#cuddleRoot .cuddle-branch-shell[data-umt-theme="storm"],
+#cuddleRoot[data-umt-theme="storm"] { --umt-world-tint: rgba(143, 125, 255, .17); --umt-world-glow: rgba(214, 199, 255, .10); }
+#cuddleRoot .cuddle-branch-shell[data-umt-theme="forge"],
+#cuddleRoot[data-umt-theme="forge"] { --umt-world-tint: rgba(255, 122, 47, .16); --umt-world-glow: rgba(255, 196, 107, .11); }
+
+#cuddleRoot .umt-map-spark-meadow { fill: #fff3a6; filter: drop-shadow(0 0 3px #ffe08a); }
+#cuddleRoot .umt-map-spark-marsh { fill: #c9fff0; filter: drop-shadow(0 0 4px #5fbfa8); opacity: .6; }
+#cuddleRoot .umt-map-spark-frost { fill: #f2fbff; filter: drop-shadow(0 0 2px #cfefff); animation-name: umt-spark-fall; }
+#cuddleRoot .umt-map-spark-library { fill: #ffe7b0; filter: drop-shadow(0 0 3px #e8c98a); }
+#cuddleRoot .umt-map-spark-storm { fill: #e9e2ff; filter: drop-shadow(0 0 4px #8f7dff); animation-duration: 2.2s; }
+#cuddleRoot .umt-map-spark-forge { fill: #ffc46b; filter: drop-shadow(0 0 3px #ff7a2f); animation-name: umt-spark-rise; }
+
+@keyframes umt-spark-fall {
+  0% { opacity: 0; transform: translateY(-10px); }
+  40% { opacity: .9; }
+  100% { opacity: 0; transform: translateY(14px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cuddleRoot .umt-map-spark { animation: none; opacity: .5; }
 }
