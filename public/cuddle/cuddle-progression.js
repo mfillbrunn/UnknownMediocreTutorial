@@ -121,6 +121,7 @@
     treasureHunter: "Treasure words +$8",
     patternLens: "Shows vowel pattern",
     mistakeShield: "First miss refunded",
+    haggler: "Cheaper refreshes",
     lastLight: "Last letter revealed",
     yellowHint: "Reveals 1 letter",
     jokerCache: "+1 Joker each stage",

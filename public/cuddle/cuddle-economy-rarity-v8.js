@@ -62,6 +62,7 @@
     ["reserve dividend", TIERS.COMMON],
     ["echo finder", TIERS.COMMON],
     ["treasure hunter", TIERS.COMMON],
+    ["haggler", TIERS.COMMON],
     ["vowel bounty", TIERS.COMMON],
     // A one-time letter, so Common.
     ["position peek", TIERS.COMMON],
@@ -183,7 +184,7 @@
     "green guesser hint", "softer cuddle meter", "bigger cuddle", "opening insight",
     "quick study", "candidate notebook", "joker cache", "reserve dividend",
     "surprise assignment", "alphabet compass", "vowel lamp", "echo finder", "dead letter",
-    "treasure hunter", "pattern lens", "mistake shield", "last light"
+    "treasure hunter", "pattern lens", "mistake shield", "last light", "haggler"
   ]);
 
   const KNOWN_BOSS_NAMES = new Set([
