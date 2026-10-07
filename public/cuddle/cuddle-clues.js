@@ -6,7 +6,8 @@
  *   Pattern Lens     every stage: vowel/consonant pattern (C V C C V)
  *   Dead Letter      every stage opens with 1-3 absent letters crossed out
  *   Last Light       every stage opens with the last letter in place
- *   Treasure Hunter  about one stage in three is a treasure stage: +$8 per copy on a solve
+ *   Treasure Hunter  about one stage in three is a treasure stage: +$25 per copy when
+ *                    solved before guess 5 (world 1), 4 (world 2) or 3 (world 3)
  *   Mistake Shield   in a boss or strict stage, the first guess with no green
  *                    or yellow gives a guess back
  *
@@ -34,7 +35,17 @@
   });
   const VOWELS = new Set(["A", "E", "I", "O", "U"]);
   const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-  const TREASURE_PER_COPY = 8;
+  const TREASURE_PER_COPY = 25;
+  // The treasure pays only for a quick solve: before guess 5 in world one,
+  // 4 in world two, 3 in world three (by bosses cleared).
+  const TREASURE_BEFORE = [5, 4, 3];
+  function treasureDeadline(game) {
+    const cleared = Array.isArray(game.state && game.state.bossGatesDone) ? game.state.bossGatesDone.length : 0;
+    return TREASURE_BEFORE[Math.max(0, Math.min(2, cleared))];
+  }
+  function treasurePrize(game) {
+    return TREASURE_PER_COPY * level(game, IDS.treasureHunter) + graveRobberBonus(game);
+  }
 
   function num(value) {
     const parsed = Number(value);
@@ -150,7 +161,7 @@
         // Its own hash, not the run's random stream, so taking Treasure
         // Hunter doesn't reshuffle what the rest of the run rolls.
         record.treasure = hashText(`${record.token}:treasure`) % 3 === 0;
-        if (record.treasure) addMessage(this, `Treasure word! Solve it for +$${TREASURE_PER_COPY * level(this, IDS.treasureHunter)}.`);
+        if (record.treasure) addMessage(this, `Treasure word! Solve it before guess ${treasureDeadline(this)} for +$${treasurePrize(this)}.`);
       }
     } catch (error) {
       console.warn("Cuddle Clues: stage start failed.", error);
@@ -211,9 +222,18 @@
       if (record && entry && record.treasure && !record.treasurePaid
           && String(entry.word || "").toUpperCase() === String(this.state.secret || "").toUpperCase()) {
         record.treasurePaid = true;
-        const prize = TREASURE_PER_COPY * level(this, IDS.treasureHunter) + graveRobberBonus(this);
-        this.state.cuddleMoney = Math.max(0, num(this.state.cuddleMoney)) + prize;
-        addMessage(this, `Treasure word solved: +$${prize}.`);
+        // The guess that solved it: its own count (a Duel counts only the
+        // player's rows, as guessesUsed does there).
+        const guessNumber = num(this.state.guessesUsed) || history.length;
+        const deadline = treasureDeadline(this);
+        if (guessNumber < deadline) {
+          const prize = treasurePrize(this);
+          this.state.cuddleMoney = Math.max(0, num(this.state.cuddleMoney)) + prize;
+          addMessage(this, `Treasure word solved on guess ${guessNumber}: +$${prize}.`);
+        } else {
+          record.treasureMissed = true;
+          addMessage(this, `Treasure word solved on guess ${guessNumber}: too late for the treasure (before guess ${deadline}).`);
+        }
       }
     } catch (error) {
       console.warn("Cuddle Clues: payout failed.", error);
@@ -261,7 +281,11 @@
     if (record.treasure) {
       chips.push({
         icon: "gem", label: "Treasure word", tone: "money",
-        text: record.treasurePaid ? "Treasure claimed" : `Solve for +$${TREASURE_PER_COPY * level(game, IDS.treasureHunter) + graveRobberBonus(game)}`
+        text: record.treasurePaid
+          ? (record.treasureMissed ? "Treasure missed" : "Treasure claimed")
+          : (num(state.guessesUsed) + 1 < treasureDeadline(game)
+            ? `Solve before guess ${treasureDeadline(game)}: +$${treasurePrize(game)}`
+            : "Treasure slipped away")
       });
     }
     // Process of Elimination (cuddle-rebalance-v5.js): every consonant it

@@ -101,7 +101,7 @@
     Object.freeze({
       id: IDS.treasureHunter, key: IDS.treasureHunter, icon: "\uD83D\uDC8E",
       title: "Treasure Hunter", name: "Treasure Hunter",
-      description: "About one stage in three hides a treasure word: solve it for +$8. Stacks: +$8 more per copy.",
+      description: "About one stage in three hides a treasure word: solve it before guess 5 (4 in world 2, 3 in world 3) for +$25. Stacks: +$25 more per copy.",
       maxLevel: 2, maxCount: 2, kind: "upgrade"
     }),
     Object.freeze({
