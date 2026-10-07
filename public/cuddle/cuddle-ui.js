@@ -1299,7 +1299,9 @@
               : `<button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
               ${escapeHtml(refreshLabel)}
             </button>
-            <small>The first refresh on each between-round reward screen is free. Later refreshes cost $3, $5, $7, $9, and so on.</small>`}
+            <small>${typeof game.hasHaggler === "function" && game.hasHaggler()
+              ? "Haggler: the first refresh on each reward screen is free, then $3, $5, $7, and so on."
+              : "Refreshes on each reward screen cost $5, then $7, $9, and so on."}</small>`}
           </div>
         </section>
       </div>`;

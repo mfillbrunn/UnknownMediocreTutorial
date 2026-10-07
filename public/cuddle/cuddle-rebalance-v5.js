@@ -48,7 +48,8 @@
     clearSight: "umtClearSight",
     jokerCacheLarge: "umtJokerCacheLarge",
     cullOne: "umtCullOne",
-    cullTwo: "umtCullTwo"
+    cullTwo: "umtCullTwo",
+    haggler: "umtHaggler"
   });
 
   const VOWELS = new Set(["A", "E", "I", "O", "U"]);
@@ -107,6 +108,13 @@
       id: IDS.patternLens, key: IDS.patternLens, icon: "\uD83E\uDDE9",
       title: "Pattern Lens", name: "Pattern Lens",
       description: "Every stage shows where the answer's vowels and consonants sit, like C V C C V.",
+      maxLevel: 1, maxCount: 1, kind: "upgrade"
+    }),
+    // Cheaper reward refreshes (cuddle-engine.js getUpgradeRefreshCost).
+    Object.freeze({
+      id: IDS.haggler, key: IDS.haggler, icon: "\uD83E\uDE99",
+      title: "Haggler", name: "Haggler",
+      description: "Refreshing reward choices costs $0, then $3, $5, $7... instead of $5, $7, $9...",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     Object.freeze({

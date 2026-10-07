@@ -121,6 +121,7 @@
     treasureHunter: "Treasure words +$8",
     patternLens: "Shows vowel pattern",
     mistakeShield: "First miss refunded",
+    haggler: "Cheaper refreshes",
     lastLight: "Last letter revealed",
     yellowHint: "Reveals 1 letter",
     jokerCache: "+1 Joker each stage",
@@ -461,6 +462,9 @@
     // reveal (the ledger stays unread) until Collect, instead of opening it
     // on top of the cash-out.
     if (payoutShowing(game)) return;
+    // So does an Upgrade Pack on offer or being opened (cuddle-packs.js):
+    // the pack shows its own cards, then the badges follow.
+    if (state.umtPackOffer) return;
     const fresh = entries.slice(watch.ledgerLength);
     const combosNow = ownedComboIds(game);
     const newComboIds = new Set([...combosNow].filter((id) => !watch.comboOwned.has(id)));

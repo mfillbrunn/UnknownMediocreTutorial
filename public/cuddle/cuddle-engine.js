@@ -4021,11 +4021,23 @@
     return Boolean(state && state.status === "upgrade" && state.waystoneOffer);
   };
 
+  // Refreshing a reward screen costs $5, then $7, $9... (2 more each time,
+  // reset every screen). Haggler (cuddle-rebalance-v5.js) makes it $0, $3,
+  // then $5, $7, $9...
+  prototype.hasHaggler = function hasHaggler() {
+    try {
+      return Number(window.CuddleRebalanceV5?.upgradeLevel?.(this, "umtHaggler")) > 0;
+    } catch (_error) {
+      return false;
+    }
+  };
+
   prototype.getUpgradeRefreshCost = function getUpgradeRefreshCost() {
     if (this.isWaystoneUpgrade()) return null;
     const state = ensureBalanceState(this);
     const used = state ? state.upgradeRefreshesUsed : 0;
-    return used === 0 ? 0 : used * 2 + 1;
+    if (this.hasHaggler()) return used === 0 ? 0 : used * 2 + 1;
+    return 5 + used * 2;
   };
 
   prototype.refreshUpgradeChoices = function refreshUpgradeChoices() {
