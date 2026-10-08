@@ -1199,8 +1199,12 @@
       + stageBonusMarkup(game, payload)
       + "<p class=\"cuddle-money-payout-hint\">Tap a row to see what it paid.</p>"
       + "<div class=\"cuddle-money-payout-total\"><span>" + (payload.wasBoss ? "BOSS TOTAL" : "ROUND TOTAL") + "</span><strong>" + formatPointsDelta(payload.total) + "</strong></div>"
+      + "</section>"
+      // Collect sits in a bar pinned to the bottom of the screen, so it's
+      // always in reach; the card scrolls behind it.
+      + "<div class=\"cuddle-money-collect-bar\">"
       + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-primary cuddle-money-collect\" data-cuddle-money-action=\"collect-payout\" hidden>Collect " + formatPoints(payload.total) + "</button>"
-      + "</section></div>"
+      + "</div></div>"
     );
     var overlay = document.getElementById("cuddleMoneyPayoutOverlay");
     if (overlay) runPayoutAnimation(payload, overlay).catch(function payoutError(error) {

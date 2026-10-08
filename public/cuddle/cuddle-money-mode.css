@@ -902,3 +902,54 @@
 #cuddleScreen .cuddle-money-payout-row.is-late .cuddle-money-row-increment {
   color: #ff8a95;
 }
+
+/* Collect, pinned to the bottom of the screen on the cash-out. The overlay
+   leaves room under the card so its last rows scroll clear of the bar. */
+#cuddleScreen .cuddle-money-payout-overlay {
+  /* A column: the card is centred when it fits (auto margins) and starts
+     at the top when it's taller than the screen, so every row can be
+     scrolled to -- grid centring cut the top off. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#cuddleScreen .cuddle-money-payout-overlay > .cuddle-money-payout-card {
+  flex: none;
+  margin-block: auto;
+}
+
+/* The Collect bar sticks to the bottom of the overlay as it scrolls
+   (position: fixed would scroll with it -- the overlay's backdrop blur
+   makes it the bar's containing block). */
+#cuddleScreen .cuddle-money-collect-bar {
+  position: sticky;
+  z-index: 2;
+  bottom: calc(-1 * clamp(14px, 4vw, 42px));
+  flex: none;
+  align-self: stretch;
+  display: flex;
+  justify-content: center;
+  margin: 0 calc(-1 * clamp(14px, 4vw, 42px)) calc(-1 * clamp(14px, 4vw, 42px));
+  padding: 22px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, rgba(7, 6, 11, 0), rgba(7, 6, 11, 0.86) 40%, rgba(7, 6, 11, 0.96));
+  pointer-events: none;
+}
+
+/* Until the count finishes the bar keeps its space but shows nothing. */
+#cuddleScreen .cuddle-money-collect-bar:has(> .cuddle-money-collect[hidden]) {
+  visibility: hidden;
+}
+
+#cuddleScreen .cuddle-money-collect-bar .cuddle-money-collect {
+  width: min(560px, 100%);
+  margin-top: 0;
+  pointer-events: auto;
+}
+
+@media (max-width: 430px) {
+  #cuddleScreen .cuddle-money-collect-bar {
+    bottom: -8px;
+    margin: 0 -8px -8px;
+  }
+}
