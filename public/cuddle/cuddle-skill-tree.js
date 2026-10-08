@@ -154,7 +154,7 @@
       nodes: [
         { id: "coachPossibleAnswers", icon: "🎧", title: "Secrets Counter", tier: "rare", category: "solving", maxLevel: 1, description: "Always see how many possible answers are left, next to the theme.", level: g => (coachState(g)?.possibleAnswersUnlocked ? 1 : 0) },
         { id: "coachMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", tier: "common", category: "easierStages", maxLevel: 3, description: "The Cuddle Meter fills sooner: 2 fewer tiles, then 4, then 7 at level 3 (Hard: 12 → 10 → 8 → 5).", level: g => Number(coachState(g)?.cuddleThresholdStacks) || 0 },
-        { id: "coachMeterReward", icon: "🫶", title: "Bigger Cuddle", tier: "rare", category: "easierStages", maxLevel: 2, description: "A full Cuddle Meter gives a Joker instead of a mulligan; at level 2, a letter in its exact place.", level: g => Number(coachState(g)?.cuddleRewardTier) || 0 }
+        { id: "coachMeterReward", icon: "🫶", title: "Bigger Cuddle", tier: "rare", category: "easierStages", maxLevel: 3, description: "Upgrades what a full Cuddle Meter gives: a free mulligan, then a random consonant tested, then a Joker, then a letter in its exact place.", level: g => Number(coachState(g)?.cuddleRewardTier) || 0 }
       ]
     },
     {

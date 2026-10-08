@@ -29,6 +29,9 @@
   // Softer Cuddle Meter, by level: how many tiles sooner the meter fills
   // (Hard's 12 goes 10, 8, then 5).
   var METER_REDUCTION = [0, 2, 4, 7];
+  // What a full meter gives at each Bigger Cuddle level.
+  var METER_REWARD_NAMES = ["Free mulligan", "Consonant test", "Joker", "Green hint"];
+  var METER_REWARD_TOP = METER_REWARD_NAMES.length - 1;
   var ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   var VOWELS = new Set("AEIOU".split(""));
   var HINT_UPGRADE_IDS = new Set(["coachHint", "coachEarlierHint"]);
@@ -67,8 +70,8 @@
       key: "coachMeterReward",
       icon: "🫶",
       title: "Bigger Cuddle",
-      description: "A full Cuddle Meter gives a Joker instead of a mulligan; at level 2, a letter in its exact place.",
-      max: 2
+      description: "Upgrades what a full Cuddle Meter gives: a free mulligan, then a random consonant tested, then a Joker, then a letter in its exact place.",
+      max: 3
     }
   ]);
 
@@ -209,10 +212,12 @@
       cuddleProgress: 0,
       cuddleThresholdStacks: 0,
       cuddleRewardTier: 0,
+      meterLadderV2: true,
+      bankedConsonantTests: 0,
       cuddleGreysCollected: 0,
       cuddleTriggers: 0,
       lastMeterReward: null,
-      cuddleRewards: { mulligan: 0, joker: 0, letter: 0, row: 0 },
+      cuddleRewards: { mulligan: 0, consonant: 0, joker: 0, letter: 0, row: 0 },
       bankedMulligans: 0,
       bankedFreeLetters: 0,
       bankedExtraRows: 0,
@@ -256,7 +261,14 @@
     coach.hintRoundsWithUse = Math.max(0, integer(coach.hintRoundsWithUse, 0));
     coach.cuddleProgress = Math.max(0, integer(coach.cuddleProgress, 0));
     coach.cuddleThresholdStacks = clamp(integer(coach.cuddleThresholdStacks, 0), 0, 3);
-    coach.cuddleRewardTier = clamp(integer(coach.cuddleRewardTier, 0), 0, 2);
+    // The meter's ladder gained a step (the consonant test) between the
+    // mulligan and the Joker; older runs keep the reward they had.
+    if (!coach.meterLadderV2) {
+      coach.meterLadderV2 = true;
+      if (integer(coach.cuddleRewardTier, 0) > 0) coach.cuddleRewardTier = integer(coach.cuddleRewardTier, 0) + 1;
+    }
+    coach.cuddleRewardTier = clamp(integer(coach.cuddleRewardTier, 0), 0, METER_REWARD_TOP);
+    coach.bankedConsonantTests = Math.max(0, integer(coach.bankedConsonantTests, 0));
     coach.cuddleGreysCollected = Math.max(0, integer(coach.cuddleGreysCollected, 0));
     coach.cuddleTriggers = Math.max(0, integer(coach.cuddleTriggers, 0));
     if (!coach.lastMeterReward || typeof coach.lastMeterReward !== "object" || !coach.lastMeterReward.label) {
@@ -270,7 +282,7 @@
     coach.bankedMulligans = Math.max(0, integer(coach.bankedMulligans, 0));
     coach.bankedFreeLetters = Math.max(0, integer(coach.bankedFreeLetters, 0));
     coach.bankedExtraRows = Math.max(0, integer(coach.bankedExtraRows, 0));
-    coach.cuddleRewards = Object.assign({ mulligan: 0, joker: 0, letter: 0, row: 0 }, coach.cuddleRewards || {});
+    coach.cuddleRewards = Object.assign({ mulligan: 0, consonant: 0, joker: 0, letter: 0, row: 0 }, coach.cuddleRewards || {});
     Object.keys(coach.cuddleRewards).forEach(function normalizeReward(key) {
       coach.cuddleRewards[key] = Math.max(0, integer(coach.cuddleRewards[key], 0));
     });
@@ -352,7 +364,35 @@
   }
 
   function meterRewardName(coach) {
-    return ["Free mulligan", "Joker", "Hint"][clamp(integer(coach.cuddleRewardTier, 0), 0, 2)];
+    return METER_REWARD_NAMES[clamp(integer(coach.cuddleRewardTier, 0), 0, METER_REWARD_TOP)];
+  }
+
+  // Tests one random consonant the player doesn't know about yet: it's
+  // marked in the answer (position unknown) or out of it, like the Free
+  // Vowel Sweep does for vowels.
+  function testRandomConsonant(game) {
+    var state = game.state;
+    var known = new Set([].concat(state.knownPresent || [], state.knownAbsent || [], state.removedLetters || []));
+    (state.history || []).forEach(function seen(entry) {
+      String(entry && entry.word || "").toUpperCase().split("").forEach(function add(letter) { known.add(letter); });
+    });
+    var pool = ALPHABET.filter(function candidate(letter) { return !VOWELS.has(letter) && !known.has(letter); });
+    if (!pool.length) return { ok: false };
+    var letter = pool[Math.floor(randomFor(game) * pool.length)];
+    var present = String(state.secret || "").toUpperCase().indexOf(letter) !== -1;
+    if (present) {
+      state.knownPresent = unique([].concat(state.knownPresent || [], [letter])).sort();
+      state.knownAbsent = (state.knownAbsent || []).filter(function other(item) { return item !== letter; });
+    } else {
+      state.knownAbsent = unique([].concat(state.knownAbsent || [], [letter])).sort();
+    }
+    if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
+    return {
+      ok: true,
+      letter: letter,
+      present: present,
+      message: present ? letter + " is in the answer (position unknown)." : letter + " is not in the answer."
+    };
   }
 
   // The heart chip counts DOWN to zero, showing how many more visible grey
@@ -592,7 +632,7 @@
       if (coach.cuddleThresholdStacks >= 3) return { ok: false, error: "The Cuddle Meter is already at its minimum." };
       coach.cuddleThresholdStacks += 1;
     } else if (upgradeId === "coachMeterReward") {
-      if (coach.cuddleRewardTier >= 2) return { ok: false, error: "The Cuddle Meter reward is already a hint." };
+      if (coach.cuddleRewardTier >= METER_REWARD_TOP) return { ok: false, error: "The Cuddle Meter reward is already a letter in its place." };
       coach.cuddleRewardTier += 1;
     }
     autoGrantHints(game, coach);
@@ -652,7 +692,7 @@
     while (coach.cuddleProgress >= threshold) {
       coach.cuddleProgress -= threshold;
       coach.cuddleTriggers += 1;
-      var tier = clamp(integer(coach.cuddleRewardTier, 0), 0, 2);
+      var tier = clamp(integer(coach.cuddleRewardTier, 0), 0, METER_REWARD_TOP);
       var popLabel = "";
       if (tier === 0) {
         if (game.state.status === "playing" && !game.state.pendingRoundEnd) {
@@ -667,6 +707,17 @@
         }
         coach.cuddleRewards.mulligan += 1;
       } else if (tier === 1) {
+        var test = game.state.status === "playing" && !game.state.pendingRoundEnd ? testRandomConsonant(game) : { ok: false };
+        if (test.ok) {
+          messages.push("Cuddle Meter full: " + test.message);
+          popLabel = test.letter + (test.present ? " is in" : " is out");
+        } else {
+          coach.bankedConsonantTests += 1;
+          messages.push("Cuddle Meter full: a consonant test is banked for the next round.");
+          popLabel = "consonant (banked)";
+        }
+        coach.cuddleRewards.consonant = (coach.cuddleRewards.consonant || 0) + 1;
+      } else if (tier === 2) {
         var jokerMessage = typeof game._applyRewardEffect === "function" ? game._applyRewardEffect("jokerToken") : "";
         messages.push("Cuddle Meter full: " + (jokerMessage || "gained a Joker."));
         coach.cuddleRewards.joker += 1;
@@ -698,6 +749,12 @@
       game.state.mulligansLeft = Math.max(0, integer(game.state.mulligansLeft, 0)) + banked;
       notes.push("Banked Cuddle Meter: +" + banked + " mulligan" + (banked === 1 ? "" : "s") + ".");
       coach.bankedMulligans = 0;
+    }
+    while (coach.bankedConsonantTests > 0) {
+      var tested = testRandomConsonant(game);
+      if (!tested.ok) break;
+      notes.push("Banked Cuddle Meter: " + tested.message);
+      coach.bankedConsonantTests -= 1;
     }
     while (coach.bankedFreeLetters > 0 && hiddenPositions(game).length) {
       var result = revealExactPosition(game, "Banked Cuddle Meter");

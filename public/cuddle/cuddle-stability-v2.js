@@ -894,8 +894,8 @@
     const threshold = typeof window.CuddleCoachExpansion?.meterThreshold === "function"
       ? integer(window.CuddleCoachExpansion.meterThreshold(), 12)
       : 12;
-    const rewards = ["a free mulligan", "a Joker", "a hint"];
-    const meterReward = rewards[Math.max(0, Math.min(2, integer(coach.cuddleRewardTier, 0)))];
+    const rewards = ["a free mulligan", "a consonant test", "a Joker", "a green hint"];
+    const meterReward = rewards[Math.max(0, Math.min(3, integer(coach.cuddleRewardTier, 0)))];
     if (hints.total) addStatBadge(badges, "Hints each stage", `${hints.total} (${hints.detail})`);
     const jokers = Math.max(0, integer(mega.jokerPerRoundBonus, 0));
     if (jokers) addStatBadge(badges, "Jokers each stage", String(jokers));

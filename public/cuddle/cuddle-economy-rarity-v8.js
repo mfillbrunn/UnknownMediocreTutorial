@@ -1471,8 +1471,8 @@
       setMaxStack(def, 6);
       replaceHandlers(def, "soft-meter");
     } else if (name === "bigger cuddle") {
-      setDescription(def, "Advance the reward received when the Cuddle Meter fills: mulligan, Joker, then hint.");
-      setMaxStack(def, 2);
+      setDescription(def, "Upgrades what a full Cuddle Meter gives: a free mulligan, then a random consonant tested, then a Joker, then a letter in its exact place.");
+      setMaxStack(def, 3);
     } else if (name === "joker cache") {
       setDescription(def, "One extra Joker every stage.");
       replaceHandlers(def, "joker-cache");
@@ -1624,6 +1624,37 @@
     return items.map(transformQuestDefinition);
   }
 
+  function gameFor(context, state) {
+    if (isObject(context) && context.state && (!state || context.state === state)) return context;
+    try {
+      const active = window.CuddleBranchMap && typeof window.CuddleBranchMap.getActiveGame === "function"
+        ? window.CuddleBranchMap.getActiveGame()
+        : null;
+      if (active && (!state || active.state === state)) return active;
+    } catch (_) {
+      // No game to ask.
+    }
+    return null;
+  }
+
+  function isMaxedReward(def, context, state) {
+    const tree = window.CuddleSkillTree;
+    if (!tree || typeof tree.findNodeByName !== "function" || typeof tree.level !== "function") return false;
+    const node = tree.findNodeByName(getName(def));
+    const cap = Number(node && node.maxLevel);
+    if (!node || !Number.isFinite(cap) || cap <= 0) return false;
+    const game = gameFor(context, state);
+    if (!game) return false;
+    if (typeof node.level === "function") return tree.level(game, node) >= cap;
+    // No level reader for this one: count it in the run's reward history.
+    // (Position Peek is a one-off you can take again.)
+    if (node.id === "revealGreen") return false;
+    const wanted = norm(node.title);
+    const taken = (Array.isArray(game.state?.rewardBookHistory) ? game.state.rewardBookHistory : [])
+      .filter((entry) => entry && norm(entry.title) === wanted).length;
+    return taken >= cap;
+  }
+
   function rewardAvailable(def, context, state) {
     if (!isObject(def)) return false;
     for (const key of ["available", "isAvailable", "eligible", "condition", "canApply", "shouldOffer"]) {
@@ -1640,6 +1671,10 @@
     if ((name === "colour surge" || name === "color surge") && Number(state?.balanceRewardCounts?.colourTrade) >= 3) return false;
     // Theme Sense tops out at level 3 (every theme shown).
     if (name === "theme sense" && Number(state?.cuddleCampaign?.categorySense) >= 3) return false;
+    // Any reward already at its top level isn't offered again (reward
+    // screens, packs, shop). The badge page (cuddle-skill-tree.js) knows each
+    // reward's level and cap.
+    if (isMaxedReward(def, context, state)) return false;
     return !REMOVED_REWARDS.has(name);
   }
 
