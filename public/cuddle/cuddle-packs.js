@@ -37,7 +37,10 @@
   ]);
   var SPECIAL_ODDS = [["rare", 75], ["epic", 20], ["legendary", 5]];
   var TIER_LABEL = { common: "Common", rare: "Rare", epic: "Epic", legendary: "Legendary" };
-  var REVEAL_STEP_MS = 520;
+  var REVEAL_STEP_MS = 200;
+  var OPEN_MS = 700;
+  var BURST_MS = 150;
+  var FLY_MS = 680;
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -218,52 +221,112 @@
   }
 
   function sealedHtml(offer, wallet) {
-    var short = wallet < offer.price;
+    var short = !offer.starter && wallet < offer.price;
     var size = sizeOf(offer);
     var total = size.commons + size.specials;
-    var words = ["no", "one", "two", "three"];
-    var lines = "";
-    if (size.commons) lines += '<li><b class="is-common">' + size.commons + " Common</b> upgrade" + (size.commons === 1 ? "" : "s") + "</li>";
-    lines += '<li><b class="is-special">' + size.specials + " special" + (size.specials === 1 ? "" : "s") + "</b>"
-      + (size.specials > 1 ? " (each rolled)" : "") + ': <span class="is-rare">Rare</span> 75% · <span class="is-epic">Epic</span> 20% · <span class="is-legendary">Legendary</span> 5%</li>';
-    lines += "<li>" + (total === 2 ? "You keep both." : "You keep all " + (words[total] || total) + ".") + "</li>";
-    var title = offer.starter ? "Your Starting Pack"
-      : size.name ? "A " + size.name + " Upgrade Pack is for sale" : "An Upgrade Pack is for sale";
+    var name = (size.name ? size.name + " " : "") + "Pack";
+    var title = offer.starter ? "Your Starting Pack" : "A " + name + " is for sale";
     var kicker = offer.starter ? "Starting bonus" : "Stage cleared · World " + offer.world;
+    // The pack itself opens it too (when it can be opened).
     return '<section class="umt-pack-dialog" role="dialog" aria-modal="true" aria-labelledby="umtPackTitle">'
       + '<span class="umt-pack-kicker">' + kicker + "</span>"
       + '<h2 id="umtPackTitle">' + title + "</h2>"
-      + '<div class="umt-pack-sealed is-' + size.id + '" aria-hidden="true"><span class="umt-pack-foil"></span>'
-      + '<span class="umt-pack-name">' + (size.name ? size.name + "<br>" : "") + "Pack</span><span class=\"umt-pack-count\">" + total + " upgrades</span></div>"
-      + '<ul class="umt-pack-odds">' + lines + "</ul>"
+      + '<button type="button" class="umt-pack-sealed is-' + size.id + '" data-umt-pack="buy"' + (short ? " disabled" : "")
+      + ' aria-label="' + (offer.starter ? "Open the pack" : "Buy and open the pack for $" + offer.price) + '">'
+      + '<span class="umt-pack-foil" aria-hidden="true"></span>'
+      + '<span class="umt-pack-name">' + (size.name ? size.name + "<br>" : "") + "Pack</span>"
+      + '<span class="umt-pack-count">' + total + " upgrades</span></button>"
       + '<div class="umt-pack-actions">'
       + (offer.starter
         ? '<button type="button" class="cuddle-btn cuddle-btn-primary" data-umt-pack="buy">Open the pack</button>'
         : '<button type="button" class="cuddle-btn cuddle-btn-primary" data-umt-pack="buy"' + (short ? " disabled" : "") + ">Buy for $" + offer.price + "</button>"
           + '<button type="button" class="cuddle-btn cuddle-btn-ghost" data-umt-pack="skip">No thanks</button>')
       + "</div>"
-      + (offer.starter ? '<p class="umt-pack-wallet">Free, on every difficulty.</p>'
-        : '<p class="umt-pack-wallet">' + (short ? "You have $" + wallet + ": not enough for this pack." : "You have $" + wallet + ".") + "</p>")
+      + (offer.starter ? "" : '<p class="umt-pack-wallet">' + (short ? "You have $" + wallet + ": not enough for this pack." : "You have $" + wallet + ".") + "</p>")
       + "</section>";
   }
 
   function openedHtml(offer) {
-    var elapsed = Math.max(0, Date.now() - (Number(offer.openedAt) || 0));
-    var cards = offer.cards.map(function card(item, index) {
+    var cards = offer.cards.map(function card(item) {
       var tier = TIER_LABEL[item.tier] ? item.tier : "common";
-      return '<article class="umt-pack-card is-' + tier + '" style="--reveal-delay:' + (index * REVEAL_STEP_MS - elapsed) + 'ms">'
-        + '<span class="umt-pack-card-tier">' + TIER_LABEL[tier] + "</span>"
+      return '<article class="umt-pack-card is-' + tier + '">'
         + '<span class="umt-pack-card-icon">' + icon(item) + "</span>"
+        + '<span class="umt-pack-card-tier">' + TIER_LABEL[tier] + "</span>"
         + "<strong>" + escapeHtml(item.title) + "</strong>"
         + "<small>" + escapeHtml(item.description) + "</small>"
         + "</article>";
     }).join("");
+    var count = offer.cards.length;
     return '<section class="umt-pack-dialog is-opened" role="dialog" aria-modal="true" aria-labelledby="umtPackTitle">'
-      + '<span class="umt-pack-kicker">' + (offer.starter ? "Starting Pack opened" : "Upgrade Pack opened") + "</span>"
-      + '<h2 id="umtPackTitle">' + (offer.cards.length === 2 ? "Both are yours" : offer.cards.length === 1 ? "It's yours" : "All " + (["", "", "two", "three"][offer.cards.length] || offer.cards.length) + " are yours") + "</h2>"
+      + '<div class="umt-pack-burst" aria-hidden="true"><span class="umt-pack-glow"></span>'
+      + '<span class="umt-pack-half is-top"></span><span class="umt-pack-half is-bottom"></span></div>'
+      + '<h2 id="umtPackTitle">' + (count === 2 ? "Both are yours" : count === 1 ? "It's yours" : "All " + (["", "", "two", "three"][count] || count) + " are yours") + "</h2>"
       + '<div class="umt-pack-cards">' + cards + "</div>"
       + '<div class="umt-pack-actions"><button type="button" class="cuddle-btn cuddle-btn-primary" data-umt-pack="close">Back to the map</button></div>'
       + "</section>";
+  }
+
+  function reducedMotion() {
+    try {
+      return Boolean(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  // The badges fly out of the torn pack to their places, one after another.
+  // Timed from offer.openedAt, so a re-render mid-flight resumes it.
+  function flyOut(root, offer) {
+    var burst = root.querySelector(".umt-pack-burst");
+    if (!burst || reducedMotion()) return;
+    var elapsed = Math.max(0, Date.now() - (Number(offer.openedAt) || 0));
+    var from = burst.getBoundingClientRect();
+    var fx = from.left + from.width / 2;
+    var fy = from.top + from.height / 2;
+    [].forEach.call(root.querySelectorAll(".umt-pack-card"), function fly(card, index) {
+      if (typeof card.animate !== "function") return;
+      var box = card.getBoundingClientRect();
+      var dx = Math.round(fx - (box.left + box.width / 2));
+      var dy = Math.round(fy - (box.top + box.height / 2));
+      var spin = index % 2 === 0 ? -18 : 18;
+      card.animate([
+        { transform: "translate(" + dx + "px, " + dy + "px) scale(0.15) rotate(" + spin + "deg)", opacity: 0 },
+        { opacity: 1, offset: 0.2 },
+        { transform: "translate(0, -10px) scale(1.06) rotate(0deg)", offset: 0.78 },
+        { transform: "none", opacity: 1 }
+      ], {
+        duration: FLY_MS,
+        delay: BURST_MS + index * REVEAL_STEP_MS - elapsed,
+        easing: "cubic-bezier(.2,.8,.25,1)",
+        fill: "backwards"
+      });
+    });
+  }
+
+  // The tap: the pack shakes and tears, then the purchase goes through.
+  function openWithFlourish(game, button) {
+    var dialog = button.closest(".umt-pack-dialog");
+    var pack = dialog && dialog.querySelector(".umt-pack-sealed");
+    if (!pack || pack.classList.contains("is-opening")) return;
+    var finish = function finish() {
+      var result = game.buyUpgradePack();
+      if (!result.ok) {
+        pack.classList.remove("is-opening");
+        [].forEach.call(dialog.querySelectorAll("[data-umt-pack]"), function enable(el) { el.disabled = false; });
+        var note = dialog.querySelector(".umt-pack-wallet") || dialog.appendChild(document.createElement("p"));
+        note.className = "umt-pack-wallet";
+        note.textContent = result.error;
+        return;
+      }
+      refreshGame(game);
+    };
+    if (reducedMotion()) {
+      finish();
+      return;
+    }
+    [].forEach.call(dialog.querySelectorAll("[data-umt-pack]"), function disable(el) { el.disabled = true; });
+    pack.classList.add("is-opening");
+    setTimeout(finish, OPEN_MS);
   }
 
   var shownKey = "";
@@ -298,6 +361,7 @@
     }
     shownKey = key;
     existing.innerHTML = offer.cards ? openedHtml(offer) : sealedHtml(offer, wallet);
+    if (offer.cards) flyOut(existing, offer);
     var focus = existing.querySelector("[data-umt-pack]:not([disabled])");
     if (focus) focus.focus();
   }
@@ -324,12 +388,8 @@
     if (!game) return;
     var action = button.getAttribute("data-umt-pack");
     if (action === "buy") {
-      var result = game.buyUpgradePack();
-      if (!result.ok) {
-        var note = document.querySelector(".umt-pack-wallet");
-        if (note) note.textContent = result.error;
-        return;
-      }
+      openWithFlourish(game, button);
+      return;
     } else if (action === "skip" || action === "close") {
       game.closeUpgradePack();
     }

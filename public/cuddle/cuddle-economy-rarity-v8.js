@@ -1635,6 +1635,18 @@
     return !REMOVED_REWARDS.has(name);
   }
 
+  // The reward catalog is learnt when the game first builds its upgrade
+  // list. A pack or shop drawn before any reward screen (the free Starting
+  // Pack) would find it empty, so build it first.
+  function primeCatalog(game) {
+    if (catalog.ordinary.size >= 20 || !game || typeof game._upgradeCatalog !== "function") return;
+    try {
+      game._upgradeCatalog();
+    } catch (_error) {
+      // The draw below copes with whatever is known.
+    }
+  }
+
   function allOrdinaryCandidates(context, state) {
     const ordinary = [...catalog.ordinary.values()];
     for (const def of catalog.boss.values()) {
@@ -2739,6 +2751,7 @@
       // Plain data, so the stock survives a save; buying goes through the
       // game's own pick path (_grantUpgradeChoice).
       shopRewards(game, count, seedText) {
+        primeCatalog(game);
         const state = game && game.state;
         if (!state) return [];
         const pool = allOrdinaryCandidates(game, state)
@@ -2764,6 +2777,7 @@
       // (Legendary -> Epic -> Rare -> Common). Plain data like the shop's
       // stock; each card is granted through _grantUpgradeChoice.
       packRewards(game, specialTiers, seedText, commons = 2) {
+        primeCatalog(game);
         const state = game && game.state;
         if (!state) return [];
         const seed = String(seedText || "pack");
@@ -2803,6 +2817,7 @@
       // only way to get one. Same plain shape as the shop's stock, so the
       // offer survives a save and picks through chooseUpgrade.
       legendaryChoices(game, count, seedText) {
+        primeCatalog(game);
         const state = game && game.state;
         if (!state) return [];
         const pool = allOrdinaryCandidates(game, state).filter((def) => def.__cuddleV8Tier === TIERS.LEGENDARY);

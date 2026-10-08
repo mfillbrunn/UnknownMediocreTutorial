@@ -65,6 +65,32 @@
   box-shadow: 0 0 0 2px rgba(240, 202, 94, 0.55), 0 14px 30px rgba(0, 0, 0, 0.45);
   transform: rotate(-3deg);
   animation: umt-pack-bob 2.8s ease-in-out infinite;
+  /* It's a button: tapping the pack opens it. */
+  border: 0;
+  padding: 0;
+  color: var(--cuddle-text, #f7f4ff);
+  font: inherit;
+  cursor: pointer;
+}
+
+.umt-pack-sealed:disabled { cursor: default; }
+.umt-pack-sealed:disabled:not(.is-opening) { filter: saturate(0.6) brightness(0.8); }
+
+.umt-pack-sealed:focus-visible {
+  outline: 3px solid var(--pack-legendary);
+  outline-offset: 4px;
+}
+
+/* Opening: a shake, a swell, then a flash as it tears. */
+.umt-pack-sealed.is-opening {
+  animation: umt-pack-open 700ms cubic-bezier(.4, 0, .6, 1) forwards;
+}
+
+.umt-pack-sealed.is-opening::after {
+  height: 100%;
+  background: radial-gradient(circle, rgba(255, 246, 214, 0.95) 0%, rgba(240, 202, 94, 0.5) 40%, transparent 70%);
+  opacity: 0;
+  animation: umt-pack-flash 700ms ease-in forwards;
 }
 
 .umt-pack-sealed::before,
@@ -106,29 +132,6 @@
   text-transform: uppercase;
 }
 
-.umt-pack-odds {
-  display: grid;
-  gap: 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: var(--cuddle-muted, #aaa5bc);
-  font-size: 0.86rem;
-  line-height: 1.4;
-}
-
-.umt-pack-odds li {
-  text-wrap: balance;
-}
-
-.umt-pack-odds b,
-.umt-pack-odds span { font-weight: 800; }
-.umt-pack-odds .is-common { color: var(--pack-common); }
-.umt-pack-odds .is-special { color: var(--cuddle-text, #f7f4ff); }
-.umt-pack-odds .is-rare { color: var(--pack-rare); }
-.umt-pack-odds .is-epic { color: var(--pack-epic); }
-.umt-pack-odds .is-legendary { color: var(--pack-legendary); }
-
 .umt-pack-actions {
   display: flex;
   flex-wrap: wrap;
@@ -167,8 +170,6 @@
   border-radius: 14px;
   background: linear-gradient(180deg, color-mix(in srgb, var(--tier) 16%, transparent), rgba(255, 255, 255, 0.03));
   text-align: center;
-  animation: umt-pack-flip 620ms cubic-bezier(.2, .8, .25, 1) both;
-  animation-delay: var(--reveal-delay, 0ms);
 }
 
 .umt-pack-card.is-rare { --tier: var(--pack-rare); }
@@ -189,9 +190,14 @@
 .umt-pack-card-icon {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 58px;
+  height: 64px;
   font-size: 1.6rem;
+  /* A hex badge, edged in the tier's colour. */
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background:
+    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--tier) 35%, transparent), transparent 70%),
+    linear-gradient(160deg, var(--tier), color-mix(in srgb, var(--tier) 35%, #1a1626));
 }
 
 .umt-pack-card-icon svg {
@@ -209,10 +215,74 @@
   line-height: 1.35;
 }
 
-@keyframes umt-pack-flip {
-  0% { opacity: 0; transform: rotateY(90deg) translateY(16px) scale(0.9); }
-  60% { opacity: 1; transform: rotateY(-8deg) translateY(0) scale(1.03); }
-  100% { opacity: 1; transform: none; }
+@keyframes umt-pack-open {
+  0% { transform: rotate(-3deg) scale(1); opacity: 1; }
+  12% { transform: rotate(4deg) scale(1.02); }
+  24% { transform: rotate(-6deg) scale(1.03); }
+  36% { transform: rotate(6deg) scale(1.05); }
+  48% { transform: rotate(-4deg) scale(1.07); }
+  62% { transform: rotate(0deg) scale(1.12); opacity: 1; }
+  100% { transform: rotate(0deg) scale(1.35); opacity: 0; }
+}
+
+@keyframes umt-pack-flash {
+  0%, 50% { opacity: 0; }
+  85% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* The torn pack at the top of the opened screen, where the badges fly from. */
+.umt-pack-burst {
+  position: relative;
+  width: 90px;
+  height: 56px;
+  margin-bottom: -4px;
+}
+
+.umt-pack-glow {
+  position: absolute;
+  inset: -30px;
+  background: radial-gradient(circle, rgba(255, 238, 180, 0.75) 0%, rgba(240, 202, 94, 0.25) 45%, transparent 70%);
+  animation: umt-pack-glow 900ms ease-out both;
+}
+
+.umt-pack-half {
+  position: absolute;
+  left: 18px;
+  width: 54px;
+  height: 26px;
+  background: linear-gradient(155deg, #6a4fb0 0%, #3b2c6c 100%);
+  box-shadow: 0 0 0 2px rgba(240, 202, 94, 0.55);
+}
+
+.umt-pack-half.is-top {
+  top: 0;
+  border-radius: 8px 8px 2px 2px;
+  clip-path: polygon(0 0, 100% 0, 100% 80%, 85% 100%, 70% 78%, 52% 100%, 35% 80%, 18% 100%, 0 82%);
+  animation: umt-pack-tear-top 700ms cubic-bezier(.2, .8, .3, 1) both;
+}
+
+.umt-pack-half.is-bottom {
+  bottom: 0;
+  border-radius: 2px 2px 8px 8px;
+  clip-path: polygon(0 18%, 18% 0, 35% 20%, 52% 0, 70% 22%, 85% 0, 100% 20%, 100% 100%, 0 100%);
+  animation: umt-pack-tear-bottom 700ms cubic-bezier(.2, .8, .3, 1) both;
+}
+
+@keyframes umt-pack-glow {
+  0% { opacity: 0; transform: scale(0.4); }
+  35% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0.35; transform: scale(1); }
+}
+
+@keyframes umt-pack-tear-top {
+  0% { transform: translateY(14px); }
+  100% { transform: translate(-10px, -4px) rotate(-14deg); }
+}
+
+@keyframes umt-pack-tear-bottom {
+  0% { transform: translateY(-14px); }
+  100% { transform: translate(10px, 4px) rotate(10deg); }
 }
 
 @keyframes umt-pack-bob {
@@ -227,8 +297,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   .umt-pack-sealed,
+  .umt-pack-sealed.is-opening,
+  .umt-pack-sealed.is-opening::after,
   .umt-pack-foil,
-  .umt-pack-card {
+  .umt-pack-glow,
+  .umt-pack-half {
     animation: none;
   }
 }
