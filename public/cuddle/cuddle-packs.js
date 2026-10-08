@@ -37,10 +37,17 @@
   ]);
   var SPECIAL_ODDS = [["rare", 75], ["epic", 20], ["legendary", 5]];
   var TIER_LABEL = { common: "Common", rare: "Rare", epic: "Epic", legendary: "Legendary" };
-  var REVEAL_STEP_MS = 200;
-  var OPEN_MS = 700;
-  var BURST_MS = 150;
-  var FLY_MS = 680;
+  // The opening, in four beats: shake, swell, rip (with a spray of
+  // sparkles), then the badges fly out of the torn pack.
+  var SHAKE_MS = 620;
+  var SWELL_MS = 340;
+  var RIP_MS = 520;
+  var REVEAL_STEP_MS = 230;
+  var BURST_MS = 260;
+  var FLY_MS = 720;
+  // The top edge of the tear, as a jagged line across the pack.
+  var TEAR = "0 24%, 9% 19%, 18% 26%, 29% 18%, 40% 25%, 51% 19%, 62% 26%, 73% 18%, 84% 25%, 93% 19%, 100% 24%";
+  var TEAR_REVERSED = TEAR.split(", ").reverse().join(", ");
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -231,11 +238,12 @@
     return '<section class="umt-pack-dialog" role="dialog" aria-modal="true" aria-labelledby="umtPackTitle">'
       + '<span class="umt-pack-kicker">' + kicker + "</span>"
       + '<h2 id="umtPackTitle">' + title + "</h2>"
+      + '<div class="umt-pack-stage">'
       + '<button type="button" class="umt-pack-sealed is-' + size.id + '" data-umt-pack="buy"' + (short ? " disabled" : "")
       + ' aria-label="' + (offer.starter ? "Open the pack" : "Buy and open the pack for $" + offer.price) + '">'
       + '<span class="umt-pack-foil" aria-hidden="true"></span>'
       + '<span class="umt-pack-name">' + (size.name ? size.name + "<br>" : "") + "Pack</span>"
-      + '<span class="umt-pack-count">' + total + " upgrades</span></button>"
+      + '<span class="umt-pack-count">' + total + " upgrades</span></button></div>"
       + '<div class="umt-pack-actions">'
       + (offer.starter
         ? '<button type="button" class="cuddle-btn cuddle-btn-primary" data-umt-pack="buy">Open the pack</button>'
@@ -274,12 +282,45 @@
     }
   }
 
-  // The badges fly out of the torn pack to their places, one after another.
-  // Timed from offer.openedAt, so a re-render mid-flight resumes it.
+  // A spray of sparkles from (x, y) inside `host`, which must be
+  // positioned. Purely for show, so it uses Math.random, not the run's dice.
+  function sparkleBurst(host, x, y, count, delayMs) {
+    if (!host || reducedMotion()) return;
+    var colours = ["#fff6d6", "#f0ca5e", "#ffe08a", "#d5a6ff", "#8be8d2"];
+    for (var i = 0; i < count; i += 1) {
+      var spark = document.createElement("span");
+      spark.className = "umt-pack-spark" + (i % 3 === 0 ? " is-dot" : "");
+      spark.setAttribute("aria-hidden", "true");
+      spark.style.left = x + "px";
+      spark.style.top = y + "px";
+      spark.style.background = colours[i % colours.length];
+      host.appendChild(spark);
+      var angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.6;
+      // Mostly upward, like light spilling out of the opening.
+      var reach = 70 + Math.random() * 110;
+      var dx = Math.cos(angle) * reach;
+      var dy = Math.sin(angle) * reach * 0.8 - 40;
+      var size = 0.6 + Math.random() * 0.9;
+      var spin = Math.round((Math.random() - 0.5) * 360);
+      var duration = 700 + Math.random() * 500;
+      if (typeof spark.animate !== "function") { spark.remove(); continue; }
+      var anim = spark.animate([
+        { transform: "translate(-50%, -50%) scale(0) rotate(0deg)", opacity: 1 },
+        { transform: "translate(calc(-50% + " + (dx * 0.6) + "px), calc(-50% + " + (dy * 0.6) + "px)) scale(" + size + ") rotate(" + (spin / 2) + "deg)", opacity: 1, offset: 0.45 },
+        { transform: "translate(calc(-50% + " + dx + "px), calc(-50% + " + (dy + 30) + "px)) scale(0) rotate(" + spin + "deg)", opacity: 0 }
+      ], { duration: duration, delay: (delayMs || 0) + Math.random() * 120, easing: "cubic-bezier(.15,.7,.3,1)", fill: "both" });
+      anim.onfinish = (function bind(el) { return function done() { el.remove(); }; }(spark));
+    }
+  }
+
+  // The badges fly out of the torn pack to their places, one after another,
+  // after a second spray of sparkles. Timed from offer.openedAt, so a
+  // re-render mid-flight resumes it.
   function flyOut(root, offer) {
     var burst = root.querySelector(".umt-pack-burst");
     if (!burst || reducedMotion()) return;
     var elapsed = Math.max(0, Date.now() - (Number(offer.openedAt) || 0));
+    if (elapsed < 300) sparkleBurst(burst, burst.offsetWidth / 2, burst.offsetHeight / 2, 22, 0);
     var from = burst.getBoundingClientRect();
     var fx = from.left + from.width / 2;
     var fy = from.top + from.height / 2;
@@ -288,11 +329,12 @@
       var box = card.getBoundingClientRect();
       var dx = Math.round(fx - (box.left + box.width / 2));
       var dy = Math.round(fy - (box.top + box.height / 2));
-      var spin = index % 2 === 0 ? -18 : 18;
+      var spin = index % 2 === 0 ? -22 : 22;
       card.animate([
-        { transform: "translate(" + dx + "px, " + dy + "px) scale(0.15) rotate(" + spin + "deg)", opacity: 0 },
-        { opacity: 1, offset: 0.2 },
-        { transform: "translate(0, -10px) scale(1.06) rotate(0deg)", offset: 0.78 },
+        { transform: "translate(" + dx + "px, " + dy + "px) scale(0.12) rotate(" + spin + "deg)", opacity: 0 },
+        { opacity: 1, offset: 0.15 },
+        { transform: "translate(" + Math.round(dx * 0.35) + "px, " + Math.round(dy * 0.35 - 30) + "px) scale(0.7) rotate(" + (-spin / 2) + "deg)", offset: 0.5 },
+        { transform: "translate(0, -8px) scale(1.07) rotate(0deg)", offset: 0.82 },
         { transform: "none", opacity: 1 }
       ], {
         duration: FLY_MS,
@@ -300,33 +342,107 @@
         easing: "cubic-bezier(.2,.8,.25,1)",
         fill: "backwards"
       });
+      // Each badge lands with a flash in its tier's colour.
+      var flash = card.querySelector(".umt-pack-card-icon");
+      if (flash && typeof flash.animate === "function") {
+        flash.animate([
+          { filter: "brightness(2.2) drop-shadow(0 0 14px var(--tier))" },
+          { filter: "brightness(1) drop-shadow(0 0 0 transparent)" }
+        ], { duration: 520, delay: BURST_MS + index * REVEAL_STEP_MS + FLY_MS * 0.8 - elapsed, easing: "ease-out", fill: "backwards" });
+      }
     });
   }
 
-  // The tap: the pack shakes and tears, then the purchase goes through.
+  // The tap: the pack shakes harder and harder, swells, then rips across
+  // the top -- the flap flies off and sparkles spill out -- and only then
+  // does the purchase go through and the badges appear.
   function openWithFlourish(game, button) {
     var dialog = button.closest(".umt-pack-dialog");
     var pack = dialog && dialog.querySelector(".umt-pack-sealed");
-    if (!pack || pack.classList.contains("is-opening")) return;
+    var stage = dialog && dialog.querySelector(".umt-pack-stage");
+    if (!pack || !stage || pack.classList.contains("is-opening")) return;
     var finish = function finish() {
       var result = game.buyUpgradePack();
       if (!result.ok) {
-        pack.classList.remove("is-opening");
-        [].forEach.call(dialog.querySelectorAll("[data-umt-pack]"), function enable(el) { el.disabled = false; });
-        var note = dialog.querySelector(".umt-pack-wallet") || dialog.appendChild(document.createElement("p"));
-        note.className = "umt-pack-wallet";
+        // Back to the sealed pack, with the reason.
+        shownKey = "";
+        var overlay = document.querySelector(".umt-pack-overlay");
+        if (overlay) overlay.innerHTML = "";
+        sync();
+        var note = document.querySelector(".umt-pack-wallet");
+        if (!note) {
+          note = document.createElement("p");
+          note.className = "umt-pack-wallet";
+          var fresh = document.querySelector(".umt-pack-dialog");
+          if (fresh) fresh.appendChild(note);
+        }
         note.textContent = result.error;
         return;
       }
       refreshGame(game);
     };
-    if (reducedMotion()) {
+    if (reducedMotion() || typeof pack.animate !== "function") {
       finish();
       return;
     }
     [].forEach.call(dialog.querySelectorAll("[data-umt-pack]"), function disable(el) { el.disabled = true; });
     pack.classList.add("is-opening");
-    setTimeout(finish, OPEN_MS);
+
+    // 1. Shake, harder and faster toward the end.
+    pack.animate([
+      { transform: "rotate(0deg)" },
+      { transform: "translateX(-2px) rotate(-2deg)", offset: 0.1 },
+      { transform: "translateX(2px) rotate(2deg)", offset: 0.2 },
+      { transform: "translateX(-4px) rotate(-4deg)", offset: 0.32 },
+      { transform: "translateX(4px) rotate(4deg)", offset: 0.44 },
+      { transform: "translateX(-6px) rotate(-6deg)", offset: 0.55 },
+      { transform: "translateX(6px) rotate(6deg)", offset: 0.65 },
+      { transform: "translateX(-7px) rotate(-7deg)", offset: 0.74 },
+      { transform: "translateX(7px) rotate(7deg)", offset: 0.82 },
+      { transform: "translateX(-5px) rotate(-5deg)", offset: 0.89 },
+      { transform: "translateX(4px) rotate(3deg)", offset: 0.95 },
+      { transform: "rotate(0deg)" }
+    ], { duration: SHAKE_MS, easing: "linear" });
+
+    // 2. Swell, with the glow rising.
+    stage.animate([
+      { transform: "scale(1)", filter: "drop-shadow(0 0 0 rgba(240, 202, 94, 0))" },
+      { transform: "scale(1.32)", filter: "drop-shadow(0 0 26px rgba(240, 202, 94, 0.85))" }
+    ], { duration: SWELL_MS, delay: SHAKE_MS, easing: "cubic-bezier(.3,1.5,.6,1)", fill: "forwards" });
+
+    // 3. Rip: the top flap tears off and flies away; light and sparkles
+    // spill from the opening.
+    setTimeout(function rip() {
+      var flap = pack.cloneNode(true);
+      flap.removeAttribute("data-umt-pack");
+      flap.removeAttribute("aria-label");
+      flap.setAttribute("aria-hidden", "true");
+      flap.setAttribute("tabindex", "-1");
+      flap.className = pack.className + " umt-pack-flap";
+      flap.style.clipPath = "polygon(0 0, 100% 0, " + TEAR_REVERSED + ")";
+      pack.style.clipPath = "polygon(" + TEAR + ", 100% 100%, 0 100%)";
+      stage.appendChild(flap);
+      flap.animate([
+        { transform: "none", opacity: 1 },
+        { transform: "translate(-18px, -46px) rotate(-22deg)", opacity: 1, offset: 0.45 },
+        { transform: "translate(-60px, -110px) rotate(-48deg)", opacity: 0 }
+      ], { duration: RIP_MS + 200, easing: "cubic-bezier(.2,.7,.4,1)", fill: "forwards" });
+      var light = document.createElement("span");
+      light.className = "umt-pack-light";
+      light.setAttribute("aria-hidden", "true");
+      stage.appendChild(light);
+      var tearY = pack.offsetTop + pack.offsetHeight * 0.22;
+      light.style.top = tearY + "px";
+      sparkleBurst(stage, pack.offsetLeft + pack.offsetWidth / 2, tearY, 28, 40);
+      pack.animate([
+        { transform: "translateY(0)" },
+        { transform: "translateY(6px)", offset: 0.3 },
+        { transform: "translateY(0)" }
+      ], { duration: 260, easing: "ease-out" });
+    }, SHAKE_MS + SWELL_MS);
+
+    // 4. The badges (the opened screen takes over).
+    setTimeout(finish, SHAKE_MS + SWELL_MS + RIP_MS);
   }
 
   var shownKey = "";
