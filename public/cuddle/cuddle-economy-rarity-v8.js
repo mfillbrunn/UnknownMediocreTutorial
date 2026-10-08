@@ -542,6 +542,12 @@
     return bestScore >= 3 ? best : (isObject(context) ? context : null);
   }
 
+  // Seeds for rolls: the run's shared seed (cuddle-seed.js) when it has
+  // one. runKey stays the run's own id -- it also names saved data.
+  function seedKey(state) {
+    return state && state.runSeed ? `seed:${state.runSeed}` : runKey(state);
+  }
+
   function runKey(state) {
     if (!state) return "default";
     const values = [
@@ -827,7 +833,7 @@
       state.stageId, state.roundId, state.currentStageIndex, state.currentRound,
       state.stageNumber, state.roundNumber
     ].filter((value) => value != null && value !== "");
-    return pieces.length ? pieces.join(":") : `${runKey(state)}:${nodeType(node)}:${answerWord(state)}:${maxRows(state)}`;
+    return pieces.length ? pieces.join(":") : `${seedKey(state)}:${nodeType(node)}:${answerWord(state)}:${maxRows(state)}`;
   }
 
   function routeRows(state) {
@@ -863,7 +869,7 @@
 
   function challengeReward(node, world, rowIndex = 0, columnIndex = 0, state = null) {
     const [min, max] = CHALLENGE_RANGES[world] || CHALLENGE_RANGES[1];
-    const seed = `${runKey(state)}:${rowIndex}:${columnIndex}:${getId(node)}:${getName(node)}:challenge`;
+    const seed = `${seedKey(state)}:${rowIndex}:${columnIndex}:${getId(node)}:${getName(node)}:challenge`;
     return randomInt(min, max, seed);
   }
 
@@ -1725,10 +1731,17 @@
     if (bossCatalogLike) return transformBossCatalog(items);
 
     if (isRewardArray(items) && items.length >= 2 && items.length <= 8 && state) {
-      const selected = chooseSameTier(items.length, context, state, `${stageIdentity(state)}:${name}:${Date.now()}`);
+      const selected = chooseSameTier(items.length, context, state, `${seedKey(state)}:${stageIdentity(state)}:${name}:${offerSalt(context)}`);
       return selected.length === items.length ? selected : items;
     }
     return items;
+  }
+
+  // Each reward offer rolls a fresh salt from the game's seeded random
+  // (cuddle-seed.js), so offers are new every time yet replay with the seed.
+  function offerSalt(context) {
+    const game = isObject(context) && typeof context.random === "function" ? context : null;
+    return game ? Math.floor(game.random() * 1e9) : Date.now();
   }
 
   function postProcessValue(value, meta, depth = 0) {
@@ -1894,7 +1907,7 @@
       legendary: pool.filter((def) => def.__cuddleV8Tier === TIERS.LEGENDARY)
     };
     const selected = [];
-    const seedBase = `${runKey(state)}:${stageIdentity(state)}:shop:${customState(state)?.shop?.visit || 0}`;
+    const seedBase = `${seedKey(state)}:${stageIdentity(state)}:shop:${customState(state)?.shop?.visit || 0}`;
     for (let index = 0; index < count; index += 1) {
       const availableTiers = Object.keys(grouped).filter((tier) => grouped[tier].length > 0);
       const tier = weightedTier(SHOP_WEIGHTS, availableTiers, `${seedBase}:tier:${index}`);
@@ -1957,7 +1970,7 @@
       makeShopItem(template, "joker-token", "Joker Token", "Pouch item: gain one Joker in the current or next stage.", 16, { type: "pouch", key: "pocketJoker", amount: 1 })
     ];
 
-    const seed = `${runKey(state)}:${stageIdentity(state)}:consumables`;
+    const seed = `${seedKey(state)}:${stageIdentity(state)}:consumables`;
     source.push(...shuffle(consumables, seed).slice(0, 4));
     source.push(...permanentShopItems(template, context, state, 3));
     saveCustom(state);

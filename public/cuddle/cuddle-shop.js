@@ -194,6 +194,11 @@
     };
   }
 
+  // The run's seed (cuddle-seed.js), so a shared seed stocks the same shelves.
+  function seedText(game) {
+    return window.CuddleSeed ? window.CuddleSeed.text(game.state) : String(game.state.runId || "run");
+  }
+
   function shuffled(items, random) {
     const copy = items.slice();
     for (let index = copy.length - 1; index > 0; index -= 1) {
@@ -208,7 +213,7 @@
   }
 
   function tradeFor(game, key) {
-    const random = seeded(`${game.state.runId || "run"}:${key}:wandering-paw:trade`);
+    const random = seeded(`${seedText(game)}:${key}:wandering-paw:trade`);
     return [random() < RARE_TRADE_CHANCE ? "tradePoints30" : "tradePoints10"];
   }
 
@@ -217,7 +222,7 @@
   function keepStock(game, key) {
     const economy = window.CuddleEconomyRarityV8;
     if (!economy || typeof economy.shopRewards !== "function") return [];
-    return economy.shopRewards(game, 3, `${game.state.runId || "run"}:${key}:wandering-paw:keep`);
+    return economy.shopRewards(game, 3, `${seedText(game)}:${key}:wandering-paw:keep`);
   }
 
   function isKeepEntry(entry) {
@@ -235,7 +240,7 @@
       if (!saved.keep.every(isKeepEntry)) saved.keep = keepStock(game, key);
       return saved;
     }
-    const random = seeded(`${game.state.runId || "run"}:${key}:wandering-paw`);
+    const random = seeded(`${seedText(game)}:${key}:wandering-paw`);
     const stock = {};
     SHELVES.forEach(shelf => {
       if (shelf.id === "trade" || shelf.id === "keep") return;

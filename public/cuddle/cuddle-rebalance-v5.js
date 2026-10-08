@@ -114,7 +114,7 @@
     Object.freeze({
       id: IDS.haggler, key: IDS.haggler, icon: "\uD83E\uDE99",
       title: "Haggler", name: "Haggler",
-      description: "Refreshing reward choices costs $0, then $3, $5, $7... instead of $5, $7, $9...",
+      description: "Refreshing reward choices costs $0, then $1, $3, $5... instead of $3, $5, $7...",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     Object.freeze({

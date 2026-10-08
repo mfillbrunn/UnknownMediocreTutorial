@@ -1168,7 +1168,7 @@
     var reachable = reachableNodes(branchMap);
     var here = currentNode(branchMap);
     var hereRow = here ? here.row : -1;
-    var seed = String((game && game.state && game.state.runId) || "run");
+    var seed = window.CuddleSeed && game && game.state ? window.CuddleSeed.text(game.state) : String((game && game.state && game.state.runId) || "run");
     var defs = [];
     var bands = [];
     var trails = [];
