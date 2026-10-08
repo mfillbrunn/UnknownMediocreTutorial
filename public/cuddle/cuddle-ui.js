@@ -87,26 +87,58 @@
     return null;
   }
 
-  // A card that would complete a combo gets two marks: a glowing flag up
-  // top (the card itself lights up via :has in cuddle.css) and, under the
-  // description, what the combo adds and which earlier pick it pairs with.
-  function interactionBonusBadge(optionId) {
+  // A card that would complete a combo glows and carries a small star in
+  // its top-right corner; tapping the star (not the card) opens a note
+  // naming the combo, the earlier pick it pairs with and what it adds.
+  function interactionBonusBadge(optionId, inline = false) {
     const synergy = pendingSynergyFor(optionId);
     if (!synergy) return "";
-    return `<span class="umt-interaction-badge" title="${escapeHtml(synergy.title)}: ${escapeHtml(synergy.description)}">
+    // The boss card shows its reward's details from the reward icon, so it
+    // keeps the small "Bonus" flag in its row of traits.
+    if (inline) {
+      return `<span class="umt-interaction-badge" title="${escapeHtml(synergy.title)}: ${escapeHtml(synergy.description)}">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l3.22 6.53 7.21 1.05-5.22 5.09 1.23 7.18L12 17.9l-6.44 3.45 1.23-7.18-5.22-5.09 7.21-1.05z"/></svg>
       Bonus
     </span>`;
+    }
+    return `<span class="umt-combo-star" role="button" tabindex="0" data-combo-info aria-expanded="false"
+      aria-label="Combo bonus: ${escapeHtml(synergy.title)}. Tap for details." title="Combo bonus: ${escapeHtml(synergy.title)}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l3.22 6.53 7.21 1.05-5.22 5.09 1.23 7.18L12 17.9l-6.44 3.45 1.23-7.18-5.22-5.09 7.21-1.05z"/></svg>
+    </span>`;
   }
 
-  function interactionBonusDetail(optionId) {
+  function interactionBonusDetail(optionId, inline = false) {
     const synergy = pendingSynergyFor(optionId);
     if (!synergy) return "";
     const pairing = synergy.partner ? ` <em>with ${escapeHtml(synergy.partner)}</em>` : "";
     const effect = synergy.effect || synergy.description || "";
-    return `<span class="umt-combo-detail"><b>${escapeHtml(synergy.icon || "✨")} ${escapeHtml(synergy.title)}</b>${pairing}`
+    if (inline) {
+      return `<span class="umt-combo-detail"><b>${escapeHtml(synergy.icon || "✨")} ${escapeHtml(synergy.title)}</b>${pairing}`
+        + `<span>${goldenMoney(escapeHtml(effect))}</span></span>`;
+    }
+    return `<span class="umt-combo-pop" role="note" hidden><b>${escapeHtml(synergy.icon || "✨")} ${escapeHtml(synergy.title)}</b>${pairing}`
       + `<span>${goldenMoney(escapeHtml(effect))}</span></span>`;
   }
+
+  // The star toggles its note without choosing the card it sits on.
+  function toggleComboInfo(event) {
+    const star = event.target.closest && event.target.closest("[data-combo-info]");
+    if (!star) return false;
+    if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") return false;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const card = star.closest(".cuddle-choice");
+    const pop = card && card.querySelector(".umt-combo-pop");
+    if (!pop) return true;
+    const opening = pop.hidden;
+    document.querySelectorAll(".umt-combo-pop").forEach(other => { other.hidden = true; });
+    document.querySelectorAll("[data-combo-info]").forEach(other => other.setAttribute("aria-expanded", "false"));
+    pop.hidden = !opening;
+    star.setAttribute("aria-expanded", opening ? "true" : "false");
+    return true;
+  }
+  document.addEventListener("click", toggleComboInfo, true);
+  document.addEventListener("keydown", toggleComboInfo, true);
 
   function showScreen(id) {
     if (typeof window.showScreen === "function") {
@@ -1154,7 +1186,7 @@
       info = `<div class="umt-boss-trait-info is-reward" role="note">
           <b>Win: ${escapeHtml(reward.title)}</b>
           <span>${goldenMoney(escapeHtml(reward.description))}</span>
-          ${interactionBonusDetail(reward.id)}
+          ${interactionBonusDetail(reward.id, true)}
         </div>`;
     } else if (open === "burden" && burden) {
       info = `<div class="umt-boss-trait-info is-burden" role="note">
@@ -1173,7 +1205,7 @@
         <div class="umt-boss-traits">
           ${reward ? trait("reward", `Reward: ${reward.title}. Tap to read.`, rewardArt, bonus ? " has-bonus" : "") : ""}
           ${burden ? trait("burden", "Its curse for the rest of the run. Tap to read.", iconSvgFor(BURDEN_ICON[option.curseId || id] || "skull")) : ""}
-          ${bonus ? interactionBonusBadge(reward.id) : ""}
+          ${bonus ? interactionBonusBadge(reward.id, true) : ""}
         </div>
         ${info}
         <button type="button" class="cuddle-btn cuddle-btn-primary umt-boss-fight" data-boss-id="${escapeHtml(id)}">Fight ${escapeHtml(option.title)}</button>
