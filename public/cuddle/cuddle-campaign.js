@@ -13,7 +13,10 @@
   const CuddleGame = engine.CuddleGame;
   const CATEGORY_ENDPOINT = "/api/cuddle/category-hint";
   const SHOP_AFTER_ROUNDS = Object.freeze([4, 8, 11]);
-  const MAX_CATEGORY_SENSE = 6;
+  // Theme Sense: level 1 shows one theme, level 2 two, level 3 all of them
+  // (the hint route caps a request at eight, more than any word has).
+  const MAX_CATEGORY_SENSE = 3;
+  const ALL_CATEGORIES = 8;
   // Regardless of Theme Sense or a redeemed Category Whisper, every round
   // guarantees at least one category by this guess -- earlier on Easy (more
   // guesses left to use the clue), latest on Hard (least help).
@@ -29,7 +32,7 @@
     key: "categorySense",
     icon: "🔮",
     title: "Theme Sense",
-    description: "From now on, reveal one category at the start of every solution. Stacks."
+    description: "Each stage opens with one of the answer's themes shown. Level 2 shows two; level 3 shows them all."
   });
   const SHOP_ITEMS = Object.freeze([
     Object.freeze({
@@ -308,7 +311,7 @@
     const alreadyRequested = marker?.key === key
       ? Math.max(marker.target, campaign.revealedCategories.length)
       : campaign.revealedCategories.length;
-    const target = campaign.categorySense;
+    const target = campaign.categorySense >= MAX_CATEGORY_SENSE ? ALL_CATEGORIES : campaign.categorySense;
     const needed = target - alreadyRequested;
     if (needed <= 0) return;
     automaticTargets.set(game, { key, target });
@@ -478,7 +481,9 @@
     }
     const campaign = ensureCampaign(this);
     campaign.categorySense = clampInteger(campaign.categorySense + 1, 0, MAX_CATEGORY_SENSE);
-    this.state.lastMessage = `Theme Sense acquired: future solutions reveal up to ${campaign.categorySense} ${campaign.categorySense === 1 ? "category" : "categories"}.`;
+    this.state.lastMessage = campaign.categorySense >= MAX_CATEGORY_SENSE
+      ? "Theme Sense maxed: every stage opens with all of the answer's themes shown."
+      : `Theme Sense level ${campaign.categorySense}: every stage opens with ${campaign.categorySense === 1 ? "one theme" : "two themes"} shown.`;
     this.state.upgradeChoices = [];
     this.state.upgradePhase = null;
     this.state.upgradeMilestone = null;

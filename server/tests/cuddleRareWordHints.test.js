@@ -1,8 +1,8 @@
 // Rare Word challenge secrets aren't in allowed_secrets.txt, but the Cuddle
-// category-hint route must still accept them (answering "No category")
-// rather than refusing with a 400 that left every theme hint failing.
+// category-hint route must still accept them, and every one has themes of
+// its own to reveal.
 const assert = require("assert");
-const { loadCuddleRareWords, registerCuddleWordThemeRoutes } = require("../cuddle/wordThemes");
+const { loadCuddleRareWords, registerCuddleWordThemeRoutes, getRevealableCategories } = require("../cuddle/wordThemes");
 
 function run() {
   const rare = loadCuddleRareWords();
@@ -21,12 +21,15 @@ function run() {
 
   const rareResult = call(rare[0]);
   assert.strictEqual(rareResult.statusCode, 200, "a Rare Word secret is accepted");
-  assert.strictEqual(rareResult.body.noCategory, true, "a Rare Word has no category to reveal");
+  assert.strictEqual(rareResult.body.noCategory, false, "a Rare Word has a category to reveal");
+  assert.strictEqual(rareResult.body.categories.length, 1, "one category is revealed");
+  const untagged = rare.filter(word => getRevealableCategories(word).length === 0);
+  assert.deepStrictEqual(untagged, [], "every Rare Word has at least one theme");
 
   assert.strictEqual(call("crane").statusCode, 200, "ordinary secrets still work");
   assert.strictEqual(call("zzzzz").statusCode, 400, "unknown words are still refused");
 
-  console.log("PASS cuddleRareWordHints: Rare Word secrets get an honest \"No category\" from the category-hint route instead of a 400, ordinary secrets still work, unknown words are still refused");
+  console.log("PASS cuddleRareWordHints: every Rare Word secret has themes and gets a real category hint, ordinary secrets still work, unknown words are still refused");
 }
 
 module.exports = { run };

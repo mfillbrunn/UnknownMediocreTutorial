@@ -592,27 +592,11 @@
   // rather than shown as a zero. cuddle-stability-v2.js adds the hint,
   // Joker and Cuddle meter rows to "Your hand", and cuddle-rebalance-v5.js
   // adds the boss curses as their own group.
-  // What guesses past the window cost: "10", or "30, 40, 50…" where the
-  // cost climbs with each guess (world three).
-  function latePenaltyAmounts(window) {
-    const first = game._lateGuessPenalty(window + 1);
-    const second = game._lateGuessPenalty(window + 2);
-    if (first === second) return String(first);
-    return `${first}, ${second}, ${game._lateGuessPenalty(window + 3)}…`;
-  }
-
-  // Shown above the board once the next guess is past the stage's
-  // quick-solve window (or is the last one inside it): what it will cost.
-  function renderLateBanner(state, strictLimit) {
-    if (state.status !== "playing" || game.isBossRound() || Number.isFinite(strictLimit)
-        || typeof game._lateGuessPenalty !== "function") return "";
-    const window = game._solveGuessThreshold();
-    const next = (Number(state.guessesUsed) || 0) + 1;
-    if (next < window) return "";
-    if (next === window) {
-      return `<p class="cuddle-late-banner is-last" role="note"><b>Last guess in the window</b><span>Guesses after ${window} cost ${latePenaltyAmounts(window)} points${game._lateGuessPenalty(window + 1) === game._lateGuessPenalty(window + 2) ? " each" : ""}</span></p>`;
-    }
-    return `<p class="cuddle-late-banner" role="note"><b>Over ${window} guesses</b><span>This guess <em>-${game._lateGuessPenalty(next)}</em> points</span></p>`;
+  // The guess window and its cost are explained once per world, in the
+  // popup that opens on entering it (cuddle-world-intro.js); late rows are
+  // still tinted on the board.
+  function renderLateBanner() {
+    return "";
   }
 
   function renderRunDetails(state, rules, drawPile) {

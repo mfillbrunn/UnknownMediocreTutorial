@@ -86,7 +86,7 @@
         { id: "mulliganSize", icon: "🃏", title: "Bigger Mulligan", tier: "common", category: "easierStages", maxLevel: 2, description: "Each mulligan may replace one additional card.", level: g => upgradeCount(g, "mulliganSize") },
         { id: "cullOne", icon: "✂️", title: "Cull One Letter", tier: "common", category: "easierStages", maxLevel: 6, description: "Permanently remove one rare consonant from your deck and every future answer. Can be taken again.", level: g => v5Level(g, "umtCullOne") },
         { id: "cullTwo", icon: "✂️", title: "Cull Two Letters", tier: "epic", category: "easierStages", maxLevel: 3, description: "Permanently remove two rare consonants from your deck and every future answer. Can be taken again.", level: g => v5Level(g, "umtCullTwo") },
-        { id: "categorySense", icon: "🔮", title: "Theme Sense", tier: "rare", category: "solving", maxLevel: 6, description: "From now on, reveal one category at the start of every solution. Stacks.", level: g => Number(campaignState(g)?.categorySense) || 0 },
+        { id: "categorySense", icon: "🔮", title: "Theme Sense", tier: "rare", category: "solving", maxLevel: 3, description: "Each stage opens with one of the answer's themes shown. Level 2 shows two; level 3 shows them all.", level: g => Number(campaignState(g)?.categorySense) || 0 },
         // Round rewards the live pool offers that this catalogue used to be
         // missing entirely (so they never appeared on the tree). Icons are
         // emoji rather than the pool's text badges ("H+", "Y/G") so every
