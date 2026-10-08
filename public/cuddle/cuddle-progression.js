@@ -97,7 +97,7 @@
     mulliganSize: "Mulligans swap +1",
     cullOne: "Cuts 1 rare letter",
     cullTwo: "Cuts 2 rare letters",
-    categorySense: "+1 theme shown",
+    categorySense: "+1 theme shown (all at level 3)",
     storybookStart: "+10 points per stage",
     wideChoice: "+1 reward choice",
     handSizeBoost: "+1 card in hand",

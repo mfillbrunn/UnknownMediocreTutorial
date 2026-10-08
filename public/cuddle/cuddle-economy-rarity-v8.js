@@ -1638,6 +1638,8 @@
     // Greyscale is a one-time pick (the engine keeps its count).
     if ((name === "greyscale" || name === "grayscale") && Number(state?.balanceRewardCounts?.greyscale) >= 3) return false;
     if ((name === "colour surge" || name === "color surge") && Number(state?.balanceRewardCounts?.colourTrade) >= 3) return false;
+    // Theme Sense tops out at level 3 (every theme shown).
+    if (name === "theme sense" && Number(state?.cuddleCampaign?.categorySense) >= 3) return false;
     return !REMOVED_REWARDS.has(name);
   }
 

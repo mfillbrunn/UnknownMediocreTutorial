@@ -3435,7 +3435,7 @@
     questTrial: { title: "Quest Trial", description: "A quest requirement applies to every affected guess.", shape: "scroll" },
     questEndurance: { title: "Endurance Trial", description: "This guess comes with a quest. Miss it and your hand is one letter smaller for the rest of the stage.", shape: "hand" },
     presetWordsTrial: { title: "Preset Trial", description: "The answer is one of 10 words shown on screen, and you get only 3 guesses.", shape: "list" },
-    categorySense: { title: "Theme Sense", description: "Reveal one theme at the beginning of each solution.", shape: "tag" },
+    categorySense: { title: "Theme Sense", description: "Each stage opens with one of the answer's themes shown. Level 2 shows two; level 3 shows them all.", shape: "tag" },
     coachHint: { title: "Guesser Hint", description: "Alternates yellow presence hints and green position hints during a round.", shape: "hint" },
     revealLocation: { title: "Position Hint", description: "Reveal one correct letter and its exact position.", shape: "greenHint" },
     jokerToken: { title: "Joker", description: "Gain a wildcard letter card.", shape: "joker" },
