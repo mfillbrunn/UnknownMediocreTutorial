@@ -118,7 +118,7 @@
         { id: "rainyDay", icon: "🏦", title: "Rainy Day Fund", tier: "rare", category: "economy", maxLevel: 2, description: "Every stage opens by paying 10% interest on your wallet, up to $25. A second copy doubles both.", level: g => upgradeCount(g, "rainyDay") },
         { id: "encore", icon: "🎬", title: "Encore", tier: "rare", category: "economy", maxLevel: 1, description: "Every third stage you solve pays a 50-point encore bonus.", level: g => upgradeCount(g, "encore") },
         { id: "vowelBounty", icon: "🅰️", title: "Vowel Bounty", tier: "common", category: "economy", maxLevel: 2, description: "Every vowel in a secret you solve pays 5 points.", level: g => upgradeCount(g, "vowelBounty") },
-        { id: "haggler", icon: "🪙", title: "Haggler", tier: "common", category: "economy", maxLevel: 1, description: "Refreshing reward choices costs $0, then $3, $5, $7... instead of $5, $7, $9...", level: g => v5Level(g, "umtHaggler") },
+        { id: "haggler", icon: "🪙", title: "Haggler", tier: "common", category: "economy", maxLevel: 1, description: "Refreshing reward choices costs $0, then $1, $3, $5... instead of $3, $5, $7...", level: g => v5Level(g, "umtHaggler") },
         { id: "doubleDown", icon: "🎲", title: "Double Down", tier: "epic", category: "economy", maxLevel: 1, description: "Each stage names a lucky guess, from the 3rd to the 7th. Solve the word on exactly that guess for +50 points, even if that's past your bonus window.", level: g => upgradeCount(g, "doubleDown") }
       ]
     },

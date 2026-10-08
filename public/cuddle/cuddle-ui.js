@@ -1314,8 +1314,8 @@
               ${escapeHtml(refreshLabel)}
             </button>
             <small>${typeof game.hasHaggler === "function" && game.hasHaggler()
-              ? "Haggler: the first refresh on each reward screen is free, then $3, $5, $7, and so on."
-              : "Refreshes on each reward screen cost $5, then $7, $9, and so on."}</small>`}
+              ? "Haggler: the first refresh on each reward screen is free, then $1, $3, $5, and so on."
+              : "Refreshes on each reward screen cost $3, then $5, $7, and so on."}</small>`}
           </div>
         </section>
       </div>`;

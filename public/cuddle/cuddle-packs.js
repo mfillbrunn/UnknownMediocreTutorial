@@ -255,9 +255,12 @@
   }
 
   function openedHtml(offer) {
-    var cards = offer.cards.map(function card(item) {
+    var cards = offer.cards.map(function card(item, index) {
       var tier = TIER_LABEL[item.tier] ? item.tier : "common";
-      return '<article class="umt-pack-card is-' + tier + '">'
+      // Twinkles around the badge, and the badge itself bobs and catches
+      // the light once it has landed (cuddle-packs.css).
+      return '<article class="umt-pack-card is-' + tier + '" style="--idle-delay:' + (1300 + index * REVEAL_STEP_MS) + 'ms">'
+        + '<span class="umt-pack-twinkle" aria-hidden="true"></span><span class="umt-pack-twinkle" aria-hidden="true"></span><span class="umt-pack-twinkle" aria-hidden="true"></span>'
         + '<span class="umt-pack-card-icon">' + icon(item) + "</span>"
         + '<span class="umt-pack-card-tier">' + TIER_LABEL[tier] + "</span>"
         + "<strong>" + escapeHtml(item.title) + "</strong>"
