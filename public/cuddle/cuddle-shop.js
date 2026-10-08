@@ -87,7 +87,7 @@
       level: game => Math.max(0, int(coachOf(game).hintsPerRound)),
       apply: game => { const coach = coachOf(game); coach.hintsPerRound = Math.min(4, Math.max(0, int(coach.hintsPerRound)) + 1); } },
     { id: "keepMeter", ledgerId: "coachMeterThreshold", icon: "reward-cuddle-meter-reward.svg", title: "Softer Cuddle Meter", cost: 56, max: 3,
-      blurb: "The Cuddle Meter fills one step sooner.",
+      blurb: "The Cuddle Meter fills sooner: 2 fewer tiles, then 4, then 7 at level 3.",
       level: game => Math.max(0, int(coachOf(game).cuddleThresholdStacks)),
       apply: game => { const coach = coachOf(game); coach.cuddleThresholdStacks = Math.min(3, Math.max(0, int(coach.cuddleThresholdStacks)) + 1); } },
     { id: "keepTreasureMap", icon: "reward-green-value.svg", title: "Treasure Map", cost: 36, max: 3, bonus: "treasureMap",

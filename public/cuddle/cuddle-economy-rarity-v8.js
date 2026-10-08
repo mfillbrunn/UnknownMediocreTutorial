@@ -1467,7 +1467,7 @@
       setDescription(def, "Begin every stage with one Joker in the active pouch.");
       replaceHandlers(def, "wild-card");
     } else if (name === "softer cuddle meter") {
-      setDescription(def, "The Cuddle Meter fills one tile sooner. Up to 3 levels (minimum: five).");
+      setDescription(def, "The Cuddle Meter fills sooner: 2 fewer tiles, then 4, then 7 at level 3 (Hard: 12 → 10 → 8 → 5).");
       setMaxStack(def, 6);
       replaceHandlers(def, "soft-meter");
     } else if (name === "bigger cuddle") {

@@ -1119,7 +1119,7 @@
     Object.freeze({ id: "coachBossTenLetterCull", icon: "✂️", title: "Ten-Letter Cull", cost: 24, kind: "boss", description: "Save a ten-letter cull for the next boss." }),
     Object.freeze({ id: "coachBossUnlimitedMulligans", icon: "♾️", title: "Regular Wordle Hands", cost: 28, kind: "boss", description: "Save unlimited mulligans for the next boss." }),
     Object.freeze({ id: "coachShopPossibleAnswers", icon: "🎧", title: "Secrets Counter", cost: 44, kind: "upgrade", rarity: "bronze", description: "Unlock the exact Secrets Remaining counter for this run." }),
-    Object.freeze({ id: "coachShopMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", cost: 56, kind: "upgrade", rarity: "gold", description: "Reduce the Cuddle Meter requirement by one for this run, up to three times." })
+    Object.freeze({ id: "coachShopMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", cost: 56, kind: "upgrade", rarity: "gold", description: "The Cuddle Meter fills sooner: 2 fewer tiles, then 4, then 7 at level 3." })
   ]);
   const SHOP_BY_ID = new Map(SHOP_ITEMS.map(item => [item.id, item]));
   const UPGRADE_MAX = Object.freeze({

@@ -25,7 +25,10 @@
   var VERSION = 1;
   var STATE_KEY = "cuddleCoachExpansion";
   var BASE_METER_THRESHOLD = 10;
-  var MIN_METER_THRESHOLD = 5;
+  var MIN_METER_THRESHOLD = 3;
+  // Softer Cuddle Meter, by level: how many tiles sooner the meter fills
+  // (Hard's 12 goes 10, 8, then 5).
+  var METER_REDUCTION = [0, 2, 4, 7];
   var ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   var VOWELS = new Set("AEIOU".split(""));
   var HINT_UPGRADE_IDS = new Set(["coachHint", "coachEarlierHint"]);
@@ -56,7 +59,7 @@
       key: "coachMeterThreshold",
       icon: "🩶",
       title: "Softer Cuddle Meter",
-      description: "The Cuddle Meter fills one tile sooner. Up to 3 levels (minimum: five).",
+      description: "The Cuddle Meter fills sooner: 2 fewer tiles, then 4, then 7 at level 3 (Hard: 12 → 10 → 8 → 5).",
       max: 3
     },
     {
@@ -344,7 +347,8 @@
       : difficulty.indexOf("hard") >= 0 || difficulty.indexOf("expert") >= 0 || difficulty.indexOf("difficult") >= 0
         ? 12
         : BASE_METER_THRESHOLD;
-    return Math.max(MIN_METER_THRESHOLD, base - integer(coach.cuddleThresholdStacks, 0));
+    var level = clamp(integer(coach.cuddleThresholdStacks, 0), 0, METER_REDUCTION.length - 1);
+    return Math.max(MIN_METER_THRESHOLD, base - METER_REDUCTION[level]);
   }
 
   function meterRewardName(coach) {
