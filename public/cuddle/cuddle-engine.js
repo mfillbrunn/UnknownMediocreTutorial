@@ -629,7 +629,7 @@
 
       const width = FIXED_MASK_SPANS[id] || this.maskSpanWidth();
       const state = this.state || {};
-      const base = `${state.runId || "run"}|${state.round || 0}|${state.secret || ""}|${id}`;
+      const base = `${window.CuddleSeed ? window.CuddleSeed.text(state) : (state.runId || "run")}|${state.round || 0}|${state.secret || ""}|${id}`;
       // Round-stable effects deliberately leave the guess out of the seed,
       // so the same positions stay hidden all round.
       const seed = ROUND_STABLE_SPANS.has(id)
@@ -3307,7 +3307,7 @@
     // picks one of three Legendary rewards instead -- the only place a
     // Legendary can come from. The offer can't be refreshed.
     const legendary = window.CuddleEconomyRarityV8?.legendaryChoices?.(
-      this, 3, `${state.runId || "run"}:${state.bossesCleared}:legendary`
+      this, 3, `${window.CuddleSeed ? window.CuddleSeed.text(state) : (state.runId || "run")}:${state.bossesCleared}:legendary`
     ) || [];
     if (legendary.length) {
       state.status = "upgrade";

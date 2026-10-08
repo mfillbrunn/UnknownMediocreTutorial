@@ -509,6 +509,7 @@
           <div class="cuddle-save-summary ${hasRun ? "" : "is-empty"}">
             <span>${escapeHtml(statusLabel)}</span>
             ${hasRun ? `<strong>${state.score} pts · Round ${state.round}/${scoringRounds()}</strong>` : `<strong>Your run saves in this browser.</strong>`}
+            ${hasRun ? seedChip(state) : ""}
           </div>
           <div class="cuddle-landing-actions">
             ${hasRun ? `<button class="cuddle-btn cuddle-btn-primary" data-action="continue">${escapeHtml(continueLabel)}</button>` : ""}
@@ -516,6 +517,12 @@
           </div>
           <div class="cuddle-difficulty-picker">
             <span class="cuddle-eyebrow">${hasRun ? "START A NEW RUN" : "CHOOSE A DIFFICULTY"}</span>
+            <label class="cuddle-seed-field">
+              <span>Seed</span>
+              <input id="cuddleSeedInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                maxlength="16" placeholder="Random" value="${escapeHtml(seedDraft)}" aria-describedby="cuddleSeedHelp">
+            </label>
+            <p id="cuddleSeedHelp" class="cuddle-seed-help">Type a friend's seed and pick their difficulty to play the same run: same map, words, bosses and rewards. Leave it empty for a new one.</p>
             <div class="cuddle-difficulty-row">
               <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-easy">Easy</button>
               <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-medium">Medium</button>
@@ -1605,6 +1612,7 @@
           </div>
           ${best}
           ${top}
+          ${seedChip(state)}
           <div class="cuddle-end-stats">
             <div><span>Money</span><strong>$${Number(state.cuddleMoney || 0).toLocaleString()}</strong></div>
             <div><span>Rounds</span><strong>${state.round}/${totalRounds}</strong></div>
@@ -1637,6 +1645,7 @@
           <p>${won
             ? `You won the campaign with ${state.score} points.`
             : escapeHtml(state.failureReason || "The run could not continue.")}</p>
+          ${seedChip(state)}
           <div class="cuddle-end-stats">
             <div><span>Points</span><strong>${state.score}</strong></div>
             <div><span>Money</span><strong>$${Number(state.cuddleMoney || 0).toLocaleString()}</strong></div>
@@ -1737,6 +1746,17 @@
     selected.forEach(card => selectedCards.delete(card.id));
   }
 
+  // What's typed in the lobby's Seed box; kept here because every render
+  // rebuilds the box.
+  let seedDraft = "";
+
+  function seedChip(state) {
+    const seed = window.CuddleSeed ? window.CuddleSeed.current({ state }) : "";
+    if (!seed) return "";
+    return `<button type="button" class="cuddle-seed-chip" data-action="copy-seed" data-seed="${escapeHtml(seed)}" aria-label="Copy seed ${escapeHtml(seed)}">`
+      + `<span>Seed</span><b>${escapeHtml(seed)}</b></button>`;
+  }
+
   function startNewRun(difficulty) {
     if (!wordLists) return;
     if (game?.state && !["lost", "won"].includes(game.state.status)) {
@@ -1744,6 +1764,8 @@
       if (!okay) return;
     }
     game = new window.CuddleEngine.CuddleGame(wordLists);
+    if (window.CuddleSeed) window.CuddleSeed.setNext(seedDraft);
+    seedDraft = "";
     game.startNew(difficulty);
     landing = false;
     rulesOpen = false;
@@ -1779,6 +1801,18 @@
       case "toggle-details":
         detailsOpen = !detailsOpen;
         return true;
+      case "copy-seed": {
+        const seed = String(dataset.seed || "");
+        const fallback = () => setUiMessage(`Seed: ${seed}`);
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(seed).then(() => { setUiMessage(`Seed ${seed} copied.`); render(); }, () => { fallback(); render(); });
+          } else fallback();
+        } catch (_error) {
+          fallback();
+        }
+        return true;
+      }
       case "new-run-easy":
         startNewRun("easy");
         return true;
@@ -2160,6 +2194,10 @@
     root = document.getElementById(ROOT_ID);
     document.getElementById("cuddleBtn")?.addEventListener("click", openCuddle);
     root?.addEventListener("click", handleClick);
+    // The Seed box keeps its text across renders (they rebuild it).
+    root?.addEventListener("input", event => {
+      if (event.target && event.target.id === "cuddleSeedInput") seedDraft = String(event.target.value || "").slice(0, 16);
+    });
   });
 
   window.CuddleMode = Object.freeze({ open: openCuddle });

@@ -192,7 +192,7 @@
   }
 
   function routeRandom(game) {
-    let value = hashText(`${game?.state?.runId || "run"}:route-lanes`) || 0x6d2b79f5;
+    let value = hashText(`${window.CuddleSeed && game?.state ? window.CuddleSeed.text(game.state) : (game?.state?.runId || "run")}:route-lanes`) || 0x6d2b79f5;
     return function nextRouteValue() {
       value = (value + 0x6d2b79f5) >>> 0;
       let output = value;

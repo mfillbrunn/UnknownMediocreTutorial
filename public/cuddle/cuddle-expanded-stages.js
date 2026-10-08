@@ -549,7 +549,7 @@
       if (!map || !Array.isArray(map.rows) || map.rows.length < 2 || mapHasProgress(map)) return false;
       const row = map.rows[0];
       if (!row || !Array.isArray(row.nodes) || !row.nodes.length) return false;
-      const rng = seededRandom(`${game.state.runId || "run"}:opening-pair:v1`);
+      const rng = seededRandom(`${(window.CuddleSeed ? window.CuddleSeed.text(game.state) : (game.state.runId || "run"))}:opening-pair:v1`);
       // Lane-based routes (three lanes, sometimes two) already wire row 0
       // into row 1; only the stage types are randomized here.
       if (row.nodes.every(node => node && Number.isInteger(node.lane))) {
@@ -729,7 +729,7 @@
         map.expandedBaseRowsRecorded = true;
       }
       configureOpeningRow(game, map);
-      const rng = seededRandom(`${game.state.runId || "run"}:expanded-stages`);
+      const rng = seededRandom(`${(window.CuddleSeed ? window.CuddleSeed.text(game.state) : (game.state.runId || "run"))}:expanded-stages`);
       decorateChallengeNodes(game, map, rng);
       decorateEventNodes(map, rng);
       addMysteryNode(map, rng);
@@ -961,7 +961,7 @@
       const seen = new Set();
       const choices = [];
       for (let attempt = 0; attempt < 6 && choices.length < 3; attempt += 1) {
-        const cards = api.packRewards(game, tier, `${game.state.runId || "run"}:${game.state.round || 0}:pick:${tier}:${attempt}`) || [];
+        const cards = api.packRewards(game, tier, `${(window.CuddleSeed ? window.CuddleSeed.text(game.state) : (game.state.runId || "run"))}:${game.state.round || 0}:pick:${tier}:${attempt}`) || [];
         const card = cards[cards.length - 1];
         if (card && !seen.has(card.id)) {
           seen.add(card.id);

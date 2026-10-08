@@ -4300,3 +4300,85 @@
 .cuddle-deck.is-empty .cuddle-deck-count {
   color: var(--cuddle-muted);
 }
+
+/* Seeded runs (cuddle-seed.js): the lobby's Seed box and the seed chip. */
+.cuddle-save-summary { flex-wrap: wrap; align-items: center; }
+
+.cuddle-seed-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px 6px 14px;
+  border: 1px solid var(--cuddle-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.cuddle-seed-field:focus-within { border-color: var(--cuddle-accent); }
+
+.cuddle-seed-field span {
+  color: var(--cuddle-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cuddle-seed-field input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  outline: none;
+  color: var(--cuddle-text);
+  background: rgba(0, 0, 0, 0.22);
+  font: 800 1rem/1.2 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.cuddle-seed-field input::placeholder {
+  color: var(--cuddle-muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.cuddle-seed-help {
+  margin: 0;
+  color: var(--cuddle-muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.cuddle-seed-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border: 1px dashed color-mix(in srgb, var(--cuddle-accent) 60%, transparent);
+  border-radius: 999px;
+  color: var(--cuddle-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.cuddle-seed-chip span {
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cuddle-seed-chip b {
+  color: var(--cuddle-text);
+  font: 800 0.9rem/1 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  letter-spacing: 0.14em;
+}
+
+.cuddle-seed-chip:hover,
+.cuddle-seed-chip:focus-visible { border-style: solid; outline: none; color: var(--cuddle-text); }
+
+.cuddle-end-modal .cuddle-seed-chip { align-self: center; margin: 2px auto 8px; }

@@ -129,7 +129,7 @@
           var size = affordable[Math.floor(randomFor(this)() * affordable.length)];
           track.offered[world] = true;
           state.umtPackOffer = {
-            id: (state.runId || "run") + ":" + (state.round || 0) + ":pack",
+            id: (window.CuddleSeed ? window.CuddleSeed.text(state) : (state.runId || "run")) + ":" + (state.round || 0) + ":pack",
             size: size.id,
             price: size.prices[world],
             world: world + 1,
