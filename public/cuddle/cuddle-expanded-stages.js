@@ -2618,18 +2618,9 @@
     // The live quest and the run's clue chips, read from the Duel's state.
     // "Guess N", turning red with its cost once the player's guess is past
     // the stage's quick-solve window (the same points penalty as a stage).
-    function renderDuelGuessCount(game, duel, mine, playerTurn) {
-      let late = null;
-      try {
-        late = playerTurn && duel.tileState && typeof game._lateGuessPenalty === "function"
-          ? withDuelTileState(game, duel, () => ({ window: game._solveGuessThreshold(), cost: game._lateGuessPenalty(mine) }))
-          : null;
-      } catch (_error) {
-        late = null;
-      }
-      if (late && late.cost > 0) {
-        return `<span class="umt-duel-status-count is-late" title="Past the ${late.window}-guess window">Guess ${mine} · -${late.cost}</span>`;
-      }
+    // Just the count: the guess window's cost is explained once per world
+    // (cuddle-world-intro.js).
+    function renderDuelGuessCount(game, duel, mine) {
       return `<span class="umt-duel-status-count">Guess ${mine}</span>`;
     }
 

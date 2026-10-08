@@ -1,0 +1,97 @@
+/* The once-per-world guess-window popup (cuddle-world-intro.js). */
+.umt-wi-overlay {
+  --wi-good: #4ba66a;
+  --wi-late: #e2604f;
+  position: fixed;
+  inset: 0;
+  z-index: 8900;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(8, 7, 14, 0.62);
+  backdrop-filter: blur(2px);
+  animation: umt-wi-fade 200ms ease-out both;
+}
+
+.umt-wi-dialog {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: min(360px, 100%);
+  padding: 20px 18px 18px;
+  border: 1px solid rgba(213, 166, 255, 0.35);
+  border-radius: 18px;
+  background: var(--cuddle-surface, rgba(31, 29, 45, 0.97));
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  color: var(--cuddle-text, #f7f4ff);
+  text-align: center;
+  animation: umt-wi-pop 280ms cubic-bezier(.2, .9, .3, 1.2) both;
+}
+
+.umt-wi-kicker {
+  color: var(--cuddle-accent, #d5a6ff);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.umt-wi-dialog h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  text-wrap: balance;
+}
+
+.umt-wi-dialog p {
+  margin: 0;
+  color: var(--cuddle-muted, #aaa5bc);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  text-wrap: balance;
+}
+
+.umt-wi-dialog p b { color: var(--cuddle-text, #f7f4ff); }
+.umt-wi-dialog .umt-wi-note { font-size: 0.78rem; }
+
+.umt-wi-slots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+}
+
+.umt-wi-slot {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 4px;
+  border: 2px solid var(--wi-good);
+  border-radius: 7px;
+  color: var(--cuddle-text, #f7f4ff);
+  background: color-mix(in srgb, var(--wi-good) 18%, transparent);
+  font-size: 0.85rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.umt-wi-slot.is-late {
+  border-color: var(--wi-late);
+  border-style: dashed;
+  color: #ffb3a8;
+  background: color-mix(in srgb, var(--wi-late) 14%, transparent);
+  font-size: 0.75rem;
+}
+
+.umt-wi-dialog .cuddle-btn { width: 100%; }
+
+@keyframes umt-wi-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes umt-wi-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .umt-wi-overlay,
+  .umt-wi-dialog { animation: none; }
+}
