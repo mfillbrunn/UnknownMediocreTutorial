@@ -2938,6 +2938,8 @@
       // offer survives a save and picks through chooseUpgrade.
       // A reward offer with every card in one rarity (see sameTierOffer).
       sameTierOffer: (game, choices, avoid) => sameTierOffer(game, choices, avoid),
+      // True when the run already holds this reward at its top level.
+      isMaxed: (game, reward) => Boolean(game && reward) && isMaxedReward(typeof reward === "string" ? { title: reward } : reward, game, game.state),
       choiceTier: (choice) => choiceTier(choice),
       legendaryChoices(game, count, seedText) {
         primeCatalog(game);

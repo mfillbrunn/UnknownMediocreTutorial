@@ -121,12 +121,26 @@
     swallowClickUntil = Date.now() + 1250;
 
     const game = activeGame();
-    if (!game || !game.state || game.state.status !== "playing") return;
     const rawIndex = target ? Number(target.dataset.dragIndex) : NaN;
     const targetIndex = Number.isInteger(rawIndex) && rawIndex >= 0 && rawIndex < 5
       ? rawIndex
       : null;
 
+    // The Duel keeps its own hand and word (cuddle-expanded-stages.js).
+    if (ended.duel) {
+      const stages = window.CuddleExpandedStages;
+      if (game && stages && typeof stages.dragDuelTile === "function") {
+        if (ended.kind === "draft") {
+          if (targetIndex === null) stages.dragDuelTile(game, { kind: "remove", from: ended.sourceIndex });
+          else if (targetIndex !== ended.sourceIndex) stages.dragDuelTile(game, { kind: "move", from: ended.sourceIndex, to: targetIndex });
+        } else if (targetIndex !== null) {
+          stages.dragDuelTile(game, { kind: "insert", glyph: ended.glyph, to: targetIndex });
+        }
+        requestRender(game);
+      }
+      return;
+    }
+    if (!game || !game.state || game.state.status !== "playing") return;
     try {
       if (ended.kind === "draft") {
         if (targetIndex === null) {
@@ -172,8 +186,21 @@
     const root = document.getElementById("cuddleRoot");
     if (!root || !root.contains(event.target)) return;
     const game = activeGame();
-    if (!game || !game.state || game.state.status !== "playing" || game.state.roundIntroPending) return;
     if (root.querySelector(".cuddle-submit-row.is-mulligan-mode")) return;
+    // A Duel tile: the run itself sits on the map meanwhile.
+    const duelTarget = event.target.closest && event.target.closest("[data-duel-drag]");
+    if (duelTarget) {
+      if (duelTarget.disabled) return;
+      if (duelTarget.dataset.dragIndex != null) {
+        const index = Number(duelTarget.dataset.dragIndex);
+        const glyph = String(duelTarget.textContent || "").trim();
+        if (Number.isInteger(index) && glyph) begin(event, { kind: "draft", glyph, sourceIndex: index, duel: true });
+      } else if (duelTarget.dataset.cardGlyph) {
+        begin(event, { kind: "hand", glyph: duelTarget.dataset.cardGlyph, duel: true });
+      }
+      return;
+    }
+    if (!game || !game.state || game.state.status !== "playing" || game.state.roundIntroPending) return;
 
     const tile = event.target.closest && event.target.closest(".cuddle-tile[data-drag-index]");
     if (tile) {

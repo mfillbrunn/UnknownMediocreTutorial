@@ -777,6 +777,7 @@
     // The stop preview on the map (cuddle-branch-map.js) reads a stop's
     // wording from here, and an event's two choices as separate options.
     window.CuddleExpandedStages = Object.freeze({
+      dragDuelTile: (game, op) => dragDuelTile(game, op || {}),
       stopMeta: (node, game) => metaForNode(node, game),
       eventOptions: node => {
         const definition = node && EVENT_BY_ID[node.expandedEventId];
@@ -2008,6 +2009,31 @@
       }
     }
 
+    // A drag in the Duel (cuddle-drag-mode.js): a hand tile dropped on a
+    // slot, a word tile moved to another slot, or dragged off the word.
+    function dragDuelTile(game, op) {
+      const ready = requirePlayerDuel(game);
+      if (!ready.ok) return ready;
+      const duel = ready.duel;
+      if (duel.mulliganMode) return { ok: false, error: "Cancel the mulligan before editing the word." };
+      try {
+        const result = withDuelTileState(game, duel, state => {
+          if (op.kind === "remove") return game.removeDraftAt(integer(op.from, -1));
+          if (op.kind === "move") return game.moveDraftCard(integer(op.from, -1), integer(op.to, -1));
+          const glyph = String(op.glyph || "").toUpperCase();
+          const cards = cardsForDuelGlyph(game, state, glyph);
+          const draft = new Set((state.draft || []).filter(Boolean));
+          const card = cards.find(item => game.isInfiniteCard(item)) || cards.find(item => !draft.has(item.id));
+          if (!card) return { ok: false, error: `${glyph} is not free in your hand.` };
+          return game.insertDraftCardAt(card.id, integer(op.to, -1));
+        });
+        safeSave(game);
+        return result;
+      } catch (error) {
+        return { ok: false, error: error && error.message ? error.message : "That tile could not be moved." };
+      }
+    }
+
     function backspaceDuelDraft(game) {
       const ready = requirePlayerDuel(game);
       if (!ready.ok) return ready;
@@ -2482,8 +2508,11 @@
               const cardId = (state.draft || [])[index];
               const card = cardId ? cardById.get(cardId) : null;
               const special = duelSpecialTile(duel, draftRow, index);
-              if (!card) return `<span class="cuddle-tile${special.cls}"${special.attr}></span>`;
-              return `<button type="button" class="cuddle-tile is-draft-tile is-filled${card.source === "joker" || card.glyph === Engine.CUDDLE_JOKER_GLYPH ? " is-joker" : ""}${special.cls}"${special.attr} data-cuddle-campaign-action="expanded-duel-remove" data-shop-item-id="${index}"${enabled ? "" : " disabled"} aria-label="Remove ${escapeHtml(card.glyph)} from position ${index + 1}">${escapeHtml(card.glyph)}</button>`;
+              // data-drag-index / data-duel-drag: tiles can be dragged into,
+              // within and out of the word (cuddle-drag-mode.js).
+              const drag = enabled ? ` data-drag-index="${index}" data-duel-drag="1"` : "";
+              if (!card) return `<span class="cuddle-tile${special.cls}"${special.attr}${drag}></span>`;
+              return `<button type="button" class="cuddle-tile is-draft-tile is-filled${card.source === "joker" || card.glyph === Engine.CUDDLE_JOKER_GLYPH ? " is-joker" : ""}${special.cls}"${special.attr}${drag} data-cuddle-campaign-action="expanded-duel-remove" data-shop-item-id="${index}"${enabled ? "" : " disabled"} aria-label="Remove ${escapeHtml(card.glyph)} from position ${index + 1}">${escapeHtml(card.glyph)}</button>`;
             }).join("");
           });
         } catch (_error) {
@@ -2554,7 +2583,7 @@
         ? `${selectedCount} selected; ${eligible.length} finite available; limit ${limit}`
         : `${draftedCount} in the current word; reusable while visible`;
       return (
-        `<button type="button" class="${classes}" data-cuddle-campaign-action="expanded-duel-card" data-shop-item-id="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${group.cards.length}"${disabled ? " disabled" : ""} aria-pressed="${draftedCount > 0 || selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(group.glyph)}: ${escapeHtml(modeText)}">`
+        `<button type="button" class="${classes}" data-cuddle-campaign-action="expanded-duel-card" data-shop-item-id="${escapeHtml(group.glyph)}" data-card-glyph="${escapeHtml(group.glyph)}" data-duel-drag="1" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${group.cards.length}"${disabled ? " disabled" : ""} aria-pressed="${draftedCount > 0 || selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(group.glyph)}: ${escapeHtml(modeText)}">`
         + `<span class="cuddle-card-letter">${escapeHtml(group.glyph)}</span>${position}${badge}</button>`
       );
     }

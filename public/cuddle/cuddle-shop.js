@@ -270,8 +270,29 @@
 
   // -- the two locked-in shop methods ----------------------------------------
 
+  // A permanent reward that's maxed out (taken elsewhere since this shop
+  // was stocked, or bought here) isn't offered: unsold ones are swapped for
+  // a fresh reward the run can still take.
+  function refreshMaxedKeep(game, stock, bought) {
+    const economy = window.CuddleEconomyRarityV8;
+    if (!economy || typeof economy.isMaxed !== "function" || !Array.isArray(stock.keep)) return;
+    const maxed = entry => isKeepEntry(entry) && !bought.has(`keep:${entry.key}`) && economy.isMaxed(game, entry.title);
+    if (!stock.keep.some(maxed)) return;
+    const names = new Set(stock.keep.filter(isKeepEntry).map(entry => entry.title));
+    const fresh = (typeof economy.shopRewards === "function"
+      ? economy.shopRewards(game, 12, `${seedText(game)}:${shopKey(game)}:wandering-paw:keep:refill`)
+      : []).filter(entry => isKeepEntry(entry) && !names.has(entry.title) && !economy.isMaxed(game, entry.title));
+    stock.keep = stock.keep.map(entry => {
+      if (!maxed(entry)) return entry;
+      const swap = fresh.shift();
+      return swap || null;
+    }).filter(Boolean);
+    safeSave(game);
+  }
+
   function getCuddleShop() {
     const stock = stockFor(this);
+    refreshMaxedKeep(this, stock, new Set(boughtHere(this)));
     const bought = new Set(boughtHere(this));
     const wallet = money(this);
     const items = [];
