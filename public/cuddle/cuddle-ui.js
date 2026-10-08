@@ -1564,7 +1564,6 @@
 
   function renderWinOverlay(state) {
     const totalRounds = window.CuddleEngine.THRESHOLDS.length;
-    const removedLetters = state.removedLetters || [];
     const standing = recordWin(state);
     const elapsed = winElapsed(state, standing);
     const playing = elapsed !== null && elapsed < WIN_TIMING.countFrom + WIN_TIMING.countFor + 1600;
@@ -1597,15 +1596,12 @@
           ${best}
           ${top}
           ${seedChip(state)}
-          <div class="cuddle-end-stats">
-            <div><span>Money</span><strong>$${Number(state.cuddleMoney || 0).toLocaleString()}</strong></div>
-            <div><span>Rounds</span><strong>${state.round}/${totalRounds}</strong></div>
-            <div><span>Removed letters</span><strong>${removedLetters.length ? escapeHtml(removedLetters.join(" ")) : "—"}</strong></div>
-          </div>
+          ${renderRunStats(state)}
           <details class="cuddle-upgrade-details">
             <summary>Final upgrades</summary>
             <ul>${game.getUpgradeSummary().map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
           </details>
+          ${renderEndBadges()}
           <p id="cuddleShareStatus" class="cuddle-share-status" role="status" aria-live="polite"></p>
           <div class="cuddle-modal-actions">
             <button class="cuddle-btn cuddle-btn-primary" data-action="share-run">Share round</button>
@@ -1616,10 +1612,38 @@
       </div>`;
   }
 
+  // The run in numbers (kept by cuddle-run-stats.js).
+  function renderRunStats(state) {
+    const stats = window.CuddleRunStats ? window.CuddleRunStats.of(state) : null;
+    if (!stats) return "";
+    const skull = `<svg class="cuddle-end-skull" viewBox="-6 -7 12 13" aria-hidden="true"><path d="M0 -6.2a4.6 4.6 0 0 0-4.6 4.6c0 1.6.8 2.6 1.9 3.2v1.7a.7.7 0 0 0 .7.7h4a.7.7 0 0 0 .7-.7V1.6c1.1-.6 1.9-1.6 1.9-3.2A4.6 4.6 0 0 0 0-6.2z"/><circle cx="-1.7" cy="-1.6" r="1.15"/><circle cx="1.7" cy="-1.6" r="1.15"/></svg>`;
+    return `<div class="cuddle-end-stats cuddle-run-stats">
+            <div><span>Guesses taken</span><strong>${stats.guesses.toLocaleString()}</strong></div>
+            <div><span>Letters tested</span><strong>${stats.letters.toLocaleString()}</strong></div>
+            <div><span>Solved in the guess window</span><strong>${stats.inWindow} <small>of ${stats.stages}</small></strong></div>
+            <div><span>Skulls collected</span><strong>${skull}${stats.skulls}</strong></div>
+          </div>`;
+  }
+
+  // Every badge the run collected, under the upgrade list.
+  function renderEndBadges() {
+    const list = window.CuddleProgression && typeof window.CuddleProgression.badgeList === "function"
+      ? window.CuddleProgression.badgeList(game)
+      : [];
+    if (!list.length) return "";
+    return `<section class="cuddle-end-badges" aria-label="Badges collected">
+            <h3>Badges collected <span>${list.length}</span></h3>
+            <ul>${list.map(badge => `<li class="${badge.kind === "combo" ? "is-combo" : ""}" style="--t:${escapeHtml(badge.color)}" title="${escapeHtml(badge.title)}">`
+              + `<span class="cuddle-end-badge-hex" aria-hidden="true">${badge.icon}</span>`
+              + `<b>${escapeHtml(badge.title)}</b>`
+              + (badge.maxLevel > 1 ? `<small>${badge.level}/${badge.maxLevel}</small>` : badge.level > 1 ? `<small>×${badge.level}</small>` : "")
+              + `</li>`).join("")}</ul>
+          </section>`;
+  }
+
   function renderEndOverlay(state, won) {
     if (won) return renderWinOverlay(state);
     const totalRounds = window.CuddleEngine.THRESHOLDS.length;
-    const removedLetters = state.removedLetters || [];
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleEndTitle">
         <section class="cuddle-modal cuddle-end-modal">
@@ -1630,16 +1654,12 @@
             ? `You won the campaign with ${state.score} points.`
             : escapeHtml(state.failureReason || "The run could not continue.")}</p>
           ${seedChip(state)}
-          <div class="cuddle-end-stats">
-            <div><span>Points</span><strong>${state.score}</strong></div>
-            <div><span>Money</span><strong>$${Number(state.cuddleMoney || 0).toLocaleString()}</strong></div>
-            <div><span>Rounds reached</span><strong>${state.round}/${totalRounds}</strong></div>
-            <div><span>Removed letters</span><strong>${removedLetters.length ? escapeHtml(removedLetters.join(" ")) : "—"}</strong></div>
-          </div>
+          ${renderRunStats(state)}
           <details class="cuddle-upgrade-details">
             <summary>Final upgrades</summary>
             <ul>${game.getUpgradeSummary().map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
           </details>
+          ${renderEndBadges()}
           <p class="cuddle-share-help">Share the final round grid without revealing the secret word.</p>
           <p id="cuddleShareStatus" class="cuddle-share-status" role="status" aria-live="polite"></p>
           <div class="cuddle-modal-actions">
