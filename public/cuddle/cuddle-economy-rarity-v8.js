@@ -2778,9 +2778,79 @@
     proto._applyUpgradeChoice = wrapped;
   }
 
+  // Every card on a reward screen shares one rarity. Later layers top an
+  // offer back up (after removing duplicates or, on a refresh, the cards
+  // just shown) from the whole pool, and that filler could be any rarity --
+  // so this runs last and swaps any off-rarity card for an unused one of
+  // the offer's rarity, or drops it when there is none (never below 3).
+  function choiceTier(choice) {
+    if (!isObject(choice)) return "";
+    const marked = choice.__cuddleV8OfferTier || choice.__cuddleV8Tier;
+    if (marked) return marked;
+    const name = norm(getName(choice));
+    return ORDINARY_TIER_BY_NAME.get(name) || (LEGENDARY_BOSS_NAMES.has(name) ? TIERS.LEGENDARY : "");
+  }
+
+  function sameTierOffer(game, choices, avoid) {
+    if (!Array.isArray(choices) || choices.length < 2 || !game || !game.state) return choices;
+    const tiers = choices.map(choiceTier);
+    const counts = {};
+    tiers.forEach((tier) => { if (tier) counts[tier] = (counts[tier] || 0) + 1; });
+    const known = Object.keys(counts);
+    if (known.length <= 1 && tiers.every(Boolean)) return choices;
+    // The offer's rarity: the economy marks it on the cards it chose;
+    // otherwise the most common one.
+    const target = choices.map((choice) => choice && choice.__cuddleV8OfferTier).find(Boolean)
+      || known.sort((a, b) => counts[b] - counts[a])[0];
+    if (!target) return choices;
+    const used = new Set(choices.map((choice) => norm(getName(choice))));
+    (avoid || []).forEach((name) => used.add(norm(name)));
+    const spares = shuffle(allOrdinaryCandidates(game, game.state)
+      .filter((def) => def.__cuddleV8Tier === target && !used.has(norm(getName(def)))),
+    `${seedKey(game.state)}:${stageIdentity(game.state)}:same-tier:${offerSalt(game)}`);
+    const out = [];
+    choices.forEach((choice, index) => {
+      if (tiers[index] === target) { out.push(choice); return; }
+      const spare = spares.shift();
+      if (spare) {
+        spare.__cuddleV8OfferTier = target;
+        if (!spare.key) spare.key = getId(spare);
+        out.push(spare);
+      } else if (choices.length - (index + 1) + out.length < 3) {
+        out.push(choice);
+      }
+    });
+    return out;
+  }
+
+  function installSameTierOffers() {
+    const proto = window.CuddleEngine && window.CuddleEngine.CuddleGame && window.CuddleEngine.CuddleGame.prototype;
+    if (!proto || proto.__cuddleV8SameTier) return;
+    proto.__cuddleV8SameTier = true;
+    const baseGenerate = proto._generateUpgradeChoices;
+    if (typeof baseGenerate === "function") {
+      proto._generateUpgradeChoices = function generateSameTierChoices(...args) {
+        const result = baseGenerate.apply(this, args);
+        return Array.isArray(result) ? sameTierOffer(this, result) : result;
+      };
+    }
+    const baseRefresh = proto.refreshUpgradeChoices;
+    if (typeof baseRefresh === "function") {
+      proto.refreshUpgradeChoices = function refreshSameTierChoices(...args) {
+        const shown = (Array.isArray(this.state?.upgradeChoices) ? this.state.upgradeChoices : []).map(getName);
+        const result = baseRefresh.apply(this, args);
+        if (result && result.ok !== false && Array.isArray(this.state?.upgradeChoices)) {
+          this.state.upgradeChoices = sameTierOffer(this, this.state.upgradeChoices, shown);
+        }
+        return result;
+      };
+    }
+  }
+
   function install() {
     if (window.CuddleEconomyRarityV8?.version === VERSION) return;
     installLegendaryApply();
+    installSameTierOffers();
     const api = {
       version: VERSION,
       tiers: TIERS,
@@ -2866,6 +2936,9 @@
       // The pick after a boss: `count` different Legendary rewards, the
       // only way to get one. Same plain shape as the shop's stock, so the
       // offer survives a save and picks through chooseUpgrade.
+      // A reward offer with every card in one rarity (see sameTierOffer).
+      sameTierOffer: (game, choices, avoid) => sameTierOffer(game, choices, avoid),
+      choiceTier: (choice) => choiceTier(choice),
       legendaryChoices(game, count, seedText) {
         primeCatalog(game);
         const state = game && game.state;
