@@ -45,9 +45,9 @@ function getRevealableCategories(word) {
     .filter(Boolean);
 }
 
-// Rare Word secrets are real words but not in allowed_secrets.txt; they have
-// no theme entries, so a hint for one honestly answers "No category"
-// instead of the request being refused (which left theme hints failing).
+// Rare Word secrets are real words but not in allowed_secrets.txt. They
+// have hand-assigned wordThemes entries of their own, so the route accepts
+// them and theme hints work on Rare Word stages like any other.
 function loadCuddleRareWords(filePath = RARE_WORDS_PATH) {
   try {
     const source = fs.readFileSync(filePath, "utf8");
