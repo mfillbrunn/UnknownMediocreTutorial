@@ -3,7 +3,7 @@
   "use strict";
 
   const VERSION = "2026.09.09.2";
-  const ROUTE_VERSION = "umt-cuddle-route-2026.10.07.themes";
+  const ROUTE_VERSION = "umt-cuddle-route-2026.10.09.paths";
   const PATCH_MARK = Symbol.for("umt.cuddle.stability.v2");
   const ROUND_TYPES = new Set(["normal", "theme", "challenge", "boss", "wordle"]);
   const FALLBACK_ICON = "gift.svg";
@@ -265,6 +265,58 @@
   // Events ride along as an occasional lane in a world's middle row (only
   // when that row has all three lanes, so two wordle lanes always remain).
   const REST_LANES = [0, 2];
+  const WORDLE_TYPES = ["normal", "theme", "challenge"];
+
+  // A theme's path (cuddle-worlds.js `path`), laid over its world's Wordle
+  // rows [from, to). The run's opening row is left alone (the expanded
+  // stages configure it). A challenge row turns every lane into a
+  // challenge; events and Free Upgrades only take a lane in a three-lane
+  // row, so two Wordles always remain; Unknown stops hide a Wordle; and no
+  // row gets two of the same.
+  function applyThemePath(rows, from, to, world, path, random) {
+    const rowList = [];
+    for (let index = world === 0 ? from + 1 : from; index < to; index += 1) rowList.push(index);
+    const wordles = rowIndex => rows[rowIndex].nodes.filter(node => WORDLE_TYPES.includes(node.type));
+    const place = (count, build) => {
+      let placed = 0;
+      shuffled(rowList, random).forEach(rowIndex => {
+        if (placed < count && build(rowIndex)) placed += 1;
+      });
+    };
+    const taken = new Set();
+    place(Math.max(0, Number(path.challengeRow) || 0), rowIndex => {
+      const row = rows[rowIndex];
+      if (row.nodes.some(node => !WORDLE_TYPES.includes(node.type) && node.type !== "event")) return false;
+      row.nodes.forEach(node => { node.type = "challenge"; delete node.eventId; });
+      row.challengeRow = true;
+      taken.add(rowIndex);
+      return true;
+    });
+    const takeLane = (type, extra) => rowIndex => {
+      if (taken.has(rowIndex) || rows[rowIndex].nodes.length < 3) return false;
+      const lanes = wordles(rowIndex);
+      if (lanes.length < 3) return false;
+      const node = lanes[Math.floor(random() * lanes.length)];
+      node.type = type;
+      Object.assign(node, extra);
+      taken.add(rowIndex);
+      return true;
+    };
+    if (Number.isFinite(path.events)) place(Math.max(0, path.events), takeLane("event", { eventId: "windfall" }));
+    place(Math.max(0, Number(path.upgrade) || 0), takeLane("upgrade", {}));
+    place(Math.max(0, Number(path.mystery) || 0), rowIndex => {
+      if (rows[rowIndex].challengeRow) return false;
+      const lanes = wordles(rowIndex);
+      if (!lanes.length) return false;
+      const node = lanes[Math.floor(random() * lanes.length)];
+      node.mysteryType = node.type;
+      node.mysteryRevealed = false;
+      node.themeMystery = true;
+      node.type = "mystery";
+      return true;
+    });
+  }
+
   function buildRoute(game) {
     const pairs = bossPairs(game);
     if (pairs.length < 3) return null;
@@ -282,6 +334,7 @@
     for (let world = 0; world < 3; world += 1) {
       const theme = themes[world] || { rows: 3, lanes: "mixed", ease: 0 };
       const stepCount = Math.max(1, Math.min(5, Number(theme.rows) || 3));
+      const firstRow = rows.length;
       for (let step = 0; step < stepCount; step += 1) {
         const lanes = theme.lanes === "wide" ? [0, 1, 2]
           : theme.lanes === "linear" ? (random() < 0.5 ? [0, 2] : random() < 0.5 ? [0, 1] : [1, 2])
@@ -293,7 +346,11 @@
           if (theme.ease < 0 && type === "challenge" && random() < 0.6) types[index] = "theme";
           if (theme.ease > 0 && type === "normal" && random() < 0.6) types[index] = "challenge";
         });
-        if (step === Math.floor(stepCount / 2) && lanes.length === 3 && random() < 0.5) types[Math.floor(random() * 3)] = "event";
+        // A theme that sets its own event count places them below instead.
+        const path = theme.path || {};
+        if (!Number.isFinite(path.events) && step === Math.floor(stepCount / 2) && lanes.length === 3 && random() < 0.5) {
+          types[Math.floor(random() * 3)] = "event";
+        }
         const rowIndex = rows.length;
         rows.push({
           kind: "stops",
@@ -305,6 +362,7 @@
           })
         });
       }
+      applyThemePath(rows, firstRow, rows.length, world, theme.path || {}, random);
       const restTypes = shuffled(["shop", "upgrade"], random);
       const rowIndex = rows.length;
       rows.push({

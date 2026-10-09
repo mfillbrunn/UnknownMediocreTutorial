@@ -64,10 +64,23 @@
     }
   }
 
+  // The challenges a theme favours (cuddle-worlds.js), by name and icon.
+  function favouredChallenges(world) {
+    var book = window.CuddleQuestBook;
+    var list = book && Array.isArray(book.CONSTRAINTS) ? book.CONSTRAINTS : [];
+    return (Array.isArray(world.challenges) ? world.challenges : []).map(function find(id) {
+      var item = list.find(function match(entry) { return entry && entry.id === id; });
+      return item ? { id: id, icon: item.icon, title: item.title } : null;
+    }).filter(Boolean);
+  }
+
   function describeTheme(world) {
     var theme = world.theme || world.id;
     var trait = TRAITS[theme] || null;
-    return { theme: theme, index: world.index, name: world.name, tagline: world.tagline, accent: world.accent, trait: trait };
+    return {
+      theme: theme, index: world.index, name: world.name, tagline: world.tagline, accent: world.accent, trait: trait,
+      challenges: favouredChallenges(world), path: world.pathBlurb || ""
+    };
   }
 
   // The current world: its theme id, name, trait and stage name.
