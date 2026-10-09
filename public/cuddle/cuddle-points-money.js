@@ -52,6 +52,9 @@
   // on top of this (see the module comment above) -- this is just the
   // baseline every stage pays regardless of what else is unlocked.
   var STAGE_CLEAR_MONEY = 10;
+  // Read by the cash-out, which shows this money before it's paid (it lands
+  // when the stage is left, after the reward pick).
+  window.CuddleStageClearMoney = STAGE_CLEAR_MONEY;
 
   // Special tiles: a few board cells, rolled fresh at the start of every
   // round, boss fights included, that pay out for the letter the player lands on them.

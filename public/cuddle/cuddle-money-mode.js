@@ -324,6 +324,7 @@
       cards: null
     };
     mode.roundStartingMoney = asNumber(state.score, 0) - asNumber(state.roundScore, 0);
+    mode.roundStartingCash = asNumber(state.cuddleMoney, 0);
     mode.lastRoundKey = [state.runId, state.round, state.secret].join(":");
     state[MODE_KEY] = mode;
     migrateFirstBossGate(state);
@@ -348,6 +349,7 @@
     mode.challengeOffer = null;
     mode.activeChallenge = null;
     mode.roundStartingMoney = asNumber(state.score, 0) - asNumber(state.roundScore, 0);
+    mode.roundStartingCash = asNumber(state.cuddleMoney, 0);
 
     var difficulty = String(state.megaState && state.megaState.difficulty || "hard");
     var chance = asNumber(CONFIG.challengeChance[difficulty], CONFIG.challengeChance.hard);
@@ -552,6 +554,7 @@
     activateGame(this);
     if (!mode) return result;
     mode.roundStartingMoney = asNumber(this.state.score, 0) - asNumber(this.state.roundScore, 0);
+    mode.roundStartingCash = asNumber(this.state.cuddleMoney, 0);
     if (this.isBossRound()) {
       mode.challengeOffer = null;
       mode.activeChallenge = null;
@@ -766,6 +769,9 @@
       from: Math.round(start),
       to: Math.round(finish),
       total: expected,
+      // The wallet when the stage began: the cash-out shows what the stage
+      // paid in money too (payoutMoney), stage clear included.
+      cashFrom: Math.round(asNumber(mode.roundStartingCash, asNumber(state.cuddleMoney, 0))),
       stageBonus: stageBonus,
       rows: rows,
       challenge: challenge ? {
@@ -1101,6 +1107,8 @@
     var total = overlay.querySelector(".cuddle-money-payout-total");
     var collect = overlay.querySelector("[data-cuddle-money-action=\"collect-payout\"]");
     if (total) total.classList.add("is-visible");
+    refreshPayoutMoney(payload, overlay);
+    overlay.querySelectorAll(".cuddle-money-payout-total.is-money").forEach(function show(row) { row.classList.add("is-visible"); });
     overlay.classList.add("is-finished");
     if (collect) {
       collect.hidden = false;
@@ -1120,6 +1128,35 @@
   // rewards recorded on the guesses (solved early / within the window,
   // unused mulligans...), then the stage-level extras the rebalance layer
   // itemizes (challenge cleared, combos...), then anything left over.
+  function payoutMoney(payload) {
+    var state = activeGame && activeGame.state;
+    // The stage-clear payment lands later, when the stage is left
+    // (cuddle-points-money.js), so it's added here.
+    var clear = Math.max(0, asNumber(window.CuddleStageClearMoney, 0));
+    if (!state || payload.cashFrom == null) return clear;
+    return Math.max(0, Math.round(asNumber(state.cuddleMoney, 0) - asNumber(payload.cashFrom, 0))) + clear;
+  }
+
+  // Both amounts, always: the points and the money this stage pays.
+  function collectLabel(payload) {
+    return "Collect <b class=\"cuddle-money-collect-pts\">" + formatPointsDelta(payload.total) + " pts</b>"
+      + " <b class=\"cuddle-money-collect-cash\">+" + formatMoney(payoutMoney(payload)) + "</b>";
+  }
+
+  // The money row and the Collect label read the wallet when they're
+  // shown, so money paid as the stage resolves (the stage clear) counts.
+  function refreshPayoutMoney(payload, overlay) {
+    var money = payoutMoney(payload);
+    var row = overlay.querySelector(".cuddle-money-payout-total.is-money");
+    if (row) {
+      row.hidden = !money;
+      var value = row.querySelector("strong");
+      if (value) value.textContent = "+" + formatMoney(money);
+    }
+    var collect = overlay.querySelector("[data-cuddle-money-action=\"collect-payout\"]");
+    if (collect) collect.innerHTML = collectLabel(payload);
+  }
+
   function stageBonusMarkup(game, payload) {
     var custom = game && game.state && game.state.cuddleRebalanceV5;
     var history = game && game.state && Array.isArray(game.state.history) ? game.state.history : [];
@@ -1199,11 +1236,12 @@
       + stageBonusMarkup(game, payload)
       + "<p class=\"cuddle-money-payout-hint\">Tap a row to see what it paid.</p>"
       + "<div class=\"cuddle-money-payout-total\"><span>" + (payload.wasBoss ? "BOSS TOTAL" : "ROUND TOTAL") + "</span><strong>" + formatPointsDelta(payload.total) + "</strong></div>"
+      + "<div class=\"cuddle-money-payout-total is-money\"" + (payoutMoney(payload) ? "" : " hidden") + "><span>MONEY</span><strong>+" + formatMoney(payoutMoney(payload)) + "</strong></div>"
       + "</section>"
       // Collect sits in a bar pinned to the bottom of the screen, so it's
       // always in reach; the card scrolls behind it.
       + "<div class=\"cuddle-money-collect-bar\">"
-      + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-primary cuddle-money-collect\" data-cuddle-money-action=\"collect-payout\" hidden>Collect " + formatPoints(payload.total) + "</button>"
+      + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-primary cuddle-money-collect\" data-cuddle-money-action=\"collect-payout\" hidden>" + collectLabel(payload) + "</button>"
       + "</div></div>"
     );
     var overlay = document.getElementById("cuddleMoneyPayoutOverlay");
