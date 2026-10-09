@@ -643,10 +643,10 @@
       `<span class="cuddle-detail-badge ${className}"><b>${escapeHtml(label)}</b> ${escapeHtml(value)}</span>`;
     const boss = game.isBossRound();
     const bonusWindow = game._solveGuessThreshold ? game._solveGuessThreshold() : 6;
-    // A spare guess in an ordinary stage pays as five greens on top of the
-    // early-guess rate (cuddle-coach-expansion.js's applyUnusedRowMoney);
-    // a boss round pays only the early-guess rate.
-    const perSpare = boss ? rules.earlyPoint : 5 * rules.greenPoints + rules.earlyPoint;
+    // A spare guess pays as five greens (a BONUS row on the cash-out) plus
+    // the early-guess rate ("Solved N guesses early" in the bonus box) --
+    // cuddle-coach-expansion.js's applyUnusedRowMoney.
+    const perSpare = 5 * rules.greenPoints + rules.earlyPoint;
     const scoring = [
       `<span class="cuddle-detail-tiles">`
         + `<span class="cuddle-detail-tile is-green"><b>Green</b> ${signed(rules.greenPoints)}</span>`
@@ -832,12 +832,11 @@
             ? `<span class="cuddle-row-score is-boss-active" title="${escapeHtml(state.boss.title || "Boss power")} applied to this guess">${escapeHtml(state.boss.icon || "⚡")}</span>`
             : `<span class="cuddle-row-score is-boss-inactive" title="${escapeHtml(state.boss.title || "Boss power")} no longer applies to this guess">—</span>`)
         : null;
-      // A solve's early bonuses (scaled-by-unused-guess plus the flat
-      // solve-in-window bonus) and a too-late guess's flat penalty are
-      // both separate from the tile-color scoreDelta above -- shown as
-      // their own small suffixes so the number itself still reads as
-      // "what this guess's tiles were worth."
-      const rowBonus = (history?.earlyBonus || 0) + (history?.earlySolveBonus || 0);
+      // A too-late guess's flat penalty is separate from the tile-color
+      // scoreDelta above -- shown as its own small suffix so the number
+      // itself still reads as "what this guess's tiles were worth." (The
+      // early-solve bonus is the cash-out's, not a row's.)
+      const rowBonus = 0;
       const rowPenalty = history?.latePenalty || 0;
       const score = counts
         ? `<span class="cuddle-row-score is-counts" title="${counts.green} green, ${counts.yellow} yellow">` +
@@ -1719,7 +1718,7 @@
       yellowPoints: 1,
       greenPoints: 2,
       greyPoints: 0,
-      earlyPoint: 10,
+      earlyPoint: 5,
       mulliganPoints: 3,
       questPoints: 0,
       questCadence: 3

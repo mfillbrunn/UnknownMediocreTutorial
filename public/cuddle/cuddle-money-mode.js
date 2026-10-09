@@ -670,7 +670,6 @@
   // rather than piled onto the last row.
   var SOLVE_BONUS_FIELDS = [
     ["earlyBonus", "Solved early", "unused guesses"],
-    ["earlySolveBonus", "Solved within the window", ""],
     ["cuddleSolveBonus", "Solve bonus", ""],
     ["mulliganBonus", "Unused mulligans", ""],
     ["challengeBonus", "Challenge cleared", ""]
@@ -678,9 +677,13 @@
 
   function solveBonusLines(entry) {
     if (!entry) return [];
+    var spare = Math.max(0, Math.round(asNumber(entry.unusedRows, 0)));
     return SOLVE_BONUS_FIELDS
       .map(function line(field) {
-        return { label: field[1], detail: field[2], amount: Math.round(asNumber(entry[field[0]], 0)) };
+        var label = field[0] === "earlyBonus" && spare
+          ? "Solved " + spare + " guess" + (spare === 1 ? "" : "es") + " early"
+          : field[1];
+        return { label: label, detail: field[2], amount: Math.round(asNumber(entry[field[0]], 0)) };
       })
       .filter(function keep(line) { return line.amount; });
   }

@@ -1035,13 +1035,14 @@
     var coach = ensureCoach(game);
     var rules = typeof game.getRulesSummary === "function" ? game.getRulesSummary() : {};
     var unusedRows = Math.max(0, integer(maxGuessesBefore, 6) - integer(game.state.guessesUsed, 0));
-    var perRow = Math.max(0, 5 * finite(rules.greenPoints, 2) + finite(rules.earlyPoint, 10));
+    // Each spare row pays as five greens here (a BONUS row); the engine's
+    // own early bonus (5 per spare guess) stays on entry.earlyBonus and is
+    // shown in the bonus box as "Solved N guesses early".
+    var perRow = Math.max(0, 5 * finite(rules.greenPoints, 2));
     var desired = Math.round(unusedRows * perRow);
-    var previous = Math.round(finite(entry && entry.earlyBonus, 0));
-    var adjustment = desired - previous;
+    var early = Math.round(finite(entry && entry.earlyBonus, 0));
+    var adjustment = desired;
     if (entry) {
-      entry.legacyEarlyBonus = previous;
-      entry.earlyBonus = 0;
       entry.unusedRows = unusedRows;
       entry.unusedRowValue = perRow;
       entry.unusedRowBonus = desired;
@@ -1050,12 +1051,12 @@
     game.state.roundScore = finite(game.state.roundScore, 0) + adjustment;
     if (game.state.pendingRoundEnd) {
       game.state.pendingRoundEnd.score = game.state.score;
-      game.state.pendingRoundEnd.earlyBonus = desired;
+      game.state.pendingRoundEnd.earlyBonus = early + desired;
     }
     if (game.state.lastRoundSummary) {
       game.state.lastRoundSummary.score = game.state.score;
       game.state.lastRoundSummary.roundScore = game.state.roundScore;
-      game.state.lastRoundSummary.earlyBonus = desired;
+      game.state.lastRoundSummary.earlyBonus = early + desired;
       game.state.lastRoundSummary.unusedRows = unusedRows;
       game.state.lastRoundSummary.unusedRowValue = perRow;
     }
@@ -1427,7 +1428,7 @@
     var entry = this.state.history && this.state.history[this.state.history.length - 1];
     recordGreyTilesAndGrant(this);
     applyDoubleQuestReward(this, entry, wasBoss, activeBefore);
-    if (result.solved && !wasBoss && entry) applyUnusedRowMoney(this, entry, maxBefore);
+    if (result.solved && entry) applyUnusedRowMoney(this, entry, maxBefore);
     if (activeBefore.doubleQuestRewards && entry?.questComplete && this.state.status === "questReward") {
       this.state.questRewardPicksRemaining = Math.max(2, integer(this.state.questRewardPicksRemaining, 1));
     }
