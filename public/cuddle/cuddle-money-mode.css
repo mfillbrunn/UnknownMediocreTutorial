@@ -953,3 +953,26 @@
     margin: 0 -8px -8px;
   }
 }
+
+/* The stage's money on the cash-out: a gold row under the points total,
+   and the gold amount on the Collect button. */
+#cuddleScreen .cuddle-money-payout-total.is-money {
+  margin-top: 8px;
+  border-color: rgba(246, 201, 86, 0.55);
+  color: var(--cuddle-money-gold-bright, #f6c956);
+  background:
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1), transparent 13rem),
+    linear-gradient(130deg, rgba(120, 88, 20, 0.4), rgba(246, 201, 86, 0.1));
+}
+
+#cuddleScreen .cuddle-money-payout-total.is-money[hidden] { display: none; }
+
+#cuddleScreen .cuddle-money-collect b { font-weight: 900; }
+
+#cuddleScreen .cuddle-money-collect .cuddle-money-collect-cash {
+  margin-left: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  color: #3a2a05;
+  background: #f6c956;
+}

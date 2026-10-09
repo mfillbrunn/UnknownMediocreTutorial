@@ -956,6 +956,8 @@
     const collect = root.querySelector("[data-cuddle-money-action='collect-payout'], [data-action='collect-money-payout']");
     const total = payoutTotalFromOverlay(root);
     if (!collect || total === null) return;
+    // The cash-out now labels its own button (points and money).
+    if (collect.querySelector("b")) return;
     collect.textContent = "Collect";
     collect.setAttribute("aria-label", `Collect ${total} dollars earned this round`);
   }
@@ -1508,6 +1510,7 @@
       collect = Array.from(overlay.querySelectorAll("button")).find(button => /^\s*collect\b/i.test(button.textContent || "")) || null;
     }
     if (!collect) return;
+    if (collect.querySelector("b")) return;
     collect.textContent = "Collect";
     collect.setAttribute("aria-label", `Collect ${Math.max(0, total)} points earned this round`);
   }
