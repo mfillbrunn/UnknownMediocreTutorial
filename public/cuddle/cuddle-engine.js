@@ -107,7 +107,7 @@
   // solve is worth a lot, and mulligans you never spent pay out at round end.
   const YELLOW_POINTS = 1;
   const GREEN_POINTS = 2;
-  const EARLY_GUESS_POINTS = 10;
+  const EARLY_GUESS_POINTS = 5;
   const UNUSED_MULLIGAN_POINTS = 3;
   // A guess past the round's "quick solve" window (_solveGuessThreshold(),
   // 6/5/4 as boss gates clear) costs points (see _lateGuessPenalty): a
@@ -119,7 +119,7 @@
   const LATE_GUESS_STEP_WORLD_THREE = 10;
   // A flat bonus for solving within that same window at all, in addition
   // to the scaled-by-unused-guesses EARLY_GUESS_POINTS payout above.
-  const EARLY_SOLVE_BONUS = 5;
+  const EARLY_SOLVE_BONUS = 0;
   // Quests start at zero and are only worth anything once the Quest Value
   // reward (+5 a pick, stacking) or the Quest Head Start boss reward is taken.
   const QUEST_POINTS_PER_PICK = 10;
@@ -3934,7 +3934,7 @@
       greenPoints: coloursDisabled
         ? 0
         : finiteNumber(rules.greenPoints, 2 + finiteNumber(upgrades.yellowPoints) + finiteNumber(upgrades.greenOnlyPoints)),
-      earlyPoint: finiteNumber(rules.earlyPoint, 10 + finiteNumber(upgrades.earlyRoundPoint)),
+      earlyPoint: finiteNumber(rules.earlyPoint, 5 + finiteNumber(upgrades.earlyRoundPoint)),
       mulliganPoints: finiteNumber(rules.mulliganPoints, 3)
         + finiteNumber(upgrades.mulliganPointBonus)
     };

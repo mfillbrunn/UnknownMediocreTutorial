@@ -140,7 +140,7 @@
       except: [".umt-pt-overlay"],
       at: "top",
       cards: [
-        { title: "Cash-out", text: "Solved! Every tile you revealed pays points: grey 0, yellow 1, green 2. Each row you didn't need pays a bonus, solving within the guess window pays extra, and unused mulligans and many upgrades add more. Tap a row to see what it paid.", focus: ".cuddle-money-payout-rows" },
+        { title: "Cash-out", text: "Solved! Every tile you revealed pays points: grey 0, yellow 1, green 2. Each guess you didn't need pays a BONUS row of greens plus 5 points for finishing early, and unused mulligans, Jokers and many upgrades add more. Tap a row to see what it paid.", focus: ".cuddle-money-payout-rows" },
         { title: "Points and money", text: "<b>Points</b> are your score, and they're what lets you challenge a boss. <b class=\"umt-tut-gold\">Money</b> comes from clearing stages and challenges. You spend it in shops, on packs and on refreshes. Tap <b>Collect</b> to bank it.", focus: ".cuddle-money-collect" }
       ]
     },

@@ -20,7 +20,7 @@
     // more than the helped stages (Themed, Head Start, Lucky Start: none)
     // and less than a challenge ($20-$40), in both Points and Money.
     classicClearBonus: 12,
-    unusedJokerBonus: 3,
+    unusedJokerBonus: 5,
     reserveDividendExtra: 5,
     hints: Object.freeze({"easy":{"first":1,"cadence":2},"medium":{"first":2,"cadence":3},"hard":{"first":3,"cadence":4}})
   });

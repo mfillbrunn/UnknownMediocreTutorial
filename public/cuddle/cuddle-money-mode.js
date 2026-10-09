@@ -670,7 +670,6 @@
   // rather than piled onto the last row.
   var SOLVE_BONUS_FIELDS = [
     ["earlyBonus", "Solved early", "unused guesses"],
-    ["earlySolveBonus", "Solved within the window", ""],
     ["cuddleSolveBonus", "Solve bonus", ""],
     ["mulliganBonus", "Unused mulligans", ""],
     ["challengeBonus", "Challenge cleared", ""]
@@ -678,9 +677,13 @@
 
   function solveBonusLines(entry) {
     if (!entry) return [];
+    var spare = Math.max(0, Math.round(asNumber(entry.unusedRows, 0)));
     return SOLVE_BONUS_FIELDS
       .map(function line(field) {
-        return { label: field[1], detail: field[2], amount: Math.round(asNumber(entry[field[0]], 0)) };
+        var label = field[0] === "earlyBonus" && spare
+          ? "Solved " + spare + " guess" + (spare === 1 ? "" : "es") + " early"
+          : field[1];
+        return { label: label, detail: field[2], amount: Math.round(asNumber(entry[field[0]], 0)) };
       })
       .filter(function keep(line) { return line.amount; });
   }
@@ -1235,8 +1238,7 @@
       + "<div class=\"cuddle-money-payout-rows\">" + payload.rows.map(payoutRowMarkup).join("") + "</div>"
       + stageBonusMarkup(game, payload)
       + "<p class=\"cuddle-money-payout-hint\">Tap a row to see what it paid.</p>"
-      + "<div class=\"cuddle-money-payout-total\"><span>" + (payload.wasBoss ? "BOSS TOTAL" : "ROUND TOTAL") + "</span><strong>" + formatPointsDelta(payload.total) + "</strong></div>"
-      + "<div class=\"cuddle-money-payout-total is-money\"" + (payoutMoney(payload) ? "" : " hidden") + "><span>MONEY</span><strong>+" + formatMoney(payoutMoney(payload)) + "</strong></div>"
+      // No total rows: the Collect button carries the points and money.
       + "</section>"
       // Collect sits in a bar pinned to the bottom of the screen, so it's
       // always in reach; the card scrolls behind it.
