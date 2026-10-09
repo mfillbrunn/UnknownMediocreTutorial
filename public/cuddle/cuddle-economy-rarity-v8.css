@@ -342,3 +342,10 @@
   .cuddle-v8-pouch-item { grid-template-columns: minmax(0, 1fr) auto; }
   .cuddle-v8-pouch-item button { grid-column: 1 / -1; }
 }
+
+/* The third level of a power is a big step: its card text says so. */
+.cuddle-choice small.cuddle-v8-level-text.is-max-step::before {
+  content: "Max level: ";
+  color: #f6c956;
+  font-weight: 800;
+}
