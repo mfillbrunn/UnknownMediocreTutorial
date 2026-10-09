@@ -4577,3 +4577,48 @@
 .cuddle-newrun-modal .cuddle-difficulty-row .cuddle-btn { min-width: 0; padding-inline: 8px; }
 .cuddle-newrun-modal .cuddle-seed-field { width: 100%; }
 .cuddle-newrun-modal h2 { padding: 0 44px; }
+
+/* Combo chip: under the card's description, says what it pairs with. */
+.umt-combo-chip {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  justify-self: center;
+  gap: 5px;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  margin-top: 8px;
+  padding: 4px 6px 4px 9px;
+  border-radius: 999px;
+  font-size: .68rem;
+  font-weight: 850;
+  letter-spacing: .02em;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.umt-combo-chip svg { flex: 0 0 auto; width: 12px; height: 12px; }
+.umt-combo-chip > span { overflow: hidden; text-overflow: ellipsis; }
+.umt-combo-chip i {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: rgba(42, 15, 29, .25);
+  font-style: normal;
+  font-size: .62rem;
+}
+.umt-combo-chip[aria-expanded="true"] { transform: none; }
+/* Its note opens just above the chip. */
+.cuddle-choice:has(.umt-combo-chip) .umt-combo-pop { top: auto; bottom: 44px; }
+.umt-combo-legend {
+  margin: -2px auto 10px;
+  max-width: 46ch;
+  color: rgba(255, 236, 246, .82);
+  font-size: .78rem;
+  line-height: 1.35;
+}
+.umt-combo-legend b { color: #ffb3d4; }

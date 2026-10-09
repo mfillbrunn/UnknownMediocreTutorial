@@ -101,9 +101,13 @@
       Bonus
     </span>`;
     }
-    return `<span class="umt-combo-star" role="button" tabindex="0" data-combo-info aria-expanded="false"
-      aria-label="Combo bonus: ${escapeHtml(synergy.title)}. Tap for details." title="Combo bonus: ${escapeHtml(synergy.title)}">
+    // A labelled chip under the description: what it pairs with, in words.
+    // Tapping it (not the card) opens what the combo adds.
+    const partner = synergy.partner ? ` with ${escapeHtml(synergy.partner)}` : "";
+    return `<span class="umt-combo-star umt-combo-chip" role="button" tabindex="0" data-combo-info aria-expanded="false"
+      aria-label="Combo${partner}: ${escapeHtml(synergy.title)}. Tap for what it adds." title="Combo bonus: ${escapeHtml(synergy.title)}">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l3.22 6.53 7.21 1.05-5.22 5.09 1.23 7.18L12 17.9l-6.44 3.45 1.23-7.18-5.22-5.09 7.21-1.05z"/></svg>
+      <span>Combo${partner}</span><i aria-hidden="true">?</i>
     </span>`;
   }
 
@@ -646,7 +650,7 @@
     // A spare guess pays as five greens (a BONUS row on the cash-out) plus
     // the early-guess rate ("Solved N guesses early" in the bonus box) --
     // cuddle-coach-expansion.js's applyUnusedRowMoney.
-    const perSpare = 5 * rules.greenPoints + rules.earlyPoint;
+    const perSpare = 10 + rules.earlyPoint;
     const scoring = [
       `<span class="cuddle-detail-tiles">`
         + `<span class="cuddle-detail-tile is-green"><b>Green</b> ${signed(rules.greenPoints)}</span>`
@@ -1249,10 +1253,10 @@
           <div class="cuddle-choice-grid">
             ${state.questRewardChoices.map(reward => `
               <button class="cuddle-choice" data-reward-id="${escapeHtml(reward.id)}">
-                ${interactionBonusBadge(reward.id)}
                 <span class="cuddle-choice-icon">${escapeHtml(reward.icon || "✨")}</span>
                 <strong>${escapeHtml(reward.title)}</strong>
                 <small>${goldenMoney(escapeHtml(reward.description))}</small>
+                ${interactionBonusBadge(reward.id)}
                 ${interactionBonusDetail(reward.id)}
               </button>`).join("")}
           </div>
@@ -1318,13 +1322,16 @@
           <span class="cuddle-modal-kicker">${kicker}</span>
           <h2 id="cuddleUpgradeTitle">${heading}</h2>
           ${body ? `<p>${body}</p>` : ""}
+          ${state.upgradeChoices.some(choice => pendingSynergyFor(choice.key || choice.id))
+            ? `<p class="umt-combo-legend"><b>★ Combo</b> marks a power that pairs with one you already have: take it and you also get the combo's extra effect. Tap the chip to see it.</p>`
+            : ""}
           <div class="cuddle-choice-grid">
             ${state.upgradeChoices.map(choice => `
               <button class="cuddle-choice" data-upgrade-key="${escapeHtml(choice.key)}">
-                ${interactionBonusBadge(choice.key || choice.id)}
                 <span class="cuddle-choice-icon">${escapeHtml(choice.icon || "⬆️")}</span>
                 <strong>${escapeHtml(choice.title)}</strong>
                 <small>${goldenMoney(escapeHtml(choice.description))}</small>
+                ${interactionBonusBadge(choice.key || choice.id)}
                 ${interactionBonusDetail(choice.key || choice.id)}
               </button>`).join("")}
           </div>

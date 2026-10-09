@@ -44,7 +44,9 @@
     return TREASURE_BEFORE[Math.max(0, Math.min(2, cleared))];
   }
   function treasurePrize(game) {
-    return TREASURE_PER_COPY * level(game, IDS.treasureHunter) + graveRobberBonus(game);
+    // $25, $50, then $100 at level 3.
+    const tier = Math.max(0, Math.min(3, Math.floor(level(game, IDS.treasureHunter))));
+    return [0, TREASURE_PER_COPY, TREASURE_PER_COPY * 2, TREASURE_PER_COPY * 4][tier] + graveRobberBonus(game);
   }
 
   function num(value) {
@@ -160,7 +162,8 @@
       if (level(this, IDS.treasureHunter) > 0) {
         // Its own hash, not the run's random stream, so taking Treasure
         // Hunter doesn't reshuffle what the rest of the run rolls.
-        record.treasure = hashText(`${record.token}:treasure`) % 3 === 0;
+        // One stage in three; every other stage at level 3.
+        record.treasure = hashText(`${record.token}:treasure`) % (level(this, IDS.treasureHunter) >= 3 ? 2 : 3) === 0;
         if (record.treasure) addMessage(this, `Treasure word! Solve it before guess ${treasureDeadline(this)} for +$${treasurePrize(this)}.`);
       }
     } catch (error) {

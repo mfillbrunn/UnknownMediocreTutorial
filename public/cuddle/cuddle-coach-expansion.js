@@ -1031,6 +1031,8 @@
     payload.stageBonus = payload.total - allocated;
   }
 
+  var BONUS_ROW_POINTS = 10;
+
   function applyUnusedRowMoney(game, entry, maxGuessesBefore) {
     var coach = ensureCoach(game);
     var rules = typeof game.getRulesSummary === "function" ? game.getRulesSummary() : {};
@@ -1038,7 +1040,10 @@
     // Each spare row pays as five greens here (a BONUS row); the engine's
     // own early bonus (5 per spare guess) stays on entry.earlyBonus and is
     // shown in the bonus box as "Solved N guesses early".
-    var perRow = Math.max(0, 5 * finite(rules.greenPoints, 2));
+    // Five greens at the base rate: a flat 10. Green upgrades (Colour
+    // Surge, Richer Colours) raise real greens, not every spare row too --
+    // multiplied through the spare rows they swamped every other power.
+    var perRow = BONUS_ROW_POINTS;
     var desired = Math.round(unusedRows * perRow);
     var early = Math.round(finite(entry && entry.earlyBonus, 0));
     var adjustment = desired;
@@ -1094,6 +1099,12 @@
     if (hasBossReward(game, "secondCup") && !coach.secondCupUsed) {
       coach.secondCupUsed = true;
       game.state.maxGuesses = Math.max(1, integer(game.state.maxGuesses, 6) + 1);
+      // A strict stage's limit is the world's window, not the board's rows,
+      // so the rescue row has to raise that limit too (see _hardGuessLimit
+      // below) -- otherwise the next guess is refused and the stage hangs.
+      var rescue = game.state.umtRescueRows;
+      var stageKey = String(game.state.round || 0) + ":" + String(game.state.secret || "");
+      game.state.umtRescueRows = { key: stageKey, rows: (rescue && rescue.key === stageKey ? integer(rescue.rows, 0) : 0) + 1 };
       game.state.pendingRoundEnd = null;
       game.state.status = "playing";
       game.state.failureReason = null;
@@ -1103,6 +1114,18 @@
       return true;
     }
     return false;
+  }
+
+  // Rescue rows (Second Cup) on a strict stage extend its limit.
+  var originalHardGuessLimit = proto._hardGuessLimit;
+  if (typeof originalHardGuessLimit === "function") {
+    proto._hardGuessLimit = function hardGuessLimitWithRescueRows() {
+      var base = originalHardGuessLimit.apply(this, arguments);
+      var state = this.state;
+      var rescue = state && state.umtRescueRows;
+      if (!Number.isFinite(base) || !rescue || (this.isBossRound && this.isBossRound())) return base;
+      return rescue.key === String(state.round || 0) + ":" + String(state.secret || "") ? base + integer(rescue.rows, 0) : base;
+    };
   }
 
   function installQuestBookExtensions() {

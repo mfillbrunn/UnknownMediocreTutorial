@@ -1458,7 +1458,7 @@
       setMaxStack(def, 1);
       replaceHandlers(def, "quest-reroll-stage");
     } else if (name === "colour surge" || name === "color surge") {
-      setDescription(def, "Green tiles are worth 2 points more (3 more at level 3). Up to 3 levels.");
+      setDescription(def, "Green tiles pay 1 more point. Level 2: 2 more. Level 3: 4 more.");
       replaceHandlers(def, "colour-surge");
     } else if (name === "grey matters" || name === "gray matters") {
       setDescription(def, "Grey tiles are worth 1 point more. Yellow and green values are unchanged.");
@@ -2575,6 +2575,13 @@
   function clearRewardTheme(element) {
     const previous = element.dataset.cuddleV8Category;
     if (!previous) return;
+    element.style.removeProperty("--cuddle-v8-category-color");
+    const description = element.querySelector(":scope > small[data-cuddle-v8-original]");
+    if (description) {
+      description.textContent = description.dataset.cuddleV8Original;
+      delete description.dataset.cuddleV8Original;
+      description.classList.remove("cuddle-v8-level-text", "is-max-step");
+    }
     element.classList.remove("cuddle-v8-themed", `cuddle-v8-cat-${previous}`);
     delete element.dataset.cuddleV8Category;
     delete element.dataset.cuddleV8Level;
@@ -2590,7 +2597,8 @@
     const capped = Number.isFinite(maxLevel);
     const next = capped ? Math.min(current + 1, maxLevel) : current + 1;
     const atMax = capped && next >= maxLevel;
-    return `Lv ${current} → ${next}${atMax ? " (max)" : ""}`;
+    // The third level of a power is its big one (cuddle-skill-tree.js).
+    return `Lv ${current} → ${next}${atMax ? (maxLevel >= 3 ? " ★ max" : " (max)") : ""}`;
   }
 
   function decorateRewardTheme(root = document) {
@@ -2620,6 +2628,18 @@
       element.dataset.cuddleV8Category = node.category;
       element.dataset.cuddleV8Level = stamp;
       element.classList.add("cuddle-v8-themed", `cuddle-v8-cat-${node.category}`);
+      if (category.color) element.style.setProperty("--cuddle-v8-category-color", category.color);
+
+      // A power with levels: the card says what this pick gives, not the
+      // power's general description.
+      const description = element.querySelector(":scope > small");
+      if (!isBossReward && description && Array.isArray(node.levels) && node.levels.length && typeof tree.levelText === "function"
+          && level !== null && level < node.levels.length) {
+        description.dataset.cuddleV8Original = description.textContent;
+        description.textContent = tree.levelText(node, level + 1);
+        description.classList.add("cuddle-v8-level-text");
+        if (node.maxLevel >= 3 && level + 1 === node.maxLevel) description.classList.add("is-max-step");
+      }
 
       const badge = document.createElement("span");
       badge.className = "cuddle-v8-category-badge";

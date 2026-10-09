@@ -335,6 +335,7 @@
         icon: combo.icon,
         title: combo.title,
         tier: "legendary",
+        type: "combo",
         category: "combo",
         maxLevel: 1,
         description: `${combo.requires.map(group => titleFor(group[0])).join(" + ")}: ${combo.effect}`,

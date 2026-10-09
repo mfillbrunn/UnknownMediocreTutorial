@@ -700,3 +700,40 @@
 #cuddleRoot.umt-starter-pending .cuddle-branch-shell {
   visibility: hidden;
 }
+
+/* Badges sorted by type: one labelled section per type. */
+.umt-progress-host .umt-bd-main:has(> .umt-bd-type) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  align-content: start;
+  gap: 18px 22px;
+}
+.umt-progress-host .umt-bd-type-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  color: var(--type);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.umt-progress-host .umt-bd-type-head i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--type);
+}
+.umt-progress-host .umt-bd-type-head small {
+  margin-left: auto;
+  color: rgba(247, 244, 255, 0.55);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+.umt-progress-host .umt-bd-card-next {
+  margin-top: 6px;
+  color: rgba(247, 244, 255, 0.8);
+  font-size: 0.78rem;
+}
+.umt-progress-host .umt-bd-card-next b { color: #f6c956; }

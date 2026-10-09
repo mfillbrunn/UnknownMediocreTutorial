@@ -62,8 +62,8 @@
     Object.freeze({
       id: IDS.rainyDay, key: IDS.rainyDay, icon: "\uD83C\uDFE6",
       title: "Rainy Day Fund", name: "Rainy Day Fund",
-      description: "Every stage opens by paying 10% interest on your wallet, up to $25. A second copy doubles both.",
-      maxLevel: 2, maxCount: 2, kind: "upgrade"
+      description: "Every stage pays 10% interest on your wallet, up to $25. Level 2: 20%, up to $50. Level 3: 30%, up to $120.",
+      maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.encore, key: IDS.encore, icon: "\uD83C\uDFAC",
@@ -74,8 +74,8 @@
     Object.freeze({
       id: IDS.vowelBounty, key: IDS.vowelBounty, icon: "\uD83C\uDD70\uFE0F",
       title: "Vowel Bounty", name: "Vowel Bounty",
-      description: "Every vowel in a secret you solve pays 5 points.",
-      maxLevel: 2, maxCount: 2, kind: "upgrade"
+      description: "Every vowel in a word you solve pays 5 points. Level 2: 10 points. Level 3: 18 points.",
+      maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.doubleDown, key: IDS.doubleDown, icon: "\uD83C\uDFB2",
@@ -101,8 +101,8 @@
     Object.freeze({
       id: IDS.treasureHunter, key: IDS.treasureHunter, icon: "\uD83D\uDC8E",
       title: "Treasure Hunter", name: "Treasure Hunter",
-      description: "About one stage in three hides a treasure word: solve it before guess 5 (4 in world 2, 3 in world 3) for +$25. Stacks: +$25 more per copy.",
-      maxLevel: 2, maxCount: 2, kind: "upgrade"
+      description: "About one stage in three hides a treasure word: solve it before guess 5 (4 in world 2, 3 in world 3) for +$25. Level 2: +$50. Level 3: +$100, in every other stage.",
+      maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.patternLens, key: IDS.patternLens, icon: "\uD83E\uDDE9",
@@ -156,13 +156,13 @@
     Object.freeze({
       id: IDS.cullOne, key: IDS.cullOne, icon: "\u2702\uFE0F",
       title: "Cull One Letter", name: "Cull One Letter",
-      description: "Permanently remove one rare consonant from your deck and every future answer. Can be taken again.",
-      maxLevel: 6, maxCount: 6, kind: "upgrade", cull: 1
+      description: "Permanently remove one rare consonant from your deck and every future answer. Level 2: two gone. Level 3: four gone.",
+      maxLevel: 3, maxCount: 3, kind: "upgrade", cull: 1
     }),
     Object.freeze({
       id: IDS.cullTwo, key: IDS.cullTwo, icon: "\u2702\uFE0F",
       title: "Cull Two Letters", name: "Cull Two Letters",
-      description: "Permanently remove two rare consonants from your deck and every future answer. Can be taken again.",
+      description: "Permanently remove two rare consonants from your deck and every future answer. Level 2: four gone. Level 3: seven gone.",
       maxLevel: 3, maxCount: 3, kind: "upgrade", cull: 2
     })
   ]);
@@ -2129,7 +2129,9 @@
 
     const entry = latestRoundEntry(game);
     const rows = unusedRows(game, entry, snapshot);
-    const desiredUnused = Math.round(rows * ((5 * greenValue(game, entry)) + earlyRowValue(game)));
+    // A spare row is a flat 10 (five base-rate greens) plus the early rate;
+    // see cuddle-coach-expansion.js applyUnusedRowMoney.
+    const desiredUnused = Math.round(rows * (10 + earlyRowValue(game)));
     const currentUnused = asNumber(entry && entry.unusedRowBonus, 0) + asNumber(entry && entry.earlyBonus, 0);
     const unusedDelta = Math.max(0, desiredUnused - currentUnused);
 
@@ -2603,8 +2605,10 @@
     // Interest on the wallet, paid into the wallet -- it used to read the
     // run's points and pay points, while promising money.
     const balance = Math.max(0, asNumber(state.cuddleMoney, 0)) + (compound ? totalJokerStock(game) * 10 : 0);
-    const cap = (compound ? 50 : 25) * level;
-    const interest = Math.min(cap, Math.floor(balance * 0.1 * level));
+    // 10% up to $25, 20% up to $50, then 30% up to $120 at level 3.
+    const tier = Math.max(0, Math.min(3, Math.floor(level)));
+    const cap = [0, 25, 50, 120][tier] * (compound ? 2 : 1);
+    const interest = Math.min(cap, Math.floor(balance * 0.1 * tier));
     if (interest <= 0) return;
     state.cuddleMoney = Math.max(0, asNumber(state.cuddleMoney, 0)) + interest;
     appendNotice(game, `Rainy Day Fund paid $${interest} in interest.`);
@@ -2758,7 +2762,9 @@
     if (vowelLevel > 0) {
       const vowels = secretVowelCount(game);
       if (vowels > 0) {
-        addScoreBonus(game, vowels * 5 * vowelLevel, "umtVowelBounty",
+        // 5, 10, then 18 a vowel at level 3.
+        const perVowel = [0, 5, 10, 18][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
+        addScoreBonus(game, vowels * perVowel, "umtVowelBounty",
           `${vowels} vowel${vowels === 1 ? "" : "s"} in the secret`);
       }
     }
@@ -2987,7 +2993,10 @@
     const cullReward = customRewardById(id);
     if (cullReward && cullReward.cull && typeof game._removalCandidates === "function") {
       const state = stateOf(game);
-      const letters = game._removalCandidates(cullReward.cull * delta);
+      // The third pick of a cull takes one letter more (1, 1, 2 for Cull
+      // One; 2, 2, 3 for Cull Two).
+      const thirdPick = alreadyApplied < 3 && current >= 3 ? 1 : 0;
+      const letters = game._removalCandidates(cullReward.cull * delta + thirdPick);
       if (state && letters.length) {
         state.removedLetters = Array.from(new Set([...(state.removedLetters || []), ...letters])).sort();
         appendNotice(game, `${cullReward.title}: ${letters.join(", ")} ${letters.length === 1 ? "is" : "are"} gone for good.`);
@@ -4469,6 +4478,15 @@
         scheduleUi();
         return value;
       }, (error) => { throw error; });
+    });
+
+    // The same rule check as submitDraft below, so the board shows a
+    // challenge's rule before the guess is sent (it only refused it).
+    wrapMethod(prototype, "canSubmit", function (original, args) {
+      const base = original.apply(this, args);
+      if (!base || base.ok === false || !stagePlan(this)) return base;
+      const validation = challengeValidation(this, activeChallenge(this), guessesUsed(this));
+      return validation ? { ...base, ok: false, error: validation } : base;
     });
 
     wrapMethod(prototype, "submitDraft", function (original, args) {

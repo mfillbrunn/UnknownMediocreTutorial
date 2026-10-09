@@ -160,6 +160,14 @@
   }
 
   function shortText(node) {
+    // A power with levels says what its current level does.
+    const tree = window.CuddleSkillTree;
+    if (Array.isArray(node.short) && node.short.length && node.level > 0) {
+      return node.short[Math.min(node.short.length, node.level) - 1];
+    }
+    if (Array.isArray(node.levels) && node.levels.length && node.level > 0 && tree && typeof tree.levelText === "function") {
+      return tree.levelText(node, node.level).replace(/\.$/, "");
+    }
     if (SHORT[node.id]) return SHORT[node.id];
     if (SHORT[canonicalId(node.id)]) return SHORT[canonicalId(node.id)];
     const text = String(node.description || "").split(/(?<=\.)\s/)[0].replace(/\.$/, "");
@@ -188,6 +196,9 @@
         tier: base.tier || "common",
         description: base.description || "",
         maxLevel: Number.isFinite(base.maxLevel) ? base.maxLevel : null,
+        type: base.type || null,
+        levels: Array.isArray(base.levels) ? base.levels.slice() : null,
+        short: Array.isArray(base.short) ? base.short.slice() : null,
         requires: Array.isArray(base.requires) ? base.requires.slice() : null,
         kind: "upgrade",
         level: 0,
@@ -217,7 +228,9 @@
       node.first = Math.min(node.first, index);
       node.picks.push({ round: num(entry.round, 1), order: index });
     });
-    const badges = [...nodes.values()].filter((n) => n.kind !== "combo" && n.level > 0).sort((a, b) => a.first - b.first);
+    // Sorted by type (the badge page's sections), then rarity, then name.
+    const collected = [...nodes.values()].filter((n) => n.kind !== "combo" && n.level > 0).sort((a, b) => a.first - b.first);
+    const badges = tree && typeof tree.sortByType === "function" ? tree.sortByType(collected, (n) => n) : collected;
     // A combo is earned once both of its halves are; it joins the list at
     // the moment the second half arrived.
     const synergies = window.CuddleSynergies;
@@ -271,16 +284,25 @@
 
   function cardMarkup(model, node) {
     if (!node) return "";
-    const tier = node.kind === "combo" ? "Combo" : `${TIER_NAME[node.tier] || "Common"}${node.kind === "boss" ? " · Boss reward" : ""}`;
+    const types = window.CuddleSkillTree && window.CuddleSkillTree.TYPES;
+    const typeLabel = node.type && types && types[node.type] ? types[node.type].label : "";
+    const tier = node.kind === "combo" ? "Combo"
+      : [TIER_NAME[node.tier] || "Common", typeLabel, node.kind === "boss" ? "Boss reward" : ""].filter(Boolean).join(" · ");
     const color = node.kind === "combo" ? COMBO_COLOR : TIER_STROKE[node.tier] || TIER_STROKE.common;
     const levelText = node.kind === "combo" ? ""
-      : node.maxLevel && node.maxLevel > 1 ? `Level ${node.level} of ${node.maxLevel}`
+      : node.maxLevel && node.maxLevel > 1 ? `Level ${node.level} of ${node.maxLevel}${node.level >= node.maxLevel ? " (max)" : ""}`
         : node.level > 1 ? `Taken ${node.level} times` : "";
+    // A stackable power: what it does now, and what the next pick adds.
+    const tree = window.CuddleSkillTree;
+    const nextText = node.kind !== "combo" && Array.isArray(node.levels) && node.level < node.levels.length && tree
+      ? `<p class="umt-bd-card-next"><b>Level ${node.level + 1}${node.level + 1 === node.maxLevel ? " (max)" : ""}:</b> ${esc(tree.levelText(node, node.level + 1))}</p>` : "";
     const when = node.picks && node.picks.length
       ? `Picked up on ${[...new Set(node.picks.map((p) => `stage ${Math.max(1, p.round)}`))].join(", ")}` : "";
     const body = node.kind === "combo"
       ? `<p class="umt-bd-card-halves">${(node.halves || []).map((h) => esc(h.title)).join(" + ")}</p><p>${esc(comboEffect(node))}</p>`
-      : `<p>${esc(node.description)}</p>`;
+      : Array.isArray(node.levels) && node.levels.length && tree
+        ? `<p>${esc(tree.levelText(node, Math.max(1, node.level)))}</p>${nextText}`
+        : `<p>${esc(node.description)}</p>`;
     return `<div class="umt-bd-card-inner" style="--t:${color}">`
       + `<div class="umt-bd-card-head"><span class="umt-bd-card-icon" aria-hidden="true">${iconMarkup(node.icon)}</span>`
       + `<div><strong>${esc(node.title)}</strong><span class="umt-bd-card-tier">${esc(tier)}</span></div></div>`
@@ -307,8 +329,19 @@
     // A combo that just formed makes its two badges light up as it arrives.
     const linking = new Set();
     model.combos.filter((combo) => fresh.has(combo.id)).forEach((combo) => combo.halves.forEach((h) => linking.add(h.id)));
+    // One section per type, in the registry's order.
+    const tree = window.CuddleSkillTree;
+    const types = tree && tree.TYPES ? tree.TYPES : {};
+    const order = tree && Array.isArray(tree.TYPE_ORDER) ? tree.TYPE_ORDER.concat([null]) : [null];
+    const sections = order.map((type) => ({
+      type,
+      info: type ? types[type] : { label: "Other", color: "#aaa5bc" },
+      items: model.badges.filter((node) => (type ? node.type === type : !node.type || !types[node.type]))
+    })).filter((section) => section.items.length);
     const grid = model.badges.length
-      ? `<div class="umt-bd-grid">${model.badges.map((node) => badgeMarkup(node, fresh, linking)).join("")}</div>`
+      ? sections.map((section) => `<section class="umt-bd-type" style="--type:${section.info.color}" aria-label="${esc(section.info.label)}">`
+        + `<h3 class="umt-bd-type-head"><i aria-hidden="true"></i>${esc(section.info.label)}<small>${section.items.length}</small></h3>`
+        + `<div class="umt-bd-grid">${section.items.map((node) => badgeMarkup(node, fresh, linking)).join("")}</div></section>`).join("")
       : `<p class="umt-bd-empty">No badges yet. Every reward you pick up lands here.</p>`;
     // The combo column only appears once there is a combo to show.
     const combos = model.combos.length
@@ -321,7 +354,7 @@
       + `<span class="umt-pt-count">${model.badges.length}<small> badge${model.badges.length === 1 ? "" : "s"}</small></span>`
       + `<button type="button" class="umt-pt-close" data-umt-pt-close aria-label="Close badges">×</button></header>`
       + `<div class="umt-bd-body${combos ? " has-combos" : ""}">`
-      + `<section class="umt-bd-main" aria-label="Badges, in the order you got them">${grid}</section>`
+      + `<section class="umt-bd-main" aria-label="Badges, by type">${grid}</section>`
       + combos
       + `</div>`
       + (reveal ? `<footer class="umt-pt-foot"><button type="button" class="umt-pt-continue" data-umt-pt-close>Continue</button></footer>` : "")

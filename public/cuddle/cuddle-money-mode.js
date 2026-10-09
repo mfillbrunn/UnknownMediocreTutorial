@@ -785,6 +785,16 @@
     };
   }
 
+  // Same check as submitDraft below, so the rule shows before sending.
+  var originalCanSubmit = proto.canSubmit;
+  proto.canSubmit = function canSubmitCuddleMoney() {
+    var base = originalCanSubmit.apply(this, arguments);
+    if (!base || base.ok === false || !this.state || this.state.status !== "playing" || this.isBossRound()) return base;
+    var mode = this.state.cuddleMoneyMode;
+    var error = challengeValidationError(this, mode ? mode.activeChallenge : null);
+    return error ? Object.assign({}, base, { ok: false, error: error }) : base;
+  };
+
   var originalSubmitDraft = proto.submitDraft;
   proto.submitDraft = function submitCuddleMoneyDraft() {
     activateGame(this);

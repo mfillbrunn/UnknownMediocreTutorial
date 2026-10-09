@@ -87,6 +87,8 @@
   // special tile (one per row at most); Treasure Map and Treasure Trove add
   // tiles on top of that.
   var TILE_CHANCE_PER_GUESS = 0.25;
+  // A three-level power's steps (cuddle-skill-tree.js): 1, 2, then 4.
+  var LEVEL_STEP = [0, 1, 2, 4];
 
   // Relative odds of each kind for one tile. Money and points are always
   // in the pool; the unlockable kinds scale with their unlock's level
@@ -115,7 +117,8 @@
   function pickKind(state, random) {
     var pool = TILE_KINDS.map(function weigh(entry) {
       var level = entry.bonus ? bonusLevel(state, entry.bonus) : 1;
-      return { kind: entry.kind, weight: level > 0 ? entry.weight(level) : 0 };
+      // Levels 1, 2, 3 weigh x1, x2, x4: the third pick is the big one.
+      return { kind: entry.kind, weight: level > 0 ? entry.weight(LEVEL_STEP[Math.min(3, Math.floor(level))]) : 0 };
     }).filter(function usable(entry) { return entry.weight > 0; });
     var total = pool.reduce(function sum(acc, entry) { return acc + entry.weight; }, 0);
     var roll = random() * total;
@@ -139,7 +142,7 @@
       rows[swap] = held;
     }
     var count = rows.filter(function roll() { return random() < TILE_CHANCE_PER_GUESS; }).length
-      + bonusLevel(state, "treasureMap")
+      + LEVEL_STEP[Math.min(3, Math.floor(bonusLevel(state, "treasureMap")))]
       // Treasure Trove from the shop: +2 tiles while its stages last
       // (counted down by cuddle-shop.js once the stage has begun).
       + (state.cuddleShopV2 && Number(state.cuddleShopV2.tileStages) > 0 ? 2 : 0);

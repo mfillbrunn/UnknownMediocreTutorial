@@ -2252,7 +2252,7 @@
           id: "extraMulligans",
           icon: "🔄",
           title: "Second Thoughts",
-          description: "Gain one additional mulligan every stage."
+          description: "+1 mulligan every stage. Level 2: +2. Level 3: +4."
         },
         {
           id: "yellowPoints",
@@ -2270,13 +2270,13 @@
           id: "questRefreshes",
           icon: "♻️",
           title: "Reward Refresh",
-          description: "Every quest reward screen gets one more free refresh. Stacks."
+          description: "+1 free refresh on every quest reward screen. Level 2: +2. Level 3: +4."
         },
         {
           id: "questPoints",
           icon: "🏅",
           title: "Quest Value",
-          description: "Quests are worth 10 points more. Stacks."
+          description: "Every completed quest pays +10 points. Level 2: +20. Level 3: +40."
         },
         {
           id: "questReroll",
@@ -2285,12 +2285,13 @@
           description: "Once per stage, reroll the current quest for free."
         }
       ];
-      if (this.state.upgrades.mulliganSize < 2) {
+      // Three levels (the power registry); the third gives a whole-hand swap.
+      if (this.state.upgrades.mulliganSize < 3) {
         choices.push({
           id: "mulliganSize",
           icon: "🃏",
           title: "Bigger Mulligan",
-          description: "Each mulligan may replace one additional card."
+          description: "Each mulligan swaps up to 4 letters. Level 2: 5. Level 3: your whole hand."
         });
       }
       // Quest Cadence moved to the Quest Trial boss reward -- it is no
@@ -2727,7 +2728,7 @@
       id: "storybookStart",
       icon: "📖",
       title: "Opening Verse",
-      description: "Start every stage with +10 points. Stacks up to three times.",
+      description: "+10 points at the start of every stage. Level 2: +20. Level 3: +35.",
       max: 3
     },
     {
@@ -2741,8 +2742,8 @@
       id: "wideChoice",
       icon: "🌈",
       title: "Wide Margins",
-      description: "See one additional between-round upgrade choice. Stacks up to two times.",
-      max: 2
+      description: "One more card on every reward screen. Level 2: two more. Level 3: two more, and the first refresh on every reward screen is free.",
+      max: 3
     },
     // Special board tiles (cuddle-points-money.js). A run starts with only
     // money and points tiles; these add more of them, and unlock the rarer
@@ -2752,7 +2753,7 @@
       icon: "🗺️",
       title: "Treasure Map",
       tier: "common",
-      description: "One more special tile appears on the board every stage. Stacks up to three times.",
+      description: "One more special tile on the board every stage. Level 2: two more. Level 3: four more.",
       max: 3
     },
     {
@@ -3207,7 +3208,9 @@
     state.roundOpeningPoints = 0;
     // Opening Verse and Margin Note work in every stage, boss fights included.
     const notes = [];
-    const openingPoints = Number(state.cuddleBonuses.storybookStart || 0) * 10
+    // 10, 20, then 35 at level 3 (the power registry, cuddle-skill-tree.js).
+    const verse = Math.max(0, Math.min(3, Math.floor(Number(state.cuddleBonuses.storybookStart || 0))));
+    const openingPoints = [0, 10, 20, 35][verse]
       + (cuddleV3HasSynergy(this, "illustratedStart") ? 5 : 0);
     if (openingPoints > 0) {
       state.score += openingPoints;
@@ -3749,35 +3752,35 @@
       key: "handSizeBoost",
       icon: "H+",
       title: "Bigger Hand",
-      description: "Hold one more consonant in your hand from now on."
+      description: "Hold 1 more consonant. Level 2: 2 more. Level 3: 4 more."
     },
     {
       id: "mulliganValueBoost",
       key: "mulliganValueBoost",
       icon: "M+",
       title: "Mulligan Dividend",
-      description: "Each unused mulligan is worth 3 points more when you solve. Stacks."
+      description: "Each unused mulligan pays 5 more points when you solve. Level 2: 10 more. Level 3: 25 more."
     },
     {
       id: "earlySolveBoost",
       key: "earlySolveBoost",
       icon: "E+",
       title: "Early Finish",
-      description: "Each unused guess earns 5 points more on an early solve."
+      description: "Each spare guess pays 5 more points. Level 2: 10 more. Level 3: 25 more."
     },
     {
       id: "colourTrade",
       key: "colourTrade",
       icon: "G+",
       title: "Colour Surge",
-      description: "Green tiles are worth 2 points more (3 more at level 3). Up to 3 levels."
+      description: "Green tiles pay 1 more point. Level 2: 2 more. Level 3: 4 more."
     },
     {
       id: "greyscale",
       key: "greyscale",
       icon: "GREY",
       title: "Greyscale",
-      description: "Grey tiles gain 1 point (2 at level 3, which also gives yellow tiles 1). Up to 3 levels."
+      description: "Grey tiles pay 1 point. Level 2: 2 points. Level 3: 3 points, and yellows 1 more."
     }
   ]);
   const customUpgradeIds = new Set(customUpgradeDefinitions.map(item => item.id));
@@ -3992,19 +3995,24 @@
         const finalLevel = finiteNumber(state.balanceRewardCounts.colourTrade) + 1 >= COLOUR_REWARD_MAX;
         // Balance pass (full-run sims): greens are the rarest colour, so
         // Colour Surge pays more per tile than Greyscale does.
-        upgrades.greenOnlyPoints += finalLevel ? 3 : 2;
+        // +1, +2, then +4 at the top level: the third pick is the big one.
+        // (Was +2 a level, +8 at three: about 100 points a stage in sims.)
+        upgrades.greenOnlyPoints += finalLevel ? 2 : 1;
         break;
       }
       case "greyscale": {
         const finalLevel = finiteNumber(state.balanceRewardCounts.greyscale) + 1 >= COLOUR_REWARD_MAX;
         // Was grey +2 / yellow +1 a level (+7 / +4 at three): about 35
         // points a stage from one Common, far above any other.
-        upgrades.greyPoints += finalLevel ? 2 : 1;
+        // 1, 2, 3 a grey, and yellows +1 at the top level. (Was +2 at the
+        // third: ~44 points a stage in sims, top of every power.)
+        upgrades.greyPoints += 1;
         if (finalLevel) upgrades.yellowOnlyPoints += 1;
         break;
       }
       case "mulliganValueBoost":
-        upgrades.mulliganPointBonus += 3;
+        // 5, 10, then 25 at level 3 (cuddle-powers.js adds the extra).
+        upgrades.mulliganPointBonus += 5;
         break;
       case "earlySolveBoost":
         upgrades.earlyRoundPoint += 5;
