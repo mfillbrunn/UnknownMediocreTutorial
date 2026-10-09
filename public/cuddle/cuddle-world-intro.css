@@ -95,3 +95,34 @@
   .umt-wi-overlay,
   .umt-wi-dialog { animation: none; }
 }
+
+/* The world's name, tagline and rule (cuddle-world-identity.js). */
+.umt-wi-dialog { border-color: color-mix(in srgb, var(--wi-accent, #d5a6ff) 50%, transparent); }
+.umt-wi-dialog .umt-wi-kicker { color: var(--wi-accent, #d5a6ff); }
+.umt-wi-dialog h2.umt-wi-world {
+  margin: -6px 0 0;
+  color: var(--wi-accent, #f7f4ff);
+  font-size: 1.45rem;
+}
+.umt-wi-dialog .umt-wi-tagline { margin-top: -8px; font-style: italic; }
+.umt-wi-dialog h3 {
+  margin: 4px 0 0;
+  font-size: 1rem;
+  text-wrap: balance;
+}
+.umt-wi-trait {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--wi-accent, #d5a6ff) 45%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--wi-accent, #d5a6ff) 12%, transparent);
+  text-align: left;
+}
+.umt-wi-trait-icon { display: grid; width: 30px; height: 30px; }
+.umt-wi-trait-icon svg { width: 30px; height: 30px; }
+.umt-wi-trait b { color: var(--wi-accent, #f7f4ff); font-size: .92rem; }
+.umt-wi-dialog .umt-wi-trait p { margin-top: 2px; color: var(--cuddle-text, #f7f4ff); font-size: .82rem; text-wrap: pretty; }

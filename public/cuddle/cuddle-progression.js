@@ -620,8 +620,14 @@
     const lines = [];
     const token = roundToken(state);
 
+    // The world's name, and its own word for a stage (a Glade in the Woods,
+    // a Grotto in the Caverns...), from cuddle-world-identity.js.
+    const identity = window.CuddleWorldIdentity && typeof window.CuddleWorldIdentity.describe === "function"
+      ? window.CuddleWorldIdentity.describe(game) : null;
+    const worldLabel = identity && identity.name ? identity.name : `World ${world}`;
+    const stageWord = identity && identity.trait ? identity.trait.stage : "Stage";
     const content = {
-      eyebrow: boss ? `World ${world} · Boss` : `World ${world} · Stage ${Math.max(1, num(state.round, 1))}`,
+      eyebrow: boss ? `${worldLabel} · Boss` : `${worldLabel} · ${stageWord} ${Math.max(1, num(state.round, 1))}`,
       icon: boss ? (boss.icon || "💀") : (node && node.typeIcon) || "🟩",
       title: boss ? (boss.title || "Boss") : (node && node.typeTitle) || "Wordle",
       tone: boss ? "boss" : node && node.type === "challenge" ? "challenge" : "plain",
@@ -630,6 +636,10 @@
       money: [],
       onWin: null
     };
+
+    if (identity && identity.trait) {
+      lines.push({ kind: "info", icon: identity.trait.icon, text: `${identity.trait.name} — ${identity.trait.text}` });
+    }
 
     if (boss) {
       if (boss.description) lines.push({ kind: "hazard", icon: "⚠️", text: boss.description });

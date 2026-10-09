@@ -145,7 +145,9 @@
       + LEVEL_STEP[Math.min(3, Math.floor(bonusLevel(state, "treasureMap")))]
       // Treasure Trove from the shop: +2 tiles while its stages last
       // (counted down by cuddle-shop.js once the stage has begun).
-      + (state.cuddleShopV2 && Number(state.cuddleShopV2.tileStages) > 0 ? 2 : 0);
+      + (state.cuddleShopV2 && Number(state.cuddleShopV2.tileStages) > 0 ? 2 : 0)
+      // The Sunlit Meadow's In Bloom trait (cuddle-world-identity.js).
+      + (window.CuddleWorldIdentity ? window.CuddleWorldIdentity.extraSpecialTiles(game) : 0);
     // One tile per row at most, so they spread across the window instead
     // of stacking into a single lucky guess.
     return rows
