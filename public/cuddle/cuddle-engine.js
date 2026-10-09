@@ -5090,6 +5090,26 @@
     state.lastMessage = `${state.lastMessage || ""} Preset Trial: the secret is one of ${words.join(", ")}.`.trim();
   }
 
+  // A smaller hand takes effect at once: consonants beyond the new limit
+  // are lost at random (vowels and the tiles in the word being built stay).
+  function trimHandToLimit(game) {
+    const state = game.state;
+    if (!state || !Array.isArray(state.hand)) return "";
+    const lost = [];
+    while (game.getCountedHandSize() > game.getHandLimit()) {
+      const candidates = state.hand.filter(card => (
+        game.cardCountsTowardHandLimit(card)
+        && !game.isInfiniteCard(card)
+        && !(state.draft || []).includes(card.id)
+      ));
+      if (!candidates.length) break;
+      const victim = candidates[Math.floor(game.random() * candidates.length)];
+      lost.push(victim.glyph);
+      game._discardCards([victim.id]);
+    }
+    return lost.length ? ` Lost ${lost.join(", ")}.` : "";
+  }
+
   const composedGetHandLimit = CuddleGame.prototype.getHandLimit;
   CuddleGame.prototype.getHandLimit = function getHandLimitMega() {
     const mega = ensureMega(this);
@@ -5497,13 +5517,13 @@
     if (((this.isBossRound() && this.state.boss?.id === "questEndurance") || enduranceGuess)
         && entry && entry.questId && !entry.questComplete) {
       mega.handSizePenaltyThisRound = Number(mega.handSizePenaltyThisRound || 0) + 1;
-      this.state.lastMessage = `${this.state.lastMessage || ""} Endurance Trial: -1 hand size this round.`.trim();
+      this.state.lastMessage = `${this.state.lastMessage || ""} Endurance Trial: -1 hand size this round.${trimHandToLimit(this)}`.trim();
     }
     if (entry && entry.questId && !entry.questComplete && !this.isBossRound()) {
       const enduranceDebuff = plannedRatchetForGuess(this, this.state.guessesUsed);
       if (enduranceDebuff?.bossId === "questEndurance") {
         mega.handSizePenaltyThisRound = Number(mega.handSizePenaltyThisRound || 0) + 1;
-        this.state.lastMessage = `${this.state.lastMessage || ""} Boss curse (Endurance Trial): -1 hand size this round.`.trim();
+        this.state.lastMessage = `${this.state.lastMessage || ""} Boss curse (Endurance Trial): -1 hand size this round.${trimHandToLimit(this)}`.trim();
       }
     }
 
