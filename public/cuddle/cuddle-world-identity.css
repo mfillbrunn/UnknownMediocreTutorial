@@ -295,7 +295,8 @@
 
 /* Citadel: embers rising under an eclipse. */
 .umt-wa[data-theme="citadel"] .umt-wa-glow {
-  background: radial-gradient(circle at 50% 7%, #0b0305 0 34px, rgba(255, 196, 120, .7) 36px, rgba(255, 90, 79, .25) 46px, rgba(255, 90, 79, .06) 90px, transparent 150px);
+  /* In the top corner, clear of the header's numbers. */
+  background: radial-gradient(circle at 88% 9%, #0b0305 0 30px, rgba(255, 196, 120, .7) 32px, rgba(255, 90, 79, .25) 42px, rgba(255, 90, 79, .06) 84px, transparent 140px);
 }
 .umt-wa[data-theme="citadel"] .umt-wa-p {
   top: auto;
