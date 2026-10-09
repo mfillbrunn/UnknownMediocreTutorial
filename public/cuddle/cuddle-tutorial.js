@@ -249,6 +249,11 @@
     var game = activeGame();
     var state = game && game.state;
     if (!state || !document.getElementById("cuddleRoot")) return;
+    // Never over the lobby.
+    if (document.querySelector(".cuddle-landing")) {
+      if (view.el) close();
+      return;
+    }
     if (!record) {
       // Only a fresh run starts the tour.
       if (!freshRun(state)) return;

@@ -101,7 +101,7 @@
     var game = activeGame();
     var state = game && game.state;
     var existing = document.querySelector(".umt-wi-overlay");
-    var ready = Boolean(state && state.status === "branchMap" && document.getElementById("cuddleRoot")
+    var ready = Boolean(state && state.status === "branchMap" && document.getElementById("cuddleRoot") && !document.querySelector(".cuddle-landing")
       && typeof game._solveGuessThreshold === "function" && typeof game._lateGuessPenalty === "function"
       && String(state.runId || "").indexOf(":duel:") === -1);
     var index = ready ? worldIndex(state) : -1;
