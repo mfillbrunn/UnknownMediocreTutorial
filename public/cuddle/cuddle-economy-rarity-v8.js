@@ -1467,12 +1467,12 @@
       setDescription(def, "Begin every stage with one Joker in the active pouch.");
       replaceHandlers(def, "wild-card");
     } else if (name === "softer cuddle meter") {
-      setDescription(def, "The Cuddle Meter fills one tile sooner. Up to 3 levels (minimum: five).");
+      setDescription(def, "The Cuddle Meter fills sooner: 2 fewer tiles, then 4, then 7 at level 3 (Hard: 12 → 10 → 8 → 5).");
       setMaxStack(def, 6);
       replaceHandlers(def, "soft-meter");
     } else if (name === "bigger cuddle") {
-      setDescription(def, "Advance the reward received when the Cuddle Meter fills: mulligan, Joker, then hint.");
-      setMaxStack(def, 2);
+      setDescription(def, "Upgrades what a full Cuddle Meter gives: a free mulligan, then a random consonant tested, then a Joker, then a letter in its exact place.");
+      setMaxStack(def, 3);
     } else if (name === "joker cache") {
       setDescription(def, "One extra Joker every stage.");
       replaceHandlers(def, "joker-cache");
@@ -1624,6 +1624,37 @@
     return items.map(transformQuestDefinition);
   }
 
+  function gameFor(context, state) {
+    if (isObject(context) && context.state && (!state || context.state === state)) return context;
+    try {
+      const active = window.CuddleBranchMap && typeof window.CuddleBranchMap.getActiveGame === "function"
+        ? window.CuddleBranchMap.getActiveGame()
+        : null;
+      if (active && (!state || active.state === state)) return active;
+    } catch (_) {
+      // No game to ask.
+    }
+    return null;
+  }
+
+  function isMaxedReward(def, context, state) {
+    const tree = window.CuddleSkillTree;
+    if (!tree || typeof tree.findNodeByName !== "function" || typeof tree.level !== "function") return false;
+    const node = tree.findNodeByName(getName(def));
+    const cap = Number(node && node.maxLevel);
+    if (!node || !Number.isFinite(cap) || cap <= 0) return false;
+    const game = gameFor(context, state);
+    if (!game) return false;
+    if (typeof node.level === "function") return tree.level(game, node) >= cap;
+    // No level reader for this one: count it in the run's reward history.
+    // (Position Peek is a one-off you can take again.)
+    if (node.id === "revealGreen") return false;
+    const wanted = norm(node.title);
+    const taken = (Array.isArray(game.state?.rewardBookHistory) ? game.state.rewardBookHistory : [])
+      .filter((entry) => entry && norm(entry.title) === wanted).length;
+    return taken >= cap;
+  }
+
   function rewardAvailable(def, context, state) {
     if (!isObject(def)) return false;
     for (const key of ["available", "isAvailable", "eligible", "condition", "canApply", "shouldOffer"]) {
@@ -1640,6 +1671,10 @@
     if ((name === "colour surge" || name === "color surge") && Number(state?.balanceRewardCounts?.colourTrade) >= 3) return false;
     // Theme Sense tops out at level 3 (every theme shown).
     if (name === "theme sense" && Number(state?.cuddleCampaign?.categorySense) >= 3) return false;
+    // Any reward already at its top level isn't offered again (reward
+    // screens, packs, shop). The badge page (cuddle-skill-tree.js) knows each
+    // reward's level and cap.
+    if (isMaxedReward(def, context, state)) return false;
     return !REMOVED_REWARDS.has(name);
   }
 
@@ -2743,9 +2778,79 @@
     proto._applyUpgradeChoice = wrapped;
   }
 
+  // Every card on a reward screen shares one rarity. Later layers top an
+  // offer back up (after removing duplicates or, on a refresh, the cards
+  // just shown) from the whole pool, and that filler could be any rarity --
+  // so this runs last and swaps any off-rarity card for an unused one of
+  // the offer's rarity, or drops it when there is none (never below 3).
+  function choiceTier(choice) {
+    if (!isObject(choice)) return "";
+    const marked = choice.__cuddleV8OfferTier || choice.__cuddleV8Tier;
+    if (marked) return marked;
+    const name = norm(getName(choice));
+    return ORDINARY_TIER_BY_NAME.get(name) || (LEGENDARY_BOSS_NAMES.has(name) ? TIERS.LEGENDARY : "");
+  }
+
+  function sameTierOffer(game, choices, avoid) {
+    if (!Array.isArray(choices) || choices.length < 2 || !game || !game.state) return choices;
+    const tiers = choices.map(choiceTier);
+    const counts = {};
+    tiers.forEach((tier) => { if (tier) counts[tier] = (counts[tier] || 0) + 1; });
+    const known = Object.keys(counts);
+    if (known.length <= 1 && tiers.every(Boolean)) return choices;
+    // The offer's rarity: the economy marks it on the cards it chose;
+    // otherwise the most common one.
+    const target = choices.map((choice) => choice && choice.__cuddleV8OfferTier).find(Boolean)
+      || known.sort((a, b) => counts[b] - counts[a])[0];
+    if (!target) return choices;
+    const used = new Set(choices.map((choice) => norm(getName(choice))));
+    (avoid || []).forEach((name) => used.add(norm(name)));
+    const spares = shuffle(allOrdinaryCandidates(game, game.state)
+      .filter((def) => def.__cuddleV8Tier === target && !used.has(norm(getName(def)))),
+    `${seedKey(game.state)}:${stageIdentity(game.state)}:same-tier:${offerSalt(game)}`);
+    const out = [];
+    choices.forEach((choice, index) => {
+      if (tiers[index] === target) { out.push(choice); return; }
+      const spare = spares.shift();
+      if (spare) {
+        spare.__cuddleV8OfferTier = target;
+        if (!spare.key) spare.key = getId(spare);
+        out.push(spare);
+      } else if (choices.length - (index + 1) + out.length < 3) {
+        out.push(choice);
+      }
+    });
+    return out;
+  }
+
+  function installSameTierOffers() {
+    const proto = window.CuddleEngine && window.CuddleEngine.CuddleGame && window.CuddleEngine.CuddleGame.prototype;
+    if (!proto || proto.__cuddleV8SameTier) return;
+    proto.__cuddleV8SameTier = true;
+    const baseGenerate = proto._generateUpgradeChoices;
+    if (typeof baseGenerate === "function") {
+      proto._generateUpgradeChoices = function generateSameTierChoices(...args) {
+        const result = baseGenerate.apply(this, args);
+        return Array.isArray(result) ? sameTierOffer(this, result) : result;
+      };
+    }
+    const baseRefresh = proto.refreshUpgradeChoices;
+    if (typeof baseRefresh === "function") {
+      proto.refreshUpgradeChoices = function refreshSameTierChoices(...args) {
+        const shown = (Array.isArray(this.state?.upgradeChoices) ? this.state.upgradeChoices : []).map(getName);
+        const result = baseRefresh.apply(this, args);
+        if (result && result.ok !== false && Array.isArray(this.state?.upgradeChoices)) {
+          this.state.upgradeChoices = sameTierOffer(this, this.state.upgradeChoices, shown);
+        }
+        return result;
+      };
+    }
+  }
+
   function install() {
     if (window.CuddleEconomyRarityV8?.version === VERSION) return;
     installLegendaryApply();
+    installSameTierOffers();
     const api = {
       version: VERSION,
       tiers: TIERS,
@@ -2831,6 +2936,11 @@
       // The pick after a boss: `count` different Legendary rewards, the
       // only way to get one. Same plain shape as the shop's stock, so the
       // offer survives a save and picks through chooseUpgrade.
+      // A reward offer with every card in one rarity (see sameTierOffer).
+      sameTierOffer: (game, choices, avoid) => sameTierOffer(game, choices, avoid),
+      // True when the run already holds this reward at its top level.
+      isMaxed: (game, reward) => Boolean(game && reward) && isMaxedReward(typeof reward === "string" ? { title: reward } : reward, game, game.state),
+      choiceTier: (choice) => choiceTier(choice),
       legendaryChoices(game, count, seedText) {
         primeCatalog(game);
         const state = game && game.state;

@@ -2876,7 +2876,14 @@
     const hasAid = legendaryOffer || repaired.some((item) => SOLVING_AID_IDS.has(normalizedId(item)));
     if (!hasAid) {
       const excluded = refreshExclusions.get(game) || new Set();
-      const available = availableSolvingRewards(game).filter((reward) => !excluded.has(reward.id));
+      // The aid takes the offer's rarity, so every card on the screen shares
+      // one (cuddle-economy-rarity-v8.js); with no aid of that rarity the
+      // offer is left as it is.
+      const economy = window.CuddleEconomyRarityV8;
+      const tierOf = (item) => (economy && typeof economy.choiceTier === "function" ? economy.choiceTier(item) : "");
+      const offerTier = repaired.map((item) => item && item.__cuddleV8OfferTier).find(Boolean) || tierOf(repaired[0]);
+      const available = availableSolvingRewards(game).filter((reward) => !excluded.has(reward.id)
+        && (!offerTier || tierOf(reward) === offerTier));
       if (available.length) {
         const refreshes = asInteger((stateOf(game) || {}).upgradeRefreshesUsed, 0);
         const pick = available[hash32(`${mapSeed(game)}:${roundToken(game)}:${refreshes}:aid`) % available.length];

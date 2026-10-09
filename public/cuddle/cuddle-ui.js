@@ -87,26 +87,58 @@
     return null;
   }
 
-  // A card that would complete a combo gets two marks: a glowing flag up
-  // top (the card itself lights up via :has in cuddle.css) and, under the
-  // description, what the combo adds and which earlier pick it pairs with.
-  function interactionBonusBadge(optionId) {
+  // A card that would complete a combo glows and carries a small star in
+  // its top-right corner; tapping the star (not the card) opens a note
+  // naming the combo, the earlier pick it pairs with and what it adds.
+  function interactionBonusBadge(optionId, inline = false) {
     const synergy = pendingSynergyFor(optionId);
     if (!synergy) return "";
-    return `<span class="umt-interaction-badge" title="${escapeHtml(synergy.title)}: ${escapeHtml(synergy.description)}">
+    // The boss card shows its reward's details from the reward icon, so it
+    // keeps the small "Bonus" flag in its row of traits.
+    if (inline) {
+      return `<span class="umt-interaction-badge" title="${escapeHtml(synergy.title)}: ${escapeHtml(synergy.description)}">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l3.22 6.53 7.21 1.05-5.22 5.09 1.23 7.18L12 17.9l-6.44 3.45 1.23-7.18-5.22-5.09 7.21-1.05z"/></svg>
       Bonus
     </span>`;
+    }
+    return `<span class="umt-combo-star" role="button" tabindex="0" data-combo-info aria-expanded="false"
+      aria-label="Combo bonus: ${escapeHtml(synergy.title)}. Tap for details." title="Combo bonus: ${escapeHtml(synergy.title)}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l3.22 6.53 7.21 1.05-5.22 5.09 1.23 7.18L12 17.9l-6.44 3.45 1.23-7.18-5.22-5.09 7.21-1.05z"/></svg>
+    </span>`;
   }
 
-  function interactionBonusDetail(optionId) {
+  function interactionBonusDetail(optionId, inline = false) {
     const synergy = pendingSynergyFor(optionId);
     if (!synergy) return "";
     const pairing = synergy.partner ? ` <em>with ${escapeHtml(synergy.partner)}</em>` : "";
     const effect = synergy.effect || synergy.description || "";
-    return `<span class="umt-combo-detail"><b>${escapeHtml(synergy.icon || "✨")} ${escapeHtml(synergy.title)}</b>${pairing}`
+    if (inline) {
+      return `<span class="umt-combo-detail"><b>${escapeHtml(synergy.icon || "✨")} ${escapeHtml(synergy.title)}</b>${pairing}`
+        + `<span>${goldenMoney(escapeHtml(effect))}</span></span>`;
+    }
+    return `<span class="umt-combo-pop" role="note" hidden><b>${escapeHtml(synergy.icon || "✨")} ${escapeHtml(synergy.title)}</b>${pairing}`
       + `<span>${goldenMoney(escapeHtml(effect))}</span></span>`;
   }
+
+  // The star toggles its note without choosing the card it sits on.
+  function toggleComboInfo(event) {
+    const star = event.target.closest && event.target.closest("[data-combo-info]");
+    if (!star) return false;
+    if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") return false;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const card = star.closest(".cuddle-choice");
+    const pop = card && card.querySelector(".umt-combo-pop");
+    if (!pop) return true;
+    const opening = pop.hidden;
+    document.querySelectorAll(".umt-combo-pop").forEach(other => { other.hidden = true; });
+    document.querySelectorAll("[data-combo-info]").forEach(other => other.setAttribute("aria-expanded", "false"));
+    pop.hidden = !opening;
+    star.setAttribute("aria-expanded", opening ? "true" : "false");
+    return true;
+  }
+  document.addEventListener("click", toggleComboInfo, true);
+  document.addEventListener("keydown", toggleComboInfo, true);
 
   function showScreen(id) {
     if (typeof window.showScreen === "function") {
@@ -514,6 +546,7 @@
           <div class="cuddle-landing-actions">
             ${hasRun ? `<button class="cuddle-btn cuddle-btn-primary" data-action="continue">${escapeHtml(continueLabel)}</button>` : ""}
             <button class="cuddle-btn cuddle-btn-ghost" data-action="rules">Rules</button>
+            ${window.CuddleTutorial && window.CuddleTutorial.isDone() ? `<button type="button" class="cuddle-tut-replay" data-umt-tut="replay">Replay the tour</button>` : ""}
           </div>
           <div class="cuddle-difficulty-picker">
             <span class="cuddle-eyebrow">${hasRun ? "START A NEW RUN" : "CHOOSE A DIFFICULTY"}</span>
@@ -1154,7 +1187,7 @@
       info = `<div class="umt-boss-trait-info is-reward" role="note">
           <b>Win: ${escapeHtml(reward.title)}</b>
           <span>${goldenMoney(escapeHtml(reward.description))}</span>
-          ${interactionBonusDetail(reward.id)}
+          ${interactionBonusDetail(reward.id, true)}
         </div>`;
     } else if (open === "burden" && burden) {
       info = `<div class="umt-boss-trait-info is-burden" role="note">
@@ -1173,7 +1206,7 @@
         <div class="umt-boss-traits">
           ${reward ? trait("reward", `Reward: ${reward.title}. Tap to read.`, rewardArt, bonus ? " has-bonus" : "") : ""}
           ${burden ? trait("burden", "Its curse for the rest of the run. Tap to read.", iconSvgFor(BURDEN_ICON[option.curseId || id] || "skull")) : ""}
-          ${bonus ? interactionBonusBadge(reward.id) : ""}
+          ${bonus ? interactionBonusBadge(reward.id, true) : ""}
         </div>
         ${info}
         <button type="button" class="cuddle-btn cuddle-btn-primary umt-boss-fight" data-boss-id="${escapeHtml(id)}">Fight ${escapeHtml(option.title)}</button>
@@ -1564,7 +1597,6 @@
 
   function renderWinOverlay(state) {
     const totalRounds = window.CuddleEngine.THRESHOLDS.length;
-    const removedLetters = state.removedLetters || [];
     const standing = recordWin(state);
     const elapsed = winElapsed(state, standing);
     const playing = elapsed !== null && elapsed < WIN_TIMING.countFrom + WIN_TIMING.countFor + 1600;
@@ -1597,15 +1629,12 @@
           ${best}
           ${top}
           ${seedChip(state)}
-          <div class="cuddle-end-stats">
-            <div><span>Money</span><strong>$${Number(state.cuddleMoney || 0).toLocaleString()}</strong></div>
-            <div><span>Rounds</span><strong>${state.round}/${totalRounds}</strong></div>
-            <div><span>Removed letters</span><strong>${removedLetters.length ? escapeHtml(removedLetters.join(" ")) : "—"}</strong></div>
-          </div>
+          ${renderRunStats(state)}
           <details class="cuddle-upgrade-details">
             <summary>Final upgrades</summary>
             <ul>${game.getUpgradeSummary().map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
           </details>
+          ${renderEndBadges()}
           <p id="cuddleShareStatus" class="cuddle-share-status" role="status" aria-live="polite"></p>
           <div class="cuddle-modal-actions">
             <button class="cuddle-btn cuddle-btn-primary" data-action="share-run">Share round</button>
@@ -1616,10 +1645,38 @@
       </div>`;
   }
 
+  // The run in numbers (kept by cuddle-run-stats.js).
+  function renderRunStats(state) {
+    const stats = window.CuddleRunStats ? window.CuddleRunStats.of(state) : null;
+    if (!stats) return "";
+    const skull = `<svg class="cuddle-end-skull" viewBox="-6 -7 12 13" aria-hidden="true"><path d="M0 -6.2a4.6 4.6 0 0 0-4.6 4.6c0 1.6.8 2.6 1.9 3.2v1.7a.7.7 0 0 0 .7.7h4a.7.7 0 0 0 .7-.7V1.6c1.1-.6 1.9-1.6 1.9-3.2A4.6 4.6 0 0 0 0-6.2z"/><circle cx="-1.7" cy="-1.6" r="1.15"/><circle cx="1.7" cy="-1.6" r="1.15"/></svg>`;
+    return `<div class="cuddle-end-stats cuddle-run-stats">
+            <div><span>Guesses taken</span><strong>${stats.guesses.toLocaleString()}</strong></div>
+            <div><span>Letters tested</span><strong>${stats.letters.toLocaleString()}</strong></div>
+            <div><span>Solved in the guess window</span><strong>${stats.inWindow} <small>of ${stats.stages}</small></strong></div>
+            <div><span>Skulls collected</span><strong>${skull}${stats.skulls}</strong></div>
+          </div>`;
+  }
+
+  // Every badge the run collected, under the upgrade list.
+  function renderEndBadges() {
+    const list = window.CuddleProgression && typeof window.CuddleProgression.badgeList === "function"
+      ? window.CuddleProgression.badgeList(game)
+      : [];
+    if (!list.length) return "";
+    return `<section class="cuddle-end-badges" aria-label="Badges collected">
+            <h3>Badges collected <span>${list.length}</span></h3>
+            <ul>${list.map(badge => `<li class="${badge.kind === "combo" ? "is-combo" : ""}" style="--t:${escapeHtml(badge.color)}" title="${escapeHtml(badge.title)}">`
+              + `<span class="cuddle-end-badge-hex" aria-hidden="true">${badge.icon}</span>`
+              + `<b>${escapeHtml(badge.title)}</b>`
+              + (badge.maxLevel > 1 ? `<small>${badge.level}/${badge.maxLevel}</small>` : badge.level > 1 ? `<small>×${badge.level}</small>` : "")
+              + `</li>`).join("")}</ul>
+          </section>`;
+  }
+
   function renderEndOverlay(state, won) {
     if (won) return renderWinOverlay(state);
     const totalRounds = window.CuddleEngine.THRESHOLDS.length;
-    const removedLetters = state.removedLetters || [];
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleEndTitle">
         <section class="cuddle-modal cuddle-end-modal">
@@ -1630,16 +1687,12 @@
             ? `You won the campaign with ${state.score} points.`
             : escapeHtml(state.failureReason || "The run could not continue.")}</p>
           ${seedChip(state)}
-          <div class="cuddle-end-stats">
-            <div><span>Points</span><strong>${state.score}</strong></div>
-            <div><span>Money</span><strong>$${Number(state.cuddleMoney || 0).toLocaleString()}</strong></div>
-            <div><span>Rounds reached</span><strong>${state.round}/${totalRounds}</strong></div>
-            <div><span>Removed letters</span><strong>${removedLetters.length ? escapeHtml(removedLetters.join(" ")) : "—"}</strong></div>
-          </div>
+          ${renderRunStats(state)}
           <details class="cuddle-upgrade-details">
             <summary>Final upgrades</summary>
             <ul>${game.getUpgradeSummary().map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
           </details>
+          ${renderEndBadges()}
           <p class="cuddle-share-help">Share the final round grid without revealing the secret word.</p>
           <p id="cuddleShareStatus" class="cuddle-share-status" role="status" aria-live="polite"></p>
           <div class="cuddle-modal-actions">

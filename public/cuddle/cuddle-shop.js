@@ -87,7 +87,7 @@
       level: game => Math.max(0, int(coachOf(game).hintsPerRound)),
       apply: game => { const coach = coachOf(game); coach.hintsPerRound = Math.min(4, Math.max(0, int(coach.hintsPerRound)) + 1); } },
     { id: "keepMeter", ledgerId: "coachMeterThreshold", icon: "reward-cuddle-meter-reward.svg", title: "Softer Cuddle Meter", cost: 56, max: 3,
-      blurb: "The Cuddle Meter fills one step sooner.",
+      blurb: "The Cuddle Meter fills sooner: 2 fewer tiles, then 4, then 7 at level 3.",
       level: game => Math.max(0, int(coachOf(game).cuddleThresholdStacks)),
       apply: game => { const coach = coachOf(game); coach.cuddleThresholdStacks = Math.min(3, Math.max(0, int(coach.cuddleThresholdStacks)) + 1); } },
     { id: "keepTreasureMap", icon: "reward-green-value.svg", title: "Treasure Map", cost: 36, max: 3, bonus: "treasureMap",
@@ -270,8 +270,29 @@
 
   // -- the two locked-in shop methods ----------------------------------------
 
+  // A permanent reward that's maxed out (taken elsewhere since this shop
+  // was stocked, or bought here) isn't offered: unsold ones are swapped for
+  // a fresh reward the run can still take.
+  function refreshMaxedKeep(game, stock, bought) {
+    const economy = window.CuddleEconomyRarityV8;
+    if (!economy || typeof economy.isMaxed !== "function" || !Array.isArray(stock.keep)) return;
+    const maxed = entry => isKeepEntry(entry) && !bought.has(`keep:${entry.key}`) && economy.isMaxed(game, entry.title);
+    if (!stock.keep.some(maxed)) return;
+    const names = new Set(stock.keep.filter(isKeepEntry).map(entry => entry.title));
+    const fresh = (typeof economy.shopRewards === "function"
+      ? economy.shopRewards(game, 12, `${seedText(game)}:${shopKey(game)}:wandering-paw:keep:refill`)
+      : []).filter(entry => isKeepEntry(entry) && !names.has(entry.title) && !economy.isMaxed(game, entry.title));
+    stock.keep = stock.keep.map(entry => {
+      if (!maxed(entry)) return entry;
+      const swap = fresh.shift();
+      return swap || null;
+    }).filter(Boolean);
+    safeSave(game);
+  }
+
   function getCuddleShop() {
     const stock = stockFor(this);
+    refreshMaxedKeep(this, stock, new Set(boughtHere(this)));
     const bought = new Set(boughtHere(this));
     const wallet = money(this);
     const items = [];

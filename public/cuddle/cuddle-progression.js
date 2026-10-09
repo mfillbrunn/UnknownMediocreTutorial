@@ -1089,8 +1089,28 @@
     install();
   }
 
+  // Every badge the run collected (combos last), as display data for the
+  // end screen.
+  function badgeList(game) {
+    try {
+      const model = buildModel(game);
+      return model.badges.concat(model.combos).map((node) => ({
+        id: node.id,
+        title: node.title,
+        icon: iconMarkup(node.icon),
+        color: node.kind === "combo" ? COMBO_COLOR : TIER_STROKE[node.tier] || TIER_STROKE.common,
+        kind: node.kind,
+        level: node.level,
+        maxLevel: node.maxLevel
+      }));
+    } catch (_error) {
+      return [];
+    }
+  }
+
   window.CuddleProgression = Object.freeze({
     openTree: (game) => openTree(game || activeGame()),
+    badgeList,
     closeTree,
     buildModel
   });
