@@ -1,0 +1,96 @@
+/* The boss-gate warning (cuddle-boss-danger.js): red pulsing screen edges
+   and a pill when the run is short of the boss's points, a green pill when
+   it's there. */
+.umt-bd {
+  position: fixed;
+  inset: 0;
+  z-index: 10400;
+  pointer-events: none;
+}
+
+.umt-bd-edge {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.umt-bd[data-state="danger"] .umt-bd-edge {
+  box-shadow: inset 0 0 0 3px rgba(255, 77, 77, 0.75), inset 0 0 70px 18px rgba(230, 40, 40, 0.55);
+  animation: umt-bd-pulse 1.3s ease-in-out infinite;
+}
+
+.umt-bd-pill {
+  position: absolute;
+  left: 50%;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  animation: umt-bd-in 260ms ease-out both;
+}
+
+.umt-bd-pill b {
+  margin-right: 4px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.umt-bd[data-state="danger"] .umt-bd-pill {
+  color: #fff;
+  background: #c62f3a;
+  animation: umt-bd-in 260ms ease-out both, umt-bd-blink 1.3s ease-in-out infinite;
+}
+
+.umt-bd[data-state="safe"] .umt-bd-pill {
+  color: #08321f;
+  background: #57d69a;
+}
+
+.umt-bd[data-where="stage"] .umt-bd-pill { display: none; }
+
+/* On a stage: the header's "Next boss" line carries the verdict. */
+html[data-umt-boss-danger="danger"] #cuddleRoot .cuddle-header-boss-goal {
+  padding: 1px 8px;
+  border-radius: 999px;
+  color: #fff;
+  background: #c62f3a;
+  animation: umt-bd-pulse 1.3s ease-in-out infinite;
+}
+
+html[data-umt-boss-danger="safe"] #cuddleRoot .cuddle-header-boss-goal {
+  padding: 1px 8px;
+  border-radius: 999px;
+  color: #08321f;
+  background: #57d69a;
+}
+
+@keyframes umt-bd-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+@keyframes umt-bd-blink {
+  0%, 100% { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(255, 90, 90, 0.35), 0 6px 18px rgba(0, 0, 0, 0.4); }
+}
+
+@keyframes umt-bd-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .umt-bd[data-state="danger"] .umt-bd-edge { animation: none; opacity: 0.8; }
+  html[data-umt-boss-danger] #cuddleRoot .cuddle-header-boss-goal { animation: none; }
+  .umt-bd-pill,
+  .umt-bd[data-state="danger"] .umt-bd-pill { animation: none; }
+}
