@@ -593,7 +593,7 @@
               <span class="cuddle-header-score cuddle-header-points" aria-label="${game.bankedScore()} points${game.isBossRound() ? "" : `, goal ${target}`}">${game.bankedScore()}${game.isBossRound() ? "" : ` / ${target}`}</span>
               <span class="cuddle-header-money" aria-label="${Number(state.cuddleMoney || 0)} money">$${Number(state.cuddleMoney || 0).toLocaleString()}</span>
             </div>
-            ${bossGoal ? `<span class="cuddle-header-boss-goal" aria-label="${Math.min(bossGoal.score, bossGoal.required)} of ${bossGoal.required} points toward the next boss">Next boss: ${Math.min(bossGoal.score, bossGoal.required)}/${bossGoal.required} pts</span>` : ""}
+            ${bossGoal && bossGoal.required > 0 ? `<span class="cuddle-header-boss-goal" aria-label="${Math.min(bossGoal.score, bossGoal.required)} of ${bossGoal.required} points toward the next boss">Next boss: ${Math.min(bossGoal.score, bossGoal.required)}/${bossGoal.required} pts</span>` : ""}
           </div>
           <div class="cuddle-header-side cuddle-header-side-right">
             <button class="cuddle-details-toggle ${detailsOpen ? "is-open" : ""}" data-action="toggle-details"

@@ -66,9 +66,11 @@
     // honest bot playing whole runs with the gates switched off) so about
     // 75% of runs reach the first boss, 40% the second and 15% the final
     // -- boss losses included. Easy and medium never bind for a sound run.
-    "before-3": { easy: 50, medium: 100, hard: 170 },
-    "before-7": { easy: 250, medium: 300, hard: 560 },
-    "final": { easy: 550, medium: 600, hard: 1100 }
+    // Lowered by 50 across the board when spare guesses dropped from 20
+    // to 15 points each.
+    "before-3": { easy: 0, medium: 50, hard: 120 },
+    "before-7": { easy: 200, medium: 250, hard: 510 },
+    "final": { easy: 500, medium: 550, hard: 1050 }
   };
 
   function difficultyOf(game) {
@@ -82,7 +84,8 @@
     var tiers = BOSS_POINT_REQUIREMENTS[gate];
     if (!tiers) return 0;
     // Fixed per difficulty: the same target every run, whatever the theme.
-    return tiers[difficultyOf(game)] || tiers.hard;
+    var value = tiers[difficultyOf(game)];
+    return typeof value === "number" ? value : tiers.hard;
   }
 
   // Points the run has banked (the live round's guess points don't count

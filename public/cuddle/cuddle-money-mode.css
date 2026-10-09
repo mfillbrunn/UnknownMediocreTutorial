@@ -987,3 +987,21 @@
   color: #3a2a05;
   background: #f6c956;
 }
+
+/* Tighter cash-out rows: smaller tiles and less padding, so more of the
+   round fits on screen. */
+#cuddleScreen .cuddle-money-payout-rows { gap: 3px; }
+
+#cuddleScreen .cuddle-money-payout-row { padding: 2px 8px; }
+
+#cuddleScreen .cuddle-money-payout-row-main { min-height: 0; }
+
+#cuddleScreen .cuddle-money-payout-tiles {
+  grid-template-columns: repeat(5, minmax(28px, 38px));
+  gap: 4px;
+}
+
+#cuddleScreen .cuddle-money-payout-tile {
+  border-radius: 7px;
+  font-size: clamp(0.82rem, 2.8vw, 0.98rem);
+}

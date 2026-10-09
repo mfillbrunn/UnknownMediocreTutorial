@@ -1238,8 +1238,7 @@
       + "<div class=\"cuddle-money-payout-rows\">" + payload.rows.map(payoutRowMarkup).join("") + "</div>"
       + stageBonusMarkup(game, payload)
       + "<p class=\"cuddle-money-payout-hint\">Tap a row to see what it paid.</p>"
-      + "<div class=\"cuddle-money-payout-total\"><span>" + (payload.wasBoss ? "BOSS TOTAL" : "ROUND TOTAL") + "</span><strong>" + formatPointsDelta(payload.total) + "</strong></div>"
-      + "<div class=\"cuddle-money-payout-total is-money\"" + (payoutMoney(payload) ? "" : " hidden") + "><span>MONEY</span><strong>+" + formatMoney(payoutMoney(payload)) + "</strong></div>"
+      // No total rows: the Collect button carries the points and money.
       + "</section>"
       // Collect sits in a bar pinned to the bottom of the screen, so it's
       // always in reach; the card scrolls behind it.
