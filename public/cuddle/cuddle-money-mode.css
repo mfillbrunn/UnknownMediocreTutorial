@@ -969,10 +969,21 @@
 
 #cuddleScreen .cuddle-money-collect b { font-weight: 900; }
 
+#cuddleScreen .cuddle-money-collect .cuddle-money-collect-pts,
 #cuddleScreen .cuddle-money-collect .cuddle-money-collect-cash {
-  margin-left: 4px;
+  display: inline-block;
+  margin-left: 6px;
   padding: 1px 8px;
   border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+#cuddleScreen .cuddle-money-collect .cuddle-money-collect-pts {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+#cuddleScreen .cuddle-money-collect .cuddle-money-collect-cash {
   color: #3a2a05;
   background: #f6c956;
 }

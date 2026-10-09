@@ -1130,17 +1130,17 @@
   // itemizes (challenge cleared, combos...), then anything left over.
   function payoutMoney(payload) {
     var state = activeGame && activeGame.state;
-    if (!state || payload.cashFrom == null) return 0;
     // The stage-clear payment lands later, when the stage is left
     // (cuddle-points-money.js), so it's added here.
     var clear = Math.max(0, asNumber(window.CuddleStageClearMoney, 0));
+    if (!state || payload.cashFrom == null) return clear;
     return Math.max(0, Math.round(asNumber(state.cuddleMoney, 0) - asNumber(payload.cashFrom, 0))) + clear;
   }
 
+  // Both amounts, always: the points and the money this stage pays.
   function collectLabel(payload) {
-    var money = payoutMoney(payload);
-    return "Collect <b>" + formatPointsDelta(payload.total) + " pts</b>"
-      + (money ? " <b class=\"cuddle-money-collect-cash\">+" + formatMoney(money) + "</b>" : "");
+    return "Collect <b class=\"cuddle-money-collect-pts\">" + formatPointsDelta(payload.total) + " pts</b>"
+      + " <b class=\"cuddle-money-collect-cash\">+" + formatMoney(payoutMoney(payload)) + "</b>";
   }
 
   // The money row and the Collect label read the wallet when they're
