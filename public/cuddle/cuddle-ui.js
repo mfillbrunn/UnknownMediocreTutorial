@@ -546,6 +546,7 @@
           <div class="cuddle-landing-actions">
             ${hasRun ? `<button class="cuddle-btn cuddle-btn-primary" data-action="continue">${escapeHtml(continueLabel)}</button>` : ""}
             <button class="cuddle-btn cuddle-btn-ghost" data-action="rules">Rules</button>
+            ${window.CuddleTutorial && window.CuddleTutorial.isDone() ? `<button type="button" class="cuddle-tut-replay" data-umt-tut="replay">Replay the tour</button>` : ""}
           </div>
           <div class="cuddle-difficulty-picker">
             <span class="cuddle-eyebrow">${hasRun ? "START A NEW RUN" : "CHOOSE A DIFFICULTY"}</span>

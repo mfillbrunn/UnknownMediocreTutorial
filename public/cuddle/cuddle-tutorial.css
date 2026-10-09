@@ -1,0 +1,156 @@
+/* The first-run tour (cuddle-tutorial.js): a card in a sheet at the top or
+   bottom of the screen, and a glow on the part of the screen it explains. */
+.umt-tut {
+  --tut-accent: #8be8d2;
+  position: fixed;
+  z-index: 10600;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+
+.umt-tut[data-at="bottom"] { bottom: 0; }
+.umt-tut[data-at="top"] { top: 0; padding-top: calc(12px + env(safe-area-inset-top, 0px)); }
+
+.umt-tut-card {
+  display: grid;
+  gap: 8px;
+  width: min(440px, 100%);
+  padding: 14px 16px 12px;
+  border: 1px solid color-mix(in srgb, var(--tut-accent) 55%, transparent);
+  border-radius: 16px;
+  background: rgba(24, 22, 36, 0.97);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  color: var(--cuddle-text, #f7f4ff);
+  pointer-events: auto;
+  animation: umt-tut-in 260ms cubic-bezier(.2, .9, .3, 1.15) both;
+}
+
+.umt-tut-kicker {
+  color: var(--tut-accent);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.umt-tut-card h2 {
+  margin: 0;
+  font-size: 1.08rem;
+  text-wrap: balance;
+}
+
+.umt-tut-card p {
+  margin: 0;
+  color: rgba(247, 244, 255, 0.86);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.umt-tut-card b { color: var(--cuddle-text, #f7f4ff); }
+
+.umt-tut-g, .umt-tut-y, .umt-tut-x, .umt-tut-r {
+  padding: 0 5px;
+  border-radius: 4px;
+  color: #fff;
+  font-weight: 800;
+}
+
+.umt-tut-g { background: #4ba66a; }
+.umt-tut-y { background: #c9a03a; }
+.umt-tut-x { background: #5e5b69; }
+.umt-tut-r { background: #b84a4a; }
+.umt-tut-gold { color: #f6c956 !important; }
+.umt-tut-common { color: #e0a568; font-weight: 800; }
+.umt-tut-rare { color: #b9c8de; font-weight: 800; }
+.umt-tut-epic { color: #c08bff; font-weight: 800; }
+.umt-tut-legendary { color: #f6c956; font-weight: 800; }
+
+.umt-tut-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.umt-tut-dots {
+  display: inline-flex;
+  gap: 5px;
+  margin-right: auto;
+}
+
+.umt-tut-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.umt-tut-dots i.is-on { background: var(--tut-accent); }
+
+.umt-tut-skip {
+  margin-left: auto;
+  padding: 6px 4px;
+  border: 0;
+  background: none;
+  color: var(--cuddle-muted, #aaa5bc);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.umt-tut-dots + .umt-tut-skip { margin-left: 0; }
+
+.umt-tut-skip:hover,
+.umt-tut-skip:focus-visible { color: var(--cuddle-text, #f7f4ff); }
+
+.umt-tut-next { min-width: 96px; }
+
+/* What the card is talking about. */
+.umt-tut-focus {
+  position: relative;
+  z-index: 3;
+  border-radius: 12px;
+  box-shadow: 0 0 0 3px #8be8d2, 0 0 24px rgba(139, 232, 210, 0.55) !important;
+  animation: umt-tut-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes umt-tut-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.umt-tut[data-at="top"] .umt-tut-card { animation-name: umt-tut-in-top; }
+
+@keyframes umt-tut-in-top {
+  from { opacity: 0; transform: translateY(-10px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes umt-tut-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px #8be8d2, 0 0 14px rgba(139, 232, 210, 0.35); }
+  50% { box-shadow: 0 0 0 3px #8be8d2, 0 0 28px rgba(139, 232, 210, 0.7); }
+}
+
+/* The lobby's replay link. */
+.cuddle-tut-replay {
+  justify-self: center;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  color: var(--cuddle-muted, #aaa5bc);
+  font: inherit;
+  font-size: 0.78rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.cuddle-tut-replay:disabled { text-decoration: none; cursor: default; }
+
+@media (prefers-reduced-motion: reduce) {
+  .umt-tut-card,
+  .umt-tut-focus { animation: none; }
+}
