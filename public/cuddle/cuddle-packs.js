@@ -464,7 +464,8 @@
       || document.querySelector(".umt-pt-overlay")
       || (money && typeof money.payoutActive === "function" && money.payoutActive())
       || (state && state.cuddleMoneyMode && state.cuddleMoneyMode.pendingPayout));
-    var visible = Boolean(offer && state.status === "branchMap" && !cashingOut && document.getElementById("cuddleRoot"));
+    // Not over the lobby: the pack waits until the run is on screen.
+    var visible = Boolean(offer && state.status === "branchMap" && !cashingOut && document.getElementById("cuddleRoot") && !document.querySelector(".cuddle-landing"));
     if (!visible) {
       if (existing) existing.remove();
       shownKey = "";

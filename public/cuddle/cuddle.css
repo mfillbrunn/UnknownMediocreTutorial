@@ -4509,3 +4509,71 @@
 
 /* A card with its combo note open sits above its neighbours. */
 .cuddle-choice:has(.umt-combo-pop:not([hidden])) { z-index: 6; }
+
+/* The Cuddle mascot logo, and the slimmer lobby around it. */
+.cuddle-logo.is-art {
+  width: auto;
+  height: auto;
+  margin-bottom: 10px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.cuddle-logo-img {
+  display: block;
+  width: 112px;
+  height: 112px;
+  filter: drop-shadow(0 14px 28px rgba(92, 197, 143, 0.28));
+  animation: cuddle-logo-bob 3.2s ease-in-out infinite;
+}
+
+.cuddle-loading-card .cuddle-logo-img { width: 88px; height: 88px; }
+
+@keyframes cuddle-logo-bob {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-5px) rotate(2deg); }
+}
+
+.cuddle-hero .cuddle-tagline { margin: 8px 0 20px; }
+
+.cuddle-hero .cuddle-save-summary { justify-content: center; }
+
+.cuddle-landing-actions { display: grid; gap: 10px; }
+
+/* New run popup. */
+.cuddle-newrun-modal {
+  display: grid;
+  gap: 14px;
+  width: min(380px, 100%);
+  text-align: center;
+}
+
+.cuddle-newrun-modal h2 { margin: 0; }
+.cuddle-newrun-note { margin: -6px 0 0; color: var(--cuddle-muted); font-size: 0.82rem; }
+
+/* Rules: colour chips. */
+.cuddle-rule-chip {
+  padding: 0 5px;
+  border-radius: 4px;
+  color: #fff;
+  font-weight: 800;
+}
+
+.cuddle-rule-chip.is-green { background: #4ba66a; }
+.cuddle-rule-chip.is-yellow { background: #c9a03a; }
+.cuddle-rule-chip.is-grey { background: #5e5b69; }
+.cuddle-rule-chip.is-red { background: #b84a4a; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cuddle-logo-img { animation: none; }
+}
+
+.cuddle-newrun-modal,
+.cuddle-newrun-modal * { box-sizing: border-box; }
+.cuddle-newrun-modal > * { min-width: 0; }
+.cuddle-newrun-modal .cuddle-difficulty-row { width: 100%; }
+.cuddle-newrun-modal .cuddle-difficulty-row .cuddle-btn { min-width: 0; padding-inline: 8px; }
+.cuddle-newrun-modal .cuddle-seed-field { width: 100%; }
+.cuddle-newrun-modal h2 { padding: 0 44px; }

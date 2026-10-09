@@ -337,7 +337,7 @@
   function renderLoading() {
     return `
       <div class="cuddle-loading-card" role="status">
-        <div class="cuddle-logo" aria-hidden="true">C</div>
+        <div class="cuddle-logo is-art" aria-hidden="true"><img class="cuddle-logo-img" src="cuddle/icons/cuddle-logo.svg" alt="" width="88" height="88"></div>
         <h2>Opening Cuddle…</h2>
         <p>Shuffling the letter deck.</p>
       </div>`;
@@ -346,7 +346,7 @@
   function renderReconnecting(secondsLeft) {
     return `
       <div class="cuddle-loading-card" role="status">
-        <div class="cuddle-logo" aria-hidden="true">C</div>
+        <div class="cuddle-logo is-art" aria-hidden="true"><img class="cuddle-logo-img" src="cuddle/icons/cuddle-logo.svg" alt="" width="88" height="88"></div>
         <h2>Reconnecting…</h2>
         <p>Connection dropped while opening Cuddle. Your saved run is safe — retrying for ${secondsLeft}s.</p>
       </div>`;
@@ -521,12 +521,8 @@
   function renderLanding() {
     const state = currentState();
     const hasRun = Boolean(state);
-    const statusLabel = state
-      ? state.status === "won" ? "Completed"
-        : state.status === "lost" ? "Run ended"
-          : `Round ${state.round} in progress`
-      : "No saved run";
-    const continueLabel = state?.status === "won" || state?.status === "lost" ? "Review run" : "Continue run";
+    const finished = state?.status === "won" || state?.status === "lost";
+    const continueLabel = finished ? "Review run" : "Continue run";
     return `
       <div class="cuddle-landing">
         <div class="cuddle-landing-top">
@@ -534,37 +530,46 @@
           <button class="cuddle-icon-btn" data-action="rules" aria-label="How to play Cuddle">?</button>
         </div>
         <section class="cuddle-hero">
-          <div class="cuddle-logo" aria-hidden="true">C</div>
-          <p class="cuddle-eyebrow">SINGLE-PLAYER ROGUELITE</p>
+          <div class="cuddle-logo is-art" aria-hidden="true"><img class="cuddle-logo-img" src="cuddle/icons/cuddle-logo.svg" alt="" width="112" height="112"></div>
           <h1>CUDDLE</h1>
-          <p class="cuddle-tagline">Build words from cards. Learn the secret. Shape the deck. Survive ${scoringRounds()} rounds and three bosses.</p>
-          <div class="cuddle-save-summary ${hasRun ? "" : "is-empty"}">
-            <span>${escapeHtml(statusLabel)}</span>
-            ${hasRun ? `<strong>${state.score} pts · Round ${state.round}/${scoringRounds()}</strong>` : `<strong>Your run saves in this browser.</strong>`}
-            ${hasRun ? seedChip(state) : ""}
-          </div>
+          <p class="cuddle-tagline">Guess words, collect upgrades, beat the bosses.</p>
+          ${hasRun ? `<div class="cuddle-save-summary">
+            <span>${finished ? (state.status === "won" ? "Run won" : "Run ended") : `Stage ${state.round}`}</span>
+            <strong>${Number(state.score || 0).toLocaleString()} pts</strong>
+            ${seedChip(state)}
+          </div>` : ""}
           <div class="cuddle-landing-actions">
             ${hasRun ? `<button class="cuddle-btn cuddle-btn-primary" data-action="continue">${escapeHtml(continueLabel)}</button>` : ""}
+            <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run">New run</button>
             <button class="cuddle-btn cuddle-btn-ghost" data-action="rules">Rules</button>
             ${window.CuddleTutorial && window.CuddleTutorial.isDone() ? `<button type="button" class="cuddle-tut-replay" data-umt-tut="replay">Replay the tour</button>` : ""}
           </div>
-          <div class="cuddle-difficulty-picker">
-            <span class="cuddle-eyebrow">${hasRun ? "START A NEW RUN" : "CHOOSE A DIFFICULTY"}</span>
-            <label class="cuddle-seed-field">
-              <span>Seed</span>
-              <input id="cuddleSeedInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
-                maxlength="16" placeholder="Random" value="${escapeHtml(seedDraft)}" aria-describedby="cuddleSeedHelp">
-            </label>
-            <p id="cuddleSeedHelp" class="cuddle-seed-help">Type a friend's seed and pick their difficulty to play the same run: same map, words, bosses and rewards. Leave it empty for a new one.</p>
-            <div class="cuddle-difficulty-row">
-              <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-easy">Easy</button>
-              <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-medium">Medium</button>
-              <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-hard">Hard</button>
-            </div>
-            ${bestWinsLine()}
-          </div>
+          ${bestWinsLine()}
         </section>
+        ${newRunOpen ? renderNewRunOverlay(hasRun) : ""}
         ${rulesOpen ? renderRulesOverlay() : ""}
+      </div>`;
+  }
+
+  // "New run": pick a difficulty, optionally with a seed.
+  function renderNewRunOverlay(hasRun) {
+    return `
+      <div class="cuddle-overlay cuddle-newrun-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleNewRunTitle">
+        <section class="cuddle-modal cuddle-newrun-modal">
+          <button class="cuddle-modal-close" data-action="close-new-run" aria-label="Close">×</button>
+          <h2 id="cuddleNewRunTitle">New run</h2>
+          ${hasRun ? `<p class="cuddle-newrun-note">This replaces your saved run.</p>` : ""}
+          <div class="cuddle-difficulty-row">
+            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Easy</button>
+            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Medium</button>
+            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-hard">Hard</button>
+          </div>
+          <label class="cuddle-seed-field">
+            <span>Seed</span>
+            <input id="cuddleSeedInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
+              maxlength="16" placeholder="Random" value="${escapeHtml(seedDraft)}">
+          </label>
+        </section>
       </div>`;
   }
 
@@ -1719,6 +1724,7 @@
       questPoints: 0,
       questCadence: 3
     };
+    const tile = (cls, text) => `<span class="cuddle-rule-chip is-${cls}">${text}</span>`;
     return `
       <div class="cuddle-overlay cuddle-rules-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleRulesTitle">
         <section class="cuddle-modal cuddle-rules-modal">
@@ -1726,15 +1732,14 @@
           <span class="cuddle-modal-kicker">HOW TO PLAY</span>
           <h2 id="cuddleRulesTitle">Cuddle rules</h2>
           <div class="cuddle-rules-grid">
-            <article><strong>1 · Build, do not type</strong><p>Tap cards in order to make a five-letter word from the existing secret list. Q is its own card; use the always-available U card separately when a word needs QU.</p></article>
-            <article><strong>2 · Reuse letters in hand</strong><p>Any letter currently shown in your hand can be tapped more than once while building a word. A, E, I, O, and U are bold, always available, and do not use counted hand slots. Yellow or green consonants stay in hand after a guess.</p></article>
-            <article><strong>3 · Refill the hand</strong><p>You have ${rules.handSize} counted consonant slots. A finite consonant used in a submitted word leaves once, even when it was repeated in that word, and the draw pile refills open counted slots back toward ${rules.handSize}.</p></article>
-            <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards.</p></article>
-            <article><strong>5 · Earn enough points</strong><p>Yellow tiles score ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}, green tiles score ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}, and grey tiles score ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}. Solving within your bonus window (see Details) adds +${5 * rules.greenPoints + rules.earlyPoint} for every guess still spare, and every mulligan you did not spend is worth +${rules.mulliganPoints}. An ordinary stage has no guess limit -- just keep guessing until you solve it -- but some stops (a few challenges, events and bargains say so) must be solved within the world's guess limit of 6, 5 or 4, or the run ends. You must also meet the cumulative round points target.</p></article>
-            <article><strong>6 · Grow the run</strong><p>Quests appear every few turns and pay bonus points once you own a reward that makes them worth something. Certain boss rewards add extra concurrent quests. Solve the word to choose an upgrade after every round.</p></article>
-            <article><strong>7 · Boss rounds</strong><p>Each world ends at a boss, and the third one decides the run. A boss's power lasts for its first few guesses. A boss round has no points target -- you only have to solve it -- but its guesses and solve bonuses still score. Clear a boss to keep its displayed permanent reward; no ordinary upgrade follows.</p></article>
+            <article><strong>Guess the word</strong><p>Each stage hides a five-letter word. Build guesses from your tiles. ${tile("green", "Green")} right spot, ${tile("yellow", "Yellow")} wrong spot, ${tile("grey", "Grey")} not in the word.</p></article>
+            <article><strong>Your tiles</strong><p>Vowels stay in your hand and turn ${tile("red", "red")} once ruled out. Consonants are used up when you guess with them and redrawn from your deck. A mulligan (${rules.mulligans} per stage) swaps consonants you can't use.</p></article>
+            <article><strong>Points</strong><p>Every tile pays: grey ${rules.greyPoints}, yellow ${rules.yellowPoints}, green ${rules.greenPoints}. Unused rows and mulligans pay a bonus. Solve within the world's guess window (6, then 5, then 4) or each extra guess costs points.</p></article>
+            <article><strong>Money</strong><p>Clearing a stage pays $10, and challenges pay more. Spend it in shops, on packs, at events and on reward refreshes.</p></article>
+            <article><strong>The map</strong><p>Pick a stop on each row: Wordle stages (some with a challenge, skulls show how hard), shops, events, free upgrades and duels.</p></article>
+            <article><strong>Upgrades</strong><p>After each stage, pick one upgrade for the rest of the run. Common, Rare or Epic; Legendary only after a boss. Quests pop up every few guesses and pay a bonus pick.</p></article>
+            <article><strong>Bosses</strong><p>Each world ends in a boss you can only face with enough points. Bosses bend the rules and leave a curse, but give a Legendary pick. Beat the final boss to win.</p></article>
           </div>
-          <p class="cuddle-rule-note"><strong>Campaign targets:</strong> ${window.CuddleEngine.THRESHOLDS.join(" · ")}. Clear round ${scoringRounds()} at ${window.CuddleEngine.THRESHOLDS[scoringRounds() - 1]} points, then beat the final boss to win.</p>
           <button class="cuddle-btn cuddle-btn-primary" data-action="close-rules">Got it</button>
         </section>
       </div>`;
@@ -1786,6 +1791,8 @@
   // What's typed in the lobby's Seed box; kept here because every render
   // rebuilds the box.
   let seedDraft = "";
+  // The New run popup.
+  let newRunOpen = false;
 
   function seedChip(state) {
     const seed = window.CuddleSeed ? window.CuddleSeed.current({ state }) : "";
@@ -1796,10 +1803,8 @@
 
   function startNewRun(difficulty) {
     if (!wordLists) return;
-    if (game?.state && !["lost", "won"].includes(game.state.status)) {
-      const okay = window.confirm("Start a new Cuddle run? The current saved run will be replaced.");
-      if (!okay) return;
-    }
+    // The New run popup already says the saved run will be replaced.
+    newRunOpen = false;
     game = new window.CuddleEngine.CuddleGame(wordLists);
     if (window.CuddleSeed) window.CuddleSeed.setNext(seedDraft);
     seedDraft = "";
@@ -1850,6 +1855,13 @@
         }
         return true;
       }
+      case "new-run":
+        newRunOpen = true;
+        rulesOpen = false;
+        return true;
+      case "close-new-run":
+        newRunOpen = false;
+        return true;
       case "new-run-easy":
         startNewRun("easy");
         return true;
