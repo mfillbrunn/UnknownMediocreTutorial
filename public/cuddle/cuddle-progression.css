@@ -702,7 +702,12 @@
 }
 
 /* Badges sorted by type: one labelled section per type. */
-.umt-progress-host .umt-bd-type + .umt-bd-type { margin-top: 18px; }
+.umt-progress-host .umt-bd-main:has(> .umt-bd-type) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  align-content: start;
+  gap: 18px 22px;
+}
 .umt-progress-host .umt-bd-type-head {
   display: flex;
   align-items: center;

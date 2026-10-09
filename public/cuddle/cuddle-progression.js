@@ -162,6 +162,9 @@
   function shortText(node) {
     // A power with levels says what its current level does.
     const tree = window.CuddleSkillTree;
+    if (Array.isArray(node.short) && node.short.length && node.level > 0) {
+      return node.short[Math.min(node.short.length, node.level) - 1];
+    }
     if (Array.isArray(node.levels) && node.levels.length && node.level > 0 && tree && typeof tree.levelText === "function") {
       return tree.levelText(node, node.level).replace(/\.$/, "");
     }
@@ -195,6 +198,7 @@
         maxLevel: Number.isFinite(base.maxLevel) ? base.maxLevel : null,
         type: base.type || null,
         levels: Array.isArray(base.levels) ? base.levels.slice() : null,
+        short: Array.isArray(base.short) ? base.short.slice() : null,
         requires: Array.isArray(base.requires) ? base.requires.slice() : null,
         kind: "upgrade",
         level: 0,

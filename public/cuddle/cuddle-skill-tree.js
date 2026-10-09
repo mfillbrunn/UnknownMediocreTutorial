@@ -124,7 +124,7 @@
           levels: ["Every stage opens with one of the answer's themes shown", "Every stage opens with two of its themes shown", "Every stage opens with all of its themes shown"],
           level: g => Number(campaignState(g)?.categorySense) || 0 },
         { id: "storybookStart", icon: "📖", title: "Opening Verse", tier: "common", type: "points", maxLevel: 3,
-          levels: ["+10 points at the start of every stage", "+20 points at the start of every stage", "+45 points at the start of every stage"],
+          levels: ["+10 points at the start of every stage", "+20 points at the start of every stage", "+35 points at the start of every stage"],
           level: g => Number(g?.state?.cuddleBonuses?.storybookStart) || 0 },
         { id: "wideChoice", icon: "🌈", title: "Wide Margins", tier: "common", type: "money", maxLevel: 3,
           levels: ["One more card on every reward screen", "Two more cards on every reward screen", "Two more cards, and the first refresh on every reward screen is free"],
@@ -133,7 +133,7 @@
           levels: ["Hold 1 more consonant", "Hold 2 more consonants", "Hold 4 more consonants"],
           level: g => Number(g?.state?.balanceRewardCounts?.handSizeBoost) || 0 },
         { id: "mulliganValueBoost", icon: "💱", title: "Mulligan Dividend", tier: "common", type: "points", maxLevel: 3,
-          levels: ["Each unused mulligan pays 3 more points when you solve", "Each unused mulligan pays 6 more points", "Each unused mulligan pays 15 more points"],
+          levels: ["Each unused mulligan pays 5 more points when you solve", "Each unused mulligan pays 10 more points", "Each unused mulligan pays 25 more points"],
           level: g => Number(g?.state?.balanceRewardCounts?.mulliganValueBoost) || 0 },
         { id: "earlySolveBoost", icon: "🏁", title: "Early Finish", tier: "common", type: "points", maxLevel: 3,
           levels: ["Each spare guess pays 5 more points", "Each spare guess pays 10 more points", "Each spare guess pays 25 more points"],
@@ -142,7 +142,7 @@
           levels: ["Green tiles pay 1 more point", "Green tiles pay 2 more points", "Green tiles pay 4 more points"],
           level: g => Number(g?.state?.balanceRewardCounts?.colourTrade) || 0 },
         { id: "greyscale", icon: "⬛", title: "Greyscale", tier: "common", type: "points", maxLevel: 3,
-          levels: ["Grey tiles pay 1 point", "Grey tiles pay 2 points", "Grey tiles pay 4 points, and yellows 1 more"],
+          levels: ["Grey tiles pay 1 point", "Grey tiles pay 2 points", "Grey tiles pay 3 points, and yellows 1 more"],
           level: g => Number(g?.state?.balanceRewardCounts?.greyscale) || 0 },
         { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", type: "money", maxLevel: 1, description: "The next round reward you pick is applied twice." },
         { id: "greenCount", icon: "🔢", title: "Precise Green", tier: "rare", type: "clues", maxLevel: 1, description: "A green tile also shows how many times that letter appears in the secret." },
@@ -175,7 +175,7 @@
           level: g => v5Level(g, "umtRainyDay") },
         { id: "encore", icon: "🎬", title: "Encore", tier: "rare", type: "points", maxLevel: 1, description: "Every third stage you solve pays a 50-point encore bonus.", level: g => v5Level(g, "umtEncore") },
         { id: "vowelBounty", icon: "🅰️", title: "Vowel Bounty", tier: "common", type: "points", maxLevel: 3,
-          levels: ["Every vowel in a word you solve pays 5 points", "Every vowel pays 10 points", "Every vowel pays 25 points"],
+          levels: ["Every vowel in a word you solve pays 5 points", "Every vowel pays 10 points", "Every vowel pays 18 points"],
           level: g => v5Level(g, "umtVowelBounty") },
         { id: "haggler", icon: "🪙", title: "Haggler", tier: "common", type: "money", maxLevel: 1, description: "Refreshing reward choices costs $0, then $1, $3, $5... instead of $3, $5, $7...", level: g => v5Level(g, "umtHaggler") },
         { id: "doubleDown", icon: "🎲", title: "Double Down", tier: "epic", type: "points", maxLevel: 1, description: "Each stage names a lucky guess, from the 3rd to the 7th. Solve the word on exactly that guess for +50 points, even if that's past your bonus window.", level: g => v5Level(g, "umtDoubleDown") }
@@ -233,10 +233,10 @@
       blurb: "Powers that change how you play a stage.",
       nodes: [
         { id: "momentum", icon: "📈", title: "Momentum", tier: "common", type: "points", maxLevel: 3,
-          levels: ["Each guess with more greens than the one before pays +4 points", "Each such guess pays +8 points", "Each such guess pays +20 points"],
+          levels: ["Each guess with more greens than the one before pays +4 points", "Each such guess pays +8 points", "Each such guess pays +15 points"],
           level: g => powerLevel(g, "momentum") },
         { id: "bigOpener", icon: "🎯", title: "Big Opener", tier: "rare", type: "points", maxLevel: 3,
-          levels: ["Each green or yellow on your first guess pays +3 points", "Each green or yellow on your first guess pays +5 points", "Each green or yellow on your first guess pays +12 points"],
+          levels: ["Each green or yellow on your first guess pays +4 points", "Each green or yellow on your first guess pays +7 points", "Each green or yellow on your first guess pays +16 points"],
           level: g => powerLevel(g, "bigOpener") },
         { id: "lastStand", icon: "⚔️", title: "Last Stand", tier: "rare", type: "points", maxLevel: 3,
           levels: ["Solve on the last guess of your window for +25 points", "Solve on the last guess of your window for +45 points", "Solve on the last guess of your window for +100 points"],
@@ -281,6 +281,42 @@
     }
   ]);
 
+  // A few words per level, for the badge page's hexagons.
+  const SHORT_LEVELS = {
+    extraMulligans: ["+1 mulligan a stage", "+2 mulligans a stage", "+4 mulligans a stage"],
+    questRefreshes: ["+1 quest refresh", "+2 quest refreshes", "+4 quest refreshes"],
+    questPoints: ["+10 per quest", "+20 per quest", "+40 per quest"],
+    mulliganSize: ["Mulligans swap 4", "Mulligans swap 5", "Mulligans swap all"],
+    cullOne: ["1 letter culled", "2 letters culled", "4 letters culled"],
+    cullTwo: ["2 letters culled", "4 letters culled", "7 letters culled"],
+    categorySense: ["1 theme shown", "2 themes shown", "All themes shown"],
+    storybookStart: ["+10 a stage", "+20 a stage", "+35 a stage"],
+    wideChoice: ["+1 reward card", "+2 reward cards", "+2 cards, free refresh"],
+    handSizeBoost: ["+1 consonant", "+2 consonants", "+4 consonants"],
+    mulliganValueBoost: ["+5 per spare mulligan", "+10 per spare mulligan", "+25 per spare mulligan"],
+    earlySolveBoost: ["+5 per spare guess", "+10 per spare guess", "+25 per spare guess"],
+    colourTrade: ["Greens +1", "Greens +2", "Greens +4"],
+    greyscale: ["Greys pay 1", "Greys pay 2", "Greys 3, yellows +1"],
+    "surprise-assignment": ["+1 quest a stage", "+2 quests a stage", "+4 quests a stage"],
+    treasureMap: ["+1 special tile", "+2 special tiles", "+4 special tiles"],
+    mulliganTiles: ["Mulligan tiles", "Mulligan tiles x2", "Mulligan tiles x4"],
+    jokerTiles: ["Joker tiles", "Joker tiles x2", "Joker tiles x4"],
+    oracleTiles: ["Oracle tiles", "Oracle tiles x2", "Oracle tiles x4"],
+    rainyDay: ["10% interest", "20% interest", "30% interest"],
+    vowelBounty: ["+5 per vowel", "+10 per vowel", "+18 per vowel"],
+    treasureHunter: ["Treasure +$25", "Treasure +$50", "Treasure +$100"],
+    yellowHint: ["1 letter shown", "1 letter placed"],
+    "alphabet-compass": ["1 compass tile", "2 compass tiles", "Every tile"],
+    coachMeterThreshold: ["Meter 2 sooner", "Meter 4 sooner", "Meter 7 sooner"],
+    coachMeterReward: ["Meter tests a letter", "Meter gives a Joker", "Meter places a letter"],
+    momentum: ["+4 per better guess", "+8 per better guess", "+15 per better guess"],
+    bigOpener: ["+4 per opener colour", "+7 per opener colour", "+16 per opener colour"],
+    lastStand: ["+25 last-guess solve", "+45 last-guess solve", "+100 last-guess solve"],
+    pickpocket: ["+$1 per yellow", "+$2 per yellow", "+$4 per yellow"],
+    gracePeriod: ["1st late guess free", "2 late guesses free", "2 free, then half"],
+    questCadence: ["Quests every 2nd guess", "Quests every guess"]
+  };
+
   // A stackable power's description lists every level, and says the third
   // is the big one. The type doubles as the old colour category.
   function sentence(text) {
@@ -290,6 +326,7 @@
   for (const branch of BRANCHES) {
     for (const node of branch.nodes) {
       node.category = node.type;
+      if (SHORT_LEVELS[node.id]) node.short = SHORT_LEVELS[node.id];
       if (Array.isArray(node.levels) && node.levels.length) {
         node.description = node.levels.length > 1
           ? `${sentence(node.levels[0])} Level 2: ${sentence(node.levels[1]).replace(/^./, c => c.toLowerCase())}`

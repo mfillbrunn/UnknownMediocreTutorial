@@ -2728,7 +2728,7 @@
       id: "storybookStart",
       icon: "📖",
       title: "Opening Verse",
-      description: "+10 points at the start of every stage. Level 2: +20. Level 3: +45.",
+      description: "+10 points at the start of every stage. Level 2: +20. Level 3: +35.",
       max: 3
     },
     {
@@ -3208,9 +3208,9 @@
     state.roundOpeningPoints = 0;
     // Opening Verse and Margin Note work in every stage, boss fights included.
     const notes = [];
-    // 10, 20, then 45 at level 3 (the power registry, cuddle-skill-tree.js).
+    // 10, 20, then 35 at level 3 (the power registry, cuddle-skill-tree.js).
     const verse = Math.max(0, Math.min(3, Math.floor(Number(state.cuddleBonuses.storybookStart || 0))));
-    const openingPoints = [0, 10, 20, 45][verse]
+    const openingPoints = [0, 10, 20, 35][verse]
       + (cuddleV3HasSynergy(this, "illustratedStart") ? 5 : 0);
     if (openingPoints > 0) {
       state.score += openingPoints;
@@ -3759,7 +3759,7 @@
       key: "mulliganValueBoost",
       icon: "M+",
       title: "Mulligan Dividend",
-      description: "Each unused mulligan pays 3 more points when you solve. Level 2: 6 more. Level 3: 15 more."
+      description: "Each unused mulligan pays 5 more points when you solve. Level 2: 10 more. Level 3: 25 more."
     },
     {
       id: "earlySolveBoost",
@@ -3780,7 +3780,7 @@
       key: "greyscale",
       icon: "GREY",
       title: "Greyscale",
-      description: "Grey tiles pay 1 point. Level 2: 2 points. Level 3: 4 points, and yellows 1 more."
+      description: "Grey tiles pay 1 point. Level 2: 2 points. Level 3: 3 points, and yellows 1 more."
     }
   ]);
   const customUpgradeIds = new Set(customUpgradeDefinitions.map(item => item.id));
@@ -4004,12 +4004,15 @@
         const finalLevel = finiteNumber(state.balanceRewardCounts.greyscale) + 1 >= COLOUR_REWARD_MAX;
         // Was grey +2 / yellow +1 a level (+7 / +4 at three): about 35
         // points a stage from one Common, far above any other.
-        upgrades.greyPoints += finalLevel ? 2 : 1;
+        // 1, 2, 3 a grey, and yellows +1 at the top level. (Was +2 at the
+        // third: ~44 points a stage in sims, top of every power.)
+        upgrades.greyPoints += 1;
         if (finalLevel) upgrades.yellowOnlyPoints += 1;
         break;
       }
       case "mulliganValueBoost":
-        upgrades.mulliganPointBonus += 3;
+        // 5, 10, then 25 at level 3 (cuddle-powers.js adds the extra).
+        upgrades.mulliganPointBonus += 5;
         break;
       case "earlySolveBoost":
         upgrades.earlyRoundPoint += 5;

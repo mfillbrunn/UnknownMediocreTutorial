@@ -74,7 +74,7 @@
     Object.freeze({
       id: IDS.vowelBounty, key: IDS.vowelBounty, icon: "\uD83C\uDD70\uFE0F",
       title: "Vowel Bounty", name: "Vowel Bounty",
-      description: "Every vowel in a word you solve pays 5 points. Level 2: 10 points. Level 3: 25 points.",
+      description: "Every vowel in a word you solve pays 5 points. Level 2: 10 points. Level 3: 18 points.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
@@ -2762,8 +2762,8 @@
     if (vowelLevel > 0) {
       const vowels = secretVowelCount(game);
       if (vowels > 0) {
-        // 5, 10, then 25 a vowel at level 3.
-        const perVowel = [0, 5, 10, 25][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
+        // 5, 10, then 18 a vowel at level 3.
+        const perVowel = [0, 5, 10, 18][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
         addScoreBonus(game, vowels * perVowel, "umtVowelBounty",
           `${vowels} vowel${vowels === 1 ? "" : "s"} in the secret`);
       }
