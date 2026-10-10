@@ -24,6 +24,8 @@
   let actionMode = "play";
   let selectedCards = new Set();
   let uiMessage = "";
+  // Set when New run was tried with no Cuddle Coin left.
+  let newRunCoinNote = false;
   // The quest reward screen opens with a short "Quest complete" stamp the
   // first time it shows for a given quest; re-renders of the same screen
   // (a refresh, Double Pick's second choice) open straight onto the cards.
@@ -533,6 +535,7 @@
       <div class="cuddle-landing">
         <div class="cuddle-landing-top">
           <button class="cuddle-icon-btn" data-action="back" aria-label="Back to main menu">←</button>
+          ${window.CuddleAchievements ? `<span class="umt-coin-chip" title="Cuddle Coins: a run costs 1"><span class="umt-coin" aria-hidden="true"></span><b data-umt-coin-count>${window.CuddleAchievements.coins()}</b></span>` : ""}
           <button class="cuddle-icon-btn" data-action="rules" aria-label="How to play Cuddle">?</button>
         </div>
         <section class="cuddle-hero">
@@ -547,6 +550,7 @@
           <div class="cuddle-landing-actions">
             ${hasRun ? `<button class="cuddle-btn cuddle-btn-primary" data-action="continue">${escapeHtml(continueLabel)}</button>` : ""}
             <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run">New run</button>
+            ${window.CuddleAchievements ? `<button class="cuddle-btn cuddle-btn-ghost" data-action="achievements">Achievements</button>` : ""}
             <button class="cuddle-btn cuddle-btn-ghost" data-action="rules">Rules</button>
             ${window.CuddleTutorial && window.CuddleTutorial.isDone() ? `<button type="button" class="cuddle-tut-replay" data-umt-tut="replay">Replay the tour</button>` : ""}
           </div>
@@ -565,6 +569,8 @@
           <button class="cuddle-modal-close" data-action="close-new-run" aria-label="Close">×</button>
           <h2 id="cuddleNewRunTitle">New run</h2>
           ${hasRun ? `<p class="cuddle-newrun-note">This replaces your saved run.</p>` : ""}
+          ${window.CuddleAchievements ? `<p class="umt-newrun-cost"><span class="umt-coin" aria-hidden="true"></span>Costs 1 Cuddle Coin · you have <b>${window.CuddleAchievements.coins()}</b></p>` : ""}
+          ${newRunCoinNote ? `<p class="umt-newrun-broke" role="alert">No Cuddle Coins left. You get 1 free each day, and 1 for each achievement you claim.</p>` : ""}
           <div class="cuddle-difficulty-row">
             <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Easy</button>
             <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Medium</button>
@@ -1806,6 +1812,13 @@
 
   function startNewRun(difficulty) {
     if (!wordLists) return;
+    // A run costs one Cuddle Coin (cuddle-achievements.js).
+    const wallet = window.CuddleAchievements;
+    if (wallet && !wallet.spend()) {
+      newRunCoinNote = true;
+      return;
+    }
+    newRunCoinNote = false;
     // The New run popup already says the saved run will be replaced.
     newRunOpen = false;
     game = new window.CuddleEngine.CuddleGame(wordLists);
@@ -1860,8 +1873,12 @@
       }
       case "new-run":
         newRunOpen = true;
+        newRunCoinNote = false;
         rulesOpen = false;
         return true;
+      case "achievements":
+        if (window.CuddleAchievements) window.CuddleAchievements.open();
+        return false;
       case "close-new-run":
         newRunOpen = false;
         return true;

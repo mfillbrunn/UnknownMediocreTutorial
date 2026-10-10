@@ -1,0 +1,181 @@
+/* Cuddle: achievements and Cuddle Coins (cuddle-achievements.js). */
+
+/* A coin: a small gold disc with a heart stamped in it. */
+.umt-coin {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff1b8, #f6c956 45%, #b8862b);
+  box-shadow: inset 0 0 0 1.5px rgba(122, 82, 16, 0.75);
+}
+.umt-coin::after {
+  content: "♥";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #8a5a10;
+  font-size: 10px;
+  line-height: 1;
+}
+.umt-coin-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-self: center;
+  gap: 6px;
+  padding: 4px 12px 4px 6px;
+  border: 1px solid rgba(246, 201, 86, 0.55);
+  border-radius: 999px;
+  background: rgba(246, 201, 86, 0.12);
+  color: #ffe8a3;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.umt-newrun-cost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: -4px 0 0;
+  color: var(--cuddle-muted, #b9b2cc);
+  font-size: 0.82rem;
+}
+.umt-newrun-cost b { color: #ffe8a3; }
+.umt-newrun-broke {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(233, 92, 118, 0.5);
+  border-radius: 10px;
+  background: rgba(233, 92, 118, 0.12);
+  color: #ffd2da;
+  font-size: 0.82rem;
+}
+
+/* -- the page ------------------------------------------------------------------ */
+.umt-ach-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100003;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(8, 6, 14, 0.78);
+}
+.umt-ach-modal {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 10px;
+  width: min(720px, 100%);
+  max-height: min(860px, calc(100dvh - 32px));
+  padding: 16px;
+  border: 1px solid rgba(246, 201, 86, 0.35);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #221a30, #15111d);
+  color: #f7f4ff;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+.umt-ach-head { display: flex; align-items: center; gap: 12px; }
+.umt-ach-head > div { flex: 1 1 auto; min-width: 0; }
+.umt-ach-head h2 { margin: 0; font-size: 1.35rem; }
+.umt-ach-head p { margin: 2px 0 0; color: #b9b2cc; font-size: 0.82rem; }
+.umt-ach-close {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+.umt-ach-help { margin: 0; color: #b9b2cc; font-size: 0.8rem; }
+.umt-ach-body-scroll { overflow-y: auto; display: grid; gap: 14px; padding-right: 2px; }
+.umt-ach-group h3 {
+  margin: 0 0 6px;
+  color: #f6c956;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.umt-ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.umt-ach {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.umt-ach-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.umt-ach-icon svg { width: 26px; height: 26px; }
+.umt-ach-tri { color: #ff7a59; font-size: 1.1rem; }
+.umt-ach-body { display: grid; gap: 2px; min-width: 0; }
+.umt-ach-body b { font-size: 0.92rem; }
+.umt-ach-body small { color: #c9c3d8; font-size: 0.76rem; line-height: 1.3; }
+.umt-ach-foot { margin-top: 3px; font-size: 0.7rem; font-style: normal; font-weight: 800; letter-spacing: 0.04em; }
+.umt-ach.is-locked { opacity: 0.5; }
+.umt-ach.is-locked .umt-ach-icon { filter: grayscale(1); }
+.umt-ach.is-locked .umt-ach-foot { color: #8f89a0; }
+.umt-ach.is-ready {
+  border-color: rgba(246, 201, 86, 0.8);
+  background: linear-gradient(135deg, rgba(246, 201, 86, 0.18), rgba(255, 255, 255, 0.04));
+  box-shadow: 0 0 18px rgba(246, 201, 86, 0.22);
+  cursor: pointer;
+  animation: umt-ach-ready 2s ease-in-out infinite;
+}
+.umt-ach.is-ready .umt-ach-foot { color: #ffe08a; }
+.umt-ach.is-claimed { border-color: rgba(87, 214, 154, 0.45); }
+.umt-ach.is-claimed .umt-ach-foot { color: #6fe3aa; }
+.umt-ach.is-claimed .umt-ach-foot::before { content: "✓ "; }
+.umt-ach.is-just-claimed { animation: umt-ach-claim 600ms cubic-bezier(.2, .9, .3, 1.3); }
+.umt-ach:focus-visible, .umt-ach-close:focus-visible { outline: 2px solid #f6c956; outline-offset: 2px; }
+@keyframes umt-ach-ready { 50% { box-shadow: 0 0 26px rgba(246, 201, 86, 0.42); } }
+@keyframes umt-ach-claim { 0% { transform: scale(0.94); } 60% { transform: scale(1.04); } 100% { transform: none; } }
+
+/* -- the unlock toast ----------------------------------------------------------- */
+.umt-ach-toast {
+  position: fixed;
+  left: 50%;
+  top: 14px;
+  z-index: 100004;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 10px 14px 10px 10px;
+  border: 1px solid rgba(246, 201, 86, 0.7);
+  border-radius: 14px;
+  background: #241a2e;
+  color: #f7f4ff;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  transform: translateX(-50%);
+  animation: umt-ach-toast-in 360ms cubic-bezier(.2, .9, .3, 1.2) both;
+}
+.umt-ach-toast.is-leaving { animation: umt-ach-toast-out 380ms ease-in both; }
+.umt-ach-toast-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: rgba(246, 201, 86, 0.18); }
+.umt-ach-toast-icon svg { width: 24px; height: 24px; }
+.umt-ach-toast b { display: block; color: #ffe08a; font-size: 0.86rem; }
+.umt-ach-toast small { display: block; color: #c9c3d8; font-size: 0.76rem; }
+@keyframes umt-ach-toast-in { from { opacity: 0; transform: translate(-50%, -14px); } }
+@keyframes umt-ach-toast-out { to { opacity: 0; transform: translate(-50%, -14px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .umt-ach.is-ready, .umt-ach.is-just-claimed, .umt-ach-toast, .umt-ach-toast.is-leaving { animation: none; }
+}
