@@ -3778,7 +3778,7 @@
     {
       id: "greyscale",
       key: "greyscale",
-      icon: "GREY",
+      icon: "⬛",
       title: "Greyscale",
       description: "Grey tiles pay 1 point. Level 2: 2 points. Level 3: 3 points, and yellows 1 more."
     }
