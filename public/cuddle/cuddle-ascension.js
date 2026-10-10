@@ -1,7 +1,7 @@
 /* Cuddle: the Ascension ladder.
  *
  * Win a Hard run and Ascension 1 unlocks; win at Ascension N and N+1
- * unlocks, up to 8. Each level adds one handicap to all the ones below it,
+ * unlocks, up to 9. Each level adds one handicap to all the ones below it,
  * so Ascension 5 carries five. Only Hard runs climb the ladder.
  *
  *   1 Thin Hand      one fewer consonant in your hand
@@ -15,6 +15,8 @@
  *   7 Heavy Toll     each late guess costs 10 more points
  *   8 Hexed          the run starts cursed: one of the first three guesses
  *                    of every stage has its feedback masked
+ *   9 Dead Weight    a dead tile sits in your deck all run
+ *                    (dealt by cuddle-burdens.js)
  *
  * The level a run was started at is stored on the run (state.umtAscension),
  * so a saved run keeps its handicaps whatever is picked in the lobby later.
@@ -42,7 +44,8 @@
     Object.freeze({ level: 5, id: "gauntlet", name: "Gauntlet", text: "No plain Wordles: every Wordle stop has a challenge." }),
     Object.freeze({ level: 6, id: "steepGates", name: "Steep Gates", text: "Boss point targets are 20% higher." }),
     Object.freeze({ level: 7, id: "heavyToll", name: "Heavy Toll", text: "Each late guess costs 10 more points." }),
-    Object.freeze({ level: 8, id: "hexed", name: "Hexed", text: "You start cursed: one early guess of every stage is masked." })
+    Object.freeze({ level: 8, id: "hexed", name: "Hexed", text: "You start cursed: one early guess of every stage is masked." }),
+    Object.freeze({ level: 9, id: "deadWeight", name: "Dead Weight", text: "A dead tile sits in your deck all run. Mulligan it away." })
   ]);
   var MAX = LEVELS.length;
   var BY_ID = {};

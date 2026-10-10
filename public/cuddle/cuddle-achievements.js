@@ -47,7 +47,7 @@
     { id: "maxCommon", group: "powers", icon: "⬆", title: "Maxed Out", text: "Max out a Common power for the first time." },
     { id: "maxRare", group: "powers", icon: "⬆", title: "Rare Mastery", text: "Max out a Rare power with several levels." }
   ];
-  for (var level = 1; level <= 8; level += 1) {
+  for (var level = 1; level <= 9; level += 1) {
     LIST.push({ id: "ascension" + level, group: "ascension", icon: "▲", title: "Ascension " + level, text: "Win a Hard run at Ascension " + level + "." });
   }
   var BY_ID = {};
@@ -227,7 +227,7 @@
         if (difficulty === "hard") unlock("winHard");
         if (!memo.late) unlock("flawless");
         var ascension = state.umtAscension && Number(state.umtAscension.level);
-        if (difficulty === "hard" && ascension >= 1 && ascension <= 8) unlock("ascension" + ascension);
+        if (difficulty === "hard" && ascension >= 1 && ascension <= 9) unlock("ascension" + ascension);
       }
       try { game.save(); } catch (_error) { /* next save */ }
     }

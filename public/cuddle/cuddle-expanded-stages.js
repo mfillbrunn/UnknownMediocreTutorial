@@ -248,6 +248,36 @@
         opt("safe", "Listen to a lecture", "Two opening clues in the next Wordle.", [{ type: "nextBonus", key: "clue", amount: 2 }]),
         opt("bold", "Study through the night", "Two rare letters leave the deck and every future answer for good, but the next Wordle must be solved within the guess limit.", [{ type: "upgradeId", id: "umtCullTwo" }, { type: "nextPenalty", key: "guess", amount: 1 }])
       ])
+    }),
+    // Deck burdens (cuddle-burdens.js): a dead tile has no letter and only
+    // leaves your hand through a mulligan; doubled consonants are second
+    // copies of weak letters that crowd the good ones out.
+    Object.freeze({
+      id: "stoneMason",
+      title: "Stone Mason",
+      flavor: "A mason offers a fine carving, if you'll carry one of her blank slabs.",
+      options: Object.freeze([
+        opt("safe", "Buy a pebble charm", "Gain $[12].", [{ type: "money", amount: 12 }]),
+        opt("bold", "Carry the blank slab", "Choose one of three **Epic** upgrades, but 1 dead tile joins your deck for the rest of the run.", [{ type: "deadTile", amount: 1 }, { type: "pickTier", tier: "epic" }])
+      ])
+    }),
+    Object.freeze({
+      id: "echoingWell",
+      title: "Echoing Well",
+      flavor: "Shout a coin into the well and it shouts back twice as loud.",
+      options: Object.freeze([
+        opt("safe", "Listen to the echo", "One opening clue in the next Wordle.", [{ type: "nextBonus", key: "clue", amount: 1 }]),
+        opt("bold", "Shout into the well", "Gain $[45], but 3 doubled consonants join your deck for the rest of the run.", [{ type: "money", amount: 45 }, { type: "doubleConsonants", amount: 3 }])
+      ])
+    }),
+    Object.freeze({
+      id: "rustyPress",
+      title: "Rusty Press",
+      flavor: "The old letter press still works. Mostly.",
+      options: Object.freeze([
+        opt("safe", "Oil the gears", "Two extra mulligans in the next Wordle.", [{ type: "nextBonus", key: "mulligan", amount: 2 }]),
+        opt("gamble", "Pull the lever", "60%: a random **Rare** upgrade. 40%: it jams, and 1 dead tile joins your deck for the rest of the run.", [{ type: "gamble", chance: 0.6, win: [{ type: "upgradeTier", tier: "rare" }], lose: [{ type: "deadTile", amount: 1 }] }])
+      ])
     })
   ]);
   const EVENT_BY_ID = Object.freeze(Object.fromEntries(EVENTS.map(item => [item.id, item])));
@@ -1123,6 +1153,12 @@
           case "curse":
             messages.push(addEventCurse(game));
             break;
+          case "deadTile":
+            if (window.CuddleBurdens) messages.push(window.CuddleBurdens.addDead(game, effect.amount || 1));
+            break;
+          case "doubleConsonants":
+            if (window.CuddleBurdens) messages.push(window.CuddleBurdens.addDoubles(game, effect.amount || 3));
+            break;
           case "gamble": {
             const won = randomFor(game) < Number(effect.chance || 0.5);
             context.gambleResult = won ? "won" : "lost";
@@ -1304,6 +1340,7 @@
         { id: "pay", title: "Pay $10", description: "Start Easy after paying $10.", enabled: Number(game.state.cuddleMoney || 0) >= 10, upgrade: null },
         { id: "nextGuess", title: "Borrow a guess", description: "Start Easy, but the next normal Wordle begins one guess short.", enabled: true, upgrade: null },
         { id: "boss", title: "Strengthen the boss", description: "Start Easy, but the next boss is one guess tougher.", enabled: true, upgrade: null },
+        { id: "deadTile", title: "Take a dead tile", description: "Start Easy, but a dead tile joins your deck for the rest of the run. It has no letter; mulligan it away.", enabled: Boolean(window.CuddleBurdens), upgrade: null },
         { id: "upgrade", title: upgrade ? `Give up ${upgrade.title}` : "Give up an upgrade", description: upgrade ? `Surrender one level of ${upgrade.title}.` : "No reversible upgrade is available.", enabled: Boolean(upgrade), upgrade }
       ];
     }
@@ -1618,6 +1655,9 @@
         case "boss":
           map.bossPenalty = Number(map.bossPenalty || 0) + 1;
           return { ok: true, message: "The next boss will be one guess tougher." };
+        case "deadTile":
+          if (!window.CuddleBurdens) return { ok: false, error: "Dead tiles are unavailable." };
+          return { ok: true, message: window.CuddleBurdens.addDead(game, 1) };
         case "upgrade": {
           const result = surrenderUpgrade(game, sacrifice.upgrade);
           return result.ok ? result : { ok: false, error: result.message };
@@ -2700,7 +2740,7 @@
     }
 
     // Short labels for the Easy costs; the full wording is the tooltip.
-    const EASY_COST_LABELS = { pay: "Pay $10", nextGuess: "Next Wordle −1 guess", boss: "Next boss −1 guess" };
+    const EASY_COST_LABELS = { pay: "Pay $10", nextGuess: "Next Wordle −1 guess", boss: "Next boss −1 guess", deadTile: "+1 dead tile" };
 
     // Three tiers, easiest first, each with its own colour and pips. Easy
     // costs something up front; Medium and Hard pay more on a win.

@@ -29,7 +29,7 @@
 .umt-asc-head span { color: var(--cuddle-muted, #b9b2cc); font-size: .72rem; }
 .umt-asc-levels {
   display: grid;
-  grid-template-columns: repeat(9, minmax(0, 1fr));
+  grid-template-columns: repeat(10, minmax(0, 1fr));
   gap: 4px;
 }
 .umt-asc-level {

@@ -892,6 +892,7 @@
     // ranks with the yellows it half-resembles.
     // Same rule the card itself uses to show "?" (see renderHandCard).
     const cardRank = glyph => {
+      if (window.CuddleBurdens?.isDeadGlyph(glyph)) return 200;
       const status = game.getCardKnowledgeStatus(glyph);
       if (status === "unused" && typeof game.isGlyphUnknown === "function" && game.isGlyphUnknown(glyph)) return 1.8;
       if (status === "yellow" && typeof game.isGlyphBlue === "function" && game.isGlyphBlue(glyph)) return 1.5;
@@ -951,6 +952,20 @@
       || (actionMode !== "play" && selectable.length === 0)
       || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
     const isJoker = group.glyph === window.CuddleEngine.CUDDLE_JOKER_GLYPH;
+    // A dead tile (cuddle-burdens.js): no letter, only good for a mulligan.
+    if (window.CuddleBurdens?.isDeadGlyph(group.glyph)) {
+      const deadCount = group.cards.length;
+      const deadDisabled = state.status !== "playing"
+        || (actionMode !== "play" && selectable.length === 0)
+        || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
+      const deadLabel = `Dead tile${deadCount > 1 ? ` ×${deadCount}` : ""}: no letter, can't be played. Mulligan it away.`;
+      return `
+      <button class="cuddle-card is-dead${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${deadCount}" ${deadDisabled ? "disabled" : ""}
+        aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(deadLabel)}" title="${escapeHtml(deadLabel)}">
+        <span class="cuddle-card-letter cuddle-card-dead" aria-hidden="true"></span>
+        ${deadCount > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${deadCount}</span>` : ""}
+      </button>`;
+    }
     const classes = [
       "cuddle-card",
       `is-card-${status}`,

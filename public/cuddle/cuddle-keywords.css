@@ -5,5 +5,6 @@
 .umt-kw.is-money { color: #f6c956; }
 .umt-kw.is-mulligan { color: #7cc4ff; }
 .umt-kw.is-joker { color: #c9a2ff; }
+.umt-kw.is-dead { color: #b9b0cf; text-decoration: underline dashed rgba(185, 176, 207, 0.6); text-underline-offset: 3px; }
 /* On light cards the same hues, deep enough to read. */
 .umt-bd-short .umt-kw.is-points { color: #3fcf8a; }
