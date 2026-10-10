@@ -273,6 +273,9 @@
   let rivalIntroOpen = false;
   let duelWinFx = { id: "", at: 0 };
   const DUEL_WIN_FX_MS = 3200;
+  // A loss plays its own short beat once, the same way (--loss-t).
+  let duelLossFx = { id: "", at: 0 };
+  const DUEL_LOSS_FX_MS = 2600;
 
   function rivalOf(duel) {
     return RIVALS[duel && duel.difficulty] || RIVALS.medium;
@@ -2773,17 +2776,29 @@
       const playing = duel.phase === "playing";
       const secretTiles = String(duel.secret || "").split("").map((letter, index) => `<span class="cuddle-tile is-green" style="--i:${index}">${escapeHtml(letter)}</span>`).join("");
       let winFx = "";
+      let lossLayer = "";
       if (duel.phase === "won") {
         if (duelWinFx.id !== duel.id) duelWinFx = { id: duel.id, at: Date.now() };
         const elapsed = Date.now() - duelWinFx.at;
         if (elapsed < DUEL_WIN_FX_MS) winFx = ` is-celebrating" style="--win-t:-${elapsed}ms`;
       }
+      if (duel.phase === "lost") {
+        if (duelLossFx.id !== duel.id) duelLossFx = { id: duel.id, at: Date.now() };
+        const elapsed = Date.now() - duelLossFx.at;
+        if (elapsed < DUEL_LOSS_FX_MS) {
+          winFx = ` is-mourning" style="--loss-t:-${elapsed}ms`;
+          lossLayer = ` is-mourning" style="--loss-t:-${elapsed}ms`;
+        }
+      }
       const rival = rivalOf(duel);
       const sparks = duel.phase === "won"
         ? `<span class="umt-duel-sparks" aria-hidden="true">${Array.from({ length: 10 }, (_unused, index) => `<i style="--a:${index * 36}deg"></i>`).join("")}</span>`
         : "";
+      // The result sits in the middle of the screen over the board, so its
+      // button is in reach without scrolling.
       const outcome = duel.phase === "won" || duel.phase === "lost"
-        ? `<section class="umt-stop-panel umt-duel-outcome is-${duel.phase === "won" ? "win" : "loss"}${winFx}">`
+        ? `<div class="umt-duel-outcome-layer is-${duel.phase === "won" ? "win" : "loss"}${lossLayer}" role="dialog" aria-modal="true">`
+          + `<section class="umt-stop-panel umt-duel-outcome is-${duel.phase === "won" ? "win" : "loss"}${winFx}">`
           + `<div class="umt-duel-outcome-rival${duel.phase === "won" ? " is-defeated" : " is-gloating"}">${sparks}${rivalSvg(rival)}</div>`
           + `<h2>${duel.phase === "won" ? `You beat ${escapeHtml(rival.name)}` : `${escapeHtml(rival.name)} solved it first`}</h2>`
           + `<div class="cuddle-board-row umt-duel-answer">${secretTiles}</div>`
@@ -2791,7 +2806,7 @@
           + (duel.phase === "won"
             ? `<button type="button" class="cuddle-btn cuddle-btn-primary" data-cuddle-campaign-action="expanded-duel-continue">Back on the road</button>`
             : `<button type="button" class="cuddle-btn" data-cuddle-campaign-action="expanded-duel-end">End this run</button>`)
-          + `</section>`
+          + `</section></div>`
         : "";
       const aiTurn = duel.turn === "ai";
       const mine = (duel.history || []).filter(entry => entry.actor === (aiTurn ? "ai" : "player")).length + 1;
