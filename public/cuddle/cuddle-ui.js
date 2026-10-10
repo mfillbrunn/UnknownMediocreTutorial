@@ -471,7 +471,9 @@
     // A Quick Mode boss runs the clock all fight; a Quick Mode guess of a
     // challenge or a mixed boss runs it for that guess only.
     const planSeconds = () => Number(window.CuddleRebalanceV5?.guessTimerSeconds?.(game)) || 0;
-    const seconds = Number(state?.boss?.secondsPerGuess) || planSeconds();
+    // Quick Mode is 45 seconds a guess on Hard (a boss saved at 60 too).
+    const hardQuick = state?.boss?.id === "quickMode" && state?.megaState?.difficulty === "hard";
+    const seconds = hardQuick ? 45 : Number(state?.boss?.secondsPerGuess) || planSeconds();
     const running = Boolean(
       seconds && state.status === "playing" && !state.roundIntroPending && !state.pendingRoundEnd
     );

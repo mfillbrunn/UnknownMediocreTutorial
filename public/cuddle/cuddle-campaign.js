@@ -25,7 +25,7 @@
     id: "revealCategory",
     icon: "🧭",
     title: "Category Whisper",
-    description: "+1 theme shown"
+    description: "Shows 1 more of the answer's themes"
   });
   const CATEGORY_SENSE_UPGRADE = Object.freeze({
     id: "categorySense",

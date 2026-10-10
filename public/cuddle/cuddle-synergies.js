@@ -21,34 +21,34 @@
 
   const COMBOS = Object.freeze([
     { id: "secondWind", icon: "🌬️", title: "Second Wind", requires: [["extraMulligans"], ["mulliganValueBoost"]],
-      effect: "+3 points per unused mulligan" },
+      effect: "Each unused mulligan pays +3 points more when you solve" },
     { id: "questMaster", icon: "🎖️", title: "Quest Master", requires: [["questPoints"], ["questReroll"]],
-      effect: "+$2 per quest" },
+      effect: "Each completed quest also pays +$2" },
     { id: "fullHouse", icon: "🂡", title: "Full House", requires: [["handSizeBoost"], ["jokerCache", "jokerCacheLarge"]],
-      effect: "+1 mulligan per stage" },
+      effect: "Start every stage with +1 mulligan" },
     // Combos around the Legendary and boss rewards.
     { id: "cartographer", icon: "🗺️", title: "Cartographer", requires: [["allThemesBoss", "allThemes"], ["categorySense"]],
-      effect: "+10 points per solve" },
+      effect: "Every solved stage pays +10 points" },
     { id: "questEngine", icon: "⚙️", title: "Quest Engine", requires: [["questPersistReward"], ["questDoublePick"]],
-      effect: "+$3 per quest" },
+      effect: "Each completed quest also pays +$3" },
     { id: "cleanSweep", icon: "🧹", title: "Clean Sweep", requires: [["cullRare"], ["freeVowelSweep"]],
-      effect: "+1 mulligan per stage" },
+      effect: "Start every stage with +1 mulligan" },
     { id: "safetyNet", icon: "🪢", title: "Safety Net", requires: [["secondCup"], ["doubleMulligans"]],
-      effect: "+20 points for solving on the last guess of your window" },
+      effect: "Solve on the last guess of your guess window for +20 points" },
     { id: "scholarsEye", icon: "🔎", title: "Scholar's Eye", requires: [["greenCount"], ["categorySense"]],
-      effect: "+$3 per solve" },
+      effect: "Every solved stage pays +$3" },
     { id: "busyDay", icon: "📋", title: "Busy Day", requires: [["surprise-assignment"], ["questRefreshes"]],
-      effect: "+5 points per quest" },
+      effect: "Each completed quest pays +5 points more" },
     { id: "fastStory", icon: "📚", title: "Fast Story", requires: [["storybookStart"], ["earlySolveBoost"]],
-      effect: "+15 points for a solve by guess 3" },
+      effect: "Solve by guess 3 for +15 points" },
     // Insight combos (rewards in cuddle-clues.js).
     { id: "lamplighter", icon: "🏮", title: "Lamplighter", requires: [["vowelLamp"], ["patternLens"]],
-      effect: "+1 mulligan per stage" },
+      effect: "Start every stage with +1 mulligan" },
     // Existing engine combos: previewed here, applied by the engine.
     { id: "goldenTempo", icon: "⚡", title: "Golden Tempo", engine: true, requires: [["colourTrade", "yellowPoints"], ["earlySolveBoost", "earlyRoundPoint"]],
-      effect: "+5 points per solve" },
+      effect: "Every solved stage pays +5 points" },
     { id: "endlessMargins", icon: "🖋️", title: "Endless Margins", engine: true, requires: [["wideChoice"], ["questRefreshes"]],
-      effect: "+1 quest reward option" }
+      effect: "Quest reward screens show 1 extra choice" }
   ]);
   const COMBO_BY_ID = new Map(COMBOS.map(combo => [combo.id, combo]));
 

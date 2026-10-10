@@ -321,31 +321,31 @@
       id: "stealthGuess",
       icon: "🔁",
       title: "Extra Mulligan",
-      description: "+1 mulligan this stage"
+      description: "+1 mulligan for this stage"
     },
     {
       id: "letterProbe",
       icon: "🔎",
       title: "Letter Count",
-      description: "Shows how often 2 of your consonants appear"
+      description: "Shows how many times 2 of your consonants appear in the answer"
     },
     {
       id: "sillyWord",
       icon: "🤪",
       title: "Silly Word",
-      description: "This guess can be any 5 letters"
+      description: "Your next guess can be any 5 letters, real word or not"
     },
     {
       id: "extraLetters",
       icon: "🎁",
       title: "Extra Letters",
-      description: "+3 consonants this guess"
+      description: "+3 extra consonants in your hand for your next guess"
     },
     {
       id: "jokerToken",
       icon: "🃏",
       title: "Joker",
-      description: "+1 Joker, a wildcard kept until you use it"
+      description: "+1 Joker: a wildcard tile you keep until you use it"
     }
   ];
 
@@ -370,7 +370,7 @@
     { id: "arrowMode", icon: "🧭", title: "Arrow Signs", kind: "mask", boss: true, challenge: true, mix: true, curse: true, reward: 26,
       text: "marked tiles show only an alphabet arrow (dash = green)." },
     { id: "quickMode", icon: "⏱️", title: "Quick Mode", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 24,
-      text: "60 seconds per guess, or it's lost." },
+      text: "60 seconds per guess (45 on Hard), or it's lost." },
     { id: "noMulligans", icon: "✋", title: "Steady Hand", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 23,
       text: "no mulligans." },
     { id: "questEndurance", icon: "🏃", title: "Endurance Trial", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 26,

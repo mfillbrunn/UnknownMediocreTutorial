@@ -339,11 +339,11 @@
   // -------------------------------------------------------------------------
 
   var QUEST_REWARDS = [
-    { id: "umtRuleOut", icon: "🚫", title: "Rule Out", description: "2 of your consonants are ruled out" },
-    { id: "umtVowelCheck", icon: "🔤", title: "Vowel Check", description: "2 vowels you haven't tried are tested" },
-    { id: "umtSpotlight", icon: "👁️", title: "Spotlight", description: "1 yellow letter turns green (or the next yellow you find)" },
-    { id: "umtPocketMoney", icon: "💰", title: "Pocket Money", description: "+$10" },
-    { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "+15 points" }
+    { id: "umtRuleOut", icon: "🚫", title: "Rule Out", description: "2 consonants in your hand that aren't in the answer are marked grey" },
+    { id: "umtVowelCheck", icon: "🔤", title: "Vowel Check", description: "Tests 2 vowels you haven't tried: you learn if each is in the answer" },
+    { id: "umtSpotlight", icon: "👁️", title: "Spotlight", description: "A yellow letter is shown in its exact place (or the next yellow you find)" },
+    { id: "umtPocketMoney", icon: "💰", title: "Pocket Money", description: "Gain +$10 now" },
+    { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "Gain +15 points now" }
   ];
 
   function uniqueSorted(list) {
