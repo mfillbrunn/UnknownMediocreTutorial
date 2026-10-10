@@ -381,7 +381,8 @@
       text: "at most one vowel." },
     { id: "shortHand", icon: "✂️", title: "Short Hand", kind: "round", boss: true, challenge: false, mix: false, curse: true, reward: 0,
       text: "10 consonants not in the answer leave your deck; only 4 guesses." },
-    { id: "presetWordsTrial", icon: "🎴", title: "Preset Trial", kind: "round", boss: true, challenge: false, mix: false, curse: true, reward: 0,
+    // Preset Trial is a stage of its own now (cuddle-curses.js), not a boss.
+    { id: "presetWordsTrial", icon: "🎴", title: "Preset Trial", kind: "round", boss: false, challenge: false, mix: false, curse: false, reward: 0,
       text: "the answer is one of 10 words shown; only 3 guesses." },
     { id: "rareWord", icon: "💎", title: "Rare Word", kind: "round", boss: false, challenge: true, mix: false, curse: false, reward: 40,
       text: "the answer is a rare word." }
@@ -510,6 +511,9 @@
     },
     {
       id: "presetWordsTrial",
+      // Kept so a run saved mid-fight still finds it; never offered now --
+      // the Preset Trial is a stage of its own (cuddle-curses.js).
+      retired: true,
       icon: "🎴",
       title: "Preset Trial",
       description: "The answer is one of 10 words shown on screen, and you get only 3 guesses.",
@@ -586,10 +590,11 @@
   // Two distinct bosses to choose between, each carrying its own reward.
   function bossChoices(random = Math.random, excludeIds = []) {
     const skip = new Set(excludeIds);
-    let pool = BOSSES.filter(boss => !skip.has(boss.id));
+    const offered = BOSSES.filter(boss => !boss.retired);
+    let pool = offered.filter(boss => !skip.has(boss.id));
     // Every boss already used -- fall back to the full list rather than
     // offering nothing at all.
-    if (pool.length < 2) pool = BOSSES.slice();
+    if (pool.length < 2) pool = offered.slice();
     return shuffle(pool, random).slice(0, 2).map(boss => ({
       ...boss,
       reward: getBossReward(boss.rewardId)

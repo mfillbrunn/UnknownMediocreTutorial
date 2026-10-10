@@ -5,7 +5,7 @@
   const VERSION = "2026.09.09.2";
   const ROUTE_VERSION = "umt-cuddle-route-2026.10.09.paths";
   const PATCH_MARK = Symbol.for("umt.cuddle.stability.v2");
-  const ROUND_TYPES = new Set(["normal", "theme", "challenge", "boss", "wordle"]);
+  const ROUND_TYPES = new Set(["normal", "theme", "challenge", "boss", "wordle", "trial"]);
   const FALLBACK_ICON = "gift.svg";
   const STAGE_ICON = Object.freeze({
     normal: "stage-normal.svg",
@@ -122,7 +122,7 @@
   function getBossPool() {
     const book = window.CuddleQuestBook || {};
     const pool = Array.isArray(book.BOSSES) ? book.BOSSES : [];
-    return pool.filter(item => item && item.id).map(item => ({ ...item }));
+    return pool.filter(item => item && item.id && !item.retired).map(item => ({ ...item }));
   }
 
   function getBossById(id) {

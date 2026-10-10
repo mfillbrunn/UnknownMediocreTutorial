@@ -126,6 +126,7 @@
     shop: "#f6c956",
     upgrade: "#5ad1ff",
     duel: "#ff7ab6",
+    trial: "#e8c98a",
     mystery: "#c7bfff",
     boss: "#ff5a6a",
     final: "#ffcf70"
@@ -138,6 +139,7 @@
     shop: "Shop",
     upgrade: "Upgrade",
     duel: "Duel",
+    trial: "Trial",
     mystery: "Unknown",
     boss: "Boss",
     final: "Final Boss"
@@ -179,6 +181,12 @@
       + '<path d="M12.6 16.4l4-4M7.4 12.4l4 4" stroke="#ff7ab6" stroke-width="2.2" stroke-linecap="round"/>'
       + '<path d="M14.8 15 19 19.2M9.2 15 5 19.2" stroke="#ff7ab6" stroke-width="2" stroke-linecap="round"/>'
       + '<circle cx="19.9" cy="20.1" r="1.5" fill="#ffb8d6"/><circle cx="4.1" cy="20.1" r="1.5" fill="#ffb8d6"/>',
+    trial:
+      '<path d="M6 3.5h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z" fill="#f3e3c3"/>'
+      + '<rect x="8.6" y="6.4" width="7.8" height="3" rx="1" fill="#a98bff"/>'
+      + '<rect x="8.6" y="11" width="7.8" height="3" rx="1" fill="#53c47c"/>'
+      + '<rect x="8.6" y="15.6" width="7.8" height="3" rx="1" fill="#a98bff"/>'
+      + '<path d="M17.6 12.4l1.4 1.4 2.8-3.2" fill="none" stroke="#e8c98a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
     mystery:
       '<circle cx="12" cy="12" r="9.6" fill="#3a3550" stroke="#c7bfff" stroke-width="1.5"/>'
       + '<path d="M9.3 9.5a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.2.9-1.2 1.8v.5" stroke="#f1edff" stroke-width="2" fill="none" stroke-linecap="round"/>'
@@ -230,6 +238,7 @@
       case "shop": return "shop";
       case "upgrade": return "upgrade";
       case "duel": return "duel";
+      case "trial": return "trial";
       case "mystery": return node.mysteryRevealed ? kindForNode({ type: node.mysteryType }) : "mystery";
       case "boss": return node.gate === "final" ? "final" : "boss";
       default: return "wordle";

@@ -105,13 +105,42 @@
     return decoys.concat(secret).sort();
   }
 
+  // -- the Preset Trial stage -------------------------------------------------
+  // A stop of its own on the map (cuddle-expanded-stages.js addTrialRows),
+  // one or two a run: two guesses as usual, then on guess 3 the answer is
+  // one of a short list -- 3 words in world one, 4 in world two, 5 in world
+  // three. The right pick passes it (and pays); a wrong one is the stage's
+  // last guess, which ends the run, the same as losing a Duel.
+  var TRIAL_GUESS = 3;
+  var TRIAL_WORDS = [3, 4, 5];
+  var TRIAL_MONEY = [15, 20, 25];
+
+  function trialNode(state) {
+    if (!state || state.status !== "playing") return null;
+    var map = state.branchMap;
+    var position = map && map.position;
+    var row = position && Array.isArray(map.rows) ? map.rows[Number(position.row)] : null;
+    var node = row && Array.isArray(row.nodes) ? row.nodes[Number(position.col)] : null;
+    return node && node.type === "trial" ? node : null;
+  }
+
+  function trialWorld(node) {
+    return Math.max(0, Math.min(2, Math.floor(Number(node && node.trialWorld)) || 0));
+  }
+
+  function trialSize(node) {
+    return TRIAL_WORDS[trialWorld(node)];
+  }
+
   // The guess (1-based) this stage's Preset Trial curse lands on, or 0.
   // Ordinary stages only: a boss fight keeps its own rules, and a Duel
   // alternates with the AI.
   proto.presetPickGuess = function presetPickGuess() {
     var state = this.state;
-    if (!state || inDuel(state) || typeof Engine.ratchetForGuess !== "function") return 0;
+    if (!state || inDuel(state)) return 0;
     if (typeof this.isBossRound === "function" && this.isBossRound()) return 0;
+    if (trialNode(state)) return TRIAL_GUESS;
+    if (typeof Engine.ratchetForGuess !== "function") return 0;
     var mega = megaOf(state);
     if (!(mega.ratchetDebuffs || []).some(function preset(item) { return item && item.bossId === PRESET_ID; })) return 0;
     for (var guess = 1; guess <= LOOKAHEAD; guess += 1) {
@@ -131,7 +160,8 @@
     var mega = megaOf(state);
     var key = stageKey(state) + ":" + guess;
     if (!mega.presetPick || mega.presetPick.key !== key || !Array.isArray(mega.presetPick.words)) {
-      var size = Math.max(MIN_WORDS, Math.min(MAX_WORDS, guess));
+      var trial = trialNode(state);
+      var size = trial ? trialSize(trial) : Math.max(MIN_WORDS, Math.min(MAX_WORDS, guess));
       mega.presetPick = { key: key, guess: guess, words: buildChoices(this, size) };
     }
     return mega.presetPick;
@@ -153,11 +183,25 @@
     state.hand = state.hand.concat(cards);
     state.draft = ids.slice();
     this._presetPickWord = word;
+    var trial = trialNode(state);
     var result;
     try {
       result = this.submitDraft();
     } finally {
       this._presetPickWord = null;
+    }
+    // A wrong pick ends the run: say so plainly, not as a missed guess limit.
+    if (trial && result && result.ok !== false && state.status === "lost") {
+      state.failureReason = "Wrong pick in the Preset Trial: the answer was " + String(state.secret || "").toUpperCase() + ".";
+      try { this.save(); } catch (_error) { /* next save */ }
+    }
+    // Passing a Preset Trial pays on top of the stage's own earnings.
+    if (trial && result && result.ok !== false && word === String(state.secret || "").toUpperCase() && !trial.trialPaid) {
+      var money = TRIAL_MONEY[trialWorld(trial)];
+      trial.trialPaid = true;
+      state.cuddleMoney = Math.max(0, (Number(state.cuddleMoney) || 0) + money);
+      state.lastMessage = ((state.lastMessage || "") + " Preset Trial passed: +$" + money + ".").trim();
+      try { this.save(); } catch (_error) { /* next save */ }
     }
     if (!result || result.ok === false) {
       state.hand = state.hand.filter(function keep(card) { return ids.indexOf(card.id) === -1; });
