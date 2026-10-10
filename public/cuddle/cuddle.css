@@ -4622,3 +4622,33 @@
   line-height: 1.35;
 }
 .umt-combo-legend b { color: #ffb3d4; }
+
+/* Play screen, economical with space: the next boss's target rides inside
+   the points pill (288/510), and the theme, the clues, the run's excluded
+   letters and the Ascension chip share wrapping lines above the board. */
+#cuddleScreen .cuddle-header-score .cuddle-header-boss-goal {
+  display: inline;
+  margin: 0 0 0 1px;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: rgba(143, 247, 205, 0.62);
+  font-size: 0.8em;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+#cuddleScreen .cuddle-play-strip { gap: 6px; }
+#cuddleScreen .cuddle-play-strip > .cuddle-play-theme-badge { flex: 0 1 auto; }
+#cuddleScreen .cuddle-play-strip > .umt-clues { display: contents; }
+.umt-clue.is-excluded {
+  border-color: rgba(255, 130, 130, 0.38);
+  background: rgba(255, 130, 130, 0.1);
+  color: #ffdede;
+}
+.umt-clue.is-world {
+  border-color: color-mix(in srgb, var(--wt-accent, #a98bff) 50%, transparent);
+  background: color-mix(in srgb, var(--wt-accent, #a98bff) 14%, transparent);
+}
+.umt-clue.is-excluded .umt-clue-text,
+.umt-clue.is-world .umt-clue-text { display: inline-flex; align-items: center; gap: 4px; }

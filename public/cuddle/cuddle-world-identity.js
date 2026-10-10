@@ -273,44 +273,32 @@
     });
   }
 
-  function iconHtml(emoji) {
-    var icons = window.CuddleIcons;
-    return icons ? icons.svg(emoji) : escapeHtml(emoji);
-  }
-
-  // What the trait has done in this stage, in a few words.
-  function traitStatus(game, theme) {
-    var state = game.state;
+  // What a world's rule has told the player this stage, as clue chips for
+  // the play strip (cuddle-clues.js): only the rules that reveal something
+  // about the answer. The others are explained by the world intro and the
+  // stage banner, and take no space on the play screen.
+  function traitClues(game) {
+    var state = game && game.state;
+    if (!state || state.status !== "playing" || inDuel(state)) return [];
+    var info = describe(game);
+    if (!info || !info.trait) return [];
     var trait = state.umtWorldTrait && state.umtWorldTrait.key === stageKey(state) ? state.umtWorldTrait : {};
     var secret = String(state.secret || "").toUpperCase();
-    switch (theme) {
-      case "woods": return trait.whisper ? "Not " + trait.whisper : "Whispers after guess 1";
-      case "meadow": return "+2 special tiles";
-      case "marsh": return trait.firefly ? trait.firefly.letter + (trait.firefly.present ? " is in it" : " isn't in it") : "A vowel tested";
-      case "caverns": return secret.length === 5 ? (new Set(secret).size < 5 ? "Repeats a letter" : "No repeated letters") : "";
-      case "frost": return "-1 mulligan · +$8 a solve";
-      case "library": return "A theme shown";
-      case "citadel": return "+15 in the window";
-      case "storm": return (state.history || []).length >= 3 ? "Struck guess 3" : "Guess 3 pays double";
-      case "forge": return "Greens +2 · greys -1";
-      default: return "";
+    var label = info.trait.name;
+    switch (info.theme) {
+      case "woods":
+        return trait.whisper ? [{ icon: info.trait.icon, label: label, text: "Not", letters: [trait.whisper], tone: "world" }] : [];
+      case "marsh":
+        return trait.firefly
+          ? [{ icon: info.trait.icon, label: label, text: trait.firefly.present ? "In it" : "Not in it", letters: [trait.firefly.letter], tone: "world" }]
+          : [];
+      case "caverns":
+        return secret.length === 5
+          ? [{ icon: info.trait.icon, label: label, text: new Set(secret).size < 5 ? "Repeats a letter" : "No repeats", tone: "world" }]
+          : [];
+      default:
+        return [];
     }
-  }
-
-  var chipOpen = false;
-
-  function chipHtml(game, info) {
-    var trait = info.trait;
-    var status = traitStatus(game, info.theme);
-    return '<div class="umt-world-chip-wrap">'
-      + '<button type="button" class="umt-world-chip" data-umt-world-chip aria-expanded="' + (chipOpen ? "true" : "false") + '"'
-      + ' aria-label="' + escapeHtml(info.name + ": " + trait.name + ". " + trait.text) + '">'
-      + '<span class="umt-world-chip-icon" aria-hidden="true">' + iconHtml(trait.icon) + '</span>'
-      + '<span class="umt-world-chip-name">' + escapeHtml(trait.name) + '</span>'
-      + (status ? '<span class="umt-world-chip-status">' + escapeHtml(status) + '</span>' : "")
-      + '</button>'
-      + (chipOpen ? '<p class="umt-world-chip-note"><b>' + escapeHtml(info.name) + '</b> ' + escapeHtml(trait.text) + '</p>' : "")
-      + '</div>';
   }
 
   // The moving backdrop: the same particles on every redraw, each placed
@@ -356,27 +344,9 @@
     var shell = root.querySelector(":scope > .cuddle-shell:not(.cuddle-branch-shell):not(.cuddle-shop-shell)");
     if (!info || !shell || inDuel(game.state)) return;
     if (!shell.querySelector(":scope > .umt-wa")) shell.insertAdjacentHTML("afterbegin", ambienceHtml(info.theme));
-    if (game.state.status !== "playing" || !info.trait) return;
-    root.querySelectorAll(".umt-world-chip-wrap").forEach(function drop(element) { element.remove(); });
-    var strip = root.querySelector(".cuddle-play-strip");
-    if (!strip) {
-      var column = root.querySelector(".cuddle-left-column");
-      if (!column) return;
-      column.insertAdjacentHTML("afterbegin", '<div class="cuddle-play-strip"></div>');
-      strip = column.querySelector(".cuddle-play-strip");
-    }
-    strip.insertAdjacentHTML("afterbegin", chipHtml(game, info));
+    // The world's rule is told by the world intro and the stage banner; the
+    // play screen keeps its space for the board (no chip in the strip).
   }
-
-  document.addEventListener("click", function onChip(event) {
-    var chip = event.target.closest && event.target.closest("[data-umt-world-chip]");
-    if (!chip) return;
-    event.preventDefault();
-    chipOpen = !chipOpen;
-    var game = window.CuddleBranchMap && window.CuddleBranchMap.getActiveGame && window.CuddleBranchMap.getActiveGame();
-    var root = document.getElementById("cuddleRoot");
-    if (game && root) render(root, game, false);
-  });
 
   // The same render hook cuddle-clues.js uses; other add-ons replace
   // CuddleCampaign on their own timers, so re-hook when a newer one appears.
@@ -413,6 +383,7 @@
     TRAITS: TRAITS,
     describe: describe,
     describeWorld: describeWorld,
+    traitClues: traitClues,
     extraSpecialTiles: extraSpecialTiles
   });
 }());

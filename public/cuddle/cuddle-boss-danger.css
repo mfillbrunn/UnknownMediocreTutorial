@@ -57,20 +57,15 @@
 
 .umt-bd[data-where="stage"] .umt-bd-pill { display: none; }
 
-/* On a stage: the header's "Next boss" line carries the verdict. */
-html[data-umt-boss-danger="danger"] #cuddleRoot .cuddle-header-boss-goal {
-  padding: 1px 8px;
-  border-radius: 999px;
-  color: #fff;
-  background: #c62f3a;
+/* On a stage: the boss target beside the header's points carries the
+   verdict -- red and pulsing while short of it, bright once it's met. */
+html[data-umt-boss-danger="danger"] #cuddleScreen .cuddle-header-score .cuddle-header-boss-goal {
+  color: #ff6b74;
   animation: umt-bd-pulse 1.3s ease-in-out infinite;
 }
 
-html[data-umt-boss-danger="safe"] #cuddleRoot .cuddle-header-boss-goal {
-  padding: 1px 8px;
-  border-radius: 999px;
-  color: #08321f;
-  background: #57d69a;
+html[data-umt-boss-danger="safe"] #cuddleScreen .cuddle-header-score .cuddle-header-boss-goal {
+  color: #8ff7cd;
 }
 
 @keyframes umt-bd-pulse {
@@ -90,7 +85,7 @@ html[data-umt-boss-danger="safe"] #cuddleRoot .cuddle-header-boss-goal {
 
 @media (prefers-reduced-motion: reduce) {
   .umt-bd[data-state="danger"] .umt-bd-edge { animation: none; opacity: 0.8; }
-  html[data-umt-boss-danger] #cuddleRoot .cuddle-header-boss-goal { animation: none; }
+  html[data-umt-boss-danger] #cuddleScreen .cuddle-header-score .cuddle-header-boss-goal { animation: none; }
   .umt-bd-pill,
   .umt-bd[data-state="danger"] .umt-bd-pill { animation: none; }
 }

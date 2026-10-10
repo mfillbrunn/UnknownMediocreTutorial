@@ -977,7 +977,8 @@
         ? Math.max(0, Math.round(number(state.score, 0) - provisional))
         : Math.max(0, Math.round(number(state.score, 0)));
     root.querySelectorAll(".cuddle-header-score").forEach(score => {
-      score.textContent = amount.toLocaleString();
+      // Only the number: the play screen keeps the boss target beside it.
+      (score.querySelector(".cuddle-header-points-value") || score).textContent = amount.toLocaleString();
       score.setAttribute("aria-label", `${amount} points`);
       score.classList.add("umt-plain-points-counter");
     });

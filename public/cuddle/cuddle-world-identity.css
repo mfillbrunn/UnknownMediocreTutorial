@@ -162,8 +162,7 @@
   font-family: var(--wt-font);
   font-style: var(--wt-letter-style);
 }
-#cuddleRoot[data-umt-theme] .cuddle-header-title .cuddle-eyebrow,
-#cuddleRoot[data-umt-theme] .cuddle-header-boss-goal:not([class*="danger"]) {
+#cuddleRoot[data-umt-theme] .cuddle-header-title .cuddle-eyebrow {
   color: var(--wt-accent);
 }
 
@@ -384,56 +383,6 @@
   .umt-wa-flash { display: none; }
   .umt-wa-fog { animation: none; }
 }
-
-/* -- the world chip ------------------------------------------------------------ */
-#cuddleRoot .umt-world-chip-wrap {
-  display: grid;
-  justify-items: start;
-  gap: 4px;
-}
-#cuddleRoot .umt-world-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 100%;
-  padding: 4px 10px 4px 6px;
-  border: 1px solid color-mix(in srgb, var(--wt-accent, #d5a6ff) 55%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--wt-accent, #d5a6ff) 14%, rgba(10, 8, 16, .7));
-  color: var(--cuddle-text, #f7f4ff);
-  font: inherit;
-  font-size: .74rem;
-  line-height: 1.2;
-  cursor: pointer;
-}
-#cuddleRoot .umt-world-chip-icon { display: inline-grid; width: 18px; height: 18px; }
-#cuddleRoot .umt-world-chip-icon svg { width: 18px; height: 18px; }
-#cuddleRoot .umt-world-chip-name {
-  color: var(--wt-accent, #d5a6ff);
-  font-weight: 850;
-  letter-spacing: .02em;
-  white-space: nowrap;
-}
-#cuddleRoot .umt-world-chip-status {
-  overflow: hidden;
-  color: rgba(247, 244, 255, .82);
-  font-weight: 650;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-#cuddleRoot .umt-world-chip-status::before { content: "·"; margin-right: 6px; opacity: .6; }
-#cuddleRoot .umt-world-chip:focus-visible { outline: 2px solid var(--wt-accent, #fff); outline-offset: 2px; }
-#cuddleRoot .umt-world-chip-note {
-  max-width: 46ch;
-  margin: 0;
-  padding: 7px 10px;
-  border-radius: 10px;
-  background: rgba(10, 8, 16, .82);
-  color: rgba(247, 244, 255, .88);
-  font-size: .76rem;
-  line-height: 1.4;
-}
-#cuddleRoot .umt-world-chip-note b { color: var(--wt-accent, #d5a6ff); }
 
 /* Board scenery for the themed worlds (the base three keep cuddle-worlds.css's
    pines, crystals and towers): hills and flowers, reeds, snowy peaks,

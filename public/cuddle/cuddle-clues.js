@@ -315,13 +315,19 @@
 
   function renderClues(root, game) {
     if (!root || !game || !game.state || game.state.status !== "playing") return;
-    const chips = clueChips(game);
+    const world = window.CuddleWorldIdentity;
+    const chips = (world && typeof world.traitClues === "function" ? world.traitClues(game) : []).concat(clueChips(game));
+    // Letters excluded for the whole run (Cull One and friends) sit with
+    // the clues instead of on a line of their own under the board.
+    const removed = Array.isArray(game.state.removedLetters) ? game.state.removedLetters : [];
+    if (removed.length) chips.push({ icon: "🚫", label: `Excluded this run: ${removed.join(", ")}`, text: "Out", letters: removed.slice(), tone: "excluded" });
     root.querySelectorAll(".umt-clues").forEach(element => element.remove());
     if (!chips.length) return;
     const markup = `<div class="umt-clues" aria-label="Clues">${chips.map(chip => (
       `<span class="umt-clue${chip.tone ? ` is-${chip.tone}` : ""}" title="${escapeHtml(chip.label)}">`
       + `${icon(chip.icon)}<span class="umt-clue-text${chip.mono ? " is-mono" : ""}">${escapeHtml(chip.text)}`
       + (chip.letters ? chip.letters.map((letter, i) => {
+        if (chip.tone === "excluded" || chip.tone === "world") return `<b class="umt-clue-letter">${escapeHtml(letter)}</b>`;
         const latest = i === chip.letters.length - 1;
         const key = `${game.state.secret}:${chip.letters.join("")}`;
         const flip = latest && key !== flippedSweepKey;
