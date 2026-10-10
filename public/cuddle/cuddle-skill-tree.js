@@ -236,7 +236,7 @@
           levels: ["+4 points per guess with more greens", "+8 points per guess with more greens", "+15 points per guess with more greens"],
           level: g => powerLevel(g, "momentum") },
         { id: "bigOpener", icon: "🎯", title: "Big Opener", tier: "rare", type: "points", maxLevel: 3,
-          levels: ["+4 points per green or yellow on your first guess", "+7 points per green or yellow on your first guess", "+16 points per green or yellow on your first guess"],
+          levels: ["+5 points per green or yellow on your first guess", "+10 points per green or yellow on your first guess", "+20 points per green or yellow on your first guess"],
           level: g => powerLevel(g, "bigOpener") },
         { id: "lastStand", icon: "⚔️", title: "Last Stand", tier: "rare", type: "points", maxLevel: 3,
           levels: ["+25 points for solving on the last guess of your window", "+45 points for solving on the last guess of your window", "+100 points for solving on the last guess of your window"],

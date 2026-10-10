@@ -248,7 +248,7 @@
   }
 
   var MOMENTUM = [0, 4, 8, 15];
-  var BIG_OPENER = [0, 4, 7, 16];
+  var BIG_OPENER = [0, 5, 10, 20];
   var LAST_STAND = [0, 25, 45, 100];
   var PICKPOCKET = [0, 1, 2, 4];
 
