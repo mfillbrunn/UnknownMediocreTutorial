@@ -1413,13 +1413,14 @@
       // -- and toward a solve on this very guess -- before the round
       // resolves further down.
       // A guess past the round's quick-solve window (see latePenalty below)
-      // earns nothing -- no tiles, no special tiles, no quest -- only its
-      // penalty.
+      // earns nothing from its colours and no quest -- only its penalty. A
+      // special tile on it still pays: it was aimed at and hit, the solving
+      // guess included.
       const lateGuess = this.state.guessesUsed + 1 > this._solveGuessThreshold();
-      const tilePoints = !lateGuess && typeof this._scoreSpecialTiles === "function"
+      const tilePoints = typeof this._scoreSpecialTiles === "function"
         ? Math.max(0, Number(this._scoreSpecialTiles(this.state.history.length, feedback)) || 0)
         : 0;
-      const scoreDelta = lateGuess ? 0 : greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue + tilePoints;
+      const scoreDelta = (lateGuess ? 0 : greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue) + tilePoints;
       if (shielded) this.state.buffs.greyShield -= 1;
 
       const activeQuest = this.state.activeQuest;

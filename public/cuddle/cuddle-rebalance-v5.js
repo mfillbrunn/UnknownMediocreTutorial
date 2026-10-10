@@ -1928,18 +1928,35 @@
       mulligans: mulligansRemaining(game),
       score: asNumber(stateOf(game) && stateOf(game).score, 0),
       draftHadJoker: draftUsesJoker(game),
+      draftJokers: draftJokerCount(game),
       challenge: challenge ? { ...challenge } : null
     };
   }
 
-  function draftUsesJoker(game) {
+  // How many Jokers the guess being submitted spends. The draft holds card
+  // ids (not cards), so each is looked up in the hand -- a Joker played on
+  // the solving guess is spent, not an unused one.
+  function draftJokerCount(game) {
     const state = stateOf(game) || {};
+    const hands = handArrays(game);
+    const byId = new Map();
+    hands.forEach((hand) => hand.forEach((card) => { if (card && card.id != null) byId.set(String(card.id), card); }));
     const draftCandidates = [state.draft, state.draftCards, state.megaState && state.megaState.draft, state.megaState && state.megaState.draftCards, state.mega && state.mega.draft, state.mega && state.mega.draftCards];
+    let most = 0;
     for (const draft of draftCandidates) {
       if (!Array.isArray(draft)) continue;
-      if (draft.some((item) => isJokerCard(item) || String(item).includes("★"))) return true;
+      const count = draft.filter((item) => {
+        if (item && typeof item === "object") return isJokerCard(item);
+        const card = byId.get(String(item));
+        return card ? isJokerCard(card) : String(item).includes("★");
+      }).length;
+      most = Math.max(most, count);
     }
-    return false;
+    return most;
+  }
+
+  function draftUsesJoker(game) {
+    return draftJokerCount(game) > 0;
   }
 
   function latestRoundEntry(game) {
@@ -2198,9 +2215,15 @@
       entry.umtUnusedRowVerified = desiredUnused;
     }
 
-    const currentJokers = totalJokerStock(game);
-    const fallbackJokers = snapshot ? Math.max(0, snapshot.jokers - (snapshot.draftHadJoker ? 1 : 0)) : 0;
-    const unusedJokers = Math.max(currentJokers, fallbackJokers);
+    // Jokers held before the solving guess, less the ones it spent. The live
+    // count after it can still show a spent Joker card (and charges refill
+    // for the next stage), so the snapshot is the measure when there is one.
+    const spent = snapshot ? Math.max(asNumber(snapshot.draftJokers, 0), snapshot.draftHadJoker ? 1 : 0) : 0;
+    // A Joker won on that same guess (a Joker tile) is held, unused.
+    const held = asNumber(snapshot && snapshot.jokers, 0);
+    const unusedJokers = snapshot
+      ? Math.max(0, held - spent) + Math.max(0, totalJokerStock(game) - held)
+      : totalJokerStock(game);
     const jokerBonus = unusedJokers * CONFIG.unusedJokerBonus;
     if (jokerBonus > 0) {
       addScoreBonus(game, jokerBonus, "umtJokerBonus", `${unusedJokers} unused Joker${unusedJokers === 1 ? "" : "s"}`, entry);
