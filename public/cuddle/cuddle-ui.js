@@ -1272,6 +1272,10 @@
         : `Refresh choices ($${refreshCost})`;
     const waystone = typeof game.isWaystoneUpgrade === "function" && game.isWaystoneUpgrade();
     const legendary = Boolean(state.legendaryOffer);
+    // Wide Margins adds its extra choices at the end of an ordinary offer:
+    // those cards carry a small mark saying where they came from.
+    const wideExtra = legendary || startingRewards ? 0 : Math.min(2, Number(state.cuddleBonuses?.wideChoice || 0));
+    const wideFrom = state.upgradeChoices.length - wideExtra >= 2 ? state.upgradeChoices.length - wideExtra : Infinity;
     // An event's choose-one-of-three (cuddle-expanded-stages.js).
     const eventPick = waystone && state.umtEventPick ? state.umtEventPick : null;
     const eventTier = eventPick ? String(eventPick.tier || "").replace(/^./, c => c.toUpperCase()) : "";
@@ -1315,8 +1319,9 @@
             ? `<p class="umt-combo-legend"><b>★ Combo</b>: pairs with a power you have, for a bonus.</p>`
             : ""}
           <div class="cuddle-choice-grid">
-            ${state.upgradeChoices.map(choice => `
-              <button class="cuddle-choice" data-upgrade-key="${escapeHtml(choice.key)}">
+            ${state.upgradeChoices.map((choice, index) => `
+              <button class="cuddle-choice${index >= wideFrom ? " is-wide-extra" : ""}" data-upgrade-key="${escapeHtml(choice.key)}">
+                ${index >= wideFrom ? `<span class="umt-wide-tag">Wide Margins</span>` : ""}
                 <span class="cuddle-choice-icon">${escapeHtml(choice.icon || "⬆️")}</span>
                 <strong>${escapeHtml(choice.title)}</strong>
                 <small>${goldenMoney(escapeHtml(choice.description))}</small>
