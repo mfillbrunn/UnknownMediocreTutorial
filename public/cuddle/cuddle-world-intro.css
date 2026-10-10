@@ -126,34 +126,3 @@
 .umt-wi-trait-icon svg { width: 30px; height: 30px; }
 .umt-wi-trait b { color: var(--wi-accent, #f7f4ff); font-size: .92rem; }
 .umt-wi-dialog .umt-wi-trait p { margin-top: 2px; color: var(--cuddle-text, #f7f4ff); font-size: .82rem; text-wrap: pretty; }
-
-/* The road ahead: this world's common challenges and its path. */
-.umt-wi-road {
-  display: grid;
-  gap: 6px;
-  width: 100%;
-  text-align: left;
-}
-.umt-wi-road-label {
-  color: var(--wi-accent, #d5a6ff);
-  font-size: .7rem;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-.umt-wi-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.umt-wi-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 9px 3px 5px;
-  border: 1px solid rgba(255, 159, 67, .45);
-  border-radius: 999px;
-  background: rgba(255, 159, 67, .12);
-  color: var(--cuddle-text, #f7f4ff);
-  font-size: .78rem;
-  font-weight: 700;
-}
-.umt-wi-chip svg { width: 16px; height: 16px; }
-.umt-wi-dialog .umt-wi-path { margin: 0; font-size: .8rem; text-wrap: pretty; }
-.umt-wi-path b { color: var(--wi-accent, #f7f4ff); }

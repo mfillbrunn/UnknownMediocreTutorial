@@ -64,23 +64,10 @@
     }
   }
 
-  // The challenges a theme favours (cuddle-worlds.js), by name and icon.
-  function favouredChallenges(world) {
-    var book = window.CuddleQuestBook;
-    var list = book && Array.isArray(book.CONSTRAINTS) ? book.CONSTRAINTS : [];
-    return (Array.isArray(world.challenges) ? world.challenges : []).map(function find(id) {
-      var item = list.find(function match(entry) { return entry && entry.id === id; });
-      return item ? { id: id, icon: item.icon, title: item.title } : null;
-    }).filter(Boolean);
-  }
-
   function describeTheme(world) {
     var theme = world.theme || world.id;
     var trait = TRAITS[theme] || null;
-    return {
-      theme: theme, index: world.index, name: world.name, tagline: world.tagline, accent: world.accent, trait: trait,
-      challenges: favouredChallenges(world), path: world.pathBlurb || ""
-    };
+    return { theme: theme, index: world.index, name: world.name, tagline: world.tagline, accent: world.accent, trait: trait };
   }
 
   // The current world: its theme id, name, trait and stage name.
@@ -273,34 +260,6 @@
     });
   }
 
-  // What a world's rule has told the player this stage, as clue chips for
-  // the play strip (cuddle-clues.js): only the rules that reveal something
-  // about the answer. The others are explained by the world intro and the
-  // stage banner, and take no space on the play screen.
-  function traitClues(game) {
-    var state = game && game.state;
-    if (!state || state.status !== "playing" || inDuel(state)) return [];
-    var info = describe(game);
-    if (!info || !info.trait) return [];
-    var trait = state.umtWorldTrait && state.umtWorldTrait.key === stageKey(state) ? state.umtWorldTrait : {};
-    var secret = String(state.secret || "").toUpperCase();
-    var label = info.trait.name;
-    switch (info.theme) {
-      case "woods":
-        return trait.whisper ? [{ icon: info.trait.icon, label: label, text: "Not", letters: [trait.whisper], tone: "world" }] : [];
-      case "marsh":
-        return trait.firefly
-          ? [{ icon: info.trait.icon, label: label, text: trait.firefly.present ? "In it" : "Not in it", letters: [trait.firefly.letter], tone: "world" }]
-          : [];
-      case "caverns":
-        return secret.length === 5
-          ? [{ icon: info.trait.icon, label: label, text: new Set(secret).size < 5 ? "Repeats a letter" : "No repeats", tone: "world" }]
-          : [];
-      default:
-        return [];
-    }
-  }
-
   // The moving backdrop: the same particles on every redraw, each placed
   // where it would be by now, so a redraw never makes them jump.
   var PARTICLES = { woods: 14, meadow: 18, marsh: 12, caverns: 16, frost: 30, library: 16, citadel: 18, storm: 34, forge: 22 };
@@ -383,7 +342,6 @@
     TRAITS: TRAITS,
     describe: describe,
     describeWorld: describeWorld,
-    traitClues: traitClues,
     extraSpecialTiles: extraSpecialTiles
   });
 }());

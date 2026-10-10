@@ -315,8 +315,9 @@
 
   function renderClues(root, game) {
     if (!root || !game || !game.state || game.state.status !== "playing") return;
-    const world = window.CuddleWorldIdentity;
-    const chips = (world && typeof world.traitClues === "function" ? world.traitClues(game) : []).concat(clueChips(game));
+    // World rules (Whispers, Watchtower...) stay off the play screen: the
+    // world intro and the stage banner explain them.
+    const chips = clueChips(game);
     // Letters excluded for the whole run (Cull One and friends) sit with
     // the clues instead of on a line of their own under the board.
     const removed = Array.isArray(game.state.removedLetters) ? game.state.removedLetters : [];
@@ -327,7 +328,7 @@
       `<span class="umt-clue${chip.tone ? ` is-${chip.tone}` : ""}" title="${escapeHtml(chip.label)}">`
       + `${icon(chip.icon)}<span class="umt-clue-text${chip.mono ? " is-mono" : ""}">${escapeHtml(chip.text)}`
       + (chip.letters ? chip.letters.map((letter, i) => {
-        if (chip.tone === "excluded" || chip.tone === "world") return `<b class="umt-clue-letter">${escapeHtml(letter)}</b>`;
+        if (chip.tone === "excluded") return `<b class="umt-clue-letter">${escapeHtml(letter)}</b>`;
         const latest = i === chip.letters.length - 1;
         const key = `${game.state.secret}:${chip.letters.join("")}`;
         const flip = latest && key !== flippedSweepKey;

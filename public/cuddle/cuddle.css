@@ -4648,11 +4648,6 @@
   background: rgba(255, 130, 130, 0.1);
   color: #ffdede;
 }
-.umt-clue.is-world {
-  border-color: color-mix(in srgb, var(--wt-accent, #a98bff) 50%, transparent);
-  background: color-mix(in srgb, var(--wt-accent, #a98bff) 14%, transparent);
-}
-.umt-clue.is-excluded .umt-clue-text,
-.umt-clue.is-world .umt-clue-text { display: inline-flex; align-items: center; gap: 4px; }
+.umt-clue.is-excluded .umt-clue-text { display: inline-flex; align-items: center; gap: 4px; }
 /* Rows pack at the top of the board rather than spreading to fill it. */
 #cuddleScreen .cuddle-board { align-content: start; }
