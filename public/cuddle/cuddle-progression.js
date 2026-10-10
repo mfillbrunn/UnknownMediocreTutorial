@@ -267,13 +267,30 @@
     return `<span class="umt-bd-sparks" aria-hidden="true">${Array.from({ length: 8 }, (_, i) => `<i style="--a:${i * 45}deg;--d:${(i % 2) * 70}ms"></i>`).join("")}</span>`;
   }
 
-  function badgeMarkup(node, fresh, linking) {
+  // Several badges at once (an Upgrade Pack's three cards) unlock one after
+  // another, in the order they were picked: each fresh badge's --step
+  // delays its unlock by that many beats (cuddle-progression.css), and
+  // openTree moves the view and the card along with it.
+  const REVEAL_BEAT = 1600;
+
+  function revealSteps(fresh, model) {
+    const steps = new Map();
+    const order = [...fresh].filter((id) => !(model.nodes.get(id) && model.nodes.get(id).kind === "combo"));
+    order.forEach((id, index) => steps.set(id, index));
+    // Combos (and the two badges that form them) follow the last badge.
+    const last = Math.max(0, order.length - 1);
+    [...fresh].filter((id) => !steps.has(id)).forEach((id) => steps.set(id, last));
+    return steps;
+  }
+
+  function badgeMarkup(node, fresh, linking, steps) {
     const color = node.kind === "combo" ? COMBO_COLOR : TIER_STROKE[node.tier] || TIER_STROKE.common;
     const level = node.maxLevel && node.maxLevel > 1
       ? `<span class="umt-bd-level">${node.level}/${node.maxLevel}</span>`
       : node.level > 1 ? `<span class="umt-bd-level">×${node.level}</span>` : "";
     const classes = ["umt-bd-badge", node.kind === "combo" ? "is-combo" : "", fresh.has(node.id) ? "is-new" : "", linking.has(node.id) ? "is-linking" : ""].filter(Boolean).join(" ");
-    return `<button type="button" class="${classes}" data-umt-badge="${esc(node.id)}" style="--t:${color}"`
+    const step = steps && steps.has(node.id) ? steps.get(node.id) : linking.has(node.id) && steps && steps.size ? Math.max(...steps.values()) : 0;
+    return `<button type="button" class="${classes}" data-umt-badge="${esc(node.id)}" style="--t:${color}${step ? `;--step:${step}` : ""}"`
       + ` aria-label="${esc(node.title)}${node.kind === "combo" ? " (combo)" : ""}. ${esc(shortText(node))}.">`
       + `<svg class="umt-bd-hex" viewBox="0 0 100 116" aria-hidden="true"><path class="umt-bd-hex-fill" d="${HEX}"/><path class="umt-bd-hex-line" d="${HEX_INNER}"/></svg>`
       + `<span class="umt-bd-face"><span class="umt-bd-icon" aria-hidden="true">${iconMarkup(node.icon)}</span>`
@@ -329,6 +346,7 @@
     // A combo that just formed makes its two badges light up as it arrives.
     const linking = new Set();
     model.combos.filter((combo) => fresh.has(combo.id)).forEach((combo) => combo.halves.forEach((h) => linking.add(h.id)));
+    const steps = revealSteps(fresh, model);
     // One section per type, in the registry's order.
     const tree = window.CuddleSkillTree;
     const types = tree && tree.TYPES ? tree.TYPES : {};
@@ -341,11 +359,11 @@
     const grid = model.badges.length
       ? sections.map((section) => `<section class="umt-bd-type" style="--type:${section.info.color}" aria-label="${esc(section.info.label)}">`
         + `<h3 class="umt-bd-type-head"><i aria-hidden="true"></i>${esc(section.info.label)}<small>${section.items.length}</small></h3>`
-        + `<div class="umt-bd-grid">${section.items.map((node) => badgeMarkup(node, fresh, linking)).join("")}</div></section>`).join("")
+        + `<div class="umt-bd-grid">${section.items.map((node) => badgeMarkup(node, fresh, linking, steps)).join("")}</div></section>`).join("")
       : `<p class="umt-bd-empty">No badges yet. Every reward you pick up lands here.</p>`;
     // The combo column only appears once there is a combo to show.
     const combos = model.combos.length
-      ? `<aside class="umt-bd-combos" aria-label="Combos"><h3>Combos</h3><div class="umt-bd-combo-list">${model.combos.map((node) => badgeMarkup(node, fresh, linking)).join("")}</div></aside>`
+      ? `<aside class="umt-bd-combos" aria-label="Combos"><h3>Combos</h3><div class="umt-bd-combo-list">${model.combos.map((node) => badgeMarkup(node, fresh, linking, steps)).join("")}</div></aside>`
       : "";
     return `<div class="umt-pt-overlay umt-bd-overlay${reveal ? " is-reveal" : ""}" role="dialog" aria-modal="true" aria-labelledby="umtPtTitle">`
       + `<div class="umt-pt-backdrop" data-umt-pt-close></div>`
@@ -444,17 +462,47 @@
     view.lastFocus = document.activeElement;
     view.openId = (view.openId || 0) + 1;
     renderOverlay();
+    revealTimers.forEach(clearTimeout);
+    revealTimers = [];
     requestAnimationFrame(() => {
       const layer = host() && host().querySelector(".umt-pt-layer");
-      const first = layer && layer.querySelector(".umt-bd-main .umt-bd-badge.is-new, .umt-bd-badge.is-new");
-      if (first) first.scrollIntoView({ block: "nearest", behavior: reducedMotion() ? "auto" : "smooth" });
       const closeBtn = layer && layer.querySelector(options.reveal ? ".umt-pt-continue" : ".umt-pt-close");
       if (closeBtn) closeBtn.focus({ preventScroll: true });
+      // Walk the fresh badges in order: bring each into view as it unlocks
+      // and, when there are several, show its card before moving on.
+      const model = buildModel(game);
+      const order = [...revealSteps(view.freshIds, model).entries()]
+        .filter(([id]) => !(model.nodes.get(id) && model.nodes.get(id).kind === "combo"))
+        .sort((a, b) => a[1] - b[1]).map(([id]) => id);
+      const openId = view.openId;
+      const several = order.length > 1;
+      const visit = (id) => {
+        if (!view.open || view.openId !== openId) return;
+        const live = host() && host().querySelector(".umt-pt-layer");
+        const badge = live && live.querySelector(`.umt-bd-main [data-umt-badge="${CSS.escape(id)}"]`);
+        if (!badge) return;
+        // The last badge's card would cover this one as it unlocks.
+        if (!view.cardPinned) hideCard();
+        badge.scrollIntoView({ block: "nearest", behavior: reducedMotion() ? "auto" : "smooth" });
+        if (several) {
+          revealTimers.push(setTimeout(() => {
+            if (view.open && view.openId === openId && !view.cardPinned) showCard(id, false);
+          }, 700));
+        }
+      };
+      order.forEach((id, index) => {
+        if (index === 0) visit(id);
+        else if (!reducedMotion()) revealTimers.push(setTimeout(() => visit(id), index * REVEAL_BEAT));
+      });
     });
   }
 
+  let revealTimers = [];
+
   function closeTree() {
     if (!view.open) return;
+    revealTimers.forEach(clearTimeout);
+    revealTimers = [];
     view.open = false;
     view.reveal = null;
     view.freshIds = new Set();
