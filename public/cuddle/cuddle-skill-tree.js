@@ -145,7 +145,8 @@
           levels: ["Every grey tile pays +1 point", "Every grey tile pays +2 points", "Every grey tile pays +3 points, and every yellow +1 point more"],
           level: g => Number(g?.state?.balanceRewardCounts?.greyscale) || 0 },
         { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", type: "money", maxLevel: 1, description: "The next reward you pick is applied twice" },
-        { id: "greenCount", icon: "🔢", title: "Precise Green", tier: "rare", type: "clues", maxLevel: 1, description: "A green tile also shows how many times its letter appears in the answer" },
+        { id: "greenCount", icon: "🔢", title: "Precise Green", tier: "rare", type: "clues", maxLevel: 1, description: "A green tile also shows how many times its letter appears in the answer",
+          level: g => (g?.state?.megaState?.greenCountUnlocked ? 1 : 0) },
         { id: "surprise-assignment", icon: "📜", title: "Surprise Assignment", tier: "rare", type: "quests", maxLevel: 3,
           levels: ["+1 surprise quest appears in every stage", "+2 surprise quests appear in every stage", "+4 surprise quests appear in every stage"],
           level: g => ledgerCount(g, "surprise-assignment") },
@@ -209,7 +210,8 @@
         { id: "alphabet-compass", icon: "🧭", title: "Alphabet Compass", tier: "epic", type: "clues", maxLevel: 3,
           levels: ["After each guess, 1 tile shows if the answer's letter there is earlier or later in the alphabet", "After each guess, 2 tiles show it", "Legendary: after each guess, every tile shows it"],
           level: g => (window.CuddleCompass && g?.state ? window.CuddleCompass.copiesOwned(g.state) : 0) },
-        { id: "consonantSweep", icon: "🔍", title: "Process of Elimination", tier: "epic", type: "clues", maxLevel: 1, description: "After each guess, one more consonant that isn't in the answer is shown", level: g => upgradeCount(g, "consonantSweep") }
+        { id: "consonantSweep", icon: "🔍", title: "Process of Elimination", tier: "epic", type: "clues", maxLevel: 1, description: "After each guess, one more consonant that isn't in the answer is shown", level: g => Math.max(upgradeCount(g, "consonantSweep"), upgradeCount(g, "umtConsonantSweep"),
+            Number(g?.state?.cuddleRebalanceV5?.upgrades?.umtConsonantSweep) || 0) }
       ]
     },
     {

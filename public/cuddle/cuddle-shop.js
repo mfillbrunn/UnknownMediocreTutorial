@@ -253,6 +253,13 @@
     return economy.shopRewards(game, 3, `${seedText(game)}:${key}:wandering-paw:keep`);
   }
 
+  function oneTime(entry) {
+    const tree = window.CuddleSkillTree;
+    const node = tree && typeof tree.resolve === "function"
+      ? tree.resolve(entry.key) || tree.resolve(entry.title) : null;
+    return Boolean(node && node.maxLevel === 1);
+  }
+
   function isKeepEntry(entry) {
     return Boolean(entry) && typeof entry === "object" && typeof entry.key === "string";
   }
@@ -358,6 +365,8 @@
             kind: "upgrade",
             icon: entry.icon,
             tier: entry.tier,
+            // A one-level power: once bought it's maxed (cuddle-skill-tree.js).
+            once: oneTime(entry),
             title: entry.title,
             description: entry.description,
             cost,
@@ -575,7 +584,7 @@
 
   function durationChip(entry) {
     // A pool reward's chip names its rarity, in that rarity's colour.
-    if (entry.shelf === "keep" && entry.tier) return `${entry.tier} · keeps`;
+    if (entry.shelf === "keep" && entry.tier) return `${entry.tier} · ${entry.once ? "one-time" : "keeps"}`;
     if (entry.shelf === "trade") return entry.rare ? "Rare deal" : "Right now";
     if (entry.shelf === "mend") return "For good";
     if (entry.shelf === "boss") return "Next boss";

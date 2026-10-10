@@ -326,6 +326,11 @@
     var result = baseBegin.apply(this, arguments);
     var state = this.state;
     if (state && !inDuel(state)) {
+      // Second Guess Quest: one free quest reroll every stage.
+      if (levelOf(this, "questReroll") > 0) {
+        var mega = state.megaState || (state.megaState = {});
+        mega.questRerollCharges = Math.max(1, num(mega.questRerollCharges));
+      }
       if (levelOf(this, "boldOpener") > 0) {
         state.buffs = Object.assign({}, state.buffs || {}, { sillyWord: Math.max(1, num(state.buffs && state.buffs.sillyWord)) });
       }

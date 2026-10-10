@@ -3384,6 +3384,9 @@
         state.upgrades.questPoints = Number(state.upgrades.questPoints || 0) + QUEST_POINTS_PER_PICK;
         return { ok: true };
       case "questReroll":
+        // A one-time power: recorded so it reads as taken (and maxed), and
+        // refilled to one reroll every stage (cuddle-powers.js).
+        state.upgrades.questReroll = 1;
         this._applyRewardEffect("questReroll");
         return { ok: true };
       default:

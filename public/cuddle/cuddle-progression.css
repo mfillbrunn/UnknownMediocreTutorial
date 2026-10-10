@@ -739,3 +739,5 @@
   font-size: 0.78rem;
 }
 .umt-progress-host .umt-bd-card-next b { color: #f6c956; }
+/* A one-time power you hold: it's maxed. */
+.umt-progress-host .umt-bd-level.is-once { letter-spacing: 0.06em; text-transform: uppercase; }

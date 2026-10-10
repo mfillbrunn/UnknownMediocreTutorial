@@ -287,7 +287,8 @@
     const color = node.kind === "combo" ? COMBO_COLOR : TIER_STROKE[node.tier] || TIER_STROKE.common;
     const level = node.maxLevel && node.maxLevel > 1
       ? `<span class="umt-bd-level">${node.level}/${node.maxLevel}</span>`
-      : node.level > 1 ? `<span class="umt-bd-level">×${node.level}</span>` : "";
+      : node.level > 1 ? `<span class="umt-bd-level">×${node.level}</span>`
+        : node.kind !== "combo" && node.maxLevel === 1 && node.level >= 1 ? `<span class="umt-bd-level is-once">Max</span>` : "";
     const classes = ["umt-bd-badge", node.kind === "combo" ? "is-combo" : "", fresh.has(node.id) ? "is-new" : "", linking.has(node.id) ? "is-linking" : ""].filter(Boolean).join(" ");
     const step = steps && steps.has(node.id) ? steps.get(node.id) : linking.has(node.id) && steps && steps.size ? Math.max(...steps.values()) : 0;
     return `<button type="button" class="${classes}" data-umt-badge="${esc(node.id)}" style="--t:${color}${step ? `;--step:${step}` : ""}"`
@@ -308,7 +309,8 @@
     const color = node.kind === "combo" ? COMBO_COLOR : TIER_STROKE[node.tier] || TIER_STROKE.common;
     const levelText = node.kind === "combo" ? ""
       : node.maxLevel && node.maxLevel > 1 ? `Level ${node.level} of ${node.maxLevel}${node.level >= node.maxLevel ? " (max)" : ""}`
-        : node.level > 1 ? `Taken ${node.level} times` : "";
+        : node.level > 1 ? `Taken ${node.level} times`
+          : node.maxLevel === 1 ? "One-time power · maxed" : "";
     // A stackable power: what it does now, and what the next pick adds.
     const tree = window.CuddleSkillTree;
     const nextText = node.kind !== "combo" && Array.isArray(node.levels) && node.level < node.levels.length && tree
