@@ -102,7 +102,7 @@
     boss: Object.freeze({ title: "Boss", label: "Boss", icon: "stage-boss.svg", description: "A boss Wordle with permanent stakes." }),
     duel: Object.freeze({ title: "Word Duel", label: "Duel", icon: "stage-duel.svg", description: "Alternate guesses with an AI that also builds its words from a hand of letters. The first side to solve the word wins; if the AI does, the run ends." }),
     mystery: Object.freeze({ title: "Unknown Stop", label: "?", icon: "stage-mystery.svg", description: "This stop stays hidden until you enter it." }),
-    trial: Object.freeze({ title: "Preset Trial", label: "Trial", icon: "stage-trial.svg", description: "Every path passes through it. Play two guesses as usual; on guess 3 the answer is one of a few listed words (3 in world one, 4 in world two, 5 in world three). Pick it to pass. A wrong pick ends the run." })
+    trial: Object.freeze({ title: "Preset Trial", label: "Trial", icon: "stage-trial.svg", description: "Three guesses, then the answer is one of a list. Pick it to pass. A wrong pick ends the run. Choose how many words when you arrive." })
   });
 
   // Road events. Money written $[n] grows with the world (x1, x1.5, x2 --
@@ -247,6 +247,36 @@
       options: Object.freeze([
         opt("safe", "Listen to a lecture", "Two opening clues in the next Wordle.", [{ type: "nextBonus", key: "clue", amount: 2 }]),
         opt("bold", "Study through the night", "Two rare letters leave the deck and every future answer for good, but the next Wordle must be solved within the guess limit.", [{ type: "upgradeId", id: "umtCullTwo" }, { type: "nextPenalty", key: "guess", amount: 1 }])
+      ])
+    }),
+    // Deck burdens (cuddle-burdens.js): a dead tile has no letter and only
+    // leaves your hand through a mulligan; doubled consonants are second
+    // copies of weak letters that crowd the good ones out.
+    Object.freeze({
+      id: "stoneMason",
+      title: "Stone Mason",
+      flavor: "A mason offers a fine carving, if you'll carry one of her blank slabs.",
+      options: Object.freeze([
+        opt("safe", "Buy a pebble charm", "Gain $[12].", [{ type: "money", amount: 12 }]),
+        opt("bold", "Carry the blank slab", "Choose one of three **Epic** upgrades, but 1 dead tile joins your deck for the rest of the run.", [{ type: "deadTile", amount: 1 }, { type: "pickTier", tier: "epic" }])
+      ])
+    }),
+    Object.freeze({
+      id: "echoingWell",
+      title: "Echoing Well",
+      flavor: "Shout a coin into the well and it shouts back twice as loud.",
+      options: Object.freeze([
+        opt("safe", "Listen to the echo", "One opening clue in the next Wordle.", [{ type: "nextBonus", key: "clue", amount: 1 }]),
+        opt("bold", "Shout into the well", "Gain $[45], but 3 doubled consonants join your deck for the rest of the run.", [{ type: "money", amount: 45 }, { type: "doubleConsonants", amount: 3 }])
+      ])
+    }),
+    Object.freeze({
+      id: "rustyPress",
+      title: "Rusty Press",
+      flavor: "The old letter press still works. Mostly.",
+      options: Object.freeze([
+        opt("safe", "Oil the gears", "Two extra mulligans in the next Wordle.", [{ type: "nextBonus", key: "mulligan", amount: 2 }]),
+        opt("gamble", "Pull the lever", "60%: a random **Rare** upgrade. 40%: it jams, and 1 dead tile joins your deck for the rest of the run.", [{ type: "gamble", chance: 0.6, win: [{ type: "upgradeTier", tier: "rare" }], lose: [{ type: "deadTile", amount: 1 }] }])
       ])
     })
   ]);
@@ -723,6 +753,9 @@
           col: 0,
           type: "trial",
           trialWorld: world,
+          // Blind: the list appears on guess 3. Open: a longer list is shown
+          // from the start (cuddle-curses.js).
+          trialKind: rng() < 0.5 ? "open" : "blind",
           next: nextRow.nodes.map((_node, col) => col)
         };
         map.rows.splice(insertion, 0, { kind: "trial", act: previousRow.act, nodes: [trialNode] });
@@ -817,6 +850,15 @@
         const reward = Number(node.expandedChallengeReward || (definition ? challengeRewardFor(game, definition, turns, true) : 0));
         return Object.assign({}, base, {
           description: `${challengeDescription(node.challengeId, turns)}${reward > 0 ? ` Win for +$${reward}.` : ""}`
+        });
+      }
+      if (node.type === "trial") {
+        const open = node.trialKind === "open";
+        return Object.assign({}, BASE_STAGE_META.trial, {
+          title: open ? "Open Trial" : "Preset Trial",
+          description: open
+            ? "The answer is one of the words listed from the start. Two guesses, then pick it to pass. A wrong pick ends the run. Choose how many words when you arrive."
+            : BASE_STAGE_META.trial.description
         });
       }
       if (node.type === "theme") {
@@ -1111,6 +1153,12 @@
           case "curse":
             messages.push(addEventCurse(game));
             break;
+          case "deadTile":
+            if (window.CuddleBurdens) messages.push(window.CuddleBurdens.addDead(game, effect.amount || 1));
+            break;
+          case "doubleConsonants":
+            if (window.CuddleBurdens) messages.push(window.CuddleBurdens.addDoubles(game, effect.amount || 3));
+            break;
           case "gamble": {
             const won = randomFor(game) < Number(effect.chance || 0.5);
             context.gambleResult = won ? "won" : "lost";
@@ -1292,6 +1340,7 @@
         { id: "pay", title: "Pay $10", description: "Start Easy after paying $10.", enabled: Number(game.state.cuddleMoney || 0) >= 10, upgrade: null },
         { id: "nextGuess", title: "Borrow a guess", description: "Start Easy, but the next normal Wordle begins one guess short.", enabled: true, upgrade: null },
         { id: "boss", title: "Strengthen the boss", description: "Start Easy, but the next boss is one guess tougher.", enabled: true, upgrade: null },
+        { id: "deadTile", title: "Take a dead tile", description: "Start Easy, but a dead tile joins your deck for the rest of the run. It has no letter; mulligan it away.", enabled: Boolean(window.CuddleBurdens), upgrade: null },
         { id: "upgrade", title: upgrade ? `Give up ${upgrade.title}` : "Give up an upgrade", description: upgrade ? `Surrender one level of ${upgrade.title}.` : "No reversible upgrade is available.", enabled: Boolean(upgrade), upgrade }
       ];
     }
@@ -1606,6 +1655,9 @@
         case "boss":
           map.bossPenalty = Number(map.bossPenalty || 0) + 1;
           return { ok: true, message: "The next boss will be one guess tougher." };
+        case "deadTile":
+          if (!window.CuddleBurdens) return { ok: false, error: "Dead tiles are unavailable." };
+          return { ok: true, message: window.CuddleBurdens.addDead(game, 1) };
         case "upgrade": {
           const result = surrenderUpgrade(game, sacrifice.upgrade);
           return result.ok ? result : { ok: false, error: result.message };
@@ -2623,7 +2675,9 @@
         || (duel.mulliganMode && (eligible.length === 0
           || (selectedCount === 0 && (unselectedCount === 0 || selected.size >= limit))));
       const revealedPositions = Array.isArray(state.revealedPositions) ? state.revealedPositions : [];
-      const positionIndex = status === "green" ? revealedPositions.indexOf(group.glyph) : -1;
+      const positions = status === "green"
+        ? revealedPositions.map((glyph, index) => (glyph === group.glyph ? index + 1 : 0)).filter(Boolean)
+        : [];
       const classes = [
         "cuddle-card",
         `is-card-${status}`,
@@ -2639,8 +2693,8 @@
         : group.cards.length > 1
           ? `<span class="cuddle-card-count" aria-hidden="true">×${group.cards.length}</span>`
           : "";
-      const position = positionIndex >= 0
-        ? `<span class="cuddle-card-position" aria-hidden="true">#${positionIndex + 1}</span>`
+      const position = positions.length
+        ? `<span class="cuddle-card-position" aria-hidden="true">#${positions.join(",")}</span>`
         : "";
       const modeText = duel.mulliganMode
         ? `${selectedCount} selected; ${eligible.length} finite available; limit ${limit}`
@@ -2686,7 +2740,7 @@
     }
 
     // Short labels for the Easy costs; the full wording is the tooltip.
-    const EASY_COST_LABELS = { pay: "Pay $10", nextGuess: "Next Wordle −1 guess", boss: "Next boss −1 guess" };
+    const EASY_COST_LABELS = { pay: "Pay $10", nextGuess: "Next Wordle −1 guess", boss: "Next boss −1 guess", deadTile: "+1 dead tile" };
 
     // Three tiers, easiest first, each with its own colour and pips. Easy
     // costs something up front; Medium and Hard pay more on a win.

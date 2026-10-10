@@ -1093,3 +1093,19 @@ button.umt-duel-option:focus-visible {
 @media (max-width: 440px) {
   .umt-duel-choose .umt-duel-option { grid-template-columns: auto minmax(0, 1fr) auto; }
 }
+
+/* The Preset Trial's difficulty pick (cuddle-curses.js): a centred dialog
+   using the Duel's tier cards. */
+.umt-trial-pick {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(10, 6, 16, 0.74);
+  overflow-y: auto;
+}
+.umt-trial-pick-panel { width: min(400px, 100%); margin: 0; box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55); }
+.umt-trial-pick-panel h2 { margin: 0 0 4px; color: #e8c98a; }
+.umt-trial-pick .umt-duel-option { width: 100%; font: inherit; text-align: left; cursor: pointer; grid-template-areas: "pips name" "pips win"; grid-template-columns: auto minmax(0, 1fr); }

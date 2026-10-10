@@ -127,7 +127,7 @@
     upgrade: { icon: "✨", title: "Free Upgrade", label: "Upgrade", description: "Take a free permanent upgrade. No Wordle here.", playsRound: false },
     event: { icon: "❔", title: "Event", label: "Event", description: "A trade: something gained now for something given up.", playsRound: false },
     boss: { icon: "💀", title: "Boss", label: "Boss", description: "A boss round: pass or fail, and its reward is permanent.", playsRound: true },
-    trial: { icon: "📜", title: "Preset Trial", label: "Trial", description: "Every path passes through it. On guess 3 the answer is one of a few listed words: pick it to pass. A wrong pick ends the run.", playsRound: true }
+    trial: { icon: "📜", title: "Preset Trial", label: "Trial", description: "On guess 3, the answer is one of a few listed words. Pick it to pass. A wrong pick ends the run.", playsRound: true }
   };
 
   var EVENTS = Object.freeze([
@@ -1525,8 +1525,7 @@
       brief.summary = meta ? meta.description : "Race an AI to the answer.";
     } else if (kind === "trial") {
       brief.summary = meta ? meta.description : "On guess 3, pick the answer from a short list.";
-      var trialWorld = Math.max(0, Math.min(2, Number(node.trialWorld) || 0));
-      brief.gets.push({ type: "win", text: "Pass it: +$" + [15, 20, 25][trialWorld] });
+      brief.gets.push({ type: "win", text: "Pass it: points and money, more on harder" });
       brief.risks.push("A wrong pick ends the run");
     } else if (kind === "mystery") {
       brief.title = "Unknown Stop";

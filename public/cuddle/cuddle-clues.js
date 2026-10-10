@@ -302,6 +302,11 @@
     if (state.boss && state.boss.id === "presetWordsTrial" && Array.isArray(preset) && preset.length) {
       chips.push({ icon: "scroll", label: "Preset Trial", text: "Answer is one of", words: preset, tone: "preset" });
     }
+    // An Open trial's list, shown from the first guess (cuddle-curses.js).
+    const openList = typeof game.presetOpenList === "function" ? game.presetOpenList() : null;
+    if (Array.isArray(openList) && openList.length) {
+      chips.push({ icon: "scroll", label: "Open Trial", text: "Answer is one of", words: openList, tone: "preset" });
+    }
     if (level(game, IDS.mistakeShield) > 0 && shieldApplies(game)) {
       chips.push({ icon: "shield", label: "Mistake Shield", text: record.shieldUsed ? "Shield used" : "Shield ready", tone: record.shieldUsed ? "spent" : "" });
     }

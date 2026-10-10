@@ -103,6 +103,12 @@
     "shortHand", "noMulligans", "questTrial", "presetWordsTrial", "quickMode"
   ]);
 
+  // Quick Mode's clock per guess: 45 seconds on Hard, 60 otherwise.
+  function quickModeSeconds(state) {
+    const difficulty = String(state?.megaState?.difficulty || state?.mega?.difficulty || "");
+    return difficulty === "hard" ? 45 : 60;
+  }
+
   // Scoring. Greys are worth nothing (not a penalty), each unused guess on a
   // solve is worth a lot, and mulligans you never spent pay out at round end.
   const YELLOW_POINTS = 1;
@@ -308,7 +314,8 @@
         .map(card => (card && typeof card === "object"
           ? { ...card, glyph: glyphForLetter(card.glyph) }
           : null))
-        .filter(card => card && /^[A-Z]$/.test(card.glyph));
+        // A dead tile (cuddle-burdens.js) has no letter but must survive a reload.
+        .filter(card => card && (/^[A-Z]$/.test(card.glyph) || card.dead === true));
       state.deck = normalizeCards(state.deck);
       state.discard = normalizeCards(state.discard);
       state.hand = normalizeCards(state.hand);
@@ -1413,13 +1420,14 @@
       // -- and toward a solve on this very guess -- before the round
       // resolves further down.
       // A guess past the round's quick-solve window (see latePenalty below)
-      // earns nothing -- no tiles, no special tiles, no quest -- only its
-      // penalty.
+      // earns nothing from its colours and no quest -- only its penalty. A
+      // special tile on it still pays: it was aimed at and hit, the solving
+      // guess included.
       const lateGuess = this.state.guessesUsed + 1 > this._solveGuessThreshold();
-      const tilePoints = !lateGuess && typeof this._scoreSpecialTiles === "function"
+      const tilePoints = typeof this._scoreSpecialTiles === "function"
         ? Math.max(0, Number(this._scoreSpecialTiles(this.state.history.length, feedback)) || 0)
         : 0;
-      const scoreDelta = lateGuess ? 0 : greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue + tilePoints;
+      const scoreDelta = (lateGuess ? 0 : greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue) + tilePoints;
       if (shielded) this.state.buffs.greyShield -= 1;
 
       const activeQuest = this.state.activeQuest;
@@ -2196,7 +2204,7 @@
         // of one -- picked once, up front, distinct from each other.
         hiddenIndices: chosen.id === "hiddenMargins" ? shuffle([0, 1, 2, 3, 4], this.random).slice(0, 2) : null,
         // Quick Mode is the only boss the UI has to run a clock for.
-        secondsPerGuess: chosen.id === "quickMode" ? 60 : null,
+        secondsPerGuess: chosen.id === "quickMode" ? quickModeSeconds(this.state) : null,
         // A mixed boss: one constraint per guess, and the one it curses with.
         plan: Array.isArray(chosen.plan) ? chosen.plan.slice() : undefined,
         curseId: chosen.curseId || null
@@ -2929,7 +2937,7 @@
       case "hideFeedback":
         return `${range(count)}: One marked tile shows no colour.`;
       case "quickMode":
-        return "Every guess: 60 seconds, or it's lost.";
+        return "Every guess: 60 seconds (45 on Hard), or it's lost.";
       case "shortHand":
         return "Whole fight: 10 consonants not in the answer leave your deck; only 4 guesses.";
       case "noMulligans": {
@@ -3151,7 +3159,7 @@
     if (state.boss) {
       const stage = cuddleV3BossStage(state.boss.gate, Math.max(0, Number(state.bossesCleared || 1) - 1));
       state.boss = cuddleV3RetimeBoss(state.boss, stage);
-      state.boss.secondsPerGuess = state.boss.id === "quickMode" ? 60 : null;
+      state.boss.secondsPerGuess = state.boss.id === "quickMode" ? quickModeSeconds(state) : null;
     }
     if (Array.isArray(state.bossOffer)) {
       state.bossOffer = state.bossOffer.map(item => (
@@ -3259,7 +3267,7 @@
     if (result?.ok && this.state?.boss) {
       const stage = cuddleV3BossStage(this.state.boss.gate, Math.max(0, Number(this.state.bossesCleared || 0)));
       this.state.boss = cuddleV3RetimeBoss(this.state.boss, stage);
-      this.state.boss.secondsPerGuess = this.state.boss.id === "quickMode" ? 60 : null;
+      this.state.boss.secondsPerGuess = this.state.boss.id === "quickMode" ? quickModeSeconds(this.state) : null;
       this.save();
     }
     return result;

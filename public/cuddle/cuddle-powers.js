@@ -248,7 +248,7 @@
   }
 
   var MOMENTUM = [0, 4, 8, 15];
-  var BIG_OPENER = [0, 4, 7, 16];
+  var BIG_OPENER = [0, 5, 10, 20];
   var LAST_STAND = [0, 25, 45, 100];
   var PICKPOCKET = [0, 1, 2, 4];
 
@@ -339,11 +339,11 @@
   // -------------------------------------------------------------------------
 
   var QUEST_REWARDS = [
-    { id: "umtRuleOut", icon: "🚫", title: "Rule Out", description: "2 of your consonants ruled out" },
-    { id: "umtVowelCheck", icon: "🔤", title: "Vowel Check", description: "2 untried vowels tested" },
-    { id: "umtSpotlight", icon: "👁️", title: "Spotlight", description: "1 yellow → green (waits for a yellow)" },
-    { id: "umtPocketMoney", icon: "💰", title: "Pocket Money", description: "+$10" },
-    { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "+15 pts" }
+    { id: "umtRuleOut", icon: "🚫", title: "Rule Out", description: "2 consonants in your hand that aren't in the answer are marked grey" },
+    { id: "umtVowelCheck", icon: "🔤", title: "Vowel Check", description: "Tests 2 vowels you haven't tried: you learn if each is in the answer" },
+    { id: "umtSpotlight", icon: "👁️", title: "Spotlight", description: "A yellow letter is shown in its exact place (or the next yellow you find)" },
+    { id: "umtPocketMoney", icon: "💰", title: "Pocket Money", description: "Gain +$10 now" },
+    { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "Gain +15 points now" }
   ];
 
   function uniqueSorted(list) {

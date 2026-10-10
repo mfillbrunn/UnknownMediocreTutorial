@@ -24,6 +24,8 @@
   let actionMode = "play";
   let selectedCards = new Set();
   let uiMessage = "";
+  // Set when New run was tried with no Cuddle Coin left.
+  let newRunCoinNote = false;
   // The quest reward screen opens with a short "Quest complete" stamp the
   // first time it shows for a given quest; re-renders of the same screen
   // (a refresh, Double Pick's second choice) open straight onto the cards.
@@ -471,7 +473,9 @@
     // A Quick Mode boss runs the clock all fight; a Quick Mode guess of a
     // challenge or a mixed boss runs it for that guess only.
     const planSeconds = () => Number(window.CuddleRebalanceV5?.guessTimerSeconds?.(game)) || 0;
-    const seconds = Number(state?.boss?.secondsPerGuess) || planSeconds();
+    // Quick Mode is 45 seconds a guess on Hard (a boss saved at 60 too).
+    const hardQuick = state?.boss?.id === "quickMode" && state?.megaState?.difficulty === "hard";
+    const seconds = hardQuick ? 45 : Number(state?.boss?.secondsPerGuess) || planSeconds();
     const running = Boolean(
       seconds && state.status === "playing" && !state.roundIntroPending && !state.pendingRoundEnd
     );
@@ -531,6 +535,7 @@
       <div class="cuddle-landing">
         <div class="cuddle-landing-top">
           <button class="cuddle-icon-btn" data-action="back" aria-label="Back to main menu">←</button>
+          ${window.CuddleAchievements ? `<span class="umt-coin-chip" title="Cuddle Coins: a run costs 1"><span class="umt-coin" aria-hidden="true"></span><b data-umt-coin-count>${window.CuddleAchievements.coins()}</b></span>` : ""}
           <button class="cuddle-icon-btn" data-action="rules" aria-label="How to play Cuddle">?</button>
         </div>
         <section class="cuddle-hero">
@@ -545,6 +550,7 @@
           <div class="cuddle-landing-actions">
             ${hasRun ? `<button class="cuddle-btn cuddle-btn-primary" data-action="continue">${escapeHtml(continueLabel)}</button>` : ""}
             <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run">New run</button>
+            ${window.CuddleAchievements ? `<button class="cuddle-btn cuddle-btn-ghost" data-action="achievements">Achievements</button>` : ""}
             <button class="cuddle-btn cuddle-btn-ghost" data-action="rules">Rules</button>
             ${window.CuddleTutorial && window.CuddleTutorial.isDone() ? `<button type="button" class="cuddle-tut-replay" data-umt-tut="replay">Replay the tour</button>` : ""}
           </div>
@@ -563,6 +569,8 @@
           <button class="cuddle-modal-close" data-action="close-new-run" aria-label="Close">×</button>
           <h2 id="cuddleNewRunTitle">New run</h2>
           ${hasRun ? `<p class="cuddle-newrun-note">This replaces your saved run.</p>` : ""}
+          ${window.CuddleAchievements ? `<p class="umt-newrun-cost"><span class="umt-coin" aria-hidden="true"></span>Costs 1 Cuddle Coin · you have <b>${window.CuddleAchievements.coins()}</b></p>` : ""}
+          ${newRunCoinNote ? `<p class="umt-newrun-broke" role="alert">No Cuddle Coins left. You get 1 free each day, and 1 for each achievement you claim.</p>` : ""}
           <div class="cuddle-difficulty-row">
             <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Easy</button>
             <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Medium</button>
@@ -884,6 +892,7 @@
     // ranks with the yellows it half-resembles.
     // Same rule the card itself uses to show "?" (see renderHandCard).
     const cardRank = glyph => {
+      if (window.CuddleBurdens?.isDeadGlyph(glyph)) return 200;
       const status = game.getCardKnowledgeStatus(glyph);
       if (status === "unused" && typeof game.isGlyphUnknown === "function" && game.isGlyphUnknown(glyph)) return 1.8;
       if (status === "yellow" && typeof game.isGlyphBlue === "function" && game.isGlyphBlue(glyph)) return 1.5;
@@ -943,6 +952,20 @@
       || (actionMode !== "play" && selectable.length === 0)
       || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
     const isJoker = group.glyph === window.CuddleEngine.CUDDLE_JOKER_GLYPH;
+    // A dead tile (cuddle-burdens.js): no letter, only good for a mulligan.
+    if (window.CuddleBurdens?.isDeadGlyph(group.glyph)) {
+      const deadCount = group.cards.length;
+      const deadDisabled = state.status !== "playing"
+        || (actionMode !== "play" && selectable.length === 0)
+        || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
+      const deadLabel = `Dead tile${deadCount > 1 ? ` ×${deadCount}` : ""}: no letter, can't be played. Mulligan it away.`;
+      return `
+      <button class="cuddle-card is-dead${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${deadCount}" ${deadDisabled ? "disabled" : ""}
+        aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(deadLabel)}" title="${escapeHtml(deadLabel)}">
+        <span class="cuddle-card-letter cuddle-card-dead" aria-hidden="true"></span>
+        ${deadCount > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${deadCount}</span>` : ""}
+      </button>`;
+    }
     const classes = [
       "cuddle-card",
       `is-card-${status}`,
@@ -960,9 +983,13 @@
     // the underlying knowledge (state.revealedPositions) doesn't track how
     // a position became known.
     const revealedPositions = state.revealedPositions || [];
-    const positionIndex = status === "green" ? revealedPositions.indexOf(group.glyph) : -1;
+    // Every place the letter is known to go: a letter the answer uses twice
+    // shows both ("#3,5").
+    const positions = status === "green"
+      ? revealedPositions.map((glyph, index) => (glyph === group.glyph ? index + 1 : 0)).filter(Boolean)
+      : [];
     const statusLabel = status === "unknown" ? "unknown · result withheld"
-      : status === "green" ? (positionIndex >= 0 ? `green · position ${positionIndex + 1}` : "green")
+      : status === "green" ? (positions.length ? `green · position${positions.length > 1 ? "s" : ""} ${positions.join(" and ")}` : "green")
         : status === "blue" ? "blue · in the secret, placement unknown"
           : status === "yellow" ? "yellow"
             : status === "red" ? "red · not in the secret"
@@ -990,7 +1017,7 @@
         title="${escapeHtml(details)}">
         <span class="cuddle-card-letter">${escapeHtml(group.glyph)}</span>
         ${unknown ? `<span class="cuddle-card-unknown" aria-hidden="true">?</span>` : ""}
-        ${positionIndex >= 0 ? `<span class="cuddle-card-position" aria-hidden="true">#${positionIndex + 1}</span>` : ""}
+        ${positions.length ? `<span class="cuddle-card-position" aria-hidden="true">#${positions.join(",")}</span>` : ""}
         ${showBadge ? `<span class="cuddle-card-count" aria-hidden="true">×${badgeValue}</span>` : ""}
       </button>`;
   }
@@ -1268,6 +1295,10 @@
         : `Refresh choices ($${refreshCost})`;
     const waystone = typeof game.isWaystoneUpgrade === "function" && game.isWaystoneUpgrade();
     const legendary = Boolean(state.legendaryOffer);
+    // Wide Margins adds its extra choices at the end of an ordinary offer:
+    // those cards carry a small mark saying where they came from.
+    const wideExtra = legendary || startingRewards ? 0 : Math.min(2, Number(state.cuddleBonuses?.wideChoice || 0));
+    const wideFrom = state.upgradeChoices.length - wideExtra >= 2 ? state.upgradeChoices.length - wideExtra : Infinity;
     // An event's choose-one-of-three (cuddle-expanded-stages.js).
     const eventPick = waystone && state.umtEventPick ? state.umtEventPick : null;
     const eventTier = eventPick ? String(eventPick.tier || "").replace(/^./, c => c.toUpperCase()) : "";
@@ -1311,8 +1342,9 @@
             ? `<p class="umt-combo-legend"><b>★ Combo</b>: pairs with a power you have, for a bonus.</p>`
             : ""}
           <div class="cuddle-choice-grid">
-            ${state.upgradeChoices.map(choice => `
-              <button class="cuddle-choice" data-upgrade-key="${escapeHtml(choice.key)}">
+            ${state.upgradeChoices.map((choice, index) => `
+              <button class="cuddle-choice${index >= wideFrom ? " is-wide-extra" : ""}" data-upgrade-key="${escapeHtml(choice.key)}">
+                ${index >= wideFrom ? `<span class="umt-wide-tag">Wide Margins</span>` : ""}
                 <span class="cuddle-choice-icon">${escapeHtml(choice.icon || "⬆️")}</span>
                 <strong>${escapeHtml(choice.title)}</strong>
                 <small>${goldenMoney(escapeHtml(choice.description))}</small>
@@ -1795,6 +1827,13 @@
 
   function startNewRun(difficulty) {
     if (!wordLists) return;
+    // A run costs one Cuddle Coin (cuddle-achievements.js).
+    const wallet = window.CuddleAchievements;
+    if (wallet && !wallet.spend()) {
+      newRunCoinNote = true;
+      return;
+    }
+    newRunCoinNote = false;
     // The New run popup already says the saved run will be replaced.
     newRunOpen = false;
     game = new window.CuddleEngine.CuddleGame(wordLists);
@@ -1849,8 +1888,12 @@
       }
       case "new-run":
         newRunOpen = true;
+        newRunCoinNote = false;
         rulesOpen = false;
         return true;
+      case "achievements":
+        if (window.CuddleAchievements) window.CuddleAchievements.open();
+        return false;
       case "close-new-run":
         newRunOpen = false;
         return true;
