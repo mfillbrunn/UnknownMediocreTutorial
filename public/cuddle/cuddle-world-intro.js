@@ -85,9 +85,34 @@
         + (late ? "&minus;" + game._lateGuessPenalty(i) : i) + "</span>";
     }
     var name = worldName(game, index);
-    return '<section class="umt-wi-dialog" role="dialog" aria-modal="true" aria-labelledby="umtWiTitle">'
-      + '<span class="umt-wi-kicker">World ' + (index + 1) + (name ? " &middot; " + escapeHtml(name) : "") + "</span>"
-      + '<h2 id="umtWiTitle">Solve within ' + window + " guesses</h2>"
+    // The world's own rule (cuddle-world-identity.js), above the window.
+    // (globalThis: `window` here is the guess window's size.)
+    var worldIdentity = globalThis.CuddleWorldIdentity;
+    var identity = worldIdentity && typeof worldIdentity.describeWorld === "function"
+      ? worldIdentity.describeWorld(game, index) : null;
+    var trait = identity && identity.trait;
+    var icons = globalThis.CuddleIcons;
+    var traitHtml = trait
+      ? '<div class="umt-wi-trait"><span class="umt-wi-trait-icon" aria-hidden="true">' + (icons ? icons.svg(trait.icon) : "") + "</span>"
+        + "<div><b>" + escapeHtml(trait.name) + "</b><p>" + escapeHtml(trait.text) + "</p></div></div>"
+      : "";
+    // What the road holds: the challenges this world favours, and its path.
+    var challenges = identity && identity.challenges && identity.challenges.length
+      ? '<div class="umt-wi-road"><span class="umt-wi-road-label">Common challenges</span><div class="umt-wi-chips">'
+        + identity.challenges.map(function chip(item) {
+          return '<span class="umt-wi-chip"><span aria-hidden="true">' + (icons ? icons.svg(item.icon) : escapeHtml(item.icon)) + "</span>" + escapeHtml(item.title) + "</span>";
+        }).join("") + "</div>"
+        + (identity.path ? '<p class="umt-wi-path"><b>Path:</b> ' + escapeHtml(identity.path) + "</p>" : "")
+        + "</div>"
+      : "";
+    return '<section class="umt-wi-dialog"' + (identity && identity.accent ? ' style="--wi-accent:' + escapeHtml(identity.accent) + '"' : "")
+      + ' role="dialog" aria-modal="true" aria-labelledby="umtWiTitle">'
+      + '<span class="umt-wi-kicker">World ' + (index + 1) + "</span>"
+      + '<h2 class="umt-wi-world">' + escapeHtml(name || "World " + (index + 1)) + "</h2>"
+      + (identity && identity.tagline ? '<p class="umt-wi-tagline">' + escapeHtml(identity.tagline) + "</p>" : "")
+      + traitHtml
+      + challenges
+      + '<h3 id="umtWiTitle">Solve within ' + window + " guesses</h3>"
       + '<div class="umt-wi-slots" aria-hidden="true">' + slots + "</div>"
       + "<p>" + costLine(game, window) + "</p>"
       + (index > 0 ? '<p class="umt-wi-note">The window is tighter than last world&rsquo;s.</p>' : "")

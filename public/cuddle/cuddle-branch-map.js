@@ -85,7 +85,11 @@
     if (!tiers) return 0;
     // Fixed per difficulty: the same target every run, whatever the theme.
     var value = tiers[difficultyOf(game)];
-    return typeof value === "number" ? value : tiers.hard;
+    if (typeof value !== "number") value = tiers.hard;
+    // Ascension's Steep Gates (cuddle-ascension.js) raise it, to the next 10.
+    var factor = window.CuddleAscension && typeof window.CuddleAscension.gateFactor === "function"
+      ? window.CuddleAscension.gateFactor(game) : 1;
+    return factor === 1 ? value : Math.ceil((value * factor) / 10) * 10;
   }
 
   // Points the run has banked (the live round's guess points don't count

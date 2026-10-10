@@ -699,12 +699,15 @@
     }
 
     function addMysteryNode(map, rng) {
-      const existing = map.rows.flatMap(row => row.nodes).find(node => node.type === "mystery" || node.mysteryType);
+      // A themed world's own Unknown stops (cuddle-stability-v2.js
+      // applyThemePath) come on top of the run's one.
+      const existing = map.rows.flatMap(row => row.nodes).find(node => (node.type === "mystery" || node.mysteryType) && !node.themeMystery);
       if (existing) return;
       const positionRow = map.position ? integer(map.position.row, -1) : -1;
       const candidates = [];
       map.rows.forEach((row, rowIndex) => {
         if (rowIndex <= positionRow || rowIndex === 0) return;
+        if (row.nodes.some(node => node.type === "mystery" || node.mysteryType)) return;
         row.nodes.forEach(node => {
           // Never the Shop / Free Upgrade fork before a boss: its two sides
           // have to show what they are.

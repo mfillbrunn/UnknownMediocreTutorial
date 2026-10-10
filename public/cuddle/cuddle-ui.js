@@ -566,8 +566,9 @@
           <div class="cuddle-difficulty-row">
             <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Easy</button>
             <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Medium</button>
-            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-hard">Hard</button>
+            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-hard">${escapeHtml(window.CuddleAscension ? window.CuddleAscension.hardLabel() : "Hard")}</button>
           </div>
+          ${window.CuddleAscension ? window.CuddleAscension.pickerHtml() : ""}
           <label class="cuddle-seed-field">
             <span>Seed</span>
             <input id="cuddleSeedInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
@@ -1628,7 +1629,7 @@
       <div class="cuddle-overlay cuddle-win-overlay${playing ? " is-celebrating" : ""}" role="dialog" aria-modal="true" aria-labelledby="cuddleEndTitle"
         style="--win-t:${playing ? -elapsed : -99999}ms">
         <section class="cuddle-modal cuddle-end-modal cuddle-win-modal">
-          <span class="cuddle-modal-kicker">${totalRounds} ROUNDS CLEARED · ${difficultyName.toUpperCase()}</span>
+          <span class="cuddle-modal-kicker">${totalRounds} ROUNDS CLEARED · ${difficultyName.toUpperCase()}${state.umtAscension && state.umtAscension.level > 0 ? ` · ASCENSION ${state.umtAscension.level}` : ""}</span>
           <div class="cuddle-win-row" aria-hidden="true">
             ${"CHAMP".split("").map((letter, index) => `<span class="cuddle-win-tile" style="--i:${index}">${letter}</span>`).join("")}
           </div>
@@ -1638,6 +1639,7 @@
             <strong data-win-score="${score}">${shownScore.toLocaleString()}</strong>
           </div>
           ${best}
+          ${window.CuddleAscension ? window.CuddleAscension.winHtml(state) : ""}
           ${top}
           ${seedChip(state)}
           ${renderRunStats(state)}
@@ -1876,6 +1878,9 @@
         return true;
       case "new-run-hard":
         startNewRun("hard");
+        return true;
+      case "ascension-pick":
+        if (window.CuddleAscension) window.CuddleAscension.select(Number(dataset.level));
         return true;
       case "reroll-quest": {
         const result = game.rerollActiveQuest();

@@ -808,9 +808,40 @@
     );
   }
 
+  // Each themed world (cuddle-worlds.js `challenges`) favours three
+  // challenges: about this share of its challenge picks come from them.
+  const THEME_CHALLENGE_SHARE = 65;
+
+  function worldOfNode(game, node) {
+    const map = stateOf(game) && stateOf(game).branchMap;
+    const row = map && Array.isArray(map.rows) ? map.rows[Math.floor(Number(node.row))] : null;
+    const Worlds = window.CuddleWorlds;
+    if (!row || !Worlds || typeof Worlds.themedWorld !== "function") return { theme: null, row };
+    return { theme: Worlds.themedWorld(map, Math.floor(Number(row.act)) || 0), row };
+  }
+
+  function favouredIds(game, node) {
+    const { theme } = worldOfNode(game, node);
+    return theme && Array.isArray(theme.challenges) ? theme.challenges : [];
+  }
+
+  // `list`, or the part of it the world favours, `share`% of the time.
+  function leanTo(list, favoured, seed) {
+    const preferred = list.filter((challenge) => favoured.includes(challenge.id));
+    return preferred.length && hash32(`${seed}:theme`) % 100 < THEME_CHALLENGE_SHARE ? preferred : list;
+  }
+
+  // Ascension (cuddle-ascension.js): from Gauntlet on, no Wordle stop is
+  // without a challenge.
+  function gauntlet(game) {
+    const ascension = window.CuddleAscension;
+    return Boolean(ascension && typeof ascension.has === "function" && ascension.has(game, "gauntlet"));
+  }
+
   function challengeForNode(game, node) {
-    const index = hash32(`${mapSeed(game)}:challenge:${node.row}:${node.col}`) % CHALLENGES.length;
-    return CHALLENGES[index];
+    const seed = `${mapSeed(game)}:challenge:${node.row}:${node.col}`;
+    const pool = leanTo(CHALLENGES, favouredIds(game, node), seed);
+    return pool[hash32(seed) % pool.length];
   }
 
   const CLASSIC_DESCRIPTION = `A standard Wordle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${CONFIG.classicClearBonus}.`;
@@ -903,15 +934,15 @@
     };
   }
 
-  function composeStop(target, seed) {
+  function composeStop(target, seed, favoured = []) {
     const pick = (list, key) => list[hash32(`${seed}:${key}`) % list.length];
     const { all, rules, rare } = stackableChallenges();
     const ease = pick(Object.keys(EASE_PARTS), "ease");
-    const oneChallenge = (key) => pick(all, key);
+    const oneChallenge = (key) => pick(leanTo(all, favoured, `${seed}:${key}`), key);
     const twoChallenges = () => {
       const first = oneChallenge("c1");
       const pool = (first.kind === "mask" ? rules : all).filter((item) => item.id !== first.id);
-      return [first, pick(pool, "c2")];
+      return [first, pick(leanTo(pool, favoured, `${seed}:c2`), "c2")];
     };
     const coin = hash32(`${seed}:shape`) % 100;
     let parts;
@@ -960,7 +991,14 @@
       const at = Math.max(0, steps.indexOf(target));
       target = steps[Math.max(0, Math.min(steps.length - 1, at + (lean > 0 ? 2 : -2)))];
     }
-    const parts = composeStop(target, seed);
+    const favoured = theme && Array.isArray(theme.challenges) ? theme.challenges : [];
+    // A world that favours Rare Words turns some challenge stops into them.
+    if (favoured.includes("rareWord") && (target === 1 || target === 2) && hash32(`${seed}:rare`) % 100 < 30) target += 0.5;
+    // A challenge row (a theme's path), and every stop from Gauntlet on,
+    // carries at least one challenge.
+    const row = map && Array.isArray(map.rows) ? map.rows[Math.floor(Number(node.row))] : null;
+    if (target < 1 && ((row && row.challengeRow) || gauntlet(game))) target = 1;
+    const parts = composeStop(target, seed, favoured);
     if (parts.neutral) {
       const variant = neutralVariant(parts.neutral);
       variant.difficulty = 0;
@@ -1008,7 +1046,16 @@
       node.cuddleVariant = planned;
       return planned;
     }
-    const roll = hash32(`${mapSeed(game)}:variant:${node.row}:${node.col}${salt}`) % 100;
+    let roll = hash32(`${mapSeed(game)}:variant:${node.row}:${node.col}${salt}`) % 100;
+    // World 1's theme: a kinder one turns half its challenges into Themed
+    // Wordles; a challenge row (and Gauntlet) makes every stop a challenge.
+    const { theme, row } = worldOfNode(game, node);
+    const easy = CONFIG.regularWordlePercent + CONFIG.themedWordlePercent + CONFIG.randomOpenerPercent
+      + CONFIG.luckyStartPercent + CONFIG.jackpotPercent + CONFIG.doubleOrNothingPercent;
+    if ((row && row.challengeRow) || gauntlet(game)) roll = Math.max(roll, easy);
+    else if (theme && Number(theme.ease) < 0 && roll >= easy && hash32(`${mapSeed(game)}:kind:${node.row}:${node.col}${salt}`) % 100 < 50) {
+      roll = CONFIG.regularWordlePercent;
+    }
     let variant;
     if (roll < CONFIG.regularWordlePercent) {
       variant = {
