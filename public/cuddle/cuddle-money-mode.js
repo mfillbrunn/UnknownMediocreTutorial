@@ -672,7 +672,8 @@
     ["earlyBonus", "Solved early", "unused guesses"],
     ["cuddleSolveBonus", "Solve bonus", ""],
     ["mulliganBonus", "Unused mulligans", ""],
-    ["challengeBonus", "Challenge cleared", ""]
+    ["challengeBonus", "Challenge cleared", ""],
+    ["presetTrialBonus", "Trial passed", ""]
   ];
 
   function solveBonusLines(entry) {

@@ -107,17 +107,40 @@
 
   // -- the Preset Trial stage -------------------------------------------------
   // A stop of its own on the map (cuddle-expanded-stages.js addTrialRows),
-  // one or two a run: two guesses as usual, then on guess 3 the answer is
-  // one of a short list -- 3 words in world one, 4 in world two, 5 in world
-  // three. The right pick passes it (and pays); a wrong one is the stage's
-  // last guess, which ends the run, the same as losing a Duel.
-  // Two kinds: a Blind trial shows its short list only on guess 3; an Open
-  // trial shows a longer list from the start, to be narrowed down over the
-  // first two guesses.
-  var TRIAL_GUESS = 3;
-  var TRIAL_WORDS = [3, 4, 5];
-  var OPEN_TRIAL_WORDS = [8, 10, 12];
-  var TRIAL_MONEY = [15, 20, 25];
+  // one or two a run. Two kinds:
+  //   Blind  three guesses as usual, then on guess 4 the answer is one of a
+  //          short list that appears only then (the harder read: more
+  //          guesses for fewer words).
+  //   Open   a longer list is shown from the start; two guesses to narrow
+  //          it down, then the pick on guess 3 (more words per guess).
+  // The player picks a difficulty on arriving: the harder, the more words
+  // to choose from and the bigger the bonus. The right pick passes it; a
+  // wrong one is the stage's last guess, which ends the run, the same as
+  // losing a Duel. A trial pays its guesses and its spare rows, plus the
+  // trial bonus -- never the early-solve bonus.
+  var TRIAL_LEVELS = {
+    easy: { label: "Easy", blind: 3, open: 6, points: 20, money: 10 },
+    medium: { label: "Medium", blind: 5, open: 10, points: 40, money: 20 },
+    hard: { label: "Hard", blind: 7, open: 14, points: 70, money: 35 }
+  };
+  var TRIAL_ORDER = ["easy", "medium", "hard"];
+
+  // The trial node the run stands on (during the stage and its cash-out).
+  function trialHere(state) {
+    var map = state && state.branchMap;
+    var position = map && map.position;
+    var row = position && Array.isArray(map.rows) ? map.rows[Number(position.row)] : null;
+    var node = row && Array.isArray(row.nodes) ? row.nodes[Number(position.col)] : null;
+    return node && node.type === "trial" ? node : null;
+  }
+
+  function trialLevel(node) {
+    return node && TRIAL_LEVELS[node.trialDifficulty] ? TRIAL_LEVELS[node.trialDifficulty] : null;
+  }
+
+  function trialPickGuess(node) {
+    return node && node.trialKind === "open" ? 3 : 4;
+  }
 
   function trialNode(state) {
     if (!state || state.status !== "playing") return null;
@@ -128,16 +151,13 @@
     return node && node.type === "trial" ? node : null;
   }
 
-  function trialWorld(node) {
-    return Math.max(0, Math.min(2, Math.floor(Number(node && node.trialWorld)) || 0));
-  }
-
   function isOpenTrial(node) {
     return Boolean(node && node.trialKind === "open");
   }
 
   function trialSize(node) {
-    return (isOpenTrial(node) ? OPEN_TRIAL_WORDS : TRIAL_WORDS)[trialWorld(node)];
+    var level = trialLevel(node) || TRIAL_LEVELS.medium;
+    return isOpenTrial(node) ? level.open : level.blind;
   }
 
   // An Open trial's list, drawn once at the start of the stage (before any
@@ -145,7 +165,7 @@
   proto.presetOpenList = function presetOpenList() {
     var state = this.state;
     var node = trialNode(state);
-    if (!isOpenTrial(node)) return null;
+    if (!isOpenTrial(node) || !trialLevel(node)) return null;
     var mega = megaOf(state);
     var key = stageKey(state);
     if (!mega.presetOpen || mega.presetOpen.key !== key || !Array.isArray(mega.presetOpen.words)) {
@@ -161,7 +181,8 @@
     var state = this.state;
     if (!state || inDuel(state)) return 0;
     if (typeof this.isBossRound === "function" && this.isBossRound()) return 0;
-    if (trialNode(state)) return TRIAL_GUESS;
+    var trial = trialNode(state);
+    if (trial) return trialPickGuess(trial);
     if (typeof Engine.ratchetForGuess !== "function") return 0;
     var mega = megaOf(state);
     if (!(mega.ratchetDebuffs || []).some(function preset(item) { return item && item.bossId === PRESET_ID; })) return 0;
@@ -218,14 +239,6 @@
       state.failureReason = "Wrong pick in the Preset Trial: the answer was " + String(state.secret || "").toUpperCase() + ".";
       try { this.save(); } catch (_error) { /* next save */ }
     }
-    // Passing a Preset Trial pays on top of the stage's own earnings.
-    if (trial && result && result.ok !== false && word === String(state.secret || "").toUpperCase() && !trial.trialPaid) {
-      var money = TRIAL_MONEY[trialWorld(trial)];
-      trial.trialPaid = true;
-      state.cuddleMoney = Math.max(0, (Number(state.cuddleMoney) || 0) + money);
-      state.lastMessage = ((state.lastMessage || "") + " Preset Trial passed: +$" + money + ".").trim();
-      try { this.save(); } catch (_error) { /* next save */ }
-    }
     if (!result || result.ok === false) {
       state.hand = state.hand.filter(function keep(card) { return ids.indexOf(card.id) === -1; });
       state.draft = savedDraft;
@@ -261,4 +274,119 @@
     var rescued = Math.max(0, (Number(state.maxGuesses) || 0) - mega.presetStage.baseMax);
     return Math.min(limit, guess + rescued);
   };
+
+  // A trial pays its guesses and its spare rows, never the early-solve
+  // bonus (there's no guessing early when the list decides the guess):
+  // the spare rows' early rate is zero here...
+  var baseRules = proto.getRulesSummary;
+  if (typeof baseRules === "function") {
+    proto.getRulesSummary = function rulesWithPresetTrial() {
+      var rules = baseRules.apply(this, arguments);
+      if (rules && trialHere(this.state)) rules = Object.assign({}, rules, { earlyPoint: 0 });
+      return rules;
+    };
+  }
+
+  // ...the engine's own early bonus is taken back on the solve, and the
+  // trial bonus is paid instead (points and money, by the difficulty).
+  var baseSubmit = proto.submitDraft;
+  proto.submitDraft = function submitDraftWithPresetTrial() {
+    var state = this.state;
+    var trial = state && !inDuel(state) ? trialNode(state) : null;
+    var before = trial && Array.isArray(state.history) ? state.history.length : 0;
+    var result = baseSubmit.apply(this, arguments);
+    state = this.state;
+    if (!trial || !result || result.ok === false || !Array.isArray(state.history) || state.history.length <= before) return result;
+    var entry = state.history[state.history.length - 1];
+    if (!entry || String(entry.word || "").toUpperCase() !== String(state.secret || "").toUpperCase() || trial.trialPaid) return result;
+    var early = Math.max(0, Math.round(Number(entry.earlyBonus) || 0));
+    var level = trialLevel(trial) || TRIAL_LEVELS.medium;
+    var change = level.points - early;
+    entry.earlyBonus = 0;
+    entry.presetTrialBonus = level.points;
+    state.score = (Number(state.score) || 0) + change;
+    state.roundScore = (Number(state.roundScore) || 0) + change;
+    if (state.pendingRoundEnd) {
+      state.pendingRoundEnd.earlyBonus = Math.max(0, (Number(state.pendingRoundEnd.earlyBonus) || 0) - early);
+      state.pendingRoundEnd.score = state.score;
+    }
+    if (state.lastRoundSummary && Number(state.lastRoundSummary.earlyBonus)) {
+      state.lastRoundSummary.earlyBonus = Math.max(0, Number(state.lastRoundSummary.earlyBonus) - early);
+    }
+    trial.trialPaid = true;
+    state.cuddleMoney = Math.max(0, (Number(state.cuddleMoney) || 0) + level.money);
+    state.lastMessage = ((state.lastMessage || "") + " Trial passed: +" + level.points + " points, +$" + level.money + ".").trim();
+    try { this.save(); } catch (_error) { /* next save */ }
+    return result;
+  };
+
+  // -- choosing the trial's difficulty ---------------------------------------
+  function escapeHtml(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function swap(character) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[character];
+    });
+  }
+
+  function needsDifficulty(state) {
+    var node = trialNode(state);
+    return Boolean(node && !trialLevel(node) && !(state.history || []).length);
+  }
+
+  function pickerHtml(state) {
+    var node = trialNode(state);
+    var open = isOpenTrial(node);
+    var pips = function pips(count) {
+      return '<span class="umt-duel-pips" aria-hidden="true">' + [1, 2, 3].map(function pip(n) { return "<i" + (n <= count ? ' class="is-on"' : "") + "></i>"; }).join("") + "</span>";
+    };
+    var options = TRIAL_ORDER.map(function option(id, index) {
+      var level = TRIAL_LEVELS[id];
+      var words = open ? level.open : level.blind;
+      return '<button type="button" class="umt-duel-option is-' + id + '" data-umt-trial-level="' + id + '">' + pips(index + 1)
+        + "<b>" + level.label + "</b>"
+        + '<span class="umt-duel-win">' + words + " words · Pass: +" + level.points + " points · +$" + level.money + "</span></button>";
+    }).join("");
+    return '<div class="umt-trial-pick" role="dialog" aria-modal="true" aria-labelledby="umtTrialPickTitle">'
+      + '<section class="umt-stop-panel umt-duel-choose umt-trial-pick-panel">'
+      + '<h2 id="umtTrialPickTitle">' + (open ? "Open Trial" : "Preset Trial") + "</h2>"
+      + '<p class="umt-stop-lead">' + (open
+        ? "The answer is one of the listed words, shown from the start. Two guesses, then pick it."
+        : "Three guesses, then the answer is one of a list. Pick it.")
+      + " A wrong pick ends the run. Harder means more words to choose from.</p>"
+      + '<div class="umt-duel-options">' + options + "</div></section></div>";
+  }
+
+  function renderPicker(root, game) {
+    var existing = document.querySelector(".umt-trial-pick");
+    var state = game && game.state;
+    if (!state || inDuel(state) || !needsDifficulty(state)) {
+      if (existing) existing.remove();
+      return;
+    }
+    if (existing) return;
+    var host = document.getElementById("cuddleScreen") || document.body;
+    host.insertAdjacentHTML("beforeend", pickerHtml(state));
+  }
+
+  document.addEventListener("click", function chooseLevel(event) {
+    var button = event.target.closest && event.target.closest("[data-umt-trial-level]");
+    if (!button) return;
+    event.preventDefault();
+    var game = window.CuddleBranchMap && typeof window.CuddleBranchMap.getActiveGame === "function"
+      ? window.CuddleBranchMap.getActiveGame() : null;
+    var node = game && trialNode(game.state);
+    if (!node || !TRIAL_LEVELS[button.dataset.umtTrialLevel]) return;
+    node.trialDifficulty = button.dataset.umtTrialLevel;
+    try { game.save(); } catch (_error) { /* next save */ }
+    var layer = document.querySelector(".umt-trial-pick");
+    if (layer) layer.remove();
+    window.dispatchEvent(new CustomEvent("cuddle:campaign-update", { detail: { runId: game.state.runId } }));
+  });
+
+  setInterval(function watch() {
+    var game = window.CuddleBranchMap && typeof window.CuddleBranchMap.getActiveGame === "function"
+      ? window.CuddleBranchMap.getActiveGame() : null;
+    if (document.getElementById("cuddleRoot")) renderPicker(document.getElementById("cuddleRoot"), game);
+  }, 250);
+
+  window.CuddlePresetTrial = Object.freeze({ LEVELS: TRIAL_LEVELS });
 }());

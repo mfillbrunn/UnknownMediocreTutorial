@@ -1525,8 +1525,7 @@
       brief.summary = meta ? meta.description : "Race an AI to the answer.";
     } else if (kind === "trial") {
       brief.summary = meta ? meta.description : "On guess 3, pick the answer from a short list.";
-      var trialWorld = Math.max(0, Math.min(2, Number(node.trialWorld) || 0));
-      brief.gets.push({ type: "win", text: "Pass it: +$" + [15, 20, 25][trialWorld] });
+      brief.gets.push({ type: "win", text: "Pass it: points and money, more on harder" });
       brief.risks.push("A wrong pick ends the run");
     } else if (kind === "mystery") {
       brief.title = "Unknown Stop";
