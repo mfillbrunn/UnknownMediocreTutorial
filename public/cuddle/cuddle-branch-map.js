@@ -126,7 +126,8 @@
     shop: { icon: "🛒", title: "The Wandering Paw", label: "Shop", description: "Spend money on one-use supplies. No Wordle here.", playsRound: false },
     upgrade: { icon: "✨", title: "Free Upgrade", label: "Upgrade", description: "Take a free permanent upgrade. No Wordle here.", playsRound: false },
     event: { icon: "❔", title: "Event", label: "Event", description: "A trade: something gained now for something given up.", playsRound: false },
-    boss: { icon: "💀", title: "Boss", label: "Boss", description: "A boss round: pass or fail, and its reward is permanent.", playsRound: true }
+    boss: { icon: "💀", title: "Boss", label: "Boss", description: "A boss round: pass or fail, and its reward is permanent.", playsRound: true },
+    trial: { icon: "📜", title: "Preset Trial", label: "Trial", description: "Every path passes through it. On guess 3 the answer is one of a few listed words: pick it to pass. A wrong pick ends the run.", playsRound: true }
   };
 
   var EVENTS = Object.freeze([
@@ -1519,6 +1520,11 @@
       brief.gets.push({ type: "perk", text: "Pick 1 of 3 free permanent upgrades" });
     } else if (kind === "duel") {
       brief.summary = meta ? meta.description : "Race an AI to the answer.";
+    } else if (kind === "trial") {
+      brief.summary = meta ? meta.description : "On guess 3, pick the answer from a short list.";
+      var trialWorld = Math.max(0, Math.min(2, Number(node.trialWorld) || 0));
+      brief.gets.push({ type: "win", text: "Pass it: +$" + [15, 20, 25][trialWorld] });
+      brief.risks.push("A wrong pick ends the run");
     } else if (kind === "mystery") {
       brief.title = "Unknown Stop";
       brief.summary = "Hidden until you step onto it. Could be anything on the road.";

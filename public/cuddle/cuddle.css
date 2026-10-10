@@ -3107,7 +3107,7 @@
    the row into a horizontal scroll. */
 @media (max-width: 860px) {
   #cuddleScreen .cuddle-board-row {
-    grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(28px, 34px);
+    grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(30px, 42px);
     /* The base rule centres the tracks, which makes 1fr collapse to content
        width; stretch is what lets the tiles actually share the row. */
     justify-content: stretch;
@@ -3157,10 +3157,12 @@
   }
 }
 
-/* Stages with no guess limit: unplayed rows keep their space but stay out
-   of sight, and the next row slides in when it's reached. */
+/* Stages with no guess limit: unplayed rows aren't drawn at all, so the
+   board never scrolls past the row being typed (a boss, whose rows are all
+   real guesses, still shows them), and the next row slides in when it's
+   reached. */
 #cuddleScreen .cuddle-board-row.is-future-hidden {
-  visibility: hidden;
+  display: none;
 }
 #cuddleScreen .cuddle-board-row.is-arriving {
   animation: cuddle-row-arrive .34s cubic-bezier(.2, .9, .3, 1.2) both;
@@ -4622,3 +4624,30 @@
   line-height: 1.35;
 }
 .umt-combo-legend b { color: #ffb3d4; }
+
+/* Play screen, economical with space: the next boss's target rides inside
+   the points pill (288/510), and the theme, the clues, the run's excluded
+   letters and the Ascension chip share wrapping lines above the board. */
+#cuddleScreen .cuddle-header-score .cuddle-header-boss-goal {
+  display: inline;
+  margin: 0 0 0 1px;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: rgba(143, 247, 205, 0.62);
+  font-size: 0.8em;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+#cuddleScreen .cuddle-play-strip { gap: 6px; }
+#cuddleScreen .cuddle-play-strip > .cuddle-play-theme-badge { flex: 0 1 auto; }
+#cuddleScreen .cuddle-play-strip > .umt-clues { display: contents; }
+.umt-clue.is-excluded {
+  border-color: rgba(255, 130, 130, 0.38);
+  background: rgba(255, 130, 130, 0.1);
+  color: #ffdede;
+}
+.umt-clue.is-excluded .umt-clue-text { display: inline-flex; align-items: center; gap: 4px; }
+/* Rows pack at the top of the board rather than spreading to fill it. */
+#cuddleScreen .cuddle-board { align-content: start; }

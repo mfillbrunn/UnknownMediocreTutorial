@@ -9,7 +9,7 @@
   const INSTALL_MARK = Symbol.for("umt.cuddle.expandedStages.v1");
   const MAP_STATUS = "branchMap";
   const ICON_ROOT = "cuddle/icons/";
-  const ROUND_TYPES = new Set(["normal", "theme", "challenge", "boss", "wordle"]);
+  const ROUND_TYPES = new Set(["normal", "theme", "challenge", "boss", "wordle", "trial"]);
   const VOWEL_SET = new Set(["A", "E", "I", "O", "U"]);
   const CARD_STATUS_ORDER = Object.freeze({ green: 0, yellow: 1, unused: 2, red: 3 });
   const DUEL_TILE_METHODS = Object.freeze([
@@ -101,7 +101,8 @@
     event: Object.freeze({ title: "Mystery Event", label: "Event", icon: "stage-event-choice.svg", description: "Something happens on the road here. You only find out what when you arrive." }),
     boss: Object.freeze({ title: "Boss", label: "Boss", icon: "stage-boss.svg", description: "A boss Wordle with permanent stakes." }),
     duel: Object.freeze({ title: "Word Duel", label: "Duel", icon: "stage-duel.svg", description: "Alternate guesses with an AI that also builds its words from a hand of letters. The first side to solve the word wins; if the AI does, the run ends." }),
-    mystery: Object.freeze({ title: "Unknown Stop", label: "?", icon: "stage-mystery.svg", description: "This stop stays hidden until you enter it." })
+    mystery: Object.freeze({ title: "Unknown Stop", label: "?", icon: "stage-mystery.svg", description: "This stop stays hidden until you enter it." }),
+    trial: Object.freeze({ title: "Preset Trial", label: "Trial", icon: "stage-trial.svg", description: "Every path passes through it. Play two guesses as usual; on guess 3 the answer is one of a few listed words (3 in world one, 4 in world two, 5 in world three). Pick it to pass. A wrong pick ends the run." })
   });
 
   // Road events. Money written $[n] grows with the world (x1, x1.5, x2 --
@@ -627,7 +628,7 @@
     // Every run has at least one Word Duel, and duels live in the later
     // worlds (2 and 3): a duel row is slotted between two ordinary rows of
     // the same world (never next to a boss), and half the time a second one
-    // follows at least two rows further on.
+    // follows in the other world (never two in one world).
     function addDuelRows(game, map, rng) {
       if (map.expandedDuelRowsInserted || mapHasProgress(map) || map.rows.length < 6) return false;
       const isBoss = row => Boolean(row && (row.kind === "boss" || (row.nodes || []).some(node => node && (node.type === "boss" || node.type === "final"))));
@@ -653,7 +654,8 @@
       if (!pool.length) return false;
       const chosen = [pool[Math.floor(rng() * pool.length)]];
       if (rng() < 0.5) {
-        const second = pool.filter(value => Math.abs(value - chosen[0]) >= 2);
+        // At most one Duel a world.
+        const second = pool.filter(value => Math.abs(value - chosen[0]) >= 2 && worldOf(value) !== worldOf(chosen[0]));
         if (second.length) chosen.push(second[Math.floor(rng() * second.length)]);
       }
       chosen.sort((a, b) => b - a).forEach((insertion, index) => {
@@ -673,6 +675,57 @@
       });
       map.expandedDuelRowsInserted = true;
       map.expandedDuelCount = chosen.length;
+      return Boolean(chosen.length);
+    }
+
+    // One or two Preset Trials a run, at most one a world: like a Duel, a
+    // row of its own that every path passes through, slotted between two
+    // ordinary rows of a world (never next to a boss or a Duel). Worlds
+    // without a Duel are picked first.
+    function addTrialRows(game, map, rng) {
+      if (map.expandedTrialRowsInserted || mapHasProgress(map) || map.rows.length < 6) return false;
+      const isBoss = row => Boolean(row && (row.kind === "boss" || (row.nodes || []).some(node => node && (node.type === "boss" || node.type === "final"))));
+      const isSpecial = row => Boolean(row && (row.kind === "duel" || row.kind === "trial" || row.restFork));
+      const worldOf = index => {
+        const row = map.rows[index];
+        if (row && Number.isFinite(Number(row.act))) return Number(row.act);
+        return map.rows.slice(0, index).filter(isBoss).length;
+      };
+      const duelWorlds = new Set(map.rows.map((row, index) => (row.kind === "duel" ? worldOf(index) : null)).filter(world => world != null));
+      const slotsByWorld = new Map();
+      for (let insertion = 2; insertion <= map.rows.length - 1; insertion += 1) {
+        const before = map.rows[insertion - 1];
+        const after = map.rows[insertion];
+        if (!before || !after || isBoss(before) || isBoss(after) || isSpecial(before) || isSpecial(after)) continue;
+        if (worldOf(insertion - 1) !== worldOf(insertion)) continue;
+        const world = worldOf(insertion);
+        if (!slotsByWorld.has(world)) slotsByWorld.set(world, []);
+        slotsByWorld.get(world).push(insertion);
+      }
+      const worlds = shuffled([...slotsByWorld.keys()], rng)
+        .sort((a, b) => Number(duelWorlds.has(a)) - Number(duelWorlds.has(b)));
+      if (!worlds.length) return false;
+      const count = worlds.length > 1 && rng() < 0.5 ? 2 : 1;
+      const chosen = worlds.slice(0, count).map(world => {
+        const slots = slotsByWorld.get(world);
+        return { world, insertion: slots[Math.floor(rng() * slots.length)] };
+      });
+      chosen.sort((a, b) => b.insertion - a.insertion).forEach(({ world, insertion }) => {
+        const nextRow = map.rows[insertion];
+        const previousRow = map.rows[insertion - 1];
+        if (!nextRow || !previousRow) return;
+        previousRow.nodes.forEach(node => { node.next = [0]; });
+        const trialNode = {
+          row: insertion,
+          col: 0,
+          type: "trial",
+          trialWorld: world,
+          next: nextRow.nodes.map((_node, col) => col)
+        };
+        map.rows.splice(insertion, 0, { kind: "trial", act: previousRow.act, nodes: [trialNode] });
+      });
+      map.expandedTrialRowsInserted = true;
+      map.expandedTrialCount = chosen.length;
       return Boolean(chosen.length);
     }
 
@@ -741,6 +794,10 @@
         safeSave(game);
       }
       else if (!map.expandedDuelRowsInserted && mapHasProgress(map)) map.expandedDuelMigrationDeferred = true;
+      if (allowDuelInsertion && !mapHasProgress(map) && addTrialRows(game, map, rng)) {
+        reindexRows(map);
+        safeSave(game);
+      }
       reindexRows(map);
       annotateProgression(map);
       map.expandedStagesVersion = VERSION;

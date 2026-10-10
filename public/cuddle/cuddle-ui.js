@@ -581,8 +581,6 @@
   function renderRun() {
     const state = currentState();
     const rules = game.getRulesSummary();
-    const target = game.getTarget();
-    const drawPile = state.deck.length;
     const bossGoal = window.CuddleBranchMap && typeof window.CuddleBranchMap.nextBossRequirement === "function"
       ? window.CuddleBranchMap.nextBossRequirement(game)
       : null;
@@ -595,26 +593,14 @@
           <div class="cuddle-header-title">
             <span class="cuddle-eyebrow">SINGLE-PLAYER CAMPAIGN</span>
             <div class="cuddle-header-title-line">
-              <span class="cuddle-header-score cuddle-header-points" aria-label="${game.bankedScore()} points${game.isBossRound() ? "" : `, goal ${target}`}">${game.bankedScore()}${game.isBossRound() ? "" : ` / ${target}`}</span>
+              <span class="cuddle-header-score cuddle-header-points" aria-label="${game.bankedScore()} points"><span class="cuddle-header-points-value">${game.bankedScore()}</span>${bossGoal && bossGoal.required > 0 ? `<span class="cuddle-header-boss-goal" title="Points needed for the next boss" aria-label="of ${bossGoal.required} needed for the next boss">/${bossGoal.required}</span>` : ""}</span>
               <span class="cuddle-header-money" aria-label="${Number(state.cuddleMoney || 0)} money">$${Number(state.cuddleMoney || 0).toLocaleString()}</span>
             </div>
-            ${bossGoal && bossGoal.required > 0 ? `<span class="cuddle-header-boss-goal" aria-label="${Math.min(bossGoal.score, bossGoal.required)} of ${bossGoal.required} points toward the next boss">Next boss: ${Math.min(bossGoal.score, bossGoal.required)}/${bossGoal.required} pts</span>` : ""}
           </div>
           <div class="cuddle-header-side cuddle-header-side-right">
-            <button class="cuddle-details-toggle ${detailsOpen ? "is-open" : ""}" data-action="toggle-details"
-              aria-expanded="${detailsOpen ? "true" : "false"}" aria-controls="cuddleRunDetails"
-              aria-label="${detailsOpen ? "Hide run details" : "Show run details"}">
-              ${detailsOpen ? "Hide ▲" : "Details ▼"}
-            </button>
             <button class="cuddle-icon-btn" data-action="rules" aria-label="How to play">?</button>
           </div>
         </header>
-
-
-        ${detailsOpen ? `
-          <section id="cuddleRunDetails" class="cuddle-details-panel" aria-label="Run details">
-            ${renderRunDetails(state, rules, drawPile)}
-          </section>` : ""}
 
         <main class="cuddle-play-area">
           <section class="cuddle-left-column">
@@ -863,11 +849,9 @@
         + (hiddenFuture ? " is-future-hidden" : "");
       rows.push(`<div class="cuddle-board-row${rowClass}"${hiddenFuture ? ' aria-hidden="true"' : ""}>${tiles.join("")}${score}</div>`);
     }
-    const removedCount = state.removedLetters?.length || 0;
-    const excluded = removedCount
-      ? `<p class="cuddle-excluded-letters">${removedCount} letter${removedCount === 1 ? "" : "s"} excluded: ${escapeHtml(state.removedLetters.join(", "))}</p>`
-      : "";
-    return `${renderLateBanner(state, strictLimit)}<section class="cuddle-board" aria-label="Guess board">${rows.join("")}</section>${excluded}`;
+    // Letters excluded this run show as a chip in the play strip above the
+    // board (cuddle-clues.js), not as a line under it.
+    return `${renderLateBanner(state, strictLimit)}<section class="cuddle-board" aria-label="Guess board">${rows.join("")}</section>`;
   }
 
   function renderStatusAnnouncement(state) {

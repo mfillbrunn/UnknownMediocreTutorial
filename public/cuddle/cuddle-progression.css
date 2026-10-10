@@ -563,7 +563,9 @@
   clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
   opacity: 0;
 }
-.umt-progress-host .umt-bd-badge.is-new { animation: umt-bd-unlock 900ms cubic-bezier(0.25, 1.4, 0.5, 1) 350ms both; }
+/* --step: a pack's badges unlock one per beat, in pick order. */
+.umt-progress-host .umt-bd-badge { --beat: calc(var(--step, 0) * 1.6s); }
+.umt-progress-host .umt-bd-badge.is-new { animation: umt-bd-unlock 900ms cubic-bezier(0.25, 1.4, 0.5, 1) calc(350ms + var(--beat)) both; }
 .umt-progress-host .umt-bd-badge.is-new::after {
   content: "";
   position: absolute;
@@ -573,17 +575,17 @@
   background-size: 260% 100%;
   background-position: 130% 0;
   pointer-events: none;
-  animation: umt-bd-shine 900ms ease-out 800ms both;
+  animation: umt-bd-shine 900ms ease-out calc(800ms + var(--beat)) both;
 }
-.umt-progress-host .umt-bd-badge.is-new .umt-bd-sparks i { animation: umt-bd-spark 800ms ease-out calc(700ms + var(--d)) both; }
-.umt-progress-host .umt-bd-badge.is-new .umt-bd-hex-fill { animation: umt-bd-glow 1.6s ease-out 700ms both; }
+.umt-progress-host .umt-bd-badge.is-new .umt-bd-sparks i { animation: umt-bd-spark 800ms ease-out calc(700ms + var(--beat) + var(--d)) both; }
+.umt-progress-host .umt-bd-badge.is-new .umt-bd-hex-fill { animation: umt-bd-glow 1.6s ease-out calc(700ms + var(--beat)) both; }
 /* A combo arrives once the badge that completed it is in: its two badges
    light up rose, then the combo badge pops into the combo column. */
-.umt-progress-host .umt-bd-badge.is-linking { animation: umt-bd-link 1.2s ease-in-out 1.3s both; }
-.umt-progress-host .umt-bd-badge.is-combo.is-new { animation-delay: 1.9s; }
-.umt-progress-host .umt-bd-badge.is-combo.is-new::after { animation-delay: 2.3s; }
-.umt-progress-host .umt-bd-badge.is-combo.is-new .umt-bd-sparks i { animation-delay: calc(2.2s + var(--d)); }
-.umt-progress-host .umt-bd-badge.is-combo.is-new .umt-bd-hex-fill { animation-delay: 2.2s; }
+.umt-progress-host .umt-bd-badge.is-linking { animation: umt-bd-link 1.2s ease-in-out calc(1.3s + var(--beat)) both; }
+.umt-progress-host .umt-bd-badge.is-combo.is-new { animation-delay: calc(1.9s + var(--beat)); }
+.umt-progress-host .umt-bd-badge.is-combo.is-new::after { animation-delay: calc(2.3s + var(--beat)); }
+.umt-progress-host .umt-bd-badge.is-combo.is-new .umt-bd-sparks i { animation-delay: calc(2.2s + var(--beat) + var(--d)); }
+.umt-progress-host .umt-bd-badge.is-combo.is-new .umt-bd-hex-fill { animation-delay: calc(2.2s + var(--beat)); }
 
 @keyframes umt-bd-unlock {
   0% { opacity: 0; transform: scale(0.55) rotate(-8deg); filter: grayscale(1) brightness(0.6); }
