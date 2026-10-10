@@ -798,6 +798,7 @@
   font-size: 0.64rem;
   font-weight: 900;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .cuddle-card.is-card-unused {

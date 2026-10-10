@@ -960,9 +960,13 @@
     // the underlying knowledge (state.revealedPositions) doesn't track how
     // a position became known.
     const revealedPositions = state.revealedPositions || [];
-    const positionIndex = status === "green" ? revealedPositions.indexOf(group.glyph) : -1;
+    // Every place the letter is known to go: a letter the answer uses twice
+    // shows both ("#3,5").
+    const positions = status === "green"
+      ? revealedPositions.map((glyph, index) => (glyph === group.glyph ? index + 1 : 0)).filter(Boolean)
+      : [];
     const statusLabel = status === "unknown" ? "unknown · result withheld"
-      : status === "green" ? (positionIndex >= 0 ? `green · position ${positionIndex + 1}` : "green")
+      : status === "green" ? (positions.length ? `green · position${positions.length > 1 ? "s" : ""} ${positions.join(" and ")}` : "green")
         : status === "blue" ? "blue · in the secret, placement unknown"
           : status === "yellow" ? "yellow"
             : status === "red" ? "red · not in the secret"
@@ -990,7 +994,7 @@
         title="${escapeHtml(details)}">
         <span class="cuddle-card-letter">${escapeHtml(group.glyph)}</span>
         ${unknown ? `<span class="cuddle-card-unknown" aria-hidden="true">?</span>` : ""}
-        ${positionIndex >= 0 ? `<span class="cuddle-card-position" aria-hidden="true">#${positionIndex + 1}</span>` : ""}
+        ${positions.length ? `<span class="cuddle-card-position" aria-hidden="true">#${positions.join(",")}</span>` : ""}
         ${showBadge ? `<span class="cuddle-card-count" aria-hidden="true">×${badgeValue}</span>` : ""}
       </button>`;
   }

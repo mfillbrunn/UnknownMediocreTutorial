@@ -2623,7 +2623,9 @@
         || (duel.mulliganMode && (eligible.length === 0
           || (selectedCount === 0 && (unselectedCount === 0 || selected.size >= limit))));
       const revealedPositions = Array.isArray(state.revealedPositions) ? state.revealedPositions : [];
-      const positionIndex = status === "green" ? revealedPositions.indexOf(group.glyph) : -1;
+      const positions = status === "green"
+        ? revealedPositions.map((glyph, index) => (glyph === group.glyph ? index + 1 : 0)).filter(Boolean)
+        : [];
       const classes = [
         "cuddle-card",
         `is-card-${status}`,
@@ -2639,8 +2641,8 @@
         : group.cards.length > 1
           ? `<span class="cuddle-card-count" aria-hidden="true">×${group.cards.length}</span>`
           : "";
-      const position = positionIndex >= 0
-        ? `<span class="cuddle-card-position" aria-hidden="true">#${positionIndex + 1}</span>`
+      const position = positions.length
+        ? `<span class="cuddle-card-position" aria-hidden="true">#${positions.join(",")}</span>`
         : "";
       const modeText = duel.mulliganMode
         ? `${selectedCount} selected; ${eligible.length} finite available; limit ${limit}`
