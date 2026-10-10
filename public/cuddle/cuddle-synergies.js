@@ -21,32 +21,32 @@
 
   const COMBOS = Object.freeze([
     { id: "secondWind", icon: "🌬️", title: "Second Wind", requires: [["extraMulligans"], ["mulliganValueBoost"]],
-      effect: "+3 pts per unused mulligan" },
+      effect: "+3 points per unused mulligan" },
     { id: "questMaster", icon: "🎖️", title: "Quest Master", requires: [["questPoints"], ["questReroll"]],
       effect: "+$2 per quest" },
     { id: "fullHouse", icon: "🂡", title: "Full House", requires: [["handSizeBoost"], ["jokerCache", "jokerCacheLarge"]],
       effect: "+1 mulligan per stage" },
     // Combos around the Legendary and boss rewards.
     { id: "cartographer", icon: "🗺️", title: "Cartographer", requires: [["allThemesBoss", "allThemes"], ["categorySense"]],
-      effect: "+10 pts per solve" },
+      effect: "+10 points per solve" },
     { id: "questEngine", icon: "⚙️", title: "Quest Engine", requires: [["questPersistReward"], ["questDoublePick"]],
       effect: "+$3 per quest" },
     { id: "cleanSweep", icon: "🧹", title: "Clean Sweep", requires: [["cullRare"], ["freeVowelSweep"]],
       effect: "+1 mulligan per stage" },
     { id: "safetyNet", icon: "🪢", title: "Safety Net", requires: [["secondCup"], ["doubleMulligans"]],
-      effect: "+20 pts for a last-window solve" },
+      effect: "+20 points for solving on the last guess of your window" },
     { id: "scholarsEye", icon: "🔎", title: "Scholar's Eye", requires: [["greenCount"], ["categorySense"]],
       effect: "+$3 per solve" },
     { id: "busyDay", icon: "📋", title: "Busy Day", requires: [["surprise-assignment"], ["questRefreshes"]],
-      effect: "+5 pts per quest" },
+      effect: "+5 points per quest" },
     { id: "fastStory", icon: "📚", title: "Fast Story", requires: [["storybookStart"], ["earlySolveBoost"]],
-      effect: "+15 pts for a solve by guess 3" },
+      effect: "+15 points for a solve by guess 3" },
     // Insight combos (rewards in cuddle-clues.js).
     { id: "lamplighter", icon: "🏮", title: "Lamplighter", requires: [["vowelLamp"], ["patternLens"]],
       effect: "+1 mulligan per stage" },
     // Existing engine combos: previewed here, applied by the engine.
     { id: "goldenTempo", icon: "⚡", title: "Golden Tempo", engine: true, requires: [["colourTrade", "yellowPoints"], ["earlySolveBoost", "earlyRoundPoint"]],
-      effect: "+5 pts per solve" },
+      effect: "+5 points per solve" },
     { id: "endlessMargins", icon: "🖋️", title: "Endless Margins", engine: true, requires: [["wideChoice"], ["questRefreshes"]],
       effect: "+1 quest reward option" }
   ]);

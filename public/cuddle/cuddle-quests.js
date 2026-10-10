@@ -327,13 +327,13 @@
       id: "letterProbe",
       icon: "🔎",
       title: "Letter Count",
-      description: "Count of 2 consonants in the answer"
+      description: "Shows how often 2 of your consonants appear"
     },
     {
       id: "sillyWord",
       icon: "🤪",
       title: "Silly Word",
-      description: "This guess: any 5 letters"
+      description: "This guess can be any 5 letters"
     },
     {
       id: "extraLetters",
@@ -345,7 +345,7 @@
       id: "jokerToken",
       icon: "🃏",
       title: "Joker",
-      description: "+1 Joker (wildcard, kept till used)"
+      description: "+1 Joker, a wildcard kept until you use it"
     }
   ];
 

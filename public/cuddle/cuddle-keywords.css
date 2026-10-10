@@ -1,0 +1,9 @@
+/* Coloured keywords in reward, badge, quest and shop text
+   (cuddle-keywords.js): one colour per thing, always bold. */
+.umt-kw { font-weight: 850; white-space: nowrap; }
+.umt-kw.is-points { color: #6fe3aa; }
+.umt-kw.is-money { color: #f6c956; }
+.umt-kw.is-mulligan { color: #7cc4ff; }
+.umt-kw.is-joker { color: #c9a2ff; }
+/* On light cards the same hues, deep enough to read. */
+.umt-bd-short .umt-kw.is-points { color: #3fcf8a; }
