@@ -3107,7 +3107,7 @@
    the row into a horizontal scroll. */
 @media (max-width: 860px) {
   #cuddleScreen .cuddle-board-row {
-    grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(28px, 34px);
+    grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(30px, 42px);
     /* The base rule centres the tracks, which makes 1fr collapse to content
        width; stretch is what lets the tiles actually share the row. */
     justify-content: stretch;
@@ -3157,10 +3157,12 @@
   }
 }
 
-/* Stages with no guess limit: unplayed rows keep their space but stay out
-   of sight, and the next row slides in when it's reached. */
+/* Stages with no guess limit: unplayed rows aren't drawn at all, so the
+   board never scrolls past the row being typed (a boss, whose rows are all
+   real guesses, still shows them), and the next row slides in when it's
+   reached. */
 #cuddleScreen .cuddle-board-row.is-future-hidden {
-  visibility: hidden;
+  display: none;
 }
 #cuddleScreen .cuddle-board-row.is-arriving {
   animation: cuddle-row-arrive .34s cubic-bezier(.2, .9, .3, 1.2) both;
@@ -4652,3 +4654,5 @@
 }
 .umt-clue.is-excluded .umt-clue-text,
 .umt-clue.is-world .umt-clue-text { display: inline-flex; align-items: center; gap: 4px; }
+/* Rows pack at the top of the board rather than spreading to fill it. */
+#cuddleScreen .cuddle-board { align-content: start; }
