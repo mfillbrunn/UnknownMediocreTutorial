@@ -1032,3 +1032,64 @@ button.umt-duel-option:focus-visible {
   .umt-duel-outcome.is-mourning,
   .umt-duel-outcome.is-mourning * { animation: none !important; }
 }
+
+/* Duel tiers: Easy, Medium, Hard top to bottom, each its own colour, with
+   difficulty pips. Easy shows what starting it costs; the others are free. */
+.umt-duel-choose .umt-duel-option {
+  --tier: #57d69a;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "pips name tag" "pips win tag";
+  gap: 2px 12px;
+  padding: 12px 14px 12px 12px;
+  border: 1px solid color-mix(in srgb, var(--tier) 45%, transparent);
+  border-left: 5px solid var(--tier);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--tier) 16%, transparent), rgba(255, 255, 255, 0.03) 70%);
+}
+.umt-duel-choose .umt-duel-option.is-medium { --tier: #f6c956; }
+.umt-duel-choose .umt-duel-option.is-hard { --tier: #ff6b74; }
+.umt-duel-choose .umt-duel-option.is-easy { grid-template-areas: "pips name name" "pips win win" "label label label" "costs costs costs"; }
+.umt-duel-choose button.umt-duel-option:hover,
+.umt-duel-choose button.umt-duel-option:focus-visible {
+  border-color: var(--tier);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--tier) 26%, transparent), rgba(255, 255, 255, 0.05) 75%);
+}
+.umt-duel-pips { grid-area: pips; display: grid; gap: 3px; align-self: center; }
+.umt-duel-pips i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.umt-duel-pips i.is-on { background: var(--tier); }
+/* Filled from the bottom up, like a meter. */
+.umt-duel-pips { grid-auto-flow: row; transform: scaleY(-1); }
+.umt-duel-choose .umt-duel-option b { grid-area: name; color: var(--tier); font-size: 1rem; }
+.umt-duel-choose .umt-duel-option .umt-duel-win { grid-area: win; color: var(--cuddle-text); font-weight: 700; }
+.umt-duel-free {
+  grid-area: tag;
+  align-self: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cuddle-muted) !important;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.umt-duel-cost-label {
+  grid-area: label;
+  margin-top: 6px;
+  color: var(--cuddle-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.umt-duel-choose .umt-duel-option.is-easy .umt-duel-costs { grid-area: costs; }
+.umt-duel-choose .umt-duel-cost { border-color: color-mix(in srgb, var(--tier) 55%, transparent); }
+.umt-duel-choose .umt-duel-cost:hover,
+.umt-duel-choose .umt-duel-cost:focus-visible { border-color: var(--tier); background: color-mix(in srgb, var(--tier) 18%, transparent); }
+@media (max-width: 440px) {
+  .umt-duel-choose .umt-duel-option { grid-template-columns: auto minmax(0, 1fr) auto; }
+}

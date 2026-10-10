@@ -3178,7 +3178,8 @@
 /* A card that would complete a combo lights up: pulsing gold-pink glow, a
    sheen that sweeps across once on arrival, and a strip under the
    description naming the combo and what it adds. */
-.cuddle-choice:has(.umt-combo-star) {
+.cuddle-choice:has(.umt-combo-star),
+.cuddle-choice:has(.umt-combo-line) {
   position: relative;
   border-color: rgba(255, 138, 190, .85) !important;
   box-shadow: 0 0 0 1px rgba(246, 201, 86, .45), 0 0 22px rgba(255, 111, 176, .35);
@@ -3266,6 +3267,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .cuddle-choice:has(.umt-combo-star),
+  .cuddle-choice:has(.umt-combo-line),
   .umt-combo-star {
     animation: none;
   }
@@ -4580,42 +4582,27 @@
 .cuddle-newrun-modal .cuddle-seed-field { width: 100%; }
 .cuddle-newrun-modal h2 { padding: 0 44px; }
 
-/* Combo chip: under the card's description, says what it pairs with. */
-.umt-combo-chip {
-  position: static;
-  display: inline-flex;
-  align-items: center;
-  justify-self: center;
+/* Combo line: under the card's description, the partner and the bonus in
+   a few words. Plain text, so tapping it just picks the card. */
+.umt-combo-line {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
   gap: 5px;
-  width: auto;
-  height: auto;
-  max-width: 100%;
   margin-top: 8px;
-  padding: 4px 6px 4px 9px;
-  border-radius: 999px;
-  font-size: .68rem;
-  font-weight: 850;
-  letter-spacing: .02em;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 143, 192, 0.45);
+  border-radius: 10px;
+  background: rgba(255, 143, 192, 0.12);
+  color: #ffe3ef;
+  font-size: .72rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: left;
+  pointer-events: none;
 }
-.umt-combo-chip svg { flex: 0 0 auto; width: 12px; height: 12px; }
-.umt-combo-chip > span { overflow: hidden; text-overflow: ellipsis; }
-.umt-combo-chip i {
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: rgba(42, 15, 29, .25);
-  font-style: normal;
-  font-size: .62rem;
-}
-.umt-combo-chip[aria-expanded="true"] { transform: none; }
-/* Its note opens just above the chip. */
-.cuddle-choice:has(.umt-combo-chip) .umt-combo-pop { top: auto; bottom: 44px; }
+.umt-combo-line svg { flex: 0 0 auto; width: 12px; height: 12px; margin-top: 2px; color: #ff8fc0; }
+.umt-combo-line b { color: #ff9fca; font-weight: 850; }
 .umt-combo-legend {
   margin: -2px auto 10px;
   max-width: 46ch;

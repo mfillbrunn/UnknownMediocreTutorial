@@ -2686,22 +2686,26 @@
     }
 
     // Short labels for the Easy costs; the full wording is the tooltip.
-    const EASY_COST_LABELS = { pay: "Pay $10", nextGuess: "Next Wordle 1 guess short", boss: "Next boss 1 guess tougher" };
+    const EASY_COST_LABELS = { pay: "Pay $10", nextGuess: "Next Wordle −1 guess", boss: "Next boss −1 guess" };
 
+    // Three tiers, easiest first, each with its own colour and pips. Easy
+    // costs something up front; Medium and Hard pay more on a win.
     function renderDuelDifficulty(game, duel) {
       duel.easySacrifices = duelSacrifices(game);
       const easyCosts = duel.easySacrifices.filter(item => item.enabled || item.id === "pay").map(item => (
         `<button type="button" class="umt-duel-cost" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="easy:${escapeHtml(item.id)}"${item.enabled ? "" : " disabled"} title="${escapeHtml(item.description)}">`
-        + richText(EASY_COST_LABELS[item.id] || item.title) + `</button>`
+        + richText(EASY_COST_LABELS[item.id] || (item.upgrade ? `−1 level: ${item.upgrade.title}` : item.title)) + `</button>`
       )).join("");
+      const pips = count => `<span class="umt-duel-pips" aria-hidden="true">${[1, 2, 3].map(n => `<i${n <= count ? ' class="is-on"' : ""}></i>`).join("")}</span>`;
       return (
         `<section class="umt-stop-panel umt-duel-choose">`
         + `<div class="umt-stop-head">${stopMedallion("duel")}<h2>Word Duel</h2></div>`
-        + `<p class="umt-stop-lead">Take turns guessing against the AI. The first to solve wins. If the AI solves first, the run ends.</p>`
+        + `<p class="umt-stop-lead">Take turns guessing against the AI. First to solve wins. If the AI wins, the run ends.</p>`
         + `<div class="umt-duel-options">`
-        + `<button type="button" class="umt-duel-option is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium"><b>Medium AI</b><span>${richText("Win +$18 · pick an upgrade")}</span></button>`
-        + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard"><b>Hard AI</b><span>${richText("Win +$38 · bonus upgrade + pick")}</span></button>`
-        + `<div class="umt-duel-option is-easy"><b>Easy AI</b><span>Pay one to start:</span><div class="umt-duel-costs">${easyCosts}</div></div>`
+        + `<div class="umt-duel-option is-easy">${pips(1)}<b>Easy AI</b><span class="umt-duel-win">Win: ${richText("+$10 · pick 1")}</span>`
+        + `<span class="umt-duel-cost-label">Costs one to start:</span><div class="umt-duel-costs">${easyCosts}</div></div>`
+        + `<button type="button" class="umt-duel-option is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium">${pips(2)}<b>Medium AI</b><span class="umt-duel-win">Win: ${richText("+$18 · pick 1")}</span><span class="umt-duel-free">Free</span></button>`
+        + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard">${pips(3)}<b>Hard AI</b><span class="umt-duel-win">Win: ${richText("+$38 · +1 power · pick 1")}</span><span class="umt-duel-free">Free</span></button>`
         + `</div>`
         + `</section>`
       );
