@@ -262,6 +262,12 @@
     if (!result || !result.ok || history.length <= before || inDuel(state)) return result;
     try {
       var entry = history[history.length - 1];
+      // A Spotlight that found no yellow places the first one that shows.
+      if (state.umtSpotlightPending && state.umtSpotlightPending === spotlightKey(state) && state.status === "playing"
+          && !(entry && entry.word === state.secret) && applySpotlight(this)) {
+        note(this, state.umtSpotlightNote);
+      }
+
       // A guess past the window earns nothing but its penalty.
       if (num(entry && entry.latePenalty) > 0) return result;
       var feedback = shownFeedback(entry);
@@ -333,9 +339,9 @@
   // -------------------------------------------------------------------------
 
   var QUEST_REWARDS = [
-    { id: "umtRuleOut", icon: "🚫", title: "Rule Out", description: "Three consonants that aren't in the answer are marked grey." },
+    { id: "umtRuleOut", icon: "🚫", title: "Rule Out", description: "Two consonants in your hand (or your deck) that aren't in the answer are marked grey." },
     { id: "umtVowelCheck", icon: "🔤", title: "Vowel Check", description: "Learn whether two vowels you haven't tried are in the answer." },
-    { id: "umtSpotlight", icon: "👁️", title: "Spotlight", description: "One letter you've found shows its exact place. If you haven't found one, a random letter does." },
+    { id: "umtSpotlight", icon: "👁️", title: "Spotlight", description: "One yellow letter turns green: its exact place is shown. With no yellow yet, it waits for your next one." },
     { id: "umtPocketMoney", icon: "💰", title: "Pocket Money", description: "Gain $10 right now." },
     { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "Gain 15 points right now." },
     { id: "umtFreshHand", icon: "🔃", title: "Fresh Hand", description: "Swap every consonant in your hand for new ones, without using a mulligan." }
@@ -361,19 +367,65 @@
     return out;
   }
 
+  // Spotlight only ever turns a yellow into a green: a letter the board has
+  // shown yellow, at a place no guess has shown green yet. It never finds
+  // a letter the player hasn't, so it can't hand out more than one step.
+  function spotlightKey(state) {
+    return [state.runId || "", state.round || 0, state.secret || ""].join(":");
+  }
+
+  function applySpotlight(game) {
+    var state = game.state;
+    var secret = String(state.secret || "").toUpperCase();
+    if (secret.length !== 5 || typeof game._syncInfiniteCards !== "function") return false;
+    if (!Array.isArray(state.revealedPositions)) state.revealedPositions = [null, null, null, null, null];
+    var yellow = new Set();
+    var green = new Set();
+    (state.history || []).forEach(function each(entry) {
+      var word = String(entry && entry.word || "").toUpperCase();
+      shownFeedback(entry).forEach(function mark(value, index) {
+        if (value === "yellow") yellow.add(word[index]);
+        if (value === "green") green.add(index);
+      });
+    });
+    var spots = [];
+    for (var index = 0; index < secret.length; index += 1) {
+      if (!state.revealedPositions[index] && !green.has(index) && yellow.has(secret[index])) spots.push(index);
+    }
+    if (!spots.length) return false;
+    var spot = pick(game, spots, 1)[0];
+    state.revealedPositions[spot] = secret[spot];
+    state.knownPresent = uniqueSorted((state.knownPresent || []).concat([secret[spot]]));
+    state.umtSpotlightPending = null;
+    game._syncInfiniteCards();
+    if (typeof game.drawToHandLimit === "function") game.drawToHandLimit();
+    state.umtSpotlightNote = "Spotlight: " + secret[spot] + " goes in position " + (spot + 1) + ".";
+    return true;
+  }
+
   var QUEST_EFFECTS = {
+    // Two consonants that aren't in the answer, taken from the letters the
+    // player can actually play -- the hand first, then the deck -- so the
+    // grey marks are ones that matter.
     umtRuleOut: function ruleOut(game) {
       var state = game.state;
       var secret = String(state.secret || "").toUpperCase();
       var known = new Set((state.knownAbsent || []).concat(state.removedLetters || []));
       var tested = testedLetters(state);
-      var options = "BCDFGHJKLMNPQRSTVWXYZ".split("").filter(function ok(letter) {
-        return secret.indexOf(letter) === -1 && !known.has(letter) && !tested.has(letter);
-      });
-      var chosen = pick(game, options, 3);
-      if (!chosen.length) return "Rule Out: every consonant is already accounted for.";
+      var useful = function useful(letter) {
+        return /^[BCDFGHJKLMNPQRSTVWXYZ]$/.test(letter) && secret.indexOf(letter) === -1 && !known.has(letter) && !tested.has(letter);
+      };
+      var glyphs = function glyphs(cards) {
+        return uniqueSorted((cards || []).map(function glyph(card) { return String(card && card.glyph || "").toUpperCase(); }).filter(useful));
+      };
+      var chosen = pick(game, glyphs(state.hand), 2);
+      if (chosen.length < 2) {
+        chosen = chosen.concat(pick(game, glyphs(state.deck).filter(function fresh(letter) { return chosen.indexOf(letter) === -1; }), 2 - chosen.length));
+      }
+      if (!chosen.length) return "Rule Out: none of your consonants can be ruled out.";
       state.knownAbsent = uniqueSorted((state.knownAbsent || []).concat(chosen));
-      return "Rule Out: " + chosen.join(", ") + " " + (chosen.length === 1 ? "is" : "are") + " not in the answer.";
+      if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
+      return "Rule Out: " + chosen.join(" and ") + " " + (chosen.length === 1 ? "is" : "are") + " not in the answer.";
     },
     umtVowelCheck: function vowelCheck(game) {
       var state = game.state;
@@ -394,26 +446,9 @@
         + ".";
     },
     umtSpotlight: function spotlight(game) {
-      var state = game.state;
-      var secret = String(state.secret || "").toUpperCase();
-      var placed = Array.isArray(state.revealedPositions) ? state.revealedPositions : [];
-      // A letter seen as yellow (or known present) whose place isn't shown yet.
-      var found = new Set(state.knownPresent || []);
-      (state.history || []).forEach(function each(entry) {
-        var word = String(entry && entry.word || "").toUpperCase();
-        shownFeedback(entry).forEach(function mark(value, index) { if (value === "yellow" || value === "green") found.add(word[index]); });
-      });
-      var spots = [];
-      for (var index = 0; index < secret.length; index += 1) {
-        if (!placed[index] && found.has(secret[index])) spots.push(index);
-      }
-      if (!spots.length || typeof game._syncInfiniteCards !== "function") return game._applyRewardEffect("revealLocation");
-      var spot = pick(game, spots, 1)[0];
-      state.revealedPositions[spot] = secret[spot];
-      state.knownPresent = uniqueSorted((state.knownPresent || []).concat([secret[spot]]));
-      game._syncInfiniteCards();
-      if (typeof game.drawToHandLimit === "function") game.drawToHandLimit();
-      return "Spotlight: position " + (spot + 1) + " is " + secret[spot] + ".";
+      if (applySpotlight(game)) return game.state.umtSpotlightNote;
+      game.state.umtSpotlightPending = spotlightKey(game.state);
+      return "Spotlight: no yellow letter yet. Your next yellow will be placed.";
     },
     umtPocketMoney: function pocketMoney(game) {
       game.state.cuddleMoney = Math.max(0, num(game.state.cuddleMoney) + 10);
