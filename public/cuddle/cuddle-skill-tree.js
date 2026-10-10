@@ -310,7 +310,7 @@
     coachMeterThreshold: ["Meter 2 sooner", "Meter 4 sooner", "Meter 7 sooner"],
     coachMeterReward: ["Meter tests a letter", "Meter gives a Joker", "Meter places a letter"],
     momentum: ["+4 per better guess", "+8 per better guess", "+15 per better guess"],
-    bigOpener: ["+4 per opener colour", "+7 per opener colour", "+16 per opener colour"],
+    bigOpener: ["+5 per opener colour", "+10 per opener colour", "+20 per opener colour"],
     lastStand: ["+25 last-guess solve", "+45 last-guess solve", "+100 last-guess solve"],
     pickpocket: ["+$1 per yellow", "+$2 per yellow", "+$4 per yellow"],
     gracePeriod: ["1st late guess free", "2 late guesses free", "2 free, then half"],
