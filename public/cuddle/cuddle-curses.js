@@ -111,8 +111,12 @@
   // one of a short list -- 3 words in world one, 4 in world two, 5 in world
   // three. The right pick passes it (and pays); a wrong one is the stage's
   // last guess, which ends the run, the same as losing a Duel.
+  // Two kinds: a Blind trial shows its short list only on guess 3; an Open
+  // trial shows a longer list from the start, to be narrowed down over the
+  // first two guesses.
   var TRIAL_GUESS = 3;
   var TRIAL_WORDS = [3, 4, 5];
+  var OPEN_TRIAL_WORDS = [8, 10, 12];
   var TRIAL_MONEY = [15, 20, 25];
 
   function trialNode(state) {
@@ -128,9 +132,27 @@
     return Math.max(0, Math.min(2, Math.floor(Number(node && node.trialWorld)) || 0));
   }
 
-  function trialSize(node) {
-    return TRIAL_WORDS[trialWorld(node)];
+  function isOpenTrial(node) {
+    return Boolean(node && node.trialKind === "open");
   }
+
+  function trialSize(node) {
+    return (isOpenTrial(node) ? OPEN_TRIAL_WORDS : TRIAL_WORDS)[trialWorld(node)];
+  }
+
+  // An Open trial's list, drawn once at the start of the stage (before any
+  // guess, so nothing on it is ruled out yet) and kept for the whole stage.
+  proto.presetOpenList = function presetOpenList() {
+    var state = this.state;
+    var node = trialNode(state);
+    if (!isOpenTrial(node)) return null;
+    var mega = megaOf(state);
+    var key = stageKey(state);
+    if (!mega.presetOpen || mega.presetOpen.key !== key || !Array.isArray(mega.presetOpen.words)) {
+      mega.presetOpen = { key: key, words: buildChoices(this, trialSize(node)) };
+    }
+    return mega.presetOpen.words;
+  };
 
   // The guess (1-based) this stage's Preset Trial curse lands on, or 0.
   // Ordinary stages only: a boss fight keeps its own rules, and a Duel
@@ -161,8 +183,9 @@
     var key = stageKey(state) + ":" + guess;
     if (!mega.presetPick || mega.presetPick.key !== key || !Array.isArray(mega.presetPick.words)) {
       var trial = trialNode(state);
+      var openList = isOpenTrial(trial) ? this.presetOpenList() : null;
       var size = trial ? trialSize(trial) : Math.max(MIN_WORDS, Math.min(MAX_WORDS, guess));
-      mega.presetPick = { key: key, guess: guess, words: buildChoices(this, size) };
+      mega.presetPick = { key: key, guess: guess, words: openList ? openList.slice() : buildChoices(this, size) };
     }
     return mega.presetPick;
   };

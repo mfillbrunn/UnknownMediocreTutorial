@@ -723,6 +723,9 @@
           col: 0,
           type: "trial",
           trialWorld: world,
+          // Blind: the list appears on guess 3. Open: a longer list is shown
+          // from the start (cuddle-curses.js).
+          trialKind: rng() < 0.5 ? "open" : "blind",
           next: nextRow.nodes.map((_node, col) => col)
         };
         map.rows.splice(insertion, 0, { kind: "trial", act: previousRow.act, nodes: [trialNode] });
@@ -817,6 +820,15 @@
         const reward = Number(node.expandedChallengeReward || (definition ? challengeRewardFor(game, definition, turns, true) : 0));
         return Object.assign({}, base, {
           description: `${challengeDescription(node.challengeId, turns)}${reward > 0 ? ` Win for +$${reward}.` : ""}`
+        });
+      }
+      if (node.type === "trial") {
+        const open = node.trialKind === "open";
+        return Object.assign({}, BASE_STAGE_META.trial, {
+          title: open ? "Open Trial" : "Preset Trial",
+          description: open
+            ? "The answer is one of the words listed from the start. After 2 guesses, pick it to pass. A wrong pick ends the run."
+            : BASE_STAGE_META.trial.description
         });
       }
       if (node.type === "theme") {
