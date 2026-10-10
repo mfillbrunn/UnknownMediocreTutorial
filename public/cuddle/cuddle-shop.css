@@ -508,3 +508,28 @@
 
 #cuddleRoot .umt-shop-final-note.is-cheaper { color: #7ee2a0; }
 #cuddleRoot .umt-shop-final-note.is-dearer { color: #ffb070; }
+
+/* ---- mend shelf: clearing deck burdens (cuddle-burdens.js) ---------------- */
+/* Laid out like the trade shelf, one row per card, in the dead tile's slate. */
+#cuddleRoot .umt-shop-shelf.umt-shelf-mend { --shelf: #a59cbb; }
+#cuddleRoot .umt-shelf-mend .umt-shop-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+#cuddleRoot .umt-shelf-mend .umt-shop-card {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "plate name price"
+    "plate chip price"
+    "plate blurb blurb";
+  align-items: center;
+  justify-items: start;
+  column-gap: 12px;
+  row-gap: 3px;
+  text-align: left;
+}
+#cuddleRoot .umt-shelf-mend .umt-shop-plate { grid-area: plate; width: 50px; height: 50px; }
+#cuddleRoot .umt-shelf-mend .umt-shop-name { grid-area: name; }
+#cuddleRoot .umt-shelf-mend .umt-shop-chip { grid-area: chip; }
+#cuddleRoot .umt-shelf-mend .umt-shop-blurb { grid-area: blurb; }
+#cuddleRoot .umt-shelf-mend .umt-shop-price { grid-area: price; align-self: start; }

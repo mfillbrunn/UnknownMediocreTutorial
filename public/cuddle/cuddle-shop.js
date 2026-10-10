@@ -5,6 +5,10 @@
  *   Keeps forever   3 permanent upgrades for the rest of the run
  *   Trade           money for points on the spot: usually +10 points for
  *                   $10, sometimes (the rare deal) +30 points for $20
+ *   Mend            only while the run carries a deck burden
+ *                   (cuddle-burdens.js): chisel out a dead tile, or sort
+ *                   out the doubled consonants. Can be bought again while
+ *                   there is something left to mend.
  * The stock is drawn per shop from larger pools (seeded by the run, saved
  * the first time the shop opens, so it never reshuffles), and a permanent
  * upgrade you have already maxed is never offered.
@@ -115,6 +119,27 @@
   ]);
   const RARE_TRADE_CHANCE = 0.2;
 
+  // Not stocked from a pool: each shows up whenever there's a burden for it.
+  const MEND_ITEMS = Object.freeze([
+    { id: "mendChisel", icon: "shop-chisel.svg", title: "Stone Chisel", cost: 20,
+      blurb: game => {
+        const left = burdenOf(game).dead;
+        return `Remove 1 dead tile from your deck for good (you carry ${left}).`;
+      },
+      available: game => burdenOf(game).dead > 0,
+      apply: game => window.CuddleBurdens.removeDead(game) },
+    { id: "mendSorter", icon: "shop-sorter.svg", title: "Letter Sorter", cost: 18,
+      blurb: game => `Remove your doubled consonants (${burdenOf(game).doubles.join(", ")}) for good.`,
+      available: game => burdenOf(game).doubles.length > 0,
+      apply: game => window.CuddleBurdens.removeDoubles(game) }
+  ]);
+  const MEND_BY_ID = new Map(MEND_ITEMS.map(item => [item.id, item]));
+
+  function burdenOf(game) {
+    const burdens = window.CuddleBurdens;
+    return burdens ? burdens.burden(game) : { dead: 0, doubles: [] };
+  }
+
   const SHELVES = Object.freeze([
     { id: "road", items: ROAD_ITEMS, count: 2, kind: "wordle", title: "For the road",
       note: "One-time supplies for your next regular stages" },
@@ -124,7 +149,10 @@
     { id: "keep", items: [], count: 3, kind: "upgrade", title: "Keeps forever",
       note: "Any reward from the run's pool, priced by its rarity" },
     { id: "trade", items: TRADE_ITEMS, count: 1, kind: "shop", title: "Trade",
-      note: "Swap money for points on the spot" }
+      note: "Swap money for points on the spot" },
+    // Filled from MEND_ITEMS, only while the run carries a deck burden.
+    { id: "mend", items: [], count: 0, kind: "shop", title: "Mend your deck",
+      note: "Get rid of dead tiles and doubled consonants for good" }
   ]);
   const ALL_ITEMS = new Map([].concat(ROAD_ITEMS, BOSS_ITEMS, KEEP_ITEMS, TRADE_ITEMS).map(item => [item.id, item]));
   const SHELF_OF = new Map();
@@ -243,7 +271,7 @@
     const random = seeded(`${seedText(game)}:${key}:wandering-paw`);
     const stock = {};
     SHELVES.forEach(shelf => {
-      if (shelf.id === "trade" || shelf.id === "keep") return;
+      if (shelf.id === "trade" || shelf.id === "keep" || shelf.id === "mend") return;
       stock[shelf.id] = shuffled(shelf.items, random).slice(0, shelf.count).map(item => item.id);
     });
     stock.keep = keepStock(game, key);
@@ -297,6 +325,28 @@
     const wallet = money(this);
     const items = [];
     SHELVES.forEach(shelf => {
+      if (shelf.id === "mend") {
+        MEND_ITEMS.filter(item => item.available(this)).forEach(item => {
+          items.push({
+            id: item.id,
+            shelf: "mend",
+            kind: "shop",
+            icon: item.icon,
+            title: item.title,
+            description: item.blurb(this),
+            cost: item.cost,
+            stages: 0,
+            points: 0,
+            rare: false,
+            level: null,
+            max: null,
+            maxed: false,
+            purchased: false,
+            affordable: wallet >= item.cost
+          });
+        });
+        return;
+      }
       if (shelf.id === "keep") {
         (stock.keep || []).filter(isKeepEntry).forEach(entry => {
           const id = `keep:${entry.key}`;
@@ -394,10 +444,22 @@
     return { ok: true, message: game.state.lastMessage, item: { id, title: entry.title } };
   }
 
+  function buyMend(game, item) {
+    if (!window.CuddleBurdens || !item.available(game)) return { ok: false, error: "There's nothing in your deck for that to mend." };
+    if (money(game) < item.cost) return { ok: false, error: `You need $${item.cost} for ${item.title}.` };
+    game.state.cuddleMoney = money(game) - item.cost;
+    const note = item.apply(game);
+    lastBought = null;
+    game.state.lastMessage = `${item.title} for $${item.cost}: ${note}`;
+    safeSave(game);
+    return { ok: true, message: game.state.lastMessage, item: { id: item.id, title: item.title } };
+  }
+
   function buyCuddleShopItem(itemId) {
     if (!this.state || this.state.status !== "shop") return { ok: false, error: "No shop is open." };
     const id = String(itemId || "");
     if (id.startsWith("keep:")) return buyKeepReward(this, id);
+    if (MEND_BY_ID.has(id)) return buyMend(this, MEND_BY_ID.get(id));
     const item = ALL_ITEMS.get(id);
     const shelf = SHELF_OF.get(id);
     const stock = stockFor(this);
@@ -515,6 +577,7 @@
     // A pool reward's chip names its rarity, in that rarity's colour.
     if (entry.shelf === "keep" && entry.tier) return `${entry.tier} · keeps`;
     if (entry.shelf === "trade") return entry.rare ? "Rare deal" : "Right now";
+    if (entry.shelf === "mend") return "For good";
     if (entry.shelf === "boss") return "Next boss";
     if (entry.shelf === "road") return entry.stages > 1 ? `Next ${entry.stages} stages` : "Next stage";
     if (entry.maxed) return "Maxed";

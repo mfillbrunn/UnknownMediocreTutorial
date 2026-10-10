@@ -17,6 +17,8 @@
  *   - some bosses on Hard, for that fight only (HARD_BOSS below);
  *   - Ascension 9, Dead Weight: one dead tile all run.
  *
+ * The shop's Mend shelf (cuddle-shop.js) sells their removal.
+ *
  * Run-long burdens live on state.umtBurden = { dead, doubles: [letters] }.
  * They are dealt into the deck each stage by _prepareInitialHand, so the
  * Duel's cloned hand gets them too.
@@ -117,6 +119,24 @@
     return picked.length
       ? "Doubled consonants: " + picked.join(", ") + " now have two copies in your deck."
       : "Your deck can't hold any more doubled consonants.";
+  }
+
+  // -- removing them (the shop's Mend shelf, cuddle-shop.js) ----------------
+  // Only run-long burdens: a Hard boss's and Ascension 9's stay put.
+  function removeDead(game) {
+    var value = burden(game && game.state);
+    if (value.dead <= 0) return "";
+    value.dead -= 1;
+    return value.dead
+      ? "A dead tile is gone. " + value.dead + " left in your deck."
+      : "Your last dead tile is gone.";
+  }
+
+  function removeDoubles(game) {
+    var value = burden(game && game.state);
+    var letters = value.doubles.slice();
+    value.doubles = [];
+    return letters.length ? letters.join(", ") + " are back to one copy each." : "";
   }
 
   // -- dealing them in -----------------------------------------------------
@@ -244,6 +264,8 @@
     isDeadGlyph: isDeadGlyph,
     addDead: addDead,
     addDoubles: addDoubles,
+    removeDead: removeDead,
+    removeDoubles: removeDoubles,
     burden: function read(game) { return burden(game && game.state); },
     hardNote: hardNote
   });
