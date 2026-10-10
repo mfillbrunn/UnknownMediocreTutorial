@@ -17,7 +17,7 @@
  *      change how a stage is played rather than adding a flat number.
  *
  *   3. More quest rewards: Rule Out, Vowel Check, Spotlight, Pocket Money,
- *      Quick Points and Fresh Hand, alongside the existing ones.
+ *      and Quick Points, alongside the existing ones.
  *
  * A power's level is the registry's level reader, so a power taken from a
  * reward screen, a pack or the shop all count the same.
@@ -343,8 +343,7 @@
     { id: "umtVowelCheck", icon: "🔤", title: "Vowel Check", description: "Learn whether two vowels you haven't tried are in the answer." },
     { id: "umtSpotlight", icon: "👁️", title: "Spotlight", description: "One yellow letter turns green: its exact place is shown. With no yellow yet, it waits for your next one." },
     { id: "umtPocketMoney", icon: "💰", title: "Pocket Money", description: "Gain $10 right now." },
-    { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "Gain 15 points right now." },
-    { id: "umtFreshHand", icon: "🔃", title: "Fresh Hand", description: "Swap every consonant in your hand for new ones, without using a mulligan." }
+    { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "Gain 15 points right now." }
   ];
 
   function uniqueSorted(list) {
@@ -457,19 +456,6 @@
     umtQuickPoints: function quickPoints(game) {
       stageBonus(game, 15, "umtQuestQuickPoints", "Quick Points");
       return "Quick Points: +15 points.";
-    },
-    umtFreshHand: function freshHand(game) {
-      var state = game.state;
-      var draft = new Set(state.draft || []);
-      var ids = (state.hand || []).filter(function swap(card) {
-        return card && !draft.has(card.id) && !game.isInfiniteCard(card);
-      }).map(function id(card) { return card.id; });
-      if (!ids.length || typeof game._discardCards !== "function" || typeof game.drawCards !== "function") {
-        return "Fresh Hand: there was nothing to swap.";
-      }
-      game._discardCards(ids);
-      var drawn = game.drawCards(ids.length) || [];
-      return "Fresh Hand: swapped " + drawn.length + " letter" + (drawn.length === 1 ? "" : "s") + ".";
     }
   };
 
