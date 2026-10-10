@@ -25,7 +25,7 @@
     id: "revealCategory",
     icon: "🧭",
     title: "Category Whisper",
-    description: "Find out one of the solution word's categories. If one is already known, reveal another."
+    description: "+1 theme shown"
   });
   const CATEGORY_SENSE_UPGRADE = Object.freeze({
     id: "categorySense",

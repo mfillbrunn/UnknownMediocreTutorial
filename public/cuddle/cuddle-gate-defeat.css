@@ -1,0 +1,198 @@
+/* Cuddle: turned away at the boss (cuddle-gate-defeat.js). The paw climbs
+   the road, the boss swells and swipes, three claw marks rip across and
+   the paw tumbles back down; then the score it fell short by. */
+.umt-gd {
+  --gd-accent: #ff5a6a;
+  position: fixed;
+  inset: 0;
+  z-index: 100002;
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  justify-items: center;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  color: #f7f4ff;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+}
+.umt-gd-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 30%, #4a0d17, #08040a 70%);
+  animation: umt-gd-fade 320ms ease-out both;
+}
+.umt-gd-stage {
+  position: relative;
+  width: min(260px, 70vw);
+  height: min(380px, 52vh);
+  align-self: center;
+  animation: umt-gd-shake 420ms ease-in-out 1820ms both;
+}
+.umt-gd-road {
+  position: absolute;
+  left: 50%;
+  top: 70px;
+  bottom: 24px;
+  width: 0;
+  border-left: 4px dotted rgba(255, 230, 200, 0.35);
+  translate: -2px 0;
+}
+.umt-gd-boss {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: rgba(40, 10, 16, 0.9);
+  box-shadow: 0 0 0 4px var(--gd-accent), 0 10px 30px rgba(0, 0, 0, 0.6);
+  animation: umt-gd-boss-rise 520ms cubic-bezier(.2, .9, .3, 1.3) 1350ms both;
+}
+.umt-gd-boss-glow {
+  position: absolute;
+  inset: -18px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 90, 106, 0.55), transparent 70%);
+  opacity: 0;
+  animation: umt-gd-glow 900ms ease-out 1350ms both;
+}
+.umt-gd-boss .umt-gd-boss-icon { position: relative; width: 64px; height: 64px; }
+.umt-gd-need {
+  position: absolute;
+  bottom: -12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #c62f3a;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.umt-gd-paw {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: #fff3dc;
+  box-shadow: 0 0 0 3px #f6c956, 0 6px 16px rgba(0, 0, 0, 0.5);
+  animation:
+    umt-gd-climb 1400ms cubic-bezier(.4, 0, .6, 1) 300ms both,
+    umt-gd-knocked 900ms cubic-bezier(.3, .6, .4, 1) 1900ms forwards;
+}
+.umt-gd-paw svg { width: 36px; height: 36px; }
+.umt-gd-slash {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 150px;
+  height: 120px;
+  translate: -50% -50%;
+  overflow: visible;
+  pointer-events: none;
+}
+.umt-gd-slash path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 90;
+  stroke-dashoffset: 90;
+  filter: drop-shadow(0 0 6px rgba(255, 90, 106, 0.95));
+  animation: umt-gd-slash 260ms ease-out both, umt-gd-slash-fade 500ms ease-in both;
+  animation-delay: 1780ms, 2250ms;
+}
+.umt-gd-slash path:nth-child(2) { animation-delay: 1840ms, 2300ms; }
+.umt-gd-slash path:nth-child(3) { animation-delay: 1900ms, 2350ms; }
+.umt-gd-flash {
+  position: fixed;
+  inset: 0;
+  background: #ff4a5c;
+  opacity: 0;
+  pointer-events: none;
+  animation: umt-gd-flash 520ms ease-out 1820ms both;
+}
+.umt-gd-text { position: relative; display: grid; gap: 4px; max-width: 320px; }
+.umt-gd-text h2 {
+  margin: 0;
+  color: #ff8b95;
+  font-size: 1.35rem;
+  text-wrap: balance;
+  animation: umt-gd-rise 420ms ease-out 2500ms both;
+}
+.umt-gd-text p {
+  margin: 0;
+  color: rgba(247, 244, 255, 0.82);
+  font-size: 0.92rem;
+  animation: umt-gd-rise 420ms ease-out 2700ms both;
+}
+.umt-gd-text b { color: #fff; font-variant-numeric: tabular-nums; }
+.umt-gd-skip {
+  position: relative;
+  margin: 0;
+  color: rgba(247, 244, 255, 0.6);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  animation: umt-gd-rise 420ms ease-out 3100ms both;
+}
+.umt-gd.is-done .umt-gd-skip { animation: umt-gd-breathe 1.8s ease-in-out infinite; }
+.umt-gd.is-leaving { animation: umt-gd-out 360ms ease-in both; }
+
+@keyframes umt-gd-fade { from { opacity: 0; } }
+@keyframes umt-gd-out { to { opacity: 0; } }
+@keyframes umt-gd-rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes umt-gd-breathe { 50% { opacity: 0.35; } }
+/* Three hops up the road, stopping short of the boss. */
+@keyframes umt-gd-climb {
+  0% { transform: translateY(0); }
+  15% { transform: translateY(-46px) scale(1.04, .96); }
+  30% { transform: translateY(-58px); }
+  45% { transform: translateY(-104px) scale(1.04, .96); }
+  60% { transform: translateY(-116px); }
+  78% { transform: translateY(-168px) scale(1.04, .96); }
+  100% { transform: translateY(-180px); }
+}
+@keyframes umt-gd-knocked {
+  0% { transform: translateY(-180px) rotate(0); opacity: 1; }
+  30% { transform: translate(46px, -150px) rotate(140deg); opacity: 1; }
+  100% { transform: translate(70px, -6px) rotate(320deg) scale(.85); opacity: 0.55; filter: grayscale(.8); }
+}
+@keyframes umt-gd-boss-rise {
+  0% { transform: scale(1); }
+  60% { transform: scale(1.28); }
+  100% { transform: scale(1.15); }
+}
+@keyframes umt-gd-glow {
+  0% { opacity: 0; }
+  40% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+@keyframes umt-gd-slash { to { stroke-dashoffset: 0; } }
+@keyframes umt-gd-slash-fade { to { opacity: 0; } }
+@keyframes umt-gd-flash {
+  0% { opacity: 0; }
+  25% { opacity: 0.45; }
+  100% { opacity: 0; }
+}
+@keyframes umt-gd-shake {
+  20% { transform: translateX(-9px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(3px); }
+}
+
+/* Reduced motion: the outcome without the climb. */
+.umt-gd.is-reduced *,
+.umt-gd.is-reduced { animation: none !important; }
+.umt-gd.is-reduced .umt-gd-paw { transform: translate(70px, -6px) rotate(320deg) scale(.85); opacity: 0.55; }
+.umt-gd.is-reduced .umt-gd-slash path { stroke-dashoffset: 0; opacity: 0.6; }

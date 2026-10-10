@@ -950,3 +950,146 @@ button.umt-duel-option:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .umt-event-result-title { animation: none; }
 }
+
+/* The Duel's result: a centred dialog over the board, so its button is
+   always in reach without scrolling. */
+.umt-duel-outcome-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(10, 6, 16, 0.72);
+  overflow-y: auto;
+}
+.umt-duel-outcome-layer > .umt-duel-outcome {
+  width: min(380px, 100%);
+  margin: 0;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+}
+.umt-duel-outcome-layer.is-loss { background: rgba(28, 6, 12, 0.76); }
+
+/* A loss: the screen flashes red, the panel slams down with a shake, the
+   rival hops in glee, then the answer turns over and the way out appears.
+   Plays once (--loss-t carries the time already played). */
+.umt-duel-outcome-layer.is-mourning {
+  animation: umt-duel-loss-dim 600ms ease-out both;
+  animation-delay: var(--loss-t, 0ms);
+}
+.umt-duel-outcome-layer.is-mourning::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 45%, transparent 30%, rgba(233, 92, 118, 0.55));
+  opacity: 0;
+  animation: umt-duel-loss-flash 900ms ease-out both;
+  animation-delay: var(--loss-t, 0ms);
+}
+.umt-duel-outcome.is-mourning {
+  animation: umt-duel-loss-slam 700ms cubic-bezier(.2, .9, .3, 1.2) both;
+  animation-delay: calc(150ms + var(--loss-t));
+}
+.umt-duel-outcome.is-mourning .umt-duel-outcome-rival svg.umt-rival {
+  animation: umt-duel-rival-gloat 360ms ease-in-out 3 both;
+  animation-delay: calc(650ms + var(--loss-t));
+}
+.umt-duel-outcome.is-mourning h2 {
+  animation: umt-duel-title-pop 420ms cubic-bezier(.2, .9, .3, 1.3) both;
+  animation-delay: calc(900ms + var(--loss-t));
+}
+.umt-duel-outcome.is-mourning .umt-duel-answer .cuddle-tile {
+  animation: umt-duel-answer-flip 420ms ease-in-out both;
+  animation-delay: calc(1150ms + var(--i) * 130ms + var(--loss-t));
+}
+.umt-duel-outcome.is-mourning > p,
+.umt-duel-outcome.is-mourning > .cuddle-btn {
+  animation: umt-duel-fade 380ms ease-out both;
+  animation-delay: calc(1900ms + var(--loss-t));
+}
+@keyframes umt-duel-loss-dim { from { background-color: rgba(28, 6, 12, 0); } }
+@keyframes umt-duel-loss-flash {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes umt-duel-loss-slam {
+  0% { opacity: 0; transform: translateY(-40px) scale(1.06); }
+  55% { opacity: 1; transform: translateY(4px) scale(1); }
+  65% { transform: translateX(-10px); }
+  75% { transform: translateX(8px); }
+  85% { transform: translateX(-5px); }
+  100% { transform: none; }
+}
+@keyframes umt-duel-rival-gloat {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-10px) rotate(-6deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .umt-duel-outcome-layer.is-mourning,
+  .umt-duel-outcome-layer.is-mourning::before,
+  .umt-duel-outcome.is-mourning,
+  .umt-duel-outcome.is-mourning * { animation: none !important; }
+}
+
+/* Duel tiers: Easy, Medium, Hard top to bottom, each its own colour, with
+   difficulty pips. Easy shows what starting it costs; the others are free. */
+.umt-duel-choose .umt-duel-option {
+  --tier: #57d69a;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "pips name tag" "pips win tag";
+  gap: 2px 12px;
+  padding: 12px 14px 12px 12px;
+  border: 1px solid color-mix(in srgb, var(--tier) 45%, transparent);
+  border-left: 5px solid var(--tier);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--tier) 16%, transparent), rgba(255, 255, 255, 0.03) 70%);
+}
+.umt-duel-choose .umt-duel-option.is-medium { --tier: #f6c956; }
+.umt-duel-choose .umt-duel-option.is-hard { --tier: #ff6b74; }
+.umt-duel-choose .umt-duel-option.is-easy { grid-template-areas: "pips name name" "pips win win" "label label label" "costs costs costs"; }
+.umt-duel-choose button.umt-duel-option:hover,
+.umt-duel-choose button.umt-duel-option:focus-visible {
+  border-color: var(--tier);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--tier) 26%, transparent), rgba(255, 255, 255, 0.05) 75%);
+}
+.umt-duel-pips { grid-area: pips; display: grid; gap: 3px; align-self: center; }
+.umt-duel-pips i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.umt-duel-pips i.is-on { background: var(--tier); }
+/* Filled from the bottom up, like a meter. */
+.umt-duel-pips { grid-auto-flow: row; transform: scaleY(-1); }
+.umt-duel-choose .umt-duel-option b { grid-area: name; color: var(--tier); font-size: 1rem; }
+.umt-duel-choose .umt-duel-option .umt-duel-win { grid-area: win; color: var(--cuddle-text); font-weight: 700; }
+.umt-duel-free {
+  grid-area: tag;
+  align-self: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cuddle-muted) !important;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.umt-duel-cost-label {
+  grid-area: label;
+  margin-top: 6px;
+  color: var(--cuddle-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.umt-duel-choose .umt-duel-option.is-easy .umt-duel-costs { grid-area: costs; }
+.umt-duel-choose .umt-duel-cost { border-color: color-mix(in srgb, var(--tier) 55%, transparent); }
+.umt-duel-choose .umt-duel-cost:hover,
+.umt-duel-choose .umt-duel-cost:focus-visible { border-color: var(--tier); background: color-mix(in srgb, var(--tier) 18%, transparent); }
+@media (max-width: 440px) {
+  .umt-duel-choose .umt-duel-option { grid-template-columns: auto minmax(0, 1fr) auto; }
+}

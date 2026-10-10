@@ -490,6 +490,9 @@
     state.status = "lost";
     state.failureReason = "You reached " + label + " with " + score + " of the " + required + " points needed to challenge it.";
     state.lastMessage = state.failureReason;
+    // cuddle-gate-defeat.js plays the boss turning the player away before
+    // the game-over screen.
+    state.umtGateDefeat = { score: score, required: required, final: ahead[0].gate === FINAL_BOSS_GATE, shown: false };
     return true;
   }
 

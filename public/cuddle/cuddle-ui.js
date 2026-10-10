@@ -101,14 +101,14 @@
       Bonus
     </span>`;
     }
-    // A labelled chip under the description: what it pairs with, in words.
-    // Tapping it (not the card) opens what the combo adds.
-    const partner = synergy.partner ? ` with ${escapeHtml(synergy.partner)}` : "";
-    return `<span class="umt-combo-star umt-combo-chip" role="button" tabindex="0" data-combo-info aria-expanded="false"
-      aria-label="Combo${partner}: ${escapeHtml(synergy.title)}. Tap for what it adds." title="Combo bonus: ${escapeHtml(synergy.title)}">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l3.22 6.53 7.21 1.05-5.22 5.09 1.23 7.18L12 17.9l-6.44 3.45 1.23-7.18-5.22-5.09 7.21-1.05z"/></svg>
-      <span>Combo${partner}</span><i aria-hidden="true">?</i>
-    </span>`;
+    // One short line under the description: the combo, its partner and
+    // what it adds. Plain text, nothing to tap, so a tap on it is a tap on
+    // the card.
+    const partner = synergy.partner ? ` + ${escapeHtml(synergy.partner)}` : "";
+    const effect = synergy.effect || synergy.description || "";
+    return `<span class="umt-combo-line" title="${escapeHtml(synergy.title)}">`
+      + `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l3.22 6.53 7.21 1.05-5.22 5.09 1.23 7.18L12 17.9l-6.44 3.45 1.23-7.18-5.22-5.09 7.21-1.05z"/></svg>`
+      + `<span><b>Combo${partner}:</b> ${goldenMoney(escapeHtml(effect))}</span></span>`;
   }
 
   function interactionBonusDetail(optionId, inline = false) {
@@ -120,8 +120,8 @@
       return `<span class="umt-combo-detail"><b>${escapeHtml(synergy.icon || "✨")} ${escapeHtml(synergy.title)}</b>${pairing}`
         + `<span>${goldenMoney(escapeHtml(effect))}</span></span>`;
     }
-    return `<span class="umt-combo-pop" role="note" hidden><b>${escapeHtml(synergy.icon || "✨")} ${escapeHtml(synergy.title)}</b>${pairing}`
-      + `<span>${goldenMoney(escapeHtml(effect))}</span></span>`;
+    // Cards spell the combo out on their own line (interactionBonusBadge).
+    return "";
   }
 
   // The star toggles its note without choosing the card it sits on.
@@ -1308,7 +1308,7 @@
           <h2 id="cuddleUpgradeTitle">${heading}</h2>
           ${body ? `<p>${body}</p>` : ""}
           ${state.upgradeChoices.some(choice => pendingSynergyFor(choice.key || choice.id))
-            ? `<p class="umt-combo-legend"><b>★ Combo</b> marks a power that pairs with one you already have: take it and you also get the combo's extra effect. Tap the chip to see it.</p>`
+            ? `<p class="umt-combo-legend"><b>★ Combo</b>: pairs with a power you have, for a bonus.</p>`
             : ""}
           <div class="cuddle-choice-grid">
             ${state.upgradeChoices.map(choice => `

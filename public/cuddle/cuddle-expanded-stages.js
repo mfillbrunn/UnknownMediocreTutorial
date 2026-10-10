@@ -273,6 +273,9 @@
   let rivalIntroOpen = false;
   let duelWinFx = { id: "", at: 0 };
   const DUEL_WIN_FX_MS = 3200;
+  // A loss plays its own short beat once, the same way (--loss-t).
+  let duelLossFx = { id: "", at: 0 };
+  const DUEL_LOSS_FX_MS = 2600;
 
   function rivalOf(duel) {
     return RIVALS[duel && duel.difficulty] || RIVALS.medium;
@@ -2683,22 +2686,26 @@
     }
 
     // Short labels for the Easy costs; the full wording is the tooltip.
-    const EASY_COST_LABELS = { pay: "Pay $10", nextGuess: "Next Wordle 1 guess short", boss: "Next boss 1 guess tougher" };
+    const EASY_COST_LABELS = { pay: "Pay $10", nextGuess: "Next Wordle −1 guess", boss: "Next boss −1 guess" };
 
+    // Three tiers, easiest first, each with its own colour and pips. Easy
+    // costs something up front; Medium and Hard pay more on a win.
     function renderDuelDifficulty(game, duel) {
       duel.easySacrifices = duelSacrifices(game);
       const easyCosts = duel.easySacrifices.filter(item => item.enabled || item.id === "pay").map(item => (
         `<button type="button" class="umt-duel-cost" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="easy:${escapeHtml(item.id)}"${item.enabled ? "" : " disabled"} title="${escapeHtml(item.description)}">`
-        + richText(EASY_COST_LABELS[item.id] || item.title) + `</button>`
+        + richText(EASY_COST_LABELS[item.id] || (item.upgrade ? `−1 level: ${item.upgrade.title}` : item.title)) + `</button>`
       )).join("");
+      const pips = count => `<span class="umt-duel-pips" aria-hidden="true">${[1, 2, 3].map(n => `<i${n <= count ? ' class="is-on"' : ""}></i>`).join("")}</span>`;
       return (
         `<section class="umt-stop-panel umt-duel-choose">`
         + `<div class="umt-stop-head">${stopMedallion("duel")}<h2>Word Duel</h2></div>`
-        + `<p class="umt-stop-lead">Take turns guessing against the AI. The first to solve wins. If the AI solves first, the run ends.</p>`
+        + `<p class="umt-stop-lead">Take turns guessing against the AI. First to solve wins. If the AI wins, the run ends.</p>`
         + `<div class="umt-duel-options">`
-        + `<button type="button" class="umt-duel-option is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium"><b>Medium AI</b><span>${richText("Win +$18 · pick an upgrade")}</span></button>`
-        + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard"><b>Hard AI</b><span>${richText("Win +$38 · bonus upgrade + pick")}</span></button>`
-        + `<div class="umt-duel-option is-easy"><b>Easy AI</b><span>Pay one to start:</span><div class="umt-duel-costs">${easyCosts}</div></div>`
+        + `<div class="umt-duel-option is-easy">${pips(1)}<b>Easy AI</b><span class="umt-duel-win">Win: ${richText("+$10 · pick 1")}</span>`
+        + `<span class="umt-duel-cost-label">Costs one to start:</span><div class="umt-duel-costs">${easyCosts}</div></div>`
+        + `<button type="button" class="umt-duel-option is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium">${pips(2)}<b>Medium AI</b><span class="umt-duel-win">Win: ${richText("+$18 · pick 1")}</span><span class="umt-duel-free">Free</span></button>`
+        + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard">${pips(3)}<b>Hard AI</b><span class="umt-duel-win">Win: ${richText("+$38 · +1 power · pick 1")}</span><span class="umt-duel-free">Free</span></button>`
         + `</div>`
         + `</section>`
       );
@@ -2773,17 +2780,29 @@
       const playing = duel.phase === "playing";
       const secretTiles = String(duel.secret || "").split("").map((letter, index) => `<span class="cuddle-tile is-green" style="--i:${index}">${escapeHtml(letter)}</span>`).join("");
       let winFx = "";
+      let lossLayer = "";
       if (duel.phase === "won") {
         if (duelWinFx.id !== duel.id) duelWinFx = { id: duel.id, at: Date.now() };
         const elapsed = Date.now() - duelWinFx.at;
         if (elapsed < DUEL_WIN_FX_MS) winFx = ` is-celebrating" style="--win-t:-${elapsed}ms`;
       }
+      if (duel.phase === "lost") {
+        if (duelLossFx.id !== duel.id) duelLossFx = { id: duel.id, at: Date.now() };
+        const elapsed = Date.now() - duelLossFx.at;
+        if (elapsed < DUEL_LOSS_FX_MS) {
+          winFx = ` is-mourning" style="--loss-t:-${elapsed}ms`;
+          lossLayer = ` is-mourning" style="--loss-t:-${elapsed}ms`;
+        }
+      }
       const rival = rivalOf(duel);
       const sparks = duel.phase === "won"
         ? `<span class="umt-duel-sparks" aria-hidden="true">${Array.from({ length: 10 }, (_unused, index) => `<i style="--a:${index * 36}deg"></i>`).join("")}</span>`
         : "";
+      // The result sits in the middle of the screen over the board, so its
+      // button is in reach without scrolling.
       const outcome = duel.phase === "won" || duel.phase === "lost"
-        ? `<section class="umt-stop-panel umt-duel-outcome is-${duel.phase === "won" ? "win" : "loss"}${winFx}">`
+        ? `<div class="umt-duel-outcome-layer is-${duel.phase === "won" ? "win" : "loss"}${lossLayer}" role="dialog" aria-modal="true">`
+          + `<section class="umt-stop-panel umt-duel-outcome is-${duel.phase === "won" ? "win" : "loss"}${winFx}">`
           + `<div class="umt-duel-outcome-rival${duel.phase === "won" ? " is-defeated" : " is-gloating"}">${sparks}${rivalSvg(rival)}</div>`
           + `<h2>${duel.phase === "won" ? `You beat ${escapeHtml(rival.name)}` : `${escapeHtml(rival.name)} solved it first`}</h2>`
           + `<div class="cuddle-board-row umt-duel-answer">${secretTiles}</div>`
@@ -2791,7 +2810,7 @@
           + (duel.phase === "won"
             ? `<button type="button" class="cuddle-btn cuddle-btn-primary" data-cuddle-campaign-action="expanded-duel-continue">Back on the road</button>`
             : `<button type="button" class="cuddle-btn" data-cuddle-campaign-action="expanded-duel-end">End this run</button>`)
-          + `</section>`
+          + `</section></div>`
         : "";
       const aiTurn = duel.turn === "ai";
       const mine = (duel.history || []).filter(entry => entry.actor === (aiTurn ? "ai" : "player")).length + 1;

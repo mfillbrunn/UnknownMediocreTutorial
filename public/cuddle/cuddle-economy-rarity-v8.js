@@ -2639,6 +2639,11 @@
         description.textContent = tree.levelText(node, level + 1);
         description.classList.add("cuddle-v8-level-text");
         if (node.maxLevel >= 3 && level + 1 === node.maxLevel) description.classList.add("is-max-step");
+      } else if (!isBossReward && description && node.description && !(Array.isArray(node.levels) && node.levels.length)) {
+        // A one-level power: the registry's short keyword text.
+        description.dataset.cuddleV8Original = description.textContent;
+        description.textContent = node.description;
+        description.classList.add("cuddle-v8-level-text");
       }
 
       const badge = document.createElement("span");
