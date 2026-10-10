@@ -102,7 +102,7 @@
     boss: Object.freeze({ title: "Boss", label: "Boss", icon: "stage-boss.svg", description: "A boss Wordle with permanent stakes." }),
     duel: Object.freeze({ title: "Word Duel", label: "Duel", icon: "stage-duel.svg", description: "Alternate guesses with an AI that also builds its words from a hand of letters. The first side to solve the word wins; if the AI does, the run ends." }),
     mystery: Object.freeze({ title: "Unknown Stop", label: "?", icon: "stage-mystery.svg", description: "This stop stays hidden until you enter it." }),
-    trial: Object.freeze({ title: "Preset Trial", label: "Trial", icon: "stage-trial.svg", description: "Every path passes through it. Play two guesses as usual; on guess 3 the answer is one of a few listed words (3 in world one, 4 in world two, 5 in world three). Pick it to pass. A wrong pick ends the run." })
+    trial: Object.freeze({ title: "Preset Trial", label: "Trial", icon: "stage-trial.svg", description: "On guess 3, the answer is one of a few listed words. Pick it to pass. A wrong pick ends the run." })
   });
 
   // Road events. Money written $[n] grows with the world (x1, x1.5, x2 --

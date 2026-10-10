@@ -127,7 +127,7 @@
     upgrade: { icon: "✨", title: "Free Upgrade", label: "Upgrade", description: "Take a free permanent upgrade. No Wordle here.", playsRound: false },
     event: { icon: "❔", title: "Event", label: "Event", description: "A trade: something gained now for something given up.", playsRound: false },
     boss: { icon: "💀", title: "Boss", label: "Boss", description: "A boss round: pass or fail, and its reward is permanent.", playsRound: true },
-    trial: { icon: "📜", title: "Preset Trial", label: "Trial", description: "Every path passes through it. On guess 3 the answer is one of a few listed words: pick it to pass. A wrong pick ends the run.", playsRound: true }
+    trial: { icon: "📜", title: "Preset Trial", label: "Trial", description: "On guess 3, the answer is one of a few listed words. Pick it to pass. A wrong pick ends the run.", playsRound: true }
   };
 
   var EVENTS = Object.freeze([
