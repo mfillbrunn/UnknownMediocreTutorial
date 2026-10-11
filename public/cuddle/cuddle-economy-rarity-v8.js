@@ -37,8 +37,7 @@
     // A Joker every stage is now only the Legendary Joker Cache.
     "wild card",
     // Upgrades are permanent: one-off effects don't belong in the pool.
-    "position peek",
-    "reward echo"
+    "position peek"
   ]);
 
   const ORDINARY_TIER_BY_NAME = new Map([
