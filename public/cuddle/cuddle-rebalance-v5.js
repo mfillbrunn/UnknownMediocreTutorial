@@ -148,7 +148,7 @@
     Object.freeze({
       id: IDS.jokerCacheLarge, key: IDS.jokerCacheLarge, icon: "\uD83C\uDCCF",
       title: "Large Joker Cache", name: "Large Joker Cache",
-      description: "Two more Jokers every stage, on top of Small Joker Cache if you have it.",
+      description: "Two more Joker tiles in your deck every stage, on top of Small Joker Cache if you have it. Draw one for a Joker.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     // Letter culls, picked from the letters the engine can safely take out
@@ -205,7 +205,7 @@
       title: "Small Joker Cache",
       name: "Small Joker Cache",
       // Each level adds one Joker per stage: 1, 2, then 3 at level 3.
-      description: "One extra Joker every stage. Level 2: two. Level 3: three.",
+      description: "A Joker tile in your deck every stage: draw it for a Joker. Level 2: two. Level 3: three.",
       maxLevel: 3,
       maxCount: 3,
       kind: "upgrade"
@@ -3061,8 +3061,8 @@
       }
       custom.cuddleUserJokerCachePerRoundLevel = current;
       appendNotice(game, current >= 2
-        ? `Small Joker Cache level ${current}: ${current} extra Jokers every stage.`
-        : "Small Joker Cache: one extra Joker every stage.");
+        ? `Small Joker Cache level ${current}: ${current} Joker tiles in your deck every stage.`
+        : "Small Joker Cache: a Joker tile in your deck every stage.");
     }
     if (id === IDS.jokerCacheLarge) {
       const mega = megaState(game);
@@ -3071,7 +3071,7 @@
         mega.jokerPerRoundBonus = Math.max(0, Math.floor(asNumber(mega.jokerPerRoundBonus, 0))) + 2 * delta;
         mega.hasJokerUnlocked = true;
       }
-      appendNotice(game, "Large Joker Cache: two more Jokers every stage.");
+      appendNotice(game, "Large Joker Cache: two more Joker tiles in your deck every stage.");
     }
     const cullReward = customRewardById(id);
     if (cullReward && cullReward.cull && typeof game._removalCandidates === "function") {
@@ -3541,7 +3541,7 @@
     umtAllThemes: { title: "All-Seeing Atlas", description: "Reveal every available theme at the start of every Wordle.", shape: "tags" },
     umtOpeningInsight: { title: "Opening Insight", description: "Begin each Wordle with an extra green position hint.", shape: "greenHint" },
     umtQuickStudy: { title: "Quick Study", description: "Guesser Hints arrive sooner.", shape: "hourglass" },
-    umtJokerCache: { title: "Joker Cache", description: "Extra Jokers every stage: one per level, up to three.", shape: "joker" },
+    umtJokerCache: { title: "Joker Cache", description: "Joker tiles in your deck every stage: one per level, up to three.", shape: "joker" },
     umtReserveDividend: { title: "Reserve Dividend", description: "Unused Jokers and mulligans pay an additional end-of-round bonus.", shape: "coins" },
     umtConsonantSweep: { title: "Process of Elimination", description: "After every guess, boss fights included, one more consonant that isn't in the answer is ruled out and shown: one after your first guess, a second after your second, and so on.", shape: "eliminate" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },

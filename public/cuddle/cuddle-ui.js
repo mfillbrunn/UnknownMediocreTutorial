@@ -894,6 +894,7 @@
     const cardRank = glyph => {
       if (window.CuddleBurdens?.isDeadGlyph(glyph)) return 200;
       if (window.CuddleBurdens?.isLuckyGlyph(glyph)) return 190;
+      if (window.CuddleBurdens?.isIdeaGlyph(glyph)) return 180;
       const status = game.getCardKnowledgeStatus(glyph);
       if (status === "unused" && typeof game.isGlyphUnknown === "function" && game.isGlyphUnknown(glyph)) return 1.8;
       if (status === "yellow" && typeof game.isGlyphBlue === "function" && game.isGlyphBlue(glyph)) return 1.5;
@@ -967,6 +968,20 @@
         ${deadCount > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${deadCount}</span>` : ""}
       </button>`;
     }
+    // An idea tile (Idea Tiles): no letter; mulligan it away for a yellow hint.
+    if (window.CuddleBurdens?.isIdeaGlyph(group.glyph)) {
+      const ideaCount = group.cards.length;
+      const ideaDisabled = state.status !== "playing"
+        || (actionMode !== "play" && selectable.length === 0)
+        || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
+      const ideaLabel = `Idea tile${ideaCount > 1 ? ` ×${ideaCount}` : ""}: no letter, can't be played. Mulligan it away for a yellow hint.`;
+      return `
+      <button class="cuddle-card is-idea${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${ideaCount}" ${ideaDisabled ? "disabled" : ""}
+        aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(ideaLabel)}" title="${escapeHtml(ideaLabel)}">
+        <span class="cuddle-card-letter cuddle-card-idea" aria-hidden="true">${window.CuddleBurdens.bulbSvg()}</span>
+        ${ideaCount > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${ideaCount}</span>` : ""}
+      </button>`;
+    }
     // A lucky tile (Lucky Clover): no letter, but it pays if it's still in hand at the solve.
     if (window.CuddleBurdens?.isLuckyGlyph(group.glyph)) {
       const luckyCount = group.cards.length;
@@ -974,7 +989,7 @@
         || (actionMode !== "play" && selectable.length === 0)
         || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
       const per = window.CuddleBurdens.LUCKY_POINTS[window.CuddleBurdens.luckyLevel(game)] || 0;
-      const luckyLabel = `Lucky tile${luckyCount > 1 ? ` ×${luckyCount}` : ""}: no letter, can't be played. Still in hand when you solve: +${per} points each.`;
+      const luckyLabel = `Lucky tile${luckyCount > 1 ? ` ×${luckyCount}` : ""}: no letter, can't be played. Still in hand when you solve: +${per} points each; mulliganed: +${window.CuddleBurdens.LUCKY_MULLIGAN_POINTS}.`;
       return `
       <button class="cuddle-card is-lucky${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${luckyCount}" ${luckyDisabled ? "disabled" : ""}
         aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(luckyLabel)}" title="${escapeHtml(luckyLabel)}">

@@ -332,8 +332,9 @@
         .map(card => (card && typeof card === "object"
           ? { ...card, glyph: glyphForLetter(card.glyph) }
           : null))
-        // Dead and lucky tiles (cuddle-burdens.js) have no letter but must survive a reload.
-        .filter(card => card && (/^[A-Z]$/.test(card.glyph) || card.dead === true || card.lucky === true));
+        // Dead, lucky, idea, wave and Joker tiles (cuddle-burdens.js) have no letter but must survive a reload.
+        .filter(card => card && (/^[A-Z]$/.test(card.glyph) || card.dead === true || card.lucky === true
+          || card.idea === true || card.wave === true || card.jokerTile === true));
       state.deck = normalizeCards(state.deck);
       state.discard = normalizeCards(state.discard);
       state.hand = normalizeCards(state.hand);
@@ -5188,7 +5189,10 @@
     if (extra > 0) {
       this.state.maxGuesses = Math.max(1, (Number(this.state.maxGuesses) || MAX_GUESSES) + extra);
     }
-    const perRoundJokers = Number(mega.jokerPerRoundBonus || 0);
+    // Joker Cache's Jokers are deck tiles now (cuddle-burdens.js), drawn
+    // like any card instead of handed out here.
+    const deckJokers = typeof this._deckJokerCount === "function" ? Number(this._deckJokerCount()) || 0 : 0;
+    const perRoundJokers = Math.max(0, Number(mega.jokerPerRoundBonus || 0) - deckJokers);
     if (perRoundJokers > 0) mega.jokerCharges = Number(mega.jokerCharges || 0) + perRoundJokers;
     ensureJokerInHand(this);
   };

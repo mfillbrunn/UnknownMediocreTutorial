@@ -26,6 +26,21 @@
  *     dead tile it can't be played, only mulliganed -- but each one still
  *     in your hand when you solve pays 10/20/30 points (by power level).
  *
+ * And three helpful tiles from powers, dealt the same way each stage:
+ *   - Idea tiles (Idea Tiles, rare): mulligan one away and the answer
+ *     shows one of its letters as a yellow (in the word, place unknown).
+ *   - Wave tiles (Wave Tiles, common): never dealt in the opening hand;
+ *     when one is drawn, every consonant in your hand is swapped out for
+ *     fresh ones.
+ *   - Joker tiles (Joker Cache): the cache's Jokers are shuffled into the
+ *     deck instead of handed out at the stage start; drawing one gives
+ *     you a Joker.
+ * Full Circle (epic) pays for going through the deck: each time it runs
+ * out and the discard is shuffled back in, one letter of the answer is
+ * shown in its exact place (a green hint).
+ * A lucky tile mulliganed away pays +5 points. Idea, lucky, wave and Joker
+ * tiles that have done their thing leave the deck for the rest of the stage.
+ *
  * Run-long burdens live on state.umtBurden = { dead, doubles: [letters] }.
  * They are dealt into the deck each stage by _prepareInitialHand, so the
  * Duel's cloned hand gets them too.
@@ -43,6 +58,10 @@
   var LUCKY_GLYPH = "♣";
   var SWAMP_DEAD = 3;
   var LUCKY_POINTS = [0, 10, 20, 30];
+  var LUCKY_MULLIGAN_POINTS = 5;
+  var IDEA_GLYPH = "◇";
+  var WAVE_GLYPH = "≈";
+  var JOKER_TILE_GLYPH = "◆";
   // Doubled from the less useful half of the alphabet: a second S or T
   // would be a gift.
   var WEAK = ["J", "Q", "X", "Z", "V", "K", "W", "F", "B", "P", "G", "Y", "H", "M"];
@@ -100,9 +119,38 @@
     return glyph === LUCKY_GLYPH;
   }
 
-  // Tiles with no letter: dead or lucky. Neither can go in a word.
+  // An idea tile's face: a little glowing light bulb.
+  var BULB_SVG = '<svg class="umt-idea-bulb" viewBox="0 0 40 40" aria-hidden="true" focusable="false">'
+    + '<path d="M20 4.5c-6.4 0-11 4.8-11 10.8 0 3.9 1.9 6.4 3.9 8.4 1.3 1.3 2 2.7 2 4.3v1.2h10.2V28c0-1.6.7-3 2-4.3 2-2 3.9-4.5 3.9-8.4C31 9.3 26.4 4.5 20 4.5z" fill="#ffe27a" stroke="#7a5a12" stroke-width="2.2" stroke-linejoin="round"/>'
+    + '<path d="M16.2 21.5c1.4-2.4 2.4-2.4 3.8 0 1.4-2.4 2.4-2.4 3.8 0" fill="none" stroke="#c98a12" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>'
+    + '<rect x="15" y="29.2" width="10" height="3.4" rx="1.5" fill="#9aa3b5" stroke="#4b5366" stroke-width="1.4"/>'
+    + '<rect x="16" y="32.6" width="8" height="3" rx="1.4" fill="#9aa3b5" stroke="#4b5366" stroke-width="1.4"/>'
+    + '<path d="M14.4 10.6c1.2-1.7 2.9-2.6 4.6-2.8" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" opacity=".85"/>'
+    + "</svg>";
+
+  function bulbSvg() {
+    return BULB_SVG;
+  }
+
+  function isIdeaCard(card) {
+    return Boolean(card && (card.idea || card.glyph === IDEA_GLYPH));
+  }
+
+  function isIdeaGlyph(glyph) {
+    return glyph === IDEA_GLYPH;
+  }
+
+  function isWaveCard(card) {
+    return Boolean(card && (card.wave || card.glyph === WAVE_GLYPH));
+  }
+
+  function isJokerTile(card) {
+    return Boolean(card && (card.jokerTile || card.glyph === JOKER_TILE_GLYPH));
+  }
+
+  // Tiles with no letter. None of them can go in a word.
   function isBlankCard(card) {
-    return isDeadCard(card) || isLuckyCard(card);
+    return isDeadCard(card) || isLuckyCard(card) || isIdeaCard(card) || isWaveCard(card) || isJokerTile(card);
   }
 
   function isDeadCard(card) {
@@ -160,15 +208,26 @@
     }
   }
 
-  function luckyLevel(game) {
+  function powerLevel(game, id, max) {
     var registry = window.CuddleSkillTree;
-    var node = registry && typeof registry.findNode === "function" ? registry.findNode("luckyClover") : null;
+    var node = registry && typeof registry.findNode === "function" ? registry.findNode(id) : null;
     if (!node || !game) return 0;
     try {
-      return Math.max(0, Math.min(3, Math.floor(Number(registry.level(game, node)) || 0)));
+      return Math.max(0, Math.min(max || 3, Math.floor(Number(registry.level(game, node)) || 0)));
     } catch (_error) {
       return 0;
     }
+  }
+
+  function luckyLevel(game) {
+    return powerLevel(game, "luckyClover");
+  }
+
+  // Joker Cache's Jokers, now dealt as deck tiles: one per Small level,
+  // two more for Large. The engine's stage-start grant leaves these out
+  // (see _deckJokerCount, read in cuddle-engine.js).
+  function deckJokers(game) {
+    return powerLevel(game, "jokerCache") + 2 * powerLevel(game, "jokerCacheLarge", 1);
   }
 
   function ascensionDead(game) {
@@ -238,8 +297,17 @@
       }
       doubles = doubles.concat(state.boss.umtDoubles);
     }
-    // Lucky tiles pay on a solve, which a Duel doesn't have.
-    return { dead: dead, doubles: doubles, lucky: inDuel(game.state) ? 0 : luckyLevel(game) };
+    // Lucky tiles pay on a solve, which a Duel doesn't have; the Duel keeps
+    // its own simpler hand (Jokers handed out up front, no power tiles).
+    var duel = inDuel(game.state);
+    return {
+      dead: dead,
+      doubles: doubles,
+      lucky: duel ? 0 : luckyLevel(game),
+      idea: duel ? 0 : powerLevel(game, "ideaTiles"),
+      wave: duel ? 0 : powerLevel(game, "waveTiles"),
+      jokers: duel ? 0 : deckJokers(game)
+    };
   }
 
   var basePrepare = proto._prepareInitialHand;
@@ -247,7 +315,7 @@
     var result = basePrepare.apply(this, arguments);
     try {
       var extras = extrasFor(this);
-      if (!extras.dead && !extras.doubles.length && !extras.lucky) return result;
+      if (!extras.dead && !extras.doubles.length && !extras.lucky && !extras.idea && !extras.wave && !extras.jokers) return result;
       var state = this.state;
       var game = this;
       var deckGlyphs = new Set(this._baseDeckGlyphs());
@@ -258,6 +326,12 @@
       }
       for (var j = 0; j < extras.lucky; j += 1) {
         finite.push({ id: this._nextId("lucky"), glyph: LUCKY_GLYPH, source: "deck", lucky: true });
+      }
+      for (var k = 0; k < extras.idea; k += 1) {
+        finite.push({ id: this._nextId("idea"), glyph: IDEA_GLYPH, source: "deck", idea: true });
+      }
+      for (var m = 0; m < extras.jokers; m += 1) {
+        finite.push({ id: this._nextId("jokertile"), glyph: JOKER_TILE_GLYPH, source: "deck", jokerTile: true });
       }
       extras.doubles.forEach(function addCopy(letter) {
         if (!deckGlyphs.has(letter) || game.isInfiniteGlyph(letter)) return;
@@ -270,15 +344,216 @@
         if (game.getCountedHandSize() < game.getHandLimit()) state.hand.push(card);
         else state.deck.push(card);
       });
+      // Wave tiles wait in the deck: a wave in the opening hand would only
+      // reshuffle a hand you haven't seen yet. The deck is drawn from its
+      // end, so they go in at random depths.
+      for (var w = 0; w < extras.wave; w += 1) {
+        var at = Math.floor(randomOf(this)() * (state.deck.length + 1));
+        state.deck.splice(at, 0, { id: this._nextId("wave"), glyph: WAVE_GLYPH, source: "deck", wave: true });
+      }
+      // A Joker tile dealt straight into the opening hand is a Joker now.
+      state.hand.filter(isJokerTile).forEach(function open(card) { cashJokerTile(game, card, true); });
     } catch (error) {
       console.warn("Cuddle burdens: dealing failed.", error);
     }
     return result;
   };
 
+  // -- power tiles in play -----------------------------------------------------
+  function note(game, text) {
+    game.state.lastMessage = ((game.state.lastMessage || "") + " " + text).trim();
+  }
+
+  // Things a draw sets off are told after the action that drew (a
+  // mulligan or a guess writes its own message over anything said sooner).
+  function drawNote(game, text) {
+    game.__umtDrawNotes = (game.__umtDrawNotes || []).concat([text]);
+  }
+
+  function flushDrawNotes(game) {
+    var notes = game.__umtDrawNotes || [];
+    game.__umtDrawNotes = [];
+    if (notes.length && game.state) note(game, notes.join(" "));
+  }
+
+  ["mulligan", "submitDraft", "chooseQuestReward", "_beginRound"].forEach(function tell(name) {
+    var base = proto[name];
+    if (typeof base !== "function") return;
+    proto[name] = function thenTellDraws() {
+      var result = base.apply(this, arguments);
+      flushDrawNotes(this);
+      return result;
+    };
+  });
+
+  function removeFromHand(state, card) {
+    var index = state.hand.indexOf(card);
+    if (index !== -1) state.hand.splice(index, 1);
+    state.draft = (state.draft || []).filter(function keep(id) { return id !== card.id; });
+  }
+
+  // Drawing a Joker tile: it becomes a Joker. One Joker card sits in hand
+  // at a time; any more wait as charges (the engine's own rule).
+  function cashJokerTile(game, card, quiet) {
+    var state = game.state;
+    removeFromHand(state, card);
+    var mega = state.megaState || (state.megaState = {});
+    mega.jokerCharges = Math.max(0, Number(mega.jokerCharges) || 0) + 1;
+    var glyph = Engine.CUDDLE_JOKER_GLYPH;
+    var holding = state.hand.some(function joker(item) { return item.source === "joker" && item.glyph === glyph; });
+    if (!holding && glyph) {
+      mega.jokerCharges -= 1;
+      state.hand.push({ id: game._nextId("joker"), glyph: glyph, source: "joker" });
+    }
+    if (!quiet) drawNote(game, "Joker tile: +1 Joker.");
+  }
+
+  // Draws stop on power tiles: a Joker tile turns into a Joker, a wave is
+  // queued (it fires once the draw that found it is finished), and the
+  // draw goes on so the hand still fills.
+  var baseDrawOne = proto._drawOne;
+  proto._drawOne = function drawOneWithPowerTiles() {
+    for (var guard = 0; guard < 60; guard += 1) {
+      var discardBefore = (this.state.discard || []).length;
+      var card = baseDrawOne.apply(this, arguments);
+      // The discard only ever empties here by being shuffled back in.
+      if (discardBefore > 0 && !(this.state.discard || []).length && !inDuel(this.state) && powerLevel(this, "fullCircle", 1) > 0) {
+        this.__umtCycles = (this.__umtCycles || 0) + 1;
+      }
+      if (!card || inDuel(this.state)) return card;
+      if (isJokerTile(card)) {
+        cashJokerTile(this, card, false);
+        continue;
+      }
+      if (isWaveCard(card)) {
+        removeFromHand(this.state, card);
+        this.__umtWaves = (this.__umtWaves || 0) + 1;
+        continue;
+      }
+      return card;
+    }
+    return null;
+  };
+
+  // A wave: every letter tile in hand (not vowels or letters you already
+  // know, which stay) goes to the discard, and fresh ones are drawn.
+  function flushWaves(game) {
+    var rounds = 0;
+    while (game.__umtWaves > 0 && rounds < 6) {
+      rounds += 1;
+      game.__umtWaves -= 1;
+      var state = game.state;
+      if (!state || state.status !== "playing") { game.__umtWaves = 0; break; }
+      var drafted = new Set(state.draft || []);
+      var swept = state.hand.filter(function consonant(card) {
+        return /^[A-Z]$/.test(card.glyph) && !game.isVowelGlyph(card.glyph) && !game.isInfiniteCard(card)
+          && card.source !== "joker" && !drafted.has(card.id);
+      });
+      if (swept.length) game._discardCards(swept.map(function id(card) { return card.id; }));
+      var drawn = game.drawToHandLimit();
+      drawNote(game, "Wave! " + swept.length + " consonant" + (swept.length === 1 ? "" : "s") + " washed out, " + drawn.length + " new ones drawn.");
+    }
+    game.__umtWaves = 0;
+  }
+
+  // Full Circle: a green hint per trip through the deck.
+  function flushCycles(game) {
+    var rounds = 0;
+    while (game.__umtCycles > 0 && rounds < 4) {
+      rounds += 1;
+      game.__umtCycles -= 1;
+      if (!game.state || game.state.status !== "playing" || typeof game._revealPositionPeek !== "function") break;
+      drawNote(game, "Full Circle: " + game._revealPositionPeek());
+    }
+    game.__umtCycles = 0;
+  }
+
+  var flushing = false;
+  ["drawCards", "_drawRewardCards"].forEach(function wrapDraw(name) {
+    var base = proto[name];
+    if (typeof base !== "function") return;
+    proto[name] = function drawThenWave() {
+      var result = base.apply(this, arguments);
+      if (!flushing && (this.__umtWaves > 0 || this.__umtCycles > 0)) {
+        flushing = true;
+        try {
+          for (var pass = 0; pass < 4 && (this.__umtWaves > 0 || this.__umtCycles > 0); pass += 1) {
+            flushWaves(this);
+            flushCycles(this);
+          }
+        } finally {
+          flushing = false;
+        }
+      }
+      return result;
+    };
+  });
+
+  // A yellow hint: one letter of the answer you haven't found yet, marked
+  // as in the word (place unknown). It stays in hand from now on.
+  function yellowHint(game) {
+    var state = game.state;
+    var secret = String(state.secret || "").toUpperCase();
+    var open = Array.from(new Set(secret.split(""))).filter(function unknown(letter) {
+      var status = game.getCardKnowledgeStatus(letter);
+      return status !== "green" && status !== "yellow";
+    });
+    if (!open.length) return "";
+    var letter = open[Math.floor(randomOf(game)() * open.length)];
+    state.knownPresent = Array.from(new Set((state.knownPresent || []).concat([letter]))).sort();
+    if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
+    return letter;
+  }
+
+  // Mulligans: idea tiles give a yellow hint each, lucky tiles +5 points
+  // each; both are spent.
+  var baseMulligan = proto.mulligan;
+  proto.mulligan = function mulliganWithPowerTiles(cardIds) {
+    var state = this.state;
+    var game = this;
+    var picked = (cardIds || []).map(function find(id) { return game.getHandCard(id); }).filter(Boolean);
+    var ideas = picked.filter(isIdeaCard);
+    var lucky = picked.filter(isLuckyCard);
+    var result = baseMulligan.apply(this, arguments);
+    state = this.state;
+    if (!result || !result.ok || inDuel(state) || (!ideas.length && !lucky.length)) return result;
+    try {
+      var spent = new Set(ideas.concat(lucky).map(function id(card) { return card.id; }));
+      state.discard = (state.discard || []).filter(function keep(card) { return !spent.has(card.id); });
+      if (lucky.length) {
+        var points = lucky.length * LUCKY_MULLIGAN_POINTS;
+        stageBonus(this, points, "umtLuckyMulligan", "Lucky tiles mulliganed");
+        note(this, "Lucky tile" + (lucky.length === 1 ? "" : "s") + " mulliganed: +" + points + " points.");
+      }
+      if (ideas.length) {
+        var letters = [];
+        ideas.forEach(function hint() {
+          var letter = yellowHint(game);
+          if (letter) letters.push(letter);
+        });
+        if (letters.length) {
+          this.drawToHandLimit();
+          note(this, "Idea! " + letters.join(", ") + (letters.length === 1 ? " is" : " are") + " in the answer.");
+        } else {
+          note(this, "Idea: you already know every letter of the answer.");
+        }
+      }
+      if (typeof this.save === "function") this.save();
+    } catch (error) {
+      console.warn("Cuddle burdens: a power tile failed on a mulligan.", error);
+    }
+    return result;
+  };
+
+  // The engine's stage-start Joker grant skips the ones dealt as tiles.
+  proto._deckJokerCount = function deckJokerCount() {
+    return inDuel(this.state) ? 0 : deckJokers(this);
+  };
+
   // A dead or lucky tile can't be played.
   var DEAD_ERROR = "A dead tile has no letter. Mulligan it away.";
   var LUCKY_ERROR = "A lucky tile has no letter. Keep it in hand: it pays out when you solve.";
+  var IDEA_ERROR = "An idea tile has no letter. Mulligan it away for a yellow hint.";
   ["toggleDraft", "insertDraftCardAt"].forEach(function guard(name) {
     var base = proto[name];
     if (typeof base !== "function") return;
@@ -286,6 +561,7 @@
       var card = typeof this.getHandCard === "function" ? this.getHandCard(cardId) : null;
       if (isDeadCard(card)) return { ok: false, error: DEAD_ERROR };
       if (isLuckyCard(card)) return { ok: false, error: LUCKY_ERROR };
+      if (isIdeaCard(card)) return { ok: false, error: IDEA_ERROR };
       return base.apply(this, arguments);
     };
   });
@@ -392,6 +668,15 @@
     isDeadGlyph: isDeadGlyph,
     skullSvg: skullSvg,
     cloverSvg: cloverSvg,
+    bulbSvg: bulbSvg,
+    IDEA_GLYPH: IDEA_GLYPH,
+    WAVE_GLYPH: WAVE_GLYPH,
+    JOKER_TILE_GLYPH: JOKER_TILE_GLYPH,
+    LUCKY_MULLIGAN_POINTS: LUCKY_MULLIGAN_POINTS,
+    isIdeaCard: isIdeaCard,
+    isIdeaGlyph: isIdeaGlyph,
+    isWaveCard: isWaveCard,
+    isJokerTile: isJokerTile,
     isLuckyCard: isLuckyCard,
     isLuckyGlyph: isLuckyGlyph,
     isBlankCard: isBlankCard,
