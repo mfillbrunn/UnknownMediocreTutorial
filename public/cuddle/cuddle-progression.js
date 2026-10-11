@@ -124,7 +124,7 @@
     haggler: "Cheaper refreshes",
     lastLight: "Last letter revealed",
     yellowHint: "Reveals 1 letter",
-    jokerCache: "+1 Joker each stage",
+    jokerCache: "+1 Joker each stage per level",
     jokerCacheLarge: "+2 Jokers each stage",
     "alphabet-compass": "Earlier / later hints",
     consonantSweep: "Rules out 1 consonant per guess",

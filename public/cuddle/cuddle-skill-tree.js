@@ -205,7 +205,11 @@
       title: "Solving Aids",
       blurb: "Jokers and letter tools, offered on every difficulty.",
       nodes: [
-        { id: "jokerCache", icon: "🃏", title: "Small Joker Cache", tier: "rare", type: "letters", maxLevel: 1, description: "Start every stage with +1 Joker", level: g => v5Level(g, "umtJokerCache") },
+        // One Joker per level, straight up to three (by request, an even step
+        // rather than a bigger third pick).
+        { id: "jokerCache", icon: "🃏", title: "Small Joker Cache", tier: "rare", type: "letters", maxLevel: 3,
+          levels: ["Start every stage with +1 Joker", "Start every stage with +2 Jokers", "Start every stage with +3 Jokers"],
+          description: "Start every stage with +1 Joker per level", level: g => v5Level(g, "umtJokerCache") },
         { id: "jokerCacheLarge", icon: "🃏", title: "Large Joker Cache", tier: "legendary", type: "letters", maxLevel: 1, description: "Start every stage with +2 Jokers, on top of Small Joker Cache", level: g => v5Level(g, "umtJokerCacheLarge") },
         { id: "alphabet-compass", icon: "🧭", title: "Alphabet Compass", tier: "epic", type: "clues", maxLevel: 3,
           levels: ["After each guess, 1 tile shows if the answer's letter there is earlier or later in the alphabet", "After each guess, 2 tiles show it", "Legendary: after each guess, every tile shows it"],
