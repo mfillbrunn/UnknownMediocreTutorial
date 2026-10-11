@@ -565,7 +565,7 @@
       id: "questCadence",
       icon: "❗",
       title: "Quest Cadence",
-      description: "Quests come more often (every second guess, then every guess) and one more can be active at a time. Stacks twice."
+      description: "One more quest a stage: guess 3 gets one too (quests on 2, 3, 5). Level 2 adds guess 1 (1, 2, 3, 5). One quest at a time."
     },
     {
       id: "questPersistReward",

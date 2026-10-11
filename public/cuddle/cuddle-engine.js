@@ -138,6 +138,24 @@
   // only the permanent boss reward shown on the choice card.
   const BOSS_BEFORE_ROUNDS = Object.freeze([3, 7, 10]);
 
+  // Which guesses get a quest. Base: guesses 2 and 5 (then 8, 11, ... on a
+  // long stage). Each Quest Cadence level adds one more guess that had
+  // none -- level 1 adds guess 3, level 2 guess 1 -- so quests come more
+  // often but there is only ever one at a time.
+  const QUEST_CADENCE_EXTRA_GUESSES = Object.freeze([3, 1]);
+  function isQuestGuess(guess, cadenceLevel) {
+    const n = Math.floor(Number(guess) || 0);
+    if (n < 1) return false;
+    if ((n + 1) % 3 === 0) return true;
+    const level = Math.max(0, Math.min(QUEST_CADENCE_EXTRA_GUESSES.length, Math.floor(Number(cadenceLevel) || 0)));
+    return QUEST_CADENCE_EXTRA_GUESSES.slice(0, level).includes(n);
+  }
+  function questGuessList(cadenceLevel, upTo = 6) {
+    const list = [];
+    for (let n = 1; n <= upTo; n += 1) if (isQuestGuess(n, cadenceLevel)) list.push(n);
+    return list;
+  }
+
   const DEFAULT_UPGRADES = Object.freeze({
     startingHand: 0,
     extraMulligans: 0,
@@ -495,7 +513,9 @@
         earlyPoint: EARLY_GUESS_POINTS + this.state.upgrades.earlyRoundPoint,
         mulliganPoints: UNUSED_MULLIGAN_POINTS,
         questPoints: Number(this.state.upgrades.questPoints) || 0,
-        questCadence: Math.max(1, 3 - this.state.upgrades.questCadence),
+        questCadence: Number(this.state.upgrades.questCadence) || 0,
+        // The guesses (of the first six) that get a quest.
+        questGuesses: questGuessList(this.state.upgrades.questCadence),
         questRefreshes: this.state.upgrades.questRefreshes
       };
     }
@@ -1771,12 +1791,8 @@
       // regardless of the player's own Quest Cadence upgrades -- that
       // constant pressure (and its penalty for missing one) is the whole
       // fight.
-      const cadence = ["questTrial", "questEndurance"].includes(this.state.boss?.id)
-        ? 1
-        : Math.max(1, 3 - this.state.upgrades.questCadence);
-      // Fires one turn earlier than a plain multiple of cadence would --
-      // base cadence 3 now lands on turns 2 and 5 instead of 3 and 6.
-      if (nextGuess < cadence - 1 || (nextGuess + 1) % cadence !== 0) return;
+      const everyGuess = ["questTrial", "questEndurance"].includes(this.state.boss?.id);
+      if (!everyGuess && !isQuestGuess(nextGuess, this.state.upgrades.questCadence)) return;
       const feasibleWords = this.getFeasibleWords();
       this.state.activeQuest = window.CuddleQuestBook?.createQuest({
         feasibleWords,
@@ -2123,9 +2139,7 @@
           // Quest Trial is now the only source of it.
           const next = Math.min(2, Number(this.state.upgrades.questCadence || 0) + 1);
           this.state.upgrades.questCadence = next;
-          return next >= 2
-            ? "Quest Cadence: a quest now appears on every guess, and one more can be active at a time."
-            : "Quest Cadence: quests now appear every second guess, and one more can be active at a time.";
+          return `Quest Cadence: quests now come on guesses ${questGuessList(next).join(", ")}.`;
         }
         default:
           return "";
@@ -2391,7 +2405,7 @@
         `Mulligans: ${rules.mulligans} × up to ${rules.mulliganSize}`,
         `Yellow value: ${rules.yellowPoints}`,
         `Early value: ${rules.earlyPoint} per unused guess`,
-        `Quest cadence: every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}`,
+        `Quests on guesses: ${rules.questGuesses.join(", ")}`,
         `Quest refreshes: ${rules.questRefreshes}`,
         `Removed letters: ${removed}`
       ];
@@ -2539,8 +2553,7 @@
       modifications.push(`${rewardRefreshes} quest reward refresh${rewardRefreshes === 1 ? "" : "es"}`);
     }
     if (questCadence) {
-      const cadence = Math.max(1, 3 - questCadence);
-      modifications.push(`A quest appears every ${cadence} guess${cadence === 1 ? "" : "es"}`);
+      modifications.push(`Quests on guesses ${questGuessList(questCadence).join(", ")}`);
     }
     if (this.state?.removedLetters?.length) {
       modifications.push(`Removed letters: ${this.state.removedLetters.join(", ")}`);
@@ -4182,7 +4195,7 @@
       `Mulligans: ${rules.mulligans} × up to ${rules.mulliganSize}; ${signed(rules.mulliganPoints)} per unused mulligan`,
       `Early solve: ${signed(rules.earlyPoint)} per unused guess`,
       `Quest value: ${signed(rules.questPoints)}`,
-      `Quest cadence: every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}`,
+      `Quests on guesses: ${(rules.questGuesses || [2, 5]).join(", ")}`,
       `Quest reward refreshes: ${rules.questRefreshes}`,
       `Removed letters: ${removed}`,
       ...preserved,
@@ -5185,9 +5198,8 @@
   // earlier layer already knows how to score, message and clear. This
   // just keeps a parallel state.megaState.activeQuests array (mirrored
   // onto state.activeQuests for the UI) whose first slot is always that
-  // same primary quest, and fills any additional slots the Quest
-  // Cadence boss reward has bought (now "an extra concurrent quest",
-  // not a faster cadence -- see cuddle-quests.js).
+  // same primary quest. (Quest Cadence used to buy extra concurrent
+  // slots here; it now adds quest guesses instead, one quest at a time.)
   // ------------------------------------------------------------------
   const composedEnsureQuestForNextGuess = CuddleGame.prototype._ensureQuestForNextGuess;
   CuddleGame.prototype._ensureQuestForNextGuess = function ensureQuestForNextGuessMega() {
@@ -5224,7 +5236,8 @@
 
     if (this.state.activeQuest) mega.activeQuests[0] = this.state.activeQuest;
 
-    const slots = 1 + Math.max(0, Number(this.state.upgrades.questCadence || 0));
+    // Only ever one quest at a time (Quest Cadence adds guesses instead).
+    const slots = 1;
     if (this.state.activeQuest) {
       let guard = 0;
       while (mega.activeQuests.filter(Boolean).length < slots && guard < 8) {
@@ -5610,7 +5623,8 @@
   const composedRulesSummary = CuddleGame.prototype.getRulesSummary;
   CuddleGame.prototype.getRulesSummary = function getRulesSummaryMega() {
     const summary = composedRulesSummary.call(this);
-    summary.questSlots = 1 + Math.max(0, Number(this.state.upgrades.questCadence || 0));
+    // One quest at a time: Quest Cadence adds quest guesses, not slots.
+    summary.questSlots = 1;
     return summary;
   };
 
@@ -5629,8 +5643,6 @@
     if (Number(mega.jokerCharges || 0) > 0) lines.push(`🃏 Joker charges: ${mega.jokerCharges}`);
     if (Number(mega.questRerollCharges || 0) > 0) lines.push(`🔄 Quest reroll charges: ${mega.questRerollCharges}`);
     if (mega.greenCountUnlocked) lines.push("Green tiles show letter counts");
-    const slotBonus = Number(this.state.upgrades.questCadence || 0);
-    if (slotBonus) lines.push(`+${slotBonus} concurrent quest${slotBonus === 1 ? "" : "s"}`);
     // Report the guess a ratchet actually lands on this round, not the one
     // it was rolled for: ratchetRowPlan slides it off any guess the stage's
     // own boss or challenge already spoils, so the rolled number is only the
