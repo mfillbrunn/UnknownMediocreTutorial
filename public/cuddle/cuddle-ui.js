@@ -962,7 +962,7 @@
       return `
       <button class="cuddle-card is-dead${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${deadCount}" ${deadDisabled ? "disabled" : ""}
         aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(deadLabel)}" title="${escapeHtml(deadLabel)}">
-        <span class="cuddle-card-letter cuddle-card-dead" aria-hidden="true"></span>
+        <span class="cuddle-card-letter cuddle-card-dead" aria-hidden="true">${window.CuddleBurdens.skullSvg()}</span>
         ${deadCount > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${deadCount}</span>` : ""}
       </button>`;
     }

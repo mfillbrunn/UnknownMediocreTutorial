@@ -48,6 +48,23 @@
     blueMode: { doubles: DOUBLES_PER_PICK }
   });
 
+  // A dead tile's face: a small, round, friendly skull.
+  var SKULL_SVG = '<svg class="umt-dead-skull" viewBox="0 0 40 40" aria-hidden="true" focusable="false">'
+    + '<path d="M20 5.5c-8 0-14 5.5-14 12.8 0 4.3 2.1 7.5 4.9 9.3v3.5a2.2 2.2 0 0 0 2.2 2.2h13.8a2.2 2.2 0 0 0 2.2-2.2v-3.5c2.8-1.8 4.9-5 4.9-9.3C34 11 28 5.5 20 5.5z" fill="#efeaf7" stroke="#2b2238" stroke-width="2.4" stroke-linejoin="round"/>'
+    + '<ellipse cx="9.8" cy="24.4" rx="2.3" ry="1.4" fill="#f4a7c0" opacity="0.85"/>'
+    + '<ellipse cx="30.2" cy="24.4" rx="2.3" ry="1.4" fill="#f4a7c0" opacity="0.85"/>'
+    + '<ellipse cx="14.2" cy="19" rx="3.7" ry="4.2" fill="#2b2238"/>'
+    + '<ellipse cx="25.8" cy="19" rx="3.7" ry="4.2" fill="#2b2238"/>'
+    + '<circle cx="15.4" cy="17.4" r="1.2" fill="#ffffff"/>'
+    + '<circle cx="27" cy="17.4" r="1.2" fill="#ffffff"/>'
+    + '<path d="M20 23.4l-1.9 2.9h3.8z" fill="#2b2238" stroke="#2b2238" stroke-width="0.8" stroke-linejoin="round"/>'
+    + '<path d="M16.8 29.6v3.2M20 29.6v3.2M23.2 29.6v3.2" stroke="#2b2238" stroke-width="1.8" stroke-linecap="round"/>'
+    + '</svg>';
+
+  function skullSvg() {
+    return SKULL_SVG;
+  }
+
   function isDeadCard(card) {
     return Boolean(card && (card.dead || card.glyph === DEAD_GLYPH));
   }
@@ -262,6 +279,7 @@
     HARD_BOSS: HARD_BOSS,
     isDeadCard: isDeadCard,
     isDeadGlyph: isDeadGlyph,
+    skullSvg: skullSvg,
     addDead: addDead,
     addDoubles: addDoubles,
     removeDead: removeDead,
