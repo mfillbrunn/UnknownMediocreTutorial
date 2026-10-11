@@ -3827,7 +3827,7 @@
       // Map stop buttons aren't reward cards; their icons belong to the map
       // layers. Drawing a reward icon here fought those layers every pass,
       // swapping the icon back and forth (visible as map flicker).
-      if (button.matches(".cuddle-branch-choice")) return;
+      if (button.matches(".cuddle-branch-choice, .umt-duel-reward")) return;
       const definition = choiceDefinition(game, button);
       const icon = button.querySelector(":scope > .cuddle-choice-icon");
       if (icon && icon.dataset.umtIconKey !== definition.id) {

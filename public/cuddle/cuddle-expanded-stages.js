@@ -2780,9 +2780,19 @@
       const parts = [];
       const quests = [tile.activeQuest, ...(Array.isArray(tile.activeQuests) ? tile.activeQuests.slice(1) : [])].filter(Boolean);
       quests.forEach((quest, index) => {
+        // Lights up "Ready" while the word being built meets the quest,
+        // the same check (and look) as a normal stage's strip.
+        let ready = false;
+        try {
+          const meets = window.CuddleCampaign && window.CuddleCampaign.draftMeetsQuest;
+          ready = typeof meets === "function" && duel.turn === "player"
+            && Boolean(withDuelTileState(game, duel, () => meets(game, quest)));
+        } catch (_error) {
+          ready = false;
+        }
         // Tap for the full rules (openQuestInfo in cuddle-campaign.js).
-        parts.push(`<span class="cuddle-quest-inline" role="button" tabindex="0" data-quest-info="${index}" data-quest-source="duel" title="Tap for details">`
-          + `<span class="cuddle-quest-tag"><span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> Quest</span>`
+        parts.push(`<span class="cuddle-quest-inline${ready ? " is-ready" : ""}" role="button" tabindex="0" data-quest-info="${index}" data-quest-source="duel" title="${ready ? "Your word meets this quest. " : ""}Tap for details">`
+          + `<span class="cuddle-quest-tag">${ready ? '<span aria-hidden="true">✓</span> Ready' : `<span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> Quest`}</span>`
           + `<span class="cuddle-quest-body"><b>${escapeHtml(quest.title || "Quest")}:</b> <span>${escapeHtml(quest.description || "")}</span></span></span>`);
       });
       let chips = [];
@@ -2815,15 +2825,32 @@
       return parts.length ? `<div class="cuddle-play-strip umt-duel-strip">${parts.join("")}</div>` : "";
     }
 
+    function rewardImg(id) {
+      const slug = String(id || "gift").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[^a-zA-Z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "").toLowerCase() || "gift";
+      return `<img class="umt-cuddle-svg-icon" src="cuddle/icons/reward-${escapeHtml(slug)}.svg" alt="" aria-hidden="true"`
+        + ` onerror="this.onerror=null;this.src='cuddle/icons/gift.svg'">`;
+    }
+
     function renderDuelQuestReward(duel) {
       const tile = duel.tileState;
       if (!tile || tile.status !== "questReward") return "";
       const choices = Array.isArray(tile.questRewardChoices) ? tile.questRewardChoices : [];
+      // Which quest the guess just completed, as a normal stage shows it.
+      const history = Array.isArray(tile.history) ? tile.history : [];
+      const last = history[history.length - 1];
+      const done = last && last.questComplete && last.questId && window.CuddleQuestBook
+        ? (window.CuddleQuestBook.QUESTS || []).find(item => item.id === last.questId) : null;
       return `<div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="umtDuelQuestTitle">`
         + `<section class="cuddle-modal cuddle-modal-wide cuddle-compact-cards"><h2 id="umtDuelQuestTitle">Quest reward</h2>`
+        + (done ? `<p class="umt-duel-quest-done"><span aria-hidden="true">✓</span> Quest complete: <b>${escapeHtml(done.title)}</b></p>` : "")
         + `<div class="cuddle-choice-grid">${choices.map(choice => (
-          `<button type="button" class="cuddle-choice" data-cuddle-campaign-action="expanded-duel-quest-reward" data-shop-item-id="${escapeHtml(choice.id)}">`
-          + `<span class="cuddle-choice-icon">${escapeHtml(choice.icon || "🎁")}</span><strong>${escapeHtml(choice.title || "Reward")}</strong>`
+          // The reward's own drawing, as on a normal stage's quest reward
+          // screen. The shared icon passes skip .umt-duel-reward: these
+          // cards carry no data-reward-id (that would make a normal stage's
+          // click handler pick the reward), so they could only guess.
+          `<button type="button" class="cuddle-choice umt-duel-reward" data-cuddle-campaign-action="expanded-duel-quest-reward" data-shop-item-id="${escapeHtml(choice.id)}">`
+          + `<span class="cuddle-choice-icon umt-svg-choice-icon">${rewardImg(choice.id)}</span><strong>${escapeHtml(choice.title || "Reward")}</strong>`
           + `<small>${richText(choice.description || "")}</small></button>`
         )).join("")}</div></section></div>`;
     }

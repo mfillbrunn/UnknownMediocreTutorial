@@ -748,6 +748,8 @@
       // most bosses have no file here, and the gift fallback read as a
       // third reward icon next to the card's reward and skip icons.
       if (button.classList.contains("cuddle-boss-choice")) return;
+      // The Duel's quest rewards draw their own icon (cuddle-expanded-stages.js).
+      if (button.classList.contains("umt-duel-reward")) return;
       const definition = definitionForChoice(game, button);
       const icon = button.querySelector(":scope > .cuddle-choice-icon, :scope > .cuddle-money-choice-icon");
       if (icon) replaceIconContents(icon, definition.id, definition.option?.title || definition.id);
