@@ -112,7 +112,7 @@
     mulliganTiles: "Unlocks mulligan tiles",
     jokerTiles: "Unlocks Joker tiles",
     oracleTiles: "Unlocks hint tiles",
-    rainyDay: "10% interest per stage",
+    rainyDay: "5% interest per stage",
     encore: "+50 every 3rd solve",
     vowelBounty: "+5 per vowel solved",
     doubleDown: "+50 on lucky guess",

@@ -172,7 +172,7 @@
       blurb: "Reward pool that pays out for how you play a round, not just for finishing it.",
       nodes: [
         { id: "rainyDay", icon: "🏦", title: "Rainy Day Fund", tier: "rare", type: "money", maxLevel: 3,
-          levels: ["Earn 10% interest on your money every stage (up to $25)", "Earn 20% interest on your money every stage (up to $50)", "Earn 30% interest on your money every stage (up to $120)"],
+          levels: ["Earn 5% interest on your money every stage (up to $10)", "Earn 10% interest on your money every stage (up to $20)", "Earn 15% interest on your money every stage (up to $40)"],
           level: g => v5Level(g, "umtRainyDay") },
         { id: "encore", icon: "🎬", title: "Encore", tier: "rare", type: "points", maxLevel: 1, description: "Every 3rd stage you solve pays an extra +50 points", level: g => v5Level(g, "umtEncore") },
         { id: "vowelBounty", icon: "🅰️", title: "Vowel Bounty", tier: "common", type: "points", maxLevel: 3,
@@ -308,7 +308,7 @@
     mulliganTiles: ["Mulligan tiles", "Mulligan tiles x2", "Mulligan tiles x4"],
     jokerTiles: ["Joker tiles", "Joker tiles x2", "Joker tiles x4"],
     oracleTiles: ["Oracle tiles", "Oracle tiles x2", "Oracle tiles x4"],
-    rainyDay: ["10% interest", "20% interest", "30% interest"],
+    rainyDay: ["5% interest", "10% interest", "15% interest"],
     vowelBounty: ["+5 per vowel", "+10 per vowel", "+18 per vowel"],
     treasureHunter: ["Treasure +$25", "Treasure +$50", "Treasure +$100"],
     yellowHint: ["1 letter shown", "1 letter placed"],

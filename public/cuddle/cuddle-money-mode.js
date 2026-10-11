@@ -317,7 +317,7 @@
     mode.starterRewardChoices = [];
     state.umtPackOffer = {
       id: (window.CuddleSeed ? window.CuddleSeed.text(state) : (state.runId || "run")) + ":starter-pack",
-      size: "large",
+      size: "starter",
       price: 0,
       world: 1,
       starter: true,

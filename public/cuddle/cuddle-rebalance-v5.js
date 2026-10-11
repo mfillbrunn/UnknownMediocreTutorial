@@ -62,7 +62,7 @@
     Object.freeze({
       id: IDS.rainyDay, key: IDS.rainyDay, icon: "\uD83C\uDFE6",
       title: "Rainy Day Fund", name: "Rainy Day Fund",
-      description: "Every stage pays 10% interest on your wallet, up to $25. Level 2: 20%, up to $50. Level 3: 30%, up to $120.",
+      description: "Every stage pays 5% interest on your wallet, up to $10. Level 2: 10%, up to $20. Level 3: 15%, up to $40.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
@@ -2685,10 +2685,11 @@
     // Interest on the wallet, paid into the wallet -- it used to read the
     // run's points and pay points, while promising money.
     const balance = Math.max(0, asNumber(state.cuddleMoney, 0)) + (compound ? totalJokerStock(game) * 10 : 0);
-    // 10% up to $25, 20% up to $50, then 30% up to $120 at level 3.
+    // 5% up to $10, 10% up to $20, then 15% up to $40 at level 3.
+    // (Was 10/20/30% up to $25/$50/$120.)
     const tier = Math.max(0, Math.min(3, Math.floor(level)));
-    const cap = [0, 25, 50, 120][tier] * (compound ? 2 : 1);
-    const interest = Math.min(cap, Math.floor(balance * 0.1 * tier));
+    const cap = [0, 10, 20, 40][tier] * (compound ? 2 : 1);
+    const interest = Math.min(cap, Math.floor(balance * 0.05 * tier));
     if (interest <= 0) return;
     state.cuddleMoney = Math.max(0, asNumber(state.cuddleMoney, 0)) + interest;
     appendNotice(game, `Rainy Day Fund paid $${interest} in interest.`);
