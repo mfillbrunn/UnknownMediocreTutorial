@@ -1427,7 +1427,10 @@
       const tilePoints = typeof this._scoreSpecialTiles === "function"
         ? Math.max(0, Number(this._scoreSpecialTiles(this.state.history.length, feedback)) || 0)
         : 0;
-      const scoreDelta = (lateGuess ? 0 : greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue) + tilePoints;
+      // Colour Surge pays half points a green, so a row's colour total is
+      // rounded down (two greens at +0.5 make +1).
+      const colourPoints = Math.floor(greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue + 1e-9);
+      const scoreDelta = (lateGuess ? 0 : colourPoints) + tilePoints;
       if (shielded) this.state.buffs.greyShield -= 1;
 
       const activeQuest = this.state.activeQuest;
@@ -3784,20 +3787,20 @@
       key: "colourTrade",
       icon: "G+",
       title: "Colour Surge",
-      description: "Green tiles pay 1 more point. Level 2: 2 more. Level 3: 4 more."
+      description: "Green tiles pay 0.5 more points. Level 2: 1 more. Level 3: 1.5 more."
     },
     {
       id: "greyscale",
       key: "greyscale",
       icon: "⬛",
       title: "Greyscale",
-      description: "Grey tiles pay 1 point. Level 2: 2 points. Level 3: 3 points, and yellows 1 more."
+      description: "Grey tiles pay 1 point. Level 2: 2 points. Level 3: 3 points."
     }
   ]);
   const customUpgradeIds = new Set(customUpgradeDefinitions.map(item => item.id));
   // Greyscale is a one-time pick. (It used to also zero yellow and green,
   // and shut Colour Surge out after it; it's pure upside now.)
-  // Colour Surge and Greyscale go up to three levels; the third pays more.
+  // Colour Surge and Greyscale go up to three levels, an even step each.
   const COLOUR_REWARD_MAX = 3;
   function onceOnlyTaken(state, id) {
     return (id === "greyscale" || id === "colourTrade")
@@ -4003,22 +4006,16 @@
         upgrades.handSizeBonus += 1;
         break;
       case "colourTrade": {
-        const finalLevel = finiteNumber(state.balanceRewardCounts.colourTrade) + 1 >= COLOUR_REWARD_MAX;
-        // Balance pass (full-run sims): greens are the rarest colour, so
-        // Colour Surge pays more per tile than Greyscale does.
-        // +1, +2, then +4 at the top level: the third pick is the big one.
-        // (Was +2 a level, +8 at three: about 100 points a stage in sims.)
-        upgrades.greenOnlyPoints += finalLevel ? 2 : 1;
+        // +0.5 a green per level: 0.5, 1, 1.5. A row's colour points are
+        // rounded down (see the tile scoring in submitDraft).
+        // (Was +1, +2, then +4 at the top level.)
+        upgrades.greenOnlyPoints += 0.5;
         break;
       }
       case "greyscale": {
-        const finalLevel = finiteNumber(state.balanceRewardCounts.greyscale) + 1 >= COLOUR_REWARD_MAX;
-        // Was grey +2 / yellow +1 a level (+7 / +4 at three): about 35
-        // points a stage from one Common, far above any other.
-        // 1, 2, 3 a grey, and yellows +1 at the top level. (Was +2 at the
-        // third: ~44 points a stage in sims, top of every power.)
+        // Greys only: 1, 2, 3 a grey. (The top level used to add +1 a
+        // yellow as well.)
         upgrades.greyPoints += 1;
-        if (finalLevel) upgrades.yellowOnlyPoints += 1;
         break;
       }
       case "mulliganValueBoost":

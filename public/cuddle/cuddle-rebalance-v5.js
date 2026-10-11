@@ -2768,7 +2768,7 @@
     if (!entry || trueBossRound(game) || noMoneyRound(game)) return;
     const greens = asInteger(entry.greenCount, 0);
     if (greens <= 0) return;
-    const bonus = Math.round(greens * greenValue(game, entry));
+    const bonus = Math.floor(greens * greenValue(game, entry) + 1e-9);
     if (bonus > 0) addScoreBonus(game, bonus, "umtJackpot",
       `${greens} green tile${greens === 1 ? "" : "s"} doubled`, entry);
   }

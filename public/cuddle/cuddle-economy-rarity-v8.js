@@ -1458,7 +1458,7 @@
       setMaxStack(def, 1);
       replaceHandlers(def, "quest-reroll-stage");
     } else if (name === "colour surge" || name === "color surge") {
-      setDescription(def, "Green tiles pay 1 more point. Level 2: 2 more. Level 3: 4 more.");
+      setDescription(def, "Green tiles pay 0.5 more points. Level 2: 1 more. Level 3: 1.5 more.");
       replaceHandlers(def, "colour-surge");
     } else if (name === "grey matters" || name === "gray matters") {
       setDescription(def, "Grey tiles are worth 1 point more. Yellow and green values are unchanged.");
