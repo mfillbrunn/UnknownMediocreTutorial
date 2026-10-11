@@ -208,9 +208,9 @@
         // One Joker per level, straight up to three (by request, an even step
         // rather than a bigger third pick).
         { id: "jokerCache", icon: "🃏", title: "Small Joker Cache", tier: "rare", type: "letters", maxLevel: 3,
-          levels: ["Start every stage with +1 Joker", "Start every stage with +2 Jokers", "Start every stage with +3 Jokers"],
-          description: "Start every stage with +1 Joker per level", level: g => v5Level(g, "umtJokerCache") },
-        { id: "jokerCacheLarge", icon: "🃏", title: "Large Joker Cache", tier: "legendary", type: "letters", maxLevel: 1, description: "Start every stage with +2 Jokers, on top of Small Joker Cache", level: g => v5Level(g, "umtJokerCacheLarge") },
+          levels: ["1 Joker tile in your deck every stage: draw it for a Joker", "2 Joker tiles in your deck every stage", "3 Joker tiles in your deck every stage"],
+          description: "1 Joker tile per level in your deck every stage: draw it for a Joker", level: g => v5Level(g, "umtJokerCache") },
+        { id: "jokerCacheLarge", icon: "🃏", title: "Large Joker Cache", tier: "legendary", type: "letters", maxLevel: 1, description: "2 more Joker tiles in your deck every stage, on top of Small Joker Cache", level: g => v5Level(g, "umtJokerCacheLarge") },
         { id: "alphabet-compass", icon: "🧭", title: "Alphabet Compass", tier: "epic", type: "clues", maxLevel: 3,
           levels: ["After each guess, 1 tile shows if the answer's letter there is earlier or later in the alphabet", "After each guess, 2 tiles show it", "Legendary: after each guess, every tile shows it"],
           level: g => (window.CuddleCompass && g?.state ? window.CuddleCompass.copiesOwned(g.state) : 0) },
@@ -255,7 +255,19 @@
           level: g => powerLevel(g, "gracePeriod") },
         { id: "boldOpener", icon: "🪄", title: "Bold Opener", tier: "epic", type: "clues", maxLevel: 1,
           description: "Your first guess in each stage can be any 5 letters, real word or not",
-          level: g => powerLevel(g, "boldOpener") }
+          level: g => powerLevel(g, "boldOpener") },
+        { id: "ideaTiles", icon: "💡", title: "Idea Tiles", tier: "rare", type: "clues", maxLevel: 3,
+          levels: ["1 idea tile in your deck. Mulligan it away: a yellow hint", "2 idea tiles. Each one mulliganed: a yellow hint", "3 idea tiles. Each one mulliganed: a yellow hint"],
+          level: g => powerLevel(g, "ideaTiles") },
+        { id: "waveTiles", icon: "🌊", title: "Wave Tiles", tier: "common", type: "letters", maxLevel: 3,
+          levels: ["1 wave tile in your deck. When you draw it, all your consonants are swapped for new ones", "2 wave tiles in your deck", "3 wave tiles in your deck"],
+          level: g => powerLevel(g, "waveTiles") },
+        { id: "fullCircle", icon: "♻️", title: "Full Circle", tier: "epic", type: "clues", maxLevel: 1,
+          description: "Each time you go through your whole deck and it reshuffles, one letter is shown in its exact place (a green hint)",
+          level: g => powerLevel(g, "fullCircle") },
+        { id: "luckyClover", icon: "🍀", title: "Lucky Clover", tier: "rare", type: "points", maxLevel: 3,
+          levels: ["1 lucky tile in your deck. In hand when you solve: +10 points. Mulliganed: +5", "2 lucky tiles. Each in hand when you solve: +20 points", "3 lucky tiles. Each in hand when you solve: +30 points"],
+          level: g => powerLevel(g, "luckyClover") }
       ]
     },
     {
@@ -320,6 +332,9 @@
     lastStand: ["+25 last-guess solve", "+45 last-guess solve", "+100 last-guess solve"],
     pickpocket: ["+$1 per yellow", "+$2 per yellow", "+$4 per yellow"],
     gracePeriod: ["1st late guess free", "2 late guesses free", "2 free, then half"],
+    ideaTiles: ["1 idea tile", "2 idea tiles", "3 idea tiles"],
+    waveTiles: ["1 wave tile", "2 wave tiles", "3 wave tiles"],
+    luckyClover: ["1 lucky tile, +10", "2 lucky tiles, +20 each", "3 lucky tiles, +30 each"],
     questCadence: ["Quests on 2, 3, 5", "Quests on 1, 2, 3, 5"]
   };
 

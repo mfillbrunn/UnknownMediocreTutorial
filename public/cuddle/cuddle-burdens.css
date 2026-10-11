@@ -26,6 +26,60 @@
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
 }
 
+/* A lucky tile: a cream-and-gold tile with a four-leaf clover. */
+#cuddleScreen .cuddle-card.is-lucky {
+  border-color: rgba(214, 178, 74, 0.85);
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.55), transparent 55%),
+    linear-gradient(160deg, #fff6d6, #f1e2a8);
+  color: #2f6b1f;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35), 0 4px 12px rgba(201, 154, 46, 0.3);
+}
+#cuddleScreen .cuddle-card.is-lucky.is-selected {
+  border-color: #3fbf6f;
+  box-shadow: 0 0 0 2px rgba(63, 191, 111, 0.6), inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+.cuddle-card-lucky {
+  display: grid;
+  place-items: center;
+  width: 72%;
+  height: 72%;
+}
+.cuddle-card-lucky .umt-lucky-clover {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 2px rgba(47, 107, 31, 0.3));
+}
+#cuddleScreen .cuddle-card.is-lucky .cuddle-card-count { color: #6b4f12; }
+
+/* An idea tile: a soft night-blue tile with a glowing bulb. */
+#cuddleScreen .cuddle-card.is-idea {
+  border-color: rgba(255, 214, 102, 0.8);
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255, 226, 122, 0.45), transparent 62%),
+    linear-gradient(160deg, #3b3f73, #262a52);
+  color: #ffe27a;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.12), 0 4px 12px rgba(255, 214, 102, 0.22);
+}
+#cuddleScreen .cuddle-card.is-idea.is-selected {
+  border-color: #f6c956;
+  box-shadow: 0 0 0 2px rgba(246, 201, 86, 0.7), inset 0 0 0 2px rgba(255, 255, 255, 0.12);
+}
+.cuddle-card-idea {
+  display: grid;
+  place-items: center;
+  width: 72%;
+  height: 72%;
+}
+.cuddle-card-idea .umt-idea-bulb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 6px rgba(255, 226, 122, 0.55));
+}
+#cuddleScreen .cuddle-card.is-idea .cuddle-card-count { color: #ffe9a8; }
+
 /* Boss cards on Hard: the extra burden the fight brings. */
 .umt-burden-note {
   display: block;

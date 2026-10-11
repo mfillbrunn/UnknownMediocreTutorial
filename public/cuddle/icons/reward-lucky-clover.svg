@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="A four-leaf clover on a lucky tile">
+  <rect x="4" y="4" width="88" height="88" rx="22" fill="#e9f8dc" stroke="#2f6b1f" stroke-width="4"/>
+  <rect x="18" y="16" width="60" height="64" rx="12" fill="#fff8e0" stroke="#c99a2e" stroke-width="4"/>
+  <path d="M48 66q5 10 13 15" fill="none" stroke="#2f6b1f" stroke-width="4.5" stroke-linecap="round"/>
+  <g fill="#4fbf4a" stroke="#2f6b1f" stroke-width="3" stroke-linejoin="round">
+    <path d="M48 46C37 39 35 26 42 25c3-.4 5.5 2 6 4.5.5-2.5 3-4.9 6-4.5 7 1 5 14-6 21z"/>
+    <path d="M48 46C37 39 35 26 42 25c3-.4 5.5 2 6 4.5.5-2.5 3-4.9 6-4.5 7 1 5 14-6 21z" transform="rotate(90 48 46)"/>
+    <path d="M48 46C37 39 35 26 42 25c3-.4 5.5 2 6 4.5.5-2.5 3-4.9 6-4.5 7 1 5 14-6 21z" transform="rotate(180 48 46)"/>
+    <path d="M48 46C37 39 35 26 42 25c3-.4 5.5 2 6 4.5.5-2.5 3-4.9 6-4.5 7 1 5 14-6 21z" transform="rotate(270 48 46)"/>
+  </g>
+  <circle cx="48" cy="46" r="3.2" fill="#ffd54a" stroke="#2f6b1f" stroke-width="2"/>
+  <path d="M41 30.5c1.5-1.4 3.4-1.2 4.2.4" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" opacity=".8"/>
+</svg>

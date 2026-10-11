@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="A deck in a circle of arrows around a green tile">
+  <rect x="4" y="4" width="88" height="88" rx="22" fill="#f1e9ff" stroke="#5b2f8a" stroke-width="4"/>
+  <path d="M48 18a30 30 0 0 1 28.6 21" fill="none" stroke="#9b6be0" stroke-width="6" stroke-linecap="round"/>
+  <path d="M78 52a30 30 0 0 1-44 22" fill="none" stroke="#9b6be0" stroke-width="6" stroke-linecap="round"/>
+  <path d="M24 62a30 30 0 0 1 10-38" fill="none" stroke="#9b6be0" stroke-width="6" stroke-linecap="round"/>
+  <path d="M70 37l7.5 4 3-8.2z" fill="#9b6be0" stroke="#9b6be0" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M38 69.5l-6.5 6.2 8.6 2.4z" fill="#9b6be0" stroke="#9b6be0" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M30 28l1.5-8.5 6.8 5.4z" fill="#9b6be0" stroke="#9b6be0" stroke-width="3" stroke-linejoin="round"/>
+  <rect x="35" y="35" width="26" height="28" rx="6" fill="#3fbf6f" stroke="#1d6b3a" stroke-width="3.5"/>
+  <path d="M42 45.5l5 5 7.5-8" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

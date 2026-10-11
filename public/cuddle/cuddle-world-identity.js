@@ -37,6 +37,8 @@
       text: "One fewer mulligan in every stage, but every solved stage pays +$8." },
     library: { icon: "📖", name: "Footnotes", stage: "Shelf",
       text: "Every stage opens with one of the answer's themes shown." },
+    swamp: { icon: "💀", name: "Sinking Mud", stage: "Bog",
+      text: "Three dead tiles sink into your deck in every stage. Mulligan them away." },
     citadel: { icon: "👁️", name: "Watchtower", stage: "Hall",
       text: "Guesses past the guess window cost 10 points more, but solving within it pays +15." },
     storm: { icon: "⚡", name: "Lightning", stage: "Ledge",
@@ -140,6 +142,21 @@
     if (!list.length) return null;
     var random = typeof game.random === "function" ? game.random : Math.random;
     return list[Math.floor(random() * list.length)];
+  }
+
+  // While a stop is entered, its stage is dealt and set up under its real
+  // row's world (see currentWorld in cuddle-worlds.js).
+  var baseEnter = proto.enterBranchNode;
+  if (typeof baseEnter === "function") {
+    proto.enterBranchNode = function enterBranchNodeInItsWorld(nodeId) {
+      var row = Number(String(nodeId || "").split(":")[0]);
+      this.__umtEnteringRow = Number.isFinite(row) ? row : undefined;
+      try {
+        return baseEnter.apply(this, arguments);
+      } finally {
+        this.__umtEnteringRow = undefined;
+      }
+    };
   }
 
   // -- stage start ------------------------------------------------------------
@@ -262,7 +279,7 @@
 
   // The moving backdrop: the same particles on every redraw, each placed
   // where it would be by now, so a redraw never makes them jump.
-  var PARTICLES = { woods: 14, meadow: 18, marsh: 12, caverns: 16, frost: 30, library: 16, citadel: 18, storm: 34, forge: 22 };
+  var PARTICLES = { woods: 14, meadow: 18, marsh: 12, caverns: 16, frost: 30, library: 16, swamp: 14, citadel: 18, storm: 34, forge: 22 };
 
   function seeded(seed) {
     var x = seed * 9301 + 49297;
@@ -292,7 +309,7 @@
     var flashDelay = -((now) % 9);
     return '<div class="umt-wa" data-theme="' + theme + '" aria-hidden="true">'
       + '<span class="umt-wa-glow"></span>'
-      + (theme === "marsh" ? '<span class="umt-wa-fog" style="animation-delay:' + (-(now % 40)).toFixed(1) + 's"></span>' : "")
+      + (theme === "marsh" || theme === "swamp" ? '<span class="umt-wa-fog" style="animation-delay:' + (-(now % 40)).toFixed(1) + 's"></span>' : "")
       + (theme === "storm" ? '<span class="umt-wa-flash" style="animation-delay:' + flashDelay.toFixed(2) + 's"></span>' : "")
       + html + '</div>';
   }
