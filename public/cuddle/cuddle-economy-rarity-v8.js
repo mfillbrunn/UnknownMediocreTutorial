@@ -160,7 +160,7 @@
       (state) => !(Number(state.upgrades?.freeVowelSweep) > 0)),
     legendaryPick("biggerMulligans", "✋", "Full Hand Mulligan", "Every mulligan can now replace up to five letters.",
       (state) => Number(state.upgrades?.mulliganSize || 0) < 2),
-    legendaryPick("questCadence", "❗", "Quest Cadence", "Quests come more often (every second guess, then every guess) and one more can be active at a time. Stacks twice.",
+    legendaryPick("questCadence", "❗", "Quest Cadence", "One more quest a stage: guess 3 gets one too (quests on 2, 3, 5). Level 2 adds guess 1 (1, 2, 3, 5). One quest at a time.",
       (state) => Number(state.upgrades?.questCadence || 0) < 2),
     legendaryPick("revealGreen", "📍", "Position Peek", "Your next stage opens with one letter of the answer already in its exact place. One time.",
       (state) => !state.pendingPositionPeek),
@@ -1574,12 +1574,6 @@
       setDescription(def, "At the start of every future boss, reveal one green position and one additional yellow letter.");
       replaceHandlers(def, "boss-field-notes");
       name = "boss field notes";
-    } else if (name === "quest cadence") {
-      setName(def, "Double Quests");
-      setId(def, "double-quests");
-      setDescription(def, "Whenever quests are active, maintain two concurrent quests instead of one.");
-      replaceHandlers(def, "double-quests");
-      name = "double quests";
     } else if (name === "backup plan") {
       setDescription(def, "Starting with the stage after this boss, increase maximum mulligans by 1 in every stage.");
       replaceHandlers(def, "backup-plan");
@@ -2340,12 +2334,9 @@
     if (!changed) customState(state).stage.questRerolls = count;
   }
 
-  function ensureTwoConcurrentQuests(state, context) {
-    if (!upgradeStack(state, "double-quests")) return;
-    setMatchingNumbers(state, (key) => /quest.*(?:slot|concurrent|active|max)|(?:slot|concurrent).*quest/.test(key), (value) => Math.max(2, value), 4);
-    const quests = findArray(state, /activequests|quests|currentquests/, 4);
-    if (quests && quests.length === 1) addQuest(state, context);
-  }
+  // Retired: there is only ever one quest at a time. Quest Cadence (the
+  // engine's questCadence) adds quest guesses instead of a second slot.
+  function ensureTwoConcurrentQuests(_state, _context) {}
 
   function stageStart(state, context, id) {
     const data = customState(state);

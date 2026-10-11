@@ -137,7 +137,7 @@
     freeVowelSweep: "Free vowel test",
     revealGreen: "Next stage: 1 letter",
     questDoublePick: "Pick 2 quest rewards",
-    questCadence: "More quests at once",
+    questCadence: "One more quest guess",
     questPersistReward: "Quests last all stage",
     allThemesBoss: "All themes revealed",
     secondCup: "1 rescue guess per run",

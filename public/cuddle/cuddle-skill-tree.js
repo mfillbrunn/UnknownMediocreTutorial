@@ -278,7 +278,7 @@
         { id: "revealGreen", icon: "📍", title: "Position Peek", tier: "common", type: "clues", maxLevel: 1, description: "Your next stage starts with 1 letter in its exact place (one time)" },
         { id: "questDoublePick", icon: "✌️", title: "Double Pick", tier: "legendary", type: "quests", maxLevel: 1, description: "On quest reward screens, pick 2 rewards instead of 1", level: g => upgradeCount(g, "questDoublePick") },
         { id: "questCadence", icon: "❗", title: "Quest Cadence", tier: "epic", type: "quests", maxLevel: 2,
-          levels: ["A new quest every second guess, and 1 more can be active at once", "A new quest every guess"],
+          levels: ["One more quest: guess 3 gets one too (2, 3, 5)", "One more quest: guess 1 gets one too (1, 2, 3, 5)"],
           level: g => upgradeCount(g, "questCadence") },
         { id: "questPersistReward", icon: "⏳", title: "Lasting Quests", tier: "legendary", type: "quests", maxLevel: 1, description: "A quest you miss stays active for the rest of the stage", level: g => (g?.state?.megaState?.questPersistsForRound ? 1 : 0) },
         { id: "allThemesBoss", icon: "🔮", title: "All-Seeing Atlas", tier: "legendary", type: "clues", maxLevel: 1, description: "Every stage starts with all of the answer's themes shown", level: g => (bossRewardOwned(g, "umtAllThemes") ? 1 : 0) },
@@ -320,7 +320,7 @@
     lastStand: ["+25 last-guess solve", "+45 last-guess solve", "+100 last-guess solve"],
     pickpocket: ["+$1 per yellow", "+$2 per yellow", "+$4 per yellow"],
     gracePeriod: ["1st late guess free", "2 late guesses free", "2 free, then half"],
-    questCadence: ["Quests every 2nd guess", "Quests every guess"]
+    questCadence: ["Quests on 2, 3, 5", "Quests on 1, 2, 3, 5"]
   };
 
   // A stackable power's description lists every level, and says the third
