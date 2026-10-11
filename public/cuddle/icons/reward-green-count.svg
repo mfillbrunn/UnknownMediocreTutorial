@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img">
-  <rect x="4" y="4" width="88" height="88" rx="22" fill="#fff4cf" stroke="#8a4b08" stroke-width="4"/>
-  <circle cx="48" cy="48" r="27" fill="#ff9f43" stroke="#8a4b08" stroke-width="5"/><path d="M55 35c-3-3-13-4-16 1-5 8 18 6 14 15-3 6-13 5-17 1M47 27v42" fill="none" stroke="#8a4b08" stroke-width="5" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="A green letter tile with a count of two">
+  <rect x="4" y="4" width="88" height="88" rx="22" fill="#e5f9ec" stroke="#1d6b3a" stroke-width="4"/>
+  <rect x="17" y="23" width="50" height="54" rx="9" fill="#3fbf6f" stroke="#1d6b3a" stroke-width="5"/>
+  <path d="M35 37h16M35 37v26h16M35 50h12" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="68" cy="27" r="16" fill="#ffffff" stroke="#1d6b3a" stroke-width="4.5"/>
+  <path d="M59 22l7 8M66 22l-7 8" stroke="#1d6b3a" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M70 21.5c1.5-2 6-2 6.5 1 .5 2.6-3 4.5-6.5 8h7" fill="none" stroke="#1d6b3a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

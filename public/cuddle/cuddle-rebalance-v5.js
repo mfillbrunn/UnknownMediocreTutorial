@@ -1599,6 +1599,15 @@
     return Boolean(active && active.rareSecret);
   }
 
+  function rareSecretNow(game) {
+    // While a new stage picks its answer, the old one is still in state.
+    if (game && game.__umtPickingSecret) return false;
+    const state = stateOf(game) || {};
+    const secret = String(state.secret || "").toUpperCase();
+    return Boolean(secret) && state.status === "playing"
+      && Array.isArray(window.CuddleRareWords) && window.CuddleRareWords.includes(secret);
+  }
+
   function rareWordPool(game) {
     const state = stateOf(game) || {};
     const removed = new Set(state.removedLetters || []);
@@ -4500,8 +4509,20 @@
     // On a Rare Word stage the whole candidate pool is the rare list: the
     // secret is picked from it, and quests and "possible answers" read the
     // same pool, so none of them contradict the answer.
+    wrapMethod(prototype, "_pickSecret", function (original, args) {
+      this.__umtPickingSecret = true;
+      try {
+        return original.apply(this, args);
+      } finally {
+        this.__umtPickingSecret = false;
+      }
+    });
+
+    // The answer itself settles it too: a stage whose secret is a rare word
+    // is a rare stage whatever path set it up (a revealed mystery stop, a
+    // stacked stop, a reload), so the counter can never leave the answer out.
     wrapMethod(prototype, "getActiveWords", function (original, args) {
-      if (rareStage(this)) {
+      if (rareStage(this) || rareSecretNow(this)) {
         const pool = rareWordPool(this);
         if (pool.length) return pool;
       }

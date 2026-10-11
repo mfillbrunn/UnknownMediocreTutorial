@@ -2594,6 +2594,8 @@
   // is whether this pick is your first copy or your last one before the
   // cap.
   function formatLevelTag(current, maxLevel) {
+    // A one-level power: taking it once is all there is.
+    if (Number(maxLevel) === 1) return current >= 1 ? "One-time · maxed" : "One-time · maxed once taken";
     const capped = Number.isFinite(maxLevel);
     const next = capped ? Math.min(current + 1, maxLevel) : current + 1;
     const atMax = capped && next >= maxLevel;
