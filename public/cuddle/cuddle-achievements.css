@@ -131,6 +131,15 @@
 .umt-ach-body small { color: #c9c3d8; font-size: 0.76rem; line-height: 1.3; }
 .umt-ach-foot { margin-top: 3px; font-size: 0.7rem; font-style: normal; font-weight: 800; letter-spacing: 0.04em; }
 .umt-ach.is-locked { opacity: 0.5; }
+/* Signed Up, not yet earned: a link to the account screen, not a dead card. */
+.umt-ach.is-locked.is-signup {
+  opacity: 1;
+  border-style: dashed;
+  border-color: rgba(246, 201, 86, 0.6);
+  cursor: pointer;
+}
+.umt-ach.is-locked.is-signup .umt-ach-icon { filter: none; }
+.umt-ach.is-locked.is-signup .umt-ach-foot { color: #ffe08a; }
 .umt-ach.is-locked .umt-ach-icon { filter: grayscale(1); }
 .umt-ach.is-locked .umt-ach-foot { color: #8f89a0; }
 .umt-ach.is-ready {

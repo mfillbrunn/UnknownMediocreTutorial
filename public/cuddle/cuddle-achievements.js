@@ -20,6 +20,7 @@
 
   // -- the list ------------------------------------------------------------------
   var GROUPS = [
+    { id: "account", label: "Account" },
     { id: "wins", label: "Wins" },
     { id: "run", label: "In a run" },
     { id: "stage", label: "In a stage" },
@@ -28,6 +29,9 @@
   ];
 
   var LIST = [
+    // Cuddle never needs an account (progress lives in this browser); this
+    // is just a thank-you coin for making one.
+    { id: "signUp", group: "account", icon: "🔑", title: "Signed Up", text: "Create a free account. Cuddle never needs one, but here's a coin for it." },
     { id: "winEasy", group: "wins", icon: "🏆", title: "Easy Win", text: "Win a run on Easy." },
     { id: "winMedium", group: "wins", icon: "🏆", title: "Medium Win", text: "Win a run on Medium." },
     { id: "winHard", group: "wins", icon: "🏆", title: "Hard Win", text: "Win a run on Hard." },
@@ -182,7 +186,17 @@
     return out;
   }
 
+  function signedIn() {
+    try {
+      return typeof window.isSignedIn === "function" && Boolean(window.isSignedIn());
+    } catch (_error) {
+      return false;
+    }
+  }
+
   function check() {
+    // Checked whether or not a run is going.
+    if (signedIn()) unlock("signUp");
     var game = activeGame();
     var state = game && game.state;
     if (!state || !state.runId || inDuel(state)) return;
@@ -300,8 +314,10 @@
         var unlocked = Boolean(data.unlocked[item.id]);
         var claimed = Boolean(data.claimed[item.id]);
         var state = claimed ? "is-claimed" : unlocked ? "is-ready" : "is-locked";
-        var foot = claimed ? "Claimed" : unlocked ? "Tap to claim +1 coin" : "Locked";
-        return '<button type="button" class="umt-ach ' + state + '" data-umt-ach="' + item.id + '"' + (unlocked && !claimed ? "" : ' aria-disabled="true"') + ">"
+        // The sign-up card, while locked, opens the account screen.
+        var signUpLink = item.id === "signUp" && !unlocked;
+        var foot = claimed ? "Claimed" : unlocked ? "Tap to claim +1 coin" : signUpLink ? "Tap to sign up" : "Locked";
+        return '<button type="button" class="umt-ach ' + state + (signUpLink ? " is-signup" : "") + '" data-umt-ach="' + item.id + '"' + (unlocked && !claimed || signUpLink ? "" : ' aria-disabled="true"') + ">"
           + '<span class="umt-ach-icon" aria-hidden="true">' + iconHtml(item.icon) + "</span>"
           + '<span class="umt-ach-body"><b>' + escapeHtml(item.title) + "</b><small>" + escapeHtml(item.text) + "</small>"
           + '<em class="umt-ach-foot">' + foot + "</em></span></button>";
@@ -363,6 +379,12 @@
       return;
     }
     var card = target.closest("[data-umt-ach]");
+    if (card && card.classList.contains("is-signup") && typeof window.showScreen === "function") {
+      event.preventDefault();
+      close();
+      window.showScreen("accountScreen");
+      return;
+    }
     if (card) {
       event.preventDefault();
       if (claim(card.dataset.umtAch)) {
