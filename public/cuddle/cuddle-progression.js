@@ -112,7 +112,7 @@
     mulliganTiles: "Unlocks mulligan tiles",
     jokerTiles: "Unlocks Joker tiles",
     oracleTiles: "Unlocks hint tiles",
-    rainyDay: "10% interest per stage",
+    rainyDay: "5% interest per stage",
     encore: "+50 every 3rd solve",
     vowelBounty: "+5 per vowel solved",
     doubleDown: "+50 on lucky guess",
@@ -124,7 +124,7 @@
     haggler: "Cheaper refreshes",
     lastLight: "Last letter revealed",
     yellowHint: "Reveals 1 letter",
-    jokerCache: "+1 Joker each stage",
+    jokerCache: "+1 Joker each stage per level",
     jokerCacheLarge: "+2 Jokers each stage",
     "alphabet-compass": "Earlier / later hints",
     consonantSweep: "Rules out 1 consonant per guess",
@@ -721,11 +721,9 @@
     const challenge = mandatory || mini;
     if (challenge) {
       const description = typeof challenge.description === "string" ? challenge.description : "";
-      // A stage's own challenge(s): how hard it is, then each challenge on
-      // its own line (and the easier half of a stacked stop, if any).
+      // A stage's own challenge(s): each challenge on its own line (and the easier half of a stacked stop, if any).
       const stop = mandatory && node && window.CuddleRebalanceV5?.stopVariant?.(game, node);
-      const skulls = stop ? Number(stop.skulls) || 0 : 0;
-      if (skulls) lines.push({ kind: "hazard", icon: "💀", text: `Difficulty: ${["", "Tricky", "Hard", "Brutal"][skulls]} (${skulls} of 3 skulls)` });
+      // (No difficulty line: the map already showed the stop's skulls.)
       if (stop && stop.ease === "luckyStart") lines.push({ kind: "bonus", icon: "🍀", text: "Lucky Start — one letter starts in its exact place" });
       if (stop && stop.ease === "themedWordle") lines.push({ kind: "bonus", icon: "🧭", text: "Themed — one of the answer's themes is revealed" });
       if (stop && Array.isArray(stop.parts) && stop.parts.length) {

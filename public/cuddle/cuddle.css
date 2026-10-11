@@ -3948,7 +3948,11 @@
 }
 .cuddle-win-modal {
   position: relative;
-  overflow: hidden;
+  /* Scrolls when the badges run past the screen; sideways stays clipped
+     for the celebration effects. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-color: rgba(246, 201, 86, 0.55);
   box-shadow: 0 0 0 1px rgba(246, 201, 86, 0.15), 0 24px 80px rgba(0, 0, 0, 0.55), 0 0 60px rgba(246, 201, 86, 0.18);
 }
@@ -4604,14 +4608,6 @@
 }
 .umt-combo-line svg { flex: 0 0 auto; width: 12px; height: 12px; margin-top: 2px; color: #ff8fc0; }
 .umt-combo-line b { color: #ff9fca; font-weight: 850; }
-.umt-combo-legend {
-  margin: -2px auto 10px;
-  max-width: 46ch;
-  color: rgba(255, 236, 246, .82);
-  font-size: .78rem;
-  line-height: 1.35;
-}
-.umt-combo-legend b { color: #ffb3d4; }
 
 /* Play screen, economical with space: the next boss's target rides inside
    the points pill (288/510), and the theme, the clues, the run's excluded

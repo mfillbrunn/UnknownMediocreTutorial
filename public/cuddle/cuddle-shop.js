@@ -97,11 +97,11 @@
     { id: "keepTreasureMap", icon: "reward-green-value.svg", title: "Treasure Map", cost: 36, max: 3, bonus: "treasureMap",
       blurb: "One more special tile appears on the board every stage." },
     { id: "keepMulliganTiles", icon: "reward-quest-reroll.svg", title: "Mulligan Tiles", cost: 30, max: 3, bonus: "mulliganTiles",
-      blurb: "Special tiles can hand you a free mulligan when you hit them." },
+      blurb: "Mulligan tiles: a green or yellow on one gives +1 mulligan." },
     { id: "keepJokerTiles", icon: "reward-joker-per-round.svg", title: "Joker Tiles", cost: 42, max: 3, bonus: "jokerTiles",
-      blurb: "Special tiles can hand you a Joker when you hit them." },
+      blurb: "Joker tiles: a green or yellow on one gives +1 Joker." },
     { id: "keepOracleTiles", icon: "reward-coach-earlier-hint.svg", title: "Oracle Tiles", cost: 60, max: 3, bonus: "oracleTiles",
-      blurb: "Rare special tiles that reveal a letter's exact place when you hit them." }
+      blurb: "Oracle tiles: a green or yellow on one places a letter." }
   ].map(item => (item.bonus
     ? Object.assign(item, {
       level: game => Math.max(0, int(bonuses(game)[item.bonus])),

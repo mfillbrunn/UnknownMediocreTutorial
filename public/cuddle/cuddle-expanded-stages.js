@@ -291,7 +291,6 @@
   let aiTyping = null;
   // When the player's turn last began, so the turn box flashes once per
   // turn instead of on every re-render.
-  let turnFlash = { key: "", at: 0 };
   const AI_TYPE_STEP_MS = 170;
   // The Duel's rival, one per AI difficulty: introduced like a boss, and
   // its face stands in for the AI on the turn box and the result.
@@ -323,7 +322,6 @@
       + `<text x="12" y="20.7" text-anchor="middle" font-family="system-ui,sans-serif" font-size="4.4" font-weight="900" fill="#140f1f">?</text>`
       + `</svg>`;
   }
-  const TURN_FLASH_MS = 1500;
   let challengeObserver = null;
 
   function install() {
@@ -2085,7 +2083,10 @@
       if (!ready.ok) return ready;
       const duel = ready.duel;
       const normalized = String(glyph || "").toUpperCase();
-      if (!/^[A-Z]$/.test(normalized) && normalized !== Engine.CUDDLE_JOKER_GLYPH) return { ok: false, error: "That tile is unavailable." };
+      // A dead tile (cuddle-burdens.js) is selectable too: it can only be
+      // mulliganed, and tapping it in play says so (the toggleDraft guard).
+      const deadTile = Boolean(window.CuddleBurdens && window.CuddleBurdens.isDeadGlyph(normalized));
+      if (!/^[A-Z]$/.test(normalized) && normalized !== Engine.CUDDLE_JOKER_GLYPH && !deadTile) return { ok: false, error: "That tile is unavailable." };
       try {
         const result = withDuelTileState(game, duel, state => {
           const cards = cardsForDuelGlyph(game, state, normalized);
@@ -2605,7 +2606,7 @@
       ));
       if (duel.phase === "playing" && duel.turn === "ai") {
         rows.push(
-          `<div class="cuddle-board-row umt-duel-row is-ai is-thinking" aria-label="The AI is typing its guess">`
+          `<div class="cuddle-board-row umt-duel-row is-ai is-thinking" role="status" aria-label="The AI's turn: it is typing its guess">`
           + Array.from({ length: 5 }, (_unused, index) => {
             const letter = aiTyping && index < aiTyping.typed ? aiTyping.word[index] : "";
             return `<span class="cuddle-tile${letter ? " is-typed" : ""}">${escapeHtml(letter)}</span>`;
@@ -2633,7 +2634,8 @@
         } catch (_error) {
           draftRow = Array.from({ length: 5 }, () => `<span class="cuddle-tile"></span>`).join("");
         }
-        rows.push(`<div class="cuddle-board-row umt-duel-row is-current-row">${draftRow}<span class="cuddle-row-score umt-duel-who is-you"></span></div>`);
+        // Your turn: the row you type into pulses (there's no turn banner).
+        rows.push(`<div class="cuddle-board-row umt-duel-row is-current-row is-your-turn" role="status" aria-label="Your turn: build your guess in this row">${draftRow}<span class="cuddle-row-score umt-duel-who is-you"></span></div>`);
       }
       return `<section class="cuddle-board umt-duel-board" aria-label="Duel board">${rows.join("")}</section>`;
     }
@@ -2688,7 +2690,13 @@
         group.glyph === Engine.CUDDLE_JOKER_GLYPH ? "is-joker" : "",
         "umt-duel-hand-card"
       ].filter(Boolean).join(" ");
-      const badge = infinite
+      // The Joker's badge counts uses left, as on a normal stage: the banked
+      // charges plus the one this card already is.
+      const isJoker = group.glyph === Engine.CUDDLE_JOKER_GLYPH;
+      const jokerUses = isJoker ? Math.max(0, Number(state.megaState && state.megaState.jokerCharges) || 0) + 1 : 0;
+      const badge = isJoker
+        ? `<span class="cuddle-card-count" aria-hidden="true">×${jokerUses}</span>`
+        : infinite
         ? `<span class="cuddle-card-count is-infinite" aria-hidden="true">&infin;</span>`
         : group.cards.length > 1
           ? `<span class="cuddle-card-count" aria-hidden="true">×${group.cards.length}</span>`
@@ -2696,9 +2704,20 @@
       const position = positions.length
         ? `<span class="cuddle-card-position" aria-hidden="true">#${positions.join(",")}</span>`
         : "";
+      // A dead tile (cuddle-burdens.js): no letter, only good for a mulligan.
+      const dead = Boolean(window.CuddleBurdens && window.CuddleBurdens.isDeadGlyph(group.glyph));
+      if (dead) {
+        const label = `Dead tile${group.cards.length > 1 ? ` ×${group.cards.length}` : ""}: no letter, can't be played. Mulligan it away.`;
+        return (
+          `<button type="button" class="cuddle-card is-dead umt-duel-hand-card${selectedCount ? " is-selected" : ""}" data-cuddle-campaign-action="expanded-duel-card" data-shop-item-id="${escapeHtml(group.glyph)}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${group.cards.length}"${disabled ? " disabled" : ""} aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">`
+          + `<span class="cuddle-card-letter cuddle-card-dead" aria-hidden="true">${window.CuddleBurdens.skullSvg()}</span>${group.cards.length > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${group.cards.length}</span>` : ""}</button>`
+        );
+      }
       const modeText = duel.mulliganMode
         ? `${selectedCount} selected; ${eligible.length} finite available; limit ${limit}`
-        : `${draftedCount} in the current word; reusable while visible`;
+        : isJoker
+          ? `${jokerUses} use${jokerUses === 1 ? "" : "s"} left`
+          : `${draftedCount} in the current word; reusable while visible`;
       return (
         `<button type="button" class="${classes}" data-cuddle-campaign-action="expanded-duel-card" data-shop-item-id="${escapeHtml(group.glyph)}" data-card-glyph="${escapeHtml(group.glyph)}" data-duel-drag="1" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${group.cards.length}"${disabled ? " disabled" : ""} aria-pressed="${draftedCount > 0 || selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(group.glyph)}: ${escapeHtml(modeText)}">`
         + `<span class="cuddle-card-letter">${escapeHtml(group.glyph)}</span>${position}${badge}</button>`
@@ -2766,23 +2785,25 @@
     }
 
     // The live quest and the run's clue chips, read from the Duel's state.
-    // "Guess N", turning red with its cost once the player's guess is past
-    // the stage's quick-solve window (the same points penalty as a stage).
-    // Just the count: the guess window's cost is explained once per world
-    // (cuddle-world-intro.js).
-    function renderDuelGuessCount(game, duel, mine) {
-      return `<span class="umt-duel-status-count">Guess ${mine}</span>`;
-    }
-
     function renderDuelStrip(game, duel) {
       const tile = duel.tileState;
       if (!tile) return "";
       const parts = [];
       const quests = [tile.activeQuest, ...(Array.isArray(tile.activeQuests) ? tile.activeQuests.slice(1) : [])].filter(Boolean);
       quests.forEach((quest, index) => {
+        // Lights up "Ready" while the word being built meets the quest,
+        // the same check (and look) as a normal stage's strip.
+        let ready = false;
+        try {
+          const meets = window.CuddleCampaign && window.CuddleCampaign.draftMeetsQuest;
+          ready = typeof meets === "function" && duel.turn === "player"
+            && Boolean(withDuelTileState(game, duel, () => meets(game, quest)));
+        } catch (_error) {
+          ready = false;
+        }
         // Tap for the full rules (openQuestInfo in cuddle-campaign.js).
-        parts.push(`<span class="cuddle-quest-inline" role="button" tabindex="0" data-quest-info="${index}" data-quest-source="duel" title="Tap for details">`
-          + `<span class="cuddle-quest-tag"><span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> Quest</span>`
+        parts.push(`<span class="cuddle-quest-inline${ready ? " is-ready" : ""}" role="button" tabindex="0" data-quest-info="${index}" data-quest-source="duel" title="${ready ? "Your word meets this quest. " : ""}Tap for details">`
+          + `<span class="cuddle-quest-tag">${ready ? '<span aria-hidden="true">✓</span> Ready' : `<span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> Quest`}</span>`
           + `<span class="cuddle-quest-body"><b>${escapeHtml(quest.title || "Quest")}:</b> <span>${escapeHtml(quest.description || "")}</span></span></span>`);
       });
       let chips = [];
@@ -2815,15 +2836,32 @@
       return parts.length ? `<div class="cuddle-play-strip umt-duel-strip">${parts.join("")}</div>` : "";
     }
 
+    function rewardImg(id) {
+      const slug = String(id || "gift").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[^a-zA-Z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "").toLowerCase() || "gift";
+      return `<img class="umt-cuddle-svg-icon" src="cuddle/icons/reward-${escapeHtml(slug)}.svg" alt="" aria-hidden="true"`
+        + ` onerror="this.onerror=null;this.src='cuddle/icons/gift.svg'">`;
+    }
+
     function renderDuelQuestReward(duel) {
       const tile = duel.tileState;
       if (!tile || tile.status !== "questReward") return "";
       const choices = Array.isArray(tile.questRewardChoices) ? tile.questRewardChoices : [];
+      // Which quest the guess just completed, as a normal stage shows it.
+      const history = Array.isArray(tile.history) ? tile.history : [];
+      const last = history[history.length - 1];
+      const done = last && last.questComplete && last.questId && window.CuddleQuestBook
+        ? (window.CuddleQuestBook.QUESTS || []).find(item => item.id === last.questId) : null;
       return `<div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="umtDuelQuestTitle">`
         + `<section class="cuddle-modal cuddle-modal-wide cuddle-compact-cards"><h2 id="umtDuelQuestTitle">Quest reward</h2>`
+        + (done ? `<p class="umt-duel-quest-done"><span aria-hidden="true">✓</span> Quest complete: <b>${escapeHtml(done.title)}</b></p>` : "")
         + `<div class="cuddle-choice-grid">${choices.map(choice => (
-          `<button type="button" class="cuddle-choice" data-cuddle-campaign-action="expanded-duel-quest-reward" data-shop-item-id="${escapeHtml(choice.id)}">`
-          + `<span class="cuddle-choice-icon">${escapeHtml(choice.icon || "🎁")}</span><strong>${escapeHtml(choice.title || "Reward")}</strong>`
+          // The reward's own drawing, as on a normal stage's quest reward
+          // screen. The shared icon passes skip .umt-duel-reward: these
+          // cards carry no data-reward-id (that would make a normal stage's
+          // click handler pick the reward), so they could only guess.
+          `<button type="button" class="cuddle-choice umt-duel-reward" data-cuddle-campaign-action="expanded-duel-quest-reward" data-shop-item-id="${escapeHtml(choice.id)}">`
+          + `<span class="cuddle-choice-icon umt-svg-choice-icon">${rewardImg(choice.id)}</span><strong>${escapeHtml(choice.title || "Reward")}</strong>`
           + `<small>${richText(choice.description || "")}</small></button>`
         )).join("")}</div></section></div>`;
     }
@@ -2866,24 +2904,6 @@
             : `<button type="button" class="cuddle-btn" data-cuddle-campaign-action="expanded-duel-end">End this run</button>`)
           + `</section></div>`
         : "";
-      const aiTurn = duel.turn === "ai";
-      const mine = (duel.history || []).filter(entry => entry.actor === (aiTurn ? "ai" : "player")).length + 1;
-      const statusTitle = aiTurn ? "AI's turn" : "Your turn";
-      const statusLine = aiTurn
-        ? `${escapeHtml(rivalOf(duel).name)} is thinking<span class="umt-duel-dots" aria-hidden="true"><i></i><i></i><i></i></span>`
-        : escapeHtml(duel.mulliganMode
-          ? "Pick tiles to swap, then confirm."
-          : (duel.history || []).length ? "Build a word from your tiles." : duel.message || "Build a word from your tiles.");
-      const statusIcon = aiTurn
-        ? rivalSvg(rivalOf(duel))
-        : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>`;
-      let flash = "";
-      if (playing && duel.turn === "player") {
-        const key = `${duel.id}:${(duel.history || []).length}`;
-        if (turnFlash.key !== key) turnFlash = { key, at: Date.now() };
-        const elapsed = Date.now() - turnFlash.at;
-        if (elapsed < TURN_FLASH_MS) flash = ` is-your-turn" style="--flash-t:-${elapsed}ms`;
-      }
       return (
         `<div class="cuddle-shell umt-duel-shell">`
         + shellHeader(game, "WORD DUEL")
@@ -2891,11 +2911,6 @@
           ? `<main class="umt-event-page">${choosing ? renderDuelDifficulty(game, duel) : ""}${!choosing && (duel.history || []).length ? renderDuelBoard(game, duel) : ""}${outcome}</main>`
           : `<main class="cuddle-play-area umt-duel-play">`
             + `<section class="cuddle-left-column">`
-            + `<div class="umt-duel-status ${aiTurn ? "is-ai" : "is-player"}${flash}" role="status">`
-            + `<span class="umt-duel-status-badge">${statusIcon}</span>`
-            + `<span class="umt-duel-status-text"><b>${statusTitle}</b><small>${statusLine}</small></span>`
-            + renderDuelGuessCount(game, duel, mine, !aiTurn)
-            + `</div>`
             + renderDuelStrip(game, duel)
             + renderDuelBoard(game, duel)
             + `</section>`

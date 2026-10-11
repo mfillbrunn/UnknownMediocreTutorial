@@ -1193,6 +1193,8 @@
     renderRoundIntroMap,
     insertMap,
     afterRender,
-    handleUiAction
+    handleUiAction,
+    // The Word Duel reads the same check for its own quest strip.
+    draftMeetsQuest
   });
 }());

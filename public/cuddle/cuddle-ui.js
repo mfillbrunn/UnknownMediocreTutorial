@@ -962,7 +962,7 @@
       return `
       <button class="cuddle-card is-dead${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${deadCount}" ${deadDisabled ? "disabled" : ""}
         aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(deadLabel)}" title="${escapeHtml(deadLabel)}">
-        <span class="cuddle-card-letter cuddle-card-dead" aria-hidden="true"></span>
+        <span class="cuddle-card-letter cuddle-card-dead" aria-hidden="true">${window.CuddleBurdens.skullSvg()}</span>
         ${deadCount > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${deadCount}</span>` : ""}
       </button>`;
     }
@@ -1187,6 +1187,16 @@
     return window.CuddleIcons ? window.CuddleIcons.svg(name) : "";
   }
 
+  // The boss stop's own icon from the map (cuddle-worlds.js), so a boss
+  // card looks like the stop you chose. The reward-icon passes skip boss
+  // cards, so nothing redraws it.
+  function bossCardIcon(isFinal, option) {
+    const worlds = window.CuddleWorlds;
+    return worlds && typeof worlds.iconSvg === "function"
+      ? worlds.iconSvg(isFinal ? "final" : "boss")
+      : escapeHtml(option.icon || "💀");
+  }
+
   function bossCardMarkup(option, isFinal) {
     const id = String(option.id);
     // A boss's reward is no longer its own: beating any boss opens a pick
@@ -1220,7 +1230,7 @@
       : "";
     return `
       <div class="cuddle-choice cuddle-boss-choice" data-boss-id="${escapeHtml(id)}">
-        <span class="cuddle-choice-icon">${escapeHtml(option.icon || "💀")}</span>
+        <span class="cuddle-choice-icon umt-boss-card-icon">${bossCardIcon(isFinal, option)}</span>
         <strong>${escapeHtml(option.title)}</strong>
         <small>${goldenMoney(escapeHtml(option.description))}</small>
         <div class="umt-boss-traits">
@@ -1338,9 +1348,6 @@
           <span class="cuddle-modal-kicker">${kicker}</span>
           <h2 id="cuddleUpgradeTitle">${heading}</h2>
           ${body ? `<p>${body}</p>` : ""}
-          ${state.upgradeChoices.some(choice => pendingSynergyFor(choice.key || choice.id))
-            ? `<p class="umt-combo-legend"><b>★ Combo</b>: pairs with a power you have, for a bonus.</p>`
-            : ""}
           <div class="cuddle-choice-grid">
             ${state.upgradeChoices.map((choice, index) => `
               <button class="cuddle-choice${index >= wideFrom ? " is-wide-extra" : ""}" data-upgrade-key="${escapeHtml(choice.key)}">
@@ -1659,10 +1666,6 @@
           ${top}
           ${seedChip(state)}
           ${renderRunStats(state)}
-          <details class="cuddle-upgrade-details">
-            <summary>Final upgrades</summary>
-            <ul>${game.getUpgradeSummary().map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
-          </details>
           ${renderEndBadges()}
           <p id="cuddleShareStatus" class="cuddle-share-status" role="status" aria-live="polite"></p>
           <div class="cuddle-modal-actions">
@@ -1717,10 +1720,6 @@
             : escapeHtml(state.failureReason || "The run could not continue.")}</p>
           ${seedChip(state)}
           ${renderRunStats(state)}
-          <details class="cuddle-upgrade-details">
-            <summary>Final upgrades</summary>
-            <ul>${game.getUpgradeSummary().map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
-          </details>
           ${renderEndBadges()}
           <p class="cuddle-share-help">Share the final round grid without revealing the secret word.</p>
           <p id="cuddleShareStatus" class="cuddle-share-status" role="status" aria-live="polite"></p>

@@ -5,12 +5,13 @@
  * only if the player can afford one; if not, it waits for a later stage of
  * the same world. It comes in three sizes, picked at random from
  * the ones the wallet covers:
- *   Small   1 Common + 1 special
- *   Medium  1 Common + 2 specials
- *   Large   3 specials
+ *   Small   2 Commons
+ *   Medium  2 Commons + 1 special
+ *   Large   1 Common + 1 special + 1 that is either (a coin flip)
  * Each special is rolled on its own: Rare (most often), Epic (less often)
  * or Legendary (rarely). Buying opens the pack and keeps every card. Prices
- * rise with the world.
+ * rise with the world. The free Starting Pack every run opens with is its
+ * own size (3 specials) and isn't sold.
  *
  * The offer lives on the run (state.umtPackOffer), so a reload shows it
  * again, and its overlay sits outside #cuddleRoot so re-renders leave it
@@ -31,10 +32,13 @@
   // cost in the shop). Only sizes the player can afford are offered; the
   // offer picks one of those at random.
   var SIZES = Object.freeze([
-    Object.freeze({ id: "small", name: "Small", commons: 1, specials: 1, prices: [35, 45, 55] }),
-    Object.freeze({ id: "medium", name: "Medium", commons: 1, specials: 2, prices: [55, 70, 85] }),
-    Object.freeze({ id: "large", name: "Large", commons: 0, specials: 3, prices: [75, 95, 115] })
+    Object.freeze({ id: "small", name: "Small", commons: 2, specials: 0, flex: 0, prices: [35, 45, 55] }),
+    Object.freeze({ id: "medium", name: "Medium", commons: 2, specials: 1, flex: 0, prices: [55, 70, 85] }),
+    // flex: a slot that's a Common or a special, 50/50, rolled on opening.
+    Object.freeze({ id: "large", name: "Large", commons: 1, specials: 1, flex: 1, prices: [75, 95, 115] })
   ]);
+  // The free pack a run starts with (cuddle-money-mode.js); never for sale.
+  var STARTER = Object.freeze({ id: "starter", name: "Large", commons: 0, specials: 3, flex: 0, prices: [] });
   var SPECIAL_ODDS = [["rare", 75], ["epic", 20], ["legendary", 5]];
   var TIER_LABEL = { common: "Common", rare: "Rare", epic: "Epic", legendary: "Legendary" };
   // The opening, in four beats: shake, swell, rip (with a spray of
@@ -79,6 +83,7 @@
 
   // Offers saved before sizes existed were the old 2 Commons + 1 special.
   function sizeOf(offer) {
+    if (offer && offer.size === "starter") return STARTER;
     for (var i = 0; i < SIZES.length; i += 1) if (offer && SIZES[i].id === offer.size) return SIZES[i];
     return { id: "classic", name: "", commons: 2, specials: 1, prices: [] };
   }
@@ -163,8 +168,13 @@
     var size = sizeOf(offer);
     var random = randomFor(this);
     var specials = [];
+    var commons = size.commons;
     for (var slot = 0; slot < size.specials; slot += 1) specials.push(rollSpecialTier(random));
-    var cards = api.packRewards(this, specials, offer.id + ":" + specials.join("-"), size.commons) || [];
+    for (var flex = 0; flex < (size.flex || 0); flex += 1) {
+      if (random() < 0.5) commons += 1;
+      else specials.push(rollSpecialTier(random));
+    }
+    var cards = api.packRewards(this, specials, offer.id + ":" + specials.join("-"), commons) || [];
     if (!cards.length) return { ok: false, error: "There are no upgrades left to put in a pack." };
     var game = this;
     var kept = [];
@@ -230,7 +240,7 @@
   function sealedHtml(offer, wallet) {
     var short = !offer.starter && wallet < offer.price;
     var size = sizeOf(offer);
-    var total = size.commons + size.specials;
+    var total = size.commons + size.specials + (size.flex || 0);
     var name = (size.name ? size.name + " " : "") + "Pack";
     var title = offer.starter ? "Your Starting Pack" : "A " + name + " is for sale";
     var kicker = offer.starter ? "Starting bonus" : "Stage cleared · World " + offer.world;

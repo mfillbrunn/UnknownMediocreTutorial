@@ -317,7 +317,7 @@
     mode.starterRewardChoices = [];
     state.umtPackOffer = {
       id: (window.CuddleSeed ? window.CuddleSeed.text(state) : (state.runId || "run")) + ":starter-pack",
-      size: "large",
+      size: "starter",
       price: 0,
       world: 1,
       starter: true,
@@ -716,7 +716,8 @@
     var lines = [];
     var rates = entry.tileRates || {};
     var tile = function addTile(count, rate, label) {
-      var total = Math.round(asNumber(count, 0) * asNumber(rate, 0));
+      // Rounded down, as the engine scores a row (Colour Surge's half points).
+      var total = Math.floor(asNumber(count, 0) * asNumber(rate, 0) + 1e-9);
       if (!asNumber(count, 0) || !total) return;
       lines.push({ label: count + " " + label, detail: formatPoints(rate) + " each", amount: total });
     };

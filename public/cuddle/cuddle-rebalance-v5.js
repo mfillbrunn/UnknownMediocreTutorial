@@ -62,7 +62,7 @@
     Object.freeze({
       id: IDS.rainyDay, key: IDS.rainyDay, icon: "\uD83C\uDFE6",
       title: "Rainy Day Fund", name: "Rainy Day Fund",
-      description: "Every stage pays 10% interest on your wallet, up to $25. Level 2: 20%, up to $50. Level 3: 30%, up to $120.",
+      description: "Every stage pays 5% interest on your wallet, up to $10. Level 2: 10%, up to $20. Level 3: 15%, up to $40.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
@@ -204,9 +204,10 @@
       icon: "🃏",
       title: "Small Joker Cache",
       name: "Small Joker Cache",
-      description: "One extra Joker every stage.",
-      maxLevel: 1,
-      maxCount: 1,
+      // Each level adds one Joker per stage: 1, 2, then 3 at level 3.
+      description: "One extra Joker every stage. Level 2: two. Level 3: three.",
+      maxLevel: 3,
+      maxCount: 3,
       kind: "upgrade"
     }),
     Object.freeze({
@@ -2684,10 +2685,11 @@
     // Interest on the wallet, paid into the wallet -- it used to read the
     // run's points and pay points, while promising money.
     const balance = Math.max(0, asNumber(state.cuddleMoney, 0)) + (compound ? totalJokerStock(game) * 10 : 0);
-    // 10% up to $25, 20% up to $50, then 30% up to $120 at level 3.
+    // 5% up to $10, 10% up to $20, then 15% up to $40 at level 3.
+    // (Was 10/20/30% up to $25/$50/$120.)
     const tier = Math.max(0, Math.min(3, Math.floor(level)));
-    const cap = [0, 25, 50, 120][tier] * (compound ? 2 : 1);
-    const interest = Math.min(cap, Math.floor(balance * 0.1 * tier));
+    const cap = [0, 10, 20, 40][tier] * (compound ? 2 : 1);
+    const interest = Math.min(cap, Math.floor(balance * 0.05 * tier));
     if (interest <= 0) return;
     state.cuddleMoney = Math.max(0, asNumber(state.cuddleMoney, 0)) + interest;
     appendNotice(game, `Rainy Day Fund paid $${interest} in interest.`);
@@ -2767,7 +2769,7 @@
     if (!entry || trueBossRound(game) || noMoneyRound(game)) return;
     const greens = asInteger(entry.greenCount, 0);
     if (greens <= 0) return;
-    const bonus = Math.round(greens * greenValue(game, entry));
+    const bonus = Math.floor(greens * greenValue(game, entry) + 1e-9);
     if (bonus > 0) addScoreBonus(game, bonus, "umtJackpot",
       `${greens} green tile${greens === 1 ? "" : "s"} doubled`, entry);
   }
@@ -3058,7 +3060,9 @@
         mega.hasJokerUnlocked = true;
       }
       custom.cuddleUserJokerCachePerRoundLevel = current;
-      appendNotice(game, "Small Joker Cache: one extra Joker every stage.");
+      appendNotice(game, current >= 2
+        ? `Small Joker Cache level ${current}: ${current} extra Jokers every stage.`
+        : "Small Joker Cache: one extra Joker every stage.");
     }
     if (id === IDS.jokerCacheLarge) {
       const mega = megaState(game);
@@ -3537,7 +3541,7 @@
     umtAllThemes: { title: "All-Seeing Atlas", description: "Reveal every available theme at the start of every Wordle.", shape: "tags" },
     umtOpeningInsight: { title: "Opening Insight", description: "Begin each Wordle with an extra green position hint.", shape: "greenHint" },
     umtQuickStudy: { title: "Quick Study", description: "Guesser Hints arrive sooner.", shape: "hourglass" },
-    umtJokerCache: { title: "Joker Cache", description: "One extra Joker every stage.", shape: "joker" },
+    umtJokerCache: { title: "Joker Cache", description: "Extra Jokers every stage: one per level, up to three.", shape: "joker" },
     umtReserveDividend: { title: "Reserve Dividend", description: "Unused Jokers and mulligans pay an additional end-of-round bonus.", shape: "coins" },
     umtConsonantSweep: { title: "Process of Elimination", description: "After every guess, boss fights included, one more consonant that isn't in the answer is ruled out and shown: one after your first guess, a second after your second, and so on.", shape: "eliminate" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
@@ -3824,7 +3828,8 @@
       // Map stop buttons aren't reward cards; their icons belong to the map
       // layers. Drawing a reward icon here fought those layers every pass,
       // swapping the icon back and forth (visible as map flicker).
-      if (button.matches(".cuddle-branch-choice")) return;
+      // Boss cards draw the map's boss icon themselves (cuddle-ui.js).
+      if (button.matches(".cuddle-branch-choice, .umt-duel-reward, .cuddle-boss-choice")) return;
       const definition = choiceDefinition(game, button);
       const icon = button.querySelector(":scope > .cuddle-choice-icon");
       if (icon && icon.dataset.umtIconKey !== definition.id) {
