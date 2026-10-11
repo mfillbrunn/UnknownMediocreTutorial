@@ -2769,7 +2769,7 @@
       icon: "🔄",
       title: "Mulligan Tiles",
       tier: "common",
-      description: "Special tiles can now be Mulligan tiles: a yellow or green on one gives an extra mulligan. Taking it again makes them more common.",
+      description: "Mulligan tiles: a green or yellow on one gives +1 mulligan.",
       max: 3
     },
     {
@@ -2777,7 +2777,7 @@
       icon: "🃏",
       title: "Joker Tiles",
       tier: "rare",
-      description: "Special tiles can now be Joker tiles: a yellow or green on one gives you a Joker. Taking it again makes them more common.",
+      description: "Joker tiles: a green or yellow on one gives +1 Joker.",
       max: 3
     },
     {
@@ -2785,7 +2785,7 @@
       icon: "🔮",
       title: "Oracle Tiles",
       tier: "epic",
-      description: "Special tiles can now be Oracle tiles, the rarest kind: a yellow or green on one reveals a letter and its exact position. Taking it again makes them more common.",
+      description: "Oracle tiles: a green or yellow on one places a letter.",
       max: 3
     }
   ]);

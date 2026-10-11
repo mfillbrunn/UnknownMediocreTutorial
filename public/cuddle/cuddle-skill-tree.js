@@ -156,13 +156,13 @@
           level: g => ledgerCount(g, "treasureMap") },
         // Board tiles beyond money and points each need their unlock.
         { id: "mulliganTiles", icon: "🔄", title: "Mulligan Tiles", tier: "common", type: "tiles", maxLevel: 3,
-          levels: ["Special tiles can be Mulligan tiles: a green or yellow on one gives +1 mulligan", "Mulligan tiles show up twice as often", "Mulligan tiles show up four times as often"],
+          levels: ["Mulligan tiles: a green or yellow on one gives +1 mulligan", "Mulligan tiles 2× as common", "Mulligan tiles 4× as common"],
           level: g => ledgerCount(g, "mulliganTiles") },
         { id: "jokerTiles", icon: "🃏", title: "Joker Tiles", tier: "rare", type: "tiles", maxLevel: 3,
-          levels: ["Special tiles can be Joker tiles: a green or yellow on one gives +1 Joker", "Joker tiles show up twice as often", "Joker tiles show up four times as often"],
+          levels: ["Joker tiles: a green or yellow on one gives +1 Joker", "Joker tiles 2× as common", "Joker tiles 4× as common"],
           level: g => ledgerCount(g, "jokerTiles") },
         { id: "oracleTiles", icon: "🔮", title: "Oracle Tiles", tier: "epic", type: "tiles", maxLevel: 3,
-          levels: ["Special tiles can be Oracle tiles: a green or yellow on one shows where a letter goes", "Oracle tiles show up twice as often", "Oracle tiles show up four times as often"],
+          levels: ["Oracle tiles: a green or yellow on one places a letter", "Oracle tiles 2× as common", "Oracle tiles 4× as common"],
           level: g => ledgerCount(g, "oracleTiles") }
       ]
     },
@@ -242,7 +242,7 @@
           levels: ["Each guess with more greens than the one before pays +4 points", "Each guess with more greens than the one before pays +8 points", "Each guess with more greens than the one before pays +15 points"],
           level: g => powerLevel(g, "momentum") },
         { id: "bigOpener", icon: "🎯", title: "Big Opener", tier: "rare", type: "points", maxLevel: 3,
-          levels: ["Each green or yellow on your first guess pays +5 points", "Each green or yellow on your first guess pays +10 points", "Each green or yellow on your first guess pays +20 points"],
+          levels: ["Guess 1: +5 points per green or yellow", "Guess 1: +10 points per green or yellow", "Guess 1: +20 points per green or yellow"],
           level: g => powerLevel(g, "bigOpener") },
         { id: "lastStand", icon: "⚔️", title: "Last Stand", tier: "rare", type: "points", maxLevel: 3,
           levels: ["Solve on the last guess of your guess window for +25 points", "Solve on the last guess of your guess window for +45 points", "Solve on the last guess of your guess window for +100 points"],
