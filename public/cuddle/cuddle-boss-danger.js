@@ -56,7 +56,8 @@
       || document.getElementById("cuddleMoneyPayoutOverlay")
       || (money && typeof money.payoutActive === "function" && money.payoutActive())
       || (state.cuddleMoneyMode && state.cuddleMoneyMode.pendingPayout)
-      || (state.branchMap && (state.branchMap.expandedEvent || state.branchMap.expandedEventResult)));
+      // A Word Duel (and its result) is its own screen, not the map.
+      || (state.branchMap && (state.branchMap.expandedEvent || state.branchMap.expandedEventResult || state.branchMap.expandedDuel)));
   }
 
   function verdict() {
