@@ -116,23 +116,15 @@
   // The player picks a difficulty on arriving: the harder, the more words
   // to choose from and the bigger the bonus. The right pick passes it; a
   // wrong one is the stage's last guess, which ends the run, the same as
-  // losing a Duel. A trial pays its guesses and its spare rows, plus the
-  // trial bonus -- never the early-solve bonus.
+  // losing a Duel. A trial pays its guesses, its early solve and its spare
+  // rows -- counted up to its last guess, not the world's -- plus the
+  // trial bonus.
   var TRIAL_LEVELS = {
     easy: { label: "Easy", blind: 3, open: 6, points: 20, money: 10 },
     medium: { label: "Medium", blind: 5, open: 10, points: 40, money: 20 },
     hard: { label: "Hard", blind: 7, open: 14, points: 70, money: 35 }
   };
   var TRIAL_ORDER = ["easy", "medium", "hard"];
-
-  // The trial node the run stands on (during the stage and its cash-out).
-  function trialHere(state) {
-    var map = state && state.branchMap;
-    var position = map && map.position;
-    var row = position && Array.isArray(map.rows) ? map.rows[Number(position.row)] : null;
-    var node = row && Array.isArray(row.nodes) ? row.nodes[Number(position.col)] : null;
-    return node && node.type === "trial" ? node : null;
-  }
 
   function trialLevel(node) {
     return node && TRIAL_LEVELS[node.trialDifficulty] ? TRIAL_LEVELS[node.trialDifficulty] : null;
@@ -275,20 +267,29 @@
     return Math.min(limit, guess + rescued);
   };
 
-  // A trial pays its guesses and its spare rows, never the early-solve
-  // bonus (there's no guessing early when the list decides the guess):
-  // the spare rows' early rate is zero here...
-  var baseRules = proto.getRulesSummary;
-  if (typeof baseRules === "function") {
-    proto.getRulesSummary = function rulesWithPresetTrial() {
-      var rules = baseRules.apply(this, arguments);
-      if (rules && trialHere(this.state)) rules = Object.assign({}, rules, { earlyPoint: 0 });
-      return rules;
-    };
-  }
+  // A stage that ends on a preset pick (a Preset Trial stop, or the curse)
+  // measures its early solve and spare rows against that last guess, not
+  // the world's window: solving on guess 2 of 3 pays one spare row, not
+  // the four a 6-guess world would. (Second Cup's rescue rows still add.)
+  var baseThreshold = proto._solveGuessThreshold;
+  var readingPick = false;
+  proto._solveGuessThreshold = function solveThresholdWithPresetPick() {
+    var window = baseThreshold.apply(this, arguments);
+    if (readingPick) return window;
+    readingPick = true;
+    try {
+      var last = typeof this._hardGuessLimit === "function" && this.presetPickGuess() > 0
+        ? Number(this._hardGuessLimit()) : 0;
+      return last > 0 ? Math.min(window, last) : window;
+    } catch (_error) {
+      return window;
+    } finally {
+      readingPick = false;
+    }
+  };
 
-  // ...the engine's own early bonus is taken back on the solve, and the
-  // trial bonus is paid instead (points and money, by the difficulty).
+  // On a solve, the trial bonus is paid on top (points and money, by the
+  // difficulty).
   var baseSubmit = proto.submitDraft;
   proto.submitDraft = function submitDraftWithPresetTrial() {
     var state = this.state;
@@ -299,20 +300,12 @@
     if (!trial || !result || result.ok === false || !Array.isArray(state.history) || state.history.length <= before) return result;
     var entry = state.history[state.history.length - 1];
     if (!entry || String(entry.word || "").toUpperCase() !== String(state.secret || "").toUpperCase() || trial.trialPaid) return result;
-    var early = Math.max(0, Math.round(Number(entry.earlyBonus) || 0));
     var level = trialLevel(trial) || TRIAL_LEVELS.medium;
-    var change = level.points - early;
-    entry.earlyBonus = 0;
+    var change = level.points;
     entry.presetTrialBonus = level.points;
     state.score = (Number(state.score) || 0) + change;
     state.roundScore = (Number(state.roundScore) || 0) + change;
-    if (state.pendingRoundEnd) {
-      state.pendingRoundEnd.earlyBonus = Math.max(0, (Number(state.pendingRoundEnd.earlyBonus) || 0) - early);
-      state.pendingRoundEnd.score = state.score;
-    }
-    if (state.lastRoundSummary && Number(state.lastRoundSummary.earlyBonus)) {
-      state.lastRoundSummary.earlyBonus = Math.max(0, Number(state.lastRoundSummary.earlyBonus) - early);
-    }
+    if (state.pendingRoundEnd) state.pendingRoundEnd.score = state.score;
     trial.trialPaid = true;
     state.cuddleMoney = Math.max(0, (Number(state.cuddleMoney) || 0) + level.money);
     state.lastMessage = ((state.lastMessage || "") + " Trial passed: +" + level.points + " points, +$" + level.money + ".").trim();
