@@ -329,15 +329,10 @@
     if (!root) return;
     root.querySelectorAll(".umt-asc-chip-wrap").forEach(function drop(element) { element.remove(); });
     if (landing || !game || !game.state || inDuel(game.state) || levelOf(game) <= 0) return;
-    var state = game.state;
-    if (state.status === "branchMap") {
-      var page = root.querySelector(".cuddle-branch-shell .cuddle-branch-page");
-      if (page) page.insertAdjacentHTML("afterbegin", chipHtml(game));
-      return;
-    }
-    if (state.status !== "playing") return;
-    var strip = root.querySelector(".cuddle-play-strip");
-    if (strip) strip.insertAdjacentHTML("beforeend", chipHtml(game));
+    // Shown on the map only: the play screen stays clear.
+    if (game.state.status !== "branchMap") return;
+    var page = root.querySelector(".cuddle-branch-shell .cuddle-branch-page");
+    if (page) page.insertAdjacentHTML("afterbegin", chipHtml(game));
   }
 
   function activeGame() {
