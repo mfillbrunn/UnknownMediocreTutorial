@@ -1839,6 +1839,8 @@
     if (window.CuddleSeed) window.CuddleSeed.setNext(seedDraft);
     seedDraft = "";
     game.startNew(difficulty);
+    // The coin goes into the machine (cuddle-coin-start.js).
+    window.CuddleCoinStart?.play({ difficulty, ascension: Number(game.state?.umtAscension?.level) || 0 });
     landing = false;
     rulesOpen = false;
     detailsOpen = false;
