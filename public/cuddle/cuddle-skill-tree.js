@@ -255,7 +255,10 @@
           level: g => powerLevel(g, "gracePeriod") },
         { id: "boldOpener", icon: "🪄", title: "Bold Opener", tier: "epic", type: "clues", maxLevel: 1,
           description: "Your first guess in each stage can be any 5 letters, real word or not",
-          level: g => powerLevel(g, "boldOpener") }
+          level: g => powerLevel(g, "boldOpener") },
+        { id: "luckyClover", icon: "🍀", title: "Lucky Clover", tier: "rare", type: "points", maxLevel: 3,
+          levels: ["1 lucky tile in your deck. Still in hand when you solve: +10 points", "2 lucky tiles. Each still in hand when you solve: +20 points", "3 lucky tiles. Each still in hand when you solve: +30 points"],
+          level: g => powerLevel(g, "luckyClover") }
       ]
     },
     {
@@ -320,6 +323,7 @@
     lastStand: ["+25 last-guess solve", "+45 last-guess solve", "+100 last-guess solve"],
     pickpocket: ["+$1 per yellow", "+$2 per yellow", "+$4 per yellow"],
     gracePeriod: ["1st late guess free", "2 late guesses free", "2 free, then half"],
+    luckyClover: ["1 lucky tile, +10", "2 lucky tiles, +20 each", "3 lucky tiles, +30 each"],
     questCadence: ["Quests on 2, 3, 5", "Quests on 1, 2, 3, 5"]
   };
 

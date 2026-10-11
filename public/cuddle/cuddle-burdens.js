@@ -19,6 +19,13 @@
  *
  * The shop's Mend shelf (cuddle-shop.js) sells their removal.
  *
+ * Two more tiles ride the same path:
+ *   - the Murky Swamp (a World 2 theme, cuddle-worlds.js) sinks 3 dead
+ *     tiles into the deck in each of its stages;
+ *   - Lucky tiles (the Lucky Clover power): a clover, no letter. Like a
+ *     dead tile it can't be played, only mulliganed -- but each one still
+ *     in your hand when you solve pays 10/20/30 points (by power level).
+ *
  * Run-long burdens live on state.umtBurden = { dead, doubles: [letters] }.
  * They are dealt into the deck each stage by _prepareInitialHand, so the
  * Duel's cloned hand gets them too.
@@ -33,6 +40,9 @@
   proto.__cuddleBurdens = true;
 
   var DEAD_GLYPH = "·";
+  var LUCKY_GLYPH = "♣";
+  var SWAMP_DEAD = 3;
+  var LUCKY_POINTS = [0, 10, 20, 30];
   // Doubled from the less useful half of the alphabet: a second S or T
   // would be a gift.
   var WEAK = ["J", "Q", "X", "Z", "V", "K", "W", "F", "B", "P", "G", "Y", "H", "M"];
@@ -63,6 +73,36 @@
 
   function skullSvg() {
     return SKULL_SVG;
+  }
+
+  // A lucky tile's face: a four-leaf clover.
+  var LEAF = "M20 19.5C14.6 16 13.6 9.6 17 9.1c1.5-.2 2.7 1 3 2.2.3-1.2 1.5-2.4 3-2.2 3.4.5 2.4 6.9-3 10.4z";
+  var CLOVER_SVG = '<svg class="umt-lucky-clover" viewBox="0 0 40 40" aria-hidden="true" focusable="false">'
+    + '<path d="M20 28q2.4 5 6.4 7.4" fill="none" stroke="#2f6b1f" stroke-width="2.4" stroke-linecap="round"/>'
+    + '<g fill="#4fbf4a" stroke="#2f6b1f" stroke-width="1.7" stroke-linejoin="round" transform="translate(0 0)">'
+    + [0, 90, 180, 270].map(function leaf(angle) {
+      return '<path d="' + LEAF + '"' + (angle ? ' transform="rotate(' + angle + ' 20 19.5)"' : "") + "/>";
+    }).join("")
+    + "</g>"
+    + '<circle cx="20" cy="19.5" r="1.7" fill="#ffd54a" stroke="#2f6b1f" stroke-width="1"/>'
+    + '<path d="M16.4 11.4c.8-.7 1.8-.6 2.2.2" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity=".85"/>'
+    + "</svg>";
+
+  function cloverSvg() {
+    return CLOVER_SVG;
+  }
+
+  function isLuckyCard(card) {
+    return Boolean(card && (card.lucky || card.glyph === LUCKY_GLYPH));
+  }
+
+  function isLuckyGlyph(glyph) {
+    return glyph === LUCKY_GLYPH;
+  }
+
+  // Tiles with no letter: dead or lucky. Neither can go in a word.
+  function isBlankCard(card) {
+    return isDeadCard(card) || isLuckyCard(card);
   }
 
   function isDeadCard(card) {
@@ -102,6 +142,33 @@
     var state = game && game.state;
     if (!state || !state.boss || difficultyOf(state) !== "hard") return null;
     return HARD_BOSS[state.boss.id] || null;
+  }
+
+  function inDuel(state) {
+    return String((state && state.runId) || "").indexOf(":duel:") !== -1;
+  }
+
+  // The Murky Swamp: every stage of it sinks 3 dead tiles into the deck.
+  function swampDead(game) {
+    var worlds = window.CuddleWorlds;
+    if (!worlds || !game || !game.state || !game.state.runId || inDuel(game.state)) return 0;
+    try {
+      var world = worlds.currentWorld(game);
+      return world && world.theme === "swamp" ? SWAMP_DEAD : 0;
+    } catch (_error) {
+      return 0;
+    }
+  }
+
+  function luckyLevel(game) {
+    var registry = window.CuddleSkillTree;
+    var node = registry && typeof registry.findNode === "function" ? registry.findNode("luckyClover") : null;
+    if (!node || !game) return 0;
+    try {
+      return Math.max(0, Math.min(3, Math.floor(Number(registry.level(game, node)) || 0)));
+    } catch (_error) {
+      return 0;
+    }
   }
 
   function ascensionDead(game) {
@@ -159,7 +226,7 @@
   // -- dealing them in -----------------------------------------------------
   function extrasFor(game) {
     var value = burden(game.state);
-    var dead = value.dead + ascensionDead(game);
+    var dead = value.dead + ascensionDead(game) + swampDead(game);
     var doubles = value.doubles.slice();
     var boss = hardBossBurden(game);
     if (boss && boss.dead) dead += boss.dead;
@@ -171,7 +238,8 @@
       }
       doubles = doubles.concat(state.boss.umtDoubles);
     }
-    return { dead: dead, doubles: doubles };
+    // Lucky tiles pay on a solve, which a Duel doesn't have.
+    return { dead: dead, doubles: doubles, lucky: inDuel(game.state) ? 0 : luckyLevel(game) };
   }
 
   var basePrepare = proto._prepareInitialHand;
@@ -179,7 +247,7 @@
     var result = basePrepare.apply(this, arguments);
     try {
       var extras = extrasFor(this);
-      if (!extras.dead && !extras.doubles.length) return result;
+      if (!extras.dead && !extras.doubles.length && !extras.lucky) return result;
       var state = this.state;
       var game = this;
       var deckGlyphs = new Set(this._baseDeckGlyphs());
@@ -187,6 +255,9 @@
       var finite = state.hand.filter(function drop(card) { return !game.isInfiniteCard(card); }).concat(state.deck);
       for (var i = 0; i < extras.dead; i += 1) {
         finite.push({ id: this._nextId("dead"), glyph: DEAD_GLYPH, source: "deck", dead: true });
+      }
+      for (var j = 0; j < extras.lucky; j += 1) {
+        finite.push({ id: this._nextId("lucky"), glyph: LUCKY_GLYPH, source: "deck", lucky: true });
       }
       extras.doubles.forEach(function addCopy(letter) {
         if (!deckGlyphs.has(letter) || game.isInfiniteGlyph(letter)) return;
@@ -205,17 +276,54 @@
     return result;
   };
 
-  // A dead tile can't be played.
+  // A dead or lucky tile can't be played.
   var DEAD_ERROR = "A dead tile has no letter. Mulligan it away.";
+  var LUCKY_ERROR = "A lucky tile has no letter. Keep it in hand: it pays out when you solve.";
   ["toggleDraft", "insertDraftCardAt"].forEach(function guard(name) {
     var base = proto[name];
     if (typeof base !== "function") return;
-    proto[name] = function draftWithoutDeadTiles(cardId) {
+    proto[name] = function draftWithoutBlankTiles(cardId) {
       var card = typeof this.getHandCard === "function" ? this.getHandCard(cardId) : null;
       if (isDeadCard(card)) return { ok: false, error: DEAD_ERROR };
+      if (isLuckyCard(card)) return { ok: false, error: LUCKY_ERROR };
       return base.apply(this, arguments);
     };
   });
+
+  // -- lucky tiles pay out on a solve ----------------------------------------
+  function stageBonus(game, amount, field, label) {
+    var rebalance = window.CuddleRebalanceV5;
+    if (rebalance && typeof rebalance.addStageBonus === "function") {
+      rebalance.addStageBonus(game, amount, field, label);
+      return;
+    }
+    game.state.score = (Number(game.state.score) || 0) + amount;
+    game.state.roundScore = (Number(game.state.roundScore) || 0) + amount;
+  }
+
+  var baseSubmit = proto.submitDraft;
+  proto.submitDraft = function submitDraftWithLuckyTiles() {
+    var state = this.state;
+    var before = state && Array.isArray(state.history) ? state.history.length : 0;
+    var result = baseSubmit.apply(this, arguments);
+    state = this.state;
+    var history = state && Array.isArray(state.history) ? state.history : [];
+    if (!result || !result.ok || history.length <= before || inDuel(state)) return result;
+    try {
+      var entry = history[history.length - 1];
+      var solved = Boolean(entry && state.secret && entry.word === state.secret);
+      var level = luckyLevel(this);
+      if (!solved || level <= 0) return result;
+      var held = (state.hand || []).filter(isLuckyCard).length;
+      if (!held) return result;
+      var points = held * LUCKY_POINTS[level];
+      stageBonus(this, points, "umtLuckyClover", held === 1 ? "Lucky tile" : "Lucky tiles x" + held);
+      state.lastMessage = ((state.lastMessage || "") + " Lucky Clover: +" + points + " points.").trim();
+    } catch (error) {
+      console.warn("Cuddle burdens: lucky tiles failed to pay.", error);
+    }
+    return result;
+  };
 
   // -- boss cards: say what Hard adds ----------------------------------------
   function hardNote(id) {
@@ -276,10 +384,18 @@
 
   window.CuddleBurdens = Object.freeze({
     DEAD_GLYPH: DEAD_GLYPH,
+    LUCKY_GLYPH: LUCKY_GLYPH,
+    LUCKY_POINTS: LUCKY_POINTS,
+    SWAMP_DEAD: SWAMP_DEAD,
     HARD_BOSS: HARD_BOSS,
     isDeadCard: isDeadCard,
     isDeadGlyph: isDeadGlyph,
     skullSvg: skullSvg,
+    cloverSvg: cloverSvg,
+    isLuckyCard: isLuckyCard,
+    isLuckyGlyph: isLuckyGlyph,
+    isBlankCard: isBlankCard,
+    luckyLevel: luckyLevel,
     addDead: addDead,
     addDoubles: addDoubles,
     removeDead: removeDead,

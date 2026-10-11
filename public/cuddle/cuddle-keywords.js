@@ -6,6 +6,7 @@
  *   +5 points    green        +$3        money gold
  *   +1 mulligan  blue         +1 Joker   purple
  *   dead tile / doubled consonants  slate (a burden)
+ *   lucky tile                      clover green
  * Text is wrapped where it is drawn (a light pass after each render), so
  * every screen that shows these descriptions picks it up.
  */
@@ -36,9 +37,9 @@
     ".umt-pack-card p"
   ].join(",");
 
-  // One pattern, four kinds. Money first, so "$10" is never read as "10".
-  var PATTERN = /([+−-]?\$\d[\d,]*)|([+−-]?\d+\s*(?:points?|pts?)\b)|((?:[+−-]?\d+\s+)?(?:free\s+)?mulligans?\b)|((?:[+−-]?\d+\s+)?jokers?\b)|((?:[+−-]?\d+\s+)?(?:dead tiles?|doubled consonants?)\b)/gi;
-  var KINDS = ["money", "points", "mulligan", "joker", "dead"];
+  // One pattern, six kinds. Money first, so "$10" is never read as "10".
+  var PATTERN = /([+−-]?\$\d[\d,]*)|([+−-]?\d+\s*(?:points?|pts?)\b)|((?:[+−-]?\d+\s+)?(?:free\s+)?mulligans?\b)|((?:[+−-]?\d+\s+)?jokers?\b)|((?:[+−-]?\d+\s+)?(?:dead tiles?|doubled consonants?)\b)|((?:[+−-]?\d+\s+)?lucky tiles?\b)/gi;
+  var KINDS = ["money", "points", "mulligan", "joker", "dead", "lucky"];
   var SKIP = /^(SCRIPT|STYLE|TEXTAREA|INPUT|SVG)$/i;
 
   function inside(node, selector) {
@@ -48,7 +49,7 @@
 
   function wrapText(node) {
     var text = node.nodeValue;
-    if (!text || !/\d|mulligan|joker|dead|doubled/i.test(text)) return;
+    if (!text || !/\d|mulligan|joker|dead|doubled|lucky/i.test(text)) return;
     PATTERN.lastIndex = 0;
     if (!PATTERN.test(text)) return;
     PATTERN.lastIndex = 0;
@@ -56,7 +57,7 @@
     var last = 0;
     var match;
     while ((match = PATTERN.exec(text))) {
-      var kindIndex = match[1] ? 0 : match[2] ? 1 : match[3] ? 2 : match[4] ? 3 : 4;
+      var kindIndex = match[1] ? 0 : match[2] ? 1 : match[3] ? 2 : match[4] ? 3 : match[5] ? 4 : 5;
       if (match.index > last) fragment.appendChild(document.createTextNode(text.slice(last, match.index)));
       var span = document.createElement("span");
       span.className = "umt-kw is-" + KINDS[kindIndex];

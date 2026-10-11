@@ -2085,7 +2085,7 @@
       const normalized = String(glyph || "").toUpperCase();
       // A dead tile (cuddle-burdens.js) is selectable too: it can only be
       // mulliganed, and tapping it in play says so (the toggleDraft guard).
-      const deadTile = Boolean(window.CuddleBurdens && window.CuddleBurdens.isDeadGlyph(normalized));
+      const deadTile = Boolean(window.CuddleBurdens && (window.CuddleBurdens.isDeadGlyph(normalized) || window.CuddleBurdens.isLuckyGlyph(normalized)));
       if (!/^[A-Z]$/.test(normalized) && normalized !== Engine.CUDDLE_JOKER_GLYPH && !deadTile) return { ok: false, error: "That tile is unavailable." };
       try {
         const result = withDuelTileState(game, duel, state => {
@@ -2706,11 +2706,14 @@
         : "";
       // A dead tile (cuddle-burdens.js): no letter, only good for a mulligan.
       const dead = Boolean(window.CuddleBurdens && window.CuddleBurdens.isDeadGlyph(group.glyph));
-      if (dead) {
-        const label = `Dead tile${group.cards.length > 1 ? ` ×${group.cards.length}` : ""}: no letter, can't be played. Mulligan it away.`;
+      const lucky = Boolean(window.CuddleBurdens && window.CuddleBurdens.isLuckyGlyph(group.glyph));
+      if (dead || lucky) {
+        const label = lucky
+          ? `Lucky tile${group.cards.length > 1 ? ` ×${group.cards.length}` : ""}: no letter, can't be played.`
+          : `Dead tile${group.cards.length > 1 ? ` ×${group.cards.length}` : ""}: no letter, can't be played. Mulligan it away.`;
         return (
-          `<button type="button" class="cuddle-card is-dead umt-duel-hand-card${selectedCount ? " is-selected" : ""}" data-cuddle-campaign-action="expanded-duel-card" data-shop-item-id="${escapeHtml(group.glyph)}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${group.cards.length}"${disabled ? " disabled" : ""} aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">`
-          + `<span class="cuddle-card-letter cuddle-card-dead" aria-hidden="true">${window.CuddleBurdens.skullSvg()}</span>${group.cards.length > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${group.cards.length}</span>` : ""}</button>`
+          `<button type="button" class="cuddle-card ${lucky ? "is-lucky" : "is-dead"} umt-duel-hand-card${selectedCount ? " is-selected" : ""}" data-cuddle-campaign-action="expanded-duel-card" data-shop-item-id="${escapeHtml(group.glyph)}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${group.cards.length}"${disabled ? " disabled" : ""} aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">`
+          + `<span class="cuddle-card-letter ${lucky ? "cuddle-card-lucky" : "cuddle-card-dead"}" aria-hidden="true">${lucky ? window.CuddleBurdens.cloverSvg() : window.CuddleBurdens.skullSvg()}</span>${group.cards.length > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${group.cards.length}</span>` : ""}</button>`
         );
       }
       const modeText = duel.mulliganMode

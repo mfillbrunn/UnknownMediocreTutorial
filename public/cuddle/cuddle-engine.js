@@ -332,8 +332,8 @@
         .map(card => (card && typeof card === "object"
           ? { ...card, glyph: glyphForLetter(card.glyph) }
           : null))
-        // A dead tile (cuddle-burdens.js) has no letter but must survive a reload.
-        .filter(card => card && (/^[A-Z]$/.test(card.glyph) || card.dead === true));
+        // Dead and lucky tiles (cuddle-burdens.js) have no letter but must survive a reload.
+        .filter(card => card && (/^[A-Z]$/.test(card.glyph) || card.dead === true || card.lucky === true));
       state.deck = normalizeCards(state.deck);
       state.discard = normalizeCards(state.discard);
       state.hand = normalizeCards(state.hand);

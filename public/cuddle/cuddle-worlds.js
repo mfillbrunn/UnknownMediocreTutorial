@@ -89,7 +89,11 @@
       Object.freeze({ theme: "library", decor: "library", name: "Sunken Library", tagline: "Every shelf a different path", accent: "#e8c98a", glow: "#7fd6c2",
         skyTop: "#1d1a30", skyBottom: "#100e1d", bossTitle: "The Pages Turn", bossLine: "Every book opens at once and reads your name.",
         rows: 4, lanes: "wide", ease: 0, blurb: "A long maze of shelves: one more stop, always three paths.",
-        challenges: ["rareWord", "countOnly", "perfectOpener"], path: { upgrade: 1 }, pathBlurb: "A reading room: one extra Free Upgrade stop." })
+        challenges: ["rareWord", "countOnly", "perfectOpener"], path: { upgrade: 1 }, pathBlurb: "A reading room: one extra Free Upgrade stop." }),
+      Object.freeze({ theme: "swamp", decor: "marsh", name: "Murky Swamp", tagline: "Thick mud underfoot", accent: "#c3dc6e", glow: "#7f9c3a",
+        skyTop: "#1d2412", skyBottom: "#0f140a", bossTitle: "The Bog Swallows", bossLine: "Bubbles rise. Something heavy climbs out of the muck.",
+        rows: 3, lanes: "mixed", ease: 0, blurb: "Sticky going: three dead tiles sink into your deck every stage.",
+        challenges: ["noMulligans", "consonantCrunch", "delayedFeedback"], path: { events: 1 }, pathBlurb: "One event half-sunk in the mud." })
     ]),
     Object.freeze([
       Object.freeze({ theme: "citadel", decor: "citadel", rows: 3, lanes: "mixed", ease: 0, blurb: "The last climb, three rows high.",
@@ -223,6 +227,10 @@
     const state = game && game.state;
     if (!state) return WORLDS[0];
     const map = state.branchMap;
+    // While a stop is being entered, the map's position can briefly name a
+    // stand-in row (cuddle-expanded-stages.js), so the stage being dealt
+    // asks for the row it is really on (set by cuddle-world-identity.js).
+    if (map && Number.isFinite(game.__umtEnteringRow)) return worldForRow(map, game.__umtEnteringRow);
     if (map && map.position && Number.isFinite(Number(map.position.row))) {
       return worldForRow(map, Number(map.position.row));
     }

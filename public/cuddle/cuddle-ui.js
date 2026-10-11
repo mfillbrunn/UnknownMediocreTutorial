@@ -893,6 +893,7 @@
     // Same rule the card itself uses to show "?" (see renderHandCard).
     const cardRank = glyph => {
       if (window.CuddleBurdens?.isDeadGlyph(glyph)) return 200;
+      if (window.CuddleBurdens?.isLuckyGlyph(glyph)) return 190;
       const status = game.getCardKnowledgeStatus(glyph);
       if (status === "unused" && typeof game.isGlyphUnknown === "function" && game.isGlyphUnknown(glyph)) return 1.8;
       if (status === "yellow" && typeof game.isGlyphBlue === "function" && game.isGlyphBlue(glyph)) return 1.5;
@@ -964,6 +965,21 @@
         aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(deadLabel)}" title="${escapeHtml(deadLabel)}">
         <span class="cuddle-card-letter cuddle-card-dead" aria-hidden="true">${window.CuddleBurdens.skullSvg()}</span>
         ${deadCount > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${deadCount}</span>` : ""}
+      </button>`;
+    }
+    // A lucky tile (Lucky Clover): no letter, but it pays if it's still in hand at the solve.
+    if (window.CuddleBurdens?.isLuckyGlyph(group.glyph)) {
+      const luckyCount = group.cards.length;
+      const luckyDisabled = state.status !== "playing"
+        || (actionMode !== "play" && selectable.length === 0)
+        || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
+      const per = window.CuddleBurdens.LUCKY_POINTS[window.CuddleBurdens.luckyLevel(game)] || 0;
+      const luckyLabel = `Lucky tile${luckyCount > 1 ? ` ×${luckyCount}` : ""}: no letter, can't be played. Still in hand when you solve: +${per} points each.`;
+      return `
+      <button class="cuddle-card is-lucky${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${luckyCount}" ${luckyDisabled ? "disabled" : ""}
+        aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(luckyLabel)}" title="${escapeHtml(luckyLabel)}">
+        <span class="cuddle-card-letter cuddle-card-lucky" aria-hidden="true">${window.CuddleBurdens.cloverSvg()}</span>
+        ${luckyCount > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${luckyCount}</span>` : ""}
       </button>`;
     }
     const classes = [
