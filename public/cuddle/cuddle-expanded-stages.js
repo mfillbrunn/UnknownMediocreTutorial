@@ -2690,7 +2690,13 @@
         group.glyph === Engine.CUDDLE_JOKER_GLYPH ? "is-joker" : "",
         "umt-duel-hand-card"
       ].filter(Boolean).join(" ");
-      const badge = infinite
+      // The Joker's badge counts uses left, as on a normal stage: the banked
+      // charges plus the one this card already is.
+      const isJoker = group.glyph === Engine.CUDDLE_JOKER_GLYPH;
+      const jokerUses = isJoker ? Math.max(0, Number(state.megaState && state.megaState.jokerCharges) || 0) + 1 : 0;
+      const badge = isJoker
+        ? `<span class="cuddle-card-count" aria-hidden="true">×${jokerUses}</span>`
+        : infinite
         ? `<span class="cuddle-card-count is-infinite" aria-hidden="true">&infin;</span>`
         : group.cards.length > 1
           ? `<span class="cuddle-card-count" aria-hidden="true">×${group.cards.length}</span>`
@@ -2709,7 +2715,9 @@
       }
       const modeText = duel.mulliganMode
         ? `${selectedCount} selected; ${eligible.length} finite available; limit ${limit}`
-        : `${draftedCount} in the current word; reusable while visible`;
+        : isJoker
+          ? `${jokerUses} use${jokerUses === 1 ? "" : "s"} left`
+          : `${draftedCount} in the current word; reusable while visible`;
       return (
         `<button type="button" class="${classes}" data-cuddle-campaign-action="expanded-duel-card" data-shop-item-id="${escapeHtml(group.glyph)}" data-card-glyph="${escapeHtml(group.glyph)}" data-duel-drag="1" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${group.cards.length}"${disabled ? " disabled" : ""} aria-pressed="${draftedCount > 0 || selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(group.glyph)}: ${escapeHtml(modeText)}">`
         + `<span class="cuddle-card-letter">${escapeHtml(group.glyph)}</span>${position}${badge}</button>`
