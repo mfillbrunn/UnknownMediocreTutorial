@@ -990,3 +990,14 @@
 @media (prefers-reduced-motion: reduce) {
   #cuddleRoot .umt-map-spark { animation: none; opacity: .5; }
 }
+
+/* A boss card's icon: the map's boss stop icon (cuddle-ui.js bossCardIcon). */
+#cuddleRoot .cuddle-boss-choice .umt-boss-card-icon {
+  display: grid;
+  place-items: center;
+  color: #ff5a6a;
+}
+#cuddleRoot .cuddle-boss-choice .umt-boss-card-icon .umt-stage-icon {
+  width: 72%;
+  height: 72%;
+}

@@ -1187,6 +1187,16 @@
     return window.CuddleIcons ? window.CuddleIcons.svg(name) : "";
   }
 
+  // The boss stop's own icon from the map (cuddle-worlds.js), so a boss
+  // card looks like the stop you chose. The reward-icon passes skip boss
+  // cards, so nothing redraws it.
+  function bossCardIcon(isFinal, option) {
+    const worlds = window.CuddleWorlds;
+    return worlds && typeof worlds.iconSvg === "function"
+      ? worlds.iconSvg(isFinal ? "final" : "boss")
+      : escapeHtml(option.icon || "💀");
+  }
+
   function bossCardMarkup(option, isFinal) {
     const id = String(option.id);
     // A boss's reward is no longer its own: beating any boss opens a pick
@@ -1220,7 +1230,7 @@
       : "";
     return `
       <div class="cuddle-choice cuddle-boss-choice" data-boss-id="${escapeHtml(id)}">
-        <span class="cuddle-choice-icon">${escapeHtml(option.icon || "💀")}</span>
+        <span class="cuddle-choice-icon umt-boss-card-icon">${bossCardIcon(isFinal, option)}</span>
         <strong>${escapeHtml(option.title)}</strong>
         <small>${goldenMoney(escapeHtml(option.description))}</small>
         <div class="umt-boss-traits">
