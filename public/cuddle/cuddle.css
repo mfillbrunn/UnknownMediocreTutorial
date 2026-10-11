@@ -4604,14 +4604,6 @@
 }
 .umt-combo-line svg { flex: 0 0 auto; width: 12px; height: 12px; margin-top: 2px; color: #ff8fc0; }
 .umt-combo-line b { color: #ff9fca; font-weight: 850; }
-.umt-combo-legend {
-  margin: -2px auto 10px;
-  max-width: 46ch;
-  color: rgba(255, 236, 246, .82);
-  font-size: .78rem;
-  line-height: 1.35;
-}
-.umt-combo-legend b { color: #ffb3d4; }
 
 /* Play screen, economical with space: the next boss's target rides inside
    the points pill (288/510), and the theme, the clues, the run's excluded

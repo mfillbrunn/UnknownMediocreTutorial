@@ -1338,9 +1338,6 @@
           <span class="cuddle-modal-kicker">${kicker}</span>
           <h2 id="cuddleUpgradeTitle">${heading}</h2>
           ${body ? `<p>${body}</p>` : ""}
-          ${state.upgradeChoices.some(choice => pendingSynergyFor(choice.key || choice.id))
-            ? `<p class="umt-combo-legend"><b>★ Combo</b>: pairs with a power you have, for a bonus.</p>`
-            : ""}
           <div class="cuddle-choice-grid">
             ${state.upgradeChoices.map((choice, index) => `
               <button class="cuddle-choice${index >= wideFrom ? " is-wide-extra" : ""}" data-upgrade-key="${escapeHtml(choice.key)}">
