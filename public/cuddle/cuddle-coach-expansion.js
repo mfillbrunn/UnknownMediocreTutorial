@@ -28,7 +28,7 @@
   var MIN_METER_THRESHOLD = 3;
   // Softer Cuddle Meter, by level: how many tiles sooner the meter fills
   // (Hard's 12 goes 10, 8, then 5).
-  var METER_REDUCTION = [0, 2, 4, 7];
+  var METER_REDUCTION = [0, 2, 4, 6];
   // What a full meter gives at each Bigger Cuddle level.
   var METER_REWARD_NAMES = ["Free mulligan", "Consonant test", "Joker", "Green hint"];
   var METER_REWARD_TOP = METER_REWARD_NAMES.length - 1;
@@ -62,7 +62,7 @@
       key: "coachMeterThreshold",
       icon: "🩶",
       title: "Softer Cuddle Meter",
-      description: "The Cuddle Meter fills sooner: 2 fewer tiles, then 4, then 7 at level 3 (Hard: 12 → 10 → 8 → 5).",
+      description: "The Cuddle Meter fills sooner: 2 fewer tiles, then 4, then 6 at level 3 (Hard: 12 → 10 → 8 → 6).",
       max: 3
     },
     {

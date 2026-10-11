@@ -225,7 +225,7 @@
       nodes: [
         { id: "coachPossibleAnswers", icon: "🎧", title: "Secrets Counter", tier: "rare", type: "clues", maxLevel: 1, description: "Shows how many possible answers are still left", level: g => (coachState(g)?.possibleAnswersUnlocked ? 1 : 0) },
         { id: "coachMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", tier: "common", type: "letters", maxLevel: 3,
-          levels: ["The Cuddle Meter needs 2 fewer tiles to fill", "The Cuddle Meter needs 4 fewer tiles to fill", "The Cuddle Meter needs 7 fewer tiles to fill"],
+          levels: ["The Cuddle Meter needs 2 fewer tiles to fill", "The Cuddle Meter needs 4 fewer tiles to fill", "The Cuddle Meter needs 6 fewer tiles to fill"],
           level: g => Number(coachState(g)?.cuddleThresholdStacks) || 0 },
         { id: "coachMeterReward", icon: "🫶", title: "Bigger Cuddle", tier: "rare", type: "letters", maxLevel: 3,
           levels: ["A full Cuddle Meter tests 1 consonant for you", "A full Cuddle Meter gives +1 Joker", "A full Cuddle Meter puts 1 letter in its exact place"],
@@ -325,7 +325,7 @@
     treasureHunter: ["Treasure +$25", "Treasure +$50", "Treasure +$100"],
     yellowHint: ["1 letter shown", "1 letter placed"],
     "alphabet-compass": ["1 compass tile", "2 compass tiles", "Every tile"],
-    coachMeterThreshold: ["Meter 2 sooner", "Meter 4 sooner", "Meter 7 sooner"],
+    coachMeterThreshold: ["Meter 2 sooner", "Meter 4 sooner", "Meter 6 sooner"],
     coachMeterReward: ["Meter tests a letter", "Meter gives a Joker", "Meter places a letter"],
     momentum: ["+4 per better guess", "+8 per better guess", "+15 per better guess"],
     bigOpener: ["+5 per opener colour", "+10 per opener colour", "+20 per opener colour"],
