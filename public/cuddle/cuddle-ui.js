@@ -1666,10 +1666,6 @@
           ${top}
           ${seedChip(state)}
           ${renderRunStats(state)}
-          <details class="cuddle-upgrade-details">
-            <summary>Final upgrades</summary>
-            <ul>${game.getUpgradeSummary().map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
-          </details>
           ${renderEndBadges()}
           <p id="cuddleShareStatus" class="cuddle-share-status" role="status" aria-live="polite"></p>
           <div class="cuddle-modal-actions">
@@ -1724,10 +1720,6 @@
             : escapeHtml(state.failureReason || "The run could not continue.")}</p>
           ${seedChip(state)}
           ${renderRunStats(state)}
-          <details class="cuddle-upgrade-details">
-            <summary>Final upgrades</summary>
-            <ul>${game.getUpgradeSummary().map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
-          </details>
           ${renderEndBadges()}
           <p class="cuddle-share-help">Share the final round grid without revealing the secret word.</p>
           <p id="cuddleShareStatus" class="cuddle-share-status" role="status" aria-live="polite"></p>

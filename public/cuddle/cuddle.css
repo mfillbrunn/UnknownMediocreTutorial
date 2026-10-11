@@ -3948,7 +3948,11 @@
 }
 .cuddle-win-modal {
   position: relative;
-  overflow: hidden;
+  /* Scrolls when the badges run past the screen; sideways stays clipped
+     for the celebration effects. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-color: rgba(246, 201, 86, 0.55);
   box-shadow: 0 0 0 1px rgba(246, 201, 86, 0.15), 0 24px 80px rgba(0, 0, 0, 0.55), 0 0 60px rgba(246, 201, 86, 0.18);
 }
