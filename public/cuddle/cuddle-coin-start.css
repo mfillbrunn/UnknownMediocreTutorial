@@ -1,0 +1,297 @@
+/* Cuddle: inserting the coin (cuddle-coin-start.js).
+   Timeline: cabinet rises (0-.35s), coin arcs into the slot (.3-1.05s),
+   slot flashes and reads 1 CREDIT (1.05s), screen powers on (1.25s),
+   zoom into the screen (1.75-2.45s) onto the map, RUN START (2.2-3.3s). */
+.umt-cs {
+  position: fixed;
+  inset: 0;
+  z-index: 100020;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  cursor: pointer;
+  color: #fff3dc;
+  font-family: inherit;
+}
+.umt-cs-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(122, 82, 196, 0.35), transparent 60%),
+    radial-gradient(circle at 50% 110%, rgba(246, 201, 86, 0.18), transparent 50%),
+    #0d0a14;
+  animation: umt-cs-fade-out 450ms ease-in 2150ms forwards;
+}
+/* The Starting Pack waits until the coin, the zoom and RUN START are done,
+   so the zoom lands on the map rather than on the pack. */
+body:has(.umt-cs) .umt-pack-overlay { visibility: hidden; }
+
+/* The zoom happens on the stage: its origin is the screen's centre. */
+.umt-cs-stage {
+  position: relative;
+  width: 230px;
+  transform-origin: 50% 141px;
+  animation:
+    umt-cs-rise 380ms cubic-bezier(.2, .9, .3, 1.15) both,
+    umt-cs-zoom 700ms cubic-bezier(.55, 0, .75, .3) 1750ms forwards;
+}
+.umt-cs-cabinet {
+  position: relative;
+  width: 230px;
+  border-radius: 22px 22px 14px 14px;
+  background: linear-gradient(180deg, #4a3474, #2a1d42 60%, #1d1430);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.08), 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(155, 107, 224, 0.25);
+}
+.umt-cs-marquee {
+  display: grid;
+  place-items: center;
+  height: 46px;
+  border-radius: 20px 20px 6px 6px;
+  background: linear-gradient(180deg, #ffd977, #f0a83a);
+  box-shadow: inset 0 -4px 0 rgba(122, 64, 8, 0.35);
+}
+.umt-cs-marquee span {
+  color: #5a2a06;
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.umt-cs-bezel {
+  margin: 10px 16px 0;
+  padding: 10px;
+  border-radius: 14px;
+  background: #120d1c;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06);
+}
+.umt-cs-screen {
+  position: relative;
+  height: 150px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #06050a;
+  animation: umt-cs-power 420ms ease-out 1250ms forwards;
+}
+/* What lights up on the screen: a tiny world map. */
+.umt-cs-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(127, 224, 165, 0.35), transparent 40%),
+    radial-gradient(circle at 75% 70%, rgba(246, 201, 86, 0.25), transparent 45%),
+    linear-gradient(160deg, #1f5a3c, #12301f);
+  opacity: 0;
+  animation: umt-cs-on 420ms ease-out 1250ms forwards;
+}
+.umt-cs-scan {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.18) 0 2px, transparent 2px 4px);
+  pointer-events: none;
+  z-index: 2;
+}
+.umt-cs-dot, .umt-cs-path, .umt-cs-ready {
+  position: absolute;
+  opacity: 0;
+  animation: umt-cs-on 300ms ease-out 1450ms forwards;
+}
+.umt-cs-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff3dc;
+  box-shadow: 0 0 0 3px #3aa76d, 0 0 10px rgba(127, 224, 165, 0.8);
+}
+.umt-cs-dot.is-a { left: 22px; bottom: 26px; }
+.umt-cs-dot.is-b { left: 92px; top: 52px; }
+.umt-cs-dot.is-c { right: 22px; top: 18px; background: #ff5a6a; box-shadow: 0 0 0 3px #7a1620, 0 0 12px rgba(255, 90, 106, 0.9); }
+.umt-cs-path {
+  left: 30px;
+  top: 30px;
+  width: 140px;
+  height: 90px;
+  border-left: 3px dotted rgba(255, 243, 220, 0.6);
+  border-bottom: 3px dotted rgba(255, 243, 220, 0.6);
+  border-radius: 0 0 0 40px;
+  transform: rotate(180deg);
+}
+.umt-cs-ready {
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  text-align: center;
+  color: #fff3dc;
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  text-shadow: 0 0 8px rgba(246, 201, 86, 0.9);
+  animation: umt-cs-on 300ms ease-out 1450ms forwards, umt-cs-blink 500ms steps(2) 1500ms infinite;
+}
+.umt-cs-deck {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  height: 34px;
+  margin: 10px 16px 0;
+  border-radius: 8px;
+  background: #241a38;
+}
+.umt-cs-deck i {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #7cc4ff;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.3);
+}
+.umt-cs-deck i.is-big { width: 22px; height: 22px; background: #ff5a6a; }
+.umt-cs-door {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 10px;
+  height: 120px;
+  margin: 12px 30px 0;
+  padding-top: 18px;
+  border-radius: 10px 10px 0 0;
+  background: linear-gradient(180deg, #1a1228, #120d1c);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.05);
+}
+.umt-cs-slot {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #c9c3d8, #8f89a0);
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25);
+  animation: umt-cs-slot-flash 520ms ease-out 1050ms both;
+}
+.umt-cs-slot-mouth {
+  width: 6px;
+  height: 28px;
+  border-radius: 3px;
+  background: #0d0a14;
+}
+.umt-cs-label {
+  position: relative;
+  height: 1em;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+.umt-cs-label b { display: block; text-align: center; white-space: nowrap; }
+.umt-cs-label .is-insert {
+  color: #ff8fa0;
+  text-shadow: 0 0 8px rgba(255, 90, 106, 0.8);
+  animation: umt-cs-blink 600ms steps(2) infinite, umt-cs-hide 1ms linear 1050ms forwards;
+}
+.umt-cs-label .is-credit {
+  position: absolute;
+  inset: 0;
+  color: #ffe08a;
+  text-shadow: 0 0 10px rgba(246, 201, 86, 0.95);
+  opacity: 0;
+  animation: umt-cs-on 1ms linear 1050ms forwards;
+}
+
+/* The coin: a gold disc with a heart, arcing in and slipping into the slot. */
+.umt-cs-coin {
+  position: absolute;
+  left: 50%;
+  top: 25px;
+  z-index: 3;
+  width: 34px;
+  height: 34px;
+  margin-left: -17px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff1b8, #f6c956 45%, #b8862b);
+  box-shadow: inset 0 0 0 2.5px rgba(122, 82, 16, 0.75), 0 0 14px rgba(246, 201, 86, 0.7);
+  opacity: 0;
+  animation: umt-cs-coin 820ms cubic-bezier(.3, .1, .4, 1) 300ms forwards;
+}
+.umt-cs-coin::after {
+  content: "♥";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #8a5a10;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.umt-cs-banner {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  pointer-events: none;
+  opacity: 0;
+  animation: umt-cs-banner 1100ms cubic-bezier(.2, .9, .3, 1.2) 2200ms forwards;
+}
+.umt-cs-banner b {
+  padding: 10px 26px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffd977, #f0a83a);
+  color: #4a2204;
+  font-size: clamp(1.6rem, 9vw, 2.4rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 30px rgba(246, 201, 86, 0.5);
+}
+.umt-cs-banner small {
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: rgba(13, 10, 20, 0.75);
+  color: #fff3dc;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.umt-cs.is-leaving { animation: umt-cs-fade-out 240ms ease-in forwards; }
+
+@keyframes umt-cs-fade-in { from { opacity: 0; } }
+@keyframes umt-cs-fade-out { to { opacity: 0; } }
+@keyframes umt-cs-on { to { opacity: 1; } }
+@keyframes umt-cs-hide { to { opacity: 0; visibility: hidden; } }
+@keyframes umt-cs-blink { 50% { opacity: 0.35; } }
+@keyframes umt-cs-rise { from { opacity: 0; transform: translateY(40px) scale(0.92); } }
+@keyframes umt-cs-coin {
+  0% { opacity: 0; transform: translate(120px, -330px) rotateY(0) scale(1.15); }
+  12% { opacity: 1; }
+  70% { opacity: 1; transform: translate(0, -18px) rotateY(900deg) scale(1); }
+  82% { opacity: 1; transform: translate(0, -4px) rotateY(990deg) scaleX(.35); }
+  100% { opacity: 0; transform: translate(0, 10px) rotateY(1080deg) scaleX(.12) scaleY(.6); }
+}
+@keyframes umt-cs-slot-flash {
+  0% { box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25), 0 0 0 0 rgba(246, 201, 86, 0); }
+  35% { box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25), 0 0 0 10px rgba(246, 201, 86, 0.55), 0 0 30px rgba(246, 201, 86, 0.9); background: linear-gradient(180deg, #fff1b8, #f6c956); }
+  100% { box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25), 0 0 14px rgba(246, 201, 86, 0.5); }
+}
+@keyframes umt-cs-power {
+  0% { box-shadow: inset 0 0 0 0 rgba(255, 255, 255, 0); }
+  30% { box-shadow: inset 0 0 40px 20px rgba(255, 255, 255, 0.85); }
+  100% { box-shadow: inset 0 0 18px 4px rgba(127, 224, 165, 0.35); }
+}
+@keyframes umt-cs-zoom {
+  0% { transform: scale(1); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: scale(7); opacity: 0; }
+}
+@keyframes umt-cs-banner {
+  0% { opacity: 0; transform: scale(0.6); }
+  25% { opacity: 1; transform: scale(1.06); }
+  35% { transform: scale(1); }
+  80% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.04) translateY(-8px); }
+}
+
+/* Reduced motion: no flight or zoom, just the banner. */
+.umt-cs.is-reduced .umt-cs-stage { display: none; }
+.umt-cs.is-reduced .umt-cs-backdrop { animation: umt-cs-fade-out 300ms ease-in 700ms forwards; }
+.umt-cs.is-reduced .umt-cs-banner { animation: none; opacity: 1; }
