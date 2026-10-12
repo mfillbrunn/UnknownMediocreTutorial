@@ -482,8 +482,14 @@
         return /^[A-Z]$/.test(card.glyph) && !game.isVowelGlyph(card.glyph) && !game.isInfiniteCard(card)
           && card.source !== "joker" && !drafted.has(card.id);
       });
+      var sweptGlyphs = swept.map(function glyph(card) { return card.glyph; });
       if (swept.length) game._discardCards(swept.map(function id(card) { return card.id; }));
       var drawn = game.drawToHandLimit();
+      // For the hand: the wave tile shows up, a wave washes these letters
+      // out, then the new ones come in (playWaveFx below).
+      game.__umtWaveFx = (game.__umtWaveFx || []).concat([{ swept: sweptGlyphs, at: Date.now() }]);
+      // Hide the new letters from their very first frame on screen.
+      if (typeof document !== "undefined" && document.body && !reducedMotion()) document.body.classList.add("umt-wave-active");
       drawNote(game, "Wave! " + swept.length + " consonant" + (swept.length === 1 ? "" : "s") + " washed out, " + drawn.length + " new ones drawn.");
     }
     game.__umtWaves = 0;
@@ -716,6 +722,131 @@
     }
   }
 
+  // -- the wave, on screen ----------------------------------------------------
+  var WAVE_SVG = '<svg class="umt-wave-glyph" viewBox="0 0 40 40" aria-hidden="true" focusable="false">'
+    + '<path d="M4 25c4-9 10-13 16-9 3 1.8 3 5.6 0 6.6-2 .7-3.7-.7-3-2.4C21 13 30 12 36 18v14H4z" fill="#4fb3ea" stroke="#1d5b8a" stroke-width="2.2" stroke-linejoin="round"/>'
+    + '<path d="M4 31c4-3 8-3 12 0s8 3 12 0 8-3 10-1" fill="none" stroke="#d6f1ff" stroke-width="2" stroke-linecap="round"/>'
+    + '<circle cx="31" cy="12" r="1.8" fill="#bfe8ff"/><circle cx="35" cy="16" r="1.3" fill="#bfe8ff"/>'
+    + "</svg>";
+
+  var WAVE_MS = { tile: 520, sweep: 900, settle: 380 };
+  var waveBusy = false;
+
+  // Consonant cards the wave brought (they're hidden until it has passed).
+  var NEW_CARD_SELECTOR = ".cuddle-hand-panel .cuddle-card:not(.is-vowel):not(.is-infinite):not(.is-dead):not(.is-lucky):not(.is-idea):not(.is-joker)";
+
+  function reducedMotion() {
+    try {
+      return Boolean(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  function playWaveFx(game) {
+    var queue = game && game.__umtWaveFx;
+    if (waveBusy || !Array.isArray(queue) || !queue.length) return;
+    var panel = document.querySelector("#cuddleScreen .cuddle-hand-panel");
+    var event = queue[0];
+    if (!panel) {
+      // Not on the play screen (a quest reward, the cash-out): try again
+      // shortly, and give up on a wave that's gone stale.
+      if (Date.now() - event.at > 4000) {
+        queue.shift();
+        if (!queue.length && document.body) document.body.classList.remove("umt-wave-active");
+      }
+      return;
+    }
+    queue.shift();
+    if (reducedMotion() || !document.body) {
+      if (document.body) document.body.classList.remove("umt-wave-active");
+      return;
+    }
+    waveBusy = true;
+    document.body.classList.add("umt-wave-active");
+    var panelBox = panel.getBoundingClientRect();
+    var slots = Array.prototype.slice.call(document.querySelectorAll(NEW_CARD_SELECTOR)).map(function box(card) {
+      // The deck's fly-in (cuddle-deck-fx.js) is still moving these hidden
+      // cards: finish it so they're measured where they'll sit.
+      if (typeof card.getAnimations === "function") card.getAnimations().forEach(function end(a) { try { a.finish(); } catch (_e) { a.cancel(); } });
+      return card.getBoundingClientRect();
+    });
+    var layer = document.createElement("div");
+    layer.className = "umt-wave-layer";
+    layer.setAttribute("aria-hidden", "true");
+    // The old letters, sitting where the hand's consonants are.
+    var ghosts = event.swept.map(function ghost(glyph, index) {
+      var slot = slots[index] || slots[slots.length - 1] || { left: panelBox.left + 20 + index * 46, top: panelBox.top + 60, width: 42, height: 48 };
+      var el = document.createElement("span");
+      el.className = "umt-wave-ghost";
+      el.textContent = glyph;
+      el.style.left = slot.left + "px";
+      el.style.top = slot.top + "px";
+      el.style.width = slot.width + "px";
+      el.style.height = slot.height + "px";
+      layer.appendChild(el);
+      return { el: el, x: slot.left + slot.width / 2 };
+    });
+    // The wave tile, drawn from the deck.
+    var deck = document.querySelector("#cuddleScreen .cuddle-deck");
+    var deckBox = deck ? deck.getBoundingClientRect() : { left: panelBox.left + 8, top: panelBox.top + 8, width: 40, height: 52 };
+    var tile = document.createElement("span");
+    tile.className = "umt-wave-tile";
+    tile.innerHTML = WAVE_SVG;
+    tile.style.left = deckBox.left + "px";
+    tile.style.top = deckBox.top + "px";
+    layer.appendChild(tile);
+    // The wave itself, across the hand.
+    var wave = document.createElement("span");
+    wave.className = "umt-wave-band";
+    wave.style.left = panelBox.left + "px";
+    wave.style.top = panelBox.top + "px";
+    wave.style.width = panelBox.width + "px";
+    wave.style.height = panelBox.height + "px";
+    wave.innerHTML = '<svg viewBox="0 0 200 100" preserveAspectRatio="none"><path d="M0 70 C20 40 40 40 60 60 S100 85 120 55 S160 25 200 50 V100 H0Z" fill="rgba(79,179,234,0.55)"/><path d="M0 80 C25 60 45 62 70 74 S115 92 140 70 S180 52 200 64" fill="none" stroke="rgba(214,241,255,0.9)" stroke-width="3"/></svg>';
+    layer.appendChild(wave);
+    document.body.appendChild(layer);
+
+    var centreX = panelBox.left + panelBox.width / 2 - 21;
+    var centreY = panelBox.top + panelBox.height / 2 - 26;
+    if (typeof tile.animate === "function") {
+      tile.animate([
+        { transform: "translate(0, 0) scale(0.4) rotate(-12deg)", opacity: 0 },
+        { transform: "translate(0, 0) scale(1) rotate(0deg)", opacity: 1, offset: 0.35 },
+        { transform: "translate(" + (centreX - deckBox.left) + "px, " + (centreY - deckBox.top) + "px) scale(1.25)", opacity: 1 }
+      ], { duration: WAVE_MS.tile, easing: "cubic-bezier(.2,.8,.2,1)", fill: "forwards" });
+      tile.animate([{ opacity: 1 }, { opacity: 0, transform: "translate(" + (centreX - deckBox.left) + "px, " + (centreY - deckBox.top) + "px) scale(1.6)" }],
+        { duration: 260, delay: WAVE_MS.tile + 120, fill: "forwards" });
+      wave.animate([
+        { transform: "translateX(-105%)", opacity: 0.2 },
+        { opacity: 1, offset: 0.2 },
+        { transform: "translateX(105%)", opacity: 0.9 }
+      ], { duration: WAVE_MS.sweep, delay: WAVE_MS.tile, easing: "ease-in-out", fill: "both" });
+      ghosts.forEach(function wash(item) {
+        var reach = (item.x - panelBox.left) / Math.max(1, panelBox.width);
+        item.el.animate([
+          { transform: "translate(0, 0) rotate(0deg)", opacity: 1 },
+          { transform: "translate(70px, -26px) rotate(28deg)", opacity: 0 }
+        ], { duration: 420, delay: WAVE_MS.tile + Math.round(reach * WAVE_MS.sweep * 0.8), easing: "ease-in", fill: "both" });
+      });
+    }
+    setTimeout(function reveal() {
+      document.body.classList.remove("umt-wave-active");
+      var fresh = document.querySelectorAll(NEW_CARD_SELECTOR);
+      Array.prototype.forEach.call(fresh, function rise(card, index) {
+        if (typeof card.animate === "function") {
+          card.animate([{ transform: "translateY(16px) scale(0.85)", opacity: 0 }, { transform: "none", opacity: 1 }],
+            { duration: 280, delay: index * 40, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" });
+        }
+      });
+    }, WAVE_MS.tile + WAVE_MS.sweep);
+    setTimeout(function done() {
+      layer.remove();
+      waveBusy = false;
+      playWaveFx(game);
+    }, WAVE_MS.tile + WAVE_MS.sweep + WAVE_MS.settle);
+  }
+
   var pending = false;
   function schedule() {
     if (pending) return;
@@ -723,6 +854,7 @@
     requestAnimationFrame(function run() {
       pending = false;
       decorate();
+      playWaveFx(activeGame());
     });
   }
 

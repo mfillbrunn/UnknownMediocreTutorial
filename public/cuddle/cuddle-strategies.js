@@ -17,8 +17,8 @@
  *
  * Gambler and purist:
  *   - High Roller (common, 3 levels): every stage bets 10 / 20 / 50
- *     points. Solve inside your guess window, or one guess past it, and it
- *     pays double back (+the bet); later than that and the bet is lost.
+ *     points. Solve by guess 5 (world 1) or guess 4 (worlds 2 and 3) and
+ *     it pays double back (+the bet); later than that and the bet is lost.
  *   - Hard Mode (common, 3 levels): a stage solved in Wordle hard mode --
  *     every guess keeps each green in place and uses each yellow you were
  *     shown -- pays +10 / +20 / +40 points.
@@ -47,6 +47,8 @@
   var LEAN_PER_BADGE = 5;
   var STRIKE_POINTS = [0, 0.5, 1, 2];
   var HIGH_ROLLER_BET = [0, 10, 20, 50];
+  // The guess a High Roller bet must be won by, per world.
+  var HIGH_ROLLER_BY = [5, 4, 4];
   var HARD_MODE_POINTS = [0, 10, 20, 40];
   var TIER_UP = { common: "rare", rare: "epic", epic: "legendary" };
   var VOWELS = "AEIOU";
@@ -336,16 +338,15 @@
       settleStrikes(this);
       var entry = history[history.length - 1];
       var solved = Boolean(entry && state.secret && entry.word === state.secret);
-      var solveWindow = typeof this._solveGuessThreshold === "function" ? this._solveGuessThreshold() : 6;
       var roller = Math.min(3, levelOf(this, "highRoller"));
       if (solved && roller > 0) {
         var bet = HIGH_ROLLER_BET[roller];
-        // Won inside the window or one guess past it.
-        var won = history.length <= solveWindow + 1;
+        // Won by guess 5 in world 1, guess 4 in worlds 2 and 3.
+        var won = history.length <= HIGH_ROLLER_BY[worldIndex(this)];
         stageBonus(this, won ? bet : -bet, "umtHighRoller", won ? "High Roller won" : "High Roller lost");
         // Jackpot (High Roller + Double Down): a win pays half the bet again.
         if (won && hasCombo(this, "jackpot")) stageBonus(this, Math.round(bet / 2), "umtComboJackpot", "Jackpot");
-        note(this, won ? "High Roller: bet " + bet + ", won +" + bet + "." : "High Roller: solved late, the " + bet + "-point bet is lost.");
+        note(this, won ? "High Roller: bet " + bet + ", won +" + bet + "." : "High Roller: not solved by guess " + HIGH_ROLLER_BY[worldIndex(this)] + ", the " + bet + "-point bet is lost.");
       }
       var hard = Math.min(3, levelOf(this, "hardMode"));
       if (solved && hard > 0 && solvedInHardMode(history)) {

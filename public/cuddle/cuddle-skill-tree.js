@@ -276,7 +276,7 @@
           levels: ["Every consonant ruled out pays +0.5 points", "Every consonant ruled out pays +1 point", "Every consonant ruled out pays +2 points"],
           level: g => powerLevel(g, "strikeThrough") },
         { id: "highRoller", icon: "🎲", title: "High Roller", tier: "common", type: "points", maxLevel: 3,
-          levels: ["Every stage bets 10 points: solve inside your guess window (or one guess past it) to win it back double, solve later and lose it", "Every stage bets 20 points", "Every stage bets 50 points"],
+          levels: ["Every stage bets 10 points: solve by guess 5 (world 1) or guess 4 (worlds 2 and 3) to win it back double, solve later and lose it", "Every stage bets 20 points", "Every stage bets 50 points"],
           level: g => powerLevel(g, "highRoller") },
         { id: "hardMode", icon: "🎯", title: "Hard Mode", tier: "common", type: "points", maxLevel: 3,
           levels: ["Solve a stage in hard mode (every guess keeps your greens and uses your yellows): +10 points", "Hard-mode solves pay +20 points", "Hard-mode solves pay +40 points"],
