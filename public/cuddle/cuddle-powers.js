@@ -151,7 +151,7 @@
   // 2. Playstyle powers
   // -------------------------------------------------------------------------
 
-  var NEW_POWERS = ["momentum", "bigOpener", "lastStand", "pickpocket", "gracePeriod", "boldOpener", "luckyClover", "ideaTiles", "waveTiles", "fullCircle"];
+  var NEW_POWERS = ["momentum", "bigOpener", "lastStand", "pickpocket", "gracePeriod", "boldOpener", "luckyClover", "ideaTiles", "waveTiles", "fullCircle", "leanBuild", "monksVow", "strikeThrough", "highRoller", "hardMode", "combine"];
 
   function powerCard(id) {
     var registry = tree();

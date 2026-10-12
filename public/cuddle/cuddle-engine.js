@@ -122,6 +122,9 @@
   // separate from EARLY_GUESS_POINTS above, which only ever pays out on
   // the guesses a solve never needed.
   const LATE_GUESS_PENALTIES = [10, 20, 30];
+  // No run culls more than this many letters in all (Cull One / Cull Two
+  // Letters, Deep Cull): past about 8, stages stop being a puzzle.
+  const CULL_CAP = 8;
   const LATE_GUESS_STEP_WORLD_THREE = 10;
   // A flat bonus for solving within that same window at all, in addition
   // to the scaled-by-unused-guesses EARLY_GUESS_POINTS payout above.
@@ -2086,7 +2089,7 @@
       if (!reward) return "";
       switch (rewardId) {
         case "cullRare": {
-          const letters = this._removalCandidates(4);
+          const letters = this._removalCandidates(3);
           if (!letters.length) return "No letters were safe to remove.";
           this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
           return `Deep Cull removed ${letters.join(", ")}.`;
@@ -2256,7 +2259,15 @@
     // simulating each prior pick as already removed before choosing the
     // next -- so the "future" viability check in _removalCandidate always
     // accounts for the combined removal, not just each letter alone.
+    // Letters culled for good (a boss's one-fight removals don't count).
+    _culledLetterCount() {
+      const temporary = new Set(this.state?.boss?.tempRemovedLetters || []);
+      return (this.state?.removedLetters || []).filter(letter => !temporary.has(letter)).length;
+    }
+
     _removalCandidates(count) {
+      // Never past the run's cull cap.
+      count = Math.min(count, Math.max(0, CULL_CAP - this._culledLetterCount()));
       const originalRemoved = this.state.removedLetters;
       const picks = [];
       try {
@@ -2753,7 +2764,7 @@
       id: "storybookStart",
       icon: "📖",
       title: "Opening Verse",
-      description: "+10 points at the start of every stage. Level 2: +20. Level 3: +35.",
+      description: "+10 points at the start of every stage. Level 2: +20. Level 3: +40.",
       max: 3
     },
     {
@@ -2811,7 +2822,7 @@
       id: "goldenTempo",
       icon: "⚡",
       title: "Golden Tempo",
-      description: "Colour Surge or Richer Colours + Early Finish: every solved stage gives +5 points."
+      description: "Colour Surge or Richer Colours + Early Finish: every solved stage gives +20 points."
     },
     {
       id: "questBinding",
@@ -3235,7 +3246,7 @@
     const notes = [];
     // 10, 20, then 35 at level 3 (the power registry, cuddle-skill-tree.js).
     const verse = Math.max(0, Math.min(3, Math.floor(Number(state.cuddleBonuses.storybookStart || 0))));
-    const openingPoints = [0, 10, 20, 35][verse]
+    const openingPoints = [0, 10, 20, 40][verse]
       + (cuddleV3HasSynergy(this, "illustratedStart") ? 5 : 0);
     if (openingPoints > 0) {
       state.score += openingPoints;
@@ -3293,7 +3304,7 @@
   const cuddleV3OriginalApplyBossReward = CuddleGame.prototype._applyBossReward;
   CuddleGame.prototype._applyBossReward = function applyCuddleV3BossReward(rewardId) {
     if (rewardId !== "cullRare") return cuddleV3OriginalApplyBossReward.call(this, rewardId);
-    const letters = this._removalCandidates(4);
+    const letters = this._removalCandidates(3);
     if (!letters.length) return "No letters were safe to remove.";
     this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
     return `Deep Cull removed ${letters.join(", ")}.`;
@@ -3561,7 +3572,7 @@
         questExtra = Number(state.cuddleBonuses.questSpark || 0) * 5
           + (cuddleV3HasSynergy(this, "questBinding") ? 5 : 0);
       }
-      if (word === state.secret && cuddleV3HasSynergy(this, "goldenTempo")) solveExtra = 5;
+      if (word === state.secret && cuddleV3HasSynergy(this, "goldenTempo")) solveExtra = 20;
       const extra = questExtra + solveExtra;
       if (extra > 0) {
         state.score += extra;
@@ -3801,14 +3812,14 @@
       key: "colourTrade",
       icon: "G+",
       title: "Colour Surge",
-      description: "Green tiles pay 0.5 more points. Level 2: 1 more. Level 3: 1.5 more."
+      description: "Green tiles pay 0.5 more points. Level 2: 1 more. Level 3: 2 more."
     },
     {
       id: "greyscale",
       key: "greyscale",
       icon: "⬛",
       title: "Greyscale",
-      description: "Grey tiles pay 1 point. Level 2: 2 points. Level 3: 3 points."
+      description: "Grey tiles pay 1 point. Level 2: 2 points. Level 3: 4 points."
     }
   ]);
   const customUpgradeIds = new Set(customUpgradeDefinitions.map(item => item.id));
@@ -3824,7 +3835,7 @@
     id: "goldenTempo",
     icon: "⚡",
     title: "Golden Tempo",
-    description: "Colour Surge or Richer Colours + Early Finish: every solved stage gives +5 points."
+    description: "Colour Surge or Richer Colours + Early Finish: every solved stage gives +20 points."
   });
 
   function finiteNumber(value, fallback = 0) {
@@ -4020,16 +4031,15 @@
         upgrades.handSizeBonus += 1;
         break;
       case "colourTrade": {
-        // +0.5 a green per level: 0.5, 1, 1.5. A row's colour points are
-        // rounded down (see the tile scoring in submitDraft).
-        // (Was +1, +2, then +4 at the top level.)
-        upgrades.greenOnlyPoints += 0.5;
+        // +0.5 a green, then 1, then 2 at level 3 (the bigger third step).
+        // A row's colour points are rounded down (see submitDraft).
+        upgrades.greenOnlyPoints += finiteNumber(state.balanceRewardCounts?.colourTrade) >= 2 ? 1 : 0.5;
         break;
       }
       case "greyscale": {
-        // Greys only: 1, 2, 3 a grey. (The top level used to add +1 a
-        // yellow as well.)
-        upgrades.greyPoints += 1;
+        // Greys only: 1, 2, then 4 a grey -- the Eliminator's engine, with
+        // the usual bigger third step.
+        upgrades.greyPoints += finiteNumber(state.balanceRewardCounts?.greyscale) >= 2 ? 2 : 1;
         break;
       }
       case "mulliganValueBoost":
@@ -4738,7 +4748,7 @@
     const mega = ensureMega(this);
     let message;
     if (rewardId === "cullRare") {
-      const letters = this._removalCandidates(4);
+      const letters = this._removalCandidates(3);
       message = letters.length
         ? (() => {
           this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();

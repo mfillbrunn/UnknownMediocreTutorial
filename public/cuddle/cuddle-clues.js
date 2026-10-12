@@ -158,7 +158,6 @@
         record.dead = deadLetters(this, Math.min(3, dead));
         if (record.dead.length) addMessage(this, `Dead Letter: ${record.dead.join(", ")} ${record.dead.length === 1 ? "is" : "are"} not in the answer.`);
       }
-      if (level(this, IDS.lastLight) > 0) addMessage(this, placeLastLetter(this));
       if (level(this, IDS.treasureHunter) > 0) {
         // Its own hash, not the run's random stream, so taking Treasure
         // Hunter doesn't reshuffle what the rest of the run rolls.
@@ -222,6 +221,18 @@
     try {
       const history = this.state && Array.isArray(this.state.history) ? this.state.history : [];
       const entry = history.length > before ? history[history.length - 1] : null;
+      // Hints that arrive later, so the opening guesses are still a real
+      // read: Yellow Guesser Hint after guess 1, Last Light after guess 2.
+      const unsolved = entry && String(entry.word || "").toUpperCase() !== String(this.state.secret || "").toUpperCase()
+        && ["playing", "questReward"].includes(this.state.status);
+      if (unsolved && history.length === 1) {
+        const rebalance = window.CuddleRebalanceV5;
+        if (rebalance && typeof rebalance.grantStageYellowHints === "function") rebalance.grantStageYellowHints(this);
+      }
+      if (unsolved && history.length >= 2 && level(this, IDS.lastLight) > 0) {
+        const placed = placeLastLetter(this);
+        if (placed) addMessage(this, placed);
+      }
       if (record && entry && record.treasure && !record.treasurePaid
           && String(entry.word || "").toUpperCase() === String(this.state.secret || "").toUpperCase()) {
         record.treasurePaid = true;
@@ -277,7 +288,8 @@
       const repeats = new Set(secret).size < 5;
       chips.push({ icon: "twoPeople", label: "Echo Finder", text: repeats ? "Repeats a letter" : "No repeated letters" });
     }
-    if (level(game, IDS.patternLens) > 0) {
+    // Pattern Lens shows from the second guess on.
+    if (level(game, IDS.patternLens) > 0 && num(state.guessesUsed) >= 1) {
       chips.push({ icon: "puzzle", label: "Pattern Lens", text: [...secret].map(letter => (VOWELS.has(letter) ? "V" : "C")).join(" "), mono: true });
     }
     if (record.dead.length) chips.push({ icon: "gravestone", label: "Dead Letter", text: `Not ${record.dead.join(", ")}` });

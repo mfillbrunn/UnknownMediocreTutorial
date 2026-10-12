@@ -19,34 +19,61 @@
   }
   const proto = Game.prototype;
 
+  // Combos are Legendary: each should be worth chasing on its own. Most
+  // point at one of the run's strategies (Sprint, Eliminator, Minimalist,
+  // Deck Churn, Untouched, Quests, Banker, Gambler, Purist, Painter) so a
+  // player who leans into one is told where it can go next.
   const COMBOS = Object.freeze([
     { id: "secondWind", icon: "🌬️", title: "Second Wind", requires: [["extraMulligans"], ["mulliganValueBoost"]],
-      effect: "Each unused mulligan pays +3 points more when you solve" },
+      effect: "Each unused mulligan pays +8 points more when you solve" },
     { id: "questMaster", icon: "🎖️", title: "Quest Master", requires: [["questPoints"], ["questReroll"]],
-      effect: "Each completed quest also pays +$2" },
+      effect: "Each completed quest also pays +$5 and +10 points" },
     { id: "fullHouse", icon: "🂡", title: "Full House", requires: [["handSizeBoost"], ["jokerCache", "jokerCacheLarge"]],
-      effect: "Start every stage with +1 mulligan" },
+      effect: "Start every stage with +2 mulligans" },
     // Combos around the Legendary and boss rewards.
     { id: "cartographer", icon: "🗺️", title: "Cartographer", requires: [["allThemesBoss", "allThemes"], ["categorySense"]],
-      effect: "Every solved stage pays +10 points" },
+      effect: "Every solved stage pays +30 points" },
     { id: "questEngine", icon: "⚙️", title: "Quest Engine", requires: [["questPersistReward"], ["questDoublePick"]],
-      effect: "Each completed quest also pays +$3" },
+      effect: "Each completed quest also pays +$6 and +10 points" },
     { id: "cleanSweep", icon: "🧹", title: "Clean Sweep", requires: [["cullRare"], ["freeVowelSweep"]],
-      effect: "Start every stage with +1 mulligan" },
+      effect: "Start every stage with +2 mulligans" },
     { id: "safetyNet", icon: "🪢", title: "Safety Net", requires: [["secondCup"], ["doubleMulligans"]],
-      effect: "Solve on the last guess of your guess window for +20 points" },
+      effect: "Solve on the last guess of your guess window for +60 points" },
     { id: "scholarsEye", icon: "🔎", title: "Scholar's Eye", requires: [["greenCount"], ["categorySense"]],
-      effect: "Every solved stage pays +$3" },
+      effect: "Every solved stage pays +$8" },
     { id: "busyDay", icon: "📋", title: "Busy Day", requires: [["surprise-assignment"], ["questRefreshes"]],
-      effect: "Each completed quest pays +5 points more" },
+      effect: "Each completed quest pays +15 points more" },
     { id: "fastStory", icon: "📚", title: "Fast Story", requires: [["storybookStart"], ["earlySolveBoost"]],
-      effect: "Solve by guess 3 for +15 points" },
+      effect: "Solve by guess 3 for +40 points" },
     // Insight combos (rewards in cuddle-clues.js).
     { id: "lamplighter", icon: "🏮", title: "Lamplighter", requires: [["vowelLamp"], ["patternLens"]],
-      effect: "Start every stage with +1 mulligan" },
+      effect: "Start every stage with +2 mulligans" },
+    // Strategy combos.
+    { id: "scorchedEarth", icon: "🔥", title: "Scorched Earth", requires: [["greyscale"], ["strikeThrough"]],
+      effect: "A guess with no green or yellow at all pays +15 points" },
+    { id: "staticCharge", icon: "⚡", title: "Static Charge", requires: [["strikeThrough"], ["coachMeterThreshold"]],
+      effect: "Every consonant ruled out also charges the Cuddle Meter by 1" },
+    { id: "ascetic", icon: "🕯️", title: "Ascetic", requires: [["leanBuild"], ["monksVow"]],
+      effect: "Skipping a reward pays +30 points more" },
+    { id: "riptide", icon: "🌊", title: "Riptide", requires: [["waveTiles"], ["fullCircle"]],
+      effect: "Every time your deck reshuffles, gain +2 mulligans" },
+    { id: "stillWaters", icon: "🌙", title: "Still Waters", requires: [["mulliganValueBoost"], ["luckyClover"]],
+      effect: "Solve a stage without using a mulligan for +30 points" },
+    { id: "blitz", icon: "🚀", title: "Blitz", requires: [["earlySolveBoost"], ["bigOpener"]],
+      effect: "Solve by guess 2 for +50 points" },
+    { id: "overtime", icon: "⏱️", title: "Overtime", requires: [["questPoints"], ["questCadence"]],
+      effect: "Each completed quest pays +20 points more" },
+    { id: "compound", icon: "🏦", title: "Compound Interest", requires: [["rainyDay", "umtRainyDay"], ["treasureHunter", "umtTreasureHunter"]],
+      effect: "Every solved stage pays +$8" },
+    { id: "jackpot", icon: "🎲", title: "Jackpot", requires: [["highRoller"], ["doubleDown", "umtDoubleDown"]],
+      effect: "A won High Roller bet pays half the bet again" },
+    { id: "purist", icon: "🎯", title: "Purist", requires: [["hardMode"], ["momentum"]],
+      effect: "A hard-mode solve pays +30 points more" },
+    { id: "brushwork", icon: "🎨", title: "Brushwork", requires: [["colourTrade", "yellowPoints"], ["momentum"]],
+      effect: "Each guess with 3 or more greens pays +10 points" },
     // Existing engine combos: previewed here, applied by the engine.
     { id: "goldenTempo", icon: "⚡", title: "Golden Tempo", engine: true, requires: [["colourTrade", "yellowPoints"], ["earlySolveBoost", "earlyRoundPoint"]],
-      effect: "Every solved stage pays +5 points" },
+      effect: "Every solved stage pays +20 points" },
     { id: "endlessMargins", icon: "🖋️", title: "Endless Margins", engine: true, requires: [["wideChoice"], ["questRefreshes"]],
       effect: "Quest reward screens show 1 extra choice" }
   ]);
@@ -73,6 +100,10 @@
       state.balanceRewardCounts && state.balanceRewardCounts[id]
     ];
     if (id === "categorySense") candidates.push(state.cuddleCampaign && state.cuddleCampaign.categorySense);
+    // Playstyle powers (cuddle-powers.js, cuddle-strategies.js) keep their
+    // own levels; the Cuddle Meter's threshold lives on the coach.
+    if (state.umtPowers && state.umtPowers.levels) candidates.push(state.umtPowers.levels[id]);
+    if (id === "coachMeterThreshold") candidates.push(state.cuddleCoachExpansion && state.cuddleCoachExpansion.cuddleThresholdStacks);
     const mega = state.megaState || {};
     if (id === "greenCount" && mega.greenCountUnlocked) candidates.push(1);
     if (Array.isArray(state.umtBossRewardsTaken)
@@ -270,12 +301,26 @@
     game.state.lastMessage = `${game.state.lastMessage || ""} ${note}`.trim();
   }
 
+  function stageKeyOf(state) {
+    return [state.runId || "", state.round || 0, state.secret || ""].join(":");
+  }
+
+  // Still Waters: remember a stage in which a mulligan was used.
+  wrap("mulligan", original => function mulliganNoted() {
+    const result = original.apply(this, arguments);
+    if (result && result.ok && this.state) this.state.umtMulliganUsed = stageKeyOf(this.state);
+    return result;
+  });
+
   wrap("_beginRound", original => function beginRoundWithCombos() {
     const result = original.apply(this, arguments);
     // Combos work in every stage, boss fights included.
     if (this.state) {
-      const extra = (ownsCombo(this, "fullHouse") ? 1 : 0) + (ownsCombo(this, "cleanSweep") ? 1 : 0)
-        + (ownsCombo(this, "lamplighter") ? 1 : 0);
+      // A badge picked through a path that skips chooseUpgrade (playstyle
+      // powers, packs, the shop) still switches its combo on here.
+      refresh(this, true);
+      const extra = (ownsCombo(this, "fullHouse") ? 2 : 0) + (ownsCombo(this, "cleanSweep") ? 2 : 0)
+        + (ownsCombo(this, "lamplighter") ? 2 : 0);
       const gained = extra && typeof this.mulliganGain === "function" ? this.mulliganGain(extra) : extra;
       if (gained) this.state.mulligansLeft = Math.max(0, num(this.state.mulligansLeft)) + gained;
     }
@@ -293,29 +338,48 @@
 
     // A guess past the quick-solve window earns nothing but its penalty.
     if (num(entry.latePenalty) > 0) return result;
+    const shown = Array.isArray(entry.shownFeedback) ? entry.shownFeedback : (entry.feedback || []);
+    const greens = shown.filter(value => value === "green").length;
+    const yellows = shown.filter(value => value === "yellow").length;
+    if (ownsCombo(this, "scorchedEarth") && !solved && greens + yellows === 0 && shown.length) {
+      stageBonus(this, 15, "umtComboScorchedEarth", "Scorched Earth");
+    }
+    if (ownsCombo(this, "brushwork") && greens >= 3) stageBonus(this, 10, "umtComboBrushwork", "Brushwork");
     if (ownsCombo(this, "deepGrey")) {
       const greys = (entry.feedback || []).filter(value => value === "grey").length;
       if (greys) stageBonus(this, greys, "umtComboDeepGrey", "Deep Grey");
     }
     if (entry.questComplete) {
-      if (ownsCombo(this, "busyDay")) stageBonus(this, 5, "umtComboBusyDay", "Busy Day");
-      if (ownsCombo(this, "questMaster")) moneyBonus(this, 2, "Quest Master: +$2.");
-      if (ownsCombo(this, "questEngine")) moneyBonus(this, 3, "Quest Engine: +$3.");
+      if (ownsCombo(this, "busyDay")) stageBonus(this, 15, "umtComboBusyDay", "Busy Day");
+      if (ownsCombo(this, "overtime")) stageBonus(this, 20, "umtComboOvertime", "Overtime");
+      if (ownsCombo(this, "questMaster")) {
+        stageBonus(this, 10, "umtComboQuestMaster", "Quest Master");
+        moneyBonus(this, 5, "Quest Master: +$5.");
+      }
+      if (ownsCombo(this, "questEngine")) {
+        stageBonus(this, 10, "umtComboQuestEngine", "Quest Engine");
+        moneyBonus(this, 6, "Quest Engine: +$6.");
+      }
     }
     if (solved) {
       if (ownsCombo(this, "secondWind")) {
         const spare = Math.max(0, num(this.state.mulligansLeft));
-        if (spare) stageBonus(this, spare * 3, "umtComboSecondWind", "Second Wind");
+        if (spare) stageBonus(this, spare * 8, "umtComboSecondWind", "Second Wind");
       }
-      if (ownsCombo(this, "fastStory") && history.length <= 3) stageBonus(this, 15, "umtComboFastStory", "Fast Story");
-      if (ownsCombo(this, "scholarsEye")) moneyBonus(this, 3, "Scholar's Eye: +$3.");
-      if (ownsCombo(this, "cartographer")) stageBonus(this, 10, "umtComboCartographer", "Cartographer");
+      if (ownsCombo(this, "fastStory") && history.length <= 3) stageBonus(this, 40, "umtComboFastStory", "Fast Story");
+      if (ownsCombo(this, "blitz") && history.length <= 2) stageBonus(this, 50, "umtComboBlitz", "Blitz");
+      if (ownsCombo(this, "stillWaters") && this.state.umtMulliganUsed !== stageKeyOf(this.state)) {
+        stageBonus(this, 30, "umtComboStillWaters", "Still Waters");
+      }
+      if (ownsCombo(this, "scholarsEye")) moneyBonus(this, 8, "Scholar's Eye: +$8.");
+      if (ownsCombo(this, "compound")) moneyBonus(this, 8, "Compound Interest: +$8.");
+      if (ownsCombo(this, "cartographer")) stageBonus(this, 30, "umtComboCartographer", "Cartographer");
       if (ownsCombo(this, "compassRose") && history.length <= 4) moneyBonus(this, 4, "Compass Rose: +$4.");
       if (ownsCombo(this, "safetyNet")) {
         // The last guess of the bonus window: anything later is a late
         // guess, which earns nothing but its penalty (returned above).
         const lastRow = typeof this._solveGuessThreshold === "function" ? this._solveGuessThreshold() : 6;
-        if (lastRow && history.length === lastRow) stageBonus(this, 20, "umtComboSafetyNet", "Safety Net");
+        if (lastRow && history.length === lastRow) stageBonus(this, 60, "umtComboSafetyNet", "Safety Net");
       }
     }
     return result;

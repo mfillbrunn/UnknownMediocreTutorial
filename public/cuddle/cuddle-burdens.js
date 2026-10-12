@@ -15,7 +15,7 @@
  *     effects, for the rest of the run;
  *   - the Word Duel: taking a dead tile is one way to pay for Easy;
  *   - some bosses on Hard, for that fight only (HARD_BOSS below);
- *   - Ascension 9, Dead Weight: one dead tile all run.
+ *   - Ascension 3, Dead Weight: one dead tile all run.
  *
  * The shop's Mend shelf (cuddle-shop.js) sells their removal.
  *
@@ -35,9 +35,9 @@
  *   - Joker tiles (Joker Cache): the cache's Jokers are shuffled into the
  *     deck instead of handed out at the stage start; drawing one gives
  *     you a Joker.
- * Full Circle (epic) pays for going through the deck: each time it runs
- * out and the discard is shuffled back in, one letter of the answer is
- * shown in its exact place (a green hint).
+ * Full Circle (epic) pays for going through the deck: the first time in a
+ * stage it runs out and the discard is shuffled back in, one letter of
+ * the answer is shown in its exact place (a green hint).
  * A lucky tile mulliganed away pays +5 points. Idea, lucky, wave and Joker
  * tiles that have done their thing leave the deck for the rest of the stage.
  *
@@ -57,7 +57,9 @@
   var DEAD_GLYPH = "·";
   var LUCKY_GLYPH = "♣";
   var SWAMP_DEAD = 3;
-  var LUCKY_POINTS = [0, 10, 20, 30];
+  var LUCKY_POINTS = [0, 10, 20, 40];
+  // Tiles dealt by level: 1, 2, then 4 (the third pick is the big one).
+  var TILES_BY_LEVEL = [0, 1, 2, 4];
   var LUCKY_MULLIGAN_POINTS = 5;
   var IDEA_GLYPH = "◇";
   var WAVE_GLYPH = "≈";
@@ -223,11 +225,15 @@
     return powerLevel(game, "luckyClover");
   }
 
-  // Joker Cache's Jokers, now dealt as deck tiles: one per Small level,
-  // two more for Large. The engine's stage-start grant leaves these out
+  function luckyCount(game) {
+    return TILES_BY_LEVEL[luckyLevel(game)];
+  }
+
+  // Joker Cache's Jokers, now dealt as deck tiles: 1, 2, then 4 for
+  // Small, two more for Large. The engine's stage-start grant leaves these out
   // (see _deckJokerCount, read in cuddle-engine.js).
   function deckJokers(game) {
-    return powerLevel(game, "jokerCache") + 2 * powerLevel(game, "jokerCacheLarge", 1);
+    return TILES_BY_LEVEL[powerLevel(game, "jokerCache")] + 2 * powerLevel(game, "jokerCacheLarge", 1);
   }
 
   function ascensionDead(game) {
@@ -265,7 +271,7 @@
   }
 
   // -- removing them (the shop's Mend shelf, cuddle-shop.js) ----------------
-  // Only run-long burdens: a Hard boss's and Ascension 9's stay put.
+  // Only run-long burdens: a Hard boss's and Ascension 3's stay put.
   function removeDead(game) {
     var value = burden(game && game.state);
     if (value.dead <= 0) return "";
@@ -303,9 +309,10 @@
     return {
       dead: dead,
       doubles: doubles,
-      lucky: duel ? 0 : luckyLevel(game),
+      lucky: duel ? 0 : luckyCount(game),
+      // Idea tiles stay 1/2/3: four yellow hints a stage was too easy.
       idea: duel ? 0 : powerLevel(game, "ideaTiles"),
-      wave: duel ? 0 : powerLevel(game, "waveTiles"),
+      wave: duel ? 0 : TILES_BY_LEVEL[powerLevel(game, "waveTiles")],
       jokers: duel ? 0 : deckJokers(game)
     };
   }
@@ -417,8 +424,21 @@
       var discardBefore = (this.state.discard || []).length;
       var card = baseDrawOne.apply(this, arguments);
       // The discard only ever empties here by being shuffled back in.
-      if (discardBefore > 0 && !(this.state.discard || []).length && !inDuel(this.state) && powerLevel(this, "fullCircle", 1) > 0) {
-        this.__umtCycles = (this.__umtCycles || 0) + 1;
+      if (discardBefore > 0 && !(this.state.discard || []).length && !inDuel(this.state)) {
+        // Full Circle: once a stage (more trips through the deck gave the
+        // whole answer away).
+        var fullCircleKey = [this.state.runId || "", this.state.round || 0, this.state.secret || ""].join(":");
+        if (powerLevel(this, "fullCircle", 1) > 0 && this.state.umtFullCircle !== fullCircleKey) {
+          this.state.umtFullCircle = fullCircleKey;
+          this.__umtCycles = (this.__umtCycles || 0) + 1;
+        }
+        // Riptide (Wave Tiles + Full Circle): +2 mulligans a reshuffle.
+        var synergies = window.CuddleSynergies;
+        if (synergies && typeof synergies.owns === "function" && synergies.owns(this, "riptide")) {
+          var gained = typeof this.mulliganGain === "function" ? this.mulliganGain(2) : 2;
+          this.state.mulligansLeft = Math.max(0, Number(this.state.mulligansLeft) || 0) + gained;
+          drawNote(this, "Riptide: +" + gained + " mulligans.");
+        }
       }
       if (!card || inDuel(this.state)) return card;
       if (isJokerTile(card)) {
@@ -546,8 +566,10 @@
   };
 
   // The engine's stage-start Joker grant skips the ones dealt as tiles.
+  // (Only the cache's own share of the per-stage grant -- one a Small
+  // level, two for Large -- whatever count of tiles that buys.)
   proto._deckJokerCount = function deckJokerCount() {
-    return inDuel(this.state) ? 0 : deckJokers(this);
+    return inDuel(this.state) ? 0 : powerLevel(this, "jokerCache") + 2 * powerLevel(this, "jokerCacheLarge", 1);
   };
 
   // A dead or lucky tile can't be played.

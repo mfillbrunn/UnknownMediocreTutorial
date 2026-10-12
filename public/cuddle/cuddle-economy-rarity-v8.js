@@ -37,8 +37,7 @@
     // A Joker every stage is now only the Legendary Joker Cache.
     "wild card",
     // Upgrades are permanent: one-off effects don't belong in the pool.
-    "position peek",
-    "reward echo"
+    "position peek"
   ]);
 
   const ORDINARY_TIER_BY_NAME = new Map([
@@ -48,10 +47,13 @@
     ["second guess quest", TIERS.COMMON],
     ["bigger mulligan", TIERS.COMMON],
     ["cull one letter", TIERS.COMMON],
-    ["opening verse", TIERS.COMMON],
+    // Rarity follows points per stage (Opening Verse, Early Finish and
+    // Vowel Bounty pay a common-plus amount every stage, so they are Rare;
+    // Encore and Double Down pay rarely, so they step down).
+    ["opening verse", TIERS.RARE],
     ["wide margins", TIERS.COMMON],
     ["mulligan dividend", TIERS.COMMON],
-    ["early finish", TIERS.COMMON],
+    ["early finish", TIERS.RARE],
     ["colour surge", TIERS.COMMON],
     ["color surge", TIERS.COMMON],
     ["greyscale", TIERS.COMMON],
@@ -63,7 +65,7 @@
     ["echo finder", TIERS.COMMON],
     ["treasure hunter", TIERS.COMMON],
     ["haggler", TIERS.COMMON],
-    ["vowel bounty", TIERS.COMMON],
+    ["vowel bounty", TIERS.RARE],
     // A one-time letter, so Common.
     ["position peek", TIERS.COMMON],
     ["mulligan tiles", TIERS.COMMON],
@@ -79,7 +81,7 @@
     ["bigger cuddle", TIERS.RARE],
     ["treasure map", TIERS.RARE],
     ["surprise assignment", TIERS.RARE],
-    ["encore", TIERS.RARE],
+    ["encore", TIERS.COMMON],
     ["rainy day fund", TIERS.RARE],
     ["small joker cache", TIERS.RARE],
     ["joker tiles", TIERS.RARE],
@@ -89,7 +91,7 @@
     ["alphabet compass", TIERS.EPIC],
     ["second cup", TIERS.EPIC],
     ["double mulligans", TIERS.EPIC],
-    ["double down", TIERS.EPIC],
+    ["double down", TIERS.RARE],
     ["process of elimination", TIERS.EPIC],
     ["cull two letters", TIERS.EPIC],
     ["full hand mulligan", TIERS.EPIC],
@@ -154,7 +156,7 @@
   const LEGENDARY_PICKS = Object.freeze([
     legendaryPick("doubleMulligans", "🔁", "Double Mulligans", "Permanently doubles every mulligan you get: each stage's starting mulligans and every one you gain along the way.",
       (state) => !(Number(state.upgrades?.doubleMulligans) > 0)),
-    legendaryPick("cullRare", "✂️", "Deep Cull", "Remove four rare letters from the deck and from every future secret.",
+    legendaryPick("cullRare", "✂️", "Deep Cull", "Remove three rare letters from the deck and from every future secret.",
       (state) => ownedHistoryCount(state, "cullRare") < 1),
     legendaryPick("freeVowelSweep", "🅰️", "Free Vowel Sweep", "Each stage opens with one random vowel tested for free: you learn whether it's in the answer, not where.",
       (state) => !(Number(state.upgrades?.freeVowelSweep) > 0)),
@@ -1458,7 +1460,7 @@
       setMaxStack(def, 1);
       replaceHandlers(def, "quest-reroll-stage");
     } else if (name === "colour surge" || name === "color surge") {
-      setDescription(def, "Green tiles pay 0.5 more points. Level 2: 1 more. Level 3: 1.5 more.");
+      setDescription(def, "Green tiles pay 0.5 more points. Level 2: 1 more. Level 3: 2 more.");
       replaceHandlers(def, "colour-surge");
     } else if (name === "grey matters" || name === "gray matters") {
       setDescription(def, "Grey tiles are worth 1 point more. Yellow and green values are unchanged.");
@@ -1467,7 +1469,7 @@
       setDescription(def, "Begin every stage with one Joker in the active pouch.");
       replaceHandlers(def, "wild-card");
     } else if (name === "softer cuddle meter") {
-      setDescription(def, "The Cuddle Meter fills sooner: 2 fewer tiles, then 4, then 7 at level 3 (Hard: 12 → 10 → 8 → 5).");
+      setDescription(def, "The Cuddle Meter fills sooner: 2 fewer tiles, then 4, then 6 at level 3 (Hard: 12 → 10 → 8 → 6).");
       setMaxStack(def, 6);
       replaceHandlers(def, "soft-meter");
     } else if (name === "bigger cuddle") {

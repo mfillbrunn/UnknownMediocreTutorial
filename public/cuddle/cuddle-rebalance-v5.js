@@ -62,7 +62,7 @@
     Object.freeze({
       id: IDS.rainyDay, key: IDS.rainyDay, icon: "\uD83C\uDFE6",
       title: "Rainy Day Fund", name: "Rainy Day Fund",
-      description: "Every stage pays 5% interest on your wallet, up to $10. Level 2: 10%, up to $20. Level 3: 15%, up to $40.",
+      description: "Every stage pays 5% interest on your wallet, up to $10. Level 2: 10%, up to $20. Level 3: 20%, up to $40.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
@@ -74,7 +74,7 @@
     Object.freeze({
       id: IDS.vowelBounty, key: IDS.vowelBounty, icon: "\uD83C\uDD70\uFE0F",
       title: "Vowel Bounty", name: "Vowel Bounty",
-      description: "Every vowel in a word you solve pays 5 points. Level 2: 10 points. Level 3: 18 points.",
+      description: "Every vowel in a word you solve pays 5 points. Level 2: 10 points. Level 3: 20 points.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
@@ -107,7 +107,7 @@
     Object.freeze({
       id: IDS.patternLens, key: IDS.patternLens, icon: "\uD83E\uDDE9",
       title: "Pattern Lens", name: "Pattern Lens",
-      description: "Every stage shows where the answer's vowels and consonants sit, like C V C C V.",
+      description: "From your second guess on, every stage shows where the answer's vowels and consonants sit, like C V C C V.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     // Cheaper reward refreshes (cuddle-engine.js getUpgradeRefreshCost).
@@ -126,7 +126,7 @@
     Object.freeze({
       id: IDS.lastLight, key: IDS.lastLight, icon: "\uD83D\uDD6F\uFE0F",
       title: "Last Light", name: "Last Light",
-      description: "Every stage opens with the answer's last letter already in place.",
+      description: "After your second guess in every stage, the answer's last letter is placed.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     // An Epic pick (cuddle-economy-rarity-v8.js); granted in
@@ -134,7 +134,7 @@
     Object.freeze({
       id: IDS.yellowHint, key: IDS.yellowHint, icon: "\uD83D\uDFE8",
       title: "Yellow Guesser Hint", name: "Yellow Guesser Hint",
-      description: "Every stage, boss fights included, opens with one letter of the answer shown as in the word, not where.",
+      description: "After your first guess in every stage, boss fights included, one letter of the answer is shown as in the word, not where.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     // Yellow Guesser Hint's second stage (Legendary): the same letter now
@@ -142,7 +142,7 @@
     Object.freeze({
       id: IDS.clearSight, key: IDS.clearSight, icon: "\uD83D\uDFE9",
       title: "Clear Sight", name: "Clear Sight",
-      description: "Upgrades Yellow Guesser Hint: every stage's letter now comes already in its exact place.",
+      description: "Upgrades Yellow Guesser Hint: the letter it shows after your first guess comes in its exact place.",
       maxLevel: 1, maxCount: 1, kind: "upgrade", requires: IDS.yellowHint
     }),
     Object.freeze({
@@ -156,13 +156,13 @@
     Object.freeze({
       id: IDS.cullOne, key: IDS.cullOne, icon: "\u2702\uFE0F",
       title: "Cull One Letter", name: "Cull One Letter",
-      description: "Permanently remove one rare consonant from your deck and every future answer. Level 2: two gone. Level 3: four gone.",
+      description: "Permanently remove one rare consonant from your deck and every future answer. Level 2: two gone. Level 3: four gone. (No run culls more than 8 letters.)",
       maxLevel: 3, maxCount: 3, kind: "upgrade", cull: 1
     }),
     Object.freeze({
       id: IDS.cullTwo, key: IDS.cullTwo, icon: "\u2702\uFE0F",
       title: "Cull Two Letters", name: "Cull Two Letters",
-      description: "Permanently remove two rare consonants from your deck and every future answer. Level 2: four gone. Level 3: seven gone.",
+      description: "Permanently remove two rare consonants from your deck and every future answer. Level 2: three gone. Level 3: five gone. (No run culls more than 8 letters.)",
       maxLevel: 3, maxCount: 3, kind: "upgrade", cull: 2
     })
   ]);
@@ -205,7 +205,7 @@
       title: "Small Joker Cache",
       name: "Small Joker Cache",
       // Each level adds one Joker per stage: 1, 2, then 3 at level 3.
-      description: "A Joker tile in your deck every stage: draw it for a Joker. Level 2: two. Level 3: three.",
+      description: "A Joker tile in your deck every stage: draw it for a Joker. Level 2: two. Level 3: four.",
       maxLevel: 3,
       maxCount: 3,
       kind: "upgrade"
@@ -1437,16 +1437,64 @@
     try { if (typeof game.drawToHandLimit === "function") game.drawToHandLimit(); } catch (_error) {}
   }
 
-  // Yellow Guesser Hint: one present letter per copy, once per stage
-  // (the round token keeps a reload from granting it twice).
+  // Yellow Guesser Hint: one present letter (or, with Clear Sight, one
+  // placed letter), once per stage. The letter is picked when the stage
+  // starts but only shown after the first guess -- so it can turn out to
+  // be one the first guess already found. (Picking it after the guess
+  // would always hand over something new, which made the "later" hint
+  // stronger, not weaker.) The round token keeps a reload from granting
+  // it twice.
+  function planStageYellowHint(game) {
+    const custom = customState(game);
+    const secret = secretWord(game);
+    if (upgradeLevel(game, IDS.yellowHint) <= 0 || !custom || !/^[A-Z]{5}$/.test(secret)) return;
+    const token = roundToken(game);
+    if (custom.yellowHintPlan && custom.yellowHintPlan.token === token) return;
+    const state = stateOf(game);
+    normalizeKnowledgeArrays(state);
+    const hidden = state.revealedPositions.map((value, index) => (value ? null : index)).filter((index) => index !== null);
+    const known = new Set(state.knownPresent || []);
+    const letters = Array.from(new Set(secret.split(""))).filter((letter) => !known.has(letter));
+    const index = hidden.length ? hidden[hash32(`${token}:plan:green`) % hidden.length] : -1;
+    const letter = letters.length ? letters[hash32(`${token}:plan:yellow`) % letters.length] : "";
+    custom.yellowHintPlan = { token, index, letter };
+  }
+
   function grantStageYellowHints(game) {
     const custom = customState(game);
     if (upgradeLevel(game, IDS.yellowHint) <= 0 || !custom) return;
     const token = roundToken(game);
     if (custom.yellowHintToken === token) return;
     custom.yellowHintToken = token;
-    if (upgradeLevel(game, IDS.clearSight) > 0) grantGreenHint(game, "Clear Sight");
-    else grantYellowHint(game, "Yellow Guesser Hint");
+    planStageYellowHint(game);
+    const plan = custom.yellowHintPlan;
+    const state = stateOf(game);
+    const secret = secretWord(game);
+    if (!plan || plan.token !== token || !state) return;
+    normalizeKnowledgeArrays(state);
+    const marks = ensureHintMarks(game);
+    if (upgradeLevel(game, IDS.clearSight) > 0 && plan.index >= 0) {
+      const letter = secret[plan.index];
+      const already = state.revealedPositions[plan.index] === letter;
+      state.revealedPositions[plan.index] = letter;
+      const positions = Array.isArray(marks.greenPositions[letter]) ? marks.greenPositions[letter] : [];
+      if (!positions.includes(plan.index + 1)) positions.push(plan.index + 1);
+      marks.greenPositions[letter] = positions.sort((left, right) => left - right);
+      finishHintKnowledge(game, letter);
+      appendNotice(game, already
+        ? `Clear Sight: ${letter} in position ${plan.index + 1} -- you'd found it already.`
+        : `Clear Sight: ${letter} is green in position ${plan.index + 1}.`);
+    } else if (plan.letter) {
+      const already = (state.knownPresent || []).includes(plan.letter);
+      if (!marks.yellowLetters.includes(plan.letter)) marks.yellowLetters.push(plan.letter);
+      finishHintKnowledge(game, plan.letter);
+      appendNotice(game, already
+        ? `Yellow Guesser Hint: ${plan.letter} -- you'd found it already.`
+        : `Yellow Guesser Hint: ${plan.letter} is in the word.`);
+    }
+    const coach = coachState(game);
+    if (coach) coach.hintsGranted = asNumber(coach.hintsGranted, 0) + 1;
+    safeSave(game);
   }
 
   // Hints land in every stage, boss fights included.
@@ -2685,11 +2733,10 @@
     // Interest on the wallet, paid into the wallet -- it used to read the
     // run's points and pay points, while promising money.
     const balance = Math.max(0, asNumber(state.cuddleMoney, 0)) + (compound ? totalJokerStock(game) * 10 : 0);
-    // 5% up to $10, 10% up to $20, then 15% up to $40 at level 3.
-    // (Was 10/20/30% up to $25/$50/$120.)
+    // 5% up to $10, 10% up to $20, then 20% up to $40 at level 3.
     const tier = Math.max(0, Math.min(3, Math.floor(level)));
     const cap = [0, 10, 20, 40][tier] * (compound ? 2 : 1);
-    const interest = Math.min(cap, Math.floor(balance * 0.05 * tier));
+    const interest = Math.min(cap, Math.floor(balance * [0, 0.05, 0.1, 0.2][tier]));
     if (interest <= 0) return;
     state.cuddleMoney = Math.max(0, asNumber(state.cuddleMoney, 0)) + interest;
     appendNotice(game, `Rainy Day Fund paid $${interest} in interest.`);
@@ -2843,8 +2890,8 @@
     if (vowelLevel > 0) {
       const vowels = secretVowelCount(game);
       if (vowels > 0) {
-        // 5, 10, then 18 a vowel at level 3.
-        const perVowel = [0, 5, 10, 18][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
+        // 5, 10, then 20 a vowel at level 3.
+        const perVowel = [0, 5, 10, 20][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
         addScoreBonus(game, vowels * perVowel, "umtVowelBounty",
           `${vowels} vowel${vowels === 1 ? "" : "s"} in the secret`);
       }
@@ -2888,7 +2935,9 @@
     applyTrainingWheels(game);
     payStageInterest(game);
     initializeHintSchedule(game);
-    grantStageYellowHints(game);
+    // Yellow Guesser Hint picks its letter now and shows it after the
+    // stage's first guess (cuddle-clues.js).
+    planStageYellowHint(game);
     doubleDownGuess(game);
     scheduleUi();
     safeSave(game);
@@ -2919,8 +2968,12 @@
   }
 
   function availableFunRewards(game) {
+    // Culls leave the pool once the run has culled its 8 letters
+    // (cuddle-engine.js _removalCandidates caps every cull there).
+    const cullsDone = typeof game?._culledLetterCount === "function" && game._culledLetterCount() >= 8;
     return FUN_REWARDS.filter((reward) => upgradeLevel(game, reward.id) < rewardMax(reward)
-      && (!reward.requires || upgradeLevel(game, reward.requires) > 0));
+      && (!reward.requires || upgradeLevel(game, reward.requires) > 0)
+      && !(cullsDone && reward.cull));
   }
 
   // Every custom reward this layer can grant -- the solving aids that
@@ -3061,7 +3114,7 @@
       }
       custom.cuddleUserJokerCachePerRoundLevel = current;
       appendNotice(game, current >= 2
-        ? `Small Joker Cache level ${current}: ${current} Joker tiles in your deck every stage.`
+        ? `Small Joker Cache level ${current}: ${current >= 3 ? 4 : current} Joker tiles in your deck every stage.`
         : "Small Joker Cache: a Joker tile in your deck every stage.");
     }
     if (id === IDS.jokerCacheLarge) {
@@ -3076,10 +3129,12 @@
     const cullReward = customRewardById(id);
     if (cullReward && cullReward.cull && typeof game._removalCandidates === "function") {
       const state = stateOf(game);
-      // The third pick of a cull takes one letter more (1, 1, 2 for Cull
-      // One; 2, 2, 3 for Cull Two).
-      const thirdPick = alreadyApplied < 3 && current >= 3 ? 1 : 0;
-      const letters = game._removalCandidates(cullReward.cull * delta + thirdPick);
+      // Letters each level takes: Cull One 1, 1, 2 (1/2/4 in all); Cull
+      // Two 2, 1, 2 (2/3/5). The run's cull cap (8) applies on top.
+      const steps = cullReward.cull >= 2 ? [2, 1, 2] : [1, 1, 2];
+      let wanted = 0;
+      for (let step = alreadyApplied + 1; step <= Math.min(3, current); step += 1) wanted += steps[step - 1] || 0;
+      const letters = game._removalCandidates(wanted);
       if (state && letters.length) {
         state.removedLetters = Array.from(new Set([...(state.removedLetters || []), ...letters])).sort();
         appendNotice(game, `${cullReward.title}: ${letters.join(", ")} ${letters.length === 1 ? "is" : "are"} gone for good.`);
@@ -4835,6 +4890,9 @@
       // Pays points into the stage's itemized "Stage bonus" box (combo
       // payouts in cuddle-synergies.js ride on this).
       addStageBonus: (game, amount, field, label) => addScoreBonus(game || publicActiveGame(), amount, field, label),
+      // Yellow Guesser Hint's stage hint (once per stage), for the clue
+      // layer to hand out after the first guess.
+      grantStageYellowHints: (game) => grantStageYellowHints(game || publicActiveGame()),
       // What a map stop's variant does, for the stop preview: a named
       // challenge is described at the run's current guess cap and carries
       // its reward (paid in both points and money on a win).

@@ -4,19 +4,19 @@
  * unlocks, up to 9. Each level adds one handicap to all the ones below it,
  * so Ascension 5 carries five. Only Hard runs climb the ladder.
  *
- *   1 Thin Hand      one fewer consonant in your hand
- *   2 Frayed Nerves  one fewer mulligan every stage
- *   3 Slim Pickings  reward screens offer one card fewer (never under two)
- *   4 Tight Window   the solve window is one guess shorter
- *   5 Gauntlet       no plain Wordles: every Wordle stop has a challenge
- *                    (read by cuddle-rebalance-v5.js)
- *   6 Steep Gates    boss point targets are 20% higher
- *                    (read by cuddle-branch-map.js)
- *   7 Heavy Toll     each late guess costs 10 more points
- *   8 Hexed          the run starts cursed: one of the first three guesses
- *                    of every stage has its feedback masked
- *   9 Dead Weight    a dead tile sits in your deck all run
+ *   1 Frayed Nerves  one fewer mulligan every stage
+ *   2 Slim Pickings  reward screens offer one card fewer (never under two)
+ *   3 Dead Weight    a dead tile sits in your deck all run
  *                    (dealt by cuddle-burdens.js)
+ *   4 Heavy Toll     each late guess costs 10 more points
+ *   5 Tight Window   the solve window is one guess shorter
+ *   6 Gauntlet       no plain Wordles: every Wordle stop has a challenge
+ *                    (read by cuddle-rebalance-v5.js)
+ *   7 Steep Gates    boss point targets are 20% higher
+ *                    (read by cuddle-branch-map.js)
+ *   8 Thin Hand      one fewer consonant in your hand
+ *   9 Hexed          the run starts cursed: one of the first three guesses
+ *                    of every stage has its feedback masked
  *
  * The level a run was started at is stored on the run (state.umtAscension),
  * so a saved run keeps its handicaps whatever is picked in the lobby later.
@@ -37,15 +37,15 @@
   var HEX_CURSES = ["hiddenMargins", "countOnly", "blueMode", "arrowMode"];
 
   var LEVELS = Object.freeze([
-    Object.freeze({ level: 1, id: "thinHand", name: "Thin Hand", text: "One fewer consonant in your hand." }),
-    Object.freeze({ level: 2, id: "frayedNerves", name: "Frayed Nerves", text: "One fewer mulligan every stage." }),
-    Object.freeze({ level: 3, id: "slimPickings", name: "Slim Pickings", text: "Reward screens offer one card fewer." }),
-    Object.freeze({ level: 4, id: "tightWindow", name: "Tight Window", text: "The solve window is one guess shorter." }),
-    Object.freeze({ level: 5, id: "gauntlet", name: "Gauntlet", text: "No plain Wordles: every Wordle stop has a challenge." }),
-    Object.freeze({ level: 6, id: "steepGates", name: "Steep Gates", text: "Boss point targets are 20% higher." }),
-    Object.freeze({ level: 7, id: "heavyToll", name: "Heavy Toll", text: "Each late guess costs 10 more points." }),
-    Object.freeze({ level: 8, id: "hexed", name: "Hexed", text: "You start cursed: one early guess of every stage is masked." }),
-    Object.freeze({ level: 9, id: "deadWeight", name: "Dead Weight", text: "A dead tile sits in your deck all run. Mulligan it away." })
+    Object.freeze({ level: 1, id: "frayedNerves", name: "Frayed Nerves", text: "One fewer mulligan every stage." }),
+    Object.freeze({ level: 2, id: "slimPickings", name: "Slim Pickings", text: "Reward screens offer one card fewer." }),
+    Object.freeze({ level: 3, id: "deadWeight", name: "Dead Weight", text: "A dead tile sits in your deck all run. Mulligan it away." }),
+    Object.freeze({ level: 4, id: "heavyToll", name: "Heavy Toll", text: "Each late guess costs 10 more points." }),
+    Object.freeze({ level: 5, id: "tightWindow", name: "Tight Window", text: "The solve window is one guess shorter." }),
+    Object.freeze({ level: 6, id: "gauntlet", name: "Gauntlet", text: "No plain Wordles: every Wordle stop has a challenge." }),
+    Object.freeze({ level: 7, id: "steepGates", name: "Steep Gates", text: "Boss point targets are 20% higher." }),
+    Object.freeze({ level: 8, id: "thinHand", name: "Thin Hand", text: "One fewer consonant in your hand." }),
+    Object.freeze({ level: 9, id: "hexed", name: "Hexed", text: "You start cursed: one early guess of every stage is masked." })
   ]);
   var MAX = LEVELS.length;
   var BY_ID = {};
@@ -329,15 +329,10 @@
     if (!root) return;
     root.querySelectorAll(".umt-asc-chip-wrap").forEach(function drop(element) { element.remove(); });
     if (landing || !game || !game.state || inDuel(game.state) || levelOf(game) <= 0) return;
-    var state = game.state;
-    if (state.status === "branchMap") {
-      var page = root.querySelector(".cuddle-branch-shell .cuddle-branch-page");
-      if (page) page.insertAdjacentHTML("afterbegin", chipHtml(game));
-      return;
-    }
-    if (state.status !== "playing") return;
-    var strip = root.querySelector(".cuddle-play-strip");
-    if (strip) strip.insertAdjacentHTML("beforeend", chipHtml(game));
+    // Shown on the map only: the play screen stays clear.
+    if (game.state.status !== "branchMap") return;
+    var page = root.querySelector(".cuddle-branch-shell .cuddle-branch-page");
+    if (page) page.insertAdjacentHTML("afterbegin", chipHtml(game));
   }
 
   function activeGame() {
