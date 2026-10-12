@@ -2309,8 +2309,8 @@
     const challenge = activeChallenge(game) || (snapshot && snapshot.challenge);
     if (challenge && !challenge.paid) {
       const reward = Math.max(0, Math.round(asNumber(challenge.reward, 0)));
-      if (reward > 0) {
-        addScoreBonus(game, reward, "umtChallengeBonus", "Challenge cleared", entry);
+      // A late solve (past the guess window) earns nothing: no points, no money.
+      if (reward > 0 && addScoreBonus(game, reward, "umtChallengeBonus", "Challenge cleared", entry) > 0) {
         // Paid in both currencies: the Points above count toward the run's
         // score and its boss gates, and the same figure in Money is what
         // makes taking a challenge worth the masked guesses it costs.
@@ -2328,8 +2328,8 @@
     const variant = activeVariant(game);
     if (variant && variant.kind === "plain" && !variant.classicPaid) {
       const bonus = CONFIG.classicClearBonus;
-      addScoreBonus(game, bonus, "umtClassicBonus", "Classic Wordle cleared", entry);
-      const paidState = stateOf(game);
+      const paidPoints = addScoreBonus(game, bonus, "umtClassicBonus", "Classic Wordle cleared", entry);
+      const paidState = paidPoints > 0 ? stateOf(game) : null;
       if (paidState) {
         paidState.cuddleMoney = Math.max(0, asNumber(paidState.cuddleMoney, 0) + bonus);
         if (entry) entry.classicBonusMoney = asNumber(entry.classicBonusMoney, 0) + bonus;
@@ -2337,7 +2337,7 @@
       // The cash-out shows the money beside the points on the same line.
       const line = (customState(game) && customState(game).lastPayoutLines || [])
         .find((item) => item && item.field === "umtClassicBonus" && item.roundToken === roundToken(game));
-      if (line) line.money = asNumber(line.money, 0) + bonus;
+      if (line && paidPoints > 0) line.money = asNumber(line.money, 0) + bonus;
       variant.classicPaid = true;
     }
 

@@ -156,7 +156,7 @@
   const LEGENDARY_PICKS = Object.freeze([
     legendaryPick("doubleMulligans", "🔁", "Double Mulligans", "Permanently doubles every mulligan you get: each stage's starting mulligans and every one you gain along the way.",
       (state) => !(Number(state.upgrades?.doubleMulligans) > 0)),
-    legendaryPick("cullRare", "✂️", "Deep Cull", "Remove three rare letters from the deck and from every future secret.",
+    legendaryPick("cullRare", "✂️", "Deep Cull", "Remove five rare letters from the deck and from every future secret.",
       (state) => ownedHistoryCount(state, "cullRare") < 1),
     legendaryPick("freeVowelSweep", "🅰️", "Free Vowel Sweep", "Each stage opens with one random vowel tested for free: you learn whether it's in the answer, not where.",
       (state) => !(Number(state.upgrades?.freeVowelSweep) > 0)),

@@ -276,7 +276,7 @@
           levels: ["Every consonant ruled out pays +0.5 points", "Every consonant ruled out pays +1 point", "Every consonant ruled out pays +2 points"],
           level: g => powerLevel(g, "strikeThrough") },
         { id: "highRoller", icon: "🎲", title: "High Roller", tier: "common", type: "points", maxLevel: 3,
-          levels: ["Every stage bets 10 points: solve inside your guess window (or one guess past it) to win it back double, solve later and lose it", "Every stage bets 20 points", "Every stage bets 50 points"],
+          levels: ["Every stage bets 10 points: solve by guess 5 (world 1) or guess 4 (worlds 2 and 3) to win it back double, solve later and lose it", "Every stage bets 20 points", "Every stage bets 50 points"],
           level: g => powerLevel(g, "highRoller") },
         { id: "hardMode", icon: "🎯", title: "Hard Mode", tier: "common", type: "points", maxLevel: 3,
           levels: ["Solve a stage in hard mode (every guess keeps your greens and uses your yellows): +10 points", "Hard-mode solves pay +20 points", "Hard-mode solves pay +40 points"],
@@ -302,7 +302,7 @@
       title: "Boss Rewards",
       blurb: "Permanent rewards for clearing a boss round. No ordinary upgrade is offered afterward.",
       nodes: [
-        { id: "cullRare", icon: "✂️", title: "Deep Cull", tier: "legendary", type: "letters", maxLevel: 1, description: "Removes 3 rare letters from your deck and all future answers" },
+        { id: "cullRare", icon: "✂️", title: "Deep Cull", tier: "legendary", type: "letters", maxLevel: 1, description: "Removes 5 rare letters from your deck and all future answers" },
         { id: "doubleMulligans", icon: "🔁", title: "Double Mulligans", tier: "epic", type: "letters", maxLevel: 1, description: "Every mulligan you get is doubled, for the rest of the run", level: g => upgradeCount(g, "doubleMulligans") },
         { id: "biggerMulligans", icon: "🖐️", title: "Full Hand Mulligan", tier: "epic", type: "letters", maxLevel: 1, description: "A mulligan can swap up to 5 of your letters", level: g => ledgerCount(g, "biggerMulligans") },
         { id: "freeVowelSweep", icon: "🅰️", title: "Free Vowel Sweep", tier: "legendary", type: "clues", maxLevel: 1, description: "Each stage tests 1 random vowel for free: you learn if it's in the answer", level: g => upgradeCount(g, "freeVowelSweep") },

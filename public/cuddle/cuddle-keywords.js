@@ -38,7 +38,9 @@
   ].join(",");
 
   // One pattern, six kinds. Money first, so "$10" is never read as "10".
-  var PATTERN = /([+−-]?\$\d[\d,]*)|([+−-]?\d+\s*(?:points?|pts?)\b)|((?:[+−-]?\d+\s+)?(?:free\s+)?mulligans?\b)|((?:[+−-]?\d+\s+)?jokers?\b)|((?:[+−-]?\d+\s+)?(?:dead tiles?|doubled consonants?)\b)|((?:[+−-]?\d+\s+)?lucky tiles?\b)/gi;
+  // Numbers may carry a decimal part ("+0.5 points" is one keyword, not
+  // "0." followed by "5 points").
+  var PATTERN = /([+−-]?\$\d[\d,]*(?:\.\d+)?)|([+−-]?\d+(?:\.\d+)?\s*(?:points?|pts?)\b)|((?:[+−-]?\d+\s+)?(?:free\s+)?mulligans?\b)|((?:[+−-]?\d+\s+)?jokers?\b)|((?:[+−-]?\d+\s+)?(?:dead tiles?|doubled consonants?)\b)|((?:[+−-]?\d+\s+)?lucky tiles?\b)/gi;
   var KINDS = ["money", "points", "mulligan", "joker", "dead", "lucky"];
   var SKIP = /^(SCRIPT|STYLE|TEXTAREA|INPUT|SVG)$/i;
 
