@@ -2091,7 +2091,7 @@
       if (!reward) return "";
       switch (rewardId) {
         case "cullRare": {
-          const letters = this._removalCandidates(3);
+          const letters = this._removalCandidates(5);
           if (!letters.length) return "No letters were safe to remove.";
           this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
           return `Deep Cull removed ${letters.join(", ")}.`;
@@ -3306,7 +3306,7 @@
   const cuddleV3OriginalApplyBossReward = CuddleGame.prototype._applyBossReward;
   CuddleGame.prototype._applyBossReward = function applyCuddleV3BossReward(rewardId) {
     if (rewardId !== "cullRare") return cuddleV3OriginalApplyBossReward.call(this, rewardId);
-    const letters = this._removalCandidates(3);
+    const letters = this._removalCandidates(5);
     if (!letters.length) return "No letters were safe to remove.";
     this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
     return `Deep Cull removed ${letters.join(", ")}.`;
@@ -4744,7 +4744,7 @@
 
   // ------------------------------------------------------------------
   // Boss reward tweaks + the three new boss rewards. Runs before the
-  // composed chain so it can fully own cullRare's letter count (3, not
+  // composed chain so it can fully own cullRare's letter count (5, not
   // the composed chain's 2) without a second removal happening on top.
   // ------------------------------------------------------------------
   const composedApplyBossReward = CuddleGame.prototype._applyBossReward;
@@ -4752,7 +4752,7 @@
     const mega = ensureMega(this);
     let message;
     if (rewardId === "cullRare") {
-      const letters = this._removalCandidates(3);
+      const letters = this._removalCandidates(5);
       message = letters.length
         ? (() => {
           this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();

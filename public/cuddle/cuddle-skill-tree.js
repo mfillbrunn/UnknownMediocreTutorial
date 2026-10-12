@@ -302,7 +302,7 @@
       title: "Boss Rewards",
       blurb: "Permanent rewards for clearing a boss round. No ordinary upgrade is offered afterward.",
       nodes: [
-        { id: "cullRare", icon: "✂️", title: "Deep Cull", tier: "legendary", type: "letters", maxLevel: 1, description: "Removes 3 rare letters from your deck and all future answers" },
+        { id: "cullRare", icon: "✂️", title: "Deep Cull", tier: "legendary", type: "letters", maxLevel: 1, description: "Removes 5 rare letters from your deck and all future answers" },
         { id: "doubleMulligans", icon: "🔁", title: "Double Mulligans", tier: "epic", type: "letters", maxLevel: 1, description: "Every mulligan you get is doubled, for the rest of the run", level: g => upgradeCount(g, "doubleMulligans") },
         { id: "biggerMulligans", icon: "🖐️", title: "Full Hand Mulligan", tier: "epic", type: "letters", maxLevel: 1, description: "A mulligan can swap up to 5 of your letters", level: g => ledgerCount(g, "biggerMulligans") },
         { id: "freeVowelSweep", icon: "🅰️", title: "Free Vowel Sweep", tier: "legendary", type: "clues", maxLevel: 1, description: "Each stage tests 1 random vowel for free: you learn if it's in the answer", level: g => upgradeCount(g, "freeVowelSweep") },

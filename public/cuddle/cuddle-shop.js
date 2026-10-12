@@ -272,7 +272,10 @@
       // A shop stocked before the trade shelf existed gets one added, and
       // one from before the pool-wide keep shelf gets a fresh keep shelf.
       if (!Array.isArray(saved.trade)) saved.trade = tradeFor(game, key);
-      if (!saved.keep.every(isKeepEntry)) saved.keep = keepStock(game, key);
+      if (!saved.keep.every(isKeepEntry)) {
+        saved.keep = keepStock(game, key);
+        safeSave(game);
+      }
       return saved;
     }
     const random = seeded(`${seedText(game)}:${key}:wandering-paw`);
@@ -284,6 +287,10 @@
     stock.keep = keepStock(game, key);
     stock.trade = tradeFor(game, key);
     shop.stock[key] = stock;
+    // Saved straight away: the keep shelf is drawn from the live reward
+    // pool, so a reload (tabbing out on a phone) before the first purchase
+    // used to re-draw it and change the shop.
+    safeSave(game);
     return stock;
   }
 

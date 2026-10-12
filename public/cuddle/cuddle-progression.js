@@ -131,7 +131,7 @@
     coachPossibleAnswers: "Shows answers left",
     coachMeterThreshold: "Cuddle Meter fills sooner",
     coachMeterReward: "Bigger meter reward",
-    cullRare: "Cuts 3 rare letters",
+    cullRare: "Cuts 5 rare letters",
     doubleMulligans: "Mulligans doubled",
     biggerMulligans: "Mulligans swap 5",
     freeVowelSweep: "Free vowel test",
