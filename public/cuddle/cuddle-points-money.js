@@ -177,6 +177,10 @@
     var state = this.state;
     var tiles = state && Array.isArray(state.cuddleMoneyTiles) ? state.cuddleMoneyTiles : null;
     if (!tiles || !Array.isArray(feedback)) return 0;
+    // A guess past the stage's window (called before guessesUsed counts it)
+    // earns nothing: its tiles are spent without paying.
+    var late = typeof this._solveGuessThreshold === "function"
+      && (Number(state.guessesUsed) || 0) + 1 > this._solveGuessThreshold();
     var points = 0;
     var notes = [];
     tiles.forEach(function pay(tile) {
@@ -189,7 +193,7 @@
       tile.hit = hit;
       tile.payout = 0;
       tile.label = "";
-      if (!hit) return;
+      if (!hit || late) return;
       if (kind === "money") {
         tile.payout = green ? MONEY_TILE_GREEN : MONEY_TILE_YELLOW;
         tile.label = "+$" + tile.payout;

@@ -297,6 +297,10 @@
   }
 
   function moneyBonus(game, amount, note) {
+    // A guess past the window earns nothing, money included.
+    const history = game.state && Array.isArray(game.state.history) ? game.state.history : [];
+    const last = history[history.length - 1];
+    if (last && num(last.latePenalty) > 0) return;
     game.state.cuddleMoney = Math.max(0, num(game.state.cuddleMoney) + amount);
     game.state.lastMessage = `${game.state.lastMessage || ""} ${note}`.trim();
   }
