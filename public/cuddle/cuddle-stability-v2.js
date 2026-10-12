@@ -1179,7 +1179,7 @@
   const SHOP_ITEMS = Object.freeze([
     Object.freeze({ id: "joker", icon: "🃏", title: "Pocket Joker", cost: 18, kind: "one-time", description: "Gain one Joker charge for this run." }),
     Object.freeze({ id: "yellowDetector", icon: "🟨", title: "Amber Lens", cost: 12, kind: "one-time", description: "Reveal one solution letter at the start of the next eligible round." }),
-    Object.freeze({ id: "coachBossTenLetterCull", icon: "✂️", title: "Ten-Letter Cull", cost: 24, kind: "boss", description: "Save a ten-letter cull for the next boss." }),
+    Object.freeze({ id: "coachBossTenLetterCull", icon: "✂️", title: "Seven-Letter Cull", cost: 24, kind: "boss", description: "Save a seven-letter cull for the next boss." }),
     Object.freeze({ id: "coachBossUnlimitedMulligans", icon: "♾️", title: "Regular Wordle Hands", cost: 28, kind: "boss", description: "Save unlimited mulligans for the next boss." }),
     Object.freeze({ id: "coachShopPossibleAnswers", icon: "🎧", title: "Secrets Counter", cost: 44, kind: "upgrade", rarity: "bronze", description: "Unlock the exact Secrets Remaining counter for this run." }),
     Object.freeze({ id: "coachShopMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", cost: 56, kind: "upgrade", rarity: "gold", description: "The Cuddle Meter fills sooner: 2 fewer tiles, then 4, then 7 at level 3." })
