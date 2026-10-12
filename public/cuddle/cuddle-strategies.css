@@ -1,0 +1,19 @@
+/* Cuddle: skipping a reward (cuddle-strategies.js). */
+.umt-skip-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.umt-skip-row small {
+  flex-basis: 100%;
+  text-align: center;
+  opacity: 0.75;
+}
+.umt-skip-btn {
+  font-size: 0.85rem;
+  border-style: dashed;
+}
+.umt-skip-btn.is-money { color: #f6c956; }

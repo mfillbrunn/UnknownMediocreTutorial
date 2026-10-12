@@ -3808,7 +3808,7 @@
       key: "greyscale",
       icon: "⬛",
       title: "Greyscale",
-      description: "Grey tiles pay 1 point. Level 2: 2 points. Level 3: 3 points."
+      description: "Grey tiles pay 1 point. Level 2: 3 points. Level 3: 5 points."
     }
   ]);
   const customUpgradeIds = new Set(customUpgradeDefinitions.map(item => item.id));
@@ -4027,9 +4027,9 @@
         break;
       }
       case "greyscale": {
-        // Greys only: 1, 2, 3 a grey. (The top level used to add +1 a
-        // yellow as well.)
-        upgrades.greyPoints += 1;
+        // Greys only: 1, 3, then 5 a grey -- the Eliminator's engine.
+        // (Was 1, 2, 3; the top level once added +1 a yellow as well.)
+        upgrades.greyPoints += finiteNumber(state.balanceRewardCounts?.greyscale) > 0 ? 2 : 1;
         break;
       }
       case "mulliganValueBoost":

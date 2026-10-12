@@ -1320,6 +1320,22 @@
       </div>`;
   }
 
+  // Skipping an ordinary reward (cuddle-strategies.js): +40 points or +$15,
+  // or both with Monk's Vow.
+  function skipRow() {
+    if (typeof game.canSkipUpgrade !== "function" || !game.canSkipUpgrade()) return "";
+    const S = window.CuddleStrategies;
+    const points = S ? S.SKIP_POINTS : 40;
+    const money = S ? S.SKIP_MONEY : 15;
+    if (S && S.hasMonksVow(game)) {
+      return `<div class="umt-skip-row"><button class="cuddle-btn cuddle-btn-ghost umt-skip-btn" data-action="skip-upgrade" data-skip-kind="both">Skip: +${points} points and +$${money}</button><small>Monk's Vow: a skip pays both.</small></div>`;
+    }
+    return `<div class="umt-skip-row">
+            <button class="cuddle-btn cuddle-btn-ghost umt-skip-btn" data-action="skip-upgrade" data-skip-kind="points">Skip: +${points} points</button>
+            <button class="cuddle-btn cuddle-btn-ghost umt-skip-btn is-money" data-action="skip-upgrade" data-skip-kind="money">Skip: +$${money}</button>
+          </div>`;
+  }
+
   function renderUpgradeOverlay(state) {
     const milestone = state.upgradePhase === "milestone";
     const startingRewards = state.upgradePhase === "difficultyStart";
@@ -1390,6 +1406,7 @@
                 ${interactionBonusDetail(choice.key || choice.id)}
               </button>`).join("")}
           </div>
+          ${skipRow()}
           <div class="cuddle-upgrade-refresh${refreshCost === null ? " is-no-refresh" : ""}">
             ${refreshCost === null
               ? `<small>${legendary ? "Legendary picks can't be refreshed." : waystone ? "A free upgrade's offer is fixed: no refreshes." : "These choices can't be refreshed."}</small>`
@@ -2013,6 +2030,11 @@
       }
       case "refresh-rewards": {
         const result = game.refreshQuestRewards();
+        setUiMessage(result.ok ? "" : result.error);
+        return true;
+      }
+      case "skip-upgrade": {
+        const result = typeof game.skipUpgrade === "function" ? game.skipUpgrade(dataset.skipKind) : { ok: false, error: "Skipping isn't available." };
         setUiMessage(result.ok ? "" : result.error);
         return true;
       }
