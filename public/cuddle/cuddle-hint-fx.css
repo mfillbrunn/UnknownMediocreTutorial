@@ -1,0 +1,39 @@
+/* Cuddle: a new hint drops in (cuddle-hint-fx.js). */
+.umt-hint-fx-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  pointer-events: none;
+  overflow: hidden;
+}
+.umt-hint-fx-tile {
+  position: fixed;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 1.3rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+}
+.umt-hint-fx-tile.is-yellow { color: #3a2a00; text-shadow: none; }
+.umt-hint-fx-tag {
+  position: fixed;
+  transform: translate(-50%, 0);
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(20, 22, 28, 0.92);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.umt-hint-fx-tag.is-green { border: 1px solid #3fbf6f; }
+.umt-hint-fx-tag.is-yellow { border: 1px solid #f6c956; }
+.umt-hint-fx-tag.is-grey { border: 1px solid #9a9ea6; }

@@ -502,7 +502,12 @@
       rounds += 1;
       game.__umtCycles -= 1;
       if (!game.state || game.state.status !== "playing" || typeof game._revealPositionPeek !== "function") break;
-      drawNote(game, "Full Circle: " + game._revealPositionPeek());
+      var peekBefore = (game.state.revealedPositions || []).slice();
+      var peek = game._revealPositionPeek();
+      (game.state.revealedPositions || []).forEach(function named(letter, index) {
+        if (letter && !peekBefore[index] && window.CuddleHintFx) window.CuddleHintFx.note(game, letter, "Full Circle");
+      });
+      drawNote(game, "Full Circle: " + peek);
     }
     game.__umtCycles = 0;
   }
@@ -539,6 +544,7 @@
     });
     if (!open.length) return "";
     var letter = open[Math.floor(randomOf(game)() * open.length)];
+    if (window.CuddleHintFx) window.CuddleHintFx.note(game, letter, "Idea tile");
     state.knownPresent = Array.from(new Set((state.knownPresent || []).concat([letter]))).sort();
     if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
     return letter;

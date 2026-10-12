@@ -140,6 +140,7 @@
     if (state.revealedPositions[4]) return "";
     const letter = secret[4];
     state.revealedPositions[4] = letter;
+    window.CuddleHintFx?.note?.(game, letter, "Last Light");
     state.knownPresent = [...new Set([...(state.knownPresent || []), letter])].sort();
     if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
     if (typeof game.drawToHandLimit === "function") game.drawToHandLimit();
