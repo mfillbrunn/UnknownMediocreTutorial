@@ -70,14 +70,27 @@
   var DOUBLES_PER_PICK = 3;
 
   // Bosses that bring a burden of their own on Hard, for the fight only.
+  // Every boss has one, so both cards on a boss choice show what Hard adds.
   var HARD_BOSS = Object.freeze({
     noMulligans: { dead: 1 },
     quickMode: { dead: 1 },
     fakeFeedback: { dead: 1 },
+    shortHand: { dead: 1 },
+    presetWordsTrial: { dead: 1 },
+    questEndurance: { dead: 1 },
     countOnly: { doubles: DOUBLES_PER_PICK },
     hiddenMargins: { doubles: DOUBLES_PER_PICK },
-    blueMode: { doubles: DOUBLES_PER_PICK }
+    blueMode: { doubles: DOUBLES_PER_PICK },
+    delayedFeedback: { doubles: DOUBLES_PER_PICK },
+    hideFeedback: { doubles: DOUBLES_PER_PICK },
+    arrowMode: { doubles: DOUBLES_PER_PICK }
   });
+  // Any other boss (a mixed one like the Chimera): one dead tile.
+  var HARD_BOSS_DEFAULT = Object.freeze({ dead: 1 });
+
+  function hardBurdenFor(id) {
+    return id ? (HARD_BOSS[id] || HARD_BOSS_DEFAULT) : null;
+  }
 
   // A dead tile's face: a small, round, friendly skull.
   var SKULL_SVG = '<svg class="umt-dead-skull" viewBox="0 0 40 40" aria-hidden="true" focusable="false">'
@@ -191,7 +204,7 @@
   function hardBossBurden(game) {
     var state = game && game.state;
     if (!state || !state.boss || difficultyOf(state) !== "hard") return null;
-    return HARD_BOSS[state.boss.id] || null;
+    return hardBurdenFor(state.boss.id);
   }
 
   function inDuel(state) {
@@ -628,11 +641,12 @@
 
   // -- boss cards: say what Hard adds ----------------------------------------
   function hardNote(id) {
-    var entry = HARD_BOSS[id];
+    var entry = hardBurdenFor(id);
     if (!entry) return "";
+    // Shown on Hard only (decorate below), so it doesn't say "On Hard".
     return entry.dead
-      ? "On Hard: +" + entry.dead + " dead tile in your deck for this fight."
-      : "On Hard: " + entry.doubles + " doubled consonants in your deck for this fight.";
+      ? "+" + entry.dead + " dead tile in your deck for this fight."
+      : entry.doubles + " doubled consonants in your deck for this fight.";
   }
 
   function activeGame() {
@@ -644,9 +658,49 @@
     }
   }
 
+  // Boss texts that name a Hard-only value ("two on Hard", "45 on Hard")
+  // show just the value for the difficulty being played.
+  var DIFFICULTY_TEXTS = [
+    [/One fewer consonant in your hand \(two on Hard\)\./g, "Two fewer consonants in your hand.", "One fewer consonant in your hand."],
+    [/\(-1 consonant, -2 on Hard\)/g, "(-2 consonants)", "(-1 consonant)"],
+    [/-1 consonant \(-2 on Hard\)/g, "-2 consonants", "-1 consonant"],
+    [/60 seconds per guess \(45 on Hard\)/g, "45 seconds per guess", "60 seconds per guess"],
+    [/60 seconds \(45 on Hard\)/g, "45 seconds", "60 seconds"]
+  ];
+
+  function difficultyText(text, hard) {
+    var out = text;
+    DIFFICULTY_TEXTS.forEach(function swap(rule) {
+      out = out.replace(rule[0], hard ? rule[1] : rule[2]);
+    });
+    return out;
+  }
+
+  function rewriteDifficultyTexts(root, hard) {
+    if (!root || !document.createTreeWalker) return;
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    var node;
+    while ((node = walker.nextNode())) {
+      var text = node.nodeValue;
+      if (!text || text.indexOf("on Hard") === -1) continue;
+      var next = difficultyText(text, hard);
+      if (next !== text) node.nodeValue = next;
+    }
+    var titled = root.querySelectorAll ? root.querySelectorAll("[title*='on Hard'], [aria-label*='on Hard']") : [];
+    for (var i = 0; i < titled.length; i += 1) {
+      ["title", "aria-label"].forEach(function attr(name) {
+        var value = titled[i].getAttribute(name);
+        if (value && value.indexOf("on Hard") !== -1) titled[i].setAttribute(name, difficultyText(value, hard));
+      });
+    }
+  }
+
   function decorate() {
     var game = activeGame();
-    if (!game || !game.state || difficultyOf(game.state) !== "hard") return;
+    if (!game || !game.state) return;
+    var hard = difficultyOf(game.state) === "hard";
+    rewriteDifficultyTexts(document.getElementById("cuddleScreen"), hard);
+    if (!hard) return;
     var cards = document.querySelectorAll(".cuddle-boss-choice[data-boss-id]");
     for (var i = 0; i < cards.length; i += 1) {
       var card = cards[i];
