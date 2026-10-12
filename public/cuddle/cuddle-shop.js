@@ -50,8 +50,8 @@
   // expansion.js), which spends them at the start of the next boss.
   const BOSS_ITEMS = Object.freeze([
     // (Its kit keeps the old "tenLetterCull" id so saved runs still hold it.)
-    { id: "bossCull", kit: "tenLetterCull", icon: "challenge-clean-letters.svg", title: "Seven-Letter Cull", cost: 24,
-      blurb: "Seven letters that are not in the boss's answer are removed from play." },
+    { id: "bossCull", kit: "tenLetterCull", icon: "challenge-clean-letters.svg", title: "Five-Letter Cull", cost: 24,
+      blurb: "Five letters that are not in the boss's answer are removed from play." },
     { id: "bossHands", kit: "unlimitedMulligans", icon: "reward-quest-refreshes.svg", title: "Regular Wordle Hands", cost: 28,
       blurb: "Unlimited mulligans for the boss, even against no-mulligan effects." },
     { id: "bossRow", kit: "extraRow", icon: "reward-umt-extra-row.svg", title: "Breathing Room", cost: 30,
