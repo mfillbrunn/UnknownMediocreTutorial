@@ -1070,7 +1070,7 @@
     coach.lastUnusedRows = unusedRows;
     coach.lastUnusedRowMoney = desired;
     if (unusedRows > 0) {
-      game.state.lastMessage = ((game.state.lastMessage || "") + " " + unusedRows + " unused row" + (unusedRows === 1 ? "" : "s") + " paid " + formatMoney(desired) + " (" + formatMoney(perRow) + " each).").trim();
+      game.state.lastMessage = ((game.state.lastMessage || "") + " " + unusedRows + " unused row" + (unusedRows === 1 ? "" : "s") + " paid " + desired + " points (" + perRow + " each).").trim();
     }
     rebuildPendingPayout(game, unusedRows, perRow);
   }

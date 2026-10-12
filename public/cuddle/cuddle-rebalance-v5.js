@@ -62,7 +62,7 @@
     Object.freeze({
       id: IDS.rainyDay, key: IDS.rainyDay, icon: "\uD83C\uDFE6",
       title: "Rainy Day Fund", name: "Rainy Day Fund",
-      description: "Every stage pays 5% interest on your wallet, up to $10. Level 2: 10%, up to $20. Level 3: 15%, up to $40.",
+      description: "Every stage pays 5% interest on your wallet, up to $10. Level 2: 10%, up to $20. Level 3: 20%, up to $40.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
@@ -74,7 +74,7 @@
     Object.freeze({
       id: IDS.vowelBounty, key: IDS.vowelBounty, icon: "\uD83C\uDD70\uFE0F",
       title: "Vowel Bounty", name: "Vowel Bounty",
-      description: "Every vowel in a word you solve pays 5 points. Level 2: 10 points. Level 3: 18 points.",
+      description: "Every vowel in a word you solve pays 5 points. Level 2: 10 points. Level 3: 20 points.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
@@ -107,7 +107,7 @@
     Object.freeze({
       id: IDS.patternLens, key: IDS.patternLens, icon: "\uD83E\uDDE9",
       title: "Pattern Lens", name: "Pattern Lens",
-      description: "Every stage shows where the answer's vowels and consonants sit, like C V C C V.",
+      description: "From your second guess on, every stage shows where the answer's vowels and consonants sit, like C V C C V.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     // Cheaper reward refreshes (cuddle-engine.js getUpgradeRefreshCost).
@@ -126,7 +126,7 @@
     Object.freeze({
       id: IDS.lastLight, key: IDS.lastLight, icon: "\uD83D\uDD6F\uFE0F",
       title: "Last Light", name: "Last Light",
-      description: "Every stage opens with the answer's last letter already in place.",
+      description: "After your second guess in every stage, the answer's last letter is placed.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     // An Epic pick (cuddle-economy-rarity-v8.js); granted in
@@ -134,7 +134,7 @@
     Object.freeze({
       id: IDS.yellowHint, key: IDS.yellowHint, icon: "\uD83D\uDFE8",
       title: "Yellow Guesser Hint", name: "Yellow Guesser Hint",
-      description: "Every stage, boss fights included, opens with one letter of the answer shown as in the word, not where.",
+      description: "After your first guess in every stage, boss fights included, one letter of the answer is shown as in the word, not where.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     // Yellow Guesser Hint's second stage (Legendary): the same letter now
@@ -142,7 +142,7 @@
     Object.freeze({
       id: IDS.clearSight, key: IDS.clearSight, icon: "\uD83D\uDFE9",
       title: "Clear Sight", name: "Clear Sight",
-      description: "Upgrades Yellow Guesser Hint: every stage's letter now comes already in its exact place.",
+      description: "Upgrades Yellow Guesser Hint: the letter it shows after your first guess comes in its exact place.",
       maxLevel: 1, maxCount: 1, kind: "upgrade", requires: IDS.yellowHint
     }),
     Object.freeze({
@@ -205,7 +205,7 @@
       title: "Small Joker Cache",
       name: "Small Joker Cache",
       // Each level adds one Joker per stage: 1, 2, then 3 at level 3.
-      description: "A Joker tile in your deck every stage: draw it for a Joker. Level 2: two. Level 3: three.",
+      description: "A Joker tile in your deck every stage: draw it for a Joker. Level 2: two. Level 3: four.",
       maxLevel: 3,
       maxCount: 3,
       kind: "upgrade"
@@ -2685,11 +2685,10 @@
     // Interest on the wallet, paid into the wallet -- it used to read the
     // run's points and pay points, while promising money.
     const balance = Math.max(0, asNumber(state.cuddleMoney, 0)) + (compound ? totalJokerStock(game) * 10 : 0);
-    // 5% up to $10, 10% up to $20, then 15% up to $40 at level 3.
-    // (Was 10/20/30% up to $25/$50/$120.)
+    // 5% up to $10, 10% up to $20, then 20% up to $40 at level 3.
     const tier = Math.max(0, Math.min(3, Math.floor(level)));
     const cap = [0, 10, 20, 40][tier] * (compound ? 2 : 1);
-    const interest = Math.min(cap, Math.floor(balance * 0.05 * tier));
+    const interest = Math.min(cap, Math.floor(balance * [0, 0.05, 0.1, 0.2][tier]));
     if (interest <= 0) return;
     state.cuddleMoney = Math.max(0, asNumber(state.cuddleMoney, 0)) + interest;
     appendNotice(game, `Rainy Day Fund paid $${interest} in interest.`);
@@ -2843,8 +2842,8 @@
     if (vowelLevel > 0) {
       const vowels = secretVowelCount(game);
       if (vowels > 0) {
-        // 5, 10, then 18 a vowel at level 3.
-        const perVowel = [0, 5, 10, 18][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
+        // 5, 10, then 20 a vowel at level 3.
+        const perVowel = [0, 5, 10, 20][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
         addScoreBonus(game, vowels * perVowel, "umtVowelBounty",
           `${vowels} vowel${vowels === 1 ? "" : "s"} in the secret`);
       }
@@ -2888,7 +2887,8 @@
     applyTrainingWheels(game);
     payStageInterest(game);
     initializeHintSchedule(game);
-    grantStageYellowHints(game);
+    // Yellow Guesser Hint now lands after the stage's first guess
+    // (cuddle-clues.js), so the opening guess is still a real read.
     doubleDownGuess(game);
     scheduleUi();
     safeSave(game);
@@ -3061,7 +3061,7 @@
       }
       custom.cuddleUserJokerCachePerRoundLevel = current;
       appendNotice(game, current >= 2
-        ? `Small Joker Cache level ${current}: ${current} Joker tiles in your deck every stage.`
+        ? `Small Joker Cache level ${current}: ${current >= 3 ? 4 : current} Joker tiles in your deck every stage.`
         : "Small Joker Cache: a Joker tile in your deck every stage.");
     }
     if (id === IDS.jokerCacheLarge) {
@@ -4835,6 +4835,9 @@
       // Pays points into the stage's itemized "Stage bonus" box (combo
       // payouts in cuddle-synergies.js ride on this).
       addStageBonus: (game, amount, field, label) => addScoreBonus(game || publicActiveGame(), amount, field, label),
+      // Yellow Guesser Hint's stage hint (once per stage), for the clue
+      // layer to hand out after the first guess.
+      grantStageYellowHints: (game) => grantStageYellowHints(game || publicActiveGame()),
       // What a map stop's variant does, for the stop preview: a named
       // challenge is described at the run's current guess cap and carries
       // its reward (paid in both points and money on a win).

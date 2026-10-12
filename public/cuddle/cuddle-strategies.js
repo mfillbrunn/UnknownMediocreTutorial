@@ -12,11 +12,25 @@
  * Eliminator -- score by ruling letters out:
  *   - Strike-Through (rare, 3 levels): every consonant ruled out during a
  *     stage (a grey, Process of Elimination, a Rule Out reward, a whisper)
- *     pays +2 / +3 / +5 points.
- *   - Greyscale (cuddle-engine.js) pays 1 / 3 / 5 points a grey.
+ *     pays +1 / +2 / +4 points.
+ *   - Greyscale (cuddle-engine.js) pays 1 / 2 / 4 points a grey.
  *
- * The three powers live in the registry (cuddle-skill-tree.js) and join
- * the reward pool through cuddle-powers.js NEW_POWERS.
+ * Gambler and purist:
+ *   - High Roller (common, 3 levels): every stage bets 10 / 20 / 50
+ *     points. Solve inside your guess window and it pays double back (+the
+ *     bet); solve late and the bet is lost.
+ *   - Hard Mode (common, 3 levels): a stage solved in Wordle hard mode --
+ *     every guess keeps each green in place and uses each yellow you were
+ *     shown -- pays +10 / +20 / +40 points.
+ *
+ * Combine (rare): taking it turns one of your badges into a random badge
+ * one rarity higher (common -> rare -> epic -> legendary). It can only
+ * reshape the playstyle badges (the ones this file and cuddle-powers.js
+ * keep in state.umtPowers); it isn't a badge itself and is only offered
+ * while you own one it can combine.
+ *
+ * These powers live in the registry (cuddle-skill-tree.js) and join the
+ * reward pool through cuddle-powers.js NEW_POWERS.
  */
 (function () {
   "use strict";
@@ -31,7 +45,10 @@
   var SKIP_MONEY = 15;
   var LEAN_BY_WORLD = [20, 40, 100];
   var LEAN_PER_BADGE = 5;
-  var STRIKE_POINTS = [0, 2, 3, 5];
+  var STRIKE_POINTS = [0, 1, 2, 4];
+  var HIGH_ROLLER_BET = [0, 10, 20, 50];
+  var HARD_MODE_POINTS = [0, 10, 20, 40];
+  var TIER_UP = { common: "rare", rare: "epic", epic: "legendary" };
   var VOWELS = "AEIOU";
 
   function num(value) {
@@ -74,6 +91,15 @@
     game.state.roundScore = num(game.state.roundScore) + value;
   }
 
+  function hasCombo(game, id) {
+    var synergies = window.CuddleSynergies;
+    try {
+      return Boolean(synergies && typeof synergies.owns === "function" && synergies.owns(game, id));
+    } catch (_error) {
+      return false;
+    }
+  }
+
   function save(game) {
     try {
       if (typeof game.save === "function") game.save();
@@ -96,11 +122,14 @@
     var state = this.state;
     var vow = levelOf(this, "monksVow") > 0;
     var points = vow || kind !== "money" ? SKIP_POINTS : 0;
+    // Ascetic (Lean Build + Monk's Vow): every skip pays 30 points more.
+    if (hasCombo(this, "ascetic")) points += 30;
     var money = vow || kind === "money" ? SKIP_MONEY : 0;
     state.score = num(state.score) + points;
     state.cuddleMoney = Math.max(0, num(state.cuddleMoney) + money);
     state.umtSkips = num(state.umtSkips) + 1;
     var paid = [points ? "+" + points + " points" : "", money ? "+$" + money : ""].filter(Boolean).join(" and ");
+    if (hasCombo(this, "ascetic")) paid += " (Ascetic)";
     state.lastMessage = "Reward skipped: " + paid + (vow ? " (Monk's Vow)." : ".");
     state.upgradeChoices = [];
     state.upgradePhase = null;
@@ -170,8 +199,116 @@
     if (level <= 0) return;
     var points = fresh.length * STRIKE_POINTS[level];
     stageBonus(game, points, "umtStrikeThrough", "Strike-Through");
+    // Static Charge (Strike-Through + Softer Cuddle Meter): each one also
+    // charges the meter; it pays out on the next guess like any grey.
+    var coach = state.cuddleCoachExpansion;
+    if (coach && hasCombo(game, "staticCharge")) coach.cuddleProgress = num(coach.cuddleProgress) + fresh.length;
     note(game, "Strike-Through: " + fresh.join(", ") + " ruled out, +" + points + " points.");
   }
+
+  // -- Hard Mode --------------------------------------------------------------
+  // Does `word` keep every green and use every yellow the earlier guesses
+  // showed? Only colours the player really saw count (masked tiles don't).
+  function followsHardMode(word, earlier) {
+    var guess = String(word || "").toUpperCase();
+    return (earlier || []).every(function check(entry) {
+      if (!entry || !entry.word) return true;
+      var shown = Array.isArray(entry.shownFeedback) ? entry.shownFeedback : entry.feedback;
+      if (!Array.isArray(shown)) return true;
+      var masked = Array.isArray(entry.maskedIndices) ? entry.maskedIndices : [];
+      var played = String(entry.word).toUpperCase();
+      for (var i = 0; i < 5; i += 1) {
+        if (masked.indexOf(i) !== -1) continue;
+        if (shown[i] === "green" && guess[i] !== played[i]) return false;
+        if (shown[i] === "yellow" && guess.indexOf(played[i]) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  function solvedInHardMode(history) {
+    for (var i = 1; i < history.length; i += 1) {
+      if (!followsHardMode(history[i] && history[i].word, history.slice(0, i))) return false;
+    }
+    return true;
+  }
+
+  // -- Combine ---------------------------------------------------------------
+  function tierOf(item) {
+    return String(item && (item.tier || item.rarity || item.rewardTier || item.__cuddleV8Tier) || "").toLowerCase();
+  }
+
+  function powersLevels(state) {
+    if (!state.umtPowers || typeof state.umtPowers !== "object") state.umtPowers = {};
+    if (!state.umtPowers.levels || typeof state.umtPowers.levels !== "object") state.umtPowers.levels = {};
+    return state.umtPowers.levels;
+  }
+
+  // Playstyle badges you own that have a rarity above them.
+  function combinable(game) {
+    var tree = registry();
+    var levels = powersLevels(game.state);
+    return Object.keys(levels).filter(function owned(id) {
+      if (id === "combine" || num(levels[id]) <= 0) return false;
+      var node = tree && tree.findNode(id);
+      return Boolean(node && TIER_UP[String(node.tier)]);
+    });
+  }
+
+  function randomOf(game) {
+    return typeof game.random === "function" ? game.random : Math.random;
+  }
+
+  function combine(game) {
+    var state = game.state;
+    var tree = registry();
+    var pool = combinable(game);
+    if (!pool.length) return { ok: false, error: "You have no badge Combine can reshape." };
+    var random = randomOf(game);
+    var fromId = pool[Math.floor(random() * pool.length)];
+    var from = tree.findNode(fromId);
+    var wanted = TIER_UP[String(from.tier)];
+    var options = (game._upgradeCatalog() || []).filter(function candidate(card) {
+      return card && card.id !== "combine" && card.id !== fromId && tierOf(card) === wanted;
+    });
+    if (!options.length) return { ok: false, error: "No " + wanted + " badge is left to combine into." };
+    var target = options[Math.floor(random() * options.length)];
+    delete powersLevels(state)[fromId];
+    var granted = game._grantUpgradeChoice(Object.assign({}, target, { key: target.key || target.id }));
+    if (!granted || granted.ok === false) {
+      powersLevels(state)[fromId] = 1;
+      return { ok: false, error: "Combine couldn't finish: " + ((granted && granted.error) || "unknown error") };
+    }
+    return { ok: true, from: from.title, to: target.title || target.name, tier: wanted };
+  }
+
+  var baseCatalog = proto._upgradeCatalog;
+  proto._upgradeCatalog = function upgradeCatalogWithCombine() {
+    var list = baseCatalog.apply(this, arguments) || [];
+    // Combine is offered only while it has something to reshape.
+    if (!this.state || combinable(this).length) return list;
+    return list.filter(function keep(item) { return !item || item.id !== "combine"; });
+  };
+
+  var baseChoose = proto.chooseUpgrade;
+  proto.chooseUpgrade = function chooseUpgradeWithCombine(choiceKey) {
+    var state = this.state;
+    var choice = state && state.status === "upgrade"
+      ? (state.upgradeChoices || []).find(function match(item) { return item && item.key === choiceKey; })
+      : null;
+    if (!choice || choice.id !== "combine") return baseChoose.apply(this, arguments);
+    var special = state.upgradePhase === "difficultyStart" || state.upgradePhase === "milestone";
+    var result = combine(this);
+    if (!result.ok) return result;
+    state = this.state;
+    state.lastMessage = "Combine: " + result.from + " became " + result.to + " (" + result.tier + ").";
+    state.upgradeChoices = [];
+    state.upgradePhase = null;
+    state.upgradeMilestone = null;
+    if (!special && typeof this._advanceRound === "function") this._advanceRound();
+    save(this);
+    return { ok: true, combined: result };
+  };
 
   // -- hooks ----------------------------------------------------------------
   var baseSubmit = proto.submitDraft;
@@ -186,6 +323,22 @@
       settleStrikes(this);
       var entry = history[history.length - 1];
       var solved = Boolean(entry && state.secret && entry.word === state.secret);
+      var solveWindow = typeof this._solveGuessThreshold === "function" ? this._solveGuessThreshold() : 6;
+      var roller = Math.min(3, levelOf(this, "highRoller"));
+      if (solved && roller > 0) {
+        var bet = HIGH_ROLLER_BET[roller];
+        var won = history.length <= solveWindow;
+        stageBonus(this, won ? bet : -bet, "umtHighRoller", won ? "High Roller won" : "High Roller lost");
+        // Jackpot (High Roller + Double Down): a win pays half the bet again.
+        if (won && hasCombo(this, "jackpot")) stageBonus(this, Math.round(bet / 2), "umtComboJackpot", "Jackpot");
+        note(this, won ? "High Roller: bet " + bet + ", won +" + bet + "." : "High Roller: solved late, the " + bet + "-point bet is lost.");
+      }
+      var hard = Math.min(3, levelOf(this, "hardMode"));
+      if (solved && hard > 0 && solvedInHardMode(history)) {
+        stageBonus(this, HARD_MODE_POINTS[hard], "umtHardMode", "Hard Mode");
+        if (hasCombo(this, "purist")) stageBonus(this, 30, "umtComboPurist", "Purist");
+        note(this, "Hard Mode: +" + HARD_MODE_POINTS[hard] + " points.");
+      }
       if (solved && levelOf(this, "leanBuild") > 0) {
         var pay = leanPayout(this);
         if (pay > 0) {
@@ -220,6 +373,10 @@
     SKIP_MONEY: SKIP_MONEY,
     LEAN_BY_WORLD: LEAN_BY_WORLD,
     STRIKE_POINTS: STRIKE_POINTS,
+    HIGH_ROLLER_BET: HIGH_ROLLER_BET,
+    HARD_MODE_POINTS: HARD_MODE_POINTS,
+    followsHardMode: followsHardMode,
+    combinable: function combinableIds(game) { return combinable(game); },
     leanPayout: leanPayout,
     otherBadges: otherBadges,
     hasMonksVow: function hasMonksVow(game) { return levelOf(game, "monksVow") > 0; }
