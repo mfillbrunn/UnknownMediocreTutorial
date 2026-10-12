@@ -529,7 +529,7 @@
       id: "cullRare",
       icon: "✂️",
       title: "Deep Cull",
-      description: "Remove four rare letters from the deck and from every future secret."
+      description: "Remove three rare letters from the deck and from every future secret."
     },
     {
       id: "doubleMulligans",

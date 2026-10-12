@@ -35,9 +35,9 @@
  *   - Joker tiles (Joker Cache): the cache's Jokers are shuffled into the
  *     deck instead of handed out at the stage start; drawing one gives
  *     you a Joker.
- * Full Circle (epic) pays for going through the deck: each time it runs
- * out and the discard is shuffled back in, one letter of the answer is
- * shown in its exact place (a green hint).
+ * Full Circle (epic) pays for going through the deck: the first time in a
+ * stage it runs out and the discard is shuffled back in, one letter of
+ * the answer is shown in its exact place (a green hint).
  * A lucky tile mulliganed away pays +5 points. Idea, lucky, wave and Joker
  * tiles that have done their thing leave the deck for the rest of the stage.
  *
@@ -310,7 +310,8 @@
       dead: dead,
       doubles: doubles,
       lucky: duel ? 0 : luckyCount(game),
-      idea: duel ? 0 : TILES_BY_LEVEL[powerLevel(game, "ideaTiles")],
+      // Idea tiles stay 1/2/3: four yellow hints a stage was too easy.
+      idea: duel ? 0 : powerLevel(game, "ideaTiles"),
       wave: duel ? 0 : TILES_BY_LEVEL[powerLevel(game, "waveTiles")],
       jokers: duel ? 0 : deckJokers(game)
     };
@@ -424,7 +425,13 @@
       var card = baseDrawOne.apply(this, arguments);
       // The discard only ever empties here by being shuffled back in.
       if (discardBefore > 0 && !(this.state.discard || []).length && !inDuel(this.state)) {
-        if (powerLevel(this, "fullCircle", 1) > 0) this.__umtCycles = (this.__umtCycles || 0) + 1;
+        // Full Circle: once a stage (more trips through the deck gave the
+        // whole answer away).
+        var fullCircleKey = [this.state.runId || "", this.state.round || 0, this.state.secret || ""].join(":");
+        if (powerLevel(this, "fullCircle", 1) > 0 && this.state.umtFullCircle !== fullCircleKey) {
+          this.state.umtFullCircle = fullCircleKey;
+          this.__umtCycles = (this.__umtCycles || 0) + 1;
+        }
         // Riptide (Wave Tiles + Full Circle): +2 mulligans a reshuffle.
         var synergies = window.CuddleSynergies;
         if (synergies && typeof synergies.owns === "function" && synergies.owns(this, "riptide")) {

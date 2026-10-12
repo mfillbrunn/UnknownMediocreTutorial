@@ -12,13 +12,13 @@
  * Eliminator -- score by ruling letters out:
  *   - Strike-Through (rare, 3 levels): every consonant ruled out during a
  *     stage (a grey, Process of Elimination, a Rule Out reward, a whisper)
- *     pays +1 / +2 / +4 points.
+ *     pays +0.5 / +1 / +2 points (halves add up within the stage).
  *   - Greyscale (cuddle-engine.js) pays 1 / 2 / 4 points a grey.
  *
  * Gambler and purist:
  *   - High Roller (common, 3 levels): every stage bets 10 / 20 / 50
- *     points. Solve inside your guess window and it pays double back (+the
- *     bet); solve late and the bet is lost.
+ *     points. Solve inside your guess window, or one guess past it, and it
+ *     pays double back (+the bet); later than that and the bet is lost.
  *   - Hard Mode (common, 3 levels): a stage solved in Wordle hard mode --
  *     every guess keeps each green in place and uses each yellow you were
  *     shown -- pays +10 / +20 / +40 points.
@@ -45,7 +45,7 @@
   var SKIP_MONEY = 15;
   var LEAN_BY_WORLD = [20, 40, 100];
   var LEAN_PER_BADGE = 5;
-  var STRIKE_POINTS = [0, 1, 2, 4];
+  var STRIKE_POINTS = [0, 0.5, 1, 2];
   var HIGH_ROLLER_BET = [0, 10, 20, 50];
   var HARD_MODE_POINTS = [0, 10, 20, 40];
   var TIER_UP = { common: "rare", rare: "epic", epic: "legendary" };
@@ -197,12 +197,16 @@
     if (!fresh.length) return;
     record.letters = record.letters.concat(fresh);
     if (level <= 0) return;
-    var points = fresh.length * STRIKE_POINTS[level];
-    stageBonus(game, points, "umtStrikeThrough", "Strike-Through");
     // Static Charge (Strike-Through + Softer Cuddle Meter): each one also
     // charges the meter; it pays out on the next guess like any grey.
     var coach = state.cuddleCoachExpansion;
     if (coach && hasCombo(game, "staticCharge")) coach.cuddleProgress = num(coach.cuddleProgress) + fresh.length;
+    // Half points add up across the stage: pay whole points as they come.
+    record.half = num(record.half) + fresh.length * STRIKE_POINTS[level];
+    var points = Math.floor(record.half);
+    record.half -= points;
+    if (points <= 0) return;
+    stageBonus(game, points, "umtStrikeThrough", "Strike-Through");
     note(game, "Strike-Through: " + fresh.join(", ") + " ruled out, +" + points + " points.");
   }
 
@@ -282,9 +286,16 @@
     return { ok: true, from: from.title, to: target.title || target.name, tier: wanted };
   }
 
+  var CULL_IDS = ["umtCullOne", "umtCullTwo", "cullOne", "cullTwo"];
+  var CULL_CAP = 8;
+
   var baseCatalog = proto._upgradeCatalog;
   proto._upgradeCatalog = function upgradeCatalogWithCombine() {
     var list = baseCatalog.apply(this, arguments) || [];
+    // Culls leave the pool once the run has culled its 8 letters.
+    if (this.state && typeof this._culledLetterCount === "function" && this._culledLetterCount() >= CULL_CAP) {
+      list = list.filter(function keep(item) { return !item || CULL_IDS.indexOf(item.id) === -1; });
+    }
     // Combine is offered only while it has something to reshape.
     if (!this.state || combinable(this).length) return list;
     return list.filter(function keep(item) { return !item || item.id !== "combine"; });
@@ -327,7 +338,8 @@
       var roller = Math.min(3, levelOf(this, "highRoller"));
       if (solved && roller > 0) {
         var bet = HIGH_ROLLER_BET[roller];
-        var won = history.length <= solveWindow;
+        // Won inside the window or one guess past it.
+        var won = history.length <= solveWindow + 1;
         stageBonus(this, won ? bet : -bet, "umtHighRoller", won ? "High Roller won" : "High Roller lost");
         // Jackpot (High Roller + Double Down): a win pays half the bet again.
         if (won && hasCombo(this, "jackpot")) stageBonus(this, Math.round(bet / 2), "umtComboJackpot", "Jackpot");

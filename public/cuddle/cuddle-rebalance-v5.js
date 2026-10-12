@@ -156,13 +156,13 @@
     Object.freeze({
       id: IDS.cullOne, key: IDS.cullOne, icon: "\u2702\uFE0F",
       title: "Cull One Letter", name: "Cull One Letter",
-      description: "Permanently remove one rare consonant from your deck and every future answer. Level 2: two gone. Level 3: four gone.",
+      description: "Permanently remove one rare consonant from your deck and every future answer. Level 2: two gone. Level 3: four gone. (No run culls more than 8 letters.)",
       maxLevel: 3, maxCount: 3, kind: "upgrade", cull: 1
     }),
     Object.freeze({
       id: IDS.cullTwo, key: IDS.cullTwo, icon: "\u2702\uFE0F",
       title: "Cull Two Letters", name: "Cull Two Letters",
-      description: "Permanently remove two rare consonants from your deck and every future answer. Level 2: four gone. Level 3: seven gone.",
+      description: "Permanently remove two rare consonants from your deck and every future answer. Level 2: three gone. Level 3: five gone. (No run culls more than 8 letters.)",
       maxLevel: 3, maxCount: 3, kind: "upgrade", cull: 2
     })
   ]);
@@ -2968,8 +2968,12 @@
   }
 
   function availableFunRewards(game) {
+    // Culls leave the pool once the run has culled its 8 letters
+    // (cuddle-engine.js _removalCandidates caps every cull there).
+    const cullsDone = typeof game?._culledLetterCount === "function" && game._culledLetterCount() >= 8;
     return FUN_REWARDS.filter((reward) => upgradeLevel(game, reward.id) < rewardMax(reward)
-      && (!reward.requires || upgradeLevel(game, reward.requires) > 0));
+      && (!reward.requires || upgradeLevel(game, reward.requires) > 0)
+      && !(cullsDone && reward.cull));
   }
 
   // Every custom reward this layer can grant -- the solving aids that
@@ -3125,10 +3129,12 @@
     const cullReward = customRewardById(id);
     if (cullReward && cullReward.cull && typeof game._removalCandidates === "function") {
       const state = stateOf(game);
-      // The third pick of a cull takes one letter more (1, 1, 2 for Cull
-      // One; 2, 2, 3 for Cull Two).
-      const thirdPick = alreadyApplied < 3 && current >= 3 ? 1 : 0;
-      const letters = game._removalCandidates(cullReward.cull * delta + thirdPick);
+      // Letters each level takes: Cull One 1, 1, 2 (1/2/4 in all); Cull
+      // Two 2, 1, 2 (2/3/5). The run's cull cap (8) applies on top.
+      const steps = cullReward.cull >= 2 ? [2, 1, 2] : [1, 1, 2];
+      let wanted = 0;
+      for (let step = alreadyApplied + 1; step <= Math.min(3, current); step += 1) wanted += steps[step - 1] || 0;
+      const letters = game._removalCandidates(wanted);
       if (state && letters.length) {
         state.removedLetters = Array.from(new Set([...(state.removedLetters || []), ...letters])).sort();
         appendNotice(game, `${cullReward.title}: ${letters.join(", ")} ${letters.length === 1 ? "is" : "are"} gone for good.`);

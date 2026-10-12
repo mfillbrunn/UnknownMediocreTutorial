@@ -122,6 +122,9 @@
   // separate from EARLY_GUESS_POINTS above, which only ever pays out on
   // the guesses a solve never needed.
   const LATE_GUESS_PENALTIES = [10, 20, 30];
+  // No run culls more than this many letters in all (Cull One / Cull Two
+  // Letters, Deep Cull): past about 8, stages stop being a puzzle.
+  const CULL_CAP = 8;
   const LATE_GUESS_STEP_WORLD_THREE = 10;
   // A flat bonus for solving within that same window at all, in addition
   // to the scaled-by-unused-guesses EARLY_GUESS_POINTS payout above.
@@ -2086,7 +2089,7 @@
       if (!reward) return "";
       switch (rewardId) {
         case "cullRare": {
-          const letters = this._removalCandidates(4);
+          const letters = this._removalCandidates(3);
           if (!letters.length) return "No letters were safe to remove.";
           this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
           return `Deep Cull removed ${letters.join(", ")}.`;
@@ -2256,7 +2259,15 @@
     // simulating each prior pick as already removed before choosing the
     // next -- so the "future" viability check in _removalCandidate always
     // accounts for the combined removal, not just each letter alone.
+    // Letters culled for good (a boss's one-fight removals don't count).
+    _culledLetterCount() {
+      const temporary = new Set(this.state?.boss?.tempRemovedLetters || []);
+      return (this.state?.removedLetters || []).filter(letter => !temporary.has(letter)).length;
+    }
+
     _removalCandidates(count) {
+      // Never past the run's cull cap.
+      count = Math.min(count, Math.max(0, CULL_CAP - this._culledLetterCount()));
       const originalRemoved = this.state.removedLetters;
       const picks = [];
       try {
@@ -3293,7 +3304,7 @@
   const cuddleV3OriginalApplyBossReward = CuddleGame.prototype._applyBossReward;
   CuddleGame.prototype._applyBossReward = function applyCuddleV3BossReward(rewardId) {
     if (rewardId !== "cullRare") return cuddleV3OriginalApplyBossReward.call(this, rewardId);
-    const letters = this._removalCandidates(4);
+    const letters = this._removalCandidates(3);
     if (!letters.length) return "No letters were safe to remove.";
     this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
     return `Deep Cull removed ${letters.join(", ")}.`;
@@ -4737,7 +4748,7 @@
     const mega = ensureMega(this);
     let message;
     if (rewardId === "cullRare") {
-      const letters = this._removalCandidates(4);
+      const letters = this._removalCandidates(3);
       message = letters.length
         ? (() => {
           this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
