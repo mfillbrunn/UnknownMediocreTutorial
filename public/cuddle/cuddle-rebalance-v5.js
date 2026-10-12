@@ -1437,16 +1437,64 @@
     try { if (typeof game.drawToHandLimit === "function") game.drawToHandLimit(); } catch (_error) {}
   }
 
-  // Yellow Guesser Hint: one present letter per copy, once per stage
-  // (the round token keeps a reload from granting it twice).
+  // Yellow Guesser Hint: one present letter (or, with Clear Sight, one
+  // placed letter), once per stage. The letter is picked when the stage
+  // starts but only shown after the first guess -- so it can turn out to
+  // be one the first guess already found. (Picking it after the guess
+  // would always hand over something new, which made the "later" hint
+  // stronger, not weaker.) The round token keeps a reload from granting
+  // it twice.
+  function planStageYellowHint(game) {
+    const custom = customState(game);
+    const secret = secretWord(game);
+    if (upgradeLevel(game, IDS.yellowHint) <= 0 || !custom || !/^[A-Z]{5}$/.test(secret)) return;
+    const token = roundToken(game);
+    if (custom.yellowHintPlan && custom.yellowHintPlan.token === token) return;
+    const state = stateOf(game);
+    normalizeKnowledgeArrays(state);
+    const hidden = state.revealedPositions.map((value, index) => (value ? null : index)).filter((index) => index !== null);
+    const known = new Set(state.knownPresent || []);
+    const letters = Array.from(new Set(secret.split(""))).filter((letter) => !known.has(letter));
+    const index = hidden.length ? hidden[hash32(`${token}:plan:green`) % hidden.length] : -1;
+    const letter = letters.length ? letters[hash32(`${token}:plan:yellow`) % letters.length] : "";
+    custom.yellowHintPlan = { token, index, letter };
+  }
+
   function grantStageYellowHints(game) {
     const custom = customState(game);
     if (upgradeLevel(game, IDS.yellowHint) <= 0 || !custom) return;
     const token = roundToken(game);
     if (custom.yellowHintToken === token) return;
     custom.yellowHintToken = token;
-    if (upgradeLevel(game, IDS.clearSight) > 0) grantGreenHint(game, "Clear Sight");
-    else grantYellowHint(game, "Yellow Guesser Hint");
+    planStageYellowHint(game);
+    const plan = custom.yellowHintPlan;
+    const state = stateOf(game);
+    const secret = secretWord(game);
+    if (!plan || plan.token !== token || !state) return;
+    normalizeKnowledgeArrays(state);
+    const marks = ensureHintMarks(game);
+    if (upgradeLevel(game, IDS.clearSight) > 0 && plan.index >= 0) {
+      const letter = secret[plan.index];
+      const already = state.revealedPositions[plan.index] === letter;
+      state.revealedPositions[plan.index] = letter;
+      const positions = Array.isArray(marks.greenPositions[letter]) ? marks.greenPositions[letter] : [];
+      if (!positions.includes(plan.index + 1)) positions.push(plan.index + 1);
+      marks.greenPositions[letter] = positions.sort((left, right) => left - right);
+      finishHintKnowledge(game, letter);
+      appendNotice(game, already
+        ? `Clear Sight: ${letter} in position ${plan.index + 1} -- you'd found it already.`
+        : `Clear Sight: ${letter} is green in position ${plan.index + 1}.`);
+    } else if (plan.letter) {
+      const already = (state.knownPresent || []).includes(plan.letter);
+      if (!marks.yellowLetters.includes(plan.letter)) marks.yellowLetters.push(plan.letter);
+      finishHintKnowledge(game, plan.letter);
+      appendNotice(game, already
+        ? `Yellow Guesser Hint: ${plan.letter} -- you'd found it already.`
+        : `Yellow Guesser Hint: ${plan.letter} is in the word.`);
+    }
+    const coach = coachState(game);
+    if (coach) coach.hintsGranted = asNumber(coach.hintsGranted, 0) + 1;
+    safeSave(game);
   }
 
   // Hints land in every stage, boss fights included.
@@ -2887,8 +2935,9 @@
     applyTrainingWheels(game);
     payStageInterest(game);
     initializeHintSchedule(game);
-    // Yellow Guesser Hint now lands after the stage's first guess
-    // (cuddle-clues.js), so the opening guess is still a real read.
+    // Yellow Guesser Hint picks its letter now and shows it after the
+    // stage's first guess (cuddle-clues.js).
+    planStageYellowHint(game);
     doubleDownGuess(game);
     scheduleUi();
     safeSave(game);
