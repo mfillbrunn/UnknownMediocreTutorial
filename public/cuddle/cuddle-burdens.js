@@ -15,7 +15,7 @@
  *     effects, for the rest of the run;
  *   - the Word Duel: taking a dead tile is one way to pay for Easy;
  *   - some bosses on Hard, for that fight only (HARD_BOSS below);
- *   - Ascension 8, Dead Weight: one dead tile all run.
+ *   - Ascension 3, Dead Weight: one dead tile all run.
  *
  * The shop's Mend shelf (cuddle-shop.js) sells their removal.
  *
@@ -265,7 +265,7 @@
   }
 
   // -- removing them (the shop's Mend shelf, cuddle-shop.js) ----------------
-  // Only run-long burdens: a Hard boss's and Ascension 8's stay put.
+  // Only run-long burdens: a Hard boss's and Ascension 3's stay put.
   function removeDead(game) {
     var value = burden(game && game.state);
     if (value.dead <= 0) return "";

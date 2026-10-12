@@ -6,17 +6,17 @@
  *
  *   1 Frayed Nerves  one fewer mulligan every stage
  *   2 Slim Pickings  reward screens offer one card fewer (never under two)
- *   3 Tight Window   the solve window is one guess shorter
- *   4 Gauntlet       no plain Wordles: every Wordle stop has a challenge
- *                    (read by cuddle-rebalance-v5.js)
- *   5 Steep Gates    boss point targets are 20% higher
- *                    (read by cuddle-branch-map.js)
- *   6 Heavy Toll     each late guess costs 10 more points
- *   7 Hexed          the run starts cursed: one of the first three guesses
- *                    of every stage has its feedback masked
- *   8 Dead Weight    a dead tile sits in your deck all run
+ *   3 Dead Weight    a dead tile sits in your deck all run
  *                    (dealt by cuddle-burdens.js)
- *   9 Thin Hand      one fewer consonant in your hand (the hardest, so last)
+ *   4 Heavy Toll     each late guess costs 10 more points
+ *   5 Tight Window   the solve window is one guess shorter
+ *   6 Gauntlet       no plain Wordles: every Wordle stop has a challenge
+ *                    (read by cuddle-rebalance-v5.js)
+ *   7 Steep Gates    boss point targets are 20% higher
+ *                    (read by cuddle-branch-map.js)
+ *   8 Thin Hand      one fewer consonant in your hand
+ *   9 Hexed          the run starts cursed: one of the first three guesses
+ *                    of every stage has its feedback masked
  *
  * The level a run was started at is stored on the run (state.umtAscension),
  * so a saved run keeps its handicaps whatever is picked in the lobby later.
@@ -39,14 +39,13 @@
   var LEVELS = Object.freeze([
     Object.freeze({ level: 1, id: "frayedNerves", name: "Frayed Nerves", text: "One fewer mulligan every stage." }),
     Object.freeze({ level: 2, id: "slimPickings", name: "Slim Pickings", text: "Reward screens offer one card fewer." }),
-    Object.freeze({ level: 3, id: "tightWindow", name: "Tight Window", text: "The solve window is one guess shorter." }),
-    Object.freeze({ level: 4, id: "gauntlet", name: "Gauntlet", text: "No plain Wordles: every Wordle stop has a challenge." }),
-    Object.freeze({ level: 5, id: "steepGates", name: "Steep Gates", text: "Boss point targets are 20% higher." }),
-    Object.freeze({ level: 6, id: "heavyToll", name: "Heavy Toll", text: "Each late guess costs 10 more points." }),
-    Object.freeze({ level: 7, id: "hexed", name: "Hexed", text: "You start cursed: one early guess of every stage is masked." }),
-    Object.freeze({ level: 8, id: "deadWeight", name: "Dead Weight", text: "A dead tile sits in your deck all run. Mulligan it away." }),
-    // The hardest handicap, so the top rung.
-    Object.freeze({ level: 9, id: "thinHand", name: "Thin Hand", text: "One fewer consonant in your hand." })
+    Object.freeze({ level: 3, id: "deadWeight", name: "Dead Weight", text: "A dead tile sits in your deck all run. Mulligan it away." }),
+    Object.freeze({ level: 4, id: "heavyToll", name: "Heavy Toll", text: "Each late guess costs 10 more points." }),
+    Object.freeze({ level: 5, id: "tightWindow", name: "Tight Window", text: "The solve window is one guess shorter." }),
+    Object.freeze({ level: 6, id: "gauntlet", name: "Gauntlet", text: "No plain Wordles: every Wordle stop has a challenge." }),
+    Object.freeze({ level: 7, id: "steepGates", name: "Steep Gates", text: "Boss point targets are 20% higher." }),
+    Object.freeze({ level: 8, id: "thinHand", name: "Thin Hand", text: "One fewer consonant in your hand." }),
+    Object.freeze({ level: 9, id: "hexed", name: "Hexed", text: "You start cursed: one early guess of every stage is masked." })
   ]);
   var MAX = LEVELS.length;
   var BY_ID = {};
