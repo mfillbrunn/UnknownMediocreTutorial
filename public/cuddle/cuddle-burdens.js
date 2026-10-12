@@ -542,8 +542,9 @@
       state.discard = (state.discard || []).filter(function keep(card) { return !spent.has(card.id); });
       if (lucky.length) {
         var points = lucky.length * LUCKY_MULLIGAN_POINTS;
-        stageBonus(this, points, "umtLuckyMulligan", "Lucky tiles mulliganed");
-        note(this, "Lucky tile" + (lucky.length === 1 ? "" : "s") + " mulliganed: +" + points + " points.");
+        if (stageBonus(this, points, "umtLuckyMulligan", "Lucky tiles mulliganed") > 0) {
+          note(this, "Lucky tile" + (lucky.length === 1 ? "" : "s") + " mulliganed: +" + points + " points.");
+        }
       }
       if (ideas.length) {
         var letters = [];
@@ -592,11 +593,12 @@
   function stageBonus(game, amount, field, label) {
     var rebalance = window.CuddleRebalanceV5;
     if (rebalance && typeof rebalance.addStageBonus === "function") {
-      rebalance.addStageBonus(game, amount, field, label);
-      return;
+      // 0 when refused (a guess past the window earns nothing).
+      return Number(rebalance.addStageBonus(game, amount, field, label)) || 0;
     }
     game.state.score = (Number(game.state.score) || 0) + amount;
     game.state.roundScore = (Number(game.state.roundScore) || 0) + amount;
+    return amount;
   }
 
   var baseSubmit = proto.submitDraft;
@@ -615,8 +617,9 @@
       var held = (state.hand || []).filter(isLuckyCard).length;
       if (!held) return result;
       var points = held * LUCKY_POINTS[level];
-      stageBonus(this, points, "umtLuckyClover", held === 1 ? "Lucky tile" : "Lucky tiles x" + held);
-      state.lastMessage = ((state.lastMessage || "") + " Lucky Clover: +" + points + " points.").trim();
+      if (stageBonus(this, points, "umtLuckyClover", held === 1 ? "Lucky tile" : "Lucky tiles x" + held) > 0) {
+        state.lastMessage = ((state.lastMessage || "") + " Lucky Clover: +" + points + " points.").trim();
+      }
     } catch (error) {
       console.warn("Cuddle burdens: lucky tiles failed to pay.", error);
     }

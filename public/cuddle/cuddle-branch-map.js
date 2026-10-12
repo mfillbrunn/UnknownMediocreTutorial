@@ -68,7 +68,8 @@
     // -- boss losses included. Easy and medium never bind for a sound run.
     // Lowered by 50 across the board when spare guesses dropped from 20
     // to 15 points each.
-    "before-3": { easy: 0, medium: 50, hard: 120 },
+    // Hard's first gate raised to 230 by request (was 120).
+    "before-3": { easy: 0, medium: 50, hard: 230 },
     "before-7": { easy: 200, medium: 250, hard: 510 },
     "final": { easy: 500, medium: 550, hard: 1050 }
   };

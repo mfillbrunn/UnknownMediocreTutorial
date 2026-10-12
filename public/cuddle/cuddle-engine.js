@@ -1444,13 +1444,14 @@
       // -- and toward a solve on this very guess -- before the round
       // resolves further down.
       // A guess past the round's quick-solve window (see latePenalty below)
-      // earns nothing from its colours and no quest -- only its penalty. A
-      // special tile on it still pays: it was aimed at and hit, the solving
-      // guess included.
+      // earns nothing at all -- colours, special tiles, quests, solve
+      // bonuses -- only its penalty. (Stage bonuses paid through the
+      // rebalance layer's addScoreBonus are refused the same way.)
       const lateGuess = this.state.guessesUsed + 1 > this._solveGuessThreshold();
-      const tilePoints = typeof this._scoreSpecialTiles === "function"
+      const tilePointsRaw = typeof this._scoreSpecialTiles === "function"
         ? Math.max(0, Number(this._scoreSpecialTiles(this.state.history.length, feedback)) || 0)
         : 0;
+      const tilePoints = lateGuess ? 0 : tilePointsRaw;
       // Colour Surge pays half points a green, so a row's colour total is
       // rounded down (two greens at +0.5 make +1).
       const colourPoints = Math.floor(greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue + 1e-9);
@@ -1607,7 +1608,8 @@
         // rewards solving inside the window at all, not just how many
         // guesses were left over when it happened.
         const earlySolveBonus = this.state.guessesUsed <= solveThreshold ? EARLY_SOLVE_BONUS : 0;
-        const mulliganBonus = Math.max(0, Number(this.state.mulligansLeft) || 0)
+        // A late solve keeps nothing but its penalty: no mulligan bonus.
+        const mulliganBonus = this.state.guessesUsed > solveThreshold ? 0 : Math.max(0, Number(this.state.mulligansLeft) || 0)
           * (UNUSED_MULLIGAN_POINTS + (Number(this.state.upgrades.mulliganPointBonus) || 0));
         entry.earlyBonus = earlyBonus;
         entry.earlySolveBonus = earlySolveBonus;
@@ -3559,7 +3561,9 @@
 
     let questExtra = 0;
     let solveExtra = 0;
-    if (!bossBefore) {
+    // A late guess earns nothing but its penalty.
+    const lateBefore = Number(state.guessesUsed || 0) + 1 > this._solveGuessThreshold();
+    if (!bossBefore && !lateBefore) {
       let questComplete = false;
       if (state.activeQuest) {
         try {
