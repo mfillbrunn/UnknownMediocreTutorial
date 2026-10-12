@@ -317,7 +317,8 @@
     // An Open trial's list, shown from the first guess (cuddle-curses.js).
     const openList = typeof game.presetOpenList === "function" ? game.presetOpenList() : null;
     if (Array.isArray(openList) && openList.length) {
-      chips.push({ icon: "scroll", label: "Open Trial", text: "Answer is one of", words: openList, tone: "preset" });
+      const out = typeof game.presetOpenRuledOut === "function" ? (game.presetOpenRuledOut() || []) : [];
+      chips.push({ icon: "scroll", label: "Open Trial", text: "Answer is one of", words: openList, ruledOut: out, tone: "preset" });
     }
     if (level(game, IDS.mistakeShield) > 0 && shieldApplies(game)) {
       chips.push({ icon: "shield", label: "Mistake Shield", text: record.shieldUsed ? "Shield used" : "Shield ready", tone: record.shieldUsed ? "spent" : "" });
@@ -352,7 +353,9 @@
         if (flip) flippedSweepKey = key;
         return `<b class="umt-clue-letter${latest ? " is-new" : ""}${flip ? " is-flipping" : ""}">${escapeHtml(letter)}</b>`;
       }).join("") : "")
-      + (chip.words ? chip.words.map(word => `<b class="umt-clue-word">${escapeHtml(String(word).toUpperCase())}</b>`).join("") : "")
+      + (chip.words ? chip.words.map(word => (chip.ruledOut && chip.ruledOut.includes(word)
+        ? `<s class="umt-clue-word is-out" title="Ruled out by your guesses">${escapeHtml(String(word).toUpperCase())}</s>`
+        : `<b class="umt-clue-word">${escapeHtml(String(word).toUpperCase())}</b>`)).join("") : "")
       + `</span></span>`
     )).join("")}</div>`;
     let strip = root.querySelector(".cuddle-play-strip");

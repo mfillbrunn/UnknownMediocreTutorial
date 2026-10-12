@@ -166,6 +166,32 @@
     return mega.presetOpen.words;
   };
 
+  // Is `word` ruled out by what the player has been shown this stage --
+  // the board's real (unmasked) colours, or a letter known to be in or
+  // out of the answer, or a placed letter? Used to cross words out of an
+  // Open trial's list as the guesses come in.
+  proto.presetWordRuledOut = function presetWordRuledOut(rawWord) {
+    var state = this.state;
+    var word = String(rawWord || "").toUpperCase();
+    if (!state || word.length !== 5) return false;
+    if (contradictions(word, state.history) > 0) return true;
+    if ((state.knownAbsent || []).some(function absent(letter) { return word.indexOf(letter) !== -1; })) return true;
+    if ((state.knownPresent || []).some(function present(letter) { return word.indexOf(letter) === -1; })) return true;
+    var placed = Array.isArray(state.revealedPositions) ? state.revealedPositions : [];
+    for (var i = 0; i < 5; i += 1) if (placed[i] && word[i] !== placed[i]) return true;
+    return false;
+  };
+
+  // Words of this stage's Open trial list that are ruled out, or null when
+  // the stage isn't an Open trial (Blind trials and the curse stay unmarked:
+  // reading the board is the whole test there).
+  proto.presetOpenRuledOut = function presetOpenRuledOut() {
+    var list = this.presetOpenList();
+    if (!Array.isArray(list)) return null;
+    var game = this;
+    return list.filter(function out(word) { return game.presetWordRuledOut(word); });
+  };
+
   // The guess (1-based) this stage's Preset Trial curse lands on, or 0.
   // Ordinary stages only: a boss fight keeps its own rules, and a Duel
   // alternates with the AI.

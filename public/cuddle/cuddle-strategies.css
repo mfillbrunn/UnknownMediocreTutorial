@@ -17,3 +17,29 @@
   border-style: dashed;
 }
 .umt-skip-btn.is-money { color: #f6c956; }
+
+/* Open Preset Trial: words your guesses ruled out are crossed out
+   (cuddle-curses.js presetOpenRuledOut). */
+.umt-clue-word.is-out {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 243, 207, 0.4);
+  font-weight: 700;
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 120, 120, 0.85);
+  text-decoration-thickness: 2px;
+}
+.cuddle-preset-word.is-out {
+  opacity: 0.4;
+  position: relative;
+}
+.cuddle-preset-word.is-out::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 50%;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 120, 120, 0.9);
+  pointer-events: none;
+}
