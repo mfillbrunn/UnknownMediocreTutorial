@@ -310,14 +310,16 @@
   function resetModeForNewRun(game) {
     var state = game.state;
     var mode = defaultModeState(false);
-    // Every difficulty starts with the same free Large Upgrade Pack
-    // (cuddle-packs.js) instead of a pick of three.
+    // A run starts with a free Upgrade Pack (cuddle-packs.js) instead of a
+    // pick of three: the starter (three specials) on Easy and Medium, a
+    // Medium pack (two Commons and a special) on Hard.
     mode.starterRewardPending = false;
     mode.starterRewardClaimed = true;
     mode.starterRewardChoices = [];
+    var difficulty = String((state.megaState && state.megaState.difficulty) || state.difficulty || "").toLowerCase();
     state.umtPackOffer = {
       id: (window.CuddleSeed ? window.CuddleSeed.text(state) : (state.runId || "run")) + ":starter-pack",
-      size: "starter",
+      size: difficulty === "hard" ? "medium" : "starter",
       price: 0,
       world: 1,
       starter: true,
