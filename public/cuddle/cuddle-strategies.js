@@ -81,14 +81,15 @@
 
   function stageBonus(game, amount, field, label) {
     var value = Math.round(num(amount));
-    if (!value) return;
+    if (!value) return 0;
     var rebalance = window.CuddleRebalanceV5;
     if (rebalance && typeof rebalance.addStageBonus === "function") {
-      rebalance.addStageBonus(game, value, field, label);
-      return;
+      // 0 when refused (a guess past the window earns nothing).
+      return num(rebalance.addStageBonus(game, value, field, label));
     }
     game.state.score = num(game.state.score) + value;
     game.state.roundScore = num(game.state.roundScore) + value;
+    return value;
   }
 
   function hasCombo(game, id) {
@@ -206,8 +207,9 @@
     var points = Math.floor(record.half);
     record.half -= points;
     if (points <= 0) return;
-    stageBonus(game, points, "umtStrikeThrough", "Strike-Through");
-    note(game, "Strike-Through: " + fresh.join(", ") + " ruled out, +" + points + " points.");
+    if (stageBonus(game, points, "umtStrikeThrough", "Strike-Through") > 0) {
+      note(game, "Strike-Through: " + fresh.join(", ") + " ruled out, +" + points + " points.");
+    }
   }
 
   // -- Hard Mode --------------------------------------------------------------
@@ -347,16 +349,14 @@
       }
       var hard = Math.min(3, levelOf(this, "hardMode"));
       if (solved && hard > 0 && solvedInHardMode(history)) {
-        stageBonus(this, HARD_MODE_POINTS[hard], "umtHardMode", "Hard Mode");
+        if (stageBonus(this, HARD_MODE_POINTS[hard], "umtHardMode", "Hard Mode") > 0) {
+          note(this, "Hard Mode: +" + HARD_MODE_POINTS[hard] + " points.");
+        }
         if (hasCombo(this, "purist")) stageBonus(this, 30, "umtComboPurist", "Purist");
-        note(this, "Hard Mode: +" + HARD_MODE_POINTS[hard] + " points.");
       }
       if (solved && levelOf(this, "leanBuild") > 0) {
         var pay = leanPayout(this);
-        if (pay > 0) {
-          stageBonus(this, pay, "umtLeanBuild", "Lean Build");
-          note(this, "Lean Build: +" + pay + " points.");
-        }
+        if (pay > 0 && stageBonus(this, pay, "umtLeanBuild", "Lean Build") > 0) note(this, "Lean Build: +" + pay + " points.");
       }
       save(this);
     } catch (error) {

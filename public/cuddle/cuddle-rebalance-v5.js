@@ -2167,6 +2167,11 @@
     if (!value) return 0;
     const state = stateOf(game);
     if (!state) return 0;
+    // A guess past the stage's guess window earns nothing but its
+    // penalty: no stage bonus rides on it (a loss -- a lost High Roller
+    // bet -- still lands).
+    const lastGuess = Array.isArray(state.history) && state.history.length ? state.history[state.history.length - 1] : null;
+    if (value > 0 && lastGuess && asNumber(lastGuess.latePenalty, 0) > 0) return 0;
     state.score = asNumber(state.score, 0) + value;
     state.roundScore = asNumber(state.roundScore, 0) + value;
     if (state.pendingRoundEnd && typeof state.pendingRoundEnd === "object") {
