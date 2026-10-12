@@ -728,7 +728,10 @@
     const quest = quests[index];
     if (!quest) return;
     closeQuestInfo();
-    const detail = window.CuddleQuestBook?.questDetail?.(quest) || quest.description || "";
+    const book = window.CuddleQuestBook;
+    const detail = source === "duel" && typeof book?.duelQuestText === "function"
+      ? book.duelQuestText(quest).detail
+      : book?.questDetail?.(quest) || quest.description || "";
     const overlay = document.createElement("div");
     overlay.className = "cuddle-quest-info-overlay";
     overlay.setAttribute("role", "presentation");

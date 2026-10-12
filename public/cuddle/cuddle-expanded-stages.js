@@ -1358,6 +1358,12 @@
       }
     }
 
+    // A quest's wording for the shared Duel board (cuddle-quests.js).
+    function duelQuestDescription(quest) {
+      const book = window.CuddleQuestBook;
+      return typeof book?.duelQuestText === "function" ? book.duelQuestText(quest).description : (quest && quest.description) || "";
+    }
+
     function withDuelTileState(game, duel, callback) {
       if (!game || !duel || !duel.tileState) throw new Error("The Duel tile hand is unavailable.");
       const campaignState = game.state;
@@ -2807,7 +2813,7 @@
         // Tap for the full rules (openQuestInfo in cuddle-campaign.js).
         parts.push(`<span class="cuddle-quest-inline${ready ? " is-ready" : ""}" role="button" tabindex="0" data-quest-info="${index}" data-quest-source="duel" title="${ready ? "Your word meets this quest. " : ""}Tap for details">`
           + `<span class="cuddle-quest-tag">${ready ? '<span aria-hidden="true">✓</span> Ready' : `<span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> Quest`}</span>`
-          + `<span class="cuddle-quest-body"><b>${escapeHtml(quest.title || "Quest")}:</b> <span>${escapeHtml(quest.description || "")}</span></span></span>`);
+          + `<span class="cuddle-quest-body"><b>${escapeHtml(quest.title || "Quest")}:</b> <span>${escapeHtml(duelQuestDescription(quest))}</span></span></span>`);
       });
       let chips = [];
       try {
