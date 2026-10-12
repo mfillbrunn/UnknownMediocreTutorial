@@ -79,8 +79,8 @@
     {
       id: "coachBossTenLetterCull",
       icon: "✂️",
-      title: "Ten-Letter Cull",
-      description: "NEXT BOSS: remove ten letters that are not in the answer from the usable pool.",
+      title: "Five-Letter Cull",
+      description: "NEXT BOSS: remove five letters that are not in the answer from the usable pool.",
       cost: 24,
       kind: "consumable",
       inventoryKey: "tenLetterCull"
@@ -816,9 +816,9 @@
       notes.push(green.message || "Opening Green revealed one exact position.");
     }
     if (active.tenLetterCull) {
-      active.culledLetters = chooseCullLetters(game, 10);
+      active.culledLetters = chooseCullLetters(game, 5);
       applyTemporaryCull(game, active.culledLetters);
-      notes.push("Ten-Letter Cull removed " + active.culledLetters.join(", ") + " for this boss.");
+      notes.push("Five-Letter Cull removed " + active.culledLetters.join(", ") + " for this boss.");
     }
     if (active.unlimitedMulligans) {
       // The real count stays as it is: mulligans just cost nothing while
@@ -1575,7 +1575,7 @@
       var labels = {
         extraRow: "Boss +row",
         openingGreen: "Boss green",
-        tenLetterCull: "Boss 10-cull",
+        tenLetterCull: "Boss 5-cull",
         unlimitedMulligans: "Boss ∞ mulligans",
         revealThemes: "Boss themes",
         autoQuests: "Boss auto-quests",

@@ -630,6 +630,23 @@
 
   // The full explanation of a live quest, shown when it is tapped. Quests
   // saved before details existed are rebuilt from their definition.
+  // In a Word Duel the board is shared: letters the opponent played count
+  // as played, so quests about earlier guesses say so.
+  const DUEL_QUEST_TEXT = Object.freeze({
+    freshLetters: {
+      description: "No letter anyone has played this Duel.",
+      detail: "Use five letters that appear in none of the earlier guesses this Duel, yours or your opponent's."
+    }
+  });
+
+  function duelQuestText(quest) {
+    const text = quest && DUEL_QUEST_TEXT[quest.id];
+    return {
+      description: (text && text.description) || (quest && quest.description) || "",
+      detail: (text && text.detail) || questDetail(quest) || (quest && quest.description) || ""
+    };
+  }
+
   function questDetail(quest) {
     if (!quest) return "";
     if (quest.detail) return quest.detail;
@@ -764,6 +781,7 @@
     createQuest,
     evaluateQuest,
     questDetail,
+    duelQuestText,
     getReward,
     rewardChoices,
     getBoss,

@@ -1480,6 +1480,7 @@
       const positions = Array.isArray(marks.greenPositions[letter]) ? marks.greenPositions[letter] : [];
       if (!positions.includes(plan.index + 1)) positions.push(plan.index + 1);
       marks.greenPositions[letter] = positions.sort((left, right) => left - right);
+      window.CuddleHintFx?.note?.(game, letter, "Clear Sight");
       finishHintKnowledge(game, letter);
       appendNotice(game, already
         ? `Clear Sight: ${letter} in position ${plan.index + 1} -- you'd found it already.`
@@ -1487,6 +1488,7 @@
     } else if (plan.letter) {
       const already = (state.knownPresent || []).includes(plan.letter);
       if (!marks.yellowLetters.includes(plan.letter)) marks.yellowLetters.push(plan.letter);
+      window.CuddleHintFx?.note?.(game, plan.letter, "Yellow Guesser Hint");
       finishHintKnowledge(game, plan.letter);
       appendNotice(game, already
         ? `Yellow Guesser Hint: ${plan.letter} -- you'd found it already.`
@@ -1511,6 +1513,7 @@
     const index = hash32(`${roundToken(game)}:${source}:yellow:${marks.yellowLetters.length}`) % candidates.length;
     const letter = candidates[index];
     marks.yellowLetters.push(letter);
+    window.CuddleHintFx?.note?.(game, letter, source);
     finishHintKnowledge(game, letter);
     const coach = coachState(game);
     if (coach) coach.hintsGranted = asNumber(coach.hintsGranted, 0) + 1;
@@ -1533,6 +1536,7 @@
     const index = hidden[hash32(`${roundToken(game)}:${source}:green:${Object.keys(marks.greenPositions).length}`) % hidden.length];
     const letter = secret[index];
     state.revealedPositions[index] = letter;
+    window.CuddleHintFx?.note?.(game, letter, source);
     const positions = Array.isArray(marks.greenPositions[letter]) ? marks.greenPositions[letter] : [];
     if (!positions.includes(index + 1)) positions.push(index + 1);
     marks.greenPositions[letter] = positions.sort((left, right) => left - right);
@@ -2807,6 +2811,7 @@
     const letter = choices[Math.floor(roll * choices.length)];
     state.knownAbsent = [...known, letter].sort();
     record.letters.push(letter);
+    window.CuddleHintFx?.note?.(game, letter, "Process of Elimination");
     appendNotice(game, `Process of Elimination: ${letter} is not in the answer.`);
   }
 

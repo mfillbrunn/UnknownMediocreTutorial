@@ -502,7 +502,12 @@
       rounds += 1;
       game.__umtCycles -= 1;
       if (!game.state || game.state.status !== "playing" || typeof game._revealPositionPeek !== "function") break;
-      drawNote(game, "Full Circle: " + game._revealPositionPeek());
+      var peekBefore = (game.state.revealedPositions || []).slice();
+      var peek = game._revealPositionPeek();
+      (game.state.revealedPositions || []).forEach(function named(letter, index) {
+        if (letter && !peekBefore[index] && window.CuddleHintFx) window.CuddleHintFx.note(game, letter, "Full Circle");
+      });
+      drawNote(game, "Full Circle: " + peek);
     }
     game.__umtCycles = 0;
   }
@@ -539,6 +544,7 @@
     });
     if (!open.length) return "";
     var letter = open[Math.floor(randomOf(game)() * open.length)];
+    if (window.CuddleHintFx) window.CuddleHintFx.note(game, letter, "Idea tile");
     state.knownPresent = Array.from(new Set((state.knownPresent || []).concat([letter]))).sort();
     if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
     return letter;
@@ -846,6 +852,99 @@
       playWaveFx(game);
     }, WAVE_MS.tile + WAVE_MS.sweep + WAVE_MS.settle);
   }
+
+  // -- little bursts when a lucky, dead or Joker tile is tapped ---------------
+  // They don't do much on their own, so a tap answers with a small flourish:
+  // clovers for luck, a puff of grave smog for a dead tile, purple sparkles
+  // for a Joker.
+  var CLOVER_PARTICLE = '<svg viewBox="0 0 20 20" aria-hidden="true">'
+    + [0, 90, 180, 270].map(function leaf(angle) {
+      return '<path d="M10 10C7.3 8.2 6.8 5 8.5 4.8c.8-.1 1.4.5 1.5 1.1.1-.6.7-1.2 1.5-1.1 1.7.2 1.2 3.4-1.5 5.2z" fill="#4fbf4a" stroke="#2f6b1f" stroke-width=".9"'
+        + (angle ? ' transform="rotate(' + angle + ' 10 10)"' : "") + "/>";
+    }).join("") + "</svg>";
+  var SPARKLE_PARTICLE = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1l2.1 6.9L19 10l-6.9 2.1L10 19l-2.1-6.9L1 10l6.9-2.1z" fill="#c9a6ff" stroke="#6b3fd1" stroke-width="1"/></svg>';
+
+  function burstLayer() {
+    var layer = document.querySelector(".umt-tap-burst-layer");
+    if (!layer) {
+      layer = document.createElement("div");
+      layer.className = "umt-tap-burst-layer";
+      layer.setAttribute("aria-hidden", "true");
+      document.body.appendChild(layer);
+    }
+    return layer;
+  }
+
+  function particle(layer, html, className, x, y) {
+    var el = document.createElement("span");
+    el.className = "umt-tap-particle " + className;
+    if (html) el.innerHTML = html;
+    el.style.left = x + "px";
+    el.style.top = y + "px";
+    layer.appendChild(el);
+    return el;
+  }
+
+  function burstFor(card) {
+    if (!card || reducedMotion() || !document.body || typeof card.animate !== "function") return;
+    var box = card.getBoundingClientRect();
+    var x = box.left + box.width / 2;
+    var y = box.top + box.height / 2;
+    var layer = burstLayer();
+    var made = [];
+    if (card.classList.contains("is-lucky")) {
+      for (var i = 0; i < 6; i += 1) {
+        var leaf = particle(layer, CLOVER_PARTICLE, "is-clover", x, y);
+        var dx = (i - 2.5) * 20 + (Math.random() * 10 - 5);
+        var dy = -60 - Math.random() * 40;
+        leaf.animate([
+          { transform: "translate(-50%, -50%) scale(0.3) rotate(0deg)", opacity: 0 },
+          { transform: "translate(calc(-50% + " + dx * 0.5 + "px), calc(-50% + " + dy * 0.6 + "px)) scale(1) rotate(" + (dx * 3) + "deg)", opacity: 1, offset: 0.35 },
+          { transform: "translate(calc(-50% + " + dx + "px), calc(-50% + " + dy + "px)) scale(0.8) rotate(" + (dx * 6) + "deg)", opacity: 0 }
+        ], { duration: 1000 + i * 50, delay: i * 40, easing: "cubic-bezier(.2,.7,.3,1)", fill: "both" });
+        made.push(leaf);
+      }
+      card.animate([{ transform: "scale(1)" }, { transform: "scale(1.12) rotate(-4deg)" }, { transform: "scale(1)" }], { duration: 320, easing: "ease-out" });
+    } else if (card.classList.contains("is-dead")) {
+      for (var j = 0; j < 5; j += 1) {
+        var puff = particle(layer, "", "is-smog", x + (j - 2) * 9, y - 8);
+        var drift = (Math.random() * 18 - 9);
+        puff.animate([
+          { transform: "translate(-50%, -50%) scale(0.4)", opacity: 0 },
+          { transform: "translate(calc(-50% + " + drift * 0.4 + "px), calc(-50% - 24px)) scale(1.1)", opacity: 0.95, offset: 0.3 },
+          { transform: "translate(calc(-50% + " + drift + "px), calc(-50% - 70px)) scale(2.2)", opacity: 0 }
+        ], { duration: 1200 + j * 80, delay: j * 90, easing: "ease-out", fill: "both" });
+        made.push(puff);
+      }
+      card.animate([
+        { transform: "translateX(0)" }, { transform: "translateX(-2px) rotate(-3deg)" }, { transform: "translateX(2px) rotate(3deg)" },
+        { transform: "translateX(-1px) rotate(-2deg)" }, { transform: "translateX(0)" }
+      ], { duration: 380, easing: "ease-in-out" });
+    } else if (card.classList.contains("is-joker")) {
+      for (var k = 0; k < 7; k += 1) {
+        var star = particle(layer, SPARKLE_PARTICLE, "is-sparkle", x, y);
+        var angle = (k / 7) * Math.PI * 2 - Math.PI / 2;
+        var reach = 48 + (k % 2) * 18;
+        var sx = Math.cos(angle) * reach;
+        var sy = Math.sin(angle) * reach;
+        star.animate([
+          { transform: "translate(-50%, -50%) scale(0)", opacity: 0 },
+          { transform: "translate(calc(-50% + " + sx * 0.8 + "px), calc(-50% + " + sy * 0.8 + "px)) scale(1.3) rotate(45deg)", opacity: 1, offset: 0.45 },
+          { transform: "translate(calc(-50% + " + sx + "px), calc(-50% + " + sy + "px)) scale(0.2) rotate(90deg)", opacity: 0 }
+        ], { duration: 720, delay: k * 80, easing: "cubic-bezier(.2,.8,.2,1)", fill: "both" });
+        made.push(star);
+      }
+      card.animate([{ filter: "brightness(1)" }, { filter: "brightness(1.5) drop-shadow(0 0 8px #b98cff)" }, { filter: "brightness(1)" }], { duration: 460 });
+    }
+    setTimeout(function cleanUp() {
+      made.forEach(function drop(el) { el.remove(); });
+    }, 1900);
+  }
+
+  document.addEventListener("pointerdown", function onTapBurst(event) {
+    var card = event.target && event.target.closest && event.target.closest("#cuddleScreen .cuddle-card.is-lucky, #cuddleScreen .cuddle-card.is-dead, #cuddleScreen .cuddle-card.is-joker");
+    if (card) burstFor(card);
+  }, true);
 
   var pending = false;
   function schedule() {
