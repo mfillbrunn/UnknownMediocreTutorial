@@ -680,11 +680,11 @@
   // What each special-tile kind looks like before it's played, and what a
   // hover on it says it pays.
   const SPECIAL_TILE_KINDS = Object.freeze({
-    money: { glyph: "$", title: "Money tile: a yellow here pays $2, a green $4" },
-    points: { glyph: "●", title: "Points tile (green dot): a yellow here pays 5 points, a green 10" },
-    mulligan: { glyph: "↻", title: "Mulligan tile: a yellow or green here gives an extra mulligan" },
-    joker: { glyph: "★", title: "Joker tile: a yellow or green here gives you a Joker" },
-    hint: { glyph: "?", title: "Oracle tile: a yellow or green here reveals a letter and its position" }
+    money: { glyph: "$", title: "Money square: a yellow here pays $2, a green $4" },
+    points: { glyph: "●", title: "Points square (green dot): a yellow here pays 5 points, a green 10" },
+    mulligan: { glyph: "↻", title: "Mulligan square: a yellow or green here gives an extra mulligan" },
+    joker: { glyph: "★", title: "Joker square: a yellow or green here gives you a Joker" },
+    hint: { glyph: "?", title: "Oracle square: a yellow or green here reveals a letter and its position" }
   });
 
   // The last "new row" the board animated in, so a re-render of the same
@@ -713,7 +713,7 @@
         state.maxGuesses,
         state.history.length + (state.status === "playing" ? 1 : 0)
       );
-    // Special tiles (cuddle-points-money.js) are marked on the board before
+    // Special squares (cuddle-points-money.js) are marked on the board before
     // they are played -- a large faint symbol for their kind -- so they can
     // actually be aimed at, then keep showing what they paid once the guess
     // through them has landed.
@@ -764,7 +764,7 @@
         // shownFeedback is what a boss lets the board reveal; it matches
         // feedback exactly in an ordinary round.
         const result = (history?.shownFeedback || history?.feedback || [])[column] || "";
-        // The joker tile in the current draft still carries its raw star
+        // The joker card in the current draft still carries its raw star
         // glyph (unresolved), and a submitted guess only knows which
         // column it resolved at via history.jokerIndex -- either way, mark
         // that one tile so it reads as the joker rather than a plain letter.
@@ -954,13 +954,13 @@
       || (actionMode !== "play" && selectable.length === 0)
       || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
     const isJoker = group.glyph === window.CuddleEngine.CUDDLE_JOKER_GLYPH;
-    // A dead tile (cuddle-burdens.js): no letter, only good for a mulligan.
+    // A dead card (cuddle-burdens.js): no letter, only good for a mulligan.
     if (window.CuddleBurdens?.isDeadGlyph(group.glyph)) {
       const deadCount = group.cards.length;
       const deadDisabled = state.status !== "playing"
         || (actionMode !== "play" && selectable.length === 0)
         || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
-      const deadLabel = `Dead tile${deadCount > 1 ? ` ×${deadCount}` : ""}: no letter, can't be played. Mulligan it away.`;
+      const deadLabel = `Dead card${deadCount > 1 ? ` ×${deadCount}` : ""}: no letter, can't be played. Mulligan it away.`;
       return `
       <button class="cuddle-card is-dead${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${deadCount}" ${deadDisabled ? "disabled" : ""}
         aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(deadLabel)}" title="${escapeHtml(deadLabel)}">
@@ -968,13 +968,13 @@
         ${deadCount > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${deadCount}</span>` : ""}
       </button>`;
     }
-    // An idea tile (Idea Tiles): no letter; mulligan it away for a yellow hint.
+    // An idea card (Idea Cards): no letter; mulligan it away for a yellow hint.
     if (window.CuddleBurdens?.isIdeaGlyph(group.glyph)) {
       const ideaCount = group.cards.length;
       const ideaDisabled = state.status !== "playing"
         || (actionMode !== "play" && selectable.length === 0)
         || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
-      const ideaLabel = `Idea tile${ideaCount > 1 ? ` ×${ideaCount}` : ""}: no letter, can't be played. Mulligan it away for a yellow hint.`;
+      const ideaLabel = `Idea card${ideaCount > 1 ? ` ×${ideaCount}` : ""}: no letter, can't be played. Mulligan it away for a yellow hint.`;
       return `
       <button class="cuddle-card is-idea${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${ideaCount}" ${ideaDisabled ? "disabled" : ""}
         aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(ideaLabel)}" title="${escapeHtml(ideaLabel)}">
@@ -982,14 +982,14 @@
         ${ideaCount > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${ideaCount}</span>` : ""}
       </button>`;
     }
-    // A lucky tile (Lucky Clover): no letter, but it pays if it's still in hand at the solve.
+    // A lucky card (Lucky Clover): no letter, but it pays if it's still in hand at the solve.
     if (window.CuddleBurdens?.isLuckyGlyph(group.glyph)) {
       const luckyCount = group.cards.length;
       const luckyDisabled = state.status !== "playing"
         || (actionMode !== "play" && selectable.length === 0)
         || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
       const per = window.CuddleBurdens.LUCKY_POINTS[window.CuddleBurdens.luckyLevel(game)] || 0;
-      const luckyLabel = `Lucky tile${luckyCount > 1 ? ` ×${luckyCount}` : ""}: no letter, can't be played. Still in hand when you solve: +${per} points each; mulliganed: +${window.CuddleBurdens.LUCKY_MULLIGAN_POINTS}.`;
+      const luckyLabel = `Lucky card${luckyCount > 1 ? ` ×${luckyCount}` : ""}: no letter, can't be played. Still in hand when you solve: +${per} points each; mulliganed: +${window.CuddleBurdens.LUCKY_MULLIGAN_POINTS}.`;
       return `
       <button class="cuddle-card is-lucky${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${luckyCount}" ${luckyDisabled ? "disabled" : ""}
         aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(luckyLabel)}" title="${escapeHtml(luckyLabel)}">
@@ -1064,6 +1064,7 @@
     // An Open trial's list crosses out the words your guesses ruled out
     // (cuddle-curses.js); a Blind trial's list stays unmarked.
     const ruledOut = typeof game.presetOpenRuledOut === "function" ? (game.presetOpenRuledOut() || []) : [];
+    const early = typeof game.presetPickIsEarly === "function" && game.presetPickIsEarly();
     const words = pick.words.map(word => (
       `<button type="button" class="cuddle-preset-word${word === chosen ? " is-selected" : ""}${ruledOut.includes(word) ? " is-out" : ""}" data-action="preset-select" data-word="${escapeHtml(word)}" aria-pressed="${word === chosen ? "true" : "false"}"${ruledOut.includes(word) ? ' title="Ruled out by your guesses"' : ""}>`
       + word.split("").map(letter => `<span>${escapeHtml(letter)}</span>`).join("")
@@ -1072,12 +1073,13 @@
     return `
       <section class="cuddle-hand-panel cuddle-preset-pick" aria-labelledby="cuddlePresetTitle">
         <div class="cuddle-preset-head">
-          <span class="cuddle-preset-kicker">Preset Trial · last guess</span>
+          <span class="cuddle-preset-kicker">${early ? "Preset Trial · answer early" : "Preset Trial · last guess"}</span>
           <h3 id="cuddlePresetTitle">The answer is one of these ${pick.words.length} words</h3>
-          <p>Use the feedback on the board. A wrong pick ends the run.</p>
+          <p>${early ? "Lock in your answer now? It's your final answer: right passes the trial, wrong ends the run." : "Use the feedback on the board. A wrong pick ends the run."}</p>
         </div>
         <div class="cuddle-preset-words">${words}</div>
         <button type="button" class="cuddle-btn cuddle-btn-primary cuddle-preset-lock" data-action="preset-lock"${chosen ? "" : " disabled"}>${chosen ? `Lock in ${escapeHtml(chosen)}` : "Pick a word"}</button>
+        ${early ? `<button type="button" class="cuddle-btn cuddle-btn-ghost cuddle-preset-back" data-action="preset-back">Keep guessing</button>` : ""}
       </section>`;
   }
 
@@ -1988,6 +1990,17 @@
       /* UMT_CUDDLE_SINGLEPLAYER_V2: ACTIONS END */
       case "preset-select":
         presetSelection = { key: presetSelection.key, word: String(dataset.word || "") };
+        return true;
+      // A word tapped in the Open trial's list: answer early with it.
+      case "preset-early": {
+        if (typeof game.openPresetPickEarly !== "function" || !game.openPresetPickEarly()) return true;
+        const pick = game.presetPick();
+        if (pick) presetSelection = { key: pick.key, word: String(dataset.word || "").toUpperCase() };
+        return true;
+      }
+      case "preset-back":
+        if (typeof game.closePresetPickEarly === "function") game.closePresetPickEarly();
+        presetSelection = { key: "", word: "" };
         return true;
       case "preset-lock": {
         const word = presetSelection.word;

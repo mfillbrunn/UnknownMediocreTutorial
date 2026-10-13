@@ -1,9 +1,9 @@
-/* Cuddle: dead tiles and doubled consonants.
+/* Cuddle: dead cards and doubled consonants.
  *
  * Two deck burdens a run can pick up, as the price of a bargain or a
  * harder setting:
  *
- *   Dead tile    a blank tile shuffled into the deck. It has no letter, so
+ *   Dead card    a blank tile shuffled into the deck. It has no letter, so
  *                it can't go in a word; it just takes a hand slot until it
  *                is mulliganed away (and it comes back when the discard is
  *                reshuffled).
@@ -13,32 +13,32 @@
  * Where they come from:
  *   - events (cuddle-expanded-stages.js): "deadTile" / "doubleConsonants"
  *     effects, for the rest of the run;
- *   - the Word Duel: taking a dead tile is one way to pay for Easy;
+ *   - the Word Duel: taking a dead card is one way to pay for Easy;
  *   - some bosses on Hard, for that fight only (HARD_BOSS below);
- *   - Ascension 3, Dead Weight: one dead tile all run.
+ *   - Ascension 3, Dead Weight: one dead card all run.
  *
  * The shop's Mend shelf (cuddle-shop.js) sells their removal.
  *
  * Two more tiles ride the same path:
  *   - the Murky Swamp (a World 2 theme, cuddle-worlds.js) sinks 3 dead
  *     tiles into the deck in each of its stages;
- *   - Lucky tiles (the Lucky Clover power): a clover, no letter. Like a
- *     dead tile it can't be played, only mulliganed -- but each one still
+ *   - Lucky cards (the Lucky Clover power): a clover, no letter. Like a
+ *     dead card it can't be played, only mulliganed -- but each one still
  *     in your hand when you solve pays 10/20/30 points (by power level).
  *
  * And three helpful tiles from powers, dealt the same way each stage:
- *   - Idea tiles (Idea Tiles, rare): mulligan one away and the answer
+ *   - Idea cards (Idea Cards, rare): mulligan one away and the answer
  *     shows one of its letters as a yellow (in the word, place unknown).
- *   - Wave tiles (Wave Tiles, common): never dealt in the opening hand;
+ *   - Wave cards (Wave Cards, common): never dealt in the opening hand;
  *     when one is drawn, every consonant in your hand is swapped out for
  *     fresh ones.
- *   - Joker tiles (Joker Cache): the cache's Jokers are shuffled into the
+ *   - Joker cards (Joker Cache): the cache's Jokers are shuffled into the
  *     deck instead of handed out at the stage start; drawing one gives
  *     you a Joker.
  * Full Circle (epic) pays for going through the deck: the first time in a
  * stage it runs out and the discard is shuffled back in, one letter of
  * the answer is shown in its exact place (a green hint).
- * A lucky tile mulliganed away pays +5 points. Idea, lucky, wave and Joker
+ * A lucky card mulliganed away pays +5 points. Idea, lucky, wave and Joker
  * tiles that have done their thing leave the deck for the rest of the stage.
  *
  * Run-long burdens live on state.umtBurden = { dead, doubles: [letters] }.
@@ -85,14 +85,14 @@
     hideFeedback: { doubles: DOUBLES_PER_PICK },
     arrowMode: { doubles: DOUBLES_PER_PICK }
   });
-  // Any other boss (a mixed one like the Chimera): one dead tile.
+  // Any other boss (a mixed one like the Chimera): one dead card.
   var HARD_BOSS_DEFAULT = Object.freeze({ dead: 1 });
 
   function hardBurdenFor(id) {
     return id ? (HARD_BOSS[id] || HARD_BOSS_DEFAULT) : null;
   }
 
-  // A dead tile's face: a small, round, friendly skull.
+  // A dead card's face: a small, round, friendly skull.
   var SKULL_SVG = '<svg class="umt-dead-skull" viewBox="0 0 40 40" aria-hidden="true" focusable="false">'
     + '<path d="M20 5.5c-8 0-14 5.5-14 12.8 0 4.3 2.1 7.5 4.9 9.3v3.5a2.2 2.2 0 0 0 2.2 2.2h13.8a2.2 2.2 0 0 0 2.2-2.2v-3.5c2.8-1.8 4.9-5 4.9-9.3C34 11 28 5.5 20 5.5z" fill="#efeaf7" stroke="#2b2238" stroke-width="2.4" stroke-linejoin="round"/>'
     + '<ellipse cx="9.8" cy="24.4" rx="2.3" ry="1.4" fill="#f4a7c0" opacity="0.85"/>'
@@ -109,7 +109,7 @@
     return SKULL_SVG;
   }
 
-  // A lucky tile's face: a four-leaf clover.
+  // A lucky card's face: a four-leaf clover.
   var LEAF = "M20 19.5C14.6 16 13.6 9.6 17 9.1c1.5-.2 2.7 1 3 2.2.3-1.2 1.5-2.4 3-2.2 3.4.5 2.4 6.9-3 10.4z";
   var CLOVER_SVG = '<svg class="umt-lucky-clover" viewBox="0 0 40 40" aria-hidden="true" focusable="false">'
     + '<path d="M20 28q2.4 5 6.4 7.4" fill="none" stroke="#2f6b1f" stroke-width="2.4" stroke-linecap="round"/>'
@@ -134,7 +134,7 @@
     return glyph === LUCKY_GLYPH;
   }
 
-  // An idea tile's face: a little glowing light bulb.
+  // An idea card's face: a little glowing light bulb.
   var BULB_SVG = '<svg class="umt-idea-bulb" viewBox="0 0 40 40" aria-hidden="true" focusable="false">'
     + '<path d="M20 4.5c-6.4 0-11 4.8-11 10.8 0 3.9 1.9 6.4 3.9 8.4 1.3 1.3 2 2.7 2 4.3v1.2h10.2V28c0-1.6.7-3 2-4.3 2-2 3.9-4.5 3.9-8.4C31 9.3 26.4 4.5 20 4.5z" fill="#ffe27a" stroke="#7a5a12" stroke-width="2.2" stroke-linejoin="round"/>'
     + '<path d="M16.2 21.5c1.4-2.4 2.4-2.4 3.8 0 1.4-2.4 2.4-2.4 3.8 0" fill="none" stroke="#c98a12" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>'
@@ -211,7 +211,7 @@
     return String((state && state.runId) || "").indexOf(":duel:") !== -1;
   }
 
-  // The Murky Swamp: every stage of it sinks 3 dead tiles into the deck.
+  // The Murky Swamp: every stage of it sinks 3 dead cards into the deck.
   function swampDead(game) {
     var worlds = window.CuddleWorlds;
     if (!worlds || !game || !game.state || !game.state.runId || inDuel(game.state)) return 0;
@@ -279,8 +279,8 @@
     var n = Math.max(1, Math.floor(Number(count) || 1));
     value.dead += n;
     return n === 1
-      ? "A dead tile joins your deck for the rest of the run."
-      : n + " dead tiles join your deck for the rest of the run.";
+      ? "A dead card joins your deck for the rest of the run."
+      : n + " dead cards join your deck for the rest of the run.";
   }
 
   function addDoubles(game, count) {
@@ -300,8 +300,8 @@
     if (value.dead <= 0) return "";
     value.dead -= 1;
     return value.dead
-      ? "A dead tile is gone. " + value.dead + " left in your deck."
-      : "Your last dead tile is gone.";
+      ? "A dead card is gone. " + value.dead + " left in your deck."
+      : "Your last dead card is gone.";
   }
 
   function removeDoubles(game) {
@@ -326,14 +326,14 @@
       }
       doubles = doubles.concat(state.boss.umtDoubles);
     }
-    // Lucky tiles pay on a solve, which a Duel doesn't have; the Duel keeps
-    // its own simpler hand (Jokers handed out up front, no power tiles).
+    // Lucky cards pay on a solve, which a Duel doesn't have; the Duel keeps
+    // its own simpler hand (Jokers handed out up front, no power cards).
     var duel = inDuel(game.state);
     return {
       dead: dead,
       doubles: doubles,
       lucky: duel ? 0 : luckyCount(game),
-      // Idea tiles stay 1/2/3: four yellow hints a stage was too easy.
+      // Idea cards stay 1/2/3: four yellow hints a stage was too easy.
       idea: duel ? 0 : powerLevel(game, "ideaTiles") + schoolPerk(game, "ideaTiles"),
       wave: duel ? 0 : TILES_BY_LEVEL[powerLevel(game, "waveTiles")],
       jokers: duel ? 0 : deckJokers(game)
@@ -374,14 +374,14 @@
         if (game.getCountedHandSize() < game.getHandLimit()) state.hand.push(card);
         else state.deck.push(card);
       });
-      // Wave tiles wait in the deck: a wave in the opening hand would only
+      // Wave cards wait in the deck: a wave in the opening hand would only
       // reshuffle a hand you haven't seen yet. The deck is drawn from its
       // end, so they go in at random depths.
       for (var w = 0; w < extras.wave; w += 1) {
         var at = Math.floor(randomOf(this)() * (state.deck.length + 1));
         state.deck.splice(at, 0, { id: this._nextId("wave"), glyph: WAVE_GLYPH, source: "deck", wave: true });
       }
-      // A Joker tile dealt straight into the opening hand is a Joker now.
+      // A Joker card dealt straight into the opening hand is a Joker now.
       state.hand.filter(isJokerTile).forEach(function open(card) { cashJokerTile(game, card, true); });
     } catch (error) {
       console.warn("Cuddle burdens: dealing failed.", error);
@@ -389,7 +389,7 @@
     return result;
   };
 
-  // -- power tiles in play -----------------------------------------------------
+  // -- power cards in play -----------------------------------------------------
   function note(game, text) {
     game.state.lastMessage = ((game.state.lastMessage || "") + " " + text).trim();
   }
@@ -422,7 +422,7 @@
     state.draft = (state.draft || []).filter(function keep(id) { return id !== card.id; });
   }
 
-  // Drawing a Joker tile: it becomes a Joker. One Joker card sits in hand
+  // Drawing a Joker card: it becomes a Joker. One Joker card sits in hand
   // at a time; any more wait as charges (the engine's own rule).
   function cashJokerTile(game, card, quiet) {
     var state = game.state;
@@ -435,10 +435,10 @@
       mega.jokerCharges -= 1;
       state.hand.push({ id: game._nextId("joker"), glyph: glyph, source: "joker" });
     }
-    if (!quiet) drawNote(game, "Joker tile: +1 Joker.");
+    if (!quiet) drawNote(game, "Joker card: +1 Joker.");
   }
 
-  // Draws stop on power tiles: a Joker tile turns into a Joker, a wave is
+  // Draws stop on power cards: a Joker card turns into a Joker, a wave is
   // queued (it fires once the draw that found it is finished), and the
   // draw goes on so the hand still fills.
   var baseDrawOne = proto._drawOne;
@@ -488,7 +488,7 @@
       var sweptGlyphs = swept.map(function glyph(card) { return card.glyph; });
       if (swept.length) game._discardCards(swept.map(function id(card) { return card.id; }));
       var drawn = game.drawToHandLimit();
-      // For the hand: the wave tile shows up, a wave washes these letters
+      // For the hand: the wave card shows up, a wave washes these letters
       // out, then the new ones come in (playWaveFx below).
       game.__umtWaveFx = (game.__umtWaveFx || []).concat([{ swept: sweptGlyphs, at: Date.now() }]);
       // Hide the new letters from their very first frame on screen.
@@ -547,13 +547,13 @@
     });
     if (!open.length) return "";
     var letter = open[Math.floor(randomOf(game)() * open.length)];
-    if (window.CuddleHintFx) window.CuddleHintFx.note(game, letter, "Idea tile");
+    if (window.CuddleHintFx) window.CuddleHintFx.note(game, letter, "Idea card");
     state.knownPresent = Array.from(new Set((state.knownPresent || []).concat([letter]))).sort();
     if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
     return letter;
   }
 
-  // Mulligans: idea tiles give a yellow hint each, lucky tiles +5 points
+  // Mulligans: idea cards give a yellow hint each, lucky cards +5 points
   // each; both are spent.
   var baseMulligan = proto.mulligan;
   proto.mulligan = function mulliganWithPowerTiles(cardIds) {
@@ -570,8 +570,8 @@
       state.discard = (state.discard || []).filter(function keep(card) { return !spent.has(card.id); });
       if (lucky.length) {
         var points = lucky.length * LUCKY_MULLIGAN_POINTS;
-        if (stageBonus(this, points, "umtLuckyMulligan", "Lucky tiles mulliganed") > 0) {
-          note(this, "Lucky tile" + (lucky.length === 1 ? "" : "s") + " mulliganed: +" + points + " points.");
+        if (stageBonus(this, points, "umtLuckyMulligan", "Lucky cards mulliganed") > 0) {
+          note(this, "Lucky card" + (lucky.length === 1 ? "" : "s") + " mulliganed: +" + points + " points.");
         }
       }
       if (ideas.length) {
@@ -589,7 +589,7 @@
       }
       if (typeof this.save === "function") this.save();
     } catch (error) {
-      console.warn("Cuddle burdens: a power tile failed on a mulligan.", error);
+      console.warn("Cuddle burdens: a power card failed on a mulligan.", error);
     }
     return result;
   };
@@ -601,10 +601,10 @@
     return inDuel(this.state) ? 0 : powerLevel(this, "jokerCache") + 2 * powerLevel(this, "jokerCacheLarge", 1);
   };
 
-  // A dead or lucky tile can't be played.
-  var DEAD_ERROR = "A dead tile has no letter. Mulligan it away.";
-  var LUCKY_ERROR = "A lucky tile has no letter. Keep it in hand: it pays out when you solve.";
-  var IDEA_ERROR = "An idea tile has no letter. Mulligan it away for a yellow hint.";
+  // A dead or lucky card can't be played.
+  var DEAD_ERROR = "A dead card has no letter. Mulligan it away.";
+  var LUCKY_ERROR = "A lucky card has no letter. Keep it in hand: it pays out when you solve.";
+  var IDEA_ERROR = "An idea card has no letter. Mulligan it away for a yellow hint.";
   ["toggleDraft", "insertDraftCardAt"].forEach(function guard(name) {
     var base = proto[name];
     if (typeof base !== "function") return;
@@ -617,7 +617,7 @@
     };
   });
 
-  // -- lucky tiles pay out on a solve ----------------------------------------
+  // -- lucky cards pay out on a solve ----------------------------------------
   function stageBonus(game, amount, field, label) {
     var rebalance = window.CuddleRebalanceV5;
     if (rebalance && typeof rebalance.addStageBonus === "function") {
@@ -644,13 +644,13 @@
       if (!solved) return result;
       var held = (state.hand || []).filter(isLuckyCard).length;
       if (!held) return result;
-      // Flora's own lucky tile pays the first level's 10 without the badge.
+      // Flora's own lucky card pays the first level's 10 without the badge.
       var points = held * LUCKY_POINTS[Math.max(1, level)] * Math.max(1, schoolPerk(this, "luckyMultiplier"));
-      if (stageBonus(this, points, "umtLuckyClover", held === 1 ? "Lucky tile" : "Lucky tiles x" + held) > 0) {
+      if (stageBonus(this, points, "umtLuckyClover", held === 1 ? "Lucky card" : "Lucky cards x" + held) > 0) {
         state.lastMessage = ((state.lastMessage || "") + " Lucky Clover: +" + points + " points.").trim();
       }
     } catch (error) {
-      console.warn("Cuddle burdens: lucky tiles failed to pay.", error);
+      console.warn("Cuddle burdens: lucky cards failed to pay.", error);
     }
     return result;
   };
@@ -661,7 +661,7 @@
     if (!entry) return "";
     // Shown on Hard only (decorate below), so it doesn't say "On Hard".
     return entry.dead
-      ? "+" + entry.dead + " dead tile in your deck for this fight."
+      ? "+" + entry.dead + " dead card in your deck for this fight."
       : entry.doubles + " doubled consonants in your deck for this fight.";
   }
 
@@ -797,7 +797,7 @@
       layer.appendChild(el);
       return { el: el, x: slot.left + slot.width / 2 };
     });
-    // The wave tile, drawn from the deck.
+    // The wave card, drawn from the deck.
     var deck = document.querySelector("#cuddleScreen .cuddle-deck");
     var deckBox = deck ? deck.getBoundingClientRect() : { left: panelBox.left + 8, top: panelBox.top + 8, width: 40, height: 52 };
     var tile = document.createElement("span");
@@ -857,9 +857,9 @@
     }, WAVE_MS.tile + WAVE_MS.sweep + WAVE_MS.settle);
   }
 
-  // -- little bursts when a lucky, dead or Joker tile is tapped ---------------
+  // -- little bursts when a lucky, dead or Joker card is tapped ---------------
   // They don't do much on their own, so a tap answers with a small flourish:
-  // clovers for luck, a puff of grave smog for a dead tile, purple sparkles
+  // clovers for luck, a puff of grave smog for a dead card, purple sparkles
   // for a Joker.
   var CLOVER_PARTICLE = '<svg viewBox="0 0 20 20" aria-hidden="true">'
     + [0, 90, 180, 270].map(function leaf(angle) {

@@ -6,7 +6,7 @@
  *
  *   1 Frayed Nerves  one fewer mulligan every stage
  *   2 Slim Pickings  reward screens offer one card fewer (never under two)
- *   3 Dead Weight    a dead tile sits in your deck all run
+ *   3 Dead Weight    a dead card sits in your deck all run
  *                    (dealt by cuddle-burdens.js)
  *   4 Heavy Toll     each late guess costs 10 more points
  *   5 Tight Window   the solve window is one guess shorter
@@ -39,7 +39,7 @@
   var LEVELS = Object.freeze([
     Object.freeze({ level: 1, id: "frayedNerves", name: "Frayed Nerves", text: "One fewer mulligan every stage." }),
     Object.freeze({ level: 2, id: "slimPickings", name: "Slim Pickings", text: "Reward screens offer one card fewer." }),
-    Object.freeze({ level: 3, id: "deadWeight", name: "Dead Weight", text: "A dead tile sits in your deck all run. Mulligan it away." }),
+    Object.freeze({ level: 3, id: "deadWeight", name: "Dead Weight", text: "A dead card sits in your deck all run. Mulligan it away." }),
     Object.freeze({ level: 4, id: "heavyToll", name: "Heavy Toll", text: "Each late guess costs 10 more points." }),
     Object.freeze({ level: 5, id: "tightWindow", name: "Tight Window", text: "The solve window is one guess shorter." }),
     Object.freeze({ level: 6, id: "gauntlet", name: "Gauntlet", text: "No plain Wordles: every Wordle stop has a challenge." }),

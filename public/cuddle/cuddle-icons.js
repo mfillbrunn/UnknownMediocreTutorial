@@ -216,7 +216,7 @@
 
   // Symbols that are typography, not emoji, unless they carry the emoji
   // variation selector (U+FE0F): arrows, ticks, card suits, and above all
-  // the Joker tile's ★, which is a playing card's glyph, not a picture.
+  // the Joker card's ★, which is a playing card's glyph, not a picture.
   // (Chromium's regex counts ★ and the suits as pictographic; Node's doesn't.)
   const KEEP = new Set(["©", "®", "™", "↔", "↕", "↖", "↗", "↘", "↙", "↩", "↪", "▪", "▫", "▶", "◀", "◻", "◼", "◽", "◾", "〰", "〽", "㊗", "㊙", "ℹ", "Ⓜ",
     "★", "☆", "✔", "♥", "♦", "♣", "♠", "☰"]);

@@ -56,20 +56,20 @@
   // when the stage is left, after the reward pick).
   window.CuddleStageClearMoney = STAGE_CLEAR_MONEY;
 
-  // Special tiles: a few board cells, rolled fresh at the start of every
+  // Special squares: a few board cells, rolled fresh at the start of every
   // round, boss fights included, that pay out for the letter the player lands on them.
   // Each is marked on the board before it is played (a large faint symbol)
   // so it can be aimed at. A yellow or green on it pays; a grey spends it
   // for nothing. Payouts happen inside the engine's scoring step (see
   // _scoreSpecialTiles, called from cuddle-engine.js's submitDraft) so a
-  // points tile counts toward the row -- and toward a solve -- on the very
+  // points square counts toward the row -- and toward a solve -- on the very
   // guess that lands on it. They only ever sit inside the round's
   // quick-solve window (_solveGuessThreshold(): 6 guesses in world one, 5
   // in world two, 4 in world three), one per row at most, so hunting one is
   // never a reason to guess past that window and eat the late penalty.
   //
-  // Kinds. A run starts with money and points tiles only; the other three
-  // each need their unlock reward (Mulligan / Joker / Oracle Tiles):
+  // Kinds. A run starts with money and points squares only; the other three
+  // each need their unlock reward (Mulligan / Joker / Oracle Squares):
   //   money    $  gold   +$2 on yellow, +$4 on green
   //   points   P  green  +5 points on yellow, +10 on green
   //   mulligan ↻         +1 mulligan (yellow or green alike)
@@ -84,7 +84,7 @@
   // How many a stage gets: one or two (1.5 on average), plus one more per
   // Treasure Map.
   // Each guess in the bonus window has about a one-in-four chance of a
-  // special tile (one per row at most); Treasure Map and Treasure Trove add
+  // special square (one per row at most); Treasure Map and Treasure Trove add
   // tiles on top of that.
   var TILE_CHANCE_PER_GUESS = 0.25;
   // A three-level power's steps (cuddle-skill-tree.js): 1, 2, then 4.
@@ -165,7 +165,7 @@
       .sort(function byRow(a, b) { return a.row - b.row; });
   }
 
-  // Pays every special tile on `row` from this guess's TRUE colours -- not
+  // Pays every special square on `row` from this guess's TRUE colours -- not
   // the masked ones a boss or challenge shows on the board: the letter
   // really did land where it landed, whatever the feedback will admit.
   // Returns the points to add to this guess's row score; everything else
@@ -198,24 +198,24 @@
         tile.payout = green ? MONEY_TILE_GREEN : MONEY_TILE_YELLOW;
         tile.label = "+$" + tile.payout;
         addMoney(state, tile.payout);
-        notes.push("Money tile +$" + tile.payout);
+        notes.push("Money square +$" + tile.payout);
       } else if (kind === "points") {
         tile.payout = green ? POINTS_TILE_GREEN : POINTS_TILE_YELLOW;
         tile.label = "+" + tile.payout;
         points += tile.payout;
-        notes.push("Points tile +" + tile.payout);
+        notes.push("Points square +" + tile.payout);
       } else if (kind === "mulligan") {
         var gained = typeof game.mulliganGain === "function" ? game.mulliganGain(1) : 1;
         tile.payout = gained;
         tile.label = "+" + gained;
         state.mulligansLeft = Math.max(0, Number(state.mulligansLeft) || 0) + gained;
-        notes.push("Mulligan tile +" + gained + " mulligan" + (gained === 1 ? "" : "s"));
+        notes.push("Mulligan square +" + gained + " mulligan" + (gained === 1 ? "" : "s"));
       } else if (kind === "joker") {
         tile.payout = 1;
         tile.label = "+1";
         var mega = state.megaState || (state.megaState = {});
         mega.jokerCharges = Math.max(0, Number(mega.jokerCharges) || 0) + 1;
-        notes.push("Joker tile +1 Joker");
+        notes.push("Joker square +1 Joker");
       } else if (kind === "hint") {
         tile.payout = 1;
         tile.label = "Hint";
@@ -240,7 +240,7 @@
     return result;
   };
 
-  // A special tile never sits on a tile a boss, challenge or curse will
+  // A special square never sits on a tile a boss, challenge or curse will
   // mark: it moves to an unmarked tile of the same guess, or is dropped
   // when that guess has none. Run again once the stage's challenge is
   // known (cuddle-rebalance-v5.js finishBeginRound).
@@ -270,7 +270,7 @@
   function revealTileHints(game, count) {
     var notes = [];
     if (typeof game._revealPositionPeek !== "function") return notes;
-    for (var i = 0; i < count; i += 1) notes.push("Oracle tile: " + game._revealPositionPeek());
+    for (var i = 0; i < count; i += 1) notes.push("Oracle square: " + game._revealPositionPeek());
     return notes;
   }
 

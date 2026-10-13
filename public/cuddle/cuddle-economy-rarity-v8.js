@@ -68,7 +68,7 @@
     ["vowel bounty", TIERS.RARE],
     // A one-time letter, so Common.
     ["position peek", TIERS.COMMON],
-    ["mulligan tiles", TIERS.COMMON],
+    ["mulligan squares", TIERS.COMMON],
 
     ["vowel lamp", TIERS.RARE],
     ["pattern lens", TIERS.EPIC],
@@ -84,7 +84,7 @@
     ["encore", TIERS.COMMON],
     ["rainy day fund", TIERS.RARE],
     ["small joker cache", TIERS.RARE],
-    ["joker tiles", TIERS.RARE],
+    ["joker squares", TIERS.RARE],
 
     // Epic: a clue every stage, or a payout, a little short of Legendary.
     ["yellow guesser hint", TIERS.EPIC],
@@ -96,7 +96,7 @@
     ["cull two letters", TIERS.EPIC],
     ["full hand mulligan", TIERS.EPIC],
     ["quest cadence", TIERS.EPIC],
-    ["oracle tiles", TIERS.EPIC],
+    ["oracle squares", TIERS.EPIC],
 
     ["candidate notebook", TIERS.LEGENDARY],
     ["large joker cache", TIERS.LEGENDARY],
@@ -1582,7 +1582,7 @@
     } else if (name === "golden thread") {
       setName(def, "Hand Resonance");
       setId(def, "hand-resonance");
-      setDescription(def, "When the answer can be made from the current hand and reusable letters, the tile keyboard gently wiggles without identifying any letter.");
+      setDescription(def, "When the answer can be made from the current hand and reusable letters, your hand gently wiggles without giving away any letter.");
       replaceHandlers(def, "hand-resonance");
       name = "hand resonance";
     } else if (name === "clear sight") {

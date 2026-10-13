@@ -1,7 +1,7 @@
 /* Cuddle: a little animation for every new hint.
  *
  * Hints arrive from many places (Yellow Guesser Hint, Full Circle, idea
- * tiles, Last Light, the Cuddle Meter, Oracle tiles, Process of
+ * tiles, Last Light, the Cuddle Meter, Oracle squares, Process of
  * Elimination, quest rewards, world traits...). Without a cue the player
  * just finds a letter coloured in and wonders why. So after every render
  * this compares what the stage knows -- letters placed (green), letters in
@@ -85,7 +85,7 @@
   }
 
   // A hint giver names itself for the label (Yellow Guesser Hint, Full
-  // Circle, Idea tile...).
+  // Circle, Idea card...).
   function note(game, letter, label) {
     var state = game && game.state;
     if (!state || !letter || !label) return;
@@ -128,7 +128,31 @@
     return el;
   }
 
+  // A card that was just dealt (or re-dealt as a hint letter) flies in
+  // from the deck pile (cuddle-deck-fx.js); measured mid-flight it sits by
+  // the pile at the far left. So wait a frame for that flight to start,
+  // then for it to land (at most 1.2s), and measure the card where it is.
+  function whenSettled(item) {
+    return new Promise(function wait(resolve) {
+      requestAnimationFrame(function nextFrame() {
+        var card = targetFor(item);
+        var running = card && typeof card.getAnimations === "function"
+          ? card.getAnimations().filter(function moving(a) { return a.playState === "running" || a.playState === "pending"; })
+          : [];
+        if (!running.length) { resolve(); return; }
+        Promise.race([
+          Promise.all(running.map(function done(a) { return a.finished.catch(function ignore() {}); })),
+          new Promise(function cap(done) { setTimeout(done, 1200); })
+        ]).then(function settled() { resolve(); });
+      });
+    });
+  }
+
   function play(item, label, delay) {
+    whenSettled(item).then(function drop() { playNow(item, label, delay); });
+  }
+
+  function playNow(item, label, delay) {
     var target = targetFor(item);
     if (!target || !document.body) return;
     var box = target.getBoundingClientRect();

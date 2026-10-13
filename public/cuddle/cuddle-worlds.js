@@ -92,7 +92,7 @@
         challenges: ["rareWord", "countOnly", "perfectOpener"], path: { upgrade: 1 }, pathBlurb: "A reading room: one extra Free Upgrade stop." }),
       Object.freeze({ theme: "swamp", decor: "marsh", name: "Murky Swamp", tagline: "Thick mud underfoot", accent: "#c3dc6e", glow: "#7f9c3a",
         skyTop: "#1d2412", skyBottom: "#0f140a", bossTitle: "The Bog Swallows", bossLine: "Bubbles rise. Something heavy climbs out of the muck.",
-        rows: 3, lanes: "mixed", ease: 0, blurb: "Sticky going: three dead tiles sink into your deck every stage.",
+        rows: 3, lanes: "mixed", ease: 0, blurb: "Sticky going: three dead cards sink into your deck every stage.",
         challenges: ["noMulligans", "consonantCrunch", "delayedFeedback"], path: { events: 1 }, pathBlurb: "One event half-sunk in the mud." })
     ]),
     Object.freeze([

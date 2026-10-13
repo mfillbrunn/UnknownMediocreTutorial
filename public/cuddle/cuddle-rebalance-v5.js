@@ -151,7 +151,7 @@
     Object.freeze({
       id: IDS.jokerCacheLarge, key: IDS.jokerCacheLarge, icon: "\uD83C\uDCCF",
       title: "Large Joker Cache", name: "Large Joker Cache",
-      description: "Two more Joker tiles in your deck every stage, on top of Small Joker Cache if you have it. Draw one for a Joker.",
+      description: "Two more Joker cards in your deck every stage, on top of Small Joker Cache if you have it. Draw one for a Joker.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     // Letter culls, picked from the letters the engine can safely take out
@@ -208,7 +208,7 @@
       title: "Small Joker Cache",
       name: "Small Joker Cache",
       // Each level adds one Joker per stage: 1, 2, then 3 at level 3.
-      description: "A Joker tile in your deck every stage: draw it for a Joker. Level 2: two. Level 3: four.",
+      description: "A Joker card in your deck every stage: draw it for a Joker. Level 2: two. Level 3: four.",
       maxLevel: 3,
       maxCount: 3,
       kind: "upgrade"
@@ -2309,7 +2309,7 @@
     // count after it can still show a spent Joker card (and charges refill
     // for the next stage), so the snapshot is the measure when there is one.
     const spent = snapshot ? Math.max(asNumber(snapshot.draftJokers, 0), snapshot.draftHadJoker ? 1 : 0) : 0;
-    // A Joker won on that same guess (a Joker tile) is held, unused.
+    // A Joker won on that same guess (a Joker card) is held, unused.
     const held = asNumber(snapshot && snapshot.jokers, 0);
     const unusedJokers = snapshot
       ? Math.max(0, held - spent) + Math.max(0, totalJokerStock(game) - held)
@@ -2956,7 +2956,7 @@
     if (revealAllThemes) queueAllThemes(game);
     clearNativeChallengeOffer(game);
     beginVariant(game, pending);
-    // Now that the stage's challenge is known, keep special tiles off the
+    // Now that the stage's challenge is known, keep special squares off the
     // tiles it will mark (cuddle-points-money.js).
     if (typeof game._avoidMaskedSpecialTiles === "function") game._avoidMaskedSpecialTiles();
     applyTrainingWheels(game);
@@ -3141,8 +3141,8 @@
       }
       custom.cuddleUserJokerCachePerRoundLevel = current;
       appendNotice(game, current >= 2
-        ? `Small Joker Cache level ${current}: ${current >= 3 ? 4 : current} Joker tiles in your deck every stage.`
-        : "Small Joker Cache: a Joker tile in your deck every stage.");
+        ? `Small Joker Cache level ${current}: ${current >= 3 ? 4 : current} Joker cards in your deck every stage.`
+        : "Small Joker Cache: a Joker card in your deck every stage.");
     }
     if (id === IDS.jokerCacheLarge) {
       const mega = megaState(game);
@@ -3151,7 +3151,7 @@
         mega.jokerPerRoundBonus = Math.max(0, Math.floor(asNumber(mega.jokerPerRoundBonus, 0))) + 2 * delta;
         mega.hasJokerUnlocked = true;
       }
-      appendNotice(game, "Large Joker Cache: two more Joker tiles in your deck every stage.");
+      appendNotice(game, "Large Joker Cache: two more Joker cards in your deck every stage.");
     }
     const cullReward = customRewardById(id);
     if (cullReward && cullReward.cull && typeof game._removalCandidates === "function") {
@@ -3623,7 +3623,7 @@
     umtAllThemes: { title: "All-Seeing Atlas", description: "Reveal every available theme at the start of every Wordle.", shape: "tags" },
     umtOpeningInsight: { title: "Opening Insight", description: "Begin each Wordle with an extra green position hint.", shape: "greenHint" },
     umtQuickStudy: { title: "Quick Study", description: "Guesser Hints arrive sooner.", shape: "hourglass" },
-    umtJokerCache: { title: "Joker Cache", description: "Joker tiles in your deck every stage: one per level, up to three.", shape: "joker" },
+    umtJokerCache: { title: "Joker Cache", description: "Joker cards in your deck every stage: one per level, up to three.", shape: "joker" },
     umtReserveDividend: { title: "Reserve Dividend", description: "Unused Jokers and mulligans pay an additional end-of-round bonus.", shape: "coins" },
     umtConsonantSweep: { title: "Process of Elimination", description: "After every guess, boss fights included, one more consonant that isn't in the answer is ruled out and shown: one after your first guess, a second after your second, and so on.", shape: "eliminate" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
