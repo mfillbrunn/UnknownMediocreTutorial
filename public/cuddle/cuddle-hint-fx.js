@@ -128,6 +128,102 @@
     return el;
   }
 
+  // -- holding the hand still while a hint falls ---------------------------
+  // A hint changes its letter's card at once: a letter in the word turns
+  // yellow or green and is sorted to the left, a ruled-out one turns red
+  // and goes to the right. So the hand's last layout is remembered (where
+  // each card sat and how it looked), and when a hint arrives every card
+  // that moved is shown back in its old place, the hinted card in its old
+  // colour; the hint falls onto it there, and only then does the card take
+  // its new colour and the hand slide into its new order.
+  var lastLayout = {};
+  var holding = 0;
+  var LAND_MS = 800;
+  var SLIDE_MS = 380;
+
+  function handCards() {
+    var screen = document.getElementById("cuddleScreen");
+    return screen ? Array.prototype.slice.call(screen.querySelectorAll(".cuddle-hand-panel .cuddle-card[data-card-glyph]")) : [];
+  }
+
+  // A card's centre where the layout puts it, without any animation's
+  // transform (a card can be mid-flight from the deck pile).
+  function layoutOf(card) {
+    var box = card.getBoundingClientRect();
+    var dx = 0;
+    var dy = 0;
+    try {
+      var transform = getComputedStyle(card).transform;
+      if (transform && transform !== "none" && typeof DOMMatrixReadOnly === "function") {
+        var matrix = new DOMMatrixReadOnly(transform);
+        dx = matrix.e;
+        dy = matrix.f;
+      }
+    } catch (_error) {
+      dx = 0;
+      dy = 0;
+    }
+    return { x: box.left + box.width / 2 - dx, y: box.top + box.height / 2 - dy, w: box.width, h: box.height, cls: card.className };
+  }
+
+  function snapshot() {
+    var layout = {};
+    handCards().forEach(function remember(card) { layout[card.getAttribute("data-card-glyph")] = layoutOf(card); });
+    lastLayout = layout;
+  }
+
+  // Shows every card that moved back where it was (and the hinted cards
+  // in their old look) for `holdMs`, then lets them slide into place.
+  function holdHand(letters, before, holdMs) {
+    var held = false;
+    handCards().forEach(function hold(card) {
+      var glyph = card.getAttribute("data-card-glyph");
+      var old = before[glyph];
+      if (!old || typeof card.animate !== "function") return;
+      var now = layoutOf(card);
+      var dx = old.x - now.x;
+      var dy = old.y - now.y;
+      var hinted = letters.indexOf(glyph) !== -1 && old.cls && old.cls !== card.className;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && !hinted) return;
+      held = true;
+      if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) {
+        // Any flight from the deck pile gives way to the hold.
+        card.getAnimations().forEach(function stop(animation) { try { animation.cancel(); } catch (_error) { /* gone */ } });
+        var total = holdMs + SLIDE_MS;
+        card.animate([
+          { transform: "translate(" + dx + "px, " + dy + "px)" },
+          { transform: "translate(" + dx + "px, " + dy + "px)", offset: holdMs / total },
+          { transform: "translate(0, 0)" }
+        ], { duration: total, easing: "ease-in-out" });
+      }
+      if (hinted) {
+        // Other layers decorate the card after this render (a hint colour
+        // class), so the old look is put back on every change until the
+        // hint lands, and the latest look is kept for then.
+        var next = card.className;
+        var restoring = false;
+        card.className = old.cls;
+        var watcher = typeof MutationObserver === "function" ? new MutationObserver(function keepOld() {
+          if (restoring || card.className === old.cls) return;
+          next = card.className;
+          restoring = true;
+          card.className = old.cls;
+          restoring = false;
+        }) : null;
+        if (watcher) watcher.observe(card, { attributes: true, attributeFilter: ["class"] });
+        setTimeout(function reveal() {
+          if (watcher) watcher.disconnect();
+          if (card.isConnected) card.className = next;
+        }, holdMs);
+      }
+    });
+    if (held) {
+      holding += 1;
+      setTimeout(function release() { holding = Math.max(0, holding - 1); snapshot(); }, holdMs + SLIDE_MS + 40);
+    }
+    return held;
+  }
+
   // A card that was just dealt (or re-dealt as a hint letter) flies in
   // from the deck pile (cuddle-deck-fx.js); measured mid-flight it sits by
   // the pile at the far left. So wait a frame for that flight to start,
@@ -148,14 +244,19 @@
     });
   }
 
-  function play(item, label, delay) {
-    whenSettled(item).then(function drop() { playNow(item, label, delay); });
+  // `spot` is where the card sat before the hint (holdHand keeps it
+  // there); without one, wait for the card to settle and measure it.
+  function play(item, label, delay, spot) {
+    if (spot) { playNow(item, label, delay, spot); return; }
+    whenSettled(item).then(function drop() { playNow(item, label, delay, null); });
   }
 
-  function playNow(item, label, delay) {
+  function playNow(item, label, delay, spot) {
     var target = targetFor(item);
-    if (!target || !document.body) return;
-    var box = target.getBoundingClientRect();
+    if ((!target && !spot) || !document.body) return;
+    var box = spot
+      ? { left: spot.x - spot.w / 2, top: spot.y - spot.h / 2, width: spot.w, height: spot.h }
+      : target.getBoundingClientRect();
     var host = layer();
     var tile = document.createElement("span");
     tile.className = "umt-hint-fx-tile is-" + item.kind;
@@ -194,13 +295,14 @@
     setTimeout(function landed() {
       var card = targetFor(item);
       if (card && typeof card.animate === "function") {
+        // A glow only: the card's transform belongs to the hold.
         card.animate([
           { boxShadow: "0 0 0 0 " + COLOURS[item.kind] },
-          { boxShadow: "0 0 0 6px " + COLOURS[item.kind] + "aa", transform: "scale(1.08)" },
-          { boxShadow: "0 0 0 0 transparent", transform: "scale(1)" }
-        ], { duration: 520, easing: "ease-out" });
+          { boxShadow: "0 0 0 6px " + COLOURS[item.kind] + "aa" },
+          { boxShadow: "0 0 0 0 transparent" }
+        ], { duration: 520, easing: "ease-out", composite: "add" });
       }
-    }, delay + 800);
+    }, delay + LAND_MS);
     setTimeout(function cleanUp() { tile.remove(); tag.remove(); }, delay + 2100);
   }
 
@@ -219,14 +321,22 @@
     knowledge(state).forEach(function mark(item) {
       if (record.seen.indexOf(item.id) === -1) record.seen.push(item.id);
     });
-    if (!fresh.length || reducedMotion()) return;
+    var before = lastLayout;
+    if (!fresh.length || reducedMotion()) {
+      if (!holding) snapshot();
+      return;
+    }
     // A placed letter also lands in "in the word": show it once, as green.
     var greens = new Set(fresh.filter(function g(item) { return item.kind === "green"; }).map(function l(item) { return item.letter; }));
     fresh = fresh.filter(function dedupe(item) { return item.kind !== "yellow" || !greens.has(item.letter); });
     // Vowels ruled out by a free test are hints too; keep the burst short.
-    fresh.slice(0, 4).forEach(function each(item, index) {
-      play(item, sourceOf(state, item), index * 260);
+    var shown = fresh.slice(0, 4);
+    var letters = shown.map(function l(item) { return item.letter; });
+    var held = holdHand(letters, before, (shown.length - 1) * 260 + LAND_MS);
+    shown.forEach(function each(item, index) {
+      play(item, sourceOf(state, item), index * 260, held ? before[item.letter] : null);
     });
+    if (!held) snapshot();
   }
 
   var pending = false;
