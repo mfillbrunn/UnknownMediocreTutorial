@@ -197,8 +197,14 @@
     });
     if (!kept.length) return { ok: false, error: "None of the pack's upgrades could be taken." };
     state.cuddleMoney = wallet - offer.price;
+    // Each card in the registry's plain wording, for the level just taken.
+    var tree = window.CuddleSkillTree;
+    var words = function words(card) {
+      if (!tree || typeof tree.pickText !== "function") return "";
+      return tree.pickText(game, card.key || card.id, 0) || tree.pickText(game, card.title, 0);
+    };
     offer.cards = kept.map(function plain(card) {
-      return { id: card.id, title: card.title, description: card.description, icon: card.icon, tier: card.tier };
+      return { id: card.id, title: card.title, description: words(card) || card.description, icon: card.icon, tier: card.tier };
     });
     offer.openedAt = Date.now();
     state.lastMessage = (offer.starter ? "Starting Pack opened: " : "Upgrade Pack opened: ") + kept.map(function title(card) { return card.title; }).join(", ") + ".";

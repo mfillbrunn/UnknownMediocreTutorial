@@ -321,31 +321,31 @@
       id: "stealthGuess",
       icon: "🔁",
       title: "Extra Mulligan",
-      description: "+1 mulligan for this stage"
+      description: "+1 mulligan for this stage."
     },
     {
       id: "letterProbe",
       icon: "🔎",
       title: "Letter Count",
-      description: "Shows how many times 2 of your consonants appear in the answer"
+      description: "2 random consonants from your hand: you see how many times each one is in the answer."
     },
     {
       id: "sillyWord",
       icon: "🤪",
       title: "Silly Word",
-      description: "Your next guess can be any 5 letters, real word or not"
+      description: "Your next guess can be any 5 letters, even if it isn't a real word."
     },
     {
       id: "extraLetters",
       icon: "🎁",
       title: "Extra Letters",
-      description: "+3 extra consonants in your hand for your next guess"
+      description: "+3 more consonants in your hand for your next guess."
     },
     {
       id: "jokerToken",
       icon: "🃏",
       title: "Joker",
-      description: "+1 Joker: a wildcard tile you keep until you use it"
+      description: "+1 Joker: a card that can be any letter. It stays until you use it."
     }
   ];
 
