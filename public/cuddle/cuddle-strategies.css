@@ -181,3 +181,23 @@ button.umt-clue-word.is-pickable:focus-visible {
 }
 button.umt-clue-word.is-pickable:focus-visible { outline: 2px solid #ffd578; outline-offset: 2px; }
 .cuddle-preset-back { margin-top: 8px; }
+
+/* Hints rank III (cuddle-schools.js): once a stage, tap a consonant in
+   the Clues strip to test it. */
+.umt-clue.is-test .umt-clue-text { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.umt-clue-test {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid rgba(88, 168, 255, 0.7);
+  border-radius: 6px;
+  background: rgba(88, 168, 255, 0.18);
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+.umt-clue-test:hover,
+.umt-clue-test:focus-visible { background: rgba(88, 168, 255, 0.4); }
+.umt-clue-test:focus-visible { outline: 2px solid #58a8ff; outline-offset: 2px; }

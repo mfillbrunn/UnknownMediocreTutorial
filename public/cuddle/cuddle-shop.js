@@ -181,7 +181,10 @@
 
   function priceOf(game, shelfId, base) {
     const factor = isFinalShop(game) ? FINAL_SHOP_PRICE[shelfId] || 1 : 1;
-    return Math.max(1, Math.round((Number(base) || 0) * factor));
+    // Money rank II: everything is 20% cheaper.
+    const schools = window.CuddleSchools;
+    const discount = schools && typeof schools.perk === "function" ? Number(schools.perk(game, "shopDiscount")) || 0 : 0;
+    return Math.max(1, Math.round((Number(base) || 0) * factor * (1 - discount)));
   }
 
   let lastBought = null;

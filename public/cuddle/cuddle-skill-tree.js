@@ -328,19 +328,19 @@
   // Each school has its own colour, so badges read as sorted by colour.
   const SCHOOLS = Object.freeze({
     flint: { label: "Speed", color: "#ff5f4f", blurb: "Strong openers and quick solves.",
-      ranks: [4, 9, 15], perks: ["Solve by guess 3: +10 points", "Solve by guess 3: +25 points", "Solve by guess 3: +60 points"] },
+      ranks: [4, 9, 15], perks: ["Solve by guess 3: +10 points", "Solve by guess 3: +1 mulligan next stage", "Solve by guess 3: your next stage starts with 1 letter placed"] },
     prism: { label: "Hints", color: "#58a8ff", blurb: "Learn about the answer before you guess it.",
-      ranks: [4, 9, 15], perks: ["Each stage starts with 1 vowel crossed out", "After your 2nd guess, 1 letter turns yellow", "After your 3rd guess, 1 letter is placed (green)"] },
+      ranks: [4, 9, 15], perks: ["Each stage starts with 1 vowel crossed out", "After your 2nd guess, 1 letter turns yellow", "Once per stage, tap a consonant in your hand to test it"] },
     flora: { label: "Cards", color: "#46cf86", blurb: "Special cards in your hand and deck (lucky, idea, wave, Joker), special squares on the board, and mulligans.",
-      ranks: [4, 9, 15], perks: ["+1 lucky card every stage", "+1 idea card and +1 mulligan every stage", "Lucky cards give double points"] },
+      ranks: [4, 9, 15], perks: ["+1 lucky card every stage", "+1 idea card and +1 mulligan every stage", "Your first mulligan each stage is free, and each stage starts with a Joker card"] },
     parchment: { label: "Elimination", color: "#c9ae84", blurb: "Rule letters out and cull them.",
-      ranks: [4, 9, 15], perks: ["Each grey tile gives +1 point", "Each stage starts with 1 consonant crossed out", "Each grey tile gives +3 points, and the Cuddle Meter fills 2 tiles sooner"] },
+      ranks: [4, 9, 15], perks: ["Each grey tile gives +1 point", "Each stage starts with 1 consonant crossed out", "After each guess, crossed-out consonants in your hand are swapped for new cards"] },
     gold: { label: "Money", color: "#f5cf3a", blurb: "Earn, save and gamble money.",
-      ranks: [4, 9, 15], perks: ["Each solve gives +$3", "Each solve gives +$8, and Rainy Day Fund can pay $10 more", "Each solve gives +$20, and your first reward refresh is free"] },
+      ranks: [4, 9, 15], perks: ["Each solve gives +$3", "Everything in the shop costs 20% less", "After each solve, earn 10% interest on your money (up to +$15)"] },
     brass: { label: "Quests", color: "#ef8a34", blurb: "More quests and bigger quest rewards.",
-      ranks: [4, 9, 15], perks: ["Each quest you finish gives +10 points", "+1 surprise quest every stage", "Each quest you finish gives +40 points and +$5"] },
+      ranks: [4, 9, 15], perks: ["Each quest you finish gives +10 points", "Quest reward screens show 1 more choice", "Each quest you finish gives +1 mulligan; finish 2 in a stage for +1 Joker card"] },
     pearl: { label: "Restraint", color: "#e7a2ee", blurb: "Fewer badges and harder play, for bigger rewards.",
-      ranks: [3, 6, 9], perks: ["Skipping a reward gives +10 points more", "A hard-mode solve gives +15 points, and Lean Build ignores 3 of your badges", "Each solve gives +30 points while you have 8 badges or fewer"] }
+      ranks: [3, 6, 9], perks: ["Skipping a reward gives +10 points more", "Solve without using a mulligan: +15 points", "After you skip a reward, the next reward screen is all Epic cards"] }
   });
   // Badges that belong to no school.
   const SCHOOLLESS = Object.freeze({ label: "General", color: "#9d97b0", blurb: "General tools that belong to no school." });
