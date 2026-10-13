@@ -162,7 +162,7 @@
       },
       at: "bottom",
       cards: [
-        { title: "Choose your path", text: "Some Wordle stops carry a <b>challenge</b>, a twist like a short clock or banned letters. Red skulls show how hard a stop is, and harder stops pay more. Shops, events and free upgrades sit between them." },
+        { title: "Choose your path", text: "Every Wordle stop shows only how hard it is: a <b>heart</b> is an easier one, no mark a regular one, and one to three red <b>skulls</b> a harder one with a twist you find out by playing it. Harder stops pay more points and money. Shops, events and free upgrades sit between them." },
         { title: "Bosses and winning", text: "Each world ends in a <b>boss</b>. You need enough points to challenge it, shown on the boss. Bosses bend the rules, and beating one gives you a <span class=\"umt-tut-legendary\">Legendary</span> pick. Beat the final boss to win the run.", focus: ".cuddle-header-points" }
       ]
     },

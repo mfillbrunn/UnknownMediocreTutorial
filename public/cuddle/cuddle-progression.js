@@ -93,7 +93,7 @@
   function schoolInfo(node) {
     const tree = window.CuddleSkillTree;
     const school = node && node.school && tree && tree.SCHOOLS ? tree.SCHOOLS[node.school] : null;
-    return school || (tree && tree.SCHOOLLESS) || { label: "Schoolless", color: "#9d97b0" };
+    return school || (tree && tree.SCHOOLLESS) || { label: "General", color: "#9d97b0" };
   }
 
   function badgeColor(node) {
@@ -406,7 +406,7 @@
     const ranks = Array.isArray(row.info.ranks) ? row.info.ranks : [];
     const next = ranks[row.rank];
     return `<div class="umt-bd-school-detail" style="--s:${row.info.color}">`
-      + `<p class="umt-bd-school-head"><strong>${esc(row.info.label)}</strong> · ${esc(row.info.group)}</p>`
+      + `<p class="umt-bd-school-head"><strong>${esc(row.info.label)}</strong></p>`
       + `<p class="umt-bd-school-blurb">${esc(row.info.blurb)}</p>`
       + `<p class="umt-bd-school-progress">${row.have} school points${next ? ` · ${next - row.have} more for rank ${NUMERAL[row.rank + 1]}` : " · top rank"}</p>`
       + `<ol class="umt-bd-school-perks">${(row.info.perks || []).map((perk, index) => `<li class="${index < row.rank ? "is-on" : ""}">`
@@ -946,6 +946,10 @@
     const key = stageKey(state);
     if (state.umtStageBannerKey === key) return;
     state.umtStageBannerKey = key;
+    // A regular stage starts without a briefing: it plays out as it is
+    // (the map only showed its tier). A boss still gets its entrance and
+    // briefing. A new curse, if any, keeps its own toast.
+    if (!(state.boss && !state.boss.__umtSynthetic)) return;
     // Taken now, synchronously, so the old bottom toast never paints.
     const burdenNotice = state.burdenNotice || null;
     if (burdenNotice) {

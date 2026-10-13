@@ -987,10 +987,34 @@
   // challenge.
   var SKULL_WORDS = ["", "Tricky", "Hard", "Brutal"];
   function stopSkulls(game, node) {
+    return Math.max(0, stopTier(game, node));
+  }
+
+  // Every Wordle stop looks the same on the map; only its tier shows: a
+  // heart for an easier one (-1), nothing for a regular one (0), one to
+  // three skulls for harder ones. What it pays depends on the tier alone.
+  function stopTier(game, node) {
     if (!node || node.type === "mystery" || node.mysteryType) return 0;
     var rebalance = window.CuddleRebalanceV5;
     var variant = rebalance && typeof rebalance.stopVariant === "function" ? rebalance.stopVariant(game, node) : null;
+    if (variant && Number.isFinite(Number(variant.tier))) return Math.max(-1, Math.min(3, Number(variant.tier)));
     return variant ? Math.max(0, Math.min(3, Number(variant.skulls) || 0)) : 0;
+  }
+
+  function stopPay(game, node) {
+    var rebalance = window.CuddleRebalanceV5;
+    var tier = stopTier(game, node);
+    return rebalance && typeof rebalance.stagePay === "function" ? Number(rebalance.stagePay(tier)) || 0 : 0;
+  }
+
+  function isStageStop(kind) {
+    return kind === "wordle" || kind === "challenge";
+  }
+
+  var HEART_PATH = "M0 4.6C-3.4 2-5.4 0-5.4-2.4a2.8 2.8 0 0 1 5.4-1.1 2.8 2.8 0 0 1 5.4 1.1C5.4 0 3.4 2 0 4.6z";
+  function heartBadge(radius) {
+    return "<g class=\"umt-node-heart\" transform=\"translate(" + (-radius * 0.72) + " " + (-radius * 0.72) + ")\">"
+      + "<path d=\"" + HEART_PATH + "\"/></g>";
   }
 
   function skullIcons(count) {
@@ -1024,6 +1048,8 @@
     if (kind === "final") return "Final Boss";
     if (kind === "boss") return node.gate === "before-7" ? "Boss II" : "Boss I";
     if (kind === "mystery") return "Unknown";
+    // Every Wordle stop has the same name; its tier is the only difference.
+    if (isStageStop(kind)) return "Wordle";
     var variant = node.cuddleVariant;
     if (variant && (kind === "wordle" || kind === "challenge")) {
       if (variant.kind === "mandatoryChallenge") {
@@ -1247,6 +1273,8 @@
       row.nodes.forEach(function drawNode(node, col) {
         var point = position(rowIndex, col);
         var kind = Worlds.kindForNode(node);
+        var stageStop = isStageStop(kind);
+        if (stageStop) kind = "wordle";
         var color = Worlds.KIND_COLORS[kind] || Worlds.KIND_COLORS.wordle;
         var boss = node.type === "boss";
         var radius = boss ? BOSS_RADIUS : STOP_RADIUS;
@@ -1280,13 +1308,14 @@
             + "<rect x=\"" + (-pillWidth / 2) + "\" y=\"-8\" width=\"" + pillWidth + "\" height=\"16\" rx=\"8\"/>"
             + "<text text-anchor=\"middle\" y=\"4\">" + required + "</text></g>";
         }
-        var skulls = boss ? 0 : stopSkulls(game, node);
-        var skullMarks = skulls ? skullBadge(skulls, radius) : "";
+        var tier = boss || !stageStop ? 0 : stopTier(game, node);
+        var skulls = Math.max(0, tier);
+        var skullMarks = skulls ? skullBadge(skulls, radius) : tier < 0 ? heartBadge(radius) : "";
         nodes.push(
           "<g class=\"" + classes.join(" ") + "\" transform=\"translate(" + point.x + "," + point.y + ")\" style=\"--kind:" + color + "\""
           + (open
             ? " data-cuddle-campaign-action=\"preview-branch-node\" data-shop-item-id=\"" + node.row + ":" + node.col + "\""
-              + " role=\"button\" tabindex=\"0\" aria-label=\"" + escapeHtml(caption + " — " + title + (required ? ", needs " + required + " points" : "") + (skulls ? ", hard stage" : "")) + "\""
+              + " role=\"button\" tabindex=\"0\" aria-label=\"" + escapeHtml(caption + " — " + title + (required ? ", needs " + required + " points" : "") + (skulls ? ", " + skulls + " skull" + (skulls === 1 ? "" : "s") : tier < 0 ? ", easy stage" : "")) + "\""
             : " data-shop-item-id=\"" + node.row + ":" + node.col + "\" aria-hidden=\"true\"")
           + ">"
           + extras
@@ -1431,12 +1460,14 @@
   function previewKindStyle(node) {
     if (!window.CuddleWorlds) return "";
     var kind = window.CuddleWorlds.kindForNode(node);
+    if (isStageStop(kind)) kind = "wordle";
     return " data-umt-stop-kind=\"" + kind + "\" style=\"--kind:" + window.CuddleWorlds.KIND_COLORS[kind] + "\"";
   }
 
   function previewIcon(node) {
     if (!window.CuddleWorlds) return "<span class=\"cuddle-choice-icon\">" + escapeHtml(nodeIcon(node)) + "</span>";
     var kind = window.CuddleWorlds.kindForNode(node);
+    if (isStageStop(kind)) kind = "wordle";
     return "<span class=\"cuddle-choice-icon umt-preview-icon\">" + window.CuddleWorlds.iconSvg(kind) + "</span>"
       + "<span class=\"umt-preview-kind\">" + escapeHtml(window.CuddleWorlds.KIND_NAMES[kind] || "Stop") + "</span>";
   }
@@ -1468,6 +1499,15 @@
     var rebalance = window.CuddleRebalanceV5;
     var variant = rebalance && typeof rebalance.stopVariant === "function" ? rebalance.stopVariant(game, node) : null;
     var brief = { title: nodeTitle(node), summary: "", gets: [], risks: [], options: null };
+    // A Wordle stop shows what it pays, set by its tier, and nothing else:
+    // what it holds is found out by playing it.
+    if (isStageStop(kind)) {
+      var pay = stopPay(game, node);
+      brief.title = "Wordle";
+      brief.tier = stopTier(game, node);
+      brief.pay = pay;
+      return brief;
+    }
     // Only what's special about this stop is listed -- the usual per-tile
     // points and money every Wordle pays aren't repeated on each preview.
     var limit = typeof game._solveGuessThreshold === "function" ? game._solveGuessThreshold() : 6;
@@ -1545,7 +1585,15 @@
   }
 
   function renderBriefing(brief) {
-    var html = "<p class=\"umt-stop-summary\">" + rewardText(brief.summary) + "</p>";
+    if (Number.isFinite(brief.pay)) {
+      var tier = brief.tier || 0;
+      var mark = tier > 0 ? "<span class=\"umt-stop-skulls\">" + skullIcons(tier) + "</span>"
+        : tier < 0 ? "<span class=\"umt-stop-heart\"><svg viewBox=\"-6 -6 12 11\" aria-hidden=\"true\"><path d=\"" + HEART_PATH + "\"/></svg></span>" : "";
+      return "<div class=\"umt-stop-pay\">" + mark
+        + "<span class=\"umt-stop-pay-label\">On a win</span>"
+        + "<b class=\"umt-points\">+" + brief.pay + " pts</b><b class=\"umt-money\">+$" + brief.pay + "</b></div>";
+    }
+    var html = brief.summary ? "<p class=\"umt-stop-summary\">" + rewardText(brief.summary) + "</p>" : "";
     if (brief.difficulty) {
       html += "<p class=\"umt-stop-difficulty\"><span>Difficulty</span><span class=\"umt-stop-skulls\">"
         + skullIcons(brief.difficulty) + "</span><b>" + SKULL_WORDS[brief.difficulty] + "</b><small>"
@@ -1635,12 +1683,17 @@
         var direction = open.length < 2 ? "" : open.length === 2
           ? (index === 0 ? " · left" : " · right")
           : (index === 0 ? " · left" : index === open.length - 1 ? " · right" : " · middle");
+        var stageCard = window.CuddleWorlds && isStageStop(window.CuddleWorlds.kindForNode(node));
         return (
           "<button class=\"cuddle-choice cuddle-branch-choice\" data-cuddle-campaign-action=\"preview-branch-node\""
           + " data-shop-item-id=\"" + node.row + ":" + node.col + "\">"
-          + "<span class=\"cuddle-choice-icon\">" + escapeHtml(nodeIcon(node)) + "</span>"
-          + "<strong>" + escapeHtml(nodeTitle(node) + direction) + "</strong>"
-          + "<small>" + goldenMoney(escapeHtml(nodeDescription(game, node))) + "</small>"
+          + (stageCard
+            ? "<span class=\"cuddle-choice-icon\">" + escapeHtml(NODE_TYPES.normal.icon) + "</span>"
+              + "<strong>" + escapeHtml("Wordle" + direction) + "</strong>"
+              + "<small>" + goldenMoney(escapeHtml("On a win: +" + stopPay(game, node) + " points and +$" + stopPay(game, node) + ".")) + "</small>"
+            : "<span class=\"cuddle-choice-icon\">" + escapeHtml(nodeIcon(node)) + "</span>"
+              + "<strong>" + escapeHtml(nodeTitle(node) + direction) + "</strong>"
+              + "<small>" + goldenMoney(escapeHtml(nodeDescription(game, node))) + "</small>")
           + "</button>"
         );
       }).join("")

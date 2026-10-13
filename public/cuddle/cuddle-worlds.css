@@ -920,6 +920,40 @@
 #cuddleRoot .umt-state-visited .umt-node-skulls,
 #cuddleRoot .umt-state-skipped .umt-node-skulls { opacity: 0.45; }
 
+/* An easier stop (tier -1) wears a small pink heart where skulls go. */
+#cuddleRoot .umt-node-heart { pointer-events: none; }
+#cuddleRoot .umt-node-heart path,
+#cuddleRoot .umt-stop-heart path {
+  fill: #ff7aa8;
+  stroke: #1b1020;
+  stroke-width: 1.1;
+  paint-order: stroke;
+}
+#cuddleRoot .umt-state-visited .umt-node-heart,
+#cuddleRoot .umt-state-skipped .umt-node-heart { opacity: 0.45; }
+
+/* A Wordle stop's preview: its tier mark and what it pays, nothing else. */
+#cuddleRoot .umt-stop-pay {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0 4px;
+  font-size: 1.05rem;
+}
+#cuddleRoot .umt-stop-pay-label {
+  color: var(--cuddle-muted, #b8b2c8);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+#cuddleRoot .umt-stop-pay b { font-weight: 900; }
+#cuddleRoot .umt-stop-heart { display: inline-flex; }
+#cuddleRoot .umt-stop-heart svg { width: 17px; height: 16px; }
+#cuddleRoot .umt-stop-pay .umt-stop-skulls svg { width: 17px; height: 18px; }
+
 /* Stop preview: the difficulty row under the summary. */
 #cuddleRoot .umt-stop-difficulty {
   display: flex;

@@ -318,30 +318,32 @@
     }
   ]);
 
-  // Schools of tile magic. Every badge belongs to one school (or none);
+  // Schools. Every badge belongs to one school (or none); the ids are
+  // older names (flint = Speed, prism = Hints, flora = Tiles, parchment =
+  // Elimination, gold = Money, brass = Quests, pearl = Restraint);
   // each level of a badge adds its rarity's weight to its school, and a
   // school's points unlock its ranks. The perks themselves live in
   // cuddle-schools.js.
   const TIER_WEIGHT = Object.freeze({ common: 1, rare: 2, epic: 3, legendary: 5 });
   // Each school has its own colour, so badges read as sorted by colour.
   const SCHOOLS = Object.freeze({
-    flint: { label: "Flint", color: "#ff5f4f", group: "Speed", blurb: "Strike early: strong openers and quick solves.",
+    flint: { label: "Speed", color: "#ff5f4f", blurb: "Strong openers and quick solves.",
       ranks: [4, 9, 15], perks: ["Solve by guess 3: +10", "Solve by guess 3: +25", "Solve by guess 3: +60"] },
-    prism: { label: "Prism", color: "#58a8ff", group: "Clues", blurb: "Study the light: learn the answer before you guess it.",
+    prism: { label: "Hints", color: "#58a8ff", blurb: "Learn about the answer before you guess it.",
       ranks: [4, 9, 15], perks: ["A grey vowel at stage start", "After guess 2: a yellow hint", "After guess 3: a green hint"] },
-    flora: { label: "Flora", color: "#46cf86", group: "Deck tiles", blurb: "Tiles that grow in your deck and hand: lucky, idea, wave, Joker, mulligans.",
+    flora: { label: "Tiles", color: "#46cf86", blurb: "Special tiles in your deck and hand: lucky, idea, wave, Joker, mulligans.",
       ranks: [4, 9, 15], perks: ["+1 lucky tile a stage", "+1 idea tile and +1 mulligan a stage", "Lucky tiles pay double"] },
-    parchment: { label: "Parchment", color: "#c9ae84", group: "Elimination", blurb: "Strike letters off the page: rule them out and cull them.",
+    parchment: { label: "Elimination", color: "#c9ae84", blurb: "Rule letters out and cull them.",
       ranks: [4, 9, 15], perks: ["Greys +1 point", "1 consonant ruled out at stage start", "Greys +3 points; Cuddle Meter fills 2 sooner"] },
-    gold: { label: "Gold", color: "#f5cf3a", group: "Riches", blurb: "Earn, hoard and gamble your riches.",
+    gold: { label: "Money", color: "#f5cf3a", blurb: "Earn, save and gamble money.",
       ranks: [4, 9, 15], perks: ["+$3 a solve", "+$8 a solve; Rainy Day cap +$10", "+$20 a solve; first reward refresh free"] },
-    brass: { label: "Brass", color: "#ef8a34", group: "Quests", blurb: "Follow the compass: more quests and bigger quest rewards.",
+    brass: { label: "Quests", color: "#ef8a34", blurb: "More quests and bigger quest rewards.",
       ranks: [4, 9, 15], perks: ["Quests +10 points", "+1 surprise quest a stage", "Quests +40 points and +$5"] },
-    pearl: { label: "Pearl", color: "#e7a2ee", group: "Restraint", blurb: "Fewer badges and harder play, for bigger rewards.",
+    pearl: { label: "Restraint", color: "#e7a2ee", blurb: "Fewer badges and harder play, for bigger rewards.",
       ranks: [3, 6, 9], perks: ["Skipping a reward pays +10 more", "Hard-mode solves +15; Lean Build ignores 3 badges", "+30 a solve while you own 8 badges or fewer"] }
   });
   // Badges that belong to no school.
-  const SCHOOLLESS = Object.freeze({ label: "Schoolless", color: "#9d97b0", group: "General", blurb: "General tools that belong to no school." });
+  const SCHOOLLESS = Object.freeze({ label: "General", color: "#9d97b0", blurb: "General tools that belong to no school." });
   const SCHOOL_ORDER = Object.freeze(Object.keys(SCHOOLS));
   const SCHOOL_MEMBERS = {
     flint: ["storybookStart", "earlySolveBoost", "bigOpener", "momentum", "colourTrade", "boldOpener"],
