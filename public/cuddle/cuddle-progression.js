@@ -130,7 +130,7 @@
     doubleDown: "+50 on lucky guess",
     vowelLamp: "Shows the vowel count",
     echoFinder: "Shows repeat letters",
-    treasureHunter: "Quick treasure solves +$25",
+    treasureHunter: "Quick treasure solves +$20",
     patternLens: "Shows vowel pattern",
     mistakeShield: "First miss refunded",
     haggler: "Cheaper refreshes",

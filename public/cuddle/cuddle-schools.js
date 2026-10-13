@@ -1,7 +1,7 @@
 /* Cuddle: schools of tile magic.
  *
  * Every badge belongs to a school (cuddle-skill-tree.js SCHOOLS): Flint,
- * Prism, Flora, Parchment, Ingot, Brass or Pearl. Each level of a badge adds
+ * Prism, Flora, Parchment, Gold, Brass or Pearl. Each level of a badge adds
  * its rarity's weight to its school (common 1, rare 2, epic 3, legendary
  * 5); a school's points unlock its three ranks (4 / 9 / 15, Pearl 3 / 6 /
  * 9), and each rank adds a perk. The ranks replaced the old two-badge
@@ -14,7 +14,7 @@
  *                                    III lucky tiles pay double
  *   Parchment I greys +1 point       II 1 consonant ruled out at start
  *                                    III greys +3, Cuddle Meter 2 sooner
- *   Ingot  I +$3 a solve             II +$8, Rainy Day cap +$10
+ *   Gold   I +$3 a solve             II +$8, Rainy Day cap +$10
  *                                    III +$20, first reward refresh free
  *   Brass  I quests +10              II +1 surprise quest a stage
  *                                    III quests +40 and +$5
@@ -38,7 +38,7 @@
   var FLINT_POINTS = [0, 10, 25, 60];
   var FLINT_BY = 3;
   var PARCHMENT_GREY = [0, 1, 1, 3];
-  var INGOT_MONEY = [0, 3, 8, 20];
+  var GOLD_MONEY = [0, 3, 8, 20];
   var BRASS_POINTS = [0, 10, 10, 40];
   var PEARL_SKIP = 10;
   var PEARL_HARD = 15;
@@ -86,7 +86,7 @@
       case "ideaTiles": return rankOf(game, "flora") >= 2 ? 1 : 0;
       case "luckyMultiplier": return rankOf(game, "flora") >= 3 ? 2 : 1;
       case "meterSooner": return rankOf(game, "parchment") >= 3 ? 2 : 0;
-      case "interestCap": return rankOf(game, "ingot") >= 2 ? 10 : 0;
+      case "interestCap": return rankOf(game, "gold") >= 2 ? 10 : 0;
       case "leanIgnore": return rankOf(game, "pearl") >= 2 ? 3 : 0;
       default: return 0;
     }
@@ -314,8 +314,8 @@
             var fast = FLINT_POINTS[Math.min(3, flint)];
             if (stageBonus(this, fast, "umtSchoolFlint", "Flint · fast solve") > 0) note(this, "Flint: solved by guess " + FLINT_BY + ", +" + fast + " points.");
           }
-          var ingot = num(now.ingot);
-          if (ingot >= 1) payMoney(this, INGOT_MONEY[Math.min(3, ingot)], "Ingot");
+          var gold = num(now.gold);
+          if (gold >= 1) payMoney(this, GOLD_MONEY[Math.min(3, gold)], "Gold");
           var pearl = num(now.pearl);
           if (pearl >= 2 && solvedInHardMode(history)) stageBonus(this, PEARL_HARD, "umtSchoolPearlHard", "Pearl · hard mode");
           if (pearl >= 3 && badgeCount(this) <= PEARL_MAX_BADGES) {
@@ -350,12 +350,12 @@
     };
   });
 
-  // Ingot III: the first refresh on each reward screen is free.
+  // Gold III: the first refresh on each reward screen is free.
   wrap("getUpgradeRefreshCost", function build(original) {
-    return function refreshCostWithIngot() {
+    return function refreshCostWithGold() {
       var cost = original.apply(this, arguments);
       if (cost === null || cost === undefined) return cost;
-      if (num(this.state && this.state.upgradeRefreshesUsed) === 0 && rankOf(this, "ingot") >= 3) return 0;
+      if (num(this.state && this.state.upgradeRefreshesUsed) === 0 && rankOf(this, "gold") >= 3) return 0;
       return cost;
     };
   });

@@ -3,8 +3,8 @@
  *   For the road    2 one-time supplies for your next regular stage(s)
  *   For the boss    2 one-time supplies for the next boss
  *   Keeps forever   3 permanent upgrades for the rest of the run
- *   Trade           money for points on the spot: usually +10 points for
- *                   $10, sometimes (the rare deal) +30 points for $20
+ *   Trade           money for points on the spot, in every shop: +10
+ *                   points for $10, +50 for $30, +200 for $100
  *   Mend            only while the run carries a deck burden
  *                   (cuddle-burdens.js): chisel out a dead tile, or sort
  *                   out the doubled consonants. Can be bought again while
@@ -110,15 +110,17 @@
     })
     : item)));
 
-  // One trade per shop, drawn like the rest of the stock: the Point Chest
-  // turns up in about one shop in five, the Point Pouch otherwise.
+  // Every shop trades at three sizes; the bigger the trade, the better
+  // the rate.
   const TRADE_ITEMS = Object.freeze([
     { id: "tradePoints10", icon: "shop-points-pouch.svg", title: "Point Pouch", cost: 10, points: 10,
       blurb: "+10 points right now, toward the next boss." },
-    { id: "tradePoints30", icon: "shop-points-chest.svg", title: "Point Chest", cost: 20, points: 30, rare: true,
-      blurb: "+30 points right now, toward the next boss. A rare deal." }
+    { id: "tradePoints50", icon: "shop-points-chest.svg", title: "Point Chest", cost: 30, points: 50,
+      blurb: "+50 points right now, toward the next boss." },
+    { id: "tradePoints200", icon: "shop-points-vault.svg", title: "Point Vault", cost: 100, points: 200,
+      blurb: "+200 points right now, toward the next boss." }
   ]);
-  const RARE_TRADE_CHANCE = 0.2;
+  const TRADE_IDS = TRADE_ITEMS.map(item => item.id);
 
   // Not stocked from a pool: each shows up whenever there's a burden for it.
   const MEND_ITEMS = Object.freeze([
@@ -149,7 +151,7 @@
     // Stocked from the whole reward pool, not a fixed list (keepStock).
     { id: "keep", items: [], count: 3, kind: "upgrade", title: "Keeps forever",
       note: "Any reward from the run's pool, priced by its rarity" },
-    { id: "trade", items: TRADE_ITEMS, count: 1, kind: "shop", title: "Trade",
+    { id: "trade", items: TRADE_ITEMS, count: TRADE_ITEMS.length, kind: "shop", title: "Trade",
       note: "Swap money for points on the spot" },
     // Filled from MEND_ITEMS, only while the run carries a deck burden.
     { id: "mend", items: [], count: 0, kind: "shop", title: "Mend your deck",
@@ -241,9 +243,8 @@
     return Boolean(item.max) && item.level(game) >= item.max;
   }
 
-  function tradeFor(game, key) {
-    const random = seeded(`${seedText(game)}:${key}:wandering-paw:trade`);
-    return [random() < RARE_TRADE_CHANCE ? "tradePoints30" : "tradePoints10"];
+  function tradeFor(_game, _key) {
+    return TRADE_IDS.slice();
   }
 
   // Three rewards from the whole pool (any rarity), each with a price
@@ -270,9 +271,10 @@
     const key = shopKey(game);
     const saved = shop.stock[key];
     if (saved && Array.isArray(saved.road) && Array.isArray(saved.boss) && Array.isArray(saved.keep)) {
-      // A shop stocked before the trade shelf existed gets one added, and
-      // one from before the pool-wide keep shelf gets a fresh keep shelf.
-      if (!Array.isArray(saved.trade)) saved.trade = tradeFor(game, key);
+      // A shop stocked before the trade shelf (or its three sizes) existed
+      // gets the full shelf, and one from before the pool-wide keep shelf
+      // gets a fresh keep shelf.
+      if (!Array.isArray(saved.trade) || saved.trade.join("|") !== TRADE_IDS.join("|")) saved.trade = tradeFor(game, key);
       if (!saved.keep.every(isKeepEntry)) {
         saved.keep = keepStock(game, key);
         safeSave(game);
@@ -593,7 +595,7 @@
   function durationChip(entry) {
     // A pool reward's chip names its rarity, in that rarity's colour.
     if (entry.shelf === "keep" && entry.tier) return `${entry.tier} · ${entry.once ? "one-time" : "keeps"}`;
-    if (entry.shelf === "trade") return entry.rare ? "Rare deal" : "Right now";
+    if (entry.shelf === "trade") return "Right now";
     if (entry.shelf === "mend") return "For good";
     if (entry.shelf === "boss") return "Next boss";
     if (entry.shelf === "road") return entry.stages > 1 ? `Next ${entry.stages} stages` : "Next stage";

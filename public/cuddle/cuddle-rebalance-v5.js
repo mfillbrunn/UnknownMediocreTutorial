@@ -101,7 +101,7 @@
     Object.freeze({
       id: IDS.treasureHunter, key: IDS.treasureHunter, icon: "\uD83D\uDC8E",
       title: "Treasure Hunter", name: "Treasure Hunter",
-      description: "About one stage in three hides a treasure word: solve it before guess 5 (4 in world 2, 3 in world 3) for +$25. Level 2: +$50. Level 3: +$100, in every other stage.",
+      description: "About one stage in three hides a treasure word: solve it before guess 5 (4 in world 2, 3 in world 3) for +$20. Level 2: +$30. Level 3: +$50, in every other stage.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
@@ -2744,7 +2744,7 @@
     const balance = Math.max(0, asNumber(state.cuddleMoney, 0)) + (compound ? totalJokerStock(game) * 10 : 0);
     // 5% up to $10, 10% up to $20, then 20% up to $40 at level 3.
     const tier = Math.max(0, Math.min(3, Math.floor(level)));
-    // Ingot II raises the cap by $10.
+    // Gold II raises the cap by $10.
     const cap = [0, 10, 20, 40][tier] * (compound ? 2 : 1) + (Number(window.CuddleSchools?.perk?.(game, "interestCap")) || 0);
     const interest = Math.min(cap, Math.floor(balance * [0, 0.05, 0.1, 0.2][tier]));
     if (interest <= 0) return;
