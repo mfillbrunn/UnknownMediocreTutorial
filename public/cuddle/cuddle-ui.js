@@ -1250,7 +1250,7 @@
     if (open === "reward" && reward) {
       info = `<div class="umt-boss-trait-info is-reward" role="note">
           <b>Win: ${escapeHtml(reward.title)}</b>
-          <span>${goldenMoney(escapeHtml(reward.description))}</span>
+          <span>${goldenMoney(escapeHtml(window.CuddleSkillTree?.pickText?.(game, reward.id) || reward.description))}</span>
           ${interactionBonusDetail(reward.id, true)}
         </div>`;
     } else if (open === "burden" && burden) {

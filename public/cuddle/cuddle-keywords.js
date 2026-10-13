@@ -34,6 +34,10 @@
     "[class*=\"shop-card\"] small",
     "[class*=\"shop-card\"] p",
     ".umt-pack-card small",
+    ".umt-shop-blurb",
+    ".umt-bd-school-detail",
+    ".cuddle-v8-school-line small",
+    ".cuddle-boss-reward small",
     ".umt-pack-card p"
   ].join(",");
 

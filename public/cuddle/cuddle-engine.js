@@ -2995,7 +2995,7 @@
     const turns = CUDDLE_V3_BOSS_TURNS[Math.max(0, Math.min(3, stage - 1))];
     const reward = option?.reward ? { ...option.reward } : option?.reward;
     if (reward?.id === "cullRare") {
-      reward.description = "Remove three rare letters from the deck and from every future secret.";
+      reward.description = "5 rare letters are gone for good: out of your deck and out of every answer.";
     }
     if (Array.isArray(option?.plan)) {
       const plan = option.plan.slice(0, Math.max(2, turns));

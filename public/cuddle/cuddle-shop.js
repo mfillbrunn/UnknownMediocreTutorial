@@ -255,6 +255,12 @@
     return economy.shopRewards(game, 3, `${seedText(game)}:${key}:wandering-paw:keep`);
   }
 
+  function plainText(game, entry) {
+    const tree = window.CuddleSkillTree;
+    if (!tree || typeof tree.pickText !== "function") return "";
+    return tree.pickText(game, entry.key) || tree.pickText(game, entry.title);
+  }
+
   function oneTime(entry) {
     const tree = window.CuddleSkillTree;
     const node = tree && typeof tree.resolve === "function"
@@ -378,7 +384,8 @@
             // A one-level power: once bought it's maxed (cuddle-skill-tree.js).
             once: oneTime(entry),
             title: entry.title,
-            description: entry.description,
+            // The registry's plain wording for the level this buys.
+            description: plainText(this, entry) || entry.description,
             cost,
             stages: 0,
             points: 0,
