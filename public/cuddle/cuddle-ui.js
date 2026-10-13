@@ -2190,7 +2190,7 @@
         ${synergy ? `
           <section class="cuddle-v3-toast is-synergy" role="status">
             <span class="cuddle-v3-toast-icon">${escapeHtml(synergy.icon || "✨")}</span>
-            <div><small>Reward interaction</small><strong>${escapeHtml(synergy.title || "Combination unlocked")}</strong><p>${escapeHtml(synergy.message || "A new combination bonus is active.")}</p></div>
+            <div><small>${escapeHtml(synergy.eyebrow || "Reward interaction")}</small><strong>${escapeHtml(synergy.title || "Combination unlocked")}</strong><p>${escapeHtml(synergy.message || "A new combination bonus is active.")}</p></div>
             <button type="button" data-cuddle-v3-action="dismiss-synergy" aria-label="Dismiss combination bonus">×</button>
           </section>` : ""}
         ${hint ? `

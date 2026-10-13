@@ -197,6 +197,7 @@
         description: base.description || "",
         maxLevel: Number.isFinite(base.maxLevel) ? base.maxLevel : null,
         type: base.type || null,
+        school: base.school || null,
         levels: Array.isArray(base.levels) ? base.levels.slice() : null,
         short: Array.isArray(base.short) ? base.short.slice() : null,
         requires: Array.isArray(base.requires) ? base.requires.slice() : null,
@@ -300,12 +301,18 @@
       + `</span>${level}${sparkles()}</button>`;
   }
 
+  function schoolLabel(node) {
+    const tree = window.CuddleSkillTree;
+    const school = node && node.school && tree && tree.SCHOOLS ? tree.SCHOOLS[node.school] : null;
+    return school ? `${school.label} +${(tree.TIER_WEIGHT && tree.TIER_WEIGHT[node.tier]) || 1} a level` : "";
+  }
+
   function cardMarkup(model, node) {
     if (!node) return "";
     const types = window.CuddleSkillTree && window.CuddleSkillTree.TYPES;
     const typeLabel = node.type && types && types[node.type] ? types[node.type].label : "";
     const tier = node.kind === "combo" ? "Combo"
-      : [TIER_NAME[node.tier] || "Common", typeLabel, node.kind === "boss" ? "Boss reward" : ""].filter(Boolean).join(" · ");
+      : [TIER_NAME[node.tier] || "Common", typeLabel, schoolLabel(node), node.kind === "boss" ? "Boss reward" : ""].filter(Boolean).join(" · ");
     const color = node.kind === "combo" ? COMBO_COLOR : TIER_STROKE[node.tier] || TIER_STROKE.common;
     const levelText = node.kind === "combo" ? ""
       : node.maxLevel && node.maxLevel > 1 ? `Level ${node.level} of ${node.maxLevel}${node.level >= node.maxLevel ? " (max)" : ""}`
@@ -341,6 +348,30 @@
     cardPinned: false
   };
 
+  // A school's header: name and group, what it's about, its rank bar and
+  // its three perks (the ones reached lit).
+  function schoolHead(section, points) {
+    const info = section.info;
+    if (!section.school) {
+      return `<h3 class="umt-bd-type-head"><i aria-hidden="true"></i>${esc(info.label)}<small>${section.items.length}</small></h3>`
+        + `<p class="umt-bd-school-blurb">${esc(info.blurb)}</p>`;
+    }
+    const tree = window.CuddleSkillTree;
+    const ranks = Array.isArray(info.ranks) ? info.ranks : [];
+    const rank = tree && typeof tree.schoolRank === "function" ? tree.schoolRank(section.school, points) : 0;
+    const next = ranks[rank];
+    const numeral = ["", "I", "II", "III"];
+    const top = ranks[ranks.length - 1] || 1;
+    const progress = next ? `${points}/${next}` : `${points} · max`;
+    return `<h3 class="umt-bd-type-head"><i aria-hidden="true"></i>${esc(info.label)}<em>${esc(info.group)}</em>`
+      + `<small>${rank ? `${numeral[rank]} · ` : ""}${esc(progress)}</small></h3>`
+      + `<p class="umt-bd-school-blurb">${esc(info.blurb)}</p>`
+      + `<div class="umt-bd-school-bar" aria-hidden="true"><b style="width:${Math.min(100, Math.round((points / top) * 100))}%"></b>`
+      + ranks.map((need) => `<i style="left:${Math.round((need / top) * 100)}%"></i>`).join("") + `</div>`
+      + `<ol class="umt-bd-school-perks">${(info.perks || []).map((perk, index) => `<li class="${index < rank ? "is-on" : ""}">`
+        + `<b>${numeral[index + 1]}</b><span>${esc(perk)}</span><small>${ranks[index]}</small></li>`).join("")}</ol>`;
+  }
+
   function overlayMarkup(game) {
     const model = buildModel(game);
     const reveal = view.mode === "reveal" ? view.reveal : null;
@@ -349,18 +380,20 @@
     const linking = new Set();
     model.combos.filter((combo) => fresh.has(combo.id)).forEach((combo) => combo.halves.forEach((h) => linking.add(h.id)));
     const steps = revealSteps(fresh, model);
-    // One section per type, in the registry's order.
+    // One section per school, in the registry's order, then the
+    // schoolless badges. Each school shows its rank and its perks.
     const tree = window.CuddleSkillTree;
-    const types = tree && tree.TYPES ? tree.TYPES : {};
-    const order = tree && Array.isArray(tree.TYPE_ORDER) ? tree.TYPE_ORDER.concat([null]) : [null];
-    const sections = order.map((type) => ({
-      type,
-      info: type ? types[type] : { label: "Other", color: "#aaa5bc" },
-      items: model.badges.filter((node) => (type ? node.type === type : !node.type || !types[node.type]))
+    const schools = tree && tree.SCHOOLS ? tree.SCHOOLS : {};
+    const order = tree && Array.isArray(tree.SCHOOL_ORDER) ? tree.SCHOOL_ORDER.concat([null]) : [null];
+    const points = tree && typeof tree.schoolPoints === "function" ? tree.schoolPoints(game) : {};
+    const sections = order.map((school) => ({
+      school,
+      info: school ? schools[school] : { label: "Schoolless", color: "#aaa5bc", blurb: "General tools that belong to no school." },
+      items: model.badges.filter((node) => (school ? node.school === school : !node.school || !schools[node.school]))
     })).filter((section) => section.items.length);
     const grid = model.badges.length
-      ? sections.map((section) => `<section class="umt-bd-type" style="--type:${section.info.color}" aria-label="${esc(section.info.label)}">`
-        + `<h3 class="umt-bd-type-head"><i aria-hidden="true"></i>${esc(section.info.label)}<small>${section.items.length}</small></h3>`
+      ? sections.map((section) => `<section class="umt-bd-type${section.school ? " is-school" : ""}" style="--type:${section.info.color}" aria-label="${esc(section.info.label)}">`
+        + schoolHead(section, num(points[section.school]))
         + `<div class="umt-bd-grid">${section.items.map((node) => badgeMarkup(node, fresh, linking, steps)).join("")}</div></section>`).join("")
       : `<p class="umt-bd-empty">No badges yet. Every reward you pick up lands here.</p>`;
     // The combo column only appears once there is a combo to show.
@@ -374,7 +407,7 @@
       + `<span class="umt-pt-count">${model.badges.length}<small> badge${model.badges.length === 1 ? "" : "s"}</small></span>`
       + `<button type="button" class="umt-pt-close" data-umt-pt-close aria-label="Close badges">×</button></header>`
       + `<div class="umt-bd-body${combos ? " has-combos" : ""}">`
-      + `<section class="umt-bd-main" aria-label="Badges, by type">${grid}</section>`
+      + `<section class="umt-bd-main" aria-label="Badges, by school">${grid}</section>`
       + combos
       + `</div>`
       + (reveal ? `<footer class="umt-pt-foot"><button type="button" class="umt-pt-continue" data-umt-pt-close>Continue</button></footer>` : "")

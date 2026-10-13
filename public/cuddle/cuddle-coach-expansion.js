@@ -360,7 +360,10 @@
         ? 12
         : BASE_METER_THRESHOLD;
     var level = clamp(integer(coach.cuddleThresholdStacks, 0), 0, METER_REDUCTION.length - 1);
-    return Math.max(MIN_METER_THRESHOLD, base - METER_REDUCTION[level]);
+    // Slate III: the meter fills 2 tiles sooner.
+    var schools = window.CuddleSchools;
+    var slate = schools && activeGame && typeof schools.perk === "function" ? Number(schools.perk(activeGame, "meterSooner")) || 0 : 0;
+    return Math.max(MIN_METER_THRESHOLD, base - METER_REDUCTION[level] - slate);
   }
 
   function meterRewardName(coach) {

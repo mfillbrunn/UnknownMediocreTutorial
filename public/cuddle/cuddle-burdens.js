@@ -238,8 +238,18 @@
     return powerLevel(game, "luckyClover");
   }
 
+  // School of Flora: its ranks add tiles and double the lucky payout.
+  function schoolPerk(game, name) {
+    var schools = window.CuddleSchools;
+    try {
+      return schools && typeof schools.perk === "function" ? Number(schools.perk(game, name)) || 0 : 0;
+    } catch (_error) {
+      return 0;
+    }
+  }
+
   function luckyCount(game) {
-    return TILES_BY_LEVEL[luckyLevel(game)];
+    return TILES_BY_LEVEL[luckyLevel(game)] + schoolPerk(game, "luckyTiles");
   }
 
   // Joker Cache's Jokers, now dealt as deck tiles: 1, 2, then 4 for
@@ -324,7 +334,7 @@
       doubles: doubles,
       lucky: duel ? 0 : luckyCount(game),
       // Idea tiles stay 1/2/3: four yellow hints a stage was too easy.
-      idea: duel ? 0 : powerLevel(game, "ideaTiles"),
+      idea: duel ? 0 : powerLevel(game, "ideaTiles") + schoolPerk(game, "ideaTiles"),
       wave: duel ? 0 : TILES_BY_LEVEL[powerLevel(game, "waveTiles")],
       jokers: duel ? 0 : deckJokers(game)
     };
@@ -444,13 +454,6 @@
         if (powerLevel(this, "fullCircle", 1) > 0 && this.state.umtFullCircle !== fullCircleKey) {
           this.state.umtFullCircle = fullCircleKey;
           this.__umtCycles = (this.__umtCycles || 0) + 1;
-        }
-        // Riptide (Wave Tiles + Full Circle): +2 mulligans a reshuffle.
-        var synergies = window.CuddleSynergies;
-        if (synergies && typeof synergies.owns === "function" && synergies.owns(this, "riptide")) {
-          var gained = typeof this.mulliganGain === "function" ? this.mulliganGain(2) : 2;
-          this.state.mulligansLeft = Math.max(0, Number(this.state.mulligansLeft) || 0) + gained;
-          drawNote(this, "Riptide: +" + gained + " mulligans.");
         }
       }
       if (!card || inDuel(this.state)) return card;
@@ -638,10 +641,11 @@
       var entry = history[history.length - 1];
       var solved = Boolean(entry && state.secret && entry.word === state.secret);
       var level = luckyLevel(this);
-      if (!solved || level <= 0) return result;
+      if (!solved) return result;
       var held = (state.hand || []).filter(isLuckyCard).length;
       if (!held) return result;
-      var points = held * LUCKY_POINTS[level];
+      // Flora's own lucky tile pays the first level's 10 without the badge.
+      var points = held * LUCKY_POINTS[Math.max(1, level)] * Math.max(1, schoolPerk(this, "luckyMultiplier"));
       if (stageBonus(this, points, "umtLuckyClover", held === 1 ? "Lucky tile" : "Lucky tiles x" + held) > 0) {
         state.lastMessage = ((state.lastMessage || "") + " Lucky Clover: +" + points + " points.").trim();
       }

@@ -741,3 +741,70 @@
 .umt-progress-host .umt-bd-card-next b { color: #f6c956; }
 /* A one-time power you hold: it's maxed. */
 .umt-progress-host .umt-bd-level.is-once { letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* Schools of tile magic (cuddle-schools.js): each section is a school,
+   its crest a small square tile in the school's material colour. */
+.umt-progress-host .umt-bd-main:has(> .umt-bd-type.is-school) {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+.umt-progress-host .umt-bd-type.is-school .umt-bd-type-head i {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.55), transparent 55%), var(--type);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+}
+.umt-progress-host .umt-bd-type-head em {
+  color: rgba(247, 244, 255, 0.6);
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.umt-progress-host .umt-bd-type-head small { font-variant-numeric: tabular-nums; }
+.umt-progress-host .umt-bd-school-blurb {
+  margin: -4px 0 8px;
+  color: rgba(247, 244, 255, 0.7);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+.umt-progress-host .umt-bd-school-bar {
+  position: relative;
+  height: 5px;
+  margin: 0 0 8px;
+  border-radius: 999px;
+  background: rgba(247, 244, 255, 0.12);
+}
+.umt-progress-host .umt-bd-school-bar b {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--type);
+}
+.umt-progress-host .umt-bd-school-bar i {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: 9px;
+  margin-left: -1px;
+  background: rgba(247, 244, 255, 0.55);
+}
+.umt-progress-host .umt-bd-school-perks {
+  display: grid;
+  gap: 3px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+.umt-progress-host .umt-bd-school-perks li {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: baseline;
+  gap: 6px;
+  color: rgba(247, 244, 255, 0.45);
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+.umt-progress-host .umt-bd-school-perks li b { font-weight: 850; letter-spacing: 0.04em; }
+.umt-progress-host .umt-bd-school-perks li small { font-variant-numeric: tabular-nums; opacity: 0.8; }
+.umt-progress-host .umt-bd-school-perks li.is-on { color: rgba(247, 244, 255, 0.95); }
+.umt-progress-host .umt-bd-school-perks li.is-on b { color: var(--type); }

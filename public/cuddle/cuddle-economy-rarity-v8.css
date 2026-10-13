@@ -349,3 +349,15 @@
   color: #f6c956;
   font-weight: 800;
 }
+
+/* The card's school (cuddle-schools.js), on its own small tile inside the
+   type chip: "Points · Slate +1". */
+.cuddle-v8-category-badge .cuddle-v8-school {
+  display: inline-block;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--school, #ccc);
+  color: #1a1220;
+  font-weight: 800;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(26, 18, 32, 0.35);
+}
