@@ -10,12 +10,15 @@
   if (window[GLOBAL_KEY] && window[GLOBAL_KEY].version === VERSION) return;
 
   const CONFIG = Object.freeze({
-    regularWordlePercent: 8,
+    // Jackpot Run and Double or Nothing are gone: a stop only shows its
+    // difficulty now, so a stop can't carry a hidden gamble. Their share
+    // went to the Classic Wordle.
+    regularWordlePercent: 26,
     themedWordlePercent: 18,
     randomOpenerPercent: 16,
     luckyStartPercent: 10,
-    jackpotPercent: 10,
-    doubleOrNothingPercent: 8,
+    jackpotPercent: 0,
+    doubleOrNothingPercent: 0,
     // A Classic Wordle gets no head start, so clearing one pays a bonus --
     // more than the helped stages (Themed, Head Start, Lucky Start: none)
     // and less than a challenge ($20-$40), in both Points and Money.
@@ -859,7 +862,7 @@
     themedWordle: { title: "Themed", icon: "🧭", text: "One of the answer's themes is revealed." },
     luckyStart: { title: "Lucky Start", icon: "\uD83C\uDF40", text: "One letter starts in its exact place." }
   });
-  const NEUTRAL_KINDS = Object.freeze(["plain", "randomOpener", "jackpot", "doubleOrNothing"]);
+  const NEUTRAL_KINDS = Object.freeze(["plain", "randomOpener"]);
   const DIFFICULTY_MIX = Object.freeze({
     // [first stop row of the world, last stop row]: weight per difficulty.
     // Rare Words (0.5, 1.5, 2.5) stay a seasoning: every world already
@@ -884,6 +887,22 @@
     if (value >= 2.5) return 3;
     if (value >= 1.5) return 2;
     return value >= 1 ? 1 : 0;
+  }
+
+  // A stop's tier, all the map shows of it: -1 (a heart: an easier
+  // Wordle with a theme or a letter given), 0 (a regular Wordle), or 1-3
+  // skulls. What a stop pays depends on its tier alone, in both points
+  // and money.
+  const STAGE_PAY = Object.freeze({ "-1": 5, 0: 12, 1: 25, 2: 50, 3: 80 });
+  function stageTier(variant) {
+    if (!variant) return 0;
+    if (variant.kind === "themedWordle" || variant.kind === "luckyStart") return -1;
+    if (variant.kind !== "mandatoryChallenge") return 0;
+    const difficulty = stagePartDifficulty(variant);
+    return difficulty < 0 ? -1 : difficultySkulls(difficulty);
+  }
+  function stagePay(tier) {
+    return STAGE_PAY[String(Math.max(-1, Math.min(3, Math.round(asNumber(tier, 0)))))] || 0;
   }
 
   function variantChallengeIds(variant) {
@@ -1037,6 +1056,10 @@
   }
 
   function variantForNode(game, node, salt = "") {
+    // A saved Jackpot Run or Double or Nothing stop plays as a Classic one.
+    if (node.cuddleVariant && (node.cuddleVariant.kind === "jackpot" || node.cuddleVariant.kind === "doubleOrNothing")) {
+      node.cuddleVariant = neutralVariant("plain");
+    }
     if (!salt && node.cuddleVariant && node.cuddleVariant.version === VERSION) {
       // Stops rolled before the Classic bonus existed keep their old text.
       if (node.cuddleVariant.kind === "plain") node.cuddleVariant.description = CLASSIC_DESCRIPTION;
@@ -1809,7 +1832,7 @@
           && typeof window.CuddleCampaign.queueCategoryReveal === "function") {
         window.CuddleCampaign.queueCategoryReveal(game, 1, "branch");
       }
-      appendNotice(game, `${merged.icon} ${custom.activeChallenge.title} accepted automatically. Win for a $${merged.reward} bonus.`);
+      appendNotice(game, `${merged.icon} ${custom.activeChallenge.title} accepted automatically.`);
       const opening = stateOf(game);
       if (merged.plan && merged.plan[0] === "questEndurance" && opening && !opening.activeQuest
           && typeof game._ensureQuestForNextGuess === "function") {
@@ -2310,39 +2333,32 @@
       }
     }
 
+    // A stage pays for its tier alone (stageTier), in points and the same
+    // in money; a late solve (past the guess window) earns nothing.
     const challenge = activeChallenge(game) || (snapshot && snapshot.challenge);
-    if (challenge && !challenge.paid) {
-      const reward = Math.max(0, Math.round(asNumber(challenge.reward, 0)));
-      // A late solve (past the guess window) earns nothing: no points, no money.
-      if (reward > 0 && addScoreBonus(game, reward, "umtChallengeBonus", "Challenge cleared", entry) > 0) {
-        // Paid in both currencies: the Points above count toward the run's
-        // score and its boss gates, and the same figure in Money is what
-        // makes taking a challenge worth the masked guesses it costs.
-        const paidState = stateOf(game);
-        if (paidState) {
-          paidState.cuddleMoney = Math.max(0, asNumber(paidState.cuddleMoney, 0) + reward);
-          if (entry) entry.challengeBonusMoney = asNumber(entry.challengeBonusMoney, 0) + reward;
-        }
+    const variant = activeVariant(game);
+    if (variant && !variant.stagePaid) {
+      const tier = stageTier(variant);
+      const pay = stagePay(tier);
+      const label = tier < 0 ? "Easy stage cleared" : tier === 0 ? "Stage cleared"
+        : `${tier}-skull stage cleared`;
+      const paidPoints = pay > 0 ? addScoreBonus(game, pay, "umtStagePay", label, entry) : 0;
+      const paidState = paidPoints > 0 ? stateOf(game) : null;
+      if (paidState) {
+        paidState.cuddleMoney = Math.max(0, asNumber(paidState.cuddleMoney, 0) + pay);
+        if (entry) entry.challengeBonusMoney = asNumber(entry.challengeBonusMoney, 0) + pay;
+        // The cash-out shows the money beside the points on the same line.
+        const line = (customState(game) && customState(game).lastPayoutLines || [])
+          .find((item) => item && item.field === "umtStagePay" && item.roundToken === roundToken(game));
+        if (line) line.money = asNumber(line.money, 0) + pay;
       }
+      variant.stagePaid = true;
+      variant.classicPaid = true;
+    }
+    if (challenge && !challenge.paid) {
       challenge.paid = true;
       const liveChallenge = activeChallenge(game);
       if (liveChallenge) liveChallenge.paid = true;
-    }
-
-    const variant = activeVariant(game);
-    if (variant && variant.kind === "plain" && !variant.classicPaid) {
-      const bonus = CONFIG.classicClearBonus;
-      const paidPoints = addScoreBonus(game, bonus, "umtClassicBonus", "Classic Wordle cleared", entry);
-      const paidState = paidPoints > 0 ? stateOf(game) : null;
-      if (paidState) {
-        paidState.cuddleMoney = Math.max(0, asNumber(paidState.cuddleMoney, 0) + bonus);
-        if (entry) entry.classicBonusMoney = asNumber(entry.classicBonusMoney, 0) + bonus;
-      }
-      // The cash-out shows the money beside the points on the same line.
-      const line = (customState(game) && customState(game).lastPayoutLines || [])
-        .find((item) => item && item.field === "umtClassicBonus" && item.roundToken === roundToken(game));
-      if (line && paidPoints > 0) line.money = asNumber(line.money, 0) + bonus;
-      variant.classicPaid = true;
     }
 
     /* UMT_CUDDLE_USER_CONSUME_JOKERS */
@@ -4932,11 +4948,14 @@
             // Each challenge on its own, for previews that list them.
             parts: planLines(live, variant),
             difficulty,
-            skulls: difficultySkulls(difficulty)
+            skulls: difficultySkulls(difficulty),
+            tier: stageTier(variant),
+            pay: stagePay(stageTier(variant))
           };
         }
         const difficulty = stagePartDifficulty(variant);
-        return { kind: variant.kind, title: variant.title, description: variant.description, difficulty, skulls: difficultySkulls(difficulty) };
+        return { kind: variant.kind, title: variant.title, description: variant.description, difficulty, skulls: difficultySkulls(difficulty),
+          tier: stageTier(variant), pay: stagePay(stageTier(variant)) };
       },
       // The challenge stops the map can roll, described at the run's
       // current guess cap -- listed by the map key.
@@ -4956,6 +4975,9 @@
       // the boss-choice screen (cuddle-ui.js's renderBossChoiceOverlay) so
       // both surfaces describe the same burdens identically.
       burdenInfo: (id) => BURDEN_INFO[id] || null,
+      // A stop's tier (-1 heart, 0 plain, 1-3 skulls) and what it pays.
+      stageTier: (variant) => stageTier(variant),
+      stagePay: (tier) => stagePay(tier),
       // Double Down's chip on the live play strip (cuddle-campaign.js's
       // insertMap): the stage's lucky guess, shown until it has been played.
       luckyGuessBadge: (game) => {

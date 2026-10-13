@@ -946,6 +946,10 @@
     const key = stageKey(state);
     if (state.umtStageBannerKey === key) return;
     state.umtStageBannerKey = key;
+    // A regular stage starts without a briefing: it plays out as it is
+    // (the map only showed its tier). A boss still gets its entrance and
+    // briefing. A new curse, if any, keeps its own toast.
+    if (!(state.boss && !state.boss.__umtSynthetic)) return;
     // Taken now, synchronously, so the old bottom toast never paints.
     const burdenNotice = state.burdenNotice || null;
     if (burdenNotice) {
