@@ -1064,6 +1064,7 @@
     // An Open trial's list crosses out the words your guesses ruled out
     // (cuddle-curses.js); a Blind trial's list stays unmarked.
     const ruledOut = typeof game.presetOpenRuledOut === "function" ? (game.presetOpenRuledOut() || []) : [];
+    const early = typeof game.presetPickIsEarly === "function" && game.presetPickIsEarly();
     const words = pick.words.map(word => (
       `<button type="button" class="cuddle-preset-word${word === chosen ? " is-selected" : ""}${ruledOut.includes(word) ? " is-out" : ""}" data-action="preset-select" data-word="${escapeHtml(word)}" aria-pressed="${word === chosen ? "true" : "false"}"${ruledOut.includes(word) ? ' title="Ruled out by your guesses"' : ""}>`
       + word.split("").map(letter => `<span>${escapeHtml(letter)}</span>`).join("")
@@ -1072,12 +1073,13 @@
     return `
       <section class="cuddle-hand-panel cuddle-preset-pick" aria-labelledby="cuddlePresetTitle">
         <div class="cuddle-preset-head">
-          <span class="cuddle-preset-kicker">Preset Trial · last guess</span>
+          <span class="cuddle-preset-kicker">${early ? "Preset Trial · answer early" : "Preset Trial · last guess"}</span>
           <h3 id="cuddlePresetTitle">The answer is one of these ${pick.words.length} words</h3>
-          <p>Use the feedback on the board. A wrong pick ends the run.</p>
+          <p>${early ? "Lock in your answer now? It's your final answer: right passes the trial, wrong ends the run." : "Use the feedback on the board. A wrong pick ends the run."}</p>
         </div>
         <div class="cuddle-preset-words">${words}</div>
         <button type="button" class="cuddle-btn cuddle-btn-primary cuddle-preset-lock" data-action="preset-lock"${chosen ? "" : " disabled"}>${chosen ? `Lock in ${escapeHtml(chosen)}` : "Pick a word"}</button>
+        ${early ? `<button type="button" class="cuddle-btn cuddle-btn-ghost cuddle-preset-back" data-action="preset-back">Keep guessing</button>` : ""}
       </section>`;
   }
 
@@ -1988,6 +1990,17 @@
       /* UMT_CUDDLE_SINGLEPLAYER_V2: ACTIONS END */
       case "preset-select":
         presetSelection = { key: presetSelection.key, word: String(dataset.word || "") };
+        return true;
+      // A word tapped in the Open trial's list: answer early with it.
+      case "preset-early": {
+        if (typeof game.openPresetPickEarly !== "function" || !game.openPresetPickEarly()) return true;
+        const pick = game.presetPick();
+        if (pick) presetSelection = { key: pick.key, word: String(dataset.word || "").toUpperCase() };
+        return true;
+      }
+      case "preset-back":
+        if (typeof game.closePresetPickEarly === "function") game.closePresetPickEarly();
+        presetSelection = { key: "", word: "" };
         return true;
       case "preset-lock": {
         const word = presetSelection.word;

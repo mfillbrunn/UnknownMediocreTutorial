@@ -163,3 +163,21 @@
   .umt-cmb-old, .umt-cmb-flash, .umt-cmb-sparks { display: none; }
   .umt-cmb-new, .umt-cmb-caption { animation: none; opacity: 1; }
 }
+
+/* Open Preset Trial: before the pick's guess, each word in the list can
+   be tapped to answer with it early (cuddle-ui.js "preset-early"). */
+button.umt-clue-word.is-pickable {
+  border: 1px solid rgba(255, 213, 120, 0.55);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 120ms ease, background-color 120ms ease, border-color 120ms ease;
+}
+button.umt-clue-word.is-pickable:hover,
+button.umt-clue-word.is-pickable:focus-visible {
+  border-color: #ffd578;
+  background: rgba(255, 213, 120, 0.22);
+  transform: translateY(-1px);
+}
+button.umt-clue-word.is-pickable:focus-visible { outline: 2px solid #ffd578; outline-offset: 2px; }
+.cuddle-preset-back { margin-top: 8px; }

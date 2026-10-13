@@ -211,13 +211,40 @@
     return 0;
   };
 
+  // An Open trial's answer can be locked in early, from the list shown
+  // since the start: tapping a word opens the pick on this guess. It's the
+  // same final answer as the pick on guess 3 -- right passes the trial,
+  // wrong ends the run. "Keep guessing" closes it again.
+  proto.openPresetPickEarly = function openPresetPickEarly() {
+    var state = this.state;
+    var trial = trialNode(state);
+    var guess = this.presetPickGuess();
+    if (!isOpenTrial(trial) || !guess || (Number(state.guessesUsed) || 0) + 1 >= guess) return false;
+    megaOf(state).presetEarly = stageKey(state) + ":" + (Number(state.guessesUsed) || 0);
+    return true;
+  };
+
+  proto.closePresetPickEarly = function closePresetPickEarly() {
+    if (this.state) megaOf(this.state).presetEarly = null;
+  };
+
+  // True while an early pick is open (only until the next guess is played).
+  proto.presetPickIsEarly = function presetPickIsEarly() {
+    var state = this.state;
+    if (!state || state.status !== "playing" || !trialNode(state)) return false;
+    var early = megaOf(state).presetEarly;
+    return Boolean(early) && early === stageKey(state) + ":" + (Number(state.guessesUsed) || 0);
+  };
+
   // The open pick -- { guess, words } -- while the next guess is the
-  // cursed one, else null. Kept on the run so a reload shows the same list.
+  // cursed one (or an early pick is open), else null. Kept on the run so a
+  // reload shows the same list.
   proto.presetPick = function presetPick() {
     var state = this.state;
     if (!state || state.status !== "playing") return null;
     var guess = this.presetPickGuess();
-    if (!guess || (Number(state.guessesUsed) || 0) + 1 !== guess) return null;
+    if (!guess) return null;
+    if ((Number(state.guessesUsed) || 0) + 1 !== guess && !this.presetPickIsEarly()) return null;
     var mega = megaOf(state);
     var key = stageKey(state) + ":" + guess;
     if (!mega.presetPick || mega.presetPick.key !== key || !Array.isArray(mega.presetPick.words)) {
@@ -240,6 +267,11 @@
     var state = this.state;
     var savedDraft = Array.isArray(state.draft) ? state.draft.slice() : [];
     var game = this;
+    // A wrong early pick is still the final answer: this guess becomes the
+    // stage's last, so the engine ends the run as it does for a wrong pick
+    // on guess 3. (Only when wrong: a right one keeps its spare rows.)
+    var early = this.presetPickIsEarly();
+    if (early && word !== String(state.secret || "").toUpperCase()) this._presetFinalGuess = (Number(state.guessesUsed) || 0) + 1;
     var cards = word.split("").map(function make(letter) { return game._newCard(letter, "extra"); });
     var ids = cards.map(function id(card) { return card.id; });
     state.hand = state.hand.concat(cards);
@@ -251,6 +283,8 @@
       result = this.submitDraft();
     } finally {
       this._presetPickWord = null;
+      this._presetFinalGuess = 0;
+      if (early) megaOf(state).presetEarly = null;
     }
     // A wrong pick ends the run: say so plainly, not as a missed guess limit.
     if (trial && result && result.ok !== false && state.status === "lost") {
@@ -281,6 +315,7 @@
   var baseHardLimit = proto._hardGuessLimit;
   proto._hardGuessLimit = function hardGuessLimitWithPresetPick() {
     var limit = baseHardLimit.apply(this, arguments);
+    if (this._presetFinalGuess > 0) return Math.min(limit, this._presetFinalGuess);
     var guess = this.presetPickGuess();
     if (!guess) return limit;
     var state = this.state;

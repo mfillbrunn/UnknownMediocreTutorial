@@ -320,7 +320,12 @@
     const openList = typeof game.presetOpenList === "function" ? game.presetOpenList() : null;
     if (Array.isArray(openList) && openList.length) {
       const out = typeof game.presetOpenRuledOut === "function" ? (game.presetOpenRuledOut() || []) : [];
-      chips.push({ icon: "scroll", label: "Open Trial", text: "Answer is one of", words: openList, ruledOut: out, tone: "preset" });
+      // Before the pick's own guess, a word can be tapped to answer with it
+      // early (cuddle-ui.js "preset-early").
+      const pickGuess = typeof game.presetPickGuess === "function" ? game.presetPickGuess() : 0;
+      const pickable = game.state.status === "playing" && pickGuess > 0 && num(game.state.guessesUsed) + 1 < pickGuess
+        && !(typeof game.presetPickIsEarly === "function" && game.presetPickIsEarly());
+      chips.push({ icon: "scroll", label: "Open Trial", text: pickable ? "Answer is one of (tap one to answer now)" : "Answer is one of", words: openList, ruledOut: out, pickable, tone: "preset" });
     }
     if (level(game, IDS.mistakeShield) > 0 && shieldApplies(game)) {
       chips.push({ icon: "shield", label: "Mistake Shield", text: record.shieldUsed ? "Shield used" : "Shield ready", tone: record.shieldUsed ? "spent" : "" });
@@ -357,7 +362,9 @@
       }).join("") : "")
       + (chip.words ? chip.words.map(word => (chip.ruledOut && chip.ruledOut.includes(word)
         ? `<s class="umt-clue-word is-out" title="Ruled out by your guesses">${escapeHtml(String(word).toUpperCase())}</s>`
-        : `<b class="umt-clue-word">${escapeHtml(String(word).toUpperCase())}</b>`)).join("") : "")
+        : chip.pickable
+          ? `<button type="button" class="umt-clue-word is-pickable" data-action="preset-early" data-word="${escapeHtml(String(word).toUpperCase())}" title="Answer with ${escapeHtml(String(word).toUpperCase())}">${escapeHtml(String(word).toUpperCase())}</button>`
+          : `<b class="umt-clue-word">${escapeHtml(String(word).toUpperCase())}</b>`)).join("") : "")
       + `</span></span>`
     )).join("")}</div>`;
     let strip = root.querySelector(".cuddle-play-strip");
