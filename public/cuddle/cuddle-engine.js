@@ -398,7 +398,10 @@
           && this.getCountedHandSize() < this.getHandLimit()) {
         this.drawToHandLimit();
       }
-      if (state.status === "upgrade" && state.upgradeChoices.length < 3) {
+      // Only an empty offer is rebuilt: a short one is deliberate (Slim
+      // Pickings shows 2), and rebuilding it on every reload handed out a
+      // free refresh each time the player tabbed away and back.
+      if (state.status === "upgrade" && !state.upgradeChoices.length) {
         state.upgradeChoices = this._generateUpgradeChoices();
       }
       delete state.feedbackBonusMilestones;

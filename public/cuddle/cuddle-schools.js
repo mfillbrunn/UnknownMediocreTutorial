@@ -1,18 +1,18 @@
 /* Cuddle: schools of tile magic.
  *
  * Every badge belongs to a school (cuddle-skill-tree.js SCHOOLS): Flint,
- * Glass, Flora, Slate, Ingot, Brass or Pearl. Each level of a badge adds
+ * Prism, Flora, Parchment, Ingot, Brass or Pearl. Each level of a badge adds
  * its rarity's weight to its school (common 1, rare 2, epic 3, legendary
  * 5); a school's points unlock its three ranks (4 / 9 / 15, Pearl 3 / 6 /
  * 9), and each rank adds a perk. The ranks replaced the old two-badge
  * combos.
  *
  *   Flint  I solve by guess 3: +10   II +25            III +60
- *   Glass  I a grey vowel at start   II yellow hint after guess 2
+ *   Prism  I a grey vowel at start   II yellow hint after guess 2
  *                                    III green hint after guess 3
  *   Flora  I +1 lucky tile           II +1 idea tile, +1 mulligan
  *                                    III lucky tiles pay double
- *   Slate  I greys +1 point          II 1 consonant ruled out at start
+ *   Parchment I greys +1 point       II 1 consonant ruled out at start
  *                                    III greys +3, Cuddle Meter 2 sooner
  *   Ingot  I +$3 a solve             II +$8, Rainy Day cap +$10
  *                                    III +$20, first reward refresh free
@@ -37,7 +37,7 @@
 
   var FLINT_POINTS = [0, 10, 25, 60];
   var FLINT_BY = 3;
-  var SLATE_GREY = [0, 1, 1, 3];
+  var PARCHMENT_GREY = [0, 1, 1, 3];
   var INGOT_MONEY = [0, 3, 8, 20];
   var BRASS_POINTS = [0, 10, 10, 40];
   var PEARL_SKIP = 10;
@@ -85,7 +85,7 @@
       case "luckyTiles": return rankOf(game, "flora") >= 1 ? 1 : 0;
       case "ideaTiles": return rankOf(game, "flora") >= 2 ? 1 : 0;
       case "luckyMultiplier": return rankOf(game, "flora") >= 3 ? 2 : 1;
-      case "meterSooner": return rankOf(game, "slate") >= 3 ? 2 : 0;
+      case "meterSooner": return rankOf(game, "parchment") >= 3 ? 2 : 0;
       case "interestCap": return rankOf(game, "ingot") >= 2 ? 10 : 0;
       case "leanIgnore": return rankOf(game, "pearl") >= 2 ? 3 : 0;
       default: return 0;
@@ -256,7 +256,7 @@
     };
   });
 
-  // Stage start: Glass I, Slate II, Flora II's mulligan.
+  // Stage start: Prism I, Parchment II, Flora II's mulligan.
   wrap("_beginRound", function build(original) {
     return function beginRoundWithSchools() {
       var result = original.apply(this, arguments);
@@ -271,8 +271,8 @@
         if (state.umtSchools.stage === key) return result;
         state.umtSchools.stage = key;
         var now = ranks(this);
-        if (num(now.glass) >= 1) ruleOut(this, true, "Glass");
-        if (num(now.slate) >= 2) ruleOut(this, false, "Slate");
+        if (num(now.prism) >= 1) ruleOut(this, true, "Prism");
+        if (num(now.parchment) >= 2) ruleOut(this, false, "Parchment");
         if (num(now.flora) >= 2) {
           var gained = typeof this.mulliganGain === "function" ? this.mulliganGain(1) : 1;
           state.mulligansLeft = Math.max(0, num(state.mulligansLeft)) + gained;
@@ -301,8 +301,8 @@
         var solved = Boolean(entry && state.secret && entry.word === state.secret);
         var shown = Array.isArray(entry.shownFeedback) ? entry.shownFeedback : (entry.feedback || []);
         var greys = shown.filter(function grey(value) { return value === "grey"; }).length;
-        var slate = num(now.slate);
-        if (slate >= 1 && greys) stageBonus(this, greys * SLATE_GREY[Math.min(3, slate)], "umtSchoolSlate", "Slate · greys");
+        var parchment = num(now.parchment);
+        if (parchment >= 1 && greys) stageBonus(this, greys * PARCHMENT_GREY[Math.min(3, parchment)], "umtSchoolParchment", "Parchment · greys");
         var brass = num(now.brass);
         if (entry.questComplete && brass >= 1) {
           stageBonus(this, BRASS_POINTS[Math.min(3, brass)], "umtSchoolBrass", "Brass · quest");
@@ -322,11 +322,11 @@
             if (stageBonus(this, PEARL_SOLVE, "umtSchoolPearl", "Pearl · lean") > 0) note(this, "Pearl: +" + PEARL_SOLVE + " points.");
           }
         } else if (state.status === "playing" || state.status === "questReward") {
-          // Glass hints after guesses 2 and 3 (a quest reward screen may
+          // Prism hints after guesses 2 and 3 (a quest reward screen may
           // be up; the stage goes on behind it).
-          var glass = num(now.glass);
-          if (glass >= 2 && history.length === 2) hint(this, "yellow", "Glass");
-          if (glass >= 3 && history.length === 3) hint(this, "green", "Glass");
+          var prism = num(now.prism);
+          if (prism >= 2 && history.length === 2) hint(this, "yellow", "Prism");
+          if (prism >= 3 && history.length === 3) hint(this, "green", "Prism");
         }
         save(this);
       } catch (error) {
