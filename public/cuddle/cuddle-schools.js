@@ -1,26 +1,28 @@
-/* Cuddle: schools of tile magic.
+/* Cuddle: schools.
  *
- * Every badge belongs to a school (cuddle-skill-tree.js SCHOOLS): Flint,
- * Prism, Flora, Parchment, Gold, Brass or Pearl. Each level of a badge adds
- * its rarity's weight to its school (common 1, rare 2, epic 3, legendary
- * 5); a school's points unlock its three ranks (4 / 9 / 15, Pearl 3 / 6 /
+ * Every badge belongs to a school (cuddle-skill-tree.js SCHOOLS): Speed,
+ * Hints, Tiles, Elimination, Money, Quests or Restraint (a few general
+ * badges belong to none). The ids are older names: flint, prism, flora,
+ * parchment, gold, brass, pearl. Each level of a badge adds its rarity's
+ * weight to its school (common 1, rare 2, epic 3, legendary 5); a
+ * school's points unlock its three ranks (4 / 9 / 15, Restraint 3 / 6 /
  * 9), and each rank adds a perk. The ranks replaced the old two-badge
  * combos.
  *
- *   Flint  I solve by guess 3: +10   II +25            III +60
- *   Prism  I a grey vowel at start   II yellow hint after guess 2
- *                                    III green hint after guess 3
- *   Flora  I +1 lucky tile           II +1 idea tile, +1 mulligan
- *                                    III lucky tiles pay double
- *   Parchment I greys +1 point       II 1 consonant ruled out at start
- *                                    III greys +3, Cuddle Meter 2 sooner
- *   Gold   I +$3 a solve             II +$8, Rainy Day cap +$10
- *                                    III +$20, first reward refresh free
- *   Brass  I quests +10              II +1 surprise quest a stage
- *                                    III quests +40 and +$5
- *   Pearl  I skips pay +10 more      II hard-mode solves +15, Lean Build
- *                                       ignores 3 badges
- *                                    III +30 a solve with 8 badges or fewer
+ *   Speed        I solve by guess 3: +10  II +25         III +60
+ *   Hints        I a grey vowel at start  II yellow hint after guess 2
+ *                                         III green hint after guess 3
+ *   Tiles        I +1 lucky tile          II +1 idea tile, +1 mulligan
+ *                                         III lucky tiles pay double
+ *   Elimination  I greys +1 point         II 1 consonant ruled out at start
+ *                                         III greys +3, Cuddle Meter 2 sooner
+ *   Money        I +$3 a solve            II +$8, Rainy Day cap +$10
+ *                                         III +$20, first reward refresh free
+ *   Quests       I quests +10             II +1 surprise quest a stage
+ *                                         III quests +40 and +$5
+ *   Restraint    I skips pay +10 more     II hard-mode solves +15, Lean
+ *                                            Build ignores 3 badges
+ *                                         III +30 a solve with 8 badges or fewer
  *
  * Perks that live inside another layer's effect (lucky and idea tiles,
  * the meter, Rainy Day, Lean Build) ask perk(game, name) for their number.
@@ -271,8 +273,8 @@
         if (state.umtSchools.stage === key) return result;
         state.umtSchools.stage = key;
         var now = ranks(this);
-        if (num(now.prism) >= 1) ruleOut(this, true, "Prism");
-        if (num(now.parchment) >= 2) ruleOut(this, false, "Parchment");
+        if (num(now.prism) >= 1) ruleOut(this, true, "Hints rank");
+        if (num(now.parchment) >= 2) ruleOut(this, false, "Elimination rank");
         if (num(now.flora) >= 2) {
           var gained = typeof this.mulliganGain === "function" ? this.mulliganGain(1) : 1;
           state.mulligansLeft = Math.max(0, num(state.mulligansLeft)) + gained;
@@ -302,31 +304,31 @@
         var shown = Array.isArray(entry.shownFeedback) ? entry.shownFeedback : (entry.feedback || []);
         var greys = shown.filter(function grey(value) { return value === "grey"; }).length;
         var parchment = num(now.parchment);
-        if (parchment >= 1 && greys) stageBonus(this, greys * PARCHMENT_GREY[Math.min(3, parchment)], "umtSchoolParchment", "Parchment · greys");
+        if (parchment >= 1 && greys) stageBonus(this, greys * PARCHMENT_GREY[Math.min(3, parchment)], "umtSchoolParchment", "Elimination rank");
         var brass = num(now.brass);
         if (entry.questComplete && brass >= 1) {
-          stageBonus(this, BRASS_POINTS[Math.min(3, brass)], "umtSchoolBrass", "Brass · quest");
-          if (brass >= 3) payMoney(this, 5, "Brass");
+          stageBonus(this, BRASS_POINTS[Math.min(3, brass)], "umtSchoolBrass", "Quests rank");
+          if (brass >= 3) payMoney(this, 5, "Quests rank");
         }
         if (solved) {
           var flint = num(now.flint);
           if (flint >= 1 && history.length <= FLINT_BY) {
             var fast = FLINT_POINTS[Math.min(3, flint)];
-            if (stageBonus(this, fast, "umtSchoolFlint", "Flint · fast solve") > 0) note(this, "Flint: solved by guess " + FLINT_BY + ", +" + fast + " points.");
+            if (stageBonus(this, fast, "umtSchoolFlint", "Speed rank") > 0) note(this, "Speed rank: solved by guess " + FLINT_BY + ", +" + fast + " points.");
           }
           var gold = num(now.gold);
-          if (gold >= 1) payMoney(this, GOLD_MONEY[Math.min(3, gold)], "Gold");
+          if (gold >= 1) payMoney(this, GOLD_MONEY[Math.min(3, gold)], "Money rank");
           var pearl = num(now.pearl);
-          if (pearl >= 2 && solvedInHardMode(history)) stageBonus(this, PEARL_HARD, "umtSchoolPearlHard", "Pearl · hard mode");
+          if (pearl >= 2 && solvedInHardMode(history)) stageBonus(this, PEARL_HARD, "umtSchoolPearlHard", "Restraint rank (hard mode)");
           if (pearl >= 3 && badgeCount(this) <= PEARL_MAX_BADGES) {
-            if (stageBonus(this, PEARL_SOLVE, "umtSchoolPearl", "Pearl · lean") > 0) note(this, "Pearl: +" + PEARL_SOLVE + " points.");
+            if (stageBonus(this, PEARL_SOLVE, "umtSchoolPearl", "Restraint rank") > 0) note(this, "Restraint rank: +" + PEARL_SOLVE + " points.");
           }
         } else if (state.status === "playing" || state.status === "questReward") {
           // Prism hints after guesses 2 and 3 (a quest reward screen may
           // be up; the stage goes on behind it).
           var prism = num(now.prism);
-          if (prism >= 2 && history.length === 2) hint(this, "yellow", "Prism");
-          if (prism >= 3 && history.length === 3) hint(this, "green", "Prism");
+          if (prism >= 2 && history.length === 2) hint(this, "yellow", "Hints rank");
+          if (prism >= 3 && history.length === 3) hint(this, "green", "Hints rank");
         }
         save(this);
       } catch (error) {
@@ -343,7 +345,7 @@
       if (result && result.ok && rankOf(this, "pearl") >= 1) {
         this.state.score = num(this.state.score) + PEARL_SKIP;
         result.points = num(result.points) + PEARL_SKIP;
-        note(this, "Pearl: +" + PEARL_SKIP + " points.");
+        note(this, "Restraint rank: +" + PEARL_SKIP + " points.");
         save(this);
       }
       return result;
