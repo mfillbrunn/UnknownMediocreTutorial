@@ -350,14 +350,45 @@
   font-weight: 800;
 }
 
-/* The card's school (cuddle-schools.js), on its own small tile inside the
-   type chip: "Points · Slate +1". */
-.cuddle-v8-category-badge .cuddle-v8-school {
-  display: inline-block;
-  padding: 0 5px;
-  border-radius: 4px;
-  background: var(--school, #ccc);
-  color: #1a1220;
-  font-weight: 800;
-  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(26, 18, 32, 0.35);
+/* The card's school (cuddle-schools.js), on its own strip under the
+   description: "[P] +2 Prism  7 -> 9 of 9". A pick that reaches a rank
+   says what the rank gives. */
+.cuddle-v8-school-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 8px 4px 4px;
+  border: 1px solid color-mix(in srgb, var(--school, #ccc) 55%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--school, #ccc) 14%, transparent);
+  color: #f7f4ff;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  text-align: left;
+  pointer-events: none;
 }
+.cuddle-v8-school-line i {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.5), transparent 60%), var(--school, #ccc);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+  color: #1a1220;
+  font-size: 0.66rem;
+  font-style: normal;
+  font-weight: 900;
+}
+.cuddle-v8-school-line b { flex: none; color: var(--school, #ccc); font-weight: 900; }
+.cuddle-v8-school-line small {
+  margin-left: auto;
+  color: rgba(247, 244, 255, 0.7);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.cuddle-v8-school-line.is-rank-up { border-color: var(--school, #ccc); }
+.cuddle-v8-school-line.is-rank-up small { color: #f7f4ff; font-weight: 750; }

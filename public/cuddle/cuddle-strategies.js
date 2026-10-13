@@ -274,7 +274,7 @@
       powersLevels(state)[fromId] = 1;
       return { ok: false, error: "Combine couldn't finish: " + ((granted && granted.error) || "unknown error") };
     }
-    return { ok: true, from: from.title, to: target.title || target.name, tier: wanted };
+    return { ok: true, from: from.title, fromId: fromId, to: target.title || target.name, toId: target.id, toIcon: target.icon, tier: wanted };
   }
 
   var CULL_IDS = ["umtCullOne", "umtCullTwo", "cullOne", "cullTwo"];
@@ -304,6 +304,7 @@
     if (!result.ok) return result;
     state = this.state;
     state.lastMessage = "Combine: " + result.from + " became " + result.to + " (" + result.tier + ").";
+    playCombineFx(result);
     state.upgradeChoices = [];
     state.upgradePhase = null;
     state.upgradeMilestone = null;
@@ -311,6 +312,65 @@
     save(this);
     return { ok: true, combined: result };
   };
+
+  // -- Combine: the old badge turns into the new one ---------------------------
+  // The old badge glows and shatters into sparks; the new one grows out of
+  // the flash and the view zooms in on it. Tap anywhere to close early.
+  var TIER_COLORS = { common: "#c98a4b", rare: "#c6d0de", epic: "#b98cff", legendary: "#f6c956" };
+  var COMBINE_FX_MS = 3200;
+
+  function escapeText(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function swap(ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[ch];
+    });
+  }
+
+  function badgeFace(node, fallbackIcon, fallbackTitle, tier) {
+    var tree = registry();
+    var school = node && node.school && tree && tree.SCHOOLS ? tree.SCHOOLS[node.school] : null;
+    var color = school ? school.color : ((tree && tree.SCHOOLLESS && tree.SCHOOLLESS.color) || "#9d97b0");
+    var icon = (node && node.icon) || fallbackIcon || "✦";
+    var Icons = window.CuddleIcons;
+    var iconHtml = Icons && Icons.hasEmoji(icon) ? Icons.svg(icon) : "<span>" + escapeText(icon) + "</span>";
+    var rarity = String(tier || (node && node.tier) || "common");
+    return '<div class="umt-cmb-badge" style="--t:' + color + ";--tier:" + (TIER_COLORS[rarity] || TIER_COLORS.common) + '">'
+      + '<svg viewBox="0 0 100 116" aria-hidden="true"><path class="umt-cmb-hex" d="M50 2 L96 28 L96 88 L50 114 L4 88 L4 28 Z"/>'
+      + '<path class="umt-cmb-line" d="M50 9 L90 32 L90 84 L50 107 L10 84 L10 32 Z"/></svg>'
+      + '<span class="umt-cmb-icon">' + iconHtml + "</span>"
+      + '<strong class="umt-cmb-name">' + escapeText((node && node.title) || fallbackTitle || "") + "</strong>"
+      + '<small class="umt-cmb-tier">' + escapeText(rarity.charAt(0).toUpperCase() + rarity.slice(1)) + "</small></div>";
+  }
+
+  function playCombineFx(result) {
+    if (typeof document === "undefined" || !document.body) return;
+    var tree = registry();
+    var fromNode = tree && tree.findNode(result.fromId);
+    var toNode = tree && (tree.findNode(result.toId) || tree.findNodeByName(result.to));
+    var layer = document.createElement("div");
+    layer.className = "umt-cmb-layer";
+    layer.setAttribute("role", "status");
+    layer.setAttribute("aria-label", "Combine: " + result.from + " became " + result.to);
+    layer.innerHTML = '<div class="umt-cmb-stage">'
+      + '<div class="umt-cmb-old">' + badgeFace(fromNode, "", result.from) + "</div>"
+      + '<div class="umt-cmb-flash" aria-hidden="true"></div>'
+      + '<div class="umt-cmb-sparks" aria-hidden="true">' + Array.from({ length: 12 }, function spark(_v, i) {
+        return '<i style="--a:' + (i * 30) + "deg;--d:" + ((i % 3) * 40) + 'ms"></i>';
+      }).join("") + "</div>"
+      + '<div class="umt-cmb-new">' + badgeFace(toNode, result.toIcon, result.to, result.tier) + "</div>"
+      + "</div>"
+      + '<p class="umt-cmb-caption"><b>Combine</b> ' + escapeText(result.from) + " → <em>" + escapeText(result.to) + "</em></p>";
+    var close = function closeFx() {
+      if (!layer.parentNode) return;
+      layer.classList.add("is-leaving");
+      setTimeout(function gone() { layer.remove(); }, 260);
+    };
+    layer.addEventListener("click", close);
+    // After the reward screen re-renders under it.
+    setTimeout(function show() {
+      document.body.appendChild(layer);
+      setTimeout(close, COMBINE_FX_MS);
+    }, 30);
+  }
 
   // -- hooks ----------------------------------------------------------------
   var baseSubmit = proto.submitDraft;

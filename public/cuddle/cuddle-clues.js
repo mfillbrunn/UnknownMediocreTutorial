@@ -6,8 +6,9 @@
  *   Pattern Lens     every stage: vowel/consonant pattern (C V C C V)
  *   Dead Letter      every stage opens with 1-3 absent letters crossed out
  *   Last Light       every stage opens with the last letter in place
- *   Treasure Hunter  about one stage in three is a treasure stage: +$25 per copy when
- *                    solved before guess 5 (world 1), 4 (world 2) or 3 (world 3)
+ *   Treasure Hunter  about one stage in three is a treasure stage: +$20 / $30 / $50 when
+ *                    solved before guess 5 (world 1), 4 (world 2) or 3 (world 3);
+ *                    level 3 makes it every other stage
  *   Mistake Shield   in a boss or strict stage, the first guess with no green
  *                    or yellow gives a guess back
  *
@@ -35,7 +36,8 @@
   });
   const VOWELS = new Set(["A", "E", "I", "O", "U"]);
   const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-  const TREASURE_PER_COPY = 25;
+  // $20, $30, then $50 at level 3 (in every other stage).
+  const TREASURE_PRIZES = [0, 20, 30, 50];
   // The treasure pays only for a quick solve: before guess 5 in world one,
   // 4 in world two, 3 in world three (by bosses cleared).
   const TREASURE_BEFORE = [5, 4, 3];
@@ -44,9 +46,8 @@
     return TREASURE_BEFORE[Math.max(0, Math.min(2, cleared))];
   }
   function treasurePrize(game) {
-    // $25, $50, then $100 at level 3.
     const tier = Math.max(0, Math.min(3, Math.floor(level(game, IDS.treasureHunter))));
-    return [0, TREASURE_PER_COPY, TREASURE_PER_COPY * 2, TREASURE_PER_COPY * 4][tier] + graveRobberBonus(game);
+    return TREASURE_PRIZES[tier] + graveRobberBonus(game);
   }
 
   function num(value) {

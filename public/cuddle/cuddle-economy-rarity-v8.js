@@ -2580,6 +2580,35 @@
     delete element.dataset.cuddleV8Level;
     element.querySelector(":scope > .cuddle-v8-category-badge")?.remove();
     element.querySelector(":scope > .cuddle-v8-level-tag")?.remove();
+    element.querySelector(":scope > .cuddle-v8-school-line")?.remove();
+  }
+
+  // The card's school, on its own strip where combos used to show: the
+  // school points this pick adds, and the rank it would reach.
+  function schoolLine(tree, node, game) {
+    const school = node.school && tree.SCHOOLS ? tree.SCHOOLS[node.school] : null;
+    if (!school) return null;
+    const weight = (tree.TIER_WEIGHT && tree.TIER_WEIGHT[node.tier]) || 1;
+    const line = document.createElement("span");
+    line.className = "cuddle-v8-school-line";
+    line.style.setProperty("--school", school.color);
+    const tile = document.createElement("i");
+    tile.setAttribute("aria-hidden", "true");
+    tile.textContent = school.label.charAt(0);
+    const gain = document.createElement("b");
+    gain.textContent = `+${weight} ${school.label}`;
+    line.append(tile, gain);
+    let have = 0;
+    try { have = Number(game && typeof tree.schoolPoints === "function" ? tree.schoolPoints(game)[node.school] : 0) || 0; } catch (_error) { have = 0; }
+    const before = typeof tree.schoolRank === "function" ? tree.schoolRank(node.school, have) : 0;
+    const after = typeof tree.schoolRank === "function" ? tree.schoolRank(node.school, have + weight) : 0;
+    const note = document.createElement("small");
+    note.textContent = after > before
+      ? `${school.label} ${["", "I", "II", "III"][after]}: ${school.perks[after - 1]}`
+      : `${have} → ${have + weight}${school.ranks[before] ? ` of ${school.ranks[before]}` : " · top rank"}`;
+    if (after > before) line.classList.add("is-rank-up");
+    line.append(note);
+    return line;
   }
 
   // Shows the transition taking this card would make (e.g. "Lv 0 -> 1"),
@@ -2644,16 +2673,15 @@
       const badge = document.createElement("span");
       badge.className = "cuddle-v8-category-badge";
       badge.textContent = category.label;
-      // Its school, and the points this pick adds to it.
-      const school = node.school && tree.SCHOOLS ? tree.SCHOOLS[node.school] : null;
-      if (school) {
-        const crest = document.createElement("b");
-        crest.className = "cuddle-v8-school";
-        crest.style.setProperty("--school", school.color);
-        crest.textContent = `${school.label} +${(tree.TIER_WEIGHT && tree.TIER_WEIGHT[node.tier]) || 1}`;
-        badge.append(" · ", crest);
-      }
       element.prepend(badge);
+      if (!isBossReward || element.classList.contains("cuddle-choice")) {
+        const line = schoolLine(tree, node, game);
+        if (line) {
+          const description = element.querySelector(":scope > small");
+          if (description) description.after(line);
+          else element.append(line);
+        }
+      }
 
       if (!isBossReward && levelTagText) {
         const title = themeTitleElement(element);

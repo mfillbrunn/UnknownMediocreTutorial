@@ -190,7 +190,7 @@
         { id: "vowelLamp", icon: "🏮", title: "Vowel Lamp", tier: "rare", type: "clues", maxLevel: 1, description: "Every stage shows how many vowels the answer has", level: g => v5Level(g, "umtVowelLamp") },
         { id: "echoFinder", icon: "👯", title: "Echo Finder", tier: "common", type: "clues", maxLevel: 1, description: "Every stage shows whether the answer repeats a letter", level: g => v5Level(g, "umtEchoFinder") },
         { id: "treasureHunter", icon: "💎", title: "Treasure Hunter", tier: "common", type: "money", maxLevel: 3,
-          levels: ["1 in 3 stages has a treasure word: solve it fast for +$25", "Treasure words pay +$50", "Treasure words pay +$100, every other stage"],
+          levels: ["1 in 3 stages has a treasure word: solve it fast for +$20", "Treasure words pay +$30", "Treasure words pay +$50, every other stage"],
           level: g => v5Level(g, "umtTreasureHunter") },
         { id: "patternLens", icon: "🧩", title: "Pattern Lens", tier: "epic", type: "clues", maxLevel: 1, description: "From guess 2, shows the answer's vowel/consonant pattern (C V C C V)", level: g => v5Level(g, "umtPatternLens") },
         { id: "mistakeShield", icon: "🛡️", title: "Mistake Shield", tier: "rare", type: "safety", maxLevel: 1, description: "Bosses and strict stages: your first all-grey guess is given back", level: g => v5Level(g, "umtMistakeShield") },
@@ -323,32 +323,35 @@
   // school's points unlock its ranks. The perks themselves live in
   // cuddle-schools.js.
   const TIER_WEIGHT = Object.freeze({ common: 1, rare: 2, epic: 3, legendary: 5 });
+  // Each school has its own colour, so badges read as sorted by colour.
   const SCHOOLS = Object.freeze({
-    flint: { label: "Flint", color: "#ff8a5c", group: "Speed", blurb: "Strike early: strong openers and quick solves.",
+    flint: { label: "Flint", color: "#ff5f4f", group: "Speed", blurb: "Strike early: strong openers and quick solves.",
       ranks: [4, 9, 15], perks: ["Solve by guess 3: +10", "Solve by guess 3: +25", "Solve by guess 3: +60"] },
-    glass: { label: "Glass", color: "#7fd8f0", group: "Clues", blurb: "See through to the answer before you guess it.",
+    prism: { label: "Prism", color: "#58a8ff", group: "Clues", blurb: "Study the light: learn the answer before you guess it.",
       ranks: [4, 9, 15], perks: ["A grey vowel at stage start", "After guess 2: a yellow hint", "After guess 3: a green hint"] },
-    flora: { label: "Flora", color: "#7bd88f", group: "Deck tiles", blurb: "Tiles that grow in your deck and hand: lucky, idea, wave, Joker, mulligans.",
+    flora: { label: "Flora", color: "#46cf86", group: "Deck tiles", blurb: "Tiles that grow in your deck and hand: lucky, idea, wave, Joker, mulligans.",
       ranks: [4, 9, 15], perks: ["+1 lucky tile a stage", "+1 idea tile and +1 mulligan a stage", "Lucky tiles pay double"] },
-    slate: { label: "Slate", color: "#9aa3b5", group: "Elimination", blurb: "Rule letters out, cull them and wipe the board clean.",
+    parchment: { label: "Parchment", color: "#c9ae84", group: "Elimination", blurb: "Strike letters off the page: rule them out and cull them.",
       ranks: [4, 9, 15], perks: ["Greys +1 point", "1 consonant ruled out at stage start", "Greys +3 points; Cuddle Meter fills 2 sooner"] },
-    ingot: { label: "Ingot", color: "#f6c956", group: "Money", blurb: "Earn, save and gamble.",
+    gold: { label: "Gold", color: "#f5cf3a", group: "Riches", blurb: "Earn, hoard and gamble your riches.",
       ranks: [4, 9, 15], perks: ["+$3 a solve", "+$8 a solve; Rainy Day cap +$10", "+$20 a solve; first reward refresh free"] },
-    brass: { label: "Brass", color: "#e0a458", group: "Quests", blurb: "Follow the compass: more quests and bigger quest rewards.",
+    brass: { label: "Brass", color: "#ef8a34", group: "Quests", blurb: "Follow the compass: more quests and bigger quest rewards.",
       ranks: [4, 9, 15], perks: ["Quests +10 points", "+1 surprise quest a stage", "Quests +40 points and +$5"] },
-    pearl: { label: "Pearl", color: "#efe6f7", group: "Restraint", blurb: "Fewer badges and harder play, for bigger rewards.",
+    pearl: { label: "Pearl", color: "#e7a2ee", group: "Restraint", blurb: "Fewer badges and harder play, for bigger rewards.",
       ranks: [3, 6, 9], perks: ["Skipping a reward pays +10 more", "Hard-mode solves +15; Lean Build ignores 3 badges", "+30 a solve while you own 8 badges or fewer"] }
   });
+  // Badges that belong to no school.
+  const SCHOOLLESS = Object.freeze({ label: "Schoolless", color: "#9d97b0", group: "General", blurb: "General tools that belong to no school." });
   const SCHOOL_ORDER = Object.freeze(Object.keys(SCHOOLS));
   const SCHOOL_MEMBERS = {
     flint: ["storybookStart", "earlySolveBoost", "bigOpener", "momentum", "colourTrade", "boldOpener"],
-    glass: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "yellowHint", "alphabet-compass",
+    prism: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "yellowHint", "alphabet-compass",
       "oracleTiles", "lastLight", "allThemesBoss", "revealGreen"],
     flora: ["luckyClover", "ideaTiles", "waveTiles", "fullCircle", "jokerCache", "jokerCacheLarge", "jokerTiles", "mulliganTiles",
       "treasureMap", "extraMulligans", "mulliganSize", "handSizeBoost", "doubleMulligans", "biggerMulligans"],
-    slate: ["greyscale", "strikeThrough", "cullOne", "cullTwo", "cullRare", "consonantSweep", "freeVowelSweep",
+    parchment: ["greyscale", "strikeThrough", "cullOne", "cullTwo", "cullRare", "consonantSweep", "freeVowelSweep",
       "coachPossibleAnswers", "coachMeterThreshold", "coachMeterReward"],
-    ingot: ["pickpocket", "haggler", "wideChoice", "treasureHunter", "rainyDay", "doubleDown", "highRoller", "lastStand"],
+    gold: ["pickpocket", "haggler", "wideChoice", "treasureHunter", "rainyDay", "doubleDown", "highRoller", "lastStand"],
     brass: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment", "questCadence", "questPersistReward", "questDoublePick"],
     pearl: ["hardMode", "mulliganValueBoost", "monksVow", "leanBuild"]
   };
@@ -378,7 +381,7 @@
     oracleTiles: ["Oracle tiles", "Oracle tiles x2", "Oracle tiles x4"],
     rainyDay: ["5% interest", "10% interest", "20% interest"],
     vowelBounty: ["+5 per vowel", "+10 per vowel", "+20 per vowel"],
-    treasureHunter: ["Treasure +$25", "Treasure +$50", "Treasure +$100"],
+    treasureHunter: ["Treasure +$20", "Treasure +$30", "Treasure +$50, every 2nd"],
     yellowHint: ["1 letter shown", "1 letter placed"],
     "alphabet-compass": ["1 compass tile", "2 compass tiles", "Every tile"],
     coachMeterThreshold: ["Meter 2 sooner", "Meter 4 sooner", "Meter 6 sooner"],
@@ -547,6 +550,7 @@
 
   window.CuddleSkillTree = Object.freeze({
     SCHOOLS,
+    SCHOOLLESS,
     SCHOOL_ORDER,
     TIER_WEIGHT,
     schoolPoints,
