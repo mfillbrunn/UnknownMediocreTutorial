@@ -1279,6 +1279,7 @@
       if (this.getCountedHandSize() < this.getHandLimit()) return true;
       const candidates = this.state.hand.filter(card => (
         this.cardCountsTowardHandLimit(card)
+        && card.source !== "joker"
         && !this.isInfiniteCard(card)
         && !this.state.draft.includes(card.id)
       ));
@@ -1373,7 +1374,9 @@
         let removableIndex = -1;
         for (let index = this.state.hand.length - 1; index >= 0; index -= 1) {
           const card = this.state.hand[index];
+          // A Joker takes a slot in the hand but is never the card let go.
           if (this.cardCountsTowardHandLimit(card)
+              && card.source !== "joker"
               && !this.isInfiniteCard(card)
               && !this.state.draft.includes(card.id)) {
             removableIndex = index;
@@ -2600,7 +2603,7 @@
       const glyphs = shuffle(
         unique(
           this.state.hand
-            .filter(card => this.cardCountsTowardHandLimit(card))
+            .filter(card => this.cardCountsTowardHandLimit(card) && card.source !== "joker")
             .map(card => glyphForLetter(card.glyph))
         ),
         this.random
@@ -4887,8 +4890,10 @@
   }
 
   const composedCardCountsTowardHandLimit = CuddleGame.prototype.cardCountsTowardHandLimit;
+  // A Joker card takes up a slot in the hand like any consonant (it used
+  // to sit on top of the limit). The trims above never let one go.
   CuddleGame.prototype.cardCountsTowardHandLimit = function cardCountsTowardHandLimitMega(card) {
-    if (card?.source === "joker") return false;
+    if (card?.source === "joker") return true;
     return composedCardCountsTowardHandLimit.call(this, card);
   };
 
@@ -5135,6 +5140,7 @@
     while (game.getCountedHandSize() > game.getHandLimit()) {
       const candidates = state.hand.filter(card => (
         game.cardCountsTowardHandLimit(card)
+        && card.source !== "joker"
         && !game.isInfiniteCard(card)
         && !(state.draft || []).includes(card.id)
       ));
