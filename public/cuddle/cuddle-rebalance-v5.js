@@ -2744,7 +2744,8 @@
     const balance = Math.max(0, asNumber(state.cuddleMoney, 0)) + (compound ? totalJokerStock(game) * 10 : 0);
     // 5% up to $10, 10% up to $20, then 20% up to $40 at level 3.
     const tier = Math.max(0, Math.min(3, Math.floor(level)));
-    const cap = [0, 10, 20, 40][tier] * (compound ? 2 : 1);
+    // Ingot II raises the cap by $10.
+    const cap = [0, 10, 20, 40][tier] * (compound ? 2 : 1) + (Number(window.CuddleSchools?.perk?.(game, "interestCap")) || 0);
     const interest = Math.min(cap, Math.floor(balance * [0, 0.05, 0.1, 0.2][tier]));
     if (interest <= 0) return;
     state.cuddleMoney = Math.max(0, asNumber(state.cuddleMoney, 0)) + interest;

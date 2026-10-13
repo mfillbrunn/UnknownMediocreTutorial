@@ -94,15 +94,6 @@
     return value;
   }
 
-  function hasCombo(game, id) {
-    var synergies = window.CuddleSynergies;
-    try {
-      return Boolean(synergies && typeof synergies.owns === "function" && synergies.owns(game, id));
-    } catch (_error) {
-      return false;
-    }
-  }
-
   function save(game) {
     try {
       if (typeof game.save === "function") game.save();
@@ -125,14 +116,11 @@
     var state = this.state;
     var vow = levelOf(this, "monksVow") > 0;
     var points = vow || kind !== "money" ? SKIP_POINTS : 0;
-    // Ascetic (Lean Build + Monk's Vow): every skip pays 30 points more.
-    if (hasCombo(this, "ascetic")) points += 30;
     var money = vow || kind === "money" ? SKIP_MONEY : 0;
     state.score = num(state.score) + points;
     state.cuddleMoney = Math.max(0, num(state.cuddleMoney) + money);
     state.umtSkips = num(state.umtSkips) + 1;
     var paid = [points ? "+" + points + " points" : "", money ? "+$" + money : ""].filter(Boolean).join(" and ");
-    if (hasCombo(this, "ascetic")) paid += " (Ascetic)";
     state.lastMessage = "Reward skipped: " + paid + (vow ? " (Monk's Vow)." : ".");
     state.upgradeChoices = [];
     state.upgradePhase = null;
@@ -177,7 +165,10 @@
 
   function leanPayout(game) {
     var base = LEAN_BY_WORLD[worldIndex(game)];
-    return Math.max(0, base - LEAN_PER_BADGE * otherBadges(game));
+    // Pearl II: 3 badges don't count against it.
+    var schools = window.CuddleSchools;
+    var ignored = schools && typeof schools.perk === "function" ? num(schools.perk(game, "leanIgnore")) : 0;
+    return Math.max(0, base - LEAN_PER_BADGE * Math.max(0, otherBadges(game) - ignored));
   }
 
   // -- Strike-Through -------------------------------------------------------
@@ -200,10 +191,6 @@
     if (!fresh.length) return;
     record.letters = record.letters.concat(fresh);
     if (level <= 0) return;
-    // Static Charge (Strike-Through + Softer Cuddle Meter): each one also
-    // charges the meter; it pays out on the next guess like any grey.
-    var coach = state.cuddleCoachExpansion;
-    if (coach && hasCombo(game, "staticCharge")) coach.cuddleProgress = num(coach.cuddleProgress) + fresh.length;
     // Half points add up across the stage: pay whole points as they come.
     record.half = num(record.half) + fresh.length * STRIKE_POINTS[level];
     var points = Math.floor(record.half);
@@ -344,8 +331,6 @@
         // Won by guess 5 in world 1, guess 4 in worlds 2 and 3.
         var won = history.length <= HIGH_ROLLER_BY[worldIndex(this)];
         stageBonus(this, won ? bet : -bet, "umtHighRoller", won ? "High Roller won" : "High Roller lost");
-        // Jackpot (High Roller + Double Down): a win pays half the bet again.
-        if (won && hasCombo(this, "jackpot")) stageBonus(this, Math.round(bet / 2), "umtComboJackpot", "Jackpot");
         note(this, won ? "High Roller: bet " + bet + ", won +" + bet + "." : "High Roller: not solved by guess " + HIGH_ROLLER_BY[worldIndex(this)] + ", the " + bet + "-point bet is lost.");
       }
       var hard = Math.min(3, levelOf(this, "hardMode"));
@@ -353,7 +338,6 @@
         if (stageBonus(this, HARD_MODE_POINTS[hard], "umtHardMode", "Hard Mode") > 0) {
           note(this, "Hard Mode: +" + HARD_MODE_POINTS[hard] + " points.");
         }
-        if (hasCombo(this, "purist")) stageBonus(this, 30, "umtComboPurist", "Purist");
       }
       if (solved && levelOf(this, "leanBuild") > 0) {
         var pay = leanPayout(this);

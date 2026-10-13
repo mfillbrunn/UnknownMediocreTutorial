@@ -3013,8 +3013,10 @@
       reward
     };
   }
-  function cuddleV3HasSynergy(game, id) {
-    return Boolean(game?.state?.rewardSynergies?.includes(id));
+  // The reward pairs were retired for the schools (cuddle-schools.js): none
+  // pays out any more, even in a save that unlocked one.
+  function cuddleV3HasSynergy(_game, _id) {
+    return false;
   }
   function cuddleV3SynergyIsActive(game, id) {
     const upgrades = game?.state?.upgrades || {};
@@ -3039,9 +3041,8 @@
     const state = cuddleV3EnsureState(game);
     if (!state) return [];
     const owned = new Set(state.rewardSynergies);
-    const unlocked = CUDDLE_V3_SYNERGIES.filter(definition => (
-      !owned.has(definition.id) && cuddleV3SynergyIsActive(game, definition.id)
-    ));
+    // Retired (see cuddleV3HasSynergy): nothing unlocks any more.
+    const unlocked = [];
     unlocked.forEach(definition => owned.add(definition.id));
     state.rewardSynergies = [...owned];
     if (announce && unlocked.length) {
@@ -3924,21 +3925,9 @@
     state.rewardBookHistory = state.rewardBookHistory.slice(-200);
   }
 
-  function unlockGoldenTempoIfReady(game) {
-    const state = ensureBalanceState(game);
-    if (!state || state.rewardSynergies.includes(goldenTempoDefinition.id)) return [];
-    const upgrades = state.upgrades;
-    if (!((finiteNumber(upgrades.yellowPoints) > 0 || finiteNumber(upgrades.greenOnlyPoints) > 0)
-      && finiteNumber(upgrades.earlyRoundPoint) > 0)) {
-      return [];
-    }
-    state.rewardSynergies.push(goldenTempoDefinition.id);
-    state.synergyNotice = {
-      icon: "✨",
-      title: "Bonus combination unlocked",
-      message: `${goldenTempoDefinition.icon} ${goldenTempoDefinition.title}: ${goldenTempoDefinition.description}`
-    };
-    return [goldenTempoDefinition];
+  // Golden Tempo was retired with the other pairs (cuddle-schools.js).
+  function unlockGoldenTempoIfReady(_game) {
+    return [];
   }
 
   const originalHydrateState = prototype._hydrateState;

@@ -318,6 +318,43 @@
     }
   ]);
 
+  // Schools of tile magic. Every badge belongs to one school (or none);
+  // each level of a badge adds its rarity's weight to its school, and a
+  // school's points unlock its ranks. The perks themselves live in
+  // cuddle-schools.js.
+  const TIER_WEIGHT = Object.freeze({ common: 1, rare: 2, epic: 3, legendary: 5 });
+  const SCHOOLS = Object.freeze({
+    flint: { label: "Flint", color: "#ff8a5c", group: "Speed", blurb: "Strike early: strong openers and quick solves.",
+      ranks: [4, 9, 15], perks: ["Solve by guess 3: +10", "Solve by guess 3: +25", "Solve by guess 3: +60"] },
+    glass: { label: "Glass", color: "#7fd8f0", group: "Clues", blurb: "See through to the answer before you guess it.",
+      ranks: [4, 9, 15], perks: ["A grey vowel at stage start", "After guess 2: a yellow hint", "After guess 3: a green hint"] },
+    flora: { label: "Flora", color: "#7bd88f", group: "Deck tiles", blurb: "Tiles that grow in your deck and hand: lucky, idea, wave, Joker, mulligans.",
+      ranks: [4, 9, 15], perks: ["+1 lucky tile a stage", "+1 idea tile and +1 mulligan a stage", "Lucky tiles pay double"] },
+    slate: { label: "Slate", color: "#9aa3b5", group: "Elimination", blurb: "Rule letters out, cull them and wipe the board clean.",
+      ranks: [4, 9, 15], perks: ["Greys +1 point", "1 consonant ruled out at stage start", "Greys +3 points; Cuddle Meter fills 2 sooner"] },
+    ingot: { label: "Ingot", color: "#f6c956", group: "Money", blurb: "Earn, save and gamble.",
+      ranks: [4, 9, 15], perks: ["+$3 a solve", "+$8 a solve; Rainy Day cap +$10", "+$20 a solve; first reward refresh free"] },
+    brass: { label: "Brass", color: "#e0a458", group: "Quests", blurb: "Follow the compass: more quests and bigger quest rewards.",
+      ranks: [4, 9, 15], perks: ["Quests +10 points", "+1 surprise quest a stage", "Quests +40 points and +$5"] },
+    pearl: { label: "Pearl", color: "#efe6f7", group: "Restraint", blurb: "Fewer badges and harder play, for bigger rewards.",
+      ranks: [3, 6, 9], perks: ["Skipping a reward pays +10 more", "Hard-mode solves +15; Lean Build ignores 3 badges", "+30 a solve while you own 8 badges or fewer"] }
+  });
+  const SCHOOL_ORDER = Object.freeze(Object.keys(SCHOOLS));
+  const SCHOOL_MEMBERS = {
+    flint: ["storybookStart", "earlySolveBoost", "bigOpener", "momentum", "colourTrade", "boldOpener"],
+    glass: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "yellowHint", "alphabet-compass",
+      "oracleTiles", "lastLight", "allThemesBoss", "revealGreen"],
+    flora: ["luckyClover", "ideaTiles", "waveTiles", "fullCircle", "jokerCache", "jokerCacheLarge", "jokerTiles", "mulliganTiles",
+      "treasureMap", "extraMulligans", "mulliganSize", "handSizeBoost", "doubleMulligans", "biggerMulligans"],
+    slate: ["greyscale", "strikeThrough", "cullOne", "cullTwo", "cullRare", "consonantSweep", "freeVowelSweep",
+      "coachPossibleAnswers", "coachMeterThreshold", "coachMeterReward"],
+    ingot: ["pickpocket", "haggler", "wideChoice", "treasureHunter", "rainyDay", "doubleDown", "highRoller", "lastStand"],
+    brass: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment", "questCadence", "questPersistReward", "questDoublePick"],
+    pearl: ["hardMode", "mulliganValueBoost", "monksVow", "leanBuild"]
+  };
+  const SCHOOL_OF = {};
+  Object.entries(SCHOOL_MEMBERS).forEach(([school, ids]) => ids.forEach(id => { SCHOOL_OF[id] = school; }));
+
   // A few words per level, for the badge page's hexagons.
   const SHORT_LEVELS = {
     extraMulligans: ["+1 mulligan a stage", "+2 mulligans a stage", "+4 mulligans a stage"],
@@ -381,6 +418,7 @@
   for (const branch of BRANCHES) {
     for (const node of branch.nodes) {
       node.category = node.type;
+      node.school = SCHOOL_OF[node.id] || null;
       if (SHORT_LEVELS[node.id]) node.short = SHORT_LEVELS[node.id];
       if (Array.isArray(node.levels) && node.levels.length) {
         // Keyword style: "+1 mulligan per stage · Lv 2: +2 mulligans per stage · ..."
@@ -484,7 +522,35 @@
     });
   }
 
+  // Each school's points: every level of every badge in it, weighted by
+  // the badge's rarity (common 1, rare 2, epic 3, legendary 5).
+  function schoolPoints(game) {
+    const points = {};
+    SCHOOL_ORDER.forEach(id => { points[id] = 0; });
+    if (!game) return points;
+    for (const branch of BRANCHES) {
+      for (const node of branch.nodes) {
+        if (!node.school) continue;
+        const max = Number.isFinite(node.maxLevel) ? node.maxLevel : 3;
+        const level = Math.min(max, Math.floor(nodeLevel(game, node)));
+        if (level > 0) points[node.school] += level * (TIER_WEIGHT[node.tier] || 1);
+      }
+    }
+    return points;
+  }
+
+  // 0 (none yet) to 3.
+  function schoolRank(school, points) {
+    const ranks = SCHOOLS[school] ? SCHOOLS[school].ranks : [];
+    return ranks.filter(need => points >= need).length;
+  }
+
   window.CuddleSkillTree = Object.freeze({
+    SCHOOLS,
+    SCHOOL_ORDER,
+    TIER_WEIGHT,
+    schoolPoints,
+    schoolRank,
     BRANCHES,
     CATEGORIES,
     TYPES,

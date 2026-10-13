@@ -2644,6 +2644,15 @@
       const badge = document.createElement("span");
       badge.className = "cuddle-v8-category-badge";
       badge.textContent = category.label;
+      // Its school, and the points this pick adds to it.
+      const school = node.school && tree.SCHOOLS ? tree.SCHOOLS[node.school] : null;
+      if (school) {
+        const crest = document.createElement("b");
+        crest.className = "cuddle-v8-school";
+        crest.style.setProperty("--school", school.color);
+        crest.textContent = `${school.label} +${(tree.TIER_WEIGHT && tree.TIER_WEIGHT[node.tier]) || 1}`;
+        badge.append(" · ", crest);
+      }
       element.prepend(badge);
 
       if (!isBossReward && levelTagText) {
