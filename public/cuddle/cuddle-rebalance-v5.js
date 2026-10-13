@@ -151,7 +151,7 @@
     Object.freeze({
       id: IDS.jokerCacheLarge, key: IDS.jokerCacheLarge, icon: "\uD83C\uDCCF",
       title: "Large Joker Cache", name: "Large Joker Cache",
-      description: "Two more Joker cards in your deck every stage, on top of Small Joker Cache if you have it. Draw one for a Joker.",
+      description: "Every stage starts with a Joker card in your hand. It doesn't count toward your hand limit.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     // Letter culls, picked from the letters the engine can safely take out
@@ -208,7 +208,7 @@
       title: "Small Joker Cache",
       name: "Small Joker Cache",
       // Each level adds one Joker per stage: 1, 2, then 3 at level 3.
-      description: "A Joker card in your deck every stage: draw it for a Joker. Level 2: two. Level 3: four.",
+      description: "A Joker card in your deck every stage (it can be any letter). Level 2: two. Level 3: four.",
       maxLevel: 3,
       maxCount: 3,
       kind: "upgrade"
@@ -3151,7 +3151,7 @@
         mega.jokerPerRoundBonus = Math.max(0, Math.floor(asNumber(mega.jokerPerRoundBonus, 0))) + 2 * delta;
         mega.hasJokerUnlocked = true;
       }
-      appendNotice(game, "Large Joker Cache: two more Joker cards in your deck every stage.");
+      appendNotice(game, "Large Joker Cache: every stage starts with a free Joker card in your hand.");
     }
     const cullReward = customRewardById(id);
     if (cullReward && cullReward.cull && typeof game._removalCandidates === "function") {

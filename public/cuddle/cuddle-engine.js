@@ -2813,7 +2813,7 @@
       icon: "🃏",
       title: "Joker Squares",
       tier: "rare",
-      description: "Joker squares: a green or yellow on one gives +1 Joker.",
+      description: "Joker squares: a green or yellow on one gives +1 Joker card.",
       max: 3
     },
     {
@@ -4892,8 +4892,10 @@
   const composedCardCountsTowardHandLimit = CuddleGame.prototype.cardCountsTowardHandLimit;
   // A Joker card takes up a slot in the hand like any consonant (it used
   // to sit on top of the limit). The trims above never let one go.
+  // (Large Joker Cache's free starting Joker is the exception: it sits on
+  // top of the hand, cuddle-burdens.js.)
   CuddleGame.prototype.cardCountsTowardHandLimit = function cardCountsTowardHandLimitMega(card) {
-    if (card?.source === "joker") return true;
+    if (card?.source === "joker") return !card.freeJoker;
     return composedCardCountsTowardHandLimit.call(this, card);
   };
 

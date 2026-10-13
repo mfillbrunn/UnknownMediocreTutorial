@@ -683,7 +683,7 @@
     money: { glyph: "$", title: "Money square: a yellow here pays $2, a green $4" },
     points: { glyph: "●", title: "Points square (green dot): a yellow here pays 5 points, a green 10" },
     mulligan: { glyph: "↻", title: "Mulligan square: a yellow or green here gives an extra mulligan" },
-    joker: { glyph: "★", title: "Joker square: a yellow or green here gives you a Joker" },
+    joker: { glyph: "★", title: "Joker square: a yellow or green here gives you a Joker card" },
     hint: { glyph: "?", title: "Oracle square: a yellow or green here reveals a letter and its position" }
   });
 

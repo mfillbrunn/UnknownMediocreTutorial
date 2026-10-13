@@ -215,7 +215,7 @@
         tile.label = "+1";
         var mega = state.megaState || (state.megaState = {});
         mega.jokerCharges = Math.max(0, Number(mega.jokerCharges) || 0) + 1;
-        notes.push("Joker square +1 Joker");
+        notes.push("Joker square +1 Joker card");
       } else if (kind === "hint") {
         tile.payout = 1;
         tile.label = "Hint";

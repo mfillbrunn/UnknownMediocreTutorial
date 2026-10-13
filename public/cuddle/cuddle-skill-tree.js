@@ -159,7 +159,7 @@
           levels: ["Some squares on the board become mulligan squares. Get a green or yellow on one: +1 mulligan.", "Mulligan squares show up 2 times as often.", "Mulligan squares show up 4 times as often."],
           level: g => ledgerCount(g, "mulliganTiles") },
         { id: "jokerTiles", icon: "🃏", title: "Joker Squares", tier: "rare", type: "tiles", maxLevel: 3,
-          levels: ["Some squares on the board become Joker squares. Get a green or yellow on one: +1 Joker.", "Joker squares show up 2 times as often.", "Joker squares show up 4 times as often."],
+          levels: ["Some squares on the board become Joker squares. Get a green or yellow on one: +1 Joker card.", "Joker squares show up 2 times as often.", "Joker squares show up 4 times as often."],
           level: g => ledgerCount(g, "jokerTiles") },
         { id: "oracleTiles", icon: "🔮", title: "Oracle Squares", tier: "epic", type: "tiles", maxLevel: 3,
           levels: ["Some squares on the board become oracle squares. Get a green or yellow on one: a letter is placed for you.", "Oracle squares show up 2 times as often.", "Oracle squares show up 4 times as often."],
@@ -208,9 +208,9 @@
         // One Joker per level, straight up to three (by request, an even step
         // rather than a bigger third pick).
         { id: "jokerCache", icon: "🃏", title: "Small Joker Cache", tier: "rare", type: "letters", maxLevel: 3,
-          levels: ["1 Joker card goes in your deck each stage. Draw it to get a Joker (a card that can be any letter).", "2 Joker cards go in your deck each stage.", "4 Joker cards go in your deck each stage."],
-          description: "1 Joker card per level in your deck every stage: draw it for a Joker", level: g => v5Level(g, "umtJokerCache") },
-        { id: "jokerCacheLarge", icon: "🃏", title: "Large Joker Cache", tier: "legendary", type: "letters", maxLevel: 1, description: "+2 more Joker cards in your deck each stage (on top of Small Joker Cache).", level: g => v5Level(g, "umtJokerCacheLarge") },
+          levels: ["1 Joker card goes in your deck each stage. A Joker card can be any letter.", "2 Joker cards go in your deck each stage.", "4 Joker cards go in your deck each stage."],
+          description: "1 Joker card per level in your deck every stage", level: g => v5Level(g, "umtJokerCache") },
+        { id: "jokerCacheLarge", icon: "🃏", title: "Large Joker Cache", tier: "legendary", type: "letters", maxLevel: 1, description: "Every stage starts with a Joker card in your hand (a card that can be any letter). It doesn't count toward your hand limit.", level: g => v5Level(g, "umtJokerCacheLarge") },
         { id: "alphabet-compass", icon: "🧭", title: "Alphabet Compass", tier: "epic", type: "clues", maxLevel: 3,
           levels: ["After each guess, 1 tile shows if the answer's letter there comes earlier or later in the ABCs.", "After each guess, 2 tiles show earlier or later.", "After each guess, every tile shows earlier or later."],
           level: g => (window.CuddleCompass && g?.state ? window.CuddleCompass.copiesOwned(g.state) : 0) },
@@ -228,7 +228,7 @@
           levels: ["The Cuddle Meter fills up 2 tiles sooner.", "The Cuddle Meter fills up 4 tiles sooner.", "The Cuddle Meter fills up 6 tiles sooner."],
           level: g => Number(coachState(g)?.cuddleThresholdStacks) || 0 },
         { id: "coachMeterReward", icon: "🫶", title: "Bigger Cuddle", tier: "rare", type: "letters", maxLevel: 3,
-          levels: ["When the Cuddle Meter is full, it tests a consonant for you.", "When the Cuddle Meter is full, you get +1 Joker.", "When the Cuddle Meter is full, a letter is placed in its spot."],
+          levels: ["When the Cuddle Meter is full, it tests a consonant for you.", "When the Cuddle Meter is full, you get +1 Joker card.", "When the Cuddle Meter is full, a letter is placed in its spot."],
           level: g => Number(coachState(g)?.cuddleRewardTier) || 0 }
       ]
     },
@@ -387,7 +387,7 @@
     yellowHint: ["1 letter shown", "1 letter placed"],
     "alphabet-compass": ["1 compass tile", "2 compass tiles", "Every tile"],
     coachMeterThreshold: ["Meter 2 sooner", "Meter 4 sooner", "Meter 6 sooner"],
-    coachMeterReward: ["Meter tests a letter", "Meter gives a Joker", "Meter places a letter"],
+    coachMeterReward: ["Meter tests a letter", "Meter gives a Joker card", "Meter places a letter"],
     momentum: ["+4 per better guess", "+8 per better guess", "+15 per better guess"],
     bigOpener: ["+5 per opener colour", "+10 per opener colour", "+20 per opener colour"],
     lastStand: ["+25 last-guess solve", "+45 last-guess solve", "+100 last-guess solve"],
