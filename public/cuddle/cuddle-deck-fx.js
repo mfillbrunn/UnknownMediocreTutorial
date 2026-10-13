@@ -162,7 +162,7 @@
   // The deck tile stack, shared by the stage hand and the Duel hand.
   function deckHtml(count, key) {
     var left = Math.max(0, Number(count) || 0);
-    var label = left + " tile" + (left === 1 ? "" : "s") + " left in the deck";
+    var label = left + " card" + (left === 1 ? "" : "s") + " left in the deck";
     return '<div class="cuddle-deck' + (left ? "" : " is-empty") + '" data-deck-key="' + String(key).replace(/[^\w:.-]/g, "") + '" role="img" aria-label="' + label + '" title="' + label + '">'
       + '<span class="cuddle-deck-card"></span><span class="cuddle-deck-card"></span><span class="cuddle-deck-card"></span>'
       + '<b class="cuddle-deck-count">' + left + "</b></div>";

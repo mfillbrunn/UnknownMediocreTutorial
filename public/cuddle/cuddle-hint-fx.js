@@ -1,7 +1,7 @@
 /* Cuddle: a little animation for every new hint.
  *
  * Hints arrive from many places (Yellow Guesser Hint, Full Circle, idea
- * tiles, Last Light, the Cuddle Meter, Oracle tiles, Process of
+ * tiles, Last Light, the Cuddle Meter, Oracle squares, Process of
  * Elimination, quest rewards, world traits...). Without a cue the player
  * just finds a letter coloured in and wonders why. So after every render
  * this compares what the stage knows -- letters placed (green), letters in
@@ -85,7 +85,7 @@
   }
 
   // A hint giver names itself for the label (Yellow Guesser Hint, Full
-  // Circle, Idea tile...).
+  // Circle, Idea card...).
   function note(game, letter, label) {
     var state = game && game.state;
     if (!state || !letter || !label) return;

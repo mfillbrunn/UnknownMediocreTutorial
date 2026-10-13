@@ -335,7 +335,7 @@
         .map(card => (card && typeof card === "object"
           ? { ...card, glyph: glyphForLetter(card.glyph) }
           : null))
-        // Dead, lucky, idea, wave and Joker tiles (cuddle-burdens.js) have no letter but must survive a reload.
+        // Dead, lucky, idea, wave and Joker cards (cuddle-burdens.js) have no letter but must survive a reload.
         .filter(card => card && (/^[A-Z]$/.test(card.glyph) || card.dead === true || card.lucky === true
           || card.idea === true || card.wave === true || card.jokerTile === true));
       state.deck = normalizeCards(state.deck);
@@ -1443,11 +1443,11 @@
       const yellowValue = coloursDisabled ? 0 : YELLOW_POINTS + colourBonus + (Number(scoringUpgrades.yellowOnlyPoints) || 0);
       const greenValue = coloursDisabled ? 0 : GREEN_POINTS + colourBonus + (Number(scoringUpgrades.greenOnlyPoints) || 0);
       // Special board tiles (cuddle-points-money.js) pay out here, inside the
-      // scoring step, so a points tile counts toward this guess's row score
+      // scoring step, so a points square counts toward this guess's row score
       // -- and toward a solve on this very guess -- before the round
       // resolves further down.
       // A guess past the round's quick-solve window (see latePenalty below)
-      // earns nothing at all -- colours, special tiles, quests, solve
+      // earns nothing at all -- colours, special squares, quests, solve
       // bonuses -- only its penalty. (Stage bonuses paid through the
       // rebalance layer's addScoreBonus are refused the same way.)
       const lateGuess = this.state.guessesUsed + 1 > this._solveGuessThreshold();
@@ -2787,38 +2787,38 @@
       max: 3
     },
     // Special board tiles (cuddle-points-money.js). A run starts with only
-    // money and points tiles; these add more of them, and unlock the rarer
+    // money and points squares; these add more of them, and unlock the rarer
     // kinds -- each unlock taken again makes its kind turn up more often.
     {
       id: "treasureMap",
       icon: "🗺️",
       title: "Treasure Map",
       tier: "common",
-      description: "One more special tile on the board every stage. Level 2: two more. Level 3: four more.",
+      description: "One more special square on the board every stage. Level 2: two more. Level 3: four more.",
       max: 3
     },
     {
       id: "mulliganTiles",
       icon: "🔄",
-      title: "Mulligan Tiles",
+      title: "Mulligan Squares",
       tier: "common",
-      description: "Mulligan tiles: a green or yellow on one gives +1 mulligan.",
+      description: "Mulligan squares: a green or yellow on one gives +1 mulligan.",
       max: 3
     },
     {
       id: "jokerTiles",
       icon: "🃏",
-      title: "Joker Tiles",
+      title: "Joker Squares",
       tier: "rare",
-      description: "Joker tiles: a green or yellow on one gives +1 Joker.",
+      description: "Joker squares: a green or yellow on one gives +1 Joker.",
       max: 3
     },
     {
       id: "oracleTiles",
       icon: "🔮",
-      title: "Oracle Tiles",
+      title: "Oracle Squares",
       tier: "epic",
-      description: "Oracle tiles: a green or yellow on one places a letter.",
+      description: "Oracle squares: a green or yellow on one places a letter.",
       max: 3
     }
   ]);
@@ -5337,7 +5337,7 @@
   }
   // Which tiles of guess `guessIndex` (0-based) a curse, the stage's
   // challenge or mixed boss, or the boss's own window will mark -- for
-  // anything that must stay off them, like special tiles.
+  // anything that must stay off them, like special squares.
   CuddleGame.prototype.maskedColumnsForGuess = function maskedColumnsForGuess(guessIndex) {
     const state = this.state;
     if (!state) return [];

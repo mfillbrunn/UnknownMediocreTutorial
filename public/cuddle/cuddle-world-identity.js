@@ -28,7 +28,7 @@
     woods: { icon: "🌬️", name: "Whispers", stage: "Glade",
       text: "After your first guess in each stage, the woods whisper one letter that isn't in the answer." },
     meadow: { icon: "🍀", name: "In Bloom", stage: "Field",
-      text: "Two more special tiles grow on the board in every stage." },
+      text: "Two more special squares grow on the board in every stage." },
     marsh: { icon: "✨", name: "Fireflies", stage: "Pool",
       text: "Every stage opens with one vowel tested for free: you learn whether it's in the answer." },
     caverns: { icon: "👯", name: "Echoes", stage: "Grotto",
@@ -38,7 +38,7 @@
     library: { icon: "📖", name: "Footnotes", stage: "Shelf",
       text: "Every stage opens with one of the answer's themes shown." },
     swamp: { icon: "💀", name: "Sinking Mud", stage: "Bog",
-      text: "Three dead tiles sink into your deck in every stage. Mulligan them away." },
+      text: "Three dead cards sink into your deck in every stage. Mulligan them away." },
     citadel: { icon: "👁️", name: "Watchtower", stage: "Hall",
       text: "Guesses past the guess window cost 10 points more, but solving within it pays +15." },
     storm: { icon: "⚡", name: "Lightning", stage: "Ledge",
@@ -265,7 +265,7 @@
     };
   }
 
-  // In Bloom: read by cuddle-points-money.js when it lays out special tiles.
+  // In Bloom: read by cuddle-points-money.js when it lays out special squares.
   function extraSpecialTiles(game) {
     return traitOf(game) === "meadow" ? 2 : 0;
   }

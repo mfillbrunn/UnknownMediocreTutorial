@@ -6,7 +6,7 @@
  *   Trade           money for points on the spot, in every shop: +10
  *                   points for $10, +50 for $30, +200 for $100
  *   Mend            only while the run carries a deck burden
- *                   (cuddle-burdens.js): chisel out a dead tile, or sort
+ *                   (cuddle-burdens.js): chisel out a dead card, or sort
  *                   out the doubled consonants. Can be bought again while
  *                   there is something left to mend.
  * The stock is drawn per shop from larger pools (seeded by the run, saved
@@ -41,7 +41,7 @@
     { id: "roadMulligans", icon: "mulligan.svg", title: "Spare Mulligans", cost: 14, stages: 2,
       blurb: "+1 mulligan in each of your next two stages." },
     { id: "roadTrove", icon: "reward-coins.svg", title: "Treasure Trove", cost: 15, stages: 2,
-      blurb: "Two extra special tiles on the board in each of your next two stages." },
+      blurb: "Two extra special squares on the board in each of your next two stages." },
     { id: "roadWhisper", icon: "theme.svg", title: "Theme Whisper", cost: 10, stages: 2,
       blurb: "Your next two stages each reveal one theme of the answer." }
   ]);
@@ -96,13 +96,13 @@
       level: game => Math.max(0, int(coachOf(game).cuddleThresholdStacks)),
       apply: game => { const coach = coachOf(game); coach.cuddleThresholdStacks = Math.min(3, Math.max(0, int(coach.cuddleThresholdStacks)) + 1); } },
     { id: "keepTreasureMap", icon: "reward-green-value.svg", title: "Treasure Map", cost: 36, max: 3, bonus: "treasureMap",
-      blurb: "One more special tile appears on the board every stage." },
-    { id: "keepMulliganTiles", icon: "reward-quest-reroll.svg", title: "Mulligan Tiles", cost: 30, max: 3, bonus: "mulliganTiles",
-      blurb: "Mulligan tiles: a green or yellow on one gives +1 mulligan." },
-    { id: "keepJokerTiles", icon: "reward-joker-per-round.svg", title: "Joker Tiles", cost: 42, max: 3, bonus: "jokerTiles",
-      blurb: "Joker tiles: a green or yellow on one gives +1 Joker." },
-    { id: "keepOracleTiles", icon: "reward-coach-earlier-hint.svg", title: "Oracle Tiles", cost: 60, max: 3, bonus: "oracleTiles",
-      blurb: "Oracle tiles: a green or yellow on one places a letter." }
+      blurb: "One more special square appears on the board every stage." },
+    { id: "keepMulliganTiles", icon: "reward-quest-reroll.svg", title: "Mulligan Squares", cost: 30, max: 3, bonus: "mulliganTiles",
+      blurb: "Mulligan squares: a green or yellow on one gives +1 mulligan." },
+    { id: "keepJokerTiles", icon: "reward-joker-per-round.svg", title: "Joker Squares", cost: 42, max: 3, bonus: "jokerTiles",
+      blurb: "Joker squares: a green or yellow on one gives +1 Joker." },
+    { id: "keepOracleTiles", icon: "reward-coach-earlier-hint.svg", title: "Oracle Squares", cost: 60, max: 3, bonus: "oracleTiles",
+      blurb: "Oracle squares: a green or yellow on one places a letter." }
   ].map(item => (item.bonus
     ? Object.assign(item, {
       level: game => Math.max(0, int(bonuses(game)[item.bonus])),
@@ -127,7 +127,7 @@
     { id: "mendChisel", icon: "shop-chisel.svg", title: "Stone Chisel", cost: 20,
       blurb: game => {
         const left = burdenOf(game).dead;
-        return `Remove 1 dead tile from your deck for good (you carry ${left}).`;
+        return `Remove 1 dead card from your deck for good (you carry ${left}).`;
       },
       available: game => burdenOf(game).dead > 0,
       apply: game => window.CuddleBurdens.removeDead(game) },
@@ -155,7 +155,7 @@
       note: "Swap money for points on the spot" },
     // Filled from MEND_ITEMS, only while the run carries a deck burden.
     { id: "mend", items: [], count: 0, kind: "shop", title: "Mend your deck",
-      note: "Get rid of dead tiles and doubled consonants for good" }
+      note: "Get rid of dead cards and doubled consonants for good" }
   ]);
   const ALL_ITEMS = new Map([].concat(ROAD_ITEMS, BOSS_ITEMS, KEEP_ITEMS, TRADE_ITEMS).map(item => [item.id, item]));
   const SHELF_OF = new Map();

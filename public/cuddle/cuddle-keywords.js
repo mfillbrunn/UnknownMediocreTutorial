@@ -5,8 +5,8 @@
  * in bold, wherever it appears in that text, so a line reads at a glance:
  *   +5 points    green        +$3        money gold
  *   +1 mulligan  blue         +1 Joker   purple
- *   dead tile / doubled consonants  slate (a burden)
- *   lucky tile                      clover green
+ *   dead card / doubled consonants  slate (a burden)
+ *   lucky card                      clover green
  * Text is wrapped where it is drawn (a light pass after each render), so
  * every screen that shows these descriptions picks it up.
  */
@@ -44,7 +44,7 @@
   // One pattern, six kinds. Money first, so "$10" is never read as "10".
   // Numbers may carry a decimal part ("+0.5 points" is one keyword, not
   // "0." followed by "5 points").
-  var PATTERN = /([+−-]?\$\d[\d,]*(?:\.\d+)?)|([+−-]?\d+(?:\.\d+)?\s*(?:points?|pts?)\b)|((?:[+−-]?\d+\s+)?(?:free\s+)?mulligans?\b)|((?:[+−-]?\d+\s+)?jokers?\b)|((?:[+−-]?\d+\s+)?(?:dead tiles?|doubled consonants?)\b)|((?:[+−-]?\d+\s+)?lucky tiles?\b)/gi;
+  var PATTERN = /([+−-]?\$\d[\d,]*(?:\.\d+)?)|([+−-]?\d+(?:\.\d+)?\s*(?:points?|pts?)\b)|((?:[+−-]?\d+\s+)?(?:free\s+)?mulligans?\b)|((?:[+−-]?\d+\s+)?jokers?\b)|((?:[+−-]?\d+\s+)?(?:dead cards?|doubled consonants?)\b)|((?:[+−-]?\d+\s+)?lucky cards?\b)/gi;
   var KINDS = ["money", "points", "mulligan", "joker", "dead", "lucky"];
   var SKIP = /^(SCRIPT|STYLE|TEXTAREA|INPUT|SVG)$/i;
 

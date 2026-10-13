@@ -12,8 +12,8 @@
  *   Speed        I solve by guess 3: +10  II +25         III +60
  *   Hints        I a grey vowel at start  II yellow hint after guess 2
  *                                         III green hint after guess 3
- *   Tiles        I +1 lucky tile          II +1 idea tile, +1 mulligan
- *                                         III lucky tiles pay double
+ *   Tiles        I +1 lucky card          II +1 idea card, +1 mulligan
+ *                                         III lucky cards pay double
  *   Elimination  I greys +1 point         II 1 consonant ruled out at start
  *                                         III greys +3, Cuddle Meter 2 sooner
  *   Money        I +$3 a solve            II +$8, Rainy Day cap +$10
@@ -24,7 +24,7 @@
  *                                            Build ignores 3 badges
  *                                         III +30 a solve with 8 badges or fewer
  *
- * Perks that live inside another layer's effect (lucky and idea tiles,
+ * Perks that live inside another layer's effect (lucky and idea cards,
  * the meter, Rainy Day, Lean Build) ask perk(game, name) for their number.
  * Ranks are read live from the badges, so they follow Combine too.
  */

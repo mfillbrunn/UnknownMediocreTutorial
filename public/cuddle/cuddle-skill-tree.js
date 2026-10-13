@@ -75,7 +75,7 @@
     money: { label: "Money", color: "#f6c956", blurb: "Earn money, or spend less of it." },
     clues: { label: "Clues", color: "#5aa9ff", blurb: "Learn about the answer." },
     letters: { label: "Letters", color: "#c08bff", blurb: "Your hand, mulligans, Jokers and deck." },
-    tiles: { label: "Tiles", color: "#4fd1c5", blurb: "Special tiles on the board." },
+    tiles: { label: "Squares", color: "#4fd1c5", blurb: "Special squares on the board." },
     quests: { label: "Quests", color: "#f6a94a", blurb: "Quests and their rewards." },
     safety: { label: "Safety", color: "#fb7185", blurb: "Second chances." }
   });
@@ -152,17 +152,17 @@
           level: g => ledgerCount(g, "surprise-assignment") },
         // More special board tiles (cuddle-points-money.js).
         { id: "treasureMap", icon: "🗺️", title: "Treasure Map", tier: "rare", type: "tiles", maxLevel: 3,
-          levels: ["+1 special tile on the board every stage.", "+2 special tiles on the board every stage.", "+4 special tiles on the board every stage."],
+          levels: ["+1 special square on the board every stage.", "+2 special squares on the board every stage.", "+4 special squares on the board every stage."],
           level: g => ledgerCount(g, "treasureMap") },
         // Board tiles beyond money and points each need their unlock.
-        { id: "mulliganTiles", icon: "🔄", title: "Mulligan Tiles", tier: "common", type: "tiles", maxLevel: 3,
-          levels: ["Some board squares become mulligan tiles. Get a green or yellow on one: +1 mulligan.", "Mulligan tiles show up 2 times as often.", "Mulligan tiles show up 4 times as often."],
+        { id: "mulliganTiles", icon: "🔄", title: "Mulligan Squares", tier: "common", type: "tiles", maxLevel: 3,
+          levels: ["Some squares on the board become mulligan squares. Get a green or yellow on one: +1 mulligan.", "Mulligan squares show up 2 times as often.", "Mulligan squares show up 4 times as often."],
           level: g => ledgerCount(g, "mulliganTiles") },
-        { id: "jokerTiles", icon: "🃏", title: "Joker Tiles", tier: "rare", type: "tiles", maxLevel: 3,
-          levels: ["Some board squares become Joker tiles. Get a green or yellow on one: +1 Joker.", "Joker tiles show up 2 times as often.", "Joker tiles show up 4 times as often."],
+        { id: "jokerTiles", icon: "🃏", title: "Joker Squares", tier: "rare", type: "tiles", maxLevel: 3,
+          levels: ["Some squares on the board become Joker squares. Get a green or yellow on one: +1 Joker.", "Joker squares show up 2 times as often.", "Joker squares show up 4 times as often."],
           level: g => ledgerCount(g, "jokerTiles") },
-        { id: "oracleTiles", icon: "🔮", title: "Oracle Tiles", tier: "epic", type: "tiles", maxLevel: 3,
-          levels: ["Some board squares become oracle tiles. Get a green or yellow on one: a letter is placed for you.", "Oracle tiles show up 2 times as often.", "Oracle tiles show up 4 times as often."],
+        { id: "oracleTiles", icon: "🔮", title: "Oracle Squares", tier: "epic", type: "tiles", maxLevel: 3,
+          levels: ["Some squares on the board become oracle squares. Get a green or yellow on one: a letter is placed for you.", "Oracle squares show up 2 times as often.", "Oracle squares show up 4 times as often."],
           level: g => ledgerCount(g, "oracleTiles") }
       ]
     },
@@ -208,9 +208,9 @@
         // One Joker per level, straight up to three (by request, an even step
         // rather than a bigger third pick).
         { id: "jokerCache", icon: "🃏", title: "Small Joker Cache", tier: "rare", type: "letters", maxLevel: 3,
-          levels: ["1 Joker tile goes in your deck each stage. Draw it to get a Joker (a card that can be any letter).", "2 Joker tiles go in your deck each stage.", "4 Joker tiles go in your deck each stage."],
-          description: "1 Joker tile per level in your deck every stage: draw it for a Joker", level: g => v5Level(g, "umtJokerCache") },
-        { id: "jokerCacheLarge", icon: "🃏", title: "Large Joker Cache", tier: "legendary", type: "letters", maxLevel: 1, description: "+2 more Joker tiles in your deck each stage (on top of Small Joker Cache).", level: g => v5Level(g, "umtJokerCacheLarge") },
+          levels: ["1 Joker card goes in your deck each stage. Draw it to get a Joker (a card that can be any letter).", "2 Joker cards go in your deck each stage.", "4 Joker cards go in your deck each stage."],
+          description: "1 Joker card per level in your deck every stage: draw it for a Joker", level: g => v5Level(g, "umtJokerCache") },
+        { id: "jokerCacheLarge", icon: "🃏", title: "Large Joker Cache", tier: "legendary", type: "letters", maxLevel: 1, description: "+2 more Joker cards in your deck each stage (on top of Small Joker Cache).", level: g => v5Level(g, "umtJokerCacheLarge") },
         { id: "alphabet-compass", icon: "🧭", title: "Alphabet Compass", tier: "epic", type: "clues", maxLevel: 3,
           levels: ["After each guess, 1 tile shows if the answer's letter there comes earlier or later in the ABCs.", "After each guess, 2 tiles show earlier or later.", "After each guess, every tile shows earlier or later."],
           level: g => (window.CuddleCompass && g?.state ? window.CuddleCompass.copiesOwned(g.state) : 0) },
@@ -256,11 +256,11 @@
         { id: "boldOpener", icon: "🪄", title: "Bold Opener", tier: "epic", type: "clues", maxLevel: 1,
           description: "Your 1st guess can be any 5 letters, even if it isn't a real word.",
           level: g => powerLevel(g, "boldOpener") },
-        { id: "ideaTiles", icon: "💡", title: "Idea Tiles", tier: "rare", type: "clues", maxLevel: 3,
-          levels: ["1 idea tile goes in your deck. Mulligan it away to see one letter of the answer.", "2 idea tiles go in your deck.", "3 idea tiles go in your deck."],
+        { id: "ideaTiles", icon: "💡", title: "Idea Cards", tier: "rare", type: "clues", maxLevel: 3,
+          levels: ["1 idea card goes in your deck. Mulligan it away to see one letter of the answer.", "2 idea cards go in your deck.", "3 idea cards go in your deck."],
           level: g => powerLevel(g, "ideaTiles") },
-        { id: "waveTiles", icon: "🌊", title: "Wave Tiles", tier: "common", type: "letters", maxLevel: 3,
-          levels: ["1 wave tile goes in your deck. When you draw it, all your consonants are swapped for new ones.", "2 wave tiles go in your deck.", "4 wave tiles go in your deck."],
+        { id: "waveTiles", icon: "🌊", title: "Wave Cards", tier: "common", type: "letters", maxLevel: 3,
+          levels: ["1 wave card goes in your deck. When you draw it, all your consonants are swapped for new ones.", "2 wave cards go in your deck.", "4 wave cards go in your deck."],
           level: g => powerLevel(g, "waveTiles") },
         { id: "fullCircle", icon: "♻️", title: "Full Circle", tier: "epic", type: "clues", maxLevel: 1,
           description: "Once a stage, when your deck runs out and starts over, a letter is placed in its spot.",
@@ -285,7 +285,7 @@
           description: "Turns one of your playstyle badges into a random badge one rarity higher.",
           level: () => 0 },
         { id: "luckyClover", icon: "🍀", title: "Lucky Clover", tier: "rare", type: "points", maxLevel: 3,
-          levels: ["1 lucky tile goes in your deck. Have it in your hand when you solve: +10 points (mulligan it: +5 points).", "2 lucky tiles: +20 points each when you solve.", "4 lucky tiles: +40 points each when you solve."],
+          levels: ["1 lucky card goes in your deck. Have it in your hand when you solve: +10 points (mulligan it: +5 points).", "2 lucky cards: +20 points each when you solve.", "4 lucky cards: +40 points each when you solve."],
           level: g => powerLevel(g, "luckyClover") }
       ]
     },
@@ -331,8 +331,8 @@
       ranks: [4, 9, 15], perks: ["Solve by guess 3: +10 points", "Solve by guess 3: +25 points", "Solve by guess 3: +60 points"] },
     prism: { label: "Hints", color: "#58a8ff", blurb: "Learn about the answer before you guess it.",
       ranks: [4, 9, 15], perks: ["Each stage starts with 1 vowel crossed out", "After your 2nd guess, 1 letter turns yellow", "After your 3rd guess, 1 letter is placed (green)"] },
-    flora: { label: "Tiles", color: "#46cf86", blurb: "Special tiles in your deck and hand: lucky, idea, wave, Joker, mulligans.",
-      ranks: [4, 9, 15], perks: ["+1 lucky tile every stage", "+1 idea tile and +1 mulligan every stage", "Lucky tiles give double points"] },
+    flora: { label: "Cards", color: "#46cf86", blurb: "Special cards in your hand and deck (lucky, idea, wave, Joker), special squares on the board, and mulligans.",
+      ranks: [4, 9, 15], perks: ["+1 lucky card every stage", "+1 idea card and +1 mulligan every stage", "Lucky cards give double points"] },
     parchment: { label: "Elimination", color: "#c9ae84", blurb: "Rule letters out and cull them.",
       ranks: [4, 9, 15], perks: ["Each grey tile gives +1 point", "Each stage starts with 1 consonant crossed out", "Each grey tile gives +3 points, and the Cuddle Meter fills 2 tiles sooner"] },
     gold: { label: "Money", color: "#f5cf3a", blurb: "Earn, save and gamble money.",
@@ -377,10 +377,10 @@
     colourTrade: ["Greens +0.5", "Greens +1", "Greens +2"],
     greyscale: ["Greys pay 1", "Greys pay 2", "Greys pay 4"],
     "surprise-assignment": ["+1 quest a stage", "+2 quests a stage", "+4 quests a stage"],
-    treasureMap: ["+1 special tile", "+2 special tiles", "+4 special tiles"],
-    mulliganTiles: ["Mulligan tiles", "Mulligan tiles x2", "Mulligan tiles x4"],
-    jokerTiles: ["Joker tiles", "Joker tiles x2", "Joker tiles x4"],
-    oracleTiles: ["Oracle tiles", "Oracle tiles x2", "Oracle tiles x4"],
+    treasureMap: ["+1 special square", "+2 special squares", "+4 special squares"],
+    mulliganTiles: ["Mulligan squares", "Mulligan squares x2", "Mulligan squares x4"],
+    jokerTiles: ["Joker squares", "Joker squares x2", "Joker squares x4"],
+    oracleTiles: ["Oracle squares", "Oracle squares x2", "Oracle squares x4"],
     rainyDay: ["5% interest", "10% interest", "20% interest"],
     vowelBounty: ["+5 per vowel", "+10 per vowel", "+20 per vowel"],
     treasureHunter: ["Treasure +$20", "Treasure +$30", "Treasure +$50, every 2nd"],
@@ -393,13 +393,13 @@
     lastStand: ["+25 last-guess solve", "+45 last-guess solve", "+100 last-guess solve"],
     pickpocket: ["+$1 per yellow", "+$2 per yellow", "+$4 per yellow"],
     gracePeriod: ["1st late guess free", "2 late guesses free", "2 free, then half"],
-    ideaTiles: ["1 idea tile", "2 idea tiles", "3 idea tiles"],
-    jokerCache: ["1 Joker tile", "2 Joker tiles", "4 Joker tiles"],
+    ideaTiles: ["1 idea card", "2 idea cards", "3 idea cards"],
+    jokerCache: ["1 Joker card", "2 Joker cards", "4 Joker cards"],
     strikeThrough: ["+0.5 per letter ruled out", "+1 per letter ruled out", "+2 per letter ruled out"],
     highRoller: ["Bet 10", "Bet 20", "Bet 50"],
     hardMode: ["+10 hard-mode solve", "+20 hard-mode solve", "+40 hard-mode solve"],
-    waveTiles: ["1 wave tile", "2 wave tiles", "4 wave tiles"],
-    luckyClover: ["1 lucky tile, +10", "2 lucky tiles, +20 each", "4 lucky tiles, +40 each"],
+    waveTiles: ["1 wave card", "2 wave cards", "4 wave cards"],
+    luckyClover: ["1 lucky card, +10", "2 lucky cards, +20 each", "4 lucky cards, +40 each"],
     questCadence: ["Quests on 2, 3, 5", "Quests on 1, 2, 3, 5"]
   };
 
@@ -461,7 +461,8 @@
     }
   }
   // Names a power also goes by on a card.
-  const ALIASES = { "full alphabet compass": "alphabet-compass", "clear sight": "yellowHint", "color surge": "colourTrade", "grayscale": "greyscale" };
+  const ALIASES = { "idea tiles": "ideaTiles", "wave tiles": "waveTiles", "mulligan tiles": "mulliganTiles",
+    "joker tiles": "jokerTiles", "oracle tiles": "oracleTiles", "full alphabet compass": "alphabet-compass", "clear sight": "yellowHint", "color surge": "colourTrade", "grayscale": "greyscale" };
   for (const [alias, id] of Object.entries(ALIASES)) {
     if (NODES_BY_ID.has(id)) NODES_BY_NAME.set(alias, NODES_BY_ID.get(id));
   }

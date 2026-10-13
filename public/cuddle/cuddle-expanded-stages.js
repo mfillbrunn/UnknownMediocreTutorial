@@ -249,7 +249,7 @@
         opt("bold", "Study through the night", "Two rare letters leave the deck and every future answer for good, but the next Wordle must be solved within the guess limit.", [{ type: "upgradeId", id: "umtCullTwo" }, { type: "nextPenalty", key: "guess", amount: 1 }])
       ])
     }),
-    // Deck burdens (cuddle-burdens.js): a dead tile has no letter and only
+    // Deck burdens (cuddle-burdens.js): a dead card has no letter and only
     // leaves your hand through a mulligan; doubled consonants are second
     // copies of weak letters that crowd the good ones out.
     Object.freeze({
@@ -258,7 +258,7 @@
       flavor: "A mason offers a fine carving, if you'll carry one of her blank slabs.",
       options: Object.freeze([
         opt("safe", "Buy a pebble charm", "Gain $[12].", [{ type: "money", amount: 12 }]),
-        opt("bold", "Carry the blank slab", "Choose one of three **Epic** upgrades, but 1 dead tile joins your deck for the rest of the run.", [{ type: "deadTile", amount: 1 }, { type: "pickTier", tier: "epic" }])
+        opt("bold", "Carry the blank slab", "Choose one of three **Epic** upgrades, but 1 dead card joins your deck for the rest of the run.", [{ type: "deadTile", amount: 1 }, { type: "pickTier", tier: "epic" }])
       ])
     }),
     Object.freeze({
@@ -276,7 +276,7 @@
       flavor: "The old letter press still works. Mostly.",
       options: Object.freeze([
         opt("safe", "Oil the gears", "Two extra mulligans in the next Wordle.", [{ type: "nextBonus", key: "mulligan", amount: 2 }]),
-        opt("gamble", "Pull the lever", "60%: a random **Rare** upgrade. 40%: it jams, and 1 dead tile joins your deck for the rest of the run.", [{ type: "gamble", chance: 0.6, win: [{ type: "upgradeTier", tier: "rare" }], lose: [{ type: "deadTile", amount: 1 }] }])
+        opt("gamble", "Pull the lever", "60%: a random **Rare** upgrade. 40%: it jams, and 1 dead card joins your deck for the rest of the run.", [{ type: "gamble", chance: 0.6, win: [{ type: "upgradeTier", tier: "rare" }], lose: [{ type: "deadTile", amount: 1 }] }])
       ])
     })
   ]);
@@ -1338,7 +1338,7 @@
         { id: "pay", title: "Pay $10", description: "Start Easy after paying $10.", enabled: Number(game.state.cuddleMoney || 0) >= 10, upgrade: null },
         { id: "nextGuess", title: "Borrow a guess", description: "Start Easy, but the next normal Wordle begins one guess short.", enabled: true, upgrade: null },
         { id: "boss", title: "Strengthen the boss", description: "Start Easy, but the next boss is one guess tougher.", enabled: true, upgrade: null },
-        { id: "deadTile", title: "Take a dead tile", description: "Start Easy, but a dead tile joins your deck for the rest of the run. It has no letter; mulligan it away.", enabled: Boolean(window.CuddleBurdens), upgrade: null },
+        { id: "deadTile", title: "Take a dead card", description: "Start Easy, but a dead card joins your deck for the rest of the run. It has no letter; mulligan it away.", enabled: Boolean(window.CuddleBurdens), upgrade: null },
         { id: "upgrade", title: upgrade ? `Give up ${upgrade.title}` : "Give up an upgrade", description: upgrade ? `Surrender one level of ${upgrade.title}.` : "No reversible upgrade is available.", enabled: Boolean(upgrade), upgrade }
       ];
     }
@@ -1515,7 +1515,7 @@
       if (!duel) throw new Error("No Duel is active.");
       duel.tileState = buildDuelTileState(game, duel);
       // What the run had going in, so a won Duel can pay out what was
-      // earned inside it (points, money tiles, interest...).
+      // earned inside it (points, money squares, interest...).
       duel.tileBase = {
         score: Number(game.state && game.state.score) || 0,
         money: Number(game.state && game.state.cuddleMoney) || 0
@@ -1526,7 +1526,7 @@
       duel.draft = "";
       withDuelTileState(game, duel, state => {
         // The same stage start every Wordle gets -- every layer's upgrades,
-        // special tiles and the first quest -- with the Duel's own answer.
+        // special squares and the first quest -- with the Duel's own answer.
         const ownPick = Object.prototype.hasOwnProperty.call(game, "_pickSecret");
         const previousPick = game._pickSecret;
         game._pickSecret = () => duel.secret;
@@ -1570,7 +1570,7 @@
         });
         state.guessesUsed = duelPlayerGuesses(state);
         if (typeof game.drawToHandLimit === "function") game.drawToHandLimit();
-        state.lastMessage = "Build your Duel guess from the Cuddle tile hand.";
+        state.lastMessage = "Build your Duel guess from your cards.";
       });
       return true;
     }
@@ -1660,7 +1660,7 @@
           map.bossPenalty = Number(map.bossPenalty || 0) + 1;
           return { ok: true, message: "The next boss will be one guess tougher." };
         case "deadTile":
-          if (!window.CuddleBurdens) return { ok: false, error: "Dead tiles are unavailable." };
+          if (!window.CuddleBurdens) return { ok: false, error: "Dead cards are unavailable." };
           return { ok: true, message: window.CuddleBurdens.addDead(game, 1) };
         case "upgrade": {
           const result = surrenderUpgrade(game, sacrifice.upgrade);
@@ -1954,7 +1954,7 @@
       ensureDuelTileState(game, duel);
       withDuelTileState(game, duel, state => {
         const visible = feedback.slice();
-        // Special tiles are for the player's guesses: one sitting on the
+        // Special squares are for the player's guesses: one sitting on the
         // row the AI just took moves along with the rest still to come.
         if (actor === "ai" && Array.isArray(state.cuddleMoneyTiles)) {
           const aiRow = state.history.length;
@@ -1995,7 +1995,7 @@
           duel.turn = actor === "player" ? "ai" : "player";
           duel.message = actor === "player"
             ? "The AI is studying the visible feedback."
-            : "Your turn. Build a word from your Cuddle tiles.";
+            : "Your turn. Build a word from your cards.";
         }
         duel.history.push(jokerIndex >= 0
           ? { actor, word, feedback: feedback.slice(), jokerIndex }
@@ -2024,7 +2024,7 @@
 
     // The player's guess goes through the game's own submitDraft (with the
     // Duel's state swapped in), so every layer's per-guess effects run as
-    // on any stage: scoring, special tiles, quests, clues, compass marks,
+    // on any stage: scoring, special squares, quests, clues, compass marks,
     // Process of Elimination and the rest.
     function submitDuelTiles(game) {
       const ready = requirePlayerDuel(game);
@@ -2089,10 +2089,10 @@
       if (!ready.ok) return ready;
       const duel = ready.duel;
       const normalized = String(glyph || "").toUpperCase();
-      // A dead tile (cuddle-burdens.js) is selectable too: it can only be
+      // A dead card (cuddle-burdens.js) is selectable too: it can only be
       // mulliganed, and tapping it in play says so (the toggleDraft guard).
       const deadTile = Boolean(window.CuddleBurdens && (window.CuddleBurdens.isDeadGlyph(normalized) || window.CuddleBurdens.isLuckyGlyph(normalized)));
-      if (!/^[A-Z]$/.test(normalized) && normalized !== Engine.CUDDLE_JOKER_GLYPH && !deadTile) return { ok: false, error: "That tile is unavailable." };
+      if (!/^[A-Z]$/.test(normalized) && normalized !== Engine.CUDDLE_JOKER_GLYPH && !deadTile) return { ok: false, error: "That card is unavailable." };
       try {
         const result = withDuelTileState(game, duel, state => {
           const cards = cardsForDuelGlyph(game, state, normalized);
@@ -2113,7 +2113,7 @@
         safeSave(game);
         return result;
       } catch (error) {
-        return { ok: false, error: error && error.message ? error.message : "That Cuddle tile could not be selected." };
+        return { ok: false, error: error && error.message ? error.message : "That card could not be selected." };
       }
     }
 
@@ -2127,7 +2127,7 @@
         safeSave(game);
         return result;
       } catch (error) {
-        return { ok: false, error: error && error.message ? error.message : "That draft tile could not be removed." };
+        return { ok: false, error: error && error.message ? error.message : "That card could not be taken back." };
       }
     }
 
@@ -2152,7 +2152,7 @@
         safeSave(game);
         return result;
       } catch (error) {
-        return { ok: false, error: error && error.message ? error.message : "That tile could not be moved." };
+        return { ok: false, error: error && error.message ? error.message : "That card could not be moved." };
       }
     }
 
@@ -2165,7 +2165,7 @@
         safeSave(game);
         return result;
       } catch (error) {
-        return { ok: false, error: error && error.message ? error.message : "The last draft tile could not be removed." };
+        return { ok: false, error: error && error.message ? error.message : "The last card could not be taken back." };
       }
     }
 
@@ -2181,7 +2181,7 @@
       if (mulligansLeft <= 0) return { ok: false, error: "No mulligans remain in this Duel." };
       ready.duel.mulliganMode = true;
       ready.duel.mulliganSelection = [];
-      ready.duel.message = "Choose finite, undrafted tiles to replace.";
+      ready.duel.message = "Choose the cards you want to swap.";
       safeSave(game);
       return { ok: true };
     }
@@ -2191,7 +2191,7 @@
       if (!ready.ok) return ready;
       ready.duel.mulliganMode = false;
       ready.duel.mulliganSelection = [];
-      ready.duel.message = "Mulligan cancelled. Build your Duel guess from the Cuddle tiles.";
+      ready.duel.message = "Mulligan cancelled. Build your Duel guess from your cards.";
       safeSave(game);
       return { ok: true };
     }
@@ -2210,7 +2210,7 @@
         duel.mulliganMode = false;
         duel.mulliganSelection = [];
         if (window.CuddleDeckFx) window.CuddleDeckFx.shuffle();
-        duel.message = `Mulligan: replaced ${result.replacements} tile${result.replacements === 1 ? "" : "s"}. Build your guess.`;
+        duel.message = `Mulligan: swapped ${result.replacements} card${result.replacements === 1 ? "" : "s"}. Build your guess.`;
         safeSave(game);
         return result;
       } catch (error) {
@@ -2576,7 +2576,7 @@
     // The Duel board: every guess so far on ordinary board rows (the AI's
     // tagged "AI"), then the row being built -- your draft, or the AI's
     // row while it thinks.
-    // Special tiles (cuddle-points-money.js) as the main board draws them:
+    // Special squares (cuddle-points-money.js) as the main board draws them:
     // a faint symbol before the guess, the payout after.
     const DUEL_SPECIAL_GLYPHS = Object.freeze({ money: "$", points: "●", mulligan: "↻", joker: "★", hint: "?" });
     function duelSpecialTile(duel, row, column) {
@@ -2710,13 +2710,13 @@
       const position = positions.length
         ? `<span class="cuddle-card-position" aria-hidden="true">#${positions.join(",")}</span>`
         : "";
-      // A dead tile (cuddle-burdens.js): no letter, only good for a mulligan.
+      // A dead card (cuddle-burdens.js): no letter, only good for a mulligan.
       const dead = Boolean(window.CuddleBurdens && window.CuddleBurdens.isDeadGlyph(group.glyph));
       const lucky = Boolean(window.CuddleBurdens && window.CuddleBurdens.isLuckyGlyph(group.glyph));
       if (dead || lucky) {
         const label = lucky
-          ? `Lucky tile${group.cards.length > 1 ? ` ×${group.cards.length}` : ""}: no letter, can't be played.`
-          : `Dead tile${group.cards.length > 1 ? ` ×${group.cards.length}` : ""}: no letter, can't be played. Mulligan it away.`;
+          ? `Lucky card${group.cards.length > 1 ? ` ×${group.cards.length}` : ""}: no letter, can't be played.`
+          : `Dead card${group.cards.length > 1 ? ` ×${group.cards.length}` : ""}: no letter, can't be played. Mulligan it away.`;
         return (
           `<button type="button" class="cuddle-card ${lucky ? "is-lucky" : "is-dead"} umt-duel-hand-card${selectedCount ? " is-selected" : ""}" data-cuddle-campaign-action="expanded-duel-card" data-shop-item-id="${escapeHtml(group.glyph)}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${group.cards.length}"${disabled ? " disabled" : ""} aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">`
           + `<span class="cuddle-card-letter ${lucky ? "cuddle-card-lucky" : "cuddle-card-dead"}" aria-hidden="true">${lucky ? window.CuddleBurdens.cloverSvg() : window.CuddleBurdens.skullSvg()}</span>${group.cards.length > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${group.cards.length}</span>` : ""}</button>`
@@ -2768,7 +2768,7 @@
     }
 
     // Short labels for the Easy costs; the full wording is the tooltip.
-    const EASY_COST_LABELS = { pay: "Pay $10", nextGuess: "Next Wordle −1 guess", boss: "Next boss −1 guess", deadTile: "+1 dead tile" };
+    const EASY_COST_LABELS = { pay: "Pay $10", nextGuess: "Next Wordle −1 guess", boss: "Next boss −1 guess", deadTile: "+1 dead card" };
 
     // Three tiers, easiest first, each with its own colour and pips. Easy
     // costs something up front; Medium and Hard pay more on a win.

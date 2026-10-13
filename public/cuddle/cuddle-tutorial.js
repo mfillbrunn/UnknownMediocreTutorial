@@ -125,8 +125,9 @@
       },
       at: "top",
       cards: [
-        { title: "Find the secret word", text: "Each stage hides a five-letter word. Build a guess from your tiles and submit it. <span class=\"umt-tut-g\">Green</span>: right letter, right spot. <span class=\"umt-tut-y\">Yellow</span>: in the word, wrong spot. <span class=\"umt-tut-x\">Grey</span>: not in the word.", focus: ".cuddle-board", at: "bottom" },
-        { title: "Your tiles", text: "<b>Vowels</b> are reusable: they stay in your hand all stage, and turn <span class=\"umt-tut-r\">red</span> once they're ruled out. <b>Consonants</b> are used up when you guess with them, and new ones are drawn from your deck. The little pile shows how many are left.", focus: ".cuddle-hand" },
+        { title: "Find the secret word", text: "Each stage hides a five-letter word. Build a guess from your letter cards and submit it. <span class=\"umt-tut-g\">Green</span>: right letter, right spot. <span class=\"umt-tut-y\">Yellow</span>: in the word, wrong spot. <span class=\"umt-tut-x\">Grey</span>: not in the word.", focus: ".cuddle-board", at: "bottom" },
+        { title: "Your cards", text: "<b>Vowels</b> are reusable: they stay in your hand all stage, and turn <span class=\"umt-tut-r\">red</span> once they're ruled out. <b>Consonants</b> are used up when you guess with them, and new ones are drawn from your deck. The little pile shows how many are left.", focus: ".cuddle-hand" },
+        { title: "Cards, squares and tiles", text: "Three words, three places. <b>Cards</b> are in your hand and deck (letters, and special ones like lucky or Joker cards). <b>Squares</b> are spots on the board (some are special, like money squares). <b>Tiles</b> are the colours a guess shows: green, yellow or grey.", focus: ".cuddle-hand" },
         { title: "Mulligans", text: "Stuck with letters you can't use? A <b>mulligan</b> swaps some consonants for fresh ones from the deck. You get a few each stage, and any you don't use pay points at the end.", focus: ".cuddle-mulligan" },
         { title: "Quests", text: "Every few guesses a <b>quest</b> appears, like \"use two yellow letters\". Meet it with your next guess to pick a bonus. Tap a quest to read it in full.", focus: ".cuddle-quest-inline" }
       ]
