@@ -988,7 +988,9 @@
       const luckyDisabled = state.status !== "playing"
         || (actionMode !== "play" && selectable.length === 0)
         || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
-      const per = window.CuddleBurdens.LUCKY_POINTS[window.CuddleBurdens.luckyLevel(game)] || 0;
+      // Without Lucky Clover (a lucky card from the Cards school) it pays
+      // the first level's points.
+      const per = window.CuddleBurdens.LUCKY_POINTS[Math.max(1, window.CuddleBurdens.luckyLevel(game))] || 0;
       const luckyLabel = `Lucky card${luckyCount > 1 ? ` ×${luckyCount}` : ""}: no letter, can't be played. Still in hand when you solve: +${per} points each; mulliganed: +${window.CuddleBurdens.LUCKY_MULLIGAN_POINTS}.`;
       return `
       <button class="cuddle-card is-lucky${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${luckyCount}" ${luckyDisabled ? "disabled" : ""}
@@ -2150,6 +2152,9 @@
     const cardButton = event.target.closest("[data-card-glyph]");
     if (!cardButton || !game?.state || game.state.status !== "playing") return;
     const glyph = cardButton.dataset.cardGlyph;
+    // A dead, idea or lucky card can't be played: tapping it explains it.
+    // (Choosing cards for a mulligan still selects it.)
+    if (actionMode === "play" && showSpecialCardInfo(cardButton)) return;
     if (actionMode === "play") {
       const result = choosePlayCard(glyph);
       setUiMessage(result.ok ? "" : result.error);
@@ -2159,6 +2164,60 @@
     }
     render();
   }
+
+  // A small note over a special card: what it is and what it does.
+  function specialCardInfo(cardButton) {
+    const burdens = window.CuddleBurdens;
+    if (!burdens) return null;
+    if (cardButton.classList.contains("is-dead")) {
+      return { tone: "dead", title: "Dead card", lines: ["It has no letter, so it can't be played. It just takes up a spot in your hand.", "Mulligan it away to get rid of it."] };
+    }
+    if (cardButton.classList.contains("is-idea")) {
+      return { tone: "idea", title: "Idea card", lines: ["It has no letter, so it can't be played.", "Mulligan it away: one letter of the answer turns yellow."] };
+    }
+    if (cardButton.classList.contains("is-lucky")) {
+      const per = burdens.LUCKY_POINTS[Math.max(1, burdens.luckyLevel(game))] || 0;
+      return { tone: "lucky", title: "Lucky card", lines: ["It has no letter, so it can't be played.", `Keep it in your hand when you solve: +${per} points.`, `Or mulligan it away now: +${burdens.LUCKY_MULLIGAN_POINTS} points.`] };
+    }
+    return null;
+  }
+
+  function hideSpecialCardInfo() {
+    document.querySelectorAll(".umt-card-info").forEach(el => el.remove());
+  }
+
+  function showSpecialCardInfo(cardButton) {
+    const info = specialCardInfo(cardButton);
+    if (!info) return false;
+    const glyph = cardButton.dataset.cardGlyph;
+    const open = document.querySelector(".umt-card-info");
+    hideSpecialCardInfo();
+    // A second tap on the same card closes it.
+    if (open && open.dataset.glyph === glyph) return true;
+    const box = cardButton.getBoundingClientRect();
+    const note = document.createElement("div");
+    note.className = `umt-card-info is-${info.tone}`;
+    note.dataset.glyph = glyph;
+    note.setAttribute("role", "note");
+    note.innerHTML = `<strong>${escapeHtml(info.title)}</strong>`
+      + info.lines.map(line => `<span>${goldenMoney(escapeHtml(line)).replace(/[+-]?\d+ points?/g, match => `<b class="is-points">${match}</b>`)}</span>`).join("");
+    document.body.appendChild(note);
+    const width = note.offsetWidth;
+    const left = Math.min(window.innerWidth - width - 8, Math.max(8, box.left + box.width / 2 - width / 2));
+    note.style.left = `${left}px`;
+    note.style.top = `${Math.max(8, box.top - note.offsetHeight - 10)}px`;
+    note.style.setProperty("--arrow", `${box.left + box.width / 2 - left}px`);
+    setTimeout(hideSpecialCardInfo, 6000);
+    return true;
+  }
+
+  // Any other tap, a scroll or a re-render puts the note away.
+  document.addEventListener("pointerdown", event => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (target && (target.closest(".umt-card-info") || target.closest(".cuddle-card.is-dead, .cuddle-card.is-idea, .cuddle-card.is-lucky"))) return;
+    hideSpecialCardInfo();
+  }, true);
+  window.addEventListener("scroll", hideSpecialCardInfo, true);
 
   // A refused tap (a second Joker in one word) shakes the tile keyboard.
   // Runs a frame later so it lands on the freshly rendered hand; also used
