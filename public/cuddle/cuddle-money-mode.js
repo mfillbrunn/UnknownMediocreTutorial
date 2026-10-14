@@ -727,12 +727,18 @@
     tile(entry.yellowCount, rates.yellow, asNumber(entry.yellowCount, 0) === 1 ? "yellow tile" : "yellow tiles");
     tile(entry.greyCount, rates.grey, asNumber(entry.greyCount, 0) === 1 ? "grey tile" : "grey tiles");
 
-    // Anything the tile lines can't account for (an older save with no
-    // tileRates, or a bonus folded into scoreDelta by another layer) still
-    // has to add up, so the remainder rides in as one honest line.
+    // Points squares on the board this guess hit (a yellow pays 5, a
+    // green 10) are part of the row's points too.
+    var squares = Math.round(asNumber(entry.squarePoints, 0));
+    if (squares) lines.push({ label: "Points square", detail: "a green or yellow on the square", amount: squares });
+
+    // Anything the lines above can't account for (an older save with no
+    // tileRates or squarePoints, or a bonus folded into scoreDelta by
+    // another layer) still has to add up, so the remainder rides in as one
+    // honest line -- most often a points square from an older save.
     var tileTotal = lines.reduce(function sum(total, line) { return total + line.amount; }, 0);
     var remainder = Math.round(asNumber(entry.scoreDelta, 0)) - tileTotal;
-    if (remainder) lines.push({ label: "Tiles", amount: remainder });
+    if (remainder) lines.push({ label: "Other points", detail: "usually a points square", amount: remainder });
 
     var extra = function addExtra(amount, label, detail) {
       var value = Math.round(asNumber(amount, 0));

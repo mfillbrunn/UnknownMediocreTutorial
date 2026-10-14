@@ -1538,6 +1538,9 @@
         // guesses in the same boss round are ordinary again.
         bossActive: bossActiveThisGuess,
         scoreDelta,
+        // Points squares hit by this guess (part of scoreDelta), so the
+        // cash-out can name them.
+        squarePoints: tilePoints,
         latePenalty,
         yellowCount,
         greenCount,
