@@ -19,6 +19,8 @@
   if (window.CuddleHintFx) return;
 
   var COLOURS = { green: "#3fbf6f", yellow: "#f6c956", grey: "#787c7e" };
+  // The hand card's class for each kind of hint (cuddle-ui.js renderHandCard).
+  var STATUS_CLASS = { green: "is-card-green", yellow: "is-card-yellow", grey: "is-card-red" };
   var VOWELS = "AEIOU";
 
   function activeGame() {
@@ -332,7 +334,21 @@
     // Vowels ruled out by a free test are hints too; keep the burst short.
     var shown = fresh.slice(0, 4);
     var letters = shown.map(function l(item) { return item.letter; });
-    var held = holdHand(letters, before, (shown.length - 1) * 260 + LAND_MS);
+    // A hint handed out after the hand was drawn (the Yellow Guesser Hint
+    // comes in right after the first guess's render) leaves its card in
+    // the old colour until something redraws the screen. Once the hint has
+    // landed, the screen is redrawn so the card shows it.
+    var stale = shown.some(function outdated(item) {
+      var card = targetFor(item);
+      return card && card.classList && card.classList.contains("cuddle-card") && !card.classList.contains(STATUS_CLASS[item.kind]);
+    });
+    var landMs = (shown.length - 1) * 260 + LAND_MS;
+    var held = holdHand(letters, before, landMs);
+    if (stale) {
+      setTimeout(function redraw() {
+        try { window.dispatchEvent(new Event("cuddle:campaign-update")); } catch (_error) { /* next render shows it */ }
+      }, landMs + (held ? SLIDE_MS + 40 : 0));
+    }
     shown.forEach(function each(item, index) {
       play(item, sourceOf(state, item), index * 260, held ? before[item.letter] : null);
     });

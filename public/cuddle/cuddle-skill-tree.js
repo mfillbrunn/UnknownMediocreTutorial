@@ -159,7 +159,7 @@
           levels: ["Some squares on the board become mulligan squares. Get a green or yellow on one: +1 mulligan.", "Mulligan squares show up 2 times as often.", "Mulligan squares show up 4 times as often."],
           level: g => ledgerCount(g, "mulliganTiles") },
         { id: "jokerTiles", icon: "🃏", title: "Joker Squares", tier: "rare", type: "tiles", maxLevel: 3,
-          levels: ["Some squares on the board become Joker squares. Get a green or yellow on one: +1 Joker.", "Joker squares show up 2 times as often.", "Joker squares show up 4 times as often."],
+          levels: ["Some squares on the board become Joker squares. Get a green or yellow on one: +1 Joker card.", "Joker squares show up 2 times as often.", "Joker squares show up 4 times as often."],
           level: g => ledgerCount(g, "jokerTiles") },
         { id: "oracleTiles", icon: "🔮", title: "Oracle Squares", tier: "epic", type: "tiles", maxLevel: 3,
           levels: ["Some squares on the board become oracle squares. Get a green or yellow on one: a letter is placed for you.", "Oracle squares show up 2 times as often.", "Oracle squares show up 4 times as often."],
@@ -208,9 +208,9 @@
         // One Joker per level, straight up to three (by request, an even step
         // rather than a bigger third pick).
         { id: "jokerCache", icon: "🃏", title: "Small Joker Cache", tier: "rare", type: "letters", maxLevel: 3,
-          levels: ["1 Joker card goes in your deck each stage. Draw it to get a Joker (a card that can be any letter).", "2 Joker cards go in your deck each stage.", "4 Joker cards go in your deck each stage."],
-          description: "1 Joker card per level in your deck every stage: draw it for a Joker", level: g => v5Level(g, "umtJokerCache") },
-        { id: "jokerCacheLarge", icon: "🃏", title: "Large Joker Cache", tier: "legendary", type: "letters", maxLevel: 1, description: "+2 more Joker cards in your deck each stage (on top of Small Joker Cache).", level: g => v5Level(g, "umtJokerCacheLarge") },
+          levels: ["1 Joker card goes in your deck each stage. A Joker card can be any letter.", "2 Joker cards go in your deck each stage.", "4 Joker cards go in your deck each stage."],
+          description: "1 Joker card per level in your deck every stage", level: g => v5Level(g, "umtJokerCache") },
+        { id: "jokerCacheLarge", icon: "🃏", title: "Large Joker Cache", tier: "legendary", type: "letters", maxLevel: 1, description: "Every stage starts with a Joker card in your hand (a card that can be any letter). It doesn't count toward your hand limit.", level: g => v5Level(g, "umtJokerCacheLarge") },
         { id: "alphabet-compass", icon: "🧭", title: "Alphabet Compass", tier: "epic", type: "clues", maxLevel: 3,
           levels: ["After each guess, 1 tile shows if the answer's letter there comes earlier or later in the ABCs.", "After each guess, 2 tiles show earlier or later.", "After each guess, every tile shows earlier or later."],
           level: g => (window.CuddleCompass && g?.state ? window.CuddleCompass.copiesOwned(g.state) : 0) },
@@ -228,7 +228,7 @@
           levels: ["The Cuddle Meter fills up 2 tiles sooner.", "The Cuddle Meter fills up 4 tiles sooner.", "The Cuddle Meter fills up 6 tiles sooner."],
           level: g => Number(coachState(g)?.cuddleThresholdStacks) || 0 },
         { id: "coachMeterReward", icon: "🫶", title: "Bigger Cuddle", tier: "rare", type: "letters", maxLevel: 3,
-          levels: ["When the Cuddle Meter is full, it tests a consonant for you.", "When the Cuddle Meter is full, you get +1 Joker.", "When the Cuddle Meter is full, a letter is placed in its spot."],
+          levels: ["When the Cuddle Meter is full, it tests a consonant for you.", "When the Cuddle Meter is full, you get +1 Joker card.", "When the Cuddle Meter is full, a letter is placed in its spot."],
           level: g => Number(coachState(g)?.cuddleRewardTier) || 0 }
       ]
     },
@@ -328,19 +328,19 @@
   // Each school has its own colour, so badges read as sorted by colour.
   const SCHOOLS = Object.freeze({
     flint: { label: "Speed", color: "#ff5f4f", blurb: "Strong openers and quick solves.",
-      ranks: [4, 9, 15], perks: ["Solve by guess 3: +10 points", "Solve by guess 3: +25 points", "Solve by guess 3: +60 points"] },
+      ranks: [4, 9, 15], perks: ["Solve by guess 3: +10 points", "Solve by guess 3: +1 mulligan next stage", "Solve by guess 3: your next stage starts with 1 letter placed"] },
     prism: { label: "Hints", color: "#58a8ff", blurb: "Learn about the answer before you guess it.",
-      ranks: [4, 9, 15], perks: ["Each stage starts with 1 vowel crossed out", "After your 2nd guess, 1 letter turns yellow", "After your 3rd guess, 1 letter is placed (green)"] },
+      ranks: [4, 9, 15], perks: ["Each stage starts with 1 vowel crossed out", "After your 2nd guess, 1 letter turns yellow", "Once per stage, tap a consonant in your hand to test it"] },
     flora: { label: "Cards", color: "#46cf86", blurb: "Special cards in your hand and deck (lucky, idea, wave, Joker), special squares on the board, and mulligans.",
-      ranks: [4, 9, 15], perks: ["+1 lucky card every stage", "+1 idea card and +1 mulligan every stage", "Lucky cards give double points"] },
+      ranks: [4, 9, 15], perks: ["+1 lucky card every stage", "+1 idea card and +1 mulligan every stage", "Your first mulligan each stage is free, and each stage starts with a Joker card"] },
     parchment: { label: "Elimination", color: "#c9ae84", blurb: "Rule letters out and cull them.",
-      ranks: [4, 9, 15], perks: ["Each grey tile gives +1 point", "Each stage starts with 1 consonant crossed out", "Each grey tile gives +3 points, and the Cuddle Meter fills 2 tiles sooner"] },
+      ranks: [4, 9, 15], perks: ["Each grey tile gives +1 point", "Each stage starts with 1 consonant crossed out", "After each guess, crossed-out consonants in your hand are swapped for new cards"] },
     gold: { label: "Money", color: "#f5cf3a", blurb: "Earn, save and gamble money.",
-      ranks: [4, 9, 15], perks: ["Each solve gives +$3", "Each solve gives +$8, and Rainy Day Fund can pay $10 more", "Each solve gives +$20, and your first reward refresh is free"] },
+      ranks: [4, 9, 15], perks: ["Each solve gives +$3", "Everything in the shop costs 20% less", "After each solve, earn 10% interest on your money (up to +$15)"] },
     brass: { label: "Quests", color: "#ef8a34", blurb: "More quests and bigger quest rewards.",
-      ranks: [4, 9, 15], perks: ["Each quest you finish gives +10 points", "+1 surprise quest every stage", "Each quest you finish gives +40 points and +$5"] },
+      ranks: [4, 9, 15], perks: ["Each quest you finish gives +10 points", "Quest reward screens show 1 more choice", "Each quest you finish gives +1 mulligan; finish 2 in a stage for +1 Joker card"] },
     pearl: { label: "Restraint", color: "#e7a2ee", blurb: "Fewer badges and harder play, for bigger rewards.",
-      ranks: [3, 6, 9], perks: ["Skipping a reward gives +10 points more", "A hard-mode solve gives +15 points, and Lean Build ignores 3 of your badges", "Each solve gives +30 points while you have 8 badges or fewer"] }
+      ranks: [3, 6, 9], perks: ["Skipping a reward gives +10 points more", "Solve without using a mulligan: +15 points", "After you skip a reward, the next reward screen is all Epic cards"] }
   });
   // Badges that belong to no school.
   const SCHOOLLESS = Object.freeze({ label: "General", color: "#9d97b0", blurb: "General tools that belong to no school." });
@@ -387,7 +387,7 @@
     yellowHint: ["1 letter shown", "1 letter placed"],
     "alphabet-compass": ["1 compass tile", "2 compass tiles", "Every tile"],
     coachMeterThreshold: ["Meter 2 sooner", "Meter 4 sooner", "Meter 6 sooner"],
-    coachMeterReward: ["Meter tests a letter", "Meter gives a Joker", "Meter places a letter"],
+    coachMeterReward: ["Meter tests a letter", "Meter gives a Joker card", "Meter places a letter"],
     momentum: ["+4 per better guess", "+8 per better guess", "+15 per better guess"],
     bigOpener: ["+5 per opener colour", "+10 per opener colour", "+20 per opener colour"],
     lastStand: ["+25 last-guess solve", "+45 last-guess solve", "+100 last-guess solve"],

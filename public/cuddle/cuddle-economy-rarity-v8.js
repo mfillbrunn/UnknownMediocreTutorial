@@ -1469,14 +1469,14 @@
       setDescription(def, "Begin every stage with one Joker in the active pouch.");
       replaceHandlers(def, "wild-card");
     } else if (name === "softer cuddle meter") {
-      setDescription(def, "The Cuddle Meter fills sooner: 2 fewer tiles, then 4, then 6 at level 3 (Hard: 12 → 10 → 8 → 6).");
+      setDescription(def, "The Cuddle Meter fills up 2 tiles sooner. Level 2: 4 tiles sooner. Level 3: 6 tiles sooner.");
       setMaxStack(def, 6);
       replaceHandlers(def, "soft-meter");
     } else if (name === "bigger cuddle") {
-      setDescription(def, "Upgrades what a full Cuddle Meter gives: a free mulligan, then a random consonant tested, then a Joker, then a letter in its exact place.");
+      setDescription(def, "Upgrades what a full Cuddle Meter gives: a free mulligan, then a random consonant tested, then a Joker card, then a letter in its exact place.");
       setMaxStack(def, 3);
     } else if (name === "joker cache") {
-      setDescription(def, "One extra Joker every stage.");
+      setDescription(def, "One extra Joker card every stage.");
       replaceHandlers(def, "joker-cache");
     }
 
@@ -2292,7 +2292,7 @@
   function grantMeterReward(state, context, level) {
     switch (level) {
       case 0: addMulligans(state, 1); showMessage("Cuddle Meter: +1 mulligan"); return true;
-      case 1: addJokers(state, 1); showMessage("Cuddle Meter: +1 Joker"); return true;
+      case 1: addJokers(state, 1); showMessage("Cuddle Meter: +1 Joker card"); return true;
       default: grantYellowHint(state, context); showMessage("Cuddle Meter: hint"); return true;
     }
   }

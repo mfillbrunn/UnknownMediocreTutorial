@@ -345,7 +345,7 @@
       id: "jokerToken",
       icon: "🃏",
       title: "Joker",
-      description: "+1 Joker: a card that can be any letter. It stays until you use it."
+      description: "+1 Joker card: a card that can be any letter. It stays until you use it."
     }
   ];
 

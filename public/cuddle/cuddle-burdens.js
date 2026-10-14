@@ -255,8 +255,10 @@
   // Joker Cache's Jokers, now dealt as deck tiles: 1, 2, then 4 for
   // Small, two more for Large. The engine's stage-start grant leaves these out
   // (see _deckJokerCount, read in cuddle-engine.js).
+  // Small Joker Cache's Joker cards in the deck: 1, 2, then 4. (Large
+  // Joker Cache hands a free Joker card out at stage start instead.)
   function deckJokers(game) {
-    return TILES_BY_LEVEL[powerLevel(game, "jokerCache")] + 2 * powerLevel(game, "jokerCacheLarge", 1);
+    return TILES_BY_LEVEL[powerLevel(game, "jokerCache")];
   }
 
   function ascensionDead(game) {
@@ -385,6 +387,36 @@
       state.hand.filter(isJokerTile).forEach(function open(card) { cashJokerTile(game, card, true); });
     } catch (error) {
       console.warn("Cuddle burdens: dealing failed.", error);
+    }
+    return result;
+  };
+
+  // -- Large Joker Cache: a free Joker card at stage start ----------------
+  // Every stage starts with a Joker card in your hand, on top of your hand
+  // (it doesn't count toward the hand limit). If a Joker card is already
+  // there, this one is added to it as one more use.
+  var baseBeginRound = proto._beginRound;
+  proto._beginRound = function beginRoundWithStartingJoker() {
+    var result = baseBeginRound.apply(this, arguments);
+    try {
+      var state = this.state;
+      if (state && state.status === "playing" && !inDuel(state) && powerLevel(this, "jokerCacheLarge", 1) > 0) {
+        var key = [state.runId || "", state.round || 0, state.secret || ""].join(":");
+        if (state.umtStartJoker !== key) {
+          state.umtStartJoker = key;
+          var glyph = Engine.CUDDLE_JOKER_GLYPH;
+          var held = state.hand.find(function joker(item) { return item.source === "joker" && item.glyph === glyph; });
+          if (held) {
+            var mega = state.megaState || (state.megaState = {});
+            mega.jokerCharges = Math.max(0, Number(mega.jokerCharges) || 0) + 1;
+            held.freeJoker = true;
+          } else if (glyph) {
+            state.hand.push({ id: this._nextId("joker"), glyph: glyph, source: "joker", freeJoker: true });
+          }
+        }
+      }
+    } catch (error) {
+      console.warn("Cuddle burdens: the starting Joker failed.", error);
     }
     return result;
   };
@@ -594,9 +626,9 @@
     return result;
   };
 
-  // The engine's stage-start Joker grant skips the ones dealt as tiles.
-  // (Only the cache's own share of the per-stage grant -- one a Small
-  // level, two for Large -- whatever count of tiles that buys.)
+  // The engine's stage-start Joker grant skips the caches' share of it
+  // (one a Small level, two for Large): Small deals Joker cards into the
+  // deck, Large hands out its own free Joker card (below).
   proto._deckJokerCount = function deckJokerCount() {
     return inDuel(this.state) ? 0 : powerLevel(this, "jokerCache") + 2 * powerLevel(this, "jokerCacheLarge", 1);
   };

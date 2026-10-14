@@ -137,7 +137,7 @@
     lastLight: "Last letter revealed",
     yellowHint: "Reveals 1 letter",
     jokerCache: "+1 Joker card in your deck per level",
-    jokerCacheLarge: "+2 Joker cards in your deck",
+    jokerCacheLarge: "A free Joker card every stage",
     "alphabet-compass": "Earlier / later hints",
     consonantSweep: "Rules out 1 consonant per guess",
     coachPossibleAnswers: "Shows answers left",

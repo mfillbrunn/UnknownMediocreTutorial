@@ -954,7 +954,7 @@
     const threshold = typeof window.CuddleCoachExpansion?.meterThreshold === "function"
       ? integer(window.CuddleCoachExpansion.meterThreshold(), 12)
       : 12;
-    const rewards = ["a free mulligan", "a consonant test", "a Joker", "a green hint"];
+    const rewards = ["a free mulligan", "a consonant test", "a Joker card", "a green hint"];
     const meterReward = rewards[Math.max(0, Math.min(3, integer(coach.cuddleRewardTier, 0)))];
     if (hints.total) addStatBadge(badges, "Hints each stage", `${hints.total} (${hints.detail})`);
     const jokers = Math.max(0, integer(mega.jokerPerRoundBonus, 0));
@@ -1182,7 +1182,7 @@
     Object.freeze({ id: "coachBossTenLetterCull", icon: "✂️", title: "Five-Letter Cull", cost: 24, kind: "boss", description: "Save a five-letter cull for the next boss." }),
     Object.freeze({ id: "coachBossUnlimitedMulligans", icon: "♾️", title: "Regular Wordle Hands", cost: 28, kind: "boss", description: "Save unlimited mulligans for the next boss." }),
     Object.freeze({ id: "coachShopPossibleAnswers", icon: "🎧", title: "Secrets Counter", cost: 44, kind: "upgrade", rarity: "bronze", description: "Unlock the exact Secrets Remaining counter for this run." }),
-    Object.freeze({ id: "coachShopMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", cost: 56, kind: "upgrade", rarity: "gold", description: "The Cuddle Meter fills sooner: 2 fewer tiles, then 4, then 7 at level 3." })
+    Object.freeze({ id: "coachShopMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", cost: 56, kind: "upgrade", rarity: "gold", description: "The Cuddle Meter fills up 2 tiles sooner. Level 2: 4 tiles sooner. Level 3: 6 tiles sooner." })
   ]);
   const SHOP_BY_ID = new Map(SHOP_ITEMS.map(item => [item.id, item]));
   const UPGRADE_MAX = Object.freeze({

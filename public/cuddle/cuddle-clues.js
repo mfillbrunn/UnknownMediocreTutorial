@@ -327,6 +327,12 @@
         && !(typeof game.presetPickIsEarly === "function" && game.presetPickIsEarly());
       chips.push({ icon: "scroll", label: "Open Trial", text: pickable ? "Answer is one of (tap one to answer now)" : "Answer is one of", words: openList, ruledOut: out, pickable, tone: "preset" });
     }
+    // Hints rank III: once a stage, tap a consonant to test it.
+    const testable = window.CuddleSchools && typeof window.CuddleSchools.testableLetters === "function"
+      ? window.CuddleSchools.testableLetters(game) : [];
+    if (testable.length) {
+      chips.push({ icon: "magnifier", label: "Hints rank", text: "Test a card:", tests: testable, tone: "test" });
+    }
     if (level(game, IDS.mistakeShield) > 0 && shieldApplies(game)) {
       chips.push({ icon: "shield", label: "Mistake Shield", text: record.shieldUsed ? "Shield used" : "Shield ready", tone: record.shieldUsed ? "spent" : "" });
     }
@@ -360,6 +366,7 @@
         if (flip) flippedSweepKey = key;
         return `<b class="umt-clue-letter${latest ? " is-new" : ""}${flip ? " is-flipping" : ""}">${escapeHtml(letter)}</b>`;
       }).join("") : "")
+      + (chip.tests ? chip.tests.map(letter => `<button type="button" class="umt-clue-test" data-school-test="${escapeHtml(letter)}" title="Test ${escapeHtml(letter)}: is it in the answer?">${escapeHtml(letter)}</button>`).join("") : "")
       + (chip.words ? chip.words.map(word => (chip.ruledOut && chip.ruledOut.includes(word)
         ? `<s class="umt-clue-word is-out" title="Ruled out by your guesses">${escapeHtml(String(word).toUpperCase())}</s>`
         : chip.pickable

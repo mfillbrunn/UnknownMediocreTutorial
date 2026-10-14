@@ -62,7 +62,7 @@
       key: "coachMeterThreshold",
       icon: "🩶",
       title: "Softer Cuddle Meter",
-      description: "The Cuddle Meter fills sooner: 2 fewer tiles, then 4, then 6 at level 3 (Hard: 12 → 10 → 8 → 6).",
+      description: "The Cuddle Meter fills up 2 tiles sooner. Level 2: 4 tiles sooner. Level 3: 6 tiles sooner.",
       max: 3
     },
     {
@@ -70,7 +70,7 @@
       key: "coachMeterReward",
       icon: "🫶",
       title: "Bigger Cuddle",
-      description: "Upgrades what a full Cuddle Meter gives: a free mulligan, then a random consonant tested, then a Joker, then a letter in its exact place.",
+      description: "Upgrades what a full Cuddle Meter gives: a free mulligan, then a random consonant tested, then a Joker card, then a letter in its exact place.",
       max: 3
     }
   ]);
@@ -722,7 +722,7 @@
         coach.cuddleRewards.consonant = (coach.cuddleRewards.consonant || 0) + 1;
       } else if (tier === 2) {
         var jokerMessage = typeof game._applyRewardEffect === "function" ? game._applyRewardEffect("jokerToken") : "";
-        messages.push("Cuddle Meter full: " + (jokerMessage || "gained a Joker."));
+        messages.push("Cuddle Meter full: " + (jokerMessage || "gained a Joker card."));
         coach.cuddleRewards.joker += 1;
         popLabel = "+1 joker";
       } else {

@@ -181,3 +181,62 @@ button.umt-clue-word.is-pickable:focus-visible {
 }
 button.umt-clue-word.is-pickable:focus-visible { outline: 2px solid #ffd578; outline-offset: 2px; }
 .cuddle-preset-back { margin-top: 8px; }
+
+/* Hints rank III (cuddle-schools.js): once a stage, tap a consonant in
+   the Clues strip to test it. */
+.umt-clue.is-test .umt-clue-text { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.umt-clue-test {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid rgba(88, 168, 255, 0.7);
+  border-radius: 6px;
+  background: rgba(88, 168, 255, 0.18);
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+.umt-clue-test:hover,
+.umt-clue-test:focus-visible { background: rgba(88, 168, 255, 0.4); }
+.umt-clue-test:focus-visible { outline: 2px solid #58a8ff; outline-offset: 2px; }
+
+/* A tap on a dead, idea or lucky card (cuddle-ui.js showSpecialCardInfo):
+   a small note over it says what the card is and what it does. */
+.umt-card-info {
+  --accent: #9aa3b5;
+  position: fixed;
+  z-index: 80;
+  display: grid;
+  gap: 3px;
+  max-width: min(260px, calc(100vw - 16px));
+  padding: 9px 12px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: rgba(22, 20, 32, 0.97);
+  color: rgba(247, 244, 255, 0.92);
+  font-size: 0.8rem;
+  line-height: 1.35;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  animation: umt-card-info-in 160ms ease-out both;
+}
+.umt-card-info::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: calc(var(--arrow, 50%) - 6px);
+  width: 10px;
+  height: 10px;
+  border-right: 1px solid var(--accent);
+  border-bottom: 1px solid var(--accent);
+  background: inherit;
+  transform: rotate(45deg);
+}
+.umt-card-info strong { color: var(--accent); font-size: 0.85rem; font-weight: 900; }
+.umt-card-info.is-dead { --accent: #a9b0c2; }
+.umt-card-info.is-idea { --accent: #f6c956; }
+.umt-card-info.is-lucky { --accent: #57d68d; }
+@keyframes umt-card-info-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .umt-card-info { animation: none; } }
+.umt-card-info b.is-points { color: #57d69a; font-weight: 900; }
