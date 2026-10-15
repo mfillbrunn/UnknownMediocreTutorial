@@ -319,7 +319,9 @@
     var difficulty = String((state.megaState && state.megaState.difficulty) || state.difficulty || "").toLowerCase();
     state.umtPackOffer = {
       id: (window.CuddleSeed ? window.CuddleSeed.text(state) : (state.runId || "run")) + ":starter-pack",
-      size: difficulty === "hard" ? "medium" : "starter",
+      // Easy and Medium start small (2 Commons), so a new player meets
+      // badges one or two at a time; Hard gets a Medium pack.
+      size: difficulty === "hard" ? "medium" : "small",
       price: 0,
       world: 1,
       starter: true,

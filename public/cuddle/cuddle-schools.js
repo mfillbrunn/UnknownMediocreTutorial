@@ -77,6 +77,8 @@
     var registry = tree();
     var out = {};
     if (!registry || !game || !game.state || typeof registry.schoolPoints !== "function") return out;
+    // A calm first world keeps the schools for after its boss.
+    if (window.CuddleFirstRun && window.CuddleFirstRun.schoolsHidden(game)) return out;
     var points = registry.schoolPoints(game);
     registry.SCHOOL_ORDER.forEach(function each(id) {
       out[id] = registry.schoolRank(id, points[id]);

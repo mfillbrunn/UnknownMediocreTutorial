@@ -363,8 +363,10 @@
 
   function drawBosses(game, count, exclude) {
     var book = window.CuddleQuestBook;
+    // A first run draws no boss that needs quests (cuddle-first-run.js).
+    var skip = (exclude || []).concat(window.CuddleFirstRun ? window.CuddleFirstRun.questChallenges(game) : []);
     var drawn = (book && typeof book.bossChoices === "function"
-      ? book.bossChoices(game.random, exclude || [])
+      ? book.bossChoices(game.random, skip)
       : []) || [];
     return drawn.slice(0, count);
   }

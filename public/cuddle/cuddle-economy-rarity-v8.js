@@ -1671,6 +1671,8 @@
     // screens, packs, shop). The badge page (cuddle-skill-tree.js) knows each
     // reward's level and cap.
     if (isMaxedReward(def, context, state)) return false;
+    // A first run leaves quests and special squares out (cuddle-first-run.js).
+    if (window.CuddleFirstRun && window.CuddleFirstRun.hidesReward(getId(def) || getName(def), state)) return false;
     return !REMOVED_REWARDS.has(name);
   }
 
@@ -2588,6 +2590,8 @@
   function schoolLine(tree, node, game) {
     const school = node.school && tree.SCHOOLS ? tree.SCHOOLS[node.school] : null;
     if (!school) return null;
+    // A calm first world keeps the schools for after its boss.
+    if (window.CuddleFirstRun && window.CuddleFirstRun.schoolsHidden(game)) return null;
     const weight = (tree.TIER_WEIGHT && tree.TIER_WEIGHT[node.tier]) || 1;
     const line = document.createElement("span");
     line.className = "cuddle-v8-school-line";

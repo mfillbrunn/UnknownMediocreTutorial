@@ -844,7 +844,7 @@
 
   function challengeForNode(game, node) {
     const seed = `${mapSeed(game)}:challenge:${node.row}:${node.col}`;
-    const pool = leanTo(CHALLENGES, favouredIds(game, node), seed);
+    const pool = leanTo(allowedChallenges(game), favouredIds(game, node), seed);
     return pool[hash32(seed) % pool.length];
   }
 
@@ -945,8 +945,15 @@
   // The challenges that can be stacked: at most one of them masks tiles,
   // so a combined stop never hides feedback on more guesses than one
   // challenge plus a rule.
-  function stackableChallenges() {
-    const all = CHALLENGES.filter((challenge) => !challenge.rareSecret);
+  // Challenges a run may draw: a first run (cuddle-first-run.js) has no
+  // quests, so no challenge that needs them.
+  function allowedChallenges(game) {
+    const skip = window.CuddleFirstRun ? window.CuddleFirstRun.questChallenges(game) : [];
+    return skip.length ? CHALLENGES.filter((challenge) => !skip.includes(challenge.id)) : CHALLENGES;
+  }
+
+  function stackableChallenges(game) {
+    const all = allowedChallenges(game).filter((challenge) => !challenge.rareSecret);
     return {
       all,
       rules: all.filter((challenge) => challenge.kind !== "mask"),
@@ -954,9 +961,9 @@
     };
   }
 
-  function composeStop(target, seed, favoured = []) {
+  function composeStop(target, seed, favoured = [], game = null) {
     const pick = (list, key) => list[hash32(`${seed}:${key}`) % list.length];
-    const { all, rules, rare } = stackableChallenges();
+    const { all, rules, rare } = stackableChallenges(game);
     const ease = pick(Object.keys(EASE_PARTS), "ease");
     const oneChallenge = (key) => pick(leanTo(all, favoured, `${seed}:${key}`), key);
     const twoChallenges = () => {
@@ -1018,7 +1025,7 @@
     // carries at least one challenge.
     const row = map && Array.isArray(map.rows) ? map.rows[Math.floor(Number(node.row))] : null;
     if (target < 1 && ((row && row.challengeRow) || gauntlet(game))) target = 1;
-    const parts = composeStop(target, seed, favoured);
+    const parts = composeStop(target, seed, favoured, game);
     if (parts.neutral) {
       const variant = neutralVariant(parts.neutral);
       variant.difficulty = 0;
