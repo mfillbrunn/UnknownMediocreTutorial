@@ -1,6 +1,6 @@
 /* Cuddle: the Co-pilot stage.
  *
- * A two-skull challenge stop (cuddle-quests.js CONSTRAINTS "copilot",
+ * A one-skull challenge stop (cuddle-quests.js CONSTRAINTS "copilot",
  * placed by cuddle-rebalance-v5.js): every second guess -- the 2nd, 4th,
  * 6th... -- is played for you by the Duel's hard AI
  * (cuddle-expanded-stages.js aiWord). It isn't a race: the AI's guesses

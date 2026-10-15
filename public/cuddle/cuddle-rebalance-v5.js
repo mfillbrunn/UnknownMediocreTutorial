@@ -992,14 +992,14 @@
       // placed letter.
       parts = { ease: "luckyStart", challenges: [rare] };
     } else if (target === 1) {
-      parts = coin < 70 ? { challenges: [oneChallenge("c1")] } : { ease, challenges: twoChallenges() };
+      // Some one-skull stops are a challenge that stands alone (Co-pilot).
+      parts = solo.length && hash32(`${seed}:solo`) % 100 < 20
+        ? { challenges: [pick(solo, "solo")] }
+        : coin < 70 ? { challenges: [oneChallenge("c1")] } : { ease, challenges: twoChallenges() };
     } else if (target === 1.5) {
       parts = { challenges: [rare] };
     } else if (target === 2) {
-      // Some two-skull stops are a two-skull challenge on its own.
-      parts = solo.length && hash32(`${seed}:solo`) % 100 < 30
-        ? { challenges: [pick(solo, "solo")] }
-        : { challenges: twoChallenges() };
+      parts = { challenges: twoChallenges() };
     } else {
       parts = { challenges: [rare, oneChallenge("c1")] };
     }
@@ -1933,11 +1933,11 @@
     const state = stateOf(game) || {};
     const boss = state.boss;
     if (boss && !boss.__umtSynthetic && Array.isArray(boss.plan)) return boss.plan;
-    // A word-rule boss (Letter Demand, Word Chain, Locked In) is one rule
-    // over its guesses -- one more for the two that start from guess 2.
+    // A word-rule boss (Letter Demand, Banned Letter, Word Chain, Locked In)
+    // holds its rule over the whole fight: over only its first guesses it
+    // was barely harder than a plain stage in testing.
     if (boss && !boss.__umtSynthetic && WORD_RULES.includes(boss.id)) {
-      const extra = boss.id === "letterDemand" || boss.id === "letterBan" ? 0 : 1;
-      return Array.from({ length: Math.max(1, asInteger(boss.turns, 2)) + extra }, () => boss.id);
+      return Array.from({ length: 12 }, () => boss.id);
     }
     const challenge = activeChallenge(game);
     return challenge && Array.isArray(challenge.plan) ? challenge.plan : null;
