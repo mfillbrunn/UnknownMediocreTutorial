@@ -297,7 +297,7 @@
     questEndurance: ["Endurance Trial", "A quest; miss it and lose 1 hand size for the stage."],
     letterDemand: ["Letter Demand", "Your word must use the letter shown (you're handed a card of it)."],
     letterBan: ["Banned Letter", "Your word may not use the letter shown."],
-    wordChain: ["Word Chain", "Your word must start with the last letter of your guess before."],
+    wordChain: ["Word Chain", "Your word must start with the last consonant of your guess before."],
     lockedIn: ["Locked In", "Keep every green in place and use every yellow."]
   });
 
@@ -2001,16 +2001,19 @@
     return pool[hash32(`${roundToken(game)}:ban:${used}`) % pool.length];
   }
 
-  // The letter Word Chain asks a word to start with: the last letter of the
-  // guess before.
+  // The letter Word Chain asks a word to start with: the last consonant of
+  // the guess before (so many words end in E that "the last letter" mostly
+  // meant starting with E -- next to impossible from a hand).
   function chainLetter(game, used) {
     const state = stateOf(game) || {};
     const history = Array.isArray(state.history) ? state.history : [];
     const previous = used > 0 ? history[used - 1] : null;
     const word = previous ? String(previous.word || "").toUpperCase() : "";
+    if (word.length !== 5) return null;
+    const consonant = word.split("").reverse().find((letter) => !"AEIOU".includes(letter));
     // Hardly any word starts with J, Q, X or Z: after one of those, the
     // chain is let off for that guess.
-    return word.length === 5 && !"JQXZ".includes(word[4]) ? word[4] : null;
+    return consonant && !"JQXZ".includes(consonant) ? consonant : null;
   }
 
   // What Locked In holds you to: the greens and yellows the board showed
@@ -3815,7 +3818,7 @@
     consonantCrunch: { title: "Consonant Crunch", description: "This word may contain at most one vowel.", shape: "consonant" },
     letterDemand: { title: "Letter Demand", description: "This word must use the letter shown above the board. If you hold no card of it, you're handed one.", shape: "tag" },
     letterBan: { title: "Banned Letter", description: "This word may not use the letter shown above the board. A new letter is banned every guess.", shape: "noShield" },
-    wordChain: { title: "Word Chain", description: "This word must start with the last letter of your guess before. If you hold no card of it, you're handed one.", shape: "scroll" },
+    wordChain: { title: "Word Chain", description: "This word must start with the last consonant of your guess before. If you hold no card of it, you're handed one.", shape: "scroll" },
     lockedIn: { title: "Locked In", description: "Wordle's Hard Mode: this word must keep every green letter in its place and use every yellow one.", shape: "noShield" },
     shroudedEdges: { title: "Shrouded Edges", description: "The same marked positions remain hidden on every affected guess.", shape: "edges" },
     countOnly: { title: "Count Only", description: "The marked tiles report only how many of them are green and how many yellow, never which is which. Every other tile in the row shows its real colour.", shape: "count", multiplayerId: "countOnly" },

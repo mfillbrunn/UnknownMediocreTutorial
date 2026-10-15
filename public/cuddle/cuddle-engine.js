@@ -2997,7 +2997,7 @@
       case "letterBan":
         return `${range(count)}: Each word may not use the letter shown (a new one every guess).`;
       case "wordChain":
-        return `Guesses 2–${count + 1}: Start each word with the last letter of the word before.`;
+        return `Guesses 2–${count + 1}: Start each word with the last consonant of the word before.`;
       case "lockedIn":
         return `Guesses 2–${count + 1}: Keep every green in place and use every yellow.`;
       default:

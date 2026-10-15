@@ -388,7 +388,7 @@
     { id: "letterBan", icon: "🚫", title: "Banned Letter", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 20,
       text: "don't use the letter shown (it changes every guess)." },
     { id: "wordChain", icon: "🔗", title: "Word Chain", kind: "rule", boss: true, challenge: true, mix: false, curse: false, reward: 24,
-      text: "start your word with the last letter of your guess before." },
+      text: "start your word with the last consonant of your guess before." },
     { id: "lockedIn", icon: "🔒", title: "Locked In", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 22,
       text: "keep every green letter in its place and use every yellow one (Wordle's Hard Mode)." },
     { id: "shortHand", icon: "✂️", title: "Short Hand", kind: "round", boss: true, challenge: false, mix: false, curse: true, reward: 0,
@@ -536,7 +536,7 @@
       id: "wordChain",
       icon: "🔗",
       title: "Word Chain",
-      description: "From your 2nd guess, each word must start with the last letter of the word before.",
+      description: "From your 2nd guess, each word must start with the last consonant of the word before.",
       turns: 3,
       rewardId: "revealGreen"
     },
