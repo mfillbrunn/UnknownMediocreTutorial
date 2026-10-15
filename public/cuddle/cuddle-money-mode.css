@@ -1005,3 +1005,13 @@
   border-radius: 7px;
   font-size: clamp(0.82rem, 2.8vw, 0.98rem);
 }
+
+/* The unused guesses' one BONUS row: "4 × +40". */
+#cuddleScreen .cuddle-money-row-times {
+  margin-right: 3px;
+  font-size: 0.72em;
+  font-weight: 800;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+#cuddleScreen .cuddle-money-row-increment { white-space: nowrap; }

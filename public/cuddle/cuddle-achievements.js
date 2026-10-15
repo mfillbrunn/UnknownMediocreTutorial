@@ -275,8 +275,25 @@
 
   // -- toast -----------------------------------------------------------------------
   var toastBusy = false;
+  // A stage being played keeps the screen for the game: an achievement
+  // waits for the cash-out, a reward screen or the map.
+  function playingStage() {
+    try {
+      var game = window.CuddleBranchMap && typeof window.CuddleBranchMap.getActiveGame === "function" ? window.CuddleBranchMap.getActiveGame() : null;
+      var state = game && game.state;
+      return Boolean(state && state.status === "playing" && !state.pendingRoundEnd);
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  var toastWait = 0;
   function showToast() {
     if (toastBusy || !toastQueue.length || !document.body) return;
+    if (playingStage()) {
+      if (!toastWait) toastWait = setTimeout(function later() { toastWait = 0; showToast(); }, 1500);
+      return;
+    }
     var item = toastQueue.shift();
     toastBusy = true;
     var el = document.createElement("div");

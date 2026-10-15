@@ -300,7 +300,10 @@
       seen[id] = rank;
       for (var r = before + 1; r <= rank; r += 1) reached.push({ school: id, rank: r });
     });
-    if (announce && reached.length) {
+    // Ranks a starting pack hands out aren't announced: a new run's first
+    // screen has enough on it. (The badge page shows them.)
+    var started = num(state.round) > 1 || (Array.isArray(state.history) && state.history.length > 0);
+    if (announce && reached.length && started) {
       var numeral = ["", "I", "II", "III"];
       state.synergyNotice = {
         icon: "✦",

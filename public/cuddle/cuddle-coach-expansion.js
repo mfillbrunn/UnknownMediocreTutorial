@@ -1011,16 +1011,18 @@
         breakdown: breakdownFor(entry)
       };
     });
-    for (var index = 0; index < unusedRows; index += 1) {
+    // The guesses you didn't need, as one row: "BONUS ×4  +40" (it used
+    // to be one identical row per unused guess).
+    if (unusedRows > 0) {
       payload.rows.push({
-        index: "unused-" + index,
+        index: "unused",
         word: "BONUS",
         feedback: ["green", "green", "green", "green", "green"],
         timedOut: false,
-        amount: Math.round(perRow),
+        amount: Math.round(perRow * unusedRows),
         bonusRow: true,
-        unusedRowNumber: index + 1,
-        breakdown: [{ label: "Unused guess row " + (index + 1), detail: "paid as five greens", amount: Math.round(perRow) }]
+        bonusCount: unusedRows,
+        breakdown: [{ label: unusedRows + " unused guess" + (unusedRows === 1 ? "" : "es"), detail: Math.round(perRow) + " points each", amount: Math.round(perRow * unusedRows) }]
       });
     }
     payload.to = Math.round(finite(game.state.score, 0));

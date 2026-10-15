@@ -1055,7 +1055,7 @@
     var tiles = word.split("").map(function payoutTile(letter, index) {
       return tileMarkup(letter === " " ? "" : letter, row.late ? "late" : (row.feedback[index] || ""));
     }).join("");
-    var label = row.timedOut ? "timed-out guess" : "guess " + (asNumber(row.index, 0) + 1);
+    var label = row.bonusRow ? "the unused guesses" : row.timedOut ? "timed-out guess" : "guess " + (asNumber(row.index, 0) + 1);
     // The row's main line is a button so the breakdown is reachable by
     // keyboard and reads as tappable; the delegated handler does the toggle.
     return "<div class=\"cuddle-money-payout-row" + (row.late ? " is-late" : "") + "\" data-payout-row=\"" + row.index + "\">"
@@ -1063,7 +1063,9 @@
       + " data-cuddle-money-action=\"toggle-payout-row\""
       + " aria-expanded=\"false\" aria-label=\"Show what " + escapeHtml(label) + " paid\">"
       + "<span class=\"cuddle-money-payout-tiles\">" + tiles + "</span>"
-      + "<span class=\"cuddle-money-row-increment\">" + formatPointsDelta(row.amount) + "</span>"
+      + "<span class=\"cuddle-money-row-increment\">"
+      + (row.bonusCount > 1 ? "<small class=\"cuddle-money-row-times\">" + escapeHtml(row.bonusCount) + " ×</small>" : "")
+      + formatPointsDelta(row.amount) + "</span>"
       + "<span class=\"cuddle-money-row-chevron\" aria-hidden=\"true\"></span>"
       + "</button>"
       + "<div class=\"cuddle-money-row-detail\" hidden>" + breakdownMarkup(row) + "</div>"
@@ -1257,7 +1259,7 @@
       + "<span class=\"cuddle-money-kicker\" id=\"cuddleMoneyPayoutTitle\">" + (payload.wasBoss ? "BOSS DEFEATED &middot; CASH OUT" : "ROUND " + escapeHtml(payload.round) + " CASH OUT") + "</span>"
       + payoutWordMarkup(payload)
       + challengeLine
-      + "<div class=\"cuddle-money-bank\"><span>Wallet</span><strong id=\"cuddleMoneyBankCounter\">" + formatPoints(payload.from) + "</strong></div>"
+      + "<div class=\"cuddle-money-bank\"><span>Points</span><strong id=\"cuddleMoneyBankCounter\">" + formatPoints(payload.from) + "</strong></div>"
       + "<div class=\"cuddle-money-payout-rows\">" + payload.rows.map(payoutRowMarkup).join("") + "</div>"
       + stageBonusMarkup(game, payload)
       + "<p class=\"cuddle-money-payout-hint\">Tap a row to see what it paid.</p>"

@@ -1503,8 +1503,9 @@
     // what it holds is found out by playing it.
     if (isStageStop(kind)) {
       var pay = stopPay(game, node);
-      brief.title = "Wordle";
       brief.tier = stopTier(game, node);
+      // The title names how hard it is (the chip above already says Wordle).
+      brief.title = ["Easy Wordle", "Regular Wordle", "Tricky Wordle", "Hard Wordle", "Brutal Wordle"][brief.tier + 1] || "Wordle";
       brief.pay = pay;
       return brief;
     }
