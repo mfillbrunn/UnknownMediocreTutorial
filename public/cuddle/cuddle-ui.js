@@ -555,10 +555,20 @@
             ${window.CuddleTutorial && window.CuddleTutorial.isDone() ? `<button type="button" class="cuddle-tut-replay" data-umt-tut="replay">Replay the tour</button>` : ""}
           </div>
           ${bestWinsLine()}
+          ${window.CuddleUnlocks ? window.CuddleUnlocks.landingHtml() : ""}
         </section>
         ${newRunOpen ? renderNewRunOverlay(hasRun) : ""}
         ${rulesOpen ? renderRulesOverlay() : ""}
       </div>`;
+  }
+
+  // Hard opens once a Medium run is won (cuddle-unlocks.js).
+  function hardLocked() {
+    return Boolean(window.CuddleUnlocks && !window.CuddleUnlocks.hardUnlocked());
+  }
+
+  function lockIcon() {
+    return window.CuddleIcons ? window.CuddleIcons.svg("🔒", "cuddle-lock-icon") : "🔒 ";
   }
 
   // "New run": pick a difficulty, optionally with a seed.
@@ -574,9 +584,11 @@
           <div class="cuddle-difficulty-row">
             <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Easy</button>
             <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Medium</button>
-            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-hard">${escapeHtml(window.CuddleAscension ? window.CuddleAscension.hardLabel() : "Hard")}</button>
+            ${hardLocked()
+              ? `<button class="cuddle-btn cuddle-btn-primary is-locked" data-action="new-run-hard" aria-disabled="true" aria-label="Hard, locked: win a run on Medium to unlock it">${lockIcon()}Hard</button>`
+              : `<button class="cuddle-btn cuddle-btn-primary" data-action="new-run-hard">${escapeHtml(window.CuddleAscension ? window.CuddleAscension.hardLabel() : "Hard")}</button>`}
           </div>
-          <div class="cuddle-difficulty-help" aria-hidden="true"><span>More help</span><span>The usual run</span><span>Tougher bosses</span></div>
+          <div class="cuddle-difficulty-help" aria-hidden="true"><span>More help</span><span>The usual run</span>${hardLocked() ? `<span class="is-locked">Win on Medium to unlock</span>` : "<span>Tougher bosses</span>"}</div>
           ${window.CuddleAscension ? window.CuddleAscension.pickerHtml() : ""}
           <details class="cuddle-newrun-more"${seedDraft ? " open" : ""}>
             <summary>More options</summary>
@@ -1983,6 +1995,7 @@
         startNewRun("medium");
         return true;
       case "new-run-hard":
+        if (hardLocked()) return false;
         startNewRun("hard");
         return true;
       case "ascension-pick":

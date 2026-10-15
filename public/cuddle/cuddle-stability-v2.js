@@ -152,7 +152,13 @@
         (Array.isArray(choices) ? choices : []).forEach(add);
       } catch (_error) {}
     }
-    shuffled(getBossPool(), game?.random || Math.random).forEach(add);
+    // Topped up from the whole list -- except bosses the player hasn't
+    // unlocked (cuddle-unlocks.js) and, on a first run, the quest bosses.
+    const shut = new Set([
+      ...(window.CuddleUnlocks ? window.CuddleUnlocks.lockedBosses() : []),
+      ...(window.CuddleFirstRun ? window.CuddleFirstRun.questChallenges(game) : [])
+    ]);
+    shuffled(getBossPool().filter(item => !shut.has(item.id)), game?.random || Math.random).forEach(add);
     return selected.slice(0, count);
   }
 

@@ -946,9 +946,11 @@
   // so a combined stop never hides feedback on more guesses than one
   // challenge plus a rule.
   // Challenges a run may draw: a first run (cuddle-first-run.js) has no
-  // quests, so no challenge that needs them.
+  // quests, so no challenge that needs them, and challenges the player
+  // hasn't unlocked yet (cuddle-unlocks.js) stay out.
   function allowedChallenges(game) {
-    const skip = window.CuddleFirstRun ? window.CuddleFirstRun.questChallenges(game) : [];
+    const skip = (window.CuddleFirstRun ? window.CuddleFirstRun.questChallenges(game) : [])
+      .concat(window.CuddleUnlocks ? window.CuddleUnlocks.lockedRules() : []);
     return skip.length ? CHALLENGES.filter((challenge) => !skip.includes(challenge.id)) : CHALLENGES;
   }
 
@@ -4999,7 +5001,7 @@
       },
       // The challenge stops the map can roll, described at the run's
       // current guess cap -- listed by the map key.
-      mapChallenges: (game) => CHALLENGES.map((challenge) => ({
+      mapChallenges: (game) => allowedChallenges(game || publicActiveGame()).map((challenge) => ({
         id: challenge.id,
         title: challenge.title,
         reward: challenge.reward,
