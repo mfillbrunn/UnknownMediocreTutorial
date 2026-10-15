@@ -318,7 +318,11 @@
         kind: item.kind,
         reward: item.reward,
         text: item.text,
-        rareSecret: item.id === "rareWord"
+        rareSecret: item.id === "rareWord",
+        // A challenge worth more than one step of difficulty (the
+        // Co-pilot: 2), and one that is a stage of its own, never stacked.
+        weight: Number(item.weight) || 1,
+        solo: Boolean(item.solo)
       }))
   );
   // Challenge ids from before the shared list, kept so saved maps still read.
@@ -844,7 +848,8 @@
 
   function challengeForNode(game, node) {
     const seed = `${mapSeed(game)}:challenge:${node.row}:${node.col}`;
-    const pool = leanTo(allowedChallenges(game), favouredIds(game, node), seed);
+    // World 1's challenge stops are one skull: no two-skull Co-pilot there.
+    const pool = leanTo(allowedChallenges(game).filter((challenge) => !challenge.solo), favouredIds(game, node), seed);
     return pool[hash32(seed) % pool.length];
   }
 
@@ -874,7 +879,7 @@
   function stagePartDifficulty(variant) {
     if (!variant) return 0;
     const ids = variantChallengeIds(variant);
-    let total = ids.reduce((sum, id) => sum + (challengeById(id).rareSecret ? 1.5 : 1), 0);
+    let total = ids.reduce((sum, id) => sum + (challengeById(id).rareSecret ? 1.5 : challengeById(id).weight || 1), 0);
     const ease = variant.ease || (EASE_PARTS[variant.kind] ? variant.kind : null);
     if (ease) total -= 1;
     return total;
@@ -955,17 +960,18 @@
   }
 
   function stackableChallenges(game) {
-    const all = allowedChallenges(game).filter((challenge) => !challenge.rareSecret);
+    const all = allowedChallenges(game).filter((challenge) => !challenge.rareSecret && !challenge.solo);
     return {
       all,
       rules: all.filter((challenge) => challenge.kind !== "mask"),
-      rare: CHALLENGES.find((challenge) => challenge.rareSecret)
+      rare: CHALLENGES.find((challenge) => challenge.rareSecret),
+      solo: allowedChallenges(game).filter((challenge) => challenge.solo)
     };
   }
 
   function composeStop(target, seed, favoured = [], game = null) {
     const pick = (list, key) => list[hash32(`${seed}:${key}`) % list.length];
-    const { all, rules, rare } = stackableChallenges(game);
+    const { all, rules, rare, solo } = stackableChallenges(game);
     const ease = pick(Object.keys(EASE_PARTS), "ease");
     const oneChallenge = (key) => pick(leanTo(all, favoured, `${seed}:${key}`), key);
     const twoChallenges = () => {
@@ -986,7 +992,10 @@
     } else if (target === 1.5) {
       parts = { challenges: [rare] };
     } else if (target === 2) {
-      parts = { challenges: twoChallenges() };
+      // Some two-skull stops are a two-skull challenge on its own.
+      parts = solo.length && hash32(`${seed}:solo`) % 100 < 30
+        ? { challenges: [pick(solo, "solo")] }
+        : { challenges: twoChallenges() };
     } else {
       parts = { challenges: [rare, oneChallenge("c1")] };
     }
@@ -1709,7 +1718,7 @@
 
   // How many opening guesses a challenge covers this run.
   function challengeTurns(game, challenge) {
-    if (!challenge || challenge.rareSecret) return 0;
+    if (!challenge || challenge.rareSecret || challenge.solo) return 0;
     if (challenge.id === "perfectOpener") return 1;
     // Easy and Medium: no lock, one mulligan fewer instead (beginVariant).
     if (challenge.id === "noMulligans") return softChallenges(game) ? 0 : mulliganLockTurns(game);
@@ -1775,7 +1784,7 @@
 
   // A challenge in one systematic line: which guesses, then what happens.
   function challengeDisplayDescription(game, challenge) {
-    if (challenge.rareSecret) return `Whole stage: ${challenge.text}`;
+    if (challenge.rareSecret || challenge.solo) return `Whole stage: ${challenge.text}`;
     if (challenge.id === "noMulligans" && softChallenges(game)) return `Start: ${challengeText(game, challenge)}`;
     const turns = Math.max(1, challengeTurns(game, challenge));
     return `${guessRange(1, turns)}: ${challengeText(game, challenge)}`;
@@ -1788,7 +1797,7 @@
     let guess = 1;
     variantChallengeIds(variant).forEach((id) => {
       const challenge = challengeById(id);
-      if (challenge.rareSecret) {
+      if (challenge.rareSecret || challenge.solo) {
         lines.push({ id: challenge.id, label: "Whole stage", title: challenge.title, text: sentence(challenge.text) });
         return;
       }
@@ -4959,6 +4968,12 @@
       // Pays points into the stage's itemized "Stage bonus" box (combo
       // payouts in cuddle-synergies.js ride on this).
       addStageBonus: (game, amount, field, label) => addScoreBonus(game || publicActiveGame(), amount, field, label),
+      // The challenge ids of the stage being played ([] when none).
+      liveChallengeIds: (game) => {
+        const live = game || publicActiveGame();
+        const custom = customState(live);
+        return activeChallenge(live) && custom && custom.activeVariant ? variantChallengeIds(custom.activeVariant) : [];
+      },
       // Yellow Guesser Hint's stage hint (once per stage), for the clue
       // layer to hand out after the first guess.
       grantStageYellowHints: (game) => grantStageYellowHints(game || publicActiveGame()),

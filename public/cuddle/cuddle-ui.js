@@ -955,9 +955,13 @@
     // A displayed glyph is reusable in play mode, whether its backing card is finite or persistent.
     const persistentCard = group.cards.find(card => game.isInfiniteCard(card));
     const draftedCount = state.draft.filter(id => group.cards.some(card => card.id === id)).length;
+    // An ice world (cuddle-world-identity.js) freezes one letter each
+    // guess: it stays in hand and can't be mulliganed.
+    const frozen = Boolean(window.CuddleWorldIdentity?.isFrozenGlyph?.(game, group.glyph));
     const selectable = group.cards.filter(card => (
       !game.isInfiniteCard(card)
       && !state.draft.includes(card.id)
+      && !frozen
     ));
     const selectedCount = selectable.filter(card => selectedCards.has(card.id)).length;
     const unselectedCount = selectable.length - selectedCount;
@@ -977,7 +981,11 @@
     // blue -- so the hand shows blue too, matching the board.
     const blueOnly = trueStatus === "yellow"
       && typeof game.isGlyphBlue === "function" && game.isGlyphBlue(group.glyph);
-    const status = unknown ? "unknown" : blueOnly ? "blue" : trueStatus;
+    // A water world (cuddle-world-identity.js) shows every letter known to
+    // be in the answer as blue in the hand, green or yellow.
+    const watery = (trueStatus === "yellow" || trueStatus === "green")
+      && Boolean(window.CuddleWorldIdentity?.handIsBlue?.(game));
+    const status = unknown ? "unknown" : (blueOnly || watery) ? "blue" : trueStatus;
     // getDraftWord().length counts gaps Drag Mode has padded out too (each
     // renders as a literal space), so it reaches 5 as soon as ANY tile has
     // been positionally placed -- long before the word is actually full.
@@ -1041,7 +1049,8 @@
       VOWEL_SET.has(group.glyph) ? "is-vowel" : "",
       draftedCount ? "has-drafted" : "",
       selectedCount ? "is-selected" : "",
-      isJoker ? "is-joker" : ""
+      isJoker ? "is-joker" : "",
+      frozen ? "is-frozen" : ""
     ].filter(Boolean).join(" ");
     // A green card's position isn't otherwise visible from the hand -- the
     // board only shows it once that position has actually been guessed.
@@ -1075,6 +1084,7 @@
       isJoker ? `${jokerUsesLeft} use${jokerUsesLeft === 1 ? "" : "s"} left this run`
         : persistentCard ? "stays in hand after a guess" : `${count} ${count === 1 ? "copy" : "copies"}`,
       statusLabel,
+      frozen ? "frozen: can't be mulliganed this guess" : "",
       draftedCount ? `${draftedCount} in the grid` : "",
       selectedCount ? `${selectedCount} selected` : ""
     ].filter(Boolean).join(" · ");
@@ -1087,6 +1097,7 @@
         ${unknown ? `<span class="cuddle-card-unknown" aria-hidden="true">?</span>` : ""}
         ${positions.length ? `<span class="cuddle-card-position" aria-hidden="true">#${positions.join(",")}</span>` : ""}
         ${showBadge ? `<span class="cuddle-card-count" aria-hidden="true">×${badgeValue}</span>` : ""}
+        ${frozen ? `<span class="cuddle-card-ice" aria-hidden="true"></span>` : ""}
       </button>`;
   }
 

@@ -1009,6 +1009,10 @@
 #cuddleRoot[data-umt-theme="storm"] { --umt-world-tint: rgba(143, 125, 255, .17); --umt-world-glow: rgba(214, 199, 255, .10); }
 #cuddleRoot .cuddle-branch-shell[data-umt-theme="forge"],
 #cuddleRoot[data-umt-theme="forge"] { --umt-world-tint: rgba(255, 122, 47, .16); --umt-world-glow: rgba(255, 196, 107, .11); }
+#cuddleRoot .cuddle-branch-shell[data-umt-theme="tides"],
+#cuddleRoot[data-umt-theme="tides"] { --umt-world-tint: rgba(47, 140, 255, .17); --umt-world-glow: rgba(127, 211, 255, .10); }
+#cuddleRoot .cuddle-branch-shell[data-umt-theme="glacier"],
+#cuddleRoot[data-umt-theme="glacier"] { --umt-world-tint: rgba(95, 184, 255, .15); --umt-world-glow: rgba(230, 247, 255, .11); }
 
 #cuddleRoot .umt-map-spark-meadow { fill: #fff3a6; filter: drop-shadow(0 0 3px #ffe08a); }
 #cuddleRoot .umt-map-spark-marsh { fill: #c9fff0; filter: drop-shadow(0 0 4px #5fbfa8); opacity: .6; }
@@ -1016,6 +1020,8 @@
 #cuddleRoot .umt-map-spark-library { fill: #ffe7b0; filter: drop-shadow(0 0 3px #e8c98a); }
 #cuddleRoot .umt-map-spark-storm { fill: #e9e2ff; filter: drop-shadow(0 0 4px #8f7dff); animation-duration: 2.2s; }
 #cuddleRoot .umt-map-spark-forge { fill: #ffc46b; filter: drop-shadow(0 0 3px #ff7a2f); animation-name: umt-spark-rise; }
+#cuddleRoot .umt-map-spark-tides { fill: #cdeeff; filter: drop-shadow(0 0 3px #2f8cff); opacity: .7; animation-name: umt-spark-rise; }
+#cuddleRoot .umt-map-spark-glacier { fill: #f2fbff; filter: drop-shadow(0 0 2px #bfe9ff); animation-name: umt-spark-fall; }
 
 @keyframes umt-spark-fall {
   0% { opacity: 0; transform: translateY(-10px); }

@@ -884,6 +884,13 @@
     // wording from here, and an event's two choices as separate options.
     window.CuddleExpandedStages = Object.freeze({
       dragDuelTile: (game, op) => dragDuelTile(game, op || {}),
+      // The Duel AI's next word given `rows` ({word, feedback}) so far, at
+      // `difficulty` (the Co-pilot stage, cuddle-copilot.js, plays the hard
+      // one). It reads every row as its own.
+      aiWord: (game, rows, difficulty) => chooseAiWord(game, {
+        difficulty: difficulty || "hard",
+        history: (rows || []).map(row => ({ word: String(row.word || "").toUpperCase(), feedback: row.feedback, actor: "ai" }))
+      }),
       stopMeta: (node, game) => metaForNode(node, game),
       eventOptions: node => {
         const definition = node && EVENT_BY_ID[node.expandedEventId];

@@ -385,7 +385,12 @@
     { id: "presetWordsTrial", icon: "🎴", title: "Preset Trial", kind: "round", boss: false, challenge: false, mix: false, curse: false, reward: 0,
       text: "the answer is one of 10 words shown; only 3 guesses." },
     { id: "rareWord", icon: "💎", title: "Rare Word", kind: "round", boss: false, challenge: true, mix: false, curse: false, reward: 40,
-      text: "the answer is a rare word." }
+      text: "the answer is a rare word." },
+    // A stage of its own (never stacked with another challenge), worth two
+    // skulls: the AI plays every second guess (cuddle-copilot.js).
+    { id: "copilot", icon: "🤖", title: "Co-pilot", kind: "round", boss: false, challenge: true, mix: false, curse: false, reward: 30,
+      weight: 2, solo: true,
+      text: "every second guess (2nd, 4th, 6th) is made for you by a sharp AI. It's on your side, but you don't get to pick." }
   ]);
 
   function getConstraint(id) {

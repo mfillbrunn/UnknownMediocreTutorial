@@ -4,8 +4,8 @@
  * Progress points: every run, finished or not, adds its points to the
  * player's progress, up to 500 a run (counted as the run goes, so a run
  * given up halfway still counts what it scored). Progress passes four
- * levels; each opens new stage challenges and bosses, badges and quest
- * rewards. Until then they're never drawn: not on the map, not on reward
+ * levels; each opens new stage challenges and bosses, world themes,
+ * badges and quest rewards. Until then they're never drawn: not on the map, not on reward
  * screens, in packs or the shop, and not when a quest pays out.
  *
  * Hard opens once a Medium run is won.
@@ -23,20 +23,23 @@
   var RUN_CAP = 500;
 
   // Each level: the progress it needs and what it opens. `rules` are
-  // constraints (cuddle-quests.js CONSTRAINTS) that are both a stage
-  // challenge and a boss; `bosses` are bosses alone.
+  // constraints (cuddle-quests.js CONSTRAINTS) that are a stage challenge,
+  // a boss or both; `bosses` are bosses alone; `themes` are world themes
+  // (cuddle-worlds.js THEMES) a run can draw.
   var LEVELS = [
     {
       points: 150,
       rules: ["noMulligans"],
       bosses: [],
+      themes: ["swamp"],
       badges: ["ideaTiles", "waveTiles", "doubleDown", "greenCount"],
       quest: ["revealCategory"]
     },
     {
       points: 400,
-      rules: ["countOnly", "questEndurance"],
+      rules: ["countOnly", "questEndurance", "copilot"],
       bosses: [],
+      themes: ["frost", "tides"],
       badges: ["highRoller", "hardMode", "strikeThrough", "rewardEcho", "alphabet-compass", "boldOpener"],
       quest: ["letterProbe", "umtVowelCheck"]
     },
@@ -44,6 +47,7 @@
       points: 800,
       rules: ["delayedFeedback", "arrowMode"],
       bosses: [],
+      themes: ["storm", "forge"],
       badges: ["leanBuild", "monksVow", "fullCircle"],
       quest: ["sillyWord", "umtSpotlight"]
     },
@@ -51,6 +55,7 @@
       points: 1300,
       rules: ["fakeFeedback"],
       bosses: ["chimera"],
+      themes: ["glacier"],
       badges: ["combine", "encoreNight"],
       quest: []
     }
@@ -147,6 +152,10 @@
 
   function lockedQuestRewards() {
     return locked("quest");
+  }
+
+  function lockedThemes() {
+    return locked("themes");
   }
 
   function badgeId(idOrName) {
@@ -292,12 +301,21 @@
       var node = tree && typeof tree.resolve === "function" ? tree.resolve(id) : null;
       return node ? node.title : id;
     };
+    var theme = function themeName(id) {
+      var worlds = window.CuddleWorlds;
+      for (var slot = 0; worlds && slot < 3; slot += 1) {
+        var found = worlds.themeOptions(slot).find(function match(option) { return option.theme === id; });
+        if (found) return found.name || id;
+      }
+      return id;
+    };
     var quest = function questName(id) {
       var item = book && typeof book.getReward === "function" ? book.getReward(id) : null;
       return item ? item.title : id;
     };
     return {
       rules: entry.rules.map(rule).concat(entry.bosses.map(rule)),
+      themes: (entry.themes || []).map(theme),
       badges: entry.badges.map(badge),
       quest: entry.quest.map(quest)
     };
@@ -313,7 +331,7 @@
   function announce(from, to) {
     for (var index = from; index < to; index += 1) {
       var list = names(LEVELS[index]);
-      var all = list.rules.concat(list.badges, list.quest);
+      var all = list.rules.concat(list.themes, list.badges, list.quest);
       toast({ icon: "🔓", title: "Unlocked: level " + (index + 1), text: listText(all, 3) + " can now show up in your runs." });
     }
   }
@@ -374,7 +392,7 @@
     var list = names(next);
     return '<span class="umt-unl-head"><b>Unlocks</b><small>' + have.toLocaleString() + " / " + next.points.toLocaleString() + " points</small></span>"
       + '<span class="umt-unl-track"><i style="width:' + share + '%"></i></span>'
-      + '<small class="umt-unl-next">Next: ' + esc(listText(list.rules.concat(list.badges, list.quest), 2)) + "</small>";
+      + '<small class="umt-unl-next">Next: ' + esc(listText(list.rules.concat(list.themes, list.badges, list.quest), 2)) + "</small>";
   }
 
   function landingHtml() {
@@ -399,6 +417,7 @@
       var status = open ? "Unlocked" : (entry.points - have).toLocaleString() + " points to go";
       var groups = [
         list.rules.length ? '<div class="umt-unl-group"><small>Challenges and bosses</small><div>' + chips(list.rules, "rule") + "</div></div>" : "",
+        list.themes.length ? '<div class="umt-unl-group"><small>Worlds</small><div>' + chips(list.themes, "theme") + "</div></div>" : "",
         list.badges.length ? '<div class="umt-unl-group"><small>Badges</small><div>' + chips(list.badges, "badge") + "</div></div>" : "",
         list.quest.length ? '<div class="umt-unl-group"><small>Quest rewards</small><div>' + chips(list.quest, "quest") + "</div></div>" : ""
       ].join("");
@@ -412,7 +431,7 @@
       + '<section class="umt-unl-modal">'
       + '<header class="umt-unl-modal-head"><div><h2 id="umtUnlTitle">Unlocks</h2><p>' + have.toLocaleString() + " progress points</p></div>"
       + '<button type="button" class="umt-unl-close" data-umt-unlocks-close aria-label="Close unlocks">×</button></header>'
-      + '<p class="umt-unl-help">Every run adds its points to your progress, up to 500 a run. Runs you don\'t finish count too. New challenges, bosses, badges and quest rewards open as you go.</p>'
+      + '<p class="umt-unl-help">Every run adds its points to your progress, up to 500 a run. Runs you don\'t finish count too. New challenges, bosses, worlds, badges and quest rewards open as you go.</p>'
       + '<div class="umt-unl-scroll">' + rows + hard + "</div>"
       + "</section></div>";
   }
@@ -463,6 +482,7 @@
     lockedRules: lockedRules,
     lockedBosses: lockedBosses,
     lockedQuestRewards: lockedQuestRewards,
+    lockedThemes: lockedThemes,
     hidesReward: hidesReward,
     landingHtml: landingHtml,
     open: renderPage,

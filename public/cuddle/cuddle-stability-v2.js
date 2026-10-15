@@ -334,7 +334,8 @@
     // shape -- how many Wordle rows, how many lanes, easier or harder stops.
     const Worlds = window.CuddleWorlds;
     const themes = [0, 1, 2].map(world => {
-      const options = Worlds && typeof Worlds.themeOptions === "function" ? Worlds.themeOptions(world) : null;
+      const options = Worlds && typeof Worlds.availableThemes === "function" ? Worlds.availableThemes(world)
+        : Worlds && typeof Worlds.themeOptions === "function" ? Worlds.themeOptions(world) : null;
       return options && options.length ? options[Math.floor(random() * options.length)] : null;
     });
     for (let world = 0; world < 3; world += 1) {

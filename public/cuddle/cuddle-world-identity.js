@@ -1,6 +1,6 @@
 /* Cuddle: what makes each world its own.
  *
- * Each of the nine world themes (cuddle-worlds.js THEMES -- three per world
+ * Each world theme (cuddle-worlds.js THEMES -- three or four per world
  * slot, one drawn per run) has
  *   a look     its own palette, board, tile shape and lettering, and a
  *              moving backdrop (leaves, pollen, fireflies, crystal glints,
@@ -39,12 +39,16 @@
       text: "Every stage opens with one of the answer's themes shown." },
     swamp: { icon: "💀", name: "Sinking Mud", stage: "Bog",
       text: "Three dead cards sink into your deck in every stage. Mulligan them away." },
+    tides: { icon: "🌊", name: "Deep Water", stage: "Lagoon",
+      text: "Every letter in your hand that's in the answer shows blue: you can't tell green from yellow there. The board still shows the colours." },
     citadel: { icon: "👁️", name: "Watchtower", stage: "Hall",
       text: "Guesses past the guess window cost 10 points more, but solving within it pays +15." },
     storm: { icon: "⚡", name: "Lightning", stage: "Ledge",
       text: "Your third guess in every stage pays double tile points." },
     forge: { icon: "🔥", name: "Forge Heat", stage: "Anvil",
-      text: "Every green tile pays 2 more points, but every grey tile costs 1." }
+      text: "Every green tile pays 2 more points, but every grey tile costs 1." },
+    glacier: { icon: "🧊", name: "Frozen Hand", stage: "Crevasse",
+      text: "One letter in your hand is frozen: it can't be mulliganed. A different one freezes after every guess." }
   });
 
   function num(value) {
@@ -265,6 +269,66 @@
     };
   }
 
+  // -- Deep Water (tides) ------------------------------------------------------
+  // Read by cuddle-ui.js (the hand's colours) and cuddle-hint-fx.js (a hint
+  // landing on a card).
+  function handIsBlue(game) {
+    return traitOf(game) === "tides";
+  }
+
+  // -- Frozen Hand (glacier) ----------------------------------------------------
+  // One letter of the hand is frozen for each guess: chosen from the cards
+  // a mulligan could swap, and chosen again once a guess is made (or if the
+  // frozen letter has left the hand).
+  function swappable(game, card) {
+    if (!card || !card.glyph) return false;
+    if (typeof game.isInfiniteCard === "function" && game.isInfiniteCard(card)) return false;
+    var burdens = window.CuddleBurdens;
+    if (burdens && ((burdens.isDeadGlyph && burdens.isDeadGlyph(card.glyph))
+      || (burdens.isIdeaGlyph && burdens.isIdeaGlyph(card.glyph))
+      || (burdens.isLuckyGlyph && burdens.isLuckyGlyph(card.glyph)))) return false;
+    return card.glyph !== (window.CuddleEngine && window.CuddleEngine.CUDDLE_JOKER_GLYPH);
+  }
+
+  function frozenGlyph(game) {
+    var state = game && game.state;
+    if (traitOf(game) !== "glacier" || !state || state.status !== "playing") return null;
+    var hand = Array.isArray(state.hand) ? state.hand : [];
+    var guess = num(state.guessesUsed);
+    var trait = record(state);
+    var held = function held(glyph) { return hand.some(function has(card) { return card && card.glyph === glyph; }); };
+    if (trait.frozen && trait.frozen.guess === guess && held(trait.frozen.glyph)) return trait.frozen.glyph;
+    var letters = Array.from(new Set(hand.filter(function ok(card) { return swappable(game, card); }).map(function glyph(card) { return card.glyph; })))
+      .filter(function fresh(glyph) { return !trait.frozen || glyph !== trait.frozen.glyph; });
+    if (!letters.length) return null;
+    // The same letter on a reload: picked from the stage and the guess.
+    var seed = 0;
+    String(stageKey(state) + ":" + guess).split("").forEach(function mix(character) { seed = (seed * 31 + character.charCodeAt(0)) >>> 0; });
+    letters.sort();
+    trait.frozen = { guess: guess, glyph: letters[seed % letters.length] };
+    return trait.frozen.glyph;
+  }
+
+  function isFrozenGlyph(game, glyph) {
+    return Boolean(glyph) && frozenGlyph(game) === glyph;
+  }
+
+  var baseMulligan = proto.mulligan;
+  if (typeof baseMulligan === "function") {
+    proto.mulligan = function mulliganWithFrozenHand(cardIds) {
+      var frozen = frozenGlyph(this);
+      if (frozen && Array.isArray(cardIds)) {
+        var game = this;
+        var hit = cardIds.some(function isFrozen(id) {
+          var card = typeof game.getHandCard === "function" ? game.getHandCard(id) : null;
+          return card && card.glyph === frozen;
+        });
+        if (hit) return { ok: false, error: "Frozen Hand: " + frozen + " is frozen this guess and can't be mulliganed." };
+      }
+      return baseMulligan.apply(this, arguments);
+    };
+  }
+
   // In Bloom: read by cuddle-points-money.js when it lays out special squares.
   function extraSpecialTiles(game) {
     return traitOf(game) === "meadow" ? 2 : 0;
@@ -279,7 +343,7 @@
 
   // The moving backdrop: the same particles on every redraw, each placed
   // where it would be by now, so a redraw never makes them jump.
-  var PARTICLES = { woods: 14, meadow: 18, marsh: 12, caverns: 16, frost: 30, library: 16, swamp: 14, citadel: 18, storm: 34, forge: 22 };
+  var PARTICLES = { woods: 14, meadow: 18, marsh: 12, caverns: 16, frost: 30, library: 16, swamp: 14, tides: 20, citadel: 18, storm: 34, forge: 22, glacier: 24 };
 
   function seeded(seed) {
     var x = seed * 9301 + 49297;
@@ -298,7 +362,8 @@
       var duration = 6 + rand() * 10;
       if (theme === "storm") duration = 0.7 + rand() * 0.6;
       if (theme === "forge") duration = 2.5 + rand() * 3;
-      if (theme === "frost") duration = 8 + rand() * 9;
+      if (theme === "frost" || theme === "glacier") duration = 8 + rand() * 9;
+      if (theme === "tides") duration = 7 + rand() * 7;
       var offset = rand() * duration;
       var delay = -((now + offset) % duration);
       var style = "--x:" + (rand() * 100).toFixed(1) + "%;--y:" + (rand() * 100).toFixed(1) + "%;--s:" + (0.6 + rand() * 0.9).toFixed(2)
@@ -359,6 +424,9 @@
     TRAITS: TRAITS,
     describe: describe,
     describeWorld: describeWorld,
-    extraSpecialTiles: extraSpecialTiles
+    extraSpecialTiles: extraSpecialTiles,
+    handIsBlue: handIsBlue,
+    frozenGlyph: frozenGlyph,
+    isFrozenGlyph: isFrozenGlyph
   });
 }());

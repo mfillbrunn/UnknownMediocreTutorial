@@ -119,6 +119,7 @@
 .umt-unl-chip.is-rule { border-color: rgba(255, 110, 130, 0.45); color: #ffc9d1; }
 .umt-unl-chip.is-badge { border-color: rgba(246, 201, 86, 0.45); color: #ffe8a3; }
 .umt-unl-chip.is-quest { border-color: rgba(110, 200, 255, 0.45); color: #c6e9ff; }
+.umt-unl-chip.is-theme { border-color: rgba(120, 220, 170, 0.45); color: #c9f5de; }
 .umt-unl-level:not(.is-open) .umt-unl-chip { opacity: 0.75; }
 
 @media (prefers-reduced-motion: reduce) {
