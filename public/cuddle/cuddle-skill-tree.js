@@ -188,7 +188,7 @@
       blurb: "Clues about the answer before you guess, and a little luck. Effects in cuddle-clues.js.",
       nodes: [
         { id: "vowelLamp", icon: "🏮", title: "Vowel Lamp", tier: "rare", type: "clues", maxLevel: 1, description: "Every stage tells you how many vowels the answer has.", level: g => v5Level(g, "umtVowelLamp") },
-        { id: "echoFinder", icon: "👯", title: "Echo Finder", tier: "common", type: "clues", maxLevel: 1, description: "Every stage tells you if the answer uses a letter twice.", level: g => v5Level(g, "umtEchoFinder") },
+        { id: "echoFinder", icon: "👯", title: "Echo Finder", tier: "rare", type: "clues", maxLevel: 1, description: "Every stage tells you if the answer uses a letter twice.", level: g => v5Level(g, "umtEchoFinder") },
         { id: "treasureHunter", icon: "💎", title: "Treasure Hunter", tier: "common", type: "money", maxLevel: 3,
           levels: ["About 1 in 3 stages has a treasure word. Solve it quickly: +$20.", "Treasure words give +$30.", "Treasure words give +$50, and every 2nd stage has one."],
           level: g => v5Level(g, "umtTreasureHunter") },
