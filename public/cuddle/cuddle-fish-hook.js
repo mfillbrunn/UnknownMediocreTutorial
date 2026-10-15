@@ -105,6 +105,15 @@
     return Array.from(new Set(list)).sort();
   }
 
+  // The hook plays its own animation for what it teaches: the hint drop
+  // (cuddle-hint-fx.js) counts that letter as already shown.
+  function shownByHook(state, id) {
+    var key = stageKey(state);
+    if (!state.umtHintFx || state.umtHintFx.key !== key) state.umtHintFx = { key: key, seen: [], sources: {} };
+    if (!Array.isArray(state.umtHintFx.seen)) state.umtHintFx.seen = [];
+    if (state.umtHintFx.seen.indexOf(id) === -1) state.umtHintFx.seen.push(id);
+  }
+
   function inAnswer(state, letter) {
     return String(state.secret || "").toUpperCase().indexOf(letter) !== -1;
   }
@@ -114,6 +123,7 @@
   function markPresent(game, letter) {
     var state = game.state;
     state.knownPresent = uniqueSorted((state.knownPresent || []).concat([letter]));
+    shownByHook(state, "p:" + letter);
     if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
   }
 
@@ -151,6 +161,7 @@
         return { ok: true, glyph: caught.glyph, thrown: null, tested: "present" };
       }
       state.knownAbsent = uniqueSorted((state.knownAbsent || []).concat([caught.glyph]));
+      shownByHook(state, "a:" + caught.glyph);
     }
     if (thrown) {
       state.hand = state.hand.filter(function keep(card) { return card.id !== thrown.id; });
@@ -285,10 +296,12 @@
     if (target.closest("[data-umt-fish-go]")) {
       event.preventDefault();
       var game = activeGame();
+      var from = deckSpot();
       var result = game ? game.fishCard(view.glyph, view.throwId) : null;
       close();
       if (result && result.ok) {
         try { window.dispatchEvent(new Event("cuddle:campaign-update")); } catch (_error) { /* next render */ }
+        playCatch(from, result.glyph, result.tested);
       }
       return;
     }
@@ -302,12 +315,137 @@
     if (event.key === "Escape" && document.querySelector(".umt-fish-overlay")) close();
   });
 
+  // -- the catch, animated ---------------------------------------------------------
+  // A line drops from the top of the screen onto the deck, the water
+  // splashes, the hook comes up with the card wriggling on it, and the card
+  // is flung into the hand -- yellow if it's in the answer, grey if not.
+  function reducedMotion() {
+    try {
+      return Boolean(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  function deckSpot() {
+    var deck = document.querySelector("#cuddleScreen .cuddle-deck");
+    var box = deck ? deck.getBoundingClientRect() : null;
+    if (!box || !box.width) return null;
+    return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+  }
+
+  function handCard(glyph) {
+    var cards = document.querySelectorAll('#cuddleScreen .cuddle-hand-panel [data-card-glyph="' + glyph + '"]');
+    return cards.length ? cards[cards.length - 1] : null;
+  }
+
+  function playCatch(from, glyph, tested) {
+    if (!from || reducedMotion() || !document.body || typeof document.body.animate !== "function") return;
+    var layer = document.createElement("div");
+    layer.className = "umt-catch";
+    layer.setAttribute("aria-hidden", "true");
+    var kind = tested === "present" ? "is-yellow" : tested === "absent" ? "is-grey" : "is-plain";
+    layer.innerHTML = '<span class="umt-catch-line"></span>'
+      + '<span class="umt-catch-ring"></span><span class="umt-catch-ring is-late"></span>'
+      + '<span class="umt-catch-drop"></span><span class="umt-catch-drop is-b"></span><span class="umt-catch-drop is-c"></span>'
+      + '<span class="umt-catch-card ' + kind + '">' + esc(glyph) + "</span>"
+      + '<span class="umt-catch-hook">' + hookSvg() + "</span>";
+    document.body.appendChild(layer);
+    var x = from.x;
+    var y = from.y;
+    var up = Math.max(60, y * 0.38);
+    var T = 1700;
+    var at = function at(el) { el.style.left = x + "px"; return el; };
+    var line = at(layer.querySelector(".umt-catch-line"));
+    line.style.height = y + "px";
+    line.animate([
+      { transform: "scaleY(0)", offset: 0 },
+      { transform: "scaleY(1)", offset: 0.26, easing: "ease-in" },
+      { transform: "scaleY(1)", offset: 0.4 },
+      { transform: "scaleY(" + ((y - up) / y).toFixed(3) + ")", offset: 0.62, easing: "ease-out" },
+      { transform: "scaleY(" + ((y - up) / y).toFixed(3) + ")", offset: 0.7 },
+      { transform: "scaleY(0)", opacity: 0, offset: 1 }
+    ], { duration: T, easing: "ease-in-out", fill: "forwards" });
+    at(layer.querySelector(".umt-catch-hook")).animate([
+      { transform: "translate(-50%, -100%) translateY(0)", offset: 0 },
+      { transform: "translate(-50%, -100%) translateY(" + y + "px)", offset: 0.26, easing: "ease-in" },
+      { transform: "translate(-50%, -100%) translateY(" + (y + 6) + "px)", offset: 0.32 },
+      { transform: "translate(-50%, -100%) translateY(" + y + "px)", offset: 0.4 },
+      { transform: "translate(-50%, -100%) translateY(" + (y - up) + "px) rotate(10deg)", offset: 0.62, easing: "ease-out" },
+      { transform: "translate(-50%, -100%) translateY(" + (y - up) + "px) rotate(-8deg)", offset: 0.7 },
+      { transform: "translate(-50%, -100%) translateY(0)", opacity: 0, offset: 1 }
+    ], { duration: T, easing: "ease-in-out", fill: "forwards" });
+    // The splash where the hook goes in.
+    Array.prototype.forEach.call(layer.querySelectorAll(".umt-catch-ring"), function ring(el, index) {
+      at(el).style.top = y + "px";
+      el.animate([
+        { transform: "translate(-50%, -50%) scale(0.2)", opacity: 0 },
+        { transform: "translate(-50%, -50%) scale(0.3)", opacity: 0.9, offset: 0.01 },
+        { transform: "translate(-50%, -50%) scale(" + (index ? 2.2 : 1.6) + ")", opacity: 0 }
+      ], { duration: 650, delay: T * 0.27 + index * 120, easing: "ease-out", fill: "both" });
+    });
+    Array.prototype.forEach.call(layer.querySelectorAll(".umt-catch-drop"), function drop(el, index) {
+      at(el).style.top = y + "px";
+      var side = (index - 1) * 16;
+      el.animate([
+        { transform: "translate(-50%, -50%)", opacity: 0 },
+        { transform: "translate(-50%, -50%)", opacity: 1, offset: 0.05 },
+        { transform: "translate(calc(-50% + " + side + "px), calc(-50% - 26px))", opacity: 1, offset: 0.45 },
+        { transform: "translate(calc(-50% + " + (side * 1.6) + "px), calc(-50% + 6px))", opacity: 0 }
+      ], { duration: 560, delay: T * 0.28 + index * 30, easing: "ease-out", fill: "both" });
+    });
+    // The card: hooked at the deck, wriggling up, then flung to the hand.
+    var card = at(layer.querySelector(".umt-catch-card"));
+    card.style.top = "0px";
+    var lift = y - up;
+    // Up on the hook: hooked at the deck, wriggling as it's reeled in.
+    card.animate([
+      { transform: "translate(-50%, 0) translateY(" + (y + 4) + "px) scale(0.3)", opacity: 0, offset: 0 },
+      { transform: "translate(-50%, 0) translateY(" + (y + 4) + "px) scale(0.3)", opacity: 0, offset: 0.51 },
+      { transform: "translate(-50%, 0) translateY(" + (y - 4) + "px) scale(1.1)", opacity: 1, offset: 0.6 },
+      { transform: "translate(-50%, 0) translateY(" + (y - up * 0.5) + "px) rotate(14deg)", opacity: 1, offset: 0.74 },
+      { transform: "translate(-50%, 0) translateY(" + lift + "px) rotate(-12deg)", opacity: 1, offset: 0.88 },
+      { transform: "translate(-50%, 0) translateY(" + lift + "px) rotate(9deg) scale(1.08)", opacity: 1, offset: 1 }
+    ], { duration: T * 0.7, easing: "linear", fill: "forwards" });
+    // Then flung into the hand, which has been redrawn with the catch by now.
+    setTimeout(function fling() {
+      var target = handCard(glyph);
+      var box = target ? target.getBoundingClientRect() : null;
+      var tx = box && box.width ? box.left + box.width / 2 : x + 60;
+      var ty = box && box.width ? box.top + box.height / 2 : y;
+      var dx = tx - x;
+      var flight = card.animate([
+        { transform: "translate(-50%, 0) translateY(" + lift + "px) rotate(9deg) scale(1.08)", opacity: 1 },
+        { transform: "translate(calc(-50% + " + (dx * 0.5).toFixed(1) + "px), 0) translateY(" + (Math.min(lift, ty) - 50) + "px) rotate(-170deg)", opacity: 1, offset: 0.45 },
+        { transform: "translate(calc(-50% + " + dx.toFixed(1) + "px), 0) translateY(" + (ty - 22) + "px) rotate(-360deg) scale(0.9)", opacity: 1, offset: 0.9 },
+        { transform: "translate(calc(-50% + " + dx.toFixed(1) + "px), 0) translateY(" + (ty - 22) + "px) rotate(-360deg) scale(0.7)", opacity: 0 }
+      ], { duration: T * 0.32, easing: "ease-in-out", fill: "forwards" });
+      flight.onfinish = function landed() {
+        var live = handCard(glyph);
+        if (live && typeof live.animate === "function") {
+          live.animate([
+            { transform: "scale(1)" },
+            { transform: "scale(1.22) rotate(-4deg)", offset: 0.4 },
+            { transform: "scale(1)" }
+          ], { duration: 420, easing: "cubic-bezier(.2, 1.5, .4, 1)" });
+        }
+        layer.remove();
+      };
+    }, T * 0.7);
+    setTimeout(function cleanup() { if (layer.parentNode) layer.remove(); }, T + 1200);
+  }
+
   function tick() {
     var game = activeGame();
     if (!game || !game.state) return;
     var copilot = window.CuddleCopilot;
-    if (!(copilot && typeof copilot.aiTurn === "function" && copilot.aiTurn(game)) && game.autoHook()) {
-      try { window.dispatchEvent(new Event("cuddle:campaign-update")); } catch (_error) { /* next render */ }
+    if (!(copilot && typeof copilot.aiTurn === "function" && copilot.aiTurn(game))) {
+      var from = deckSpot();
+      var bit = game.autoHook();
+      if (bit) {
+        try { window.dispatchEvent(new Event("cuddle:campaign-update")); } catch (_error) { /* next render */ }
+        playCatch(from, bit, "present");
+      }
     }
     placeButton(game);
     if (view.open && !ready(game)) close();

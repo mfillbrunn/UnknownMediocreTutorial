@@ -89,3 +89,49 @@
 @media (prefers-reduced-motion: reduce) {
   .umt-fish-btn, .umt-fish-sheet { animation: none; }
 }
+
+/* The catch: a line, a hook, a splash and a wriggling card. */
+.umt-catch {
+  position: fixed;
+  inset: 0;
+  z-index: 100005;
+  overflow: hidden;
+  pointer-events: none;
+}
+.umt-catch > span { position: absolute; top: 0; }
+.umt-catch-line {
+  width: 2px;
+  margin-left: -1px;
+  background: linear-gradient(180deg, rgba(220, 235, 255, 0.15), rgba(220, 235, 255, 0.85));
+  transform-origin: top center;
+}
+.umt-catch-hook { width: 30px; height: 30px; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45)); }
+.umt-catch-hook svg { width: 100%; height: 100%; }
+.umt-catch-ring {
+  width: 44px;
+  height: 16px;
+  border: 2px solid rgba(140, 200, 255, 0.85);
+  border-radius: 50%;
+}
+.umt-catch-drop {
+  width: 6px;
+  height: 8px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: #9fd2ff;
+}
+.umt-catch-card {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 44px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 8px;
+  background: #3d4660;
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: 900;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+  transform-origin: 50% 0;
+}
+.umt-catch-card.is-yellow { border-color: #ffe08a; background: #e9c046; color: #3a2a00; box-shadow: 0 0 16px rgba(246, 201, 86, 0.7); }
+.umt-catch-card.is-grey { background: #5b5f69; color: #d7d9de; }
