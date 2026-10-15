@@ -122,8 +122,8 @@
   // rows -- counted up to its last guess, not the world's -- plus the
   // trial bonus.
   //   Pair   the list is shown from the start, but you never type: each
-  //          guess is one of two words drawn from the list, tapped to play
-  //          it. After each, look at two more words or pick the answer
+  //          guess is one of two words offered (any everyday words, not
+  //          only the list's), tapped to play it. After each, look at two more words or pick the answer
   //          (latest on guess 5). The sooner you pass, the more it pays.
   var TRIAL_LEVELS = {
     easy: { label: "Easy", blind: 3, open: 6, pairs: 6, points: 20, money: 10 },
@@ -418,13 +418,24 @@
     return record;
   }
 
+  // Two everyday words to play, from all of them (not only the list), never
+  // one already played or one using a letter culled from the run.
   function drawPair(game) {
     var state = game.state;
     var played = {};
     (state.history || []).forEach(function mark(entry) { if (entry && entry.word) played[String(entry.word).toUpperCase()] = true; });
-    var list = (game.presetOpenList() || []).filter(function fresh(word) { return !played[word]; });
+    var removed = Array.isArray(state.removedLetters) ? state.removedLetters : [];
+    var source = typeof game.getActiveWords === "function" ? game.getActiveWords() : [];
+    if (!source || !source.length) source = game.presetOpenList() || [];
     var random = typeof game.random === "function" ? game.random : Math.random;
-    return shuffled(list, random).slice(0, 2).sort();
+    var picked = [];
+    for (var tries = 0; tries < 200 && picked.length < 2; tries += 1) {
+      var word = String(source[Math.floor(random() * source.length)] || "").toUpperCase();
+      if (!/^[A-Z]{5}$/.test(word) || played[word] || picked.indexOf(word) !== -1) continue;
+      if (removed.some(function has(letter) { return word.indexOf(letter) !== -1; })) continue;
+      picked.push(word);
+    }
+    return picked.sort();
   }
 
   // What the Pair trial's panel shows now, or null when it isn't one (or
@@ -440,7 +451,12 @@
     return {
       key: record.key + ":" + record.guess,
       phase: record.phase,
-      pair: record.pair.map(function word(item) { return { word: item, out: game.presetWordRuledOut(item) }; }),
+      // A word from the list that the board already rules out is marked
+      // (it can't be the answer); any other word is just a probe.
+      pair: record.pair.map(function word(item) {
+        var listed = (game.presetOpenList() || []).indexOf(item) !== -1;
+        return { word: item, listed: listed, out: listed && game.presetWordRuledOut(item) };
+      }),
       guess: guess,
       lastProbe: guess === PAIR_PICK_GUESS - 1,
       payNow: trialBonus(trial, guess),
@@ -518,7 +534,7 @@
       + '<section class="umt-stop-panel umt-duel-choose umt-trial-pick-panel">'
       + '<h2 id="umtTrialPickTitle">' + (pairs ? "Pair Trial" : open ? "Open Trial" : "Preset Trial") + "</h2>"
       + '<p class="umt-stop-lead">' + (pairs
-        ? "The answer is one of the listed words. Each guess, choose one of two words from the list to play. After each, see two more or pick the answer. The sooner you pass, the more it pays."
+        ? "The answer is one of the listed words. Each guess, choose one of two words to play. After each, see two more or pick the answer. The sooner you pass, the more it pays."
         : open
           ? "The answer is one of the listed words, shown from the start. Two guesses, then pick it."
           : "Three guesses, then the answer is one of a list. Pick it.")

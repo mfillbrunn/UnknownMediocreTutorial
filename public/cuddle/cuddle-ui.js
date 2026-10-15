@@ -1137,7 +1137,7 @@
     const pay = item => `+${item.points} points, +$${item.money}`;
     if (panel.phase === "pair") {
       const words = panel.pair.map(item => `<button type="button" class="cuddle-pair-word${item.out ? " is-out" : ""}" data-action="pair-word" data-word="${escapeHtml(item.word)}"`
-        + ` aria-label="Play ${escapeHtml(item.word)}${item.out ? " (ruled out by your guesses)" : ""}">${escapeHtml(item.word)}${item.out ? `<small>ruled out</small>` : ""}</button>`).join("");
+        + ` aria-label="Play ${escapeHtml(item.word)}${item.out ? " (ruled out by your guesses)" : ""}">${escapeHtml(item.word)}${item.out ? `<small>ruled out</small>` : item.listed ? `<small>on the list</small>` : ""}</button>`).join("");
       return `
       <section class="cuddle-hand-panel cuddle-pair-panel" aria-labelledby="cuddlePairTitle">
         <div class="cuddle-pair-head">

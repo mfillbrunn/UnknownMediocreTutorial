@@ -754,7 +754,7 @@
           // Blind: the list appears on guess 3. Open: a longer list is shown
           // from the start (cuddle-curses.js).
           // Pair: the list from the start, and every guess is one of
-          // two words from it.
+          // two words offered.
           trialKind: (() => { const roll = rng(); return roll < 0.34 ? "open" : roll < 0.67 ? "blind" : "pairs"; })(),
           next: nextRow.nodes.map((_node, col) => col)
         };
@@ -860,7 +860,7 @@
         if (node.trialKind === "pairs") {
           return Object.assign({}, BASE_STAGE_META.trial, {
             title: "Pair Trial",
-            description: "The answer is one of the words listed from the start. No typing: each guess, play one of two words from the list, then see two more or pick the answer. The sooner you pass, the more it pays. A wrong pick ends the run."
+            description: "The answer is one of the words listed from the start. No typing: each guess, play one of two words offered, then see two more or pick the answer. The sooner you pass, the more it pays. A wrong pick ends the run."
           });
         }
         return Object.assign({}, BASE_STAGE_META.trial, {
