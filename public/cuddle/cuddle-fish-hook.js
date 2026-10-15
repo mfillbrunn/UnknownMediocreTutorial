@@ -9,6 +9,13 @@
  * A small hook sits on the deck while it's ready; tapping it opens the
  * discard pile.
  *
+ * Level 2: the caught letter is tested as it comes up. In the answer, it
+ *   turns yellow (and, like every yellow letter, stays in your hand for
+ *   good without taking a slot); not in it, it turns grey.
+ * Level 3: also, once a stage, the hook bites on its own: as soon as a
+ *   letter of the answer lands in the discard pile, it's hooked out and
+ *   turns yellow.
+ *
  * The Fishing Line quest reward (cuddle-powers.js) gives one catch for
  * the stage it's picked in, badge or not.
  */
@@ -88,8 +95,26 @@
     state.umtFishLine = { key: stageKey(state), count: extraThisStage(state) + 1 };
   }
 
+  // Manual catches this stage: one with the badge (any level), plus
+  // Fishing Line's.
   function allowance(game) {
-    return level(game) + extraThisStage(game.state);
+    return (level(game) > 0 ? 1 : 0) + extraThisStage(game.state);
+  }
+
+  function uniqueSorted(list) {
+    return Array.from(new Set(list)).sort();
+  }
+
+  function inAnswer(state, letter) {
+    return String(state.secret || "").toUpperCase().indexOf(letter) !== -1;
+  }
+
+  // A letter known to be in the answer: yellow, and (cuddle-engine.js
+  // _syncInfiniteCards) a card that stays in hand without taking a slot.
+  function markPresent(game, letter) {
+    var state = game.state;
+    state.knownPresent = uniqueSorted((state.knownPresent || []).concat([letter]));
+    if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
   }
 
   function ready(game) {
@@ -114,15 +139,49 @@
       if (!thrown) return { ok: false, error: "Your hand is full: pick a card to throw back." };
     }
     var caught = state.discard.splice(index, 1)[0];
+    state.umtFishHook = { key: stageKey(state), used: usedThisStage(state) + 1 };
+    // Level 2: the catch is tested. In the answer, it turns yellow and
+    // needs no slot, so nothing is thrown back.
+    if (level(this) >= 2) {
+      if (inAnswer(state, caught.glyph)) {
+        state.discard.push(caught);
+        markPresent(this, caught.glyph);
+        state.lastMessage = "Fish Hook: you caught " + caught.glyph + ", and it's in the answer!";
+        try { this.save(); } catch (_error) { /* next save */ }
+        return { ok: true, glyph: caught.glyph, thrown: null, tested: "present" };
+      }
+      state.knownAbsent = uniqueSorted((state.knownAbsent || []).concat([caught.glyph]));
+    }
     if (thrown) {
       state.hand = state.hand.filter(function keep(card) { return card.id !== thrown.id; });
       if (thrown.source === "deck") state.discard.push(thrown);
     }
     state.hand.push(caught);
-    state.umtFishHook = { key: stageKey(state), used: usedThisStage(state) + 1 };
-    state.lastMessage = "Fish Hook: you caught " + caught.glyph + (thrown ? " and threw back " + thrown.glyph : "") + ".";
+    var tested = level(this) >= 2 ? " It isn't in the answer." : "";
+    state.lastMessage = "Fish Hook: you caught " + caught.glyph + (thrown ? " and threw back " + thrown.glyph : "") + "." + tested;
     try { this.save(); } catch (_error) { /* next save */ }
-    return { ok: true, glyph: caught.glyph, thrown: thrown ? thrown.glyph : null };
+    return { ok: true, glyph: caught.glyph, thrown: thrown ? thrown.glyph : null, tested: tested ? "absent" : null };
+  };
+
+  // Level 3: once a stage, a letter of the answer that lands in the
+  // discard pile (and isn't known yet) is hooked out on its own and turns
+  // yellow. Returns the letter, or null.
+  proto.autoHook = function autoHook() {
+    var state = this.state;
+    if (level(this) < 3 || !state || inDuel(state) || state.status !== "playing" || state.pendingRoundEnd) return null;
+    if (state.umtFishAuto === stageKey(state)) return null;
+    var game = this;
+    var bite = (state.discard || []).find(function letter(card) {
+      if (!isLetter(card) || !inAnswer(state, card.glyph)) return false;
+      var status = typeof game.getCardKnowledgeStatus === "function" ? game.getCardKnowledgeStatus(card.glyph) : "unused";
+      return status !== "yellow" && status !== "green";
+    });
+    if (!bite) return null;
+    state.umtFishAuto = stageKey(state);
+    markPresent(this, bite.glyph);
+    state.lastMessage = ((state.lastMessage || "") + " Fish Hook bit on its own: " + bite.glyph + " is in the answer.").trim();
+    try { this.save(); } catch (_error) { /* next save */ }
+    return bite.glyph;
   };
 
   // -- on screen -------------------------------------------------------------------
@@ -177,7 +236,8 @@
     return '<div class="umt-fish-overlay" role="dialog" aria-modal="true" aria-labelledby="umtFishTitle">'
       + '<section class="umt-fish-sheet">'
       + '<header><span class="umt-fish-icon" aria-hidden="true">' + hookSvg() + '</span><div><h2 id="umtFishTitle">Fish Hook</h2>'
-      + "<p>Take one card back from your discard pile." + (level(game) > 0 ? " Once a stage." : "") + "</p></div>"
+      + "<p>Take one card back from your discard pile." + (level(game) > 0 ? " Once a stage." : "")
+      + (level(game) >= 2 ? " The letter you catch is tested: if it's in the answer, it turns yellow and needs no space." : "") + "</p></div>"
       + '<button type="button" class="umt-fish-close" data-umt-fish-close aria-label="Close">×</button></header>'
       + '<h3>Discard pile</h3><div class="umt-fish-pond">' + fish + "</div>"
       + (full ? '<h3>Your hand is full: throw one back</h3><div class="umt-fish-pond">' + back + "</div>" : "")
@@ -245,6 +305,10 @@
   function tick() {
     var game = activeGame();
     if (!game || !game.state) return;
+    var copilot = window.CuddleCopilot;
+    if (!(copilot && typeof copilot.aiTurn === "function" && copilot.aiTurn(game)) && game.autoHook()) {
+      try { window.dispatchEvent(new Event("cuddle:campaign-update")); } catch (_error) { /* next render */ }
+    }
     placeButton(game);
     if (view.open && !ready(game)) close();
   }
