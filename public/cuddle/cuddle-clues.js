@@ -327,6 +327,10 @@
         && !(typeof game.presetPickIsEarly === "function" && game.presetPickIsEarly());
       chips.push({ icon: "scroll", label: "Trial list", text: pickable ? "Answer is one of (tap one to answer now)" : "Answer is one of", words: openList, ruledOut: out, pickable, tone: "preset" });
     }
+    // A word rule on this guess (Letter Demand, Word Chain, Locked In).
+    const rule = window.CuddleRebalanceV5 && typeof window.CuddleRebalanceV5.wordRuleNote === "function"
+      ? window.CuddleRebalanceV5.wordRuleNote(game) : null;
+    if (rule) chips.push({ icon: rule.icon, label: rule.label, text: rule.text, letters: rule.letters, tone: "rule" });
     // Hints rank III: once a stage, tap a consonant to test it.
     const testable = window.CuddleSchools && typeof window.CuddleSchools.testableLetters === "function"
       ? window.CuddleSchools.testableLetters(game) : [];

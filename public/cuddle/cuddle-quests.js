@@ -379,6 +379,16 @@
       text: "five different letters." },
     { id: "consonantCrunch", icon: "🥨", title: "Consonant Crunch", kind: "rule", boss: false, challenge: true, mix: true, curse: false, reward: 25,
       text: "at most one vowel." },
+    // Rules that ask something of the word itself (cuddle-rebalance-v5.js
+    // challengeValidation). Letter Demand hands you a card of the letter it
+    // asks for, and Word Chain one of the letter your word must start with,
+    // so the hand can always meet them.
+    { id: "letterDemand", icon: "📌", title: "Letter Demand", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 20,
+      text: "use the letter shown in your word (you're handed a card of it)." },
+    { id: "wordChain", icon: "🔗", title: "Word Chain", kind: "rule", boss: true, challenge: true, mix: false, curse: false, reward: 24,
+      text: "start your word with the last letter of your guess before." },
+    { id: "lockedIn", icon: "🔒", title: "Locked In", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 22,
+      text: "keep every green letter in its place and use every yellow one (Wordle's Hard Mode)." },
     { id: "shortHand", icon: "✂️", title: "Short Hand", kind: "round", boss: true, challenge: false, mix: false, curse: true, reward: 0,
       text: "10 consonants not in the answer leave your deck; only 4 guesses." },
     // Preset Trial is a stage of its own now (cuddle-curses.js), not a boss.
@@ -503,6 +513,30 @@
       description: "Mulligans are locked for your opening guesses.",
       turns: 0,
       rewardId: "questDoublePick"
+    },
+    {
+      id: "letterDemand",
+      icon: "📌",
+      title: "Letter Demand",
+      description: "For your first guesses, each word must use a letter the boss names. You're handed a card of it.",
+      turns: 3,
+      rewardId: "biggerMulligans"
+    },
+    {
+      id: "wordChain",
+      icon: "🔗",
+      title: "Word Chain",
+      description: "From your 2nd guess, each word must start with the last letter of the word before.",
+      turns: 3,
+      rewardId: "revealGreen"
+    },
+    {
+      id: "lockedIn",
+      icon: "🔒",
+      title: "Locked In",
+      description: "From your 2nd guess, keep every green letter in its place and use every yellow one.",
+      turns: 3,
+      rewardId: "freeVowelSweep"
     },
     // (Quest Trial -- a quest on every guess, 5 points lost for each one
     // missed -- was retired: more chore than challenge.)
