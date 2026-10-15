@@ -296,6 +296,7 @@
     presetWordsTrial: ["Preset Trial", "Stage ends on this guess: pick the answer from as many words as its number."],
     questEndurance: ["Endurance Trial", "A quest; miss it and lose 1 hand size for the stage."],
     letterDemand: ["Letter Demand", "Your word must use the letter shown (you're handed a card of it)."],
+    letterBan: ["Banned Letter", "Your word may not use the letter shown."],
     wordChain: ["Word Chain", "Your word must start with the last letter of your guess before."],
     lockedIn: ["Locked In", "Keep every green in place and use every yellow."]
   });
@@ -1935,7 +1936,7 @@
     // A word-rule boss (Letter Demand, Word Chain, Locked In) is one rule
     // over its guesses -- one more for the two that start from guess 2.
     if (boss && !boss.__umtSynthetic && WORD_RULES.includes(boss.id)) {
-      const extra = boss.id === "letterDemand" ? 0 : 1;
+      const extra = boss.id === "letterDemand" || boss.id === "letterBan" ? 0 : 1;
       return Array.from({ length: Math.max(1, asInteger(boss.turns, 2)) + extra }, () => boss.id);
     }
     const challenge = activeChallenge(game);
@@ -1968,7 +1969,9 @@
   }
 
   // -- word rules: Letter Demand, Word Chain, Locked In ------------------
-  const WORD_RULES = Object.freeze(["letterDemand", "wordChain", "lockedIn"]);
+  const WORD_RULES = Object.freeze(["letterDemand", "letterBan", "wordChain", "lockedIn"]);
+  // Banned Letter draws from the letters words lean on most, so it bites.
+  const BAN_LETTERS = "ERSTALNOCDPMH".split("");
   const DEMAND_LETTERS = "RSTLNCDPMHBGFKWY".split("");
 
   // The letter Letter Demand asks for on guess `used` (0-based): fixed by
@@ -1983,6 +1986,19 @@
     const pool = fresh.length ? fresh : open;
     if (!pool.length) return null;
     return pool[hash32(`${roundToken(game)}:demand:${used}`) % pool.length];
+  }
+
+  // The letter Banned Letter forbids on guess `used`: fixed by the stage
+  // and the guess, a new one each guess, never one you already know is in
+  // the answer (that would only block the solve) or a culled one.
+  function banLetter(game, used) {
+    const state = stateOf(game) || {};
+    const removed = new Set(state.removedLetters || []);
+    const present = new Set(state.knownPresent || []);
+    (state.revealedPositions || []).forEach((letter) => { if (letter) present.add(letter); });
+    const pool = BAN_LETTERS.filter((letter) => !removed.has(letter) && !present.has(letter));
+    if (!pool.length) return null;
+    return pool[hash32(`${roundToken(game)}:ban:${used}`) % pool.length];
   }
 
   // The letter Word Chain asks a word to start with: the last letter of the
@@ -2028,6 +2044,10 @@
       const letter = demandLetter(game, used);
       return letter ? { id: effect, icon: "📌", label: "Letter Demand", text: "Use", letters: [letter] } : null;
     }
+    if (effect === "letterBan") {
+      const letter = banLetter(game, used);
+      return letter ? { id: effect, icon: "🚫", label: "Banned Letter", text: "Don't use", letters: [letter] } : null;
+    }
     if (effect === "wordChain") {
       const letter = chainLetter(game, used);
       return letter ? { id: effect, icon: "🔗", label: "Word Chain", text: "Start with", letters: [letter] } : null;
@@ -2071,6 +2091,10 @@
     if (effect === "letterDemand") {
       const letter = demandLetter(game, used);
       if (letter && !word.includes(letter)) return `Letter Demand: this word must use ${letter}.`;
+    }
+    if (effect === "letterBan") {
+      const letter = banLetter(game, used);
+      if (letter && word.includes(letter)) return `Banned Letter: this word may not use ${letter}.`;
     }
     if (effect === "wordChain") {
       const letter = chainLetter(game, used);
@@ -3790,6 +3814,7 @@
     perfectOpener: { title: "Perfect Opener", description: "This word must use five different letters.", shape: "unique" },
     consonantCrunch: { title: "Consonant Crunch", description: "This word may contain at most one vowel.", shape: "consonant" },
     letterDemand: { title: "Letter Demand", description: "This word must use the letter shown above the board. If you hold no card of it, you're handed one.", shape: "tag" },
+    letterBan: { title: "Banned Letter", description: "This word may not use the letter shown above the board. A new letter is banned every guess.", shape: "noShield" },
     wordChain: { title: "Word Chain", description: "This word must start with the last letter of your guess before. If you hold no card of it, you're handed one.", shape: "scroll" },
     lockedIn: { title: "Locked In", description: "Wordle's Hard Mode: this word must keep every green letter in its place and use every yellow one.", shape: "noShield" },
     shroudedEdges: { title: "Shrouded Edges", description: "The same marked positions remain hidden on every affected guess.", shape: "edges" },

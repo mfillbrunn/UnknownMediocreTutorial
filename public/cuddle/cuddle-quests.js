@@ -385,6 +385,8 @@
     // so the hand can always meet them.
     { id: "letterDemand", icon: "📌", title: "Letter Demand", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 20,
       text: "use the letter shown in your word (you're handed a card of it)." },
+    { id: "letterBan", icon: "🚫", title: "Banned Letter", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 20,
+      text: "don't use the letter shown (it changes every guess)." },
     { id: "wordChain", icon: "🔗", title: "Word Chain", kind: "rule", boss: true, challenge: true, mix: false, curse: false, reward: 24,
       text: "start your word with the last letter of your guess before." },
     { id: "lockedIn", icon: "🔒", title: "Locked In", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 22,
@@ -521,6 +523,14 @@
       description: "For your first guesses, each word must use a letter the boss names. You're handed a card of it.",
       turns: 3,
       rewardId: "biggerMulligans"
+    },
+    {
+      id: "letterBan",
+      icon: "🚫",
+      title: "Banned Letter",
+      description: "For your first guesses, each word may not use a letter the boss names. The letter changes every guess.",
+      turns: 3,
+      rewardId: "doubleMulligans"
     },
     {
       id: "wordChain",

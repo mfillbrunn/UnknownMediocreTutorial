@@ -2994,6 +2994,8 @@
         return "Every guess: a quest; miss one, lose 1 hand size for the fight.";
       case "letterDemand":
         return `${range(count)}: Each word must use the letter shown (you're handed a card of it).`;
+      case "letterBan":
+        return `${range(count)}: Each word may not use the letter shown (a new one every guess).`;
       case "wordChain":
         return `Guesses 2–${count + 1}: Start each word with the last letter of the word before.`;
       case "lockedIn":
