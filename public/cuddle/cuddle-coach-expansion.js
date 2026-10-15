@@ -71,7 +71,7 @@
       key: "coachMeterReward",
       icon: "🫶",
       title: "Bigger Cuddle",
-      description: "Adds to what a full Cuddle Meter gives. It always gives a free mulligan; each level adds one more: a consonant tested, then a Joker card, then a yellow hint.",
+      description: "Adds to what a full Cuddle Meter gives. It always gives a free mulligan; each level adds one more: a consonant tested, then a Joker card, then a yellow hint (once a stage; the last level is an Epic pick).",
       max: 3
     }
   ]);
@@ -751,18 +751,20 @@
         coach.cuddleRewards.joker += 1;
         pops.push("+1 Joker");
       }
-      // Bigger Cuddle 3: and a yellow hint.
-      if (tier >= 3) {
+      // Bigger Cuddle 3: and a yellow hint, once a stage (a later fill in
+      // the same stage gives everything else).
+      if (tier >= 3 && coach.yellowHintStage !== roundKey(game)) {
         var yellow = live ? meterYellowHint(game) : null;
         if (yellow) {
+          coach.yellowHintStage = roundKey(game);
           messages.push("Yellow hint: " + yellow + " is in the answer.");
           pops.push(yellow + " yellow");
-        } else {
-          coach.bankedYellowHints += 1;
+          coach.cuddleRewards.letter += 1;
+        } else if (!live && !coach.bankedYellowHints) {
+          coach.bankedYellowHints = 1;
           messages.push("A yellow hint is banked for the next round.");
           pops.push("hint (banked)");
         }
-        coach.cuddleRewards.letter += 1;
       }
       var popLabel = pops.join(" · ");
       coach.lastMeterReward = { seq: coach.cuddleTriggers, label: popLabel };
@@ -787,11 +789,13 @@
       notes.push("Banked Cuddle Meter: " + tested.message);
       coach.bankedConsonantTests -= 1;
     }
-    while (coach.bankedYellowHints > 0) {
+    if (coach.bankedYellowHints > 0 && coach.yellowHintStage !== roundKey(game)) {
       var hinted = meterYellowHint(game);
-      if (!hinted) break;
-      notes.push("Banked Cuddle Meter: " + hinted + " is in the answer.");
-      coach.bankedYellowHints -= 1;
+      if (hinted) {
+        coach.yellowHintStage = roundKey(game);
+        notes.push("Banked Cuddle Meter: " + hinted + " is in the answer.");
+      }
+      coach.bankedYellowHints = 0;
     }
     while (coach.bankedFreeLetters > 0 && hiddenPositions(game).length) {
       var result = revealExactPosition(game, "Banked Cuddle Meter");

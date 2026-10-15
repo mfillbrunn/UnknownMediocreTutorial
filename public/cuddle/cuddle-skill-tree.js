@@ -228,7 +228,9 @@
           levels: ["The Cuddle Meter fills up 2 tiles sooner.", "The Cuddle Meter fills up 4 tiles sooner.", "The Cuddle Meter fills up 6 tiles sooner."],
           level: g => Number(coachState(g)?.cuddleThresholdStacks) || 0 },
         { id: "coachMeterReward", icon: "🫶", title: "Bigger Cuddle", tier: "rare", type: "letters", maxLevel: 3,
-          levels: ["When the Cuddle Meter is full, it also tests a consonant for you (on top of its free mulligan).", "A full Cuddle Meter also gives +1 Joker card.", "A full Cuddle Meter also gives a yellow hint: a letter of the answer turns yellow."],
+          levels: ["When the Cuddle Meter is full, it also tests a consonant for you (on top of its free mulligan).", "A full Cuddle Meter also gives +1 Joker card.", "Once a stage, a full Cuddle Meter also gives a yellow hint: a letter of the answer turns yellow."],
+          // The last level is a bigger step: offered as an Epic card.
+          levelTiers: { 3: "epic" },
           level: g => Number(coachState(g)?.cuddleRewardTier) || 0 }
       ]
     },
@@ -394,7 +396,7 @@
     yellowHint: ["1 letter shown", "1 letter placed"],
     "alphabet-compass": ["1 compass tile", "2 compass tiles", "Every tile"],
     coachMeterThreshold: ["Meter 2 sooner", "Meter 4 sooner", "Meter 6 sooner"],
-    coachMeterReward: ["Meter + consonant test", "Meter + Joker card", "Meter + yellow hint"],
+    coachMeterReward: ["Meter + consonant test", "Meter + Joker card", "Meter + yellow hint, once a stage"],
     momentum: ["+4 per better guess", "+8 per better guess", "+15 per better guess"],
     bigOpener: ["+5 per opener colour", "+10 per opener colour", "+20 per opener colour"],
     lastStand: ["+25 last-guess solve", "+45 last-guess solve", "+100 last-guess solve"],

@@ -1690,6 +1690,22 @@
     }
   }
 
+  // A badge whose later level is a bigger step can be offered at a higher
+  // rarity for that pick (the registry's `levelTiers`, e.g. Bigger
+  // Cuddle's last level is Epic): a copy of its card wears that rarity.
+  function atNextLevelTier(def, state) {
+    const tree = window.CuddleSkillTree;
+    const node = tree && typeof tree.resolve === "function" ? tree.resolve(getId(def) || getName(def)) : null;
+    if (!node || !node.levelTiers || typeof tree.level !== "function") return def;
+    let level = 0;
+    try { level = Number(tree.level({ state }, node)) || 0; } catch (_) { level = 0; }
+    const tier = node.levelTiers[level + 1];
+    if (!tier || tier === def.__cuddleV8Tier) return def;
+    const copy = Object.assign(Object.create(Object.getPrototypeOf(def)), def);
+    setTier(copy, tier);
+    return copy;
+  }
+
   function allOrdinaryCandidates(context, state) {
     const ordinary = [...catalog.ordinary.values()];
     for (const def of catalog.boss.values()) {
@@ -1699,7 +1715,7 @@
     const unique = new Map();
     for (const def of ordinary) {
       if (!rewardAvailable(def, context, state)) continue;
-      unique.set(norm(getName(def)), def);
+      unique.set(norm(getName(def)), atNextLevelTier(def, state));
     }
     return [...unique.values()];
   }
