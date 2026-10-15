@@ -348,7 +348,8 @@
     { id: "umtVowelCheck", icon: "🔤", title: "Vowel Check", description: "2 vowels you haven't tried are tested: you learn if each one is in the answer." },
     { id: "umtSpotlight", icon: "👁️", title: "Spotlight", description: "A yellow letter moves to its exact spot and turns green (or the next yellow you find does)." },
     { id: "umtPocketMoney", icon: "💰", title: "Pocket Money", description: "Get +$10 right now." },
-    { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "Get +15 points right now." }
+    { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "Get +15 points right now." },
+    { id: "umtFishingLine", icon: "🎣", title: "Fishing Line", description: "Once this stage, take a card back from your discard pile (tap the hook on your deck)." }
   ];
 
   function uniqueSorted(list) {
@@ -461,6 +462,12 @@
     umtQuickPoints: function quickPoints(game) {
       stageBonus(game, 15, "umtQuestQuickPoints", "Quick Points");
       return "Quick Points: +15 points.";
+    },
+    // One Fish Hook catch for this stage (cuddle-fish-hook.js).
+    umtFishingLine: function fishingLine(game) {
+      var hook = window.CuddleFishHook;
+      if (hook && typeof hook.addCatch === "function") hook.addCatch(game);
+      return "Fishing Line: tap the hook on your deck to take a card back from the discard pile.";
     }
   };
 

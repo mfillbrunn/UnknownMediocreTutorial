@@ -8,6 +8,9 @@
  *
  * A small hook sits on the deck while it's ready; tapping it opens the
  * discard pile.
+ *
+ * The Fishing Line quest reward (cuddle-powers.js) gives one catch for
+ * the stage it's picked in, badge or not.
  */
 (function () {
   "use strict";
@@ -73,12 +76,28 @@
     });
   }
 
+  // Extra catches this stage (Fishing Line).
+  function extraThisStage(state) {
+    var line = state.umtFishLine;
+    return line && line.key === stageKey(state) ? Number(line.count) || 0 : 0;
+  }
+
+  function addCatch(game) {
+    var state = game && game.state;
+    if (!state) return;
+    state.umtFishLine = { key: stageKey(state), count: extraThisStage(state) + 1 };
+  }
+
+  function allowance(game) {
+    return level(game) + extraThisStage(game.state);
+  }
+
   function ready(game) {
     var state = game && game.state;
     if (!state || inDuel(state) || state.status !== "playing" || state.pendingRoundEnd) return false;
     var copilot = window.CuddleCopilot;
     if (copilot && typeof copilot.aiTurn === "function" && copilot.aiTurn(game)) return false;
-    return level(game) > 0 && usedThisStage(state) < level(game) && pond(game).length > 0;
+    return usedThisStage(state) < allowance(game) && pond(game).length > 0;
   }
 
   // Fishes one `glyph` out of the discard pile into the hand; `throwBackId`
@@ -158,7 +177,7 @@
     return '<div class="umt-fish-overlay" role="dialog" aria-modal="true" aria-labelledby="umtFishTitle">'
       + '<section class="umt-fish-sheet">'
       + '<header><span class="umt-fish-icon" aria-hidden="true">' + hookSvg() + '</span><div><h2 id="umtFishTitle">Fish Hook</h2>'
-      + "<p>Take one card back from your discard pile. Once a stage.</p></div>"
+      + "<p>Take one card back from your discard pile." + (level(game) > 0 ? " Once a stage." : "") + "</p></div>"
       + '<button type="button" class="umt-fish-close" data-umt-fish-close aria-label="Close">×</button></header>'
       + '<h3>Discard pile</h3><div class="umt-fish-pond">' + fish + "</div>"
       + (full ? '<h3>Your hand is full: throw one back</h3><div class="umt-fish-pond">' + back + "</div>" : "")
@@ -251,5 +270,5 @@
   }
   attach();
 
-  window.CuddleFishHook = Object.freeze({ ready: ready, pond: pond });
+  window.CuddleFishHook = Object.freeze({ ready: ready, pond: pond, addCatch: addCatch });
 }());
