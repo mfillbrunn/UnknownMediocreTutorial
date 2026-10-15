@@ -1131,9 +1131,40 @@
       </section>`;
   }
 
+  // A Pair trial (cuddle-curses.js): no typing. Each guess is one of two
+  // words from the list; after it, two more words or the answer pick.
+  function renderPairPanel(panel) {
+    const pay = item => `+${item.points} points, +$${item.money}`;
+    if (panel.phase === "pair") {
+      const words = panel.pair.map(item => `<button type="button" class="cuddle-pair-word${item.out ? " is-out" : ""}" data-action="pair-word" data-word="${escapeHtml(item.word)}"`
+        + ` aria-label="Play ${escapeHtml(item.word)}${item.out ? " (ruled out by your guesses)" : ""}">${escapeHtml(item.word)}${item.out ? `<small>ruled out</small>` : item.listed ? `<small>on the list</small>` : ""}</button>`).join("");
+      return `
+      <section class="cuddle-hand-panel cuddle-pair-panel" aria-labelledby="cuddlePairTitle">
+        <div class="cuddle-pair-head">
+          <h3 id="cuddlePairTitle">Guess ${panel.guess}: play one of these words</h3>
+          <p>If it's the answer, you pass: ${pay(panel.payNow)}.</p>
+        </div>
+        <div class="cuddle-pair-words">${words}</div>
+      </section>`;
+    }
+    return `
+      <section class="cuddle-hand-panel cuddle-pair-panel" aria-labelledby="cuddlePairTitle">
+        <div class="cuddle-pair-head">
+          <h3 id="cuddlePairTitle">Read the board. What next?</h3>
+          <p>Pick the answer from the list now: a right pick passes for ${pay(panel.payNow)}. A wrong pick ends the run.</p>
+        </div>
+        <div class="cuddle-pair-actions">
+          <button type="button" class="cuddle-btn cuddle-btn-primary" data-action="pair-pick">Pick the answer <span>${pay(panel.payNow)}</span></button>
+          <button type="button" class="cuddle-btn" data-action="pair-next">Show two more words <span>${panel.lastProbe ? "then you must pick" : `pass then pays ${pay(panel.payNext)}`}</span></button>
+        </div>
+      </section>`;
+  }
+
   function renderHand(state, rules) {
     const presetPick = state.status === "playing" && typeof game.presetPick === "function" ? game.presetPick() : null;
     if (presetPick) return renderPresetPick(presetPick);
+    const pairPanel = state.status === "playing" && typeof game.presetPairPanel === "function" ? game.presetPairPanel() : null;
+    if (pairPanel) return renderPairPanel(pairPanel);
     const unlimitedMulligans = typeof game.hasUnlimitedMulligans === "function" && game.hasUnlimitedMulligans();
     const limit = game.getMulliganLimit();
     const groups = groupedHand(state);
@@ -2047,6 +2078,20 @@
         if (pick) presetSelection = { key: pick.key, word: String(dataset.word || "").toUpperCase() };
         return true;
       }
+      case "pair-word": {
+        const result = typeof game.submitPairWord === "function" ? game.submitPairWord(String(dataset.word || "")) : { ok: false };
+        setUiMessage(result.ok ? "" : result.error || "");
+        resetActionMode();
+        return true;
+      }
+      case "pair-next":
+        if (typeof game.presetPairNext === "function") game.presetPairNext();
+        return true;
+      // "Pick the answer": the list's early pick (cuddle-curses.js).
+      case "pair-pick":
+        if (typeof game.openPresetPickEarly === "function") game.openPresetPickEarly();
+        presetSelection = { key: "", word: "" };
+        return true;
       case "preset-back":
         if (typeof game.closePresetPickEarly === "function") game.closePresetPickEarly();
         presetSelection = { key: "", word: "" };

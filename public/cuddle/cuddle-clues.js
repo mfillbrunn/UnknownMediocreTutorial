@@ -325,7 +325,7 @@
       const pickGuess = typeof game.presetPickGuess === "function" ? game.presetPickGuess() : 0;
       const pickable = game.state.status === "playing" && pickGuess > 0 && num(game.state.guessesUsed) + 1 < pickGuess
         && !(typeof game.presetPickIsEarly === "function" && game.presetPickIsEarly());
-      chips.push({ icon: "scroll", label: "Open Trial", text: pickable ? "Answer is one of (tap one to answer now)" : "Answer is one of", words: openList, ruledOut: out, pickable, tone: "preset" });
+      chips.push({ icon: "scroll", label: "Trial list", text: pickable ? "Answer is one of (tap one to answer now)" : "Answer is one of", words: openList, ruledOut: out, pickable, tone: "preset" });
     }
     // Hints rank III: once a stage, tap a consonant to test it.
     const testable = window.CuddleSchools && typeof window.CuddleSchools.testableLetters === "function"
