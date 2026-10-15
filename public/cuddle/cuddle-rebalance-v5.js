@@ -1702,7 +1702,8 @@
   function challengeTurns(game, challenge) {
     if (!challenge || challenge.rareSecret) return 0;
     if (challenge.id === "perfectOpener") return 1;
-    if (challenge.id === "noMulligans") return mulliganLockTurns(game);
+    // Easy and Medium: no lock, one mulligan fewer instead (beginVariant).
+    if (challenge.id === "noMulligans") return softChallenges(game) ? 0 : mulliganLockTurns(game);
     if (challenge.id === "questEndurance") return challengeTurnCap(game) + 1;
     return challengeTurnCap(game);
   }
@@ -1746,11 +1747,29 @@
     return value.charAt(0).toUpperCase() + value.slice(1);
   }
 
+  // On Easy and Medium two challenges are gentler: Steady Hand takes one
+  // mulligan away at the start (instead of locking mulligans), and
+  // Consonant Crunch allows two vowels (instead of one).
+  function softChallenges(game) {
+    return difficultyName(game) !== "hard";
+  }
+  const SOFT_TEXT = Object.freeze({
+    noMulligans: "1 mulligan fewer this stage.",
+    consonantCrunch: "at most two vowels."
+  });
+  function challengeText(game, challenge) {
+    return softChallenges(game) && SOFT_TEXT[challenge.id] ? SOFT_TEXT[challenge.id] : challenge.text;
+  }
+  function crunchVowels(game) {
+    return softChallenges(game) ? 2 : 1;
+  }
+
   // A challenge in one systematic line: which guesses, then what happens.
   function challengeDisplayDescription(game, challenge) {
     if (challenge.rareSecret) return `Whole stage: ${challenge.text}`;
+    if (challenge.id === "noMulligans" && softChallenges(game)) return `Start: ${challengeText(game, challenge)}`;
     const turns = Math.max(1, challengeTurns(game, challenge));
-    return `${guessRange(1, turns)}: ${challenge.text}`;
+    return `${guessRange(1, turns)}: ${challengeText(game, challenge)}`;
   }
 
   // A stop's challenges guess by guess, in the order the stage plays them
@@ -1764,8 +1783,12 @@
         lines.push({ id: challenge.id, label: "Whole stage", title: challenge.title, text: sentence(challenge.text) });
         return;
       }
+      if (challenge.id === "noMulligans" && softChallenges(game)) {
+        lines.push({ id: challenge.id, label: "Start", title: challenge.title, text: sentence(challengeText(game, challenge)) });
+        return;
+      }
       const turns = Math.max(1, challengeTurns(game, challenge));
-      lines.push({ id: challenge.id, label: guessRange(guess, guess + turns - 1), title: challenge.title, text: sentence(challenge.text) });
+      lines.push({ id: challenge.id, label: guessRange(guess, guess + turns - 1), title: challenge.title, text: sentence(challengeText(game, challenge)) });
       guess += turns;
     });
     return lines;
@@ -1822,6 +1845,11 @@
         mandatory: true
       };
       clearNativeChallengeOffer(game);
+      // Steady Hand on Easy and Medium: one mulligan fewer this stage.
+      if (softChallenges(game) && variantChallengeIds(variant).includes("noMulligans")) {
+        const opening = stateOf(game);
+        if (opening) opening.mulligansLeft = Math.max(0, asNumber(opening.mulligansLeft, 0) - 1);
+      }
       if (variant.ease === "luckyStart") {
         try {
           if (typeof game._revealPositionPeek === "function") game._revealPositionPeek();
@@ -1901,8 +1929,10 @@
     if (effect === "perfectOpener" && new Set(word.split("")).size !== word.length) {
       return "Perfect Opener: this word must use five different letters.";
     }
-    if (effect === "consonantCrunch" && (word.match(/[AEIOU]/g) || []).length > 1) {
-      return "Consonant Crunch: this word may contain at most one vowel.";
+    if (effect === "consonantCrunch" && (word.match(/[AEIOU]/g) || []).length > crunchVowels(game)) {
+      return crunchVowels(game) > 1
+        ? "Consonant Crunch: this word may contain at most two vowels."
+        : "Consonant Crunch: this word may contain at most one vowel.";
     }
     return null;
   }
@@ -3657,6 +3687,9 @@
   function powerInfo(id) {
     const key = String(id || "power");
     const known = POWER_INFO[key];
+    if (known && key === "consonantCrunch" && activeGame && softChallenges(activeGame)) {
+      return { id: key, ...known, description: "This word may contain at most two vowels." };
+    }
     if (known) return { id: key, ...known };
     const metadata = window.POWER_METADATA && window.POWER_METADATA[key];
     const title = metadata && (metadata.name || metadata.title) || key.replace(/([a-z])([A-Z])/g, "$1 $2");
