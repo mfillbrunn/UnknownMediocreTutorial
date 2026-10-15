@@ -319,8 +319,11 @@
     return icons && typeof icons.svg === "function" ? icons.svg(icon) : escapeHtml(icon);
   }
 
+  // Coins still on their way to the chip (see flyCoin) aren't counted yet.
+  var flying = 0;
+
   function coinChip() {
-    return '<span class="umt-coin-chip" title="Cuddle Coins: a run costs 1"><span class="umt-coin" aria-hidden="true"></span><b>' + coins() + "</b></span>";
+    return '<span class="umt-coin-chip" title="Cuddle Coins: a run costs 1"><span class="umt-coin" aria-hidden="true"></span><b>' + Math.max(0, coins() - flying) + "</b></span>";
   }
 
   function pageHtml() {
@@ -404,14 +407,128 @@
     }
     if (card) {
       event.preventDefault();
+      var from = card.getBoundingClientRect();
       if (claim(card.dataset.umtAch)) {
+        var animated = canAnimate();
+        if (animated) flying += 1;
         render();
         var claimed = document.querySelector('.umt-ach-overlay [data-umt-ach="' + card.dataset.umtAch + '"]');
         if (claimed) claimed.classList.add("is-just-claimed");
+        if (animated) flyCoin(from);
         refreshLanding();
       }
     }
   });
+
+  // -- the claim animation ---------------------------------------------------------
+  // The coin pops out of the claimed card in a burst of sparkles, spinning,
+  // then arcs up into the coin count, which bumps and ticks up as it lands.
+  function canAnimate() {
+    var reduced = false;
+    try {
+      reduced = Boolean(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    } catch (_error) { /* animate */ }
+    return !reduced && typeof document.body.animate === "function";
+  }
+
+  function centerOf(rect) {
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  }
+
+  function spawn(layer, className, at, html) {
+    var el = document.createElement("span");
+    el.className = className;
+    el.style.left = at.x + "px";
+    el.style.top = at.y + "px";
+    if (html) el.innerHTML = html;
+    layer.appendChild(el);
+    return el;
+  }
+
+  function easeInOut(t) {
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  }
+
+  function land() {
+    flying = Math.max(0, flying - 1);
+    var chip = document.querySelector(".umt-ach-overlay .umt-coin-chip");
+    if (!chip) return;
+    var count = chip.querySelector("b");
+    if (count) count.textContent = String(Math.max(0, coins() - flying));
+    chip.classList.remove("is-bump");
+    void chip.offsetWidth;
+    chip.classList.add("is-bump");
+  }
+
+  function flyCoin(fromRect) {
+    var chipCoin = document.querySelector(".umt-ach-overlay .umt-coin-chip .umt-coin");
+    if (!chipCoin) {
+      land();
+      return;
+    }
+    var start = centerOf(fromRect);
+    var end = centerOf(chipCoin.getBoundingClientRect());
+    var layer = document.createElement("div");
+    layer.className = "umt-coin-fly";
+    layer.setAttribute("aria-hidden", "true");
+    document.body.appendChild(layer);
+
+    // A ring and a spray of sparkles where the coin pops out.
+    spawn(layer, "umt-coin-fly-ring", start).animate(
+      [{ transform: "translate(-50%, -50%) scale(0.2)", opacity: 0.9 }, { transform: "translate(-50%, -50%) scale(2.6)", opacity: 0 }],
+      { duration: 520, easing: "cubic-bezier(.2, .8, .3, 1)", fill: "forwards" }
+    );
+    for (var i = 0; i < 12; i += 1) {
+      var angle = (i / 12) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+      var reach = 46 + Math.random() * 34;
+      var star = i % 3 === 0;
+      spawn(layer, star ? "umt-coin-fly-star" : "umt-coin-fly-spark", start, star ? "✦" : "").animate([
+        { transform: "translate(-50%, -50%) scale(0.4)", opacity: 1 },
+        { transform: "translate(calc(-50% + " + (Math.cos(angle) * reach).toFixed(1) + "px), calc(-50% + " + (Math.sin(angle) * reach).toFixed(1) + "px)) scale(1)", opacity: 1, offset: 0.6 },
+        { transform: "translate(calc(-50% + " + (Math.cos(angle) * reach * 1.2).toFixed(1) + "px), calc(-50% + " + (Math.sin(angle) * reach * 1.2 + 10).toFixed(1) + "px)) scale(0.2)", opacity: 0 }
+      ], { duration: 560 + Math.random() * 180, delay: 60, easing: "cubic-bezier(.15, .8, .35, 1)", fill: "both" });
+    }
+    spawn(layer, "umt-coin-fly-plus", { x: start.x, y: start.y - 30 }, "+1").animate([
+      { transform: "translate(-50%, 0) scale(0.6)", opacity: 0 },
+      { transform: "translate(-50%, -14px) scale(1.15)", opacity: 1, offset: 0.25 },
+      { transform: "translate(-50%, -30px) scale(1)", opacity: 1, offset: 0.7 },
+      { transform: "translate(-50%, -42px) scale(1)", opacity: 0 }
+    ], { duration: 950, delay: 120, easing: "ease-out", fill: "both" });
+
+    // The coin: pop and spin in place, a beat, then an arc to the chip.
+    var coin = spawn(layer, "umt-coin-fly-coin", start, '<span class="umt-coin"></span>');
+    var dx = end.x - start.x;
+    var dy = end.y - start.y;
+    var lift = Math.min(-60, dy * 0.35 - 60);
+    var frames = [
+      { transform: "translate(0px, 0px) scale(0.2) rotateY(0deg)", opacity: 0, offset: 0 },
+      { transform: "translate(0px, -12px) scale(3) rotateY(540deg)", opacity: 1, offset: 0.24, easing: "ease-out" },
+      { transform: "translate(0px, -6px) scale(2.5) rotateY(720deg)", opacity: 1, offset: 0.34 },
+      { transform: "translate(0px, -6px) scale(2.5) rotateY(720deg)", opacity: 1, offset: 0.42 }
+    ];
+    var STEPS = 12;
+    for (var s = 1; s <= STEPS; s += 1) {
+      var t = easeInOut(s / STEPS);
+      // A curve from just above the card, bowing up, into the chip.
+      var x = 2 * (1 - t) * t * (dx * 0.3) + t * t * dx;
+      var y = (1 - t) * (1 - t) * -6 + 2 * (1 - t) * t * lift + t * t * dy;
+      frames.push({
+        transform: "translate(" + x.toFixed(1) + "px, " + y.toFixed(1) + "px) scale(" + (2.5 - 1.5 * t).toFixed(2) + ") rotateY(" + (720 + 360 * t).toFixed(0) + "deg)",
+        opacity: 1,
+        offset: 0.42 + 0.58 * (s / STEPS)
+      });
+    }
+    var flight = coin.animate(frames, { duration: 1250, fill: "forwards" });
+    var done = false;
+    var finish = function finish() {
+      if (done) return;
+      done = true;
+      land();
+      setTimeout(function clear() { layer.remove(); }, 400);
+    };
+    flight.onfinish = finish;
+    setTimeout(finish, 1600);
+  }
 
   document.addEventListener("keydown", function onKey(event) {
     if (openNow && event.key === "Escape") close();
