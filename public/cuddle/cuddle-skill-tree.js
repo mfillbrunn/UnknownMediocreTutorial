@@ -262,7 +262,7 @@
           levels: ["1 idea card goes in your deck. Mulligan it away to see one letter of the answer.", "2 idea cards go in your deck.", "3 idea cards go in your deck."],
           level: g => powerLevel(g, "ideaTiles") },
         { id: "waveTiles", icon: "🌊", title: "Wave Cards", tier: "common", type: "letters", maxLevel: 3,
-          levels: ["1 wave card goes in your deck. When you draw it, all your consonants are swapped for new ones.", "2 wave cards go in your deck.", "4 wave cards go in your deck."],
+          levels: ["1 wave card goes in your deck. When you draw it, all your consonants are swapped for new ones. Dead cards wash away too, and idea cards give their yellow hint.", "2 wave cards go in your deck.", "4 wave cards go in your deck."],
           level: g => powerLevel(g, "waveTiles") },
         { id: "fullCircle", icon: "♻️", title: "Full Circle", tier: "epic", type: "clues", maxLevel: 1,
           description: "Once a stage, when your deck runs out and starts over, a letter is placed in its spot.",

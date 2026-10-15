@@ -56,17 +56,13 @@
   isolation: isolate;
 }
 
-.cuddle-card.umt-hint-yellow {
-  outline: 3px solid var(--tile-yellow, #d6a925) !important;
-  outline-offset: 2px;
-  box-shadow: 0 0 0.65rem color-mix(in srgb, var(--tile-yellow, #d6a925) 58%, transparent) !important;
-}
+/* A hinted card used to wear a thick ring in the hint's colour. The card
+   now turns that colour itself (and the hint drops onto it,
+   cuddle-hint-fx.js), so the ring only read as a second, unexplained
+   border: hinted cards look like any other card of their colour. */
 
-.cuddle-card.umt-hint-green {
-  outline: 3px solid var(--tile-green, #3aa76d) !important;
-  outline-offset: 2px;
-  box-shadow: 0 0 0.65rem color-mix(in srgb, var(--tile-green, #3aa76d) 58%, transparent) !important;
-}
+/* The hand already shows a green card's place (#3); no second badge. */
+.cuddle-card:has(.cuddle-card-position) > .umt-hint-position { display: none; }
 
 .umt-hint-position {
   position: absolute;
