@@ -690,6 +690,12 @@
   // The last "new row" the board animated in, so a re-render of the same
   // row (every tap redraws the board) doesn't replay the slide.
   let lastArrivedRowKey = "";
+  // When each special square started its burst (a yellow on one pops a
+  // little, a green more). The board is redrawn several times right after
+  // a guess, so the burst carries its elapsed time into each redraw and
+  // stops being drawn once it's over.
+  const specialBurstStart = new Map();
+  const SPECIAL_BURST_MS = 1500;
 
   function renderBoard(state) {
     const rows = [];
@@ -773,10 +779,22 @@
           : Boolean(history?.jokerRevealed && history.jokerIndex === column);
         const moneyTile = moneyTiles.find(tile => tile && tile.row === row && tile.col === column);
         const tileKind = moneyTile ? (SPECIAL_TILE_KINDS[moneyTile.kind] ? moneyTile.kind : "money") : null;
+        // A square the latest guess just paid out bursts once, bigger for
+        // a green than a yellow.
+        const burstKey = moneyTile ? `${state.runId || ""}:${state.round || 0}:${state.secret || ""}:${row}:${column}` : "";
+        let bursting = false;
+        let burstShift = 0;
+        if (moneyTile && moneyTile.paid && moneyTile.payout > 0 && history
+            && row === state.history.length - 1 && (result === "green" || result === "yellow")) {
+          if (!specialBurstStart.has(burstKey)) specialBurstStart.set(burstKey, Date.now());
+          burstShift = Date.now() - specialBurstStart.get(burstKey);
+          bursting = burstShift < SPECIAL_BURST_MS;
+        }
         const moneyClass = !moneyTile
           ? ""
           : ` is-special-tile is-special-${tileKind}`
-            + (moneyTile.paid ? (moneyTile.payout > 0 ? " is-special-won" : " is-special-missed") : "");
+            + (moneyTile.paid ? (moneyTile.payout > 0 ? " is-special-won" : " is-special-missed") : "")
+            + (bursting ? ` is-special-burst is-burst-${result}` : "");
         // data-special draws the unplayed tile's watermark; once paid, the
         // same attribute carries the payout ("+$4", "+10", "Hint") instead.
         const moneyBadge = !moneyTile || (moneyTile.paid && !moneyTile.payout)
@@ -784,6 +802,7 @@
           : moneyTile.paid
             ? ` data-special-paid="${escapeHtml(moneyTile.label || (tileKind === "money" ? `+$${moneyTile.payout}` : `+${moneyTile.payout}`))}"`
             : ` data-special="${SPECIAL_TILE_KINDS[tileKind].glyph}" title="${escapeHtml(SPECIAL_TILE_KINDS[tileKind].title)}"`;
+        const burstStyle = bursting ? ` style="--burst-shift:-${burstShift}ms"` : "";
         const masked = maskCols.includes(column);
         const tileClass = (result ? ` is-${result}` : letter ? " is-filled" : "")
           + (isJokerTile ? " is-joker" : "") + moneyClass
@@ -816,7 +835,7 @@
           const compassMark = compass
             ? `<span class="umt-compass-mark is-${compass.dir === "L" ? "left" : compass.dir === "R" ? "right" : "match"}" title="${compass.dir === "L" ? "The secret's letter here comes earlier in the alphabet" : compass.dir === "R" ? "The secret's letter here comes later in the alphabet" : "This letter matches the secret here"}">${compass.dir === "L" ? "&larr;" : compass.dir === "R" ? "&rarr;" : "&ndash;"}</span>`
             : "";
-          tiles.push(`<span class="cuddle-tile${tileClass}${compass ? " has-compass" : ""}${arrow ? " is-arrow-sign" : ""}"${moneyBadge}>${escapeHtml(letter)}${compassMark}</span>`);
+          tiles.push(`<span class="cuddle-tile${tileClass}${compass ? " has-compass" : ""}${arrow ? " is-arrow-sign" : ""}"${moneyBadge}${burstStyle}>${escapeHtml(letter)}${compassMark}</span>`);
         }
       }
       // Count Only replaces the row's score with the only thing it tells you:
