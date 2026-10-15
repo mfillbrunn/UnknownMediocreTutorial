@@ -821,7 +821,23 @@
     return !/event|shop|upgrade|mystery|duel|boss|map/.test(type);
   }
 
+  // guessHistory and maxRows search the whole state three levels deep, and
+  // the tick asks four times a second: what they find barely changes, so
+  // each answer is kept for a second per state.
+  const historyFound = new WeakMap();
+  const rowsFound = new WeakMap();
+  const FOUND_MS = 1000;
+
   function guessHistory(state) {
+    if (!isObject(state)) return searchGuessHistory(state);
+    const cached = historyFound.get(state);
+    if (cached && Date.now() - cached.at < FOUND_MS) return cached.value;
+    const value = searchGuessHistory(state);
+    historyFound.set(state, { value, at: Date.now() });
+    return value;
+  }
+
+  function searchGuessHistory(state) {
     const arrays = [];
     for (const object of shallowObjects(state, 3)) {
       for (const [key, value] of safeOwnEntries(object)) {
@@ -842,6 +858,15 @@
   }
 
   function maxRows(state) {
+    if (!isObject(state)) return searchMaxRows(state);
+    const cached = rowsFound.get(state);
+    if (cached && Date.now() - cached.at < FOUND_MS) return cached.value;
+    const value = searchMaxRows(state);
+    rowsFound.set(state, { value, at: Date.now() });
+    return value;
+  }
+
+  function searchMaxRows(state) {
     return firstNumber(state, [
       (key) => /maxguesses|guesslimit|totalrows|rowlimit|allowedguesses/.test(key),
       (key) => /guesses|rows/.test(key)

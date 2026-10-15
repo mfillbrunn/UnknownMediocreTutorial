@@ -3891,36 +3891,43 @@
     const marks = ensureHintMarks(game);
     const yellow = new Set(marks ? marks.yellowLetters : []);
     const greens = marks && marks.greenPositions || {};
+    // Only what differs is written: this runs on every redraw, and
+    // rewriting every card's class and title each time (even unchanged)
+    // restyled the whole hand many times a second.
     root.querySelectorAll("[data-card-glyph]").forEach((card) => {
       const renderedTitle = card.dataset.umtHintRenderedTitle || "";
-      if (!renderedTitle || card.title !== renderedTitle) {
-        card.dataset.umtHintBaseTitle = card.title || String(card.dataset.cardGlyph || "").toUpperCase();
-      }
-      const baseTitle = card.dataset.umtHintBaseTitle || String(card.dataset.cardGlyph || "").toUpperCase();
-      card.classList.remove("umt-hint-yellow", "umt-hint-green");
-      card.querySelectorAll(":scope > .umt-hint-position").forEach((badge) => badge.remove());
-      card.title = baseTitle;
-      delete card.dataset.umtHintRenderedTitle;
+      const baseTitle = renderedTitle && card.title === renderedTitle
+        ? (card.dataset.umtHintBaseTitle || String(card.dataset.cardGlyph || "").toUpperCase())
+        : (card.title || String(card.dataset.cardGlyph || "").toUpperCase());
+      if (card.dataset.umtHintBaseTitle !== baseTitle) card.dataset.umtHintBaseTitle = baseTitle;
 
       const glyph = String(card.dataset.cardGlyph || "").toUpperCase();
       const positions = Array.isArray(greens[glyph]) ? greens[glyph] : [];
-      let hintTitle = "";
-      if (positions.length) {
-        card.classList.add("umt-hint-green");
-        const badge = document.createElement("span");
-        badge.className = "umt-hint-position";
-        badge.textContent = positions.join(",");
-        badge.setAttribute("aria-hidden", "true");
-        card.appendChild(badge);
-        hintTitle = `Green hint: position ${positions.join(", ")}.`;
-      } else if (yellow.has(glyph)) {
-        card.classList.add("umt-hint-yellow");
-        hintTitle = "Yellow hint: this letter is in the word.";
+      const kind = positions.length ? "green" : yellow.has(glyph) ? "yellow" : "";
+      card.classList.toggle("umt-hint-green", kind === "green");
+      card.classList.toggle("umt-hint-yellow", kind === "yellow");
+
+      const badgeText = kind === "green" ? positions.join(",") : "";
+      const badges = card.querySelectorAll(":scope > .umt-hint-position");
+      if (badges.length !== (badgeText ? 1 : 0) || (badgeText && badges[0].textContent !== badgeText)) {
+        badges.forEach((badge) => badge.remove());
+        if (badgeText) {
+          const badge = document.createElement("span");
+          badge.className = "umt-hint-position";
+          badge.textContent = badgeText;
+          badge.setAttribute("aria-hidden", "true");
+          card.appendChild(badge);
+        }
       }
+
+      const hintTitle = kind === "green" ? `Green hint: position ${positions.join(", ")}.`
+        : kind === "yellow" ? "Yellow hint: this letter is in the word." : "";
+      const title = hintTitle ? `${baseTitle}${/[.!?]$/.test(baseTitle) ? "" : "."} ${hintTitle}` : baseTitle;
+      if (card.title !== title) card.title = title;
       if (hintTitle) {
-        const joined = `${baseTitle}${/[.!?]$/.test(baseTitle) ? "" : "."} ${hintTitle}`;
-        card.title = joined;
-        card.dataset.umtHintRenderedTitle = joined;
+        if (card.dataset.umtHintRenderedTitle !== title) card.dataset.umtHintRenderedTitle = title;
+      } else if (card.dataset.umtHintRenderedTitle !== undefined) {
+        delete card.dataset.umtHintRenderedTitle;
       }
     });
   }
@@ -4521,9 +4528,19 @@
   }
 
 
+  // The Quick Mode clock ticks inside its row icon (cuddle-ui.js
+  // paintQuickModeClock); that alone is no reason to redraw everything.
+  function onUiMutations(mutations) {
+    const relevant = mutations.some((mutation) => {
+      const target = mutation.target && mutation.target.nodeType === 1 ? mutation.target : mutation.target && mutation.target.parentElement;
+      return !(target && target.closest && target.closest(".umt-row-quick-clock"));
+    });
+    if (relevant) scheduleUi();
+  }
+
   function installUiObserver() {
     if (!uiObserver && document.documentElement) {
-      uiObserver = new MutationObserver(scheduleUi);
+      uiObserver = new MutationObserver(onUiMutations);
       observeUiMutations();
     }
     if (document.documentElement.dataset.umtCuddleUiV5 === "1") {

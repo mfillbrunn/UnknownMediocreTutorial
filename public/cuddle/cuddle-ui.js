@@ -513,8 +513,11 @@
     const el = document.getElementById("cuddleQuickClock");
     if (!el) return;
     const left = Math.max(0, Math.ceil((quickModeDeadline - Date.now()) / 1000));
-    el.textContent = `${left}s`;
-    el.classList.toggle("is-urgent", left <= 10);
+    // Written only when the second changes: every write is a page change
+    // other layers react to.
+    const text = `${left}s`;
+    if (el.textContent !== text) el.textContent = text;
+    if (el.classList.contains("is-urgent") !== (left <= 10)) el.classList.toggle("is-urgent", left <= 10);
   }
 
   function bestWinsLine() {
