@@ -1,5 +1,7 @@
 /* Cuddle: the Preset Trial curse.
  *
+ * Also the Preset Trial stops (Blind, Open and Pair), further down.
+ *
  * Beating the Preset Trial boss leaves a curse on one guess (3rd to 5th)
  * of every later stage. That guess is the stage's last: instead of
  * building a word from tiles, the player picks the answer from a short
@@ -119,11 +121,19 @@
   // losing a Duel. A trial pays its guesses, its early solve and its spare
   // rows -- counted up to its last guess, not the world's -- plus the
   // trial bonus.
+  //   Pair   the list is shown from the start, but you never type: each
+  //          guess is one of two words drawn from the list, tapped to play
+  //          it. After each, look at two more words or pick the answer
+  //          (latest on guess 5). The sooner you pass, the more it pays.
   var TRIAL_LEVELS = {
-    easy: { label: "Easy", blind: 3, open: 6, points: 20, money: 10 },
-    medium: { label: "Medium", blind: 5, open: 10, points: 40, money: 20 },
-    hard: { label: "Hard", blind: 7, open: 14, points: 70, money: 35 }
+    easy: { label: "Easy", blind: 3, open: 6, pairs: 6, points: 20, money: 10 },
+    medium: { label: "Medium", blind: 5, open: 10, pairs: 8, points: 40, money: 20 },
+    hard: { label: "Hard", blind: 7, open: 14, pairs: 10, points: 70, money: 35 }
   };
+  // A Pair trial's pass pays this share of its bonus by the guess it's
+  // solved on (1st, 2nd, 3rd, 4th, 5th).
+  var PAIR_PAY = [1, 0.75, 0.5, 0.35, 0.25];
+  var PAIR_PICK_GUESS = 5;
   var TRIAL_ORDER = ["easy", "medium", "hard"];
 
   function trialLevel(node) {
@@ -131,6 +141,7 @@
   }
 
   function trialPickGuess(node) {
+    if (node && node.trialKind === "pairs") return PAIR_PICK_GUESS;
     return node && node.trialKind === "open" ? 3 : 4;
   }
 
@@ -143,13 +154,28 @@
     return node && node.type === "trial" ? node : null;
   }
 
+  // Open and Pair trials show their list from the start.
   function isOpenTrial(node) {
-    return Boolean(node && node.trialKind === "open");
+    return Boolean(node && (node.trialKind === "open" || node.trialKind === "pairs"));
+  }
+
+  function isPairTrial(node) {
+    return Boolean(node && node.trialKind === "pairs");
   }
 
   function trialSize(node) {
     var level = trialLevel(node) || TRIAL_LEVELS.medium;
+    if (isPairTrial(node)) return level.pairs;
     return isOpenTrial(node) ? level.open : level.blind;
+  }
+
+  // What passing pays if the answer is found on guess `guess` (1-based):
+  // the full bonus, or a Pair trial's share of it.
+  function trialBonus(node, guess) {
+    var level = trialLevel(node) || TRIAL_LEVELS.medium;
+    if (!isPairTrial(node)) return { points: level.points, money: level.money };
+    var share = PAIR_PAY[Math.max(0, Math.min(PAIR_PAY.length - 1, guess - 1))];
+    return { points: Math.round(level.points * share), money: Math.round(level.money * share) };
   }
 
   // An Open trial's list, drawn once at the start of the stage (before any
@@ -361,7 +387,7 @@
     if (!trial || !result || result.ok === false || !Array.isArray(state.history) || state.history.length <= before) return result;
     var entry = state.history[state.history.length - 1];
     if (!entry || String(entry.word || "").toUpperCase() !== String(state.secret || "").toUpperCase() || trial.trialPaid) return result;
-    var level = trialLevel(trial) || TRIAL_LEVELS.medium;
+    var level = trialBonus(trial, state.history.length);
     var change = level.points;
     entry.presetTrialBonus = level.points;
     state.score = (Number(state.score) || 0) + change;
@@ -371,6 +397,94 @@
     state.cuddleMoney = Math.max(0, (Number(state.cuddleMoney) || 0) + level.money);
     state.lastMessage = ((state.lastMessage || "") + " Trial passed: +" + level.points + " points, +$" + level.money + ".").trim();
     try { this.save(); } catch (_error) { /* next save */ }
+    return result;
+  };
+
+  // -- the Pair trial's guesses ------------------------------------------------
+  // Each guess is a word from the list, one of two shown. After it, the
+  // player looks at two more words, or picks the answer (the early pick).
+  // Kept on the run: { key, guess, phase: "pair" | "decide", pair }.
+  function pairRecord(game) {
+    var state = game.state;
+    var mega = megaOf(state);
+    var key = stageKey(state);
+    var guess = Number(state.guessesUsed) || 0;
+    var record = mega.presetPairs;
+    if (!record || record.key !== key || record.guess !== guess) {
+      // A new stage starts on a pair; after a guess, the player decides.
+      record = mega.presetPairs = { key: key, guess: guess, phase: guess ? "decide" : "pair", pair: [] };
+    }
+    if (record.phase === "pair" && (!Array.isArray(record.pair) || !record.pair.length)) record.pair = drawPair(game);
+    return record;
+  }
+
+  function drawPair(game) {
+    var state = game.state;
+    var played = {};
+    (state.history || []).forEach(function mark(entry) { if (entry && entry.word) played[String(entry.word).toUpperCase()] = true; });
+    var list = (game.presetOpenList() || []).filter(function fresh(word) { return !played[word]; });
+    var random = typeof game.random === "function" ? game.random : Math.random;
+    return shuffled(list, random).slice(0, 2).sort();
+  }
+
+  // What the Pair trial's panel shows now, or null when it isn't one (or
+  // the answer pick is open instead).
+  proto.presetPairPanel = function presetPairPanel() {
+    var state = this.state;
+    var trial = trialNode(state);
+    if (!isPairTrial(trial) || !trialLevel(trial) || inDuel(state)) return null;
+    if (state.pendingRoundEnd || this.presetPick()) return null;
+    var record = pairRecord(this);
+    var guess = (Number(state.guessesUsed) || 0) + 1;
+    var game = this;
+    return {
+      key: record.key + ":" + record.guess,
+      phase: record.phase,
+      pair: record.pair.map(function word(item) { return { word: item, out: game.presetWordRuledOut(item) }; }),
+      guess: guess,
+      lastProbe: guess === PAIR_PICK_GUESS - 1,
+      payNow: trialBonus(trial, guess),
+      payNext: trialBonus(trial, guess + 1)
+    };
+  };
+
+  // "Show two more words".
+  proto.presetPairNext = function presetPairNext() {
+    var panel = this.presetPairPanel();
+    if (!panel || panel.phase !== "decide") return false;
+    var record = pairRecord(this);
+    record.phase = "pair";
+    record.pair = drawPair(this);
+    try { this.save(); } catch (_error) { /* next save */ }
+    return true;
+  };
+
+  // Plays one of the two words shown as this guess (not the final answer:
+  // only the pick is).
+  proto.submitPairWord = function submitPairWord(rawWord) {
+    var panel = this.presetPairPanel();
+    var word = String(rawWord || "").toUpperCase();
+    if (!panel || panel.phase !== "pair") return { ok: false, error: "There's no pair of words to choose from." };
+    if (!panel.pair.some(function has(item) { return item.word === word; })) return { ok: false, error: "Choose one of the two words." };
+    var state = this.state;
+    var game = this;
+    var savedDraft = Array.isArray(state.draft) ? state.draft.slice() : [];
+    var cards = word.split("").map(function make(letter) { return game._newCard(letter, "extra"); });
+    var ids = cards.map(function id(card) { return card.id; });
+    state.hand = state.hand.concat(cards);
+    state.draft = ids.slice();
+    this._presetPickWord = word;
+    var result;
+    try {
+      result = this.submitDraft();
+    } finally {
+      this._presetPickWord = null;
+    }
+    if (!result || result.ok === false) {
+      state.hand = state.hand.filter(function keep(card) { return ids.indexOf(card.id) === -1; });
+      state.draft = savedDraft;
+      return result || { ok: false, error: "That word could not be played." };
+    }
     return result;
   };
 
@@ -389,22 +503,25 @@
   function pickerHtml(state) {
     var node = trialNode(state);
     var open = isOpenTrial(node);
+    var pairs = isPairTrial(node);
     var pips = function pips(count) {
       return '<span class="umt-duel-pips" aria-hidden="true">' + [1, 2, 3].map(function pip(n) { return "<i" + (n <= count ? ' class="is-on"' : "") + "></i>"; }).join("") + "</span>";
     };
     var options = TRIAL_ORDER.map(function option(id, index) {
       var level = TRIAL_LEVELS[id];
-      var words = open ? level.open : level.blind;
+      var words = pairs ? level.pairs : open ? level.open : level.blind;
       return '<button type="button" class="umt-duel-option is-' + id + '" data-umt-trial-level="' + id + '">' + pips(index + 1)
         + "<b>" + level.label + "</b>"
-        + '<span class="umt-duel-win">' + words + " words · Pass: +" + level.points + " points · +$" + level.money + "</span></button>";
+        + '<span class="umt-duel-win">' + words + " words · Pass: " + (pairs ? "up to " : "") + "+" + level.points + " points · +$" + level.money + "</span></button>";
     }).join("");
     return '<div class="umt-trial-pick" role="dialog" aria-modal="true" aria-labelledby="umtTrialPickTitle">'
       + '<section class="umt-stop-panel umt-duel-choose umt-trial-pick-panel">'
-      + '<h2 id="umtTrialPickTitle">' + (open ? "Open Trial" : "Preset Trial") + "</h2>"
-      + '<p class="umt-stop-lead">' + (open
-        ? "The answer is one of the listed words, shown from the start. Two guesses, then pick it."
-        : "Three guesses, then the answer is one of a list. Pick it.")
+      + '<h2 id="umtTrialPickTitle">' + (pairs ? "Pair Trial" : open ? "Open Trial" : "Preset Trial") + "</h2>"
+      + '<p class="umt-stop-lead">' + (pairs
+        ? "The answer is one of the listed words. Each guess, choose one of two words from the list to play. After each, see two more or pick the answer. The sooner you pass, the more it pays."
+        : open
+          ? "The answer is one of the listed words, shown from the start. Two guesses, then pick it."
+          : "Three guesses, then the answer is one of a list. Pick it.")
       + " A wrong pick ends the run. Harder means more words to choose from.</p>"
       + '<div class="umt-duel-options">' + options + "</div></section></div>";
   }
@@ -442,5 +559,5 @@
     if (document.getElementById("cuddleRoot")) renderPicker(document.getElementById("cuddleRoot"), game);
   }, 250);
 
-  window.CuddlePresetTrial = Object.freeze({ LEVELS: TRIAL_LEVELS });
+  window.CuddlePresetTrial = Object.freeze({ LEVELS: TRIAL_LEVELS, PAIR_PAY: PAIR_PAY, PAIR_PICK_GUESS: PAIR_PICK_GUESS });
 }());
