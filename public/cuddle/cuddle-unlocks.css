@@ -125,3 +125,14 @@
 @media (prefers-reduced-motion: reduce) {
   .umt-unl-track i { transition: none; }
 }
+
+/* Small steps: chips straight under each step's header, a legend above. */
+.umt-unl-help p { margin: 0; }
+.umt-unl-help { display: grid; gap: 8px; }
+.umt-unl-legend { display: flex; flex-wrap: wrap; gap: 5px; }
+.umt-unl-legend .umt-unl-chip { font-size: 0.7rem; }
+.umt-unl-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.umt-unl-level { gap: 6px; padding: 8px 12px; }
+.umt-unl-level.is-ready { border-color: rgba(246, 201, 86, 0.5); }
+.umt-unl-level.is-ready header em { color: #ffe08a; }
+.umt-unl-track.is-ready i { background: linear-gradient(90deg, #f6c956, #ffe08a); }

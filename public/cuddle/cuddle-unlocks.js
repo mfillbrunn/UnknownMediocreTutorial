@@ -1,12 +1,18 @@
 /* Cuddle: unlocks. The harder and more involved parts of the game open up
- * as the player plays.
+ * as the player plays, a couple at a time.
  *
  * Progress points: every run, finished or not, adds its points to the
  * player's progress, up to 500 a run (counted as the run goes, so a run
- * given up halfway still counts what it scored). Progress passes four
- * levels; each opens new stage challenges and bosses, world themes,
- * badges and quest rewards. Until then they're never drawn: not on the map, not on reward
- * screens, in packs or the shop, and not when a quest pays out.
+ * given up halfway still counts what it scored). Progress passes a line of
+ * small unlocks (STEPS), each a challenge, a boss, a world, a pair of
+ * badges or a pair of quest rewards. Until one opens, what it holds is
+ * never drawn: not on the map, not on reward screens, in packs or the
+ * shop, and not when a quest pays out.
+ *
+ * A run opens at most two unlocks (RUN_UNLOCKS), however many points it
+ * scores: progress beyond that waits, and the next run opens what it has
+ * already earned (up to two again), so new things arrive a couple at a
+ * time rather than all at once.
  *
  * Hard opens once a Medium run is won.
  *
@@ -21,45 +27,48 @@
 
   var STORE_KEY = "umt-cuddle-unlocks-v1";
   var RUN_CAP = 500;
+  var RUN_UNLOCKS = 2;
 
-  // Each level: the progress it needs and what it opens. `rules` are
-  // constraints (cuddle-quests.js CONSTRAINTS) that are a stage challenge,
-  // a boss or both; `bosses` are bosses alone; `themes` are world themes
-  // (cuddle-worlds.js THEMES) a run can draw.
-  var LEVELS = [
-    {
-      points: 150,
-      rules: ["noMulligans"],
-      bosses: [],
-      themes: ["swamp"],
-      badges: ["ideaTiles", "waveTiles", "doubleDown", "greenCount"],
-      quest: ["revealCategory"]
-    },
-    {
-      points: 400,
-      rules: ["countOnly", "questEndurance", "copilot"],
-      bosses: [],
-      themes: ["frost", "tides"],
-      badges: ["highRoller", "hardMode", "strikeThrough", "rewardEcho", "alphabet-compass", "boldOpener"],
-      quest: ["letterProbe", "umtVowelCheck"]
-    },
-    {
-      points: 800,
-      rules: ["delayedFeedback", "arrowMode"],
-      bosses: [],
-      themes: ["storm", "forge"],
-      badges: ["leanBuild", "monksVow", "fullCircle"],
-      quest: ["sillyWord", "umtSpotlight"]
-    },
-    {
-      points: 1300,
-      rules: ["fakeFeedback"],
-      bosses: ["chimera"],
-      themes: ["glacier"],
-      badges: ["combine", "encoreNight"],
-      quest: []
-    }
-  ];
+  // The unlocks in the order they open, each with the progress it needs.
+  // `rules` are constraints (cuddle-quests.js CONSTRAINTS) that are a stage
+  // challenge, a boss or both; `bosses` are bosses alone; `themes` are world
+  // themes (cuddle-worlds.js THEMES) a run can draw; `badges` and `quest`
+  // are rewards. Simpler things first, the hardest last.
+  var STEPS = [
+    { points: 100, rules: ["noMulligans"] },
+    { points: 200, badges: ["ideaTiles", "waveTiles"] },
+    { points: 300, badges: ["greenCount"], quest: ["revealCategory"] },
+    { points: 400, themes: ["swamp"] },
+    { points: 520, rules: ["countOnly"] },
+    { points: 640, badges: ["doubleDown", "highRoller"] },
+    { points: 760, quest: ["letterProbe", "umtVowelCheck"] },
+    { points: 880, rules: ["questEndurance"] },
+    { points: 1000, themes: ["frost"] },
+    { points: 1150, badges: ["hardMode", "strikeThrough"] },
+    { points: 1300, rules: ["copilot"] },
+    { points: 1450, themes: ["tides"] },
+    { points: 1600, badges: ["rewardEcho", "alphabet-compass"] },
+    { points: 1750, rules: ["delayedFeedback"] },
+    { points: 1900, quest: ["sillyWord", "umtSpotlight"] },
+    { points: 2050, themes: ["storm"] },
+    { points: 2200, badges: ["boldOpener", "leanBuild"] },
+    { points: 2350, rules: ["arrowMode"] },
+    { points: 2500, themes: ["forge"] },
+    { points: 2650, badges: ["monksVow", "fullCircle"] },
+    { points: 2800, rules: ["fakeFeedback"] },
+    { points: 2950, bosses: ["chimera"] },
+    { points: 3100, themes: ["glacier"] },
+    { points: 3250, badges: ["combine", "encoreNight"] }
+  ].map(function complete(step) {
+    return Object.freeze({
+      points: step.points,
+      rules: step.rules || [],
+      bosses: step.bosses || [],
+      themes: step.themes || [],
+      badges: step.badges || [],
+      quest: step.quest || []
+    });
+  });
 
   // -- storage -------------------------------------------------------------------
   function readRaw(key) {
@@ -75,16 +84,21 @@
     try { window.localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (_error) { /* not saved */ }
   }
 
+  // How many unlocks `points` has paid for (whether opened yet or not).
+  function earnedSteps(points) {
+    var reached = 0;
+    STEPS.forEach(function check(step, index) { if (points >= step.points) reached = index + 1; });
+    return reached;
+  }
+
   // A player from before unlocks existed: credit for the runs they've won
-  // (and Hard, if they've won on Medium or Hard already).
+  // (and Hard, if they've won on Medium or Hard already), opened at once.
   function seed() {
     var ach = readRaw("umt-cuddle-achievements-v1");
     var got = ach && ach.unlocked && typeof ach.unlocked === "object" ? ach.unlocked : {};
     var wins = ["winEasy", "winMedium", "winHard"].filter(function has(id) { return got[id]; }).length;
     var points = wins * RUN_CAP + (got.firstBoss ? 150 : 0);
-    var data = { points: points, runs: {}, hard: Boolean(got.winMedium || got.winHard), shown: 0 };
-    data.shown = levelFor(points);
-    return data;
+    return { points: points, runs: {}, hard: Boolean(got.winMedium || got.winHard), opened: earnedSteps(points), runOpened: {} };
   }
 
   var cache = null;
@@ -98,7 +112,12 @@
     data.points = Math.max(0, Math.floor(Number(data.points) || 0));
     data.runs = data.runs && typeof data.runs === "object" ? data.runs : {};
     data.hard = Boolean(data.hard);
-    data.shown = Math.max(0, Math.floor(Number(data.shown) || 0));
+    // Saved before unlocks came in small steps: what its points paid for
+    // stays open.
+    if (!Number.isFinite(Number(data.opened))) data.opened = earnedSteps(data.points);
+    data.opened = Math.max(0, Math.min(STEPS.length, Math.floor(Number(data.opened) || 0)));
+    data.runOpened = data.runOpened && typeof data.runOpened === "object" ? data.runOpened : {};
+    delete data.shown;
     cache = data;
     return data;
   }
@@ -113,32 +132,23 @@
     if (event.key === STORE_KEY) cache = null;
   });
 
-  // How many levels `points` has reached (0-4).
-  function levelFor(points) {
-    var reached = 0;
-    LEVELS.forEach(function check(level, index) { if (points >= level.points) reached = index + 1; });
-    return reached;
-  }
-
   function points() {
     return read().points;
   }
 
+  // How many unlocks are open.
   function level() {
-    return levelFor(points());
+    return read().opened;
   }
 
   function hardUnlocked() {
     return read().hard;
   }
 
-  // Everything the levels not yet reached keep shut.
+  // Everything the unlocks not yet opened keep shut.
   function locked(key) {
-    var reached = level();
     var out = [];
-    LEVELS.forEach(function collect(entry, index) {
-      if (index >= reached) out = out.concat(entry[key]);
-    });
+    STEPS.slice(level()).forEach(function collect(step) { out = out.concat(step[key]); });
     return out;
   }
 
@@ -315,7 +325,7 @@
     };
     return {
       rules: entry.rules.map(rule).concat(entry.bosses.map(rule)),
-      themes: (entry.themes || []).map(theme),
+      themes: entry.themes.map(theme),
       badges: entry.badges.map(badge),
       quest: entry.quest.map(quest)
     };
@@ -328,12 +338,29 @@
     return items.slice(0, most).join(", ") + " and " + (items.length - most) + " more";
   }
 
-  function announce(from, to) {
-    for (var index = from; index < to; index += 1) {
-      var list = names(LEVELS[index]);
-      var all = list.rules.concat(list.themes, list.badges, list.quest);
-      toast({ icon: "🔓", title: "Unlocked: level " + (index + 1), text: listText(all, 3) + " can now show up in your runs." });
+  function stepNames(step) {
+    var list = names(step);
+    return list.rules.concat(list.themes, list.badges, list.quest);
+  }
+
+  // What kind of thing a step opens, in the words of its notice.
+  function stepText(step) {
+    if (step.rules.length) {
+      var book = window.CuddleQuestBook;
+      var rule = book && typeof book.getConstraint === "function" ? book.getConstraint(step.rules[0]) : null;
+      return rule && !rule.boss ? "A new stage challenge can now turn up in your runs."
+        : "A new challenge can now turn up on stages and as a boss.";
     }
+    if (step.bosses.length) return "A new boss can now turn up in your runs.";
+    if (step.themes.length) return "A new world can now turn up in your runs.";
+    if (step.badges.length && step.quest.length) return "New rewards can now turn up in your runs.";
+    if (step.badges.length) return "New badges can now turn up as rewards.";
+    return "New quest rewards can now turn up.";
+  }
+
+  function announce(index) {
+    var step = STEPS[index];
+    toast({ icon: "🔓", title: "Unlocked: " + listText(stepNames(step), 2), text: stepText(step) });
   }
 
   function tick() {
@@ -359,10 +386,15 @@
       changed = true;
       toast({ icon: "🔓", title: "Hard unlocked", text: "You won a Medium run. Hard runs are open now." });
     }
-    var reached = levelFor(data.points);
-    if (reached > data.shown) {
-      announce(data.shown, reached);
-      data.shown = reached;
+    // At most RUN_UNLOCKS open in this run; the rest wait for the next one.
+    var used = Math.max(0, Number(data.runOpened[id]) || 0);
+    while (data.opened < earnedSteps(data.points) && used < RUN_UNLOCKS) {
+      announce(data.opened);
+      data.opened += 1;
+      used += 1;
+      data.runOpened[id] = used;
+      var runs = Object.keys(data.runOpened);
+      while (runs.length > 40) delete data.runOpened[runs.shift()];
       changed = true;
     }
     if (changed) {
@@ -378,21 +410,33 @@
     });
   }
 
+  // Unlocks paid for but waiting, because the last run already opened its two.
+  function waiting() {
+    var data = read();
+    return Math.max(0, earnedSteps(data.points) - data.opened);
+  }
+
   function landingInner() {
-    var have = points();
-    var reached = levelFor(have);
-    var next = LEVELS[reached];
+    var data = read();
+    var have = data.points;
+    var next = STEPS[data.opened];
     if (!next) {
       return '<span class="umt-unl-head"><b>Unlocks</b><small>All unlocked</small></span>'
         + '<span class="umt-unl-track"><i style="width:100%"></i></span>'
-        + '<small class="umt-unl-next">' + (hardUnlocked() ? "Every challenge, boss and badge is in the game." : "Win a Medium run to unlock Hard.") + "</small>";
+        + '<small class="umt-unl-next">' + (hardUnlocked() ? "Every challenge, boss, world and badge is in the game." : "Win a Medium run to unlock Hard.") + "</small>";
     }
-    var from = reached ? LEVELS[reached - 1].points : 0;
-    var share = Math.max(0, Math.min(100, Math.round(((have - from) / (next.points - from)) * 100)));
-    var list = names(next);
-    return '<span class="umt-unl-head"><b>Unlocks</b><small>' + have.toLocaleString() + " / " + next.points.toLocaleString() + " points</small></span>"
-      + '<span class="umt-unl-track"><i style="width:' + share + '%"></i></span>'
-      + '<small class="umt-unl-next">Next: ' + esc(listText(list.rules.concat(list.themes, list.badges, list.quest), 2)) + "</small>";
+    var ready = waiting();
+    var from = data.opened ? STEPS[data.opened - 1].points : 0;
+    var share = ready ? 100 : Math.max(0, Math.min(100, Math.round(((have - from) / (next.points - from)) * 100)));
+    var head = ready
+      ? (ready === 1 ? "1 unlock ready" : ready + " unlocks ready")
+      : have.toLocaleString() + " / " + next.points.toLocaleString() + " points";
+    var line = ready
+      ? "Opens in your next run: " + esc(listText(stepNames(next), 2))
+      : "Next: " + esc(listText(stepNames(next), 2));
+    return '<span class="umt-unl-head"><b>Unlocks</b><small>' + head + "</small></span>"
+      + '<span class="umt-unl-track' + (ready ? " is-ready" : "") + '"><i style="width:' + share + '%"></i></span>'
+      + '<small class="umt-unl-next">' + line + "</small>";
   }
 
   function landingHtml() {
@@ -408,30 +452,30 @@
     return items.map(function chip(text) { return '<span class="umt-unl-chip is-' + kind + '">' + esc(text) + "</span>"; }).join("");
   }
 
+  function stepChips(step) {
+    var list = names(step);
+    return chips(list.rules, "rule") + chips(list.themes, "theme") + chips(list.badges, "badge") + chips(list.quest, "quest");
+  }
+
   function pageHtml() {
-    var have = points();
-    var reached = levelFor(have);
-    var rows = LEVELS.map(function row(entry, index) {
-      var open = index < reached;
-      var list = names(entry);
-      var status = open ? "Unlocked" : (entry.points - have).toLocaleString() + " points to go";
-      var groups = [
-        list.rules.length ? '<div class="umt-unl-group"><small>Challenges and bosses</small><div>' + chips(list.rules, "rule") + "</div></div>" : "",
-        list.themes.length ? '<div class="umt-unl-group"><small>Worlds</small><div>' + chips(list.themes, "theme") + "</div></div>" : "",
-        list.badges.length ? '<div class="umt-unl-group"><small>Badges</small><div>' + chips(list.badges, "badge") + "</div></div>" : "",
-        list.quest.length ? '<div class="umt-unl-group"><small>Quest rewards</small><div>' + chips(list.quest, "quest") + "</div></div>" : ""
-      ].join("");
-      return '<section class="umt-unl-level' + (open ? " is-open" : "") + (index === reached ? " is-next" : "") + '">'
-        + '<header><b>Level ' + (index + 1) + '</b><span>' + entry.points.toLocaleString() + " points</span><em>" + status + "</em></header>"
-        + groups + "</section>";
+    var data = read();
+    var have = data.points;
+    var earned = earnedSteps(have);
+    var rows = STEPS.map(function row(step, index) {
+      var open = index < data.opened;
+      var status = open ? "Unlocked" : index < earned ? "Opens next run" : (step.points - have).toLocaleString() + " points to go";
+      return '<section class="umt-unl-level' + (open ? " is-open" : "") + (index === data.opened ? " is-next" : "") + (!open && index < earned ? " is-ready" : "") + '">'
+        + "<header><b>" + step.points.toLocaleString() + " points</b><span></span><em>" + status + "</em></header>"
+        + '<div class="umt-unl-chips">' + stepChips(step) + "</div></section>";
     }).join("");
     var hard = '<section class="umt-unl-level' + (hardUnlocked() ? " is-open" : "") + '">'
       + "<header><b>Hard</b><span>Win a Medium run</span><em>" + (hardUnlocked() ? "Unlocked" : "Locked") + "</em></header></section>";
     return '<div class="umt-unl-overlay" role="dialog" aria-modal="true" aria-labelledby="umtUnlTitle">'
       + '<section class="umt-unl-modal">'
-      + '<header class="umt-unl-modal-head"><div><h2 id="umtUnlTitle">Unlocks</h2><p>' + have.toLocaleString() + " progress points</p></div>"
+      + '<header class="umt-unl-modal-head"><div><h2 id="umtUnlTitle">Unlocks</h2><p>' + have.toLocaleString() + " progress points · " + data.opened + " of " + STEPS.length + " unlocked</p></div>"
       + '<button type="button" class="umt-unl-close" data-umt-unlocks-close aria-label="Close unlocks">×</button></header>'
-      + '<p class="umt-unl-help">Every run adds its points to your progress, up to 500 a run. Runs you don\'t finish count too. New challenges, bosses, worlds, badges and quest rewards open as you go.</p>'
+      + '<div class="umt-unl-help"><p>Every run adds its points to your progress, up to 500 a run, and runs you don\'t finish count too. A run opens at most ' + RUN_UNLOCKS + " unlocks; anything more you've earned opens in your next run.</p>"
+      + '<p class="umt-unl-legend"><span class="umt-unl-chip is-rule">Challenge or boss</span><span class="umt-unl-chip is-theme">World</span><span class="umt-unl-chip is-badge">Badge</span><span class="umt-unl-chip is-quest">Quest reward</span></p></div>'
       + '<div class="umt-unl-scroll">' + rows + hard + "</div>"
       + "</section></div>";
   }
@@ -474,10 +518,12 @@
   setInterval(tick, 1000);
 
   window.CuddleUnlocks = Object.freeze({
-    LEVELS: LEVELS,
+    STEPS: STEPS,
     RUN_CAP: RUN_CAP,
+    RUN_UNLOCKS: RUN_UNLOCKS,
     points: points,
     level: level,
+    waiting: waiting,
     hardUnlocked: hardUnlocked,
     lockedRules: lockedRules,
     lockedBosses: lockedBosses,
@@ -487,12 +533,13 @@
     landingHtml: landingHtml,
     open: renderPage,
     close: closePage,
-    // For testing: open everything (or set progress to `value`).
+    // For testing: open everything, or set progress to `value` points with
+    // what they pay for opened at once.
     unlockAll: function unlockAll(value) {
       var data = read();
-      data.points = value == null ? LEVELS[LEVELS.length - 1].points : Math.max(0, Math.floor(Number(value) || 0));
+      data.points = value == null ? STEPS[STEPS.length - 1].points : Math.max(0, Math.floor(Number(value) || 0));
       data.hard = value == null ? true : data.hard;
-      data.shown = levelFor(data.points);
+      data.opened = earnedSteps(data.points);
       save(data);
       refreshLanding();
       return data.points;
