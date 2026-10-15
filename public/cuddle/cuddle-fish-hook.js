@@ -1,0 +1,255 @@
+/* Cuddle: Fish Hook (a Rare Cards badge, cuddle-skill-tree.js).
+ *
+ * A mulliganed or played card goes to the discard pile and only comes back
+ * once the deck runs out and is reshuffled. Fish Hook lets the player,
+ * once a stage, pick one card out of the discard pile straight into the
+ * hand. If the hand is full, they throw one of their cards back first (it
+ * goes to the discard pile in its place).
+ *
+ * A small hook sits on the deck while it's ready; tapping it opens the
+ * discard pile.
+ */
+(function () {
+  "use strict";
+
+  var Engine = window.CuddleEngine;
+  var Game = Engine && Engine.CuddleGame;
+  if (!Game || Game.prototype.__cuddleFishHook) return;
+  var proto = Game.prototype;
+  proto.__cuddleFishHook = true;
+
+  var ID = "fishHook";
+
+  function inDuel(state) {
+    return String((state && state.runId) || "").indexOf(":duel:") !== -1;
+  }
+
+  function level(game) {
+    var tree = window.CuddleSkillTree;
+    var node = tree && tree.findNode(ID);
+    return node && game ? Number(tree.level(game, node)) || 0 : 0;
+  }
+
+  function stageKey(state) {
+    return [state.runId || "", state.round || 0, state.secret || ""].join(":");
+  }
+
+  function usedThisStage(state) {
+    var record = state.umtFishHook;
+    return record && record.key === stageKey(state) ? Number(record.used) || 0 : 0;
+  }
+
+  function isLetter(card) {
+    return Boolean(card && /^[A-Z]$/.test(String(card.glyph || "")));
+  }
+
+  // Letters in the discard pile, one entry per letter, with how many.
+  function pond(game) {
+    var counts = {};
+    (game.state.discard || []).forEach(function add(card) {
+      if (isLetter(card)) counts[card.glyph] = (counts[card.glyph] || 0) + 1;
+    });
+    return Object.keys(counts).sort().map(function entry(glyph) { return { glyph: glyph, count: counts[glyph] }; });
+  }
+
+  function handFull(game) {
+    return typeof game.getCountedHandSize === "function" && typeof game.getHandLimit === "function"
+      && game.getCountedHandSize() >= game.getHandLimit();
+  }
+
+  // Cards that can go back to make room: ones that count toward the hand
+  // limit, aren't in the word being built, aren't a Joker, and aren't
+  // frozen (cuddle-world-identity.js).
+  function throwable(game) {
+    var state = game.state;
+    var identity = window.CuddleWorldIdentity;
+    return (state.hand || []).filter(function ok(card) {
+      if (!card || !card.glyph) return false;
+      if (typeof game.cardCountsTowardHandLimit === "function" && !game.cardCountsTowardHandLimit(card)) return false;
+      if (typeof game.isInfiniteCard === "function" && game.isInfiniteCard(card)) return false;
+      if (card.source === "joker" || (state.draft || []).indexOf(card.id) !== -1) return false;
+      if (identity && typeof identity.isFrozenGlyph === "function" && identity.isFrozenGlyph(game, card.glyph)) return false;
+      return true;
+    });
+  }
+
+  function ready(game) {
+    var state = game && game.state;
+    if (!state || inDuel(state) || state.status !== "playing" || state.pendingRoundEnd) return false;
+    var copilot = window.CuddleCopilot;
+    if (copilot && typeof copilot.aiTurn === "function" && copilot.aiTurn(game)) return false;
+    return level(game) > 0 && usedThisStage(state) < level(game) && pond(game).length > 0;
+  }
+
+  // Fishes one `glyph` out of the discard pile into the hand; `throwBackId`
+  // names the hand card that makes room when the hand is full.
+  proto.fishCard = function fishCard(glyph, throwBackId) {
+    var state = this.state;
+    if (!ready(this)) return { ok: false, error: "Fish Hook isn't ready right now." };
+    var letter = String(glyph || "").toUpperCase();
+    var index = (state.discard || []).findIndex(function match(card) { return isLetter(card) && card.glyph === letter; });
+    if (index < 0) return { ok: false, error: "There's no " + letter + " in the discard pile." };
+    var thrown = null;
+    if (handFull(this)) {
+      thrown = throwable(this).find(function match(card) { return card.id === throwBackId; }) || null;
+      if (!thrown) return { ok: false, error: "Your hand is full: pick a card to throw back." };
+    }
+    var caught = state.discard.splice(index, 1)[0];
+    if (thrown) {
+      state.hand = state.hand.filter(function keep(card) { return card.id !== thrown.id; });
+      if (thrown.source === "deck") state.discard.push(thrown);
+    }
+    state.hand.push(caught);
+    state.umtFishHook = { key: stageKey(state), used: usedThisStage(state) + 1 };
+    state.lastMessage = "Fish Hook: you caught " + caught.glyph + (thrown ? " and threw back " + thrown.glyph : "") + ".";
+    try { this.save(); } catch (_error) { /* next save */ }
+    return { ok: true, glyph: caught.glyph, thrown: thrown ? thrown.glyph : null };
+  };
+
+  // -- on screen -------------------------------------------------------------------
+  function activeGame() {
+    try {
+      return window.CuddleBranchMap && typeof window.CuddleBranchMap.getActiveGame === "function"
+        ? window.CuddleBranchMap.getActiveGame() : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function esc(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function swap(character) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[character];
+    });
+  }
+
+  function hookSvg() {
+    var icons = window.CuddleIcons;
+    return icons && typeof icons.svg === "function" ? icons.svg("🪝") : "🪝";
+  }
+
+  // The hook on the deck, while Fish Hook is ready this stage.
+  function placeButton(game) {
+    var row = document.querySelector("#cuddleScreen .cuddle-submit-row.has-deck");
+    var existing = document.querySelector("#cuddleScreen .umt-fish-btn");
+    var show = Boolean(row) && ready(game) && !row.classList.contains("is-mulligan-mode");
+    if (!show) {
+      if (existing) existing.remove();
+      return;
+    }
+    if (existing && existing.parentNode === row) return;
+    if (existing) existing.remove();
+    row.insertAdjacentHTML("beforeend", '<button type="button" class="umt-fish-btn" data-umt-fish-open aria-label="Fish Hook: take a card back from the discard pile" title="Fish Hook: take a card back from the discard pile">' + hookSvg() + "</button>");
+  }
+
+  var view = { open: false, glyph: "", throwId: "" };
+
+  function sheetHtml(game) {
+    var full = handFull(game);
+    var fish = pond(game).map(function chip(entry) {
+      var status = typeof game.getCardKnowledgeStatus === "function" ? game.getCardKnowledgeStatus(entry.glyph) : "unused";
+      return '<button type="button" class="umt-fish-card is-' + esc(status) + (view.glyph === entry.glyph ? " is-picked" : "") + '" data-umt-fish-pick="' + esc(entry.glyph) + '" aria-pressed="' + (view.glyph === entry.glyph) + '">'
+        + esc(entry.glyph) + (entry.count > 1 ? "<small>×" + entry.count + "</small>" : "") + "</button>";
+    }).join("");
+    var back = full ? throwable(game).map(function chip(card) {
+      return '<button type="button" class="umt-fish-card is-hand' + (view.throwId === card.id ? " is-picked" : "") + '" data-umt-fish-throw="' + esc(card.id) + '" aria-pressed="' + (view.throwId === card.id) + '">' + esc(card.glyph) + "</button>";
+    }).join("") : "";
+    var canGo = view.glyph && (!full || view.throwId);
+    var label = !view.glyph ? "Pick a card to catch" : full && !view.throwId ? "Pick a card to throw back" : "Catch " + view.glyph;
+    return '<div class="umt-fish-overlay" role="dialog" aria-modal="true" aria-labelledby="umtFishTitle">'
+      + '<section class="umt-fish-sheet">'
+      + '<header><span class="umt-fish-icon" aria-hidden="true">' + hookSvg() + '</span><div><h2 id="umtFishTitle">Fish Hook</h2>'
+      + "<p>Take one card back from your discard pile. Once a stage.</p></div>"
+      + '<button type="button" class="umt-fish-close" data-umt-fish-close aria-label="Close">×</button></header>'
+      + '<h3>Discard pile</h3><div class="umt-fish-pond">' + fish + "</div>"
+      + (full ? '<h3>Your hand is full: throw one back</h3><div class="umt-fish-pond">' + back + "</div>" : "")
+      + '<button type="button" class="cuddle-btn cuddle-btn-primary umt-fish-go" data-umt-fish-go' + (canGo ? "" : " disabled") + ">" + esc(label) + "</button>"
+      + "</section></div>";
+  }
+
+  function renderSheet() {
+    var game = activeGame();
+    var existing = document.querySelector(".umt-fish-overlay");
+    if (!view.open || !game || !ready(game)) {
+      view.open = false;
+      if (existing) existing.remove();
+      return;
+    }
+    if (existing) existing.remove();
+    (document.getElementById("cuddleScreen") || document.body).insertAdjacentHTML("beforeend", sheetHtml(game));
+  }
+
+  function close() {
+    view = { open: false, glyph: "", throwId: "" };
+    renderSheet();
+  }
+
+  document.addEventListener("click", function onClick(event) {
+    var target = event.target;
+    if (!target || !target.closest) return;
+    if (target.closest("[data-umt-fish-open]")) {
+      event.preventDefault();
+      event.stopPropagation();
+      view = { open: true, glyph: "", throwId: "" };
+      renderSheet();
+      return;
+    }
+    if (!document.querySelector(".umt-fish-overlay")) return;
+    var pick = target.closest("[data-umt-fish-pick]");
+    var toss = target.closest("[data-umt-fish-throw]");
+    if (pick || toss) {
+      event.preventDefault();
+      if (pick) view.glyph = pick.dataset.umtFishPick;
+      if (toss) view.throwId = toss.dataset.umtFishThrow;
+      renderSheet();
+      return;
+    }
+    if (target.closest("[data-umt-fish-go]")) {
+      event.preventDefault();
+      var game = activeGame();
+      var result = game ? game.fishCard(view.glyph, view.throwId) : null;
+      close();
+      if (result && result.ok) {
+        try { window.dispatchEvent(new Event("cuddle:campaign-update")); } catch (_error) { /* next render */ }
+      }
+      return;
+    }
+    if (target.closest("[data-umt-fish-close]") || target.classList.contains("umt-fish-overlay")) {
+      event.preventDefault();
+      close();
+    }
+  }, true);
+
+  document.addEventListener("keydown", function onKey(event) {
+    if (event.key === "Escape" && document.querySelector(".umt-fish-overlay")) close();
+  });
+
+  function tick() {
+    var game = activeGame();
+    if (!game || !game.state) return;
+    placeButton(game);
+    if (view.open && !ready(game)) close();
+  }
+
+  function attach() {
+    var host = document.getElementById("cuddleScreen");
+    if (!host) {
+      document.addEventListener("DOMContentLoaded", attach, { once: true });
+      return;
+    }
+    var pending = false;
+    new MutationObserver(function schedule() {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(function run() {
+        pending = false;
+        try { tick(); } catch (error) { console.warn("Cuddle Fish Hook:", error); }
+      });
+    }).observe(host, { childList: true, subtree: true });
+    setInterval(function poll() {
+      try { tick(); } catch (error) { console.warn("Cuddle Fish Hook:", error); }
+    }, 700);
+  }
+  attach();
+
+  window.CuddleFishHook = Object.freeze({ ready: ready, pond: pond });
+}());

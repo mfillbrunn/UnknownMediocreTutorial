@@ -286,7 +286,11 @@
           level: () => 0 },
         { id: "luckyClover", icon: "🍀", title: "Lucky Clover", tier: "rare", type: "points", maxLevel: 3,
           levels: ["1 lucky card goes in your deck. Have it in your hand when you solve: +10 points (mulligan it: +5 points).", "2 lucky cards: +20 points each when you solve.", "4 lucky cards: +40 points each when you solve."],
-          level: g => powerLevel(g, "luckyClover") }
+          level: g => powerLevel(g, "luckyClover") },
+        // cuddle-fish-hook.js
+        { id: "fishHook", icon: "🪝", title: "Fish Hook", tier: "rare", type: "letters", maxLevel: 1,
+          description: "Once a stage, fish a card you've discarded back into your hand. (If your hand is full, you throw one back.)",
+          level: g => powerLevel(g, "fishHook") }
       ]
     },
     {
@@ -349,7 +353,7 @@
     flint: ["storybookStart", "earlySolveBoost", "bigOpener", "momentum", "colourTrade", "boldOpener"],
     prism: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "yellowHint", "alphabet-compass",
       "oracleTiles", "lastLight", "allThemesBoss", "revealGreen"],
-    flora: ["luckyClover", "ideaTiles", "waveTiles", "fullCircle", "jokerCache", "jokerCacheLarge", "jokerTiles", "mulliganTiles",
+    flora: ["luckyClover", "fishHook", "ideaTiles", "waveTiles", "fullCircle", "jokerCache", "jokerCacheLarge", "jokerTiles", "mulliganTiles",
       "treasureMap", "extraMulligans", "mulliganSize", "handSizeBoost", "doubleMulligans", "biggerMulligans"],
     parchment: ["greyscale", "strikeThrough", "cullOne", "cullTwo", "cullRare", "consonantSweep", "freeVowelSweep",
       "coachPossibleAnswers", "coachMeterThreshold", "coachMeterReward"],
@@ -400,6 +404,7 @@
     hardMode: ["+10 hard-mode solve", "+20 hard-mode solve", "+40 hard-mode solve"],
     waveTiles: ["1 wave card", "2 wave cards", "4 wave cards"],
     luckyClover: ["1 lucky card, +10", "2 lucky cards, +20 each", "4 lucky cards, +40 each"],
+    fishHook: ["Fish 1 discard a stage"],
     questCadence: ["Quests on 2, 3, 5", "Quests on 1, 2, 3, 5"]
   };
 

@@ -1,0 +1,91 @@
+/* Cuddle: Fish Hook (cuddle-fish-hook.js). A hook hangs on the deck while
+   it's ready; the sheet shows the discard pile to fish from. */
+.cuddle-submit-row.has-deck { position: relative; }
+.umt-fish-btn {
+  position: absolute;
+  top: -12px;
+  left: -8px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 3px;
+  border: 1px solid rgba(106, 168, 255, 0.8);
+  border-radius: 50%;
+  background: #15294a;
+  box-shadow: 0 0 0 3px rgba(106, 168, 255, 0.18), 0 4px 10px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  animation: umt-fish-bob 2.4s ease-in-out infinite;
+}
+.umt-fish-btn svg { width: 20px; height: 20px; }
+.umt-fish-btn:focus-visible { outline: 2px solid #9cc4ff; outline-offset: 2px; }
+@keyframes umt-fish-bob {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(3px) rotate(6deg); }
+}
+
+.umt-fish-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100002;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  padding: 16px;
+  background: rgba(8, 6, 14, 0.62);
+}
+.umt-fish-sheet {
+  display: grid;
+  gap: 10px;
+  width: min(440px, 100%);
+  padding: 16px;
+  border: 1px solid rgba(106, 168, 255, 0.45);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #172744, #0e1527);
+  color: #f2f6ff;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+  animation: umt-fish-in 220ms ease-out both;
+}
+@keyframes umt-fish-in { from { opacity: 0; transform: translateY(18px); } }
+.umt-fish-sheet header { display: flex; align-items: center; gap: 10px; }
+.umt-fish-sheet header > div { flex: 1 1 auto; min-width: 0; }
+.umt-fish-sheet h2 { margin: 0; font-size: 1.15rem; }
+.umt-fish-sheet header p { margin: 2px 0 0; color: #b8c6e0; font-size: 0.8rem; }
+.umt-fish-icon svg { width: 30px; height: 30px; }
+.umt-fish-sheet h3 { margin: 4px 0 0; color: #9fb3d6; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.umt-fish-close {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f2f6ff;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.umt-fish-pond { display: flex; flex-wrap: wrap; gap: 6px; }
+.umt-fish-card {
+  position: relative;
+  min-width: 40px;
+  height: 44px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+.umt-fish-card small { margin-left: 2px; color: #b8c6e0; font-size: 0.65rem; font-weight: 700; }
+.umt-fish-card.is-red { opacity: 0.45; text-decoration: line-through; }
+.umt-fish-card.is-picked { border-color: #9cc4ff; background: rgba(106, 168, 255, 0.28); box-shadow: 0 0 0 2px rgba(106, 168, 255, 0.4); }
+.umt-fish-card.is-hand.is-picked { border-color: #ff9fae; background: rgba(239, 90, 103, 0.25); box-shadow: 0 0 0 2px rgba(239, 90, 103, 0.35); }
+.umt-fish-card:focus-visible, .umt-fish-close:focus-visible { outline: 2px solid #9cc4ff; outline-offset: 2px; }
+.umt-fish-go { margin-top: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .umt-fish-btn, .umt-fish-sheet { animation: none; }
+}
