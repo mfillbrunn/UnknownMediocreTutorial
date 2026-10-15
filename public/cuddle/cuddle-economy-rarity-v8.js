@@ -517,7 +517,34 @@
     return score;
   }
 
+  // Which object is a context's state hardly ever changes, but finding it
+  // means scanning the context two levels deep -- and every wrapped game
+  // method asks, many times per render. So the answer is remembered per
+  // context: until its .state is swapped for another object (a reload, a
+  // new run), or for a quarter second when it has no .state of its own.
+  const foundStates = new WeakMap();
+  const FOUND_STATE_MS = 250;
+
   function findState(context, args = []) {
+    let plainArgs = true;
+    if (Array.isArray(args)) {
+      for (let index = 0; index < args.length; index += 1) {
+        if (isObject(args[index])) { plainArgs = false; break; }
+      }
+    }
+    if (plainArgs && isObject(context)) {
+      const cached = foundStates.get(context);
+      let holder;
+      try { holder = context.state; } catch (_) { holder = undefined; }
+      if (cached && (holder !== undefined ? cached.holder === holder : Date.now() - cached.at < FOUND_STATE_MS)) return cached.state;
+      const state = scanForState(context, args);
+      foundStates.set(context, { state, holder, at: Date.now() });
+      return state;
+    }
+    return scanForState(context, args);
+  }
+
+  function scanForState(context, args = []) {
     // Deliberately avoid Array.prototype.filter/map/sort here. This function is
     // called by every wrapper and therefore must not depend on methods that a
     // faulty or third-party monkey patch could route back into the wrapper.
@@ -2072,7 +2099,12 @@
     };
   }
 
+  // The states this tick found (see tick), so the pouch button and the
+  // payout sweeps don't scan every context again.
+  let tickStates = null;
+
   function activeState() {
+    if (tickStates && tickStates.length) return tickStates[0][1];
     let best = null;
     let score = -1;
     for (const context of contextList) {
@@ -2503,12 +2535,18 @@
     saveCustom(state);
   }
 
-  function tickContext(context) {
-    const state = findState(context, []);
-    if (!state || stateScore(state) < 3) return;
-    contextList.add(context);
+  // The base-config patch scans the whole state for a few named fields;
+  // once every couple of seconds per state is plenty.
+  const configPatchedAt = new WeakMap();
+  const CONFIG_PATCH_MS = 2000;
+
+  function tickContext(context, state) {
     const data = customState(state);
-    patchBaseConfig(state);
+    const now = Date.now();
+    if (!(now - (configPatchedAt.get(state) || 0) < CONFIG_PATCH_MS)) {
+      configPatchedAt.set(state, now);
+      patchBaseConfig(state);
+    }
     patchRoute(state);
 
     const id = stageIdentity(state);
@@ -2517,12 +2555,31 @@
     if (count !== data.stage.guessCount) stageTurn(state, context, count);
     wiggleIfReady(state);
     fallbackPayoutAdjustment(state);
-    renderPouchButton();
   }
 
+  // Each distinct game state is ticked once, however many contexts (patched
+  // objects, wrapped callers) lead to it -- the list of contexts grows with
+  // every global the economy wraps, and ticking every one of them, each
+  // re-scanning all the others for the pouch button, slowed the game down.
   function tick() {
+    const seen = new Set();
+    const live = [];
     for (const context of [...contextList]) {
-      try { tickContext(context); } catch (error) { console.debug("[Cuddle Economy v8] tick skipped", error); }
+      let state = null;
+      try { state = findState(context, []); } catch (_) { state = null; }
+      if (!state || seen.has(state) || stateScore(state) < 3) continue;
+      seen.add(state);
+      live.push([context, state]);
+    }
+    live.sort((a, b) => stateScore(b[1]) - stateScore(a[1]));
+    tickStates = live;
+    try {
+      for (const [context, state] of live) {
+        try { tickContext(context, state); } catch (error) { console.debug("[Cuddle Economy v8] tick skipped", error); }
+      }
+      try { renderPouchButton(); } catch (error) { console.debug("[Cuddle Economy v8] pouch skipped", error); }
+    } finally {
+      tickStates = null;
     }
   }
 
