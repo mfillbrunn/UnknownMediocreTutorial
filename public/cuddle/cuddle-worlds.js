@@ -93,7 +93,11 @@
       Object.freeze({ theme: "swamp", decor: "marsh", name: "Murky Swamp", tagline: "Thick mud underfoot", accent: "#c3dc6e", glow: "#7f9c3a",
         skyTop: "#1d2412", skyBottom: "#0f140a", bossTitle: "The Bog Swallows", bossLine: "Bubbles rise. Something heavy climbs out of the muck.",
         rows: 3, lanes: "mixed", ease: 0, blurb: "Sticky going: three dead cards sink into your deck every stage.",
-        challenges: ["noMulligans", "consonantCrunch", "delayedFeedback"], path: { events: 1 }, pathBlurb: "One event half-sunk in the mud." })
+        challenges: ["noMulligans", "consonantCrunch", "delayedFeedback"], path: { events: 1 }, pathBlurb: "One event half-sunk in the mud." }),
+      Object.freeze({ theme: "tides", decor: "tides", name: "Drowned Lagoon", tagline: "Everything looks blue down here", accent: "#7fd3ff", glow: "#2f8cff",
+        skyTop: "#0b2340", skyBottom: "#06142a", bossTitle: "The Tide Turns", bossLine: "The water pulls back, and something enormous was under it.",
+        rows: 3, lanes: "mixed", ease: 0, blurb: "Deep water: your hand only shows blue for letters in the answer.",
+        challenges: ["blueMode", "hiddenMargins", "delayedFeedback"], path: { events: 1, mystery: 1 }, pathBlurb: "An event and an Unknown stop under the waves." })
     ]),
     Object.freeze([
       Object.freeze({ theme: "citadel", decor: "citadel", rows: 3, lanes: "mixed", ease: 0, blurb: "The last climb, three rows high.",
@@ -105,9 +109,24 @@
       Object.freeze({ theme: "forge", decor: "forge", name: "Ember Forge", tagline: "Long halls of molten words", accent: "#ffc46b", glow: "#ff7a2f",
         skyTop: "#2c140a", skyBottom: "#160904", bossTitle: "The Forge Roars", bossLine: "The furnace opens and the smith steps out.",
         rows: 4, lanes: "wide", ease: 0, blurb: "Long halls: one more stop and three paths every row.",
-        challenges: ["consonantCrunch", "questEndurance", "noMulligans"], path: { upgrade: 1, challengeRow: 1 }, pathBlurb: "An anvil row of challenges, and an extra Free Upgrade stop." })
+        challenges: ["consonantCrunch", "questEndurance", "noMulligans"], path: { upgrade: 1, challengeRow: 1 }, pathBlurb: "An anvil row of challenges, and an extra Free Upgrade stop." }),
+      Object.freeze({ theme: "glacier", decor: "glacier", name: "Glacier Throne", tagline: "Cold hands, hard words", accent: "#bfe9ff", glow: "#5fb8ff",
+        skyTop: "#102638", skyBottom: "#07121d", bossTitle: "The Glacier Wakes", bossLine: "The ice groans, cracks, and stands up.",
+        rows: 3, lanes: "mixed", ease: 1, blurb: "Bitter cold: one letter in your hand freezes each guess, and stops are harder.",
+        challenges: ["noMulligans", "countOnly", "quickMode"], path: { events: 0, challengeRow: 1 }, pathBlurb: "A frozen row where every path is a challenge; no events." })
     ])
   ]);
+
+  // The themes a new run can draw for world slot `index`: the harder ones
+  // stay shut until the player unlocks them (cuddle-unlocks.js). A saved
+  // route keeps whatever it drew (themedWorld reads every theme).
+  function availableThemes(index) {
+    const options = themeOptions(index);
+    const unlocks = window.CuddleUnlocks;
+    const shut = unlocks && typeof unlocks.lockedThemes === "function" ? unlocks.lockedThemes() : [];
+    const open = options.filter(option => !shut.includes(option.theme));
+    return open.length ? open : options.slice(0, 1);
+  }
 
   function themeOptions(index) {
     return THEMES[Math.max(0, Math.min(2, Math.trunc(Number(index)) || 0))];
@@ -405,6 +424,7 @@
     world: clampWorld,
     THEMES,
     themeOptions,
+    availableThemes,
     themedWorld,
     kindForNode,
     iconMarkup,

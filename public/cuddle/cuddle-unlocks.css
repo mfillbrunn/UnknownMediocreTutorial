@@ -1,0 +1,138 @@
+/* Cuddle: unlocks (cuddle-unlocks.js). */
+
+/* -- the lobby bar ---------------------------------------------------------- */
+.umt-unl-bar {
+  display: grid;
+  gap: 6px;
+  width: min(340px, 100%);
+  margin: 14px auto 0;
+  padding: 10px 14px;
+  border: 1px solid rgba(160, 140, 255, 0.35);
+  border-radius: 14px;
+  background: rgba(120, 100, 220, 0.1);
+  color: #f7f4ff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.umt-unl-bar:hover { border-color: rgba(180, 160, 255, 0.6); }
+.umt-unl-bar:focus-visible { outline: 2px solid #b8a8ff; outline-offset: 2px; }
+.umt-unl-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.umt-unl-head b { font-size: 0.86rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.umt-unl-head small { color: #cfc6ff; font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.umt-unl-track {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+.umt-unl-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8f7bff, #c7b8ff);
+  transition: width 600ms ease;
+}
+.umt-unl-next { color: #b9b2cc; font-size: 0.76rem; line-height: 1.3; }
+
+/* -- the locked Hard button ----------------------------------------------------- */
+.cuddle-btn.is-locked {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  opacity: 0.55;
+  filter: grayscale(0.7);
+  cursor: not-allowed;
+}
+.cuddle-lock-icon { width: 15px; height: 15px; }
+.cuddle-difficulty-help .is-locked { color: #cfc6ff; }
+
+/* -- the page ------------------------------------------------------------------ */
+.umt-unl-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100003;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(8, 6, 14, 0.78);
+}
+.umt-unl-modal {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 10px;
+  width: min(560px, 100%);
+  max-height: min(820px, calc(100dvh - 32px));
+  padding: 16px;
+  border: 1px solid rgba(160, 140, 255, 0.4);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #221a30, #15111d);
+  color: #f7f4ff;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+.umt-unl-modal-head { display: flex; align-items: center; gap: 12px; }
+.umt-unl-modal-head > div { flex: 1 1 auto; min-width: 0; }
+.umt-unl-modal-head h2 { margin: 0; font-size: 1.35rem; }
+.umt-unl-modal-head p { margin: 2px 0 0; color: #b9b2cc; font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.umt-unl-close {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f7f4ff;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+.umt-unl-close:focus-visible { outline: 2px solid #b8a8ff; outline-offset: 2px; }
+.umt-unl-help { margin: 0; color: #b9b2cc; font-size: 0.8rem; line-height: 1.4; }
+.umt-unl-scroll { display: grid; gap: 8px; overflow-y: auto; padding-right: 2px; }
+.umt-unl-level {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.umt-unl-level header { display: flex; align-items: baseline; gap: 8px; }
+.umt-unl-level header b { font-size: 0.95rem; }
+.umt-unl-level header span { flex: 1 1 auto; color: #b9b2cc; font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.umt-unl-level header em { color: #8f89a0; font-size: 0.74rem; font-style: normal; font-weight: 800; white-space: nowrap; }
+.umt-unl-level.is-next { border-color: rgba(160, 140, 255, 0.55); background: rgba(120, 100, 220, 0.1); }
+.umt-unl-level.is-next header em { color: #cfc6ff; }
+.umt-unl-level.is-open { border-color: rgba(87, 214, 154, 0.4); }
+.umt-unl-level.is-open header em { color: #6fe3aa; }
+.umt-unl-level.is-open header em::before { content: "✓ "; }
+.umt-unl-group { display: grid; gap: 4px; }
+.umt-unl-group small { color: #8f89a0; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.umt-unl-group div { display: flex; flex-wrap: wrap; gap: 5px; }
+.umt-unl-chip {
+  padding: 3px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.76rem;
+}
+.umt-unl-chip.is-rule { border-color: rgba(255, 110, 130, 0.45); color: #ffc9d1; }
+.umt-unl-chip.is-badge { border-color: rgba(246, 201, 86, 0.45); color: #ffe8a3; }
+.umt-unl-chip.is-quest { border-color: rgba(110, 200, 255, 0.45); color: #c6e9ff; }
+.umt-unl-chip.is-theme { border-color: rgba(120, 220, 170, 0.45); color: #c9f5de; }
+.umt-unl-level:not(.is-open) .umt-unl-chip { opacity: 0.75; }
+
+@media (prefers-reduced-motion: reduce) {
+  .umt-unl-track i { transition: none; }
+}
+
+/* Small steps: chips straight under each step's header, a legend above. */
+.umt-unl-help p { margin: 0; }
+.umt-unl-help { display: grid; gap: 8px; }
+.umt-unl-legend { display: flex; flex-wrap: wrap; gap: 5px; }
+.umt-unl-legend .umt-unl-chip { font-size: 0.7rem; }
+.umt-unl-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.umt-unl-level { gap: 6px; padding: 8px 12px; }
+.umt-unl-level.is-ready { border-color: rgba(246, 201, 86, 0.5); }
+.umt-unl-level.is-ready header em { color: #ffe08a; }
+.umt-unl-track.is-ready i { background: linear-gradient(90deg, #f6c956, #ffe08a); }

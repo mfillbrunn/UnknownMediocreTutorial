@@ -152,7 +152,13 @@
         (Array.isArray(choices) ? choices : []).forEach(add);
       } catch (_error) {}
     }
-    shuffled(getBossPool(), game?.random || Math.random).forEach(add);
+    // Topped up from the whole list -- except bosses the player hasn't
+    // unlocked (cuddle-unlocks.js) and, on a first run, the quest bosses.
+    const shut = new Set([
+      ...(window.CuddleUnlocks ? window.CuddleUnlocks.lockedBosses() : []),
+      ...(window.CuddleFirstRun ? window.CuddleFirstRun.questChallenges(game) : [])
+    ]);
+    shuffled(getBossPool().filter(item => !shut.has(item.id)), game?.random || Math.random).forEach(add);
     return selected.slice(0, count);
   }
 
@@ -328,7 +334,8 @@
     // shape -- how many Wordle rows, how many lanes, easier or harder stops.
     const Worlds = window.CuddleWorlds;
     const themes = [0, 1, 2].map(world => {
-      const options = Worlds && typeof Worlds.themeOptions === "function" ? Worlds.themeOptions(world) : null;
+      const options = Worlds && typeof Worlds.availableThemes === "function" ? Worlds.availableThemes(world)
+        : Worlds && typeof Worlds.themeOptions === "function" ? Worlds.themeOptions(world) : null;
       return options && options.length ? options[Math.floor(random() * options.length)] : null;
     });
     for (let world = 0; world < 3; world += 1) {

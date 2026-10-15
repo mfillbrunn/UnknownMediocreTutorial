@@ -1673,6 +1673,8 @@
     if (isMaxedReward(def, context, state)) return false;
     // A first run leaves quests and special squares out (cuddle-first-run.js).
     if (window.CuddleFirstRun && window.CuddleFirstRun.hidesReward(getId(def) || getName(def), state)) return false;
+    // Badges the player hasn't unlocked yet (cuddle-unlocks.js).
+    if (window.CuddleUnlocks && window.CuddleUnlocks.hidesReward(getId(def), getName(def))) return false;
     return !REMOVED_REWARDS.has(name);
   }
 

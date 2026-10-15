@@ -18,9 +18,9 @@
 
   if (window.CuddleHintFx) return;
 
-  var COLOURS = { green: "#3fbf6f", yellow: "#f6c956", grey: "#787c7e" };
+  var COLOURS = { green: "#3fbf6f", yellow: "#f6c956", grey: "#787c7e", blue: "#4f7fe0" };
   // The hand card's class for each kind of hint (cuddle-ui.js renderHandCard).
-  var STATUS_CLASS = { green: "is-card-green", yellow: "is-card-yellow", grey: "is-card-red" };
+  var STATUS_CLASS = { green: "is-card-green", yellow: "is-card-yellow", grey: "is-card-red", blue: "is-card-blue" };
   var VOWELS = "AEIOU";
 
   function activeGame() {
@@ -271,7 +271,7 @@
     tile.style.top = endY + "px";
     var tag = document.createElement("span");
     tag.className = "umt-hint-fx-tag is-" + item.kind;
-    tag.textContent = (item.kind === "green" ? "Placed" : item.kind === "yellow" ? "In the word" : "Not in it") + " · " + label;
+    tag.textContent = (item.kind === "green" ? "Placed" : item.kind === "yellow" || item.kind === "blue" ? "In the word" : "Not in it") + " · " + label;
     tag.style.left = (box.left + box.width / 2) + "px";
     tag.style.top = Math.max(8, box.top - 30) + "px";
     host.appendChild(tile);
@@ -331,6 +331,11 @@
     // A placed letter also lands in "in the word": show it once, as green.
     var greens = new Set(fresh.filter(function g(item) { return item.kind === "green"; }).map(function l(item) { return item.letter; }));
     fresh = fresh.filter(function dedupe(item) { return item.kind !== "yellow" || !greens.has(item.letter); });
+    // Deep water (cuddle-world-identity.js): the hand only shows blue.
+    var identity = window.CuddleWorldIdentity;
+    if (identity && typeof identity.handIsBlue === "function" && identity.handIsBlue(game)) {
+      fresh = fresh.map(function drown(item) { return item.kind === "grey" ? item : Object.assign({}, item, { kind: "blue" }); });
+    }
     // Vowels ruled out by a free test are hints too; keep the burst short.
     var shown = fresh.slice(0, 4);
     var letters = shown.map(function l(item) { return item.letter; });

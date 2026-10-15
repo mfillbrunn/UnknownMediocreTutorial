@@ -1160,6 +1160,19 @@
         parts.push("<g transform=\"translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") scale(" + scale.toFixed(2) + ")\">"
           + "<rect x=\"-2\" y=\"14\" width=\"4\" height=\"7\" fill=\"#0b2118\"/>"
           + "<path d=\"M0-28-9-10h4l-8 11h5l-9 12h34l-9-12h5l-8-11h4z\" fill=\"" + shade + "\"/></g>");
+      } else if (decor === "tides") {
+        // Kelp swaying up from a sandy bed, with a coral fan now and then.
+        var kelp = random() < 0.5 ? "#1f7a6a" : "#2f5f9a";
+        parts.push("<g transform=\"translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") scale(" + scale.toFixed(2) + ")\" opacity=\".85\">"
+          + "<ellipse cy=\"14\" rx=\"15\" ry=\"3\" fill=\"#0f2f4a\"/>"
+          + "<path d=\"M-4 14C-9 4 1-4-5-14S-1-26-4-30M3 14C7 6-1-2 5-10S2-20 6-24\" stroke=\"" + kelp + "\" stroke-width=\"2.4\" fill=\"none\" stroke-linecap=\"round\"/>"
+          + (random() < 0.4 ? "<path d=\"M9 14c0-6 2-10 6-12M11 9c2-1 4-1 6 0\" stroke=\"#ff8fa3\" stroke-width=\"1.6\" fill=\"none\" stroke-linecap=\"round\"/>" : "")
+          + "</g>");
+      } else if (decor === "glacier") {
+        // Jagged blue-white ice shards.
+        parts.push("<g transform=\"translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") scale(" + scale.toFixed(2) + ")\">"
+          + "<path d=\"M-14 14-9-12-4-2 0-28 5-6 9-16 14 14z\" fill=\"#1d3b55\" stroke=\"#7fc6f0\" stroke-width=\"1\" stroke-linejoin=\"round\"/>"
+          + "<path d=\"M0-28 2-10 5-6z\" fill=\"#e6f7ff\" fill-opacity=\".55\"/></g>");
       } else if (decor === "caverns") {
         var hue = random() < 0.5 ? "#6f5cf0" : "#46b8e8";
         var tilt = (random() * 40 - 20).toFixed(0);

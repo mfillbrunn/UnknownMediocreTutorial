@@ -539,6 +539,12 @@
 
   window.CuddleAchievements = Object.freeze({
     LIST: LIST,
+    // Another file's notice ({icon, title, text}) in the same toast line.
+    toast: function queueToast(item) {
+      if (!item) return;
+      toastQueue.push(item);
+      showToast();
+    },
     open: open,
     close: close,
     coins: coins,
