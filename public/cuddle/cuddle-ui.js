@@ -576,12 +576,16 @@
             <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Medium</button>
             <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-hard">${escapeHtml(window.CuddleAscension ? window.CuddleAscension.hardLabel() : "Hard")}</button>
           </div>
+          <div class="cuddle-difficulty-help" aria-hidden="true"><span>More help</span><span>The usual run</span><span>Tougher bosses</span></div>
           ${window.CuddleAscension ? window.CuddleAscension.pickerHtml() : ""}
-          <label class="cuddle-seed-field">
-            <span>Seed</span>
-            <input id="cuddleSeedInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
-              maxlength="16" placeholder="Random" value="${escapeHtml(seedDraft)}">
-          </label>
+          <details class="cuddle-newrun-more"${seedDraft ? " open" : ""}>
+            <summary>More options</summary>
+            <label class="cuddle-seed-field">
+              <span>Seed</span>
+              <input id="cuddleSeedInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                maxlength="16" placeholder="Random" value="${escapeHtml(seedDraft)}">
+            </label>
+          </details>
         </section>
       </div>`;
   }
@@ -2206,9 +2210,12 @@
   }
 
   function showSpecialCardInfo(cardButton) {
-    const info = specialCardInfo(cardButton);
+    return showInfoNote(cardButton, specialCardInfo(cardButton), cardButton.dataset.cardGlyph);
+  }
+
+  // The same small note, over any element: a title and a few lines.
+  function showInfoNote(cardButton, info, glyph) {
     if (!info) return false;
-    const glyph = cardButton.dataset.cardGlyph;
     const open = document.querySelector(".umt-card-info");
     hideSpecialCardInfo();
     // A second tap on the same card closes it.
@@ -2224,7 +2231,10 @@
     const width = note.offsetWidth;
     const left = Math.min(window.innerWidth - width - 8, Math.max(8, box.left + box.width / 2 - width / 2));
     note.style.left = `${left}px`;
-    note.style.top = `${Math.max(8, box.top - note.offsetHeight - 10)}px`;
+    // Above the card, or below it when there's no room (the header).
+    const above = box.top - note.offsetHeight - 10;
+    if (above < 8) note.classList.add("is-below");
+    note.style.top = `${above < 8 ? box.bottom + 10 : above}px`;
     note.style.setProperty("--arrow", `${box.left + box.width / 2 - left}px`);
     setTimeout(hideSpecialCardInfo, 6000);
     return true;
@@ -2233,9 +2243,22 @@
   // Any other tap, a scroll or a re-render puts the note away.
   document.addEventListener("pointerdown", event => {
     const target = event.target instanceof Element ? event.target : null;
-    if (target && (target.closest(".umt-card-info") || target.closest(".cuddle-card.is-dead, .cuddle-card.is-idea, .cuddle-card.is-lucky"))) return;
+    if (target && (target.closest(".umt-card-info") || target.closest(".cuddle-card.is-dead, .cuddle-card.is-idea, .cuddle-card.is-lucky, .cuddle-heart-badge"))) return;
     hideSpecialCardInfo();
   }, true);
+
+  // The heart in the header is the Cuddle Meter; a tap says what it is
+  // (its tooltip only shows on a mouse hover).
+  document.addEventListener("click", event => {
+    const heart = event.target instanceof Element ? event.target.closest("#cuddleScreen .cuddle-heart-badge") : null;
+    if (!heart) return;
+    event.preventDefault();
+    showInfoNote(heart, {
+      tone: "meter",
+      title: "Cuddle Meter",
+      lines: ["Every grey or yellow tile your guesses show fills it.", `${heart.getAttribute("title") || ""}.`]
+    }, "meter");
+  });
   window.addEventListener("scroll", hideSpecialCardInfo, true);
 
   // A refused tap (a second Joker in one word) shakes the tile keyboard.

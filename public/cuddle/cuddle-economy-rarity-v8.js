@@ -1671,6 +1671,8 @@
     // screens, packs, shop). The badge page (cuddle-skill-tree.js) knows each
     // reward's level and cap.
     if (isMaxedReward(def, context, state)) return false;
+    // A first run leaves quests and special squares out (cuddle-first-run.js).
+    if (window.CuddleFirstRun && window.CuddleFirstRun.hidesReward(getId(def) || getName(def), state)) return false;
     return !REMOVED_REWARDS.has(name);
   }
 
@@ -2588,6 +2590,8 @@
   function schoolLine(tree, node, game) {
     const school = node.school && tree.SCHOOLS ? tree.SCHOOLS[node.school] : null;
     if (!school) return null;
+    // A calm first world keeps the schools for after its boss.
+    if (window.CuddleFirstRun && window.CuddleFirstRun.schoolsHidden(game)) return null;
     const weight = (tree.TIER_WEIGHT && tree.TIER_WEIGHT[node.tier]) || 1;
     const line = document.createElement("span");
     line.className = "cuddle-v8-school-line";
@@ -2605,7 +2609,9 @@
     const note = document.createElement("small");
     note.textContent = after > before
       ? `${school.label} ${["", "I", "II", "III"][after]}: ${school.perks[after - 1]}`
-      : `${have} → ${have + weight}${school.ranks[before] ? ` of ${school.ranks[before]}` : " · top rank"}`;
+      : school.ranks[before]
+        ? `${have + weight} of ${school.ranks[before]} for ${school.label} ${["", "I", "II", "III"][before + 1]}`
+        : "top rank";
     if (after > before) line.classList.add("is-rank-up");
     line.append(note);
     return line;
@@ -2615,14 +2621,14 @@
   // not just the current count -- what a level number alone doesn't say
   // is whether this pick is your first copy or your last one before the
   // cap.
+  // Only a pick that levels up a badge you already have says so ("Level 2
+  // of 3"); a first pick, or a one-time badge, needs no tag.
   function formatLevelTag(current, maxLevel) {
-    // A one-level power: taking it once is all there is.
-    if (Number(maxLevel) === 1) return current >= 1 ? "One-time · maxed" : "One-time · maxed once taken";
+    if (Number(maxLevel) === 1 || !(Number(current) >= 1)) return "";
     const capped = Number.isFinite(maxLevel);
     const next = capped ? Math.min(current + 1, maxLevel) : current + 1;
-    const atMax = capped && next >= maxLevel;
     // The third level of a power is its big one (cuddle-skill-tree.js).
-    return `Lv ${current} → ${next}${atMax ? (maxLevel >= 3 ? " ★ max" : " (max)") : ""}`;
+    return capped ? `Level ${next} of ${maxLevel}${next >= maxLevel && maxLevel >= 3 ? " ★" : ""}` : `Level ${next}`;
   }
 
   function decorateRewardTheme(root = document) {
@@ -2652,7 +2658,11 @@
       element.dataset.cuddleV8Category = node.category;
       element.dataset.cuddleV8Level = stamp;
       element.classList.add("cuddle-v8-themed", `cuddle-v8-cat-${node.category}`);
-      if (category.color) element.style.setProperty("--cuddle-v8-category-color", category.color);
+      // The card's edge wears its school's colour (the same colour as its
+      // badge and the strip below), so one colour system runs through it.
+      const schoolInfo = node.school && tree.SCHOOLS ? tree.SCHOOLS[node.school] : (tree.SCHOOLLESS || null);
+      const edge = (schoolInfo && schoolInfo.color) || category.color;
+      if (edge) element.style.setProperty("--cuddle-v8-category-color", edge);
 
       // A power with levels: the card says what this pick gives, not the
       // power's general description.
@@ -2670,10 +2680,9 @@
         description.classList.add("cuddle-v8-level-text");
       }
 
-      const badge = document.createElement("span");
-      badge.className = "cuddle-v8-category-badge";
-      badge.textContent = category.label;
-      element.prepend(badge);
+      // (The type chip -- Points, Quests... -- is left off: the school
+      // strip below already groups the card, and the card had too many
+      // labels.)
       if (!isBossReward || element.classList.contains("cuddle-choice")) {
         const line = schoolLine(tree, node, game);
         if (line) {

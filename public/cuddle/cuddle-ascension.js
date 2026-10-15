@@ -259,6 +259,9 @@
   // The lobby's level picker (cuddle-ui.js renderNewRunOverlay).
   function pickerHtml() {
     var ladder = readLadder();
+    // Nothing to pick until a Hard run is won: a new player doesn't see a
+    // ladder of locked levels.
+    if (ladder.unlocked === 0) return "";
     var buttons = "";
     for (var level = 0; level <= MAX; level += 1) {
       var locked = level > ladder.unlocked;

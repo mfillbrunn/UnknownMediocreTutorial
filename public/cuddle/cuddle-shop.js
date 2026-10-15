@@ -294,7 +294,11 @@
     const stock = {};
     SHELVES.forEach(shelf => {
       if (shelf.id === "trade" || shelf.id === "keep" || shelf.id === "mend") return;
-      stock[shelf.id] = shuffled(shelf.items, random).slice(0, shelf.count).map(item => item.id);
+      // A first run has no special squares (cuddle-first-run.js), so no
+      // Treasure Trove.
+      const items = window.CuddleFirstRun && window.CuddleFirstRun.noSquares(game)
+        ? shelf.items.filter(item => item.id !== "roadTrove") : shelf.items;
+      stock[shelf.id] = shuffled(items, random).slice(0, shelf.count).map(item => item.id);
     });
     stock.keep = keepStock(game, key);
     stock.trade = tradeFor(game, key);

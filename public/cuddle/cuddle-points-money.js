@@ -130,6 +130,8 @@
   }
 
   function rollSpecialTiles(game) {
+    // A first run has no special squares (cuddle-first-run.js).
+    if (window.CuddleFirstRun && window.CuddleFirstRun.noSquares(game)) return [];
     var random = randomFor(game);
     var state = game.state || {};
     var threshold = typeof game._solveGuessThreshold === "function" ? game._solveGuessThreshold() : 6;

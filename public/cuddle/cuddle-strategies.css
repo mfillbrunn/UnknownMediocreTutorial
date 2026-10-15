@@ -276,3 +276,33 @@ button.umt-clue-word.is-pickable:focus-visible { outline: 2px solid #ffd578; out
   .cuddle-tile.is-special-burst,
   .cuddle-tile.is-special-burst[data-special-paid]::after { animation: none; }
 }
+
+/* New run: a line on what each difficulty means, and the Seed tucked
+   under "More options" (cuddle-ui.js renderNewRun). */
+.cuddle-difficulty-help {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 6px 0 0;
+  color: rgba(247, 244, 255, 0.6);
+  font-size: 0.72rem;
+  line-height: 1.3;
+  text-align: center;
+}
+.cuddle-newrun-more { margin-top: 12px; }
+.cuddle-newrun-more summary {
+  color: rgba(247, 244, 255, 0.6);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  list-style-position: inside;
+}
+.cuddle-newrun-more[open] summary { margin-bottom: 8px; }
+.umt-card-info.is-meter { --accent: #ff7aa8; }
+#cuddleScreen .cuddle-heart-badge { cursor: pointer; }
+.umt-card-info.is-below::after {
+  top: -6px;
+  bottom: auto;
+  transform: rotate(225deg);
+}

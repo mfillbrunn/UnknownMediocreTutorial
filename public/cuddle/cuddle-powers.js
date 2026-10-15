@@ -12,7 +12,7 @@
  *      Day Fund, Treasure Hunter, Treasure Map and the tile unlocks, the
  *      culls).
  *
- *   2. Playstyle powers: Momentum, Big Opener, Last Stand, Pickpocket,
+ *   2. Playstyle powers: Momentum, Big Opener, Last Stand, Pickpocket ($2 / $4 / $8 a yellow),
  *      Grace Period and Bold Opener. They join the reward pool here and
  *      change how a stage is played rather than adding a flat number.
  *
@@ -250,7 +250,7 @@
   var MOMENTUM = [0, 4, 8, 15];
   var BIG_OPENER = [0, 5, 10, 20];
   var LAST_STAND = [0, 25, 45, 100];
-  var PICKPOCKET = [0, 1, 2, 4];
+  var PICKPOCKET = [0, 2, 4, 8];
 
   var baseSubmit = proto.submitDraft;
   proto.submitDraft = function submitDraftWithPowers() {

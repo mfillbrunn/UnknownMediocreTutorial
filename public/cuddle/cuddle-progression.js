@@ -382,6 +382,8 @@
   function schoolsMarkup(game, model) {
     const tree = window.CuddleSkillTree;
     if (!tree || !tree.SCHOOLS) return "";
+    // A calm first world keeps the schools for after its boss.
+    if (window.CuddleFirstRun && window.CuddleFirstRun.schoolsHidden(game)) return "";
     const points = typeof tree.schoolPoints === "function" ? tree.schoolPoints(game) : {};
     const rows = tree.SCHOOL_ORDER.map((id) => {
       const info = tree.SCHOOLS[id];

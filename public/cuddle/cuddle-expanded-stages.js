@@ -833,6 +833,9 @@
         safeSave(game);
       }
       reindexRows(map);
+      // A calm first world (cuddle-first-run.js): only Wordle stops before
+      // the first boss.
+      if (window.CuddleFirstRun && window.CuddleFirstRun.calmMap(game, map)) safeSave(game);
       annotateProgression(map);
       map.expandedStagesVersion = VERSION;
       return map;
