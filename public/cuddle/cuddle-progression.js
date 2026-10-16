@@ -330,36 +330,31 @@
   function schoolLabel(node) {
     const tree = window.CuddleSkillTree;
     const school = node && node.school && tree && tree.SCHOOLS ? tree.SCHOOLS[node.school] : null;
-    return school ? `${school.label} +${(tree.TIER_WEIGHT && tree.TIER_WEIGHT[node.tier]) || 1} a level` : "";
+    if (!school) return "";
+    // What this badge adds to its school right now: its tier's weight for
+    // every level held (a level-1 rare gives +2, at level 2 +4).
+    const weight = (tree.TIER_WEIGHT && tree.TIER_WEIGHT[node.tier]) || 1;
+    const cap = Number.isFinite(node.maxLevel) && node.maxLevel > 0 ? node.maxLevel : 3;
+    return `${school.label} +${weight * Math.min(cap, Math.max(1, num(node.level) || 1))}`;
   }
 
   function cardMarkup(model, node) {
     if (!node) return "";
-    const types = window.CuddleSkillTree && window.CuddleSkillTree.TYPES;
-    const typeLabel = node.type && types && types[node.type] ? types[node.type].label : "";
+    // Kept short on purpose: tier and school, then what the badge does at
+    // the level held -- no type label, next-level preview or pick history.
     const tier = node.kind === "combo" ? "Combo"
-      : [TIER_NAME[node.tier] || "Common", typeLabel, schoolLabel(node), node.kind === "boss" ? "Boss reward" : ""].filter(Boolean).join(" · ");
+      : [TIER_NAME[node.tier] || "Common", schoolLabel(node), node.kind === "boss" ? "Boss reward" : ""].filter(Boolean).join(" · ");
     const color = badgeColor(node);
-    const levelText = node.kind === "combo" ? ""
-      : node.maxLevel && node.maxLevel > 1 ? `Level ${node.level} of ${node.maxLevel}${node.level >= node.maxLevel ? " (max)" : ""}`
-        : node.level > 1 ? `Taken ${node.level} times`
-          : node.maxLevel === 1 ? "One-time power · maxed" : "";
-    // A stackable power: what it does now, and what the next pick adds.
     const tree = window.CuddleSkillTree;
-    const nextText = node.kind !== "combo" && Array.isArray(node.levels) && node.level < node.levels.length && tree
-      ? `<p class="umt-bd-card-next"><b>Level ${node.level + 1}${node.level + 1 === node.maxLevel ? " (max)" : ""}:</b> ${esc(tree.levelText(node, node.level + 1))}</p>` : "";
-    const when = node.picks && node.picks.length
-      ? `Picked up on ${[...new Set(node.picks.map((p) => `stage ${Math.max(1, p.round)}`))].join(", ")}` : "";
     const body = node.kind === "combo"
       ? `<p class="umt-bd-card-halves">${(node.halves || []).map((h) => esc(h.title)).join(" + ")}</p><p>${esc(comboEffect(node))}</p>`
       : Array.isArray(node.levels) && node.levels.length && tree
-        ? `<p>${esc(tree.levelText(node, Math.max(1, node.level)))}</p>${nextText}`
+        ? `<p>${esc(tree.levelText(node, Math.max(1, node.level)))}</p>`
         : `<p>${esc(node.description)}</p>`;
     return `<div class="umt-bd-card-inner" style="--t:${color}">`
       + `<div class="umt-bd-card-head"><span class="umt-bd-card-icon" aria-hidden="true">${iconMarkup(node.icon)}</span>`
       + `<div><strong>${esc(node.title)}</strong><span class="umt-bd-card-tier">${esc(tier)}</span></div></div>`
       + body
-      + (levelText || when ? `<p class="umt-bd-card-meta">${esc([levelText, when].filter(Boolean).join(" · "))}</p>` : "")
       + `</div>`;
   }
 
