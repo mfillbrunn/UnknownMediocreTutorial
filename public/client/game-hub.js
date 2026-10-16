@@ -21,10 +21,56 @@
 
   const vowelPlayMenu = window.showStartup;
 
-  function showHub() {
+  // { from: "cuddleScreen" } plays the way back out of Cuddle: the screen,
+  // with its meadow, whooshes off to the left while the game choice slides
+  // in from the right behind it.
+  function showHub(options) {
+    const leaving = options && options.from ? document.getElementById(options.from) : null;
+    const animate = leaving && leaving.classList.contains("active")
+      && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    let layers = null;
+    if (animate) layers = startWhoosh(leaving);
     setChosen(null);
     window.showScreen("gameHubScreen");
     document.body.classList.add("menu-mode");
+    if (layers) finishWhoosh(layers);
+  }
+
+  const WHOOSH_MS = 460;
+
+  // Freezes the leaving screen where it is (it's about to lose .active,
+  // which would hide it) and lays a copy of the meadow under it: the
+  // backdrop belongs to the page while Cuddle is open, so it would
+  // otherwise vanish the moment the screen switches.
+  function startWhoosh(leaving) {
+    const rect = leaving.getBoundingClientRect();
+    const scrollTop = leaving.scrollTop;
+    const meadow = document.createElement("div");
+    meadow.className = "umt-whoosh-meadow";
+    meadow.setAttribute("aria-hidden", "true");
+    document.body.appendChild(meadow);
+    leaving.classList.add("umt-whoosh-out");
+    Object.assign(leaving.style, {
+      top: `${rect.top}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      height: `${rect.height}px`
+    });
+    leaving.scrollTop = scrollTop;
+    leaving.setAttribute("aria-hidden", "true");
+    return { leaving, meadow };
+  }
+
+  function finishWhoosh({ leaving, meadow }) {
+    const hub = document.getElementById("gameHubScreen");
+    hub?.classList.add("umt-whoosh-in");
+    setTimeout(() => {
+      meadow.remove();
+      leaving.classList.remove("umt-whoosh-out");
+      ["top", "left", "width", "height"].forEach(prop => { leaving.style[prop] = ""; });
+      leaving.removeAttribute("aria-hidden");
+      hub?.classList.remove("umt-whoosh-in");
+    }, WHOOSH_MS + 160);
   }
 
   // The first-run "want a tutorial?" offer is about Vowel Play, so it waits

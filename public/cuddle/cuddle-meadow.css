@@ -152,8 +152,61 @@ body.umt-meadow-arriving #cuddleScreen .cuddle-root {
   to { opacity: 0; }
 }
 
+/* ---------- Leaving: the whoosh back to the game choice ---------- */
+
+/* The meadow, now a moving sheet instead of the page's own backdrop. */
+.umt-whoosh-meadow {
+  position: fixed;
+  inset: 0;
+  z-index: 99980;
+  pointer-events: none;
+  background-color: #2a689f;
+  background-image: var(--umt-meadow-veil), url("backgrounds/cuddle-meadow.jpg");
+  background-image: var(--umt-meadow-veil), image-set(
+    url("backgrounds/cuddle-meadow.webp") type("image/webp"),
+    url("backgrounds/cuddle-meadow.jpg") type("image/jpeg")
+  );
+  background-size: cover, var(--umt-meadow-size);
+  background-position: center, var(--umt-meadow-position);
+  background-repeat: no-repeat;
+  box-shadow: 30px 0 60px rgba(0, 0, 0, 0.45);
+  animation: umtWhooshOut 460ms cubic-bezier(0.55, 0, 0.8, 0.25) forwards;
+}
+
+/* The Cuddle screen itself, kept on screen (it has just lost .active)
+   at the exact box it had, riding along on top of the meadow. */
+#cuddleScreen.umt-whoosh-out {
+  display: block !important;
+  position: fixed !important;
+  z-index: 99981;
+  margin: 0 !important;
+  /* An inactive .screen is faded out (layout.css); this one must leave
+     whole, not dissolve on the way. */
+  opacity: 1 !important;
+  transition: none !important;
+  pointer-events: none;
+  animation: umtWhooshOut 460ms cubic-bezier(0.55, 0, 0.8, 0.25) forwards;
+}
+
+@keyframes umtWhooshOut {
+  0% { transform: translateX(0); filter: blur(0); }
+  70% { filter: blur(1.5px); }
+  100% { transform: translateX(-112vw); filter: blur(3px); }
+}
+
+/* The game choice glides in from the right as the meadow clears. */
+#gameHubScreen.umt-whoosh-in .menu-center {
+  animation: umtWhooshIn 520ms 90ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+@keyframes umtWhooshIn {
+  from { translate: 70px 0; opacity: 0; }
+  to { translate: 0 0; opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  body.umt-meadow-arriving #cuddleScreen .cuddle-root {
+  body.umt-meadow-arriving #cuddleScreen .cuddle-root,
+  #gameHubScreen.umt-whoosh-in .menu-center {
     animation: none;
   }
 }
