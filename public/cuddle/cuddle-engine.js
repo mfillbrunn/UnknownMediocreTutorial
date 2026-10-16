@@ -139,6 +139,9 @@
   // Letters, Deep Cull): past about 8, stages stop being a puzzle.
   const CULL_CAP = 8;
   const LATE_GUESS_STEP_WORLD_THREE = 10;
+  // Easy: a flat, gentler cost per late guess -- free in world one, then 5
+  // and 10 points (no extra step in world three).
+  const EASY_LATE_GUESS_PENALTIES = [0, 5, 10];
   // A flat bonus for solving within that same window at all, in addition
   // to the scaled-by-unused-guesses EARLY_GUESS_POINTS payout above.
   const EARLY_SOLVE_BONUS = 0;
@@ -619,6 +622,8 @@
         ? this.state.bossGatesDone.length
         : 0;
       const world = Math.max(0, Math.min(LATE_GUESS_PENALTIES.length - 1, cleared));
+      const difficulty = String(this.state?.megaState?.difficulty || this.state?.mega?.difficulty || "");
+      if (difficulty === "easy") return EASY_LATE_GUESS_PENALTIES[world];
       const base = LATE_GUESS_PENALTIES[world];
       return world === LATE_GUESS_PENALTIES.length - 1 ? base + (over - 1) * LATE_GUESS_STEP_WORLD_THREE : base;
     }

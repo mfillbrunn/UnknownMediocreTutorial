@@ -210,7 +210,7 @@
     extraLetters: "+4 more consonants in your hand for your next guess.",
     jokerToken: "+2 Joker cards: cards that can be any letter. They stay until you use them.",
     revealCategory: "Shows 2 more of the answer's themes",
-    umtRuleOut: "3 consonants in your hand that aren't in the answer turn grey.",
+    umtRuleOut: "3 consonants in your hand that aren't in the answer turn grey, and are swapped for new cards.",
     umtVowelCheck: "3 vowels you haven't tried are tested: you learn if each one is in the answer.",
     umtSpotlight: "2 yellow letters move to their exact spots and turn green (or the next ones you find do).",
     umtPocketMoney: "Get +$20 right now.",
