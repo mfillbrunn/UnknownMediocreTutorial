@@ -24,9 +24,9 @@
  *   Golden Ledger (epic, 2)  money counts toward a boss's points gate,
  *                            $1 = 0.5 points (1 point); it isn't spent.
  * Speed
- *   Fast Lane (epic, 3)      the first 1 / 2 / 3 guesses are free of every
- *                            boss, challenge and curse, which all start
- *                            that many guesses later (the shift itself is
+ *   Fast Lane (epic, 3)      every boss, challenge and curse starts 1 / 2 /
+ *                            3 guesses later: none is removed, its guesses
+ *                            just come after the clear opening ones (the shift itself is
  *                            applied in cuddle-engine.js and
  *                            cuddle-rebalance-v5.js through freeOpeners).
  *   Golden Opener (legendary) every yellow in the 1st guess moves to its
@@ -803,6 +803,57 @@
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", startPainting);
   else startPainting();
+
+  // ---------------------------------------------------------------------------
+  // Starting kit: Easy and Medium runs start with Bigger Hand and Fish Hook
+  // (Bigger Hand level 2 on Easy), taken the way a reward pick is, so they
+  // show on the badge page and count for their schools.
+  // ---------------------------------------------------------------------------
+
+  var STARTING_KIT = {
+    easy: [["handSizeBoost", 2], ["fishHook", 1]],
+    medium: [["handSizeBoost", 1], ["fishHook", 1]]
+  };
+
+  function kitCard(game, id) {
+    var catalog = typeof game._upgradeCatalog === "function" ? (game._upgradeCatalog() || []) : [];
+    var card = catalog.find(function same(item) { return item && item.id === id; });
+    if (card) return card;
+    var tree = registry();
+    var node = tree && tree.findNode(id);
+    return node ? { id: id, key: id, title: node.title, icon: node.icon, description: node.description || "", tier: node.tier, kind: "upgrade" } : null;
+  }
+
+  function grantStartingKit(game, difficulty) {
+    var state = game && game.state;
+    if (!state || inDuel(state) || state.umtStartingKit || typeof game._grantUpgradeChoice !== "function") return;
+    var mega = state.megaState || state.mega || {};
+    var kit = STARTING_KIT[String(difficulty || mega.difficulty || "")];
+    state.umtStartingKit = true;
+    if (!kit) return;
+    kit.forEach(function give(entry) {
+      for (var copy = levelOf(game, entry[0]); copy < entry[1]; copy += 1) {
+        var card = kitCard(game, entry[0]);
+        if (!card) return;
+        var result = game._grantUpgradeChoice(Object.assign({}, card, { key: card.key || card.id }));
+        if (!result || result.ok === false) return;
+      }
+    });
+    save(game);
+  }
+
+  var baseStartNew = proto.startNew;
+  if (typeof baseStartNew === "function") {
+    proto.startNew = function startNewWithStartingKit(difficulty) {
+      var result = baseStartNew.apply(this, arguments);
+      try {
+        grantStartingKit(this, difficulty);
+      } catch (error) {
+        console.warn("Cuddle new badges: starting kit failed.", error);
+      }
+      return result;
+    };
+  }
 
   window.CuddleNewBadges = Object.freeze({
     freeOpeners: freeOpeners,

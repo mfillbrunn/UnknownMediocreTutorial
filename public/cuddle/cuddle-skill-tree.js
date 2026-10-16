@@ -326,8 +326,8 @@
           levels: ["Your money counts toward the points a boss needs before you can challenge it: every $1 counts as 0.5 points. (It isn't spent.)", "Every $1 counts as 1 point."],
           level: g => powerLevel(g, "goldenLedger") },
         { id: "fastLane", icon: "🏁", title: "Fast Lane", tier: "epic", type: "safety", maxLevel: 3,
-          levels: ["Your 1st guess is never affected by bosses, challenges or curses: they all start a guess later.",
-            "Your first 2 guesses are free of them.", "Your first 3 guesses are free of them."],
+          levels: ["Bosses, challenges and curses start a guess later: your 1st guess is clear, and their tricky guesses all still come, just one guess later.",
+            "They start 2 guesses later.", "They start 3 guesses later."],
           level: g => powerLevel(g, "fastLane") },
         { id: "goldenOpener", icon: "🌟", title: "Golden Opener", tier: "legendary", type: "clues", maxLevel: 1,
           description: "Every yellow letter in your 1st guess moves to its spot and turns green.",
@@ -452,7 +452,7 @@
     questScout: ["1 quest letter placed", "2 quest letters placed"],
     insertCoin: ["Extra guess for $100", "Extra guess for $75"],
     goldenLedger: ["$1 counts as 0.5 points", "$1 counts as 1 point"],
-    fastLane: ["Guess 1 is free", "Guesses 1-2 are free", "Guesses 1-3 are free"]
+    fastLane: ["Tricky guesses come 1 later", "Tricky guesses come 2 later", "Tricky guesses come 3 later"]
   };
 
   // "Hard-mode solve: +20 points" after "Hard-mode solve: +10 points" ->

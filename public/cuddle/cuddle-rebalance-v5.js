@@ -1726,11 +1726,11 @@
     if (challenge.id === "perfectOpener") return 1;
     // Easy and Medium: no lock, one mulligan fewer instead (beginVariant).
     if (challenge.id === "noMulligans") return softChallenges(game) ? 0 : mulliganLockTurns(game);
-    if (challenge.id === "questEndurance") return challengeTurnCap(game) + 1;
+    if (challenge.id === "questEndurance") return challengeTurnCap(game, challenge) + 1;
     // These two ask nothing of a first guess (there's no word before it, and
     // nothing known yet): they run one guess longer, from the 2nd.
-    if (challenge.id === "wordChain" || challenge.id === "lockedIn") return challengeTurnCap(game) + 1;
-    return challengeTurnCap(game);
+    if (challenge.id === "wordChain" || challenge.id === "lockedIn") return challengeTurnCap(game, challenge) + 1;
+    return challengeTurnCap(game, challenge);
   }
 
   // A challenge as one constraint per guess, like a mixed boss's plan.
@@ -1738,15 +1738,16 @@
     return Array.from({ length: challengeTurns(game, challenge) }, () => challenge.id);
   }
 
-  // How many of a challenge's designed guesses actually carry its extra
-  // difficulty this run: 1 before the first boss, 2 between the first and
-  // second, 4 from the second boss on. A challenge whose own masks/vowel
-  // budget already run shorter than the cap is unaffected -- this only
-  // ever shortens, never lengthens, a challenge's designed effect.
-  function challengeTurnCap(game) {
+  // How many guesses a challenge covers, by world: 1 in world one, 1-2 in
+  // world two, 2-3 in world three. Which end of the range is fixed per
+  // run, world and challenge (a hash, not a die roll), so the map's
+  // preview and the stage itself always agree.
+  function challengeTurnCap(game, challenge) {
     const state = stateOf(game);
     const cleared = state && Array.isArray(state.bossGatesDone) ? state.bossGatesDone.length : 0;
-    return cleared >= 2 ? 2 : 1;
+    if (cleared <= 0) return 1;
+    const extra = hash32(`${mapSeed(game)}:turns:${cleared}:${(challenge && challenge.id) || ""}`) % 2;
+    return (cleared >= 2 ? 2 : 1) + extra;
   }
 
   // The map preview has to describe the same capped guess count

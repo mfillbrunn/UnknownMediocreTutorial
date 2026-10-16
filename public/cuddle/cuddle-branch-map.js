@@ -1602,7 +1602,7 @@
       if (kind === "final") {
         brief.summary = "The last secret. Beat it to win the run.";
       } else {
-        brief.summary = "Choose one of two bosses. Beat it to pick a legendary reward; its curse stays with you after.";
+        brief.summary = "Choose one of two bosses. Beat it to pick a legendary reward.";
         brief.gets.push({ type: "perk", text: "Pick 1 of 3 legendary rewards" });
       }
       brief.risks.push("The boss's power works against you");

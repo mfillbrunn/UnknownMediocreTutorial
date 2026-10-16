@@ -10,7 +10,7 @@
  *   cashout  the first cash-out: how points are paid, points vs money
  *   reward   the first upgrade pick: what upgrades and rarities are
  *   map1     the map after a stage: challenges, skulls, bosses and winning
- *   boss     the first boss choice: reward and curse
+ *   boss     the first boss choice: its reward
  *   loop     the second stage: a send-off; the tour is done
  *
  * Progress lives in localStorage ("umt-cuddle-tutorial-v1"), so the tour
@@ -129,6 +129,8 @@
         { title: "Your cards", text: "<b>Vowels</b> are reusable: they stay in your hand all stage, and turn <span class=\"umt-tut-r\">red</span> once they're ruled out. <b>Consonants</b> are used up when you guess with them, and new ones are drawn from your deck. The little pile shows how many are left.", focus: ".cuddle-hand" },
         { title: "Cards, squares and tiles", text: "Three words, three places. <b>Cards</b> are in your hand and deck (letters, and special ones like lucky or Joker cards). <b>Squares</b> are spots on the board (some are special, like money squares). <b>Tiles</b> are the colours a guess shows: green, yellow or grey.", focus: ".cuddle-hand" },
         { title: "Mulligans", text: "Stuck with letters you can't use? A <b>mulligan</b> swaps some consonants for fresh ones from the deck. You get a few each stage, and any you don't use pay points at the end.", focus: ".cuddle-mulligan" },
+        // Easy and Medium runs start with Fish Hook (cuddle-new-badges.js).
+        { title: "Fish Hook", skip: function noHook(game) { return !(window.CuddleFishHook && game && window.CuddleSkillTree && window.CuddleSkillTree.level(game, window.CuddleSkillTree.findNode("fishHook")) > 0); }, text: "You start with the <b>Fish Hook</b>. Threw away a letter you need after all? Once you've used or mulliganed cards, a <b>hook</b> appears by your deck: tap it, once a stage, to fish a card back from your discard pile.", focus: ".umt-fish-btn" },
         { title: "Quests", skip: function noQuests(game) { return Boolean(window.CuddleFirstRun && window.CuddleFirstRun.noQuests(game)); }, text: "Every few guesses a <b>quest</b> appears, like \"use two yellow letters\". Meet it with your next guess to pick a bonus. Tap a quest to read it in full.", focus: ".cuddle-quest-inline" }
       ]
     },
@@ -174,7 +176,7 @@
       },
       at: "top",
       cards: [
-        { title: "Choose your boss", text: "Pick the boss you'll fight. The <b>+</b> shows what you win, and the <b>&minus;</b> is the curse it leaves for the rest of the run. Tap either to read it." }
+        { title: "Choose your boss", text: "Pick the boss you'll fight. The <b>+</b> shows what you win: tap it to read it." }
       ]
     },
     {

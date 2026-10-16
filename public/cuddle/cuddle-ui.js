@@ -1278,7 +1278,7 @@
           <h2 id="cuddleBossTitle">${isFinal ? "One last secret" : "Choose your boss"}</h2>
           <p>${isFinal
             ? "Beat this round to win the run."
-            : "Beat a boss to choose 1 of 3 legendary rewards. Its curse (−) stays with you for the rest of the run."}</p>
+            : "Beat a boss to choose 1 of 3 legendary rewards."}</p>
           <div class="cuddle-choice-grid">
             ${options.map(option => bossCardMarkup(option, isFinal)).join("")}
           </div>
@@ -1322,7 +1322,8 @@
     // A boss's reward is no longer its own: beating any boss opens a pick
     // of three Legendary rewards, so the card shows only its curse.
     const reward = null;
-    const burden = isFinal ? "" : bossCurseNote(option, isFinal);
+    // Bosses no longer leave a curse behind, so the card shows no (−).
+    const burden = "";
     const open = bossTraitOpen.bossId === id ? bossTraitOpen.trait : null;
     const bonus = reward ? pendingSynergyFor(reward.id) : null;
     const trait = (kind, label, iconHtml, extraClass = "") => `

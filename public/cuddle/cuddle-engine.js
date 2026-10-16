@@ -5109,6 +5109,7 @@
     return result;
   };
 
+  const BOSSES_LEAVE_CURSES = false;
   const composedClearBoss = CuddleGame.prototype._clearBoss;
   CuddleGame.prototype._clearBoss = function clearBossMega() {
     const mega = ensureMega(this);
@@ -5119,7 +5120,9 @@
     // includes that round's own opening _ensureQuestForNextGuess() -- the
     // Quest Trial ratchet analog needs the debuff on record before that
     // happens, or the first round right after this boss never sees it.
-    if (bossBefore?.ratchetSourceId && bossBefore.gate !== "final") {
+    // A beaten boss no longer leaves a curse on later stages (the Cursed
+    // Idol event and Ascension's Hexed still curse, by the player's choice).
+    if (BOSSES_LEAVE_CURSES && bossBefore?.ratchetSourceId && bossBefore.gate !== "final") {
       const ordinal = Number(this.state?.bossesCleared || 0) + 1;
       if (!Array.isArray(mega.ratchetOrdinalsApplied)) mega.ratchetOrdinalsApplied = [];
       if (!mega.ratchetOrdinalsApplied.includes(ordinal)) {

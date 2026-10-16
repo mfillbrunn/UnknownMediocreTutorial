@@ -177,7 +177,7 @@
       bossIds: [first?.id, second?.id].filter(Boolean),
       bossTitle: "Choose one of two bosses",
       bossIcon: first?.icon || "💀",
-      bossDescription: "Choose which boss to fight. Beat it for its reward; its curse stays with you after.",
+      bossDescription: "Choose which boss to fight. Beat it for its reward.",
       gate,
       next: []
     };
@@ -608,7 +608,11 @@
   // against double-applying the same boss stage's penalty (guessIndex is
   // no longer 1:1 with the ordinal, so it can't double as that guard by
   // itself the way it used to).
+  const BOSSES_LEAVE_CURSES = false;
   function commitBossCurse(game, boss) {
+    // Bosses no longer leave a curse on later stages (see cuddle-engine.js
+    // BOSSES_LEAVE_CURSES).
+    if (!BOSSES_LEAVE_CURSES) return false;
     if (!boss?.ratchetSourceId || boss.gate === "final") return false;
     const mega = megaState(game);
     if (!mega) return false;
@@ -663,12 +667,8 @@
       return afterResult(result, value => {
         if (value?.ok !== false && this.state?.boss) {
           const chosen = rememberChosenBoss(this, offer, chosenId);
-          if (chosen && chosen.gate !== "final") {
-            const suffix = ` Beat it and its curse stays with you.`;
-            if (!String(this.state.lastMessage || "").includes("curse stays with you")) {
-              this.state.lastMessage = `${this.state.lastMessage || ""}${suffix}`.trim();
-            }
-          }
+          // (Bosses no longer leave a curse behind, so nothing to warn about.)
+          void chosen;
         }
         return value;
       });
