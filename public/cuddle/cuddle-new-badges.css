@@ -1,0 +1,83 @@
+/* cuddle-new-badges.js: Quest Scout's placed letters and Insert Coin's
+   question. */
+
+/* A quest-word letter waiting in its spot on the row being played: faint,
+   in the quests' orange, until a card is put there. */
+#cuddleScreen .cuddle-tile[data-umt-quest-hint]::after {
+  content: attr(data-umt-quest-hint);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #ef8a34;
+  font-weight: 900;
+  font-size: 1.6em;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+#cuddleScreen .cuddle-tile[data-umt-quest-hint] {
+  position: relative;
+  border-color: rgba(239, 138, 52, 0.75) !important;
+  box-shadow: inset 0 0 0 1px rgba(239, 138, 52, 0.35);
+}
+
+/* Insert Coin: out of guesses, pay for one more? */
+.umt-coin-offer {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(8, 7, 14, 0.62);
+}
+
+.umt-coin-card {
+  width: min(360px, 100%);
+  padding: 22px 20px 18px;
+  border: 1px solid rgba(246, 201, 86, 0.55);
+  border-radius: 18px;
+  background: rgba(25, 22, 34, 0.98);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.5);
+  color: #f7f4ff;
+  text-align: center;
+  animation: umtCoinIn 260ms cubic-bezier(0.2, 0.8, 0.25, 1) both;
+}
+
+.umt-coin-kicker {
+  color: #f6c956;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.umt-coin-card h2 {
+  margin: 6px 0 8px;
+  font-size: 1.5rem;
+}
+
+.umt-coin-card p {
+  margin: 0 0 6px;
+}
+
+.umt-coin-wallet {
+  color: #aaa5bc;
+  font-size: 0.9rem;
+}
+
+.umt-coin-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+@keyframes umtCoinIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .umt-coin-card { animation: none; }
+}

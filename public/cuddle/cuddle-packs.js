@@ -207,7 +207,7 @@
       return { id: card.id, title: card.title, description: words(card) || card.description, icon: card.icon, tier: card.tier };
     });
     offer.openedAt = Date.now();
-    state.lastMessage = (offer.starter ? "Starting Pack opened: " : "Upgrade Pack opened: ") + kept.map(function title(card) { return card.title; }).join(", ") + ".";
+    state.lastMessage = (offer.gift ? (offer.giftTitle || "Gift pack") + " opened: " : offer.starter ? "Starting Pack opened: " : "Upgrade Pack opened: ") + kept.map(function title(card) { return card.title; }).join(", ") + ".";
     save(this);
     return { ok: true, cards: offer.cards };
   };
@@ -244,29 +244,32 @@
   }
 
   function sealedHtml(offer, wallet) {
-    var short = !offer.starter && wallet < offer.price;
+    // A gift (the Treasure Chest badge, cuddle-new-badges.js) opens free,
+    // the way the Starting Pack does.
+    var free = Boolean(offer.starter || offer.gift);
+    var short = !free && wallet < offer.price;
     var size = sizeOf(offer);
     var total = size.commons + size.specials + (size.flex || 0);
     var name = (size.name ? size.name + " " : "") + "Pack";
-    var title = offer.starter ? "Your Starting Pack" : "A " + name + " is for sale";
-    var kicker = offer.starter ? "Starting bonus" : "Stage cleared · World " + offer.world;
+    var title = offer.gift ? (offer.giftTitle || "A free " + name) : offer.starter ? "Your Starting Pack" : "A " + name + " is for sale";
+    var kicker = offer.gift ? (offer.giftKicker || "Gift") : offer.starter ? "Starting bonus" : "Stage cleared · World " + offer.world;
     // The pack itself opens it too (when it can be opened).
     return '<section class="umt-pack-dialog" role="dialog" aria-modal="true" aria-labelledby="umtPackTitle">'
       + '<span class="umt-pack-kicker">' + kicker + "</span>"
       + '<h2 id="umtPackTitle">' + title + "</h2>"
       + '<div class="umt-pack-stage">'
       + '<button type="button" class="umt-pack-sealed is-' + size.id + '" data-umt-pack="buy"' + (short ? " disabled" : "")
-      + ' aria-label="' + (offer.starter ? "Open the pack" : "Buy and open the pack for $" + offer.price) + '">'
+      + ' aria-label="' + (free ? "Open the pack" : "Buy and open the pack for $" + offer.price) + '">'
       + '<span class="umt-pack-foil" aria-hidden="true"></span>'
       + '<span class="umt-pack-name">' + (size.name ? size.name + "<br>" : "") + "Pack</span>"
       + '<span class="umt-pack-count">' + total + " upgrades</span></button></div>"
       + '<div class="umt-pack-actions">'
-      + (offer.starter
+      + (free
         ? '<button type="button" class="cuddle-btn cuddle-btn-primary" data-umt-pack="buy">Open the pack</button>'
         : '<button type="button" class="cuddle-btn cuddle-btn-primary" data-umt-pack="buy"' + (short ? " disabled" : "") + ">Buy for $" + offer.price + "</button>"
           + '<button type="button" class="cuddle-btn cuddle-btn-ghost" data-umt-pack="skip">No thanks</button>')
       + "</div>"
-      + (offer.starter ? "" : '<p class="umt-pack-wallet">' + (short ? "You have $" + wallet + ": not enough for this pack." : "You have $" + wallet + ".") + "</p>")
+      + (free ? "" : '<p class="umt-pack-wallet">' + (short ? "You have $" + wallet + ": not enough for this pack." : "You have $" + wallet + ".") + "</p>")
       + "</section>";
   }
 

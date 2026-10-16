@@ -1726,11 +1726,11 @@
     if (challenge.id === "perfectOpener") return 1;
     // Easy and Medium: no lock, one mulligan fewer instead (beginVariant).
     if (challenge.id === "noMulligans") return softChallenges(game) ? 0 : mulliganLockTurns(game);
-    if (challenge.id === "questEndurance") return challengeTurnCap(game) + 1;
+    if (challenge.id === "questEndurance") return challengeTurnCap(game, challenge) + 1;
     // These two ask nothing of a first guess (there's no word before it, and
     // nothing known yet): they run one guess longer, from the 2nd.
-    if (challenge.id === "wordChain" || challenge.id === "lockedIn") return challengeTurnCap(game) + 1;
-    return challengeTurnCap(game);
+    if (challenge.id === "wordChain" || challenge.id === "lockedIn") return challengeTurnCap(game, challenge) + 1;
+    return challengeTurnCap(game, challenge);
   }
 
   // A challenge as one constraint per guess, like a mixed boss's plan.
@@ -1738,15 +1738,16 @@
     return Array.from({ length: challengeTurns(game, challenge) }, () => challenge.id);
   }
 
-  // How many of a challenge's designed guesses actually carry its extra
-  // difficulty this run: 1 before the first boss, 2 between the first and
-  // second, 4 from the second boss on. A challenge whose own masks/vowel
-  // budget already run shorter than the cap is unaffected -- this only
-  // ever shortens, never lengthens, a challenge's designed effect.
-  function challengeTurnCap(game) {
+  // How many guesses a challenge covers, by world: 1 in world one, 1-2 in
+  // world two, 2-3 in world three. Which end of the range is fixed per
+  // run, world and challenge (a hash, not a die roll), so the map's
+  // preview and the stage itself always agree.
+  function challengeTurnCap(game, challenge) {
     const state = stateOf(game);
     const cleared = state && Array.isArray(state.bossGatesDone) ? state.bossGatesDone.length : 0;
-    return cleared >= 2 ? 2 : 1;
+    if (cleared <= 0) return 1;
+    const extra = hash32(`${mapSeed(game)}:turns:${cleared}:${(challenge && challenge.id) || ""}`) % 2;
+    return (cleared >= 2 ? 2 : 1) + extra;
   }
 
   // The map preview has to describe the same capped guess count
@@ -1829,6 +1830,23 @@
     if (Object.prototype.hasOwnProperty.call(mode, "noOfferStreak")) mode.noOfferStreak = 0;
   }
 
+  // Fast Lane (cuddle-new-badges.js): the stage's first 1-3 guesses are
+  // free of every boss, challenge and curse effect -- they all start that
+  // many guesses later. A plan is shifted by leading empty guesses.
+  function freeOpeners(game) {
+    try {
+      return Math.max(0, Math.floor(asNumber(window.CuddleNewBadges && window.CuddleNewBadges.freeOpeners
+        ? window.CuddleNewBadges.freeOpeners(game) : 0, 0)));
+    } catch (_error) {
+      return 0;
+    }
+  }
+
+  function delayedPlan(game, plan) {
+    const delay = freeOpeners(game);
+    return delay > 0 && Array.isArray(plan) ? Array.from({ length: delay }, () => null).concat(plan) : plan;
+  }
+
   function beginVariant(game, pending) {
     const custom = customState(game);
     if (!custom) return;
@@ -1860,6 +1878,9 @@
         };
       }, {});
       const stacked = variantChallengeIds(variant).length > 1 || variant.ease;
+      const shifted = delayedPlan(game, merged.plan);
+      merged.plan = shifted;
+      merged.masks = shifted;
       custom.activeChallenge = {
         ...merged,
         title: stacked ? variant.title : merged.title,
@@ -1932,7 +1953,7 @@
   function stagePlan(game) {
     const state = stateOf(game) || {};
     const boss = state.boss;
-    if (boss && !boss.__umtSynthetic && Array.isArray(boss.plan)) return boss.plan;
+    if (boss && !boss.__umtSynthetic && Array.isArray(boss.plan)) return delayedPlan(game, boss.plan);
     // A word-rule boss (Letter Demand, Banned Letter, Word Chain, Locked In)
     // rules exactly the guesses its row icon marks: the boss's turns, the
     // same window the board reads (powerIdsForGuess, the engine's
@@ -1941,7 +1962,8 @@
     // longer showed it.
     if (boss && !boss.__umtSynthetic && WORD_RULES.includes(boss.id)) {
       const turns = Math.max(0, Math.floor(Number(boss.turns) || 0));
-      return Array.from({ length: 12 }, (_, index) => (index < turns ? boss.id : null));
+      const delay = freeOpeners(game);
+      return Array.from({ length: 12 + delay }, (_, index) => (index >= delay && index < turns + delay ? boss.id : null));
     }
     const challenge = activeChallenge(game);
     return challenge && Array.isArray(challenge.plan) ? challenge.plan : null;
@@ -4212,14 +4234,18 @@
     }
 
     const boss = state.boss;
+    // Fast Lane pushes the boss's guesses back (the challenge plan above
+    // already carries the shift).
+    const delay = freeOpeners(game);
     if (boss && !boss.__umtSynthetic && Array.isArray(boss.plan)) {
-      if (boss.plan[guessIndex]) add(boss.plan[guessIndex], 0);
-    } else if (boss && !boss.__umtSynthetic) {
+      const planned = guessIndex >= delay ? boss.plan[guessIndex - delay] : null;
+      if (planned) add(planned, 0);
+    } else if (boss && !boss.__umtSynthetic && guessIndex >= delay) {
       const turns = Math.max(0, Math.floor(asNumber(boss.turns, 0)));
       // Same set the engine's _bossActive() reads, so a row is marked with
       // the boss icon on exactly the guesses the boss still constrains.
       const wholeRound = wholeRoundBosses().has(String(boss.id || ""));
-      if (wholeRound || turns <= 0 || guessIndex < turns) add(boss.id || boss.bossId, 0);
+      if (wholeRound || turns <= 0 || guessIndex < turns + delay) add(boss.id || boss.bossId, 0);
     }
 
     // guessIndex is 0-based here; the engine's plan is keyed by 1-based

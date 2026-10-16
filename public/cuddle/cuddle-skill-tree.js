@@ -295,7 +295,43 @@
             "The letter you fish is tested: if it's in the answer, it turns yellow.",
             "Also, once a stage, the hook bites on its own: a letter of the answer that you discard is hooked back and turns yellow."],
           description: "Fish a card back from your discard pile, once a stage.",
-          level: g => powerLevel(g, "fishHook") }
+          level: g => powerLevel(g, "fishHook") },
+        // cuddle-new-badges.js
+        { id: "cleanSlate", icon: "🧼", title: "Clean Slate", tier: "legendary", type: "letters", maxLevel: 1,
+          description: "Skipping a reward also levels up one of your badges at random.",
+          level: g => powerLevel(g, "cleanSlate") },
+        { id: "ascetic", icon: "🧘", title: "Ascetic", tier: "legendary", type: "points", maxLevel: 1,
+          description: "While you have 5 badges or fewer (this one included), every stage you solve pays 1.5 times its points.",
+          level: g => powerLevel(g, "ascetic") },
+        { id: "questMastery", icon: "📜", title: "Quest Mastery", tier: "legendary", type: "quests", maxLevel: 1,
+          description: "Every quest reward is one step bigger: 2 mulligans instead of 1, 3 vowels checked instead of 2, 3 letters ruled out instead of 2, and so on.",
+          level: g => powerLevel(g, "questMastery") },
+        { id: "overtime", icon: "⏱️", title: "Overtime", tier: "legendary", type: "quests", maxLevel: 1,
+          description: "Each quest you finish gives you 1 more guess this stage: a boss fight is a guess longer, and on other stages the late-guess cost starts a guess later.",
+          level: g => powerLevel(g, "overtime") },
+        { id: "questScout", icon: "🔭", title: "Quest Scout", tier: "epic", type: "quests", maxLevel: 2,
+          levels: ["When a quest appears, a word from your hand that fulfills it is found (but not shown): 1 of its letters is placed in its spot in your word.",
+            "2 of the quest word's letters are placed."],
+          level: g => powerLevel(g, "questScout") },
+        { id: "blackMarket", icon: "🛒", title: "Black Market", tier: "legendary", type: "money", maxLevel: 1,
+          description: "On every reward screen, you can pay $50 for a random badge (on top of your pick).",
+          level: g => powerLevel(g, "blackMarket") },
+        { id: "treasureChest", icon: "🧰", title: "Treasure Chest", tier: "legendary", type: "money", maxLevel: 1,
+          description: "Opens a free Large Pack right away. It has no other power, but it counts toward the Money school.",
+          level: g => powerLevel(g, "treasureChest") },
+        { id: "insertCoin", icon: "🪙", title: "Insert Coin", tier: "epic", type: "money", maxLevel: 2,
+          levels: ["When you run out of guesses in a boss or strict stage, you can pay $100 for 1 more guess.", "An extra guess costs $75."],
+          level: g => powerLevel(g, "insertCoin") },
+        { id: "goldenLedger", icon: "📒", title: "Golden Ledger", tier: "epic", type: "money", maxLevel: 2,
+          levels: ["Your money counts toward the points a boss needs before you can challenge it: every $1 counts as 0.5 points. (It isn't spent.)", "Every $1 counts as 1 point."],
+          level: g => powerLevel(g, "goldenLedger") },
+        { id: "fastLane", icon: "🏁", title: "Fast Lane", tier: "epic", type: "safety", maxLevel: 3,
+          levels: ["Bosses, challenges and curses start a guess later: your 1st guess is clear, and their tricky guesses all still come, just one guess later.",
+            "They start 2 guesses later.", "They start 3 guesses later."],
+          level: g => powerLevel(g, "fastLane") },
+        { id: "goldenOpener", icon: "🌟", title: "Golden Opener", tier: "legendary", type: "clues", maxLevel: 1,
+          description: "Every yellow letter in your 1st guess moves to its spot and turns green.",
+          level: g => powerLevel(g, "goldenOpener") }
       ]
     },
     {
@@ -355,16 +391,18 @@
   const SCHOOLLESS = Object.freeze({ label: "General", color: "#9d97b0", blurb: "General tools that belong to no school." });
   const SCHOOL_ORDER = Object.freeze(Object.keys(SCHOOLS));
   const SCHOOL_MEMBERS = {
-    flint: ["storybookStart", "earlySolveBoost", "bigOpener", "momentum", "colourTrade", "boldOpener"],
+    flint: ["storybookStart", "earlySolveBoost", "bigOpener", "momentum", "colourTrade", "boldOpener", "encore", "vowelBounty", "fastLane", "goldenOpener"],
     prism: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "yellowHint", "alphabet-compass",
       "oracleTiles", "lastLight", "allThemesBoss", "revealGreen"],
     flora: ["luckyClover", "fishHook", "ideaTiles", "waveTiles", "fullCircle", "jokerCache", "jokerCacheLarge", "jokerTiles", "mulliganTiles",
       "treasureMap", "extraMulligans", "mulliganSize", "handSizeBoost", "doubleMulligans", "biggerMulligans"],
     parchment: ["greyscale", "strikeThrough", "cullOne", "cullTwo", "cullRare", "consonantSweep", "freeVowelSweep",
       "coachPossibleAnswers", "coachMeterThreshold", "coachMeterReward"],
-    gold: ["pickpocket", "haggler", "wideChoice", "treasureHunter", "rainyDay", "doubleDown", "highRoller", "lastStand"],
-    brass: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment", "questCadence", "questPersistReward", "questDoublePick"],
-    pearl: ["hardMode", "mulliganValueBoost", "monksVow", "leanBuild"]
+    gold: ["pickpocket", "haggler", "wideChoice", "treasureHunter", "rainyDay", "doubleDown", "highRoller", "lastStand",
+      "blackMarket", "treasureChest", "insertCoin", "goldenLedger"],
+    brass: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment", "questCadence", "questPersistReward", "questDoublePick",
+      "questMastery", "overtime", "questScout"],
+    pearl: ["hardMode", "mulliganValueBoost", "monksVow", "leanBuild", "gracePeriod", "mistakeShield", "cleanSlate", "ascetic"]
   };
   const SCHOOL_OF = {};
   Object.entries(SCHOOL_MEMBERS).forEach(([school, ids]) => ids.forEach(id => { SCHOOL_OF[id] = school; }));
@@ -410,7 +448,11 @@
     waveTiles: ["1 wave card", "2 wave cards", "4 wave cards"],
     luckyClover: ["1 lucky card, +10", "2 lucky cards, +20 each", "4 lucky cards, +40 each"],
     fishHook: ["Fish 1 discard a stage", "Fished letter tested", "Auto-hooks a right letter"],
-    questCadence: ["Quests on 2, 3, 5", "Quests on 1, 2, 3, 5"]
+    questCadence: ["Quests on 2, 3, 5", "Quests on 1, 2, 3, 5"],
+    questScout: ["1 quest letter placed", "2 quest letters placed"],
+    insertCoin: ["Extra guess for $100", "Extra guess for $75"],
+    goldenLedger: ["$1 counts as 0.5 points", "$1 counts as 1 point"],
+    fastLane: ["Tricky guesses come 1 later", "Tricky guesses come 2 later", "Tricky guesses come 3 later"]
   };
 
   // "Hard-mode solve: +20 points" after "Hard-mode solve: +10 points" ->

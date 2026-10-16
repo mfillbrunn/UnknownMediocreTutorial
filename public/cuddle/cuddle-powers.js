@@ -151,7 +151,10 @@
   // 2. Playstyle powers
   // -------------------------------------------------------------------------
 
-  var NEW_POWERS = ["momentum", "bigOpener", "lastStand", "pickpocket", "gracePeriod", "boldOpener", "luckyClover", "ideaTiles", "waveTiles", "fullCircle", "leanBuild", "monksVow", "strikeThrough", "highRoller", "hardMode", "combine", "fishHook"];
+  var NEW_POWERS = ["momentum", "bigOpener", "lastStand", "pickpocket", "gracePeriod", "boldOpener", "luckyClover", "ideaTiles", "waveTiles", "fullCircle", "leanBuild", "monksVow", "strikeThrough", "highRoller", "hardMode", "combine", "fishHook",
+    // cuddle-new-badges.js
+    "cleanSlate", "ascetic", "questMastery", "overtime", "questScout", "blackMarket", "treasureChest",
+    "insertCoin", "goldenLedger", "fastLane", "goldenOpener"];
 
   function powerCard(id) {
     var registry = tree();
@@ -408,6 +411,12 @@
     return true;
   }
 
+  // Quest Mastery (cuddle-new-badges.js) makes every quest reward one step
+  // bigger; it sets this flag around the reward it is applying.
+  function questBoost(game) {
+    return game && game.__umtQuestBoost ? 1 : 0;
+  }
+
   var QUEST_EFFECTS = {
     // Two consonants that aren't in the answer, taken from the letters the
     // player can actually play -- the hand first, then the deck -- so the
@@ -423,14 +432,15 @@
       var glyphs = function glyphs(cards) {
         return uniqueSorted((cards || []).map(function glyph(card) { return String(card && card.glyph || "").toUpperCase(); }).filter(useful));
       };
-      var chosen = pick(game, glyphs(state.hand), 2);
-      if (chosen.length < 2) {
-        chosen = chosen.concat(pick(game, glyphs(state.deck).filter(function fresh(letter) { return chosen.indexOf(letter) === -1; }), 2 - chosen.length));
+      var wanted = 2 + questBoost(game);
+      var chosen = pick(game, glyphs(state.hand), wanted);
+      if (chosen.length < wanted) {
+        chosen = chosen.concat(pick(game, glyphs(state.deck).filter(function fresh(letter) { return chosen.indexOf(letter) === -1; }), wanted - chosen.length));
       }
       if (!chosen.length) return "Rule Out: none of your consonants can be ruled out.";
       state.knownAbsent = uniqueSorted((state.knownAbsent || []).concat(chosen));
       if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
-      return "Rule Out: " + chosen.join(" and ") + " " + (chosen.length === 1 ? "is" : "are") + " not in the answer.";
+      return "Rule Out: " + (chosen.length > 2 ? chosen.slice(0, -1).join(", ") + " and " + chosen[chosen.length - 1] : chosen.join(" and ")) + " " + (chosen.length === 1 ? "is" : "are") + " not in the answer.";
     },
     umtVowelCheck: function vowelCheck(game) {
       var state = game.state;
@@ -438,7 +448,7 @@
       var tested = testedLetters(state);
       var known = new Set((state.knownAbsent || []).concat(state.knownPresent || []));
       var options = "AEIOU".split("").filter(function ok(letter) { return !tested.has(letter) && !known.has(letter); });
-      var chosen = pick(game, options, 2);
+      var chosen = pick(game, options, 2 + questBoost(game));
       if (!chosen.length) return "Vowel Check: you've already tried every vowel.";
       var present = chosen.filter(function inWord(letter) { return secret.indexOf(letter) !== -1; });
       var absent = chosen.filter(function notInWord(letter) { return secret.indexOf(letter) === -1; });
@@ -451,22 +461,33 @@
         + ".";
     },
     umtSpotlight: function spotlight(game) {
-      if (applySpotlight(game)) return game.state.umtSpotlightNote;
+      if (applySpotlight(game)) {
+        var first = game.state.umtSpotlightNote;
+        // Quest Mastery: a second yellow placed too.
+        if (questBoost(game) && applySpotlight(game)) return first + " " + game.state.umtSpotlightNote;
+        return first;
+      }
       game.state.umtSpotlightPending = spotlightKey(game.state);
       return "Spotlight: no yellow letter yet. Your next yellow will be placed.";
     },
     umtPocketMoney: function pocketMoney(game) {
-      game.state.cuddleMoney = Math.max(0, num(game.state.cuddleMoney) + 10);
-      return "Pocket Money: +$10.";
+      var cash = questBoost(game) ? 20 : 10;
+      game.state.cuddleMoney = Math.max(0, num(game.state.cuddleMoney) + cash);
+      return "Pocket Money: +$" + cash + ".";
     },
     umtQuickPoints: function quickPoints(game) {
-      stageBonus(game, 15, "umtQuestQuickPoints", "Quick Points");
-      return "Quick Points: +15 points.";
+      var points = questBoost(game) ? 30 : 15;
+      stageBonus(game, points, "umtQuestQuickPoints", "Quick Points");
+      return "Quick Points: +" + points + " points.";
     },
     // One Fish Hook catch for this stage (cuddle-fish-hook.js).
     umtFishingLine: function fishingLine(game) {
       var hook = window.CuddleFishHook;
-      if (hook && typeof hook.addCatch === "function") hook.addCatch(game);
+      if (hook && typeof hook.addCatch === "function") {
+        hook.addCatch(game);
+        if (questBoost(game)) hook.addCatch(game);
+      }
+      if (questBoost(game)) return "Fishing Line: 2 catches. Tap the hook on your deck to take cards back from the discard pile.";
       return "Fishing Line: tap the hook on your deck to take a card back from the discard pile.";
     }
   };
