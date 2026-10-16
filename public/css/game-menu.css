@@ -1417,7 +1417,10 @@ body.menu-mode #appMain {
 
 /* Keep non-startup menu screens centered after the menu container becomes
    full-viewport for the illustrated landing screen. */
-body.menu-mode .screen.game-menu:not(#startupScreen):not(#gameHubScreen) {
+/* One :not() with a list, not two chained: chaining counted two ids and
+   out-ranked screens' own widths (Cuddle's desktop layout was squeezed
+   into this 600px column). */
+body.menu-mode .screen.game-menu:not(#startupScreen, #gameHubScreen) {
   width: min(600px, calc(100vw - 24px));
   margin-inline: auto;
 }
