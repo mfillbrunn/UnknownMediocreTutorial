@@ -1000,6 +1000,74 @@
     if (card) burstFor(card);
   }, true);
 
+  // -- a lucky or dead card leaving the hand ------------------------------------
+  // Mulliganed away (or washed out by a wave), a lucky card lets a clover
+  // float up off its tile, and a dead card gives up a little ghost that
+  // drifts away to the sky. The tiles are grouped by kind in the hand, so
+  // the rect is measured now, before the hand re-renders without them.
+  var GHOST_PARTICLE = '<svg viewBox="0 0 24 28" aria-hidden="true">'
+    + '<path d="M12 1.5C6.8 1.5 3 5.4 3 10.6V25l3-2.4 3 2.4 3-2.4 3 2.4 3-2.4 3 2.4V10.6C21 5.4 17.2 1.5 12 1.5z" fill="rgba(244,241,255,0.92)" stroke="rgba(150,138,190,0.9)" stroke-width="1.1"/>'
+    + '<ellipse cx="9" cy="11" rx="1.6" ry="2.2" fill="#3c3458"/><ellipse cx="15" cy="11" rx="1.6" ry="2.2" fill="#3c3458"/>'
+    + '<ellipse cx="12" cy="16" rx="1.4" ry="1.1" fill="#3c3458" opacity="0.7"/></svg>';
+
+  function soulsLeave(kind, count, box) {
+    if (!count || !box || reducedMotion() || !document.body) return;
+    var layer = burstLayer();
+    // Above the hand's tiles and the deck's shuffle, not just the board.
+    layer.classList.add("is-raised");
+    var x = box.left + box.width / 2;
+    var y = box.top + box.height / 2;
+    for (var i = 0; i < Math.min(3, count); i += 1) {
+      var lucky = kind === "lucky";
+      var el = particle(layer, lucky ? CLOVER_PARTICLE : GHOST_PARTICLE, lucky ? "is-clover is-leaving" : "is-ghost", x, y);
+      if (typeof el.animate !== "function") { el.remove(); continue; }
+      var side = (i % 2 ? 1 : -1) * (6 + i * 6);
+      var rise = lucky ? 120 : 150;
+      var frames = lucky ? [
+        { transform: "translate(-50%, -50%) scale(0.4) rotate(0deg)", opacity: 0 },
+        { transform: "translate(-50%, calc(-50% - 28px)) scale(1.25) rotate(40deg)", opacity: 1, offset: 0.2 },
+        { transform: "translate(calc(-50% + " + side + "px), calc(-50% - " + rise * 0.7 + "px)) scale(1.1) rotate(150deg)", opacity: 1, offset: 0.75 },
+        { transform: "translate(calc(-50% + " + side * 1.4 + "px), calc(-50% - " + rise + "px)) scale(0.8) rotate(220deg)", opacity: 0 }
+      ] : [
+        { transform: "translate(-50%, -50%) scale(0.5)", opacity: 0 },
+        { transform: "translate(calc(-50% - 6px), calc(-50% - 30px)) scale(1)", opacity: 1, offset: 0.2 },
+        { transform: "translate(calc(-50% + " + (8 + side) + "px), calc(-50% - " + rise * 0.55 + "px)) scale(1) rotate(6deg)", opacity: 0.95, offset: 0.55 },
+        { transform: "translate(calc(-50% - " + (4 - side) + "px), calc(-50% - " + rise + "px)) scale(0.85) rotate(-6deg)", opacity: 0 }
+      ];
+      var duration = lucky ? 1400 : 1700;
+      // Each step eases on its own, so the flight holds its glow until near the top.
+      frames.forEach(function ease(frame) { frame.easing = "ease-out"; });
+      el.animate(frames, { duration: duration, delay: i * 140, easing: "linear", fill: "both" });
+      setTimeout(el.remove.bind(el), duration + i * 140 + 80);
+    }
+  }
+
+  var baseDiscard = proto._discardCards;
+  if (typeof baseDiscard === "function") {
+    proto._discardCards = function discardWithSouls(cardIds) {
+      var leaving = { lucky: 0, dead: 0 };
+      try {
+        var ids = new Set(cardIds || []);
+        (this.state && this.state.hand || []).forEach(function tally(card) {
+          if (!ids.has(card.id)) return;
+          if (isLuckyCard(card)) leaving.lucky += 1;
+          else if (isDeadCard(card)) leaving.dead += 1;
+        });
+      } catch (_error) { /* the flourish is optional */ }
+      var result = baseDiscard.apply(this, arguments);
+      if ((leaving.lucky || leaving.dead) && typeof document !== "undefined") {
+        try {
+          ["lucky", "dead"].forEach(function fly(kind) {
+            if (!leaving[kind]) return;
+            var tile = document.querySelector("#cuddleScreen .cuddle-hand-panel .cuddle-card.is-" + kind);
+            if (tile) soulsLeave(kind, leaving[kind], tile.getBoundingClientRect());
+          });
+        } catch (_error) { /* the flourish is optional */ }
+      }
+      return result;
+    };
+  }
+
   var pending = false;
   function schedule() {
     if (pending) return;
