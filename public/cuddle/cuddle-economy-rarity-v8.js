@@ -62,7 +62,7 @@
     // Offered by cuddle-rebalance-v5.js as a solving aid (it is not in this
     // layer's own catalog -- see REMOVED_REWARDS), so its tier lives here.
     ["reserve dividend", TIERS.COMMON],
-    ["echo finder", TIERS.COMMON],
+    ["echo finder", TIERS.RARE],
     ["treasure hunter", TIERS.COMMON],
     ["haggler", TIERS.COMMON],
     ["vowel bounty", TIERS.RARE],
@@ -821,7 +821,23 @@
     return !/event|shop|upgrade|mystery|duel|boss|map/.test(type);
   }
 
+  // guessHistory and maxRows search the whole state three levels deep, and
+  // the tick asks four times a second: what they find barely changes, so
+  // each answer is kept for a second per state.
+  const historyFound = new WeakMap();
+  const rowsFound = new WeakMap();
+  const FOUND_MS = 1000;
+
   function guessHistory(state) {
+    if (!isObject(state)) return searchGuessHistory(state);
+    const cached = historyFound.get(state);
+    if (cached && Date.now() - cached.at < FOUND_MS) return cached.value;
+    const value = searchGuessHistory(state);
+    historyFound.set(state, { value, at: Date.now() });
+    return value;
+  }
+
+  function searchGuessHistory(state) {
     const arrays = [];
     for (const object of shallowObjects(state, 3)) {
       for (const [key, value] of safeOwnEntries(object)) {
@@ -842,6 +858,15 @@
   }
 
   function maxRows(state) {
+    if (!isObject(state)) return searchMaxRows(state);
+    const cached = rowsFound.get(state);
+    if (cached && Date.now() - cached.at < FOUND_MS) return cached.value;
+    const value = searchMaxRows(state);
+    rowsFound.set(state, { value, at: Date.now() });
+    return value;
+  }
+
+  function searchMaxRows(state) {
     return firstNumber(state, [
       (key) => /maxguesses|guesslimit|totalrows|rowlimit|allowedguesses/.test(key),
       (key) => /guesses|rows/.test(key)
@@ -1870,10 +1895,10 @@
     extraMulligans: 0.6, questRefreshes: 0.15, questPoints: 0.5, questReroll: 0.15,
     mulliganSize: 0.5, storybookStart: 0.6, wideChoice: 0.55, mulliganTiles: 0.35,
     mulliganValueBoost: 0.6, earlySolveBoost: 0.35, colourTrade: 0.5, greyscale: 0.7,
-    coachMeterThreshold: 0.45, umtVowelBounty: 0.55, umtEchoFinder: 0.3,
+    coachMeterThreshold: 0.45, umtVowelBounty: 0.55,
     umtTreasureHunter: 0.5, umtHaggler: 0.2, umtCullOne: 0.45,
     // Rare ($50-70)
-    treasureMap: 0.55, jokerTiles: 0.5, handSizeBoost: 0.9, greenCount: 0.25,
+    treasureMap: 0.55, jokerTiles: 0.5, handSizeBoost: 0.9, greenCount: 0.25, umtEchoFinder: 0.2,
     categorySense: 0.6, coachPossibleAnswers: 0.7, coachMeterReward: 0.35,
     "surprise-assignment": 0.3, umtJokerCache: 0.75, umtRainyDay: 0.6, umtEncore: 0.7,
     umtVowelLamp: 0.5, umtMistakeShield: 0.35,

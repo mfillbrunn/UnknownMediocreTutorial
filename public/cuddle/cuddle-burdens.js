@@ -31,7 +31,7 @@
  *     shows one of its letters as a yellow (in the word, place unknown).
  *   - Wave cards (Wave Cards, common): never dealt in the opening hand;
  *     when one is drawn, every consonant in your hand is swapped out for
- *     fresh ones.
+ *     fresh ones; dead cards wash out too, and idea cards give their hint.
  *   - Joker cards (Joker Cache): the cache's Jokers are shuffled into the
  *     deck instead of handed out at the stage start; drawing one gives
  *     you a Joker.
@@ -504,7 +504,8 @@
   };
 
   // A wave: every letter tile in hand (not vowels or letters you already
-  // know, which stay) goes to the discard, and fresh ones are drawn.
+  // know, which stay) goes to the discard, and fresh ones are drawn. Dead
+  // cards wash out too, and idea cards, which give their yellow hint.
   function flushWaves(game) {
     var rounds = 0;
     while (game.__umtWaves > 0 && rounds < 6) {
@@ -517,15 +518,32 @@
         return /^[A-Z]$/.test(card.glyph) && !game.isVowelGlyph(card.glyph) && !game.isInfiniteCard(card)
           && card.source !== "joker" && !drafted.has(card.id);
       });
+      // The wave also carries off dead cards (to the discard, like a
+      // mulligan) and idea cards, which give their yellow hint as they go.
+      // Jokers and lucky cards are yours to keep: it leaves them be.
+      var dead = state.hand.filter(isDeadCard);
+      var ideas = state.hand.filter(isIdeaCard);
       var sweptGlyphs = swept.map(function glyph(card) { return card.glyph; });
-      if (swept.length) game._discardCards(swept.map(function id(card) { return card.id; }));
+      if (swept.length || dead.length) game._discardCards(swept.concat(dead).map(function id(card) { return card.id; }));
+      var ideaLetters = [];
+      if (ideas.length) {
+        var spent = new Set(ideas.map(function id(card) { return card.id; }));
+        state.hand = state.hand.filter(function keep(card) { return !spent.has(card.id); });
+        ideas.forEach(function hint() {
+          var letter = yellowHint(game);
+          if (letter) ideaLetters.push(letter);
+        });
+      }
       var drawn = game.drawToHandLimit();
       // For the hand: the wave card shows up, a wave washes these letters
       // out, then the new ones come in (playWaveFx below).
       game.__umtWaveFx = (game.__umtWaveFx || []).concat([{ swept: sweptGlyphs, at: Date.now() }]);
       // Hide the new letters from their very first frame on screen.
       if (typeof document !== "undefined" && document.body && !reducedMotion()) document.body.classList.add("umt-wave-active");
-      drawNote(game, "Wave! " + swept.length + " consonant" + (swept.length === 1 ? "" : "s") + " washed out, " + drawn.length + " new ones drawn.");
+      drawNote(game, "Wave! " + swept.length + " consonant" + (swept.length === 1 ? "" : "s")
+        + (dead.length ? " and " + dead.length + " dead card" + (dead.length === 1 ? "" : "s") : "")
+        + " washed out, " + drawn.length + " new ones drawn."
+        + (ideaLetters.length ? " The idea card" + (ideas.length === 1 ? "" : "s") + " washed out too: " + ideaLetters.join(", ") + (ideaLetters.length === 1 ? " is" : " are") + " in the answer." : ""));
     }
     game.__umtWaves = 0;
   }

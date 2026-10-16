@@ -56,17 +56,13 @@
   isolation: isolate;
 }
 
-.cuddle-card.umt-hint-yellow {
-  outline: 3px solid var(--tile-yellow, #d6a925) !important;
-  outline-offset: 2px;
-  box-shadow: 0 0 0.65rem color-mix(in srgb, var(--tile-yellow, #d6a925) 58%, transparent) !important;
-}
+/* A hinted card used to wear a thick ring in the hint's colour. The card
+   now turns that colour itself (and the hint drops onto it,
+   cuddle-hint-fx.js), so the ring only read as a second, unexplained
+   border: hinted cards look like any other card of their colour. */
 
-.cuddle-card.umt-hint-green {
-  outline: 3px solid var(--tile-green, #3aa76d) !important;
-  outline-offset: 2px;
-  box-shadow: 0 0 0.65rem color-mix(in srgb, var(--tile-green, #3aa76d) 58%, transparent) !important;
-}
+/* The hand already shows a green card's place (#3); no second badge. */
+.cuddle-card:has(.cuddle-card-position) > .umt-hint-position { display: none; }
 
 .umt-hint-position {
   position: absolute;
@@ -219,16 +215,30 @@
   outline: 2px dashed #e0bcff;
   outline-offset: 3px;
   box-shadow: inset 0 0 0 3px var(--umt-mask-ring), 0 0 0.8rem rgba(201, 165, 255, 0.55);
+}
+
+/* The pulse is a glow layer fading in and out (opacity only, which the
+   graphics chip handles alone) rather than an animated blurred shadow,
+   which had the tiles repainted every frame. */
+#cuddleRoot .cuddle-tile.umt-masked-tile.is-mask-pending::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  box-shadow: 0 0 1.1rem rgba(201, 165, 255, 0.85);
+  opacity: 0.3;
+  pointer-events: none;
+  will-change: opacity;
   animation: umt-mask-pending-pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes umt-mask-pending-pulse {
-  0%, 100% { box-shadow: inset 0 0 0 3px var(--umt-mask-ring), 0 0 0.5rem rgba(201, 165, 255, 0.4); outline-color: rgba(224, 188, 255, 0.7); }
-  50% { box-shadow: inset 0 0 0 3px var(--umt-mask-ring), 0 0 1.1rem rgba(201, 165, 255, 0.8); outline-color: #f3e2ff; }
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #cuddleRoot .cuddle-tile.umt-masked-tile.is-mask-pending {
+  #cuddleRoot .cuddle-tile.umt-masked-tile.is-mask-pending::after {
     animation: none;
   }
 }

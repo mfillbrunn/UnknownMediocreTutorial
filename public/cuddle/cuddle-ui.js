@@ -284,7 +284,9 @@
     if (leftCuddleOnPurpose || !cuddleSeenAt) return;
     if (Date.now() - cuddleSeenAt > RETURN_GRACE_MS) return;
     if (cuddleScreenActive()) return;
-    if (!document.getElementById("startupScreen")?.classList.contains("active")) return;
+    const onMenu = ["startupScreen", "gameHubScreen"]
+      .some(id => document.getElementById(id)?.classList.contains("active"));
+    if (!onMenu) return;
     openCuddle({ resume: cuddleSeenView === "run" });
   }
 
@@ -301,7 +303,7 @@
       if (cuddleScreenActive() && id !== "cuddleScreen") noteCuddleSeen();
       const result = original.apply(this, arguments);
       // Straight away, before the menu is ever painted.
-      if (id === "startupScreen") returnToCuddleIfDropped();
+      if (id === "startupScreen" || id === "gameHubScreen") returnToCuddleIfDropped();
       return result;
     };
     guarded.__umtCuddleGuard = true;
@@ -513,8 +515,11 @@
     const el = document.getElementById("cuddleQuickClock");
     if (!el) return;
     const left = Math.max(0, Math.ceil((quickModeDeadline - Date.now()) / 1000));
-    el.textContent = `${left}s`;
-    el.classList.toggle("is-urgent", left <= 10);
+    // Written only when the second changes: every write is a page change
+    // other layers react to.
+    const text = `${left}s`;
+    if (el.textContent !== text) el.textContent = text;
+    if (el.classList.contains("is-urgent") !== (left <= 10)) el.classList.toggle("is-urgent", left <= 10);
   }
 
   function bestWinsLine() {
@@ -534,7 +539,7 @@
     return `
       <div class="cuddle-landing">
         <div class="cuddle-landing-top">
-          <button class="cuddle-icon-btn" data-action="back" aria-label="Back to main menu">←</button>
+          <button class="cuddle-icon-btn" data-action="back" aria-label="Back to game choice">←</button>
           ${window.CuddleAchievements ? `<span class="umt-coin-chip" title="Cuddle Coins: a run costs 1"><span class="umt-coin" aria-hidden="true"></span><b data-umt-coin-count>${window.CuddleAchievements.coins()}</b></span>` : ""}
           <button class="cuddle-icon-btn" data-action="rules" aria-label="How to play Cuddle">?</button>
         </div>
@@ -1984,12 +1989,13 @@
     switch (action) {
       case "back":
         rulesOpen = false;
-        // Cuddle sits on the main menu now, not inside the Play hub.
+        // Cuddle sits on the game-choice screen (client/game-hub.js).
         // Leaving on purpose means the next visit starts on the menu.
         forgetCuddleSession();
         leftCuddleOnPurpose = true;
         cuddleSeenAt = 0;
-        showScreen("startupScreen");
+        if (window.UmtGameHub) window.UmtGameHub.showHub();
+        else showScreen("startupScreen");
         return false;
       case "run-menu":
         landing = true;

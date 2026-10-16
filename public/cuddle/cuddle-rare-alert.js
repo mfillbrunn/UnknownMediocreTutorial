@@ -2,17 +2,16 @@
  *
  * A Rare Word stage (cuddle-rebalance-v5.js, alone or stacked with other
  * challenges) is easy to miss now that a stage starts without a briefing.
- * So when one begins, a translucent red wash pulls over the screen, its
- * edges pulse red twice like a siren, and a big "RARE WORD" banner with a
- * flashing alarm light says so. It lasts about 2.5 seconds; a tap closes it
- * sooner. Shown once per stage (a reload doesn't replay it).
+ * So when one begins, a light red wash pulls over the screen, its edges
+ * glow red once, and a "RARE WORD" banner with a small alarm light says
+ * so. It lasts about 2 seconds; a tap closes it sooner. Shown once per stage (a reload doesn't replay it).
  */
 (function () {
   "use strict";
 
   if (window.CuddleRareAlert) return;
 
-  var SHOW_MS = 2600;
+  var SHOW_MS = 1900;
 
   function activeGame() {
     try {

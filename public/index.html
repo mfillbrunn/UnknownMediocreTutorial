@@ -25,7 +25,8 @@
   <!-- 8. Power-specific effects -->
   <link rel="stylesheet" href="css/powers.css?fake-feedback-reveal-fix=1">
   <!-- 9. Lobby-->
-  <link rel="stylesheet" href="css/game-menu.css?menu-account-spacing=1&umt-fix=20260830-1&umt-streamlined=1.0.2&menu-scroll-fix=1&umt-tutorial-rework=20260901&guest-play=1&menu-refresh=20260930">
+  <link rel="stylesheet" href="css/game-menu.css?menu-account-spacing=1&umt-fix=20260830-1&umt-streamlined=1.0.2&menu-scroll-fix=1&umt-tutorial-rework=20260901&guest-play=1&menu-refresh=20260930&game-hub=1">
+  <link rel="stylesheet" href="css/player-insights.css?v=1">
     <!-- 10. Account data-->
   <link rel="stylesheet" href="css/account.css">    
   <!-- 11. Leaderboard-->
@@ -51,7 +52,7 @@
 <!-- CUDDLE_COACH_EXPANSION:STYLE END -->
 <!-- CUDDLE_MODE:STYLE END -->
 <!-- UMT_CUDDLE_REBALANCE_V5_CSS_BEGIN -->
-<link rel="stylesheet" href="/cuddle/cuddle-rebalance-v5.css?v=5.5.1&quick-clock-mobile=1&stage-bonus-cleanup=1&r=20261014b">
+<link rel="stylesheet" href="/cuddle/cuddle-rebalance-v5.css?v=5.5.1&quick-clock-mobile=1&stage-bonus-cleanup=1&r=20261026e">
 <!-- UMT_CUDDLE_REBALANCE_V5_CSS_END -->
   <!-- UMT_CUDDLE_USER_PATCH_CSS_BEGIN -->
 <link rel="stylesheet" href="cuddle/cuddle-stability-v2.css?v=2026.09.15.3&cuddle-fixpack=20260912r2&stage-bonus-itemized=1&cuddle-map-fit=20260912r1&r=20261007v">
@@ -336,8 +337,46 @@
 
     <!-- ========== MAIN ========== -->
       <main id="appMain">
-<!-- ========== START UP ========== -->
-        <section id="startupScreen" class="screen active game-menu streamlined-menu-screen">
+<!-- ========== GAME CHOICE (first screen) ========== -->
+<!-- Vowel Play (multiplayer) or Cuddle (single player). client/game-hub.js
+     routes showStartup() here until Vowel Play is picked. -->
+        <section id="gameHubScreen" class="screen active game-menu streamlined-menu-screen" aria-label="Choose a game">
+  <div class="menu-center streamlined-menu-card">
+    <h2 class="menu-title">CHOOSE A GAME</h2>
+    <div class="menu-buttons streamlined-menu-buttons game-hub-buttons">
+      <button id="hubVowelPlayBtn" class="menu-btn menu-action-btn game-hub-btn" type="button">
+        <span class="menu-action-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false"><rect x="2.5" y="6" width="8.5" height="12" rx="2"/><rect x="13" y="6" width="8.5" height="12" rx="2"/><path d="M5 14.5 6.75 9.5 8.5 14.5M5.6 12.8h2.3M17.25 9.5v5"/></svg>
+        </span>
+        <span class="menu-action-copy">
+          <span class="menu-action-title">Vowel Play</span>
+          <span class="menu-action-subtitle">Word duels with friends or AI</span>
+        </span>
+        <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
+      </button>
+
+      <!-- CUDDLE_MODE:MENU START -->
+      <button id="cuddleBtn" class="menu-btn menu-action-btn game-hub-btn" type="button">
+        <span class="menu-action-icon" aria-hidden="true">
+          <img src="cuddle/icons/cuddle-logo.svg" alt="" width="26" height="26" style="display:block;width:26px;height:26px">
+        </span>
+        <span class="menu-action-copy">
+          <span class="menu-action-title">Cuddle</span>
+          <span class="menu-action-subtitle">A solo card adventure</span>
+        </span>
+        <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
+      </button>
+      <!-- CUDDLE_MODE:MENU END -->
+    </div>
+    <div class="menu-footer-links">
+      <button id="hubBugReportBtn" class="link-btn menu-bug-link" type="button">Report a bug</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========== VOWEL PLAY MENU ========== -->
+        <section id="startupScreen" class="screen game-menu streamlined-menu-screen">
+  <button id="vpBackToHubBtn" class="menu-hub-back" type="button" aria-label="Back to game choice">&#8592; Games</button>
   <div id="menuAccountStatus" class="menu-account-status"></div>
   <div class="menu-center streamlined-menu-card">
     <h2 class="menu-title">VOWEL PLAY</h2>
@@ -364,18 +403,6 @@
         <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
       </button>
 
-      <!-- CUDDLE_MODE:MENU START -->
-      <button id="cuddleBtn" class="menu-btn menu-action-btn" type="button">
-        <span class="menu-action-icon" aria-hidden="true">
-          <img src="cuddle/icons/cuddle-logo.svg" alt="" width="26" height="26" style="display:block;width:26px;height:26px">
-        </span>
-        <span class="menu-action-copy">
-          <span class="menu-action-title">Cuddle</span>
-          <span class="menu-action-subtitle">A solo card adventure</span>
-        </span>
-        <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
-      </button>
-      <!-- CUDDLE_MODE:MENU END -->
 
       <button id="playMainBtn" class="menu-btn menu-action-btn" type="button">
         <span class="menu-action-icon" aria-hidden="true">
@@ -1790,6 +1817,7 @@
   <script src="client/guest-identity.js?guest-play=1"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="client/helpers.js?v=screen-scroll-reset-1"></script>
+  <script src="client/game-hub.js?v=1"></script>
   <script src="client/statistics.js?menu-account-spacing=1&guest-play=1"></script>
   <script src="network/socketClient.js?power-popup-icon=1"></script>
 
@@ -1894,19 +1922,19 @@
   <script src="single-player/achievements.js"></script>
   <script src="single-player/challenges.js?umt-challenges=20260901&challenge-room-finished-guard=1&guest-access=1"></script>
 <!-- CUDDLE_MODE:SCRIPTS START -->
-  <script src="cuddle/cuddle-quests.js?v=26&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=2&points-money-split=1&special-tiles=1&strict-stages=1&r=20261025m"></script>
+  <script src="cuddle/cuddle-quests.js?v=26&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=2&points-money-split=1&special-tiles=1&strict-stages=1&r=20261026l"></script>
   <script src="cuddle/cuddle-icons.js?v=3&r=20261025o"></script>
-  <script src="cuddle/cuddle-engine.js?v=53&cuddle-boss-rounds=3&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=3&preset-trial-desc=1&no-guess-cap=1&progression=1&special-tiles=1&strict-stages=1&r=20261024t"></script>
+  <script src="cuddle/cuddle-engine.js?v=53&cuddle-boss-rounds=3&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=3&preset-trial-desc=1&no-guess-cap=1&progression=1&special-tiles=1&strict-stages=1&r=20261026l"></script>
   <script src="cuddle/cuddle-seed.js?v=1&r=20261008u"></script>
 <!-- UMT_CUDDLE_CAMPAIGN_SCRIPT START -->
   <script src="cuddle/cuddle-campaign.js?v=18&points-money-split=1&special-tiles=1&strict-stages=1&r=20261022q"></script>
 <!-- UMT_CUDDLE_CAMPAIGN_SCRIPT END -->
-  <script src="cuddle/cuddle-ui.js?v=63&umt-streamlined=1.0.2&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=3&cuddle-campaign-map=2&skill-tree=1&boss-reward-id=1&count-only-fix=1&points-money-split=1&special-tiles=1&strict-stages=1&r=20261025y"></script>
+  <script src="cuddle/cuddle-ui.js?v=63&umt-streamlined=1.0.2&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=3&cuddle-campaign-map=2&skill-tree=1&boss-reward-id=1&count-only-fix=1&points-money-split=1&special-tiles=1&strict-stages=1&r=20261026m"></script>
 <!-- CUDDLE_COACH_EXPANSION:SCRIPTS START -->
   <script src="cuddle/cuddle-money-mode.js?v=22&easy-only-hints=1&slower-payout=1&payout-20pct-faster=20261019o&payout-30pct-faster=1&stage-bonus-section=1&points-money-split=1&progression=1&r=20261025i"></script>
   <script src="cuddle/cuddle-coach-expansion.js?v=10&easy-only-hints=1&points-money-split=1&progression=1&r=20261025v"></script>
 <!-- CUDDLE_COACH_EXPANSION:SCRIPTS END -->
-  <script src="cuddle/cuddle-skill-tree.js?v=14&points-money-split=1&progression=1&r=20261025v"></script>
+  <script src="cuddle/cuddle-skill-tree.js?v=14&points-money-split=1&progression=1&r=20261026c"></script>
 <!-- CUDDLE_BRANCH_MAP:SCRIPTS START -->
   <script src="cuddle/cuddle-worlds.js?v=4&r=20261025m"></script>
   <script src="cuddle/cuddle-branch-map.js?v=14&points-money-split=1&progression=1&worlds=1&r=20261025m"></script>
@@ -1935,6 +1963,7 @@
   <script src="ui/v9-3-ui-fixes.js?v=9-3&bonus-cleanup=1"></script>
   <script src="client/play-menu.js?umt-streamlined=1.0.2&feedback-lie=1&guest-play=1"></script>
   <script src="client/bug-report.js?bug-report=1"></script>
+  <script src="client/player-insights.js?v=2"></script>
   <script src="client/roomid.js"></script>
 <div id="power-fx" aria-hidden="true"></div>
 <div id="submit-banner" aria-hidden="true"></div>
@@ -1956,7 +1985,7 @@
   <script src="powerEngine/power-tiers.js?v=2.3-card-carousel&reward-overhaul=1&magic-mode-legendary=1&feedback-lie=1&secret-themes=3&theme-dossier=1&theme-reward-rarity-swap=1&alphabet-compass=1"></script> <!-- power-choice-mode-v2.2 -->
   <script src="client/power-choice-mode.js?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&hardmode-copy=1&mobile-perf=1&reward-overhaul=1&optional-note-oneline=1&note-inline-title=1&daily-hide-refresh=1&guide-btn-inline=1&reward-icon-fit=1&spy-rules-short=1&fixed-reward-svg-pack=1&clean-fixed-rewards=1&persistent-power-badge=2&theme-dossier=1&refresh-hide-swap=1&svg-star-icons=1"></script> <!-- power-choice-mode-v2.2 -->
 <!-- UMT_CUDDLE_REBALANCE_V5_JS_BEGIN -->
-<script src="/cuddle/cuddle-rebalance-v5.js?v=5.17.0&challenge-turn-scaling=2&consonant-sweep=1&notebook-removed=1&expose-upgrade-level=1&stage-bonus-cleanup=1&points-money-split=1&special-tiles=1&strict-stages=1&r=20261025m"></script>
+<script src="/cuddle/cuddle-rebalance-v5.js?v=5.17.0&challenge-turn-scaling=2&consonant-sweep=1&notebook-removed=1&expose-upgrade-level=1&stage-bonus-cleanup=1&points-money-split=1&special-tiles=1&strict-stages=1&r=20261026l"></script>
 <!-- UMT_CUDDLE_REBALANCE_V5_JS_END -->
   <!-- UMT_CUDDLE_USER_PATCH_JS_BEGIN -->
 <script src="cuddle/cuddle-stability-v2.js?v=2026.10.01.3&strict-stages=1&cuddle-fixpack=20260912r2&stage-bonus-itemized=1&points-money-split=1&shop-4th-upgrade=1&shop-lockin-export=1&cuddle-map-fit=20260912r1&r=20261025u"></script>
@@ -1967,18 +1996,18 @@
   <script src="cuddle/cuddle-points-money.js?v=6&r=20261025i"></script>
   <script src="cuddle/cuddle-shop.js?v=2&r=20261025i"></script>
   <script src="cuddle/cuddle-synergies.js?v=7&r=20261023s"></script>
-  <script src="cuddle/cuddle-clues.js?v=1&r=20261025w"></script>
+  <script src="cuddle/cuddle-clues.js?v=1&r=20261026f"></script>
   <script src="cuddle/cuddle-compass.js?v=1&r=20261002f"></script>
   <script src="cuddle/cuddle-rare-words.js?v=1"></script>
 <!-- CUDDLE_ECONOMY_RARITY_V8_START -->
 <link rel="stylesheet" href="cuddle/cuddle-economy-rarity-v8.css?v=8.3.0&rarity-metals=3&rarity-badge-corner=1&reward-theme=1&level-transition=1&r=20261023u">
-<script src="cuddle/cuddle-economy-rarity-v8.js?v=8.5.7&observer-cost=2&rarity-metals=3&shallow-skip-builtins=1&rarity-badge-corner=20261019p&reward-theme=1&level-transition=1&r=20261025z" defer></script>
+<script src="cuddle/cuddle-economy-rarity-v8.js?v=8.5.7&observer-cost=2&rarity-metals=3&shallow-skip-builtins=1&rarity-badge-corner=20261019p&reward-theme=1&level-transition=1&r=20261026e" defer></script>
 <!-- CUDDLE_ECONOMY_RARITY_V8_END -->
   <script src="cuddle/cuddle-shop-lockin.js?v=2&accessor-lock=1" defer></script>
   <!-- Stage-intro banner + progression tree. Loaded last so it wraps the
        fully layered chooseUpgrade and render hook. -->
   <link rel="stylesheet" href="cuddle/cuddle-progression.css?v=18&r=20261023u">
-  <script src="cuddle/cuddle-progression.js?v=23&r=20261025i" defer></script>
+  <script src="cuddle/cuddle-progression.js?v=23&r=20261026d" defer></script>
   <script src="cuddle/cuddle-curses.js?v=1&r=20261025y" defer></script>
   <script src="cuddle/cuddle-deck-fx.js?v=1&r=20261024d" defer></script>
   <link rel="stylesheet" href="cuddle/cuddle-packs.css?v=1&r=20261009d">
@@ -2004,11 +2033,11 @@
   <link rel="stylesheet" href="cuddle/cuddle-hint-fx.css?v=1&r=20261025m">
   <script src="cuddle/cuddle-hint-fx.js?v=1&r=20261025m" defer></script>
   <link rel="stylesheet" href="cuddle/cuddle-burdens.css?v=1&r=20261022s">
-  <script src="cuddle/cuddle-burdens.js?v=1&r=20261024m" defer></script>
+  <script src="cuddle/cuddle-burdens.js?v=1&r=20261026a" defer></script>
   <script src="cuddle/cuddle-schools.js?v=1&r=20261025i" defer></script>
   <script src="cuddle/cuddle-first-run.js?v=1&r=20261025j" defer></script>
-  <link rel="stylesheet" href="cuddle/cuddle-rare-alert.css?v=1&r=20261025c">
-  <script src="cuddle/cuddle-rare-alert.js?v=1&r=20261025c" defer></script>
+  <link rel="stylesheet" href="cuddle/cuddle-rare-alert.css?v=1&r=20261026b">
+  <script src="cuddle/cuddle-rare-alert.js?v=1&r=20261026b" defer></script>
   <link rel="stylesheet" href="cuddle/cuddle-gate-defeat.css?v=1&r=20261015f">
   <script src="cuddle/cuddle-gate-defeat.js?v=1&r=20261015e" defer></script>
   <link rel="stylesheet" href="cuddle/cuddle-keywords.css?v=1&r=20261020a">
@@ -2016,9 +2045,9 @@
   <link rel="stylesheet" href="cuddle/cuddle-achievements.css?v=1&r=20261025k">
   <script src="cuddle/cuddle-achievements.js?v=1&r=20261025l" defer></script>
   <link rel="stylesheet" href="cuddle/cuddle-unlocks.css?v=1&r=20261025n">
-  <script src="cuddle/cuddle-unlocks.js?v=1&r=20261025n" defer></script>
+  <script src="cuddle/cuddle-unlocks.js?v=1&r=20261026f" defer></script>
   <link rel="stylesheet" href="cuddle/cuddle-copilot.css?v=1&r=20261025m">
-  <script src="cuddle/cuddle-copilot.js?v=1&r=20261025m" defer></script>
+  <script src="cuddle/cuddle-copilot.js?v=1&r=20261026k" defer></script>
   <link rel="stylesheet" href="cuddle/cuddle-fish-hook.css?v=1&r=20261025r">
   <script src="cuddle/cuddle-fish-hook.js?v=1&r=20261025t" defer></script>
   <link rel="stylesheet" href="cuddle/cuddle-shop.css?v=2&r=20261018b">

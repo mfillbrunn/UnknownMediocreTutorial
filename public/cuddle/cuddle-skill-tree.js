@@ -188,7 +188,7 @@
       blurb: "Clues about the answer before you guess, and a little luck. Effects in cuddle-clues.js.",
       nodes: [
         { id: "vowelLamp", icon: "🏮", title: "Vowel Lamp", tier: "rare", type: "clues", maxLevel: 1, description: "Every stage tells you how many vowels the answer has.", level: g => v5Level(g, "umtVowelLamp") },
-        { id: "echoFinder", icon: "👯", title: "Echo Finder", tier: "common", type: "clues", maxLevel: 1, description: "Every stage tells you if the answer uses a letter twice.", level: g => v5Level(g, "umtEchoFinder") },
+        { id: "echoFinder", icon: "👯", title: "Echo Finder", tier: "rare", type: "clues", maxLevel: 1, description: "Every stage tells you if the answer uses a letter twice.", level: g => v5Level(g, "umtEchoFinder") },
         { id: "treasureHunter", icon: "💎", title: "Treasure Hunter", tier: "common", type: "money", maxLevel: 3,
           levels: ["About 1 in 3 stages has a treasure word. Solve it quickly: +$20.", "Treasure words give +$30.", "Treasure words give +$50, and every 2nd stage has one."],
           level: g => v5Level(g, "umtTreasureHunter") },
@@ -262,7 +262,7 @@
           levels: ["1 idea card goes in your deck. Mulligan it away to see one letter of the answer.", "2 idea cards go in your deck.", "3 idea cards go in your deck."],
           level: g => powerLevel(g, "ideaTiles") },
         { id: "waveTiles", icon: "🌊", title: "Wave Cards", tier: "common", type: "letters", maxLevel: 3,
-          levels: ["1 wave card goes in your deck. When you draw it, all your consonants are swapped for new ones.", "2 wave cards go in your deck.", "4 wave cards go in your deck."],
+          levels: ["1 wave card goes in your deck. When you draw it, all your consonants are swapped for new ones. Dead cards wash away too, and idea cards give their yellow hint.", "2 wave cards go in your deck.", "4 wave cards go in your deck."],
           level: g => powerLevel(g, "waveTiles") },
         { id: "fullCircle", icon: "♻️", title: "Full Circle", tier: "epic", type: "clues", maxLevel: 1,
           description: "Once a stage, when your deck runs out and starts over, a letter is placed in its spot.",

@@ -47,7 +47,9 @@
   // difficulty span, which would only make them harsher. Hide Feedback and
   // Hidden Margins additionally hold their positions still for the whole
   // round; every other effect re-rolls its span each guess.
-  const FIXED_MASK_SPANS = Object.freeze({ hideFeedback: 1, hiddenMargins: 2, singleLie: 1 });
+  // Fake Feedback and Arrow Signs were the hardest masks by far in testing
+  // (lying colours and no colour at all on three tiles): they mark two.
+  const FIXED_MASK_SPANS = Object.freeze({ hideFeedback: 1, hiddenMargins: 2, singleLie: 1, fakeFeedback: 2, arrowMode: 2 });
   const ROUND_STABLE_SPANS = new Set(["hideFeedback", "hiddenMargins"]);
 
   // Every effect that alters what a row's tiles show. Anything not listed
@@ -373,7 +375,7 @@
       state.pendingRewardEcho = Boolean(state.pendingRewardEcho);
       state.buffs = { greyShield: 0, ...(state.buffs || {}) };
       state.serial = Number.isFinite(state.serial) ? state.serial : 0;
-      // Short Hand shortens this to 4 for its round -- a save reloaded
+      // Short Hand shortens this to 5 for its round -- a save reloaded
       // mid-round used to have this unconditionally reset back to 6 here,
       // silently undoing the boss's guess cap the moment the page reopened.
       state.maxGuesses = Number.isFinite(state.maxGuesses) && state.maxGuesses > 0
@@ -576,7 +578,7 @@
     }
 
     // The real guess cap for the CURRENT round -- ordinarily just
-    // MAX_GUESSES, but Short Hand shortens it to four. Centralized so every
+    // MAX_GUESSES, but Short Hand shortens it to five. Centralized so every
     // "out of guesses" check agrees with what the board actually shows
     // (state.maxGuesses), instead of some checks quietly assuming six.
     // How many guesses still earn the "solved it quickly" Points bonus
@@ -960,19 +962,14 @@
       // the Sprint challenge, an event's guess penalty) -- see
       // _applyStrictGuessLimit().
       state.strictGuessLimit = false;
+      // Short Hand: one consonant fewer in the hand for the fight (two on Hard) (see
+      // getHandLimitMega) and only five guesses (four lost 58% of fights). It used to pull ten
+      // consonants that aren't in the answer out of the deck, which told
+      // you ten letters for free and left a deck of mostly the answer's own
+      // letters: in testing it made the fight easier than a plain stage.
       if (state.boss?.id === "shortHand") {
-        const secretLetters = new Set(state.secret.split(""));
-        const alreadyRemoved = new Set(state.removedLetters);
-        const candidates = shuffle(
-          LETTERS.filter(letter => (
-            !VOWELS.has(letter) && !secretLetters.has(letter) && !alreadyRemoved.has(letter)
-          )),
-          this.random
-        );
-        const picked = candidates.slice(0, 10);
-        state.boss.tempRemovedLetters = picked;
-        state.removedLetters = unique([...state.removedLetters, ...picked]).sort();
-        state.maxGuesses = 4;
+        state.boss.tempRemovedLetters = [];
+        state.maxGuesses = 5;
       }
       // Steady Hand locks mulligans for the opening guesses only (see
       // _steadyHandTurns and mulligan below); the rest of the fight plays
@@ -2978,7 +2975,7 @@
       case "quickMode":
         return "Every guess: 60 seconds (45 on Hard), or it's lost.";
       case "shortHand":
-        return "Whole fight: 10 consonants not in the answer leave your deck; only 4 guesses.";
+        return "Whole fight: 1 consonant fewer in your hand (2 on Hard); only 5 guesses.";
       case "noMulligans": {
         // Locked for the opening guesses only, one per world (see
         // _steadyHandTurns, which reads the same stage).
@@ -2992,6 +2989,14 @@
         return "Whole fight: the answer is one of 10 words shown; only 3 guesses.";
       case "questEndurance":
         return "Every guess: a quest; miss one, lose 1 hand size for the fight.";
+      case "letterDemand":
+        return "Guesses 1-4: your word must use the letter shown (you're handed a card of it).";
+      case "letterBan":
+        return "Every guess: your word may not use the letter shown (a new one every guess).";
+      case "wordChain":
+        return "Guesses 2-4: start with the last consonant of the word before.";
+      case "lockedIn":
+        return "Whole fight: keep every green in place and use every yellow.";
       default:
         return `${range(count)}: boss power active.`;
     }
@@ -5162,6 +5167,9 @@
     const mega = ensureMega(this);
     let limit = composedGetHandLimit.call(this);
     limit = Math.max(1, limit - Number(mega.handSizePenaltyThisRound || 0));
+    if (this.isBossRound() && this.state?.boss?.id === "shortHand") {
+      limit = Math.max(1, limit - (mega.difficulty === "hard" ? 2 : 1));
+    }
     if (!this.isBossRound()) {
       // Short Hand's curse: one consonant fewer on its guess, two on Hard.
       const debuff = plannedRatchetForGuess(this, Number(this.state?.guessesUsed || 0) + 1);

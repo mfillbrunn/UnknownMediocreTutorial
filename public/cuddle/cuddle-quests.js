@@ -379,17 +379,30 @@
       text: "five different letters." },
     { id: "consonantCrunch", icon: "🥨", title: "Consonant Crunch", kind: "rule", boss: false, challenge: true, mix: true, curse: false, reward: 25,
       text: "at most one vowel." },
+    // Rules that ask something of the word itself (cuddle-rebalance-v5.js
+    // challengeValidation). Letter Demand hands you a card of the letter it
+    // asks for, and Word Chain one of the letter your word must start with,
+    // so the hand can always meet them.
+    { id: "letterDemand", icon: "📌", title: "Letter Demand", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 20,
+      text: "use the letter shown in your word (you're handed a card of it)." },
+    { id: "letterBan", icon: "🚫", title: "Banned Letter", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 20,
+      text: "don't use the letter shown (it changes every guess)." },
+    { id: "wordChain", icon: "🔗", title: "Word Chain", kind: "rule", boss: true, challenge: true, mix: false, curse: false, reward: 24,
+      text: "start your word with the last consonant of your guess before." },
+    { id: "lockedIn", icon: "🔒", title: "Locked In", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 22,
+      text: "keep every green letter in its place and use every yellow one (Wordle's Hard Mode)." },
     { id: "shortHand", icon: "✂️", title: "Short Hand", kind: "round", boss: true, challenge: false, mix: false, curse: true, reward: 0,
-      text: "10 consonants not in the answer leave your deck; only 4 guesses." },
+      text: "one consonant fewer in your hand (two on Hard); only 5 guesses." },
     // Preset Trial is a stage of its own now (cuddle-curses.js), not a boss.
     { id: "presetWordsTrial", icon: "🎴", title: "Preset Trial", kind: "round", boss: false, challenge: false, mix: false, curse: false, reward: 0,
       text: "the answer is one of 10 words shown; only 3 guesses." },
     { id: "rareWord", icon: "💎", title: "Rare Word", kind: "round", boss: false, challenge: true, mix: false, curse: false, reward: 40,
       text: "the answer is a rare word." },
-    // A stage of its own (never stacked with another challenge), worth two
-    // skulls: the AI plays every second guess (cuddle-copilot.js).
-    { id: "copilot", icon: "🤖", title: "Co-pilot", kind: "round", boss: false, challenge: true, mix: false, curse: false, reward: 30,
-      weight: 2, solo: true,
+    // A stage of its own (never stacked with another challenge): the AI
+    // plays every second guess (cuddle-copilot.js). One skull: in testing
+    // the hard AI guessed about as well as a careful player.
+    { id: "copilot", icon: "🤖", title: "Co-pilot", kind: "round", boss: false, challenge: true, mix: false, curse: false, reward: 25,
+      weight: 1, solo: true,
       text: "every second guess (2nd, 4th, 6th) is made for you by a sharp AI. It's on your side, but you don't get to pick." }
   ]);
 
@@ -484,7 +497,7 @@
       id: "shortHand",
       icon: "🥊",
       title: "Short Hand",
-      description: "Ten consonants that aren't in the answer are pulled from your deck before this round starts, and you only get four guesses to find it.",
+      description: "Your hand holds one consonant fewer for this fight (two on Hard), and you only get five guesses to find the answer.",
       turns: 0,
       rewardId: "revealGreen"
     },
@@ -503,6 +516,38 @@
       description: "Mulligans are locked for your opening guesses.",
       turns: 0,
       rewardId: "questDoublePick"
+    },
+    {
+      id: "letterDemand",
+      icon: "📌",
+      title: "Letter Demand",
+      description: "For your first four guesses, each word must use a letter the boss names (a new one each guess). You're handed a card of it.",
+      turns: 3,
+      rewardId: "biggerMulligans"
+    },
+    {
+      id: "letterBan",
+      icon: "🚫",
+      title: "Banned Letter",
+      description: "Every guess, your word may not use a letter the boss names. The letter changes every guess.",
+      turns: 3,
+      rewardId: "doubleMulligans"
+    },
+    {
+      id: "wordChain",
+      icon: "🔗",
+      title: "Word Chain",
+      description: "Guesses two to four must each start with the last consonant of the word before.",
+      turns: 3,
+      rewardId: "revealGreen"
+    },
+    {
+      id: "lockedIn",
+      icon: "🔒",
+      title: "Locked In",
+      description: "The whole fight in Hard Mode: keep every green letter in its place and use every yellow one.",
+      turns: 3,
+      rewardId: "freeVowelSweep"
     },
     // (Quest Trial -- a quest on every guess, 5 points lost for each one
     // missed -- was retired: more chore than challenge.)

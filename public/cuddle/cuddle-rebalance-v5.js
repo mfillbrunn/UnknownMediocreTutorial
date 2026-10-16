@@ -294,7 +294,11 @@
     // Retired as a boss; kept so older runs that already carry it read well.
     questTrial: ["Quest Trial", "A quest; miss it and lose 5 points."],
     presetWordsTrial: ["Preset Trial", "Stage ends on this guess: pick the answer from as many words as its number."],
-    questEndurance: ["Endurance Trial", "A quest; miss it and lose 1 hand size for the stage."]
+    questEndurance: ["Endurance Trial", "A quest; miss it and lose 1 hand size for the stage."],
+    letterDemand: ["Letter Demand", "Your word must use the letter shown (you're handed a card of it)."],
+    letterBan: ["Banned Letter", "Your word may not use the letter shown."],
+    wordChain: ["Word Chain", "Your word must start with the last consonant of your guess before."],
+    lockedIn: ["Locked In", "Keep every green in place and use every yellow."]
   });
 
   // "1 guess" vs "N guesses" -- description functions below combine this
@@ -988,14 +992,14 @@
       // placed letter.
       parts = { ease: "luckyStart", challenges: [rare] };
     } else if (target === 1) {
-      parts = coin < 70 ? { challenges: [oneChallenge("c1")] } : { ease, challenges: twoChallenges() };
+      // Some one-skull stops are a challenge that stands alone (Co-pilot).
+      parts = solo.length && hash32(`${seed}:solo`) % 100 < 20
+        ? { challenges: [pick(solo, "solo")] }
+        : coin < 70 ? { challenges: [oneChallenge("c1")] } : { ease, challenges: twoChallenges() };
     } else if (target === 1.5) {
       parts = { challenges: [rare] };
     } else if (target === 2) {
-      // Some two-skull stops are a two-skull challenge on its own.
-      parts = solo.length && hash32(`${seed}:solo`) % 100 < 30
-        ? { challenges: [pick(solo, "solo")] }
-        : { challenges: twoChallenges() };
+      parts = { challenges: twoChallenges() };
     } else {
       parts = { challenges: [rare, oneChallenge("c1")] };
     }
@@ -1723,6 +1727,9 @@
     // Easy and Medium: no lock, one mulligan fewer instead (beginVariant).
     if (challenge.id === "noMulligans") return softChallenges(game) ? 0 : mulliganLockTurns(game);
     if (challenge.id === "questEndurance") return challengeTurnCap(game) + 1;
+    // These two ask nothing of a first guess (there's no word before it, and
+    // nothing known yet): they run one guess longer, from the 2nd.
+    if (challenge.id === "wordChain" || challenge.id === "lockedIn") return challengeTurnCap(game) + 1;
     return challengeTurnCap(game);
   }
 
@@ -1926,13 +1933,40 @@
     const state = stateOf(game) || {};
     const boss = state.boss;
     if (boss && !boss.__umtSynthetic && Array.isArray(boss.plan)) return boss.plan;
+    // A word-rule boss (Letter Demand, Banned Letter, Word Chain, Locked In)
+    // holds its rule over the whole fight: over only its first guesses it
+    // was barely harder than a plain stage in testing.
+    // Letter Demand and Word Chain rule the opening guesses only: late in
+    // a fight a demanded letter the answer lacks, or a chain letter it
+    // doesn't start with, makes the answer itself unplayable (a third or
+    // more of fights lost in testing, even on every other guess). Demand
+    // rules guesses 1-4; Chain rules 2-4 (guess 1 has nothing to chain from).
+    if (boss && !boss.__umtSynthetic && WORD_RULES.includes(boss.id)) {
+      const span = boss.id === "letterDemand" ? [0, 4] : boss.id === "wordChain" ? [1, 4] : [0, 12];
+      return Array.from({ length: 12 }, (_, index) => (index >= span[0] && index < span[1] ? boss.id : null));
+    }
     const challenge = activeChallenge(game);
     return challenge && Array.isArray(challenge.plan) ? challenge.plan : null;
   }
 
   function planEffect(game, used) {
     const plan = stagePlan(game);
-    return plan ? plan[used] || null : null;
+    const planned = plan ? plan[used] || null : null;
+    return planned || ratchetRule(game, used);
+  }
+
+  // A beaten word-rule boss's curse: its rule on the guesses it haunts.
+  function ratchetRule(game, used) {
+    const engine = window.CuddleEngine;
+    if (!engine || typeof engine.ratchetForGuess !== "function") return null;
+    const state = stateOf(game) || {};
+    if (state.boss && !state.boss.__umtSynthetic) return null;
+    try {
+      const debuff = engine.ratchetForGuess(game, used + 1);
+      return debuff && WORD_RULES.includes(debuff.bossId) ? debuff.bossId : null;
+    } catch (_error) {
+      return null;
+    }
   }
 
   function isMaskConstraint(id) {
@@ -1940,10 +1974,153 @@
     return Boolean(item && item.kind === "mask");
   }
 
+  // -- word rules: Letter Demand, Word Chain, Locked In ------------------
+  const WORD_RULES = Object.freeze(["letterDemand", "letterBan", "wordChain", "lockedIn"]);
+  // Banned Letter draws from the letters words lean on most, so it bites.
+  const BAN_LETTERS = "ERSTALNOCDPMH".split("");
+  const DEMAND_LETTERS = "RSTLNCDPMHBGFKWY".split("");
+
+  // The letter Letter Demand asks for on guess `used` (0-based): fixed by
+  // the stage and the guess, never a culled letter, and one not already
+  // known to be out of the answer when there's a choice.
+  function demandLetter(game, used) {
+    const state = stateOf(game) || {};
+    const removed = new Set(state.removedLetters || []);
+    const absent = new Set(state.knownAbsent || []);
+    const open = DEMAND_LETTERS.filter((letter) => !removed.has(letter));
+    const fresh = open.filter((letter) => !absent.has(letter));
+    const pool = fresh.length ? fresh : open;
+    if (!pool.length) return null;
+    return pool[hash32(`${roundToken(game)}:demand:${used}`) % pool.length];
+  }
+
+  // The letter Banned Letter forbids on guess `used`: fixed by the stage
+  // and the guess, a new one each guess, never one you already know is in
+  // the answer (that would only block the solve) or a culled one.
+  function banLetter(game, used) {
+    const state = stateOf(game) || {};
+    const removed = new Set(state.removedLetters || []);
+    const present = new Set(state.knownPresent || []);
+    (state.revealedPositions || []).forEach((letter) => { if (letter) present.add(letter); });
+    const pool = BAN_LETTERS.filter((letter) => !removed.has(letter) && !present.has(letter));
+    if (!pool.length) return null;
+    return pool[hash32(`${roundToken(game)}:ban:${used}`) % pool.length];
+  }
+
+  // The letter Word Chain asks a word to start with: the last consonant of
+  // the guess before (so many words end in E that "the last letter" mostly
+  // meant starting with E -- next to impossible from a hand).
+  function chainLetter(game, used) {
+    const state = stateOf(game) || {};
+    const history = Array.isArray(state.history) ? state.history : [];
+    const previous = used > 0 ? history[used - 1] : null;
+    const word = previous ? String(previous.word || "").toUpperCase() : "";
+    if (word.length !== 5) return null;
+    // Y counts as a vowel here: so many words end in Y, and so few start
+    // with it, that chaining on it stranded the hand.
+    const consonant = word.split("").reverse().find((letter) => !"AEIOUY".includes(letter));
+    // Hardly any word starts with J, Q, V, X or Z: after one of those, the
+    // chain is let off for that guess.
+    return consonant && !"JQVXZ".includes(consonant) ? consonant : null;
+  }
+
+  // What Locked In holds you to: the greens and yellows the board showed
+  // (a masked tile proves nothing, so it isn't counted).
+  function lockedKnowledge(game) {
+    const state = stateOf(game) || {};
+    const greens = {};
+    const yellows = new Set();
+    (state.history || []).forEach((entry) => {
+      if (!entry || !entry.word) return;
+      const word = String(entry.word).toUpperCase();
+      const shown = Array.isArray(entry.shownFeedback) ? entry.shownFeedback : entry.feedback || [];
+      const masked = Array.isArray(entry.maskedIndices) ? entry.maskedIndices : [];
+      for (let index = 0; index < 5; index += 1) {
+        if (masked.includes(index)) continue;
+        if (shown[index] === "green") greens[index] = word[index];
+        else if (shown[index] === "yellow") yellows.add(word[index]);
+      }
+    });
+    Object.values(greens).forEach((letter) => yellows.delete(letter));
+    return { greens, yellows: [...yellows] };
+  }
+
+  // What the current guess's word rule asks, for the clue strip.
+  function wordRuleNote(game) {
+    const state = stateOf(game) || {};
+    if (state.status !== "playing") return null;
+    const used = guessesUsed(game);
+    const effect = planEffect(game, used);
+    if (effect === "letterDemand") {
+      const letter = demandLetter(game, used);
+      return letter ? { id: effect, icon: "📌", label: "Letter Demand", text: "Use", letters: [letter] } : null;
+    }
+    if (effect === "letterBan") {
+      const letter = banLetter(game, used);
+      return letter ? { id: effect, icon: "🚫", label: "Banned Letter", text: "Don't use", letters: [letter] } : null;
+    }
+    if (effect === "wordChain") {
+      const letter = chainLetter(game, used);
+      return letter ? { id: effect, icon: "🔗", label: "Word Chain", text: "Start with", letters: [letter] } : null;
+    }
+    if (effect === "lockedIn" && used > 0) {
+      const known = lockedKnowledge(game);
+      const greens = Object.keys(known.greens).map((index) => `${known.greens[index]} in place ${Number(index) + 1}`);
+      if (!greens.length && !known.yellows.length) return null;
+      const parts = [];
+      if (greens.length) parts.push(`keep ${greens.join(", ")}`);
+      if (known.yellows.length) parts.push(`use ${known.yellows.join(", ")}`);
+      const text = parts.join("; ");
+      return { id: effect, icon: "🔒", label: "Locked In", text: text.charAt(0).toUpperCase() + text.slice(1) };
+    }
+    return null;
+  }
+
+  // Letter Demand and Word Chain hand you a card of the letter they ask for
+  // when your hand has none, so the rule can always be met. The card is
+  // taken back when the guess no longer asks for it.
+  function syncRuleCards(game) {
+    const state = stateOf(game);
+    if (!state || !Array.isArray(state.hand) || state.status !== "playing") return;
+    const used = guessesUsed(game);
+    const effect = planEffect(game, used);
+    const wanted = effect === "letterDemand" ? demandLetter(game, used)
+      : effect === "wordChain" ? chainLetter(game, used) : null;
+    const draft = new Set(state.draft || []);
+    state.hand = state.hand.filter((card) => !(card && card.umtRuleGift && card.glyph !== wanted && !draft.has(card.id)));
+    if (!wanted || typeof game._newCard !== "function") return;
+    if (state.hand.some((card) => card && card.glyph === wanted)) return;
+    const card = game._newCard(wanted, "extra");
+    card.umtRuleGift = true;
+    state.hand.push(card);
+  }
+
   function challengeValidation(game, _challenge, used) {
     const word = draftWord(game);
     if (!word) return null;
     const effect = planEffect(game, used);
+    if (effect === "letterDemand") {
+      const letter = demandLetter(game, used);
+      if (letter && !word.includes(letter)) return `Letter Demand: this word must use ${letter}.`;
+    }
+    if (effect === "letterBan") {
+      const letter = banLetter(game, used);
+      if (letter && word.includes(letter)) return `Banned Letter: this word may not use ${letter}.`;
+    }
+    if (effect === "wordChain") {
+      const letter = chainLetter(game, used);
+      if (letter && word[0] !== letter) return `Word Chain: this word must start with ${letter}.`;
+    }
+    if (effect === "lockedIn" && used > 0) {
+      const known = lockedKnowledge(game);
+      for (const index of Object.keys(known.greens)) {
+        if (word[Number(index)] !== known.greens[index]) {
+          return `Locked In: keep ${known.greens[index]} in place ${Number(index) + 1}.`;
+        }
+      }
+      const missing = known.yellows.filter((letter) => !word.includes(letter));
+      if (missing.length) return `Locked In: use ${missing.join(" and ")} in this word.`;
+    }
     if (effect === "perfectOpener" && new Set(word.split("")).size !== word.length) {
       return "Perfect Opener: this word must use five different letters.";
     }
@@ -3647,6 +3824,10 @@
     noSafetyNet: { title: "No Safety Net", description: "Mulligans and skipped guesses are disabled for this Wordle.", shape: "noShield" },
     perfectOpener: { title: "Perfect Opener", description: "This word must use five different letters.", shape: "unique" },
     consonantCrunch: { title: "Consonant Crunch", description: "This word may contain at most one vowel.", shape: "consonant" },
+    letterDemand: { title: "Letter Demand", description: "This word must use the letter shown above the board. If you hold no card of it, you're handed one.", shape: "tag" },
+    letterBan: { title: "Banned Letter", description: "This word may not use the letter shown above the board. A new letter is banned every guess.", shape: "noShield" },
+    wordChain: { title: "Word Chain", description: "This word must start with the last consonant of your guess before. If you hold no card of it, you're handed one.", shape: "scroll" },
+    lockedIn: { title: "Locked In", description: "Wordle's Hard Mode: this word must keep every green letter in its place and use every yellow one.", shape: "noShield" },
     shroudedEdges: { title: "Shrouded Edges", description: "The same marked positions remain hidden on every affected guess.", shape: "edges" },
     countOnly: { title: "Count Only", description: "The marked tiles report only how many of them are green and how many yellow, never which is which. Every other tile in the row shows its real colour.", shape: "count", multiplayerId: "countOnly" },
     delayedFeedback: { title: "Delayed Feedback", description: "The marked tiles hold back their colours for one guess: each row's hidden tiles are revealed when you submit the next guess. Every other tile in the row shows its real colour immediately.", shape: "clock" },
@@ -3891,36 +4072,43 @@
     const marks = ensureHintMarks(game);
     const yellow = new Set(marks ? marks.yellowLetters : []);
     const greens = marks && marks.greenPositions || {};
+    // Only what differs is written: this runs on every redraw, and
+    // rewriting every card's class and title each time (even unchanged)
+    // restyled the whole hand many times a second.
     root.querySelectorAll("[data-card-glyph]").forEach((card) => {
       const renderedTitle = card.dataset.umtHintRenderedTitle || "";
-      if (!renderedTitle || card.title !== renderedTitle) {
-        card.dataset.umtHintBaseTitle = card.title || String(card.dataset.cardGlyph || "").toUpperCase();
-      }
-      const baseTitle = card.dataset.umtHintBaseTitle || String(card.dataset.cardGlyph || "").toUpperCase();
-      card.classList.remove("umt-hint-yellow", "umt-hint-green");
-      card.querySelectorAll(":scope > .umt-hint-position").forEach((badge) => badge.remove());
-      card.title = baseTitle;
-      delete card.dataset.umtHintRenderedTitle;
+      const baseTitle = renderedTitle && card.title === renderedTitle
+        ? (card.dataset.umtHintBaseTitle || String(card.dataset.cardGlyph || "").toUpperCase())
+        : (card.title || String(card.dataset.cardGlyph || "").toUpperCase());
+      if (card.dataset.umtHintBaseTitle !== baseTitle) card.dataset.umtHintBaseTitle = baseTitle;
 
       const glyph = String(card.dataset.cardGlyph || "").toUpperCase();
       const positions = Array.isArray(greens[glyph]) ? greens[glyph] : [];
-      let hintTitle = "";
-      if (positions.length) {
-        card.classList.add("umt-hint-green");
-        const badge = document.createElement("span");
-        badge.className = "umt-hint-position";
-        badge.textContent = positions.join(",");
-        badge.setAttribute("aria-hidden", "true");
-        card.appendChild(badge);
-        hintTitle = `Green hint: position ${positions.join(", ")}.`;
-      } else if (yellow.has(glyph)) {
-        card.classList.add("umt-hint-yellow");
-        hintTitle = "Yellow hint: this letter is in the word.";
+      const kind = positions.length ? "green" : yellow.has(glyph) ? "yellow" : "";
+      card.classList.toggle("umt-hint-green", kind === "green");
+      card.classList.toggle("umt-hint-yellow", kind === "yellow");
+
+      const badgeText = kind === "green" ? positions.join(",") : "";
+      const badges = card.querySelectorAll(":scope > .umt-hint-position");
+      if (badges.length !== (badgeText ? 1 : 0) || (badgeText && badges[0].textContent !== badgeText)) {
+        badges.forEach((badge) => badge.remove());
+        if (badgeText) {
+          const badge = document.createElement("span");
+          badge.className = "umt-hint-position";
+          badge.textContent = badgeText;
+          badge.setAttribute("aria-hidden", "true");
+          card.appendChild(badge);
+        }
       }
+
+      const hintTitle = kind === "green" ? `Green hint: position ${positions.join(", ")}.`
+        : kind === "yellow" ? "Yellow hint: this letter is in the word." : "";
+      const title = hintTitle ? `${baseTitle}${/[.!?]$/.test(baseTitle) ? "" : "."} ${hintTitle}` : baseTitle;
+      if (card.title !== title) card.title = title;
       if (hintTitle) {
-        const joined = `${baseTitle}${/[.!?]$/.test(baseTitle) ? "" : "."} ${hintTitle}`;
-        card.title = joined;
-        card.dataset.umtHintRenderedTitle = joined;
+        if (card.dataset.umtHintRenderedTitle !== title) card.dataset.umtHintRenderedTitle = title;
+      } else if (card.dataset.umtHintRenderedTitle !== undefined) {
+        delete card.dataset.umtHintRenderedTitle;
       }
     });
   }
@@ -4521,9 +4709,19 @@
   }
 
 
+  // The Quick Mode clock ticks inside its row icon (cuddle-ui.js
+  // paintQuickModeClock); that alone is no reason to redraw everything.
+  function onUiMutations(mutations) {
+    const relevant = mutations.some((mutation) => {
+      const target = mutation.target && mutation.target.nodeType === 1 ? mutation.target : mutation.target && mutation.target.parentElement;
+      return !(target && target.closest && target.closest(".umt-row-quick-clock"));
+    });
+    if (relevant) scheduleUi();
+  }
+
   function installUiObserver() {
     if (!uiObserver && document.documentElement) {
-      uiObserver = new MutationObserver(scheduleUi);
+      uiObserver = new MutationObserver(onUiMutations);
       observeUiMutations();
     }
     if (document.documentElement.dataset.umtCuddleUiV5 === "1") {
@@ -4691,6 +4889,7 @@
         restoreCategory();
         hintSuppression.restore();
         finishBeginRound(this, pending, hintSuppression.configured, shouldRevealAll);
+        try { syncRuleCards(this); } catch (error) { log("rule cards failed", error); }
         return value;
       }, (error) => {
         restoreCategory();
@@ -4713,7 +4912,7 @@
     // challenge's rule before the guess is sent (it only refused it).
     wrapMethod(prototype, "canSubmit", function (original, args) {
       const base = original.apply(this, args);
-      if (!base || base.ok === false || !stagePlan(this)) return base;
+      if (!base || base.ok === false || !(stagePlan(this) || ratchetRule(this, guessesUsed(this)))) return base;
       const validation = challengeValidation(this, activeChallenge(this), guessesUsed(this));
       return validation ? { ...base, ok: false, error: validation } : base;
     });
@@ -4725,7 +4924,7 @@
       const activePowers = powerIdsForGuess(this, used);
       const state = stateOf(this);
       const historyLength = state && Array.isArray(state.history) ? state.history.length : 0;
-      if (stagePlan(this)) {
+      if (stagePlan(this) || ratchetRule(this, used)) {
         const validation = challengeValidation(this, challenge, used);
         if (validation) return rejectAction(this, validation);
       }
@@ -4777,6 +4976,7 @@
           processScheduledHint(this);
           applyConsonantSweep(this);
         }
+        try { syncRuleCards(this); } catch (error) { log("rule cards failed", error); }
         safeSave(this);
         scheduleUi();
         return value;
@@ -4799,7 +4999,12 @@
       if (planEffect(this, guessesUsed(this)) === "noMulligans") {
         return rejectAction(this, "Steady Hand: no mulligans before this guess.");
       }
-      return original.apply(this, args);
+      // Mulliganing away the hand's only card of a demanded or chain letter
+      // must hand the rule's card back, or the guess can't be made at all.
+      return afterResult(original.apply(this, args), (value) => {
+        try { syncRuleCards(this); } catch (error) { log("rule cards failed", error); }
+        return value;
+      }, (error) => { throw error; });
     });
 
     wrapMethod(prototype, "forfeitGuess", function (original, args) {
@@ -4968,6 +5173,10 @@
       // Pays points into the stage's itemized "Stage bonus" box (combo
       // payouts in cuddle-synergies.js ride on this).
       addStageBonus: (game, amount, field, label) => addScoreBonus(game || publicActiveGame(), amount, field, label),
+      // The current guess's word rule (Letter Demand, Word Chain, Locked
+      // In), for the clue strip; and the gift cards those rules hand out.
+      wordRuleNote: (game) => wordRuleNote(game || publicActiveGame()),
+      syncRuleCards: (game) => syncRuleCards(game || publicActiveGame()),
       // The challenge ids of the stage being played ([] when none).
       liveChallengeIds: (game) => {
         const live = game || publicActiveGame();

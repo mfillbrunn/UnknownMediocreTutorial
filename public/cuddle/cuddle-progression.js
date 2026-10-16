@@ -703,7 +703,7 @@
   }
 
   // ---------------------------------------------------------------------
-  // Stage-intro banner
+  // Stage start: a boss's entrance (no stage starts with a briefing)
   // ---------------------------------------------------------------------
 
   const banner = { timer: null, remaining: 0, startedAt: 0, el: null, moneyBaseline: null, runId: null };
@@ -714,177 +714,6 @@
 
   function stageKey(state) {
     return `${roundToken(state)}:${state.boss ? state.boss.gate || state.boss.id || "boss" : "stage"}`;
-  }
-
-  function burdenTitle(id) {
-    const info = window.CuddleRebalanceV5 && typeof window.CuddleRebalanceV5.burdenInfo === "function"
-      ? window.CuddleRebalanceV5.burdenInfo(id) : null;
-    return info ? info[0] : String(id || "Burden").replace(/([a-z])([A-Z])/g, "$1 $2");
-  }
-
-  const VARIANTS = {
-    jackpot: { icon: "💰", text: "Jackpot Run — greens pay double", kind: "bonus" },
-    luckyStart: { icon: "🍀", text: "Lucky Start — one position is already yours", kind: "bonus" },
-    doubleOrNothing: { icon: "⚖️", text: "Double or Nothing — solve fast to double the stage", kind: "hazard" },
-    randomOpener: { icon: "🎲", text: "Head Start — a random word plays your first guess", kind: "info" }
-  };
-
-  function bannerContent(game, burdenNotice) {
-    const state = game.state;
-    const branch = window.CuddleBranchMap;
-    const node = branch && typeof branch.currentStageNode === "function" ? branch.currentStageNode(game) : null;
-    const gatesDone = Array.isArray(state.bossGatesDone) ? state.bossGatesDone.length : 0;
-    const world = Math.min(3, gatesDone + 1);
-    const boss = state.boss && !state.boss.__umtSynthetic ? state.boss : null;
-    const lines = [];
-    const token = roundToken(state);
-
-    // The world's name, and its own word for a stage (a Glade in the Woods,
-    // a Grotto in the Caverns...), from cuddle-world-identity.js.
-    const identity = window.CuddleWorldIdentity && typeof window.CuddleWorldIdentity.describe === "function"
-      ? window.CuddleWorldIdentity.describe(game) : null;
-    const worldLabel = identity && identity.name ? identity.name : `World ${world}`;
-    const stageWord = identity && identity.trait ? identity.trait.stage : "Stage";
-    const content = {
-      eyebrow: boss ? `${worldLabel} · Boss` : `${worldLabel} · ${stageWord} ${Math.max(1, num(state.round, 1))}`,
-      icon: boss ? (boss.icon || "💀") : (node && node.typeIcon) || "🟩",
-      title: boss ? (boss.title || "Boss") : (node && node.typeTitle) || "Wordle",
-      tone: boss ? "boss" : node && node.type === "challenge" ? "challenge" : "plain",
-      lines,
-      points: [],
-      money: [],
-      onWin: null
-    };
-
-    if (identity && identity.trait) {
-      lines.push({ kind: "info", icon: identity.trait.icon, text: `${identity.trait.name} — ${identity.trait.text}` });
-    }
-
-    if (boss) {
-      if (boss.description) lines.push({ kind: "hazard", icon: "⚠️", text: boss.description });
-      if (boss.gate !== "final") lines.push({ kind: "bonus", icon: "🎁", text: "Clear it to pick 1 of 3 legendary rewards" });
-    }
-
-    // A strict stage is lost outright if it isn't solved in time -- the
-    // most important thing the banner can say about it.
-    if (!boss && typeof game._hardGuessLimit === "function" && Number.isFinite(game._hardGuessLimit())) {
-      lines.push({ kind: "hazard", icon: "⏱️", text: `Solve within ${game._hardGuessLimit()} guesses or the run is lost` });
-    }
-
-    const custom = state.cuddleRebalanceV5 || {};
-    const variant = custom.activeVariant && custom.activeVariant.roundToken === token ? custom.activeVariant : null;
-    if (variant && variant.kind === "doubleOrNothing") {
-      const limit = window.CuddleRebalanceV5?.doubleOrNothingLimit?.(game) || 3;
-      lines.push({ ...VARIANTS.doubleOrNothing, text: `Double or Nothing — solve by guess ${limit} to double the stage` });
-    } else if (variant && VARIANTS[variant.kind]) lines.push(VARIANTS[variant.kind]);
-    // A Classic Wordle pays its own clear bonus, in both currencies.
-    if (variant && variant.kind === "plain" && num(variant.clearBonus) > 0) {
-      content.onWin = { points: num(variant.clearBonus), money: num(variant.clearBonus), label: "Classic Wordle cleared" };
-    }
-
-    const mandatory = custom.activeChallenge && custom.activeChallenge.roundToken === token ? custom.activeChallenge : null;
-    const mode = state.cuddleMoneyMode || {};
-    const thisStage = (item) => item && (item.offeredRound == null || num(item.offeredRound) === num(state.round));
-    const mini = (thisStage(mode.activeChallenge) && mode.activeChallenge)
-      || (thisStage(mode.challengeOffer) && mode.challengeOffer) || null;
-    const challenge = mandatory || mini;
-    if (challenge) {
-      const description = typeof challenge.description === "string" ? challenge.description : "";
-      // A stage's own challenge(s): each challenge on its own line (and the easier half of a stacked stop, if any).
-      const stop = mandatory && node && window.CuddleRebalanceV5?.stopVariant?.(game, node);
-      // (No difficulty line: the map already showed the stop's skulls.)
-      if (stop && stop.ease === "luckyStart") lines.push({ kind: "bonus", icon: "🍀", text: "Lucky Start — one letter starts in its exact place" });
-      if (stop && stop.ease === "themedWordle") lines.push({ kind: "bonus", icon: "🧭", text: "Themed — one of the answer's themes is revealed" });
-      if (stop && Array.isArray(stop.parts) && stop.parts.length) {
-        stop.parts.forEach((part) => lines.push({ kind: "hazard", icon: "⚡", text: `${part.label ? `${part.label} · ` : ""}${part.title} — ${part.text}` }));
-      } else {
-        lines.push({ kind: "hazard", icon: challenge.icon || "⚡", text: `${challenge.title || "Challenge"}${description ? ` — ${description}` : ""}` });
-      }
-      const reward = num(challenge.reward);
-      if (reward > 0) {
-        // Challenges pay both currencies on a win.
-        content.onWin = { points: mandatory ? reward : 0, money: reward, label: mandatory ? "Challenge cleared" : (mode.challengeOffer && !mode.activeChallenge ? "If you accept and win" : "Challenge cleared") };
-      }
-    }
-
-    // Stacked disadvantages from bosses you walked past, on the guesses the
-    // engine really puts them this stage.
-    const engine = window.CuddleEngine;
-    let newBurdenShown = false;
-    if (engine && typeof engine.ratchetForGuess === "function") {
-      const rows = Math.max(1, num(state.maxGuesses, 6));
-      for (let guess = 1; guess <= rows; guess += 1) {
-        let debuff = null;
-        try {
-          debuff = engine.ratchetForGuess(game, guess);
-        } catch (_error) {
-          debuff = null;
-        }
-        if (!debuff) continue;
-        const title = burdenTitle(debuff.bossId || debuff.id);
-        const isNew = Boolean(burdenNotice && burdenNotice.title && !newBurdenShown && burdenNotice.title === title);
-        if (isNew) newBurdenShown = true;
-        lines.push({ kind: "hazard", icon: "☠️", text: `Guess ${guess} · ${title}${isNew ? " (new)" : ""}` });
-      }
-    }
-
-    // A freshly left-behind boss used to announce itself in the bottom
-    // toast; it belongs to this stage's briefing now (taken off the state
-    // by checkForStageStart the moment the stage began).
-    if (burdenNotice && !newBurdenShown) {
-      lines.push({ kind: "hazard", icon: "☠️", text: `New curse: ${burdenNotice.title || "beaten boss"}` });
-    }
-
-    const opening = num(state.roundOpeningPoints);
-    if (opening > 0) content.points.push({ amount: opening, label: "Opening Verse" });
-    if (banner.moneyBaseline && banner.moneyBaseline.runId === (state.runId || "run")) {
-      const gained = Math.round(num(state.cuddleMoney) - banner.moneyBaseline.money);
-      if (gained > 0) content.money.push({ amount: gained, label: "On arrival" });
-    }
-
-    if (!lines.length && !content.points.length && !content.money.length && !content.onWin) {
-      lines.push({ kind: "info", icon: "✦", text: (node && node.typeDescription) || "Solve the Wordle to move on." });
-    }
-    return content;
-  }
-
-  function rewardRows(content) {
-    const rows = [];
-    content.points.forEach((p) => rows.push(
-      `<div class="umt-reward-row is-points"><b>+${p.amount}</b><small>pts</small><em>${esc(p.label)}</em></div>`
-    ));
-    content.money.forEach((m) => rows.push(
-      `<div class="umt-reward-row is-money"><b>+$${m.amount}</b><em>${esc(m.label)}</em></div>`
-    ));
-    const gained = rows.length ? `<div class="umt-sb-rewards">${rows.join("")}</div>` : "";
-    const win = content.onWin
-      ? `<div class="umt-sb-win"><span>${esc(content.onWin.label)}</span>`
-        + (content.onWin.points ? `<span class="umt-reward-chip is-points">+${content.onWin.points} pts</span>` : "")
-        + (content.onWin.money ? `<span class="umt-reward-chip is-money">+$${content.onWin.money}</span>` : "")
-        + `</div>`
-      : "";
-    return gained + win;
-  }
-
-  // Money gold, points green -- the same colours as the header counters.
-  function rewardText(text) {
-    return esc(text)
-      .replace(/[+-]?\$\s?\d[\d,]*/g, (match) => `<b class="umt-money">${match}</b>`)
-      .replace(/[+-]?\d[\d,]*\s?(?:points|point|pts)\b/g, (match) => `<b class="umt-points">${match}</b>`);
-  }
-
-  function bannerMarkup(content, holdMs) {
-    const lines = content.lines.map((line) => (
-      `<li class="is-${line.kind}"><span aria-hidden="true">${esc(line.icon)}</span><span>${rewardText(line.text)}</span></li>`
-    )).join("");
-    return `<div class="umt-stage-banner is-${content.tone}" role="status" aria-live="polite" style="--hold:${holdMs}ms">`
-      + `<div class="umt-sb-sheen" aria-hidden="true"></div>`
-      + `<div class="umt-sb-head"><span class="umt-sb-icon" aria-hidden="true">${esc(content.icon)}</span>`
-      + `<div><span class="umt-sb-eyebrow">${esc(content.eyebrow)}</span><strong class="umt-sb-title">${esc(content.title)}</strong></div></div>`
-      + (lines ? `<ul class="umt-sb-lines">${lines}</ul>` : "")
-      + rewardRows(content)
-      + `<span class="umt-sb-timer" aria-hidden="true"></span>`
-      + `</div>`;
   }
 
   function dismissBanner(immediate) {
@@ -899,38 +728,6 @@
     }
     el.classList.add("is-leaving");
     setTimeout(() => el.remove(), 420);
-  }
-
-  function showBanner(game, burdenNotice) {
-    const el = host();
-    if (!el) return;
-    dismissBanner(true);
-    const content = bannerContent(game, burdenNotice);
-    const lineCount = content.lines.length + content.points.length + content.money.length + (content.onWin ? 1 : 0);
-    const holdMs = Math.min(6200, 2800 + lineCount * 550);
-    const wrap = document.createElement("div");
-    wrap.className = "umt-stage-banner-wrap";
-    wrap.innerHTML = bannerMarkup(content, holdMs);
-    el.appendChild(wrap);
-    banner.el = wrap;
-    const card = wrap.firstElementChild;
-    banner.remaining = holdMs;
-    banner.startedAt = Date.now();
-    banner.timer = setTimeout(() => dismissBanner(false), holdMs);
-    card.addEventListener("click", () => dismissBanner(false));
-    card.addEventListener("pointerenter", (event) => {
-      if (event.pointerType !== "mouse" || !banner.timer) return;
-      clearTimeout(banner.timer);
-      banner.timer = null;
-      banner.remaining = Math.max(600, banner.remaining - (Date.now() - banner.startedAt));
-      card.classList.add("is-paused");
-    });
-    card.addEventListener("pointerleave", (event) => {
-      if (event.pointerType !== "mouse" || banner.el !== wrap || banner.timer) return;
-      banner.startedAt = Date.now();
-      banner.timer = setTimeout(() => dismissBanner(false), banner.remaining);
-      card.classList.remove("is-paused");
-    });
   }
 
   function checkForStageStart(game) {
@@ -948,18 +745,11 @@
     const key = stageKey(state);
     if (state.umtStageBannerKey === key) return;
     state.umtStageBannerKey = key;
-    // A regular stage starts without a briefing: it plays out as it is
-    // (the map only showed its tier). A boss still gets its entrance and
-    // briefing. A new curse, if any, keeps its own toast.
+    // No stage starts with a briefing: the map and the board already say
+    // what it is. A boss still makes its entrance (cuddle-worlds.js). A
+    // new curse, if any, keeps its own toast.
     if (!(state.boss && !state.boss.__umtSynthetic)) return;
-    // Taken now, synchronously, so the old bottom toast never paints.
-    const burdenNotice = state.burdenNotice || null;
-    if (burdenNotice) {
-      state.burdenNotice = null;
-      document.querySelectorAll("#cuddleRoot .cuddle-v3-toast.is-burden").forEach((el) => el.remove());
-    }
-    // Let every layer finish its own round-start work (variants, challenge
-    // offers, interest) before reading what the stage holds.
+    // Let every layer finish its own round-start work first.
     banner.pending = true;
     setTimeout(() => {
       if (!game.state || game.state.status !== "playing" || game.state.umtStageBannerKey !== key) {
@@ -967,24 +757,13 @@
         return;
       }
       saveGame(game);
-      // A boss makes an entrance first (cuddle-worlds.js); the briefing
-      // banner follows once it clears.
       const boss = game.state.boss && !game.state.boss.__umtSynthetic ? game.state.boss : null;
       const worlds = window.CuddleWorlds;
       if (boss && worlds && typeof worlds.playBossEntrance === "function") {
-        worlds.playBossEntrance({
-          game,
-          boss,
-          onDone: () => {
-            banner.pending = false;
-            if (!game.state || game.state.status !== "playing" || game.state.umtStageBannerKey !== key) return;
-            showBanner(game, burdenNotice);
-          }
-        });
+        worlds.playBossEntrance({ game, boss, onDone: () => { banner.pending = false; } });
         return;
       }
       banner.pending = false;
-      showBanner(game, burdenNotice);
     }, 140);
   }
 

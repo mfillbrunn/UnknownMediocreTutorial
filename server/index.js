@@ -15,6 +15,7 @@ const { applyAction } = require("./core/stateMachine");
 const { getDailyConfig } = require("./utils/dailyConfig");
 const { buildPublicDailyView } = require("./utils/dailyPublicView");
 const { registerBugReportRoutes } = require("./routes/bugReports");
+const { registerPlayerInsightRoutes } = require("./routes/playerInsights");
 // UMT_CUDDLE_CAMPAIGN_THEME_ROUTE_IMPORT START
 const { registerCuddleWordThemeRoutes } = require("./cuddle/wordThemes");
 // UMT_CUDDLE_CAMPAIGN_THEME_ROUTE_IMPORT END
@@ -101,6 +102,12 @@ registerCuddleWordThemeRoutes(app, { allowedSecrets: ALLOWED_SECRETS });
 // body parser is scoped to that route rather than applied app-wide.
 app.use("/api/bug-report", express.json({ limit: "32kb" }));
 registerBugReportRoutes(app, { supabase });
+
+// Play tracking and the post-run "Did you have fun?" form (tables in
+// server/sql/player_insights.sql). Run updates may arrive as a sendBeacon
+// when the tab closes, which still carries a JSON content type.
+app.use(["/api/play-run", "/api/feedback"], express.json({ limit: "16kb" }));
+registerPlayerInsightRoutes(app, { supabase });
 
 app.get("/api/daily", (req, res) => {
   const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
