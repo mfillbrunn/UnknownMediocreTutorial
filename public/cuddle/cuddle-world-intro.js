@@ -71,6 +71,7 @@
   function costLine(game, window) {
     var first = game._lateGuessPenalty(window + 1);
     var second = game._lateGuessPenalty(window + 2);
+    if (first === second && first <= 0) return "Guesses after that are <b>free</b> here; they just miss the quick-solve bonus.";
     if (first === second) return "Every guess after that costs <b>" + first + " points</b>.";
     return "Guesses after that cost <b>" + first + "</b>, then <b>" + second + "</b>, <b>"
       + game._lateGuessPenalty(window + 3) + "</b>&hellip; points, more each time.";
@@ -82,7 +83,7 @@
     for (var i = 1; i <= window + EXTRA_SLOTS; i += 1) {
       var late = i > window;
       slots += '<span class="umt-wi-slot' + (late ? " is-late" : "") + '">'
-        + (late ? "&minus;" + game._lateGuessPenalty(i) : i) + "</span>";
+        + (late ? (game._lateGuessPenalty(i) > 0 ? "&minus;" + game._lateGuessPenalty(i) : "0") : i) + "</span>";
     }
     var name = worldName(game, index);
     // The world's own rule (cuddle-world-identity.js), above the window.
