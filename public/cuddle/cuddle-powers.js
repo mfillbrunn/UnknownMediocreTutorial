@@ -16,7 +16,7 @@
  *      Grace Period and Bold Opener. They join the reward pool here and
  *      change how a stage is played rather than adding a flat number.
  *
- *   3. More quest rewards: Rule Out, Vowel Check, Spotlight, Pocket Money,
+ *   3. More quest rewards: Vowel Check, Spotlight, Pocket Money,
  *      and Quick Points, alongside the existing ones.
  *
  * A power's level is the registry's level reader, so a power taken from a
@@ -347,7 +347,9 @@
   // -------------------------------------------------------------------------
 
   var QUEST_REWARDS = [
-    { id: "umtRuleOut", icon: "🚫", title: "Rule Out", description: "2 consonants in your hand that aren't in the answer turn grey." },
+    // Rule Out ("2 consonants that aren't in the answer turn grey") is no
+    // longer offered: it overlapped Letter Count, which checks 2 consonants.
+    // Its effect stays below for a save already showing it as a choice.
     { id: "umtVowelCheck", icon: "🔤", title: "Vowel Check", description: "2 vowels you haven't tried are tested: you learn if each one is in the answer." },
     { id: "umtSpotlight", icon: "👁️", title: "Spotlight", description: "A yellow letter moves to its exact spot and turns green (or the next yellow you find does)." },
     { id: "umtPocketMoney", icon: "💰", title: "Pocket Money", description: "Get +$10 right now." },
