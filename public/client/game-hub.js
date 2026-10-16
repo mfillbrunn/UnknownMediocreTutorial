@@ -47,7 +47,6 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("hubVowelPlayBtn")?.addEventListener("click", openVowelPlay);
-    document.getElementById("cuddleBtn")?.addEventListener("click", () => setChosen("cuddle"));
     document.getElementById("vpBackToHubBtn")?.addEventListener("click", showHub);
     document.getElementById("hubBugReportBtn")?.addEventListener("click", () => window.openBugReport?.());
 
@@ -61,6 +60,67 @@
       };
     }
   });
+
+  // ---- Opening Cuddle: the meadow portal ---------------------------------
+  //
+  // Picking Cuddle opens a circle of its meadow backdrop out of the button
+  // until it fills the screen, switches to Cuddle underneath (whose own
+  // backdrop is the same picture, see cuddle/cuddle-meadow.css), then lets
+  // the portal fade away as Cuddle's content rises in. The click is caught
+  // on the way down so cuddle-ui.js's own handler on the button doesn't
+  // switch screens before the portal has opened; this calls it afterwards.
+  const MEADOW_IMAGE = "cuddle/backgrounds/cuddle-meadow.webp";
+  const PORTAL_OPEN_MS = 620;
+  let portalBusy = false;
+
+  function preloadMeadow() {
+    const image = new Image();
+    image.decoding = "async";
+    image.src = MEADOW_IMAGE;
+  }
+
+  function openCuddleThroughPortal(button) {
+    setChosen("cuddle");
+    const open = () => window.CuddleMode?.open?.();
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduced || portalBusy || !window.CuddleMode) {
+      open();
+      return;
+    }
+    portalBusy = true;
+    const rect = button.getBoundingClientRect();
+    const portal = document.createElement("div");
+    portal.className = "umt-meadow-portal";
+    portal.setAttribute("aria-hidden", "true");
+    // Opens from the button's icon (the Cuddle logo), not its middle.
+    portal.style.setProperty("--portal-x", `${Math.round(rect.left + Math.min(40, rect.width / 2))}px`);
+    portal.style.setProperty("--portal-y", `${Math.round(rect.top + rect.height / 2)}px`);
+    document.body.appendChild(portal);
+
+    setTimeout(() => {
+      document.body.classList.add("umt-meadow-arriving");
+      open();
+      requestAnimationFrame(() => portal.classList.add("is-leaving"));
+      setTimeout(() => {
+        portal.remove();
+        document.body.classList.remove("umt-meadow-arriving");
+        portalBusy = false;
+      }, 600);
+    }, PORTAL_OPEN_MS);
+  }
+
+  document.addEventListener("click", event => {
+    const button = event.target instanceof Element ? event.target.closest("#cuddleBtn") : null;
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    openCuddleThroughPortal(button);
+  }, true);
+
+  // Fetch the picture while the player is still choosing, so the portal
+  // opens onto it rather than onto plain blue.
+  if (document.readyState === "complete") setTimeout(preloadMeadow, 300);
+  else window.addEventListener("load", () => setTimeout(preloadMeadow, 300), { once: true });
 
   window.UmtGameHub = Object.freeze({
     showHub,
