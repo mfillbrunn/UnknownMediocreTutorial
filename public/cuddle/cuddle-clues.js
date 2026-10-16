@@ -327,10 +327,13 @@
         && !(typeof game.presetPickIsEarly === "function" && game.presetPickIsEarly());
       chips.push({ icon: "scroll", label: "Trial list", text: pickable ? "Answer is one of (tap one to answer now)" : "Answer is one of", words: openList, ruledOut: out, pickable, tone: "preset" });
     }
-    // A word rule on this guess (Letter Demand, Word Chain, Locked In).
+    // A word rule on this guess. Rules about one letter (Letter Demand,
+    // Banned Letter, Word Chain) show that letter on the row itself, in
+    // place of the row's icon (cuddle-rebalance-v5.js) -- only Locked In,
+    // with its list of letters and places, still needs a chip here.
     const rule = window.CuddleRebalanceV5 && typeof window.CuddleRebalanceV5.wordRuleNote === "function"
       ? window.CuddleRebalanceV5.wordRuleNote(game) : null;
-    if (rule) chips.push({ icon: rule.icon, label: rule.label, text: rule.text, letters: rule.letters, tone: "rule" });
+    if (rule && !rule.letters) chips.push({ icon: rule.icon, label: rule.label, text: rule.text, letters: rule.letters, tone: "rule" });
     // Hints rank III: once a stage, tap a consonant to test it.
     const testable = window.CuddleSchools && typeof window.CuddleSchools.testableLetters === "function"
       ? window.CuddleSchools.testableLetters(game) : [];

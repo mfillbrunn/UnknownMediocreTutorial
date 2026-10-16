@@ -2990,13 +2990,13 @@
       case "questEndurance":
         return "Every guess: a quest; miss one, lose 1 hand size for the fight.";
       case "letterDemand":
-        return "Guesses 1-4: your word must use the letter shown (you're handed a card of it).";
+        return `${range(count)}: your word must use the letter shown beside it (you're handed a card of it).`;
       case "letterBan":
-        return "Every guess: your word may not use the letter shown (a new one every guess).";
+        return `${range(count)}: your word may not use the letter shown beside it (a new one each guess).`;
       case "wordChain":
-        return "Guesses 2-4: start with the last consonant of the word before.";
+        return `Guesses 2–${count}: start with the letter shown beside the guess (the last consonant of the word before).`;
       case "lockedIn":
-        return "Whole fight: keep every green in place and use every yellow.";
+        return `${range(count)}: keep every green in place and use every yellow.`;
       default:
         return `${range(count)}: boss power active.`;
     }
@@ -3019,11 +3019,14 @@
         reward
       };
     }
+    // Word Chain's first guess has nothing to chain from, so one extra
+    // guess keeps its real chained guesses at the gate's count.
+    const ownTurns = option?.id === "wordChain" ? turns + 1 : turns;
     return {
       ...option,
-      turns,
+      turns: ownTurns,
       stage,
-      description: cuddleV3BossDescription(option?.id, turns, stage),
+      description: cuddleV3BossDescription(option?.id, ownTurns, stage),
       reward
     };
   }
