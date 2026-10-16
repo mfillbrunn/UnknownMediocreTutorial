@@ -392,7 +392,7 @@
     { id: "lockedIn", icon: "🔒", title: "Locked In", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 22,
       text: "keep every green letter in its place and use every yellow one (Wordle's Hard Mode)." },
     { id: "shortHand", icon: "✂️", title: "Short Hand", kind: "round", boss: true, challenge: false, mix: false, curse: true, reward: 0,
-      text: "two consonants fewer in your hand; only 4 guesses." },
+      text: "one consonant fewer in your hand (two on Hard); only 5 guesses." },
     // Preset Trial is a stage of its own now (cuddle-curses.js), not a boss.
     { id: "presetWordsTrial", icon: "🎴", title: "Preset Trial", kind: "round", boss: false, challenge: false, mix: false, curse: false, reward: 0,
       text: "the answer is one of 10 words shown; only 3 guesses." },
@@ -497,7 +497,7 @@
       id: "shortHand",
       icon: "🥊",
       title: "Short Hand",
-      description: "Your hand holds two consonants fewer for this fight, and you only get four guesses to find the answer.",
+      description: "Your hand holds one consonant fewer for this fight (two on Hard), and you only get five guesses to find the answer.",
       turns: 0,
       rewardId: "revealGreen"
     },
@@ -521,7 +521,7 @@
       id: "letterDemand",
       icon: "📌",
       title: "Letter Demand",
-      description: "Every guess, your word must use a letter the boss names (a new one each guess). You're handed a card of it.",
+      description: "For your first four guesses, each word must use a letter the boss names (a new one each guess). You're handed a card of it.",
       turns: 3,
       rewardId: "biggerMulligans"
     },
@@ -537,7 +537,7 @@
       id: "wordChain",
       icon: "🔗",
       title: "Word Chain",
-      description: "Every guess after the first must start with the last consonant of the word before.",
+      description: "Guesses two to four must each start with the last consonant of the word before.",
       turns: 3,
       rewardId: "revealGreen"
     },

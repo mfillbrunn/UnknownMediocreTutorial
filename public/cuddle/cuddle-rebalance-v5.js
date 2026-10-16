@@ -1936,8 +1936,14 @@
     // A word-rule boss (Letter Demand, Banned Letter, Word Chain, Locked In)
     // holds its rule over the whole fight: over only its first guesses it
     // was barely harder than a plain stage in testing.
+    // Letter Demand and Word Chain rule the opening guesses only: late in
+    // a fight a demanded letter the answer lacks, or a chain letter it
+    // doesn't start with, makes the answer itself unplayable (a third or
+    // more of fights lost in testing, even on every other guess). Demand
+    // rules guesses 1-4; Chain rules 2-4 (guess 1 has nothing to chain from).
     if (boss && !boss.__umtSynthetic && WORD_RULES.includes(boss.id)) {
-      return Array.from({ length: 12 }, () => boss.id);
+      const span = boss.id === "letterDemand" ? [0, 4] : boss.id === "wordChain" ? [1, 4] : [0, 12];
+      return Array.from({ length: 12 }, (_, index) => (index >= span[0] && index < span[1] ? boss.id : null));
     }
     const challenge = activeChallenge(game);
     return challenge && Array.isArray(challenge.plan) ? challenge.plan : null;
@@ -2010,10 +2016,12 @@
     const previous = used > 0 ? history[used - 1] : null;
     const word = previous ? String(previous.word || "").toUpperCase() : "";
     if (word.length !== 5) return null;
-    const consonant = word.split("").reverse().find((letter) => !"AEIOU".includes(letter));
-    // Hardly any word starts with J, Q, X or Z: after one of those, the
+    // Y counts as a vowel here: so many words end in Y, and so few start
+    // with it, that chaining on it stranded the hand.
+    const consonant = word.split("").reverse().find((letter) => !"AEIOUY".includes(letter));
+    // Hardly any word starts with J, Q, V, X or Z: after one of those, the
     // chain is let off for that guess.
-    return consonant && !"JQXZ".includes(consonant) ? consonant : null;
+    return consonant && !"JQVXZ".includes(consonant) ? consonant : null;
   }
 
   // What Locked In holds you to: the greens and yellows the board showed
@@ -4991,7 +4999,12 @@
       if (planEffect(this, guessesUsed(this)) === "noMulligans") {
         return rejectAction(this, "Steady Hand: no mulligans before this guess.");
       }
-      return original.apply(this, args);
+      // Mulliganing away the hand's only card of a demanded or chain letter
+      // must hand the rule's card back, or the guess can't be made at all.
+      return afterResult(original.apply(this, args), (value) => {
+        try { syncRuleCards(this); } catch (error) { log("rule cards failed", error); }
+        return value;
+      }, (error) => { throw error; });
     });
 
     wrapMethod(prototype, "forfeitGuess", function (original, args) {
