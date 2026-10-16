@@ -1411,17 +1411,31 @@
 
   // Skipping an ordinary reward (cuddle-strategies.js): +40 points or +$15,
   // or both with Monk's Vow.
+  // Black Market (cuddle-new-badges.js): $50 for a random badge, once a
+  // reward screen, on top of the pick.
+  function marketRow() {
+    const badges = window.CuddleNewBadges;
+    const offer = badges && typeof badges.marketOffer === "function" ? badges.marketOffer(game) : null;
+    if (!offer) return "";
+    return `<div class="umt-skip-row umt-market-row"><button class="cuddle-btn cuddle-btn-ghost umt-skip-btn is-money" data-action="buy-random-badge"${offer.affordable ? "" : " disabled"}>Black Market: a random badge for $${offer.price}</button>`
+      + `<small>${offer.affordable ? "On top of the reward you pick." : `You have $${offer.wallet}.`}</small></div>`;
+  }
+
   function skipRow() {
     if (typeof game.canSkipUpgrade !== "function" || !game.canSkipUpgrade()) return "";
     const S = window.CuddleStrategies;
     const points = S ? S.SKIP_POINTS : 40;
     const money = S ? S.SKIP_MONEY : 15;
+    // Clean Slate (cuddle-new-badges.js): a skip also levels up a badge.
+    const slate = window.CuddleNewBadges && window.CuddleNewBadges.hasCleanSlate && window.CuddleNewBadges.hasCleanSlate(game)
+      ? `<small>Clean Slate: skipping also levels up one of your badges.</small>` : "";
     if (S && S.hasMonksVow(game)) {
-      return `<div class="umt-skip-row"><button class="cuddle-btn cuddle-btn-ghost umt-skip-btn" data-action="skip-upgrade" data-skip-kind="both">Skip: +${points} points and +$${money}</button><small>Monk's Vow: a skip pays both.</small></div>`;
+      return `<div class="umt-skip-row"><button class="cuddle-btn cuddle-btn-ghost umt-skip-btn" data-action="skip-upgrade" data-skip-kind="both">Skip: +${points} points and +$${money}</button><small>Monk's Vow: a skip pays both.</small>${slate}</div>`;
     }
     return `<div class="umt-skip-row">
             <button class="cuddle-btn cuddle-btn-ghost umt-skip-btn" data-action="skip-upgrade" data-skip-kind="points">Skip: +${points} points</button>
             <button class="cuddle-btn cuddle-btn-ghost umt-skip-btn is-money" data-action="skip-upgrade" data-skip-kind="money">Skip: +$${money}</button>
+            ${slate}
           </div>`;
   }
 
@@ -1496,6 +1510,7 @@
               </button>`).join("")}
           </div>
           ${skipRow()}
+          ${marketRow()}
           <div class="cuddle-upgrade-refresh${refreshCost === null ? " is-no-refresh" : ""}">
             ${refreshCost === null
               ? `<small>${legendary ? "Legendary picks can't be refreshed." : waystone ? "A free upgrade's offer is fixed: no refreshes." : "These choices can't be refreshed."}</small>`
@@ -2147,6 +2162,12 @@
       case "refresh-rewards": {
         const result = game.refreshQuestRewards();
         setUiMessage(result.ok ? "" : result.error);
+        return true;
+      }
+      case "buy-random-badge": {
+        const result = typeof game.buyRandomBadge === "function" ? game.buyRandomBadge() : { ok: false, error: "The Black Market is closed." };
+        setUiMessage(result.ok ? (result.message || "") : result.error);
+        if (result.ok && result.spent) requestAnimationFrame(() => flyWalletChange(-result.spent));
         return true;
       }
       case "skip-upgrade": {

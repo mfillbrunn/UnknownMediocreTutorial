@@ -93,12 +93,24 @@
     return factor === 1 ? value : Math.ceil((value * factor) / 10) * 10;
   }
 
+  // Golden Ledger (cuddle-new-badges.js): money counts toward a boss's
+  // points gate. Every comparison against a gate adds it.
+  function ledgerCredit(game) {
+    try {
+      var badges = window.CuddleNewBadges;
+      return badges && typeof badges.ledgerCredit === "function" ? Math.max(0, Math.floor(Number(badges.ledgerCredit(game)) || 0)) : 0;
+    } catch (_error) {
+      return 0;
+    }
+  }
+
   // Points the run has banked (the live round's guess points don't count
   // until the round ends), as the boss gates compare against.
   function bankedPoints(game) {
-    return game && typeof game.bankedScore === "function"
+    var banked = game && typeof game.bankedScore === "function"
       ? Number(game.bankedScore()) || 0
       : Number((game && game.state && game.state.score) || 0);
+    return banked + ledgerCredit(game);
   }
 
   // The next boss gate the run hasn't cleared yet, and what it costs --
@@ -114,9 +126,7 @@
     return {
       gate: gate,
       required: bossPointRequirement(game, gate),
-      score: game && typeof game.bankedScore === "function"
-        ? game.bankedScore()
-        : Number((game && game.state && game.state.score) || 0)
+      score: bankedPoints(game)
     };
   }
 
@@ -484,7 +494,7 @@
     var branchMap = ensureBranchMap(game);
     var ahead = reachableNodes(branchMap);
     if (!ahead.length || !ahead.every(function isBoss(node) { return node.type === "boss"; })) return false;
-    var score = Number(state.score || 0);
+    var score = Number(state.score || 0) + ledgerCredit(game);
     var required = ahead.reduce(function lowest(min, node) {
       return Math.min(min, bossPointRequirement(game, node.gate));
     }, Infinity);
@@ -878,7 +888,7 @@
     if (!isReachable(branchMap, node)) return { ok: false, error: "No path leads there from here." };
     if (node.type === "boss") {
       var required = bossPointRequirement(this, node.gate);
-      var current = Number(this.state.score || 0);
+      var current = Number(this.state.score || 0) + ledgerCredit(this);
       if (required && current < required && !window.__umtSimIgnoreGates) {
         return {
           ok: false,
@@ -930,7 +940,7 @@
       var base = (node.bossDescription ? node.bossDescription + " " : "")
         + "Pass or fail, and its reward is permanent.";
       var required = bossPointRequirement(game, node.gate);
-      var current = Number((game && game.state && game.state.score) || 0);
+      var current = Number((game && game.state && game.state.score) || 0) + ledgerCredit(game);
       if (required && current < required) {
         base += " Locked: reach " + required + " points to challenge it (you have " + current + ").";
       }
@@ -1637,7 +1647,7 @@
 
   function renderPreviewOverlay(game, node) {
     var required = node.type === "boss" ? bossPointRequirement(game, node.gate) : 0;
-    var current = Number((game && game.state && game.state.score) || 0);
+    var current = Number((game && game.state && game.state.score) || 0) + ledgerCredit(game);
     var locked = Boolean(required) && current < required;
     var brief = window.CuddleWorlds ? stopBriefing(game, node) : null;
     return (

@@ -1829,6 +1829,23 @@
     if (Object.prototype.hasOwnProperty.call(mode, "noOfferStreak")) mode.noOfferStreak = 0;
   }
 
+  // Fast Lane (cuddle-new-badges.js): the stage's first 1-3 guesses are
+  // free of every boss, challenge and curse effect -- they all start that
+  // many guesses later. A plan is shifted by leading empty guesses.
+  function freeOpeners(game) {
+    try {
+      return Math.max(0, Math.floor(asNumber(window.CuddleNewBadges && window.CuddleNewBadges.freeOpeners
+        ? window.CuddleNewBadges.freeOpeners(game) : 0, 0)));
+    } catch (_error) {
+      return 0;
+    }
+  }
+
+  function delayedPlan(game, plan) {
+    const delay = freeOpeners(game);
+    return delay > 0 && Array.isArray(plan) ? Array.from({ length: delay }, () => null).concat(plan) : plan;
+  }
+
   function beginVariant(game, pending) {
     const custom = customState(game);
     if (!custom) return;
@@ -1860,6 +1877,9 @@
         };
       }, {});
       const stacked = variantChallengeIds(variant).length > 1 || variant.ease;
+      const shifted = delayedPlan(game, merged.plan);
+      merged.plan = shifted;
+      merged.masks = shifted;
       custom.activeChallenge = {
         ...merged,
         title: stacked ? variant.title : merged.title,
@@ -1932,7 +1952,7 @@
   function stagePlan(game) {
     const state = stateOf(game) || {};
     const boss = state.boss;
-    if (boss && !boss.__umtSynthetic && Array.isArray(boss.plan)) return boss.plan;
+    if (boss && !boss.__umtSynthetic && Array.isArray(boss.plan)) return delayedPlan(game, boss.plan);
     // A word-rule boss (Letter Demand, Banned Letter, Word Chain, Locked In)
     // rules exactly the guesses its row icon marks: the boss's turns, the
     // same window the board reads (powerIdsForGuess, the engine's
@@ -1941,7 +1961,8 @@
     // longer showed it.
     if (boss && !boss.__umtSynthetic && WORD_RULES.includes(boss.id)) {
       const turns = Math.max(0, Math.floor(Number(boss.turns) || 0));
-      return Array.from({ length: 12 }, (_, index) => (index < turns ? boss.id : null));
+      const delay = freeOpeners(game);
+      return Array.from({ length: 12 + delay }, (_, index) => (index >= delay && index < turns + delay ? boss.id : null));
     }
     const challenge = activeChallenge(game);
     return challenge && Array.isArray(challenge.plan) ? challenge.plan : null;
@@ -4212,14 +4233,18 @@
     }
 
     const boss = state.boss;
+    // Fast Lane pushes the boss's guesses back (the challenge plan above
+    // already carries the shift).
+    const delay = freeOpeners(game);
     if (boss && !boss.__umtSynthetic && Array.isArray(boss.plan)) {
-      if (boss.plan[guessIndex]) add(boss.plan[guessIndex], 0);
-    } else if (boss && !boss.__umtSynthetic) {
+      const planned = guessIndex >= delay ? boss.plan[guessIndex - delay] : null;
+      if (planned) add(planned, 0);
+    } else if (boss && !boss.__umtSynthetic && guessIndex >= delay) {
       const turns = Math.max(0, Math.floor(asNumber(boss.turns, 0)));
       // Same set the engine's _bossActive() reads, so a row is marked with
       // the boss icon on exactly the guesses the boss still constrains.
       const wholeRound = wholeRoundBosses().has(String(boss.id || ""));
-      if (wholeRound || turns <= 0 || guessIndex < turns) add(boss.id || boss.bossId, 0);
+      if (wholeRound || turns <= 0 || guessIndex < turns + delay) add(boss.id || boss.bossId, 0);
     }
 
     // guessIndex is 0-based here; the engine's plan is keyed by 1-based

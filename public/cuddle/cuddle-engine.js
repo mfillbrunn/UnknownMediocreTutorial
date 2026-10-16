@@ -49,6 +49,17 @@
   // round; every other effect re-rolls its span each guess.
   // Fake Feedback and Arrow Signs were the hardest masks by far in testing
   // (lying colours and no colour at all on three tiles): they mark two.
+  // Fast Lane (cuddle-new-badges.js): the stage's first 1-3 guesses are
+  // free of every boss, challenge and curse effect, which all start that
+  // many guesses later instead.
+  function freeOpeners(game) {
+    try {
+      return Math.max(0, Math.floor(Number(window.CuddleNewBadges?.freeOpeners?.(game)) || 0));
+    } catch (_error) {
+      return 0;
+    }
+  }
+
   const FIXED_MASK_SPANS = Object.freeze({ hideFeedback: 1, hiddenMargins: 2, singleLie: 1, fakeFeedback: 2, arrowMode: 2 });
   const ROUND_STABLE_SPANS = new Set(["hideFeedback", "hiddenMargins"]);
 
@@ -572,9 +583,11 @@
       // a run carrying +1 guess every round (mega.extraGuesses) pushed the
       // board past that window and quietly stopped hiding anything on the
       // extra rows, while the row's power icon still promised it would.
+      const delay = freeOpeners(this);
+      if (this.state.guessesUsed < delay) return false;
       if (WHOLE_ROUND_BOSSES.has(boss.id)) return true;
       const turns = Number(boss.turns) || 0;
-      return this.state.guessesUsed < turns;
+      return this.state.guessesUsed < turns + delay;
     }
 
     // The real guess cap for the CURRENT round -- ordinarily just
@@ -4439,6 +4452,15 @@
 (function () {
   "use strict";
 
+  // Fast Lane: see freeOpeners at the top of the file (a separate scope).
+  function freeOpeners(game) {
+    try {
+      return Math.max(0, Math.floor(Number(window.CuddleNewBadges?.freeOpeners?.(game)) || 0));
+    } catch (_error) {
+      return 0;
+    }
+  }
+
   const Engine = window.CuddleEngine;
   const CuddleGame = Engine && Engine.CuddleGame;
   if (!CuddleGame) return;
@@ -5019,13 +5041,16 @@
     // as the stage's own boss and rebuild the plan around a board it doesn't
     // describe, so the plan is frozen for the duration of the swap.
     if (mega.ratchetSwapInFlight && mega.ratchetRowPlan) return mega.ratchetRowPlan;
-    const own = ownNegativeRowCount(game);
-    const key = [state.runId || "run", state.round || 0, state.secret || "", own].join(":");
+    // Fast Lane: the first guesses carry nothing, and a boss's own rows
+    // start after them (a challenge's plan already starts with them).
+    const delay = freeOpeners(game);
+    const own = ownNegativeRowCount(game) + (game.isBossRound() ? delay : 0);
+    const key = [state.runId || "run", state.round || 0, state.secret || "", own, delay].join(":");
     if (mega.ratchetRowPlanKey === key && mega.ratchetRowPlan) return mega.ratchetRowPlan;
 
     const debuffs = (mega.ratchetDebuffs || []).filter(Boolean);
     const claimed = new Set();
-    for (let row = 1; row <= own; row += 1) claimed.add(row);
+    for (let row = 1; row <= Math.max(own, delay); row += 1) claimed.add(row);
 
     // An ordinary stage has no guess limit (see submitDraft), so a
     // displaced ratchet always has somewhere to go.
@@ -5385,7 +5410,10 @@
     const boss = state.boss;
     if (boss && !Array.isArray(boss.plan)) {
       const turns = Number(boss.turns) || 0;
-      if (WHOLE_ROUND_BOSSES.has(boss.id) || turns <= 0 || guessIndex < turns) return this.maskSpanFor(boss.id, guessIndex);
+      const delay = freeOpeners(this);
+      if (guessIndex >= delay && (WHOLE_ROUND_BOSSES.has(boss.id) || turns <= 0 || guessIndex < turns + delay)) {
+        return this.maskSpanFor(boss.id, guessIndex);
+      }
     }
     return [];
   };
