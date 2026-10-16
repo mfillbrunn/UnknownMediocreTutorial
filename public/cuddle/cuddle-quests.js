@@ -521,7 +521,7 @@
       id: "letterDemand",
       icon: "📌",
       title: "Letter Demand",
-      description: "For your first four guesses, each word must use a letter the boss names (a new one each guess). You're handed a card of it.",
+      description: "On the boss's marked guesses, each word must use the letter shown beside it (a new one each guess). You're handed a card of it.",
       turns: 3,
       rewardId: "biggerMulligans"
     },
@@ -529,7 +529,7 @@
       id: "letterBan",
       icon: "🚫",
       title: "Banned Letter",
-      description: "Every guess, your word may not use a letter the boss names. The letter changes every guess.",
+      description: "On the boss's marked guesses, your word may not use the letter shown beside it. The letter changes every guess.",
       turns: 3,
       rewardId: "doubleMulligans"
     },
@@ -537,7 +537,7 @@
       id: "wordChain",
       icon: "🔗",
       title: "Word Chain",
-      description: "Guesses two to four must each start with the last consonant of the word before.",
+      description: "On the boss's marked guesses after the first, each word must start with the letter shown beside it: the last consonant of the word before.",
       turns: 3,
       rewardId: "revealGreen"
     },
@@ -545,7 +545,7 @@
       id: "lockedIn",
       icon: "🔒",
       title: "Locked In",
-      description: "The whole fight in Hard Mode: keep every green letter in its place and use every yellow one.",
+      description: "Hard Mode on the boss's marked guesses: keep every green letter in its place and use every yellow one.",
       turns: 3,
       rewardId: "freeVowelSweep"
     },

@@ -1934,16 +1934,14 @@
     const boss = state.boss;
     if (boss && !boss.__umtSynthetic && Array.isArray(boss.plan)) return boss.plan;
     // A word-rule boss (Letter Demand, Banned Letter, Word Chain, Locked In)
-    // holds its rule over the whole fight: over only its first guesses it
-    // was barely harder than a plain stage in testing.
-    // Letter Demand and Word Chain rule the opening guesses only: late in
-    // a fight a demanded letter the answer lacks, or a chain letter it
-    // doesn't start with, makes the answer itself unplayable (a third or
-    // more of fights lost in testing, even on every other guess). Demand
-    // rules guesses 1-4; Chain rules 2-4 (guess 1 has nothing to chain from).
+    // rules exactly the guesses its row icon marks: the boss's turns, the
+    // same window the board reads (powerIdsForGuess, the engine's
+    // _bossActive). It used to run on a span of its own -- guesses 1-4, or
+    // the whole fight -- so the rule kept being enforced on rows that no
+    // longer showed it.
     if (boss && !boss.__umtSynthetic && WORD_RULES.includes(boss.id)) {
-      const span = boss.id === "letterDemand" ? [0, 4] : boss.id === "wordChain" ? [1, 4] : [0, 12];
-      return Array.from({ length: 12 }, (_, index) => (index >= span[0] && index < span[1] ? boss.id : null));
+      const turns = Math.max(0, Math.floor(Number(boss.turns) || 0));
+      return Array.from({ length: 12 }, (_, index) => (index < turns ? boss.id : null));
     }
     const challenge = activeChallenge(game);
     return challenge && Array.isArray(challenge.plan) ? challenge.plan : null;
@@ -2043,6 +2041,17 @@
     });
     Object.values(greens).forEach((letter) => yellows.delete(letter));
     return { greens, yellows: [...yellows] };
+  }
+
+  // The single letter a word rule pins to guess `used` (0-based), or null:
+  // Letter Demand's letter to use, Banned Letter's to avoid, Word Chain's
+  // to start with. Locked In has no single letter.
+  function ruleLetterFor(game, used) {
+    const effect = planEffect(game, used);
+    const letter = effect === "letterDemand" ? demandLetter(game, used)
+      : effect === "letterBan" ? banLetter(game, used)
+        : effect === "wordChain" ? chainLetter(game, used) : null;
+    return letter ? { id: effect, letter } : null;
   }
 
   // What the current guess's word rule asks, for the clue strip.
@@ -4254,6 +4263,13 @@
     }
   }
 
+  // Word rules that pin one letter to a guess, and how the row says it.
+  const RULE_LETTER_IDS = new Map([
+    ["letterDemand", "use"],
+    ["letterBan", "don't use"],
+    ["wordChain", "start with"]
+  ]);
+
   function renderRowPowerIcons(game) {
     const root = rootElement();
     if (!root) return;
@@ -4292,13 +4308,26 @@
         stack.className = "umt-row-power-icons";
         row.appendChild(stack);
       }
-      const signature = `${ids.join("+")}:${span.join(",")}`;
+      // A word rule on this row with a known letter shows the letter itself
+      // (the row being played: live; a played row: the one it was held
+      // to). Rows still to come keep the rule's icon -- their letter isn't
+      // picked yet.
+      const letterFor = (id) => {
+        if (!RULE_LETTER_IDS.has(id)) return null;
+        if (history) return history.umtRuleLetter && history.umtRuleLetter.id === id ? history.umtRuleLetter.letter : null;
+        if (index !== asInteger(state?.guessesUsed, 0) || state?.status !== "playing") return null;
+        const live = ruleLetterFor(game, index);
+        return live && live.id === id ? live.letter : null;
+      };
+      const letters = ids.map(letterFor);
+      const signature = `${ids.join("+")}:${span.join(",")}:${letters.join("")}`;
       if (stack.dataset.umtSignature === signature) return;
       stack.dataset.umtSignature = signature;
       stack.innerHTML = "";
 
-      ids.forEach((id) => {
+      ids.forEach((id, idIndex) => {
         const info = powerInfo(id);
+        const ruleLetter = letters[idIndex];
         // Only the effect that actually claims tiles names them; a mulligan
         // lock sharing the row has nothing to do with the marked span.
         const marks = span.length && maskingPowerIds().has(id) ? span : [];
@@ -4312,9 +4341,17 @@
         button.dataset.umtPowerScope = marks.length
           ? `Guess ${index + 1} — ${tilePhrase(marks)}`
           : `Guess ${index + 1}`;
-        button.innerHTML = powerSvg(id);
-        button.title = `${scope}. Click for details`;
-        button.setAttribute("aria-label", `${scope}. Open explanation.`);
+        if (ruleLetter) {
+          const verb = RULE_LETTER_IDS.get(id);
+          button.classList.add("umt-rule-letter-button", `is-${id}`);
+          button.innerHTML = `<span class="umt-rule-letter" aria-hidden="true">${ruleLetter}</span>`;
+          button.title = `${info.title}: ${verb} ${ruleLetter} on guess ${index + 1}. Click for details`;
+          button.setAttribute("aria-label", `${info.title}: ${verb} ${ruleLetter} on guess ${index + 1}. Open explanation.`);
+        } else {
+          button.innerHTML = powerSvg(id);
+          button.title = `${scope}. Click for details`;
+          button.setAttribute("aria-label", `${scope}. Open explanation.`);
+        }
         // Quick Mode's per-guess countdown used to live in a header badge
         // (removed -- this row icon is now the only place a boss's effect
         // shows). cuddle-ui.js's paintQuickModeClock still writes into
@@ -4928,6 +4965,9 @@
         const validation = challengeValidation(this, challenge, used);
         if (validation) return rejectAction(this, validation);
       }
+      // Kept on the guess, so its row can go on showing the letter it was
+      // held to (the rule picks against what's known, which moves on).
+      const ruleLetter = ruleLetterFor(this, used);
       const previousBoss = state && state.boss;
       // A mixed boss keeps its own identity (gate, title) through the swap,
       // so the fight's pass/fail rules still apply to this guess.
@@ -4961,7 +5001,10 @@
       return afterResult(result, (value) => {
         restore();
         const history = state && Array.isArray(state.history) ? state.history : [];
-        if (history.length > historyLength) history[history.length - 1].umtPowerIds = activePowers;
+        if (history.length > historyLength) {
+          history[history.length - 1].umtPowerIds = activePowers;
+          if (ruleLetter) history[history.length - 1].umtRuleLetter = ruleLetter;
+        }
         reconcileMysteryKnowledge(this);
         if (history.length > historyLength) {
           applyJackpotBonus(this, history[history.length - 1]);
