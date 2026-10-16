@@ -1994,7 +1994,7 @@
         forgetCuddleSession();
         leftCuddleOnPurpose = true;
         cuddleSeenAt = 0;
-        if (window.UmtGameHub) window.UmtGameHub.showHub();
+        if (window.UmtGameHub) window.UmtGameHub.showHub({ from: "cuddleScreen" });
         else showScreen("startupScreen");
         return false;
       case "run-menu":
