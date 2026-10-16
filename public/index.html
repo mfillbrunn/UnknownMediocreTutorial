@@ -25,7 +25,8 @@
   <!-- 8. Power-specific effects -->
   <link rel="stylesheet" href="css/powers.css?fake-feedback-reveal-fix=1">
   <!-- 9. Lobby-->
-  <link rel="stylesheet" href="css/game-menu.css?menu-account-spacing=1&umt-fix=20260830-1&umt-streamlined=1.0.2&menu-scroll-fix=1&umt-tutorial-rework=20260901&guest-play=1&menu-refresh=20260930">
+  <link rel="stylesheet" href="css/game-menu.css?menu-account-spacing=1&umt-fix=20260830-1&umt-streamlined=1.0.2&menu-scroll-fix=1&umt-tutorial-rework=20260901&guest-play=1&menu-refresh=20260930&game-hub=1">
+  <link rel="stylesheet" href="css/player-insights.css?v=1">
     <!-- 10. Account data-->
   <link rel="stylesheet" href="css/account.css">    
   <!-- 11. Leaderboard-->
@@ -336,8 +337,46 @@
 
     <!-- ========== MAIN ========== -->
       <main id="appMain">
-<!-- ========== START UP ========== -->
-        <section id="startupScreen" class="screen active game-menu streamlined-menu-screen">
+<!-- ========== GAME CHOICE (first screen) ========== -->
+<!-- Vowel Play (multiplayer) or Cuddle (single player). client/game-hub.js
+     routes showStartup() here until Vowel Play is picked. -->
+        <section id="gameHubScreen" class="screen active game-menu streamlined-menu-screen" aria-label="Choose a game">
+  <div class="menu-center streamlined-menu-card">
+    <h2 class="menu-title">CHOOSE A GAME</h2>
+    <div class="menu-buttons streamlined-menu-buttons game-hub-buttons">
+      <button id="hubVowelPlayBtn" class="menu-btn menu-action-btn game-hub-btn" type="button">
+        <span class="menu-action-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false"><rect x="2.5" y="6" width="8.5" height="12" rx="2"/><rect x="13" y="6" width="8.5" height="12" rx="2"/><path d="M5 14.5 6.75 9.5 8.5 14.5M5.6 12.8h2.3M17.25 9.5v5"/></svg>
+        </span>
+        <span class="menu-action-copy">
+          <span class="menu-action-title">Vowel Play</span>
+          <span class="menu-action-subtitle">Word duels with friends or AI</span>
+        </span>
+        <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
+      </button>
+
+      <!-- CUDDLE_MODE:MENU START -->
+      <button id="cuddleBtn" class="menu-btn menu-action-btn game-hub-btn" type="button">
+        <span class="menu-action-icon" aria-hidden="true">
+          <img src="cuddle/icons/cuddle-logo.svg" alt="" width="26" height="26" style="display:block;width:26px;height:26px">
+        </span>
+        <span class="menu-action-copy">
+          <span class="menu-action-title">Cuddle</span>
+          <span class="menu-action-subtitle">A solo card adventure</span>
+        </span>
+        <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
+      </button>
+      <!-- CUDDLE_MODE:MENU END -->
+    </div>
+    <div class="menu-footer-links">
+      <button id="hubBugReportBtn" class="link-btn menu-bug-link" type="button">Report a bug</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========== VOWEL PLAY MENU ========== -->
+        <section id="startupScreen" class="screen game-menu streamlined-menu-screen">
+  <button id="vpBackToHubBtn" class="menu-hub-back" type="button" aria-label="Back to game choice">&#8592; Games</button>
   <div id="menuAccountStatus" class="menu-account-status"></div>
   <div class="menu-center streamlined-menu-card">
     <h2 class="menu-title">VOWEL PLAY</h2>
@@ -364,18 +403,6 @@
         <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
       </button>
 
-      <!-- CUDDLE_MODE:MENU START -->
-      <button id="cuddleBtn" class="menu-btn menu-action-btn" type="button">
-        <span class="menu-action-icon" aria-hidden="true">
-          <img src="cuddle/icons/cuddle-logo.svg" alt="" width="26" height="26" style="display:block;width:26px;height:26px">
-        </span>
-        <span class="menu-action-copy">
-          <span class="menu-action-title">Cuddle</span>
-          <span class="menu-action-subtitle">A solo card adventure</span>
-        </span>
-        <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
-      </button>
-      <!-- CUDDLE_MODE:MENU END -->
 
       <button id="playMainBtn" class="menu-btn menu-action-btn" type="button">
         <span class="menu-action-icon" aria-hidden="true">
@@ -1790,6 +1817,7 @@
   <script src="client/guest-identity.js?guest-play=1"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="client/helpers.js?v=screen-scroll-reset-1"></script>
+  <script src="client/game-hub.js?v=1"></script>
   <script src="client/statistics.js?menu-account-spacing=1&guest-play=1"></script>
   <script src="network/socketClient.js?power-popup-icon=1"></script>
 
@@ -1901,7 +1929,7 @@
 <!-- UMT_CUDDLE_CAMPAIGN_SCRIPT START -->
   <script src="cuddle/cuddle-campaign.js?v=18&points-money-split=1&special-tiles=1&strict-stages=1&r=20261022q"></script>
 <!-- UMT_CUDDLE_CAMPAIGN_SCRIPT END -->
-  <script src="cuddle/cuddle-ui.js?v=63&umt-streamlined=1.0.2&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=3&cuddle-campaign-map=2&skill-tree=1&boss-reward-id=1&count-only-fix=1&points-money-split=1&special-tiles=1&strict-stages=1&r=20261026e"></script>
+  <script src="cuddle/cuddle-ui.js?v=63&umt-streamlined=1.0.2&cuddle-boss-rounds=2&umt-cuddle-rebalance=20260902-cuddle-rebalance-v3&umt-expansion=3&cuddle-campaign-map=2&skill-tree=1&boss-reward-id=1&count-only-fix=1&points-money-split=1&special-tiles=1&strict-stages=1&r=20261026m"></script>
 <!-- CUDDLE_COACH_EXPANSION:SCRIPTS START -->
   <script src="cuddle/cuddle-money-mode.js?v=22&easy-only-hints=1&slower-payout=1&payout-20pct-faster=20261019o&payout-30pct-faster=1&stage-bonus-section=1&points-money-split=1&progression=1&r=20261025i"></script>
   <script src="cuddle/cuddle-coach-expansion.js?v=10&easy-only-hints=1&points-money-split=1&progression=1&r=20261025v"></script>
@@ -1935,6 +1963,7 @@
   <script src="ui/v9-3-ui-fixes.js?v=9-3&bonus-cleanup=1"></script>
   <script src="client/play-menu.js?umt-streamlined=1.0.2&feedback-lie=1&guest-play=1"></script>
   <script src="client/bug-report.js?bug-report=1"></script>
+  <script src="client/player-insights.js?v=2"></script>
   <script src="client/roomid.js"></script>
 <div id="power-fx" aria-hidden="true"></div>
 <div id="submit-banner" aria-hidden="true"></div>
