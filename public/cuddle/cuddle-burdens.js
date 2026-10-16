@@ -503,8 +503,8 @@
     return null;
   };
 
-  // A wave: every letter tile in hand (not vowels or letters you already
-  // know, which stay) goes to the discard, and fresh ones are drawn. Dead
+  // A wave: every consonant tile in hand (vowels stay), typed into the
+  // word or not, goes to the discard, and fresh ones are drawn. Dead
   // cards wash out too, and idea cards, which give their yellow hint.
   function flushWaves(game) {
     var rounds = 0;
@@ -513,11 +513,13 @@
       game.__umtWaves -= 1;
       var state = game.state;
       if (!state || state.status !== "playing") { game.__umtWaves = 0; break; }
-      var drafted = new Set(state.draft || []);
+      // Letters already typed into the word wash out with the rest; the
+      // word being built is cleared, since it has lost letters anyway.
       var swept = state.hand.filter(function consonant(card) {
         return /^[A-Z]$/.test(card.glyph) && !game.isVowelGlyph(card.glyph) && !game.isInfiniteCard(card)
-          && card.source !== "joker" && !drafted.has(card.id);
+          && card.source !== "joker";
       });
+      if (swept.length) state.draft = [];
       // The wave also carries off dead cards (to the discard, like a
       // mulligan) and idea cards, which give their yellow hint as they go.
       // Jokers and lucky cards are yours to keep: it leaves them be.
