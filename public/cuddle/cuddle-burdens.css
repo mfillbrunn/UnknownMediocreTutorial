@@ -155,6 +155,9 @@ body.umt-wave-active #cuddleScreen .cuddle-hand-panel .cuddle-card:not(.is-vowel
 .umt-tap-particle.is-clover { width: 26px; height: 26px; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45)); }
 .umt-tap-particle.is-sparkle { width: 22px; height: 22px; filter: drop-shadow(0 0 6px rgba(185, 140, 255, 1)); }
 .umt-tap-particle svg { display: block; width: 100%; height: 100%; }
+.umt-tap-burst-layer.is-raised { z-index: 400; }
+.umt-tap-particle.is-clover.is-leaving { width: 36px; height: 36px; filter: drop-shadow(0 0 8px rgba(140, 230, 120, 0.8)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4)); }
+.umt-tap-particle.is-ghost { width: 32px; height: 37px; filter: drop-shadow(0 0 8px rgba(220, 210, 255, 0.85)); }
 .umt-tap-particle.is-smog {
   width: 34px;
   height: 34px;
