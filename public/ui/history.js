@@ -375,14 +375,48 @@ function getHistoryScrollState(container) {
   // away from it (exactly the rule the rest of this controller follows) --
   // which is what landedAtBottomByClamping above exists to keep true
   // across the repeated resizes that same panel causes while it is held.
+  //
+  // The rows can also grow while the box stays the same size -- the
+  // Guesser's board widening when the sidebar collapses makes every tile
+  // (and so every row) taller, and a quest card above can shrink the box
+  // at the same moment the rows grow. Watching only the box missed that:
+  // a list that fitted exactly (scrollTop 0) started to overflow with
+  // nothing re-pinning it, leaving the oldest row on top and the newest
+  // hidden under the quest card. So the rows are watched too, by the same
+  // rule.
   if (typeof ResizeObserver !== "undefined") {
     const observer = new ResizeObserver(() => {
-      if (s.detached || s.interacting) return;
+      if (s.interacting) return;
+      // Every row fits: there is nothing to be scrolled away from, so a
+      // "scrolled away" flag left over from earlier is stale. No scroll
+      // event reports this (scrollTop is often already 0 and doesn't
+      // move), and a stale flag here is what stopped the list following
+      // its newest row once it overflowed again.
+      if (historyHasNowhereToScroll(container)) {
+        s.detached = false;
+        s.seenTop = container.scrollTop;
+        s.seenMax = 0;
+        return;
+      }
+      if (s.detached) return;
       container.scrollTop = container.scrollHeight;
       s.seenTop = container.scrollTop;
       s.seenMax = historyMaxScrollTop(container);
     });
     observer.observe(container);
+    Array.from(container.children).forEach(row => observer.observe(row));
+    if (typeof MutationObserver !== "undefined") {
+      new MutationObserver(records => {
+        records.forEach(record => {
+          record.addedNodes.forEach(node => {
+            if (node.nodeType === 1) observer.observe(node);
+          });
+          record.removedNodes.forEach(node => {
+            if (node.nodeType === 1) observer.unobserve(node);
+          });
+        });
+      }).observe(container, { childList: true });
+    }
   }
 
   return s;

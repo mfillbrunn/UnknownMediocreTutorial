@@ -1,0 +1,159 @@
+/* Cuddle's meadow backdrop, and the "portal" that opens onto it when Cuddle
+   is picked on the game-choice screen (client/game-hub.js).
+
+   The picture is wide (1660 x 948). It is laid out with `cover`, so it
+   always fills the screen and crops whatever doesn't fit; the anchor point
+   keeps the little green cube and the tree in view on tall phone screens,
+   where most of the width is cropped away, and loses only sky and sea on
+   very wide ones. */
+
+/* The picture is painted on the page itself (the root element, which
+   always covers the whole viewport) rather than on #cuddleScreen: on wide
+   screens Cuddle sits in a centred column (body.menu-mode's width cap in
+   game-menu.css), and a backdrop on that column alone left dark bands
+   either side of it. (Not body::before -- an app-wide rule already uses
+   that layer and fades it.) */
+html:has(#cuddleScreen.active) {
+  background-color: #2a689f;
+  background-image: var(--umt-meadow-veil), url("backgrounds/cuddle-meadow.jpg");
+  background-image: var(--umt-meadow-veil), image-set(
+    url("backgrounds/cuddle-meadow.webp") type("image/webp"),
+    url("backgrounds/cuddle-meadow.jpg") type("image/jpeg")
+  );
+  background-size: cover, var(--umt-meadow-size);
+  background-position: center, var(--umt-meadow-position);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+body:has(#cuddleScreen.active) {
+  background: transparent;
+}
+
+:root {
+  --umt-meadow-size: cover;
+  --umt-meadow-position: 24% 64%;
+  /* A light veil: the panels on top are dark glass with white text, and
+     the bright sky alone would wash out the edges where text sits on it. */
+  --umt-meadow-veil: linear-gradient(
+    180deg,
+    rgba(8, 22, 48, 0.16) 0%,
+    rgba(8, 22, 48, 0.24) 55%,
+    rgba(8, 22, 48, 0.42) 100%
+  );
+}
+
+/* Tall phone screens: `cover` fits the picture to the screen's height
+   exactly, which parks the cube about two-thirds of the way down -- right
+   behind Cuddle's menu. Drawing it a quarter taller and pinning its top
+   drops the cube below the menu (only grass is lost at the bottom), and
+   the anchor keeps the cube and the tree in the visible slice. */
+@media (max-aspect-ratio: 3/4) {
+  :root {
+    --umt-meadow-size: auto 125%;
+    --umt-meadow-position: 21% 0%;
+  }
+}
+
+/* Wide, short windows: the cube sits a little below centre, keep it up. */
+@media (min-aspect-ratio: 2/1) {
+  :root {
+    --umt-meadow-position: 24% 58%;
+  }
+}
+
+#cuddleScreen.screen {
+  background: transparent;
+}
+
+/* The menu's lighter text and outline buttons were made for a dark
+   ground; on the sky they need a little glass behind them. */
+#cuddleScreen .cuddle-tagline {
+  color: #fff;
+  text-shadow: 0 1px 10px rgba(6, 22, 52, 0.75);
+}
+
+#cuddleScreen .cuddle-landing .cuddle-hero h1,
+#cuddleScreen .cuddle-landing .cuddle-hero h2 {
+  text-shadow: 0 2px 18px rgba(6, 22, 52, 0.55);
+}
+
+#cuddleScreen .cuddle-landing .cuddle-btn-ghost,
+#cuddleScreen .cuddle-landing .umt-unl-bar,
+#cuddleScreen .cuddle-landing .cuddle-save-summary,
+#cuddleScreen .cuddle-landing .cuddle-icon-btn,
+#cuddleScreen .cuddle-landing .umt-coin-chip {
+  background-color: rgba(17, 16, 32, 0.58);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: #f7f4ff;
+}
+
+/* Arriving: the Cuddle screen's own content rises in over the backdrop. */
+body.umt-meadow-arriving #cuddleScreen .cuddle-root {
+  animation: umtMeadowContentIn 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes umtMeadowContentIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- The portal ---------- */
+
+.umt-meadow-portal {
+  position: fixed;
+  inset: 0;
+  z-index: 99990;
+  pointer-events: none;
+  background-color: #2a689f;
+  /* Same picture and veil as the backdrop it hands over to. */
+  background-image: var(--umt-meadow-veil), url("backgrounds/cuddle-meadow.jpg");
+  background-image: var(--umt-meadow-veil), image-set(
+    url("backgrounds/cuddle-meadow.webp") type("image/webp"),
+    url("backgrounds/cuddle-meadow.jpg") type("image/jpeg")
+  );
+  background-size: cover, var(--umt-meadow-size);
+  background-position: center, var(--umt-meadow-position);
+  background-repeat: no-repeat;
+  clip-path: circle(0 at var(--portal-x, 50%) var(--portal-y, 50%));
+  transform: scale(1.08);
+  animation: umtMeadowPortalOpen 680ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  will-change: clip-path, transform;
+}
+
+/* A soft rim on the opening circle, like light spilling through. */
+.umt-meadow-portal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at var(--portal-x, 50%) var(--portal-y, 50%),
+    rgba(255, 255, 255, 0.55),
+    rgba(255, 255, 255, 0) 38%
+  );
+  animation: umtMeadowGlow 680ms ease-out forwards;
+}
+
+.umt-meadow-portal.is-leaving {
+  opacity: 0;
+  transition: opacity 360ms ease;
+}
+
+@keyframes umtMeadowPortalOpen {
+  to {
+    clip-path: circle(150vmax at var(--portal-x, 50%) var(--portal-y, 50%));
+    transform: scale(1);
+  }
+}
+
+@keyframes umtMeadowGlow {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.umt-meadow-arriving #cuddleScreen .cuddle-root {
+    animation: none;
+  }
+}
