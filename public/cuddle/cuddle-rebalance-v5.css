@@ -619,7 +619,7 @@ html.umt-mandatory-challenge .cuddle-challenge-decline {
 
 /* A word rule's letter on the guess row, in place of the rule's icon:
    Letter Demand's letter to use, Word Chain's to start with (both a red
-   disc), Banned Letter's to avoid (the same disc, struck through). */
+   disc), Banned Letter's to avoid (the letter in a red ring). */
 #cuddleScreen .umt-power-icon-button.umt-rule-letter-button {
   display: grid;
   place-items: center;
@@ -644,16 +644,12 @@ html.umt-mandatory-challenge .cuddle-challenge-decline {
   letter-spacing: 0;
 }
 
-#cuddleScreen .umt-rule-letter-button.is-letterBan .umt-rule-letter::after {
-  content: "";
-  position: absolute;
-  left: 3px;
-  right: 3px;
-  top: 50%;
-  height: 2.5px;
-  border-radius: 2px;
-  background: #fff;
-  transform: translateY(-50%) rotate(-45deg);
+/* Banned Letter: the letter inside a red ring, not a filled disc -- a
+   strike through it made the letter hard to read. */
+#cuddleScreen .umt-rule-letter-button.is-letterBan .umt-rule-letter {
+  background: rgba(20, 14, 28, 0.82);
+  box-shadow: inset 0 0 0 2.5px #e2434f, 0 0 0 1.5px rgba(255, 255, 255, 0.7), 0 3px 10px rgba(216, 67, 79, 0.45);
+  color: #fff;
 }
 
 /* The score column's own small boss icon peeks out from under the larger

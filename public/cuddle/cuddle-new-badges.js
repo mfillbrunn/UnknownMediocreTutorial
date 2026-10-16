@@ -3,7 +3,7 @@
  * Restraint
  *   Clean Slate (legendary)  skipping a reward also levels up one of your
  *                            badges at random.
- *   Ascetic (legendary)      with 5 badges or fewer (itself included),
+ *   Ascetic (legendary)      with 5 non-Restraint badges or fewer,
  *                            every solved stage pays 1.5x its points.
  * Quests
  *   Quest Mastery (legendary) every quest reward is one step bigger (2
@@ -135,7 +135,8 @@
     var count = 0;
     tree.BRANCHES.forEach(function branch(group) {
       (group.nodes || []).forEach(function node(item) {
-        if (!item || item.type === "combo") return;
+        // Restraint's own badges (Ascetic included) don't count.
+        if (!item || item.type === "combo" || item.school === "pearl") return;
         try {
           if (num(tree.level(game, item)) > 0) count += 1;
         } catch (_error) {

@@ -269,7 +269,7 @@
           level: g => powerLevel(g, "fullCircle") },
         // Minimalist and Eliminator (cuddle-strategies.js).
         { id: "leanBuild", icon: "🧹", title: "Lean Build", tier: "epic", type: "points", maxLevel: 1,
-          description: "Each solve gives +20 points (world 1), +40 points (world 2) or +100 points (world 3), minus 5 points for every other badge you have.",
+          description: "Each solve gives +20 points (world 1), +40 points (world 2) or +100 points (world 3), minus 5 points for every badge you have outside Restraint.",
           level: g => powerLevel(g, "leanBuild") },
         { id: "monksVow", icon: "🕯️", title: "Monk's Vow", tier: "rare", type: "money", maxLevel: 1,
           description: "Skipping a reward gives you both: +40 points and +$15.",
@@ -301,7 +301,7 @@
           description: "Skipping a reward also levels up one of your badges at random.",
           level: g => powerLevel(g, "cleanSlate") },
         { id: "ascetic", icon: "🧘", title: "Ascetic", tier: "legendary", type: "points", maxLevel: 1,
-          description: "While you have 5 badges or fewer (this one included), every stage you solve pays 1.5 times its points.",
+          description: "While you have 5 badges or fewer outside Restraint, every stage you solve pays 1.5 times its points.",
           level: g => powerLevel(g, "ascetic") },
         { id: "questMastery", icon: "📜", title: "Quest Mastery", tier: "legendary", type: "quests", maxLevel: 1,
           description: "Every quest reward is one step bigger: 2 mulligans instead of 1, 3 vowels checked instead of 2, 3 letters ruled out instead of 2, and so on.",
