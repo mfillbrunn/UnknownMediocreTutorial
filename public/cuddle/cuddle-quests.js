@@ -323,12 +323,9 @@
       title: "Extra Mulligan",
       description: "+1 mulligan for this stage."
     },
-    {
-      id: "letterProbe",
-      icon: "🔎",
-      title: "Letter Count",
-      description: "2 random consonants from your hand: you see how many times each one is in the answer."
-    },
+    // Letter Count ("letterProbe": how many times 2 hand consonants are in
+    // the answer) is no longer offered: Rule Out (cuddle-powers.js) covers
+    // consonants. Its effect stays in the engine for older saves.
     {
       id: "sillyWord",
       icon: "🤪",

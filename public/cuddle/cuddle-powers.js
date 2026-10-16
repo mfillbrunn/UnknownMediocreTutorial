@@ -16,7 +16,7 @@
  *      Grace Period and Bold Opener. They join the reward pool here and
  *      change how a stage is played rather than adding a flat number.
  *
- *   3. More quest rewards: Vowel Check, Spotlight, Pocket Money,
+ *   3. More quest rewards: Rule Out, Vowel Check, Spotlight, Pocket Money,
  *      and Quick Points, alongside the existing ones.
  *
  * A power's level is the registry's level reader, so a power taken from a
@@ -347,9 +347,7 @@
   // -------------------------------------------------------------------------
 
   var QUEST_REWARDS = [
-    // Rule Out ("2 consonants that aren't in the answer turn grey") is no
-    // longer offered: it overlapped Letter Count, which checks 2 consonants.
-    // Its effect stays below for a save already showing it as a choice.
+    { id: "umtRuleOut", icon: "🚫", title: "Rule Out", description: "2 consonants in your hand that aren't in the answer turn grey, and are swapped for new cards." },
     { id: "umtVowelCheck", icon: "🔤", title: "Vowel Check", description: "2 vowels you haven't tried are tested: you learn if each one is in the answer." },
     { id: "umtSpotlight", icon: "👁️", title: "Spotlight", description: "A yellow letter moves to its exact spot and turns green (or the next yellow you find does)." },
     { id: "umtPocketMoney", icon: "💰", title: "Pocket Money", description: "Get +$10 right now." },
@@ -441,8 +439,16 @@
       }
       if (!chosen.length) return "Rule Out: none of your consonants can be ruled out.";
       state.knownAbsent = uniqueSorted((state.knownAbsent || []).concat(chosen));
+      // The ruled-out cards leave the hand, and fresh ones are drawn.
+      var draft = new Set(state.draft || []);
+      var gone = (state.hand || []).filter(function ruledOut(card) {
+        return card && chosen.indexOf(String(card.glyph || "").toUpperCase()) !== -1 && !draft.has(card.id)
+          && !(typeof game.isInfiniteCard === "function" && game.isInfiniteCard(card));
+      }).map(function id(card) { return card.id; });
+      if (gone.length && typeof game._discardCards === "function") game._discardCards(gone);
       if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
-      return "Rule Out: " + (chosen.length > 2 ? chosen.slice(0, -1).join(", ") + " and " + chosen[chosen.length - 1] : chosen.join(" and ")) + " " + (chosen.length === 1 ? "is" : "are") + " not in the answer.";
+      if (typeof game.drawToHandLimit === "function") game.drawToHandLimit();
+      return "Rule Out: " + (chosen.length > 2 ? chosen.slice(0, -1).join(", ") + " and " + chosen[chosen.length - 1] : chosen.join(" and ")) + " " + (chosen.length === 1 ? "is" : "are") + " not in the answer" + (gone.length ? ", swapped for new cards." : ".");
     },
     umtVowelCheck: function vowelCheck(game) {
       var state = game.state;

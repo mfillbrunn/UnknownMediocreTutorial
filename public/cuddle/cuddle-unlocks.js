@@ -41,7 +41,7 @@
     { points: 400, themes: ["swamp"] },
     { points: 520, rules: ["countOnly", "wordChain"] },
     { points: 640, badges: ["doubleDown", "highRoller"] },
-    { points: 760, quest: ["letterProbe", "umtVowelCheck"] },
+    { points: 760, quest: ["umtVowelCheck"] },
     { points: 880, rules: ["questEndurance"] },
     { points: 1000, themes: ["frost"] },
     { points: 1150, badges: ["hardMode", "strikeThrough"] },
