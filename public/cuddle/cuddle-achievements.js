@@ -217,7 +217,10 @@
     var bosses = Math.max(Number(state.bossesCleared) || 0, Array.isArray(state.bossGatesDone) ? state.bossGatesDone.length : 0);
     if (bosses > 0 || state.status === "won") unlock("firstBoss");
 
-    var powers = countPowers(game);
+    // Easy shows no badges (cuddle-easy-mode.js) and starts with Bigger Hand
+    // at its top level, so badge achievements wait for Medium and Hard.
+    var easy = Boolean(window.CuddleEasyMode && window.CuddleEasyMode.isEasy(game));
+    var powers = easy ? { legendary: 0, epic: 0, maxCommon: false, maxRare: false } : countPowers(game);
     if (powers.legendary >= 4) unlock("legendary4");
     if (powers.epic >= 10) unlock("epic10");
     if (powers.maxCommon) unlock("maxCommon");

@@ -68,6 +68,13 @@
     return shown(document.querySelector(selector));
   }
 
+  // Easy (cuddle-easy-mode.js) is a short straight road with no badges on
+  // show: some cards have an Easy version, and some don't apply there.
+  function easyRun(game) {
+    return Boolean(window.CuddleEasyMode && window.CuddleEasyMode.isEasy(game));
+  }
+  function onlyEasy(game) { return !easyRun(game); }
+
   function stagesSolved(state) {
     var stats = state.umtRunStats;
     return Number(stats && stats.stages) || 0;
@@ -111,7 +118,9 @@
       },
       at: "bottom",
       cards: [
-        { title: "The map", text: "Each row of the map is a choice of stops, and you move up one row at a time. Tap a <b>Wordle</b> stop on the first row to play your first stage." }
+        { title: "Welcome to Cuddle", skip: onlyEasy, text: "Cuddle is Wordle as a short walk: solve a few words in a row, then beat the boss at the end of the road. Every letter of the answer is already in your hand, and the answer's themes are shown at the top." },
+        { title: "The road", skip: onlyEasy, text: "The road is a straight line. Tap the next stop to play it." },
+        { title: "The map", skip: easyRun, text: "Each row of the map is a choice of stops, and you move up one row at a time. Tap a <b>Wordle</b> stop on the first row to play your first stage." }
       ]
     },
     {
@@ -154,7 +163,8 @@
       },
       at: "top",
       cards: [
-        { title: "Pick an upgrade", text: "After each stage you choose one of these, and it helps for the rest of the run. Every card on a screen shares one rarity: <span class=\"umt-tut-common\">Common</span>, <span class=\"umt-tut-rare\">Rare</span> or <span class=\"umt-tut-epic\">Epic</span>. <span class=\"umt-tut-legendary\">Legendary</span> ones only come after a boss. Don't like them? Refresh for a few dollars.", focus: ".cuddle-choice-grid", at: "bottom" }
+        { title: "Pick a helper", skip: onlyEasy, text: "After each stage, pick one helper. It stays with you to the end of the run.", focus: ".cuddle-choice-grid", at: "bottom" },
+        { title: "Pick an upgrade", skip: easyRun, text: "After each stage you choose one of these, and it helps for the rest of the run. Every card on a screen shares one rarity: <span class=\"umt-tut-common\">Common</span>, <span class=\"umt-tut-rare\">Rare</span> or <span class=\"umt-tut-epic\">Epic</span>. <span class=\"umt-tut-legendary\">Legendary</span> ones only come after a boss. Don't like them? Refresh for a few dollars.", focus: ".cuddle-choice-grid", at: "bottom" }
       ]
     },
     {
@@ -165,8 +175,9 @@
       },
       at: "bottom",
       cards: [
-        { title: "Choose your path", text: "Every Wordle stop shows only how hard it is: a <b>heart</b> is an easier one, no mark a regular one, and one to three red <b>skulls</b> a harder one with a twist you find out by playing it. Harder stops pay more points and money. Shops, events and free upgrades sit between them." },
-        { title: "Bosses and winning", text: "Each world ends in a <b>boss</b>. You need enough points to challenge it, shown on the boss. Bosses bend the rules, and beating one gives you a <span class=\"umt-tut-legendary\">Legendary</span> pick. Beat the final boss to win the run.", focus: ".cuddle-header-points" }
+        { title: "Choose your path", skip: easyRun, text: "Every Wordle stop shows only how hard it is: a <b>heart</b> is an easier one, no mark a regular one, and one to three red <b>skulls</b> a harder one with a twist you find out by playing it. Harder stops pay more points and money. Shops, events and free upgrades sit between them." },
+        { title: "The boss", skip: onlyEasy, text: "The road ends at a <b>boss</b>. It bends the rules a little: beat it and you win the run." },
+        { title: "Bosses and winning", skip: easyRun, text: "Each world ends in a <b>boss</b>. You need enough points to challenge it, shown on the boss. Bosses bend the rules, and beating one gives you a <span class=\"umt-tut-legendary\">Legendary</span> pick. Beat the final boss to win the run.", focus: ".cuddle-header-points" }
       ]
     },
     {
@@ -189,7 +200,8 @@
       at: "bottom",
       done: true,
       cards: [
-        { title: "You've got it", text: "That's the loop: solve stages, cash out, pick upgrades, and build up the points to take on the bosses. Good luck!" }
+        { title: "You've got it", skip: onlyEasy, text: "That's it: solve the stages, pick helpers, and beat the boss at the end. Good luck!" },
+        { title: "You've got it", skip: easyRun, text: "That's the loop: solve stages, cash out, pick upgrades, and build up the points to take on the bosses. Good luck!" }
       ]
     }
   ];

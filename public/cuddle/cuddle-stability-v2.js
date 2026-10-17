@@ -139,8 +139,14 @@
     const book = window.CuddleQuestBook || {};
     const seen = new Set(Array.isArray(game?.state?.bossesSeen) ? game.state.bossesSeen : []);
     const selected = [];
+    // Bosses the player hasn't unlocked (cuddle-unlocks.js) and, on a first
+    // run or Easy, the quest bosses: never drawn, from either source below.
+    const shut = new Set([
+      ...(window.CuddleUnlocks ? window.CuddleUnlocks.lockedBosses() : []),
+      ...(window.CuddleFirstRun ? window.CuddleFirstRun.questChallenges(game) : [])
+    ]);
     const add = definition => {
-      if (!definition || !definition.id || selected.some(item => item.id === definition.id)) return;
+      if (!definition || !definition.id || shut.has(definition.id) || selected.some(item => item.id === definition.id)) return;
       selected.push({ ...definition });
     };
     for (let attempt = 0; attempt < 12 && selected.length < count; attempt += 1) {
@@ -152,12 +158,7 @@
         (Array.isArray(choices) ? choices : []).forEach(add);
       } catch (_error) {}
     }
-    // Topped up from the whole list -- except bosses the player hasn't
-    // unlocked (cuddle-unlocks.js) and, on a first run, the quest bosses.
-    const shut = new Set([
-      ...(window.CuddleUnlocks ? window.CuddleUnlocks.lockedBosses() : []),
-      ...(window.CuddleFirstRun ? window.CuddleFirstRun.questChallenges(game) : [])
-    ]);
+    // Topped up from the whole list.
     shuffled(getBossPool().filter(item => !shut.has(item.id)), game?.random || Math.random).forEach(add);
     return selected.slice(0, count);
   }

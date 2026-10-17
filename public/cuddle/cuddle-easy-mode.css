@@ -1,0 +1,38 @@
+/* Cuddle Easy (cuddle-easy-mode.js): badges stay out of sight. */
+
+/* No badge page, counts or end-of-run badge list. */
+body.umt-easy-mode #cuddleScreen .umt-pt-open,
+body.umt-easy-mode #cuddleScreen .cuddle-end-badges,
+body.umt-easy-mode #cuddleScreen .umt-progress-host {
+  display: none !important;
+}
+
+/* A reward is shown by what it does: no badge name, icon, rarity or
+   level, and none of the reward screen's extras (skip, market, refresh,
+   money). */
+body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .cuddle-choice > strong,
+body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .cuddle-choice-icon,
+body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .cuddle-v8-rarity-badge,
+body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .cuddle-v8-level-tag,
+body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .umt-wide-tag,
+body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .umt-skip-row,
+body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .umt-market-row,
+body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .cuddle-upgrade-refresh,
+body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .cuddle-upgrade-wallet {
+  display: none !important;
+}
+
+body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .cuddle-choice {
+  justify-content: center;
+  min-height: 84px;
+  border-color: rgba(143, 208, 164, 0.55) !important;
+  background: linear-gradient(160deg, rgba(36, 74, 52, 0.92), rgba(20, 44, 32, 0.92)) !important;
+  box-shadow: none !important;
+}
+
+body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .cuddle-choice small {
+  color: #f1fff5;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
