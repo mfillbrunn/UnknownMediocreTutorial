@@ -283,7 +283,20 @@
       ])
     })
   ]);
-  const EVENT_BY_ID = Object.freeze(Object.fromEntries(EVENTS.map(item => [item.id, item])));
+  // Events placed on purpose, never drawn at random: Educational's
+  // crossroads (cuddle-easy-mode.js) between its second and third stages.
+  const PLACED_EVENTS = Object.freeze([
+    Object.freeze({
+      id: "eduCrossroads",
+      title: "Crossroads",
+      flavor: "The road forks for a moment. Which help do you want for the rest of the way?",
+      options: Object.freeze([
+        opt("safe", "More themes", "Every answer from here on shows all of its themes.", [{ type: "eduChoice", choice: "themes" }]),
+        opt("bold", "More consonants", "Two more consonants in your hand every stage, so it's harder to tell which ones are in the answer. Stages pay +50% points.", [{ type: "eduChoice", choice: "consonants" }])
+      ])
+    })
+  ]);
+  const EVENT_BY_ID = Object.freeze(Object.fromEntries(EVENTS.concat(PLACED_EVENTS).map(item => [item.id, item])));
 
   let installAttempts = 0;
   let legendOpen = false;
@@ -1203,6 +1216,11 @@
           }
           case "curse":
             messages.push(addEventCurse(game));
+            break;
+          case "eduChoice":
+            if (window.CuddleEasyMode && typeof window.CuddleEasyMode.choose === "function") {
+              messages.push(window.CuddleEasyMode.choose(game, effect.choice));
+            }
             break;
           case "deadTile":
             if (window.CuddleBurdens) messages.push(window.CuddleBurdens.addDead(game, effect.amount || 1));

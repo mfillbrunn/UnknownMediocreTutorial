@@ -5,10 +5,14 @@
  *   - the map is a straight line of Themed Wordles (and one Free Upgrade
  *     before the boss): no forks, shops, events, Unknown stops, Duels or
  *     Trials;
- *   - every theme of the answer is shown from the start (Theme Sense at
- *     its top level);
+ *   - two themes of every answer are shown from the start;
  *   - every consonant of the answer is in the hand, from the opening hand
- *     and again after every guess; no mulligans and no deck on screen;
+ *     and again after every guess, among a few others: 1 on the first
+ *     stage, then 2, 3, 4, and 5 at the boss (DECOYS); no mulligans and no
+ *     deck on screen;
+ *   - a Crossroads stop after the second stage asks: more themes (every
+ *     theme shown from then on) or more consonants (two more in every
+ *     hand, and stages pay +50% points);
  *   - no quests, special squares or badge packs;
  *   - badges stay out of sight: no badge page or counts, and a reward
  *     screen offers three simple helpers, shown by what they do rather than
@@ -32,6 +36,12 @@
   var EASY_HELPERS = ["vowelLamp", "echoFinder", "yellowHint", "patternLens", "greenCount", "lastLight",
     "alphabet-compass", "consonantSweep", "coachPossibleAnswers", "boldOpener", "goldenOpener"];
   var MAX_THEMES = 3;
+  var BASE_THEMES = 2;
+  // Consonants in the hand besides the answer's, by stage (the boss last).
+  var DECOYS = [1, 2, 3, 4, 5];
+  var EXTRA_DECOYS = 2;
+  var CONSONANT_BONUS = 0.5;
+  var CROSSROADS_ROW = 2;
 
   function stateOf(gameOrState) {
     if (!gameOrState) return null;
@@ -68,7 +78,7 @@
           // No badge packs: not the free one at the start, nor later ones.
           state.umtPackOffer = null;
           state.umtPackTrack = { seen: [0, 0, 0], offered: [true, true, true] };
-          showAllThemes(state);
+          showThemes(state, BASE_THEMES);
           state.mulligansLeft = 0;
           clearQuests(state);
           state.cuddleMoneyTiles = [];
@@ -79,9 +89,47 @@
     };
   }
 
-  function showAllThemes(state) {
+  function showThemes(state, count) {
     if (!state.cuddleCampaign || typeof state.cuddleCampaign !== "object") state.cuddleCampaign = {};
-    state.cuddleCampaign.categorySense = Math.max(MAX_THEMES, Number(state.cuddleCampaign.categorySense) || 0);
+    state.cuddleCampaign.categorySense = Math.max(count, Number(state.cuddleCampaign.categorySense) || 0);
+  }
+
+  function eduState(state) {
+    if (!state.umtEdu || typeof state.umtEdu !== "object") state.umtEdu = { choice: null };
+    return state.umtEdu;
+  }
+
+  // The Crossroads (cuddle-expanded-stages.js eduCrossroads).
+  function choose(game, choice) {
+    var state = game && game.state;
+    if (!state) return "";
+    var edu = eduState(state);
+    edu.choice = choice === "consonants" ? "consonants" : "themes";
+    if (edu.choice === "themes") {
+      showThemes(state, MAX_THEMES);
+      return "From here on, every answer shows all of its themes.";
+    }
+    return "From here on, two more consonants in every hand, and stages pay +50% points.";
+  }
+
+  // Which stage this is: Wordles and the boss reached so far (the
+  // Crossroads and the Free Upgrade don't count).
+  function stageNumber(state) {
+    var map = state.branchMap;
+    if (!map || !Array.isArray(map.rows) || !map.position) return 1;
+    var row = Number(map.position.row);
+    var count = 0;
+    for (var i = 0; i <= row && i < map.rows.length; i += 1) {
+      var node = map.rows[i] && map.rows[i].nodes && map.rows[i].nodes[0];
+      if (node && node.type !== "event" && node.type !== "upgrade" && node.type !== "shop") count += 1;
+    }
+    return Math.max(1, count);
+  }
+
+  function decoyCount(state) {
+    var base = DECOYS[Math.min(DECOYS.length - 1, stageNumber(state) - 1)];
+    if (state.boss) base = DECOYS[DECOYS.length - 1];
+    return base + (eduState(state).choice === "consonants" ? EXTRA_DECOYS : 0);
   }
 
   function clearQuests(state) {
@@ -122,16 +170,23 @@
       rows.push(row);
     });
     if (rows.length !== map.rows.length) changed = true;
+    // The Crossroads, once, after the second stage.
+    if (!map.umtEduCrossroads && rows.length > CROSSROADS_ROW + 1 && position < CROSSROADS_ROW) {
+      rows.splice(CROSSROADS_ROW, 0, { kind: "stops", act: 0, nodes: [{ type: "event", expandedEventId: "eduCrossroads", eduCrossroads: true, next: [] }] });
+      map.umtEduCrossroads = true;
+      changed = true;
+    }
     rows.forEach(function line(row, index) {
       var nodes = row.nodes || [];
       var walked = map.position && Number(map.position.row) === index ? nodes[Number(map.position.col)] : null;
-      var keep = walked || nodes.find(function n(node) { return node && (node.type === "boss" || node.type === "final"); })
+      var keep = walked || nodes.find(function c(node) { return node && node.eduCrossroads; })
+        || nodes.find(function n(node) { return node && (node.type === "boss" || node.type === "final"); })
         || (row.restFork ? nodes.find(function u(node) { return node && node.type === "upgrade"; }) : null)
         || nodes[0];
       if (!keep) return;
       // Every stop is a Themed Wordle (cuddle-rebalance-v5.js gives it the
       // variant); here it just loses whatever else it was.
-      if (!walked && index > position && keep.type !== "boss" && keep.type !== "final" && keep.type !== "upgrade") {
+      if (!walked && index > position && !keep.eduCrossroads && keep.type !== "boss" && keep.type !== "final" && keep.type !== "upgrade") {
         if (keep.type !== "theme") changed = true;
         keep.type = "theme";
         delete keep.mysteryType;
@@ -141,6 +196,14 @@
         delete keep.challengeId;
         delete keep.shopSlot;
         if (keep.cuddleVariant && keep.cuddleVariant.kind !== "themedWordle") delete keep.cuddleVariant;
+      }
+      // The Crossroads stays one (a first run's calm map turns events into
+      // Wordles before this runs).
+      if (keep.eduCrossroads && !walked && index > position && (keep.type !== "event" || keep.expandedEventId !== "eduCrossroads")) {
+        keep.type = "event";
+        keep.expandedEventId = "eduCrossroads";
+        delete keep.cuddleVariant;
+        changed = true;
       }
       if (keep.restChoice) { delete keep.restChoice; changed = true; }
       if (nodes.length !== 1) changed = true;
@@ -246,6 +309,29 @@
         held[letter] = (held[letter] || 0) + 1;
       }
     });
+    // Then the other consonants: as many as this stage allows.
+    var wanted = decoyCount(state);
+    var spareCount = function spareCount() {
+      var seen = {};
+      return state.hand.filter(function spare(card) {
+        if (!plain(game, card)) return false;
+        seen[card.glyph] = (seen[card.glyph] || 0) + 1;
+        return seen[card.glyph] > (need[card.glyph] || 0);
+      });
+    };
+    var spares = spareCount();
+    while (spares.length > wanted) {
+      var drop = spares.pop();
+      state.hand.splice(state.hand.indexOf(drop), 1);
+      state.deck.push(drop);
+    }
+    while (spares.length < wanted) {
+      var from = state.deck.findIndex(function decoy(card) { return plain(game, card) && !need[card.glyph]; });
+      if (from < 0) break;
+      var card = state.deck.splice(from, 1)[0];
+      state.hand.push(card);
+      spares.push(card);
+    }
   }
 
   var basePrepare = proto._prepareInitialHand;
@@ -257,6 +343,41 @@
     return result;
   };
 
+  // Refills go through the same deal: the answer's consonants and this
+  // stage's share of others, not a hand filled to its size.
+  var baseDraw = proto.drawToHandLimit;
+  if (typeof baseDraw === "function") {
+    proto.drawToHandLimit = function drawToHandLimitEasy() {
+      if (!isEasy(this) || !this.state || this.state.status !== "playing" || !this.state.secret) return baseDraw.apply(this, arguments);
+      try { dealAnswer(this); } catch (error) { console.warn("Cuddle Educational: dealing the answer failed.", error); }
+      return [];
+    };
+  }
+
+  // Is any consonant of the answer missing from the hand (a stage that
+  // picks its answer after the deal, say)?
+  function handMissesAnswer(game) {
+    var state = game.state;
+    var secret = String(state.secret || "").toUpperCase();
+    if (!/^[A-Z]{5}$/.test(secret) || !Array.isArray(state.hand)) return false;
+    var glyphs = state.hand.map(function g(card) { return card && card.glyph; });
+    return secret.split("").some(function missing(letter) {
+      if ("AEIOU".indexOf(letter) !== -1) return false;
+      var need = secret.split("").filter(function same(x) { return x === letter; }).length;
+      return glyphs.filter(function same(x) { return x === letter; }).length < need;
+    });
+  }
+
+  function keepHandDealt(game) {
+    var state = game && game.state;
+    if (!state || state.status !== "playing" || !isEasy(game) || (state.draft || []).length) return false;
+    var stale = handMissesAnswer(game) || state.umtEduDealtFor !== String(state.secret) + ":" + (state.history || []).length;
+    if (!stale) return false;
+    try { dealAnswer(game); } catch (_error) { return false; }
+    state.umtEduDealtFor = String(state.secret) + ":" + (state.history || []).length;
+    return true;
+  }
+
   // Consonants are spent by a guess: the hand is topped up with the
   // answer's again after each one.
   var baseSubmit = proto.submitDraft;
@@ -266,6 +387,15 @@
       // would pay as unused at the solve).
       if (isEasy(this) && this.state) this.state.mulligansLeft = 0;
       var result = baseSubmit.apply(this, arguments);
+      var state = this.state;
+      var history = state && Array.isArray(state.history) ? state.history : [];
+      var last = history[history.length - 1];
+      if (isEasy(this) && result && result.ok && last && last.word === state.secret && !last.umtEduBonus
+          && eduState(state).choice === "consonants" && window.CuddleRebalanceV5 && typeof window.CuddleRebalanceV5.addStageBonus === "function") {
+        last.umtEduBonus = true;
+        var bonus = Math.round((Number(state.roundScore) || 0) * CONSONANT_BONUS);
+        if (bonus > 0) window.CuddleRebalanceV5.addStageBonus(this, bonus, "umtEduConsonants", "More consonants: +50%");
+      }
       if (isEasy(this) && this.state && this.state.status === "playing") {
         try { dealAnswer(this); } catch (error) { console.warn("Cuddle Educational: dealing the answer failed.", error); }
       }
@@ -400,6 +530,10 @@
     document.body.classList.toggle("umt-easy-mode", on);
     if (on) {
       keepMapStraight(game);
+      if (keepHandDealt(game)) {
+        save(game);
+        try { window.dispatchEvent(new CustomEvent("cuddle:campaign-update", { detail: { runId: game.state.runId } })); } catch (_error) { /* next render */ }
+      }
       if (keepHelpers(game)) {
         save(game);
         try { window.dispatchEvent(new CustomEvent("cuddle:campaign-update", { detail: { runId: game.state.runId } })); } catch (_error) { /* next render */ }
@@ -423,5 +557,5 @@
   }
   attach();
 
-  window.CuddleEasyMode = Object.freeze({ isEasy: isEasy, HELPERS: EASY_HELPERS.slice() });
+  window.CuddleEasyMode = Object.freeze({ isEasy: isEasy, choose: choose, HELPERS: EASY_HELPERS.slice(), DECOYS: DECOYS.slice() });
 }());
