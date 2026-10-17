@@ -118,7 +118,7 @@
           levels: ["1 rare letter is gone for good: out of your deck and out of every answer.", "2 rare letters are gone for good.", "4 rare letters are gone for good."],
           level: g => v5Level(g, "umtCullOne") },
         { id: "cullTwo", icon: "✂️", title: "Cull Two Letters", tier: "epic", type: "letters", maxLevel: 3,
-          levels: ["2 rare letters are gone for good: out of your deck and out of every answer.", "3 rare letters are gone for good.", "5 rare letters are gone for good."],
+          levels: ["1 rare letter is gone for good: out of your deck and out of every answer.", "2 rare letters are gone for good.", "4 rare letters are gone for good."],
           level: g => v5Level(g, "umtCullTwo") },
         { id: "categorySense", icon: "🔮", title: "Theme Sense", tier: "rare", type: "clues", maxLevel: 3,
           levels: ["Each stage starts by telling you 1 theme of the answer (like \"animals\").", "Each stage starts by telling you 2 themes.", "Each stage starts by telling you every theme."],
@@ -174,11 +174,11 @@
         { id: "rainyDay", icon: "🏦", title: "Rainy Day Fund", tier: "rare", type: "money", maxLevel: 3,
           levels: ["After each stage, you earn 5% of your money as interest (up to +$10).", "You earn 10% interest (up to +$20).", "You earn 20% interest (up to +$40)."],
           level: g => v5Level(g, "umtRainyDay") },
-        { id: "encore", icon: "🎬", title: "Encore", tier: "common", type: "points", maxLevel: 1, description: "Every 3rd stage you solve gives +50 points.", level: g => v5Level(g, "umtEncore") },
+        { id: "encore", icon: "🎬", title: "Encore", tier: "common", type: "points", maxLevel: 1, description: "Every 3rd stage you solve gives +30 points.", level: g => v5Level(g, "umtEncore") },
         { id: "vowelBounty", icon: "🅰️", title: "Vowel Bounty", tier: "rare", type: "points", maxLevel: 3,
           levels: ["When you solve, each vowel in the answer gives +5 points.", "Each vowel in the answer gives +10 points.", "Each vowel in the answer gives +20 points."],
           level: g => v5Level(g, "umtVowelBounty") },
-        { id: "haggler", icon: "🪙", title: "Haggler", tier: "common", type: "money", maxLevel: 1, description: "Refreshing reward cards costs less: $0, then $1, then $3 (instead of $3, $5, $7).", level: g => v5Level(g, "umtHaggler") },
+        { id: "haggler", icon: "🪙", title: "Haggler", tier: "rare", type: "money", maxLevel: 1, description: "Refreshing reward cards costs less: $0, then $1, then $3 (instead of $3, $5, $7).", level: g => v5Level(g, "umtHaggler") },
         { id: "doubleDown", icon: "🎲", title: "Double Down", tier: "rare", type: "points", maxLevel: 1, description: "Each stage picks a lucky guess (3rd to 7th). Solve on exactly that guess: +50 points.", level: g => v5Level(g, "umtDoubleDown") }
       ]
     },
@@ -269,7 +269,7 @@
           level: g => powerLevel(g, "fullCircle") },
         // Minimalist and Eliminator (cuddle-strategies.js).
         { id: "leanBuild", icon: "🧹", title: "Lean Build", tier: "epic", type: "points", maxLevel: 1,
-          description: "Each solve gives +20 points (world 1), +40 points (world 2) or +100 points (world 3), minus 5 points for every badge you have outside Restraint.",
+          description: "Each solve gives +20 points (world 1), +40 points (world 2) or +100 points (world 3), minus 5 points for every badge you have outside Restraint (Legendaries don't count).",
           level: g => powerLevel(g, "leanBuild") },
         { id: "monksVow", icon: "🕯️", title: "Monk's Vow", tier: "rare", type: "money", maxLevel: 1,
           description: "Skipping a reward gives you both: +40 points and +$15.",
@@ -301,7 +301,7 @@
           description: "Skipping a reward also levels up one of your badges at random.",
           level: g => powerLevel(g, "cleanSlate") },
         { id: "ascetic", icon: "🧘", title: "Ascetic", tier: "legendary", type: "points", maxLevel: 1,
-          description: "While you have 5 badges or fewer outside Restraint, every stage you solve pays 1.5 times its points.",
+          description: "While you have 5 badges or fewer outside Restraint (Legendaries don't count), every stage you solve pays 1.5 times its points.",
           level: g => powerLevel(g, "ascetic") },
         { id: "questMastery", icon: "📜", title: "Quest Mastery", tier: "legendary", type: "quests", maxLevel: 1,
           description: "Every quest reward is one step bigger: 2 mulligans instead of 1, 3 vowels checked instead of 2, 3 letters ruled out instead of 2, and so on.",
@@ -309,6 +309,9 @@
         { id: "overtime", icon: "⏱️", title: "Overtime", tier: "legendary", type: "quests", maxLevel: 1,
           description: "Each quest you finish gives you 1 more guess this stage: a boss fight is a guess longer, and on other stages the late-guess cost starts a guess later.",
           level: g => powerLevel(g, "overtime") },
+        { id: "questChain", icon: "⛓️", title: "Quest Chain", tier: "legendary", type: "quests", maxLevel: 1,
+          description: "Each quest you finish puts a new quest (a random one) on your next guess, if it doesn't already have one. Finish that one too and the chain goes on.",
+          level: g => powerLevel(g, "questChain") },
         { id: "questScout", icon: "🔭", title: "Quest Scout", tier: "epic", type: "quests", maxLevel: 2,
           levels: ["When a quest appears, a word from your hand that fulfills it is found (but not shown): 1 of its letters is placed in its spot in your word.",
             "2 of the quest word's letters are placed."],
@@ -347,10 +350,10 @@
       title: "Boss Rewards",
       blurb: "Permanent rewards for clearing a boss round. No ordinary upgrade is offered afterward.",
       nodes: [
-        { id: "cullRare", icon: "✂️", title: "Deep Cull", tier: "legendary", type: "letters", maxLevel: 1, description: "5 rare letters are gone for good: out of your deck and out of every answer." },
+        { id: "cullRare", icon: "✂️", title: "Deep Cull", tier: "legendary", type: "letters", maxLevel: 1, description: "3 rare letters are gone for good: out of your deck and out of every answer." },
         { id: "doubleMulligans", icon: "🔁", title: "Double Mulligans", tier: "epic", type: "letters", maxLevel: 1, description: "Every mulligan you get is doubled for the rest of the run.", level: g => upgradeCount(g, "doubleMulligans") },
         { id: "biggerMulligans", icon: "🖐️", title: "Full Hand Mulligan", tier: "epic", type: "letters", maxLevel: 1, description: "A mulligan can swap up to 5 of your letters.", level: g => ledgerCount(g, "biggerMulligans") },
-        { id: "freeVowelSweep", icon: "🅰️", title: "Free Vowel Sweep", tier: "legendary", type: "clues", maxLevel: 1, description: "Each stage, 1 vowel is tested for free: you learn if it's in the answer.", level: g => upgradeCount(g, "freeVowelSweep") },
+        { id: "freeVowelSweep", icon: "🅰️", title: "Free Vowel Sweep", tier: "legendary", type: "clues", maxLevel: 1, description: "Each stage, 2 vowels are tested for free: you learn if they're in the answer.", level: g => upgradeCount(g, "freeVowelSweep") },
         { id: "revealGreen", icon: "📍", title: "Position Peek", tier: "common", type: "clues", maxLevel: 1, description: "Your next stage starts with 1 letter already in its spot (one time only)." },
         { id: "questDoublePick", icon: "✌️", title: "Double Pick", tier: "legendary", type: "quests", maxLevel: 1, description: "When a quest pays out, pick 2 rewards instead of 1.", level: g => upgradeCount(g, "questDoublePick") },
         { id: "questCadence", icon: "❗", title: "Quest Cadence", tier: "epic", type: "quests", maxLevel: 2,
@@ -401,7 +404,7 @@
     gold: ["pickpocket", "haggler", "wideChoice", "treasureHunter", "rainyDay", "doubleDown", "highRoller", "lastStand",
       "blackMarket", "treasureChest", "insertCoin", "goldenLedger"],
     brass: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment", "questCadence", "questPersistReward", "questDoublePick",
-      "questMastery", "overtime", "questScout"],
+      "questMastery", "overtime", "questChain", "questScout"],
     pearl: ["hardMode", "mulliganValueBoost", "monksVow", "leanBuild", "gracePeriod", "mistakeShield", "cleanSlate", "ascetic"]
   };
   const SCHOOL_OF = {};

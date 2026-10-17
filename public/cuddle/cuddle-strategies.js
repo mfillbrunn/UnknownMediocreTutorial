@@ -146,14 +146,15 @@
   }
 
   // Every badge (registry power) you own outside Restraint: Restraint's
-  // own badges (Lean Build itself among them) don't count against it.
+  // own badges (Lean Build itself among them) and Legendaries (which can't
+  // be skipped) don't count against it.
   function otherBadges(game) {
     var tree = registry();
     if (!tree || !Array.isArray(tree.BRANCHES)) return 0;
     var count = 0;
     tree.BRANCHES.forEach(function branch(group) {
       (group.nodes || []).forEach(function node(item) {
-        if (!item || item.id === "leanBuild" || item.school === "pearl") return;
+        if (!item || item.id === "leanBuild" || item.school === "pearl" || item.tier === "legendary") return;
         try {
           if (num(tree.level(game, item)) > 0) count += 1;
         } catch (_error) {

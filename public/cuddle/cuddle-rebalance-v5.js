@@ -71,7 +71,7 @@
     Object.freeze({
       id: IDS.encore, key: IDS.encore, icon: "\uD83C\uDFAC",
       title: "Encore", name: "Encore",
-      description: "Every third stage you solve pays a 50-point encore bonus.",
+      description: "Every third stage you solve pays a 30-point encore bonus.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     Object.freeze({
@@ -165,7 +165,7 @@
     Object.freeze({
       id: IDS.cullTwo, key: IDS.cullTwo, icon: "\u2702\uFE0F",
       title: "Cull Two Letters", name: "Cull Two Letters",
-      description: "Permanently remove two rare consonants from your deck and every future answer. Level 2: three gone. Level 3: five gone. (No run culls more than 8 letters.)",
+      description: "Permanently remove one rare consonant from your deck and every future answer. Level 2: two gone. Level 3: four gone. (No run culls more than 8 letters.)",
       maxLevel: 3, maxCount: 3, kind: "upgrade", cull: 2
     })
   ]);
@@ -3181,9 +3181,10 @@
     }
 
     if (upgradeLevel(game, IDS.encore) > 0) {
+      const ENCORE_POINTS = 30;
       custom.encoreSolves = asInteger(custom.encoreSolves, 0) + 1;
       if (custom.encoreSolves % 3 === 0) {
-        addScoreBonus(game, 50, "umtEncore", "Every third stage solved");
+        addScoreBonus(game, ENCORE_POINTS, "umtEncore", "Every third stage solved");
         if (hasFunSynergy(game, "encoreNight")) {
           const vowels = secretVowelCount(game);
           if (vowels > 0) addScoreBonus(game, vowels * 10, "umtEncore",
@@ -3412,9 +3413,9 @@
     const cullReward = customRewardById(id);
     if (cullReward && cullReward.cull && typeof game._removalCandidates === "function") {
       const state = stateOf(game);
-      // Letters each level takes: Cull One 1, 1, 2 (1/2/4 in all); Cull
-      // Two 2, 1, 2 (2/3/5). The run's cull cap (8) applies on top.
-      const steps = cullReward.cull >= 2 ? [2, 1, 2] : [1, 1, 2];
+      // Letters each level takes: 1, 1, 2 (1/2/4 in all), for Cull One
+      // and Cull Two alike. The run's cull cap (8) applies on top.
+      const steps = [1, 1, 2];
       let wanted = 0;
       for (let step = alreadyApplied + 1; step <= Math.min(3, current); step += 1) wanted += steps[step - 1] || 0;
       const letters = game._removalCandidates(wanted);

@@ -101,7 +101,7 @@
     event: Object.freeze({ title: "Mystery Event", label: "Event", icon: "stage-event-choice.svg", description: "Something happens on the road here. You only find out what when you arrive." }),
     boss: Object.freeze({ title: "Boss", label: "Boss", icon: "stage-boss.svg", description: "A boss Wordle with permanent stakes." }),
     duel: Object.freeze({ title: "Word Duel", label: "Duel", icon: "stage-duel.svg", description: "Alternate guesses with an AI that also builds its words from a hand of letters. The first side to solve the word wins; if the AI does, the run ends." }),
-    mystery: Object.freeze({ title: "Unknown Stop", label: "?", icon: "stage-mystery.svg", description: "This stop stays hidden until you enter it." }),
+    mystery: Object.freeze({ title: "Unknown Stop", label: "?", icon: "stage-mystery.svg", description: "This stop stays hidden until you enter it. It could even be a Duel or a Preset Trial. Stepping onto it pays +20 points." }),
     trial: Object.freeze({ title: "Preset Trial", label: "Trial", icon: "stage-trial.svg", description: "Three guesses, then the answer is one of a list. Pick it to pass. A wrong pick ends the run. Choose how many words when you arrive." })
   });
 
@@ -249,7 +249,7 @@
       flavor: "A scholar offers to cross a few letters off the list for good.",
       options: Object.freeze([
         opt("safe", "Listen to a lecture", "Three opening clues in the next Wordle and [40] points.", [{ type: "nextBonus", key: "clue", amount: 3 }, { type: "points", amount: 40 }]),
-        opt("bold", "Study through the night", "Two rare letters leave the deck and every future answer for good, and you gain a random **Rare** upgrade, but the next Wordle must be solved within the guess limit.", [{ type: "upgradeId", id: "umtCullTwo" }, { type: "upgradeTier", tier: "rare" }, { type: "nextPenalty", key: "guess", amount: 1 }])
+        opt("bold", "Study through the night", "A rare letter leaves the deck and every future answer for good (Cull Two Letters), and you gain a random **Rare** upgrade, but the next Wordle must be solved within the guess limit.", [{ type: "upgradeId", id: "umtCullTwo" }, { type: "upgradeTier", tier: "rare" }, { type: "nextPenalty", key: "guess", amount: 1 }])
       ])
     }),
     // Deck burdens (cuddle-burdens.js): a dead card has no letter and only
@@ -918,10 +918,38 @@
       }
     });
 
-    function revealMystery(node) {
+    // An Unknown stop can also turn out to be a Duel or a Preset Trial
+    // (MYSTERY_TWISTS, rolled once, seeded by the run and the stop), and
+    // stepping onto one pays MYSTERY_BONUS points on top of whatever it is.
+    const MYSTERY_TWISTS = Object.freeze([["duel", 0.2], ["trial", 0.2]]);
+    const MYSTERY_BONUS = 20;
+    function revealMystery(node, game) {
       if (!node || node.type !== "mystery" || !node.mysteryType) return node;
-      node.type = node.mysteryType;
+      const state = game && game.state;
+      const runSeed = state ? (window.CuddleSeed ? window.CuddleSeed.text(state) : (state.runId || "run")) : "run";
+      const roll = seededRandom(`${runSeed}:mystery:${node.row}:${node.col}`)();
+      let type = node.mysteryType;
+      let floor = 0;
+      for (const [twist, chance] of MYSTERY_TWISTS) {
+        if (roll >= floor && roll < floor + chance) { type = twist; break; }
+        floor += chance;
+      }
+      if (type === "duel") {
+        node.duelId = `${state && state.runId ? state.runId : "run"}:duel:unknown:${node.row}:${node.col}`;
+      } else if (type === "trial") {
+        const map = state && state.branchMap;
+        const row = map && Array.isArray(map.rows) ? map.rows[integer(node.row, -1)] : null;
+        node.trialWorld = row && Number.isFinite(Number(row.act)) ? Number(row.act)
+          : (state && Array.isArray(state.bossGatesDone) ? state.bossGatesDone.length : 0);
+        const kindRoll = seededRandom(`${runSeed}:mystery-trial:${node.row}:${node.col}`)();
+        node.trialKind = kindRoll < 0.34 ? "open" : kindRoll < 0.67 ? "blind" : "pairs";
+      }
+      node.type = type;
       node.mysteryRevealed = true;
+      if (state && !node.mysteryBonusPaid) {
+        node.mysteryBonusPaid = true;
+        state.score = Math.max(0, Number(state.score || 0) + MYSTERY_BONUS);
+      }
       return node;
     }
 
@@ -2459,7 +2487,7 @@
       if (!node) return { ok: false, error: "That stop is not on the map." };
       if (!isReachable(map, node)) return { ok: false, error: "No path leads there from here." };
       if (node.type === "mystery") {
-        node = revealMystery(node);
+        node = revealMystery(node, this);
         safeSave(this);
       }
       if (node.type === "duel") return openDuel(this, node);
@@ -2981,7 +3009,7 @@
         row("shop", "Shop", "Spend money on supplies for the next stages, the next boss, or the whole run."),
         row("upgrade", "Free Upgrade", "Choose a free permanent upgrade."),
         row("duel", "Duel", "Alternate guesses with an AI. The first to solve wins; losing ends the run. One in every run, in world 2 or 3."),
-        row("mystery", "Unknown", "Stays hidden until you step onto it."),
+        row("mystery", "Unknown", "Stays hidden until you step onto it (it may even be a Duel or a Trial). +20 points."),
         row("boss", "Boss", "A boss Wordle guards the end of each world. Its reward is permanent."),
         row("final", "Final Boss", "The last guardian, at the top of the Eclipse Citadel.")
       ].join("");
@@ -3212,9 +3240,9 @@
       if (!node || node.type !== "mystery" || node.mysteryRevealed) return null;
       if (!isReachable(map, node)) return null;
 
-      revealMystery(node);
+      revealMystery(node, game);
       const meta = metaForNode(node, game);
-      game.state.lastMessage = `Unknown Stop revealed: ${meta.title}.`;
+      game.state.lastMessage = `Unknown Stop revealed: ${meta.title}. +${MYSTERY_BONUS} points.`;
       return null;
     }
 

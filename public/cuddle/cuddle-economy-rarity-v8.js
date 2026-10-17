@@ -64,7 +64,7 @@
     ["reserve dividend", TIERS.COMMON],
     ["echo finder", TIERS.RARE],
     ["treasure hunter", TIERS.COMMON],
-    ["haggler", TIERS.COMMON],
+    ["haggler", TIERS.RARE],
     ["vowel bounty", TIERS.RARE],
     // A one-time letter, so Common.
     ["position peek", TIERS.COMMON],
@@ -156,9 +156,9 @@
   const LEGENDARY_PICKS = Object.freeze([
     legendaryPick("doubleMulligans", "🔁", "Double Mulligans", "Permanently doubles every mulligan you get: each stage's starting mulligans and every one you gain along the way.",
       (state) => !(Number(state.upgrades?.doubleMulligans) > 0)),
-    legendaryPick("cullRare", "✂️", "Deep Cull", "Remove five rare letters from the deck and from every future secret.",
+    legendaryPick("cullRare", "✂️", "Deep Cull", "Remove three rare letters from the deck and from every future secret.",
       (state) => ownedHistoryCount(state, "cullRare") < 1),
-    legendaryPick("freeVowelSweep", "🅰️", "Free Vowel Sweep", "Each stage opens with one random vowel tested for free: you learn whether it's in the answer, not where.",
+    legendaryPick("freeVowelSweep", "🅰️", "Free Vowel Sweep", "Each stage opens with two random vowels tested for free: you learn whether they're in the answer, not where.",
       (state) => !(Number(state.upgrades?.freeVowelSweep) > 0)),
     legendaryPick("biggerMulligans", "✋", "Full Hand Mulligan", "Every mulligan can now replace up to five letters.",
       (state) => Number(state.upgrades?.mulliganSize || 0) < 2),
@@ -1896,12 +1896,12 @@
     mulliganSize: 0.5, storybookStart: 0.6, wideChoice: 0.55, mulliganTiles: 0.35,
     mulliganValueBoost: 0.6, earlySolveBoost: 0.35, colourTrade: 0.5, greyscale: 0.7,
     coachMeterThreshold: 0.45, umtVowelBounty: 0.55,
-    umtTreasureHunter: 0.5, umtHaggler: 0.2, umtCullOne: 0.45,
+    umtTreasureHunter: 0.5, umtCullOne: 0.45,
     // Rare ($50-70)
     treasureMap: 0.55, jokerTiles: 0.5, handSizeBoost: 0.9, greenCount: 0.25, umtEchoFinder: 0.2,
     categorySense: 0.6, coachPossibleAnswers: 0.7, coachMeterReward: 0.35,
     "surprise-assignment": 0.3, umtJokerCache: 0.75, umtRainyDay: 0.6, umtEncore: 0.7,
-    umtVowelLamp: 0.5, umtMistakeShield: 0.35,
+    umtVowelLamp: 0.5, umtMistakeShield: 0.35, umtHaggler: 0.2,
     // Epic ($75-100)
     oracleTiles: 0.45, "alphabet-compass": 0.6, umtConsonantSweep: 0.8, umtDoubleDown: 0.35,
     umtYellowHint: 0.95, umtCullTwo: 0.6, umtPatternLens: 0.7

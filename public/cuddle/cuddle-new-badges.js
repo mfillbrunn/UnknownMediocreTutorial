@@ -1,4 +1,4 @@
-/* Cuddle: eleven badges that fill out the schools.
+/* Cuddle: twelve badges that fill out the schools.
  *
  * Restraint
  *   Clean Slate (legendary)  skipping a reward also levels up one of your
@@ -12,6 +12,9 @@
  *   Overtime (legendary)     each quest finished gives 1 more guess this
  *                            stage: a boss fight runs a guess longer; on
  *                            other stages the late-guess cost starts later.
+ *   Quest Chain (legendary)  each quest finished puts a random quest on
+ *                            the next guess (if it has none), so quests
+ *                            can chain on.
  *   Quest Scout (epic, 2)    when a quest appears, a word from the hand
  *                            that fulfills it is found but kept hidden: 1
  *                            (2) of its letters is shown in its spot.
@@ -135,8 +138,9 @@
     var count = 0;
     tree.BRANCHES.forEach(function branch(group) {
       (group.nodes || []).forEach(function node(item) {
-        // Restraint's own badges (Ascetic included) don't count.
-        if (!item || item.type === "combo" || item.school === "pearl") return;
+        // Restraint's own badges (Ascetic included) and Legendaries (which
+        // can't be skipped) don't count.
+        if (!item || item.type === "combo" || item.school === "pearl" || item.tier === "legendary") return;
         try {
           if (num(tree.level(game, item)) > 0) count += 1;
         } catch (_error) {
@@ -337,6 +341,52 @@
     proto._solveGuessThreshold = function solveGuessThresholdWithOvertime() {
       return baseThreshold.apply(this, arguments) + overtimeBonus(this);
     };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Quest Chain
+  // ---------------------------------------------------------------------------
+
+  // A quest finished on the latest guess books one for the guess after it.
+  function bookQuestChain(game) {
+    var state = game.state;
+    if (!has(game, "questChain")) return;
+    var history = Array.isArray(state.history) ? state.history : [];
+    var entry = history[history.length - 1];
+    if (!entry || !entry.questComplete || entry.umtQuestChain) return;
+    entry.umtQuestChain = true;
+    state.umtQuestChain = { key: stageKey(state), guess: history.length + 1 };
+    // The next guess's quest has already been settled by now; if a quest
+    // reward screen is open, it lands once play resumes.
+    placeChainedQuest(game);
+  }
+
+  // The booked guess gets a random quest, unless it already has one.
+  function placeChainedQuest(game) {
+    var state = game.state;
+    var booked = state && state.umtQuestChain;
+    if (!booked || state.status !== "playing" || inDuel(state)) return;
+    if (booked.key !== stageKey(state) || booked.guess !== num(state.guessesUsed) + 1) return;
+    state.umtQuestChain = null;
+    if (state.activeQuest || !has(game, "questChain")) return;
+    if (typeof game._effectiveMaxGuesses === "function" && booked.guess > game._effectiveMaxGuesses()) return;
+    var book = window.CuddleQuestBook;
+    if (!book || typeof book.createQuest !== "function") return;
+    var quest = book.createQuest({
+      feasibleWords: game.getFeasibleWords(),
+      secret: state.secret,
+      history: state.history,
+      knownAbsent: state.knownAbsent,
+      knownPresent: state.knownPresent,
+      revealedPositions: state.revealedPositions,
+      rareLetters: typeof game.getRareLetters === "function" ? game.getRareLetters() : [],
+      random: randomOf(game)
+    });
+    if (!quest) return;
+    state.activeQuest = quest;
+    if (state.megaState && typeof state.megaState === "object") state.megaState.activeQuests = [quest];
+    state.activeQuests = [quest];
+    note(game, "Quest Chain: a new quest for this guess.");
   }
 
   // ---------------------------------------------------------------------------
@@ -582,6 +632,7 @@
       var entry = history[history.length - 1];
       var solved = Boolean(entry && state.secret && entry.word === state.secret);
       countOvertime(this);
+      if (!solved) bookQuestChain(this);
       if (!solved && history.length === 1 && state.status === "playing" && has(this, "goldenOpener")) {
         var placed = goldenOpener(this, entry);
         if (placed.length) {
@@ -678,6 +729,11 @@
   if (typeof baseEnsureQuest === "function") {
     proto._ensureQuestForNextGuess = function ensureQuestWithScout() {
       var result = baseEnsureQuest.apply(this, arguments);
+      try {
+        placeChainedQuest(this);
+      } catch (error) {
+        console.warn("Cuddle new badges: Quest Chain failed.", error);
+      }
       try {
         scoutQuest(this);
       } catch (error) {

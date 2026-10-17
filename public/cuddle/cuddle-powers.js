@@ -153,7 +153,7 @@
 
   var NEW_POWERS = ["momentum", "bigOpener", "lastStand", "pickpocket", "gracePeriod", "boldOpener", "luckyClover", "ideaTiles", "waveTiles", "fullCircle", "leanBuild", "monksVow", "strikeThrough", "highRoller", "hardMode", "combine", "fishHook",
     // cuddle-new-badges.js
-    "cleanSlate", "ascetic", "questMastery", "overtime", "questScout", "blackMarket", "treasureChest",
+    "cleanSlate", "ascetic", "questMastery", "overtime", "questChain", "questScout", "blackMarket", "treasureChest",
     "insertCoin", "goldenLedger", "fastLane", "goldenOpener"];
 
   function powerCard(id) {
