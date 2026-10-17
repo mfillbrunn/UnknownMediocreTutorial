@@ -101,7 +101,7 @@
     questPoints: function (state) { bump(state.upgrades, "questPoints", 10); }, // 10, 20, 40 points
     mulliganSize: function (state) { bump(state.upgrades, "mulliganSize", 3); }, // 4, 5, whole hand
     handSizeBoost: function (state) { bump(state.upgrades, "handSizeBonus", 1); }, // 1, 2, 4 consonants
-    mulliganValueBoost: function (state) { bump(state.upgrades, "mulliganPointBonus", 10); }, // 5, 10, 25
+    mulliganValueBoost: function (state) { bump(state.upgrades, "mulliganPointBonus", 6); }, // 3, 6, 12
     earlySolveBoost: function (state) { bump(state.upgrades, "earlyRoundPoint", 10); }, // 5, 10, 25
     "surprise-assignment": function (_state, game) { // 1, 2, 4 quests
       var economy = window.CuddleEconomyRarityV8;

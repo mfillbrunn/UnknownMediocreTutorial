@@ -868,7 +868,9 @@
   // ---------------------------------------------------------------------------
 
   var STARTING_KIT = {
-    easy: [["handSizeBoost", 2], ["fishHook", 1]],
+    // Easy shows no badges (cuddle-easy-mode.js), and every letter of the
+    // answer is dealt into the opening hand, so no Fish Hook.
+    easy: [["handSizeBoost", 2]],
     medium: [["handSizeBoost", 1], ["fishHook", 1]]
   };
 

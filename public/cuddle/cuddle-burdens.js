@@ -24,7 +24,7 @@
  *     tiles into the deck in each of its stages;
  *   - Lucky cards (the Lucky Clover power): a clover, no letter. Like a
  *     dead card it can't be played, only mulliganed -- but each one still
- *     in your hand when you solve pays 10/20/30 points (by power level).
+ *     in your hand when you solve pays 5/10/20 points (by power level).
  *
  * And three helpful tiles from powers, dealt the same way each stage:
  *   - Idea cards (Idea Cards, rare): mulligan one away and the answer
@@ -38,7 +38,7 @@
  * Full Circle (epic) pays for going through the deck: the first time in a
  * stage it runs out and the discard is shuffled back in, one letter of
  * the answer is shown in its exact place (a green hint).
- * A lucky card mulliganed away pays +5 points. Idea, lucky, wave and Joker
+ * A lucky card mulliganed away pays +2 points. Idea, lucky, wave and Joker
  * tiles that have done their thing leave the deck for the rest of the stage.
  *
  * Run-long burdens live on state.umtBurden = { dead, doubles: [letters] }.
@@ -57,10 +57,10 @@
   var DEAD_GLYPH = "·";
   var LUCKY_GLYPH = "♣";
   var SWAMP_DEAD = 3;
-  var LUCKY_POINTS = [0, 10, 20, 40];
+  var LUCKY_POINTS = [0, 5, 10, 20];
   // Tiles dealt by level: 1, 2, then 4 (the third pick is the big one).
   var TILES_BY_LEVEL = [0, 1, 2, 4];
-  var LUCKY_MULLIGAN_POINTS = 5;
+  var LUCKY_MULLIGAN_POINTS = 2;
   var IDEA_GLYPH = "◇";
   var WAVE_GLYPH = "≈";
   var JOKER_TILE_GLYPH = "◆";

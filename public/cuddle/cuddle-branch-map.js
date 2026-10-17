@@ -62,16 +62,15 @@
   var BOSS_GATE_ORDER = ["before-3", "before-7", "final"];
   var MIXED_BOSS_CHANCE = 0.35;
   var BOSS_POINT_REQUIREMENTS = {
-    // Hard is meant to be hard: calibrated with full-run simulations (an
-    // honest bot playing whole runs with the gates switched off) so about
-    // 75% of runs reach the first boss, 40% the second and 15% the final
-    // -- boss losses included. Easy and medium never bind for a sound run.
-    // Lowered by 50 across the board when spare guesses dropped from 20
-    // to 15 points each.
-    // Hard's first gate raised to 230 by request (was 120).
-    "before-3": { easy: 0, medium: 50, hard: 230 },
-    "before-7": { easy: 200, medium: 250, hard: 510 },
-    "final": { easy: 500, medium: 550, hard: 1050 }
+    // Set from whole-run simulations (a careful bot, gates switched off,
+    // scores recorded on reaching each boss) after unused mulligans and
+    // lucky cards were cut back. Medium's gates pass about 90% / 80% / 65%
+    // of the bot's runs; Hard's sit near its median, so each is a real
+    // hurdle -- a player who builds points on purpose clears them more
+    // often. Easy is one world (cuddle-easy-mode.js) with no gate.
+    "before-3": { easy: 0, medium: 200, hard: 250 },
+    "before-7": { easy: 200, medium: 450, hard: 600 },
+    "final": { easy: 500, medium: 700, hard: 1000 }
   };
 
   function difficultyOf(game) {

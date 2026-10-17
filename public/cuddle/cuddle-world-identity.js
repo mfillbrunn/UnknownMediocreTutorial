@@ -77,7 +77,13 @@
   }
 
   // The current world: its theme id, name, trait and stage name.
+  // Easy (cuddle-easy-mode.js) keeps its one world plain: no world rule.
+  function easyRun(game) {
+    return Boolean(window.CuddleEasyMode && window.CuddleEasyMode.isEasy(game));
+  }
+
   function describe(game) {
+    if (easyRun(game)) return null;
     var world = worldOf(game);
     return world ? describeTheme(world) : null;
   }
@@ -86,6 +92,7 @@
   // announces the next world while the player still stands on the last
   // row of the one before.
   function describeWorld(game, index) {
+    if (easyRun(game)) return null;
     var worlds = window.CuddleWorlds;
     var map = game && game.state && game.state.branchMap;
     if (!worlds || !map) return null;

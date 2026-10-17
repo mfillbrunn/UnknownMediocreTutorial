@@ -918,8 +918,8 @@
       }
     });
 
-    // An Unknown stop can also turn out to be a Duel or a Preset Trial
-    // (MYSTERY_TWISTS, rolled once, seeded by the run and the stop), and
+    // An Unknown stop can also turn out to be a Duel (from world 2 on) or a
+    // Preset Trial (MYSTERY_TWISTS, rolled once, seeded by the run and the stop), and
     // stepping onto one pays MYSTERY_BONUS points on top of whatever it is.
     const MYSTERY_TWISTS = Object.freeze([["duel", 0.2], ["trial", 0.2]]);
     const MYSTERY_BONUS = 20;
@@ -934,6 +934,10 @@
         if (roll >= floor && roll < floor + chance) { type = twist; break; }
         floor += chance;
       }
+      // Not a Duel in the first world: on Hard a lost Duel ends the run,
+      // and a run shouldn't be able to end on its first few stops.
+      const nodeRow = state && state.branchMap && Array.isArray(state.branchMap.rows) ? state.branchMap.rows[integer(node.row, -1)] : null;
+      if (type === "duel" && nodeRow && (Math.floor(Number(nodeRow.act)) || 0) === 0) type = node.mysteryType;
       if (type === "duel") {
         node.duelId = `${state && state.runId ? state.runId : "run"}:duel:unknown:${node.row}:${node.col}`;
       } else if (type === "trial") {

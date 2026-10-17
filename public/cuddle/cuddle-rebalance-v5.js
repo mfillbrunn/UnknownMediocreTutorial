@@ -1077,7 +1077,24 @@
     }
   }
 
+  // Easy (cuddle-easy-mode.js) is a straight line of Themed Wordles.
+  function easyRun(game) {
+    return Boolean(window.CuddleEasyMode && window.CuddleEasyMode.isEasy(game));
+  }
+
   function variantForNode(game, node, salt = "") {
+    if (easyRun(game)) {
+      if (!(node.cuddleVariant && node.cuddleVariant.kind === "themedWordle" && node.cuddleVariant.version === VERSION)) {
+        node.cuddleVariant = {
+          version: VERSION,
+          kind: "themedWordle",
+          icon: "\uD83E\uDDED",
+          title: "Themed Wordle",
+          description: "A round that opens with one of the solution's categories already revealed."
+        };
+      }
+      return node.cuddleVariant;
+    }
     // A saved Jackpot Run or Double or Nothing stop plays as a Classic one.
     if (node.cuddleVariant && (node.cuddleVariant.kind === "jackpot" || node.cuddleVariant.kind === "doubleOrNothing")) {
       node.cuddleVariant = neutralVariant("plain");
@@ -1215,6 +1232,7 @@
 
     // A row made entirely of rare plain nodes is converted deterministically so
     // the player is never offered a wall of ordinary Wordles.
+    if (easyRun(game)) return changed;
     for (const rowNodes of rows.values()) {
       if (rowNodes.length && rowNodes.every((node) => node.cuddleVariant && node.cuddleVariant.kind === "plain")) {
         const node = rowNodes[0];
@@ -1242,6 +1260,7 @@
   // player hasn't reached yet, never the opening row or the fork before a
   // boss.
   function ensureRareWordStages(game) {
+    if (easyRun(game)) return false;
     const map = stateOf(game) && stateOf(game).branchMap;
     if (!map || !Array.isArray(map.rows)) return false;
     const rare = CHALLENGES.find((challenge) => challenge.rareSecret);

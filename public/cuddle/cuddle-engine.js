@@ -127,7 +127,9 @@
   const YELLOW_POINTS = 1;
   const GREEN_POINTS = 2;
   const EARLY_GUESS_POINTS = 5;
-  const UNUSED_MULLIGAN_POINTS = 3;
+  // Unused mulligans were a fifth of every stage's points (whole-run
+  // simulations): 1 each keeps the nudge without paying for doing nothing.
+  const UNUSED_MULLIGAN_POINTS = 1;
   // A guess past the round's "quick solve" window (_solveGuessThreshold(),
   // 6/5/4 as boss gates clear) costs points (see _lateGuessPenalty): a
   // flat 10 each in world one, a flat 20 each in world two, and in world
@@ -3843,7 +3845,7 @@
       key: "mulliganValueBoost",
       icon: "M+",
       title: "Mulligan Dividend",
-      description: "Each unused mulligan pays 5 more points when you solve. Level 2: 10 more. Level 3: 25 more."
+      description: "Each unused mulligan pays 3 more points when you solve. Level 2: 6 more. Level 3: 12 more."
     },
     {
       id: "earlySolveBoost",
@@ -4076,8 +4078,8 @@
         break;
       }
       case "mulliganValueBoost":
-        // 5, 10, then 25 at level 3 (cuddle-powers.js adds the extra).
-        upgrades.mulliganPointBonus += 5;
+        // 3, 6, then 12 at level 3 (cuddle-powers.js adds the extra).
+        upgrades.mulliganPointBonus += 3;
         break;
       case "earlySolveBoost":
         upgrades.earlyRoundPoint += 5;
