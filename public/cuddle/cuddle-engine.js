@@ -5708,7 +5708,7 @@
     const mega = ensureMega(this);
     const lines = composedCurrentModifications.call(this).filter(line => !String(line).startsWith("No run upgrades yet"));
     if (mega.difficulty && mega.difficulty !== "hard") {
-      lines.push(`Difficulty: ${mega.difficulty[0].toUpperCase()}${mega.difficulty.slice(1)}`);
+      lines.push(`Difficulty: ${mega.difficulty === "easy" ? "Educational" : mega.difficulty[0].toUpperCase() + mega.difficulty.slice(1)}`);
     }
     if (mega.extraGuesses) lines.push(`+${mega.extraGuesses} guess${mega.extraGuesses === 1 ? "" : "es"} every round`);
     if (mega.questPersistsForRound) lines.push("Missed quests stay active for the rest of the stage");
