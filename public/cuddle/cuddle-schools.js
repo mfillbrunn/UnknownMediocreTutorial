@@ -12,7 +12,8 @@
  *   Speed        I   solve by guess 3: +10 points
  *                II  solve by guess 3: +1 mulligan next stage
  *                III solve by guess 3: next stage starts with a letter placed
- *   Hints        I   each stage starts with a vowel crossed out
+ *   Hints        I   one tile of each stage's first guess shows a compass
+ *                       arrow (cuddle-compass.js)
  *                II  after guess 2, a letter turns yellow
  *                III once a stage, tap a consonant in your hand to test it
  *   Cards        I   +1 lucky card every stage
@@ -370,7 +371,7 @@
           mine.epicShown = false;
           mine.epicNext = false;
         }
-        if (num(now.prism) >= 1) ruleOut(this, true, "Hints rank");
+        // Hints I is an arrow on the first guess (cuddle-compass.js).
         if (num(now.parchment) >= 2) ruleOut(this, false, "Elimination rank");
         if (num(now.flora) >= 2) addMulligans(this, 1);
         if (num(now.flora) >= 3) giveJoker(this);

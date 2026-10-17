@@ -378,7 +378,7 @@
     flint: { label: "Speed", color: "#ff5f4f", blurb: "Strong openers and quick solves.",
       ranks: [4, 9, 15], perks: ["Solve by guess 3: +10 points", "Solve by guess 3: +1 mulligan next stage", "Solve by guess 3: your next stage starts with 1 letter placed"] },
     prism: { label: "Hints", color: "#58a8ff", blurb: "Learn about the answer before you guess it.",
-      ranks: [4, 9, 15], perks: ["Each stage starts with 1 vowel crossed out", "After your 2nd guess, 1 letter turns yellow", "Once per stage, tap a consonant in your hand to test it"] },
+      ranks: [4, 9, 15], perks: ["One tile of your first guess shows an arrow (earlier or later in the alphabet)", "After your 2nd guess, 1 letter turns yellow", "Once per stage, tap a consonant in your hand to test it"] },
     flora: { label: "Cards", color: "#46cf86", blurb: "Special cards in your hand and deck (lucky, idea, wave, Joker), special squares on the board, and mulligans.",
       ranks: [4, 9, 15], perks: ["+1 lucky card every stage", "+1 idea card and +1 mulligan every stage", "Your first mulligan each stage is free, and each stage starts with a Joker card"] },
     parchment: { label: "Elimination", color: "#c9ae84", blurb: "Rule letters out and cull them.",
