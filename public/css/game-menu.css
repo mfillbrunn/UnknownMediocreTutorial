@@ -2463,29 +2463,33 @@ body.tutorial-done-open #tutorialDoneModal.active {
 /* UMT MAIN MENU REFRESH END */
 
 /* ==========================================================================
-   Game choice (#gameHubScreen): the doorway -- the detective's dark office
-   on the left (Vowel Play), the sunny meadow through the open door on the
-   right (Cuddle). Picking a game pans the picture toward its side
+   Game choice (#gameHubScreen): the detective's room -- the dark office
+   with its desk on the left (Vowel Play), the sunny meadow through the open
+   door on the right (Cuddle). Picking a game pans the picture toward its side
    (client/game-hub.js, .umt-hub-pan below).
    ========================================================================== */
 :root {
   --umt-hub-size: cover;
   --umt-hub-position: 50% 50%;
+  /* Where the open door sits on screen, and how far the pan slides it in. */
+  --umt-hub-door-x: 77%;
+  --umt-hub-door-shift: -24vw;
 }
 
-/* Tall phone screens: keep the door and the meadow's cube in view. */
+/* Tall phone screens: crop round the open door, so the cube stays in
+   view. */
 @media (max-aspect-ratio: 3/4) {
-  :root { --umt-hub-position: 60% 50%; }
+  :root { --umt-hub-position: 85% 50%; --umt-hub-door-x: 55%; --umt-hub-door-shift: 0vw; }
 }
 
 #gameHubScreen.screen.active {
   background-color: #10141f;
   background-image:
     linear-gradient(180deg, rgba(4, 10, 22, 0.05), rgba(4, 10, 22, 0.28)),
-    url("../assets/menu/hub-doorway.jpg");
+    url("../assets/menu/hub-room.jpg");
   background-image:
     linear-gradient(180deg, rgba(4, 10, 22, 0.05), rgba(4, 10, 22, 0.28)),
-    image-set(url("../assets/menu/hub-doorway.webp") type("image/webp"), url("../assets/menu/hub-doorway.jpg") type("image/jpeg"));
+    image-set(url("../assets/menu/hub-room.webp") type("image/webp"), url("../assets/menu/hub-room.jpg") type("image/jpeg"));
   background-size: cover, var(--umt-hub-size);
   background-position: center, var(--umt-hub-position);
 }
@@ -2498,19 +2502,21 @@ body.tutorial-done-open #tutorialDoneModal.active {
   z-index: 99990;
   pointer-events: none;
   background-color: #10141f;
-  background-image: url("../assets/menu/hub-doorway.jpg");
-  background-image: image-set(url("../assets/menu/hub-doorway.webp") type("image/webp"), url("../assets/menu/hub-doorway.jpg") type("image/jpeg"));
+  background-image: url("../assets/menu/hub-room.jpg");
+  background-image: image-set(url("../assets/menu/hub-room.webp") type("image/webp"), url("../assets/menu/hub-room.jpg") type("image/jpeg"));
   background-size: var(--umt-hub-size);
   background-position: var(--umt-hub-position);
   background-repeat: no-repeat;
   will-change: transform, opacity, filter;
 }
+/* Through the door (about 77% across; on a phone, cropped round the
+   door, nearer the middle). */
 .umt-hub-pan.is-cuddle {
-  transform-origin: 72% 55%;
+  transform-origin: var(--umt-hub-door-x) 50%;
   animation: umtHubToMeadow 720ms cubic-bezier(0.55, 0, 0.75, 0.3) forwards;
 }
 .umt-hub-pan.is-vowelplay {
-  transform-origin: 18% 50%;
+  transform-origin: 22% 48%;
   animation: umtHubToOffice 720ms cubic-bezier(0.55, 0, 0.75, 0.3) forwards;
 }
 .umt-hub-pan.is-leaving {
@@ -2520,11 +2526,11 @@ body.tutorial-done-open #tutorialDoneModal.active {
 
 @keyframes umtHubToMeadow {
   0% { transform: translateX(0) scale(1); filter: brightness(1); }
-  100% { transform: translateX(-18vw) scale(1.9); filter: brightness(1.25) saturate(1.1); }
+  100% { transform: translateX(var(--umt-hub-door-shift)) scale(2.6); filter: brightness(1.3) saturate(1.1); }
 }
 @keyframes umtHubToOffice {
   0% { transform: translateX(0) scale(1); filter: brightness(1); }
-  100% { transform: translateX(16vw) scale(1.7); filter: brightness(0.7); }
+  100% { transform: translateX(20vw) scale(1.8); filter: brightness(0.6); }
 }
 
 /* The choice itself steps aside first. */
