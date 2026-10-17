@@ -100,7 +100,7 @@
     shop: Object.freeze({ title: "Wandering Paw", label: "Shop", icon: "stage-shop.svg", description: "Spend money on run supplies." }),
     event: Object.freeze({ title: "Mystery Event", label: "Event", icon: "stage-event-choice.svg", description: "Something happens on the road here. You only find out what when you arrive." }),
     boss: Object.freeze({ title: "Boss", label: "Boss", icon: "stage-boss.svg", description: "A boss Wordle with permanent stakes." }),
-    duel: Object.freeze({ title: "Word Duel", label: "Duel", icon: "stage-duel.svg", description: "Alternate guesses with an AI that also builds its words from a hand of letters. The first side to solve the word wins; if the AI does, the run ends." }),
+    duel: Object.freeze({ title: "Word Duel", label: "Duel", icon: "stage-duel.svg", description: "Alternate guesses with an AI that also builds its words from a hand of letters. The first side to solve the word wins; if the AI does, you get nothing (on Hard, the run ends)." }),
     mystery: Object.freeze({ title: "Unknown Stop", label: "?", icon: "stage-mystery.svg", description: "This stop stays hidden until you enter it. It could even be a Duel or a Preset Trial. Stepping onto it pays +20 points." }),
     trial: Object.freeze({ title: "Preset Trial", label: "Trial", icon: "stage-trial.svg", description: "Three guesses, then the answer is one of a list. Pick it to pass. A wrong pick ends the run. Choose how many words when you arrive." })
   });
@@ -1989,12 +1989,31 @@
       safeSave(game);
     }
 
+    // Losing a Duel ends the run only on Hard. On Easy it just pays
+    // nothing; on Medium it also costs DUEL_LOSS_POINTS. (Whole-run
+    // simulations: with every Duel loss ending the run, Duels ended about
+    // two in three Easy and Medium runs -- more than every boss together.)
+    const DUEL_LOSS_POINTS = Object.freeze({ easy: 0, medium: 50 });
+    function runDifficulty(game) {
+      const value = String(game && game.state && game.state.megaState && game.state.megaState.difficulty || "hard").toLowerCase();
+      return value === "easy" || value === "medium" ? value : "hard";
+    }
+    function duelLossEndsRun(game) {
+      return runDifficulty(game) === "hard";
+    }
+    function duelLossPoints(game) {
+      return DUEL_LOSS_POINTS[runDifficulty(game)] || 0;
+    }
+
     function completeDuelLoss(game, winningWord) {
       const duel = ensureMap(game).expandedDuel;
       if (!duel) return;
       duel.phase = "lost";
       duel.turn = null;
-      duel.message = `The AI solved ${winningWord}. This run is over.`;
+      const cost = duelLossPoints(game);
+      duel.message = duelLossEndsRun(game)
+        ? `The AI solved ${winningWord}. This run is over.`
+        : `The AI solved ${winningWord}. No reward this time${cost ? `, and it costs you ${cost} points` : ""}. The road goes on.`;
       game.state.lastMessage = duel.message;
       safeSave(game);
     }
@@ -2394,9 +2413,24 @@
       return { ok: true };
     }
 
+    // Easy and Medium: a lost Duel, and back on the road.
+    function leaveLostDuel(game) {
+      const map = ensureMap(game);
+      const duel = map && map.expandedDuel;
+      if (!duel || duel.phase !== "lost" || duelLossEndsRun(game)) return { ok: false, error: "The Duel has not been lost." };
+      const cost = Math.min(duelLossPoints(game), Math.max(0, Number(game.state.score) || 0));
+      if (cost > 0) game.state.score = (Number(game.state.score) || 0) - cost;
+      map.expandedDuel = null;
+      game.state.status = MAP_STATUS;
+      game.state.lastMessage = `Lost the Word Duel${cost ? `: -${cost} points` : ""}.`;
+      safeSave(game);
+      return { ok: true };
+    }
+
     function endRunAfterDuel(game) {
       const map = ensureMap(game);
       const duel = map && map.expandedDuel;
+      if (duel && duel.phase === "lost" && !duelLossEndsRun(game)) return leaveLostDuel(game);
       if (!duel || duel.phase !== "lost") return { ok: false, error: "The Duel has not ended the run." };
       game.state.secret = duel.secret;
       game.state.history = (duel.history || []).map(entry => ({ word: entry.word, feedback: entry.feedback, shownFeedback: entry.feedback }));
@@ -2831,7 +2865,7 @@
       return (
         `<section class="umt-stop-panel umt-duel-choose">`
         + `<div class="umt-stop-head">${stopMedallion("duel")}<h2>Word Duel</h2></div>`
-        + `<p class="umt-stop-lead">Take turns guessing against the AI. First to solve wins. If the AI wins, the run ends.</p>`
+        + `<p class="umt-stop-lead">Take turns guessing against the AI. First to solve wins. ${duelLossEndsRun(game) ? "If the AI wins, the run ends." : duelLossPoints(game) ? `If the AI wins, you lose ${duelLossPoints(game)} points.` : "If the AI wins, you just get no reward."}</p>`
         + `<div class="umt-duel-options">`
         + `<div class="umt-duel-option is-easy">${pips(1)}<b>Easy AI</b><span class="umt-duel-win">Win: ${richText("+$10 · pick 1")}</span>`
         + `<span class="umt-duel-cost-label">Costs one to start:</span><div class="umt-duel-costs">${easyCosts}</div></div>`
@@ -2974,7 +3008,9 @@
           + `<p class="umt-stop-lead">${richText(duel.message)}</p>`
           + (duel.phase === "won"
             ? `<button type="button" class="cuddle-btn cuddle-btn-primary" data-cuddle-campaign-action="expanded-duel-continue">Back on the road</button>`
-            : `<button type="button" class="cuddle-btn" data-cuddle-campaign-action="expanded-duel-end">End this run</button>`)
+            : duelLossEndsRun(game)
+              ? `<button type="button" class="cuddle-btn" data-cuddle-campaign-action="expanded-duel-end">End this run</button>`
+              : `<button type="button" class="cuddle-btn cuddle-btn-primary" data-cuddle-campaign-action="expanded-duel-end">Back on the road</button>`)
           + `</section></div>`
         : "";
       return (
@@ -3023,7 +3059,7 @@
         row("event", "Event", "A choice: a safe reward, or a bigger one with a cost."),
         row("shop", "Shop", "Spend money on supplies for the next stages, the next boss, or the whole run."),
         row("upgrade", "Free Upgrade", "Choose a free permanent upgrade."),
-        row("duel", "Duel", "Alternate guesses with an AI. The first to solve wins; losing ends the run. One in every run, in world 2 or 3."),
+        row("duel", "Duel", "Alternate guesses with an AI. The first to solve wins. Losing costs points on Medium and ends the run on Hard. One in every run, in world 2 or 3."),
         row("mystery", "Unknown", "Stays hidden until you step onto it (it may even be a Duel or a Trial). +20 points."),
         row("boss", "Boss", "A boss Wordle guards the end of each world. Its reward is permanent."),
         row("final", "Final Boss", "The last guardian, at the top of the Eclipse Citadel.")

@@ -77,7 +77,48 @@
   // until Vowel Play is actually picked.
   let onboardingPending = false;
 
+  // ---- Leaving the game choice: the doorway pans to the chosen side --------
+  //
+  // The hub's picture is a doorway: the detective's office on the left
+  // (Vowel Play), the meadow through the door on the right (Cuddle). A copy
+  // of it is laid over the screen and moves toward the chosen side; the
+  // game opens underneath and the copy fades away (css/game-menu.css,
+  // .umt-hub-pan).
+  const PAN_MS = 620;
+  let panBusy = false;
+
+  function panTo(side, open) {
+    const hub = document.getElementById("gameHubScreen");
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduced || panBusy || !hub || !hub.classList.contains("active")) {
+      open();
+      return;
+    }
+    panBusy = true;
+    hub.classList.add("umt-hub-leaving", side === "cuddle" ? "is-to-cuddle" : "is-to-vowelplay");
+    const pan = document.createElement("div");
+    pan.className = `umt-hub-pan is-${side}`;
+    pan.setAttribute("aria-hidden", "true");
+    document.body.appendChild(pan);
+    const arriving = side === "cuddle" ? "umt-meadow-arriving" : "umt-office-arriving";
+    setTimeout(() => {
+      document.body.classList.add(arriving);
+      hub.classList.remove("umt-hub-leaving", "is-to-cuddle", "is-to-vowelplay");
+      open();
+      requestAnimationFrame(() => pan.classList.add("is-leaving"));
+      setTimeout(() => {
+        pan.remove();
+        document.body.classList.remove(arriving);
+        panBusy = false;
+      }, 560);
+    }, PAN_MS);
+  }
+
   function openVowelPlay() {
+    panTo("vowelplay", showVowelPlay);
+  }
+
+  function showVowelPlay() {
     setChosen("vowelplay");
     vowelPlayMenu();
     if (onboardingPending) {
@@ -128,6 +169,11 @@
   function openCuddleThroughPortal(button) {
     setChosen("cuddle");
     const open = () => window.CuddleMode?.open?.();
+    // From the game choice: through the doorway, into the meadow.
+    if (document.getElementById("gameHubScreen")?.classList.contains("active") && window.CuddleMode) {
+      panTo("cuddle", open);
+      return;
+    }
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (reduced || portalBusy || !window.CuddleMode) {
       open();
@@ -170,7 +216,7 @@
 
   window.UmtGameHub = Object.freeze({
     showHub,
-    openVowelPlay,
+    openVowelPlay: showVowelPlay,
     // Called by player-insights.js when a Vowel Play game is live, so the
     // menu after it is Vowel Play's even if it was reached by a link.
     markVowelPlay() { if (chosen !== "vowelplay") setChosen("vowelplay"); },

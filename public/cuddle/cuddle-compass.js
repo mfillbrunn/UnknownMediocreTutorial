@@ -40,10 +40,19 @@
     return out;
   }
 
+  // Hints rank I (cuddle-schools.js): one more arrow on a stage's first guess.
+  function hintsRankArrow(game, entry) {
+    const schools = window.CuddleSchools;
+    const history = game.state && Array.isArray(game.state.history) ? game.state.history : [];
+    if (!schools || typeof schools.rankOf !== "function" || history[0] !== entry) return 0;
+    if (String(game.state.runId || "").indexOf(":duel:") !== -1) return 0;
+    try { return Number(schools.rankOf(game, "prism")) >= 1 ? 1 : 0; } catch (_error) { return 0; }
+  }
+
   function markEntry(game, entry) {
     const state = game.state;
     const copies = copiesOwned(state);
-    const count = copies >= MAX_COPIES ? 5 : copies;
+    const count = copies >= MAX_COPIES ? 5 : Math.min(5, copies + hintsRankArrow(game, entry));
     if (!count || !entry || entry.umtCompass) return;
     const secret = String(state.secret || "").toUpperCase();
     const word = String(entry.word || "").toUpperCase();
