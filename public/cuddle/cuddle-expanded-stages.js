@@ -2871,6 +2871,21 @@
       } catch (_error) {
         chips = [];
       }
+      // The treasure word's diamond belongs to a stage's theme line, not here.
+      chips = chips.filter(chip => !chip.treasure);
+      // Themes of the Duel's own answer (Theme Sense, a Category Whisper).
+      const themes = tile.cuddleCampaign && typeof tile.cuddleCampaign === "object" ? tile.cuddleCampaign : null;
+      if (themes && String(themes.categoryRoundSecret || "") === String(duel.secret || "").toUpperCase()) {
+        const known = Array.isArray(themes.revealedCategories) ? themes.revealedCategories : [];
+        const content = known.length
+          ? known.map(item => `<span class="cuddle-category-chip">${escapeHtml(item.label)}</span>`).join("")
+          : themes.noCategory ? `<span class="cuddle-category-chip is-empty">No category</span>`
+            : themes.categoryPending ? `<span class="cuddle-category-chip is-pending">Listening…</span>` : "";
+        if (content) {
+          parts.push(`<div class="cuddle-map-badge-standalone cuddle-play-theme-badge"><div class="cuddle-category-readout" aria-label="Known solution categories">`
+            + `<div class="cuddle-category-chips">${content}</div></div></div>`);
+        }
+      }
       if (chips.length) {
         const icon = name => (window.CuddleIcons ? `<span class="umt-ico">${window.CuddleIcons.svg(name)}</span>` : "");
         parts.push(`<div class="umt-clues" aria-label="Clues">${chips.map(chip => (

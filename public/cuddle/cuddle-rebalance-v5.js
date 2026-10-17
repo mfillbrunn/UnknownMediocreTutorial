@@ -4246,7 +4246,11 @@
       // Same set the engine's _bossActive() reads, so a row is marked with
       // the boss icon on exactly the guesses the boss still constrains.
       const wholeRound = wholeRoundBosses().has(String(boss.id || ""));
-      if (wholeRound || turns <= 0 || guessIndex < turns + delay) add(boss.id || boss.bossId, 0);
+      if (boss.id === "noMulligans" && typeof game._steadyHandTurns === "function") {
+        // Steady Hand counts as a whole-round boss, but its lock only holds
+        // for the opening guesses (the engine's mulligan() reads the same).
+        if (guessIndex < game._steadyHandTurns()) add(boss.id, 0);
+      } else if (wholeRound || turns <= 0 || guessIndex < turns + delay) add(boss.id || boss.bossId, 0);
     }
 
     // guessIndex is 0-based here; the engine's plan is keyed by 1-based
