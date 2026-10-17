@@ -2461,3 +2461,90 @@ body.tutorial-done-open #tutorialDoneModal.active {
   }
 }
 /* UMT MAIN MENU REFRESH END */
+
+/* ==========================================================================
+   Game choice (#gameHubScreen): the doorway -- the detective's dark office
+   on the left (Vowel Play), the sunny meadow through the open door on the
+   right (Cuddle). Picking a game pans the picture toward its side
+   (client/game-hub.js, .umt-hub-pan below).
+   ========================================================================== */
+:root {
+  --umt-hub-size: cover;
+  --umt-hub-position: 50% 50%;
+}
+
+/* Tall phone screens: keep the door and the meadow's cube in view. */
+@media (max-aspect-ratio: 3/4) {
+  :root { --umt-hub-position: 60% 50%; }
+}
+
+#gameHubScreen.screen.active {
+  background-color: #10141f;
+  background-image:
+    linear-gradient(180deg, rgba(4, 10, 22, 0.05), rgba(4, 10, 22, 0.28)),
+    url("../assets/menu/hub-doorway.jpg");
+  background-image:
+    linear-gradient(180deg, rgba(4, 10, 22, 0.05), rgba(4, 10, 22, 0.28)),
+    image-set(url("../assets/menu/hub-doorway.webp") type("image/webp"), url("../assets/menu/hub-doorway.jpg") type("image/jpeg"));
+  background-size: cover, var(--umt-hub-size);
+  background-position: center, var(--umt-hub-position);
+}
+
+/* The picture as a sheet of its own, laid exactly over the screen's, that
+   moves toward the chosen side and then fades into that game's screen. */
+.umt-hub-pan {
+  position: fixed;
+  inset: 0;
+  z-index: 99990;
+  pointer-events: none;
+  background-color: #10141f;
+  background-image: url("../assets/menu/hub-doorway.jpg");
+  background-image: image-set(url("../assets/menu/hub-doorway.webp") type("image/webp"), url("../assets/menu/hub-doorway.jpg") type("image/jpeg"));
+  background-size: var(--umt-hub-size);
+  background-position: var(--umt-hub-position);
+  background-repeat: no-repeat;
+  will-change: transform, opacity, filter;
+}
+.umt-hub-pan.is-cuddle {
+  transform-origin: 72% 55%;
+  animation: umtHubToMeadow 720ms cubic-bezier(0.55, 0, 0.75, 0.3) forwards;
+}
+.umt-hub-pan.is-vowelplay {
+  transform-origin: 18% 50%;
+  animation: umtHubToOffice 720ms cubic-bezier(0.55, 0, 0.75, 0.3) forwards;
+}
+.umt-hub-pan.is-leaving {
+  opacity: 0;
+  transition: opacity 380ms ease;
+}
+
+@keyframes umtHubToMeadow {
+  0% { transform: translateX(0) scale(1); filter: brightness(1); }
+  100% { transform: translateX(-18vw) scale(1.9); filter: brightness(1.25) saturate(1.1); }
+}
+@keyframes umtHubToOffice {
+  0% { transform: translateX(0) scale(1); filter: brightness(1); }
+  100% { transform: translateX(16vw) scale(1.7); filter: brightness(0.7); }
+}
+
+/* The choice itself steps aside first. */
+#gameHubScreen.umt-hub-leaving .menu-center {
+  transition: opacity 180ms ease, translate 260ms ease;
+  opacity: 0;
+}
+#gameHubScreen.umt-hub-leaving.is-to-cuddle .menu-center { translate: -40px 0; }
+#gameHubScreen.umt-hub-leaving.is-to-vowelplay .menu-center { translate: 40px 0; }
+
+/* Arriving at Vowel Play's menu: its content rises in. */
+body.umt-office-arriving #startupScreen .menu-center {
+  animation: umtOfficeIn 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes umtOfficeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .umt-hub-pan { animation: none !important; }
+  body.umt-office-arriving #startupScreen .menu-center { animation: none; }
+}
