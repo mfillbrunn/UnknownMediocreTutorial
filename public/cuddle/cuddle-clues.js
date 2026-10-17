@@ -295,15 +295,10 @@
       chips.push({ icon: "puzzle", label: "Pattern Lens", text: [...secret].map(letter => (VOWELS.has(letter) ? "V" : "C")).join(" "), mono: true });
     }
     if (record.dead.length) chips.push({ icon: "gravestone", label: "Dead Letter", text: `Not ${record.dead.join(", ")}` });
-    if (record.treasure) {
-      chips.push({
-        icon: "gem", label: "Treasure word", tone: "money",
-        text: record.treasurePaid
-          ? (record.treasureMissed ? "Treasure missed" : "Treasure claimed")
-          : (num(state.guessesUsed) + 1 < treasureDeadline(game)
-            ? `Solve before guess ${treasureDeadline(game)}: +$${treasurePrize(game)}`
-            : "Treasure slipped away")
-      });
+    // The treasure word is a small diamond with its deadline in it, in the
+    // theme line (renderClues), while it can still be claimed.
+    if (record.treasure && !record.treasurePaid && num(state.guessesUsed) + 1 < treasureDeadline(game)) {
+      chips.push({ treasure: true, deadline: treasureDeadline(game), prize: treasurePrize(game) });
     }
     // Process of Elimination (cuddle-rebalance-v5.js): every consonant it
     // has ruled out this stage, the newest one picked out.
@@ -355,7 +350,11 @@
     if (!root || !game || !game.state || game.state.status !== "playing") return;
     // World rules (Whispers, Watchtower...) stay off the play screen: the
     // world intro and the stage banner explain them.
-    const chips = clueChips(game);
+    const all = clueChips(game);
+    const treasure = all.find(chip => chip.treasure);
+    const chips = all.filter(chip => !chip.treasure);
+    root.querySelectorAll(".umt-treasure-diamond").forEach(element => element.remove());
+    if (treasure) placeTreasureDiamond(root, treasure);
     // Letters excluded for the whole run (Cull One and friends) sit with
     // the clues instead of on a line of their own under the board.
     const removed = Array.isArray(game.state.removedLetters) ? game.state.removedLetters : [];
@@ -389,6 +388,26 @@
       strip = column.querySelector(".cuddle-play-strip");
     }
     strip.insertAdjacentHTML("beforeend", markup);
+  }
+
+  // In the theme line when there is one, else at the head of the strip.
+  function placeTreasureDiamond(root, treasure) {
+    const label = `Treasure word: solve before guess ${treasure.deadline} for +$${treasure.prize}`;
+    const markup = `<span class="umt-treasure-diamond" role="img" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">`
+      + `<b>${escapeHtml(String(treasure.deadline))}</b></span>`;
+    const themes = root.querySelector(".cuddle-play-strip .cuddle-category-chips");
+    if (themes) {
+      themes.insertAdjacentHTML("afterbegin", markup);
+      return;
+    }
+    let strip = root.querySelector(".cuddle-play-strip");
+    if (!strip) {
+      const column = root.querySelector(".cuddle-left-column");
+      if (!column) return;
+      column.insertAdjacentHTML("afterbegin", '<div class="cuddle-play-strip"></div>');
+      strip = column.querySelector(".cuddle-play-strip");
+    }
+    strip.insertAdjacentHTML("afterbegin", markup);
   }
 
   function installRenderHook() {

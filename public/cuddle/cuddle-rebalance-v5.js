@@ -71,7 +71,7 @@
     Object.freeze({
       id: IDS.encore, key: IDS.encore, icon: "\uD83C\uDFAC",
       title: "Encore", name: "Encore",
-      description: "Every third stage you solve pays a 50-point encore bonus.",
+      description: "Every third stage you solve pays a 30-point encore bonus.",
       maxLevel: 1, maxCount: 1, kind: "upgrade"
     }),
     Object.freeze({
@@ -165,7 +165,7 @@
     Object.freeze({
       id: IDS.cullTwo, key: IDS.cullTwo, icon: "\u2702\uFE0F",
       title: "Cull Two Letters", name: "Cull Two Letters",
-      description: "Permanently remove two rare consonants from your deck and every future answer. Level 2: three gone. Level 3: five gone. (No run culls more than 8 letters.)",
+      description: "Permanently remove one rare consonant from your deck and every future answer. Level 2: two gone. Level 3: four gone. (No run culls more than 8 letters.)",
       maxLevel: 3, maxCount: 3, kind: "upgrade", cull: 2
     })
   ]);
@@ -3181,9 +3181,10 @@
     }
 
     if (upgradeLevel(game, IDS.encore) > 0) {
+      const ENCORE_POINTS = 30;
       custom.encoreSolves = asInteger(custom.encoreSolves, 0) + 1;
       if (custom.encoreSolves % 3 === 0) {
-        addScoreBonus(game, 50, "umtEncore", "Every third stage solved");
+        addScoreBonus(game, ENCORE_POINTS, "umtEncore", "Every third stage solved");
         if (hasFunSynergy(game, "encoreNight")) {
           const vowels = secretVowelCount(game);
           if (vowels > 0) addScoreBonus(game, vowels * 10, "umtEncore",
@@ -3412,9 +3413,9 @@
     const cullReward = customRewardById(id);
     if (cullReward && cullReward.cull && typeof game._removalCandidates === "function") {
       const state = stateOf(game);
-      // Letters each level takes: Cull One 1, 1, 2 (1/2/4 in all); Cull
-      // Two 2, 1, 2 (2/3/5). The run's cull cap (8) applies on top.
-      const steps = cullReward.cull >= 2 ? [2, 1, 2] : [1, 1, 2];
+      // Letters each level takes: 1, 1, 2 (1/2/4 in all), for Cull One
+      // and Cull Two alike. The run's cull cap (8) applies on top.
+      const steps = [1, 1, 2];
       let wanted = 0;
       for (let step = alreadyApplied + 1; step <= Math.min(3, current); step += 1) wanted += steps[step - 1] || 0;
       const letters = game._removalCandidates(wanted);
@@ -4245,7 +4246,11 @@
       // Same set the engine's _bossActive() reads, so a row is marked with
       // the boss icon on exactly the guesses the boss still constrains.
       const wholeRound = wholeRoundBosses().has(String(boss.id || ""));
-      if (wholeRound || turns <= 0 || guessIndex < turns + delay) add(boss.id || boss.bossId, 0);
+      if (boss.id === "noMulligans" && typeof game._steadyHandTurns === "function") {
+        // Steady Hand counts as a whole-round boss, but its lock only holds
+        // for the opening guesses (the engine's mulligan() reads the same).
+        if (guessIndex < game._steadyHandTurns()) add(boss.id, 0);
+      } else if (wholeRound || turns <= 0 || guessIndex < turns + delay) add(boss.id || boss.bossId, 0);
     }
 
     // guessIndex is 0-based here; the engine's plan is keyed by 1-based
@@ -5305,6 +5310,17 @@
       // (e.g. "1/2") on live reward cards without duplicating the several
       // state locations a level can live in.
       upgradeLevel: (game, id) => upgradeLevel(game || publicActiveGame(), id),
+      // A sold badge (cuddle-shop.js): its level goes to 0 everywhere it is
+      // kept, and its applied-effects mark resets so taking it again works.
+      clearUpgrade: (game, id) => {
+        const target = game || publicActiveGame();
+        const custom = customState(target);
+        if (custom && custom.upgrades) custom.upgrades[id] = 0;
+        if (custom && custom.appliedUpgradeEffects) custom.appliedUpgradeEffects[id] = 0;
+        upgradeContainers(target, false).forEach((container) => { if (id in container) container[id] = 0; });
+        scheduleUi();
+        return upgradeLevel(target, id);
+      },
       // [title, description] for the burden a boss's effect leaves behind
       // once it's skipped and the OTHER boss is later cleared -- shared with
       // the boss-choice screen (cuddle-ui.js's renderBossChoiceOverlay) so

@@ -533,3 +533,36 @@
 #cuddleRoot .umt-shelf-mend .umt-shop-chip { grid-area: chip; }
 #cuddleRoot .umt-shelf-mend .umt-shop-blurb { grid-area: blurb; }
 #cuddleRoot .umt-shelf-mend .umt-shop-price { grid-area: price; align-self: start; }
+
+/* ---- sell shelf: one of your badges back for money ----------------------- */
+/* Laid out like the trade shelf (a row per badge), two to a line when
+   there's room; the price is what you get, so it reads in green. */
+#cuddleRoot .umt-shop-shelf.umt-shelf-sell { --shelf: #8fd0a4; }
+#cuddleRoot .umt-shelf-sell .umt-shop-row {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+#cuddleRoot .umt-shelf-sell .umt-shop-card {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "plate name price"
+    "plate chip price"
+    "plate blurb blurb";
+  align-items: center;
+  justify-items: start;
+  column-gap: 10px;
+  row-gap: 2px;
+  text-align: left;
+}
+#cuddleRoot .umt-shelf-sell .umt-shop-plate { grid-area: plate; width: 38px; height: 38px; }
+#cuddleRoot .umt-shelf-sell .umt-shop-name { grid-area: name; }
+#cuddleRoot .umt-shelf-sell .umt-shop-chip { grid-area: chip; }
+#cuddleRoot .umt-shelf-sell .umt-shop-pips { display: none; }
+#cuddleRoot .umt-shelf-sell .umt-shop-blurb { grid-area: blurb; }
+#cuddleRoot .umt-shelf-sell .umt-shop-price { grid-area: price; align-self: start; }
+#cuddleRoot .umt-shelf-sell .umt-shop-price.is-sale.is-buyable {
+  background: linear-gradient(180deg, #b6f0c6, #5fc27f);
+  color: #0f3a1d;
+  box-shadow: 0 3px 0 #3c8d57;
+  padding-left: 13px;
+}

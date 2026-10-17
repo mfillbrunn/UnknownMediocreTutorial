@@ -576,7 +576,7 @@
       id: "cullRare",
       icon: "✂️",
       title: "Deep Cull",
-      description: "Remove five rare letters from the deck and from every future secret."
+      description: "Remove three rare letters from the deck and from every future secret."
     },
     {
       id: "doubleMulligans",
@@ -594,7 +594,7 @@
       id: "freeVowelSweep",
       icon: "🅰️",
       title: "Free Vowel Sweep",
-      description: "Each stage opens with one random vowel tested for free: you learn whether it's in the answer, not where."
+      description: "Each stage opens with two random vowels tested for free: you learn whether they're in the answer, not where."
     },
     {
       id: "revealGreen",

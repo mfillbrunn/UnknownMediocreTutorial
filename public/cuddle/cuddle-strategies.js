@@ -5,7 +5,7 @@
  *     for +40 points or +$15 (the player picks). Boss/legendary picks,
  *     starting rewards and Free Upgrade / event picks can't be skipped.
  *   - Lean Build (epic, one-time): every solved stage pays a flat 20 / 40
- *     / 100 points (world 1 / 2 / 3), minus 5 for every other badge you
+ *     / 100 points (world 1 / 2 / 3), minus 5 for every non-Restraint badge you
  *     own.
  *   - Monk's Vow (rare, one-time): a skip pays both, +40 points and +$15.
  *
@@ -145,14 +145,16 @@
     return Math.max(0, Math.min(2, gates));
   }
 
-  // Every badge (registry power) you own, Lean Build itself left out.
+  // Every badge (registry power) you own outside Restraint: Restraint's
+  // own badges (Lean Build itself among them) and Legendaries (which can't
+  // be skipped) don't count against it.
   function otherBadges(game) {
     var tree = registry();
     if (!tree || !Array.isArray(tree.BRANCHES)) return 0;
     var count = 0;
     tree.BRANCHES.forEach(function branch(group) {
       (group.nodes || []).forEach(function node(item) {
-        if (!item || item.id === "leanBuild") return;
+        if (!item || item.id === "leanBuild" || item.school === "pearl" || item.tier === "legendary") return;
         try {
           if (num(tree.level(game, item)) > 0) count += 1;
         } catch (_error) {

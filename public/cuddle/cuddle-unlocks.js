@@ -63,7 +63,7 @@
     { points: 3400, badges: ["cleanSlate", "ascetic"] },
     { points: 3550, badges: ["questMastery", "overtime"] },
     { points: 3700, badges: ["blackMarket", "treasureChest"] },
-    { points: 3850, badges: ["goldenOpener"] }
+    { points: 3850, badges: ["goldenOpener", "questChain"] }
   ].map(function complete(step) {
     return Object.freeze({
       points: step.points,

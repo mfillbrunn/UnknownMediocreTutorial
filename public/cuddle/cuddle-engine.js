@@ -138,6 +138,8 @@
   // No run culls more than this many letters in all (Cull One / Cull Two
   // Letters, Deep Cull): past about 8, stages stop being a puzzle.
   const CULL_CAP = 8;
+  // Deep Cull (legendary) takes this many letters at once.
+  const DEEP_CULL_LETTERS = 3;
   const LATE_GUESS_STEP_WORLD_THREE = 10;
   // Easy: a flat, gentler cost per late guess -- free in world one, then 5
   // and 10 points (no extra step in world three).
@@ -1018,7 +1020,7 @@
         if (message) messages.push(message);
       }
 
-      // Free Vowel Sweep (boss reward): one random vowel is tested in every
+      // Free Vowel Sweep (boss reward): two random vowels are tested in every
       // position for free before the first guess, so its greens and greys are
       // already on the board without costing a turn.
       const sweep = this._applyFreeVowelSweep();
@@ -1039,25 +1041,28 @@
     // position information is the scarce resource. Compare _revealPositionPeek,
     // which stays green because it's spent from an earned charge or a quest
     // reward rather than given away for free at round start.
+    // Two different vowels are tested.
     _applyFreeVowelSweep() {
       if (!(Number(this.state.upgrades.freeVowelSweep) > 0)) return "";
       const pool = ALWAYS_AVAILABLE_VOWELS.filter(
         vowel => !this.state.removedLetters.includes(vowel)
       );
       if (!pool.length) return "";
-      const vowel = pool[Math.floor(this.random() * pool.length)];
       const secret = String(this.state.secret || "");
-      const present = secret.includes(vowel);
-      if (present) {
-        this.state.knownPresent = unique([...this.state.knownPresent, vowel]).sort();
-        this.state.knownAbsent = this.state.knownAbsent.filter(letter => letter !== vowel);
-      } else {
-        this.state.knownAbsent = unique([...this.state.knownAbsent, vowel]).sort();
+      const lines = [];
+      for (let pick = 0; pick < 2 && pool.length; pick += 1) {
+        const vowel = pool.splice(Math.floor(this.random() * pool.length), 1)[0];
+        const present = secret.includes(vowel);
+        if (present) {
+          this.state.knownPresent = unique([...this.state.knownPresent, vowel]).sort();
+          this.state.knownAbsent = this.state.knownAbsent.filter(letter => letter !== vowel);
+        } else {
+          this.state.knownAbsent = unique([...this.state.knownAbsent, vowel]).sort();
+        }
+        lines.push(present ? `${vowel} is in the secret (position unknown)` : `${vowel} is not in the secret`);
       }
       this._syncInfiniteCards();
-      return present
-        ? `Free vowel sweep: ${vowel} is in the secret (position unknown).`
-        : `Free vowel sweep: ${vowel} is not in the secret.`;
+      return `Free vowel sweep: ${lines.join("; ")}.`;
     }
 
     _pickSecret() {
@@ -2115,7 +2120,7 @@
       if (!reward) return "";
       switch (rewardId) {
         case "cullRare": {
-          const letters = this._removalCandidates(5);
+          const letters = this._removalCandidates(DEEP_CULL_LETTERS);
           if (!letters.length) return "No letters were safe to remove.";
           this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
           return `Deep Cull removed ${letters.join(", ")}.`;
@@ -3024,7 +3029,7 @@
     const turns = CUDDLE_V3_BOSS_TURNS[Math.max(0, Math.min(3, stage - 1))];
     const reward = option?.reward ? { ...option.reward } : option?.reward;
     if (reward?.id === "cullRare") {
-      reward.description = "5 rare letters are gone for good: out of your deck and out of every answer.";
+      reward.description = "3 rare letters are gone for good: out of your deck and out of every answer.";
     }
     if (Array.isArray(option?.plan)) {
       const plan = option.plan.slice(0, Math.max(2, turns));
@@ -3342,7 +3347,7 @@
   const cuddleV3OriginalApplyBossReward = CuddleGame.prototype._applyBossReward;
   CuddleGame.prototype._applyBossReward = function applyCuddleV3BossReward(rewardId) {
     if (rewardId !== "cullRare") return cuddleV3OriginalApplyBossReward.call(this, rewardId);
-    const letters = this._removalCandidates(5);
+    const letters = this._removalCandidates(DEEP_CULL_LETTERS);
     if (!letters.length) return "No letters were safe to remove.";
     this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
     return `Deep Cull removed ${letters.join(", ")}.`;
@@ -4777,7 +4782,7 @@
 
   // ------------------------------------------------------------------
   // Boss reward tweaks + the three new boss rewards. Runs before the
-  // composed chain so it can fully own cullRare's letter count (5, not
+  // composed chain so it can fully own cullRare's letter count (3, not
   // the composed chain's 2) without a second removal happening on top.
   // ------------------------------------------------------------------
   const composedApplyBossReward = CuddleGame.prototype._applyBossReward;
@@ -4785,7 +4790,7 @@
     const mega = ensureMega(this);
     let message;
     if (rewardId === "cullRare") {
-      const letters = this._removalCandidates(5);
+      const letters = this._removalCandidates(3);
       message = letters.length
         ? (() => {
           this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();

@@ -279,7 +279,22 @@
     }
   }
 
-  function queueCategoryReveal(game, count = 1, source = "quest") {
+  // The reveal runs later, after a fetch. A Duel plays on a state of its
+  // own that is only swapped in while it acts (cuddle-expanded-stages.js
+  // withDuelTileState), so the request keeps hold of the state it was
+  // asked for: otherwise it would look up the stage's word, not the Duel's.
+  function pinnedToState(game) {
+    const state = game && game.state;
+    if (!state) return game;
+    const pinned = Object.create(game);
+    Object.defineProperty(pinned, "state", { value: state, writable: false });
+    // The Duel's state is saved as part of the run's, by the game itself.
+    pinned.save = function savePinned() { return game.save(); };
+    return pinned;
+  }
+
+  function queueCategoryReveal(realGame, count = 1, source = "quest") {
+    const game = pinnedToState(realGame);
     const campaign = resetCategoryStateForSecret(game);
     if (!campaign) return "Category clue unavailable.";
     if (campaign.noCategory) return "No category.";
@@ -288,13 +303,14 @@
     campaign.categoryNotice = source === "automatic"
       ? "Listening for the solution's theme…"
       : "Listening for another category…";
-    const previous = hintQueues.get(game) || Promise.resolve();
+    // Queued per game (not per pinned view), so requests still run in turn.
+    const previous = hintQueues.get(realGame) || Promise.resolve();
     const next = previous
       .catch(() => undefined)
       .then(() => performCategoryRequest(game, count, source));
-    hintQueues.set(game, next);
+    hintQueues.set(realGame, next);
     next.finally(() => {
-      if (hintQueues.get(game) !== next) return;
+      if (hintQueues.get(realGame) !== next) return;
       const liveCampaign = ensureCampaign(game);
       if (liveCampaign) liveCampaign.categoryPending = false;
       game.save();

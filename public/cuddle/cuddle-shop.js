@@ -5,6 +5,9 @@
  *   Keeps forever   3 permanent upgrades for the rest of the run
  *   Trade           money for points on the spot, in every shop: +10
  *                   points for $10, +50 for $30, +200 for $100
+ *   Sell            once per shop, sell one of your badges back for money
+ *                   (by its rarity and level). Badges kept as levels
+ *                   (state.umtPowers) can be sold; the rest can't.
  *   Mend            only while the run carries a deck burden
  *                   (cuddle-burdens.js): chisel out a dead card, or sort
  *                   out the doubled consonants. Can be bought again while
@@ -138,6 +141,86 @@
   ]);
   const MEND_BY_ID = new Map(MEND_ITEMS.map(item => [item.id, item]));
 
+  // What a badge sells for, per level, by rarity.
+  const SALE_PER_LEVEL = Object.freeze({ common: 10, rare: 18, epic: 30, legendary: 45 });
+  // Badges whose whole effect happened when they were taken: nothing to sell.
+  const UNSELLABLE = new Set(["combine", "treasureChest"]);
+
+  function powerLevels(game) {
+    const state = game.state;
+    if (!state.umtPowers || typeof state.umtPowers !== "object") state.umtPowers = {};
+    if (!state.umtPowers.levels || typeof state.umtPowers.levels !== "object") state.umtPowers.levels = {};
+    return state.umtPowers.levels;
+  }
+
+  // Badges kept by cuddle-rebalance-v5.js whose effect reads their level
+  // every time it applies, so selling one simply switches it off. (The
+  // letter culls and Joker caches act once when taken, so they stay.)
+  const SELLABLE_V5 = Object.freeze({
+    encore: "umtEncore", rainyDay: "umtRainyDay", vowelBounty: "umtVowelBounty", haggler: "umtHaggler",
+    doubleDown: "umtDoubleDown", vowelLamp: "umtVowelLamp", echoFinder: "umtEchoFinder",
+    treasureHunter: "umtTreasureHunter", patternLens: "umtPatternLens", mistakeShield: "umtMistakeShield",
+    lastLight: "umtLastLight"
+  });
+
+  // Badges you could sell here: playstyle badges kept as levels, and the
+  // switch-like ones above.
+  function sellableBadges(game) {
+    const tree = window.CuddleSkillTree;
+    if (!tree || typeof tree.findNode !== "function") return [];
+    const levels = powerLevels(game);
+    const ids = Object.keys(levels).concat(Object.keys(SELLABLE_V5).filter(id => !(id in levels)));
+    return ids.map(id => {
+      const node = tree.findNode(id);
+      if (!node || UNSELLABLE.has(id) || node.type === "combo") return null;
+      let level = 0;
+      try { level = Math.max(0, Math.floor(Number(tree.level(game, node)) || 0)); } catch (_error) { level = 0; }
+      if (level <= 0) return null;
+      const tier = String(node.tier || "common");
+      return { id, node, level, tier, value: (SALE_PER_LEVEL[tier] || SALE_PER_LEVEL.common) * level };
+    }).filter(Boolean).sort((a, b) => b.value - a.value || String(a.node.title).localeCompare(String(b.node.title)));
+  }
+
+  // Takes a badge away for good: its kept level, and the reward-book
+  // entries the registry also counts as levels (ledgerCount).
+  function removeBadge(game, id) {
+    delete powerLevels(game)[id];
+    const rebalance = window.CuddleRebalanceV5;
+    if (SELLABLE_V5[id] && rebalance && typeof rebalance.clearUpgrade === "function") rebalance.clearUpgrade(game, SELLABLE_V5[id]);
+    const history = Array.isArray(game.state.rewardBookHistory) ? game.state.rewardBookHistory : [];
+    history.forEach(entry => {
+      const umt = SELLABLE_V5[id];
+      if (entry && umt && (entry.id === umt || entry.key === umt)) {
+        entry.soldId = id;
+        entry.id = `${umt}:sold`;
+        if (entry.key === umt) entry.key = `${umt}:sold`;
+        return;
+      }
+      if (entry && (entry.id === id || entry.rewardId === id)) {
+        entry.soldId = id;
+        entry.id = `${id}:sold`;
+        if (entry.rewardId === id) entry.rewardId = `${id}:sold`;
+      }
+    });
+  }
+
+  function sellBadge(game, itemId) {
+    const id = String(itemId || "").replace(/^sell:/, "");
+    const shop = shopState(game);
+    const key = shopKey(game);
+    if (!shop.sold || typeof shop.sold !== "object") shop.sold = {};
+    if (shop.sold[key]) return { ok: false, error: "You've already sold a badge in this shop." };
+    const badge = sellableBadges(game).find(item => item.id === id);
+    if (!badge) return { ok: false, error: "You can't sell that badge." };
+    removeBadge(game, id);
+    game.state.cuddleMoney = money(game) + badge.value;
+    shop.sold[key] = id;
+    lastBought = null;
+    game.state.lastMessage = `${badge.node.title} sold for $${badge.value}.`;
+    safeSave(game);
+    return { ok: true, message: game.state.lastMessage, item: { id: `sell:${id}`, title: badge.node.title } };
+  }
+
   function burdenOf(game) {
     const burdens = window.CuddleBurdens;
     return burdens ? burdens.burden(game) : { dead: 0, doubles: [] };
@@ -153,6 +236,9 @@
       note: "Any reward from the run's pool, priced by its rarity" },
     { id: "trade", items: TRADE_ITEMS, count: TRADE_ITEMS.length, kind: "shop", title: "Trade",
       note: "Swap money for points on the spot" },
+    // Your own badges, one of which can be sold per shop.
+    { id: "sell", items: [], count: 0, kind: "shop", title: "Sell a badge",
+      note: "Sell one badge per shop, for money by its rarity and level" },
     // Filled from MEND_ITEMS, only while the run carries a deck burden.
     { id: "mend", items: [], count: 0, kind: "shop", title: "Mend your deck",
       note: "Get rid of dead cards and doubled consonants for good" }
@@ -354,7 +440,41 @@
     const bought = new Set(boughtHere(this));
     const wallet = money(this);
     const items = [];
+    const soldHere = (shopState(this).sold || {})[shopKey(this)] || null;
     SHELVES.forEach(shelf => {
+      if (shelf.id === "sell") {
+        sellableBadges(this).forEach(badge => {
+          items.push({
+            id: `sell:${badge.id}`,
+            shelf: "sell",
+            kind: "shop",
+            icon: badge.node.icon,
+            tier: badge.tier,
+            title: badge.node.title,
+            description: badge.level > 1 ? `Level ${badge.level}. Sells for $${badge.value}.` : `Sells for $${badge.value}.`,
+            cost: badge.value,
+            stages: 0,
+            points: 0,
+            rare: false,
+            level: badge.level,
+            max: null,
+            maxed: false,
+            purchased: false,
+            locked: Boolean(soldHere),
+            affordable: !soldHere
+          });
+        });
+        if (soldHere) {
+          const tree = window.CuddleSkillTree;
+          const node = tree && typeof tree.findNode === "function" ? tree.findNode(soldHere) : null;
+          items.push({
+            id: `sold:${soldHere}`, shelf: "sell", kind: "shop", icon: node ? node.icon : "✦",
+            title: node ? node.title : "Badge", description: "Sold in this shop.", cost: 0, stages: 0, points: 0,
+            rare: false, level: null, max: null, maxed: false, purchased: true, affordable: false
+          });
+        }
+        return;
+      }
       if (shelf.id === "mend") {
         MEND_ITEMS.filter(item => item.available(this)).forEach(item => {
           items.push({
@@ -492,6 +612,7 @@
     if (!this.state || this.state.status !== "shop") return { ok: false, error: "No shop is open." };
     const id = String(itemId || "");
     if (id.startsWith("keep:")) return buyKeepReward(this, id);
+    if (id.startsWith("sell:")) return sellBadge(this, id);
     if (MEND_BY_ID.has(id)) return buyMend(this, MEND_BY_ID.get(id));
     const item = ALL_ITEMS.get(id);
     const shelf = SHELF_OF.get(id);
@@ -608,7 +729,8 @@
 
   function durationChip(entry) {
     // A pool reward's chip names its rarity, in that rarity's colour.
-    if (entry.shelf === "keep" && entry.tier) return `${entry.tier} · ${entry.once ? "one-time" : "keeps"}`;
+    if (entry.shelf === "keep" && entry.tier) return entry.once ? `${entry.tier} · one-time` : entry.tier;
+    if (entry.shelf === "sell") return entry.purchased ? "Sold" : entry.tier || "Badge";
     if (entry.shelf === "trade") return "Right now";
     if (entry.shelf === "mend") return "For good";
     if (entry.shelf === "boss") return "Next boss";
@@ -629,7 +751,9 @@
 
   function renderCard(entry) {
     const disabled = entry.purchased || entry.maxed || !entry.affordable;
-    const price = entry.purchased ? "Sold" : entry.maxed ? "Maxed" : entry.affordable ? `$${entry.cost}` : `Need $${entry.cost}`;
+    const price = entry.shelf === "sell"
+      ? (entry.purchased ? "Sold" : entry.locked ? "One sale per shop" : `Sell +$${entry.cost}`)
+      : entry.purchased ? "Sold" : entry.maxed ? "Maxed" : entry.affordable ? `$${entry.cost}` : `Need $${entry.cost}`;
     const classes = ["umt-shop-card", `umt-shelf-${entry.shelf}`];
     if (entry.tier) classes.push("cuddle-v8-rarity", `cuddle-v8-${entry.tier}`);
     if (entry.rare) classes.push("is-rare");
@@ -645,8 +769,9 @@
       + `<strong class="umt-shop-name">${escapeHtml(entry.title)}</strong>`
       + levelPips(entry)
       + `<span class="umt-shop-blurb">${escapeHtml(entry.description)}</span>`
-      + `<span class="umt-shop-price${entry.affordable ? " is-buyable" : ""}">`
-      + (entry.affordable ? `<span class="umt-shop-coin" aria-hidden="true">$</span>${entry.cost}` : escapeHtml(price))
+      + `<span class="umt-shop-price${entry.affordable ? " is-buyable" : ""}${entry.shelf === "sell" ? " is-sale" : ""}">`
+      + (entry.shelf === "sell" ? escapeHtml(price)
+        : entry.affordable ? `<span class="umt-shop-coin" aria-hidden="true">$</span>${entry.cost}` : escapeHtml(price))
       + `</span>`
       + (entry.purchased ? `<span class="umt-shop-stamp" aria-hidden="true">Sold</span>` : "")
       + `</button>`
