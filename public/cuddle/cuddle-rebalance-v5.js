@@ -5310,6 +5310,17 @@
       // (e.g. "1/2") on live reward cards without duplicating the several
       // state locations a level can live in.
       upgradeLevel: (game, id) => upgradeLevel(game || publicActiveGame(), id),
+      // A sold badge (cuddle-shop.js): its level goes to 0 everywhere it is
+      // kept, and its applied-effects mark resets so taking it again works.
+      clearUpgrade: (game, id) => {
+        const target = game || publicActiveGame();
+        const custom = customState(target);
+        if (custom && custom.upgrades) custom.upgrades[id] = 0;
+        if (custom && custom.appliedUpgradeEffects) custom.appliedUpgradeEffects[id] = 0;
+        upgradeContainers(target, false).forEach((container) => { if (id in container) container[id] = 0; });
+        scheduleUi();
+        return upgradeLevel(target, id);
+      },
       // [title, description] for the burden a boss's effect leaves behind
       // once it's skipped and the OTHER boss is later cleared -- shared with
       // the boss-choice screen (cuddle-ui.js's renderBossChoiceOverlay) so
