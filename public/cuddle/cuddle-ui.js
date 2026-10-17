@@ -587,7 +587,7 @@
           ${window.CuddleAchievements ? `<p class="umt-newrun-cost"><span class="umt-coin" aria-hidden="true"></span>Costs 1 Cuddle Coin · you have <b>${window.CuddleAchievements.coins()}</b></p>` : ""}
           ${newRunCoinNote ? `<p class="umt-newrun-broke" role="alert">No Cuddle Coins left. You get 1 free each day, and 1 for each achievement you claim.</p>` : ""}
           <div class="cuddle-difficulty-row">
-            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Easy</button>
+            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Educational</button>
             <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Medium</button>
             ${hardLocked()
               ? `<button class="cuddle-btn cuddle-btn-primary is-locked" data-action="new-run-hard" aria-disabled="true" aria-label="Hard, locked: win a run on Medium to unlock it">${lockIcon()}Hard</button>`
@@ -1606,7 +1606,8 @@
   // apart from the run save itself so a new run never wipes it. The win
   // screen compares against the best earlier win on the same difficulty.
   var RECORDS_KEY = "umtCuddleRecords";
-  var DIFFICULTY_NAMES = { easy: "Easy", medium: "Medium", hard: "Hard" };
+  // Easy is shown as "Educational" (the id stays "easy").
+  var DIFFICULTY_NAMES = { easy: "Educational", medium: "Medium", hard: "Hard" };
 
   function readRecords() {
     try {
