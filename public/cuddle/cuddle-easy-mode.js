@@ -7,7 +7,8 @@
  *     Trials;
  *   - every theme of the answer is shown from the start (Theme Sense at
  *     its top level);
- *   - every consonant of the answer is in the opening hand;
+ *   - every consonant of the answer is in the hand, from the opening hand
+ *     and again after every guess; no mulligans and no deck on screen;
  *   - no quests, special squares or badge packs;
  *   - badges stay out of sight: no badge page or counts, and a reward
  *     screen offers three simple helpers, shown by what they do rather than
@@ -26,7 +27,10 @@
 
   // The helpers an Easy reward screen offers: simple, and all about
   // finding the word.
-  var EASY_HELPERS = ["handSizeBoost", "extraMulligans", "vowelLamp", "echoFinder", "yellowHint", "jokerCache", "patternLens", "greenCount", "lastLight"];
+  // (No hand, mulligan or Joker helpers: the hand always holds the answer's
+  // letters, and there are no mulligans or deck to manage.)
+  var EASY_HELPERS = ["vowelLamp", "echoFinder", "yellowHint", "patternLens", "greenCount", "lastLight",
+    "alphabet-compass", "consonantSweep", "coachPossibleAnswers", "boldOpener", "goldenOpener"];
   var MAX_THEMES = 3;
 
   function stateOf(gameOrState) {
@@ -65,6 +69,7 @@
           state.umtPackOffer = null;
           state.umtPackTrack = { seen: [0, 0, 0], offered: [true, true, true] };
           showAllThemes(state);
+          state.mulligansLeft = 0;
           clearQuests(state);
           state.cuddleMoneyTiles = [];
           save(this);
@@ -251,6 +256,37 @@
     }
     return result;
   };
+
+  // Consonants are spent by a guess: the hand is topped up with the
+  // answer's again after each one.
+  var baseSubmit = proto.submitDraft;
+  if (typeof baseSubmit === "function") {
+    proto.submitDraft = function submitDraftEasy() {
+      // No mulligans here, whatever a stage's start may have added (they
+      // would pay as unused at the solve).
+      if (isEasy(this) && this.state) this.state.mulligansLeft = 0;
+      var result = baseSubmit.apply(this, arguments);
+      if (isEasy(this) && this.state && this.state.status === "playing") {
+        try { dealAnswer(this); } catch (error) { console.warn("Cuddle Educational: dealing the answer failed.", error); }
+      }
+      return result;
+    };
+  }
+
+  // -- no mulligans --------------------------------------------------------------
+  var baseAllowance = proto.getMulliganAllowance;
+  if (typeof baseAllowance === "function") {
+    proto.getMulliganAllowance = function getMulliganAllowanceEasy() {
+      return isEasy(this) ? 0 : baseAllowance.apply(this, arguments);
+    };
+  }
+  var baseMulligan = proto.mulligan;
+  if (typeof baseMulligan === "function") {
+    proto.mulligan = function mulliganEasy() {
+      if (isEasy(this)) return { ok: false, error: "No mulligans in Educational: your hand already holds the answer's letters." };
+      return baseMulligan.apply(this, arguments);
+    };
+  }
 
   // -- the first boss ends the run --------------------------------------------------
   var baseClearBoss = proto._clearBoss;
