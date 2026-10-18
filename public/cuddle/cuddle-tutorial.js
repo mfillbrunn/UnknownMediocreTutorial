@@ -207,6 +207,95 @@
     }
   ];
 
+  // Educational (cuddle-easy-mode.js) is the tutorial itself: its own tour,
+  // played in every Educational run and kept on the run (state.umtEduTour).
+  // Stage 1 has every letter in hand, stage 2 needs a mulligan, the reward
+  // after it is the first badge pick, then the boss.
+  function eduStage(game) {
+    return window.CuddleEasyMode && typeof window.CuddleEasyMode.stageNumber === "function" ? window.CuddleEasyMode.stageNumber(game) : 0;
+  }
+  function playing(state) {
+    return state.status === "playing" && !state.roundIntroPending && !state.pendingRoundEnd
+      && present(".cuddle-hand") && !moneyOverlayUp() && !present(".cuddle-overlay");
+  }
+
+  var EDU_SCENES = [
+    {
+      id: "e-map",
+      when: function when(game, state) {
+        return state.status === "branchMap" && stagesSolved(state) === 0 && !moneyOverlayUp();
+      },
+      at: "bottom",
+      cards: [
+        { title: "Welcome to Cuddle", text: "Cuddle is Wordle with letter cards. This run teaches you how it works, one stage at a time: a few words, then a boss at the end." },
+        { title: "The road", text: "Your road is a straight line of stops. Tap the first one to play your first stage." }
+      ]
+    },
+    {
+      id: "e-stage1",
+      when: function when(game, state) { return playing(state) && stagesSolved(state) === 0 && !state.boss; },
+      at: "top",
+      cards: [
+        { title: "Find the secret word", text: "Each stage hides a five-letter word. Build a guess from your letter cards and tap <b>Submit word</b>. <span class=\"umt-tut-g\">Green</span>: right letter, right spot. <span class=\"umt-tut-y\">Yellow</span>: in the word, wrong spot. Grey: not in the word." },
+        { title: "Your cards", text: "<b>Vowels</b> are always in your hand. <b>Consonants</b> are cards: this time every consonant of the answer is already in your hand, so you only need to find the order.", focus: ".cuddle-hand" },
+        { title: "Themes", text: "The tags at the top are the answer's <b>themes</b>, a hint about what kind of word it is.", focus: ".cuddle-category-chips" }
+      ]
+    },
+    {
+      id: "e-points",
+      when: function when() {
+        var collect = document.querySelector("#cuddleMoneyPayoutOverlay [data-cuddle-money-action=\"collect-payout\"]");
+        return Boolean(collect && !collect.hidden);
+      },
+      except: [".umt-pt-overlay"],
+      at: "top",
+      cards: [
+        { title: "Points", text: "Solved! Every tile you revealed pays points: a yellow 1, a green 2. Every guess you didn't need pays a bonus row too, so solving sooner pays more.", focus: ".cuddle-money-payout-rows" },
+        { title: "Your score", text: "Points add up over the run: they're your score. Tap <b>Collect</b> to bank them.", focus: ".cuddle-money-collect" }
+      ]
+    },
+    {
+      id: "e-mulligan",
+      when: function when(game, state) {
+        return playing(state) && window.CuddleEasyMode && window.CuddleEasyMode.isMulliganStage(game) && present(".cuddle-mulligan");
+      },
+      at: "top",
+      cards: [
+        { title: "A letter is missing", text: "This time one consonant of the answer is <b>not</b> in your hand. Consonants come from your <b>deck</b>, the pile beside the buttons." },
+        { title: "Mulligan", text: "A <b>mulligan</b> swaps cards for new ones from the deck. Tap <b>Mulligan</b>, choose a consonant you don't need, and confirm: the missing letter comes in.", focus: ".cuddle-mulligan" }
+      ]
+    },
+    {
+      id: "e-badge",
+      when: function when(game, state) {
+        return state.status === "upgrade" && present(".cuddle-choice-grid") && !moneyOverlayUp();
+      },
+      at: "top",
+      cards: [
+        { title: "Pick a badge", text: "After a stage you pick one of these. Each is a <b>badge</b>: it stays with you for the rest of the run and makes you better, usually with a hint about the answer. Pick the one that sounds most useful.", focus: ".cuddle-choice-grid", at: "bottom" }
+      ]
+    },
+    {
+      id: "e-crossroads",
+      when: function when() { return present(".umt-event-page") && present(".umt-event-choice"); },
+      at: "bottom",
+      cards: [
+        { title: "A choice", text: "<b>More themes</b> makes the rest of the way easier. <b>More consonants</b> puts more letters in your hand, so it's harder to tell which ones are in the answer, but every stage pays more points." }
+      ]
+    },
+    {
+      id: "e-boss",
+      when: function when(game, state) {
+        return (state.status === "bossChoice" && present(".cuddle-boss-choice")) || (playing(state) && Boolean(state.boss));
+      },
+      at: "top",
+      cards: [
+        { title: "The boss", text: "The last stop is a <b>boss</b>. A boss bends one rule of Wordle for a guess or two: tap its icon beside a row to read what it does." },
+        { title: "How you win", text: "Solve the boss's word within its guesses and you <b>win the run</b>. Run out of guesses and the run is over. Good luck!" }
+      ]
+    }
+  ];
+
   var view = { scene: null, index: 0, el: null, focus: null };
 
   function clearFocus() {
@@ -256,14 +345,23 @@
     if (next) next.focus({ preventScroll: true });
   }
 
+  function eduRecord(state) {
+    if (!state.umtEduTour || typeof state.umtEduTour !== "object" || !Array.isArray(state.umtEduTour.seen)) {
+      state.umtEduTour = { status: "active", seen: [] };
+    }
+    return state.umtEduTour;
+  }
+
   function sync() {
-    var record = load();
+    var game = activeGame();
+    var state = game && game.state;
+    var edu = Boolean(state && easyRun(game));
+    var record = edu ? eduRecord(state) : load();
+    var scenes = edu ? EDU_SCENES : SCENES;
     if (record && record.status === "done") {
       if (view.el) close();
       return;
     }
-    var game = activeGame();
-    var state = game && game.state;
     if (!state || !document.getElementById("cuddleRoot")) return;
     // Never over the lobby.
     if (document.querySelector(".cuddle-landing")) {
@@ -299,8 +397,8 @@
         return;
       }
     }
-    for (var i = 0; i < SCENES.length; i += 1) {
-      var scene = SCENES[i];
+    for (var i = 0; i < scenes.length; i += 1) {
+      var scene = scenes[i];
       if (record.seen.indexOf(scene.id) !== -1) continue;
       if (scene.needs && scene.needs.some(function missing(id) { return record.seen.indexOf(id) === -1; })) continue;
       if (busy(scene.except)) continue;
@@ -317,7 +415,7 @@
         try { return !(typeof card.skip === "function" && card.skip(game, state)); } catch (_error) { return true; }
       });
       if (!cards.length) continue;
-      view.scene = Object.assign({}, scene, { cards: cards });
+      view.scene = Object.assign({}, scene, { cards: cards, edu: edu });
       view.index = 0;
       render();
       return;
@@ -325,8 +423,19 @@
   }
 
   function finishScene() {
-    var record = load() || { status: "active", seen: [] };
     var scene = view.scene;
+    if (scene && scene.edu) {
+      var game = activeGame();
+      if (game && game.state) {
+        var own = eduRecord(game.state);
+        if (own.seen.indexOf(scene.id) === -1) own.seen.push(scene.id);
+        try { game.save(); } catch (_error) { /* next save */ }
+      }
+      close();
+      schedule();
+      return;
+    }
+    var record = load() || { status: "active", seen: [] };
     if (scene && record.seen.indexOf(scene.id) === -1) record.seen.push(scene.id);
     if (scene && scene.done) record.status = "done";
     store(record);
@@ -341,7 +450,15 @@
     event.stopPropagation();
     var action = button.getAttribute("data-umt-tut");
     if (action === "skip") {
-      store({ status: "done", seen: SCENES.map(function id(scene) { return scene.id; }), skipped: true });
+      if (view.scene && view.scene.edu) {
+        var game = activeGame();
+        if (game && game.state) {
+          eduRecord(game.state).status = "done";
+          try { game.save(); } catch (_error) { /* next save */ }
+        }
+      } else {
+        store({ status: "done", seen: SCENES.map(function id(scene) { return scene.id; }), skipped: true });
+      }
       close();
     } else if (action === "next") {
       if (view.scene && view.index < view.scene.cards.length - 1) {

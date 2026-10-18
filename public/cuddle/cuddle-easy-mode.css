@@ -38,13 +38,14 @@ body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .cuddle-choice small {
 }
 
 /* No mulligans and no deck: the hand always holds the answer's letters. */
-body.umt-easy-mode #cuddleScreen .cuddle-hand-panel .cuddle-mulligan,
-body.umt-easy-mode #cuddleScreen .cuddle-hand-panel .cuddle-deck {
+/* (The Mulligan stage, body.umt-edu-mulligan, has both.) */
+body.umt-easy-mode:not(.umt-edu-mulligan) #cuddleScreen .cuddle-hand-panel .cuddle-mulligan,
+body.umt-easy-mode:not(.umt-edu-mulligan) #cuddleScreen .cuddle-hand-panel .cuddle-deck {
   display: none !important;
 }
 
 /* With the deck and Mulligan gone, Submit takes the row. */
-body.umt-easy-mode #cuddleScreen .cuddle-submit-row,
-body.umt-easy-mode #cuddleScreen .cuddle-submit-row.has-deck {
+body.umt-easy-mode:not(.umt-edu-mulligan) #cuddleScreen .cuddle-submit-row,
+body.umt-easy-mode:not(.umt-edu-mulligan) #cuddleScreen .cuddle-submit-row.has-deck {
   grid-template-columns: minmax(0, 85fr) minmax(0, 15fr) !important;
 }
