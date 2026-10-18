@@ -38,7 +38,12 @@
   var MAX_THEMES = 3;
   var BASE_THEMES = 2;
   // Consonants in the hand besides the answer's, by stage (the boss last).
-  var DECOYS = [1, 2, 3, 4, 5];
+  // Stage 1: none (every letter there, nothing to sort out); stage 2 is the
+  // Mulligan stage (MULLIGAN_STAGE); then up to 4, and 5 at the boss.
+  var DECOYS = [0, 2, 2, 3, 4];
+  var BOSS_DECOYS = 5;
+  var MULLIGAN_STAGE = 2;
+  var STAGE_MULLIGANS = 2;
   var EXTRA_DECOYS = 2;
   var CONSONANT_BONUS = 0.5;
   var CROSSROADS_ROW = 2;
@@ -128,7 +133,7 @@
 
   function decoyCount(state) {
     var base = DECOYS[Math.min(DECOYS.length - 1, stageNumber(state) - 1)];
-    if (state.boss) base = DECOYS[DECOYS.length - 1];
+    if (state.boss) base = BOSS_DECOYS;
     return base + (eduState(state).choice === "consonants" ? EXTRA_DECOYS : 0);
   }
 
@@ -274,6 +279,26 @@
       && !(typeof game.isInfiniteCard === "function" && game.isInfiniteCard(card));
   }
 
+  // The Mulligan stage: one consonant of the answer is held back -- on top
+  // of the deck, so the player's first mulligan brings it in.
+  function isMulliganStage(state) {
+    return Boolean(state && state.status === "playing" && !state.boss && stageNumber(state) === MULLIGAN_STAGE);
+  }
+
+  function heldBack(game) {
+    var state = game.state;
+    if (!isMulliganStage(state)) return null;
+    var secret = String(state.secret || "").toUpperCase();
+    var key = secret + ":" + (state.round || 0);
+    var record = state.umtEduMulligan;
+    if (!record || record.key !== key) {
+      var letter = secret.split("").find(function consonant(ch) { return "AEIOU".indexOf(ch) === -1; }) || null;
+      record = state.umtEduMulligan = { key: key, letter: letter, done: !letter };
+      state.mulligansLeft = Math.max(Number(state.mulligansLeft) || 0, STAGE_MULLIGANS);
+    }
+    return record.done ? null : record.letter;
+  }
+
   function dealAnswer(game) {
     var state = game.state;
     var secret = String(state.secret || "").toUpperCase();
@@ -281,6 +306,19 @@
     var vowel = function vowel(letter) { return typeof game.isVowelGlyph === "function" ? game.isVowelGlyph(letter) : "AEIOU".indexOf(letter) !== -1; };
     var need = {};
     secret.split("").forEach(function count(letter) { if (!vowel(letter)) need[letter] = (need[letter] || 0) + 1; });
+    var hold = heldBack(game);
+    if (hold) {
+      // Out of the hand, onto the top of the deck (drawn first).
+      state.hand = state.hand.filter(function keep(card) {
+        if (!plain(game, card) || card.glyph !== hold) return true;
+        state.deck.push(card);
+        return false;
+      });
+      var top = state.deck.findIndex(function match(card) { return plain(game, card) && card.glyph === hold; });
+      if (top < 0 && typeof game._newCard === "function") state.deck.push(game._newCard(hold, "deck"));
+      else if (top >= 0 && top !== state.deck.length - 1) state.deck.push(state.deck.splice(top, 1)[0]);
+      delete need[hold];
+    }
     var held = {};
     state.hand.forEach(function count(card) { if (plain(game, card)) held[card.glyph] = (held[card.glyph] || 0) + 1; });
     Object.keys(need).forEach(function bring(letter) {
@@ -326,7 +364,7 @@
       state.deck.push(drop);
     }
     while (spares.length < wanted) {
-      var from = state.deck.findIndex(function decoy(card) { return plain(game, card) && !need[card.glyph]; });
+      var from = state.deck.findIndex(function decoy(card) { return plain(game, card) && !need[card.glyph] && card.glyph !== hold && String(state.secret).indexOf(card.glyph) === -1; });
       if (from < 0) break;
       var card = state.deck.splice(from, 1)[0];
       state.hand.push(card);
@@ -361,8 +399,11 @@
     var secret = String(state.secret || "").toUpperCase();
     if (!/^[A-Z]{5}$/.test(secret) || !Array.isArray(state.hand)) return false;
     var glyphs = state.hand.map(function g(card) { return card && card.glyph; });
+    // The Mulligan stage's held-back letter is missing on purpose.
+    var record = state.umtEduMulligan;
+    var hold = isMulliganStage(state) && record && !record.done ? record.letter : null;
     return secret.split("").some(function missing(letter) {
-      if ("AEIOU".indexOf(letter) !== -1) return false;
+      if ("AEIOU".indexOf(letter) !== -1 || letter === hold) return false;
       var need = secret.split("").filter(function same(x) { return x === letter; }).length;
       return glyphs.filter(function same(x) { return x === letter; }).length < need;
     });
@@ -385,7 +426,7 @@
     proto.submitDraft = function submitDraftEasy() {
       // No mulligans here, whatever a stage's start may have added (they
       // would pay as unused at the solve).
-      if (isEasy(this) && this.state) this.state.mulligansLeft = 0;
+      if (isEasy(this) && this.state && !isMulliganStage(this.state)) this.state.mulligansLeft = 0;
       var result = baseSubmit.apply(this, arguments);
       var state = this.state;
       var history = state && Array.isArray(state.history) ? state.history : [];
@@ -413,8 +454,32 @@
   var baseMulligan = proto.mulligan;
   if (typeof baseMulligan === "function") {
     proto.mulligan = function mulliganEasy() {
-      if (isEasy(this)) return { ok: false, error: "No mulligans in Educational: your hand already holds the answer's letters." };
-      return baseMulligan.apply(this, arguments);
+      if (!isEasy(this)) return baseMulligan.apply(this, arguments);
+      if (!isMulliganStage(this.state)) return { ok: false, error: "No mulligans here: your hand already holds the answer's letters." };
+      var result = baseMulligan.apply(this, arguments);
+      if (result && result.ok && this.state.umtEduMulligan) this.state.umtEduMulligan.done = true;
+      return result;
+    };
+  }
+
+  // -- no reward after the first stage -----------------------------------------
+  // The tour explains the points there; picking a reward comes after the
+  // Mulligan stage.
+  var baseResolveEnd = proto._resolvePendingRoundEnd;
+  if (typeof baseResolveEnd === "function") {
+    proto._resolvePendingRoundEnd = function resolvePendingRoundEndEasy() {
+      var result = baseResolveEnd.apply(this, arguments);
+      var state = this.state;
+      var stats = state && state.umtRunStats;
+      if (isEasy(this) && state && state.status === "upgrade" && state.upgradePhase === "round" && !state.boss
+          && (Number(stats && stats.stages) || 0) <= 1 && stageNumber(state) <= 1 && typeof this._advanceRound === "function") {
+        state.upgradeChoices = [];
+        state.upgradePhase = null;
+        state.upgradeMilestone = null;
+        this._advanceRound();
+        save(this);
+      }
+      return result;
     };
   }
 
@@ -528,6 +593,7 @@
     var screen = document.getElementById("cuddleScreen");
     var on = Boolean(game && isEasy(game) && screen && screen.classList.contains("active"));
     document.body.classList.toggle("umt-easy-mode", on);
+    document.body.classList.toggle("umt-edu-mulligan", on && isMulliganStage(game.state));
     if (on) {
       keepMapStraight(game);
       if (keepHandDealt(game)) {
@@ -557,5 +623,7 @@
   }
   attach();
 
-  window.CuddleEasyMode = Object.freeze({ isEasy: isEasy, choose: choose, HELPERS: EASY_HELPERS.slice(), DECOYS: DECOYS.slice() });
+  window.CuddleEasyMode = Object.freeze({ isEasy: isEasy, choose: choose,
+    isMulliganStage: function mulliganStage(game) { return isEasy(game) && isMulliganStage(game && game.state); },
+    stageNumber: function stage(game) { return game && game.state ? stageNumber(game.state) : 0; }, HELPERS: EASY_HELPERS.slice(), DECOYS: DECOYS.slice() });
 }());
