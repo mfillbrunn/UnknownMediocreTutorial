@@ -2945,6 +2945,8 @@
     // Easy difficulty only -- Medium/Hard players chose the harder start on
     // purpose, so the ramp would just be free value they didn't ask for.
     if (difficultyName(game) !== "easy") return null;
+    // Educational (cuddle-easy-mode.js) deals the answer's letters instead.
+    if (easyRun(game)) return null;
     // A Duel runs on a cloned throwaway state with its own rules; the ramp is
     // about the campaign's opening Wordles only.
     if (state.branchMap && state.branchMap.expandedDuel) return null;

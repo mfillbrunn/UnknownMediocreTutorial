@@ -238,7 +238,8 @@
       cards: [
         { title: "Find the secret word", text: "Each stage hides a five-letter word. Build a guess from your letter cards and tap <b>Submit word</b>. <span class=\"umt-tut-g\">Green</span>: right letter, right spot. <span class=\"umt-tut-y\">Yellow</span>: in the word, wrong spot. Grey: not in the word." },
         { title: "Your cards", text: "<b>Vowels</b> are always in your hand. <b>Consonants</b> are cards: this time every consonant of the answer is already in your hand, so you only need to find the order.", focus: ".cuddle-hand" },
-        { title: "Themes", text: "The tags at the top are the answer's <b>themes</b>, a hint about what kind of word it is.", focus: ".cuddle-category-chips" }
+        { title: "Themes", text: "The tags at the top are the answer's <b>themes</b>, a hint about what kind of word it is.", focus: ".cuddle-category-chips" },
+        { title: "A hint for this one", text: "The answer uses all three of your consonants, <b>S</b>, <b>C</b> and <b>B</b>, in that order, with two vowels in between. And it's a fun activity!", focus: ".cuddle-hand" }
       ]
     },
     {
@@ -251,7 +252,7 @@
       at: "top",
       cards: [
         { title: "Points", text: "Solved! Every tile you revealed pays points: a yellow 1, a green 2. Every guess you didn't need pays a bonus row too, so solving sooner pays more.", focus: ".cuddle-money-payout-rows" },
-        { title: "Your score", text: "Points add up over the run: they're your score. Tap <b>Collect</b> to bank them.", focus: ".cuddle-money-collect" }
+        { title: "You need points", text: "Points add up over the run, and you'll need them: the <b>boss</b> at the end only lets you challenge it once you have enough points: 30 in this run. Every solved stage gets you closer. Tap <b>Collect</b> to bank these.", focus: ".cuddle-money-collect" }
       ]
     },
     {
@@ -261,8 +262,19 @@
       },
       at: "top",
       cards: [
-        { title: "A letter is missing", text: "This time one consonant of the answer is <b>not</b> in your hand. Consonants come from your <b>deck</b>, the pile beside the buttons." },
-        { title: "Mulligan", text: "A <b>mulligan</b> swaps cards for new ones from the deck. Tap <b>Mulligan</b>, choose a consonant you don't need, and confirm: the missing letter comes in.", focus: ".cuddle-mulligan" }
+        { title: "A letter is missing", text: "This time one consonant of the answer is <b>not</b> in your hand: the <b>T</b>. Consonants come from your <b>deck</b>, the pile beside the buttons, and the T is waiting on top." },
+        { title: "Mulligan the K", text: "A <b>mulligan</b> swaps cards for new ones from the deck. Tap <b>Mulligan</b>, choose the <b>K</b> (the answer doesn't use it), and confirm: the T comes in.", focus: ".cuddle-mulligan" },
+        { title: "A hint for this one", text: "The answer uses <b>T</b>, <b>G</b> and <b>R</b>, in that order; the <b>X</b> isn't in it either. And it's a big striped cat!" }
+      ]
+    },
+    {
+      id: "e-stage3",
+      when: function when(game, state) {
+        return playing(state) && !state.boss && eduStage(game) > 2 && !(window.CuddleEasyMode && window.CuddleEasyMode.isMulliganStage(game));
+      },
+      at: "top",
+      cards: [
+        { title: "No mulligans needed", text: "From here on you don't need to mulligan: every consonant of the answer is in your hand again. But there are more letters the answer doesn't use, so the themes and your guesses' colours matter more.", focus: ".cuddle-hand" }
       ]
     },
     {
