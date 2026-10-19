@@ -4012,7 +4012,8 @@
         ? 0
         : finiteNumber(rules.greenPoints, 2 + finiteNumber(upgrades.yellowPoints) + finiteNumber(upgrades.greenOnlyPoints)),
       earlyPoint: finiteNumber(rules.earlyPoint, 5 + finiteNumber(upgrades.earlyRoundPoint)),
-      mulliganPoints: finiteNumber(rules.mulliganPoints, UNUSED_MULLIGAN_POINTS)
+      // (The base's own UNUSED_MULLIGAN_POINTS, 1, out of this block's reach.)
+      mulliganPoints: finiteNumber(rules.mulliganPoints, 1)
         + finiteNumber(upgrades.mulliganPointBonus)
     };
   };

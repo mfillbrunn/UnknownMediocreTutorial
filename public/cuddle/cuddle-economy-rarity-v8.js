@@ -849,6 +849,10 @@
   }
 
   function guessCount(state) {
+    // The engine's own history, when there is one: an empty history (the
+    // map, a stage's start) used to fall through to two scans of the whole
+    // state on every tick.
+    if (isObject(state) && Array.isArray(state.history)) return state.history.length;
     const history = guessHistory(state);
     if (history.length) return history.length;
     return firstNumber(state, [
@@ -887,7 +891,22 @@
       state.stageId, state.roundId, state.currentStageIndex, state.currentRound,
       state.stageNumber, state.roundNumber
     ].filter((value) => value != null && value !== "");
-    return pieces.length ? pieces.join(":") : `${seedKey(state)}:${nodeType(node)}:${answerWord(state)}:${maxRows(state)}`;
+    if (pieces.length) return pieces.join(":");
+    // The engine's stage: its word and round number, read straight off the
+    // state (scanning for the word and the row limit four times a second
+    // was most of this module's cost on a phone).
+    if (typeof state.secret === "string" && state.secret) {
+      return `${seedKey(state)}:${String(state.secret).toUpperCase()}:r${Number(state.round) || 0}`;
+    }
+    return `${seedKey(state)}:${nodeType(node)}:${answerWord(state)}:${maxRows(state)}`;
+  }
+
+  // A stage begun under the old identity (seed:type:WORD:rows) is the same
+  // stage under the new one: renamed, not started again.
+  function sameStageRenamed(previous, id) {
+    if (typeof previous !== "string" || /:r\d+$/.test(previous)) return false;
+    const word = id.split(":").slice(-2, -1)[0];
+    return Boolean(word) && previous.indexOf(`:${word}:`) !== -1 && previous.indexOf(id.split(":").slice(0, -2).join(":") + ":") === 0;
   }
 
   function routeRows(state) {
@@ -2563,9 +2582,9 @@
   }
 
   // The base-config patch scans the whole state for a few named fields;
-  // once every couple of seconds per state is plenty.
+  // every ten seconds per state is plenty.
   const configPatchedAt = new WeakMap();
-  const CONFIG_PATCH_MS = 2000;
+  const CONFIG_PATCH_MS = 10000;
 
   function tickContext(context, state) {
     const data = customState(state);
@@ -2577,6 +2596,7 @@
     patchRoute(state);
 
     const id = stageIdentity(state);
+    if (data.stage && sameStageRenamed(data.stage.id, id)) data.stage.id = id;
     if (data.stage?.id !== id) stageStart(state, context, id);
     const count = guessCount(state);
     if (count !== data.stage.guessCount) stageTurn(state, context, count);
@@ -2588,13 +2608,22 @@
   // objects, wrapped callers) lead to it -- the list of contexts grows with
   // every global the economy wraps, and ticking every one of them, each
   // re-scanning all the others for the pouch button, slowed the game down.
+  // Only a run's own state is ticked. The contexts include every global the
+  // economy wraps (other modules' exports, config tables); scoring those as
+  // states ticked some 25 objects four times a second, each with several
+  // deep scans -- most of the game's idle CPU on a phone -- and let the
+  // money patches reach config numbers named like money.
+  function isRunState(state) {
+    return isObject(state) && Array.isArray(state.hand) && typeof state.status === "string" && "runId" in state;
+  }
+
   function tick() {
     const seen = new Set();
     const live = [];
     for (const context of [...contextList]) {
       let state = null;
       try { state = findState(context, []); } catch (_) { state = null; }
-      if (!state || seen.has(state) || stateScore(state) < 3) continue;
+      if (!state || seen.has(state) || !isRunState(state) || stateScore(state) < 3) continue;
       seen.add(state);
       live.push([context, state]);
     }
