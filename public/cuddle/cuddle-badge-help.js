@@ -249,8 +249,6 @@
     var cards = document.querySelectorAll(CARD_SELECTOR);
     Array.prototype.forEach.call(cards, function (card) {
       if (card.querySelector(":scope > .umt-help-q")) return;
-      // Educational (cuddle-easy-mode.js) shows what a reward does, not the badge.
-      if (document.body.classList.contains("umt-easy-mode") && card.matches("[data-upgrade-key]")) return;
       var title = card.querySelector("strong");
       var node = findNode(card.getAttribute("data-umt-badge")) || findNode(card.getAttribute("data-upgrade-key"))
         || findNode(title && title.textContent.trim());

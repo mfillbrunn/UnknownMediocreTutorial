@@ -293,7 +293,7 @@
       },
       at: "top",
       cards: [
-        { title: "Pick a badge", text: "After a stage you pick one of these. Each is a <b>badge</b>: it stays with you for the rest of the run and makes you better, usually with a hint about the answer. Pick the one that sounds most useful.", focus: ".cuddle-choice-grid", at: "bottom" }
+        { title: "Pick a badge", text: "After a stage you pick one of these. Each is a <b>badge</b>: it stays with you for the rest of the run and makes you better, usually with a hint about the answer. Tap a badge's <b>?</b> to see how it works. Pick the one that sounds most useful.", focus: ".cuddle-choice-grid", at: "bottom" }
       ]
     },
     {
@@ -301,7 +301,7 @@
       when: function when() { return present(".umt-event-page") && present(".umt-event-choice"); },
       at: "bottom",
       cards: [
-        { title: "A choice", text: "<b>More themes</b> makes the rest of the way easier. <b>More consonants</b> puts more letters in your hand, so it's harder to tell which ones are in the answer, but every stage pays more points." }
+        { title: "A choice", text: "Pick the help you like for the rest of the way. <b>A hint</b> marks one letter of every answer yellow from the start. <b>Themes</b> shows every theme of every answer." }
       ]
     },
     {

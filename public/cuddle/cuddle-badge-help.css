@@ -40,6 +40,8 @@
 
 /* On the reward cards: top right, level with the title. */
 #cuddleScreen [data-upgrade-key] > .umt-help-q { top: 22px; right: 12px; width: 24px; height: 24px; }
+/* Room for it beside a long badge name. */
+#cuddleScreen [data-upgrade-key]:has(> .umt-help-q) > strong { padding-right: 30px; }
 
 /* On the badge page's hexagons: smaller, top left (the level sits top right). */
 .umt-bd-badge > .umt-help-q {

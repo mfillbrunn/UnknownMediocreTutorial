@@ -291,8 +291,8 @@
       title: "Crossroads",
       flavor: "The road forks for a moment. Which help do you want for the rest of the way?",
       options: Object.freeze([
-        opt("safe", "More themes", "Every answer from here on shows all of its themes.", [{ type: "eduChoice", choice: "themes" }]),
-        opt("bold", "More consonants", "Two more consonants in your hand every stage, so it's harder to tell which ones are in the answer. Stages pay +50% points.", [{ type: "eduChoice", choice: "consonants" }])
+        opt("hint", "A hint", "Every stage from here on starts with one letter of the answer marked yellow: it's in the word.", [{ type: "eduChoice", choice: "hint" }]),
+        opt("themes", "Themes", "Every answer from here on shows all of its themes, so you know what kind of word to look for.", [{ type: "eduChoice", choice: "themes" }])
       ])
     })
   ]);
@@ -2644,7 +2644,7 @@
       }
       const choices = definition.options.map((option, index) => {
         const available = eventAvailability(game, option, eventState);
-        const tag = option.id === "safe" ? "Safe" : option.id === "bold" ? "Bargain"
+        const tag = option.id === "hint" || option.id === "themes" ? "Help" : option.id === "safe" ? "Safe" : option.id === "bold" ? "Bargain"
           : option.id === "gamble" ? "Gamble" : option.id === "risk" ? "High stakes" : "Chance";
         const gives = (option.effects || []).some(effect => effect.type === "surrenderUpgrade") && eventState.sacrificeUpgrade
           ? `<em class="umt-event-gives">Gives up: ${escapeHtml(eventState.sacrificeUpgrade.title)}</em>`
