@@ -8,8 +8,9 @@
  *   - two themes of every answer are shown from the start;
  *   - every consonant of the answer is in the hand, from the opening hand
  *     and again after every guess, among a few others: 1 on the first
- *     stage, then 2, 3, 4, and 5 at the boss (DECOYS); no mulligans and no
- *     deck on screen;
+ *     stage, then 2, 3, 4, and 5 at the boss (DECOYS); mulligans and the
+ *     deck only on the Mulligan stage and from the Crossroads on, where one
+ *     letter of the answer waits on top of the deck;
  *   - a Crossroads stop after the second stage asks: more themes (every
  *     theme shown from then on) or more consonants (two more in every
  *     hand, and stages pay +50% points);
@@ -44,6 +45,7 @@
   var BOSS_DECOYS = 5;
   var MULLIGAN_STAGE = 2;
   var STAGE_MULLIGANS = 2;
+  var RELEASE_AFTER = 3;
   var EXTRA_DECOYS = 2;
   var CONSONANT_BONUS = 0.5;
   var CROSSROADS_ROW = 2;
@@ -313,17 +315,33 @@
     return Boolean(state && state.status === "playing" && !state.boss && stageNumber(state) === MULLIGAN_STAGE);
   }
 
+  // Past the Crossroads, mulligans are back for every stage, the boss too:
+  // one consonant of the answer waits on top of the deck, so any mulligan
+  // brings it in. Not found by then, it comes in by itself after the third
+  // guess (RELEASE_AFTER).
+  function mulligansBack(state) {
+    return Boolean(state && state.status === "playing" && eduState(state).choice && stageNumber(state) > MULLIGAN_STAGE);
+  }
+
+  function mulligansOn(state) {
+    return isMulliganStage(state) || mulligansBack(state);
+  }
+
   function heldBack(game) {
     var state = game.state;
-    if (!isMulliganStage(state)) return null;
+    if (!mulligansOn(state)) return null;
     var secret = String(state.secret || "").toUpperCase();
     var key = secret + ":" + (state.round || 0);
     var record = state.umtEduMulligan;
     if (!record || record.key !== key) {
-      var letter = secret.split("").find(function consonant(ch) { return "AEIOU".indexOf(ch) === -1; }) || null;
+      var consonants = secret.split("").filter(function consonant(ch) { return "AEIOU".indexOf(ch) === -1; });
+      // The Mulligan stage holds its first consonant (the tour names it);
+      // later stages their last.
+      var letter = (isMulliganStage(state) ? consonants[0] : consonants[consonants.length - 1]) || null;
       record = state.umtEduMulligan = { key: key, letter: letter, done: !letter };
       state.mulligansLeft = Math.max(Number(state.mulligansLeft) || 0, STAGE_MULLIGANS);
     }
+    if (!record.done && mulligansBack(state) && (state.history || []).length >= RELEASE_AFTER) record.done = true;
     return record.done ? null : record.letter;
   }
 
@@ -459,7 +477,7 @@
     var glyphs = state.hand.map(function g(card) { return card && card.glyph; });
     // The Mulligan stage's held-back letter is missing on purpose.
     var record = state.umtEduMulligan;
-    var hold = isMulliganStage(state) && record && !record.done ? record.letter : null;
+    var hold = mulligansOn(state) && record && !record.done ? record.letter : null;
     return secret.split("").some(function missing(letter) {
       if ("AEIOU".indexOf(letter) !== -1 || letter === hold) return false;
       var need = secret.split("").filter(function same(x) { return x === letter; }).length;
@@ -484,7 +502,7 @@
     proto.submitDraft = function submitDraftEasy() {
       // No mulligans here, whatever a stage's start may have added (they
       // would pay as unused at the solve).
-      if (isEasy(this) && this.state && !isMulliganStage(this.state)) this.state.mulligansLeft = 0;
+      if (isEasy(this) && this.state && !mulligansOn(this.state)) this.state.mulligansLeft = 0;
       var result = baseSubmit.apply(this, arguments);
       var state = this.state;
       var history = state && Array.isArray(state.history) ? state.history : [];
@@ -513,7 +531,7 @@
   if (typeof baseMulligan === "function") {
     proto.mulligan = function mulliganEasy() {
       if (!isEasy(this)) return baseMulligan.apply(this, arguments);
-      if (!isMulliganStage(this.state)) return { ok: false, error: "No mulligans here: your hand already holds the answer's letters." };
+      if (!mulligansOn(this.state)) return { ok: false, error: "No mulligans here: your hand already holds the answer's letters." };
       var result = baseMulligan.apply(this, arguments);
       if (result && result.ok && this.state.umtEduMulligan) this.state.umtEduMulligan.done = true;
       return result;
@@ -651,7 +669,7 @@
     var screen = document.getElementById("cuddleScreen");
     var on = Boolean(game && isEasy(game) && screen && screen.classList.contains("active"));
     document.body.classList.toggle("umt-easy-mode", on);
-    document.body.classList.toggle("umt-edu-mulligan", on && isMulliganStage(game.state));
+    document.body.classList.toggle("umt-edu-mulligan", on && mulligansOn(game.state));
     if (on) {
       keepMapStraight(game);
       if (keepHandDealt(game)) {

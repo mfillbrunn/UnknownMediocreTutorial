@@ -283,7 +283,7 @@
       },
       at: "top",
       cards: [
-        { title: "No mulligans needed", text: "From here on you don't need to mulligan: every consonant of the answer is in your hand again. But there are more letters the answer doesn't use, so the themes and your guesses' colours matter more.", focus: ".cuddle-hand" }
+        { title: "Mulligans are back", text: "From here on, one consonant of the answer waits in your <b>deck</b> each stage, the boss too. Work out which letters you don't need and <b>mulligan</b> one: the missing letter comes in. (Miss it, and it turns up by itself after your third guess.)", focus: ".cuddle-mulligan" }
       ]
     },
     {
