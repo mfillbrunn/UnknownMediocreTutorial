@@ -69,7 +69,10 @@
       try { return typeof game.isInfiniteCard === "function" && game.isInfiniteCard(card); }
       catch (_error) { return false; }
     });
-    return reusable || matches.find((card) => !used.has(card.id)) || null;
+    // Every hand letter can go into a word more than once (cuddle-engine.js
+    // toggleDraftReusable), so a card already in the word can be dropped in
+    // again: a spare copy first, else the same card.
+    return reusable || matches.find((card) => !used.has(card.id)) || matches[0] || null;
   }
 
   function cleanup() {

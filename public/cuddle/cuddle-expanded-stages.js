@@ -2235,8 +2235,9 @@
           const glyph = String(op.glyph || "").toUpperCase();
           const cards = cardsForDuelGlyph(game, state, glyph);
           const draft = new Set((state.draft || []).filter(Boolean));
-          const card = cards.find(item => game.isInfiniteCard(item)) || cards.find(item => !draft.has(item.id));
-          if (!card) return { ok: false, error: `${glyph} is not free in your hand.` };
+          // A letter can go in twice, as a tap allows: a spare copy, else the same card.
+          const card = cards.find(item => game.isInfiniteCard(item)) || cards.find(item => !draft.has(item.id)) || cards[0];
+          if (!card) return { ok: false, error: `${glyph} is not in your hand.` };
           return game.insertDraftCardAt(card.id, integer(op.to, -1));
         });
         safeSave(game);
