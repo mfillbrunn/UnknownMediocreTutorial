@@ -347,6 +347,18 @@
       else if (top >= 0 && top !== state.deck.length - 1) state.deck.push(state.deck.splice(top, 1)[0]);
       delete need[hold];
     }
+    // A letter that now stays in hand (found yellow or green) covers every
+    // copy the answer needs: no second card of it, which would show as ×2.
+    var kept = {};
+    state.hand.forEach(function stays(card) {
+      if (card && typeof game.isInfiniteCard === "function" && game.isInfiniteCard(card)) kept[card.glyph] = true;
+    });
+    state.hand = state.hand.filter(function single(card) {
+      if (!plain(game, card) || !kept[card.glyph]) return true;
+      state.deck.unshift(card);
+      return false;
+    });
+    Object.keys(kept).forEach(function covered(letter) { delete need[letter]; });
     var held = {};
     state.hand.forEach(function count(card) { if (plain(game, card)) held[card.glyph] = (held[card.glyph] || 0) + 1; });
     Object.keys(need).forEach(function bring(letter) {

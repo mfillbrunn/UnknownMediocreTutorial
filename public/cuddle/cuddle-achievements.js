@@ -32,7 +32,6 @@
     // Cuddle never needs an account (progress lives in this browser); this
     // is just a thank-you coin for making one.
     { id: "signUp", group: "account", icon: "🔑", title: "Signed Up", text: "Create a free account. Cuddle never needs one, but here's a coin for it." },
-    { id: "winEasy", group: "wins", icon: "🏆", title: "Educational Win", text: "Win a run on Educational." },
     { id: "winMedium", group: "wins", icon: "🏆", title: "Medium Win", text: "Win a run on Medium." },
     { id: "winHard", group: "wins", icon: "🏆", title: "Hard Win", text: "Win a run on Hard." },
     { id: "flawless", group: "wins", icon: "⭐", title: "Flawless", text: "Win a run without ever guessing past the guess window." },
@@ -194,12 +193,19 @@
     }
   }
 
+  // Educational (cuddle-easy-mode.js) is the guided tutorial: it earns no
+  // achievements (nor the first-run coins), so they all wait for Medium and
+  // Hard.
+  function educational(game) {
+    return Boolean(window.CuddleEasyMode && window.CuddleEasyMode.isEasy(game));
+  }
+
   function check() {
     // Checked whether or not a run is going.
     if (signedIn()) unlock("signUp");
     var game = activeGame();
     var state = game && game.state;
-    if (!state || !state.runId || inDuel(state)) return;
+    if (!state || !state.runId || inDuel(state) || educational(game)) return;
     var memo = runMemo(state);
     var money = Math.max(0, Number(state.cuddleMoney) || 0);
     if (money > memo.lastMoney) memo.earned += money - memo.lastMoney;
@@ -217,10 +223,7 @@
     var bosses = Math.max(Number(state.bossesCleared) || 0, Array.isArray(state.bossGatesDone) ? state.bossGatesDone.length : 0);
     if (bosses > 0 || state.status === "won") unlock("firstBoss");
 
-    // Easy shows no badges (cuddle-easy-mode.js) and starts with Bigger Hand
-    // at its top level, so badge achievements wait for Medium and Hard.
-    var easy = Boolean(window.CuddleEasyMode && window.CuddleEasyMode.isEasy(game));
-    var powers = easy ? { legendary: 0, epic: 0, maxCommon: false, maxRare: false } : countPowers(game);
+    var powers = countPowers(game);
     if (powers.legendary >= 4) unlock("legendary4");
     if (powers.epic >= 10) unlock("epic10");
     if (powers.maxCommon) unlock("maxCommon");
@@ -239,7 +242,6 @@
       }
       if (state.status === "won") {
         var difficulty = difficultyOf(state);
-        if (difficulty === "easy") unlock("winEasy");
         if (difficulty === "medium") unlock("winMedium");
         if (difficulty === "hard") unlock("winHard");
         if (!memo.late) unlock("flawless");
@@ -262,7 +264,7 @@
       state = this.state;
       try {
         var history = state && Array.isArray(state.history) ? state.history : [];
-        if (result && result.ok !== false && history.length > before && !inDuel(state)) {
+        if (result && result.ok !== false && history.length > before && !inDuel(state) && !educational(this)) {
           var entry = history[history.length - 1];
           var memo = runMemo(state);
           if (Number(entry && entry.latePenalty) > 0) memo.late = true;
