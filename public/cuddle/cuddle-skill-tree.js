@@ -133,7 +133,7 @@
           levels: ["Hold 1 more consonant in your hand.", "Hold 2 more consonants in your hand.", "Hold 4 more consonants in your hand."],
           level: g => Number(g?.state?.balanceRewardCounts?.handSizeBoost) || 0 },
         { id: "mulliganValueBoost", icon: "💱", title: "Mulligan Dividend", tier: "common", type: "points", maxLevel: 3,
-          levels: ["When you solve, each mulligan you didn't use gives +3 points.", "Each unused mulligan gives +6 points.", "Each unused mulligan gives +12 points."],
+          levels: ["When you solve, each mulligan you didn't use gives 3 more points: 4 instead of 1.", "Each unused mulligan gives 6 more points: 7 in all.", "Each unused mulligan gives 12 more points: 13 in all."],
           level: g => Number(g?.state?.balanceRewardCounts?.mulliganValueBoost) || 0 },
         { id: "earlySolveBoost", icon: "🏁", title: "Early Finish", tier: "rare", type: "points", maxLevel: 3,
           levels: ["When you solve, each guess you had left gives +5 points.", "Each guess you had left gives +10 points.", "Each guess you had left gives +25 points."],

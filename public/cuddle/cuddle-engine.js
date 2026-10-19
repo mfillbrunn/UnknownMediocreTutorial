@@ -3845,7 +3845,7 @@
       key: "mulliganValueBoost",
       icon: "M+",
       title: "Mulligan Dividend",
-      description: "Each unused mulligan pays 3 more points when you solve. Level 2: 6 more. Level 3: 12 more."
+      description: "Each unused mulligan pays 3 more points when you solve (4 instead of 1). Level 2: 6 more (7). Level 3: 12 more (13)."
     },
     {
       id: "earlySolveBoost",
@@ -4012,7 +4012,7 @@
         ? 0
         : finiteNumber(rules.greenPoints, 2 + finiteNumber(upgrades.yellowPoints) + finiteNumber(upgrades.greenOnlyPoints)),
       earlyPoint: finiteNumber(rules.earlyPoint, 5 + finiteNumber(upgrades.earlyRoundPoint)),
-      mulliganPoints: finiteNumber(rules.mulliganPoints, 3)
+      mulliganPoints: finiteNumber(rules.mulliganPoints, UNUSED_MULLIGAN_POINTS)
         + finiteNumber(upgrades.mulliganPointBonus)
     };
   };

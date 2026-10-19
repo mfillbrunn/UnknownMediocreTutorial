@@ -1896,7 +1896,7 @@
       greenPoints: 2,
       greyPoints: 0,
       earlyPoint: 5,
-      mulliganPoints: 3,
+      mulliganPoints: 1,
       questPoints: 0,
       questCadence: 3
     };
