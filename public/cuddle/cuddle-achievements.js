@@ -103,8 +103,13 @@
     return data.coins;
   }
 
+  // Free play: for now a run costs nothing (coins are kept, not spent).
+  // Set to false to charge a coin a run again.
+  var FREE_PLAY = true;
+
   // Spends one coin to start a run; false when there are none.
   function spend() {
+    if (FREE_PLAY) return true;
     var data = wallet();
     if (data.coins < 1) return false;
     data.coins -= 1;
@@ -554,6 +559,7 @@
     close: close,
     coins: coins,
     spend: spend,
+    freePlay: FREE_PLAY,
     addCoins: addCoins,
     unlock: unlock,
     claim: claim,

@@ -540,7 +540,7 @@
       <div class="cuddle-landing">
         <div class="cuddle-landing-top">
           <button class="cuddle-icon-btn" data-action="back" aria-label="Back to game choice">←</button>
-          ${window.CuddleAchievements ? `<span class="umt-coin-chip" title="Cuddle Coins: a run costs 1"><span class="umt-coin" aria-hidden="true"></span><b data-umt-coin-count>${window.CuddleAchievements.coins()}</b></span>` : ""}
+          ${window.CuddleAchievements ? `<span class="umt-coin-chip" title="${window.CuddleAchievements.freePlay ? "Cuddle Coins: runs are free right now" : "Cuddle Coins: a run costs 1"}"><span class="umt-coin" aria-hidden="true"></span><b data-umt-coin-count>${window.CuddleAchievements.coins()}</b></span>` : ""}
           <button class="cuddle-icon-btn" data-action="rules" aria-label="How to play Cuddle">?</button>
         </div>
         <section class="cuddle-hero">
@@ -584,7 +584,7 @@
           <button class="cuddle-modal-close" data-action="close-new-run" aria-label="Close">×</button>
           <h2 id="cuddleNewRunTitle">New run</h2>
           ${hasRun ? `<p class="cuddle-newrun-note">This replaces your saved run.</p>` : ""}
-          ${window.CuddleAchievements ? `<p class="umt-newrun-cost"><span class="umt-coin" aria-hidden="true"></span>Costs 1 Cuddle Coin · you have <b>${window.CuddleAchievements.coins()}</b></p>` : ""}
+          ${window.CuddleAchievements ? `<p class="umt-newrun-cost"><span class="umt-coin" aria-hidden="true"></span>${window.CuddleAchievements.freePlay ? "Free to play right now" : `Costs 1 Cuddle Coin · you have <b>${window.CuddleAchievements.coins()}</b>`}</p>` : ""}
           ${newRunCoinNote ? `<p class="umt-newrun-broke" role="alert">No Cuddle Coins left. You get 1 free each day, and 1 for each achievement you claim.</p>` : ""}
           <div class="cuddle-difficulty-row">
             <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Educational</button>
