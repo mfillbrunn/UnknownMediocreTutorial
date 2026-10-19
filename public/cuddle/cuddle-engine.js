@@ -137,7 +137,7 @@
   // separate from EARLY_GUESS_POINTS above, which only ever pays out on
   // the guesses a solve never needed.
   const LATE_GUESS_PENALTIES = [10, 20, 30];
-  // No run culls more than this many letters in all (Cull One / Cull Two
+  // No run culls more than this many letters in all (Pruning Shears, Cull
   // Letters, Deep Cull): past about 8, stages stop being a puzzle.
   const CULL_CAP = 8;
   // Deep Cull (legendary) takes this many letters at once.

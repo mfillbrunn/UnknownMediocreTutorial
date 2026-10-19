@@ -46,7 +46,7 @@
     ["quest value", TIERS.COMMON],
     ["second guess quest", TIERS.COMMON],
     ["bigger mulligan", TIERS.COMMON],
-    ["cull one letter", TIERS.COMMON],
+    ["pruning shears", TIERS.COMMON],
     // Rarity follows points per stage (Opening Verse, Early Finish and
     // Vowel Bounty pay a common-plus amount every stage, so they are Rare;
     // Encore and Double Down pay rarely, so they step down).
@@ -93,7 +93,7 @@
     ["double mulligans", TIERS.EPIC],
     ["double down", TIERS.RARE],
     ["process of elimination", TIERS.EPIC],
-    ["cull two letters", TIERS.EPIC],
+    ["cull letters", TIERS.EPIC],
     ["full hand mulligan", TIERS.EPIC],
     ["quest cadence", TIERS.EPIC],
     ["oracle squares", TIERS.EPIC],
@@ -178,7 +178,7 @@
 
   const KNOWN_ORDINARY_NAMES = new Set([
     "second thoughts", "reward refresh", "quest value", "second guess quest",
-    "bigger mulligan", "cull x & y", "cull one letter", "cull two letters",
+    "bigger mulligan", "cull x & y", "pruning shears", "cull letters",
     "opening verse", "quest ink", "wide margins", "grey matters", "gray matters",
     "bigger hand", "mulligan dividend", "early finish", "colour surge", "color surge",
     "greyscale", "grayscale", "reward echo", "precise green", "wild card",

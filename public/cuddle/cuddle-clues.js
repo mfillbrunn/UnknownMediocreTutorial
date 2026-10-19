@@ -354,7 +354,7 @@
     const chips = all.filter(chip => !chip.treasure);
     root.querySelectorAll(".umt-treasure-diamond").forEach(element => element.remove());
     if (treasure) placeTreasureDiamond(root, treasure);
-    // Letters excluded for the whole run (Cull One and friends) sit with
+    // Letters excluded for the whole run (Pruning Shears and friends) sit with
     // the clues instead of on a line of their own under the board.
     const removed = Array.isArray(game.state.removedLetters) ? game.state.removedLetters : [];
     if (removed.length) chips.push({ icon: "🚫", label: `Excluded this run: ${removed.join(", ")}`, text: "Out", letters: removed.slice(), tone: "excluded" });

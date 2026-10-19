@@ -97,7 +97,11 @@
 /* A wave tile drawn (cuddle-burdens.js playWaveFx): the tile pops out of
    the deck, a wave sweeps the hand and washes the old consonants away,
    then the new ones rise into place. */
-body.umt-wave-active #cuddleScreen .cuddle-hand-panel .cuddle-card:not(.is-vowel):not(.is-infinite):not(.is-dead):not(.is-lucky):not(.is-idea):not(.is-joker) {
+body.umt-wave-active #cuddleScreen .cuddle-hand-panel .cuddle-card:not(.is-vowel):not(.is-infinite):not(.is-dead):not(.is-lucky):not(.is-idea):not(.is-joker),
+body.umt-wave-active #cuddleScreen .cuddle-hand-panel .cuddle-card.is-dead,
+body.umt-wave-active #cuddleScreen .cuddle-hand-panel .cuddle-card.is-idea,
+body.umt-wave-active.umt-wave-new-lucky #cuddleScreen .cuddle-hand-panel .cuddle-card.is-lucky,
+body.umt-wave-active.umt-wave-new-joker #cuddleScreen .cuddle-hand-panel .cuddle-card.is-joker {
   visibility: hidden;
 }
 .umt-wave-layer {
@@ -118,6 +122,14 @@ body.umt-wave-active #cuddleScreen .cuddle-hand-panel .cuddle-card:not(.is-vowel
   color: #ffffff;
   font-weight: 800;
   font-size: 1.15rem;
+}
+/* A washed-out dead card: its skull floats off with the letters. */
+.umt-wave-ghost.is-dead {
+  background: linear-gradient(180deg, #3b3340, #241f29);
+}
+.umt-wave-ghost.is-dead svg {
+  width: 60%;
+  height: 60%;
 }
 .umt-wave-tile {
   position: fixed;

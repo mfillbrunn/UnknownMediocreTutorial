@@ -249,7 +249,7 @@
       flavor: "A scholar offers to cross a few letters off the list for good.",
       options: Object.freeze([
         opt("safe", "Listen to a lecture", "Three opening clues in the next Wordle and [40] points.", [{ type: "nextBonus", key: "clue", amount: 3 }, { type: "points", amount: 40 }]),
-        opt("bold", "Study through the night", "A rare letter leaves the deck and every future answer for good (Cull Two Letters), and you gain a random **Rare** upgrade, but the next Wordle must be solved within the guess limit.", [{ type: "upgradeId", id: "umtCullTwo" }, { type: "upgradeTier", tier: "rare" }, { type: "nextPenalty", key: "guess", amount: 1 }])
+        opt("bold", "Study through the night", "A rare letter leaves the deck and every future answer for good (Cull Letters), and you gain a random **Rare** upgrade, but the next Wordle must be solved within the guess limit.", [{ type: "upgradeId", id: "umtCullTwo" }, { type: "upgradeTier", tier: "rare" }, { type: "nextPenalty", key: "guess", amount: 1 }])
       ])
     }),
     // Deck burdens (cuddle-burdens.js): a dead card has no letter and only

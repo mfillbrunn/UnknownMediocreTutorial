@@ -536,12 +536,25 @@
           if (letter) ideaLetters.push(letter);
         });
       }
+      var hadLucky = state.hand.some(isLuckyCard);
+      var hadJoker = state.hand.some(isJokerTile);
       var drawn = game.drawToHandLimit();
+      drawn = Array.isArray(drawn) ? drawn : [];
       // For the hand: the wave card shows up, a wave washes these letters
-      // out, then the new ones come in (playWaveFx below).
-      game.__umtWaveFx = (game.__umtWaveFx || []).concat([{ swept: sweptGlyphs, at: Date.now() }]);
-      // Hide the new letters from their very first frame on screen.
-      if (typeof document !== "undefined" && document.body && !reducedMotion()) document.body.classList.add("umt-wave-active");
+      // (and dead and idea cards) out, then the new ones come in, special
+      // cards it drew among them (playWaveFx below).
+      game.__umtWaveFx = (game.__umtWaveFx || []).concat([{
+        swept: sweptGlyphs.concat(dead.map(function d() { return "dead"; }), ideas.map(function i() { return "idea"; })),
+        newLucky: !hadLucky && drawn.some(isLuckyCard),
+        newJoker: !hadJoker && drawn.some(isJokerTile),
+        at: Date.now()
+      }]);
+      // Hide the new cards from their very first frame on screen.
+      if (typeof document !== "undefined" && document.body && !reducedMotion()) {
+        document.body.classList.add("umt-wave-active");
+        document.body.classList.toggle("umt-wave-new-lucky", game.__umtWaveFx[game.__umtWaveFx.length - 1].newLucky);
+        document.body.classList.toggle("umt-wave-new-joker", game.__umtWaveFx[game.__umtWaveFx.length - 1].newJoker);
+      }
       drawNote(game, "Wave! " + swept.length + " consonant" + (swept.length === 1 ? "" : "s")
         + (dead.length ? " and " + dead.length + " dead card" + (dead.length === 1 ? "" : "s") : "")
         + " washed out, " + drawn.length + " new ones drawn."
@@ -796,6 +809,20 @@
 
   // Consonant cards the wave brought (they're hidden until it has passed).
   var NEW_CARD_SELECTOR = ".cuddle-hand-panel .cuddle-card:not(.is-vowel):not(.is-infinite):not(.is-dead):not(.is-lucky):not(.is-idea):not(.is-joker)";
+  // Cards a wave brings in: its new consonants, every dead and idea card
+  // (the wave washed out the old ones), and a lucky card or Joker it drew
+  // when there wasn't one already (cuddle-burdens.css hides them likewise).
+  function freshCards(event) {
+    var selector = NEW_CARD_SELECTOR + ", .cuddle-hand-panel .cuddle-card.is-dead, .cuddle-hand-panel .cuddle-card.is-idea"
+      + (event && event.newLucky ? ", .cuddle-hand-panel .cuddle-card.is-lucky" : "")
+      + (event && event.newJoker ? ", .cuddle-hand-panel .cuddle-card.is-joker" : "");
+    return Array.prototype.slice.call(document.querySelectorAll(selector));
+  }
+
+  function endWave() {
+    if (!document.body) return;
+    document.body.classList.remove("umt-wave-active", "umt-wave-new-lucky", "umt-wave-new-joker");
+  }
 
   function reducedMotion() {
     try {
@@ -815,19 +842,19 @@
       // shortly, and give up on a wave that's gone stale.
       if (Date.now() - event.at > 4000) {
         queue.shift();
-        if (!queue.length && document.body) document.body.classList.remove("umt-wave-active");
+        if (!queue.length) endWave();
       }
       return;
     }
     queue.shift();
     if (reducedMotion() || !document.body) {
-      if (document.body) document.body.classList.remove("umt-wave-active");
+      endWave();
       return;
     }
     waveBusy = true;
     document.body.classList.add("umt-wave-active");
     var panelBox = panel.getBoundingClientRect();
-    var slots = Array.prototype.slice.call(document.querySelectorAll(NEW_CARD_SELECTOR)).map(function box(card) {
+    var slots = freshCards(event).map(function box(card) {
       // The deck's fly-in (cuddle-deck-fx.js) is still moving these hidden
       // cards: finish it so they're measured where they'll sit.
       if (typeof card.getAnimations === "function") card.getAnimations().forEach(function end(a) { try { a.finish(); } catch (_e) { a.cancel(); } });
@@ -840,8 +867,10 @@
     var ghosts = event.swept.map(function ghost(glyph, index) {
       var slot = slots[index] || slots[slots.length - 1] || { left: panelBox.left + 20 + index * 46, top: panelBox.top + 60, width: 42, height: 48 };
       var el = document.createElement("span");
-      el.className = "umt-wave-ghost";
-      el.textContent = glyph;
+      el.className = "umt-wave-ghost" + (glyph === "dead" || glyph === "idea" ? " is-" + glyph : "");
+      if (glyph === "dead") el.innerHTML = skullSvg();
+      else if (glyph === "idea") el.textContent = "\uD83D\uDCA1";
+      else el.textContent = glyph;
       el.style.left = slot.left + "px";
       el.style.top = slot.top + "px";
       el.style.width = slot.width + "px";
@@ -893,8 +922,8 @@
       });
     }
     setTimeout(function reveal() {
-      document.body.classList.remove("umt-wave-active");
-      var fresh = document.querySelectorAll(NEW_CARD_SELECTOR);
+      var fresh = freshCards(event);
+      endWave();
       Array.prototype.forEach.call(fresh, function rise(card, index) {
         if (typeof card.animate === "function") {
           card.animate([{ transform: "translateY(16px) scale(0.85)", opacity: 0 }, { transform: "none", opacity: 1 }],
