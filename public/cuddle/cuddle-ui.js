@@ -1111,23 +1111,54 @@
   // in" plays it, since a wrong pick ends the run.
   let presetSelection = { key: "", word: "" };
 
+  // A trial's words the player has crossed out by hand (nothing is crossed
+  // out for them: telling which ones the guesses ruled out is the trial).
+  // Kept on the run for this stage, and shared with the list above the
+  // board (cuddle-clues.js).
+  function presetStruckKey(state) {
+    return `${state.runId || ""}:${state.round || 0}:${state.secret || ""}`;
+  }
+
+  function presetStruck() {
+    const state = currentState();
+    const record = state && state.umtPresetStruck;
+    return record && record.key === presetStruckKey(state) && Array.isArray(record.words) ? record.words : [];
+  }
+
+  function togglePresetStruck(word) {
+    const state = currentState();
+    if (!state || !word) return;
+    const words = presetStruck().slice();
+    const at = words.indexOf(word);
+    if (at >= 0) words.splice(at, 1);
+    else words.push(word);
+    state.umtPresetStruck = { key: presetStruckKey(state), words };
+    if (words.includes(presetSelection.word)) presetSelection = { key: presetSelection.key, word: "" };
+    try { game.save(); } catch (_error) { /* next save */ }
+  }
+
   function renderPresetPick(pick) {
     if (presetSelection.key !== pick.key) presetSelection = { key: pick.key, word: "" };
     const chosen = presetSelection.word;
-    // No word is crossed out: telling which ones the guesses ruled out is
-    // the trial.
+    const struck = presetStruck();
     const early = typeof game.presetPickIsEarly === "function" && game.presetPickIsEarly();
-    const words = pick.words.map(word => (
-      `<button type="button" class="cuddle-preset-word${word === chosen ? " is-selected" : ""}" data-action="preset-select" data-word="${escapeHtml(word)}" aria-pressed="${word === chosen ? "true" : "false"}">`
-      + word.split("").map(letter => `<span>${escapeHtml(letter)}</span>`).join("")
-      + `</button>`
-    )).join("");
+    // Each word: cross it out (or back in) on the left, pick it on the right.
+    const words = pick.words.map(word => {
+      const out = struck.includes(word);
+      return `<div class="cuddle-preset-row${out ? " is-struck" : ""}${word === chosen ? " is-selected" : ""}">`
+        + `<button type="button" class="cuddle-preset-strike" data-action="preset-strike" data-word="${escapeHtml(word)}" aria-pressed="${out ? "true" : "false"}" aria-label="${out ? `Bring ${escapeHtml(word)} back` : `Cross out ${escapeHtml(word)}`}">${out ? "↺" : "✕"}</button>`
+        + `<button type="button" class="cuddle-preset-word${word === chosen ? " is-selected" : ""}" data-action="preset-select" data-word="${escapeHtml(word)}" aria-pressed="${word === chosen ? "true" : "false"}"${out ? " disabled" : ""} aria-label="Pick ${escapeHtml(word)}">`
+        + word.split("").map(letter => `<span>${escapeHtml(letter)}</span>`).join("")
+        + `</button></div>`;
+    }).join("");
+    const left = pick.words.length - pick.words.filter(word => struck.includes(word)).length;
     return `
       <section class="cuddle-hand-panel cuddle-preset-pick" aria-labelledby="cuddlePresetTitle">
         <div class="cuddle-preset-head">
           <span class="cuddle-preset-kicker">${early ? "Preset Trial · answer early" : "Preset Trial · last guess"}</span>
           <h3 id="cuddlePresetTitle">The answer is one of these ${pick.words.length} words</h3>
-          <p>${early ? "Lock in your answer now? It's your final answer: right passes the trial, wrong ends the run." : "Use the feedback on the board. A wrong pick ends the run."}</p>
+          <p>${early ? "Lock in your answer now? It's your final answer: right passes the trial, wrong ends the run." : "Check each word against your guesses above. A wrong pick ends the run."}
+            Tap ✕ to cross out a word that can't be it${struck.length ? ` (${left} left)` : ""}.</p>
         </div>
         <div class="cuddle-preset-words">${words}</div>
         <button type="button" class="cuddle-btn cuddle-btn-primary cuddle-preset-lock" data-action="preset-lock"${chosen ? "" : " disabled"}>${chosen ? `Lock in ${escapeHtml(chosen)}` : "Pick a word"}</button>
@@ -2091,7 +2122,13 @@
         return false;
       /* UMT_CUDDLE_SINGLEPLAYER_V2: ACTIONS END */
       case "preset-select":
+        if (presetStruck().includes(String(dataset.word || ""))) return false;
         presetSelection = { key: presetSelection.key, word: String(dataset.word || "") };
+        return true;
+      // Cross a trial word out by hand, or bring it back (here and in the
+      // list above the board).
+      case "preset-strike":
+        togglePresetStruck(String(dataset.word || "").toUpperCase());
         return true;
       // A word tapped in the Open trial's list: answer early with it.
       case "preset-early": {
