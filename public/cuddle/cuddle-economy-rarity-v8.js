@@ -2484,7 +2484,9 @@
       if (data.flags.bossCullThree > 0) { cullLetters(state, context, 3, 1); data.flags.bossCullThree -= 1; }
     }
 
-    data.stage.freeYellowTurn = difficulty === "easy" ? 1 : difficulty === "medium" ? 2 : null;
+    // (Not in Educational, cuddle-easy-mode.js: its hand holds the answer's letters.)
+    const educational = Boolean(window.CuddleEasyMode && window.CuddleEasyMode.isEasy(state));
+    data.stage.freeYellowTurn = educational ? null : difficulty === "easy" ? 1 : difficulty === "medium" ? 2 : null;
     saveCustom(state);
   }
 

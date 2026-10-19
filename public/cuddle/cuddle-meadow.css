@@ -117,9 +117,8 @@ body.umt-meadow-arriving #cuddleScreen .cuddle-root {
   background-position: center, var(--umt-meadow-position);
   background-repeat: no-repeat;
   clip-path: circle(0 at var(--portal-x, 50%) var(--portal-y, 50%));
-  transform: scale(1.08);
   animation: umtMeadowPortalOpen 680ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
-  will-change: clip-path, transform;
+  will-change: clip-path;
 }
 
 /* A soft rim on the opening circle, like light spilling through. */
@@ -143,7 +142,6 @@ body.umt-meadow-arriving #cuddleScreen .cuddle-root {
 @keyframes umtMeadowPortalOpen {
   to {
     clip-path: circle(150vmax at var(--portal-x, 50%) var(--portal-y, 50%));
-    transform: scale(1);
   }
 }
 

@@ -77,45 +77,47 @@
   // until Vowel Play is actually picked.
   let onboardingPending = false;
 
-  // ---- Leaving the game choice: the doorway pans to the chosen side --------
+  // ---- Leaving the game choice: a circle of the chosen game's room ---------
   //
-  // The hub's picture is a doorway: the detective's office on the left
-  // (Vowel Play), the meadow through the door on the right (Cuddle). A copy
-  // of it is laid over the screen and moves toward the chosen side; the
-  // game opens underneath and the copy fades away (css/game-menu.css,
-  // .umt-hub-pan).
-  const PAN_MS = 620;
-  let panBusy = false;
+  // Picking a game opens a circle of that game's backdrop out of its button
+  // until it fills the screen (no zoom: the picture stays put), switches to
+  // the game underneath, and lets the circle fade away. Cuddle's is its
+  // meadow (cuddle/cuddle-meadow.css, .umt-meadow-portal); Vowel Play's is
+  // the dark detective office (css/game-menu.css, .umt-office-portal).
+  const PORTAL_OPEN_MS = 620;
+  let portalBusy = false;
 
-  function panTo(side, open) {
-    const hub = document.getElementById("gameHubScreen");
+  function openThroughPortal(button, className, arriving, open) {
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduced || panBusy || !hub || !hub.classList.contains("active")) {
+    if (reduced || portalBusy || !button) {
       open();
       return;
     }
-    panBusy = true;
-    hub.classList.add("umt-hub-leaving", side === "cuddle" ? "is-to-cuddle" : "is-to-vowelplay");
-    const pan = document.createElement("div");
-    pan.className = `umt-hub-pan is-${side}`;
-    pan.setAttribute("aria-hidden", "true");
-    document.body.appendChild(pan);
-    const arriving = side === "cuddle" ? "umt-meadow-arriving" : "umt-office-arriving";
+    portalBusy = true;
+    const rect = button.getBoundingClientRect();
+    const portal = document.createElement("div");
+    portal.className = className;
+    portal.setAttribute("aria-hidden", "true");
+    // Opens from the button's icon, not its middle.
+    portal.style.setProperty("--portal-x", `${Math.round(rect.left + Math.min(40, rect.width / 2))}px`);
+    portal.style.setProperty("--portal-y", `${Math.round(rect.top + rect.height / 2)}px`);
+    document.body.appendChild(portal);
+
     setTimeout(() => {
       document.body.classList.add(arriving);
-      hub.classList.remove("umt-hub-leaving", "is-to-cuddle", "is-to-vowelplay");
       open();
-      requestAnimationFrame(() => pan.classList.add("is-leaving"));
+      requestAnimationFrame(() => portal.classList.add("is-leaving"));
       setTimeout(() => {
-        pan.remove();
+        portal.remove();
         document.body.classList.remove(arriving);
-        panBusy = false;
-      }, 560);
-    }, PAN_MS);
+        portalBusy = false;
+      }, 600);
+    }, PORTAL_OPEN_MS);
   }
 
-  function openVowelPlay() {
-    panTo("vowelplay", showVowelPlay);
+  function openVowelPlay(event) {
+    const button = event?.currentTarget instanceof Element ? event.currentTarget : document.getElementById("hubVowelPlayBtn");
+    openThroughPortal(button, "umt-office-portal", "umt-office-arriving", showVowelPlay);
   }
 
   function showVowelPlay() {
@@ -150,15 +152,11 @@
 
   // ---- Opening Cuddle: the meadow portal ---------------------------------
   //
-  // Picking Cuddle opens a circle of its meadow backdrop out of the button
-  // until it fills the screen, switches to Cuddle underneath (whose own
-  // backdrop is the same picture, see cuddle/cuddle-meadow.css), then lets
-  // the portal fade away as Cuddle's content rises in. The click is caught
-  // on the way down so cuddle-ui.js's own handler on the button doesn't
-  // switch screens before the portal has opened; this calls it afterwards.
+  // Cuddle's own backdrop is the same meadow picture, so the circle hands
+  // over seamlessly. The click is caught on the way down so cuddle-ui.js's
+  // own handler on the button doesn't switch screens before the portal has
+  // opened; this calls it afterwards.
   const MEADOW_IMAGE = "cuddle/backgrounds/cuddle-meadow.webp";
-  const PORTAL_OPEN_MS = 620;
-  let portalBusy = false;
 
   function preloadMeadow() {
     const image = new Image();
@@ -169,36 +167,11 @@
   function openCuddleThroughPortal(button) {
     setChosen("cuddle");
     const open = () => window.CuddleMode?.open?.();
-    // From the game choice: through the doorway, into the meadow.
-    if (document.getElementById("gameHubScreen")?.classList.contains("active") && window.CuddleMode) {
-      panTo("cuddle", open);
-      return;
-    }
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduced || portalBusy || !window.CuddleMode) {
+    if (!window.CuddleMode) {
       open();
       return;
     }
-    portalBusy = true;
-    const rect = button.getBoundingClientRect();
-    const portal = document.createElement("div");
-    portal.className = "umt-meadow-portal";
-    portal.setAttribute("aria-hidden", "true");
-    // Opens from the button's icon (the Cuddle logo), not its middle.
-    portal.style.setProperty("--portal-x", `${Math.round(rect.left + Math.min(40, rect.width / 2))}px`);
-    portal.style.setProperty("--portal-y", `${Math.round(rect.top + rect.height / 2)}px`);
-    document.body.appendChild(portal);
-
-    setTimeout(() => {
-      document.body.classList.add("umt-meadow-arriving");
-      open();
-      requestAnimationFrame(() => portal.classList.add("is-leaving"));
-      setTimeout(() => {
-        portal.remove();
-        document.body.classList.remove("umt-meadow-arriving");
-        portalBusy = false;
-      }, 600);
-    }, PORTAL_OPEN_MS);
+    openThroughPortal(button, "umt-meadow-portal", "umt-meadow-arriving", open);
   }
 
   document.addEventListener("click", event => {

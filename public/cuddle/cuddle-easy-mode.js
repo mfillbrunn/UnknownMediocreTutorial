@@ -47,6 +47,13 @@
   var EXTRA_DECOYS = 2;
   var CONSONANT_BONUS = 0.5;
   var CROSSROADS_ROW = 2;
+  // The tour's first two stages use set words, so its cards can talk about
+  // them: SCUBA (S, C, B in the hand), then TIGER on the Mulligan stage
+  // with K and X beside G and R -- T waits on top of the deck.
+  var TOUR_WORDS = {
+    1: { word: "SCUBA", decoys: [] },
+    2: { word: "TIGER", decoys: ["K", "X"] }
+  };
 
   function stateOf(gameOrState) {
     if (!gameOrState) return null;
@@ -124,11 +131,32 @@
     if (!map || !Array.isArray(map.rows) || !map.position) return 1;
     var row = Number(map.position.row);
     var count = 0;
+    var stage = function stage(node) { return Boolean(node && node.type !== "event" && node.type !== "upgrade" && node.type !== "shop"); };
+    var node = null;
     for (var i = 0; i <= row && i < map.rows.length; i += 1) {
-      var node = map.rows[i] && map.rows[i].nodes && map.rows[i].nodes[0];
-      if (node && node.type !== "event" && node.type !== "upgrade" && node.type !== "shop") count += 1;
+      node = map.rows[i] && map.rows[i].nodes && map.rows[i].nodes[0];
+      if (stage(node)) count += 1;
     }
+    // Leaving the Crossroads, the next stage's word is picked before the
+    // map moves on: that's the next stage.
+    if (state.status === "playing" && !stage(node)) count += 1;
     return Math.max(1, count);
+  }
+
+  function tourWord(state) {
+    if (!state || state.boss) return null;
+    return TOUR_WORDS[stageNumber(state)] || null;
+  }
+
+  var basePickSecret = proto._pickSecret;
+  if (typeof basePickSecret === "function") {
+    proto._pickSecret = function pickSecretEasy() {
+      // Only on the map's stage itself (the run's start picks a word too).
+      var map = this.state && this.state.branchMap;
+      var tour = isEasy(this) && map && map.position ? tourWord(this.state) : null;
+      if (tour && this.getActiveWords().indexOf(tour.word) !== -1) return tour.word;
+      return basePickSecret.apply(this, arguments);
+    };
   }
 
   function decoyCount(state) {
@@ -357,15 +385,33 @@
         return seen[card.glyph] > (need[card.glyph] || 0);
       });
     };
+    var tour = tourWord(state);
+    var fixed = tour && tour.word === secret ? tour.decoys : [];
     var spares = spareCount();
-    while (spares.length > wanted) {
+    // A set word's decoys: any other spare goes first.
+    if (fixed.length) {
+      spares.sort(function setLast(a, b) { return (fixed.indexOf(a.glyph) !== -1) - (fixed.indexOf(b.glyph) !== -1); }).reverse();
+    }
+    var unset = function unset() { return fixed.length && spares.length && fixed.indexOf(spares[spares.length - 1].glyph) === -1; };
+    while (spares.length > wanted || unset()) {
       var drop = spares.pop();
       state.hand.splice(state.hand.indexOf(drop), 1);
-      state.deck.push(drop);
+      // To the bottom: the held-back letter stays on top.
+      state.deck.unshift(drop);
     }
     while (spares.length < wanted) {
-      var from = state.deck.findIndex(function decoy(card) { return plain(game, card) && !need[card.glyph] && card.glyph !== hold && String(state.secret).indexOf(card.glyph) === -1; });
-      if (from < 0) break;
+      var from = state.deck.findIndex(function decoy(card) {
+        if (!plain(game, card) || need[card.glyph] || card.glyph === hold || String(state.secret).indexOf(card.glyph) !== -1) return false;
+        if (spares.some(function same(spare) { return spare.glyph === card.glyph; })) return false;
+        return !fixed.length || fixed.indexOf(card.glyph) !== -1;
+      });
+      if (from < 0) {
+        // A set decoy that isn't in the deck (discarded): made for the stage.
+        var missing = fixed.find(function absent(letter) { return !spares.some(function same(spare) { return spare.glyph === letter; }); });
+        if (!missing || typeof game._newCard !== "function") break;
+        state.deck.unshift(game._newCard(missing, "deck"));
+        from = 0;
+      }
       var card = state.deck.splice(from, 1)[0];
       state.hand.push(card);
       spares.push(card);

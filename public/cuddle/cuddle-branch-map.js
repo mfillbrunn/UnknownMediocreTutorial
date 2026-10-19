@@ -67,8 +67,10 @@
     // lucky cards were cut back. Medium's gates pass about 90% / 80% / 65%
     // of the bot's runs; Hard's sit near its median, so each is a real
     // hurdle -- a player who builds points on purpose clears them more
-    // often. Easy is one world (cuddle-easy-mode.js) with no gate.
-    "before-3": { easy: 0, medium: 200, hard: 250 },
+    // often. Educational (easy) is one world (cuddle-easy-mode.js) on a
+    // single road: its gate is one every run can reach (three solved stages
+    // pay at least 10 each), so the tour can teach it without a dead end.
+    "before-3": { easy: 30, medium: 200, hard: 250 },
     "before-7": { easy: 200, medium: 450, hard: 600 },
     "final": { easy: 500, medium: 700, hard: 1000 }
   };
