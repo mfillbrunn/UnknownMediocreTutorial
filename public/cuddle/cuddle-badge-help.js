@@ -258,16 +258,19 @@
   }
 
   // A tap on the "?" opens the help and nothing else: not the reward pick,
-  // not the purchase underneath it.
+  // not the purchase underneath it. The press itself is only kept from the
+  // card (not cancelled): cancelling a touch also cancels the click that
+  // follows it on a phone, and the click is what opens the help.
   function onHelpTap(event) {
     var button = event.target instanceof Element ? event.target.closest(".umt-help-q") : null;
     if (!button) return;
-    event.preventDefault();
     event.stopImmediatePropagation();
-    if (event.type === "click") open(button.getAttribute("data-umt-help"));
+    if (event.type !== "click") return;
+    event.preventDefault();
+    open(button.getAttribute("data-umt-help"));
   }
   ["pointerdown", "mousedown", "touchstart", "click"].forEach(function (type) {
-    window.addEventListener(type, onHelpTap, { capture: true, passive: false });
+    window.addEventListener(type, onHelpTap, { capture: true, passive: true });
   });
   window.addEventListener("keydown", function (event) {
     var button = event.target instanceof Element ? event.target.closest(".umt-help-q") : null;

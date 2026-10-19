@@ -138,22 +138,88 @@
   .umt-cmb-new, .umt-cmb-caption { animation: none; opacity: 1; }
 }
 
-/* Open Preset Trial: before the pick's guess, each word in the list can
-   be tapped to answer with it early (cuddle-ui.js "preset-early"). */
-button.umt-clue-word.is-pickable {
-  border: 1px solid rgba(255, 213, 120, 0.55);
+/* A trial's word list above the board: tap a word to cross it out by hand
+   (or back in); "Answer now" opens the pick early (cuddle-clues.js). */
+button.umt-clue-word.is-strikable {
+  border: 1px solid rgba(255, 213, 120, 0.4);
   font: inherit;
   font-weight: 800;
   cursor: pointer;
-  transition: transform 120ms ease, background-color 120ms ease, border-color 120ms ease;
+  transition: background-color 120ms ease, border-color 120ms ease, opacity 120ms ease;
 }
-button.umt-clue-word.is-pickable:hover,
-button.umt-clue-word.is-pickable:focus-visible {
-  border-color: #ffd578;
-  background: rgba(255, 213, 120, 0.22);
-  transform: translateY(-1px);
+button.umt-clue-word.is-strikable:hover { border-color: #ffd578; }
+button.umt-clue-word.is-strikable:focus-visible { outline: 2px solid #ffd578; outline-offset: 2px; }
+button.umt-clue-word.is-out {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 243, 207, 0.42);
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 120, 120, 0.9);
+  text-decoration-thickness: 2px;
 }
-button.umt-clue-word.is-pickable:focus-visible { outline: 2px solid #ffd578; outline-offset: 2px; }
+.umt-clue-answer {
+  padding: 2px 9px;
+  border: 1px solid rgba(213, 166, 255, 0.6);
+  border-radius: 999px;
+  background: rgba(213, 166, 255, 0.18);
+  color: #f3e7ff;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.umt-clue-answer:focus-visible { outline: 2px solid #d5a6ff; outline-offset: 2px; }
+
+/* The pick: each word with a cross-out button on its left. The word list
+   scrolls inside the panel, so the board and its feedback stay in view
+   above it. */
+.cuddle-preset-pick {
+  max-height: min(54vh, 460px);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+.cuddle-preset-pick .cuddle-preset-words {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  align-content: start;
+  padding: 2px;
+}
+.cuddle-preset-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 4px;
+}
+.cuddle-preset-strike {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--cuddle-border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 140, 140, 0.95);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.cuddle-preset-strike:focus-visible { outline: 2px solid var(--cuddle-accent); outline-offset: 2px; }
+.cuddle-preset-row .cuddle-preset-word { gap: 3px; padding: 6px 4px; }
+.cuddle-preset-row .cuddle-preset-word span { width: 21px; height: 26px; font-size: 0.88rem; }
+.cuddle-preset-row.is-struck .cuddle-preset-strike { color: var(--cuddle-text); }
+.cuddle-preset-row.is-struck .cuddle-preset-word {
+  position: relative;
+  opacity: 0.4;
+  cursor: default;
+}
+.cuddle-preset-row.is-struck .cuddle-preset-word::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 50%;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 120, 120, 0.95);
+}
 .cuddle-preset-back { margin-top: 8px; }
 
 /* Hints rank III (cuddle-schools.js): once a stage, tap a consonant in

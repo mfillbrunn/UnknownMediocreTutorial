@@ -314,12 +314,12 @@
     // An Open trial's list, shown from the first guess (cuddle-curses.js).
     const openList = typeof game.presetOpenList === "function" ? game.presetOpenList() : null;
     if (Array.isArray(openList) && openList.length) {
-      // Before the pick's own guess, a word can be tapped to answer with it
-      // early (cuddle-ui.js "preset-early").
+      // Before the pick's own guess, "Answer now" opens the pick early
+      // (cuddle-ui.js "pair-pick").
       const pickGuess = typeof game.presetPickGuess === "function" ? game.presetPickGuess() : 0;
       const pickable = game.state.status === "playing" && pickGuess > 0 && num(game.state.guessesUsed) + 1 < pickGuess
         && !(typeof game.presetPickIsEarly === "function" && game.presetPickIsEarly());
-      chips.push({ icon: "scroll", label: "Trial list", text: pickable ? "Answer is one of (tap one to answer now)" : "Answer is one of", words: openList, pickable, tone: "preset" });
+      chips.push({ icon: "scroll", label: "Trial list", text: "Answer is one of", words: openList, pickable, tone: "preset" });
     }
     // A word rule on this guess. Rules about one letter (Letter Demand,
     // Banned Letter, Word Chain) show that letter on the row itself, in
@@ -360,6 +360,11 @@
     if (removed.length) chips.push({ icon: "🚫", label: `Excluded this run: ${removed.join(", ")}`, text: "Out", letters: removed.slice(), tone: "excluded" });
     root.querySelectorAll(".umt-clues").forEach(element => element.remove());
     if (!chips.length) return;
+    // Trial words crossed out by hand this stage (cuddle-ui.js presetStruck).
+    const live = game.state;
+    const struckRecord = live.umtPresetStruck;
+    const struck = struckRecord && struckRecord.key === `${live.runId || ""}:${live.round || 0}:${live.secret || ""}`
+      && Array.isArray(struckRecord.words) ? struckRecord.words : [];
     const markup = `<div class="umt-clues" aria-label="Clues">${chips.map(chip => (
       `<span class="umt-clue${chip.tone ? ` is-${chip.tone}` : ""}" title="${escapeHtml(chip.label)}">`
       + `${icon(chip.icon)}<span class="umt-clue-text${chip.mono ? " is-mono" : ""}">${escapeHtml(chip.text)}`
@@ -372,9 +377,14 @@
         return `<b class="umt-clue-letter${latest ? " is-new" : ""}${flip ? " is-flipping" : ""}">${escapeHtml(letter)}</b>`;
       }).join("") : "")
       + (chip.tests ? chip.tests.map(letter => `<button type="button" class="umt-clue-test" data-school-test="${escapeHtml(letter)}" title="Test ${escapeHtml(letter)}: is it in the answer?">${escapeHtml(letter)}</button>`).join("") : "")
-      + (chip.words ? chip.words.map(word => (chip.pickable
-          ? `<button type="button" class="umt-clue-word is-pickable" data-action="preset-early" data-word="${escapeHtml(String(word).toUpperCase())}" title="Answer with ${escapeHtml(String(word).toUpperCase())}">${escapeHtml(String(word).toUpperCase())}</button>`
-          : `<b class="umt-clue-word">${escapeHtml(String(word).toUpperCase())}</b>`)).join("") : "")
+      // A tap crosses a word out by hand, or brings it back (cuddle-ui.js
+      // "preset-strike", shared with the pick).
+      + (chip.words ? chip.words.map(word => {
+        const upper = escapeHtml(String(word).toUpperCase());
+        const out = struck.includes(String(word).toUpperCase());
+        return `<button type="button" class="umt-clue-word is-strikable${out ? " is-out" : ""}" data-action="preset-strike" data-word="${upper}" aria-pressed="${out ? "true" : "false"}" title="${out ? `Bring ${upper} back` : `Cross out ${upper}`}">${upper}</button>`;
+      }).join("") : "")
+      + (chip.pickable ? `<button type="button" class="umt-clue-answer" data-action="pair-pick">Answer now</button>` : "")
       + `</span></span>`
     )).join("")}</div>`;
     let strip = root.querySelector(".cuddle-play-strip");
