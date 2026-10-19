@@ -1114,12 +1114,11 @@
   function renderPresetPick(pick) {
     if (presetSelection.key !== pick.key) presetSelection = { key: pick.key, word: "" };
     const chosen = presetSelection.word;
-    // An Open trial's list crosses out the words your guesses ruled out
-    // (cuddle-curses.js); a Blind trial's list stays unmarked.
-    const ruledOut = typeof game.presetOpenRuledOut === "function" ? (game.presetOpenRuledOut() || []) : [];
+    // No word is crossed out: telling which ones the guesses ruled out is
+    // the trial.
     const early = typeof game.presetPickIsEarly === "function" && game.presetPickIsEarly();
     const words = pick.words.map(word => (
-      `<button type="button" class="cuddle-preset-word${word === chosen ? " is-selected" : ""}${ruledOut.includes(word) ? " is-out" : ""}" data-action="preset-select" data-word="${escapeHtml(word)}" aria-pressed="${word === chosen ? "true" : "false"}"${ruledOut.includes(word) ? ' title="Ruled out by your guesses"' : ""}>`
+      `<button type="button" class="cuddle-preset-word${word === chosen ? " is-selected" : ""}" data-action="preset-select" data-word="${escapeHtml(word)}" aria-pressed="${word === chosen ? "true" : "false"}">`
       + word.split("").map(letter => `<span>${escapeHtml(letter)}</span>`).join("")
       + `</button>`
     )).join("");
@@ -1141,8 +1140,8 @@
   function renderPairPanel(panel) {
     const pay = item => `+${item.points} points, +$${item.money}`;
     if (panel.phase === "pair") {
-      const words = panel.pair.map(item => `<button type="button" class="cuddle-pair-word${item.out ? " is-out" : ""}" data-action="pair-word" data-word="${escapeHtml(item.word)}"`
-        + ` aria-label="Play ${escapeHtml(item.word)}${item.out ? " (ruled out by your guesses)" : ""}">${escapeHtml(item.word)}${item.out ? `<small>ruled out</small>` : item.listed ? `<small>on the list</small>` : ""}</button>`).join("");
+      const words = panel.pair.map(item => `<button type="button" class="cuddle-pair-word" data-action="pair-word" data-word="${escapeHtml(item.word)}"`
+        + ` aria-label="Play ${escapeHtml(item.word)}">${escapeHtml(item.word)}${item.listed ? `<small>on the list</small>` : ""}</button>`).join("");
       return `
       <section class="cuddle-hand-panel cuddle-pair-panel" aria-labelledby="cuddlePairTitle">
         <div class="cuddle-pair-head">
