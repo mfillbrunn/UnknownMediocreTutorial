@@ -243,6 +243,15 @@
       ]
     },
     {
+      // After a guess rules a letter out, whichever stage that is.
+      id: "e-colours",
+      when: function when(game, state) { return playing(state) && present(".cuddle-hand .cuddle-card.is-card-red"); },
+      at: "top",
+      cards: [
+        { title: "Red means not in the word", text: "Your cards keep score too. A card that turns <span class=\"umt-tut-r\">red</span> is <b>not in the word</b>: leave it out of your next guesses. <span class=\"umt-tut-y\">Yellow</span> and <span class=\"umt-tut-g\">green</span> cards are in the word, and they now stay in your hand.", focus: ".cuddle-hand" }
+      ]
+    },
+    {
       id: "e-points",
       when: function when() {
         var collect = document.querySelector("#cuddleMoneyPayoutOverlay [data-cuddle-money-action=\"collect-payout\"]");
@@ -274,7 +283,7 @@
       },
       at: "top",
       cards: [
-        { title: "No mulligans needed", text: "From here on you don't need to mulligan: every consonant of the answer is in your hand again. But there are more letters the answer doesn't use, so the themes and your guesses' colours matter more.", focus: ".cuddle-hand" }
+        { title: "Mulligans are back", text: "From here on, one consonant of the answer waits in your <b>deck</b> each stage, the boss too. Work out which letters you don't need and <b>mulligan</b> one: the missing letter comes in. (Miss it, and it turns up by itself after your third guess.)", focus: ".cuddle-mulligan" }
       ]
     },
     {
@@ -284,7 +293,7 @@
       },
       at: "top",
       cards: [
-        { title: "Pick a badge", text: "After a stage you pick one of these. Each is a <b>badge</b>: it stays with you for the rest of the run and makes you better, usually with a hint about the answer. Pick the one that sounds most useful.", focus: ".cuddle-choice-grid", at: "bottom" }
+        { title: "Pick a badge", text: "After a stage you pick one of these. Each is a <b>badge</b>: it stays with you for the rest of the run and makes you better, usually with a hint about the answer. Tap a badge's <b>?</b> to see how it works. Pick the one that sounds most useful.", focus: ".cuddle-choice-grid", at: "bottom" }
       ]
     },
     {
@@ -292,7 +301,7 @@
       when: function when() { return present(".umt-event-page") && present(".umt-event-choice"); },
       at: "bottom",
       cards: [
-        { title: "A choice", text: "<b>More themes</b> makes the rest of the way easier. <b>More consonants</b> puts more letters in your hand, so it's harder to tell which ones are in the answer, but every stage pays more points." }
+        { title: "A choice", text: "Pick the help you like for the rest of the way. <b>A hint</b> marks one letter of every answer yellow from the start. <b>Themes</b> shows every theme of every answer." }
       ]
     },
     {

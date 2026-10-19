@@ -249,7 +249,7 @@
       flavor: "A scholar offers to cross a few letters off the list for good.",
       options: Object.freeze([
         opt("safe", "Listen to a lecture", "Three opening clues in the next Wordle and [40] points.", [{ type: "nextBonus", key: "clue", amount: 3 }, { type: "points", amount: 40 }]),
-        opt("bold", "Study through the night", "A rare letter leaves the deck and every future answer for good (Cull Two Letters), and you gain a random **Rare** upgrade, but the next Wordle must be solved within the guess limit.", [{ type: "upgradeId", id: "umtCullTwo" }, { type: "upgradeTier", tier: "rare" }, { type: "nextPenalty", key: "guess", amount: 1 }])
+        opt("bold", "Study through the night", "A rare letter leaves the deck and every future answer for good (Cull Letters), and you gain a random **Rare** upgrade, but the next Wordle must be solved within the guess limit.", [{ type: "upgradeId", id: "umtCullTwo" }, { type: "upgradeTier", tier: "rare" }, { type: "nextPenalty", key: "guess", amount: 1 }])
       ])
     }),
     // Deck burdens (cuddle-burdens.js): a dead card has no letter and only
@@ -291,8 +291,8 @@
       title: "Crossroads",
       flavor: "The road forks for a moment. Which help do you want for the rest of the way?",
       options: Object.freeze([
-        opt("safe", "More themes", "Every answer from here on shows all of its themes.", [{ type: "eduChoice", choice: "themes" }]),
-        opt("bold", "More consonants", "Two more consonants in your hand every stage, so it's harder to tell which ones are in the answer. Stages pay +50% points.", [{ type: "eduChoice", choice: "consonants" }])
+        opt("hint", "A hint", "Every stage from here on starts with one letter of the answer marked yellow: it's in the word.", [{ type: "eduChoice", choice: "hint" }]),
+        opt("themes", "Themes", "Every answer from here on shows all of its themes, so you know what kind of word to look for.", [{ type: "eduChoice", choice: "themes" }])
       ])
     })
   ]);
@@ -2235,8 +2235,9 @@
           const glyph = String(op.glyph || "").toUpperCase();
           const cards = cardsForDuelGlyph(game, state, glyph);
           const draft = new Set((state.draft || []).filter(Boolean));
-          const card = cards.find(item => game.isInfiniteCard(item)) || cards.find(item => !draft.has(item.id));
-          if (!card) return { ok: false, error: `${glyph} is not free in your hand.` };
+          // A letter can go in twice, as a tap allows: a spare copy, else the same card.
+          const card = cards.find(item => game.isInfiniteCard(item)) || cards.find(item => !draft.has(item.id)) || cards[0];
+          if (!card) return { ok: false, error: `${glyph} is not in your hand.` };
           return game.insertDraftCardAt(card.id, integer(op.to, -1));
         });
         safeSave(game);
@@ -2643,7 +2644,7 @@
       }
       const choices = definition.options.map((option, index) => {
         const available = eventAvailability(game, option, eventState);
-        const tag = option.id === "safe" ? "Safe" : option.id === "bold" ? "Bargain"
+        const tag = option.id === "hint" || option.id === "themes" ? "Help" : option.id === "safe" ? "Safe" : option.id === "bold" ? "Bargain"
           : option.id === "gamble" ? "Gamble" : option.id === "risk" ? "High stakes" : "Chance";
         const gives = (option.effects || []).some(effect => effect.type === "surrenderUpgrade") && eventState.sacrificeUpgrade
           ? `<em class="umt-event-gives">Gives up: ${escapeHtml(eventState.sacrificeUpgrade.title)}</em>`

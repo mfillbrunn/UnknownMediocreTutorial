@@ -18,32 +18,6 @@
 }
 .umt-skip-btn.is-money { color: #f6c956; }
 
-/* Open Preset Trial: words your guesses ruled out are crossed out
-   (cuddle-curses.js presetOpenRuledOut). */
-.umt-clue-word.is-out {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 243, 207, 0.4);
-  font-weight: 700;
-  text-decoration: line-through;
-  text-decoration-color: rgba(255, 120, 120, 0.85);
-  text-decoration-thickness: 2px;
-}
-.cuddle-preset-word.is-out {
-  opacity: 0.4;
-  position: relative;
-}
-.cuddle-preset-word.is-out::after {
-  content: "";
-  position: absolute;
-  left: 6px;
-  right: 6px;
-  top: 50%;
-  height: 2px;
-  border-radius: 2px;
-  background: rgba(255, 120, 120, 0.9);
-  pointer-events: none;
-}
-
 /* Combine (cuddle-strategies.js playCombineFx): the old badge glows,
    shatters into sparks, and the new one grows out of the flash while the
    view zooms in on it. */
@@ -339,7 +313,6 @@ button.umt-clue-word.is-pickable:focus-visible { outline: 2px solid #ffd578; out
 .cuddle-pair-word:hover { border-color: rgba(213, 166, 255, 0.55); transform: translateY(-2px); }
 .cuddle-pair-word:focus-visible { outline: 2px solid var(--cuddle-accent, #d5a6ff); outline-offset: 2px; }
 .cuddle-pair-word small { color: var(--cuddle-muted, #b9b2cc); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; }
-.cuddle-pair-word.is-out { opacity: 0.6; }
 .cuddle-pair-actions { display: grid; gap: 8px; }
 .cuddle-pair-actions .cuddle-btn { display: grid; gap: 1px; padding-block: 10px; }
 .cuddle-pair-actions .cuddle-btn span { color: inherit; font-size: 0.72rem; font-weight: 600; opacity: 0.8; }

@@ -137,7 +137,7 @@
   // separate from EARLY_GUESS_POINTS above, which only ever pays out on
   // the guesses a solve never needed.
   const LATE_GUESS_PENALTIES = [10, 20, 30];
-  // No run culls more than this many letters in all (Cull One / Cull Two
+  // No run culls more than this many letters in all (Pruning Shears, Cull
   // Letters, Deep Cull): past about 8, stages stop being a puzzle.
   const CULL_CAP = 8;
   // Deep Cull (legendary) takes this many letters at once.
@@ -3845,7 +3845,7 @@
       key: "mulliganValueBoost",
       icon: "M+",
       title: "Mulligan Dividend",
-      description: "Each unused mulligan pays 3 more points when you solve. Level 2: 6 more. Level 3: 12 more."
+      description: "Each unused mulligan pays 3 more points when you solve (4 instead of 1). Level 2: 6 more (7). Level 3: 12 more (13)."
     },
     {
       id: "earlySolveBoost",
@@ -4012,7 +4012,8 @@
         ? 0
         : finiteNumber(rules.greenPoints, 2 + finiteNumber(upgrades.yellowPoints) + finiteNumber(upgrades.greenOnlyPoints)),
       earlyPoint: finiteNumber(rules.earlyPoint, 5 + finiteNumber(upgrades.earlyRoundPoint)),
-      mulliganPoints: finiteNumber(rules.mulliganPoints, 3)
+      // (The base's own UNUSED_MULLIGAN_POINTS, 1, out of this block's reach.)
+      mulliganPoints: finiteNumber(rules.mulliganPoints, 1)
         + finiteNumber(upgrades.mulliganPointBonus)
     };
   };

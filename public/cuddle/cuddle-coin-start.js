@@ -45,7 +45,7 @@
       + '<div class="umt-cs-door">'
       + '<span class="umt-cs-coin"></span>'
       + '<div class="umt-cs-slot"><span class="umt-cs-slot-mouth"></span></div>'
-      + '<span class="umt-cs-label"><b class="is-insert">INSERT COIN</b><b class="is-credit">1 CREDIT</b></span>'
+      + '<span class="umt-cs-label"><b class="is-insert">INSERT COIN</b><b class="is-credit">' + (window.CuddleAchievements && window.CuddleAchievements.freePlay ? "FREE PLAY" : "1 CREDIT") + '</b></span>'
       + "</div>"
       + "</div>";
   }

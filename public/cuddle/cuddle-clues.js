@@ -314,13 +314,12 @@
     // An Open trial's list, shown from the first guess (cuddle-curses.js).
     const openList = typeof game.presetOpenList === "function" ? game.presetOpenList() : null;
     if (Array.isArray(openList) && openList.length) {
-      const out = typeof game.presetOpenRuledOut === "function" ? (game.presetOpenRuledOut() || []) : [];
       // Before the pick's own guess, a word can be tapped to answer with it
       // early (cuddle-ui.js "preset-early").
       const pickGuess = typeof game.presetPickGuess === "function" ? game.presetPickGuess() : 0;
       const pickable = game.state.status === "playing" && pickGuess > 0 && num(game.state.guessesUsed) + 1 < pickGuess
         && !(typeof game.presetPickIsEarly === "function" && game.presetPickIsEarly());
-      chips.push({ icon: "scroll", label: "Trial list", text: pickable ? "Answer is one of (tap one to answer now)" : "Answer is one of", words: openList, ruledOut: out, pickable, tone: "preset" });
+      chips.push({ icon: "scroll", label: "Trial list", text: pickable ? "Answer is one of (tap one to answer now)" : "Answer is one of", words: openList, pickable, tone: "preset" });
     }
     // A word rule on this guess. Rules about one letter (Letter Demand,
     // Banned Letter, Word Chain) show that letter on the row itself, in
@@ -355,7 +354,7 @@
     const chips = all.filter(chip => !chip.treasure);
     root.querySelectorAll(".umt-treasure-diamond").forEach(element => element.remove());
     if (treasure) placeTreasureDiamond(root, treasure);
-    // Letters excluded for the whole run (Cull One and friends) sit with
+    // Letters excluded for the whole run (Pruning Shears and friends) sit with
     // the clues instead of on a line of their own under the board.
     const removed = Array.isArray(game.state.removedLetters) ? game.state.removedLetters : [];
     if (removed.length) chips.push({ icon: "🚫", label: `Excluded this run: ${removed.join(", ")}`, text: "Out", letters: removed.slice(), tone: "excluded" });
@@ -373,9 +372,7 @@
         return `<b class="umt-clue-letter${latest ? " is-new" : ""}${flip ? " is-flipping" : ""}">${escapeHtml(letter)}</b>`;
       }).join("") : "")
       + (chip.tests ? chip.tests.map(letter => `<button type="button" class="umt-clue-test" data-school-test="${escapeHtml(letter)}" title="Test ${escapeHtml(letter)}: is it in the answer?">${escapeHtml(letter)}</button>`).join("") : "")
-      + (chip.words ? chip.words.map(word => (chip.ruledOut && chip.ruledOut.includes(word)
-        ? `<s class="umt-clue-word is-out" title="Ruled out by your guesses">${escapeHtml(String(word).toUpperCase())}</s>`
-        : chip.pickable
+      + (chip.words ? chip.words.map(word => (chip.pickable
           ? `<button type="button" class="umt-clue-word is-pickable" data-action="preset-early" data-word="${escapeHtml(String(word).toUpperCase())}" title="Answer with ${escapeHtml(String(word).toUpperCase())}">${escapeHtml(String(word).toUpperCase())}</button>`
           : `<b class="umt-clue-word">${escapeHtml(String(word).toUpperCase())}</b>`)).join("") : "")
       + `</span></span>`
