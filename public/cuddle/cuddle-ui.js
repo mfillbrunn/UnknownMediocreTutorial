@@ -1201,6 +1201,12 @@
     const pairPanel = state.status === "playing" && typeof game.presetPairPanel === "function" ? game.presetPairPanel() : null;
     if (pairPanel) return renderPairPanel(pairPanel);
     const unlimitedMulligans = typeof game.hasUnlimitedMulligans === "function" && game.hasUnlimitedMulligans();
+    // A one-mulligan window (Steady Hand, Locked Opener): the button shows
+    // 1 (0 once used), in red, whatever the stage's own count.
+    const mulliganCap = typeof game.mulliganWindowCap === "function" ? game.mulliganWindowCap() : null;
+    const mulligansShown = mulliganCap == null
+      ? state.mulligansLeft
+      : unlimitedMulligans ? mulliganCap : Math.min(mulliganCap, state.mulligansLeft);
     const limit = game.getMulliganLimit();
     const groups = groupedHand(state);
     const vowels = groups.vowels.map(group => renderHandCard(group, state, limit)).join("");
@@ -1226,9 +1232,9 @@
               </button>
               <button class="cuddle-btn cuddle-backspace" data-action="cancel-mode" aria-label="Cancel mulligan" title="Cancel mulligan">✕</button>
             ` : `
-              <button class="cuddle-btn cuddle-mulligan" data-action="mulligan-mode" ${state.mulligansLeft > 0 || unlimitedMulligans ? "" : "disabled"}
-                title="Mulligan: ${unlimitedMulligans ? "unlimited" : `${state.mulligansLeft} left`}, up to ${rules.mulliganSize} cards">
-                Mulligan <span>${unlimitedMulligans ? "&infin;" : state.mulligansLeft}</span>
+              <button class="cuddle-btn cuddle-mulligan${mulliganCap != null ? " is-capped" : ""}" data-action="mulligan-mode" ${mulligansShown > 0 || (unlimitedMulligans && mulliganCap == null) ? "" : "disabled"}
+                title="${mulliganCap != null ? `Only one mulligan right now (a challenge): ${mulliganCap ? "1 left" : "used"}` : `Mulligan: ${unlimitedMulligans ? "unlimited" : `${state.mulligansLeft} left`}, up to ${rules.mulliganSize} cards`}">
+                Mulligan <span>${mulliganCap == null && unlimitedMulligans ? "&infin;" : mulligansShown}</span>
               </button>
               <button class="cuddle-btn cuddle-btn-primary cuddle-submit" data-action="submit" ${submit.ok ? "" : "disabled"}>Submit word</button>
               <button class="cuddle-btn cuddle-backspace" data-action="backspace" ${state.draft.length ? "" : "disabled"}

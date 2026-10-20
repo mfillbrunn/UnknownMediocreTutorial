@@ -368,7 +368,9 @@
       text: "marked tiles show only an alphabet arrow (dash = green)." },
     { id: "quickMode", icon: "⏱️", title: "Quick Mode", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 24,
       text: "60 seconds per guess (45 on Hard), or it's lost." },
-    { id: "noMulligans", icon: "✋", title: "Steady Hand", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 23,
+    // A hard one: it counts as one and a half challenges on the map (two
+    // skulls on its own), like a Rare Word.
+    { id: "noMulligans", icon: "✋", title: "Steady Hand", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 23, weight: 1.5,
       text: "only one mulligan." },
     { id: "questEndurance", icon: "🏃", title: "Endurance Trial", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 26,
       text: "a quest each guess; miss one, lose 1 hand size." },

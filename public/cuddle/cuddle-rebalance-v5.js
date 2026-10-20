@@ -278,7 +278,7 @@
     fakeFeedback: ["Fake Feedback", "Marked tiles show a wrong colour."],
     arrowMode: ["Arrow Signs", "Marked tiles show only an alphabet arrow (dash = green)."],
     quickMode: ["Quick Mode", "That guess scores 0 points."],
-    noMulligans: ["Steady Hand", "No mulligan right before it."],
+    noMulligans: ["Steady Hand", "Only one mulligan right before it."],
     shortHand: ["Short Hand", "One fewer consonant in your hand (two on Hard)."],
     // Retired as a boss; kept so older runs that already carry it read well.
     questTrial: ["Quest Trial", "A quest; miss it and lose 5 points."],
@@ -5098,6 +5098,13 @@
       }, (error) => { throw error; });
     });
 
+    wrapMethod(prototype, "mulliganWindowCap", function (original, args) {
+      if (planEffect(this, guessesUsed(this)) === "noMulligans" && typeof this._steadyHandSpent === "function") {
+        return this._steadyHandSpent() ? 0 : 1;
+      }
+      return original.apply(this, args);
+    });
+
     wrapMethod(prototype, "forfeitGuess", function (original, args) {
       if (planEffect(this, guessesUsed(this)) === "noMulligans") {
         return rejectAction(this, "Steady Hand: you can't skip this guess.");
@@ -5320,6 +5327,8 @@
         id: challenge.id,
         title: challenge.title,
         reward: challenge.reward,
+        // More than one step of difficulty (Steady Hand 1.5, Co-pilot 2).
+        weight: challenge.rareSecret ? 1.5 : challenge.weight || 1,
         description: challengeDisplayDescription(game || publicActiveGame(), challenge)
       })),
       // Generic "how many times has this id been taken" lookup, reused by

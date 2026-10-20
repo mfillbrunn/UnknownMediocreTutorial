@@ -1747,6 +1747,14 @@
       this.state.umtSteadyHandSpent = this._steadyHandKey();
     }
 
+    // How many mulligans a one-mulligan window (Steady Hand, Locked
+    // Opener) still allows right now: 1, or 0 once used; null when no such
+    // window is on. The challenge layers add their own windows to this.
+    mulliganWindowCap() {
+      const steadyHand = this.state.boss?.id === "noMulligans" && Number(this.state.guessesUsed || 0) < this._steadyHandTurns();
+      return steadyHand ? (this._steadyHandSpent() ? 0 : 1) : null;
+    }
+
     mulligan(cardIds) {
       if (this.state.status !== "playing") return { ok: false, error: "The round is paused." };
       const steadyHand = this.state.boss?.id === "noMulligans" && Number(this.state.guessesUsed || 0) < this._steadyHandTurns();

@@ -2557,6 +2557,17 @@
       return originalCanSubmit.apply(this, arguments);
     };
 
+    const originalWindowCap = proto.mulliganWindowCap;
+    proto.mulliganWindowCap = function mulliganWindowCapWithExpandedChallenge() {
+      const challenge = activeExpandedChallenge(this);
+      if (challenge && challenge.effect === "mulliganLock"
+          && integer(this.state.guessesUsed, 0) < expandedChallengeTurns(challenge)
+          && typeof this._steadyHandSpent === "function") {
+        return this._steadyHandSpent() ? 0 : 1;
+      }
+      return typeof originalWindowCap === "function" ? originalWindowCap.apply(this, arguments) : null;
+    };
+
     proto.mulligan = function mulliganWithExpandedChallenge() {
       const challenge = activeExpandedChallenge(this);
       // Locked Opener: one mulligan in its opening guesses, not none.
@@ -3098,7 +3109,8 @@
         row("final", "Final Boss", "The last guardian, at the top of the Eclipse Citadel.")
       ].join("");
       const challengeRows = catalogue.map(item => (
-        `<li>${icon("challenge")}<span><strong>${escapeHtml(item.title)}</strong><small>${richText(item.description)}</small></span></li>`
+        `<li>${icon("challenge")}<span><strong>${escapeHtml(item.title)}</strong><small>${richText(item.description)}`
+        + `${Number(item.weight) > 1 ? ` A hard one: two skulls on its own.` : ""}</small></span></li>`
       )).join("");
       return (
         `<div class="cuddle-overlay umt-stage-legend-overlay" role="dialog" aria-modal="true" aria-labelledby="umtStageLegendTitle">`
