@@ -1145,3 +1145,28 @@ button.umt-duel-option:focus-visible {
     border-color: rgba(127, 224, 165, 0.8);
   }
 }
+
+/* The stuck guard's notice (cuddle-stuck-guard.js): what it just did. */
+.umt-stuck-note {
+  position: fixed;
+  left: 50%;
+  top: calc(72px + env(safe-area-inset-top, 0px));
+  z-index: 10045;
+  width: min(360px, calc(100% - 32px));
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(246, 201, 86, 0.55);
+  background: #2a2312;
+  color: #fbeec9;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+  transform: translateX(-50%);
+  animation: umt-stuck-in 240ms ease-out both;
+  pointer-events: none;
+}
+.umt-stuck-note.is-leaving { animation: umt-stuck-out 380ms ease-in both; }
+@keyframes umt-stuck-in { from { opacity: 0; transform: translate(-50%, -8px); } }
+@keyframes umt-stuck-out { to { opacity: 0; transform: translate(-50%, -8px); } }

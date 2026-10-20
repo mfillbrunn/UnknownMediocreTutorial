@@ -1,14 +1,18 @@
 /* Cuddle: never stuck without a legal word.
  *
- * A rule on a guess (Consonant Crunch's "at most one vowel", Perfect
+ * A rule on a guess (Consonant Crunch's "at most two vowels", Perfect
  * Opener's five different letters...) can leave a hand that spells no
  * legal word at all. With a mulligan left the player can swap letters;
  * with none, nothing used to let them go on -- the stage simply hung.
  *
- * When that happens -- no mulligans (or Steady Hand still has them
- * locked) and no legal word in the hand -- the consonants are swapped for
- * new ones, free, up to three times a guess. If even that finds nothing,
- * the guess is passed (it counts as a used guess) so the stage can go on.
+ * When that happens -- no mulligans and no legal word in the hand:
+ *   - if the hand does spell a word once the guess's rule is set aside,
+ *     the rule is lifted for this guess (the letters and the guess stay
+ *     the player's);
+ *   - otherwise the consonants are swapped for new ones, free, up to
+ *     three times a guess, and only if even that finds nothing is the
+ *     guess passed, so the stage can go on.
+ * Each step says what it did, in a notice on screen.
  */
 (function () {
   "use strict";
@@ -81,6 +85,33 @@
     return found;
   }
 
+  // The same key cuddle-rebalance-v5.js's challengeValidation reads.
+  function waiverKey(state) {
+    return [state.runId || "", state.round || 0, state.secret || "", Number(state.guessesUsed) || 0].join(":");
+  }
+
+  function notice(text) {
+    var host = document.getElementById("cuddleScreen") || document.body;
+    var old = document.querySelector(".umt-stuck-note");
+    if (old) old.remove();
+    var el = document.createElement("div");
+    el.className = "umt-stuck-note";
+    el.setAttribute("role", "status");
+    el.textContent = text;
+    host.appendChild(el);
+    setTimeout(function () { el.classList.add("is-leaving"); }, 4200);
+    setTimeout(function () { el.remove(); }, 4600);
+  }
+
+  function ruleName(game) {
+    var rebalance = window.CuddleRebalanceV5;
+    try {
+      var title = rebalance && typeof rebalance.currentRuleTitle === "function" ? rebalance.currentRuleTitle(game) : "";
+      if (title) return title;
+    } catch (_error) { /* unnamed */ }
+    return "this guess's rule";
+  }
+
   function stageKey(state) {
     return [state.runId || "", state.round || 0, state.secret || "", state.guessesUsed || 0].join(":");
   }
@@ -99,6 +130,18 @@
     lastChecked = key;
     if (hasLegalWord(game)) return;
 
+    // Only the rule stands in the way: lift it for this guess.
+    state.umtRuleWaived = waiverKey(state);
+    if (hasLegalWord(game)) {
+      var lifted = "No word fits " + ruleName(game) + " with these letters, so it's lifted for this guess.";
+      state.lastMessage = lifted;
+      notice(lifted);
+      try { game.save(); } catch (_error) { /* next save */ }
+      window.dispatchEvent(new CustomEvent("cuddle:campaign-update", { detail: { runId: state.runId } }));
+      return;
+    }
+    state.umtRuleWaived = null;
+
     var guard = state.umtStuckGuard && state.umtStuckGuard.key === stageKey(state) ? state.umtStuckGuard : { key: stageKey(state), swaps: 0 };
     state.umtStuckGuard = guard;
     if (guard.swaps < MAX_SWAPS && typeof game._discardCards === "function" && typeof game.drawCards === "function") {
@@ -109,11 +152,13 @@
       state.draft = [];
       game._discardCards(ids);
       game.drawCards(ids.length);
-      state.lastMessage = "No legal word could be made from your letters, so they were swapped for free.";
+      state.lastMessage = "No word could be made from your letters, so your consonants were swapped for free.";
+      notice(state.lastMessage);
     } else if (typeof game.forfeitGuess === "function") {
       state.draft = [];
       game.forfeitGuess();
-      state.lastMessage = ((state.lastMessage || "") + " No legal word was possible, so this guess was passed.").trim();
+      state.lastMessage = "No word was possible even after new letters, so this guess was passed.";
+      notice(state.lastMessage);
     }
     try { game.save(); } catch (_error) { /* next save */ }
     window.dispatchEvent(new CustomEvent("cuddle:campaign-update", { detail: { runId: state.runId } }));
