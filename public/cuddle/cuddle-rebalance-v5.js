@@ -1735,10 +1735,26 @@
     // Easy and Medium: no lock, one mulligan fewer instead (beginVariant).
     if (challenge.id === "noMulligans") return softChallenges(game) ? 0 : mulliganLockTurns(game);
     if (challenge.id === "questEndurance") return challengeTurnCap(game, challenge) + 1;
-    // These two ask nothing of a first guess (there's no word before it, and
-    // nothing known yet): they run one guess longer, from the 2nd.
-    if (challenge.id === "wordChain" || challenge.id === "lockedIn") return challengeTurnCap(game, challenge) + 1;
     return challengeTurnCap(game, challenge);
+  }
+
+  // Word Chain and Locked In ask nothing of a first guess (there's no word
+  // before it, and nothing known yet), so neither opens a stage: another
+  // challenge of the stop goes first, or guess 1 is a free one.
+  const NEEDS_EARLIER_GUESS = Object.freeze(["wordChain", "lockedIn"]);
+
+  // A stop's challenges in the order the stage plays them, and how many
+  // free guesses come before the first (beginVariant, planLines).
+  function playOrder(game, ids) {
+    const list = ids.map(challengeById);
+    const timed = (challenge) => !(challenge.rareSecret || challenge.solo)
+      && !(challenge.id === "noMulligans" && softChallenges(game));
+    const first = list.findIndex(timed);
+    if (first < 0 || !NEEDS_EARLIER_GUESS.includes(list[first].id)) return { list, lead: 0 };
+    const opener = list.findIndex((challenge, index) => index > first && timed(challenge) && !NEEDS_EARLIER_GUESS.includes(challenge.id));
+    if (opener < 0) return { list, lead: 1 };
+    list.splice(first, 0, list.splice(opener, 1)[0]);
+    return { list, lead: 0 };
   }
 
   // A challenge as one constraint per guess, like a mixed boss's plan.
@@ -1803,16 +1819,17 @@
     if (challenge.rareSecret || challenge.solo) return `Whole stage: ${challenge.text}`;
     if (challenge.id === "noMulligans" && softChallenges(game)) return `Start: ${challengeText(game, challenge)}`;
     const turns = Math.max(1, challengeTurns(game, challenge));
-    return `${guessRange(1, turns)}: ${challengeText(game, challenge)}`;
+    const start = NEEDS_EARLIER_GUESS.includes(challenge.id) ? 2 : 1;
+    return `${guessRange(start, start + turns - 1)}: ${challengeText(game, challenge)}`;
   }
 
   // A stop's challenges guess by guess, in the order the stage plays them
   // (beginVariant chains their plans the same way).
   function planLines(game, variant) {
     const lines = [];
-    let guess = 1;
-    variantChallengeIds(variant).forEach((id) => {
-      const challenge = challengeById(id);
+    const order = playOrder(game, variantChallengeIds(variant));
+    let guess = 1 + order.lead;
+    order.list.forEach((challenge) => {
       if (challenge.rareSecret || challenge.solo) {
         lines.push({ id: challenge.id, label: "Whole stage", title: challenge.title, text: sentence(challenge.text) });
         return;
@@ -1870,7 +1887,8 @@
       // A stacked stop runs every challenge in it at once: their masked
       // guesses follow one another, their rules all apply, and their
       // bonuses add up.
-      const merged = variantChallengeIds(variant).map(challengeById).reduce((sum, challenge) => {
+      const order = playOrder(game, variantChallengeIds(variant));
+      const merged = order.list.reduce((sum, challenge) => {
         const plan = (sum.plan || []).concat(challengePlan(game, challenge));
         return {
           ...sum,
@@ -1886,6 +1904,8 @@
         };
       }, {});
       const stacked = variantChallengeIds(variant).length > 1 || variant.ease;
+      // A free first guess when the stop opens on Word Chain or Locked In.
+      if (order.lead) merged.plan = Array.from({ length: order.lead }, () => null).concat(merged.plan || []);
       const shifted = delayedPlan(game, merged.plan);
       merged.plan = shifted;
       merged.masks = shifted;
