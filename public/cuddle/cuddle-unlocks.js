@@ -58,7 +58,7 @@
     { points: 2800, rules: ["fakeFeedback"] },
     { points: 2950, bosses: ["chimera"] },
     { points: 3100, themes: ["glacier"] },
-    { points: 3250, badges: ["combine", "encoreNight"] },
+    { points: 3250, badges: ["combine"] },
     // The legendaries added with cuddle-new-badges.js, two at a time.
     { points: 3400, badges: ["cleanSlate", "ascetic"] },
     { points: 3550, badges: ["questMastery", "overtime"] },

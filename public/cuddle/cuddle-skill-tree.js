@@ -338,14 +338,6 @@
       ]
     },
     {
-      id: "synergyCombos",
-      title: "Synergy Combos",
-      blurb: "Owning both halves of a pair turns the combo on permanently.",
-      nodes: [
-        { id: "encoreNight", icon: "🎬", title: "Encore Night", tier: "legendary", type: "combo", maxLevel: 1, description: "Each Encore also gives +10 points for every vowel in that answer.", requires: ["encore", "vowelBounty"], level: g => (v5Level(g, "umtEncore") > 0 && v5Level(g, "umtVowelBounty") > 0) ? 1 : 0 }
-      ]
-    },
-    {
       id: "bossRewards",
       title: "Boss Rewards",
       blurb: "Permanent rewards for clearing a boss round. No ordinary upgrade is offered afterward.",

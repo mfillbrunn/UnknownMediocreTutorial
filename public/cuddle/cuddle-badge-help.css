@@ -208,3 +208,193 @@
   .umt-help-backdrop,
   .umt-help-card { animation: none; }
 }
+
+/* ---- before and after (cuddle-badge-before-after.js) ------------------------ */
+.umt-ba {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.umt-ba-side {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.umt-ba-side.is-after {
+  background: color-mix(in srgb, var(--help-color) 10%, transparent);
+  border-color: color-mix(in srgb, var(--help-color) 45%, transparent);
+}
+.umt-ba-side h4 {
+  margin: 0;
+  color: rgba(236, 233, 247, 0.6);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.umt-ba-side.is-after h4 { color: var(--help-color); }
+.umt-ba-side > p {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+.umt-ba-note,
+.umt-ba-shot-note {
+  margin: 0;
+  color: rgba(236, 233, 247, 0.6);
+  font-size: 0.74rem;
+}
+
+/* What's new on the "with it" side glows in the badge's colour. */
+.umt-ba .is-new {
+  box-shadow: 0 0 0 2px var(--help-color), 0 0 12px color-mix(in srgb, var(--help-color) 55%, transparent);
+}
+
+/* A cash-out. */
+.umt-ba-pay {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.umt-ba-pay li {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+.umt-ba-pay b { color: #8ff0b4; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.umt-ba-total {
+  margin: 0;
+  font-size: 0.74rem;
+  color: rgba(236, 233, 247, 0.75);
+}
+.umt-ba-total b { color: #8ff0b4; font-variant-numeric: tabular-nums; }
+
+/* A hand of cards. */
+.umt-ba-hand { display: flex; flex-wrap: wrap; gap: 3px; }
+.umt-ba-card {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 26px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #6a6a74, #4c4c55);
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+.umt-ba-card.is-joker { background: linear-gradient(180deg, #8b5cf6, #5b32c2); }
+.umt-ba-card.is-lucky { background: #fff7d8; color: #2f6b1f; }
+.umt-ba-card.is-idea { background: linear-gradient(180deg, #3b4a8f, #27336a); }
+.umt-ba-card.is-dead { background: #2c2530; color: #e9e2ee; }
+.umt-ba-card.is-yellow { background: #e1b844; color: #231a04; }
+.umt-ba-card.is-red { background: #c95463; }
+
+/* Clue chips. */
+.umt-ba-clues { display: flex; flex-wrap: wrap; gap: 4px; }
+.umt-ba-clues.is-empty { color: rgba(236, 233, 247, 0.45); font-size: 0.74rem; font-style: italic; }
+.umt-ba-chip {
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(160, 180, 255, 0.4);
+  background: rgba(40, 52, 90, 0.7);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+/* A row of tiles. */
+.umt-ba-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+.umt-ba-tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #fff;
+}
+.umt-ba-tile.is-empty { border: 1px solid rgba(255, 255, 255, 0.18); }
+.umt-ba-tile.is-grey { background: #5a5a63; }
+.umt-ba-tile.is-yellow { background: #d9b13c; color: #231a04; }
+.umt-ba-tile.is-green { background: #3fa765; }
+.umt-ba-tile.is-square { border: 2px solid currentColor; font-size: 0.82rem; }
+.umt-ba-tile.is-money { color: #e8c24a; }
+.umt-ba-tile.is-hint { color: #4fd1c5; }
+.umt-ba-tile.is-mulligan { color: #6aa8ff; }
+.umt-ba-tile.is-joker { color: #e879c6; }
+.umt-ba-mark {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0 3px;
+  border-radius: 6px;
+  background: #1b1f33;
+  border: 1px solid rgba(160, 180, 255, 0.6);
+  font-size: 0.56rem;
+  font-style: normal;
+  line-height: 1.3;
+}
+
+/* One number. */
+.umt-ba-stat {
+  display: grid;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+}
+.umt-ba-stat b { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.umt-ba-stat span { color: rgba(236, 233, 247, 0.65); font-size: 0.68rem; line-height: 1.3; }
+
+.umt-ba-text {
+  margin: 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+/* Screenshots of the game itself, before and after. */
+.umt-ba-shots { display: grid; gap: 10px; }
+.umt-ba-shots figure { display: grid; gap: 4px; margin: 0; }
+.umt-ba-shots figcaption {
+  color: rgba(236, 233, 247, 0.6);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.umt-ba-shots img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0c0f18;
+}
+.umt-ba-shots-title {
+  margin: 4px 0 0;
+  color: rgba(236, 233, 247, 0.62);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* The music button (cuddle-music.js) sits beside the ? in the top bar. */
+.umt-music-btn svg { width: 18px; height: 18px; }
+.umt-music-btn[aria-pressed="false"] { opacity: 0.6; }
+.cuddle-header .cuddle-header-side-right .umt-music-btn { width: 34px; height: 34px; min-width: 0; padding: 0; }
