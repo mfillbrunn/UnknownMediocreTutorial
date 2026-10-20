@@ -426,11 +426,45 @@
   // to the top, which would hide the row the player is actually typing into
   // once a few guesses are down. Nudge it back into view -- only when there is
   // a real scroller, so the desktop layout is untouched.
+  // The player's own scrolling wins: while a finger is on the screen, or
+  // once they have scrolled the board themselves, a re-render or a resize
+  // leaves it where they put it (it used to snap back to the current row
+  // mid-swipe, which felt like the touch hadn't registered). Placing a
+  // letter, removing one or submitting a guess brings the row back.
+  let touching = false;
+  let userScrolled = false;
+  let lastRowKey = "";
+  let lastScroller = null;
+  document.addEventListener("touchstart", (event) => {
+    touching = true;
+    if (event.target instanceof Element && event.target.closest("#cuddleRoot .cuddle-left-column, #cuddleRoot .cuddle-board")) userScrolled = true;
+  }, { capture: true, passive: true });
+  const untouch = () => { touching = false; };
+  document.addEventListener("touchend", untouch, { capture: true, passive: true });
+  document.addEventListener("touchcancel", untouch, { capture: true, passive: true });
+  document.addEventListener("wheel", (event) => {
+    if (event.target instanceof Element && event.target.closest("#cuddleRoot .cuddle-left-column, #cuddleRoot .cuddle-board")) userScrolled = true;
+  }, { capture: true, passive: true });
+
+  function rowKey() {
+    const state = game?.state;
+    if (!state) return "";
+    return [state.runId || "", state.round || 0, (state.history || []).length, (state.draft || []).length].join(":");
+  }
+
   function keepCurrentRowVisible() {
     const current = root?.querySelector(".cuddle-board-row.is-current-row");
     if (!current) return;
     const scroller = findScrollableAncestor(current);
     if (!scroller) return;
+    const key = rowKey();
+    const moved = key !== lastRowKey || scroller !== lastScroller;
+    if (moved) {
+      lastRowKey = key;
+      lastScroller = scroller;
+      userScrolled = false;
+    }
+    if (touching || (!moved && userScrolled)) return;
     const scrollerBox = scroller.getBoundingClientRect();
     const rowBox = current.getBoundingClientRect();
     if (rowBox.top >= scrollerBox.top && rowBox.bottom <= scrollerBox.bottom) return;

@@ -10,6 +10,12 @@
   document.documentElement.dataset.umtCuddleDragUserFix = "1";
 
   const DRAG_THRESHOLD = 8;
+  // A hand card needs a longer pull before it counts as a drag: a quick
+  // tap on a phone often slides a few pixels, and that used to start a
+  // drag that dropped nowhere, so the tap was lost.
+  const HAND_DRAG_THRESHOLD = 16;
+  // A "drag" of a hand card that lands on no tile, this short, was a tap.
+  const TAP_SLIP = 44;
   let session = null;
   let ghost = null;
   let hoverTile = null;
@@ -93,7 +99,7 @@
     if (!session || (session.pointerId != null && event.pointerId !== session.pointerId)) return;
     if (!ghost) {
       const distance = Math.hypot(event.clientX - session.startX, event.clientY - session.startY);
-      if (distance < DRAG_THRESHOLD) return;
+      if (distance < (session.kind === "hand" ? HAND_DRAG_THRESHOLD : DRAG_THRESHOLD)) return;
       ghost = document.createElement("div");
       ghost.className = "drag-letter-ghost cuddle-drag-letter-ghost umt-drag-letter-ghost";
       ghost.textContent = session.glyph;
@@ -116,6 +122,15 @@
     const wasDragging = Boolean(ghost);
     cleanup();
     if (!wasDragging) return; // ordinary taps keep the original click behavior
+
+    // A hand card slid a little and let go over no tile: pick it, as a tap.
+    const slip = Math.hypot(event.clientX - ended.startX, event.clientY - ended.startY);
+    if (ended.kind === "hand" && !target && slip < TAP_SLIP && ended.source && ended.source.isConnected && !ended.source.disabled) {
+      event.preventDefault();
+      ended.source.click();
+      swallowClickUntil = Date.now() + 600;
+      return;
+    }
 
     // A compatibility click can be retargeted after the UI rerenders. Swallow
     // it globally instead of on the source element that is about to disappear.
@@ -213,6 +228,31 @@
       return;
     }
     const card = event.target.closest && event.target.closest(".cuddle-card[data-card-glyph]");
-    if (card && !card.disabled) begin(event, { kind: "hand", glyph: card.dataset.cardGlyph });
+    if (card && !card.disabled) begin(event, { kind: "hand", glyph: card.dataset.cardGlyph, source: card });
+  }, true);
+
+  // A tap that lands in the gap between two hand cards picks the nearer
+  // one, when it is close: the cards sit a few pixels apart and a finger
+  // is wider than that.
+  const GAP_REACH = 10;
+  document.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target || target.closest(".cuddle-card") || !target.closest("#cuddleRoot .cuddle-hand")) return;
+    const x = event.clientX;
+    const y = event.clientY;
+    if (!x && !y) return;
+    let best = null;
+    let bestDistance = GAP_REACH;
+    target.closest(".cuddle-hand").querySelectorAll(".cuddle-card[data-card-glyph]:not([disabled])").forEach((card) => {
+      const box = card.getBoundingClientRect();
+      const dx = Math.max(box.left - x, 0, x - box.right);
+      const dy = Math.max(box.top - y, 0, y - box.bottom);
+      const distance = Math.hypot(dx, dy);
+      if (distance <= bestDistance) { best = card; bestDistance = distance; }
+    });
+    if (!best) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    best.click();
   }, true);
 })();
