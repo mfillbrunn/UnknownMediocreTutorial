@@ -547,9 +547,16 @@
       ? window.CuddleBranchMap.getActiveGame() : null;
     if (document.getElementById("cuddleRoot")) renderPicker(document.getElementById("cuddleRoot"), game);
   }
-  // On every game change and redraw (cuddle-pulse.js), not on a timer.
+  // On every game change and redraw (cuddle-pulse.js), not on a timer --
+  // and straight away when the Cuddle screen is redrawn, so the picker is
+  // up before the stage under it is ever painted.
   if (window.CuddlePulse) window.CuddlePulse.on(watch, 3000);
   else setInterval(watch, 500);
+  (function watchRedraws() {
+    var root = document.getElementById("cuddleRoot");
+    if (root) new MutationObserver(watch).observe(root, { childList: true });
+    else document.addEventListener("DOMContentLoaded", watchRedraws, { once: true });
+  }());
 
   window.CuddlePresetTrial = Object.freeze({ LEVELS: TRIAL_LEVELS, PAIR_PAY: PAIR_PAY, PAIR_PICK_GUESS: PAIR_PICK_GUESS });
 }());

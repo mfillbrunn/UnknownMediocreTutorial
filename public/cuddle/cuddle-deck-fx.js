@@ -132,7 +132,8 @@
       });
     }
     fx.counts = counts;
-    if (reducedMotion()) return;
+    // A Trial's difficulty picker covers the stage: no deal behind it.
+    if (reducedMotion() || document.querySelector(".umt-trial-pick")) return;
     var last = 0;
     buttons.forEach(function fly(button) {
       var glyph = button.dataset.fxGlyph;

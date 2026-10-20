@@ -1103,7 +1103,9 @@ button.umt-duel-option:focus-visible {
   display: grid;
   place-items: center;
   padding: 16px;
-  background: rgba(10, 6, 16, 0.74);
+  /* Solid: nothing of the stage behind it (the hand, its hints) shows
+     before the trial starts. */
+  background: #0f0b17;
   overflow-y: auto;
 }
 .umt-trial-pick-panel { width: min(400px, 100%); margin: 0; box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55); }
