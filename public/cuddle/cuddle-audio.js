@@ -33,7 +33,7 @@
   // -- settings --------------------------------------------------------------------
   var KEYS = { music: "umt-cuddle-music", sfx: "umt-cuddle-sfx" };
   // Music: "off", "quiet" or "normal" (an older "on" reads as normal).
-  var MUSIC_LEVELS = { off: 0, quiet: 0.012, normal: 0.04 };
+  var MUSIC_LEVELS = { off: 0, quiet: 0.006, normal: 0.02 };
   var MUSIC_CHOICES = [["off", "Off"], ["quiet", "Quiet"], ["normal", "Normal"]];
   function readSetting(name) {
     var value = null;
@@ -239,7 +239,7 @@
     pick: function (count) { var f = step(count - 1); tone({ f: f, f2: f * 1.04, dur: 0.07, type: "sine", vol: 0.06, attack: 0.004 }); tone({ f: f * 2, dur: 0.04, type: "sine", vol: 0.012, attack: 0.004 }); },
     remove: function (count) { var f = step(count); tone({ f: f, f2: f * 0.92, dur: 0.07, type: "sine", vol: 0.05, attack: 0.004 }); },
     // Any button: a barely-there tick.
-    tap: function () { tone({ f: 1800, dur: 0.03, type: "sine", vol: 0.02, attack: 0.002 }); },
+    tap: function () { tone({ f: 2000, dur: 0.02, type: "sine", vol: 0.01, attack: 0.002 }); },
     // A badge tapped to look at it: a tiny rising glint.
     peek: function () { tone({ f: G6, f2: C6 * 2, dur: 0.14, type: "sine", vol: 0.035, attack: 0.01 }); tone({ f: G6 * 2, dur: 0.1, type: "sine", vol: 0.01, delay: 0.04 }); },
     drag: function () { tone({ f: 880, f2: 990, dur: 0.05, type: "sine", vol: 0.03, attack: 0.004 }); },
@@ -277,6 +277,16 @@
     // The coin dropping into the cabinet (cuddle-coin-start.js).
     coin: function () { tone({ f: 1976, dur: 0.45, type: "sine", vol: 0.08, attack: 0.002 }); tone({ f: 2637, dur: 0.4, type: "sine", vol: 0.06, attack: 0.002, delay: 0.07 }); tone({ f: 5274, dur: 0.12, type: "sine", vol: 0.012, delay: 0.07 }); },
     cashRow: function () { tone({ f: 1320 + Math.random() * 120, dur: 0.06, type: "sine", vol: 0.05 }); },
+    // Every cash-out row paid: quick ticks climbing (the rows adding up)
+    // landing on a warm chord.
+    sum: function () {
+      [0, 1, 2, 3, 4].forEach(function (i) { tone({ f: 1320 * Math.pow(1.06, i), dur: 0.05, type: "sine", vol: 0.035, delay: i * 0.045 }); });
+      [C6, E6, G6].forEach(function (f, i) { tone({ f: f, dur: 0.55, type: "sine", vol: 0.045, attack: 0.008, delay: 0.24 + i * 0.015 }); });
+    },
+    // A tile marked for a mulligan: a small soft bloop (like a dead card,
+    // lighter); unmarked: it bobs back up.
+    markMulligan: function () { tone({ f: 520, f2: 300, dur: 0.11, type: "sine", vol: 0.045, attack: 0.005 }); },
+    unmarkMulligan: function () { tone({ f: 300, f2: 420, dur: 0.08, type: "sine", vol: 0.035, attack: 0.005 }); },
     // A cash-out row that costs points: a soft "wah-wah" going down.
     cashMinus: function () { tone({ f: 494, f2: 440, dur: 0.13, type: "triangle", vol: 0.06, attack: 0.006 }); tone({ f: 415, f2: 330, dur: 0.24, type: "triangle", vol: 0.06, attack: 0.006, delay: 0.13 }); },
     collect: function () { [0, 0.05, 0.1, 0.15, 0.2].forEach(function (d, i) { tone({ f: 1400 + i * 120, dur: 0.08, type: "sine", vol: 0.05, delay: d }); }); notes([C6, E6], 0.08, { type: "sine", delay: 0.25, vol: 0.08 }); },
@@ -450,8 +460,16 @@
   document.addEventListener("pointerdown", function (event) {
     var target = event.target instanceof Element ? event.target : null;
     if (!target) return;
+    // Choosing tiles to mulligan away (the hand stays put; the Mulligan
+    // bar below it is in its mulligan mode).
+    var mulliganing = Boolean(document.querySelector("#cuddleScreen .cuddle-submit-row.is-mulligan-mode"));
+    var handCard = target.closest("#cuddleScreen .cuddle-hand .cuddle-card");
+    if (mulliganing && handCard) {
+      if (!handCard.disabled) play(handCard.classList.contains("is-selected") ? "unmarkMulligan" : "markMulligan");
+      return;
+    }
     var card = target.closest("#cuddleScreen .cuddle-card.is-dead, #cuddleScreen .cuddle-card.is-lucky, #cuddleScreen .cuddle-card.is-idea, #cuddleScreen .cuddle-card.is-joker");
-    if (card && !card.closest(".is-mulligan-mode")) {
+    if (card) {
       play(card.classList.contains("is-dead") ? "dead" : card.classList.contains("is-lucky") ? "lucky" : card.classList.contains("is-idea") ? "idea" : "joker");
     }
   }, true);
@@ -480,6 +498,11 @@
     new MutationObserver(function (records) {
       records.forEach(function (record) {
         var el = record.target;
+        if (el === overlay && el.classList.contains("is-summing") && !overlay.__umtSummed) {
+          overlay.__umtSummed = true;
+          play("sum");
+          return;
+        }
         if (!(el.classList && el.classList.contains("cuddle-money-payout-row") && el.classList.contains("is-counting"))) return;
         var amount = el.querySelector(".cuddle-money-row-increment");
         var negative = el.classList.contains("is-late") || /^\s*[-\u2212]/.test(amount ? amount.textContent.replace(/^\s*\d+\s*\u00d7\s*/, "") : "");

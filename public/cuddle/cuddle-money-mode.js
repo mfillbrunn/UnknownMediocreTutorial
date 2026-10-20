@@ -1133,6 +1133,24 @@
       await delay(rowPause);
       if (payload.animationToken !== token) return;
     }
+    // Every row paid: the solving bonus pops in (green, with the sum's
+    // chime, cuddle-audio.js) and the points count up to the full total.
+    var bonus = overlay.querySelector(".umt-stage-bonus-section");
+    var firstTime = !payload.bonusShown;
+    payload.bonusShown = true;
+    if (bonus) {
+      bonus.classList.remove("is-pending");
+      if (firstTime && !instant && !reduceMotion) {
+        bonus.classList.add("is-revealing");
+        if (typeof bonus.scrollIntoView === "function") bonus.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    }
+    if (firstTime) overlay.classList.add("is-summing");
+    if (bank && firstTime && current !== payload.to && bankDuration > 0) {
+      bank.classList.add("is-summing");
+      await animateBank(bank, current, payload.to, bankDuration);
+      if (payload.animationToken !== token) return;
+    }
     if (bank) bank.textContent = formatPoints(payload.to);
     var total = overlay.querySelector(".cuddle-money-payout-total");
     var collect = overlay.querySelector("[data-cuddle-money-action=\"collect-payout\"]");
@@ -1210,7 +1228,9 @@
     var remainder = Math.round(asNumber(payload.stageBonus, 0)) - listed;
     if (remainder && !stageLines.length) lines.push({ label: "Other stage rewards", amount: remainder });
     if (!lines.length) return "";
-    return "<div class=\"umt-stage-bonus-section\">"
+    // Hidden while the rows count; it pops in once they're all paid
+    // (runPayoutAnimation).
+    return "<div class=\"umt-stage-bonus-section" + (payload.bonusShown ? "" : " is-pending") + "\">"
       + "<div class=\"umt-stage-bonus-title\">Solving bonus</div>"
       + lines.map(function row(line) {
           return "<div class=\"umt-stage-bonus-line\"><span>" + escapeHtml(line.label) + "</span>"
