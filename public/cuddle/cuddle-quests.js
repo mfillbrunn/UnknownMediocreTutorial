@@ -371,7 +371,7 @@
     // A hard one: it counts as one and a half challenges on the map (two
     // skulls on its own), like a Rare Word.
     { id: "noMulligans", icon: "✋", title: "Steady Hand", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 23, weight: 1.5,
-      text: "only one mulligan." },
+      text: "at most one mulligan per guess." },
     { id: "questEndurance", icon: "🏃", title: "Endurance Trial", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 26,
       text: "a quest each guess; miss one, lose 1 hand size." },
     { id: "perfectOpener", icon: "🧩", title: "Perfect Opener", kind: "rule", boss: false, challenge: true, mix: true, curse: false, reward: 22,
@@ -512,7 +512,7 @@
       id: "noMulligans",
       icon: "✋",
       title: "Steady Hand",
-      description: "Only one mulligan in your opening guesses.",
+      description: "At most one mulligan per guess in your opening guesses.",
       turns: 0,
       rewardId: "questDoublePick"
     },

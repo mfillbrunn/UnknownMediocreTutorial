@@ -1201,8 +1201,8 @@
     const pairPanel = state.status === "playing" && typeof game.presetPairPanel === "function" ? game.presetPairPanel() : null;
     if (pairPanel) return renderPairPanel(pairPanel);
     const unlimitedMulligans = typeof game.hasUnlimitedMulligans === "function" && game.hasUnlimitedMulligans();
-    // A one-mulligan window (Steady Hand, Locked Opener): the button shows
-    // 1 (0 once used), in red, whatever the stage's own count.
+    // A one-mulligan-per-guess limit (Steady Hand, Locked Opener): the
+    // button shows 1 (0 once used, or if none are left), in red.
     const mulliganCap = typeof game.mulliganWindowCap === "function" ? game.mulliganWindowCap() : null;
     const mulligansShown = mulliganCap == null
       ? state.mulligansLeft
@@ -1233,7 +1233,7 @@
               <button class="cuddle-btn cuddle-backspace" data-action="cancel-mode" aria-label="Cancel mulligan" title="Cancel mulligan">✕</button>
             ` : `
               <button class="cuddle-btn cuddle-mulligan${mulliganCap != null ? " is-capped" : ""}" data-action="mulligan-mode" ${mulligansShown > 0 || (unlimitedMulligans && mulliganCap == null) ? "" : "disabled"}
-                title="${mulliganCap != null ? `Only one mulligan right now (a challenge): ${mulliganCap ? "1 left" : "used"}` : `Mulligan: ${unlimitedMulligans ? "unlimited" : `${state.mulligansLeft} left`}, up to ${rules.mulliganSize} cards`}">
+                title="${mulliganCap != null ? `Only one mulligan on this guess (a challenge): ${mulliganCap ? "1 left" : "used"}. ${state.mulligansLeft} left in all.` : `Mulligan: ${unlimitedMulligans ? "unlimited" : `${state.mulligansLeft} left`}, up to ${rules.mulliganSize} cards`}">
                 Mulligan <span>${mulliganCap == null && unlimitedMulligans ? "&infin;" : mulligansShown}</span>
               </button>
               <button class="cuddle-btn cuddle-btn-primary cuddle-submit" data-action="submit" ${submit.ok ? "" : "disabled"}>Submit word</button>

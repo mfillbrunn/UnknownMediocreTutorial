@@ -1735,10 +1735,12 @@
       return Math.max(1, Math.min(3, stage));
     }
 
-    // Whether this stage's one Steady Hand mulligan has been used (the
-    // boss here, or the challenge in cuddle-rebalance-v5.js).
+    // Whether this guess's one Steady Hand mulligan has been used (the
+    // boss here, or the challenge in cuddle-rebalance-v5.js). Each limited
+    // guess allows one; the real count (mulligansLeft) goes down as usual
+    // underneath, so a guess after the limit has whatever is left.
     _steadyHandKey() {
-      return `${this.state.runId || ""}:${this.state.round || 0}:${this.state.secret || ""}`;
+      return `${this.state.runId || ""}:${this.state.round || 0}:${this.state.secret || ""}:${Number(this.state.guessesUsed || 0)}`;
     }
     _steadyHandSpent() {
       return this.state.umtSteadyHandSpent === this._steadyHandKey();
@@ -1747,9 +1749,9 @@
       this.state.umtSteadyHandSpent = this._steadyHandKey();
     }
 
-    // How many mulligans a one-mulligan window (Steady Hand, Locked
-    // Opener) still allows right now: 1, or 0 once used; null when no such
-    // window is on. The challenge layers add their own windows to this.
+    // How many mulligans a one-per-guess limit (Steady Hand, Locked
+    // Opener) still allows on this guess: 1, or 0 once used; null when no
+    // such limit is on. The challenge layers add their own to this.
     mulliganWindowCap() {
       const steadyHand = this.state.boss?.id === "noMulligans" && Number(this.state.guessesUsed || 0) < this._steadyHandTurns();
       return steadyHand ? (this._steadyHandSpent() ? 0 : 1) : null;
@@ -1759,8 +1761,7 @@
       if (this.state.status !== "playing") return { ok: false, error: "The round is paused." };
       const steadyHand = this.state.boss?.id === "noMulligans" && Number(this.state.guessesUsed || 0) < this._steadyHandTurns();
       if (steadyHand && this._steadyHandSpent()) {
-        const turns = this._steadyHandTurns();
-        return { ok: false, error: `Steady Hand: only one mulligan until ${turns === 1 ? "your first guess is" : `your first ${turns} guesses are`} in.` };
+        return { ok: false, error: "Steady Hand: only one mulligan on this guess." };
       }
       const ids = unique(cardIds || []);
       if (this.state.mulligansLeft <= 0) return { ok: false, error: "No mulligans remain this round." };
@@ -3027,7 +3028,7 @@
         // One mulligan in the opening guesses only, one guess per world
         // (see _steadyHandTurns, which reads the same stage).
         const locked = Math.max(1, Math.min(3, Number(stage) || 1));
-        return `${range(locked)}: only one mulligan.`;
+        return `${range(locked)}: at most one mulligan per guess.`;
       }
       case "questTrial":
         return `Every guess: a quest; miss one and lose $${QUEST_TRIAL_PENALTY}.`;
