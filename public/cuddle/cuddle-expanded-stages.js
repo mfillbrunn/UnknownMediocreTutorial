@@ -3054,8 +3054,10 @@
     }
 
     // The map key follows the map's own icon set (cuddle-worlds.js): one
-    // icon per kind of stop, with every Wordle variant under the one
-    // Wordle icon and every named challenge under the one challenge icon.
+    // icon per kind of stop. A Wordle stop shows only how hard it is (a
+    // heart, nothing, or 1-3 skulls; cuddle-rebalance-v5.js stageTier), so
+    // the key explains those marks and what each pays; the challenges a
+    // skull can hide are listed below.
     function renderLegend() {
       const Worlds = window.CuddleWorlds;
       if (!Worlds) return renderLegacyLegend();
@@ -3064,27 +3066,31 @@
         : null;
       const icon = kind => `<span class="umt-legend-glyph" style="--kind:${Worlds.KIND_COLORS[kind]}">${Worlds.iconSvg(kind)}</span>`;
       const row = (kind, title, text) => `<li>${icon(kind)}<span><strong>${escapeHtml(title)}</strong><small>${richText(text)}</small></span></li>`;
-      const variants = [
-        ["Classic", "A standard Wordle with no help. Clearing it pays a bonus: more than the helped stages, less than a challenge."],
-        ["Themed", "Opens with some of the solution's categories revealed."],
-        ["Head Start", "A random word is played for you as the first guess."],
-        ["Lucky Start", "One exact letter position is revealed before you start."],
-        ["Jackpot", "Green tiles pay double, but you must solve within the world's guess limit."],
-        ["Double or Nothing", "Solve fast to double the stage's earnings (by guess 5 in world 1, 4 in world 2, 3 in world 3); take longer and lose half."]
+      const heart = '<svg class="umt-legend-mark is-heart" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.7 4.5c2.1 0 3.6 1.1 4.3 2.6.7-1.5 2.2-2.6 4.3-2.6 3.7 0 5.8 3.8 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg>';
+      const skull = '<svg class="umt-legend-mark is-skull" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C7 2 3.5 5.6 3.5 10.2c0 2.8 1.3 4.9 3.3 6.2V20c0 .6.4 1 1 1h1.5v-2h1.4v2h2.6v-2h1.4v2h1.5c.6 0 1-.4 1-1v-3.6c2-1.3 3.3-3.4 3.3-6.2C20.5 5.6 17 2 12 2zM8.7 13.2a2 2 0 110-4 2 2 0 010 4zm6.6 0a2 2 0 110-4 2 2 0 010 4z"/></svg>';
+      const marks = [
+        [heart, "Easier", "A theme of the answer, or one of its letters, is given at the start.", 5],
+        ["", "Regular", "A plain Wordle. Sometimes a word is played for you as your first guess.", 12],
+        [skull, "Harder", "One challenge against you.", 25],
+        [skull + skull, "Hard", "Two challenges, or a Rare Word: an unusual answer.", 50],
+        [skull + skull + skull, "Hardest", "A Rare Word with a challenge on top.", 80]
       ];
+      const markRows = marks.map(([mark, title, text, pay]) => (
+        `<li><span class="umt-legend-marks">${mark || '<i class="umt-legend-nomark">no mark</i>'}</span>`
+        + `<span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(text)} Pays ${pay} points and $${pay}.</small></span></li>`
+      )).join("");
       const catalogue = window.CuddleRebalanceV5 && typeof window.CuddleRebalanceV5.mapChallenges === "function"
         ? window.CuddleRebalanceV5.mapChallenges(game)
         : CHALLENGES.map(meta => ({ title: meta.title, description: meta.description }));
       const stops = [
-        row("wordle", "Wordle", "Solve the word. The name under the icon says which kind:"),
-        `<li class="umt-legend-sub"><ul>${variants.map(([title, text]) => `<li><strong>${escapeHtml(title)}</strong><small>${escapeHtml(text)}</small></li>`).join("")}</ul></li>`,
-        row("challenge", "Challenge", "A Wordle with a rule against you, named under the icon. Beat it for bonus money."),
+        row("wordle", "Wordle", "Solve the word. Its mark says how hard it is (below); what it hides you only find out by playing."),
+        row("trial", "Trial", "Find the answer among a list of words. Open Trial: the list shows from the start, and you pick after two guesses. Preset Trial: three guesses, then the list. Pair Trial: no typing, each guess is one of two words. A right pick passes, a wrong one ends the run."),
         row("event", "Event", "A choice: a safe reward, or a bigger one with a cost."),
-        row("shop", "Shop", "Spend money on supplies for the next stages, the next boss, or the whole run."),
-        row("upgrade", "Free Upgrade", "Choose a free permanent upgrade."),
-        row("duel", "Duel", "Alternate guesses with an AI. The first to solve wins. Losing costs points on Medium and ends the run on Hard. One in every run, in world 2 or 3."),
-        row("mystery", "Unknown", "Stays hidden until you step onto it (it may even be a Duel or a Trial). +20 points."),
-        row("boss", "Boss", "A boss Wordle guards the end of each world. Its reward is permanent."),
+        row("shop", "Shop", "Spend money on supplies for the next stages or the next boss, and sell a badge."),
+        row("upgrade", "Free Upgrade", "Choose a free badge."),
+        row("duel", "Duel", "Take turns guessing with an AI: the first to solve wins money. Losing costs nothing on Easy, 50 points on Medium, and ends the run on Hard. Never in world 1."),
+        row("mystery", "Unknown", "Stays hidden until you step onto it. Usually a Wordle, sometimes a Duel or a Trial. Pays +20 points."),
+        row("boss", "Boss", "Guards the end of each world. The number on it is the points you need before you can challenge it. Beat it for a permanent reward."),
         row("final", "Final Boss", "The last guardian, at the top of the Eclipse Citadel.")
       ].join("");
       const challengeRows = catalogue.map(item => (
@@ -3093,7 +3099,9 @@
       return (
         `<div class="cuddle-overlay umt-stage-legend-overlay" role="dialog" aria-modal="true" aria-labelledby="umtStageLegendTitle">`
         + `<section class="cuddle-modal umt-stage-legend"><header><div><span class="cuddle-eyebrow">MAP KEY</span><h2 id="umtStageLegendTitle">What every stop means</h2></div><button type="button" class="umt-legend-close" data-cuddle-campaign-action="expanded-help-close" aria-label="Close map key">&times;</button></header>`
-        + `<h3>Stops</h3><ul>${stops}</ul><h3>Challenges</h3><ul>${challengeRows}</ul>`
+        + `<h3>Stops</h3><ul>${stops}</ul>`
+        + `<h3>How hard a Wordle is</h3><ul class="umt-legend-tiers">${markRows}</ul>`
+        + `<h3>Challenges a skull can hide</h3><ul>${challengeRows}</ul>`
         + `</section></div>`
       );
     }

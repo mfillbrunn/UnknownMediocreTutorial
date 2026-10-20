@@ -1043,3 +1043,18 @@
   width: 72%;
   height: 72%;
 }
+
+/* The map key's Wordle difficulty marks (cuddle-expanded-stages.js renderLegend). */
+.umt-legend-tiers .umt-legend-marks {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  flex: 0 0 auto;
+  min-width: 44px;
+  height: 44px;
+}
+.umt-legend-mark { width: 16px; height: 16px; }
+.umt-legend-mark.is-heart { color: #e0457b; width: 20px; height: 20px; }
+.umt-legend-mark.is-skull { color: #e04848; }
+.umt-legend-nomark { color: #7a7488; font-size: 0.66rem; font-style: normal; text-align: center; line-height: 1.1; }
