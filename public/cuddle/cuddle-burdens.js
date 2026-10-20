@@ -938,7 +938,7 @@
     }, WAVE_MS.tile + WAVE_MS.sweep + WAVE_MS.settle);
   }
 
-  // -- little bursts when a lucky, dead or Joker card is tapped ---------------
+  // -- little bursts when a lucky, dead, idea or Joker card is tapped ---------
   // They don't do much on their own, so a tap answers with a small flourish:
   // clovers for luck, a puff of grave smog for a dead card, purple sparkles
   // for a Joker.
@@ -1020,6 +1020,31 @@
         made.push(star);
       }
       card.animate([{ filter: "brightness(1)" }, { filter: "brightness(1.5) drop-shadow(0 0 8px #b98cff)" }, { filter: "brightness(1)" }], { duration: 460 });
+    } else if (card.classList.contains("is-idea")) {
+      // The bulb lights up: rays of light flash out around it.
+      for (var r = 0; r < 8; r += 1) {
+        var ray = particle(layer, "", "is-ray", x, y);
+        var turn = r * 45;
+        ray.style.setProperty("--turn", turn + "deg");
+        ray.animate([
+          { transform: "translate(-50%, -50%) rotate(" + turn + "deg) translateY(-18px) scaleY(0.2)", opacity: 0 },
+          { transform: "translate(-50%, -50%) rotate(" + turn + "deg) translateY(-34px) scaleY(1)", opacity: 1, offset: 0.4 },
+          { transform: "translate(-50%, -50%) rotate(" + turn + "deg) translateY(-48px) scaleY(0.4)", opacity: 0 }
+        ], { duration: 620, delay: (r % 2) * 60, easing: "cubic-bezier(.2,.8,.2,1)", fill: "both" });
+        made.push(ray);
+      }
+      var glow = particle(layer, "", "is-bulb-glow", x, y);
+      glow.animate([
+        { transform: "translate(-50%, -50%) scale(0.4)", opacity: 0 },
+        { transform: "translate(-50%, -50%) scale(1.2)", opacity: 0.9, offset: 0.3 },
+        { transform: "translate(-50%, -50%) scale(1.8)", opacity: 0 }
+      ], { duration: 700, easing: "ease-out", fill: "both" });
+      made.push(glow);
+      card.animate([
+        { transform: "scale(1)", filter: "brightness(1)" },
+        { transform: "scale(1.1)", filter: "brightness(1.7) drop-shadow(0 0 10px #ffd860)" },
+        { transform: "scale(1)", filter: "brightness(1)" }
+      ], { duration: 520, easing: "ease-out" });
     }
     setTimeout(function cleanUp() {
       made.forEach(function drop(el) { el.remove(); });
@@ -1027,7 +1052,7 @@
   }
 
   document.addEventListener("pointerdown", function onTapBurst(event) {
-    var card = event.target && event.target.closest && event.target.closest("#cuddleScreen .cuddle-card.is-lucky, #cuddleScreen .cuddle-card.is-dead, #cuddleScreen .cuddle-card.is-joker");
+    var card = event.target && event.target.closest && event.target.closest("#cuddleScreen .cuddle-card.is-lucky, #cuddleScreen .cuddle-card.is-dead, #cuddleScreen .cuddle-card.is-joker, #cuddleScreen .cuddle-card.is-idea");
     if (card) burstFor(card);
   }, true);
 
