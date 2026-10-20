@@ -277,6 +277,17 @@
     // The coin dropping into the cabinet (cuddle-coin-start.js).
     coin: function () { tone({ f: 1976, dur: 0.45, type: "sine", vol: 0.08, attack: 0.002 }); tone({ f: 2637, dur: 0.4, type: "sine", vol: 0.06, attack: 0.002, delay: 0.07 }); tone({ f: 5274, dur: 0.12, type: "sine", vol: 0.012, delay: 0.07 }); },
     cashRow: function () { tone({ f: 1320 + Math.random() * 120, dur: 0.06, type: "sine", vol: 0.05 }); },
+    // A word found (cuddle-solve-fx.js): a bright little jingle as the row
+    // bounces, then a two-note chime under "Word found!".
+    solve: function () {
+      notes([C6, E6, G6, C6 * 2], 0.07, { type: "sine", vol: 0.07, dur: 0.26 });
+      tone({ f: C6 * 2, dur: 0.5, type: "triangle", vol: 0.04, delay: 0.3 });
+    },
+    found: function () {
+      tone({ f: G5, dur: 0.35, type: "sine", vol: 0.08, attack: 0.004 });
+      tone({ f: E6, dur: 0.7, type: "sine", vol: 0.09, attack: 0.004, delay: 0.12 });
+      tone({ f: E6 * 2.76, dur: 0.18, type: "sine", vol: 0.012, delay: 0.12 });
+    },
     // Every cash-out row paid: quick ticks climbing (the rows adding up)
     // landing on a warm chord.
     sum: function () {

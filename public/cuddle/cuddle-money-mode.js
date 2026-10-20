@@ -1254,6 +1254,12 @@
 
   function startPendingPayout(game, mode) {
     if (payoutRunning || !mode.pendingPayout) return;
+    // A word just found is still being celebrated (cuddle-solve-fx.js):
+    // the cash-out follows it.
+    if (window.CuddleSolveFx && window.CuddleSolveFx.busy()) {
+      setTimeout(queueUiEnhancement, 150);
+      return;
+    }
     var root = document.getElementById("cuddleRoot");
     if (!root || !root.querySelector(".cuddle-header")) return;
     var payload = mode.pendingPayout;
