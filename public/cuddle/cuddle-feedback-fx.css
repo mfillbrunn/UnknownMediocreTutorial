@@ -1,15 +1,17 @@
 /* Cuddle: a guess's feedback, tile by tile (cuddle-feedback-fx.js).
    The turn and pop use `scale`, so neither fights a paid square's own
-   burst (cuddle-strategies.css), which uses transform. */
+   burst (cuddle-strategies.css), which uses transform. Crisp on phones:
+   no filter, a small swell, and no fill past the end, so a finished tile
+   is drawn afresh at its own size rather than kept as a scaled snapshot. */
 
 .cuddle-tile.umt-rv {
-  animation: umt-rv-turn 260ms ease-in-out var(--rv-delay, 0ms) both;
+  animation: umt-rv-turn 260ms ease-in-out var(--rv-delay, 0ms) backwards;
 }
 .cuddle-tile.umt-rv.is-rv-yellow {
-  animation: umt-rv-turn-yellow 510ms ease-out var(--rv-delay, 0ms) both;
+  animation: umt-rv-turn-yellow 510ms ease-out var(--rv-delay, 0ms) backwards;
 }
 .cuddle-tile.umt-rv.is-rv-green {
-  animation: umt-rv-turn-green 590ms ease-out var(--rv-delay, 0ms) both;
+  animation: umt-rv-turn-green 590ms ease-out var(--rv-delay, 0ms) backwards;
 }
 /* A paid square keeps its burst, after its turn. */
 .cuddle-tile.umt-rv.is-special-burst {
@@ -37,16 +39,16 @@
   0% { scale: 1 1; border-color: rgba(213, 166, 255, 0.55); background: rgba(213, 166, 255, 0.11); color: var(--cuddle-text, #fff); box-shadow: none; }
   25.4% { scale: 1 0.02; border-color: rgba(213, 166, 255, 0.55); background: rgba(213, 166, 255, 0.11); color: var(--cuddle-text, #fff); box-shadow: none; }
   25.5% { scale: 1 0.02; }
-  55% { scale: 1.09 1.09; }
+  55% { scale: 1.06 1.06; }
   100% { scale: 1 1; }
 }
 @keyframes umt-rv-turn-green {
-  0% { scale: 1 1; filter: brightness(1); border-color: rgba(213, 166, 255, 0.55); background: rgba(213, 166, 255, 0.11); color: var(--cuddle-text, #fff); box-shadow: none; }
-  22% { scale: 1 0.02; filter: brightness(1); border-color: rgba(213, 166, 255, 0.55); background: rgba(213, 166, 255, 0.11); color: var(--cuddle-text, #fff); box-shadow: none; }
+  0% { scale: 1 1; border-color: rgba(213, 166, 255, 0.55); background: rgba(213, 166, 255, 0.11); color: var(--cuddle-text, #fff); box-shadow: none; }
+  22% { scale: 1 0.02; border-color: rgba(213, 166, 255, 0.55); background: rgba(213, 166, 255, 0.11); color: var(--cuddle-text, #fff); box-shadow: none; }
   22.1% { scale: 1 0.02; }
-  50% { scale: 1.16 1.16; filter: brightness(1.25); }
+  50% { scale: 1.1 1.1; }
   74% { scale: 0.97 0.97; }
-  100% { scale: 1 1; filter: brightness(1); }
+  100% { scale: 1 1; }
 }
 
 .umt-rv-layer {

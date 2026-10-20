@@ -44,8 +44,14 @@
     // Slow enough that the wallet visibly climbs and each row gets its own
     // beat, rather than the total just jumping -- see cuddleMoneyRowRing in
     // cuddle-money-mode.css, which is timed to last exactly one row here.
-    payoutRowPauseMs: 123,
-    payoutBankDurationMs: 308,
+    payoutRowPauseMs: 111,
+    payoutBankDurationMs: 277,
+    // The rows share about this much time in all, so a long stage counts
+    // each row faster and the cash-out lasts about as long either way.
+    // Each row still gets between payoutRowMinMs and payoutRowMaxMs.
+    payoutRowsTotalMs: 1550,
+    payoutRowMinMs: 150,
+    payoutRowMaxMs: 388,
     payoutCoinCount: 8
   });
 
@@ -1100,11 +1106,20 @@
   async function runPayoutAnimation(payload, overlay) {
     var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var instant = Boolean(payload.replayInstantly);
-    var rowPause = instant ? 0 : reduceMotion ? 20 : CONFIG.payoutRowPauseMs;
-    var bankDuration = instant || reduceMotion ? 0 : CONFIG.payoutBankDurationMs;
+    var rows = Array.from(overlay.querySelectorAll(".cuddle-money-payout-row"));
+    // One row's beat: the count, then a short pause, in the same proportion
+    // as the base timings.
+    var rowMs = Math.max(CONFIG.payoutRowMinMs, Math.min(CONFIG.payoutRowMaxMs, CONFIG.payoutRowsTotalMs / Math.max(1, rows.length)));
+    var share = CONFIG.payoutBankDurationMs / (CONFIG.payoutBankDurationMs + CONFIG.payoutRowPauseMs);
+    var rowPause = instant ? 0 : reduceMotion ? 20 : Math.round(rowMs * (1 - share));
+    var rowCount = Math.round(rowMs * share);
+    var bankDuration = instant || reduceMotion ? 0 : rowCount;
+    // The total's count-up keeps its own length.
+    var sumDuration = instant || reduceMotion ? 0 : CONFIG.payoutBankDurationMs;
+    // cuddleMoneyRowRing follows the row's count.
+    overlay.style.setProperty("--payout-row-ms", rowCount + "ms");
     var bank = overlay.querySelector("#cuddleMoneyBankCounter");
     var current = payload.from;
-    var rows = Array.from(overlay.querySelectorAll(".cuddle-money-payout-row"));
     // A redraw mid-count rebuilds the overlay and starts a new run of this
     // function; it picks up at the first row the old one hadn't settled,
     // and the old one (still holding the detached overlay) stops.
@@ -1146,9 +1161,9 @@
       }
     }
     if (firstTime) overlay.classList.add("is-summing");
-    if (bank && firstTime && current !== payload.to && bankDuration > 0) {
+    if (bank && firstTime && current !== payload.to && sumDuration > 0) {
       bank.classList.add("is-summing");
-      await animateBank(bank, current, payload.to, bankDuration);
+      await animateBank(bank, current, payload.to, sumDuration);
       if (payload.animationToken !== token) return;
     }
     if (bank) bank.textContent = formatPoints(payload.to);

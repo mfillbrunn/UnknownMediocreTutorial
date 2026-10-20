@@ -96,7 +96,7 @@
     radial-gradient(circle at 50% 12%, rgba(246, 201, 86, 0.13), transparent 34rem),
     rgba(8, 7, 13, 0.82);
   backdrop-filter: blur(11px) saturate(0.92);
-  animation: cuddleMoneyOverlayIn 180ms ease-out both;
+  animation: cuddleMoneyOverlayIn 162ms ease-out both;
 }
 
 #cuddleScreen .cuddle-money-modal,
@@ -111,7 +111,7 @@
     0 32px 100px rgba(0, 0, 0, 0.62),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   text-align: center;
-  animation: cuddleMoneyModalIn 300ms cubic-bezier(0.2, 0.85, 0.25, 1.14) both;
+  animation: cuddleMoneyModalIn 270ms cubic-bezier(0.2, 0.85, 0.25, 1.14) backwards;
 }
 
 /* Boss-reward-pick and challenge-offer modals: both a Money grant (a
@@ -467,8 +467,10 @@
   border-radius: 13px;
   background: rgba(255, 255, 255, 0.025);
   opacity: 0.68;
-  transform: translateZ(0);
-  transition: opacity 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  /* No transform here or on .is-counting: a scaled (or layer-promoted) row
+     is drawn as a stretched snapshot, which blurred its tiles and text on
+     phones. The counting row stands out by its ring and glow instead. */
+  transition: opacity 144ms ease, border-color 144ms ease, background 144ms ease, box-shadow 144ms ease;
 }
 
 /* The tiles + figure line is its own button so the breakdown underneath can
@@ -516,7 +518,7 @@
   margin: 6px 2px 4px;
   padding: 8px 10px;
   border-top: 1px solid rgba(62, 207, 142, 0.2);
-  animation: cuddleMoneyDetailIn 180ms ease-out both;
+  animation: cuddleMoneyDetailIn 162ms ease-out backwards;
 }
 
 @keyframes cuddleMoneyDetailIn {
@@ -584,11 +586,11 @@
     rgba(255, 255, 255, 0.035);
   box-shadow: 0 0 0 1px rgba(62, 207, 142, 0.12), 0 0 28px rgba(62, 207, 142, 0.15);
   opacity: 1;
-  transform: scale(1.018);
-  /* Timed to slightly outlast payoutBankDurationMs (cuddle-money-mode.js)
+  /* Timed to slightly outlast each row's count (--payout-row-ms, set by
+     cuddle-money-mode.js; the rows share a fixed total)
      so the ring finishes its own fade instead of being cut off the instant
      the row flips to .is-settled. */
-  animation: cuddleMoneyRowRing 336ms ease-out both;
+  animation: cuddleMoneyRowRing calc(var(--payout-row-ms, 277ms) + 25ms) ease-out both;
 }
 
 #cuddleScreen .cuddle-money-payout-row.is-settled {
@@ -654,7 +656,7 @@
 #cuddleScreen .cuddle-money-row-increment.is-visible {
   opacity: 1;
   transform: translateX(0) scale(1);
-  animation: cuddleMoneyIncrementPop 460ms cubic-bezier(0.15, 0.9, 0.2, 1.35) both;
+  animation: cuddleMoneyIncrementPop 414ms cubic-bezier(0.15, 0.9, 0.2, 1.35) backwards;
 }
 
 #cuddleScreen .cuddle-money-payout-total {
@@ -677,7 +679,7 @@
 #cuddleScreen .cuddle-money-payout-total.is-visible {
   opacity: 1;
   transform: translateY(0) scale(1);
-  animation: cuddleMoneyTotalIn 500ms cubic-bezier(0.2, 0.85, 0.25, 1.15) both;
+  animation: cuddleMoneyTotalIn 450ms cubic-bezier(0.2, 0.85, 0.25, 1.15) backwards;
 }
 
 #cuddleScreen .cuddle-money-payout-total span {
@@ -698,7 +700,7 @@
   color: var(--cuddle-points-ink) !important;
   background: linear-gradient(135deg, var(--cuddle-points-teal-bright), var(--cuddle-points-teal)) !important;
   box-shadow: 0 10px 30px rgba(62, 207, 142, 0.24);
-  animation: cuddleMoneyCollectIn 300ms ease-out both;
+  animation: cuddleMoneyCollectIn 270ms ease-out backwards;
 }
 
 #cuddleScreen .cuddle-money-confetti {
@@ -1025,10 +1027,10 @@
   filter: saturate(0.3);
 }
 #cuddleScreen .umt-stage-bonus-section.is-revealing {
-  animation: umt-sum-pop 620ms cubic-bezier(0.3, 1.5, 0.5, 1) both;
+  animation: umt-sum-pop 558ms cubic-bezier(0.3, 1.5, 0.5, 1) backwards;
 }
 #cuddleScreen .cuddle-money-bank strong.is-summing {
-  animation: umt-sum-count 700ms ease-out both;
+  animation: umt-sum-count 630ms ease-out backwards;
 }
 @keyframes umt-sum-pop {
   0% { opacity: 0.4; filter: saturate(0.3); transform: scale(0.96); box-shadow: 0 0 0 0 rgba(87, 214, 141, 0.7); }
