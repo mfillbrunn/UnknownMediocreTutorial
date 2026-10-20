@@ -523,9 +523,20 @@
   // context: until its .state is swapped for another object (a reload, a
   // new run), or for a quarter second when it has no .state of its own.
   const foundStates = new WeakMap();
-  const FOUND_STATE_MS = 250;
+  // Long enough that the 0.5s tick and a burst of wrapped calls after a
+  // tap reuse one scan; a state that moves is still found within seconds.
+  const FOUND_STATE_MS = 2000;
 
   function findState(context, args = []) {
+    // A Cuddle game: its own state, no scan. (The real state outscores
+    // anything reachable from the game or its arguments anyway, and this
+    // is asked by every wrapped method on every tap.)
+    const Game = window.CuddleEngine && window.CuddleEngine.CuddleGame;
+    if (Game && context instanceof Game) {
+      let own;
+      try { own = context.state; } catch (_) { own = undefined; }
+      if (isObject(own)) return own;
+    }
     let plainArgs = true;
     if (Array.isArray(args)) {
       for (let index = 0; index < args.length; index += 1) {
@@ -2870,10 +2881,23 @@
     }
   }
 
+  const PAYOUT_CONTAINERS = ".reward-breakdown, .round-summary, .stage-summary, .payout-breakdown, .modal, [class*='summary']";
+
   function adjustPayoutText(root = document) {
+    // Cheap check first: only a summary or modal that mentions an unused
+    // row or mulligan for money is worth walking leaf by leaf (this runs
+    // after every change on the page).
+    const containers = root.querySelectorAll?.(PAYOUT_CONTAINERS) || [];
+    let worth = false;
+    for (const container of containers) {
+      const text = container.textContent || "";
+      if (text.indexOf("$") !== -1 && /unused/i.test(text)) { worth = true; break; }
+    }
+    if (!worth) return;
     const state = activeState();
     if (!state) return;
     const data = customState(state);
+    let changed = false;
     const elements = root.querySelectorAll?.(".reward-breakdown *, .round-summary *, .stage-summary *, .payout-breakdown *, .modal *, [class*='summary'] *") || [];
     for (const element of elements) {
       if (adjustedPayoutNodes.has(element) || element.children.length) continue;
@@ -2885,13 +2909,16 @@
         const hasUnitRate = /(?:x|×)\s*\$\s*\d+/i.test(text);
         element.textContent = text.replace(/\$\s*(\d+)/, (_, amount) => `$${Math.max(0, Number(amount) - (hasUnitRate ? 7 : 7 * count))}`);
         adjustedPayoutNodes.add(element);
+        changed = true;
       } else if (/mulligan/i.test(text)) {
         const hasUnitRate = /(?:x|×)\s*\$\s*\d+/i.test(text);
         element.textContent = text.replace(/\$\s*(\d+)/, (_, amount) => `$${Math.max(0, Number(amount) - (hasUnitRate ? 1 : count))}`);
         adjustedPayoutNodes.add(element);
+        changed = true;
       }
     }
-    if (data?.stage) saveCustom(state);
+    // Saved only when something was adjusted, not on every sweep.
+    if (changed && data?.stage) saveCustom(state);
   }
 
   function adjustChallengeNotice(root = document) {
