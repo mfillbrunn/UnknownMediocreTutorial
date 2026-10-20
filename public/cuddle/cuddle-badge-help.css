@@ -393,3 +393,8 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+
+/* The music button (cuddle-music.js) sits beside the ? in the top bar. */
+.umt-music-btn svg { width: 18px; height: 18px; }
+.umt-music-btn[aria-pressed="false"] { opacity: 0.6; }
+.cuddle-header .cuddle-header-side-right .umt-music-btn { width: 34px; height: 34px; min-width: 0; padding: 0; }
