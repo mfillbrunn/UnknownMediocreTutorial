@@ -468,13 +468,9 @@
         + (absent.length ? absent.join(" and ") + (absent.length === 1 ? " isn't" : " aren't") + (present.length ? "" : " in the answer") : "")
         + ".";
     },
+    // One yellow, even with Quest Mastery (two made the stage too easy).
     umtSpotlight: function spotlight(game) {
-      if (applySpotlight(game)) {
-        var first = game.state.umtSpotlightNote;
-        // Quest Mastery: a second yellow placed too.
-        if (questBoost(game) && applySpotlight(game)) return first + " " + game.state.umtSpotlightNote;
-        return first;
-      }
+      if (applySpotlight(game)) return game.state.umtSpotlightNote;
       game.state.umtSpotlightPending = spotlightKey(game.state);
       return "Spotlight: no yellow letter yet. Your next yellow will be placed.";
     },

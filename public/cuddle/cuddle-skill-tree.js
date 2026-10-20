@@ -304,7 +304,7 @@
           description: "While you have 5 badges or fewer outside Restraint (Legendaries don't count), every stage you solve pays 1.5 times its points.",
           level: g => powerLevel(g, "ascetic") },
         { id: "questMastery", icon: "📜", title: "Quest Mastery", tier: "legendary", type: "quests", maxLevel: 1,
-          description: "Every quest reward is one step bigger: 2 mulligans instead of 1, 3 vowels checked instead of 2, 3 letters ruled out instead of 2, and so on.",
+          description: "Every quest reward is one step bigger: 2 mulligans instead of 1, 3 vowels checked instead of 2, 3 letters ruled out instead of 2, and so on. (Spotlight stays at one yellow.)",
           level: g => powerLevel(g, "questMastery") },
         { id: "overtime", icon: "⏱️", title: "Overtime", tier: "legendary", type: "quests", maxLevel: 1,
           description: "Each quest you finish gives you 1 more guess this stage: a boss fight is a guess longer, and on other stages the late-guess cost starts a guess later.",

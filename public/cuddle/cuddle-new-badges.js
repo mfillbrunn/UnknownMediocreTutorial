@@ -217,7 +217,7 @@
     revealCategory: "Shows 2 more of the answer's themes",
     umtRuleOut: "3 consonants in your hand that aren't in the answer turn grey, and are swapped for new cards.",
     umtVowelCheck: "3 vowels you haven't tried are tested: you learn if each one is in the answer.",
-    umtSpotlight: "2 yellow letters move to their exact spots and turn green (or the next ones you find do).",
+    // (Spotlight stays at one yellow: two made the stage too easy.)
     umtPocketMoney: "Get +$20 right now.",
     umtQuickPoints: "Get +30 points right now.",
     umtFishingLine: "Twice this stage, take a card back from your discard pile (tap the hook on your deck)."
