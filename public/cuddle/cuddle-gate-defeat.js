@@ -105,7 +105,9 @@
     play(game, info);
   }
 
-  setInterval(check, 200);
+  // A slow check is plenty (a loss screen waits for a tap anyway), and
+  // keeps the phone from waking five times a second for it.
+  setInterval(check, 500);
 
   window.CuddleGateDefeat = Object.freeze({ play: play, check: check });
 }());

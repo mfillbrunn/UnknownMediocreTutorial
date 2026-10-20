@@ -546,7 +546,7 @@
     var game = window.CuddleBranchMap && typeof window.CuddleBranchMap.getActiveGame === "function"
       ? window.CuddleBranchMap.getActiveGame() : null;
     if (document.getElementById("cuddleRoot")) renderPicker(document.getElementById("cuddleRoot"), game);
-  }, 250);
+  }, 500);
 
   window.CuddlePresetTrial = Object.freeze({ LEVELS: TRIAL_LEVELS, PAIR_PAY: PAIR_PAY, PAIR_PICK_GUESS: PAIR_PICK_GUESS });
 }());

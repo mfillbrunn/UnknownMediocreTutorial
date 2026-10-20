@@ -338,6 +338,12 @@ transition:
   animation: tutorial-ring-pulse 2s ease-out infinite;
 }
 
+/* Hidden (no tutorial step showing): no pulse either, or it keeps redrawing
+   an invisible ring on every screen. */
+.tutorial-focus-ring:not(.show)::after {
+  animation: none;
+}
+
 @keyframes tutorial-ring-pulse {
   0% {
     opacity: 0.65;

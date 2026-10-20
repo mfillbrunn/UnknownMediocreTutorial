@@ -1197,7 +1197,8 @@
       }
     }
     // Ambient sparks: fireflies, crystal glints, rising embers.
-    var sparkCount = Math.max(5, Math.round(span / 55));
+    // Kept few: each one animating is a redraw of the map on a phone.
+    var sparkCount = Math.max(3, Math.round(span / 110));
     for (var spark = 0; spark < sparkCount; spark += 1) {
       var sx = 20 + random() * (WORLD_MAP_WIDTH - 40);
       var sy = band.top + 20 + random() * Math.max(10, span - 40);

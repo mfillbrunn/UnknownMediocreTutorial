@@ -52,11 +52,8 @@
      * should scroll into view. Keep it aligned with the visible rows after
      * removing a duplicate.
      */
-    container.dataset.logCount = String(
-      container.querySelectorAll(
-        ".log-entry"
-      ).length
-    );
+    const count = String(container.querySelectorAll(".log-entry").length);
+    if (container.dataset.logCount !== count) container.dataset.logCount = count;
   }
 
   function dedupeAll() {

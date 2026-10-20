@@ -4605,12 +4605,15 @@
     const rows = Array.from(root.querySelectorAll(".cuddle-board-row"));
     const row = rows[(state.history || []).length];
     if (!row) return;
-    row.classList.add("umt-active-draft-row");
+    // Only real changes: this runs after every DOM change, and rewriting
+    // the same values would wake every observer again.
+    if (!row.classList.contains("umt-active-draft-row")) row.classList.add("umt-active-draft-row");
     Array.from(row.querySelectorAll(".cuddle-tile")).slice(0, 5).forEach((tile, index) => {
-      tile.dataset.umtDraftSlot = String(index);
+      if (tile.dataset.umtDraftSlot !== String(index)) tile.dataset.umtDraftSlot = String(index);
       if (tile.hasAttribute("data-draft-index")) {
-        tile.dataset.umtDraftSourceIndex = tile.getAttribute("data-draft-index");
-      } else {
+        const source = tile.getAttribute("data-draft-index");
+        if (tile.dataset.umtDraftSourceIndex !== source) tile.dataset.umtDraftSourceIndex = source;
+      } else if ("umtDraftSourceIndex" in tile.dataset) {
         delete tile.dataset.umtDraftSourceIndex;
       }
     });

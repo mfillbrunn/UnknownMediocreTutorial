@@ -3296,14 +3296,14 @@ if (window._pendingRoleAssignedRefresh) {
   }
 
   function syncButtons(hidden) {
+    // Only real changes are written: a rewrite of the same value still
+    // counts as a DOM change and wakes every observer on the page.
+    const label = hidden ? "Show constrained row" : "Hide constrained row";
     document.querySelectorAll(".constraint-toggle-btn").forEach(button => {
       button.classList.toggle("off", hidden);
-      button.setAttribute("aria-pressed", String(!hidden));
-      button.setAttribute(
-        "aria-label",
-        hidden ? "Show constrained row" : "Hide constrained row"
-      );
-      button.title = hidden ? "Show constrained row" : "Hide constrained row";
+      if (button.getAttribute("aria-pressed") !== String(!hidden)) button.setAttribute("aria-pressed", String(!hidden));
+      if (button.getAttribute("aria-label") !== label) button.setAttribute("aria-label", label);
+      if (button.title !== label) button.title = label;
     });
   }
 
