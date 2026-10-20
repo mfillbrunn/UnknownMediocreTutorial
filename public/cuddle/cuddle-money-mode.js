@@ -1133,7 +1133,7 @@
       await delay(rowPause);
       if (payload.animationToken !== token) return;
     }
-    // Every row paid: the solving bonus pops in (green, with the sum's
+    // Every row paid: the solving bonus lights up (green, with the sum's
     // chime, cuddle-audio.js) and the points count up to the full total.
     var bonus = overlay.querySelector(".umt-stage-bonus-section");
     var firstTime = !payload.bonusShown;
@@ -1228,7 +1228,7 @@
     var remainder = Math.round(asNumber(payload.stageBonus, 0)) - listed;
     if (remainder && !stageLines.length) lines.push({ label: "Other stage rewards", amount: remainder });
     if (!lines.length) return "";
-    // Hidden while the rows count; it pops in once they're all paid
+    // Dimmed while the rows count; it lights up once they're all paid
     // (runPayoutAnimation).
     return "<div class=\"umt-stage-bonus-section" + (payload.bonusShown ? "" : " is-pending") + "\">"
       + "<div class=\"umt-stage-bonus-title\">Solving bonus</div>"
