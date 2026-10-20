@@ -169,8 +169,8 @@
       { t: "pay", before: [["Solved", "+18"]], after: [["Solved", "+18"], ["Hard mode", "+10"]] }],
     leanBuild: ["A solve pays its usual cash-out.", "A solve pays a bonus, smaller for every badge you hold outside Restraint.",
       { t: "pay", before: [["Solved", "+18"]], after: [["Solved", "+18"], ["Lean Build", "+15"]] }],
-    ascetic: ["A solve pays its usual cash-out.", "With few badges outside Restraint, every solve pays half as much again.",
-      { t: "pay", before: [["Solved", "+20"]], after: [["Solved", "+20"], ["Ascetic ×1.5", "+10"]] }],
+    ascetic: ["A solve pays its usual cash-out.", "With few badges outside Restraint, every solve pays double (5 or fewer) or half as much again (10 or fewer).",
+      { t: "pay", before: [["Solved", "+20"]], after: [["Solved", "+20"], ["Ascetic ×2", "+20"]] }],
 
     // ---- Money --------------------------------------------------------------
     wideChoice: ["A reward screen shows 3 cards.", "It shows more cards to choose from.",

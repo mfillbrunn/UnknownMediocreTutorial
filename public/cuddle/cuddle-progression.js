@@ -154,7 +154,7 @@
     allThemesBoss: "All themes revealed",
     secondCup: "1 rescue guess per run",
     cleanSlate: "Skips level up a badge",
-    ascetic: "x1.5 with 5 non-Restraint badges or fewer",
+    ascetic: "x2 with ≤5 non-Restraint badges, x1.5 with ≤10",
     questMastery: "Quest rewards one step bigger",
     overtime: "+1 guess per quest",
     questChain: "Quests chain on",
