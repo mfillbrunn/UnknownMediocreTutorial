@@ -7,7 +7,8 @@
  *   short    the screen's edges pulse red, with "N pts short" on a pill
  *   reached  a green pill, "Boss target reached"
  * On a stage the pill would cover the hand, so there the header's
- * "Next boss" line flashes red (or turns green) instead.
+ * "Next boss" line flashes red (or turns green) instead. In the shop the
+ * red edges would run over its header, so it gets the pill alone.
  * The points counted are the banked ones, as the header shows and the
  * boss gate itself checks.
  *
@@ -71,7 +72,7 @@
     if (!next || !next.required) return null;
     // The same banked points the header's "Next boss" line shows.
     var score = Math.round(Number(next.score) || 0);
-    return { short: Math.max(0, next.required - score), required: next.required, onMap: state.status === "branchMap" };
+    return { short: Math.max(0, next.required - score), required: next.required, onMap: state.status === "branchMap", inShop: state.status === "shop" };
   }
 
   var view = null;
@@ -99,7 +100,7 @@
       ? "<b>Danger</b> " + found.short + " pts short of the boss (" + found.required + ")"
       : "<b>Boss target reached</b> " + found.required + " pts";
     if (view.dataset.state !== state) view.dataset.state = state;
-    var where = found.onMap ? "map" : "stage";
+    var where = found.onMap ? "map" : found.inShop ? "shop" : "stage";
     if (view.dataset.where !== where) view.dataset.where = where;
     var pill = view.querySelector(".umt-bd-pill");
     if (pill.innerHTML !== text) pill.innerHTML = text;

@@ -33,7 +33,7 @@
   // -- settings --------------------------------------------------------------------
   var KEYS = { music: "umt-cuddle-music", sfx: "umt-cuddle-sfx" };
   // Music: "off", "quiet" or "normal" (an older "on" reads as normal).
-  var MUSIC_LEVELS = { off: 0, quiet: 0.04, normal: 0.16 };
+  var MUSIC_LEVELS = { off: 0, quiet: 0.012, normal: 0.04 };
   var MUSIC_CHOICES = [["off", "Off"], ["quiet", "Quiet"], ["normal", "Normal"]];
   function readSetting(name) {
     var value = null;
@@ -153,7 +153,7 @@
   var ctx = null;
   var master = null;
   var noiseBuffer = null;
-  var SFX_VOLUME = 0.5;
+  var SFX_VOLUME = 0.45;
 
   function audioContext() {
     if (ctx) return ctx;
@@ -226,70 +226,82 @@
     list.forEach(function (f, i) { tone(Object.assign({ f: f, dur: 0.18, type: "triangle", vol: 0.22 }, o || {}, { delay: ((o && o.delay) || 0) + i * step })); });
   }
 
-  var C5 = 523.25, D5 = 587.33, E5 = 659.25, G5 = 783.99, A5 = 880, C6 = 1046.5, E6 = 1318.5, G6 = 1568;
+  var C5 = 523.25, D5 = 587.33, E5 = 659.25, F5 = 698.46, G5 = 783.99, B5 = 987.77, A5 = 880, C6 = 1046.5, E6 = 1318.5, G6 = 1568;
+
+  // All soft and small: sine and triangle tones (nothing buzzy), quiet,
+  // mostly on a five-note scale so things that happen together agree.
+  var SCALE = [C6, 1174.7, E6, G6, A5 * 2];
+  function step(i) { return SCALE[Math.max(0, Math.min(SCALE.length - 1, i))]; }
 
   var SOUNDS = {
-    // Tiles: a soft, short tip-tap, a little lower going back.
-    pick: function () { tone({ f: 430, f2: 380, dur: 0.055, type: "sine", vol: 0.16, attack: 0.002 }); noise({ f: 2600, q: 1.4, dur: 0.022, vol: 0.05, attack: 0.001 }); },
-    remove: function () { tone({ f: 350, f2: 300, dur: 0.055, type: "sine", vol: 0.14, attack: 0.002 }); noise({ f: 2000, q: 1.4, dur: 0.022, vol: 0.04, attack: 0.001 }); },
-    // Any button.
-    tap: function () { noise({ f: 1500, q: 1.2, dur: 0.028, vol: 0.06, attack: 0.001 }); tone({ f: 280, f2: 240, dur: 0.04, type: "sine", vol: 0.07, attack: 0.002 }); },
-    drag: function () { noise({ f: 2400, q: 2, dur: 0.09, vol: 0.08 }); },
-    drop: function () { tone({ f: 380, f2: 520, dur: 0.07, type: "triangle", vol: 0.2 }); noise({ f: 3000, q: 3, dur: 0.03, vol: 0.06 }); },
+    // Tiles: a little beep, one note higher for each letter of the word,
+    // and back down a note when one comes off.
+    pick: function (count) { var f = step(count - 1); tone({ f: f, f2: f * 1.04, dur: 0.07, type: "sine", vol: 0.06, attack: 0.004 }); tone({ f: f * 2, dur: 0.04, type: "sine", vol: 0.012, attack: 0.004 }); },
+    remove: function (count) { var f = step(count); tone({ f: f, f2: f * 0.92, dur: 0.07, type: "sine", vol: 0.05, attack: 0.004 }); },
+    // Any button: a barely-there tick.
+    tap: function () { tone({ f: 1800, dur: 0.03, type: "sine", vol: 0.02, attack: 0.002 }); },
+    // A badge tapped to look at it: a tiny rising glint.
+    peek: function () { tone({ f: G6, f2: C6 * 2, dur: 0.14, type: "sine", vol: 0.035, attack: 0.01 }); tone({ f: G6 * 2, dur: 0.1, type: "sine", vol: 0.01, delay: 0.04 }); },
+    drag: function () { tone({ f: 880, f2: 990, dur: 0.05, type: "sine", vol: 0.03, attack: 0.004 }); },
+    drop: function () { tone({ f: 990, f2: 880, dur: 0.07, type: "sine", vol: 0.05, attack: 0.004 }); tone({ f: E6, dur: 0.05, type: "sine", vol: 0.015, delay: 0.03 }); },
     // A guess's tiles as they turn (cuddle-feedback-fx.js), by column:
-    // greens climb a scale, so a row of them rings out.
-    tileGrey: function () { tone({ f: 230, f2: 190, dur: 0.07, type: "sine", vol: 0.1, attack: 0.003 }); },
-    tileYellow: function (i) { tone({ f: 740 * Math.pow(1.03, i), dur: 0.13, type: "triangle", vol: 0.13, attack: 0.003 }); noise({ f: 5200, q: 2, dur: 0.03, vol: 0.03 }); },
-    tileGreen: function (i) { var f = [G5, A5, C6, 1174.7, E6][i % 5]; tone({ f: f, dur: 0.22, type: "triangle", vol: 0.15, attack: 0.003 }); tone({ f: f * 2, dur: 0.14, type: "sine", vol: 0.04, delay: 0.01 }); noise({ f: 6000, q: 2, dur: 0.04, vol: 0.03 }); },
-    invalid: function () { tone({ f: 150, dur: 0.16, type: "square", vol: 0.08, filter: 900 }); tone({ f: 120, dur: 0.16, type: "square", vol: 0.08, filter: 900, delay: 0.08 }); },
-    hint: function () { notes([A5, C6, E6], 0.07, { type: "sine", vol: 0.16, dur: 0.22 }); },
-    shuffle: function () { [0, 0.06, 0.12].forEach(function (d) { noise({ f: 1800, q: 1.5, dur: 0.06, vol: 0.1, delay: d }); }); },
-    mulligan: function () { SOUNDS.shuffle(); noise({ f: 600, f2: 3200, q: 1, dur: 0.28, vol: 0.1, delay: 0.15 }); tone({ f: 300, f2: 450, dur: 0.12, type: "triangle", vol: 0.12, delay: 0.32 }); },
+    // greens climb the scale, so a row of them rings out.
+    tileGrey: function () { tone({ f: 330, f2: 300, dur: 0.08, type: "sine", vol: 0.06, attack: 0.004 }); },
+    tileYellow: function (i) { var f = 880 * Math.pow(1.03, i); tone({ f: f, dur: 0.14, type: "sine", vol: 0.07, attack: 0.004 }); tone({ f: f * 2, dur: 0.06, type: "sine", vol: 0.015, attack: 0.004 }); },
+    tileGreen: function (i) { var f = [G5, A5, C6, 1174.7, E6][i % 5]; tone({ f: f, dur: 0.22, type: "triangle", vol: 0.08, attack: 0.004 }); tone({ f: f * 2, dur: 0.12, type: "sine", vol: 0.02, delay: 0.01 }); },
+    // Not a word: a little "uh-oh".
+    invalid: function () { tone({ f: E5, dur: 0.1, type: "sine", vol: 0.06, attack: 0.005 }); tone({ f: C5, dur: 0.16, type: "sine", vol: 0.06, attack: 0.005, delay: 0.11 }); },
+    hint: function () { notes([A5, C6, E6], 0.06, { type: "sine", vol: 0.06, dur: 0.18 }); },
+    shuffle: function () { [0, 0.06, 0.12].forEach(function (d) { noise({ f: 2500, q: 1, dur: 0.05, vol: 0.03, delay: d }); }); },
+    mulligan: function () { SOUNDS.shuffle(); tone({ f: C5, f2: G5, dur: 0.12, type: "sine", vol: 0.05, attack: 0.005, delay: 0.2 }); },
     // A badge landing in the collection: a small bell, a step higher for
     // each one in a row.
-    bing: function (i) { var f = E6 * Math.pow(1.122, i % 4); tone({ f: f, dur: 0.7, type: "sine", vol: 0.15, attack: 0.004 }); tone({ f: f * 2.76, dur: 0.22, type: "sine", vol: 0.03, attack: 0.002 }); tone({ f: f / 2, dur: 0.3, type: "triangle", vol: 0.04 }); },
+    bing: function (i) { var f = E6 * Math.pow(1.122, i % 4); tone({ f: f, dur: 0.6, type: "sine", vol: 0.08, attack: 0.004 }); tone({ f: f * 2.76, dur: 0.18, type: "sine", vol: 0.015, attack: 0.002 }); tone({ f: f / 2, dur: 0.25, type: "triangle", vol: 0.02 }); },
     // A quest reward taken: two bells.
-    reward: function () { tone({ f: C6, dur: 0.35, type: "sine", vol: 0.14, attack: 0.003 }); tone({ f: G6, dur: 0.8, type: "sine", vol: 0.15, attack: 0.003, delay: 0.09 }); tone({ f: G6 * 2.76, dur: 0.2, type: "sine", vol: 0.03, delay: 0.09 }); },
+    reward: function () { tone({ f: C6, dur: 0.3, type: "sine", vol: 0.08, attack: 0.003 }); tone({ f: G6, dur: 0.7, type: "sine", vol: 0.09, attack: 0.003, delay: 0.09 }); tone({ f: G6 * 2.76, dur: 0.18, type: "sine", vol: 0.015, delay: 0.09 }); },
     // Opening a pack (cuddle-packs.js): rustling that builds as it shakes,
     // a swell, then the rip.
     pack: function () {
-      [0, 0.1, 0.19, 0.28, 0.36, 0.44, 0.51, 0.57].forEach(function (d, i) { noise({ f: 1300 + i * 160, q: 1.2, dur: 0.06, vol: 0.04 + i * 0.012, delay: d }); });
-      noise({ f: 500, f2: 2200, q: 0.7, dur: 0.34, vol: 0.08, delay: 0.62, attack: 0.3 });
-      noise({ f: 3200, f2: 900, q: 0.9, dur: 0.26, vol: 0.22, delay: 0.96, attack: 0.005 });
-      notes([E6, G6, C6 * 2], 0.05, { type: "sine", vol: 0.07, dur: 0.3, delay: 1.0 });
+      [0, 0.1, 0.19, 0.28, 0.36, 0.44, 0.51, 0.57].forEach(function (d, i) { noise({ f: 1800 + i * 160, q: 1.2, dur: 0.05, vol: 0.015 + i * 0.006, delay: d }); });
+      noise({ f: 600, f2: 2200, q: 0.7, dur: 0.34, vol: 0.04, delay: 0.62, attack: 0.3 });
+      noise({ f: 3200, f2: 1200, q: 0.9, dur: 0.22, vol: 0.09, delay: 0.96, attack: 0.01 });
+      notes([E6, G6, C6 * 2], 0.05, { type: "sine", vol: 0.04, dur: 0.3, delay: 1.0 });
     },
     // One badge flying out of the pack, brighter for a rarer one.
     packCard: function (tier) {
       var f = { common: A5, rare: C6, epic: E6, legendary: G6 }[tier] || A5;
-      tone({ f: f * 0.75, f2: f, dur: 0.08, type: "triangle", vol: 0.1 });
-      tone({ f: f, dur: 0.3, type: "sine", vol: 0.12, delay: 0.05 });
-      if (tier === "epic" || tier === "legendary") notes([f * 1.5, f * 2], 0.05, { type: "sine", vol: 0.05, dur: 0.25, delay: 0.1 });
+      tone({ f: f * 0.75, f2: f, dur: 0.08, type: "sine", vol: 0.05 });
+      tone({ f: f, dur: 0.28, type: "sine", vol: 0.07, delay: 0.05 });
+      if (tier === "epic" || tier === "legendary") notes([f * 1.5, f * 2], 0.05, { type: "sine", vol: 0.03, dur: 0.22, delay: 0.1 });
     },
     // The coin dropping into the cabinet (cuddle-coin-start.js).
-    coin: function () { noise({ f: 6000, q: 3, dur: 0.03, vol: 0.05 }); tone({ f: 1976, dur: 0.5, type: "sine", vol: 0.14, attack: 0.002 }); tone({ f: 2637, dur: 0.45, type: "sine", vol: 0.1, attack: 0.002, delay: 0.07 }); tone({ f: 5274, dur: 0.15, type: "sine", vol: 0.03, delay: 0.07 }); },
-    cashRow: function () { tone({ f: 1320 + Math.random() * 120, dur: 0.07, type: "sine", vol: 0.12 }); },
-    collect: function () { [0, 0.05, 0.1, 0.15, 0.2].forEach(function (d, i) { tone({ f: 1400 + i * 120, dur: 0.09, type: "sine", vol: 0.12, delay: d }); }); notes([C6, E6], 0.08, { delay: 0.25, vol: 0.16 }); },
-    // Into a stage: a swoosh.
-    stage: function () { noise({ f: 350, f2: 2600, q: 0.8, dur: 0.32, vol: 0.14, attack: 0.12 }); noise({ f: 2600, f2: 900, q: 0.8, dur: 0.2, vol: 0.05, delay: 0.26 }); },
-    trial: function () { notes([A5 / 2, E5, A5], 0.14, { type: "sine", vol: 0.14, dur: 0.6 }); },
-    duel: function () { tone({ f: 330, dur: 0.18, type: "sawtooth", vol: 0.06, filter: 1600 }); tone({ f: 349, dur: 0.18, type: "sawtooth", vol: 0.06, filter: 1600, delay: 0.16 }); tone({ f: 494, dur: 0.4, type: "sawtooth", vol: 0.07, filter: 1800, delay: 0.32 }); },
-    boss: function () { noise({ kind: "lowpass", f: 200, dur: 0.6, vol: 0.35 }); tone({ f: 110, f2: 82, dur: 1.2, type: "sawtooth", vol: 0.12, filter: 500 }); tone({ f: 116.5, f2: 87, dur: 1.2, type: "sawtooth", vol: 0.1, filter: 500, delay: 0.05 }); },
-    shop: function () { tone({ f: 1760, dur: 0.35, type: "sine", vol: 0.12 }); tone({ f: 2217, dur: 0.45, type: "sine", vol: 0.1, delay: 0.12 }); },
-    buy: function () { tone({ f: 1568, dur: 0.08, type: "square", vol: 0.05, filter: 3000 }); tone({ f: 2093, dur: 0.25, type: "sine", vol: 0.14, delay: 0.07 }); },
-    sell: function () { tone({ f: 2093, dur: 0.08, type: "sine", vol: 0.12 }); tone({ f: 1568, dur: 0.2, type: "sine", vol: 0.12, delay: 0.08 }); },
-    fish: function () { noise({ f: 700, f2: 300, q: 0.7, dur: 0.3, vol: 0.18 }); [0.25, 0.31, 0.37].forEach(function (d) { tone({ f: 900, dur: 0.03, type: "square", vol: 0.04, filter: 2500, delay: d }); }); },
-    quest: function () { notes([E5, G5, C6, E6], 0.07, { type: "triangle", vol: 0.18 }); },
-    square: function () { tone({ f: 1046, f2: 2093, dur: 0.16, type: "sine", vol: 0.14 }); noise({ f: 5000, q: 2, dur: 0.08, vol: 0.05, delay: 0.05 }); },
-    dead: function () { tone({ f: 140, f2: 90, dur: 0.22, type: "sine", vol: 0.25 }); noise({ kind: "lowpass", f: 400, dur: 0.12, vol: 0.12 }); },
-    lucky: function () { notes([E6, G6, E6 * 1.5], 0.05, { type: "sine", vol: 0.1, dur: 0.15 }); },
-    idea: function () { tone({ f: 1760, dur: 0.5, type: "sine", vol: 0.14 }); tone({ f: 2637, dur: 0.4, type: "sine", vol: 0.06, delay: 0.02 }); },
-    joker: function () { [0, 1, 2, 3, 4].forEach(function (i) { tone({ f: 700 * Math.pow(1.19, i), dur: 0.1, type: "triangle", vol: 0.1, delay: i * 0.04 }); }); },
-    wave: function () { noise({ f: 300, f2: 1400, q: 0.6, dur: 0.9, vol: 0.2, attack: 0.25 }); noise({ f: 1400, f2: 400, q: 0.6, dur: 0.8, vol: 0.12, delay: 0.5, attack: 0.1 }); },
-    win: function () { notes([C5, E5, G5, C6], 0.12, { vol: 0.2, dur: 0.25 }); notes([E6, G6], 0.0, { delay: 0.5, vol: 0.14, dur: 0.7, type: "sine" }); tone({ f: C6, dur: 0.8, type: "triangle", vol: 0.16, delay: 0.5 }); },
-    lose: function () { notes([G5, E5, D5, C5 / 1.06], 0.2, { type: "triangle", vol: 0.16, dur: 0.35 }); },
-    refresh: function () { noise({ f: 1200, f2: 3000, q: 1, dur: 0.18, vol: 0.1 }); },
-    skip: function () { tone({ f: 660, f2: 520, dur: 0.1, type: "sine", vol: 0.12 }); },
-    toast: function () { notes([G5, C6], 0.08, { type: "sine", vol: 0.12, dur: 0.25 }); }
+    coin: function () { tone({ f: 1976, dur: 0.45, type: "sine", vol: 0.08, attack: 0.002 }); tone({ f: 2637, dur: 0.4, type: "sine", vol: 0.06, attack: 0.002, delay: 0.07 }); tone({ f: 5274, dur: 0.12, type: "sine", vol: 0.012, delay: 0.07 }); },
+    cashRow: function () { tone({ f: 1320 + Math.random() * 120, dur: 0.06, type: "sine", vol: 0.05 }); },
+    // A cash-out row that costs points: a soft "wah-wah" going down.
+    cashMinus: function () { tone({ f: 494, f2: 440, dur: 0.13, type: "triangle", vol: 0.06, attack: 0.006 }); tone({ f: 415, f2: 330, dur: 0.24, type: "triangle", vol: 0.06, attack: 0.006, delay: 0.13 }); },
+    collect: function () { [0, 0.05, 0.1, 0.15, 0.2].forEach(function (d, i) { tone({ f: 1400 + i * 120, dur: 0.08, type: "sine", vol: 0.05, delay: d }); }); notes([C6, E6], 0.08, { type: "sine", delay: 0.25, vol: 0.08 }); },
+    // Into a stage: a soft swoosh.
+    stage: function () { noise({ f: 400, f2: 2400, q: 0.8, dur: 0.3, vol: 0.07, attack: 0.12 }); noise({ f: 2400, f2: 1000, q: 0.8, dur: 0.18, vol: 0.025, delay: 0.24 }); },
+    trial: function () { notes([A5 / 2, E5, A5], 0.14, { type: "sine", vol: 0.07, dur: 0.5 }); },
+    duel: function () { notes([E5, F5, B5], 0.15, { type: "triangle", vol: 0.06, dur: 0.22 }); },
+    boss: function () { noise({ kind: "lowpass", f: 220, dur: 0.6, vol: 0.15 }); tone({ f: 110, f2: 82, dur: 1.1, type: "triangle", vol: 0.1 }); tone({ f: 165, f2: 123, dur: 1.1, type: "sine", vol: 0.04, delay: 0.05 }); },
+    shop: function () { tone({ f: 1760, dur: 0.3, type: "sine", vol: 0.06 }); tone({ f: 2217, dur: 0.4, type: "sine", vol: 0.05, delay: 0.12 }); },
+    buy: function () { tone({ f: 1568, dur: 0.06, type: "sine", vol: 0.05 }); tone({ f: 2093, dur: 0.22, type: "sine", vol: 0.07, delay: 0.07 }); },
+    sell: function () { tone({ f: 2093, dur: 0.07, type: "sine", vol: 0.06 }); tone({ f: 1568, dur: 0.18, type: "sine", vol: 0.06, delay: 0.08 }); },
+    fish: function () { noise({ f: 900, f2: 400, q: 0.7, dur: 0.28, vol: 0.07 }); [0.25, 0.31, 0.37].forEach(function (d) { tone({ f: 1200, dur: 0.03, type: "sine", vol: 0.03, delay: d }); }); },
+    quest: function () { notes([E5, G5, C6, E6], 0.07, { type: "sine", vol: 0.08 }); },
+    square: function () { tone({ f: 1046, f2: 2093, dur: 0.15, type: "sine", vol: 0.07 }); },
+    // Special cards tapped.
+    dead: function () { tone({ f: 440, f2: 220, dur: 0.15, type: "sine", vol: 0.07, attack: 0.005 }); },
+    lucky: function () { notes([E6, G6, E6 * 1.5], 0.05, { type: "sine", vol: 0.05, dur: 0.14 }); },
+    idea: function () { tone({ f: 1760, dur: 0.45, type: "sine", vol: 0.07 }); tone({ f: 2637, dur: 0.35, type: "sine", vol: 0.03, delay: 0.02 }); },
+    joker: function () { [0, 1, 2, 3, 4].forEach(function (i) { tone({ f: 700 * Math.pow(1.19, i), dur: 0.09, type: "sine", vol: 0.05, delay: i * 0.04 }); }); },
+    wave: function () { noise({ f: 300, f2: 1400, q: 0.6, dur: 0.9, vol: 0.1, attack: 0.25 }); noise({ f: 1400, f2: 400, q: 0.6, dur: 0.8, vol: 0.06, delay: 0.5, attack: 0.1 }); },
+    win: function () { notes([C5, E5, G5, C6], 0.12, { type: "sine", vol: 0.1, dur: 0.25 }); notes([E6, G6], 0.0, { delay: 0.5, vol: 0.07, dur: 0.7, type: "sine" }); tone({ f: C6, dur: 0.8, type: "triangle", vol: 0.08, delay: 0.5 }); },
+    lose: function () { notes([G5, E5, D5, C5 / 1.06], 0.2, { type: "sine", vol: 0.08, dur: 0.35 }); },
+    refresh: function () { noise({ f: 1500, f2: 3000, q: 1, dur: 0.16, vol: 0.04 }); },
+    skip: function () { tone({ f: 660, f2: 520, dur: 0.09, type: "sine", vol: 0.05 }); },
+    toast: function () { notes([G5, C6], 0.08, { type: "sine", vol: 0.06, dur: 0.22 }); }
   };
 
   // Wakes the output if the browser put it to sleep (no tap yet, another
@@ -338,10 +350,11 @@
 
   wrap("toggleDraft", function (result, before) {
     if (!result || result.ok === false) { if (result && result.error) play("invalid"); return; }
-    play(filled(this.state) < before.draft ? "remove" : "pick");
+    var count = filled(this.state);
+    play(count < before.draft ? "remove" : "pick", count);
   });
-  wrap("removeDraftAt", function (result) { if (result && result.ok !== false) play("remove"); });
-  wrap("backspaceDraft", function (result) { if (!result || result.ok !== false) play("remove"); });
+  wrap("removeDraftAt", function (result) { if (result && result.ok !== false) play("remove", filled(this.state)); });
+  wrap("backspaceDraft", function (result) { if (!result || result.ok !== false) play("remove", filled(this.state)); });
   wrap("insertDraftCardAt", function (result) { if (result && result.ok !== false) play("drop"); });
   wrap("moveDraftCard", function (result) { if (result && result.ok !== false) play("drop"); });
 
@@ -447,7 +460,8 @@
     if (!target) return;
     // A soft click for every button, under any sound of its own.
     var button = target.closest("button, [role=\"button\"]");
-    if (button && !button.disabled && !button.closest(".cuddle-card, .cuddle-tile, .umt-sound-panel")
+    if (target.closest(".umt-bd-badge[data-umt-badge], [data-umt-help]")) play("peek");
+    else if (button && !button.disabled && !button.closest(".cuddle-card, .cuddle-tile, .umt-sound-panel")
         && (button.closest("#cuddleScreen") || button.closest(".umt-pack-overlay, .umt-pt-layer"))) {
       play("tap");
     }
@@ -466,7 +480,10 @@
     new MutationObserver(function (records) {
       records.forEach(function (record) {
         var el = record.target;
-        if (el.classList && el.classList.contains("cuddle-money-payout-row") && el.classList.contains("is-counting")) play("cashRow");
+        if (!(el.classList && el.classList.contains("cuddle-money-payout-row") && el.classList.contains("is-counting"))) return;
+        var amount = el.querySelector(".cuddle-money-row-increment");
+        var negative = el.classList.contains("is-late") || /^\s*[-\u2212]/.test(amount ? amount.textContent.replace(/^\s*\d+\s*\u00d7\s*/, "") : "");
+        play(negative ? "cashMinus" : "cashRow");
       });
     }).observe(overlay, { attributes: true, attributeFilter: ["class"], subtree: true });
   }

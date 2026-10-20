@@ -1,80 +1,72 @@
 /* Cuddle: a guess's feedback, tile by tile (cuddle-feedback-fx.js).
-   The turn uses `rotate` and the pop uses `scale`, so neither fights a
-   paid square's own burst (cuddle-strategies.css), which uses transform. */
+   The turn and pop use `scale`, so neither fights a paid square's own
+   burst (cuddle-strategies.css), which uses transform. */
 
-.cuddle-tile.umt-fb {
-  animation: umt-fb-turn 260ms ease-in-out var(--fb-delay, 0ms) both;
+.cuddle-tile.umt-rv {
+  animation: umt-rv-turn 260ms ease-in-out var(--rv-delay, 0ms) both;
 }
-.cuddle-tile.umt-fb.is-fb-yellow {
-  animation:
-    umt-fb-turn 260ms ease-in-out var(--fb-delay, 0ms) both,
-    umt-fb-pop-yellow 380ms cubic-bezier(0.3, 1.5, 0.5, 1) calc(var(--fb-delay, 0ms) + 130ms) both;
+.cuddle-tile.umt-rv.is-rv-yellow {
+  animation: umt-rv-turn-yellow 510ms ease-out var(--rv-delay, 0ms) both;
 }
-.cuddle-tile.umt-fb.is-fb-green {
-  animation:
-    umt-fb-turn 260ms ease-in-out var(--fb-delay, 0ms) both,
-    umt-fb-pop-green 460ms cubic-bezier(0.3, 1.6, 0.5, 1) calc(var(--fb-delay, 0ms) + 130ms) both;
+.cuddle-tile.umt-rv.is-rv-green {
+  animation: umt-rv-turn-green 590ms ease-out var(--rv-delay, 0ms) both;
 }
 /* A paid square keeps its burst, after its turn. */
-.cuddle-tile.umt-fb.is-special-burst {
+.cuddle-tile.umt-rv.is-special-burst {
   animation:
-    umt-fb-turn 260ms ease-in-out var(--fb-delay, 0ms) both,
+    umt-rv-turn 260ms ease-in-out var(--rv-delay, 0ms) both,
     umt-square-pop-yellow 560ms cubic-bezier(0.25, 1.5, 0.5, 1) calc(var(--burst-at) + var(--burst-shift, 0ms)) both;
 }
-.cuddle-tile.umt-fb.is-special-burst.is-burst-green {
-  animation-name: umt-fb-turn, umt-square-pop-green;
+.cuddle-tile.umt-rv.is-special-burst.is-burst-green {
+  animation-name: umt-rv-turn, umt-square-pop-green;
   animation-duration: 260ms, 700ms;
 }
 
-/* Face down (the plain typed look) until halfway, then the colour. */
-@keyframes umt-fb-turn {
-  0% {
-    rotate: x 0deg;
-    border-color: rgba(213, 166, 255, 0.55);
-    background: rgba(213, 166, 255, 0.11);
-    color: var(--cuddle-text, #fff);
-    box-shadow: none;
-  }
-  49.9% {
-    rotate: x 90deg;
-    border-color: rgba(213, 166, 255, 0.55);
-    background: rgba(213, 166, 255, 0.11);
-    color: var(--cuddle-text, #fff);
-    box-shadow: none;
-  }
-  50% { rotate: x 90deg; }
-  100% { rotate: x 0deg; }
+/* The turn is a flat squash and stretch (scale), never a 3D rotation:
+   iPhone browsers draw 3D-turned elements over everything, popups
+   included. Face down (the plain typed look) until it is flat, then the
+   colour; yellows and greens then swell and settle in the same keyframes,
+   since two animations can't share `scale`. */
+@keyframes umt-rv-turn {
+  0% { scale: 1 1; border-color: rgba(213, 166, 255, 0.55); background: rgba(213, 166, 255, 0.11); color: var(--cuddle-text, #fff); box-shadow: none; }
+  49.9% { scale: 1 0.02; border-color: rgba(213, 166, 255, 0.55); background: rgba(213, 166, 255, 0.11); color: var(--cuddle-text, #fff); box-shadow: none; }
+  50% { scale: 1 0.02; }
+  100% { scale: 1 1; }
 }
-@keyframes umt-fb-pop-yellow {
-  0% { scale: 1; }
-  45% { scale: 1.09; }
-  100% { scale: 1; }
+@keyframes umt-rv-turn-yellow {
+  0% { scale: 1 1; border-color: rgba(213, 166, 255, 0.55); background: rgba(213, 166, 255, 0.11); color: var(--cuddle-text, #fff); box-shadow: none; }
+  25.4% { scale: 1 0.02; border-color: rgba(213, 166, 255, 0.55); background: rgba(213, 166, 255, 0.11); color: var(--cuddle-text, #fff); box-shadow: none; }
+  25.5% { scale: 1 0.02; }
+  55% { scale: 1.09 1.09; }
+  100% { scale: 1 1; }
 }
-@keyframes umt-fb-pop-green {
-  0% { scale: 1; filter: brightness(1); }
-  35% { scale: 1.16; filter: brightness(1.25); }
-  70% { scale: 0.97; }
-  100% { scale: 1; filter: brightness(1); }
+@keyframes umt-rv-turn-green {
+  0% { scale: 1 1; filter: brightness(1); border-color: rgba(213, 166, 255, 0.55); background: rgba(213, 166, 255, 0.11); color: var(--cuddle-text, #fff); box-shadow: none; }
+  22% { scale: 1 0.02; filter: brightness(1); border-color: rgba(213, 166, 255, 0.55); background: rgba(213, 166, 255, 0.11); color: var(--cuddle-text, #fff); box-shadow: none; }
+  22.1% { scale: 1 0.02; }
+  50% { scale: 1.16 1.16; filter: brightness(1.25); }
+  74% { scale: 0.97 0.97; }
+  100% { scale: 1 1; filter: brightness(1); }
 }
 
-.umt-fb-layer {
+.umt-rv-layer {
   position: fixed;
   inset: 0;
   z-index: 40;
   pointer-events: none;
   overflow: hidden;
 }
-.umt-fb-spark {
+.umt-rv-spark {
   position: absolute;
   width: 7px;
   height: 7px;
   border-radius: 2px;
   will-change: transform, opacity;
 }
-.umt-fb-spark.is-yellow { background: #f6d35e; box-shadow: 0 0 6px rgba(246, 211, 94, 0.8); }
-.umt-fb-spark.is-green { background: #62d98a; box-shadow: 0 0 8px rgba(98, 217, 138, 0.85); }
-.umt-fb-spark.is-light { background: #fffbe8; }
-.umt-fb-ring {
+.umt-rv-spark.is-yellow { background: #f6d35e; box-shadow: 0 0 6px rgba(246, 211, 94, 0.8); }
+.umt-rv-spark.is-green { background: #62d98a; box-shadow: 0 0 8px rgba(98, 217, 138, 0.85); }
+.umt-rv-spark.is-light { background: #fffbe8; }
+.umt-rv-ring {
   position: absolute;
   border: 2px solid #62d98a;
   border-radius: 14px;
@@ -83,7 +75,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cuddle-tile.umt-fb,
-  .cuddle-tile.umt-fb.is-fb-yellow,
-  .cuddle-tile.umt-fb.is-fb-green { animation: none; }
+  .cuddle-tile.umt-rv,
+  .cuddle-tile.umt-rv.is-rv-yellow,
+  .cuddle-tile.umt-rv.is-rv-green { animation: none; }
 }
