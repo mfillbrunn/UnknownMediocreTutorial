@@ -65,3 +65,17 @@
   font-size: 0.74rem;
   line-height: 1.35;
 }
+
+/* Lean Build / Ascetic: how many of your badges count against it. */
+.umt-tip-count {
+  display: block;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(231, 162, 238, 0.1);
+  color: #f0c9f4;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: left;
+}

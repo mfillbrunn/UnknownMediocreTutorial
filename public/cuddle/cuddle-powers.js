@@ -265,10 +265,20 @@
     if (!result || !result.ok || history.length <= before || inDuel(state)) return result;
     try {
       var entry = history[history.length - 1];
-      // A Spotlight that found no yellow places the first one that shows.
-      if (state.umtSpotlightPending && state.umtSpotlightPending === spotlightKey(state) && state.status === "playing"
-          && !(entry && entry.word === state.secret) && applySpotlight(this)) {
-        note(this, state.umtSpotlightNote);
+      // A Spotlight still owed a yellow (or two) places the next that show.
+      // (Also when the guess opened a quest reward: the stage goes on.)
+      if (state.umtSpotlightPending && state.umtSpotlightPending === spotlightKey(state)
+          && (state.status === "playing" || state.status === "questReward")
+          && !(entry && entry.word === state.secret)) {
+        var owed = Math.max(1, num(state.umtSpotlightPendingCount) || 1);
+        var pendingKey = state.umtSpotlightPending;
+        var placed = 0;
+        while (placed < owed && applySpotlight(this)) {
+          note(this, state.umtSpotlightNote);
+          placed += 1;
+        }
+        state.umtSpotlightPending = placed < owed ? pendingKey : null;
+        state.umtSpotlightPendingCount = placed < owed ? owed - placed : 0;
       }
 
       // A guess past the window earns nothing but its penalty.
@@ -468,15 +478,19 @@
         + (absent.length ? absent.join(" and ") + (absent.length === 1 ? " isn't" : " aren't") + (present.length ? "" : " in the answer") : "")
         + ".";
     },
+    // One yellow, two with Quest Mastery. Any the board can't give yet
+    // (only one yellow showing, or none) wait for the next yellows found.
     umtSpotlight: function spotlight(game) {
-      if (applySpotlight(game)) {
-        var first = game.state.umtSpotlightNote;
-        // Quest Mastery: a second yellow placed too.
-        if (questBoost(game) && applySpotlight(game)) return first + " " + game.state.umtSpotlightNote;
-        return first;
+      var want = questBoost(game) ? 2 : 1;
+      var notes = [];
+      while (notes.length < want && applySpotlight(game)) notes.push(game.state.umtSpotlightNote);
+      var left = want - notes.length;
+      if (left > 0) {
+        game.state.umtSpotlightPending = spotlightKey(game.state);
+        game.state.umtSpotlightPendingCount = left;
       }
-      game.state.umtSpotlightPending = spotlightKey(game.state);
-      return "Spotlight: no yellow letter yet. Your next yellow will be placed.";
+      if (notes.length) return notes.join(" ") + (left ? " Your next yellow will be placed too." : "");
+      return "Spotlight: no yellow letter yet. Your next " + (left > 1 ? "two yellows" : "yellow") + " will be placed.";
     },
     umtPocketMoney: function pocketMoney(game) {
       var cash = questBoost(game) ? 20 : 10;

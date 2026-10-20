@@ -437,6 +437,7 @@
     followsHardMode: followsHardMode,
     combinable: function combinableIds(game) { return combinable(game); },
     leanPayout: leanPayout,
+    leanBase: function leanBase(game) { return LEAN_BY_WORLD[worldIndex(game)]; },
     otherBadges: otherBadges,
     hasMonksVow: function hasMonksVow(game) { return levelOf(game, "monksVow") > 0; }
   });

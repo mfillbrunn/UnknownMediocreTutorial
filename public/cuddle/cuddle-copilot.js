@@ -193,7 +193,7 @@
     }).observe(host, { childList: true, subtree: true });
     setInterval(function poll() {
       try { tick(); } catch (error) { console.warn("Cuddle co-pilot:", error); }
-    }, 400);
+    }, 1000);
   }
   attach();
 

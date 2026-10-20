@@ -3,8 +3,9 @@
  * Restraint
  *   Clean Slate (legendary)  skipping a reward also levels up one of your
  *                            badges at random.
- *   Ascetic (legendary)      with 5 non-Restraint badges or fewer,
- *                            every solved stage pays 1.5x its points.
+ *   Ascetic (legendary)      every solved stage pays 2x its points with 5
+ *                            non-Restraint badges or fewer, 1.5x with 10
+ *                            or fewer.
  * Quests
  *   Quest Mastery (legendary) every quest reward is one step bigger (2
  *                            mulligans instead of 1, 3 vowels checked
@@ -47,8 +48,9 @@
   var proto = Game.prototype;
   proto.__cuddleNewBadges = true;
 
-  var ASCETIC_LIMIT = 5;
-  var ASCETIC_MULTIPLIER = 1.5;
+  // Ascetic: [most badges outside Restraint, what a solve's points are
+  // multiplied by], fewest first.
+  var ASCETIC_TIERS = [[5, 2], [10, 1.5]];
   var MARKET_PRICE = 50;
   var COIN_PRICES = [0, 100, 75];
   var LEDGER_RATES = [0, 0.5, 1];
@@ -149,6 +151,15 @@
       });
     });
     return count;
+  }
+
+  // What Ascetic multiplies a solve by right now: 2, 1.5, or 1 (nothing).
+  function asceticMultiplier(game) {
+    var count = badgeCount(game);
+    for (var i = 0; i < ASCETIC_TIERS.length; i += 1) {
+      if (count <= ASCETIC_TIERS[i][0]) return ASCETIC_TIERS[i][1];
+    }
+    return 1;
   }
 
   // ---------------------------------------------------------------------------
@@ -639,9 +650,10 @@
           note(this, "Golden Opener: " + placed.map(function say(item) { return item.letter + " goes in position " + (item.index + 1); }).join(", ") + ".");
         }
       }
-      if (solved && !isBoss(this) && has(this, "ascetic") && badgeCount(this) <= ASCETIC_LIMIT) {
-        var extra = Math.round(num(state.roundScore) * (ASCETIC_MULTIPLIER - 1));
-        if (extra > 0 && stageBonus(this, extra, "umtAscetic", "Ascetic") > 0) note(this, "Ascetic: +" + extra + " points.");
+      var multiplier = solved && !isBoss(this) && has(this, "ascetic") ? asceticMultiplier(this) : 1;
+      if (multiplier > 1) {
+        var extra = Math.round(num(state.roundScore) * (multiplier - 1));
+        if (extra > 0 && stageBonus(this, extra, "umtAscetic", "Ascetic ×" + multiplier) > 0) note(this, "Ascetic ×" + multiplier + ": +" + extra + " points.");
       }
       masterChoices(this);
       save(this);
@@ -919,6 +931,8 @@
     marketOffer: marketOffer,
     hasCleanSlate: function hasCleanSlate(game) { return has(game, "cleanSlate"); },
     badgeCount: badgeCount,
+    asceticMultiplier: asceticMultiplier,
+    ASCETIC_TIERS: ASCETIC_TIERS,
     overtimeBonus: overtimeBonus,
     ledgerCredit: ledgerCredit,
     MASTERED_TEXT: MASTERED_TEXT

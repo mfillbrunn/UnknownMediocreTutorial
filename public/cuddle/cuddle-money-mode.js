@@ -914,13 +914,13 @@
       // (cuddle-ui.js): only the number itself is rewritten.
       var value = element.querySelector(".cuddle-header-points-value") || element;
       if (value.textContent !== pointsText) value.textContent = pointsText;
-      element.setAttribute("aria-label", visiblePoints + " points");
+      if (element.getAttribute("aria-label") !== visiblePoints + " points") element.setAttribute("aria-label", visiblePoints + " points");
     });
     var money = Math.max(0, Math.round(Number(state.cuddleMoney || 0)));
     var moneyText = formatMoney(money);
     root.querySelectorAll(".cuddle-header-money").forEach(function updateHeaderMoney(element) {
       if (element.textContent !== moneyText) element.textContent = moneyText;
-      element.setAttribute("aria-label", money + " money");
+      if (element.getAttribute("aria-label") !== money + " money") element.setAttribute("aria-label", money + " money");
     });
     var stats = root.querySelector(".cuddle-round-intro-stats");
     if (stats) {

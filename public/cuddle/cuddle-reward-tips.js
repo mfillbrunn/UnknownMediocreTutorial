@@ -9,6 +9,9 @@
  *   School rank     a badge that takes its school to its next rank.
  * At most one card per tip, so a screen never says "take everything".
  * The reason is on the chip's title and its aria-label.
+ *
+ * Badges that pay less the more badges you hold (Lean Build, Ascetic)
+ * also say how many of yours count against them, and what that means now.
  */
 (function () {
   "use strict";
@@ -121,6 +124,37 @@
       + ICONS[kind] + "<b>Tip</b><span>" + esc(LABEL[kind]) + "</span></span>";
   }
 
+  // How many of your badges count against a Restraint badge, and what it
+  // would do with them; "" for any other badge.
+  function countLine(game, node) {
+    var strategies = window.CuddleStrategies;
+    var fresh = window.CuddleNewBadges;
+    var plural = function (n) { return n + " badge" + (n === 1 ? "" : "s"); };
+    if (node.id === "leanBuild" && strategies && typeof strategies.otherBadges === "function") {
+      var others = strategies.otherBadges(game);
+      var pays = strategies.leanPayout(game);
+      var full = typeof strategies.leanBase === "function" ? strategies.leanBase(game) : null;
+      return "You have " + plural(others) + " outside Restraint (−5 points each): right now it pays +" + pays + " a solve"
+        + (full != null && full !== pays ? ", out of +" + full + "." : ".");
+    }
+    if (node.id === "ascetic" && fresh && typeof fresh.badgeCount === "function") {
+      var count = fresh.badgeCount(game);
+      var times = fresh.asceticMultiplier(game);
+      return "You have " + plural(count) + " outside Restraint: "
+        + (times > 1 ? "solves pay ×" + times + " right now." : "no bonus right now (it needs 10 or fewer).");
+    }
+    return "";
+  }
+
+  // A Restraint badge that would pay nothing with the badges you hold now.
+  function idleNow(game, node) {
+    try {
+      if (node.id === "leanBuild" && window.CuddleStrategies) return window.CuddleStrategies.leanPayout(game) <= 0;
+      if (node.id === "ascetic" && window.CuddleNewBadges) return window.CuddleNewBadges.asceticMultiplier(game) <= 1;
+    } catch (_error) { /* not known */ }
+    return false;
+  }
+
   var lastKey = "";
 
   function decorate() {
@@ -132,9 +166,13 @@
     var key = cards.map(function (card) { return card.getAttribute("data-upgrade-key"); }).join("|");
     if (key === lastKey && grid.querySelector(".umt-tip, [data-umt-tips-done]")) return;
     lastKey = key;
-    grid.querySelectorAll(".umt-tips, .umt-tip-why").forEach(function (el) { el.remove(); });
+    grid.querySelectorAll(".umt-tips, .umt-tip-why, .umt-tip-count").forEach(function (el) { el.remove(); });
     grid.setAttribute("data-umt-tips-done", "1");
     var picks = cards.map(function (card) { return { card: card, node: nodeFor(card) }; }).filter(function (item) { return item.node; });
+    picks.forEach(function (item) {
+      var line = countLine(game, item.node);
+      if (line) item.card.insertAdjacentHTML("beforeend", "<span class=\"umt-tip-count\">" + esc(line) + "</span>");
+    });
     var tips = [];
     var solve = solveNeed(game);
     if (solve) {
@@ -143,7 +181,7 @@
     }
     var points = pointsNeed(game);
     if (points) {
-      var payer = picks.find(function (item) { return item.node.type === "points"; });
+      var payer = picks.find(function (item) { return item.node.type === "points" && !idleNow(game, item.node); });
       if (payer) tips.push({ card: payer.card, kind: "points", reason: points });
     }
     var ranked = null;

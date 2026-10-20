@@ -3176,7 +3176,7 @@
     scanGlobals();
     installObserver();
     scanTimer = window.setInterval(scanGlobals, 1000);
-    tickTimer = window.setInterval(tick, 250);
+    tickTimer = window.setInterval(tick, 500);
     window.addEventListener("beforeunload", () => {
       for (const context of contextList) {
         const state = findState(context, []);

@@ -1023,6 +1023,10 @@
 #cuddleRoot .umt-map-spark-tides { fill: #cdeeff; filter: drop-shadow(0 0 3px #2f8cff); opacity: .7; animation-name: umt-spark-rise; }
 #cuddleRoot .umt-map-spark-glacier { fill: #f2fbff; filter: drop-shadow(0 0 2px #bfe9ff); animation-name: umt-spark-fall; }
 
+/* No glow filter on the sparks: a filter on an animating shape is redrawn
+   every frame, which is what made phones run hot on the map. */
+#cuddleRoot .umt-map-spark { filter: none !important; }
+
 @keyframes umt-spark-fall {
   0% { opacity: 0; transform: translateY(-10px); }
   40% { opacity: .9; }

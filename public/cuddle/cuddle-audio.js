@@ -572,12 +572,19 @@
 
   function paint() {
     var any = settings.music !== "off" || settings.sfx;
+    var label = "Sound settings: music " + settings.music + ", sound effects " + (settings.sfx ? "on" : "off");
+    // Only what changed is written: this runs after every DOM change, and
+    // a rewrite (even of the same value) would wake every observer again.
     document.querySelectorAll(".umt-music-btn").forEach(function (button) {
-      button.innerHTML = any ? ON : OFF;
-      button.setAttribute("aria-label", "Sound settings: music " + settings.music + ", sound effects " + (settings.sfx ? "on" : "off"));
-      button.setAttribute("aria-haspopup", "true");
+      var icon = any ? "on" : "off";
+      if (button.getAttribute("data-icon") !== icon) {
+        button.innerHTML = any ? ON : OFF;
+        button.setAttribute("data-icon", icon);
+      }
+      if (button.getAttribute("aria-label") !== label) button.setAttribute("aria-label", label);
+      if (button.getAttribute("aria-haspopup") !== "true") button.setAttribute("aria-haspopup", "true");
       button.classList.toggle("is-muted", !any);
-      button.title = "Sound";
+      if (button.title !== "Sound") button.title = "Sound";
     });
     var panel = document.querySelector(".umt-sound-panel");
     if (panel) {

@@ -301,7 +301,7 @@
           description: "Skipping a reward also levels up one of your badges at random.",
           level: g => powerLevel(g, "cleanSlate") },
         { id: "ascetic", icon: "🧘", title: "Ascetic", tier: "legendary", type: "points", maxLevel: 1,
-          description: "While you have 5 badges or fewer outside Restraint (Legendaries don't count), every stage you solve pays 1.5 times its points.",
+          description: "Every stage you solve pays double its points while you have 5 badges or fewer outside Restraint, or 1.5 times with 10 or fewer (Legendaries don't count).",
           level: g => powerLevel(g, "ascetic") },
         { id: "questMastery", icon: "📜", title: "Quest Mastery", tier: "legendary", type: "quests", maxLevel: 1,
           description: "Every quest reward is one step bigger: 2 mulligans instead of 1, 3 vowels checked instead of 2, 3 letters ruled out instead of 2, and so on.",
