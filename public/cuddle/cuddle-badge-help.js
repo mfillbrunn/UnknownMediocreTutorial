@@ -108,7 +108,6 @@
     goldenLedger: ["A boss needs a number of points before you can challenge it. With this badge your money counts toward that target too (it isn't spent).", ["map", "header"]],
     fastLane: ["Bosses, challenges and curses change the rules on some guesses. This badge pushes all of that back: your first guesses are normal, and the tricky ones come later.", ["map", "board"]],
     goldenOpener: ["After your first guess, every yellow letter in it is moved to its right spot and turns green.", ["board"]],
-    encoreNight: ["A combo of two badges you own. Every time Encore pays (every third solved stage), it also pays 10 points for each vowel in that answer.", ["cashout"]],
     cullRare: ["Takes 3 rare consonants out of the game for the rest of the run: out of your deck and out of every answer. A run never culls more than 8 letters in all.", ["clues", "hand"]],
     doubleMulligans: ["For the rest of the run, every mulligan you're given (at the start of a stage, from a square, from a quest) comes twice.", ["mulligan"]],
     biggerMulligans: ["Normally a mulligan swaps up to 3 cards at once. With this badge one mulligan can swap up to 5.", ["mulligan"]],

@@ -170,21 +170,10 @@
     })
   ]);
 
-  // Owning both halves of a pair turns it on permanently. Each one changes a
-  // reward's rule rather than adding another flat number, so the combination
-  // is worth more than the two pieces.
-  const FUN_SYNERGIES = Object.freeze([
-    Object.freeze({
-      id: "compoundCuddle", icon: "\uD83C\uDFE6", title: "Compound Cuddle",
-      requires: Object.freeze([IDS.rainyDay, IDS.reserveDividend]),
-      description: "Rainy Day Fund + Reserve Dividend: the interest cap doubles, and each unused Joker counts as $10 toward the balance."
-    }),
-    Object.freeze({
-      id: "encoreNight", icon: "\uD83C\uDFAC", title: "Encore Night",
-      requires: Object.freeze([IDS.encore, IDS.vowelBounty]),
-      description: "Encore + Vowel Bounty: every encore also pays 10 points for each vowel in that stage's secret."
-    }),
-  ]);
+  // Combos (two rewards that together do more) are retired: none unlocks,
+  // and one a save already earned (Compound Cuddle, Encore Night) no
+  // longer pays.
+  const FUN_SYNERGIES = Object.freeze([]);
 
   const ALL_THEMES_REWARD = Object.freeze({
     id: IDS.allThemesBoss,
@@ -2985,10 +2974,6 @@
     return new Set(custom && Array.isArray(custom.funSynergies) ? custom.funSynergies : []);
   }
 
-  function hasFunSynergy(game, id) {
-    return ownedFunSynergies(game).has(id);
-  }
-
   // Both halves owned turns a pair on for good. Called after every reward
   // pick, so the toast lands on the screen that granted the second half.
   function refreshFunSynergies(game) {
@@ -3031,14 +3016,13 @@
     const token = roundToken(game);
     if (custom.interestPaidToken === token) return;
     custom.interestPaidToken = token;
-    const compound = hasFunSynergy(game, "compoundCuddle");
     // Interest on the wallet, paid into the wallet -- it used to read the
     // run's points and pay points, while promising money.
-    const balance = Math.max(0, asNumber(state.cuddleMoney, 0)) + (compound ? totalJokerStock(game) * 10 : 0);
+    const balance = Math.max(0, asNumber(state.cuddleMoney, 0));
     // 5% up to $10, 10% up to $20, then 20% up to $40 at level 3.
     const tier = Math.max(0, Math.min(3, Math.floor(level)));
     // Gold II raises the cap by $10.
-    const cap = [0, 10, 20, 40][tier] * (compound ? 2 : 1) + (Number(window.CuddleSchools?.perk?.(game, "interestCap")) || 0);
+    const cap = [0, 10, 20, 40][tier] + (Number(window.CuddleSchools?.perk?.(game, "interestCap")) || 0);
     const interest = Math.min(cap, Math.floor(balance * [0, 0.05, 0.1, 0.2][tier]));
     if (interest <= 0) return;
     state.cuddleMoney = Math.max(0, asNumber(state.cuddleMoney, 0)) + interest;
@@ -3065,9 +3049,7 @@
       return;
     }
     const gainedGreen = knownPositionCount(game) > asInteger(before.greens, 0);
-    const gainedYellow = hasFunSynergy(game, "goldenStreak")
-      && (Array.isArray(state.knownPresent) ? state.knownPresent.length : 0) > asInteger(before.presents, 0);
-    if (!gainedGreen && !gainedYellow) {
+    if (!gainedGreen) {
       custom.streakCount = 0;
       return;
     }
@@ -3206,11 +3188,6 @@
       custom.encoreSolves = asInteger(custom.encoreSolves, 0) + 1;
       if (custom.encoreSolves % 3 === 0) {
         addScoreBonus(game, ENCORE_POINTS, "umtEncore", "Every third stage solved");
-        if (hasFunSynergy(game, "encoreNight")) {
-          const vowels = secretVowelCount(game);
-          if (vowels > 0) addScoreBonus(game, vowels * 10, "umtEncore",
-            `${vowels} vowel${vowels === 1 ? "" : "s"} encored`);
-        }
         appendNotice(game, "\uD83C\uDFAC Encore! Every third solved stage pays a bonus.");
       }
     }
@@ -3220,10 +3197,6 @@
       if (asInteger(state.guessesUsed, 0) === luckyGuess) {
         addScoreBonus(game, DOUBLE_DOWN_POINTS, "umtDoubleDown", `Solved on lucky guess ${luckyGuess}`);
         appendNotice(game, `Double Down: solved on guess ${luckyGuess}, +${DOUBLE_DOWN_POINTS} points.`);
-        if (hasFunSynergy(game, "allIn")) {
-          addScoreBonus(game, 15 * Math.max(1, upgradeLevel(game, IDS.hotStreak)), "umtHotStreak",
-            "Streak payout");
-        }
       }
     }
   }

@@ -5341,8 +5341,6 @@
     entry.extraQuestsCompleted = entry.extraQuestsCompleted || [];
     entry.extraQuestsCompleted.push(quest.title);
 
-    if (mega.unlockedSynergies.includes("jokerQuest")) mega.jokerCharges = Number(mega.jokerCharges || 0) + 1;
-
     if (game.isBossRound() || state.status === "lost" || state.status === "won" || state.pendingRoundEnd) {
       const questBonus = Number(state.upgrades.questPoints) || 0;
       if (questBonus > 0) {
@@ -5615,10 +5613,6 @@
     }
     this.state.activeQuests = mega.activeQuests.filter(Boolean).slice();
 
-    if (result.questComplete && mega.unlockedSynergies.includes("jokerQuest")) {
-      mega.jokerCharges = Number(mega.jokerCharges || 0) + 1;
-    }
-
     if (((this.isBossRound() && this.state.boss?.id === "questEndurance") || enduranceGuess)
         && entry && entry.questId && !entry.questComplete) {
       mega.handSizePenaltyThisRound = Number(mega.handSizePenaltyThisRound || 0) + 1;
@@ -5644,15 +5638,9 @@
   // state.synergyNotice toast the V3 layer already renders and lets the
   // player dismiss (dismissSynergyNotice).
   // ------------------------------------------------------------------
-  const MEGA_SYNERGIES = [
-    {
-      id: "jokerQuest",
-      icon: "🃏",
-      title: "Joker Quest",
-      description: "Concurrent Quests + Joker: completing any quest grants a joker charge.",
-      test: game => Number(game.state.upgrades.questCadence || 0) > 0 && ensureMega(game).hasJokerUnlocked
-    }
-  ];
+  // Combos are retired: none unlocks, and one a save already earned (Joker
+  // Quest: a Joker for every finished quest) no longer pays.
+  const MEGA_SYNERGIES = [];
 
   // Previews, for a reward/upgrade CARD still in the picker, whether taking
   // it would complete one of the two synergy pairs above -- i.e. the other
@@ -5660,16 +5648,7 @@
   // meaningful for the specific reward ids each synergy's test() actually
   // reads (see _applyRewardEffect/mega upgrade handling for where each id
   // sets the state a test() checks); every other reward previews as null.
-  function rewardInteractionSynergy(game, optionId) {
-    const mega = ensureMega(game);
-    const owned = new Set(mega.unlockedSynergies || []);
-    const id = String(optionId || "");
-    if (!owned.has("jokerQuest")) {
-      const hasQuestCadence = Number(game.state.upgrades?.questCadence || 0) > 0;
-      const hasJoker = Boolean(mega.hasJokerUnlocked);
-      if (id === "questCadence" && hasJoker) return MEGA_SYNERGIES[0];
-      if ((id === "jokerToken" || id === "jokerPerRound") && hasQuestCadence) return MEGA_SYNERGIES[0];
-    }
+  function rewardInteractionSynergy(_game, _optionId) {
     return null;
   }
 

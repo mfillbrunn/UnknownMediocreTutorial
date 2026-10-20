@@ -47,7 +47,7 @@
   }
   function treasurePrize(game) {
     const tier = Math.max(0, Math.min(3, Math.floor(level(game, IDS.treasureHunter))));
-    return TREASURE_PRIZES[tier] + graveRobberBonus(game);
+    return TREASURE_PRIZES[tier];
   }
 
   function num(value) {
@@ -256,13 +256,6 @@
     }
     return result;
   };
-
-  // Grave Robber combo (Dead Letter + Treasure Hunter, cuddle-synergies.js).
-  function graveRobberBonus(game) {
-    const synergies = window.CuddleSynergies;
-    try { return synergies && synergies.owns(game, "graveRobber") ? 5 : 0; }
-    catch (_error) { return 0; }
-  }
 
   // -- the clue chips -----------------------------------------------------------
   function icon(name) {
