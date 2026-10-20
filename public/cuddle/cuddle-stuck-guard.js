@@ -34,7 +34,8 @@
     var state = game.state;
     if (Number(state.mulligansLeft) <= 0) return false;
     if (state.boss && state.boss.id === "noMulligans" && typeof game._steadyHandTurns === "function"
-        && Number(state.guessesUsed || 0) < game._steadyHandTurns()) return false;
+        && Number(state.guessesUsed || 0) < game._steadyHandTurns()
+        && typeof game._steadyHandSpent === "function" && game._steadyHandSpent()) return false;
     return true;
   }
 

@@ -369,7 +369,7 @@
     { id: "quickMode", icon: "⏱️", title: "Quick Mode", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 24,
       text: "60 seconds per guess (45 on Hard), or it's lost." },
     { id: "noMulligans", icon: "✋", title: "Steady Hand", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 23,
-      text: "no mulligans." },
+      text: "only one mulligan." },
     { id: "questEndurance", icon: "🏃", title: "Endurance Trial", kind: "rule", boss: true, challenge: true, mix: true, curse: true, reward: 26,
       text: "a quest each guess; miss one, lose 1 hand size." },
     { id: "perfectOpener", icon: "🧩", title: "Perfect Opener", kind: "rule", boss: false, challenge: true, mix: true, curse: false, reward: 22,
@@ -510,7 +510,7 @@
       id: "noMulligans",
       icon: "✋",
       title: "Steady Hand",
-      description: "Mulligans are locked for your opening guesses.",
+      description: "Only one mulligan in your opening guesses.",
       turns: 0,
       rewardId: "questDoublePick"
     },

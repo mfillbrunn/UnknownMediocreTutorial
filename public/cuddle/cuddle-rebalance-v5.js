@@ -3886,7 +3886,7 @@
     arrowSigns: { title: "Arrow Signs", description: "The marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.", shape: "alphaCompass" },
     fakeFeedback: { title: "Fake Feedback", description: "The marked tiles show a colour that is deliberately wrong. Every other tile in the row shows its real colour.", shape: "lie" },
     quickMode: { title: "Quick Mode", description: "One minute for this guess; run out of time and it is lost. As a curse: that guess scores 0 points.", shape: "hourglass" },
-    noMulligans: { title: "Steady Hand", description: "No mulligans before this guess.", shape: "noShield" },
+    noMulligans: { title: "Steady Hand", description: "Only one mulligan before this guess.", shape: "noShield" },
     shortHand: { title: "Short Hand", description: "The round has a smaller hand or fewer guesses.", shape: "hand" },
     questTrial: { title: "Quest Trial", description: "A quest requirement applies to every affected guess.", shape: "scroll" },
     questEndurance: { title: "Endurance Trial", description: "This guess comes with a quest. Miss it and your hand is one letter smaller for the rest of the stage.", shape: "hand" },
@@ -5084,12 +5084,15 @@
     });
 
     wrapMethod(prototype, "mulligan", function (original, args) {
-      if (planEffect(this, guessesUsed(this)) === "noMulligans") {
-        return rejectAction(this, "Steady Hand: no mulligans before this guess.");
+      // Steady Hand: one mulligan in its guesses, not none.
+      const steadyHand = planEffect(this, guessesUsed(this)) === "noMulligans";
+      if (steadyHand && typeof this._steadyHandSpent === "function" && this._steadyHandSpent()) {
+        return rejectAction(this, "Steady Hand: only one mulligan before this guess.");
       }
       // Mulliganing away the hand's only card of a demanded or chain letter
       // must hand the rule's card back, or the guess can't be made at all.
       return afterResult(original.apply(this, args), (value) => {
+        if (steadyHand && value && value.ok !== false && typeof this._markSteadyHandSpent === "function") this._markSteadyHandSpent();
         try { syncRuleCards(this); } catch (error) { log("rule cards failed", error); }
         return value;
       }, (error) => { throw error; });
