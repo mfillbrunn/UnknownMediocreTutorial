@@ -16,6 +16,7 @@ const { getDailyConfig } = require("./utils/dailyConfig");
 const { buildPublicDailyView } = require("./utils/dailyPublicView");
 const { registerBugReportRoutes } = require("./routes/bugReports");
 const { registerPlayerInsightRoutes } = require("./routes/playerInsights");
+const { createStaticAssets } = require("./staticAssets");
 // UMT_CUDDLE_CAMPAIGN_THEME_ROUTE_IMPORT START
 const { registerCuddleWordThemeRoutes } = require("./cuddle/wordThemes");
 // UMT_CUDDLE_CAMPAIGN_THEME_ROUTE_IMPORT END
@@ -118,10 +119,16 @@ app.get("/api/daily", (req, res) => {
   const cfg = getDailyConfig(today, ALLOWED_SECRETS, ALLOWED_GUESSES);
   res.json(buildPublicDailyView(cfg));
 });
+// Scripts, stylesheets and the page go out compressed, and cached for a
+// year under content-stamped URLs (server/staticAssets.js); the rest is
+// plain express.static.
+const staticAssets = createStaticAssets(path.join(__dirname, "..", "public"));
+app.use(staticAssets.middleware);
+setTimeout(() => staticAssets.warm(), 1000);
 app.use(express.static(path.join(__dirname, "..", "public")));
-app.get("*", (req, res) =>
-  res.sendFile(path.join(__dirname, "..", "public", "index.html"))
-);
+app.get("*", (req, res) => {
+  if (!staticAssets.sendIndex(req, res)) res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+});
 
 // ------------------------------
 const io = new Server(server, {
