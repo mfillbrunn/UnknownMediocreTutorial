@@ -22,7 +22,10 @@
   var SHUFFLE_MS = 560;
 
   var fx = { key: "", counts: null, flights: {}, shuffleAt: 0 };
-  var animated = typeof WeakSet === "function" ? new WeakSet() : null;
+  // What each element last animated (a flight's start time, a shuffle's,
+  // a deal's end): the screen may update an element in place rather than
+  // replace it, so "this element, this flight" is what plays once.
+  var animated = typeof WeakMap === "function" ? new WeakMap() : null;
 
   function now() {
     return typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
@@ -41,16 +44,16 @@
     return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
   }
 
-  function once(element) {
+  function once(element, token) {
     if (!animated) return true;
-    if (animated.has(element)) return false;
-    animated.add(element);
+    if (animated.get(element) === token) return false;
+    animated.set(element, token);
     return true;
   }
 
   function flyIn(button, deck, start, at) {
     var elapsed = at - start;
-    if (elapsed >= FLY_MS || typeof button.animate !== "function" || !once(button)) return;
+    if (elapsed >= FLY_MS || typeof button.animate !== "function" || !once(button, start)) return;
     var from = centre(deck);
     var to = centre(button);
     var dx = Math.round(from.x - to.x);
@@ -70,7 +73,7 @@
 
   function shuffle(deck, at) {
     var elapsed = at - fx.shuffleAt;
-    if (!fx.shuffleAt || elapsed >= SHUFFLE_MS || !once(deck)) return;
+    if (!fx.shuffleAt || elapsed >= SHUFFLE_MS || !once(deck, "shuffle:" + fx.shuffleAt)) return;
     var cards = deck.querySelectorAll(".cuddle-deck-card");
     [].forEach.call(cards, function swing(card, index) {
       if (typeof card.animate !== "function") return;
@@ -88,7 +91,7 @@
   // A soft bump on the deck while it deals, so the tiles read as coming
   // out of it.
   function deal(deck, at, until) {
-    if (until <= at || typeof deck.animate !== "function" || !once(deck)) return;
+    if (until <= at || typeof deck.animate !== "function" || !once(deck, "deal:" + Math.round(until))) return;
     deck.animate([
       { transform: "none" },
       { transform: "translateY(-2px) scale(1.06)" },
