@@ -2157,9 +2157,17 @@
     state.hand.push(card);
   }
 
+  function ruleWaiverKey(state) {
+    return [state.runId || "", state.round || 0, state.secret || "", Number(state.guessesUsed) || 0].join(":");
+  }
+
   function challengeValidation(game, _challenge, used) {
     const word = draftWord(game);
     if (!word) return null;
+    // Lifted for this one guess because no word in the hand could meet it
+    // (cuddle-stuck-guard.js).
+    const waived = stateOf(game) && stateOf(game).umtRuleWaived;
+    if (waived && waived === ruleWaiverKey(stateOf(game))) return null;
     const effect = planEffect(game, used);
     if (effect === "letterDemand") {
       const letter = demandLetter(game, used);
@@ -5360,6 +5368,14 @@
       burdenInfo: (id) => BURDEN_INFO[id] || null,
       // A stop's tier (-1 heart, 0 plain, 1-3 skulls) and what it pays.
       stageTier: (variant) => stageTier(variant),
+      // The name of the rule on the guess being played ("Consonant
+      // Crunch"), or "".
+      currentRuleTitle: (game) => {
+        const effect = planEffect(game || publicActiveGame(), guessesUsed(game || publicActiveGame()));
+        if (!effect) return "";
+        const info = POWER_INFO[effect] || (CHALLENGES.find((item) => item.id === effect) || {});
+        return info.title || "";
+      },
       stagePay: (tier) => stagePay(tier),
       // Double Down's chip on the live play strip (cuddle-campaign.js's
       // insertMap): the stage's lucky guess, shown until it has been played.

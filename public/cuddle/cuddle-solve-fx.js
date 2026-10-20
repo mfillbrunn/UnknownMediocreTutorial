@@ -5,11 +5,11 @@
  *      its pop, sparks and climbing note (as any guess's greens do);
  *   2. a little win: the row bounces in a wave, confetti bursts out, and a
  *      short jingle plays;
- *   3. "Word found!" pops in with a chime;
- *   4. it fades away and the cash-out begins (cuddle-money-mode.js waits
+ *   3. it fades away and the cash-out begins (cuddle-money-mode.js waits
  *      while busy() is true).
- * About 3 seconds; a tap skips to the end. Reduced motion shows the
- * words alone, briefly. Duels keep their own ending.
+ * About 2.2 seconds (it's seen after every solve); a tap skips to the
+ * end. Reduced motion shows the green row alone, briefly. Duels keep
+ * their own ending.
  */
 (function () {
   "use strict";
@@ -24,8 +24,7 @@
   var TURN_AT = 120;
   // The win starts once the last tile has finished turning (560ms).
   var WIN_AT = 1060;
-  var FOUND_AT = 1450;
-  var LEAVE_AT = 2650;
+  var LEAVE_AT = 1900;
   var LEAVE_MS = 300;
 
   var layer = null;
@@ -117,16 +116,15 @@
       + '<div class="umt-sf-row">' + letters.map(function (letter, index) {
           return '<span class="umt-sf-tile" style="--i:' + index + '">' + escapeHtml(letter) + "</span>";
         }).join("") + "</div>"
-      + '<div class="umt-sf-found"><b>Word found!</b></div>'
       + "</div>";
     (document.getElementById("cuddleScreen") || document.body).appendChild(el);
     layer = el;
     el.addEventListener("click", finish);
-    var total = still ? 1200 : LEAVE_AT;
+    var total = still ? 800 : LEAVE_AT;
     busyUntil = Date.now() + total + LEAVE_MS;
     if (still) {
-      el.classList.add("is-green", "is-found");
-      sound("found");
+      el.classList.add("is-green");
+      sound("solve");
       later(total, finish);
       return;
     }
@@ -146,12 +144,7 @@
       confetti(el, row);
       sound("solve");
     });
-    // 3. Word found.
-    later(FOUND_AT, function () {
-      el.classList.add("is-found");
-      sound("found");
-    });
-    // 4. On to the cash-out.
+    // 3. On to the cash-out.
     later(LEAVE_AT, finish);
   }
 

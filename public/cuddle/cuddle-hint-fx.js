@@ -308,6 +308,14 @@
     setTimeout(function cleanUp() { tile.remove(); tag.remove(); }, delay + 2100);
   }
 
+  function onTrial(state) {
+    var map = state.branchMap;
+    var spot = map && map.position;
+    var row = spot && Array.isArray(map.rows) ? map.rows[Number(spot.row)] : null;
+    var node = row && Array.isArray(row.nodes) ? row.nodes[Number(spot.col)] : null;
+    return Boolean(node && node.type === "trial");
+  }
+
   function check() {
     var game = activeGame();
     var state = game && game.state;
@@ -324,7 +332,8 @@
       if (record.seen.indexOf(item.id) === -1) record.seen.push(item.id);
     });
     var before = lastLayout;
-    if (!fresh.length || reducedMotion()) {
+    // A Trial goes straight in: its hints are simply there, nothing flies.
+    if (!fresh.length || reducedMotion() || onTrial(state) || document.querySelector(".umt-trial-pick")) {
       if (!holding) snapshot();
       return;
     }
