@@ -59,7 +59,7 @@
       title: "Locked Opener",
       label: "Lock",
       icon: "challenge-locked-opener.svg",
-      description: "Only one mulligan during the affected opening guesses."
+      description: "At most one mulligan per guess during the affected opening guesses."
     }),
     Object.freeze({
       id: "fiveGuessSprint",
@@ -551,7 +551,7 @@
         foggedSlot: `One marked feedback position is hidden on each of the first ${count} ${guessWord}.`,
         blueHaze: `For the first ${count} ${guessWord}, a green or yellow on the marked tiles appears blue instead.`,
         singleLie: `The marked tiles in each of the first ${count} feedback ${count === 1 ? "row lie" : "rows lie"} about their colour.`,
-        lockedOpener: `Only one mulligan until ${count === 1 ? "the first guess is" : `the first ${count} guesses are`} submitted.`,
+        lockedOpener: `At most one mulligan per guess until ${count === 1 ? "the first guess is" : `the first ${count} guesses are`} submitted.`,
         fiveGuessSprint: "Solve this Wordle within the world's guess limit -- 6 guesses in world one, 5 in world two, 4 in world three -- or the run is lost.",
         vowelBudget: `Each of the first ${count} ${guessWord} may contain at most two vowels.`,
         cleanLetters: `Each of the first ${count} ${guessWord} must use five different letters.`,
@@ -2570,12 +2570,12 @@
 
     proto.mulligan = function mulliganWithExpandedChallenge() {
       const challenge = activeExpandedChallenge(this);
-      // Locked Opener: one mulligan in its opening guesses, not none.
+      // Locked Opener: one mulligan per opening guess, not none.
       const locked = challenge && challenge.effect === "mulliganLock"
         && integer(this.state.guessesUsed, 0) < expandedChallengeTurns(challenge);
       if (locked && typeof this._steadyHandSpent === "function" && this._steadyHandSpent()) {
         const count = expandedChallengeTurns(challenge);
-        return { ok: false, error: `Only one mulligan in the first ${count} ${count === 1 ? "guess" : "guesses"}.` };
+        return { ok: false, error: "Locked Opener: only one mulligan on this guess." };
       }
       const result = originalMulligan.apply(this, arguments);
       if (locked && result && result.ok !== false && typeof this._markSteadyHandSpent === "function") this._markSteadyHandSpent();
