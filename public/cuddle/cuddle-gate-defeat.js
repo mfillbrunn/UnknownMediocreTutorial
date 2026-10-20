@@ -105,9 +105,9 @@
     play(game, info);
   }
 
-  // A slow check is plenty (a loss screen waits for a tap anyway), and
-  // keeps the phone from waking five times a second for it.
-  setInterval(check, 500);
+  // Checked when the game changes (cuddle-pulse.js), not on a timer.
+  if (window.CuddlePulse) window.CuddlePulse.on(check, 3000);
+  else setInterval(check, 500);
 
   window.CuddleGateDefeat = Object.freeze({ play: play, check: check });
 }());

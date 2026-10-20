@@ -195,7 +195,9 @@
     });
   }
   wrapChoices();
-  setInterval(wrapChoices, 1000);
+  // Quick while the page's layers install, then slow (cuddle-pulse.js).
+  if (window.CuddlePulse) window.CuddlePulse.settle(wrapChoices, 1000, 10000, 20000);
+  else setInterval(wrapChoices, 1000);
 
   var baseThreshold = proto._solveGuessThreshold;
   proto._solveGuessThreshold = function solveThresholdWithAscension() {
@@ -384,7 +386,8 @@
       return;
     }
     installRenderHook();
-    setInterval(installRenderHook, 1000);
+    if (window.CuddlePulse) window.CuddlePulse.settle(installRenderHook, 1000, 10000, 20000);
+    else setInterval(installRenderHook, 1000);
   }());
 
   window.CuddleAscension = Object.freeze({

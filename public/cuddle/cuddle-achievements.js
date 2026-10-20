@@ -545,7 +545,8 @@
   });
 
   wallet();
-  setInterval(check, 1000);
+  if (window.CuddlePulse) window.CuddlePulse.on(check, 5000);
+  else setInterval(check, 1000);
 
   window.CuddleAchievements = Object.freeze({
     LIST: LIST,

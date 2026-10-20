@@ -1398,6 +1398,9 @@
       }).length;
       best = Math.max(best, count);
     }
+    // The page's rows only as a last resort: the game keeps guessesUsed
+    // itself, and this is asked many times on every tap.
+    if (Number.isFinite(Number(state.guessesUsed))) return best;
     return Math.max(best, countSubmittedRowsFromDom());
   }
 

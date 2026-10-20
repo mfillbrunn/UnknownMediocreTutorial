@@ -1030,10 +1030,13 @@
     }
     // Other add-ons replace CuddleCampaign and wrap chooseUpgrade on their
     // own install timers; if one lands after this, hook the new one too.
-    setInterval(() => {
+    const rehook = () => {
       installRenderHook();
       installLedgerBackstop();
-    }, 1000);
+    };
+    // Quick while the page's layers install, then slow.
+    if (window.CuddlePulse) window.CuddlePulse.settle(rehook, 1000, 10000, 20000);
+    else setInterval(rehook, 1000);
   }
 
   installEvents();

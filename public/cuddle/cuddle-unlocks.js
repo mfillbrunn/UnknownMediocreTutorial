@@ -520,7 +520,9 @@
 
   read();
   ensureBook();
-  setInterval(tick, 1000);
+  // When the game changes (cuddle-pulse.js), not every second.
+  if (window.CuddlePulse) window.CuddlePulse.on(tick, 5000);
+  else setInterval(tick, 1000);
 
   window.CuddleUnlocks = Object.freeze({
     STEPS: STEPS,

@@ -290,7 +290,8 @@
     openCuddle({ resume: cuddleSeenView === "run" });
   }
 
-  setInterval(noteCuddleSeen, 1000);
+  if (window.CuddlePulse) window.CuddlePulse.on(noteCuddleSeen, 5000);
+  else setInterval(noteCuddleSeen, 1000);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") noteCuddleSeen();
     else setTimeout(returnToCuddleIfDropped, 0);
@@ -381,13 +382,19 @@
     return window.CuddleEngine.THRESHOLDS.length;
   }
 
+  let keepRowFrame = 0;
   function render() {
     if (!root) return;
-    if (landing || !game?.state) root.innerHTML = renderLanding();
-    else root.innerHTML = renderRun();
+    // In place where it can (cuddle-morph.js): only what changed is touched.
+    const html = landing || !game?.state ? renderLanding() : renderRun();
+    const screen = landing || !game?.state ? "landing" : "run";
+    if (window.CuddleMorph) window.CuddleMorph.update(root, html, screen);
+    else root.innerHTML = html;
     syncQuickModeTimer();
     syncPageScrollLock();
-    keepCurrentRowVisible();
+    // Measured on the next frame, with the browser's own layout, rather
+    // than forcing a layout of the freshly rebuilt screen right here.
+    if (!keepRowFrame) keepRowFrame = requestAnimationFrame(() => { keepRowFrame = 0; keepCurrentRowVisible(); });
     // The bolt-on modules patch their panels in on the next frame, which can
     // shrink the board after the first pass; watch for that and re-align.
     watchScrollerResize();

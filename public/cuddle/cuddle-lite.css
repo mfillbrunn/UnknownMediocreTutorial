@@ -1,0 +1,24 @@
+/* Cuddle: lighter on phones.
+ *
+ * Background blur (backdrop-filter) is one of the most expensive effects a
+ * phone's graphics chip can draw: every frame it re-reads and blurs the
+ * whole screen behind the popup, and the quest stamp even animated it.
+ * None of it is needed to read anything, so it is off everywhere; the
+ * popups that leaned on it get a slightly darker dim instead. Loaded last
+ * so it wins over every earlier sheet (and !important wins over
+ * animations).
+ */
+*,
+*::before,
+*::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* The dims, a touch darker to make up for the blur. */
+.cuddle-overlay { background-color: rgba(8, 7, 12, 0.84); }
+.umt-progress-host .umt-pt-backdrop { background: rgba(8, 7, 14, 0.82); }
+.umt-pack-overlay { background: rgba(8, 7, 14, 0.8); }
+.umt-help-backdrop { background: rgba(6, 8, 16, 0.8); }
+.cuddle-v8-pouch-overlay { background: rgba(16, 9, 23, 0.82); }
+.umt-wi-overlay { background: rgba(8, 7, 14, 0.72); }
