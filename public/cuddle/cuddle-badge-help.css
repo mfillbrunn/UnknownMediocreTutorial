@@ -406,7 +406,7 @@
   z-index: 100001;
   display: grid;
   gap: 4px;
-  min-width: 190px;
+  min-width: 250px;
   padding: 6px;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -439,3 +439,32 @@
   text-align: center;
 }
 .umt-sound-panel [aria-checked="true"] b { background: #3fa765; color: #fff; }
+/* Music: Off / Quiet / Normal. */
+.umt-sound-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 6px 6px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.umt-sound-seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.umt-sound-panel .umt-sound-seg button {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(236, 233, 247, 0.75);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+.umt-sound-panel .umt-sound-seg button[aria-checked="true"] { background: #3fa765; color: #fff; }
+.umt-sound-panel .umt-sound-seg button[data-umt-music="off"][aria-checked="true"] { background: rgba(255, 255, 255, 0.22); }

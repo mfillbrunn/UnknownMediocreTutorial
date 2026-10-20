@@ -15,8 +15,12 @@
  * squares, special cards tapped (dead, lucky, idea, Joker) and waves.
  *
  * Browsers only allow sound after a tap, so nothing plays before the first
- * one. The speaker button in Cuddle's top bars opens Music and Sound
- * effects switches; both are remembered.
+ * one, and every later tap wakes the sound again if the browser put it to
+ * sleep (a phone does when you switch apps). The music plays through the
+ * same Web Audio output as the effects, so its volume holds on phones too
+ * (an iPhone ignores a page's volume for plain audio). The speaker button
+ * in Cuddle's top bars opens the settings: Music Off / Quiet / Normal, and
+ * Sound effects on or off; both are remembered.
  */
 (function () {
   "use strict";
@@ -28,13 +32,21 @@
 
   // -- settings --------------------------------------------------------------------
   var KEYS = { music: "umt-cuddle-music", sfx: "umt-cuddle-sfx" };
+  // Music: "off", "quiet" or "normal" (an older "on" reads as normal).
+  var MUSIC_LEVELS = { off: 0, quiet: 0.04, normal: 0.16 };
+  var MUSIC_CHOICES = [["off", "Off"], ["quiet", "Quiet"], ["normal", "Normal"]];
   function readSetting(name) {
-    try { return localStorage.getItem(KEYS[name]) !== "off"; } catch (_error) { return true; }
+    var value = null;
+    try { value = localStorage.getItem(KEYS[name]); } catch (_error) { /* not remembered */ }
+    if (name === "music") return value === "off" || value === "quiet" ? value : "normal";
+    return value !== "off";
   }
-  function writeSetting(name, on) {
-    try { localStorage.setItem(KEYS[name], on ? "on" : "off"); } catch (_error) { /* not remembered */ }
+  function writeSetting(name, value) {
+    try { localStorage.setItem(KEYS[name], name === "music" ? value : value ? "on" : "off"); } catch (_error) { /* not remembered */ }
   }
   var settings = { music: readSetting("music"), sfx: readSetting("sfx") };
+  // A tap has happened, so the browser lets this page make sound. It never
+  // goes back to false: a refused play is retried on the next tap.
   var unlocked = false;
 
   function screen() { return document.getElementById("cuddleScreen"); }
@@ -51,20 +63,54 @@
 
   // -- music -----------------------------------------------------------------------
   var MUSIC_SRC = "cuddle/audio/cuddle-theme.mp3";
-  var MUSIC_VOLUME = 0.18;
   // It eases in slowly and steps out quickly.
   var FADE_IN_MS = 4000;
   var FADE_OUT_MS = 700;
+  var CHANGE_MS = 600;
   var music = null;
+  var musicGain = null;
   var fade = 0;
   var fadeTarget = -1;
 
-  // Fades the music to a volume. A repeat call for the same volume keeps the
+  function ensureMusic() {
+    if (music) return music;
+    music = new Audio(MUSIC_SRC);
+    music.loop = true;
+    music.preload = "auto";
+    var ac = audioContext();
+    if (ac && typeof ac.createMediaElementSource === "function") {
+      try {
+        var source = ac.createMediaElementSource(music);
+        musicGain = ac.createGain();
+        musicGain.gain.value = 0;
+        source.connect(musicGain);
+        musicGain.connect(ac.destination);
+      } catch (_error) {
+        musicGain = null;
+      }
+    }
+    if (!musicGain) music.volume = 0;
+    return music;
+  }
+
+  // Fades the music to a level. A repeat call for the same level keeps the
   // fade already running, since the page re-syncs on every DOM change.
   function ramp(to, done, ms) {
     if (!music || to === fadeTarget) return;
     fadeTarget = to;
     window.clearInterval(fade);
+    if (musicGain) {
+      var gain = musicGain.gain;
+      var now = ctx.currentTime;
+      gain.cancelScheduledValues(now);
+      gain.setValueAtTime(gain.value, now);
+      gain.linearRampToValueAtTime(to, now + ms / 1000);
+      fade = window.setInterval(function finished() {
+        window.clearInterval(fade);
+        if (done) done();
+      }, ms);
+      return;
+    }
     var from = music.volume;
     var started = Date.now();
     fade = window.setInterval(function step() {
@@ -77,22 +123,29 @@
     }, 50);
   }
 
+  function wantMusic() {
+    return settings.music !== "off" && unlocked && inRun();
+  }
+
   function syncMusic() {
-    var want = settings.music && unlocked && inRun();
-    if (want) {
-      if (!music) {
-        music = new Audio(MUSIC_SRC);
-        music.loop = true;
-        music.preload = "none";
-        music.volume = 0;
-      }
+    if (wantMusic()) {
+      ensureMusic();
+      wake();
+      var wasPlaying = !music.paused && fadeTarget > 0;
       if (music.paused) {
         var playing = music.play();
-        if (playing && typeof playing.catch === "function") playing.catch(function blocked() { unlocked = false; fadeTarget = -1; });
+        // Refused (no tap yet since the browser put sound to sleep): the
+        // next tap tries again.
+        if (playing && typeof playing.catch === "function") playing.catch(function blocked() { fadeTarget = -1; });
       }
-      ramp(MUSIC_VOLUME, null, FADE_IN_MS);
+      ramp(MUSIC_LEVELS[settings.music], null, wasPlaying ? CHANGE_MS : FADE_IN_MS);
     } else if (music && !music.paused) {
-      ramp(0, function stop() { if (music && !(settings.music && unlocked && inRun())) music.pause(); }, FADE_OUT_MS);
+      ramp(0, function stop() {
+        if (music && !wantMusic()) {
+          music.pause();
+          fadeTarget = -1;
+        }
+      }, FADE_OUT_MS);
     }
   }
 
@@ -106,6 +159,9 @@
     if (ctx) return ctx;
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
+    // On an iPhone, Web Audio alone follows the silent switch (so effects
+    // came and went with the music); this page's sound is its point.
+    try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (_error) { /* older Safari */ }
     ctx = new AC();
     master = ctx.createGain();
     master.gain.value = SFX_VOLUME;
@@ -236,6 +292,16 @@
     toast: function () { notes([G5, C6], 0.08, { type: "sine", vol: 0.12, dur: 0.25 }); }
   };
 
+  // Wakes the output if the browser put it to sleep (no tap yet, another
+  // app, a locked phone). Only works inside a tap, or once one has landed.
+  function wake() {
+    if (!ctx || ctx.state === "running" || typeof ctx.resume !== "function") return;
+    try {
+      var resumed = ctx.resume();
+      if (resumed && typeof resumed.catch === "function") resumed.catch(function () { /* next tap */ });
+    } catch (_error) { /* next tap */ }
+  }
+
   var lastPlayed = {};
   function play(name, arg) {
     if (!settings.sfx || !unlocked || !SOUNDS[name] || !inCuddle()) return;
@@ -246,7 +312,13 @@
     if (Array.isArray(window.__umtSoundLog)) window.__umtSoundLog.push(name);
     var ac = audioContext();
     if (!ac) return;
-    if (ac.state === "suspended" && typeof ac.resume === "function") ac.resume();
+    if (ac.state !== "running") {
+      wake();
+      // Asleep outside a tap: the sound would only pile up and burst out
+      // with the next ones once something wakes the output.
+      var activation = navigator.userActivation;
+      if (activation && !activation.isActive) return;
+    }
     try { SOUNDS[name](arg || 0); } catch (_error) { /* a sound that can't play is skipped */ }
   }
 
@@ -459,10 +531,10 @@
   var OFF = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
 
   function paint() {
-    var any = settings.music || settings.sfx;
+    var any = settings.music !== "off" || settings.sfx;
     document.querySelectorAll(".umt-music-btn").forEach(function (button) {
       button.innerHTML = any ? ON : OFF;
-      button.setAttribute("aria-label", "Sound settings: music " + (settings.music ? "on" : "off") + ", sound effects " + (settings.sfx ? "on" : "off"));
+      button.setAttribute("aria-label", "Sound settings: music " + settings.music + ", sound effects " + (settings.sfx ? "on" : "off"));
       button.setAttribute("aria-haspopup", "true");
       button.classList.toggle("is-muted", !any);
       button.title = "Sound";
@@ -473,6 +545,9 @@
         var on = settings[box.getAttribute("data-umt-sound")];
         box.setAttribute("aria-checked", on ? "true" : "false");
         box.querySelector("b").textContent = on ? "On" : "Off";
+      });
+      panel.querySelectorAll("[data-umt-music]").forEach(function (option) {
+        option.setAttribute("aria-checked", option.getAttribute("data-umt-music") === settings.music ? "true" : "false");
       });
     }
   }
@@ -512,7 +587,10 @@
     panel.className = "umt-sound-panel";
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-label", "Sound");
-    panel.innerHTML = "<button type=\"button\" role=\"switch\" data-umt-sound=\"music\"><span>Music</span><b></b></button>"
+    panel.innerHTML = "<div class=\"umt-sound-row\"><span id=\"umtMusicLabel\">Music</span>"
+      + "<span class=\"umt-sound-seg\" role=\"radiogroup\" aria-labelledby=\"umtMusicLabel\">"
+      + MUSIC_CHOICES.map(function (choice) { return "<button type=\"button\" role=\"radio\" data-umt-music=\"" + choice[0] + "\">" + choice[1] + "</button>"; }).join("")
+      + "</span></div>"
       + "<button type=\"button\" role=\"switch\" data-umt-sound=\"sfx\"><span>Sound effects</span><b></b></button>";
     panel.style.top = Math.round(box.bottom + 8) + "px";
     panel.style.right = Math.max(8, Math.round(window.innerWidth - box.right)) + "px";
@@ -525,6 +603,15 @@
   document.addEventListener("click", function (event) {
     var target = event.target instanceof Element ? event.target : null;
     if (!target) return;
+    var level = target.closest(".umt-sound-panel [data-umt-music]");
+    if (level) {
+      settings.music = level.getAttribute("data-umt-music");
+      writeSetting("music", settings.music);
+      unlocked = true;
+      syncMusic();
+      paint();
+      return;
+    }
     var toggle = target.closest(".umt-sound-panel [data-umt-sound]");
     if (toggle) {
       var name = toggle.getAttribute("data-umt-sound");
@@ -549,19 +636,51 @@
   document.addEventListener("keydown", function (event) { if (event.key === "Escape") closePanel(); });
   window.addEventListener("scroll", closePanel, true);
 
-  // -- the first tap unlocks sound -------------------------------------------------
-  function firstTap(event) {
-    if (unlocked) return;
-    var el = screen();
-    if (!el || !(event.target instanceof Element) || !el.contains(event.target)) return;
+  // -- taps unlock sound -------------------------------------------------------------
+  // Browsers count only some events as a tap that may start sound: the
+  // end of a touch, a click, a key (not a finger going down). Each one
+  // wakes the output and retries the music if it was refused; an iPhone
+  // also wants a sound started inside the first tap.
+  var primed = false;
+  function onTap() {
     unlocked = true;
-    audioContext();
-    if (ctx && ctx.state === "suspended" && typeof ctx.resume === "function") ctx.resume();
-    window.setTimeout(syncMusic, 50);
+    var ac = audioContext();
+    if (!ac) return;
+    wake();
+    if (!primed) {
+      primed = true;
+      try {
+        var blank = ac.createBufferSource();
+        blank.buffer = ac.createBuffer(1, 1, 22050);
+        blank.connect(ac.destination);
+        blank.start(0);
+      } catch (_error) { /* not needed here */ }
+    }
+    if (wantMusic() && music && music.paused) fadeTarget = -1;
+    syncMusic();
   }
-  document.addEventListener("pointerdown", firstTap, true);
-  document.addEventListener("keydown", firstTap, true);
-  document.addEventListener("visibilitychange", syncMusic);
+  ["pointerup", "touchend", "click", "keydown"].forEach(function (type) {
+    document.addEventListener(type, onTap, true);
+  });
+  // Leaving the page stops the music at once (a hidden tab's timers are
+  // slowed, so a fade could hang on); coming back starts it again, or the
+  // next tap does if the browser wants one first.
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden && music && !music.paused) {
+      window.clearInterval(fade);
+      if (musicGain) {
+        musicGain.gain.cancelScheduledValues(ctx.currentTime);
+        musicGain.gain.setValueAtTime(0, ctx.currentTime);
+      } else {
+        music.volume = 0;
+      }
+      music.pause();
+      fadeTarget = -1;
+      return;
+    }
+    syncMusic();
+  });
+  window.addEventListener("pageshow", syncMusic);
 
   var pending = false;
   function schedule() {
@@ -589,6 +708,6 @@
   window.CuddleAudio = Object.freeze({
     play: play,
     sounds: Object.keys(SOUNDS),
-    settings: function () { return { music: settings.music, sfx: settings.sfx }; }
+    settings: function () { return { music: settings.music, sfx: settings.sfx, unlocked: unlocked, output: ctx ? ctx.state : "none", level: music ? (musicGain ? musicGain.gain.value : music.volume) : 0, playing: Boolean(music && !music.paused) }; }
   });
 }());
