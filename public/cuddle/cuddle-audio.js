@@ -155,7 +155,8 @@
     if ((state && state.status === "shop") || (el && el.querySelector(".umt-shop-page"))) return "shop";
     var entrance = document.querySelector(".umt-boss-entrance");
     if (entrance && !entrance.classList.contains("is-rival")) return "boss";
-    if (state && state.status === "playing" && state.boss && !state.boss.__umtSynthetic
+    // A quest reward pick mid-fight is still the fight.
+    if (state && (state.status === "playing" || state.status === "questReward") && state.boss && !state.boss.__umtSynthetic
         && String(state.runId || "").indexOf(":duel:") === -1) return "boss";
     return "theme";
   }
