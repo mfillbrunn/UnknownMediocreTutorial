@@ -157,6 +157,10 @@
     if (!entry || !entry.word) return;
     var marks = Array.isArray(entry.shownFeedback) && entry.shownFeedback.length ? entry.shownFeedback : entry.feedback;
     if (!Array.isArray(marks) || !marks.length) return;
+    // A solve has its own celebration (cuddle-solve-fx.js).
+    var real = Array.isArray(entry.feedback) ? entry.feedback : marks;
+    if (window.CuddleSolveFx && real.length === 5 && real.every(function (mark) { return mark === "green"; })
+        && String(game.state.runId || "").indexOf(":duel:") === -1) return;
     var r = { row: history.length - 1, word: entry.word, marks: marks.slice(), at: Date.now(), still: reducedMotion() };
     reveal = r;
     r.marks.forEach(function (_mark, index) {

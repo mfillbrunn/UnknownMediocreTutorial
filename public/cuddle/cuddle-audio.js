@@ -62,65 +62,102 @@
   }
 
   // -- music -----------------------------------------------------------------------
-  var MUSIC_SRC = "cuddle/audio/cuddle-theme.mp3";
-  // It eases in slowly and steps out quickly.
+  // Three tracks: the run's theme, the boss fights' and the shop's. The one
+  // that fits the screen plays; switching crossfades, and the boss and shop
+  // tracks start from the top each time (the theme picks up where it was).
+  var TRACKS = {
+    theme: { src: "cuddle/audio/cuddle-theme.mp3", restart: false },
+    boss: { src: "cuddle/audio/cuddle-boss.mp3", restart: true },
+    shop: { src: "cuddle/audio/cuddle-shop.mp3", restart: true }
+  };
+  // It eases in slowly at the start of a run, crossfades between tracks,
+  // and steps out quickly.
   var FADE_IN_MS = 4000;
+  var CROSS_MS = 1200;
   var FADE_OUT_MS = 700;
   var CHANGE_MS = 600;
-  var music = null;
-  var musicGain = null;
-  var fade = 0;
-  var fadeTarget = -1;
+  var current = null;
 
-  function ensureMusic() {
-    if (music) return music;
-    music = new Audio(MUSIC_SRC);
-    music.loop = true;
-    music.preload = "auto";
+  function ensureTrack(name) {
+    var track = TRACKS[name];
+    if (track.el) return track;
+    track.el = new Audio(track.src);
+    track.el.loop = true;
+    track.el.preload = "auto";
+    track.fade = 0;
+    track.target = -1;
     var ac = audioContext();
     if (ac && typeof ac.createMediaElementSource === "function") {
       try {
-        var source = ac.createMediaElementSource(music);
-        musicGain = ac.createGain();
-        musicGain.gain.value = 0;
-        source.connect(musicGain);
-        musicGain.connect(ac.destination);
+        var source = ac.createMediaElementSource(track.el);
+        track.gain = ac.createGain();
+        track.gain.gain.value = 0;
+        source.connect(track.gain);
+        track.gain.connect(ac.destination);
       } catch (_error) {
-        musicGain = null;
+        track.gain = null;
       }
     }
-    if (!musicGain) music.volume = 0;
-    return music;
+    if (!track.gain) track.el.volume = 0;
+    return track;
   }
 
-  // Fades the music to a level. A repeat call for the same level keeps the
+  function level(track) {
+    return track.gain ? track.gain.gain.value : track.el.volume;
+  }
+
+  // Fades a track to a level. A repeat call for the same level keeps the
   // fade already running, since the page re-syncs on every DOM change.
-  function ramp(to, done, ms) {
-    if (!music || to === fadeTarget) return;
-    fadeTarget = to;
-    window.clearInterval(fade);
-    if (musicGain) {
-      var gain = musicGain.gain;
+  function ramp(track, to, done, ms) {
+    if (!track.el || to === track.target) return;
+    track.target = to;
+    window.clearInterval(track.fade);
+    if (track.gain) {
+      var gain = track.gain.gain;
       var now = ctx.currentTime;
       gain.cancelScheduledValues(now);
       gain.setValueAtTime(gain.value, now);
       gain.linearRampToValueAtTime(to, now + ms / 1000);
-      fade = window.setInterval(function finished() {
-        window.clearInterval(fade);
+      track.fade = window.setInterval(function finished() {
+        window.clearInterval(track.fade);
         if (done) done();
       }, ms);
       return;
     }
-    var from = music.volume;
+    var from = track.el.volume;
     var started = Date.now();
-    fade = window.setInterval(function step() {
+    track.fade = window.setInterval(function step() {
       var t = Math.min(1, (Date.now() - started) / ms);
-      music.volume = Math.max(0, Math.min(1, from + (to - from) * t));
+      track.el.volume = Math.max(0, Math.min(1, from + (to - from) * t));
       if (t >= 1) {
-        window.clearInterval(fade);
+        window.clearInterval(track.fade);
         if (done) done();
       }
     }, 50);
+  }
+
+  function silence(track, ms) {
+    if (!track.el || track.el.paused) return;
+    ramp(track, 0, function stop() {
+      if (current !== track) {
+        track.el.pause();
+        track.target = -1;
+      }
+    }, ms);
+  }
+
+  // Which track fits what's on screen.
+  function trackFor() {
+    var game = null;
+    try { game = window.CuddleBranchMap && window.CuddleBranchMap.getActiveGame(); } catch (_error) { /* none */ }
+    var state = game && game.state;
+    var el = screen();
+    if ((state && state.status === "shop") || (el && el.querySelector(".umt-shop-page"))) return "shop";
+    var entrance = document.querySelector(".umt-boss-entrance");
+    if (entrance && !entrance.classList.contains("is-rival")) return "boss";
+    if (state && state.status === "playing" && state.boss && !state.boss.__umtSynthetic
+        && String(state.runId || "").indexOf(":duel:") === -1) return "boss";
+    return "theme";
   }
 
   function wantMusic() {
@@ -128,25 +165,27 @@
   }
 
   function syncMusic() {
-    if (wantMusic()) {
-      ensureMusic();
-      wake();
-      var wasPlaying = !music.paused && fadeTarget > 0;
-      if (music.paused) {
-        var playing = music.play();
-        // Refused (no tap yet since the browser put sound to sleep): the
-        // next tap tries again.
-        if (playing && typeof playing.catch === "function") playing.catch(function blocked() { fadeTarget = -1; });
-      }
-      ramp(MUSIC_LEVELS[settings.music], null, wasPlaying ? CHANGE_MS : FADE_IN_MS);
-    } else if (music && !music.paused) {
-      ramp(0, function stop() {
-        if (music && !wantMusic()) {
-          music.pause();
-          fadeTarget = -1;
-        }
-      }, FADE_OUT_MS);
+    if (!wantMusic()) {
+      var leaving = current;
+      current = null;
+      Object.keys(TRACKS).forEach(function (name) { if (TRACKS[name].el) silence(TRACKS[name], FADE_OUT_MS); });
+      return leaving;
     }
+    var track = ensureTrack(trackFor());
+    var switching = current && current !== track;
+    var fresh = !current;
+    current = track;
+    wake();
+    Object.keys(TRACKS).forEach(function (name) { if (TRACKS[name] !== track && TRACKS[name].el) silence(TRACKS[name], CROSS_MS); });
+    var wasPlaying = !track.el.paused && track.target > 0;
+    if (track.el.paused) {
+      if (track.restart) { try { track.el.currentTime = 0; } catch (_error) { /* not loaded yet */ } }
+      var playing = track.el.play();
+      // Refused (no tap yet since the browser put sound to sleep): the
+      // next tap tries again.
+      if (playing && typeof playing.catch === "function") playing.catch(function blocked() { track.target = -1; });
+    }
+    ramp(track, MUSIC_LEVELS[settings.music], null, wasPlaying ? CHANGE_MS : switching ? CROSS_MS : fresh ? FADE_IN_MS : CROSS_MS);
   }
 
   // -- sound effects ---------------------------------------------------------------
@@ -277,6 +316,17 @@
     // The coin dropping into the cabinet (cuddle-coin-start.js).
     coin: function () { tone({ f: 1976, dur: 0.45, type: "sine", vol: 0.08, attack: 0.002 }); tone({ f: 2637, dur: 0.4, type: "sine", vol: 0.06, attack: 0.002, delay: 0.07 }); tone({ f: 5274, dur: 0.12, type: "sine", vol: 0.012, delay: 0.07 }); },
     cashRow: function () { tone({ f: 1320 + Math.random() * 120, dur: 0.06, type: "sine", vol: 0.05 }); },
+    // A word found (cuddle-solve-fx.js): a bright little jingle as the row
+    // bounces, then a two-note chime under "Word found!".
+    solve: function () {
+      notes([C6, E6, G6, C6 * 2], 0.07, { type: "sine", vol: 0.07, dur: 0.26 });
+      tone({ f: C6 * 2, dur: 0.5, type: "triangle", vol: 0.04, delay: 0.3 });
+    },
+    found: function () {
+      tone({ f: G5, dur: 0.35, type: "sine", vol: 0.08, attack: 0.004 });
+      tone({ f: E6, dur: 0.7, type: "sine", vol: 0.09, attack: 0.004, delay: 0.12 });
+      tone({ f: E6 * 2.76, dur: 0.18, type: "sine", vol: 0.012, delay: 0.12 });
+    },
     // Every cash-out row paid: quick ticks climbing (the rows adding up)
     // landing on a warm chord.
     sum: function () {
@@ -703,7 +753,7 @@
         blank.start(0);
       } catch (_error) { /* not needed here */ }
     }
-    if (wantMusic() && music && music.paused) fadeTarget = -1;
+    if (wantMusic() && current && current.el.paused) current.target = -1;
     syncMusic();
   }
   ["pointerup", "touchend", "click", "keydown"].forEach(function (type) {
@@ -713,16 +763,21 @@
   // slowed, so a fade could hang on); coming back starts it again, or the
   // next tap does if the browser wants one first.
   document.addEventListener("visibilitychange", function () {
-    if (document.hidden && music && !music.paused) {
-      window.clearInterval(fade);
-      if (musicGain) {
-        musicGain.gain.cancelScheduledValues(ctx.currentTime);
-        musicGain.gain.setValueAtTime(0, ctx.currentTime);
-      } else {
-        music.volume = 0;
-      }
-      music.pause();
-      fadeTarget = -1;
+    if (document.hidden) {
+      Object.keys(TRACKS).forEach(function (name) {
+        var track = TRACKS[name];
+        if (!track.el || track.el.paused) return;
+        window.clearInterval(track.fade);
+        if (track.gain) {
+          track.gain.gain.cancelScheduledValues(ctx.currentTime);
+          track.gain.gain.setValueAtTime(0, ctx.currentTime);
+        } else {
+          track.el.volume = 0;
+        }
+        track.el.pause();
+        track.target = -1;
+      });
+      current = null;
       return;
     }
     syncMusic();
@@ -755,6 +810,6 @@
   window.CuddleAudio = Object.freeze({
     play: play,
     sounds: Object.keys(SOUNDS),
-    settings: function () { return { music: settings.music, sfx: settings.sfx, unlocked: unlocked, output: ctx ? ctx.state : "none", level: music ? (musicGain ? musicGain.gain.value : music.volume) : 0, playing: Boolean(music && !music.paused) }; }
+    settings: function () { return { music: settings.music, sfx: settings.sfx, unlocked: unlocked, output: ctx ? ctx.state : "none", level: current && current.el ? level(current) : 0, playing: Boolean(current && current.el && !current.el.paused), track: current ? Object.keys(TRACKS).filter(function (n) { return TRACKS[n] === current; })[0] : null }; }
   });
 }());
