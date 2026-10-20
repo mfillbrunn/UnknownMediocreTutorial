@@ -368,7 +368,7 @@
 }
 
 /* Screenshots of the game itself, before and after. */
-.umt-ba-shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.umt-ba-shots { display: grid; gap: 10px; }
 .umt-ba-shots figure { display: grid; gap: 4px; margin: 0; }
 .umt-ba-shots figcaption {
   color: rgba(236, 233, 247, 0.6);
@@ -384,4 +384,12 @@
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: #0c0f18;
+}
+.umt-ba-shots-title {
+  margin: 4px 0 0;
+  color: rgba(236, 233, 247, 0.62);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }

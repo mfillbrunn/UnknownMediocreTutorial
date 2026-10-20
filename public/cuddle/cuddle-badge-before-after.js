@@ -293,15 +293,42 @@
   }
 
   // Badges with screenshots of the game itself, before and after
-  // (help/ba/<id>-before.webp and -after.webp).
-  var SHOT_PAIRS = {};
+  // (help/ba/<id>-before.webp and -after.webp: one seeded stage played
+  // twice with the same guesses, without the badge and with it).
+  // The caption says what to compare.
+  var SHOT_PAIRS = {
+    mulliganValueBoost: "The same stage and guesses: Unused mulligans goes from +5 to +20, and the cash-out from +93 to +108.",
+    earlySolveBoost: "The same stage and guesses: Solved 3 guesses early goes from +15 to +30.",
+    colourTrade: "The same stage and guesses: the solving row's greens pay +12 instead of +10.",
+    greyscale: "The same stage and guesses: the grey tiles of the first two guesses now pay (+2 and +1 become +5 and +5).",
+    vowelBounty: "The same stage and guesses: a new row, 1 vowel in the secret +5.",
+    momentum: "The same stage and guesses: a new row, Momentum +4.",
+    bigOpener: "The same stage and guesses: a new row, Big Opener +10.",
+    storybookStart: "The same stage and guesses: the stage started with points, so the cash-out goes from +93 to +103.",
+    pickpocket: "The same stage and guesses: the yellow tiles pay money too, $39 becomes $45.",
+    vowelLamp: "The same stage after one guess: a clue chip says how many vowels.",
+    echoFinder: "The same stage after one guess: a clue chip says whether a letter repeats.",
+    patternLens: "The same stage after one guess: a clue chip shows the vowel (V) and consonant (C) spots.",
+    coachPossibleAnswers: "The same stage after one guess: the answers still possible are counted.",
+    categorySense: "The same stage at its start: the theme line shows the answer's theme.",
+    consonantSweep: "The same stage after one guess: consonants that aren't in the answer are crossed out.",
+    cullOne: "After one guess: the culled letter is listed as out of the game (the answers differ, since culling changes the word list).",
+    cullTwo: "After one guess: the culled letter is listed as out of the game (the answers differ, since culling changes the word list).",
+    "alphabet-compass": "The same stage and guesses: arrows under tiles point earlier or later in the ABCs.",
+    yellowHint: "The same stage after one guess: Y turns yellow in your hand.",
+    handSizeBoost: "The same stage at its start: one more consonant in your hand.",
+    jokerCacheLarge: "The same stage at its start: a Joker card (★) in your hand.",
+    extraMulligans: "The same stage at its start: Mulligan shows 5 instead of 4.",
+    treasureMap: "The same stage at its start: a special square on your next row.",
+    coachMeterThreshold: "The same stage at its start: the Cuddle Meter heart needs 8 tiles instead of 10."
+  };
 
   function markup(node) {
     var info = node && spec(node.id);
     if (!info) return "";
     var scaled = (Array.isArray(node.levels) && node.levels.length > 1) || (node.maxLevel && node.maxLevel > 1);
     var shots = SHOT_PAIRS[node.id]
-      ? "<div class=\"umt-ba-shots\"><figure><figcaption>Without it</figcaption><img src=\"cuddle/help/ba/" + esc(node.id) + "-before.webp\" alt=\"\" loading=\"lazy\"></figure>"
+      ? "<h4 class=\"umt-ba-shots-title\">In the game</h4><div class=\"umt-ba-shots\"><figure><figcaption>Without it</figcaption><img src=\"cuddle/help/ba/" + esc(node.id) + "-before.webp\" alt=\"\" loading=\"lazy\"></figure>"
         + "<figure><figcaption>With it</figcaption><img src=\"cuddle/help/ba/" + esc(node.id) + "-after.webp\" alt=\"\" loading=\"lazy\"></figure></div>"
         + (SHOT_PAIRS[node.id] ? "<p class=\"umt-ba-shot-note\">" + esc(SHOT_PAIRS[node.id]) + "</p>" : "")
       : "";
