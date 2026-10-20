@@ -468,7 +468,7 @@
     }).observe(host, { childList: true, subtree: true });
     setInterval(function poll() {
       try { tick(); } catch (error) { console.warn("Cuddle Fish Hook:", error); }
-    }, 1500);
+    }, 5000);
   }
   attach();
 

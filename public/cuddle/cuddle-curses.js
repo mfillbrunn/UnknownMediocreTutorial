@@ -542,11 +542,14 @@
     window.dispatchEvent(new CustomEvent("cuddle:campaign-update", { detail: { runId: game.state.runId } }));
   });
 
-  setInterval(function watch() {
+  function watch() {
     var game = window.CuddleBranchMap && typeof window.CuddleBranchMap.getActiveGame === "function"
       ? window.CuddleBranchMap.getActiveGame() : null;
     if (document.getElementById("cuddleRoot")) renderPicker(document.getElementById("cuddleRoot"), game);
-  }, 500);
+  }
+  // On every game change and redraw (cuddle-pulse.js), not on a timer.
+  if (window.CuddlePulse) window.CuddlePulse.on(watch, 3000);
+  else setInterval(watch, 500);
 
   window.CuddlePresetTrial = Object.freeze({ LEVELS: TRIAL_LEVELS, PAIR_PAY: PAIR_PAY, PAIR_PICK_GUESS: PAIR_PICK_GUESS });
 }());

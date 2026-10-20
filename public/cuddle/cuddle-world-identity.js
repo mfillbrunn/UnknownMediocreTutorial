@@ -424,7 +424,8 @@
       return;
     }
     installRenderHook();
-    setInterval(installRenderHook, 1000);
+    if (window.CuddlePulse) window.CuddlePulse.settle(installRenderHook, 1000, 10000, 20000);
+    else setInterval(installRenderHook, 1000);
   }());
 
   window.CuddleWorldIdentity = Object.freeze({

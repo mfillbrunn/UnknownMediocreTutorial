@@ -642,7 +642,8 @@
     proto._generateUpgradeChoices = wrapped;
   }
   wrapGenerate();
-  setInterval(wrapGenerate, 1000);
+  if (window.CuddlePulse) window.CuddlePulse.settle(wrapGenerate, 1000, 10000, 20000);
+  else setInterval(wrapGenerate, 1000);
 
   // Any reward screen that still shows something else (a Free Upgrade, a
   // starting pick) gets the helpers instead.

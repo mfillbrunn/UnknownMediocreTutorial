@@ -3202,8 +3202,16 @@
     window.CuddleEconomyRarityV8 = api;
     scanGlobals();
     installObserver();
-    scanTimer = window.setInterval(scanGlobals, 1000);
-    tickTimer = window.setInterval(tick, 500);
+    // On game changes (cuddle-pulse.js) rather than a fast timer; new
+    // globals appear while the page's layers install, so that scan is
+    // quick at first and slow after.
+    if (window.CuddlePulse) {
+      window.CuddlePulse.on(tick, 3000);
+      window.CuddlePulse.settle(scanGlobals, 1000, 10000, 20000);
+    } else {
+      scanTimer = window.setInterval(scanGlobals, 1000);
+      tickTimer = window.setInterval(tick, 500);
+    }
     window.addEventListener("beforeunload", () => {
       for (const context of contextList) {
         const state = findState(context, []);

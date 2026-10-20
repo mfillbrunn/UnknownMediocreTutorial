@@ -290,7 +290,8 @@
     openCuddle({ resume: cuddleSeenView === "run" });
   }
 
-  setInterval(noteCuddleSeen, 1000);
+  if (window.CuddlePulse) window.CuddlePulse.on(noteCuddleSeen, 5000);
+  else setInterval(noteCuddleSeen, 1000);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") noteCuddleSeen();
     else setTimeout(returnToCuddleIfDropped, 0);
