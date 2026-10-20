@@ -221,6 +221,8 @@
       + "<button type=\"button\" class=\"umt-help-close\" data-umt-help-close aria-label=\"Close\">×</button></header>"
       + "<div class=\"umt-help-body\">"
       + "<h3>What it does</h3>" + levelsMarkup(node, held)
+      + (window.CuddleBadgeBeforeAfter && window.CuddleBadgeBeforeAfter.has(node.id)
+        ? "<h3>Before and after</h3>" + window.CuddleBadgeBeforeAfter.markup(node) : "")
       + "<h3>How it works</h3><p class=\"umt-help-more\">" + esc(info[0]) + "</p>"
       + shotsMarkup(info[1])
       + "</div></section>";
