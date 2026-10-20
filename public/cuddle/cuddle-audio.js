@@ -5,10 +5,12 @@
  * It fades in and out and pauses off Cuddle or in a hidden tab.
  *
  * Sound effects: small sounds made on the spot with Web Audio (no files),
- * hooked to what the player does and what the game does back: picking,
- * removing and dragging cards, a guess's feedback tile by tile, hints,
- * mulligans and shuffles, badges and packs, the cash-out's rows and its
- * collect, entering a stage / Trial / Duel / shop, a boss's entrance,
+ * hooked to what the player does and what the game does back: a soft
+ * click for every button, picking, removing and dragging cards, a guess's
+ * feedback tile by tile, hints, mulligans and shuffles, the coin going in,
+ * a pack's rip and each badge out of it, a bing for each badge landing in
+ * the collection, quest rewards, the cash-out's rows and its collect,
+ * entering a stage (a swoosh) / Trial / Duel / shop, a boss's entrance,
  * winning and losing, buying and selling, the Fish Hook, quests, special
  * squares, special cards tapped (dead, lucky, idea, Joker) and waves.
  *
@@ -49,22 +51,24 @@
 
   // -- music -----------------------------------------------------------------------
   var MUSIC_SRC = "cuddle/audio/cuddle-theme.mp3";
-  var MUSIC_VOLUME = 0.35;
-  var FADE_MS = 700;
+  var MUSIC_VOLUME = 0.18;
+  // It eases in slowly and steps out quickly.
+  var FADE_IN_MS = 4000;
+  var FADE_OUT_MS = 700;
   var music = null;
   var fade = 0;
   var fadeTarget = -1;
 
   // Fades the music to a volume. A repeat call for the same volume keeps the
   // fade already running, since the page re-syncs on every DOM change.
-  function ramp(to, done) {
+  function ramp(to, done, ms) {
     if (!music || to === fadeTarget) return;
     fadeTarget = to;
     window.clearInterval(fade);
     var from = music.volume;
     var started = Date.now();
     fade = window.setInterval(function step() {
-      var t = Math.min(1, (Date.now() - started) / FADE_MS);
+      var t = Math.min(1, (Date.now() - started) / ms);
       music.volume = Math.max(0, Math.min(1, from + (to - from) * t));
       if (t >= 1) {
         window.clearInterval(fade);
@@ -86,9 +90,9 @@
         var playing = music.play();
         if (playing && typeof playing.catch === "function") playing.catch(function blocked() { unlocked = false; fadeTarget = -1; });
       }
-      ramp(MUSIC_VOLUME);
+      ramp(MUSIC_VOLUME, null, FADE_IN_MS);
     } else if (music && !music.paused) {
-      ramp(0, function stop() { if (music && !(settings.music && unlocked && inRun())) music.pause(); });
+      ramp(0, function stop() { if (music && !(settings.music && unlocked && inRun())) music.pause(); }, FADE_OUT_MS);
     }
   }
 
@@ -169,22 +173,48 @@
   var C5 = 523.25, D5 = 587.33, E5 = 659.25, G5 = 783.99, A5 = 880, C6 = 1046.5, E6 = 1318.5, G6 = 1568;
 
   var SOUNDS = {
-    pick: function () { tone({ f: 620, f2: 700, dur: 0.07, type: "triangle", vol: 0.18 }); },
-    remove: function () { tone({ f: 480, f2: 340, dur: 0.08, type: "triangle", vol: 0.16 }); },
+    // Tiles: a soft, short tip-tap, a little lower going back.
+    pick: function () { tone({ f: 430, f2: 380, dur: 0.055, type: "sine", vol: 0.16, attack: 0.002 }); noise({ f: 2600, q: 1.4, dur: 0.022, vol: 0.05, attack: 0.001 }); },
+    remove: function () { tone({ f: 350, f2: 300, dur: 0.055, type: "sine", vol: 0.14, attack: 0.002 }); noise({ f: 2000, q: 1.4, dur: 0.022, vol: 0.04, attack: 0.001 }); },
+    // Any button.
+    tap: function () { noise({ f: 1500, q: 1.2, dur: 0.028, vol: 0.06, attack: 0.001 }); tone({ f: 280, f2: 240, dur: 0.04, type: "sine", vol: 0.07, attack: 0.002 }); },
     drag: function () { noise({ f: 2400, q: 2, dur: 0.09, vol: 0.08 }); },
     drop: function () { tone({ f: 380, f2: 520, dur: 0.07, type: "triangle", vol: 0.2 }); noise({ f: 3000, q: 3, dur: 0.03, vol: 0.06 }); },
-    tileGrey: function (d) { tone({ f: 200, f2: 160, dur: 0.12, type: "sine", vol: 0.18, delay: d }); },
-    tileYellow: function (d) { tone({ f: E5, dur: 0.16, type: "triangle", vol: 0.2, delay: d }); },
-    tileGreen: function (d) { tone({ f: G5, dur: 0.2, type: "triangle", vol: 0.2, delay: d }); tone({ f: C6, dur: 0.2, type: "sine", vol: 0.1, delay: d + 0.02 }); },
+    // A guess's tiles as they turn (cuddle-feedback-fx.js), by column:
+    // greens climb a scale, so a row of them rings out.
+    tileGrey: function () { tone({ f: 230, f2: 190, dur: 0.07, type: "sine", vol: 0.1, attack: 0.003 }); },
+    tileYellow: function (i) { tone({ f: 740 * Math.pow(1.03, i), dur: 0.13, type: "triangle", vol: 0.13, attack: 0.003 }); noise({ f: 5200, q: 2, dur: 0.03, vol: 0.03 }); },
+    tileGreen: function (i) { var f = [G5, A5, C6, 1174.7, E6][i % 5]; tone({ f: f, dur: 0.22, type: "triangle", vol: 0.15, attack: 0.003 }); tone({ f: f * 2, dur: 0.14, type: "sine", vol: 0.04, delay: 0.01 }); noise({ f: 6000, q: 2, dur: 0.04, vol: 0.03 }); },
     invalid: function () { tone({ f: 150, dur: 0.16, type: "square", vol: 0.08, filter: 900 }); tone({ f: 120, dur: 0.16, type: "square", vol: 0.08, filter: 900, delay: 0.08 }); },
     hint: function () { notes([A5, C6, E6], 0.07, { type: "sine", vol: 0.16, dur: 0.22 }); },
     shuffle: function () { [0, 0.06, 0.12].forEach(function (d) { noise({ f: 1800, q: 1.5, dur: 0.06, vol: 0.1, delay: d }); }); },
     mulligan: function () { SOUNDS.shuffle(); noise({ f: 600, f2: 3200, q: 1, dur: 0.28, vol: 0.1, delay: 0.15 }); tone({ f: 300, f2: 450, dur: 0.12, type: "triangle", vol: 0.12, delay: 0.32 }); },
-    badge: function () { notes([C5, E5, G5, C6], 0.08, { vol: 0.2 }); },
-    pack: function () { noise({ f: 900, f2: 4000, q: 0.8, dur: 0.22, vol: 0.14 }); notes([G5, C6, E6], 0.07, { delay: 0.2, type: "sine", vol: 0.16 }); },
+    // A badge landing in the collection: a small bell, a step higher for
+    // each one in a row.
+    bing: function (i) { var f = E6 * Math.pow(1.122, i % 4); tone({ f: f, dur: 0.7, type: "sine", vol: 0.15, attack: 0.004 }); tone({ f: f * 2.76, dur: 0.22, type: "sine", vol: 0.03, attack: 0.002 }); tone({ f: f / 2, dur: 0.3, type: "triangle", vol: 0.04 }); },
+    // A quest reward taken: two bells.
+    reward: function () { tone({ f: C6, dur: 0.35, type: "sine", vol: 0.14, attack: 0.003 }); tone({ f: G6, dur: 0.8, type: "sine", vol: 0.15, attack: 0.003, delay: 0.09 }); tone({ f: G6 * 2.76, dur: 0.2, type: "sine", vol: 0.03, delay: 0.09 }); },
+    // Opening a pack (cuddle-packs.js): rustling that builds as it shakes,
+    // a swell, then the rip.
+    pack: function () {
+      [0, 0.1, 0.19, 0.28, 0.36, 0.44, 0.51, 0.57].forEach(function (d, i) { noise({ f: 1300 + i * 160, q: 1.2, dur: 0.06, vol: 0.04 + i * 0.012, delay: d }); });
+      noise({ f: 500, f2: 2200, q: 0.7, dur: 0.34, vol: 0.08, delay: 0.62, attack: 0.3 });
+      noise({ f: 3200, f2: 900, q: 0.9, dur: 0.26, vol: 0.22, delay: 0.96, attack: 0.005 });
+      notes([E6, G6, C6 * 2], 0.05, { type: "sine", vol: 0.07, dur: 0.3, delay: 1.0 });
+    },
+    // One badge flying out of the pack, brighter for a rarer one.
+    packCard: function (tier) {
+      var f = { common: A5, rare: C6, epic: E6, legendary: G6 }[tier] || A5;
+      tone({ f: f * 0.75, f2: f, dur: 0.08, type: "triangle", vol: 0.1 });
+      tone({ f: f, dur: 0.3, type: "sine", vol: 0.12, delay: 0.05 });
+      if (tier === "epic" || tier === "legendary") notes([f * 1.5, f * 2], 0.05, { type: "sine", vol: 0.05, dur: 0.25, delay: 0.1 });
+    },
+    // The coin dropping into the cabinet (cuddle-coin-start.js).
+    coin: function () { noise({ f: 6000, q: 3, dur: 0.03, vol: 0.05 }); tone({ f: 1976, dur: 0.5, type: "sine", vol: 0.14, attack: 0.002 }); tone({ f: 2637, dur: 0.45, type: "sine", vol: 0.1, attack: 0.002, delay: 0.07 }); tone({ f: 5274, dur: 0.15, type: "sine", vol: 0.03, delay: 0.07 }); },
     cashRow: function () { tone({ f: 1320 + Math.random() * 120, dur: 0.07, type: "sine", vol: 0.12 }); },
     collect: function () { [0, 0.05, 0.1, 0.15, 0.2].forEach(function (d, i) { tone({ f: 1400 + i * 120, dur: 0.09, type: "sine", vol: 0.12, delay: d }); }); notes([C6, E6], 0.08, { delay: 0.25, vol: 0.16 }); },
-    stage: function () { notes([G5, C6], 0.1, { type: "sine", vol: 0.16, dur: 0.3 }); },
+    // Into a stage: a swoosh.
+    stage: function () { noise({ f: 350, f2: 2600, q: 0.8, dur: 0.32, vol: 0.14, attack: 0.12 }); noise({ f: 2600, f2: 900, q: 0.8, dur: 0.2, vol: 0.05, delay: 0.26 }); },
     trial: function () { notes([A5 / 2, E5, A5], 0.14, { type: "sine", vol: 0.14, dur: 0.6 }); },
     duel: function () { tone({ f: 330, dur: 0.18, type: "sawtooth", vol: 0.06, filter: 1600 }); tone({ f: 349, dur: 0.18, type: "sawtooth", vol: 0.06, filter: 1600, delay: 0.16 }); tone({ f: 494, dur: 0.4, type: "sawtooth", vol: 0.07, filter: 1800, delay: 0.32 }); },
     boss: function () { noise({ kind: "lowpass", f: 200, dur: 0.6, vol: 0.35 }); tone({ f: 110, f2: 82, dur: 1.2, type: "sawtooth", vol: 0.12, filter: 500 }); tone({ f: 116.5, f2: 87, dur: 1.2, type: "sawtooth", vol: 0.1, filter: 500, delay: 0.05 }); },
@@ -251,21 +281,25 @@
     if (history.length <= before.history) return;
     var entry = history[history.length - 1] || {};
     var feedback = Array.isArray(entry.shownFeedback) && entry.shownFeedback.length ? entry.shownFeedback : entry.feedback;
-    (feedback || []).forEach(function (mark, index) {
-      var delay = index * 0.11;
-      if (mark === "green") play("tileGreen", delay);
-      else if (mark === "yellow" || mark === "blue") play("tileYellow", delay);
-      else play("tileGrey", delay);
-      lastPlayed.tileGreen = 0; lastPlayed.tileYellow = 0; lastPlayed.tileGrey = 0;
-    });
+    // The tiles' own sounds play as they turn (cuddle-feedback-fx.js);
+    // without it, one after another from here.
+    if (!window.CuddleFeedbackFx) {
+      (feedback || []).forEach(function (mark, index) {
+        window.setTimeout(function () {
+          play(mark === "green" ? "tileGreen" : mark === "yellow" || mark === "blue" ? "tileYellow" : "tileGrey", index);
+        }, index * 90);
+      });
+    }
     var row = history.length - 1;
     var paid = (state.cuddleMoneyTiles || []).some(function (tile) { return tile && tile.row === row && tile.paid && tile.payout > 0; });
-    if (paid) window.setTimeout(function () { play("square"); }, 650);
-    if (entry.questComplete) window.setTimeout(function () { play("quest"); }, 750);
+    if (paid) window.setTimeout(function () { play("square"); }, 760);
+    if (entry.questComplete) window.setTimeout(function () { play("quest"); }, 860);
   });
 
   wrap("mulligan", function (result) { if (result && result.ok !== false) play("mulligan"); });
-  wrap("chooseUpgrade", function (result) { if (!result || result.ok !== false) play("badge"); });
+  // A badge taken rings once it lands in the collection (the badge board's
+  // reveal, below), not here.
+  wrap("chooseQuestReward", function (result) { if (!result || result.ok !== false) play("reward"); });
   // Buying and selling in the shop. The shop's buy method is locked against
   // wrapping (cuddle-shop-lockin.js), so this listens on window, ahead of the
   // shop's own document-level handler, and reads the money afterwards.
@@ -339,6 +373,13 @@
   document.addEventListener("click", function (event) {
     var target = event.target instanceof Element ? event.target : null;
     if (!target) return;
+    // A soft click for every button, under any sound of its own.
+    var button = target.closest("button, [role=\"button\"]");
+    if (button && !button.disabled && !button.closest(".cuddle-card, .cuddle-tile, .umt-sound-panel")
+        && (button.closest("#cuddleScreen") || button.closest(".umt-pack-overlay, .umt-pt-layer"))) {
+      play("tap");
+    }
+    if (target.closest(".umt-duel-reward")) play("reward");
     if (target.closest('[data-cuddle-money-action="collect-payout"]')) play("collect");
     else if (target.closest('[data-umt-pack="buy"]')) play("pack");
     else if (target.closest('[data-action="refresh-rewards"], [data-action="refresh-upgrades"], .cuddle-upgrade-refresh')) play("refresh");
@@ -358,6 +399,41 @@
     }).observe(overlay, { attributes: true, attributeFilter: ["class"], subtree: true });
   }
 
+  // A sound a moment from now, if `el` is still on screen then.
+  function later(el, ms, name, arg) {
+    window.setTimeout(function () { if (el.isConnected) play(name, arg); }, Math.max(0, ms));
+  }
+
+  // The pack's badges flying out, each as it lands (cuddle-packs.js times
+  // them from the offer's openedAt: 260ms, then one per 230ms, 720ms each).
+  function packCards(dialog) {
+    var game = null;
+    try { game = window.CuddleBranchMap && window.CuddleBranchMap.getActiveGame(); } catch (_error) { /* no game */ }
+    var offer = game && game.state && game.state.umtPackOffer;
+    if (dialog.__umtSound) return;
+    dialog.__umtSound = true;
+    var elapsed = offer ? Date.now() - (Number(offer.openedAt) || 0) : 0;
+    if (!offer || elapsed > 400) return;
+    dialog.querySelectorAll(".umt-pack-card").forEach(function (card, index) {
+      var tier = (card.className.match(/\bis-(common|rare|epic|legendary)\b/) || [])[1] || "common";
+      later(dialog, 260 + index * 230 + 580 - elapsed, "packCard", tier);
+    });
+  }
+
+  // The badge board's reveal: each new badge pops into place one beat
+  // (1.6s) after the last (cuddle-progression.css), with a bing.
+  function badgeBings(overlay) {
+    if (overlay.__umtSound) return;
+    overlay.__umtSound = true;
+    var layer = overlay.closest(".umt-pt-layer");
+    if (layer && layer.classList.contains("is-settled")) return;
+    var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    overlay.querySelectorAll(".umt-bd-badge.is-new:not(.is-combo)").forEach(function (badge, index) {
+      var step = Number(badge.style.getPropertyValue("--step")) || 0;
+      later(overlay, reduced ? 300 + index * 140 : 650 + step * 1600, "bing", step);
+    });
+  }
+
   function added(node) {
     if (!(node instanceof Element)) return;
     var cls = node.classList;
@@ -366,6 +442,11 @@
       play(entrance.classList.contains("is-rival") ? "duel" : "boss");
     }
     if (cls.contains("umt-wave-layer")) play("wave");
+    var dialog = node.matches(".umt-pack-dialog.is-opened") ? node : node.querySelector(".umt-pack-dialog.is-opened");
+    if (dialog) packCards(dialog);
+    var board = node.matches(".umt-pt-overlay.is-reveal") ? node : node.querySelector(".umt-pt-overlay.is-reveal");
+    if (board) badgeBings(board);
+    if (cls.contains("umt-cs")) later(node, 1000, "coin");
     if (cls.contains("drag-letter-ghost")) play("drag");
     if (cls.contains("umt-ach-toast")) play("toast");
     if (cls.contains("umt-hint-fx-tile")) play("hint");
