@@ -177,3 +177,17 @@ body.umt-wave-active.umt-wave-new-joker #cuddleScreen .cuddle-hand-panel .cuddle
   background: radial-gradient(circle at 40% 40%, rgba(214, 205, 230, 0.95), rgba(120, 106, 145, 0.7) 55%, transparent 72%);
   filter: blur(2px);
 }
+/* An idea card tapped: rays of light and a warm glow (cuddle-burdens.js). */
+.umt-tap-particle.is-ray {
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #fff6c4, #ffcf3f);
+  box-shadow: 0 0 8px rgba(255, 210, 80, 0.9);
+}
+.umt-tap-particle.is-bulb-glow {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 228, 120, 0.85), rgba(255, 200, 60, 0) 70%);
+}

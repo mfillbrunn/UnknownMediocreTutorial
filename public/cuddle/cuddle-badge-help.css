@@ -398,3 +398,44 @@
 .umt-music-btn svg { width: 18px; height: 18px; }
 .umt-music-btn[aria-pressed="false"] { opacity: 0.6; }
 .cuddle-header .cuddle-header-side-right .umt-music-btn { width: 34px; height: 34px; min-width: 0; padding: 0; }
+.umt-music-btn.is-muted { opacity: 0.6; }
+
+/* The sound switches under the speaker button (cuddle-audio.js). */
+.umt-sound-panel {
+  position: fixed;
+  z-index: 100001;
+  display: grid;
+  gap: 4px;
+  min-width: 190px;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #1b1f30;
+  color: #ece9f7;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.5);
+}
+.umt-sound-panel button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.umt-sound-panel button:focus-visible { outline: 2px solid #b8a6ff; outline-offset: 1px; }
+.umt-sound-panel b {
+  min-width: 40px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.72rem;
+  text-align: center;
+}
+.umt-sound-panel [aria-checked="true"] b { background: #3fa765; color: #fff; }
