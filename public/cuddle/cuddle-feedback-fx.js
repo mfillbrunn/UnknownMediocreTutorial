@@ -79,9 +79,9 @@
     var row = rowFor(r);
     if (!row) return;
     row.querySelectorAll(".cuddle-tile").forEach(function (tile, index) {
-      if (tile.classList.contains("umt-fb")) return;
-      tile.classList.add("umt-fb", "is-fb-" + kindOf(r.marks[index]));
-      tile.style.setProperty("--fb-delay", (index * STEP_MS - elapsed) + "ms");
+      if (tile.classList.contains("umt-rv")) return;
+      tile.classList.add("umt-rv", "is-rv-" + kindOf(r.marks[index]));
+      tile.style.setProperty("--rv-delay", (index * STEP_MS - elapsed) + "ms");
     });
   }
 
@@ -90,7 +90,7 @@
   function sparkLayer() {
     if (layer && layer.isConnected) return layer;
     layer = document.createElement("div");
-    layer.className = "umt-fb-layer";
+    layer.className = "umt-rv-layer";
     layer.setAttribute("aria-hidden", "true");
     (document.getElementById("cuddleScreen") || document.body).appendChild(layer);
     return layer;
@@ -106,7 +106,7 @@
     var green = kind === "green";
     if (green) {
       var ring = document.createElement("span");
-      ring.className = "umt-fb-ring";
+      ring.className = "umt-rv-ring";
       ring.style.left = cx + "px";
       ring.style.top = cy + "px";
       ring.style.width = box.width + "px";
@@ -122,7 +122,7 @@
     var count = green ? 10 : 6;
     for (var i = 0; i < count; i += 1) {
       var spark = document.createElement("span");
-      spark.className = "umt-fb-spark is-" + kind + (i % 3 === 0 ? " is-light" : "");
+      spark.className = "umt-rv-spark is-" + kind + (i % 3 === 0 ? " is-light" : "");
       spark.style.left = cx + "px";
       spark.style.top = cy + "px";
       host.appendChild(spark);
