@@ -878,6 +878,11 @@
   font-weight: 900;
 }
 
+/* A one-mulligan window (Steady Hand, Locked Opener): the count in red. */
+.cuddle-mulligan.is-capped span {
+  color: #ff6b6b;
+}
+
 /* The confirm button's span is a whole phrase ("2/3 selected"), not a bare
    count, so it keeps the smaller muted sub-label treatment. */
 .cuddle-mulligan-confirm span {
