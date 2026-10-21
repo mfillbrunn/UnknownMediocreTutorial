@@ -2163,11 +2163,48 @@
 
   // On Medium a stage challenge's rule can be broken: the first Submit of
   // a word that breaks it only warns, the second sends it. Breaking it
-  // costs the stage its skull pay (it pays as a plain stage) and, like
-  // Short Hand, one consonant from the hand for the rest of the stage
-  // (two at most). A real boss's rule, and its curse on later stages,
-  // still can't be broken; nor can any rule on Easy or Hard.
-  const MAX_BREAK_PENALTY = 2;
+  // costs the stage its skull pay (it pays as a plain stage) and one
+  // random setback (BREAK_PENALTIES). A real boss's rule, and its curse on
+  // later stages, still can't be broken; nor can any rule on Easy or Hard.
+  const MAX_BREAK_CONSONANTS = 2;
+  const BREAK_POINTS = 10;
+  const BREAK_MONEY = 5;
+  // Each: whether it can land now, and what it does (returns its text).
+  const BREAK_PENALTIES = [
+    {
+      can: (game, variant) => (Number(variant.umtBreakConsonants) || 0) < MAX_BREAK_CONSONANTS && Boolean(megaState(game)),
+      apply: (game, variant) => {
+        const mega = megaState(game);
+        mega.handSizePenaltyThisRound = asNumber(mega.handSizePenaltyThisRound, 0) + 1;
+        variant.umtBreakConsonants = (Number(variant.umtBreakConsonants) || 0) + 1;
+        return "your hand holds one consonant fewer for the rest of the stage";
+      }
+    },
+    {
+      can: (game) => asNumber((stateOf(game) || {}).mulligansLeft, 0) > 0,
+      apply: (game) => {
+        const state = stateOf(game);
+        state.mulligansLeft = Math.max(0, asInteger(state.mulligansLeft, 0) - 1);
+        return "you lose a mulligan";
+      }
+    },
+    {
+      can: () => true,
+      apply: (game, _variant, entry) => {
+        addScoreBonus(game, -BREAK_POINTS, "umtRuleBreak", "Challenge broken", entry);
+        return `you lose ${BREAK_POINTS} points`;
+      }
+    },
+    {
+      can: (game) => asNumber((stateOf(game) || {}).cuddleMoney, 0) > 0,
+      apply: (game) => {
+        const state = stateOf(game);
+        const lost = Math.min(BREAK_MONEY, asNumber(state.cuddleMoney, 0));
+        state.cuddleMoney = Math.max(0, asNumber(state.cuddleMoney, 0) - lost);
+        return `you lose $${lost}`;
+      }
+    }
+  ];
   function breakableRule(game) {
     const state = stateOf(game);
     if (!state || difficultyName(game) !== "medium" || !activeChallenge(game)) return false;
@@ -2193,7 +2230,7 @@
   }
 
   function breakWarning(validation) {
-    return `${validation} Submit again to break the challenge: the stage loses its skull bonus and you lose a consonant for the rest of it.`;
+    return `${validation} Submit again to break the challenge: the stage loses its skull bonus, plus one random setback (a consonant, a mulligan, ${BREAK_POINTS} points or $${BREAK_MONEY}).`;
   }
 
   function breakKey(game) {
@@ -2215,16 +2252,16 @@
     return false;
   }
 
-  function breakRule(game, validation) {
+  function breakRule(game, validation, entry) {
     const variant = activeVariant(game);
     if (!variant) return;
     const title = String(validation).split(":")[0] || "The challenge";
     variant.umtRuleBroken = (Number(variant.umtRuleBroken) || 0) + 1;
-    const mega = megaState(game);
-    const lostConsonant = mega && variant.umtRuleBroken <= MAX_BREAK_PENALTY;
-    if (lostConsonant) mega.handSizePenaltyThisRound = asNumber(mega.handSizePenaltyThisRound, 0) + 1;
-    variant.umtBreakNote = `${title} broken: this stage pays as a plain stage`
-      + (lostConsonant ? ", and your hand holds one consonant fewer for the rest of it." : ".");
+    const open = BREAK_PENALTIES.filter((penalty) => penalty.can(game, variant));
+    const roll = typeof game.random === "function" ? game.random() : Math.random();
+    const penalty = open[Math.min(open.length - 1, Math.floor(roll * open.length))];
+    const what = penalty ? penalty.apply(game, variant, entry) : "";
+    variant.umtBreakNote = `${title} broken: this stage pays as a plain stage${what ? `, and ${what}` : ""}.`;
   }
 
   function challengeValidation(game, _challenge, used) {
@@ -5140,7 +5177,7 @@
           if (ruleLetter) history[history.length - 1].umtRuleLetter = ruleLetter;
           if (breaking) {
             history[history.length - 1].umtRuleBroken = true;
-            breakRule(this, breaking);
+            breakRule(this, breaking, history[history.length - 1]);
             const variant = activeVariant(this);
             if (variant && variant.umtBreakNote) {
               appendNotice(this, variant.umtBreakNote);
