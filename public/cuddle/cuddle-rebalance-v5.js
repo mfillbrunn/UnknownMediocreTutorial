@@ -2161,6 +2161,72 @@
     return [state.runId || "", state.round || 0, state.secret || "", Number(state.guessesUsed) || 0].join(":");
   }
 
+  // On Medium a stage challenge's rule can be broken: the first Submit of
+  // a word that breaks it only warns, the second sends it. Breaking it
+  // costs the stage its skull pay (it pays as a plain stage) and, like
+  // Short Hand, one consonant from the hand for the rest of the stage
+  // (two at most). A real boss's rule, and its curse on later stages,
+  // still can't be broken; nor can any rule on Easy or Hard.
+  const MAX_BREAK_PENALTY = 2;
+  function breakableRule(game) {
+    const state = stateOf(game);
+    if (!state || difficultyName(game) !== "medium" || !activeChallenge(game)) return false;
+    if (state.boss && !state.boss.__umtSynthetic) return false;
+    if (String(state.runId || "").indexOf(":duel:") !== -1) return false;
+    return !ratchetRule(game, guessesUsed(game));
+  }
+
+  // A short note at the top of the screen (styled as .umt-stuck-note in
+  // cuddle-expanded-stages.css), for the warning and the penalty.
+  function screenNote(text, tone) {
+    const host = document.getElementById("cuddleScreen") || document.body;
+    if (!host) return;
+    const old = document.querySelector(".umt-stuck-note");
+    if (old) old.remove();
+    const el = document.createElement("div");
+    el.className = `umt-stuck-note${tone ? ` is-${tone}` : ""}`;
+    el.setAttribute("role", "status");
+    el.textContent = text;
+    host.appendChild(el);
+    window.setTimeout(() => el.classList.add("is-leaving"), 4600);
+    window.setTimeout(() => el.remove(), 5000);
+  }
+
+  function breakWarning(validation) {
+    return `${validation} Submit again to break the challenge: the stage loses its skull bonus and you lose a consonant for the rest of it.`;
+  }
+
+  function breakKey(game) {
+    const state = stateOf(game) || {};
+    return `${ruleWaiverKey(state)}:${draftWord(game)}`;
+  }
+
+  // Returns true when this Submit may go ahead with the rule broken.
+  function confirmBreak(game, validation) {
+    const state = stateOf(game);
+    const key = breakKey(game);
+    if (state.umtBreakArmed === key) {
+      state.umtBreakArmed = null;
+      return true;
+    }
+    state.umtBreakArmed = key;
+    rejectAction(game, breakWarning(validation));
+    screenNote(breakWarning(validation), "warn");
+    return false;
+  }
+
+  function breakRule(game, validation) {
+    const variant = activeVariant(game);
+    if (!variant) return;
+    const title = String(validation).split(":")[0] || "The challenge";
+    variant.umtRuleBroken = (Number(variant.umtRuleBroken) || 0) + 1;
+    const mega = megaState(game);
+    const lostConsonant = mega && variant.umtRuleBroken <= MAX_BREAK_PENALTY;
+    if (lostConsonant) mega.handSizePenaltyThisRound = asNumber(mega.handSizePenaltyThisRound, 0) + 1;
+    variant.umtBreakNote = `${title} broken: this stage pays as a plain stage`
+      + (lostConsonant ? ", and your hand holds one consonant fewer for the rest of it." : ".");
+  }
+
   function challengeValidation(game, _challenge, used) {
     const word = draftWord(game);
     if (!word) return null;
@@ -2633,9 +2699,10 @@
     const challenge = activeChallenge(game) || (snapshot && snapshot.challenge);
     const variant = activeVariant(game);
     if (variant && !variant.stagePaid) {
-      const tier = stageTier(variant);
+      // A broken challenge (Medium, breakRule) pays as a plain stage.
+      const tier = variant.umtRuleBroken ? Math.min(0, stageTier(variant)) : stageTier(variant);
       const pay = stagePay(tier);
-      const label = tier < 0 ? "Easy stage cleared" : tier === 0 ? "Stage cleared"
+      const label = variant.umtRuleBroken ? "Stage cleared (challenge broken)" : tier < 0 ? "Easy stage cleared" : tier === 0 ? "Stage cleared"
         : `${tier}-skull stage cleared`;
       const paidPoints = pay > 0 ? addScoreBonus(game, pay, "umtStagePay", label, entry) : 0;
       const paidState = paidPoints > 0 ? stateOf(game) : null;
@@ -5010,6 +5077,7 @@
       const base = original.apply(this, args);
       if (!base || base.ok === false || !(stagePlan(this) || ratchetRule(this, guessesUsed(this)))) return base;
       const validation = challengeValidation(this, activeChallenge(this), guessesUsed(this));
+      if (validation && breakableRule(this)) return { ...base, ruleBreak: validation };
       return validation ? { ...base, ok: false, error: validation } : base;
     });
 
@@ -5020,9 +5088,16 @@
       const activePowers = powerIdsForGuess(this, used);
       const state = stateOf(this);
       const historyLength = state && Array.isArray(state.history) ? state.history.length : 0;
+      // A Medium challenge's rule broken on purpose (breakableRule): paid
+      // for once the guess is accepted.
+      let breaking = null;
       if (stagePlan(this) || ratchetRule(this, used)) {
         const validation = challengeValidation(this, challenge, used);
-        if (validation) return rejectAction(this, validation);
+        if (validation && !breakableRule(this)) return rejectAction(this, validation);
+        if (validation) {
+          if (!confirmBreak(this, validation)) return { ok: false, accepted: false, reason: breakWarning(validation), error: breakWarning(validation) };
+          breaking = validation;
+        }
       }
       // Kept on the guess, so its row can go on showing the letter it was
       // held to (the rule picks against what's known, which moves on).
@@ -5063,6 +5138,15 @@
         if (history.length > historyLength) {
           history[history.length - 1].umtPowerIds = activePowers;
           if (ruleLetter) history[history.length - 1].umtRuleLetter = ruleLetter;
+          if (breaking) {
+            history[history.length - 1].umtRuleBroken = true;
+            breakRule(this, breaking);
+            const variant = activeVariant(this);
+            if (variant && variant.umtBreakNote) {
+              appendNotice(this, variant.umtBreakNote);
+              screenNote(variant.umtBreakNote, "broken");
+            }
+          }
         }
         reconcileMysteryKnowledge(this);
         if (history.length > historyLength) {
