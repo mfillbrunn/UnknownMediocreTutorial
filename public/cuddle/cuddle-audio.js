@@ -63,14 +63,30 @@
   }
 
   // -- music -----------------------------------------------------------------------
-  // Three tracks: the run's theme, the boss fights' and the shop's. The one
+  // Three slots: the run's theme, the boss fights' and the shop's. The one
   // that fits the screen plays; switching crossfades, and the boss and shop
-  // tracks start from the top each time (the theme picks up where it was).
+  // start from the top each time (the theme picks up where it was). The
+  // boss has two pieces: a fight opens with either one, at random, and
+  // when it ends the other plays, back and forth.
   var TRACKS = {
     theme: { src: "cuddle/audio/cuddle-theme.mp3", restart: false },
-    boss: { src: "cuddle/audio/cuddle-boss.mp3", restart: true },
+    boss: { list: ["cuddle/audio/cuddle-boss.mp3", "cuddle/audio/cuddle-boss-2.mp3"], restart: true },
     shop: { src: "cuddle/audio/cuddle-shop.mp3", restart: true }
   };
+
+  function randomPiece(track) {
+    return track.list[Math.floor(Math.random() * track.list.length)];
+  }
+
+  // A playlist slot moves on to its next piece when one ends.
+  function nextPiece(track) {
+    var at = track.list.indexOf(track.piece);
+    track.piece = track.list[(at + 1) % track.list.length];
+    track.el.src = track.piece;
+    if (current !== track) return;
+    var playing = track.el.play();
+    if (playing && typeof playing.catch === "function") playing.catch(function blocked() { track.target = -1; });
+  }
   // It eases in slowly at the start of a run, crossfades between tracks,
   // and steps out quickly.
   var FADE_IN_MS = 4000;
@@ -82,8 +98,10 @@
   function ensureTrack(name) {
     var track = TRACKS[name];
     if (track.el) return track;
-    track.el = new Audio(track.src);
-    track.el.loop = true;
+    if (track.list) track.piece = randomPiece(track);
+    track.el = new Audio(track.list ? track.piece : track.src);
+    track.el.loop = !track.list;
+    if (track.list) track.el.addEventListener("ended", function () { nextPiece(track); });
     track.el.preload = "auto";
     track.fade = 0;
     track.target = -1;
@@ -181,7 +199,12 @@
     Object.keys(TRACKS).forEach(function (name) { if (TRACKS[name] !== track && TRACKS[name].el) silence(TRACKS[name], CROSS_MS); });
     var wasPlaying = !track.el.paused && track.target > 0;
     if (track.el.paused) {
-      if (track.restart) { try { track.el.currentTime = 0; } catch (_error) { /* not loaded yet */ } }
+      if (track.list) {
+        // A new fight: either piece, from the top.
+        var piece = randomPiece(track);
+        if (piece !== track.piece) { track.piece = piece; track.el.src = piece; }
+        else { try { track.el.currentTime = 0; } catch (_error) { /* not loaded yet */ } }
+      } else if (track.restart) { try { track.el.currentTime = 0; } catch (_error) { /* not loaded yet */ } }
       var playing = track.el.play();
       // Refused (no tap yet since the browser put sound to sleep): the
       // next tap tries again.
@@ -807,6 +830,6 @@
   window.CuddleAudio = Object.freeze({
     play: play,
     sounds: Object.keys(SOUNDS),
-    settings: function () { return { music: settings.music, sfx: settings.sfx, unlocked: unlocked, output: ctx ? ctx.state : "none", level: current && current.el ? level(current) : 0, playing: Boolean(current && current.el && !current.el.paused), track: current ? Object.keys(TRACKS).filter(function (n) { return TRACKS[n] === current; })[0] : null }; }
+    settings: function () { return { music: settings.music, sfx: settings.sfx, unlocked: unlocked, output: ctx ? ctx.state : "none", level: current && current.el ? level(current) : 0, playing: Boolean(current && current.el && !current.el.paused), track: current ? Object.keys(TRACKS).filter(function (n) { return TRACKS[n] === current; })[0] : null, piece: current && current.list ? current.piece : null }; }
   });
 }());
