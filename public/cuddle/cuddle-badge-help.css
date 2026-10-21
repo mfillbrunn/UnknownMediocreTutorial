@@ -439,7 +439,7 @@
   text-align: center;
 }
 .umt-sound-panel [aria-checked="true"] b { background: #3fa765; color: #fff; }
-/* Music: Off / Quiet / Normal. */
+/* Music and sound effects: Off / Quiet / Normal each. */
 .umt-sound-row {
   display: flex;
   align-items: center;
@@ -467,4 +467,4 @@
   font-weight: 800;
 }
 .umt-sound-panel .umt-sound-seg button[aria-checked="true"] { background: #3fa765; color: #fff; }
-.umt-sound-panel .umt-sound-seg button[data-umt-music="off"][aria-checked="true"] { background: rgba(255, 255, 255, 0.22); }
+.umt-sound-panel .umt-sound-seg button[data-umt-level="off"][aria-checked="true"] { background: rgba(255, 255, 255, 0.22); }

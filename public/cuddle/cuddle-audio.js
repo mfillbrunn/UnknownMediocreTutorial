@@ -32,17 +32,18 @@
 
   // -- settings --------------------------------------------------------------------
   var KEYS = { music: "umt-cuddle-music", sfx: "umt-cuddle-sfx" };
-  // Music: "off", "quiet" or "normal" (an older "on" reads as normal).
-  var MUSIC_LEVELS = { off: 0, quiet: 0.006, normal: 0.02 };
-  var MUSIC_CHOICES = [["off", "Off"], ["quiet", "Quiet"], ["normal", "Normal"]];
+  // Music and sound effects: each "off", "quiet" or "normal" (an older
+  // "on" reads as normal).
+  var MUSIC_LEVELS = { off: 0, quiet: 0.0078, normal: 0.026 };
+  var SFX_LEVELS = { off: 0, quiet: 0.36, normal: 0.45 };
+  var CHOICES = [["off", "Off"], ["quiet", "Quiet"], ["normal", "Normal"]];
   function readSetting(name) {
     var value = null;
     try { value = localStorage.getItem(KEYS[name]); } catch (_error) { /* not remembered */ }
-    if (name === "music") return value === "off" || value === "quiet" ? value : "normal";
-    return value !== "off";
+    return value === "off" || value === "quiet" ? value : "normal";
   }
   function writeSetting(name, value) {
-    try { localStorage.setItem(KEYS[name], name === "music" ? value : value ? "on" : "off"); } catch (_error) { /* not remembered */ }
+    try { localStorage.setItem(KEYS[name], value); } catch (_error) { /* not remembered */ }
   }
   var settings = { music: readSetting("music"), sfx: readSetting("sfx") };
   // A tap has happened, so the browser lets this page make sound. It never
@@ -62,14 +63,30 @@
   }
 
   // -- music -----------------------------------------------------------------------
-  // Three tracks: the run's theme, the boss fights' and the shop's. The one
+  // Three slots: the run's theme, the boss fights' and the shop's. The one
   // that fits the screen plays; switching crossfades, and the boss and shop
-  // tracks start from the top each time (the theme picks up where it was).
+  // start from the top each time (the theme picks up where it was). The
+  // boss has two pieces: a fight opens with either one, at random, and
+  // when it ends the other plays, back and forth.
   var TRACKS = {
     theme: { src: "cuddle/audio/cuddle-theme.mp3", restart: false },
-    boss: { src: "cuddle/audio/cuddle-boss.mp3", restart: true },
+    boss: { list: ["cuddle/audio/cuddle-boss.mp3", "cuddle/audio/cuddle-boss-2.mp3"], restart: true },
     shop: { src: "cuddle/audio/cuddle-shop.mp3", restart: true }
   };
+
+  function randomPiece(track) {
+    return track.list[Math.floor(Math.random() * track.list.length)];
+  }
+
+  // A playlist slot moves on to its next piece when one ends.
+  function nextPiece(track) {
+    var at = track.list.indexOf(track.piece);
+    track.piece = track.list[(at + 1) % track.list.length];
+    track.el.src = track.piece;
+    if (current !== track) return;
+    var playing = track.el.play();
+    if (playing && typeof playing.catch === "function") playing.catch(function blocked() { track.target = -1; });
+  }
   // It eases in slowly at the start of a run, crossfades between tracks,
   // and steps out quickly.
   var FADE_IN_MS = 4000;
@@ -81,8 +98,10 @@
   function ensureTrack(name) {
     var track = TRACKS[name];
     if (track.el) return track;
-    track.el = new Audio(track.src);
-    track.el.loop = true;
+    if (track.list) track.piece = randomPiece(track);
+    track.el = new Audio(track.list ? track.piece : track.src);
+    track.el.loop = !track.list;
+    if (track.list) track.el.addEventListener("ended", function () { nextPiece(track); });
     track.el.preload = "auto";
     track.fade = 0;
     track.target = -1;
@@ -180,7 +199,12 @@
     Object.keys(TRACKS).forEach(function (name) { if (TRACKS[name] !== track && TRACKS[name].el) silence(TRACKS[name], CROSS_MS); });
     var wasPlaying = !track.el.paused && track.target > 0;
     if (track.el.paused) {
-      if (track.restart) { try { track.el.currentTime = 0; } catch (_error) { /* not loaded yet */ } }
+      if (track.list) {
+        // A new fight: either piece, from the top.
+        var piece = randomPiece(track);
+        if (piece !== track.piece) { track.piece = piece; track.el.src = piece; }
+        else { try { track.el.currentTime = 0; } catch (_error) { /* not loaded yet */ } }
+      } else if (track.restart) { try { track.el.currentTime = 0; } catch (_error) { /* not loaded yet */ } }
       var playing = track.el.play();
       // Refused (no tap yet since the browser put sound to sleep): the
       // next tap tries again.
@@ -193,7 +217,6 @@
   var ctx = null;
   var master = null;
   var noiseBuffer = null;
-  var SFX_VOLUME = 0.45;
 
   function audioContext() {
     if (ctx) return ctx;
@@ -204,7 +227,7 @@
     try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (_error) { /* older Safari */ }
     ctx = new AC();
     master = ctx.createGain();
-    master.gain.value = SFX_VOLUME;
+    master.gain.value = SFX_LEVELS[settings.sfx] || 0;
     master.connect(ctx.destination);
     noiseBuffer = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     var data = noiseBuffer.getChannelData(0);
@@ -377,7 +400,7 @@
 
   var lastPlayed = {};
   function play(name, arg) {
-    if (!settings.sfx || !unlocked || !SOUNDS[name] || !inCuddle()) return;
+    if (settings.sfx === "off" || !unlocked || !SOUNDS[name] || !inCuddle()) return;
     var now = Date.now();
     if (lastPlayed[name] && now - lastPlayed[name] < 45) return;
     lastPlayed[name] = now;
@@ -622,8 +645,8 @@
   var OFF = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
 
   function paint() {
-    var any = settings.music !== "off" || settings.sfx;
-    var label = "Sound settings: music " + settings.music + ", sound effects " + (settings.sfx ? "on" : "off");
+    var any = settings.music !== "off" || settings.sfx !== "off";
+    var label = "Sound settings: music " + settings.music + ", sound effects " + settings.sfx;
     // Only what changed is written: this runs after every DOM change, and
     // a rewrite (even of the same value) would wake every observer again.
     document.querySelectorAll(".umt-music-btn").forEach(function (button) {
@@ -639,13 +662,9 @@
     });
     var panel = document.querySelector(".umt-sound-panel");
     if (panel) {
-      panel.querySelectorAll("[data-umt-sound]").forEach(function (box) {
-        var on = settings[box.getAttribute("data-umt-sound")];
-        box.setAttribute("aria-checked", on ? "true" : "false");
-        box.querySelector("b").textContent = on ? "On" : "Off";
-      });
-      panel.querySelectorAll("[data-umt-music]").forEach(function (option) {
-        option.setAttribute("aria-checked", option.getAttribute("data-umt-music") === settings.music ? "true" : "false");
+      panel.querySelectorAll("[data-umt-level]").forEach(function (option) {
+        var on = settings[option.getAttribute("data-umt-for")] === option.getAttribute("data-umt-level");
+        option.setAttribute("aria-checked", on ? "true" : "false");
       });
     }
   }
@@ -678,6 +697,17 @@
     if (panel) panel.remove();
   }
 
+  // One setting's Off / Quiet / Normal row.
+  function levelRow(name, title) {
+    var id = "umtSoundLabel-" + name;
+    return "<div class=\"umt-sound-row\"><span id=\"" + id + "\">" + title + "</span>"
+      + "<span class=\"umt-sound-seg\" role=\"radiogroup\" aria-labelledby=\"" + id + "\">"
+      + CHOICES.map(function (choice) {
+          return "<button type=\"button\" role=\"radio\" data-umt-for=\"" + name + "\" data-umt-level=\"" + choice[0] + "\">" + choice[1] + "</button>";
+        }).join("")
+      + "</span></div>";
+  }
+
   function openPanel(button) {
     closePanel();
     var box = button.getBoundingClientRect();
@@ -685,11 +715,7 @@
     panel.className = "umt-sound-panel";
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-label", "Sound");
-    panel.innerHTML = "<div class=\"umt-sound-row\"><span id=\"umtMusicLabel\">Music</span>"
-      + "<span class=\"umt-sound-seg\" role=\"radiogroup\" aria-labelledby=\"umtMusicLabel\">"
-      + MUSIC_CHOICES.map(function (choice) { return "<button type=\"button\" role=\"radio\" data-umt-music=\"" + choice[0] + "\">" + choice[1] + "</button>"; }).join("")
-      + "</span></div>"
-      + "<button type=\"button\" role=\"switch\" data-umt-sound=\"sfx\"><span>Sound effects</span><b></b></button>";
+    panel.innerHTML = levelRow("music", "Music") + levelRow("sfx", "Sound effects");
     panel.style.top = Math.round(box.bottom + 8) + "px";
     panel.style.right = Math.max(8, Math.round(window.innerWidth - box.right)) + "px";
     document.body.appendChild(panel);
@@ -701,24 +727,17 @@
   document.addEventListener("click", function (event) {
     var target = event.target instanceof Element ? event.target : null;
     if (!target) return;
-    var level = target.closest(".umt-sound-panel [data-umt-music]");
-    if (level) {
-      settings.music = level.getAttribute("data-umt-music");
-      writeSetting("music", settings.music);
-      unlocked = true;
-      syncMusic();
-      paint();
-      return;
-    }
-    var toggle = target.closest(".umt-sound-panel [data-umt-sound]");
-    if (toggle) {
-      var name = toggle.getAttribute("data-umt-sound");
-      settings[name] = !settings[name];
+    var choice = target.closest(".umt-sound-panel [data-umt-level]");
+    if (choice) {
+      var name = choice.getAttribute("data-umt-for");
+      settings[name] = choice.getAttribute("data-umt-level");
       writeSetting(name, settings[name]);
       unlocked = true;
+      if (name === "sfx" && master) master.gain.value = SFX_LEVELS[settings.sfx] || 0;
       syncMusic();
       paint();
-      if (name === "sfx" && settings.sfx) play("pick");
+      // A sample at the new level.
+      if (name === "sfx") play("pick");
       return;
     }
     var button = target.closest(".umt-music-btn");
@@ -811,6 +830,6 @@
   window.CuddleAudio = Object.freeze({
     play: play,
     sounds: Object.keys(SOUNDS),
-    settings: function () { return { music: settings.music, sfx: settings.sfx, unlocked: unlocked, output: ctx ? ctx.state : "none", level: current && current.el ? level(current) : 0, playing: Boolean(current && current.el && !current.el.paused), track: current ? Object.keys(TRACKS).filter(function (n) { return TRACKS[n] === current; })[0] : null }; }
+    settings: function () { return { music: settings.music, sfx: settings.sfx, unlocked: unlocked, output: ctx ? ctx.state : "none", level: current && current.el ? level(current) : 0, playing: Boolean(current && current.el && !current.el.paused), track: current ? Object.keys(TRACKS).filter(function (n) { return TRACKS[n] === current; })[0] : null, piece: current && current.list ? current.piece : null }; }
   });
 }());

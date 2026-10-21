@@ -8,9 +8,11 @@
 // records the marks on each history entry (entry.umtCompass) and
 // cuddle-ui.js's renderBoard draws them.
 //
-// Marks go on tiles that aren't green first, since those are the ones an
-// arrow says something new about, and never on a tile a boss or challenge
-// is hiding (entry.maskedIndices) -- that would give the hidden result away.
+// Marks only go where the letter isn't known yet: never on a tile that is
+// green, nor on a spot an earlier green or a hint already settled (an
+// arrow there says nothing), and never on a tile a boss or challenge is
+// hiding (entry.maskedIndices) -- that would give the hidden result away.
+// With fewer such tiles than copies, fewer arrows show.
 (function () {
   "use strict";
 
@@ -49,6 +51,25 @@
     try { return Number(schools.rankOf(game, "prism")) >= 1 ? 1 : 0; } catch (_error) { return 0; }
   }
 
+  // Spots whose letter is already certain: green on an earlier guess, or
+  // shown by a hint (state.revealedPositions). An arrow there says nothing.
+  function knownPositions(state, entry) {
+    const known = new Set();
+    const revealed = Array.isArray(state.revealedPositions) ? state.revealedPositions : [];
+    revealed.forEach((letter, index) => { if (typeof letter === "string" && letter.length === 1) known.add(index); });
+    (Array.isArray(state.history) ? state.history : []).forEach(item => {
+      if (!item || item === entry) return;
+      // What the player was shown (a boss may hide or fake a tile).
+      const shown = Array.isArray(item.shownFeedback) && item.shownFeedback.length ? item.shownFeedback : item.feedback;
+      if (!Array.isArray(shown)) return;
+      const hidden = new Set(Array.isArray(item.maskedIndices) ? item.maskedIndices : []);
+      shown.forEach((mark, index) => {
+        if (mark === "green" && !hidden.has(index) && Array.isArray(item.feedback) && item.feedback[index] === "green") known.add(index);
+      });
+    });
+    return known;
+  }
+
   function markEntry(game, entry) {
     const state = game.state;
     const copies = copiesOwned(state);
@@ -59,10 +80,9 @@
     if (secret.length !== 5 || word.length !== 5 || word === secret) return;
     const masked = new Set(Array.isArray(entry.maskedIndices) ? entry.maskedIndices : []);
     const random = typeof game.random === "function" ? () => game.random() : Math.random;
-    const open = [0, 1, 2, 3, 4].filter(index => !masked.has(index));
-    const notGreen = shuffled(open.filter(index => word[index] !== secret[index]), random);
-    const green = shuffled(open.filter(index => word[index] === secret[index]), random);
-    entry.umtCompass = notGreen.concat(green).slice(0, count)
+    const known = knownPositions(state, entry);
+    const open = [0, 1, 2, 3, 4].filter(index => !masked.has(index) && !known.has(index) && word[index] !== secret[index]);
+    entry.umtCompass = shuffled(open, random).slice(0, count)
       .sort((a, b) => a - b)
       .map(index => ({ index, dir: reading(secret[index], word[index]) }));
   }

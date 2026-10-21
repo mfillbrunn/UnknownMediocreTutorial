@@ -1170,3 +1170,10 @@ button.umt-duel-option:focus-visible {
 .umt-stuck-note.is-leaving { animation: umt-stuck-out 380ms ease-in both; }
 @keyframes umt-stuck-in { from { opacity: 0; transform: translate(-50%, -8px); } }
 @keyframes umt-stuck-out { to { opacity: 0; transform: translate(-50%, -8px); } }
+/* Medium's breakable challenge rules (cuddle-rebalance-v5.js): the
+   warning before, and the penalty after. */
+.umt-stuck-note.is-broken {
+  border-color: rgba(240, 110, 110, 0.6);
+  background: #2c1517;
+  color: #fbdcdc;
+}

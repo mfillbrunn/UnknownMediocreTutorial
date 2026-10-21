@@ -62,7 +62,31 @@
   background: #57d69a;
 }
 
-.umt-bd[data-where="stage"] .umt-bd-pill { display: none; }
+.umt-bd[data-where="stage"] .umt-bd-pill,
+.umt-bd[data-where="shop"] .umt-bd-pill { display: none; }
+
+/* In the shop: a line in the page, under the wallet (a floating pill sat
+   over the wares as the page scrolled). */
+#cuddleScreen .umt-bd-shop {
+  justify-self: center;
+  align-self: center;
+  width: fit-content;
+  max-width: 100%;
+  margin: 4px auto 10px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  text-align: center;
+}
+#cuddleScreen .umt-bd-shop b {
+  margin-right: 4px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+#cuddleScreen .umt-bd-shop[data-state="danger"] { color: #fff; background: #c62f3a; }
+#cuddleScreen .umt-bd-shop[data-state="safe"] { color: #08321f; background: #57d69a; }
 
 /* On a stage: the boss target beside the header's points carries the
    verdict -- red and pulsing while short of it, bright once it's met. */
