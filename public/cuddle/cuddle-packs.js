@@ -6,8 +6,8 @@
  * the same world. It comes in three sizes, picked at random from
  * the ones the wallet covers:
  *   Small   2 Commons
- *   Medium  2 Commons + 1 special
- *   Large   1 Common + 1 special + 1 that is either (a coin flip)
+ *   Medium  1 Common + 1 special
+ *   Large   2 specials
  * Each special is rolled on its own: Rare (most often), Epic (less often)
  * or Legendary (rarely). Buying opens the pack and keeps every card. Prices
  * rise with the world. The free Starting Pack every run opens with is its
@@ -33,9 +33,9 @@
   // offer picks one of those at random.
   var SIZES = Object.freeze([
     Object.freeze({ id: "small", name: "Small", commons: 2, specials: 0, flex: 0, prices: [35, 45, 55] }),
-    Object.freeze({ id: "medium", name: "Medium", commons: 2, specials: 1, flex: 0, prices: [55, 70, 85] }),
-    // flex: a slot that's a Common or a special, 50/50, rolled on opening.
-    Object.freeze({ id: "large", name: "Large", commons: 1, specials: 1, flex: 1, prices: [75, 95, 115] })
+    Object.freeze({ id: "medium", name: "Medium", commons: 1, specials: 1, flex: 0, prices: [55, 70, 85] }),
+    // flex (unused now): a slot that's a Common or a special, 50/50.
+    Object.freeze({ id: "large", name: "Large", commons: 0, specials: 2, flex: 0, prices: [75, 95, 115] })
   ]);
   // The free pack a run starts with (cuddle-money-mode.js); never for sale.
   var STARTER = Object.freeze({ id: "starter", name: "Large", commons: 0, specials: 3, flex: 0, prices: [] });

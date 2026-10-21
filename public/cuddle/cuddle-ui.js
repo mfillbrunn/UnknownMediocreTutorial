@@ -897,7 +897,14 @@
           const compassMark = compass
             ? `<span class="umt-compass-mark is-${compass.dir === "L" ? "left" : compass.dir === "R" ? "right" : "match"}" title="${compass.dir === "L" ? "The secret's letter here comes earlier in the alphabet" : compass.dir === "R" ? "The secret's letter here comes later in the alphabet" : "This letter matches the secret here"}">${compass.dir === "L" ? "&larr;" : compass.dir === "R" ? "&rarr;" : "&ndash;"}</span>`
             : "";
-          tiles.push(`<span class="cuddle-tile${tileClass}${compass ? " has-compass" : ""}${arrow ? " is-arrow-sign" : ""}"${moneyBadge}${burstStyle}>${escapeHtml(letter)}${compassMark}</span>`);
+          // Precise Green: how many times this letter is in the answer.
+          const letterCount = history?.greenLetterCounts && (result === "green" || result === "yellow")
+            ? Number(history.greenLetterCounts[String(letter || "").toUpperCase()]) || 0
+            : 0;
+          const countMark = letterCount
+            ? `<span class="umt-count-mark" title="${escapeHtml(String(letter || "").toUpperCase())} is in the answer ${letterCount === 1 ? "once" : `${letterCount} times`}">${letterCount}</span>`
+            : "";
+          tiles.push(`<span class="cuddle-tile${tileClass}${compass ? " has-compass" : ""}${arrow ? " is-arrow-sign" : ""}"${moneyBadge}${burstStyle}>${escapeHtml(letter)}${compassMark}${countMark}</span>`);
         }
       }
       // Count Only replaces the row's score with the only thing it tells you:
@@ -1502,12 +1509,14 @@
   function skipRow() {
     if (typeof game.canSkipUpgrade !== "function" || !game.canSkipUpgrade()) return "";
     const S = window.CuddleStrategies;
-    const points = S ? S.SKIP_POINTS : 40;
-    const money = S ? S.SKIP_MONEY : 15;
+    // A level-up screen's skip pays less than a new badge's.
+    const pay = S && typeof S.skipPay === "function" ? S.skipPay(game) : { points: 40, money: 15, vow: false };
+    const points = pay.points;
+    const money = pay.money;
     // Clean Slate (cuddle-new-badges.js): a skip also levels up a badge.
     const slate = window.CuddleNewBadges && window.CuddleNewBadges.hasCleanSlate && window.CuddleNewBadges.hasCleanSlate(game)
-      ? `<small>Clean Slate: skipping also levels up one of your badges.</small>` : "";
-    if (S && S.hasMonksVow(game)) {
+      ? `<small>Clean Slate: skipping also levels up ${window.CuddleNewBadges.cleanSlateCount && window.CuddleNewBadges.cleanSlateCount(game) >= 2 ? "two" : "one"} of your badges.</small>` : "";
+    if (pay.vow) {
       return `<div class="umt-skip-row"><button class="cuddle-btn cuddle-btn-ghost umt-skip-btn" data-action="skip-upgrade" data-skip-kind="both">Skip: +${points} points and +$${money}</button><small>Monk's Vow: a skip pays both.</small>${slate}</div>`;
     }
     return `<div class="umt-skip-row">
@@ -1551,6 +1560,9 @@
         : waystone
           ? "FREE UPGRADE"
           : `ROUND ${summary?.round || state.round} CLEARED`;
+    // The after-stage pick takes turns (cuddle-reward-rhythm.js): a level
+    // for a badge you hold, then a new badge.
+    const rhythm = window.CuddleRewardRhythm ? window.CuddleRewardRhythm.shown(state) : null;
     const heading = eventPick
       ? `Choose ${/^[AEIOU]/.test(eventTier) ? "an" : "a"} ${eventTier} upgrade`
       : legendary
@@ -1559,14 +1571,22 @@
       ? "Choose a bonus upgrade"
       : startingRewards
         ? "Choose a starting reward"
-        : "Improve the run";
+        : rhythm === "level"
+          ? "Level up a badge"
+          : rhythm === "new"
+            ? "Choose a new badge"
+            : "Improve the run";
     // The solved word now shows on the cash-out just before this screen,
     // so an ordinary round's reward screen goes straight to the choices.
     const body = milestone
       ? `Your total score reached ${state.upgradeMilestone}. This choice is in addition to the round reward.`
       : startingRewards
         ? "Pick a reward to begin the run with."
-        : "";
+        : rhythm === "level"
+          ? "One of your badges goes up a level. Next stage: a new badge."
+          : rhythm === "new"
+            ? "Next stage: level up one of your badges."
+            : "";
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleUpgradeTitle">
         <section class="cuddle-modal cuddle-modal-wide cuddle-upgrade-modal cuddle-compact-cards">
@@ -1595,9 +1615,13 @@
               : `<button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
               ${escapeHtml(refreshLabel)}
             </button>
-            <small>${typeof game.hasHaggler === "function" && game.hasHaggler()
-              ? "Haggler: the first refresh on each reward screen is free, then $1, $3, $5, and so on."
-              : "Refreshes on each reward screen cost $3, then $5, $7, and so on."}</small>`}
+            <small>${(() => {
+              const haggler = typeof game.hagglerLevel === "function" ? game.hagglerLevel() : (typeof game.hasHaggler === "function" && game.hasHaggler() ? 1 : 0);
+              if (haggler >= 3) return "Haggler: the first two refreshes on each reward screen are free, then $1 each.";
+              if (haggler === 2) return "Haggler: the first two refreshes on each reward screen are free, then $1, $3, $5, and so on.";
+              if (haggler === 1) return "Haggler: the first refresh on each reward screen is free, then $1, $3, $5, and so on.";
+              return "Refreshes on each reward screen cost $3, then $5, $7, and so on.";
+            })()}</small>`}
           </div>
         </section>
       </div>`;

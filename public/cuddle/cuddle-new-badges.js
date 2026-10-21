@@ -51,7 +51,11 @@
   // Ascetic: [most badges outside Restraint, what a solve's points are
   // multiplied by], fewest first.
   var ASCETIC_TIERS = [[5, 2], [10, 1.5]];
-  var MARKET_PRICE = 50;
+  // Black Market's price by its level.
+  var MARKET_PRICES = [50, 45, 40];
+  function marketPrice(game) {
+    return MARKET_PRICES[Math.max(1, Math.min(3, levelOf(game, "blackMarket"))) - 1];
+  }
   var COIN_PRICES = [0, 100, 75];
   var LEDGER_RATES = [0, 0.5, 1];
   var VOWELS = "AEIOU";
@@ -154,10 +158,17 @@
   }
 
   // What Ascetic multiplies a solve by right now: 2, 1.5, or 1 (nothing).
+  // Level 2 widens both thresholds: 6 and 12 badges.
+  var ASCETIC_TIERS_2 = [[6, 2], [12, 1.5]];
+  function asceticTiers(game) {
+    return levelOf(game, "ascetic") >= 2 ? ASCETIC_TIERS_2 : ASCETIC_TIERS;
+  }
+
   function asceticMultiplier(game) {
     var count = badgeCount(game);
-    for (var i = 0; i < ASCETIC_TIERS.length; i += 1) {
-      if (count <= ASCETIC_TIERS[i][0]) return ASCETIC_TIERS[i][1];
+    var tiers = asceticTiers(game);
+    for (var i = 0; i < tiers.length; i += 1) {
+      if (count <= tiers[i][0]) return tiers[i][1];
     }
     return 1;
   }
@@ -201,14 +212,24 @@
     return null;
   }
 
+  function cleanSlateCount(game) {
+    return levelOf(game, "cleanSlate") >= 2 ? 2 : 1;
+  }
+
   var baseSkip = proto.skipUpgrade;
   if (typeof baseSkip === "function") {
     proto.skipUpgrade = function skipUpgradeWithCleanSlate() {
       var slate = has(this, "cleanSlate");
       var result = baseSkip.apply(this, arguments);
       if (!slate || !result || result.ok === false) return result;
-      var title = levelUpRandomBadge(this);
-      note(this, title ? "Clean Slate: " + title + " went up a level." : "Clean Slate: none of your badges can go higher.");
+      // Level 2: two badges go up.
+      var titles = [];
+      for (var turn = 0; turn < cleanSlateCount(this); turn += 1) {
+        var raised = levelUpRandomBadge(this);
+        if (raised) titles.push(raised);
+      }
+      var title = titles.join(" and ");
+      note(this, title ? "Clean Slate: " + title + (titles.length > 1 ? " went up a level each." : " went up a level.") : "Clean Slate: none of your badges can go higher.");
       save(this);
       return Object.assign({}, result, { cleanSlate: title });
     };
@@ -515,14 +536,15 @@
     if (!Array.isArray(state.upgradeChoices) || !state.upgradeChoices.length) return null;
     if (state.umtMarketBought === marketKey(state)) return null;
     var wallet = num(state.cuddleMoney);
-    return { price: MARKET_PRICE, wallet: wallet, affordable: wallet >= MARKET_PRICE };
+    var price = marketPrice(game);
+    return { price: price, wallet: wallet, affordable: wallet >= price };
   }
 
   proto.buyRandomBadge = function buyRandomBadge() {
     var state = this.state;
     var offer = marketOffer(this);
     if (!offer) return { ok: false, error: "The Black Market has nothing for sale right now." };
-    if (!offer.affordable) return { ok: false, error: "You need $" + MARKET_PRICE + "." };
+    if (!offer.affordable) return { ok: false, error: "You need $" + offer.price + "." };
     if (typeof this._upgradeCatalog !== "function" || typeof this._grantUpgradeChoice !== "function") {
       return { ok: false, error: "The Black Market is closed." };
     }
@@ -540,12 +562,12 @@
         result = null;
       }
       if (result && result.ok !== false) {
-        state.cuddleMoney = num(state.cuddleMoney) - MARKET_PRICE;
+        state.cuddleMoney = num(state.cuddleMoney) - offer.price;
         state.umtMarketBought = key;
         var title = card.title || card.name || card.id;
-        state.lastMessage = "Black Market: " + title + " for $" + MARKET_PRICE + ".";
+        state.lastMessage = "Black Market: " + title + " for $" + offer.price + ".";
         save(this);
-        return { ok: true, message: state.lastMessage, spent: MARKET_PRICE, badge: title };
+        return { ok: true, message: state.lastMessage, spent: offer.price, badge: title };
       }
     }
     return { ok: false, error: "There's no badge left to buy." };
@@ -558,12 +580,15 @@
   // The free pack waits for the map, and for any other pack to close.
   function maybeGiftChest(game) {
     var state = game && game.state;
-    if (!state || inDuel(state) || state.umtTreasureChestGiven || !has(game, "treasureChest")) return;
+    if (!state || inDuel(state) || !has(game, "treasureChest")) return;
+    // One free pack per level (an old save's true counts as one given).
+    var given = state.umtTreasureChestGiven === true ? 1 : num(state.umtTreasureChestGiven);
+    if (given >= levelOf(game, "treasureChest")) return;
     if (state.status !== "branchMap" || state.umtPackOffer) return;
-    state.umtTreasureChestGiven = true;
+    state.umtTreasureChestGiven = given + 1;
     var world = Array.isArray(state.bossGatesDone) ? state.bossGatesDone.length : 0;
     state.umtPackOffer = {
-      id: (state.runId || "run") + ":treasure-chest",
+      id: (state.runId || "run") + ":treasure-chest" + (given ? ":" + (given + 1) : ""),
       size: "large",
       price: 0,
       world: Math.min(3, world + 1),
@@ -644,7 +669,7 @@
       var solved = Boolean(entry && state.secret && entry.word === state.secret);
       countOvertime(this);
       if (!solved) bookQuestChain(this);
-      if (!solved && history.length === 1 && state.status === "playing" && has(this, "goldenOpener")) {
+      if (!solved && history.length <= (levelOf(this, "goldenOpener") >= 2 ? 2 : 1) && state.status === "playing" && has(this, "goldenOpener")) {
         var placed = goldenOpener(this, entry);
         if (placed.length) {
           note(this, "Golden Opener: " + placed.map(function say(item) { return item.letter + " goes in position " + (item.index + 1); }).join(", ") + ".");
@@ -930,6 +955,8 @@
     freeOpeners: freeOpeners,
     marketOffer: marketOffer,
     hasCleanSlate: function hasCleanSlate(game) { return has(game, "cleanSlate"); },
+    cleanSlateCount: function count(game) { return has(game, "cleanSlate") ? cleanSlateCount(game) : 0; },
+    asceticTiers: asceticTiers,
     badgeCount: badgeCount,
     asceticMultiplier: asceticMultiplier,
     ASCETIC_TIERS: ASCETIC_TIERS,

@@ -43,13 +43,40 @@
 
   var SKIP_POINTS = 40;
   var SKIP_MONEY = 15;
+  // Skipping a level-up screen (cuddle-reward-rhythm.js) pays less than
+  // skipping a new badge.
+  var LEVEL_SKIP_POINTS = 25;
+  var LEVEL_SKIP_MONEY = 10;
+  // Monk's Vow pays both, x1, x1.25 or x1.5 by its level.
+  var VOW_SCALE = [1, 1.25, 1.5];
+
+  function levelScreen(state) {
+    var rhythm = window.CuddleRewardRhythm;
+    return Boolean(rhythm && typeof rhythm.shown === "function" && rhythm.shown(state) === "level");
+  }
+
+  // What a skip pays here: [points, money] for the points / money buttons,
+  // or both with Monk's Vow.
+  function skipPay(game) {
+    var level = levelScreen(game.state);
+    var points = level ? LEVEL_SKIP_POINTS : SKIP_POINTS;
+    var money = level ? LEVEL_SKIP_MONEY : SKIP_MONEY;
+    var vowLevel = levelOf(game, "monksVow");
+    if (vowLevel > 0) {
+      var scale = VOW_SCALE[Math.min(3, vowLevel) - 1];
+      return { points: Math.round(points * scale), money: Math.round(money * scale), vow: true };
+    }
+    return { points: points, money: money, vow: false };
+  }
+  // Lean Build's cost per other badge, by its level.
+  var LEAN_COST_BY_LEVEL = [5, 4, 3];
   var LEAN_BY_WORLD = [20, 40, 100];
   var LEAN_PER_BADGE = 5;
-  var STRIKE_POINTS = [0, 0.5, 1, 2];
-  var HIGH_ROLLER_BET = [0, 10, 20, 50];
+  var STRIKE_POINTS = [0, 0.5, 1, 1.5];
+  var HIGH_ROLLER_BET = [0, 10, 20, 40];
   // The guess a High Roller bet must be won by, per world.
   var HIGH_ROLLER_BY = [5, 4, 4];
-  var HARD_MODE_POINTS = [0, 10, 20, 40];
+  var HARD_MODE_POINTS = [0, 10, 16, 30];
   var TIER_UP = { common: "rare", rare: "epic", epic: "legendary" };
   var VOWELS = "AEIOU";
 
@@ -114,9 +141,10 @@
   proto.skipUpgrade = function skipUpgrade(kind) {
     if (!this.canSkipUpgrade()) return { ok: false, error: "This reward can't be skipped." };
     var state = this.state;
-    var vow = levelOf(this, "monksVow") > 0;
-    var points = vow || kind !== "money" ? SKIP_POINTS : 0;
-    var money = vow || kind === "money" ? SKIP_MONEY : 0;
+    var pay = skipPay(this);
+    var vow = pay.vow;
+    var points = vow || kind !== "money" ? pay.points : 0;
+    var money = vow || kind === "money" ? pay.money : 0;
     state.score = num(state.score) + points;
     state.cuddleMoney = Math.max(0, num(state.cuddleMoney) + money);
     state.umtSkips = num(state.umtSkips) + 1;
@@ -170,7 +198,8 @@
     // Pearl II: 3 badges don't count against it.
     var schools = window.CuddleSchools;
     var ignored = schools && typeof schools.perk === "function" ? num(schools.perk(game, "leanIgnore")) : 0;
-    return Math.max(0, base - LEAN_PER_BADGE * Math.max(0, otherBadges(game) - ignored));
+    var perBadge = LEAN_COST_BY_LEVEL[Math.max(1, Math.min(3, levelOf(game, "leanBuild"))) - 1];
+    return Math.max(0, base - perBadge * Math.max(0, otherBadges(game) - ignored));
   }
 
   // -- Strike-Through -------------------------------------------------------
@@ -270,10 +299,26 @@
     });
     if (!options.length) return { ok: false, error: "No " + wanted + " badge is left to combine into." };
     var target = options[Math.floor(random() * options.length)];
+    var kept = powersLevels(state)[fromId];
     delete powersLevels(state)[fromId];
+    // The reward ledger counts picks as levels too (cuddle-skill-tree.js
+    // powerLevel), so the old badge's entries are retired, as a sale does
+    // (cuddle-shop.js): otherwise it still read as held.
+    var history = Array.isArray(state.rewardBookHistory) ? state.rewardBookHistory : [];
+    var retired = history.filter(function mine(entry) { return entry && (entry.id === fromId || entry.rewardId === fromId); });
+    retired.forEach(function retire(entry) {
+      entry.combinedId = fromId;
+      if (entry.id === fromId) entry.id = fromId + ":combined";
+      if (entry.rewardId === fromId) entry.rewardId = fromId + ":combined";
+    });
     var granted = game._grantUpgradeChoice(Object.assign({}, target, { key: target.key || target.id }));
     if (!granted || granted.ok === false) {
-      powersLevels(state)[fromId] = 1;
+      powersLevels(state)[fromId] = kept || 1;
+      retired.forEach(function restore(entry) {
+        if (entry.id === fromId + ":combined") entry.id = fromId;
+        if (entry.rewardId === fromId + ":combined") entry.rewardId = fromId;
+        delete entry.combinedId;
+      });
       return { ok: false, error: "Combine couldn't finish: " + ((granted && granted.error) || "unknown error") };
     }
     return { ok: true, from: from.title, fromId: fromId, to: target.title || target.name, toId: target.id, toIcon: target.icon, tier: wanted };
@@ -439,6 +484,9 @@
     leanPayout: leanPayout,
     leanBase: function leanBase(game) { return LEAN_BY_WORLD[worldIndex(game)]; },
     otherBadges: otherBadges,
-    hasMonksVow: function hasMonksVow(game) { return levelOf(game, "monksVow") > 0; }
+    hasMonksVow: function hasMonksVow(game) { return levelOf(game, "monksVow") > 0; },
+    // What a skip on the screen now open pays: { points, money, vow }.
+    skipPay: skipPay,
+    leanPerBadge: function leanPerBadge(game) { return LEAN_COST_BY_LEVEL[Math.max(1, Math.min(3, levelOf(game, "leanBuild"))) - 1]; }
   });
 }());

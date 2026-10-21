@@ -57,7 +57,7 @@
   var DEAD_GLYPH = "·";
   var LUCKY_GLYPH = "♣";
   var SWAMP_DEAD = 3;
-  var LUCKY_POINTS = [0, 5, 10, 20];
+  var LUCKY_POINTS = [0, 5, 8, 15];
   // Tiles dealt by level: 1, 2, then 4 (the third pick is the big one).
   var TILES_BY_LEVEL = [0, 1, 2, 4];
   var LUCKY_MULLIGAN_POINTS = 2;
@@ -482,9 +482,13 @@
       if (discardBefore > 0 && !(this.state.discard || []).length && !inDuel(this.state)) {
         // Full Circle: once a stage (more trips through the deck gave the
         // whole answer away).
+        // Level 2: twice a stage.
         var fullCircleKey = [this.state.runId || "", this.state.round || 0, this.state.secret || ""].join(":");
-        if (powerLevel(this, "fullCircle", 1) > 0 && this.state.umtFullCircle !== fullCircleKey) {
-          this.state.umtFullCircle = fullCircleKey;
+        var circles = powerLevel(this, "fullCircle", 2);
+        var circle = this.state.umtFullCircle;
+        var circled = circle === fullCircleKey ? 1 : circle && circle.key === fullCircleKey ? Number(circle.count) || 0 : 0;
+        if (circles > 0 && circled < circles) {
+          this.state.umtFullCircle = { key: fullCircleKey, count: circled + 1 };
           this.__umtCycles = (this.__umtCycles || 0) + 1;
         }
       }

@@ -37,7 +37,7 @@
   const VOWELS = new Set(["A", "E", "I", "O", "U"]);
   const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   // $20, $30, then $50 at level 3 (in every other stage).
-  const TREASURE_PRIZES = [0, 20, 30, 50];
+  const TREASURE_PRIZES = [0, 20, 25, 40];
   // The treasure pays only for a quick solve: before guess 5 in world one,
   // 4 in world two, 3 in world three (by bosses cleared).
   const TREASURE_BEFORE = [5, 4, 3];
@@ -174,8 +174,21 @@
   };
 
   // -- Mistake Shield + treasure payout ---------------------------------------
-  function shieldApplies(game) {
+  // Level 1: bosses and strict stages. Level 2: every stage (on an ordinary
+  // one the late-guess cost starts a guess later). Level 3: a second
+  // all-grey guess is covered too.
+  function strictStage(game) {
     return isBoss(game) || Boolean(game.state && game.state.strictGuessLimit);
+  }
+
+  function shieldApplies(game) {
+    return strictStage(game) || level(game, IDS.mistakeShield) >= 2;
+  }
+
+  function shieldsLeft(game, record) {
+    const owned = level(game, IDS.mistakeShield) >= 3 ? 2 : 1;
+    const used = num(record.shieldsUsed) || (record.shieldUsed ? 1 : 0);
+    return Math.max(0, owned - used);
   }
 
   const originalHardLimit = proto._hardGuessLimit;
@@ -190,6 +203,17 @@
     };
   }
 
+  // On an ordinary stage the shield's guess back moves the late-guess cost.
+  const originalThreshold = proto._solveGuessThreshold;
+  if (typeof originalThreshold === "function") {
+    proto._solveGuessThreshold = function solveGuessThresholdWithShield() {
+      const base = originalThreshold.apply(this, arguments);
+      if (!Number.isFinite(base) || !this.state || strictStage(this) || !this.state.umtClues) return base;
+      const record = this.state.umtClues;
+      return record.token === stageToken(this.state) ? base + num(record.shieldBonus) : base;
+    };
+  }
+
   const originalSubmit = proto.submitDraft;
   proto.submitDraft = function submitDraftWithClues() {
     const state = this.state;
@@ -197,16 +221,17 @@
     let record = null;
     if (state && state.status === "playing" && state.secret) {
       record = clues(this);
-      if (level(this, IDS.mistakeShield) > 0 && !record.shieldUsed && shieldApplies(this)) {
+      if (level(this, IDS.mistakeShield) > 0 && shieldsLeft(this, record) > 0 && shieldApplies(this)) {
         const validation = typeof this.canSubmit === "function" ? this.canSubmit() : null;
         const word = validation && validation.ok ? String(validation.word || "").toUpperCase() : "";
         const secret = String(state.secret).toUpperCase();
         if (word.length === 5 && word !== secret && !feedbackOf(secret, word).some(value => value !== "grey")) {
           // Granted before the guess lands, so a dud on the last row is
           // caught before the engine calls the stage lost.
+          record.shieldsUsed = (num(record.shieldsUsed) || (record.shieldUsed ? 1 : 0)) + 1;
           record.shieldUsed = true;
-          record.shieldBonus = 1;
-          state.maxGuesses = Math.max(1, num(state.maxGuesses) || 6) + 1;
+          record.shieldBonus = num(record.shieldBonus) + 1;
+          if (strictStage(this)) state.maxGuesses = Math.max(1, num(state.maxGuesses) || 6) + 1;
           shielded = true;
         }
       }
@@ -214,9 +239,10 @@
     const before = state && Array.isArray(state.history) ? state.history.length : 0;
     const result = originalSubmit.apply(this, arguments);
     if (shielded && (!result || !result.ok)) {
-      record.shieldUsed = false;
-      record.shieldBonus = 0;
-      state.maxGuesses = Math.max(1, num(state.maxGuesses) - 1);
+      record.shieldsUsed = Math.max(0, num(record.shieldsUsed) - 1);
+      record.shieldUsed = record.shieldsUsed > 0;
+      record.shieldBonus = Math.max(0, num(record.shieldBonus) - 1);
+      if (strictStage(this)) state.maxGuesses = Math.max(1, num(state.maxGuesses) - 1);
       return result;
     }
     if (shielded) addMessage(this, "Mistake Shield: no greens or yellows, so you get that guess back.");
@@ -231,7 +257,9 @@
         const rebalance = window.CuddleRebalanceV5;
         if (rebalance && typeof rebalance.grantStageYellowHints === "function") rebalance.grantStageYellowHints(this);
       }
-      if (unsolved && history.length >= 2 && level(this, IDS.lastLight) > 0) {
+      // Last Light level 2: after the first guess.
+      const lastLight = level(this, IDS.lastLight);
+      if (unsolved && lastLight > 0 && history.length >= (lastLight >= 2 ? 1 : 2)) {
         const placed = placeLastLetter(this);
         if (placed) addMessage(this, placed);
       }
@@ -275,16 +303,24 @@
     const record = clues(game);
     const chips = [];
     // Every clue works in every stage, boss fights included.
-    if (level(game, IDS.vowelLamp) > 0) {
-      const count = [...secret].filter(letter => VOWELS.has(letter)).length;
-      chips.push({ icon: "lantern", label: "Vowel Lamp", text: `${count} vowel${count === 1 ? "" : "s"}` });
+    const lamp = level(game, IDS.vowelLamp);
+    if (lamp > 0) {
+      const vowels = [...secret].filter(letter => VOWELS.has(letter));
+      const count = vowels.length;
+      // Level 2 names one of them (the same one all stage).
+      const named = lamp >= 2 && count ? [...new Set(vowels)].sort()[hashText(`${record.token}:lamp`) % new Set(vowels).size] : "";
+      chips.push({ icon: "lantern", label: "Vowel Lamp", text: `${count} vowel${count === 1 ? "" : "s"}${named ? `, one is ${named}` : ""}` });
     }
-    if (level(game, IDS.echoFinder) > 0) {
-      const repeats = new Set(secret).size < 5;
-      chips.push({ icon: "twoPeople", label: "Echo Finder", text: repeats ? "Repeats a letter" : "No repeated letters" });
+    const echo = level(game, IDS.echoFinder);
+    if (echo > 0) {
+      const repeated = [...secret].find((letter, index) => secret.indexOf(letter) !== index);
+      // Level 2 says what kind of letter repeats.
+      const kind = repeated && echo >= 2 ? (VOWELS.has(repeated) ? "a vowel" : "a consonant") : "a letter";
+      chips.push({ icon: "twoPeople", label: "Echo Finder", text: repeated ? `Repeats ${kind}` : "No repeated letters" });
     }
-    // Pattern Lens shows from the second guess on.
-    if (level(game, IDS.patternLens) > 0 && num(state.guessesUsed) >= 1) {
+    // Pattern Lens shows from the second guess on (level 2: from the start).
+    const lens = level(game, IDS.patternLens);
+    if (lens > 0 && num(state.guessesUsed) >= (lens >= 2 ? 0 : 1)) {
       chips.push({ icon: "puzzle", label: "Pattern Lens", text: [...secret].map(letter => (VOWELS.has(letter) ? "V" : "C")).join(" "), mono: true });
     }
     if (record.dead.length) chips.push({ icon: "gravestone", label: "Dead Letter", text: `Not ${record.dead.join(", ")}` });
@@ -328,7 +364,8 @@
       chips.push({ icon: "magnifier", label: "Hints rank", text: "Test a card:", tests: testable, tone: "test" });
     }
     if (level(game, IDS.mistakeShield) > 0 && shieldApplies(game)) {
-      chips.push({ icon: "shield", label: "Mistake Shield", text: record.shieldUsed ? "Shield used" : "Shield ready", tone: record.shieldUsed ? "spent" : "" });
+      const left = shieldsLeft(game, record);
+      chips.push({ icon: "shield", label: "Mistake Shield", text: left > 1 ? `${left} shields ready` : left ? "Shield ready" : "Shield used", tone: left ? "" : "spent" });
     }
     return chips;
   }

@@ -1052,7 +1052,9 @@
       if (!pool.length) return "";
       const secret = String(this.state.secret || "");
       const lines = [];
-      for (let pick = 0; pick < 2 && pool.length; pick += 1) {
+      // Level 2 (taken twice): three vowels.
+      const picks = Number(this.state.upgrades.freeVowelSweep) >= 2 ? 3 : 2;
+      for (let pick = 0; pick < picks && pool.length; pick += 1) {
         const vowel = pool.splice(Math.floor(this.random() * pool.length), 1)[0];
         const present = secret.includes(vowel);
         if (present) {
@@ -2345,7 +2347,7 @@
           id: "extraMulligans",
           icon: "🔄",
           title: "Second Thoughts",
-          description: "+1 mulligan every stage. Level 2: +2. Level 3: +4."
+          description: "+1 mulligan every stage. Level 2: +2. Level 3: +3."
         },
         {
           id: "yellowPoints",
@@ -2363,13 +2365,13 @@
           id: "questRefreshes",
           icon: "♻️",
           title: "Reward Refresh",
-          description: "+1 free refresh on every quest reward screen. Level 2: +2. Level 3: +4."
+          description: "+1 free refresh on every quest reward screen. Level 2: +2. Level 3: +3."
         },
         {
           id: "questPoints",
           icon: "🏅",
           title: "Quest Value",
-          description: "Every completed quest pays +10 points. Level 2: +20. Level 3: +40."
+          description: "Every completed quest pays +10 points. Level 2: +20. Level 3: +30."
         },
         {
           id: "questReroll",
@@ -3314,7 +3316,7 @@
     const notes = [];
     // 10, 20, then 35 at level 3 (the power registry, cuddle-skill-tree.js).
     const verse = Math.max(0, Math.min(3, Math.floor(Number(state.cuddleBonuses.storybookStart || 0))));
-    const openingPoints = [0, 10, 20, 40][verse]
+    const openingPoints = [0, 10, 16, 30][verse]
       + (cuddleV3HasSynergy(this, "illustratedStart") ? 5 : 0);
     if (openingPoints > 0) {
       state.score += openingPoints;
@@ -3480,9 +3482,9 @@
         state.upgrades.questPoints = Number(state.upgrades.questPoints || 0) + QUEST_POINTS_PER_PICK;
         return { ok: true };
       case "questReroll":
-        // A one-time power: recorded so it reads as taken (and maxed), and
-        // refilled to one reroll every stage (cuddle-powers.js).
-        state.upgrades.questReroll = 1;
+        // A level (up to 3), refilled to that many free rerolls every stage
+        // (cuddle-powers.js).
+        state.upgrades.questReroll = Math.min(3, Number(state.upgrades.questReroll || 0) + 1);
         this._applyRewardEffect("questReroll");
         return { ok: true };
       default:
@@ -3861,35 +3863,35 @@
       key: "handSizeBoost",
       icon: "H+",
       title: "Bigger Hand",
-      description: "Hold 1 more consonant. Level 2: 2 more. Level 3: 4 more."
+      description: "Hold 1 more consonant. Level 2: 2 more. Level 3: 3 more."
     },
     {
       id: "mulliganValueBoost",
       key: "mulliganValueBoost",
       icon: "M+",
       title: "Mulligan Dividend",
-      description: "Each unused mulligan pays 3 more points when you solve (4 instead of 1). Level 2: 6 more (7). Level 3: 12 more (13)."
+      description: "Each unused mulligan pays 3 more points when you solve (4 instead of 1). Level 2: 6 more (7). Level 3: 9 more (10)."
     },
     {
       id: "earlySolveBoost",
       key: "earlySolveBoost",
       icon: "E+",
       title: "Early Finish",
-      description: "Each spare guess pays 5 more points. Level 2: 10 more. Level 3: 25 more."
+      description: "Each spare guess pays 5 more points. Level 2: 10 more. Level 3: 20 more."
     },
     {
       id: "colourTrade",
       key: "colourTrade",
       icon: "G+",
       title: "Colour Surge",
-      description: "Green tiles pay 0.5 more points. Level 2: 1 more. Level 3: 2 more."
+      description: "Green tiles pay 0.5 more points. Level 2: 1 more. Level 3: 1.5 more."
     },
     {
       id: "greyscale",
       key: "greyscale",
       icon: "⬛",
       title: "Greyscale",
-      description: "Grey tiles pay 1 point. Level 2: 2 points. Level 3: 4 points."
+      description: "Grey tiles pay 1 point. Level 2: 2 points. Level 3: 3 points."
     }
   ]);
   const customUpgradeIds = new Set(customUpgradeDefinitions.map(item => item.id));
@@ -4090,19 +4092,18 @@
         upgrades.handSizeBonus += 1;
         break;
       case "colourTrade": {
-        // +0.5 a green, then 1, then 2 at level 3 (the bigger third step).
+        // +0.5 a green, then 1, then 1.5: an even step each level.
         // A row's colour points are rounded down (see submitDraft).
-        upgrades.greenOnlyPoints += finiteNumber(state.balanceRewardCounts?.colourTrade) >= 2 ? 1 : 0.5;
+        upgrades.greenOnlyPoints += 0.5;
         break;
       }
       case "greyscale": {
-        // Greys only: 1, 2, then 4 a grey -- the Eliminator's engine, with
-        // the usual bigger third step.
-        upgrades.greyPoints += finiteNumber(state.balanceRewardCounts?.greyscale) >= 2 ? 2 : 1;
+        // Greys only: 1, 2, then 3 a grey -- the Eliminator's engine.
+        upgrades.greyPoints += 1;
         break;
       }
       case "mulliganValueBoost":
-        // 3, 6, then 12 at level 3 (cuddle-powers.js adds the extra).
+        // 3, 6, then 9.
         upgrades.mulliganPointBonus += 3;
         break;
       case "earlySolveBoost":
@@ -4134,20 +4135,28 @@
 
   // Refreshing a reward screen costs $3, then $5, $7... (2 more each time,
   // reset every screen). Haggler (cuddle-rebalance-v5.js) makes it $0, $1,
-  // then $3, $5, $7...
-  prototype.hasHaggler = function hasHaggler() {
+  // then $3, $5, $7...; level 2: $0, $0, $1, $3...; level 3: $0, $0, then
+  // $1 each.
+  prototype.hagglerLevel = function hagglerLevel() {
     try {
-      return Number(window.CuddleRebalanceV5?.upgradeLevel?.(this, "umtHaggler")) > 0;
+      return Math.max(0, Number(window.CuddleRebalanceV5?.upgradeLevel?.(this, "umtHaggler")) || 0);
     } catch (_error) {
-      return false;
+      return 0;
     }
+  };
+
+  prototype.hasHaggler = function hasHaggler() {
+    return this.hagglerLevel() > 0;
   };
 
   prototype.getUpgradeRefreshCost = function getUpgradeRefreshCost() {
     if (this.isWaystoneUpgrade()) return null;
     const state = ensureBalanceState(this);
     const used = state ? state.upgradeRefreshesUsed : 0;
-    if (this.hasHaggler()) return used === 0 ? 0 : used * 2 - 1;
+    const haggler = this.hagglerLevel();
+    if (haggler >= 3) return used < 2 ? 0 : 1;
+    if (haggler === 2) return used < 2 ? 0 : (used - 1) * 2 - 1;
+    if (haggler === 1) return used === 0 ? 0 : used * 2 - 1;
     return 3 + used * 2;
   };
 
@@ -4690,6 +4699,8 @@
       this.save();
       result = { ok: true };
     } else if (choice?.id === "greenCount") {
+      // Level 2: yellow tiles show their counts too.
+      mega.greenCountLevel = Math.min(2, Math.max(Number(mega.greenCountLevel) || 0, mega.greenCountUnlocked ? 1 : 0) + 1);
       mega.greenCountUnlocked = true;
       this.state.lastMessage = `${choice.title} acquired.`;
       this.state.upgradeChoices = [];
@@ -4787,7 +4798,7 @@
         description: `Remove ${list} from the deck and from every future secret. ${verb} drawn from the ten least-common eligible consonants.`
       });
     }
-    if (!mega.greenCountUnlocked) {
+    if ((Number(mega.greenCountLevel) || (mega.greenCountUnlocked ? 1 : 0)) < 2) {
       base.push({
         id: "greenCount",
         key: "greenCount",
@@ -4816,7 +4827,9 @@
     const mega = ensureMega(this);
     let message;
     if (rewardId === "cullRare") {
-      const letters = this._removalCandidates(3);
+      // Level 2: two more.
+      mega.deepCulls = Number(mega.deepCulls || 0) + 1;
+      const letters = this._removalCandidates(mega.deepCulls >= 2 ? 2 : 3);
       message = letters.length
         ? (() => {
           this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
@@ -5604,8 +5617,10 @@
 
     if (mega.greenCountUnlocked && entry && Array.isArray(entry.feedback) && typeof entry.word === "string") {
       const counts = {};
+      const countYellows = Number(mega.greenCountLevel) >= 2;
+      const shownTiles = Array.isArray(entry.shownFeedback) && entry.shownFeedback.length ? entry.shownFeedback : entry.feedback;
       entry.feedback.forEach((tile, index) => {
-        if (tile !== "green") return;
+        if (tile !== "green" && !(countYellows && tile === "yellow" && shownTiles[index] === "yellow")) return;
         const letter = entry.word[index];
         counts[letter] = secretForThisGuess.split("").filter(l => l === letter).length;
       });

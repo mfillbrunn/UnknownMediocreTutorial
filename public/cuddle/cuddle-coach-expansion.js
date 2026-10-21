@@ -635,7 +635,10 @@
       return { ok: false, error: "Unlock a Guesser Hint first." };
     }
     if (upgradeId === "coachPossibleAnswers") {
-      if (coach.possibleAnswersUnlocked) return { ok: false, error: "Secrets Remaining is already unlocked." };
+      // Level 2 lists the answers once 5 or fewer are left.
+      var answersLevel = integer(coach.possibleAnswersLevel, coach.possibleAnswersUnlocked ? 1 : 0);
+      if (answersLevel >= 2) return { ok: false, error: "Secrets Counter is already fully upgraded." };
+      coach.possibleAnswersLevel = answersLevel + 1;
       coach.possibleAnswersUnlocked = true;
     } else if (upgradeId === "coachHint") {
       if (coach.hintsPerRound >= 4) return { ok: false, error: "Hints are already fully upgraded." };
@@ -675,7 +678,7 @@
   }
 
   function upgradeIsMaxed(coach, definition) {
-    if (definition.id === "coachPossibleAnswers") return coach.possibleAnswersUnlocked;
+    if (definition.id === "coachPossibleAnswers") return integer(coach.possibleAnswersLevel, coach.possibleAnswersUnlocked ? 1 : 0) >= 2;
     if (definition.id === "coachHint") return coach.hintsPerRound >= definition.max;
     if (definition.id === "coachEarlierHint") return coach.hintStartRound <= 1;
     if (definition.id === "coachMeterThreshold") return coach.cuddleThresholdStacks >= definition.max;
@@ -1139,8 +1142,12 @@
     if (!game.state.pendingRoundEnd || game.state.pendingRoundEnd.type !== "outOfGuesses") return false;
     recordGreyTilesAndGrant(game);
     if (!game.state.pendingRoundEnd) return true;
-    if (hasBossReward(game, "secondCup") && !coach.secondCupUsed) {
-      coach.secondCupUsed = true;
+    // One rescue a run per level (an old save's used flag counts as one).
+    var cups = Math.max(1, integer(coach.secondCupLevel, 0));
+    var cupsUsed = integer(coach.secondCupUses, coach.secondCupUsed ? 1 : 0);
+    if (hasBossReward(game, "secondCup") && cupsUsed < cups) {
+      coach.secondCupUses = cupsUsed + 1;
+      coach.secondCupUsed = coach.secondCupUses >= cups;
       game.state.maxGuesses = Math.max(1, integer(game.state.maxGuesses, 6) + 1);
       // A strict stage's limit is the world's window, not the board's rows,
       // so the rescue row has to raise that limit too (see _hardGuessLimit
@@ -1385,7 +1392,10 @@
     if (!reward) return originalApplyBossReward.apply(this, arguments);
     var coach = ensureCoach(this);
     if (!coach.newBossRewardsOwned.includes(rewardId)) coach.newBossRewardsOwned.push(rewardId);
-    if (rewardId === "secondCup") coach.secondCupUsed = false;
+    if (rewardId === "secondCup") {
+      coach.secondCupLevel = Math.min(2, Math.max(1, integer(coach.secondCupLevel, 0) + 1));
+      coach.secondCupUsed = integer(coach.secondCupUses, 0) >= coach.secondCupLevel;
+    }
     return reward.title + " unlocked. " + reward.description;
   };
 
@@ -1576,8 +1586,13 @@
     var coach = ensureCoach(game);
     if (!coach || !coach.possibleAnswersUnlocked) return "";
     if (!game.state || game.state.status !== "playing") return "";
-    var count = getPossibleAnswers(game).length;
-    return "<span class=\"cuddle-secrets-remaining\">Secrets remaining: " + count.toLocaleString() + "</span>";
+    var answers = getPossibleAnswers(game);
+    var count = answers.length;
+    // Level 2: the answers themselves, once 5 or fewer are left.
+    var listed = integer(coach.possibleAnswersLevel, 1) >= 2 && count > 0 && count <= 5
+      ? ": " + answers.map(function upper(word) { return String(word).toUpperCase(); }).join(", ")
+      : "";
+    return "<span class=\"cuddle-secrets-remaining\">Secrets remaining: " + count.toLocaleString() + escapeHtml(listed) + "</span>";
   }
 
   function enhanceShop(game, coach) {

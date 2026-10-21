@@ -96,13 +96,11 @@
   // The extra a power gets, once, on reaching level 3 -- on top of what
   // its third pick already added. (Registry levels in brackets.)
   var THIRD_LEVEL = {
-    extraMulligans: function (state) { bump(state.upgrades, "extraMulligans", 1); }, // 1, 2, 4 mulligans
-    questRefreshes: function (state) { bump(state.upgrades, "questRefreshes", 1); }, // 1, 2, 4 refreshes
-    questPoints: function (state) { bump(state.upgrades, "questPoints", 10); }, // 10, 20, 40 points
+    // (Extra mulligans, reward refreshes and hand size now step evenly: 1, 2, 3.)
+    questPoints: function (state) { bump(state.upgrades, "questPoints", 0); }, // 10, 20, 30 points
     mulliganSize: function (state) { bump(state.upgrades, "mulliganSize", 3); }, // 4, 5, whole hand
-    handSizeBoost: function (state) { bump(state.upgrades, "handSizeBonus", 1); }, // 1, 2, 4 consonants
-    mulliganValueBoost: function (state) { bump(state.upgrades, "mulliganPointBonus", 6); }, // 3, 6, 12
-    earlySolveBoost: function (state) { bump(state.upgrades, "earlyRoundPoint", 10); }, // 5, 10, 25
+    mulliganValueBoost: function (state) { bump(state.upgrades, "mulliganPointBonus", 0); }, // 3, 6, 9
+    earlySolveBoost: function (state) { bump(state.upgrades, "earlyRoundPoint", 5); }, // 5, 10, 20
     "surprise-assignment": function (_state, game) { // 1, 2, 4 quests
       var economy = window.CuddleEconomyRarityV8;
       if (economy && typeof economy.applyEffect === "function") economy.applyEffect("random-quest", game);
@@ -250,10 +248,10 @@
     return feedback.filter(function is(value) { return value === colour; }).length;
   }
 
-  var MOMENTUM = [0, 4, 8, 15];
-  var BIG_OPENER = [0, 5, 10, 20];
-  var LAST_STAND = [0, 25, 45, 100];
-  var PICKPOCKET = [0, 2, 4, 8];
+  var MOMENTUM = [0, 4, 7, 12];
+  var BIG_OPENER = [0, 5, 8, 15];
+  var LAST_STAND = [0, 25, 40, 75];
+  var PICKPOCKET = [0, 2, 3, 6];
 
   var baseSubmit = proto.submitDraft;
   proto.submitDraft = function submitDraftWithPowers() {
@@ -333,16 +331,31 @@
     };
   }
 
-  // Bold Opener: every stage's first guess can be any five letters.
+  // Bold Opener: every stage's first guess can be any five letters (level
+  // 2: the first two -- the guess spends the free-form word, so it's given
+  // again after the first).
+  var baseSubmitBold = proto.submitDraft;
+  proto.submitDraft = function submitDraftWithBoldOpener() {
+    var before = this.state && Array.isArray(this.state.history) ? this.state.history.length : 0;
+    var result = baseSubmitBold.apply(this, arguments);
+    var state = this.state;
+    if (result && result.ok !== false && state && !inDuel(state) && before === 0
+        && Array.isArray(state.history) && state.history.length === 1 && state.status === "playing"
+        && levelOf(this, "boldOpener") >= 2) {
+      state.buffs = Object.assign({}, state.buffs || {}, { sillyWord: Math.max(1, num(state.buffs && state.buffs.sillyWord)) });
+    }
+    return result;
+  };
   var baseBegin = proto._beginRound;
   proto._beginRound = function beginRoundWithPowers() {
     var result = baseBegin.apply(this, arguments);
     var state = this.state;
     if (state && !inDuel(state)) {
-      // Second Guess Quest: one free quest reroll every stage.
-      if (levelOf(this, "questReroll") > 0) {
+      // Second Guess Quest: a free quest reroll every stage per level.
+      var rerolls = Math.min(3, levelOf(this, "questReroll"));
+      if (rerolls > 0) {
         var mega = state.megaState || (state.megaState = {});
-        mega.questRerollCharges = Math.max(1, num(mega.questRerollCharges));
+        mega.questRerollCharges = Math.max(rerolls, num(mega.questRerollCharges));
       }
       if (levelOf(this, "boldOpener") > 0) {
         state.buffs = Object.assign({}, state.buffs || {}, { sillyWord: Math.max(1, num(state.buffs && state.buffs.sillyWord)) });
