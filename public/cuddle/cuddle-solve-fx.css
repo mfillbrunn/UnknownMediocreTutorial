@@ -40,9 +40,10 @@
   text-transform: uppercase;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
 }
-/* Face down until flat, then green; it swells and settles. */
+/* Face down until flat, then green; it swells and settles. No filter and
+   no fill past the end, so the letters stay sharp on phones. */
 .umt-sf-tile.is-turning {
-  animation: umt-sf-turn 560ms ease-out both;
+  animation: umt-sf-turn 560ms ease-out backwards;
 }
 .umt-sf.is-still .umt-sf-tile,
 .umt-sf-tile.is-turning {
@@ -53,14 +54,14 @@
   0% { scale: 1 1; border-color: rgba(213, 166, 255, 0.55); background: #2a2438; }
   23% { scale: 1 0.02; border-color: rgba(213, 166, 255, 0.55); background: #2a2438; }
   23.1% { scale: 1 0.02; }
-  52% { scale: 1.18 1.18; filter: brightness(1.25); }
+  52% { scale: 1.1 1.1; }
   76% { scale: 0.96 0.96; }
-  100% { scale: 1 1; filter: brightness(1); }
+  100% { scale: 1 1; }
 }
 
 /* The win: a bounce wave along the row, with a glow. */
 .umt-sf-row.is-winning .umt-sf-tile {
-  animation: umt-sf-hop 460ms cubic-bezier(0.3, 1.5, 0.5, 1) calc(var(--i) * 70ms) both;
+  animation: umt-sf-hop 460ms cubic-bezier(0.3, 1.5, 0.5, 1) calc(var(--i) * 70ms) backwards;
   box-shadow: 0 0 0 2px rgba(110, 200, 136, 0.35), 0 0 22px rgba(98, 217, 138, 0.55);
 }
 @keyframes umt-sf-hop {
