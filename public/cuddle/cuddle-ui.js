@@ -2541,7 +2541,11 @@
 
     const shell = root.querySelector(".cuddle-shell") || root;
     const toasts = cuddleV3ToastStack(state);
-    if (toasts) shell.insertAdjacentHTML("beforeend", toasts);
+    // The screen is updated in place (cuddle-morph.js), so last render's
+    // notices may still be here: a dismissed one stayed on screen.
+    const old = root.querySelector(".cuddle-v3-toast-stack");
+    if (old && (!toasts || old.outerHTML.replace(/\s+/g, " ") !== toasts.trim().replace(/\s+/g, " "))) old.remove();
+    if (toasts && !root.querySelector(".cuddle-v3-toast-stack")) shell.insertAdjacentHTML("beforeend", toasts);
     scheduleToastDismissals(state);
   }
 
