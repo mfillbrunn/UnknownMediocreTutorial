@@ -65,25 +65,25 @@
     Object.freeze({
       id: IDS.rainyDay, key: IDS.rainyDay, icon: "\uD83C\uDFE6",
       title: "Rainy Day Fund", name: "Rainy Day Fund",
-      description: "Every stage pays 5% interest on your wallet, up to $10. Level 2: 10%, up to $20. Level 3: 20%, up to $40.",
+      description: "Every stage pays 5% interest on your wallet, up to $10. Level 2: 8%, up to $16. Level 3: 15%, up to $30.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.encore, key: IDS.encore, icon: "\uD83C\uDFAC",
       title: "Encore", name: "Encore",
-      description: "Every third stage you solve pays a 30-point encore bonus. Level 2: 50 points. Level 3: 80 points.",
+      description: "Every third stage you solve pays a 30-point encore bonus. Level 2: 45 points. Level 3: 65 points.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.vowelBounty, key: IDS.vowelBounty, icon: "\uD83C\uDD70\uFE0F",
       title: "Vowel Bounty", name: "Vowel Bounty",
-      description: "Every vowel in a word you solve pays 5 points. Level 2: 10 points. Level 3: 20 points.",
+      description: "Every vowel in a word you solve pays 5 points. Level 2: 8 points. Level 3: 15 points.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.doubleDown, key: IDS.doubleDown, icon: "\uD83C\uDFB2",
       title: "Double Down", name: "Double Down",
-      description: "Each stage names a lucky guess, from the 3rd to the 7th. Solve the word on exactly that guess for +50 points, even if that's past your bonus window. Level 2: +80 points. Level 3: +120 points.",
+      description: "Each stage names a lucky guess, from the 3rd to the 7th. Solve the word on exactly that guess for +50 points, even if that's past your bonus window. Level 2: +70 points. Level 3: +100 points.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     // Insight rewards: clues about the answer at the start of a stage,
@@ -104,7 +104,7 @@
     Object.freeze({
       id: IDS.treasureHunter, key: IDS.treasureHunter, icon: "\uD83D\uDC8E",
       title: "Treasure Hunter", name: "Treasure Hunter",
-      description: "About one stage in three hides a treasure word: solve it before guess 5 (4 in world 2, 3 in world 3) for +$20. Level 2: +$30. Level 3: +$50, in every other stage.",
+      description: "About one stage in three hides a treasure word: solve it before guess 5 (4 in world 2, 3 in world 3) for +$20. Level 2: +$25. Level 3: +$40, in every other stage.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
@@ -3157,8 +3157,8 @@
     // 5% up to $10, 10% up to $20, then 20% up to $40 at level 3.
     const tier = Math.max(0, Math.min(3, Math.floor(level)));
     // Gold II raises the cap by $10.
-    const cap = [0, 10, 20, 40][tier] + (Number(window.CuddleSchools?.perk?.(game, "interestCap")) || 0);
-    const interest = Math.min(cap, Math.floor(balance * [0, 0.05, 0.1, 0.2][tier]));
+    const cap = [0, 10, 16, 30][tier] + (Number(window.CuddleSchools?.perk?.(game, "interestCap")) || 0);
+    const interest = Math.min(cap, Math.floor(balance * [0, 0.05, 0.08, 0.15][tier]));
     if (interest <= 0) return;
     state.cuddleMoney = Math.max(0, asNumber(state.cuddleMoney, 0)) + interest;
     appendNotice(game, `Rainy Day Fund paid $${interest} in interest.`);
@@ -3287,7 +3287,7 @@
   // doesn't pay out (a boss, a no-money stop).
   // +50 a lucky solve; Level 2: +80; Level 3: +120.
   function doubleDownPoints(game) {
-    return [50, 80, 120][Math.max(1, Math.min(3, upgradeLevel(game, IDS.doubleDown))) - 1];
+    return [50, 70, 100][Math.max(1, Math.min(3, upgradeLevel(game, IDS.doubleDown))) - 1];
   }
   const DOUBLE_DOWN_FIRST = 3;
   const DOUBLE_DOWN_LAST = 7;
@@ -3319,8 +3319,8 @@
     if (vowelLevel > 0) {
       const vowels = secretVowelCount(game);
       if (vowels > 0) {
-        // 5, 10, then 20 a vowel at level 3.
-        const perVowel = [0, 5, 10, 20][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
+        // 5, 8, then 15 a vowel at level 3.
+        const perVowel = [0, 5, 8, 15][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
         addScoreBonus(game, vowels * perVowel, "umtVowelBounty",
           `${vowels} vowel${vowels === 1 ? "" : "s"} in the secret`);
       }
@@ -3328,7 +3328,7 @@
 
     const encoreLevel = upgradeLevel(game, IDS.encore);
     if (encoreLevel > 0) {
-      const ENCORE_POINTS = [30, 50, 80][Math.min(3, encoreLevel) - 1];
+      const ENCORE_POINTS = [30, 45, 65][Math.min(3, encoreLevel) - 1];
       custom.encoreSolves = asInteger(custom.encoreSolves, 0) + 1;
       if (custom.encoreSolves % 3 === 0) {
         addScoreBonus(game, ENCORE_POINTS, "umtEncore", "Every third stage solved");
@@ -4028,7 +4028,7 @@
     umtConsonantSweep: { title: "Process of Elimination", description: "After every guess, boss fights included, one more consonant that isn't in the answer is ruled out and shown: one after your first guess, a second after your second, and so on.", shape: "eliminate" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
     compass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
-    umtDoubleDown: { title: "Double Down", description: "Your lucky guess this stage: solve the word on exactly this guess for its bonus (+50, +80 or +120 by level).", shape: "die" },
+    umtDoubleDown: { title: "Double Down", description: "Your lucky guess this stage: solve the word on exactly this guess for its bonus (+50, +70 or +100 by level).", shape: "die" },
     "alphabet-compass": { title: "Alphabet Compass", description: "After every guess, some of its tiles show whether the secret's letter there comes earlier or later in the alphabet.", shape: "alphaCompass" }
   });
 

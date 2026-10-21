@@ -1509,14 +1509,15 @@
   function skipRow() {
     if (typeof game.canSkipUpgrade !== "function" || !game.canSkipUpgrade()) return "";
     const S = window.CuddleStrategies;
-    const points = S ? S.SKIP_POINTS : 40;
-    const money = S ? S.SKIP_MONEY : 15;
+    // A level-up screen's skip pays less than a new badge's.
+    const pay = S && typeof S.skipPay === "function" ? S.skipPay(game) : { points: 40, money: 15, vow: false };
+    const points = pay.points;
+    const money = pay.money;
     // Clean Slate (cuddle-new-badges.js): a skip also levels up a badge.
     const slate = window.CuddleNewBadges && window.CuddleNewBadges.hasCleanSlate && window.CuddleNewBadges.hasCleanSlate(game)
       ? `<small>Clean Slate: skipping also levels up ${window.CuddleNewBadges.cleanSlateCount && window.CuddleNewBadges.cleanSlateCount(game) >= 2 ? "two" : "one"} of your badges.</small>` : "";
-    if (S && S.hasMonksVow(game)) {
-      const vow = typeof S.vowPay === "function" ? S.vowPay(game) : [points, money];
-      return `<div class="umt-skip-row"><button class="cuddle-btn cuddle-btn-ghost umt-skip-btn" data-action="skip-upgrade" data-skip-kind="both">Skip: +${vow[0]} points and +$${vow[1]}</button><small>Monk's Vow: a skip pays both.</small>${slate}</div>`;
+    if (pay.vow) {
+      return `<div class="umt-skip-row"><button class="cuddle-btn cuddle-btn-ghost umt-skip-btn" data-action="skip-upgrade" data-skip-kind="both">Skip: +${points} points and +$${money}</button><small>Monk's Vow: a skip pays both.</small>${slate}</div>`;
     }
     return `<div class="umt-skip-row">
             <button class="cuddle-btn cuddle-btn-ghost umt-skip-btn" data-action="skip-upgrade" data-skip-kind="points">Skip: +${points} points</button>

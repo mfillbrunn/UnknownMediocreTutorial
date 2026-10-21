@@ -52,7 +52,7 @@
   // multiplied by], fewest first.
   var ASCETIC_TIERS = [[5, 2], [10, 1.5]];
   // Black Market's price by its level.
-  var MARKET_PRICES = [50, 40, 30];
+  var MARKET_PRICES = [50, 45, 40];
   function marketPrice(game) {
     return MARKET_PRICES[Math.max(1, Math.min(3, levelOf(game, "blackMarket"))) - 1];
   }

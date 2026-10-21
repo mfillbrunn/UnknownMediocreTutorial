@@ -57,7 +57,7 @@
   var DEAD_GLYPH = "·";
   var LUCKY_GLYPH = "♣";
   var SWAMP_DEAD = 3;
-  var LUCKY_POINTS = [0, 5, 10, 20];
+  var LUCKY_POINTS = [0, 5, 8, 15];
   // Tiles dealt by level: 1, 2, then 4 (the third pick is the big one).
   var TILES_BY_LEVEL = [0, 1, 2, 4];
   var LUCKY_MULLIGAN_POINTS = 2;

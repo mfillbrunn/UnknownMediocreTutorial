@@ -2347,7 +2347,7 @@
           id: "extraMulligans",
           icon: "🔄",
           title: "Second Thoughts",
-          description: "+1 mulligan every stage. Level 2: +2. Level 3: +4."
+          description: "+1 mulligan every stage. Level 2: +2. Level 3: +3."
         },
         {
           id: "yellowPoints",
@@ -2365,13 +2365,13 @@
           id: "questRefreshes",
           icon: "♻️",
           title: "Reward Refresh",
-          description: "+1 free refresh on every quest reward screen. Level 2: +2. Level 3: +4."
+          description: "+1 free refresh on every quest reward screen. Level 2: +2. Level 3: +3."
         },
         {
           id: "questPoints",
           icon: "🏅",
           title: "Quest Value",
-          description: "Every completed quest pays +10 points. Level 2: +20. Level 3: +40."
+          description: "Every completed quest pays +10 points. Level 2: +20. Level 3: +30."
         },
         {
           id: "questReroll",
@@ -3316,7 +3316,7 @@
     const notes = [];
     // 10, 20, then 35 at level 3 (the power registry, cuddle-skill-tree.js).
     const verse = Math.max(0, Math.min(3, Math.floor(Number(state.cuddleBonuses.storybookStart || 0))));
-    const openingPoints = [0, 10, 20, 40][verse]
+    const openingPoints = [0, 10, 16, 30][verse]
       + (cuddleV3HasSynergy(this, "illustratedStart") ? 5 : 0);
     if (openingPoints > 0) {
       state.score += openingPoints;
@@ -3863,35 +3863,35 @@
       key: "handSizeBoost",
       icon: "H+",
       title: "Bigger Hand",
-      description: "Hold 1 more consonant. Level 2: 2 more. Level 3: 4 more."
+      description: "Hold 1 more consonant. Level 2: 2 more. Level 3: 3 more."
     },
     {
       id: "mulliganValueBoost",
       key: "mulliganValueBoost",
       icon: "M+",
       title: "Mulligan Dividend",
-      description: "Each unused mulligan pays 3 more points when you solve (4 instead of 1). Level 2: 6 more (7). Level 3: 12 more (13)."
+      description: "Each unused mulligan pays 3 more points when you solve (4 instead of 1). Level 2: 6 more (7). Level 3: 9 more (10)."
     },
     {
       id: "earlySolveBoost",
       key: "earlySolveBoost",
       icon: "E+",
       title: "Early Finish",
-      description: "Each spare guess pays 5 more points. Level 2: 10 more. Level 3: 25 more."
+      description: "Each spare guess pays 5 more points. Level 2: 10 more. Level 3: 20 more."
     },
     {
       id: "colourTrade",
       key: "colourTrade",
       icon: "G+",
       title: "Colour Surge",
-      description: "Green tiles pay 0.5 more points. Level 2: 1 more. Level 3: 2 more."
+      description: "Green tiles pay 0.5 more points. Level 2: 1 more. Level 3: 1.5 more."
     },
     {
       id: "greyscale",
       key: "greyscale",
       icon: "⬛",
       title: "Greyscale",
-      description: "Grey tiles pay 1 point. Level 2: 2 points. Level 3: 4 points."
+      description: "Grey tiles pay 1 point. Level 2: 2 points. Level 3: 3 points."
     }
   ]);
   const customUpgradeIds = new Set(customUpgradeDefinitions.map(item => item.id));
@@ -4092,19 +4092,18 @@
         upgrades.handSizeBonus += 1;
         break;
       case "colourTrade": {
-        // +0.5 a green, then 1, then 2 at level 3 (the bigger third step).
+        // +0.5 a green, then 1, then 1.5: an even step each level.
         // A row's colour points are rounded down (see submitDraft).
-        upgrades.greenOnlyPoints += finiteNumber(state.balanceRewardCounts?.colourTrade) >= 2 ? 1 : 0.5;
+        upgrades.greenOnlyPoints += 0.5;
         break;
       }
       case "greyscale": {
-        // Greys only: 1, 2, then 4 a grey -- the Eliminator's engine, with
-        // the usual bigger third step.
-        upgrades.greyPoints += finiteNumber(state.balanceRewardCounts?.greyscale) >= 2 ? 2 : 1;
+        // Greys only: 1, 2, then 3 a grey -- the Eliminator's engine.
+        upgrades.greyPoints += 1;
         break;
       }
       case "mulliganValueBoost":
-        // 3, 6, then 12 at level 3 (cuddle-powers.js adds the extra).
+        // 3, 6, then 9.
         upgrades.mulliganPointBonus += 3;
         break;
       case "earlySolveBoost":

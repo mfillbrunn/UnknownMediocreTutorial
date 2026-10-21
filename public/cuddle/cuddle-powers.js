@@ -96,13 +96,11 @@
   // The extra a power gets, once, on reaching level 3 -- on top of what
   // its third pick already added. (Registry levels in brackets.)
   var THIRD_LEVEL = {
-    extraMulligans: function (state) { bump(state.upgrades, "extraMulligans", 1); }, // 1, 2, 4 mulligans
-    questRefreshes: function (state) { bump(state.upgrades, "questRefreshes", 1); }, // 1, 2, 4 refreshes
-    questPoints: function (state) { bump(state.upgrades, "questPoints", 10); }, // 10, 20, 40 points
+    // (Extra mulligans, reward refreshes and hand size now step evenly: 1, 2, 3.)
+    questPoints: function (state) { bump(state.upgrades, "questPoints", 0); }, // 10, 20, 30 points
     mulliganSize: function (state) { bump(state.upgrades, "mulliganSize", 3); }, // 4, 5, whole hand
-    handSizeBoost: function (state) { bump(state.upgrades, "handSizeBonus", 1); }, // 1, 2, 4 consonants
-    mulliganValueBoost: function (state) { bump(state.upgrades, "mulliganPointBonus", 6); }, // 3, 6, 12
-    earlySolveBoost: function (state) { bump(state.upgrades, "earlyRoundPoint", 10); }, // 5, 10, 25
+    mulliganValueBoost: function (state) { bump(state.upgrades, "mulliganPointBonus", 0); }, // 3, 6, 9
+    earlySolveBoost: function (state) { bump(state.upgrades, "earlyRoundPoint", 5); }, // 5, 10, 20
     "surprise-assignment": function (_state, game) { // 1, 2, 4 quests
       var economy = window.CuddleEconomyRarityV8;
       if (economy && typeof economy.applyEffect === "function") economy.applyEffect("random-quest", game);
@@ -250,10 +248,10 @@
     return feedback.filter(function is(value) { return value === colour; }).length;
   }
 
-  var MOMENTUM = [0, 4, 8, 15];
-  var BIG_OPENER = [0, 5, 10, 20];
-  var LAST_STAND = [0, 25, 45, 100];
-  var PICKPOCKET = [0, 2, 4, 8];
+  var MOMENTUM = [0, 4, 7, 12];
+  var BIG_OPENER = [0, 5, 8, 15];
+  var LAST_STAND = [0, 25, 40, 75];
+  var PICKPOCKET = [0, 2, 3, 6];
 
   var baseSubmit = proto.submitDraft;
   proto.submitDraft = function submitDraftWithPowers() {
