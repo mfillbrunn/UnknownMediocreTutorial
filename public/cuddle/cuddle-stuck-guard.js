@@ -74,7 +74,9 @@
         }
         state.draft = ids;
         var verdict = game.canSubmit();
-        if (verdict && verdict.ok) found = true;
+        // A word that only breaks a Medium challenge (at a cost) does not
+        // count: with nothing that fits, the rule is lifted for free.
+        if (verdict && verdict.ok && !verdict.ruleBreak) found = true;
       };
       if (typeof list.forEach === "function") list.forEach(check);
     } catch (_error) {
