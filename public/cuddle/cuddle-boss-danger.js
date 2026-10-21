@@ -7,8 +7,9 @@
  *   short    the screen's edges pulse red, with "N pts short" on a pill
  *   reached  a green pill, "Boss target reached"
  * On a stage the pill would cover the hand, so there the header's
- * "Next boss" line flashes red (or turns green) instead. In the shop the
- * red edges would run over its header, so it gets the pill alone.
+ * "Next boss" line flashes red (or turns green) instead. In the shop a
+ * floating pill sat on top of the wares as the page scrolled, so there
+ * the verdict is a line in the page itself, under the wallet.
  * The points counted are the banked ones, as the header shows and the
  * boss gate itself checks.
  *
@@ -77,6 +78,25 @@
 
   var view = null;
 
+  // The shop's own line (in the page, under the shopkeeper and wallet).
+  function syncShopLine(found, state, text) {
+    var page = document.querySelector("#cuddleRoot .umt-shop-page");
+    var line = page && page.querySelector(".umt-bd-shop");
+    if (!found || !found.inShop || !page) {
+      if (line) line.remove();
+      return;
+    }
+    if (!line) {
+      line = document.createElement("p");
+      line.className = "umt-bd-shop";
+      line.setAttribute("role", "status");
+      var hero = page.querySelector(".umt-shop-hero");
+      page.insertBefore(line, hero ? hero.nextSibling : page.firstChild);
+    }
+    if (line.dataset.state !== state) line.dataset.state = state;
+    if (line.innerHTML !== text) line.innerHTML = text;
+  }
+
   function sync() {
     var found = verdict();
     var root = document.documentElement;
@@ -85,6 +105,7 @@
     if (!found) {
       if (view) view.remove();
       view = null;
+      syncShopLine(null);
       return;
     }
     if (!view || !view.isConnected) {
@@ -104,6 +125,7 @@
     if (view.dataset.where !== where) view.dataset.where = where;
     var pill = view.querySelector(".umt-bd-pill");
     if (pill.innerHTML !== text) pill.innerHTML = text;
+    syncShopLine(found, state, text);
   }
 
   var pending = false;
@@ -124,7 +146,11 @@
     var screen = document.getElementById("cuddleScreen") || document.body;
     new MutationObserver(function onChange(records) {
       // Ignore our own pill updates.
-      if (view && records.every(function own(record) { return view.contains(record.target); })) return;
+      if (records.every(function own(record) {
+        var target = record.target;
+        return (view && view.contains(target)) || (target.closest && target.closest(".umt-bd-shop"))
+          || (target.nodeType === 3 && target.parentNode && target.parentNode.closest && target.parentNode.closest(".umt-bd-shop"));
+      })) return;
       schedule();
     }).observe(screen, { childList: true, subtree: true, characterData: true });
     window.addEventListener("cuddle:campaign-update", schedule);
