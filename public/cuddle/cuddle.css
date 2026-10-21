@@ -3309,6 +3309,27 @@
 /* Alphabet Compass (cuddle-compass.js): a small pill on the tile's bottom
    edge pointing toward the secret's letter in that spot -- clear of the
    special-tile payout badge in the top corner. */
+/* Precise Green: how many times the tile's letter is in the answer, a
+   small number in the tile's top-left corner (a special square's payout
+   badge has the other one). */
+#cuddleScreen .umt-count-mark {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  z-index: 2;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: rgba(16, 14, 28, 0.78);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 900;
+  line-height: 15px;
+  text-align: center;
+  pointer-events: none;
+}
+
 .umt-compass-mark {
   position: absolute;
   left: 50%;
