@@ -318,7 +318,7 @@
     var mode = defaultModeState(false);
     // A run starts with a free Upgrade Pack (cuddle-packs.js) instead of a
     // pick of three: the starter (three specials) on Easy and Medium, a
-    // Medium pack (two Commons and a special) on Hard.
+    // Medium pack (a Common and a special) on Hard.
     mode.starterRewardPending = false;
     mode.starterRewardClaimed = true;
     mode.starterRewardChoices = [];

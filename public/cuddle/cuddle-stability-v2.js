@@ -709,7 +709,13 @@
     });
   }
 
-  function makeImg(id, className = "umt-cuddle-svg-icon", title = "") {
+  // A badge's own emoji drawn as an image, for one with no icon file.
+  function emojiImage(emoji) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><text x="32" y="34" font-size="44" text-anchor="middle" dominant-baseline="middle">${emoji}</text></svg>`;
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  }
+
+  function makeImg(id, className = "umt-cuddle-svg-icon", title = "", emoji = "") {
     const img = document.createElement("img");
     img.className = className;
     img.src = iconUrl(id);
@@ -717,20 +723,22 @@
     img.setAttribute("aria-hidden", "true");
     if (title) img.title = title;
     img.addEventListener("error", () => {
+      // No file for it: its emoji (newer badges), else the gift.
+      if (emoji && /\p{Extended_Pictographic}/u.test(emoji)) { img.src = emojiImage(emoji); return; }
       const fallback = `cuddle/icons/${FALLBACK_ICON}`;
       if (!img.src.endsWith(`/${FALLBACK_ICON}`)) img.src = fallback;
     }, { once: true });
     return img;
   }
 
-  function replaceIconContents(container, id, title = "") {
+  function replaceIconContents(container, id, title = "", emoji = "") {
     if (!container || !id) return;
     const key = String(id);
     const existing = container.querySelector(":scope > img.umt-cuddle-svg-icon");
     if (container.dataset.umtStableIconKey === key && existing) return;
     container.dataset.umtIconKey = key;
     container.dataset.umtStableIconKey = key;
-    container.replaceChildren(makeImg(key, "umt-cuddle-svg-icon", title));
+    container.replaceChildren(makeImg(key, "umt-cuddle-svg-icon", title, emoji || String(container.textContent || "").trim()));
   }
 
   function definitionForChoice(game, button) {
@@ -760,7 +768,7 @@
       if (button.classList.contains("umt-duel-reward")) return;
       const definition = definitionForChoice(game, button);
       const icon = button.querySelector(":scope > .cuddle-choice-icon, :scope > .cuddle-money-choice-icon");
-      if (icon) replaceIconContents(icon, definition.id, definition.option?.title || definition.id);
+      if (icon) replaceIconContents(icon, definition.id, definition.option?.title || definition.id, definition.option?.icon || "");
       const reward = definition.option?.reward;
       if (reward) {
         const heading = button.querySelector(".cuddle-boss-reward > b, .cuddle-boss-reward > strong");

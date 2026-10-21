@@ -1551,6 +1551,9 @@
         : waystone
           ? "FREE UPGRADE"
           : `ROUND ${summary?.round || state.round} CLEARED`;
+    // The after-stage pick takes turns (cuddle-reward-rhythm.js): a level
+    // for a badge you hold, then a new badge.
+    const rhythm = window.CuddleRewardRhythm ? window.CuddleRewardRhythm.shown(state) : null;
     const heading = eventPick
       ? `Choose ${/^[AEIOU]/.test(eventTier) ? "an" : "a"} ${eventTier} upgrade`
       : legendary
@@ -1559,14 +1562,22 @@
       ? "Choose a bonus upgrade"
       : startingRewards
         ? "Choose a starting reward"
-        : "Improve the run";
+        : rhythm === "level"
+          ? "Level up a badge"
+          : rhythm === "new"
+            ? "Choose a new badge"
+            : "Improve the run";
     // The solved word now shows on the cash-out just before this screen,
     // so an ordinary round's reward screen goes straight to the choices.
     const body = milestone
       ? `Your total score reached ${state.upgradeMilestone}. This choice is in addition to the round reward.`
       : startingRewards
         ? "Pick a reward to begin the run with."
-        : "";
+        : rhythm === "level"
+          ? "One of your badges goes up a level. Next stage: a new badge."
+          : rhythm === "new"
+            ? "Next stage: level up one of your badges."
+            : "";
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleUpgradeTitle">
         <section class="cuddle-modal cuddle-modal-wide cuddle-upgrade-modal cuddle-compact-cards">

@@ -3017,6 +3017,10 @@
 
   function sameTierOffer(game, choices, avoid) {
     if (!Array.isArray(choices) || choices.length < 2 || !game || !game.state) return choices;
+    // A level-up screen (cuddle-reward-rhythm.js) offers badges you hold,
+    // whatever their rarity.
+    const rhythm = window.CuddleRewardRhythm;
+    if (rhythm && rhythm.shown(game.state) === "level") return choices;
     const tiers = choices.map(choiceTier);
     const counts = {};
     tiers.forEach((tier) => { if (tier) counts[tier] = (counts[tier] || 0) + 1; });
