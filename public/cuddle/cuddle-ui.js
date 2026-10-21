@@ -897,7 +897,14 @@
           const compassMark = compass
             ? `<span class="umt-compass-mark is-${compass.dir === "L" ? "left" : compass.dir === "R" ? "right" : "match"}" title="${compass.dir === "L" ? "The secret's letter here comes earlier in the alphabet" : compass.dir === "R" ? "The secret's letter here comes later in the alphabet" : "This letter matches the secret here"}">${compass.dir === "L" ? "&larr;" : compass.dir === "R" ? "&rarr;" : "&ndash;"}</span>`
             : "";
-          tiles.push(`<span class="cuddle-tile${tileClass}${compass ? " has-compass" : ""}${arrow ? " is-arrow-sign" : ""}"${moneyBadge}${burstStyle}>${escapeHtml(letter)}${compassMark}</span>`);
+          // Precise Green: how many times this letter is in the answer.
+          const letterCount = history?.greenLetterCounts && (result === "green" || result === "yellow")
+            ? Number(history.greenLetterCounts[String(letter || "").toUpperCase()]) || 0
+            : 0;
+          const countMark = letterCount
+            ? `<span class="umt-count-mark" title="${escapeHtml(String(letter || "").toUpperCase())} is in the answer ${letterCount === 1 ? "once" : `${letterCount} times`}">${letterCount}</span>`
+            : "";
+          tiles.push(`<span class="cuddle-tile${tileClass}${compass ? " has-compass" : ""}${arrow ? " is-arrow-sign" : ""}"${moneyBadge}${burstStyle}>${escapeHtml(letter)}${compassMark}${countMark}</span>`);
         }
       }
       // Count Only replaces the row's score with the only thing it tells you:
@@ -1506,9 +1513,10 @@
     const money = S ? S.SKIP_MONEY : 15;
     // Clean Slate (cuddle-new-badges.js): a skip also levels up a badge.
     const slate = window.CuddleNewBadges && window.CuddleNewBadges.hasCleanSlate && window.CuddleNewBadges.hasCleanSlate(game)
-      ? `<small>Clean Slate: skipping also levels up one of your badges.</small>` : "";
+      ? `<small>Clean Slate: skipping also levels up ${window.CuddleNewBadges.cleanSlateCount && window.CuddleNewBadges.cleanSlateCount(game) >= 2 ? "two" : "one"} of your badges.</small>` : "";
     if (S && S.hasMonksVow(game)) {
-      return `<div class="umt-skip-row"><button class="cuddle-btn cuddle-btn-ghost umt-skip-btn" data-action="skip-upgrade" data-skip-kind="both">Skip: +${points} points and +$${money}</button><small>Monk's Vow: a skip pays both.</small>${slate}</div>`;
+      const vow = typeof S.vowPay === "function" ? S.vowPay(game) : [points, money];
+      return `<div class="umt-skip-row"><button class="cuddle-btn cuddle-btn-ghost umt-skip-btn" data-action="skip-upgrade" data-skip-kind="both">Skip: +${vow[0]} points and +$${vow[1]}</button><small>Monk's Vow: a skip pays both.</small>${slate}</div>`;
     }
     return `<div class="umt-skip-row">
             <button class="cuddle-btn cuddle-btn-ghost umt-skip-btn" data-action="skip-upgrade" data-skip-kind="points">Skip: +${points} points</button>
@@ -1606,9 +1614,13 @@
               : `<button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
               ${escapeHtml(refreshLabel)}
             </button>
-            <small>${typeof game.hasHaggler === "function" && game.hasHaggler()
-              ? "Haggler: the first refresh on each reward screen is free, then $1, $3, $5, and so on."
-              : "Refreshes on each reward screen cost $3, then $5, $7, and so on."}</small>`}
+            <small>${(() => {
+              const haggler = typeof game.hagglerLevel === "function" ? game.hagglerLevel() : (typeof game.hasHaggler === "function" && game.hasHaggler() ? 1 : 0);
+              if (haggler >= 3) return "Haggler: the first two refreshes on each reward screen are free, then $1 each.";
+              if (haggler === 2) return "Haggler: the first two refreshes on each reward screen are free, then $1, $3, $5, and so on.";
+              if (haggler === 1) return "Haggler: the first refresh on each reward screen is free, then $1, $3, $5, and so on.";
+              return "Refreshes on each reward screen cost $3, then $5, $7, and so on.";
+            })()}</small>`}
           </div>
         </section>
       </div>`;

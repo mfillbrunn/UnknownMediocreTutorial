@@ -144,9 +144,9 @@
         { id: "greyscale", icon: "⬛", title: "Greyscale", tier: "common", type: "points", maxLevel: 3,
           levels: ["Each grey tile (a letter not in the word) gives +1 point.", "Each grey tile gives +2 points.", "Each grey tile gives +4 points."],
           level: g => Number(g?.state?.balanceRewardCounts?.greyscale) || 0 },
-        { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", type: "money", maxLevel: 1, description: "The next reward you pick counts twice." },
+        { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", type: "money", maxLevel: 1, description: "The next reward you pick counts twice.", level: g => ledgerCount(g, "rewardEcho") },
         { id: "greenCount", icon: "🔢", title: "Precise Green", tier: "rare", type: "clues", maxLevel: 1, description: "A green tile also shows how many times its letter is in the answer.",
-          level: g => (g?.state?.megaState?.greenCountUnlocked ? 1 : 0) },
+          level: g => Math.max(Number(g?.state?.megaState?.greenCountLevel) || 0, g?.state?.megaState?.greenCountUnlocked ? 1 : 0) },
         { id: "surprise-assignment", icon: "📜", title: "Surprise Assignment", tier: "rare", type: "quests", maxLevel: 3,
           levels: ["+1 extra quest pops up in every stage.", "+2 extra quests pop up in every stage.", "+4 extra quests pop up in every stage."],
           level: g => ledgerCount(g, "surprise-assignment") },
@@ -223,7 +223,7 @@
       title: "Cuddle Coach",
       blurb: "The Cuddle Meter and the Secrets Counter.",
       nodes: [
-        { id: "coachPossibleAnswers", icon: "🎧", title: "Secrets Counter", tier: "rare", type: "clues", maxLevel: 1, description: "Shows how many answers are still possible.", level: g => (coachState(g)?.possibleAnswersUnlocked ? 1 : 0) },
+        { id: "coachPossibleAnswers", icon: "🎧", title: "Secrets Counter", tier: "rare", type: "clues", maxLevel: 1, description: "Shows how many answers are still possible.", level: g => Math.max(Number(coachState(g)?.possibleAnswersLevel) || 0, coachState(g)?.possibleAnswersUnlocked ? 1 : 0) },
         { id: "coachMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", tier: "common", type: "letters", maxLevel: 3,
           levels: ["The Cuddle Meter fills up 2 tiles sooner.", "The Cuddle Meter fills up 4 tiles sooner.", "The Cuddle Meter fills up 6 tiles sooner."],
           level: g => Number(coachState(g)?.cuddleThresholdStacks) || 0 },
@@ -342,7 +342,8 @@
       title: "Boss Rewards",
       blurb: "Permanent rewards for clearing a boss round. No ordinary upgrade is offered afterward.",
       nodes: [
-        { id: "cullRare", icon: "✂️", title: "Deep Cull", tier: "legendary", type: "letters", maxLevel: 1, description: "3 rare letters are gone for good: out of your deck and out of every answer." },
+        { id: "cullRare", icon: "✂️", title: "Deep Cull", tier: "legendary", type: "letters", maxLevel: 1, description: "3 rare letters are gone for good: out of your deck and out of every answer.",
+          level: g => Math.max(Number(g?.state?.megaState?.deepCulls) || 0, ledgerCount(g, "cullRare"), ledgerCount(g, "legendary:cullRare")) },
         { id: "doubleMulligans", icon: "🔁", title: "Double Mulligans", tier: "epic", type: "letters", maxLevel: 1, description: "Every mulligan you get is doubled for the rest of the run.", level: g => upgradeCount(g, "doubleMulligans") },
         { id: "biggerMulligans", icon: "🖐️", title: "Full Hand Mulligan", tier: "epic", type: "letters", maxLevel: 1, description: "A mulligan can swap up to 5 of your letters.", level: g => ledgerCount(g, "biggerMulligans") },
         { id: "freeVowelSweep", icon: "🅰️", title: "Free Vowel Sweep", tier: "legendary", type: "clues", maxLevel: 1, description: "Each stage, 2 vowels are tested for free: you learn if they're in the answer.", level: g => upgradeCount(g, "freeVowelSweep") },
@@ -353,7 +354,7 @@
           level: g => upgradeCount(g, "questCadence") },
         { id: "questPersistReward", icon: "⏳", title: "Lasting Quests", tier: "legendary", type: "quests", maxLevel: 1, description: "If you miss a quest, it stays open for the rest of the stage.", level: g => (g?.state?.megaState?.questPersistsForRound ? 1 : 0) },
         { id: "allThemesBoss", icon: "🔮", title: "All-Seeing Atlas", tier: "legendary", type: "clues", maxLevel: 1, description: "Every stage starts by showing all of the answer's themes.", level: g => (bossRewardOwned(g, "umtAllThemes") ? 1 : 0) },
-        { id: "secondCup", icon: "☕", title: "Second Cup", tier: "epic", type: "safety", maxLevel: 1, description: "Once per run: +1 extra guess when a boss or strict stage would end.", level: g => (bossRewardOwned(g, "secondCup") ? 1 : 0) }
+        { id: "secondCup", icon: "☕", title: "Second Cup", tier: "epic", type: "safety", maxLevel: 1, description: "Once per run: +1 extra guess when a boss or strict stage would end.", level: g => (bossRewardOwned(g, "secondCup") ? Math.max(1, Number(coachState(g)?.secondCupLevel) || 0) : 0) }
       ]
     }
   ]);
@@ -463,6 +464,72 @@
     const rest = text.slice(start);
     // Only a clean cut: what's left starts with the new number.
     return /^[+−\-$\d]/.test(rest) ? rest : text;
+  }
+
+  // Badges that used to stop at level 1, now levelled (the level-up
+  // reward screens offer them): their top level and what each level does.
+  const UPGRADED = {
+    encore: [3, ["Every 3rd stage you solve: +30 points", "Every 3rd stage you solve: +50 points", "Every 3rd stage you solve: +80 points"],
+      ["+30 every 3rd solve", "+50 every 3rd solve", "+80 every 3rd solve"]],
+    doubleDown: [3, ["Solve on the stage's lucky guess (3rd to 7th): +50 points", "Solve on the stage's lucky guess (3rd to 7th): +80 points", "Solve on the stage's lucky guess (3rd to 7th): +120 points"],
+      ["Lucky guess +50", "Lucky guess +80", "Lucky guess +120"]],
+    haggler: [3, ["Reward refreshes: the 1st is free, then $1, $3, $5", "Reward refreshes: the first 2 are free, then $1, $3, $5", "Reward refreshes: the first 2 are free, then $1 each"],
+      ["1 free refresh", "2 free refreshes", "2 free, then $1"]],
+    vowelLamp: [2, ["Every stage tells you how many vowels the answer has", "Every stage tells you how many vowels the answer has, and names one"],
+      ["Vowel count", "Vowel count + one vowel"]],
+    echoFinder: [2, ["Every stage tells you if the answer uses a letter twice", "Every stage tells you if the answer uses a letter twice, and if it's a vowel or a consonant"],
+      ["Repeat or not", "Repeat: vowel or consonant"]],
+    patternLens: [2, ["From your 2nd guess, you see which spots are vowels and which are consonants", "From the start, you see which spots are vowels and which are consonants"],
+      ["Pattern from guess 2", "Pattern from the start"]],
+    mistakeShield: [3, ["In bosses and strict stages, an all-grey guess is given back", "On every stage, an all-grey guess is given back", "On every stage, two all-grey guesses are given back"],
+      ["Bosses & strict stages", "Every stage", "2 guesses back"]],
+    lastLight: [2, ["After your 2nd guess, the answer's last letter is filled in", "After your 1st guess, the answer's last letter is filled in"],
+      ["After guess 2", "After guess 1"]],
+    jokerCacheLarge: [2, ["Every stage starts with a Joker card in your hand", "Every stage starts with 2 Joker cards in your hand"],
+      ["1 Joker in hand", "2 Jokers in hand"]],
+    consonantSweep: [2, ["After each guess, 1 more consonant is ruled out", "After each guess, 2 more consonants are ruled out"],
+      ["1 a guess", "2 a guess"]],
+    boldOpener: [2, ["Your 1st guess can be any 5 letters", "Your first 2 guesses can be any 5 letters"],
+      ["1st guess free-form", "First 2 guesses free-form"]],
+    fullCircle: [2, ["Once a stage, when your deck starts over, a letter is placed in its spot", "Twice a stage, when your deck starts over, a letter is placed in its spot"],
+      ["Once a stage", "Twice a stage"]],
+    leanBuild: [3, ["Each solve: +20/+40/+100 by world, -5 for every badge outside Restraint", "Each solve: +20/+40/+100 by world, -4 for every badge outside Restraint", "Each solve: +20/+40/+100 by world, -3 for every badge outside Restraint"],
+      ["-5 per badge", "-4 per badge", "-3 per badge"]],
+    monksVow: [3, ["Skipping a reward: +40 points and +$15", "Skipping a reward: +60 points and +$20", "Skipping a reward: +80 points and +$25"],
+      ["+40 & +$15", "+60 & +$20", "+80 & +$25"]],
+    cleanSlate: [2, ["Skipping a reward levels up 1 of your badges", "Skipping a reward levels up 2 of your badges"],
+      ["1 badge up", "2 badges up"]],
+    ascetic: [2, ["Solves pay x2 with 5 badges or fewer outside Restraint, x1.5 with 10 or fewer", "Solves pay x2 with 6 badges or fewer outside Restraint, x1.5 with 12 or fewer"],
+      ["x2 to 5, x1.5 to 10", "x2 to 6, x1.5 to 12"]],
+    blackMarket: [3, ["On every reward screen, a random badge for $50", "On every reward screen, a random badge for $40", "On every reward screen, a random badge for $30"],
+      ["$50 badge", "$40 badge", "$30 badge"]],
+    treasureChest: [3, ["Opens a free Large Pack", "Opens another free Large Pack", "Opens a third free Large Pack"],
+      ["1 pack", "2 packs", "3 packs"]],
+    goldenOpener: [2, ["Yellow letters in your 1st guess move to their spots", "Yellow letters in your first 2 guesses move to their spots"],
+      ["Guess 1", "Guesses 1 and 2"]],
+    questReroll: [3, ["Once a stage, swap your quest for a new one for free", "Twice a stage, swap your quest for a new one for free", "3 times a stage, swap your quest for a new one for free"],
+      ["1 free swap", "2 free swaps", "3 free swaps"]],
+    greenCount: [2, ["A green tile shows how many times its letter is in the answer", "Green and yellow tiles show how many times their letter is in the answer"],
+      ["Greens show counts", "Yellows too"]],
+    coachPossibleAnswers: [2, ["Shows how many answers are still possible", "Shows how many answers are still possible, and lists them once 5 or fewer are left"],
+      ["Count", "Count + list at 5"]],
+    cullRare: [2, ["3 rare letters are gone for good", "2 more rare letters are gone for good"],
+      ["3 letters gone", "5 letters gone"]],
+    freeVowelSweep: [2, ["Each stage, 2 vowels are tested for free", "Each stage, 3 vowels are tested for free"],
+      ["2 vowels", "3 vowels"]],
+    secondCup: [2, ["Once a run: +1 guess when a boss or strict stage would end", "Twice a run: +1 guess when a boss or strict stage would end"],
+      ["Once a run", "Twice a run"]],
+    rewardEcho: [3, ["The next reward you pick counts twice", "Another reward you pick counts twice", "A third reward you pick counts twice"],
+      ["1 echo", "2 echoes", "3 echoes"]]
+  };
+  for (const branch of BRANCHES) {
+    for (const node of branch.nodes) {
+      const upgrade = UPGRADED[node.id];
+      if (!upgrade) continue;
+      node.maxLevel = upgrade[0];
+      node.levels = upgrade[1];
+      SHORT_LEVELS[node.id] = upgrade[2];
+    }
   }
 
   // A stackable power's description lists every level, and says the third

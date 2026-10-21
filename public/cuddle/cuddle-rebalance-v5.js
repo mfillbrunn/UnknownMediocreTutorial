@@ -71,8 +71,8 @@
     Object.freeze({
       id: IDS.encore, key: IDS.encore, icon: "\uD83C\uDFAC",
       title: "Encore", name: "Encore",
-      description: "Every third stage you solve pays a 30-point encore bonus.",
-      maxLevel: 1, maxCount: 1, kind: "upgrade"
+      description: "Every third stage you solve pays a 30-point encore bonus. Level 2: 50 points. Level 3: 80 points.",
+      maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.vowelBounty, key: IDS.vowelBounty, icon: "\uD83C\uDD70\uFE0F",
@@ -83,8 +83,8 @@
     Object.freeze({
       id: IDS.doubleDown, key: IDS.doubleDown, icon: "\uD83C\uDFB2",
       title: "Double Down", name: "Double Down",
-      description: "Each stage names a lucky guess, from the 3rd to the 7th. Solve the word on exactly that guess for +50 points, even if that's past your bonus window.",
-      maxLevel: 1, maxCount: 1, kind: "upgrade"
+      description: "Each stage names a lucky guess, from the 3rd to the 7th. Solve the word on exactly that guess for +50 points, even if that's past your bonus window. Level 2: +80 points. Level 3: +120 points.",
+      maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     // Insight rewards: clues about the answer at the start of a stage,
     // plus a treasure hunt and a shield. Their effects live in
@@ -92,14 +92,14 @@
     Object.freeze({
       id: IDS.vowelLamp, key: IDS.vowelLamp, icon: "\uD83C\uDFEE",
       title: "Vowel Lamp", name: "Vowel Lamp",
-      description: "Every stage, boss fights included, tells you how many vowels the answer has.",
-      maxLevel: 1, maxCount: 1, kind: "upgrade"
+      description: "Every stage, boss fights included, tells you how many vowels the answer has. Level 2: it also names one vowel that's in it.",
+      maxLevel: 2, maxCount: 2, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.echoFinder, key: IDS.echoFinder, icon: "\uD83D\uDC6F",
       title: "Echo Finder", name: "Echo Finder",
-      description: "Every stage, boss fights included, tells you whether the answer uses a letter twice.",
-      maxLevel: 1, maxCount: 1, kind: "upgrade"
+      description: "Every stage, boss fights included, tells you whether the answer uses a letter twice. Level 2: it also says whether that letter is a vowel or a consonant.",
+      maxLevel: 2, maxCount: 2, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.treasureHunter, key: IDS.treasureHunter, icon: "\uD83D\uDC8E",
@@ -110,27 +110,27 @@
     Object.freeze({
       id: IDS.patternLens, key: IDS.patternLens, icon: "\uD83E\uDDE9",
       title: "Pattern Lens", name: "Pattern Lens",
-      description: "From your second guess on, every stage shows where the answer's vowels and consonants sit, like C V C C V.",
-      maxLevel: 1, maxCount: 1, kind: "upgrade"
+      description: "From your second guess on, every stage shows where the answer's vowels and consonants sit, like C V C C V. Level 2: from your first guess.",
+      maxLevel: 2, maxCount: 2, kind: "upgrade"
     }),
     // Cheaper reward refreshes (cuddle-engine.js getUpgradeRefreshCost).
     Object.freeze({
       id: IDS.haggler, key: IDS.haggler, icon: "\uD83E\uDE99",
       title: "Haggler", name: "Haggler",
-      description: "Refreshing reward choices costs $0, then $1, $3, $5... instead of $3, $5, $7...",
-      maxLevel: 1, maxCount: 1, kind: "upgrade"
+      description: "Refreshing reward choices costs $0, then $1, $3, $5... instead of $3, $5, $7... Level 2: the first two are free. Level 3: then $1 each.",
+      maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.mistakeShield, key: IDS.mistakeShield, icon: "\uD83D\uDEE1\uFE0F",
       title: "Mistake Shield", name: "Mistake Shield",
-      description: "In a boss or a strict stage, the first guess with no green or yellow gives you an extra guess back.",
-      maxLevel: 1, maxCount: 1, kind: "upgrade"
+      description: "In a boss or a strict stage, the first guess with no green or yellow gives you an extra guess back. Level 2: on every stage. Level 3: a second all-grey guess is covered too.",
+      maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.lastLight, key: IDS.lastLight, icon: "\uD83D\uDD6F\uFE0F",
       title: "Last Light", name: "Last Light",
-      description: "After your second guess in every stage, the answer's last letter is placed.",
-      maxLevel: 1, maxCount: 1, kind: "upgrade"
+      description: "After your second guess in every stage, the answer's last letter is placed. Level 2: after your first guess.",
+      maxLevel: 2, maxCount: 2, kind: "upgrade"
     }),
     // An Epic pick (cuddle-economy-rarity-v8.js); granted in
     // grantStageYellowHints at the start of every stage.
@@ -151,8 +151,8 @@
     Object.freeze({
       id: IDS.jokerCacheLarge, key: IDS.jokerCacheLarge, icon: "\uD83C\uDCCF",
       title: "Large Joker Cache", name: "Large Joker Cache",
-      description: "Every stage starts with a Joker card in your hand. It doesn't count toward your hand limit.",
-      maxLevel: 1, maxCount: 1, kind: "upgrade"
+      description: "Every stage starts with a Joker card in your hand. It doesn't count toward your hand limit. Level 2: two Jokers.",
+      maxLevel: 2, maxCount: 2, kind: "upgrade"
     }),
     // Letter culls, picked from the letters the engine can safely take out
     // of the deck and every future answer (_removalCandidates).
@@ -219,9 +219,9 @@
       icon: "🔍",
       title: "Process of Elimination",
       name: "Process of Elimination",
-      description: "After every guess, boss fights included, one more consonant that isn't in the answer is ruled out and shown: one after your first guess, a second after your second, and so on.",
-      maxLevel: 1,
-      maxCount: 1,
+      description: "After every guess, boss fights included, one more consonant that isn't in the answer is ruled out and shown: one after your first guess, a second after your second, and so on. Level 2: two after every guess.",
+      maxLevel: 2,
+      maxCount: 2,
       kind: "upgrade"
     })
   ]);
@@ -3200,7 +3200,12 @@
   // alphabet, never reveals a position. Each letter is announced and listed
   // in the clue strip (cuddle-clues.js).
   function applyConsonantSweep(game) {
-    if (upgradeLevel(game, IDS.consonantSweep) < 1) return;
+    const level = upgradeLevel(game, IDS.consonantSweep);
+    // Level 2: two letters a guess.
+    for (let index = 0; index < Math.min(2, level); index += 1) sweepOneConsonant(game);
+  }
+
+  function sweepOneConsonant(game) {
     const state = stateOf(game);
     const custom = customState(game);
     if (!state || !custom) return;
@@ -3280,7 +3285,10 @@
   // pays a flat bonus. The row it lands on carries a die icon (see
   // renderRowPowerIcons). 0 when the reward isn't owned or the stage
   // doesn't pay out (a boss, a no-money stop).
-  const DOUBLE_DOWN_POINTS = 50;
+  // +50 a lucky solve; Level 2: +80; Level 3: +120.
+  function doubleDownPoints(game) {
+    return [50, 80, 120][Math.max(1, Math.min(3, upgradeLevel(game, IDS.doubleDown))) - 1];
+  }
   const DOUBLE_DOWN_FIRST = 3;
   const DOUBLE_DOWN_LAST = 7;
 
@@ -3318,8 +3326,9 @@
       }
     }
 
-    if (upgradeLevel(game, IDS.encore) > 0) {
-      const ENCORE_POINTS = 30;
+    const encoreLevel = upgradeLevel(game, IDS.encore);
+    if (encoreLevel > 0) {
+      const ENCORE_POINTS = [30, 50, 80][Math.min(3, encoreLevel) - 1];
       custom.encoreSolves = asInteger(custom.encoreSolves, 0) + 1;
       if (custom.encoreSolves % 3 === 0) {
         addScoreBonus(game, ENCORE_POINTS, "umtEncore", "Every third stage solved");
@@ -3330,8 +3339,9 @@
     const luckyGuess = doubleDownGuess(game);
     if (luckyGuess) {
       if (asInteger(state.guessesUsed, 0) === luckyGuess) {
-        addScoreBonus(game, DOUBLE_DOWN_POINTS, "umtDoubleDown", `Solved on lucky guess ${luckyGuess}`);
-        appendNotice(game, `Double Down: solved on guess ${luckyGuess}, +${DOUBLE_DOWN_POINTS} points.`);
+        const lucky = doubleDownPoints(game);
+        addScoreBonus(game, lucky, "umtDoubleDown", `Solved on lucky guess ${luckyGuess}`);
+        appendNotice(game, `Double Down: solved on guess ${luckyGuess}, +${lucky} points.`);
       }
     }
   }
@@ -4018,7 +4028,7 @@
     umtConsonantSweep: { title: "Process of Elimination", description: "After every guess, boss fights included, one more consonant that isn't in the answer is ruled out and shown: one after your first guess, a second after your second, and so on.", shape: "eliminate" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
     compass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
-    umtDoubleDown: { title: "Double Down", description: "Your lucky guess this stage: solve the word on exactly this guess for +50 points.", shape: "die" },
+    umtDoubleDown: { title: "Double Down", description: "Your lucky guess this stage: solve the word on exactly this guess for its bonus (+50, +80 or +120 by level).", shape: "die" },
     "alphabet-compass": { title: "Alphabet Compass", description: "After every guess, some of its tiles show whether the secret's letter there comes earlier or later in the alphabet.", shape: "alphaCompass" }
   });
 
@@ -5505,9 +5515,9 @@
         const guess = doubleDownGuess(active);
         const state = stateOf(active) || {};
         if (!guess || state.status !== "playing" || asInteger(state.guessesUsed, 0) >= guess) return "";
-        return `<span class="umt-lucky-guess" title="Double Down: solve the word on exactly guess ${guess} for +${DOUBLE_DOWN_POINTS} points">`
+        return `<span class="umt-lucky-guess" title="Double Down: solve the word on exactly guess ${guess} for +${doubleDownPoints(active)} points">`
           + `<span class="umt-lucky-guess-die" aria-hidden="true">${powerSvg("umtDoubleDown")}</span>`
-          + `Lucky guess <b>${guess}</b> <small>+${DOUBLE_DOWN_POINTS}</small></span>`;
+          + `Lucky guess <b>${guess}</b> <small>+${doubleDownPoints(active)}</small></span>`;
       },
       // Consumed by cuddle-ui.js's reward cards for the "Interaction bonus!"
       // badge, alongside the engine's own synergy preview.

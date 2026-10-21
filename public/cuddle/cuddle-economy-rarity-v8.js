@@ -157,9 +157,9 @@
     legendaryPick("doubleMulligans", "🔁", "Double Mulligans", "Permanently doubles every mulligan you get: each stage's starting mulligans and every one you gain along the way.",
       (state) => !(Number(state.upgrades?.doubleMulligans) > 0)),
     legendaryPick("cullRare", "✂️", "Deep Cull", "Remove three rare letters from the deck and from every future secret.",
-      (state) => ownedHistoryCount(state, "cullRare") < 1),
+      (state) => Number(state.megaState?.deepCulls || 0) < 2 && ownedHistoryCount(state, "cullRare") < 2),
     legendaryPick("freeVowelSweep", "🅰️", "Free Vowel Sweep", "Each stage opens with two random vowels tested for free: you learn whether they're in the answer, not where.",
-      (state) => !(Number(state.upgrades?.freeVowelSweep) > 0)),
+      (state) => Number(state.upgrades?.freeVowelSweep || 0) < 2),
     legendaryPick("biggerMulligans", "✋", "Full Hand Mulligan", "Every mulligan can now replace up to five letters.",
       (state) => Number(state.upgrades?.mulliganSize || 0) < 2),
     legendaryPick("questCadence", "❗", "Quest Cadence", "One more quest a stage: guess 3 gets one too (quests on 2, 3, 5). Level 2 adds guess 1 (1, 2, 3, 5). One quest at a time.",
@@ -171,7 +171,7 @@
     legendaryPick("questPersistReward", "⏳", "Lasting Quests", "A quest you don't complete stays active for the rest of the stage instead of expiring after one guess, boss fights included.",
       (state) => !state.megaState?.questPersistsForRound),
     legendaryPick("secondCup", "☕", "Second Cup", "Once per run, when you would run out of guesses in a boss or strict stage, you get one extra guess.",
-      (state) => !coachOwns(state, "secondCup")),
+      (state) => Number(state.cuddleCoachExpansion?.secondCupLevel || (coachOwns(state, "secondCup") ? 1 : 0)) < 2),
     legendaryPick("umtAllThemes", "🔮", "All-Seeing Atlas", "Reveal every available theme at the start of every Wordle.",
       (state) => !state.cuddleRebalanceV5?.allThemesUnlocked && !coachOwns(state, "umtAllThemes"))
   ]);

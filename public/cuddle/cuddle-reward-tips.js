@@ -134,14 +134,16 @@
       var others = strategies.otherBadges(game);
       var pays = strategies.leanPayout(game);
       var full = typeof strategies.leanBase === "function" ? strategies.leanBase(game) : null;
-      return "You have " + plural(others) + " outside Restraint (−5 points each): right now it pays +" + pays + " a solve"
+      var each = typeof strategies.leanPerBadge === "function" ? strategies.leanPerBadge(game) : 5;
+      return "You have " + plural(others) + " outside Restraint (−" + each + " points each): right now it pays +" + pays + " a solve"
         + (full != null && full !== pays ? ", out of +" + full + "." : ".");
     }
     if (node.id === "ascetic" && fresh && typeof fresh.badgeCount === "function") {
       var count = fresh.badgeCount(game);
       var times = fresh.asceticMultiplier(game);
       return "You have " + plural(count) + " outside Restraint: "
-        + (times > 1 ? "solves pay ×" + times + " right now." : "no bonus right now (it needs 10 or fewer).");
+        + (times > 1 ? "solves pay ×" + times + " right now." : "no bonus right now (it needs "
+          + (typeof fresh.asceticTiers === "function" ? fresh.asceticTiers(game)[1][0] : 10) + " or fewer).");
     }
     return "";
   }

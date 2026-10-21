@@ -1052,7 +1052,9 @@
       if (!pool.length) return "";
       const secret = String(this.state.secret || "");
       const lines = [];
-      for (let pick = 0; pick < 2 && pool.length; pick += 1) {
+      // Level 2 (taken twice): three vowels.
+      const picks = Number(this.state.upgrades.freeVowelSweep) >= 2 ? 3 : 2;
+      for (let pick = 0; pick < picks && pool.length; pick += 1) {
         const vowel = pool.splice(Math.floor(this.random() * pool.length), 1)[0];
         const present = secret.includes(vowel);
         if (present) {
@@ -3480,9 +3482,9 @@
         state.upgrades.questPoints = Number(state.upgrades.questPoints || 0) + QUEST_POINTS_PER_PICK;
         return { ok: true };
       case "questReroll":
-        // A one-time power: recorded so it reads as taken (and maxed), and
-        // refilled to one reroll every stage (cuddle-powers.js).
-        state.upgrades.questReroll = 1;
+        // A level (up to 3), refilled to that many free rerolls every stage
+        // (cuddle-powers.js).
+        state.upgrades.questReroll = Math.min(3, Number(state.upgrades.questReroll || 0) + 1);
         this._applyRewardEffect("questReroll");
         return { ok: true };
       default:
@@ -4134,20 +4136,28 @@
 
   // Refreshing a reward screen costs $3, then $5, $7... (2 more each time,
   // reset every screen). Haggler (cuddle-rebalance-v5.js) makes it $0, $1,
-  // then $3, $5, $7...
-  prototype.hasHaggler = function hasHaggler() {
+  // then $3, $5, $7...; level 2: $0, $0, $1, $3...; level 3: $0, $0, then
+  // $1 each.
+  prototype.hagglerLevel = function hagglerLevel() {
     try {
-      return Number(window.CuddleRebalanceV5?.upgradeLevel?.(this, "umtHaggler")) > 0;
+      return Math.max(0, Number(window.CuddleRebalanceV5?.upgradeLevel?.(this, "umtHaggler")) || 0);
     } catch (_error) {
-      return false;
+      return 0;
     }
+  };
+
+  prototype.hasHaggler = function hasHaggler() {
+    return this.hagglerLevel() > 0;
   };
 
   prototype.getUpgradeRefreshCost = function getUpgradeRefreshCost() {
     if (this.isWaystoneUpgrade()) return null;
     const state = ensureBalanceState(this);
     const used = state ? state.upgradeRefreshesUsed : 0;
-    if (this.hasHaggler()) return used === 0 ? 0 : used * 2 - 1;
+    const haggler = this.hagglerLevel();
+    if (haggler >= 3) return used < 2 ? 0 : 1;
+    if (haggler === 2) return used < 2 ? 0 : (used - 1) * 2 - 1;
+    if (haggler === 1) return used === 0 ? 0 : used * 2 - 1;
     return 3 + used * 2;
   };
 
@@ -4690,6 +4700,8 @@
       this.save();
       result = { ok: true };
     } else if (choice?.id === "greenCount") {
+      // Level 2: yellow tiles show their counts too.
+      mega.greenCountLevel = Math.min(2, Math.max(Number(mega.greenCountLevel) || 0, mega.greenCountUnlocked ? 1 : 0) + 1);
       mega.greenCountUnlocked = true;
       this.state.lastMessage = `${choice.title} acquired.`;
       this.state.upgradeChoices = [];
@@ -4787,7 +4799,7 @@
         description: `Remove ${list} from the deck and from every future secret. ${verb} drawn from the ten least-common eligible consonants.`
       });
     }
-    if (!mega.greenCountUnlocked) {
+    if ((Number(mega.greenCountLevel) || (mega.greenCountUnlocked ? 1 : 0)) < 2) {
       base.push({
         id: "greenCount",
         key: "greenCount",
@@ -4816,7 +4828,9 @@
     const mega = ensureMega(this);
     let message;
     if (rewardId === "cullRare") {
-      const letters = this._removalCandidates(3);
+      // Level 2: two more.
+      mega.deepCulls = Number(mega.deepCulls || 0) + 1;
+      const letters = this._removalCandidates(mega.deepCulls >= 2 ? 2 : 3);
       message = letters.length
         ? (() => {
           this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
@@ -5604,8 +5618,10 @@
 
     if (mega.greenCountUnlocked && entry && Array.isArray(entry.feedback) && typeof entry.word === "string") {
       const counts = {};
+      const countYellows = Number(mega.greenCountLevel) >= 2;
+      const shownTiles = Array.isArray(entry.shownFeedback) && entry.shownFeedback.length ? entry.shownFeedback : entry.feedback;
       entry.feedback.forEach((tile, index) => {
-        if (tile !== "green") return;
+        if (tile !== "green" && !(countYellows && tile === "yellow" && shownTiles[index] === "yellow")) return;
         const letter = entry.word[index];
         counts[letter] = secretForThisGuess.split("").filter(l => l === letter).length;
       });

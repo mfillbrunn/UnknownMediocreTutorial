@@ -333,16 +333,31 @@
     };
   }
 
-  // Bold Opener: every stage's first guess can be any five letters.
+  // Bold Opener: every stage's first guess can be any five letters (level
+  // 2: the first two -- the guess spends the free-form word, so it's given
+  // again after the first).
+  var baseSubmitBold = proto.submitDraft;
+  proto.submitDraft = function submitDraftWithBoldOpener() {
+    var before = this.state && Array.isArray(this.state.history) ? this.state.history.length : 0;
+    var result = baseSubmitBold.apply(this, arguments);
+    var state = this.state;
+    if (result && result.ok !== false && state && !inDuel(state) && before === 0
+        && Array.isArray(state.history) && state.history.length === 1 && state.status === "playing"
+        && levelOf(this, "boldOpener") >= 2) {
+      state.buffs = Object.assign({}, state.buffs || {}, { sillyWord: Math.max(1, num(state.buffs && state.buffs.sillyWord)) });
+    }
+    return result;
+  };
   var baseBegin = proto._beginRound;
   proto._beginRound = function beginRoundWithPowers() {
     var result = baseBegin.apply(this, arguments);
     var state = this.state;
     if (state && !inDuel(state)) {
-      // Second Guess Quest: one free quest reroll every stage.
-      if (levelOf(this, "questReroll") > 0) {
+      // Second Guess Quest: a free quest reroll every stage per level.
+      var rerolls = Math.min(3, levelOf(this, "questReroll"));
+      if (rerolls > 0) {
         var mega = state.megaState || (state.megaState = {});
-        mega.questRerollCharges = Math.max(1, num(mega.questRerollCharges));
+        mega.questRerollCharges = Math.max(rerolls, num(mega.questRerollCharges));
       }
       if (levelOf(this, "boldOpener") > 0) {
         state.buffs = Object.assign({}, state.buffs || {}, { sillyWord: Math.max(1, num(state.buffs && state.buffs.sillyWord)) });

@@ -92,10 +92,29 @@
     return card.key ? card : Object.assign({}, card, { key: card.id });
   }
 
+  // Boss-grade badges that only come up as the economy's legendary picks
+  // (applied as a boss reward through their "legendary:" key), so the
+  // ordinary catalog never lists their next level.
+  var BOSS_GRADE = ["cullRare", "freeVowelSweep", "secondCup"];
+
+  function bossGradeCards(game) {
+    var t = tree();
+    return BOSS_GRADE.map(function (id) {
+      var node = t.findNode(id);
+      if (!node) return null;
+      return {
+        id: id, key: "legendary:" + id, icon: node.icon, title: node.title, name: node.title,
+        description: node.description, kind: "legendary", tier: node.tier, rarity: node.tier,
+        __cuddleV8Tier: node.tier, __cuddleV8LegendaryReward: id
+      };
+    }).filter(Boolean);
+  }
+
   function levelChoices(game, count) {
     var seen = {};
-    var pool = catalog(game).filter(function (card) {
-      if (String(card.key || "").indexOf("legendary:") === 0 || !canLevel(game, card)) return false;
+    var pool = catalog(game).concat(bossGradeCards(game)).filter(function (card) {
+      var bossGrade = BOSS_GRADE.indexOf(card.id) !== -1;
+      if ((String(card.key || "").indexOf("legendary:") === 0 && !bossGrade) || !canLevel(game, card)) return false;
       var name = nameOf(card);
       if (seen[name]) return false;
       seen[name] = true;
