@@ -1,0 +1,83 @@
+/* The Cuddle drifting by behind the play screen (cuddle-drifter.js). The
+   shell becomes its own layer so the drifter can sit above the shell's
+   background but under everything in it. */
+#cuddleRoot > .cuddle-shell.umt-has-drifter {
+  isolation: isolate;
+}
+
+#cuddleScreen .umt-drifter {
+  position: fixed;
+  top: var(--drift-top, 40%);
+  left: 0;
+  z-index: -1;
+  width: 56px;
+  height: 56px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  opacity: 0.75;
+  cursor: default;
+  animation: umt-drift-right var(--drift-ms, 16000ms) linear forwards;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#cuddleScreen .umt-drifter.is-leftward {
+  animation-name: umt-drift-left;
+}
+
+#cuddleScreen .umt-drifter img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  animation: umt-drift-bob 2.6s ease-in-out infinite;
+}
+
+#cuddleScreen .umt-drifter.is-leftward img {
+  scale: -1 1;
+}
+
+#cuddleScreen .umt-drifter.is-waving img {
+  animation: umt-drift-wave 0.9s ease-in-out;
+}
+
+#cuddleScreen .umt-drifter-heart {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  color: #ff8fb8;
+  font-size: 18px;
+  pointer-events: none;
+  animation: umt-drift-heart 1.2s ease-out forwards;
+}
+
+@keyframes umt-drift-right {
+  from { transform: translateX(-72px); }
+  to { transform: translateX(calc(100vw + 16px)); }
+}
+
+@keyframes umt-drift-left {
+  from { transform: translateX(calc(100vw + 16px)); }
+  to { transform: translateX(-72px); }
+}
+
+@keyframes umt-drift-bob {
+  0%, 100% { translate: 0 0; rotate: -6deg; }
+  50% { translate: 0 -14px; rotate: 6deg; }
+}
+
+@keyframes umt-drift-wave {
+  0%, 100% { rotate: 0deg; scale: 1; }
+  30% { rotate: -16deg; scale: 1.15; }
+  60% { rotate: 14deg; scale: 1.15; }
+}
+
+@keyframes umt-drift-heart {
+  from { opacity: 1; transform: translate(-50%, 0); }
+  to { opacity: 0; transform: translate(-50%, -28px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cuddleScreen .umt-drifter { display: none; }
+}
