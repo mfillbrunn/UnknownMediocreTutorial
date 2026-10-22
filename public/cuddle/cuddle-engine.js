@@ -2843,9 +2843,17 @@
       description: "One more card on every reward screen. Level 2: two more. Level 3: two more, and the first refresh on every reward screen is free.",
       max: 3
     },
-    // Special board tiles (cuddle-points-money.js). A run starts with only
-    // money and points squares; these add more of them, and unlock the rarer
-    // kinds -- each unlock taken again makes its kind turn up more often.
+    // Special board tiles (cuddle-points-money.js). A run starts with none:
+    // each of these unlocks a kind (Bonus Squares: money and points), and
+    // taking one again makes its kind turn up more often.
+    {
+      id: "bonusSquares",
+      icon: "💰",
+      title: "Bonus Squares",
+      tier: "common",
+      description: "Money and points squares on the board: a green or yellow on one pays money or points. Level 2: one more square a stage. Level 3: two more.",
+      max: 3
+    },
     {
       id: "treasureMap",
       icon: "🗺️",

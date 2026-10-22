@@ -47,6 +47,8 @@
       { t: "stat", label: "Mulligans each stage", before: "4", after: "8" }],
     biggerMulligans: ["A mulligan swaps up to 3 cards at once.", "A mulligan swaps up to 5 cards at once.",
       { t: "stat", label: "Cards one mulligan can swap", before: "3", after: "5" }],
+    bonusSquares: ["No special squares on the board.", "Money ($) and points (●) squares turn up: a green or yellow on one pays out.",
+      { t: "row", before: [".....", "....."], after: ["..$..", "●...."] }],
     treasureMap: ["Special squares turn up on the board now and then.", "More special squares on the board every stage: more chances for money, points, mulligans and hints.",
       { t: "row", before: [".....", "....."], after: [".$..?", "....."] }],
     mulliganTiles: ["No mulligan squares on the board.", "Mulligan squares (↻) turn up: a green or yellow on one gives +1 mulligan.",

@@ -161,12 +161,6 @@
       title: "Pruning Shears", name: "Pruning Shears",
       description: "Permanently remove one rare consonant from your deck and every future answer. Level 2: two gone. Level 3: four gone. (No run culls more than 8 letters.)",
       maxLevel: 3, maxCount: 3, kind: "upgrade", cull: 1
-    }),
-    Object.freeze({
-      id: IDS.cullTwo, key: IDS.cullTwo, icon: "\u2702\uFE0F",
-      title: "Cull Letters", name: "Cull Letters",
-      description: "Permanently remove one rare consonant from your deck and every future answer. Level 2: two gone. Level 3: four gone. (No run culls more than 8 letters.)",
-      maxLevel: 3, maxCount: 3, kind: "upgrade", cull: 2
     })
   ]);
 

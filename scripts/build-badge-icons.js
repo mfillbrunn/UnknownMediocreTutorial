@@ -247,6 +247,7 @@ const GLYPHS = {
   questPersistReward: () => flag(24, 22) + `<g transform="translate(64 56) scale(0.62) translate(-48 -48)">${hourglass(48, 48)}</g>`,
   // Board squares.
   treasureMap: () => path_("M18 28l20 -6l20 6l20 -6v46l-20 6l-20 -6l-20 6z", W) + line("M38 22v46M58 28v46", ink(), 3) + line("M60 42l10 10M70 42l-10 10", acc(), 5),
+  bonusSquares: () => grid(22, 22, 52, (cx, cy) => text(cx, cy + 1, "$", 15, W)),
   mulliganTiles: () => grid(22, 22, 52, (cx, cy) => cycle(cx, cy, 6, W, 3)),
   jokerTiles: () => grid(22, 22, 52, (cx, cy) => star(cx, cy, 9, W, null)),
   oracleTiles: () => grid(22, 22, 52, (cx, cy) => circle(cx, cy, 6, W, null)),
@@ -276,7 +277,7 @@ const TYPES = {
   points: ["storybookStart", "mulliganValueBoost", "earlySolveBoost", "colourTrade", "greyscale", "encore", "vowelBounty", "doubleDown", "momentum", "bigOpener", "lastStand", "leanBuild", "strikeThrough", "highRoller", "hardMode", "luckyClover", "ascetic", "umtQuickPoints"],
   money: ["wideChoice", "rewardEcho", "rainyDay", "haggler", "treasureHunter", "pickpocket", "monksVow", "blackMarket", "treasureChest", "insertCoin", "goldenLedger", "umtPocketMoney"],
   quests: ["questRefreshes", "questPoints", "questReroll", "surprise-assignment", "questMastery", "overtime", "questChain", "questScout", "questDoublePick", "questCadence", "questPersistReward"],
-  tiles: ["treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"],
+  tiles: ["bonusSquares", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"],
   safety: ["mistakeShield", "gracePeriod", "fastLane", "secondCup"]
 };
 

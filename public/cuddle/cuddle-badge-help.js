@@ -56,6 +56,7 @@
     rewardEcho: ["The very next reward you take counts twice: you get it two times over. It's used up after that.", ["reward"]],
     greenCount: ["A green tile normally just says \"right letter, right spot\". With this badge it also tells you how many times that letter is in the answer, so you know if it's used twice.", ["board"]],
     "surprise-assignment": ["Quests normally show up on set guesses. This badge adds extra quests at random guesses in every stage, so there are more rewards to win.", ["quest", "questReward"]],
+    bonusSquares: ["The board has no special squares until a badge adds them. This one adds money ($) and points (●) squares: get a green or yellow on one and it pays out. Higher levels add more of them.", ["squares"]],
     treasureMap: ["Special squares appear on the board in some spots. Get a green or yellow on one and it pays out: money, points, a mulligan, a Joker card or a placed letter, depending on the square. This badge adds more of them.", ["squares"]],
     mulliganTiles: ["Special squares appear on the board in some spots. A mulligan square (↻) pays out when your guess puts a green or yellow on it: you get one more mulligan for this stage.", ["squares", "mulligan"]],
     jokerTiles: ["Special squares appear on the board in some spots. A Joker square (★) pays out when your guess puts a green or yellow on it: you get a Joker card, which can be any letter.", ["squares", "jokerCard"]],
