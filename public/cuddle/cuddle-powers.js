@@ -84,6 +84,53 @@
     game.state.roundScore = num(game.state.roundScore) + value;
   }
 
+  // Quest rewards paid on the spot (Quick Points, Pocket Money): straight
+  // into the header's totals, with a small "+15" rising from them, and
+  // left out of the stage's cash-out. The points go to the run's score but
+  // not the stage's (roundScore), so the header -- which holds a stage's
+  // own points back until its cash-out -- shows them at once; the cash-out
+  // counts from where the stage started, so its start moves up with them.
+  function moneyMode(game) {
+    var mode = game.state && game.state.cuddleMoneyMode;
+    return mode && typeof mode === "object" ? mode : null;
+  }
+
+  function instantPoints(game, points) {
+    var state = game.state;
+    state.score = num(state.score) + points;
+    var mode = moneyMode(game);
+    if (mode && Number.isFinite(Number(mode.roundStartingMoney))) mode.roundStartingMoney = num(mode.roundStartingMoney) + points;
+    headerPop(".cuddle-header-points", "+" + points, "points");
+  }
+
+  function instantMoney(game, cash) {
+    var state = game.state;
+    state.cuddleMoney = Math.max(0, num(state.cuddleMoney) + cash);
+    var mode = moneyMode(game);
+    if (mode && Number.isFinite(Number(mode.roundStartingCash))) mode.roundStartingCash = num(mode.roundStartingCash) + cash;
+    headerPop(".cuddle-header-money", "+$" + cash, "money");
+  }
+
+  // A small increment rising from a header counter, once the reward
+  // screen has closed and the header has redrawn.
+  function headerPop(selector, text, kind) {
+    window.setTimeout(function pop() {
+      var target = document.querySelector("#cuddleRoot " + selector);
+      if (!target) return;
+      var box = target.getBoundingClientRect();
+      if (!box.width) return;
+      var el = document.createElement("span");
+      el.className = "umt-header-pop is-" + kind;
+      el.textContent = text;
+      el.setAttribute("aria-hidden", "true");
+      el.style.left = Math.round(box.left + box.width / 2) + "px";
+      el.style.top = Math.round(box.bottom) + "px";
+      document.body.appendChild(el);
+      window.setTimeout(function () { el.remove(); }, 1500);
+      if (window.CuddleAudio) window.CuddleAudio.play(kind === "money" ? "coin" : "bing");
+    }, 380);
+  }
+
   // -------------------------------------------------------------------------
   // 1. Third-level bonuses
   // -------------------------------------------------------------------------
@@ -507,12 +554,12 @@
     },
     umtPocketMoney: function pocketMoney(game) {
       var cash = questBoost(game) ? 20 : 10;
-      game.state.cuddleMoney = Math.max(0, num(game.state.cuddleMoney) + cash);
+      instantMoney(game, cash);
       return "Pocket Money: +$" + cash + ".";
     },
     umtQuickPoints: function quickPoints(game) {
       var points = questBoost(game) ? 30 : 15;
-      stageBonus(game, points, "umtQuestQuickPoints", "Quick Points");
+      instantPoints(game, points);
       return "Quick Points: +" + points + " points.";
     },
     // One Fish Hook catch for this stage (cuddle-fish-hook.js).

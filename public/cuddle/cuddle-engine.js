@@ -3344,7 +3344,9 @@
   CuddleGame.prototype.bankedScore = function bankedScore() {
     const state = this.state || {};
     const score = Number(state.score) || 0;
-    const live = state.status === "playing" && !state.pendingRoundEnd;
+    // A quest reward pick is still mid-stage: counting the stage's points
+    // there made the header jump up, then drop back once it closed.
+    const live = (state.status === "playing" || state.status === "questReward") && !state.pendingRoundEnd;
     if (!live) return Math.max(0, score);
     const provisional = Math.max(0, (Number(state.roundScore) || 0) - (Number(state.roundOpeningPoints) || 0));
     return Math.max(0, score - provisional);
