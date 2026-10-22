@@ -720,6 +720,10 @@
 
   // Supplies carry their own drawing; a pool reward uses the shared icon set.
   function plateIcon(entry) {
+    // A badge on sale wears the badge's own icon (cuddle-badge-art.js).
+    const art = window.CuddleBadgeArt;
+    const badgeId = String(entry.rewardId || entry.bonus || "").replace(/:sold$/, "");
+    if (art && badgeId && art.has(badgeId)) return art.img(badgeId);
     const icon = String(entry.icon || "");
     if (/\.svg$/i.test(icon)) return `<img src="${ICON_ROOT}${escapeHtml(icon)}" alt="" aria-hidden="true">`;
     const Icons = window.CuddleIcons;

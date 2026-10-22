@@ -194,6 +194,12 @@
   height: 34px;
 }
 
+/* A badge's tile icon (cuddle-badge-art.js) sits whole inside the hex. */
+.umt-pack-card-icon .umt-badge-art {
+  width: 36px;
+  height: 36px;
+}
+
 .umt-pack-card strong {
   font-size: 0.95rem;
 }

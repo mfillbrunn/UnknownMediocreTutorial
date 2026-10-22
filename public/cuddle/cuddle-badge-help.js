@@ -173,7 +173,9 @@
   }
 
   // The badge's icon as the badge page draws it (cuddle-progression.js).
-  function iconMarkup(icon) {
+  function iconMarkup(icon, id) {
+    var art = window.CuddleBadgeArt;
+    if (id && art && art.has(id)) return art.img(id);
     var text = String(icon || "\u2726");
     var Icons = window.CuddleIcons;
     if (Icons && typeof Icons.hasEmoji === "function" && Icons.hasEmoji(text)) return Icons.svg(text);
@@ -215,7 +217,7 @@
     layer.className = "umt-help-layer";
     layer.innerHTML = "<div class=\"umt-help-backdrop\" data-umt-help-close></div>"
       + "<section class=\"umt-help-card\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"umtHelpTitle\" style=\"--help-color:" + esc(color) + "\">"
-      + "<header class=\"umt-help-head\"><span class=\"umt-help-icon\" aria-hidden=\"true\">" + iconMarkup(node.icon) + "</span>"
+      + "<header class=\"umt-help-head\"><span class=\"umt-help-icon\" aria-hidden=\"true\">" + iconMarkup(node.icon, node.id) + "</span>"
       + "<div><h2 id=\"umtHelpTitle\">" + esc(node.title) + "</h2>"
       + "<span class=\"umt-help-tier\">" + esc([TIER_NAME[node.tier] || "", school ? school.label : ""].filter(Boolean).join(" · ")) + "</span></div>"
       + "<button type=\"button\" class=\"umt-help-close\" data-umt-help-close aria-label=\"Close\">×</button></header>"

@@ -73,7 +73,8 @@
   function markEntry(game, entry) {
     const state = game.state;
     const copies = copiesOwned(state);
-    const count = copies >= MAX_COPIES ? 5 : Math.min(5, copies + hintsRankArrow(game, entry));
+    const schoolArrow = hintsRankArrow(game, entry);
+    const count = copies >= MAX_COPIES ? 5 : Math.min(5, copies + schoolArrow);
     if (!count || !entry || entry.umtCompass) return;
     const secret = String(state.secret || "").toUpperCase();
     const word = String(entry.word || "").toUpperCase();
@@ -85,7 +86,48 @@
     entry.umtCompass = shuffled(open, random).slice(0, count)
       .sort((a, b) => a - b)
       .map(index => ({ index, dir: reading(secret[index], word[index]) }));
+    // Where the arrows came from, for the note a tap on one shows.
+    entry.umtCompassSource = copies && schoolArrow ? "both" : copies ? "badge" : "hints";
   }
+
+  // A tap on an arrow says what it means and where it came from: an arrow
+  // on the first guess can come from the Hints school without any badge.
+  const SOURCES = {
+    badge: "From your Alphabet Compass badge.",
+    hints: "From the Hints school (rank I): your Hints badges unlocked one arrow on each stage's first guess. No badge of its own.",
+    both: "From your Alphabet Compass badge, plus one from the Hints school (rank I) on your first guess.",
+    boss: "From Arrow Signs: these tiles show an arrow instead of a colour."
+  };
+  function meaning(dir) {
+    return dir === "L" ? "← The answer's letter here comes earlier in the alphabet."
+      : dir === "R" ? "→ The answer's letter here comes later in the alphabet."
+        : "– This letter is right here (green).";
+  }
+  let bubble = null;
+  let bubbleTimer = 0;
+  function closeBubble() {
+    if (bubble) bubble.remove();
+    bubble = null;
+    clearTimeout(bubbleTimer);
+  }
+  document.addEventListener("click", event => {
+    const mark = event.target instanceof Element ? event.target.closest("#cuddleRoot .umt-compass-mark") : null;
+    if (!mark) { if (bubble && !(event.target instanceof Element && event.target.closest(".umt-compass-note"))) closeBubble(); return; }
+    event.preventDefault();
+    event.stopPropagation();
+    closeBubble();
+    bubble = document.createElement("div");
+    bubble.className = "umt-compass-note";
+    bubble.setAttribute("role", "status");
+    bubble.innerHTML = `<strong>${meaning(mark.dataset.dir)}</strong><span>${SOURCES[mark.dataset.source] || SOURCES.badge}</span>`;
+    document.body.appendChild(bubble);
+    const box = mark.getBoundingClientRect();
+    const width = Math.min(260, window.innerWidth - 24);
+    bubble.style.width = `${width}px`;
+    bubble.style.left = `${Math.round(Math.max(12, Math.min(window.innerWidth - width - 12, box.left + box.width / 2 - width / 2)))}px`;
+    bubble.style.top = `${Math.round(box.bottom + 8)}px`;
+    bubbleTimer = setTimeout(closeBubble, 6000);
+  }, true);
 
   function install() {
     const Game = window.CuddleEngine && window.CuddleEngine.CuddleGame;

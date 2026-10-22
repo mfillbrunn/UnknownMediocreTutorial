@@ -718,7 +718,9 @@
   function makeImg(id, className = "umt-cuddle-svg-icon", title = "", emoji = "") {
     const img = document.createElement("img");
     img.className = className;
-    img.src = iconUrl(id);
+    // A badge's own icon (cuddle-badge-art.js) when it has one.
+    const art = window.CuddleBadgeArt;
+    img.src = art && art.has(id) ? art.url(id) : iconUrl(id);
     img.alt = "";
     img.setAttribute("aria-hidden", "true");
     if (title) img.title = title;

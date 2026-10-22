@@ -4713,3 +4713,22 @@
   font-weight: 900;
   line-height: 1;
 }
+
+/* An arrow's note (cuddle-compass.js): what it means and where it came
+   from, under the tapped arrow. */
+#cuddleScreen .umt-compass-mark { cursor: help; pointer-events: auto; }
+.umt-compass-note {
+  position: fixed;
+  z-index: 60;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(165, 180, 252, 0.7);
+  border-radius: 12px;
+  background: #1a1726;
+  color: #e9e6f5;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.umt-compass-note strong { color: #fff; font-size: 0.85rem; }

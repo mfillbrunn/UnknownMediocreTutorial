@@ -2746,7 +2746,7 @@
       const mark = entry && Array.isArray(entry.umtCompass) ? entry.umtCompass.find(item => item && item.index === column) : null;
       if (!mark) return "";
       const side = mark.dir === "L" ? "left" : mark.dir === "R" ? "right" : "match";
-      return `<span class="umt-compass-mark is-${side}">${mark.dir === "L" ? "&larr;" : mark.dir === "R" ? "&rarr;" : "&ndash;"}</span>`;
+      return `<span class="umt-compass-mark is-${side}" data-dir="${mark.dir}" data-source="${escapeHtml(entry.umtCompassSource || "badge")}">${mark.dir === "L" ? "&larr;" : mark.dir === "R" ? "&rarr;" : "&ndash;"}</span>`;
     }
 
     // Precise Green (cuddle-ui.js draws the same): how many times the
@@ -3031,6 +3031,8 @@
     }
 
     function rewardImg(id) {
+      const art = window.CuddleBadgeArt;
+      if (art && art.has(id)) return `<img class="umt-cuddle-svg-icon" src="${escapeHtml(art.url(id))}" alt="" aria-hidden="true">`;
       const slug = String(id || "gift").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[^a-zA-Z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "").toLowerCase() || "gift";
       return `<img class="umt-cuddle-svg-icon" src="cuddle/icons/reward-${escapeHtml(slug)}.svg" alt="" aria-hidden="true"`

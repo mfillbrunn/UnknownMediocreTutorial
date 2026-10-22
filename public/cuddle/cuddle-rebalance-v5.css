@@ -654,3 +654,54 @@ html.umt-mandatory-challenge .cuddle-challenge-decline {
 #cuddleScreen .cuddle-board-row:has(.umt-rule-letter-button) .cuddle-row-score.is-boss-active .umt-ico {
   visibility: hidden;
 }
+
+/* Quick Mode's countdown (cuddle-ui.js paintQuickModeClock): a big round
+   watch in the board's bottom-right corner. The ring empties as the guess's
+   time runs out; the last 10 seconds turn red and pulse. Taps go through
+   it to the board. */
+.umt-quick-watch {
+  --watch-left: 1;
+  --watch-ring: #8be8d2;
+  position: fixed;
+  z-index: 40;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #15121e 60%, transparent 61%),
+    conic-gradient(var(--watch-ring) calc(var(--watch-left) * 360deg), rgba(255, 255, 255, 0.14) 0);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 0 3px #15121e;
+  color: #f7f4ff;
+  font-family: inherit;
+  line-height: 1;
+  pointer-events: none;
+  transition: background 0.25s linear;
+}
+.umt-quick-watch-time {
+  font-size: 1.7rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.umt-quick-watch small {
+  margin-top: 1px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.umt-quick-watch.is-urgent {
+  --watch-ring: #e95c76;
+  color: #ffd6de;
+  animation: umt-quick-watch-pulse 1s ease-in-out infinite;
+}
+@keyframes umt-quick-watch-pulse {
+  50% { transform: scale(1.08); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .umt-quick-watch.is-urgent { animation: none; }
+}
+.umt-quick-watch[hidden] { display: none; }

@@ -4538,20 +4538,10 @@
           button.title = `${scope}. Click for details`;
           button.setAttribute("aria-label", `${scope}. Open explanation.`);
         }
-        // Quick Mode's per-guess countdown used to live in a header badge
-        // (removed -- this row icon is now the only place a boss's effect
-        // shows). cuddle-ui.js's paintQuickModeClock still writes into
-        // #cuddleQuickClock by id every 250ms; only the current row gets one.
-        if (id === "quickMode" && index === asInteger(state?.guessesUsed, 0)) {
-          const clock = document.createElement("span");
-          clock.id = "cuddleQuickClock";
-          clock.className = "umt-row-quick-clock";
-          clock.setAttribute("aria-live", "off");
-          button.appendChild(clock);
-        }
+        // Quick Mode's countdown is a watch over the board's corner
+        // (cuddle-ui.js paintQuickModeClock), not part of this icon.
         stack.appendChild(button);
       });
-      if (stack.querySelector("#cuddleQuickClock")) window.CuddleQuickClock?.paint?.();
     });
   }
 

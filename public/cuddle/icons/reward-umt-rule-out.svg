@@ -1,7 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Rule out">
-  <rect x="4" y="4" width="88" height="88" rx="22" fill="#e7f0ff" stroke="#284b98" stroke-width="4"/>
-  <rect x="22" y="22" width="52" height="52" rx="9" fill="#cfd5e3" stroke="#284b98" stroke-width="5"/>
-  <text x="48" y="61" font-size="32" fill="#6c7896" font-family="Arial, Helvetica, sans-serif" font-weight="900" text-anchor="middle">Z</text>
-  <path d="M28 28l40 40" stroke="#e95c76" stroke-width="7" stroke-linecap="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-hidden="true"><rect x="4" y="4" width="88" height="88" rx="22" fill="#e2efff" stroke="#1f3f73" stroke-width="4"/><rect x="22" y="22" width="52" height="52" rx="11.44" fill="#ffffff" stroke="#1f3f73" stroke-width="4" stroke-linejoin="round"/><text x="48" y="49" text-anchor="middle" dominant-baseline="central" font-family="Nunito, Arial Rounded MT Bold, Arial, sans-serif" font-weight="900" font-size="31.2" fill="#1f3f73">X</text><circle cx="48" cy="48" r="22" fill="none" stroke="#4a95ff" stroke-width="6"/><path d="M33 63L63 33" fill="none" stroke="#4a95ff" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/></svg>

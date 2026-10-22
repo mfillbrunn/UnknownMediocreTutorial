@@ -16,12 +16,14 @@
  *   - Greyscale (cuddle-engine.js) pays 1 / 2 / 4 points a grey.
  *
  * Gambler and purist:
- *   - High Roller (common, 3 levels): every stage bets 10 / 20 / 50
+ *   - High Roller (common, 3 levels): every stage bets 10 / 20 / 40
  *     points. Solve by guess 5 (world 1) or guess 4 (worlds 2 and 3) and
- *     it pays double back (+the bet); later than that and the bet is lost.
+ *     it pays 2.5 times the bet (+25 / +50 / +100); later than that and the
+ *     bet is lost.
  *   - Hard Mode (common, 3 levels): a stage solved in Wordle hard mode --
  *     every guess keeps each green in place and uses each yellow you were
- *     shown -- pays +10 / +20 / +40 points.
+ *     shown -- pays +35 / +60 / +100 points (it's hard with a hand of
+ *     cards).
  *
  * Combine (rare): taking it turns one of your badges into a random badge
  * one rarity higher (common -> rare -> epic -> legendary). It can only
@@ -74,9 +76,11 @@
   var LEAN_PER_BADGE = 5;
   var STRIKE_POINTS = [0, 0.5, 1, 1.5];
   var HIGH_ROLLER_BET = [0, 10, 20, 40];
+  // A won bet pays more than it risks: 2.5 times the stake.
+  var HIGH_ROLLER_WIN = [0, 25, 50, 100];
   // The guess a High Roller bet must be won by, per world.
   var HIGH_ROLLER_BY = [5, 4, 4];
-  var HARD_MODE_POINTS = [0, 10, 16, 30];
+  var HARD_MODE_POINTS = [0, 35, 60, 100];
   var TIER_UP = { common: "rare", rare: "epic", epic: "legendary" };
   var VOWELS = "AEIOU";
 
@@ -378,7 +382,9 @@
     var color = school ? school.color : ((tree && tree.SCHOOLLESS && tree.SCHOOLLESS.color) || "#9d97b0");
     var icon = (node && node.icon) || fallbackIcon || "✦";
     var Icons = window.CuddleIcons;
-    var iconHtml = Icons && Icons.hasEmoji(icon) ? Icons.svg(icon) : "<span>" + escapeText(icon) + "</span>";
+    var art = window.CuddleBadgeArt;
+    var iconHtml = node && art && art.has(node.id) ? art.img(node.id)
+      : Icons && Icons.hasEmoji(icon) ? Icons.svg(icon) : "<span>" + escapeText(icon) + "</span>";
     var rarity = String(tier || (node && node.tier) || "common");
     return '<div class="umt-cmb-badge" style="--t:' + color + ";--tier:" + (TIER_COLORS[rarity] || TIER_COLORS.common) + '">'
       + '<svg viewBox="0 0 100 116" aria-hidden="true"><path class="umt-cmb-hex" d="M50 2 L96 28 L96 88 L50 114 L4 88 L4 28 Z"/>'
@@ -442,10 +448,11 @@
       var roller = Math.min(3, levelOf(this, "highRoller"));
       if (solved && roller > 0) {
         var bet = HIGH_ROLLER_BET[roller];
+        var prize = HIGH_ROLLER_WIN[roller];
         // Won by guess 5 in world 1, guess 4 in worlds 2 and 3.
         var won = history.length <= HIGH_ROLLER_BY[worldIndex(this)];
-        stageBonus(this, won ? bet : -bet, "umtHighRoller", won ? "High Roller won" : "High Roller lost");
-        note(this, won ? "High Roller: bet " + bet + ", won +" + bet + "." : "High Roller: not solved by guess " + HIGH_ROLLER_BY[worldIndex(this)] + ", the " + bet + "-point bet is lost.");
+        stageBonus(this, won ? prize : -bet, "umtHighRoller", won ? "High Roller won" : "High Roller lost");
+        note(this, won ? "High Roller: bet " + bet + ", won +" + prize + "." : "High Roller: not solved by guess " + HIGH_ROLLER_BY[worldIndex(this)] + ", the " + bet + "-point bet is lost.");
       }
       var hard = Math.min(3, levelOf(this, "hardMode"));
       if (solved && hard > 0 && solvedInHardMode(history)) {
@@ -485,6 +492,7 @@
     LEAN_BY_WORLD: LEAN_BY_WORLD,
     STRIKE_POINTS: STRIKE_POINTS,
     HIGH_ROLLER_BET: HIGH_ROLLER_BET,
+    HIGH_ROLLER_WIN: HIGH_ROLLER_WIN,
     HARD_MODE_POINTS: HARD_MODE_POINTS,
     followsHardMode: followsHardMode,
     combinable: function combinableIds(game) { return combinable(game); },

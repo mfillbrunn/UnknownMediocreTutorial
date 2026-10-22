@@ -432,7 +432,7 @@
     { id: "umtSpotlight", icon: "👁️", title: "Spotlight", description: "A yellow letter moves to its exact spot and turns green (or the next yellow you find does)." },
     { id: "umtPocketMoney", icon: "💰", title: "Pocket Money", description: "Get +$10 right now." },
     { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "Get +15 points right now." },
-    { id: "umtFishingLine", icon: "🎣", title: "Fishing Line", description: "Once this stage, take a card back from your discard pile (tap the hook on your deck)." }
+    { id: "umtFishingLine", icon: "🪝", title: "Fishing Line", description: "Once this stage, take a card back from your discard pile (tap the hook on your deck)." }
   ];
 
   function uniqueSorted(list) {

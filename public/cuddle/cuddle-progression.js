@@ -290,7 +290,11 @@
   const HEX = "M50 2 L96 28 L96 88 L50 114 L4 88 L4 28 Z";
   const HEX_INNER = "M50 9 L90 32 L90 84 L50 107 L10 84 L10 32 Z";
 
-  function iconMarkup(icon) {
+  // A badge's own icon (cuddle-badge-art.js) where it has one, else its
+  // emoji drawn by the shared icon set.
+  function iconMarkup(icon, id) {
+    const art = window.CuddleBadgeArt;
+    if (id && art && art.has(id)) return art.img(id);
     const text = String(icon || "✦");
     const Icons = window.CuddleIcons;
     if (Icons && Icons.hasEmoji(text)) return Icons.svg(text);
@@ -329,7 +333,7 @@
     return `<button type="button" class="${classes}" data-umt-badge="${esc(node.id)}" style="--t:${color};--tier:${tier}${step ? `;--step:${step}` : ""}"`
       + ` aria-label="${esc(node.title)}${node.kind === "combo" ? " (combo)" : ""}. ${esc(shortText(node))}.">`
       + `<svg class="umt-bd-hex" viewBox="0 0 100 116" aria-hidden="true"><path class="umt-bd-hex-fill" d="${HEX}"/><path class="umt-bd-hex-line" d="${HEX_INNER}"/></svg>`
-      + `<span class="umt-bd-face"><span class="umt-bd-icon" aria-hidden="true">${iconMarkup(node.icon)}</span>`
+      + `<span class="umt-bd-face"><span class="umt-bd-icon" aria-hidden="true">${iconMarkup(node.icon, node.id)}</span>`
       + `<strong class="umt-bd-name">${esc(node.title)}</strong>`
       + (node.kind === "combo" ? "" : `<small class="umt-bd-short">${esc(shortText(node))}</small>`)
       + `</span>${level}${sparkles()}</button>`;
@@ -360,7 +364,7 @@
         ? `<p>${esc(tree.levelText(node, Math.max(1, node.level)))}</p>`
         : `<p>${esc(node.description)}</p>`;
     return `<div class="umt-bd-card-inner" style="--t:${color}">`
-      + `<div class="umt-bd-card-head"><span class="umt-bd-card-icon" aria-hidden="true">${iconMarkup(node.icon)}</span>`
+      + `<div class="umt-bd-card-head"><span class="umt-bd-card-icon" aria-hidden="true">${iconMarkup(node.icon, node.id)}</span>`
       + `<div><strong>${esc(node.title)}</strong><span class="umt-bd-card-tier">${esc(tier)}</span></div></div>`
       + body
       + `</div>`;
@@ -850,6 +854,27 @@
     slot.appendChild(button);
   }
 
+  // The play screen's header gets a small badge button too, so the badges
+  // can be checked mid-stage (the same page the map's button opens).
+  function decoratePlayHeader(root, game) {
+    const slot = root.querySelector(".cuddle-shell:not(.cuddle-branch-shell) > .cuddle-header .cuddle-header-side-right");
+    if (!slot) return;
+    const count = buildModel(game).badges.length;
+    let button = slot.querySelector(".umt-pt-mini");
+    if (!button) {
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = "cuddle-icon-btn umt-pt-mini";
+      button.dataset.umtPtOpen = "1";
+      button.innerHTML = `<span aria-hidden="true">⬢</span><b></b>`;
+      slot.insertBefore(button, slot.firstChild);
+    }
+    const label = `Open badges, ${count} collected`;
+    if (button.getAttribute("aria-label") !== label) button.setAttribute("aria-label", label);
+    const badge = button.querySelector("b");
+    if (badge && badge.textContent !== String(count)) badge.textContent = String(count);
+  }
+
   function payoutShowing(game) {
     const money = game && game.state && game.state.cuddleMoneyMode;
     return Boolean((money && money.pendingPayout && money.pendingPayout.id !== money.lastAnimatedPayoutId)
@@ -900,6 +925,7 @@
     root.classList.toggle("umt-starter-pending", Boolean(money && money.starterRewardPending
       && Array.isArray(money.starterRewardChoices) && money.starterRewardChoices.length));
     decorateMapHeader(root, game);
+    decoratePlayHeader(root, game);
     checkForPicks(game);
     checkForStageStart(game);
     checkForQuest(game);
@@ -1054,7 +1080,7 @@
       return model.badges.concat(model.combos).map((node) => ({
         id: node.id,
         title: node.title,
-        icon: iconMarkup(node.icon),
+        icon: iconMarkup(node.icon, node.id),
         color: badgeColor(node),
         kind: node.kind,
         level: node.level,
