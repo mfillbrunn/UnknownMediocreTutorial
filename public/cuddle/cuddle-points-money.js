@@ -96,9 +96,9 @@
   var TILE_KINDS = [
     { kind: "money", weight: function () { return 1; } },
     { kind: "points", weight: function () { return 1; } },
-    { kind: "mulligan", bonus: "mulliganTiles", weight: function (level) { return 0.45 * level; } },
-    { kind: "joker", bonus: "jokerTiles", weight: function (level) { return 0.3 * level; } },
-    { kind: "hint", bonus: "oracleTiles", weight: function (level) { return 0.15 * level; } }
+    { kind: "mulligan", bonus: "mulliganTiles", weight: function (level) { return 0.9 * level; } },
+    { kind: "joker", bonus: "jokerTiles", weight: function (level) { return 0.6 * level; } },
+    { kind: "hint", bonus: "oracleTiles", weight: function (level) { return 0.4 * level; } }
   ];
 
   function addMoney(state, amount) {

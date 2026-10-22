@@ -304,7 +304,7 @@
     return feedback.filter(function is(value) { return value === colour; }).length;
   }
 
-  var MOMENTUM = [0, 4, 7, 12];
+  var MOMENTUM = [0, 2, 4, 7];
   var BIG_OPENER = [0, 5, 8, 15];
   var LAST_STAND = [0, 25, 40, 75];
   var PICKPOCKET = [0, 2, 3, 6];
@@ -430,9 +430,9 @@
     { id: "umtRuleOut", icon: "🚫", title: "Rule Out", description: "2 consonants in your hand that aren't in the answer turn grey, and are swapped for new cards." },
     { id: "umtVowelCheck", icon: "🔤", title: "Vowel Check", description: "2 vowels you haven't tried are tested: you learn if each one is in the answer." },
     { id: "umtSpotlight", icon: "👁️", title: "Spotlight", description: "A yellow letter moves to its exact spot and turns green (or the next yellow you find does)." },
-    { id: "umtPocketMoney", icon: "💰", title: "Pocket Money", description: "Get +$10 right now." },
-    { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "Get +15 points right now." },
-    { id: "umtFishingLine", icon: "🪝", title: "Fishing Line", description: "Once this stage, take a card back from your discard pile (tap the hook on your deck)." }
+    { id: "umtPocketMoney", icon: "💰", title: "Pocket Money", description: "Get +$8 right now." },
+    { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "Get +10 points right now." },
+    { id: "umtFishingLine", icon: "🪝", title: "Fishing Line", description: "Twice this stage, take a card back from your discard pile (tap the hook on your deck)." }
   ];
 
   function uniqueSorted(list) {
@@ -563,12 +563,12 @@
       return "Spotlight: no yellow letter yet. Your next " + (left > 1 ? "two yellows" : "yellow") + " will be placed.";
     },
     umtPocketMoney: function pocketMoney(game) {
-      var cash = questBoost(game) ? 20 : 10;
+      var cash = questBoost(game) ? 16 : 8;
       instantMoney(game, cash);
       return "Pocket Money: +$" + cash + ".";
     },
     umtQuickPoints: function quickPoints(game) {
-      var points = questBoost(game) ? 30 : 15;
+      var points = questBoost(game) ? 20 : 10;
       instantPoints(game, points);
       return "Quick Points: +" + points + " points.";
     },
@@ -576,11 +576,13 @@
     umtFishingLine: function fishingLine(game) {
       var hook = window.CuddleFishHook;
       if (hook && typeof hook.addCatch === "function") {
+        // Two catches (one was the weakest quest reward); three with
+        // Quest Mastery.
+        hook.addCatch(game);
         hook.addCatch(game);
         if (questBoost(game)) hook.addCatch(game);
       }
-      if (questBoost(game)) return "Fishing Line: 2 catches. Tap the hook on your deck to take cards back from the discard pile.";
-      return "Fishing Line: tap the hook on your deck to take a card back from the discard pile.";
+      return "Fishing Line: " + (questBoost(game) ? 3 : 2) + " catches. Tap the hook on your deck to take cards back from the discard pile.";
     }
   };
 

@@ -169,7 +169,7 @@
       { t: "pay", before: [["Solved", "+18"]], after: [["Solved", "+18"], ["Hard mode", "+10"]] }],
     leanBuild: ["A solve pays its usual cash-out.", "A solve pays a bonus, smaller for every badge you hold outside Restraint.",
       { t: "pay", before: [["Solved", "+18"]], after: [["Solved", "+18"], ["Lean Build", "+15"]] }],
-    ascetic: ["A solve pays its usual cash-out.", "With few badges outside Restraint, every solve pays double (5 or fewer) or half as much again (10 or fewer).",
+    ascetic: ["A solve pays its usual cash-out.", "With few badges outside Restraint, every solve pays 1.6 times (5 or fewer) or 1.3 times (10 or fewer).",
       { t: "pay", before: [["Solved", "+20"]], after: [["Solved", "+20"], ["Ascetic ×2", "+20"]] }],
 
     // ---- Money --------------------------------------------------------------
@@ -297,12 +297,12 @@
   // twice with the same guesses, without the badge and with it).
   // The caption says what to compare.
   var SHOT_PAIRS = {
-    mulliganValueBoost: "The same stage and guesses: Unused mulligans goes from +5 to +20, and the cash-out from +93 to +108.",
+    mulliganValueBoost: "The same stage and guesses: the unused mulligans line pays more, and so does the cash-out.",
     earlySolveBoost: "The same stage and guesses: Solved 3 guesses early goes from +15 to +30.",
-    colourTrade: "The same stage and guesses: the solving row's greens pay +12 instead of +10.",
-    greyscale: "The same stage and guesses: the grey tiles of the first two guesses now pay (+2 and +1 become +5 and +5).",
-    vowelBounty: "The same stage and guesses: a new row, 1 vowel in the secret +5.",
-    momentum: "The same stage and guesses: a new row, Momentum +4.",
+    colourTrade: "The same stage and guesses: the solving row's greens pay more.",
+    greyscale: "The same stage and guesses: the grey tiles of the first two guesses now pay too.",
+    vowelBounty: "The same stage and guesses: a new row pays for the vowels in the secret.",
+    momentum: "The same stage and guesses: a new row, the Momentum bonus.",
     bigOpener: "The same stage and guesses: a new row, Big Opener +10.",
     storybookStart: "The same stage and guesses: the stage started with points, so the cash-out goes from +93 to +103.",
     pickpocket: "The same stage and guesses: the yellow tiles pay money too, $39 becomes $45.",

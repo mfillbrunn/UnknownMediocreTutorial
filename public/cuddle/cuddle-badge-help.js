@@ -97,7 +97,7 @@
     luckyClover: ["Lucky cards go into your deck. A lucky card has no letter. If it's still in your hand when you solve, it pays points; mulligan it away and it pays a little.", ["luckyCard", "cashout"]],
     fishHook: ["The hook sits on your deck. Once a stage, tap it to fish a card you've discarded (by a guess or a mulligan) back into your hand. Higher levels test the letter you fish, and can hook a letter of the answer on their own.", ["fishhook", "hand"]],
     cleanSlate: ["A Restraint badge: whenever you skip a reward, one of your badges levels up at random, so skipping doesn't mean falling behind.", ["reward"]],
-    ascetic: ["A Restraint badge: every stage you solve pays double while you have 5 badges or fewer outside the Restraint school, and half as much again with 10 or fewer (Legendaries don't count). With more than 10 it pays nothing extra.", ["cashout", "reward"]],
+    ascetic: ["A Restraint badge: every stage you solve pays 1.6 times while you have 5 badges or fewer outside the Restraint school, and 1.3 times with 10 or fewer (Legendaries don't count). With more than 10 it pays nothing extra.", ["cashout", "reward"]],
     questMastery: ["Every reward a finished quest offers is one step bigger than usual: more mulligans, more letters checked, more letters ruled out.", ["questReward"]],
     overtime: ["Each quest you finish buys you one more guess this stage: a boss gets one more try, and on other stages the late-guess cost starts a guess later.", ["quest", "board"]],
     questChain: ["When you finish a quest, a new one appears on your next guess (if that guess doesn't have one). Keep finishing them and the chain goes on.", ["quest", "questReward"]],
