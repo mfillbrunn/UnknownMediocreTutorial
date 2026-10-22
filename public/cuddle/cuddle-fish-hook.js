@@ -30,10 +30,6 @@
 
   var ID = "fishHook";
 
-  function inDuel(state) {
-    return String((state && state.runId) || "").indexOf(":duel:") !== -1;
-  }
-
   function level(game) {
     var tree = window.CuddleSkillTree;
     var node = tree && tree.findNode(ID);
@@ -127,9 +123,26 @@
     if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
   }
 
+  // A Duel (cuddle-expanded-stages.js) keeps its own hand and discard
+  // pile: what's on screen and every catch read and change those, and the
+  // hook is only offered on the player's turn.
+  function onScreen(game, fn, changed) {
+    var stages = window.CuddleExpandedStages;
+    return stages && typeof stages.withDuel === "function" ? stages.withDuel(game, fn, changed) : fn(game);
+  }
+
+  function duelWaiting(game) {
+    var stages = window.CuddleExpandedStages;
+    return Boolean(stages && typeof stages.duelPlayerTurn === "function" && stages.duelPlayerTurn(game) === false);
+  }
+
+  function readyOnScreen(game) {
+    return Boolean(game) && !duelWaiting(game) && onScreen(game, ready);
+  }
+
   function ready(game) {
     var state = game && game.state;
-    if (!state || inDuel(state) || state.status !== "playing" || state.pendingRoundEnd) return false;
+    if (!state || state.status !== "playing" || state.pendingRoundEnd) return false;
     var copilot = window.CuddleCopilot;
     if (copilot && typeof copilot.aiTurn === "function" && copilot.aiTurn(game)) return false;
     return usedThisStage(state) < allowance(game) && pond(game).length > 0;
@@ -179,7 +192,7 @@
   // yellow. Returns the letter, or null.
   proto.autoHook = function autoHook() {
     var state = this.state;
-    if (level(this) < 3 || !state || inDuel(state) || state.status !== "playing" || state.pendingRoundEnd) return null;
+    if (level(this) < 3 || !state || state.status !== "playing" || state.pendingRoundEnd) return null;
     if (state.umtFishAuto === stageKey(state)) return null;
     var game = this;
     var bite = (state.discard || []).find(function letter(card) {
@@ -220,7 +233,7 @@
   function placeButton(game) {
     var row = document.querySelector("#cuddleScreen .cuddle-submit-row.has-deck");
     var existing = document.querySelector("#cuddleScreen .umt-fish-btn");
-    var show = Boolean(row) && ready(game) && !row.classList.contains("is-mulligan-mode");
+    var show = Boolean(row) && readyOnScreen(game) && !row.classList.contains("is-mulligan-mode");
     if (!show) {
       if (existing) existing.remove();
       return;
@@ -259,13 +272,13 @@
   function renderSheet() {
     var game = activeGame();
     var existing = document.querySelector(".umt-fish-overlay");
-    if (!view.open || !game || !ready(game)) {
+    if (!view.open || !game || !readyOnScreen(game)) {
       view.open = false;
       if (existing) existing.remove();
       return;
     }
     if (existing) existing.remove();
-    (document.getElementById("cuddleScreen") || document.body).insertAdjacentHTML("beforeend", sheetHtml(game));
+    (document.getElementById("cuddleScreen") || document.body).insertAdjacentHTML("beforeend", onScreen(game, sheetHtml));
   }
 
   function close() {
@@ -297,7 +310,9 @@
       event.preventDefault();
       var game = activeGame();
       var from = deckSpot();
-      var result = game ? game.fishCard(view.glyph, view.throwId) : null;
+      var glyph = view.glyph;
+      var throwId = view.throwId;
+      var result = game ? onScreen(game, function catchOne(g) { return g.fishCard(glyph, throwId); }, function caught(value) { return Boolean(value && value.ok); }) : null;
       close();
       if (result && result.ok) {
         try { window.dispatchEvent(new Event("cuddle:campaign-update")); } catch (_error) { /* next render */ }
@@ -439,16 +454,16 @@
     var game = activeGame();
     if (!game || !game.state) return;
     var copilot = window.CuddleCopilot;
-    if (!(copilot && typeof copilot.aiTurn === "function" && copilot.aiTurn(game))) {
+    if (!(copilot && typeof copilot.aiTurn === "function" && copilot.aiTurn(game)) && !duelWaiting(game)) {
       var from = deckSpot();
-      var bit = game.autoHook();
+      var bit = onScreen(game, function bite(g) { return g.autoHook(); }, function bitten(value) { return Boolean(value); });
       if (bit) {
         try { window.dispatchEvent(new Event("cuddle:campaign-update")); } catch (_error) { /* next render */ }
         playCatch(from, bit, "present");
       }
     }
     placeButton(game);
-    if (view.open && !ready(game)) close();
+    if (view.open && !readyOnScreen(game)) close();
   }
 
   function attach() {

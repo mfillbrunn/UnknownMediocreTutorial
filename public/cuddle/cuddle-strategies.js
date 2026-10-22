@@ -211,7 +211,7 @@
   // last look. The stage's record resets with the stage.
   function settleStrikes(game) {
     var state = game && game.state;
-    if (!state || inDuel(state)) return;
+    if (!state) return;
     var level = Math.min(3, levelOf(game, "strikeThrough"));
     var key = stageKey(state);
     if (!state.umtStrikes || state.umtStrikes.key !== key) state.umtStrikes = { key: key, letters: [] };
@@ -419,6 +419,12 @@
     }, 30);
   }
 
+  // A Duel's history also holds the AI's rows (actor "ai"): what looks at
+  // "your last guess" or "your first guess" counts only the player's own.
+  function playerRows(history) {
+    return (Array.isArray(history) ? history : []).filter(function mine(entry) { return !entry || entry.actor !== "ai"; });
+  }
+
   // -- hooks ----------------------------------------------------------------
   var baseSubmit = proto.submitDraft;
   proto.submitDraft = function submitDraftWithStrategies() {
@@ -426,8 +432,9 @@
     var before = state && Array.isArray(state.history) ? state.history.length : 0;
     var result = baseSubmit.apply(this, arguments);
     state = this.state;
-    var history = state && Array.isArray(state.history) ? state.history : [];
-    if (!result || !result.ok || history.length <= before || inDuel(state)) return result;
+    var allRows = state && Array.isArray(state.history) ? state.history : [];
+    if (!result || !result.ok || allRows.length <= before) return result;
+    var history = playerRows(allRows);
     try {
       settleStrikes(this);
       var entry = history[history.length - 1];

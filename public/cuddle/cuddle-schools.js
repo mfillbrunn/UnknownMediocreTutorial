@@ -87,8 +87,10 @@
     return out;
   }
 
+  // A Duel plays with the run's schools too (its state is a copy of the
+  // run's, badges included).
   function rankOf(game, school) {
-    if (!game || !game.state || inDuel(game.state)) return 0;
+    if (!game || !game.state) return 0;
     return num(ranks(game)[school]);
   }
 
@@ -217,7 +219,7 @@
   // learn whether it's in the answer (yellow) or not (crossed out).
   function testableLetters(game) {
     var state = game && game.state;
-    if (!state || state.status !== "playing" || inDuel(state) || rankOf(game, "prism") < 3) return [];
+    if (!state || state.status !== "playing" || rankOf(game, "prism") < 3) return [];
     if (record(state).tested === stageKey(state)) return [];
     var known = new Set([].concat(state.knownPresent || [], state.knownAbsent || [], (state.revealedPositions || []).filter(Boolean)));
     var letters = [];
@@ -355,7 +357,7 @@
     return function beginRoundWithSchools() {
       var result = original.apply(this, arguments);
       var state = this.state;
-      if (!state || state.status !== "playing" || inDuel(state)) return result;
+      if (!state || state.status !== "playing") return result;
       try {
         // A badge picked through a path that skips chooseUpgrade (packs,
         // the shop, playstyle powers) still ranks its school up here.
@@ -395,8 +397,10 @@
       var before = state && Array.isArray(state.history) ? state.history.length : 0;
       var result = original.apply(this, arguments);
       state = this.state;
-      var history = state && Array.isArray(state.history) ? state.history : [];
-      if (!result || !result.ok || history.length <= before || inDuel(state)) return result;
+      var allRows = state && Array.isArray(state.history) ? state.history : [];
+      if (!result || !result.ok || allRows.length <= before) return result;
+      // A Duel's history holds the AI's rows too: only the player's count.
+      var history = allRows.filter(function mine(row) { return !row || row.actor !== "ai"; });
       try {
         var entry = history[history.length - 1];
         // A guess past the window earns nothing but its penalty.
@@ -533,7 +537,7 @@
     return function mulliganWithSchools() {
       var result = original.apply(this, arguments);
       var state = this.state;
-      if (!result || !result.ok || !state || inDuel(state)) return result;
+      if (!result || !result.ok || !state) return result;
       var mine = record(state);
       var key = stageKey(state);
       if (rankOf(this, "flora") >= 3 && mine.freeMulligan !== key) {
@@ -557,7 +561,11 @@
     event.stopPropagation();
     var game = window.CuddleBranchMap && typeof window.CuddleBranchMap.getActiveGame === "function" ? window.CuddleBranchMap.getActiveGame() : null;
     if (!game) return;
-    game.schoolTestLetter(button.getAttribute("data-school-test"));
+    var letter = button.getAttribute("data-school-test");
+    // In a Duel, the Duel's own hand and answer (cuddle-expanded-stages.js).
+    var stages = window.CuddleExpandedStages;
+    if (stages && typeof stages.withDuel === "function") stages.withDuel(game, function test(g) { return g.schoolTestLetter(letter); }, true);
+    else game.schoolTestLetter(letter);
     window.dispatchEvent(new Event("cuddle:campaign-update"));
   }, true);
 

@@ -289,6 +289,12 @@
     };
   });
 
+  // A Duel's history also holds the AI's rows (actor "ai"): what looks at
+  // "your last guess" or "your first guess" counts only the player's own.
+  function playerRows(history) {
+    return (Array.isArray(history) ? history : []).filter(function mine(entry) { return !entry || entry.actor !== "ai"; });
+  }
+
   function shownFeedback(entry) {
     var shown = entry && (Array.isArray(entry.shownFeedback) ? entry.shownFeedback : entry.feedback);
     return Array.isArray(shown) ? shown : [];
@@ -309,8 +315,9 @@
     var before = state && Array.isArray(state.history) ? state.history.length : 0;
     var result = baseSubmit.apply(this, arguments);
     state = this.state;
-    var history = state && Array.isArray(state.history) ? state.history : [];
-    if (!result || !result.ok || history.length <= before || inDuel(state)) return result;
+    var allRows = state && Array.isArray(state.history) ? state.history : [];
+    if (!result || !result.ok || allRows.length <= before) return result;
+    var history = playerRows(allRows);
     try {
       var entry = history[history.length - 1];
       // A Spotlight still owed a yellow (or two) places the next that show.
@@ -386,11 +393,11 @@
   // again after the first).
   var baseSubmitBold = proto.submitDraft;
   proto.submitDraft = function submitDraftWithBoldOpener() {
-    var before = this.state && Array.isArray(this.state.history) ? this.state.history.length : 0;
+    var before = this.state ? playerRows(this.state.history).length : 0;
     var result = baseSubmitBold.apply(this, arguments);
     var state = this.state;
-    if (result && result.ok !== false && state && !inDuel(state) && before === 0
-        && Array.isArray(state.history) && state.history.length === 1 && state.status === "playing"
+    if (result && result.ok !== false && state && before === 0
+        && playerRows(state.history).length === 1 && state.status === "playing"
         && levelOf(this, "boldOpener") >= 2) {
       state.buffs = Object.assign({}, state.buffs || {}, { sillyWord: Math.max(1, num(state.buffs && state.buffs.sillyWord)) });
     }
@@ -400,7 +407,7 @@
   proto._beginRound = function beginRoundWithPowers() {
     var result = baseBegin.apply(this, arguments);
     var state = this.state;
-    if (state && !inDuel(state)) {
+    if (state) {
       // Second Guess Quest: a free quest reroll every stage per level.
       var rerolls = Math.min(3, levelOf(this, "questReroll"));
       if (rerolls > 0) {

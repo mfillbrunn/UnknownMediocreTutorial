@@ -247,8 +247,11 @@
     }
     if (shielded) addMessage(this, "Mistake Shield: no greens or yellows, so you get that guess back.");
     try {
-      const history = this.state && Array.isArray(this.state.history) ? this.state.history : [];
-      const entry = history.length > before ? history[history.length - 1] : null;
+      const allRows = this.state && Array.isArray(this.state.history) ? this.state.history : [];
+      const entry = allRows.length > before ? allRows[allRows.length - 1] : null;
+      // A Duel's history holds the AI's rows too: "after your 2nd guess"
+      // counts the player's own.
+      const history = allRows.filter(row => !row || row.actor !== "ai");
       // Hints that arrive later, so the opening guesses are still a real
       // read: Yellow Guesser Hint after guess 1, Last Light after guess 2.
       const unsolved = entry && String(entry.word || "").toUpperCase() !== String(this.state.secret || "").toUpperCase()

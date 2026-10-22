@@ -84,8 +84,10 @@
     }
   }
 
+  // In a Duel too: what can't happen there (Overtime's extra guess, the
+  // Treasure Chest's pack) checks for one itself.
   function has(game, id) {
-    return levelOf(game, id) > 0 && !inDuel(game && game.state);
+    return levelOf(game, id) > 0;
   }
 
   function randomOf(game) {
@@ -383,7 +385,7 @@
   function bookQuestChain(game) {
     var state = game.state;
     if (!has(game, "questChain")) return;
-    var history = Array.isArray(state.history) ? state.history : [];
+    var history = playerRows(state.history);
     var entry = history[history.length - 1];
     if (!entry || !entry.questComplete || entry.umtQuestChain) return;
     entry.umtQuestChain = true;
@@ -397,7 +399,7 @@
   function placeChainedQuest(game) {
     var state = game.state;
     var booked = state && state.umtQuestChain;
-    if (!booked || state.status !== "playing" || inDuel(state)) return;
+    if (!booked || state.status !== "playing") return;
     if (booked.key !== stageKey(state) || booked.guess !== num(state.guessesUsed) + 1) return;
     state.umtQuestChain = null;
     if (state.activeQuest || !has(game, "questChain")) return;
@@ -624,6 +626,12 @@
     return Array.isArray(shown) ? shown : [];
   }
 
+  // A Duel's history also holds the AI's rows (actor "ai"): what looks at
+  // "your last guess" or "your first guess" counts only the player's own.
+  function playerRows(history) {
+    return (Array.isArray(history) ? history : []).filter(function mine(entry) { return !entry || entry.actor !== "ai"; });
+  }
+
   // Each yellow of the opening guess takes its spot in the answer.
   function goldenOpener(game, entry) {
     var state = game.state;
@@ -662,12 +670,13 @@
     var before = state && Array.isArray(state.history) ? state.history.length : 0;
     var result = baseSubmit.apply(this, arguments);
     state = this.state;
-    var history = state && Array.isArray(state.history) ? state.history : [];
-    if (!result || !result.ok || history.length <= before || inDuel(state)) return result;
+    var allRows = state && Array.isArray(state.history) ? state.history : [];
+    if (!result || !result.ok || allRows.length <= before) return result;
+    var history = playerRows(allRows);
     try {
       var entry = history[history.length - 1];
       var solved = Boolean(entry && state.secret && entry.word === state.secret);
-      countOvertime(this);
+      if (!inDuel(state)) countOvertime(this);
       if (!solved) bookQuestChain(this);
       if (!solved && history.length <= (levelOf(this, "goldenOpener") >= 2 ? 2 : 1) && state.status === "playing" && has(this, "goldenOpener")) {
         var placed = goldenOpener(this, entry);
@@ -729,7 +738,7 @@
   function scoutQuest(game) {
     var state = game.state;
     var level = Math.min(2, levelOf(game, "questScout"));
-    if (!level || inDuel(state) || state.status !== "playing" || !state.activeQuest) return;
+    if (!level || state.status !== "playing" || !state.activeQuest) return;
     var key = scoutKey(state);
     if (state.umtQuestHint && state.umtQuestHint.key === key) return;
     var book = window.CuddleQuestBook;
