@@ -701,9 +701,31 @@
 
   // What the guess itself earned: its tiles, a quest it completed, and any
   // penalty it took.
+  // What a guess paid on the spot, shown in the header as it landed:
+  // its points squares and quest bonuses. Marked on the guess
+  // (umtInstantShown) when it isn't the solving one, and left out of its
+  // cash-out row.
+  function paidOnTheSpot(entry) {
+    if (!entry) return 0;
+    return Math.max(0, asNumber(entry.squarePoints, 0))
+      + Math.max(0, asNumber(entry.questBonus, 0))
+      + Math.max(0, asNumber(entry.questFinalBonus, 0))
+      + Math.max(0, asNumber(entry.cuddleQuestBonus, 0))
+      + Math.max(0, asNumber(entry.coachDoubleQuestBonus, 0));
+  }
+
+  // The small "+N" rising from a header counter (cuddle-powers.js).
+  function headerPop(selector, text, kind) {
+    if (typeof window.CuddleHeaderPop === "function") window.CuddleHeaderPop(selector, text, kind);
+  }
+
+  function shownAlready(entry) {
+    return entry ? Math.max(0, asNumber(entry.umtInstantShown, 0)) : 0;
+  }
+
   function rowMoney(entry) {
     if (!entry) return 0;
-    return asNumber(entry.scoreDelta, 0)
+    return asNumber(entry.scoreDelta, 0) - shownAlready(entry)
       + asNumber(entry.questBonus, 0)
       + asNumber(entry.questFinalBonus, 0)
       + asNumber(entry.cuddleQuestBonus, 0)
@@ -738,13 +760,14 @@
     // Points squares on the board this guess hit (a yellow pays 5, a
     // green 10) are part of the row's points too.
     var squares = Math.round(asNumber(entry.squarePoints, 0));
-    if (squares) lines.push({ label: "Points square", detail: "a green or yellow on the square", amount: squares });
+    var shown = shownAlready(entry) > 0;
+    if (squares && !shown) lines.push({ label: "Points square", detail: "a green or yellow on the square", amount: squares });
 
     // Anything the lines above can't account for (an older save with no
     // tileRates or squarePoints, or a bonus folded into scoreDelta by
     // another layer) still has to add up, so the remainder rides in as one
     // honest line -- most often a points square from an older save.
-    var tileTotal = lines.reduce(function sum(total, line) { return total + line.amount; }, 0);
+    var tileTotal = lines.reduce(function sum(total, line) { return total + line.amount; }, 0) + (shown ? squares : 0);
     var remainder = Math.round(asNumber(entry.scoreDelta, 0)) - tileTotal;
     if (remainder) lines.push({ label: "Other points", detail: "usually a points square", amount: remainder });
 
@@ -752,10 +775,12 @@
       var value = Math.round(asNumber(amount, 0));
       if (value) lines.push({ label: label, detail: detail || "", amount: value });
     };
-    extra(entry.questBonus, "Quest complete");
-    extra(entry.questFinalBonus, "Final quest bonus");
-    extra(entry.cuddleQuestBonus, "Quest bonus");
-    extra(entry.coachDoubleQuestBonus, "Double quest bonus");
+    if (!shown) {
+      extra(entry.questBonus, "Quest complete");
+      extra(entry.questFinalBonus, "Final quest bonus");
+      extra(entry.cuddleQuestBonus, "Quest bonus");
+      extra(entry.coachDoubleQuestBonus, "Double quest bonus");
+    }
     extra(-asNumber(entry.questTrialPenalty, 0), "Quest trial missed");
     extra(-asNumber(entry.ratchetQuestPenalty, 0), "Boss burden");
     extra(-asNumber(entry.latePenalty, 0), "Too many guesses");
@@ -765,7 +790,11 @@
   function buildPayout(game, challenge, wasBoss) {
     var state = game.state;
     var mode = ensureMode(game);
-    var start = asNumber(mode.roundStartingMoney, asNumber(state.score, 0) - asNumber(state.roundScore, 0));
+    // From what the header showed: the stage's start, plus what it had
+    // already banked mid-stage (Opening Verse; on-the-spot payouts move
+    // roundStartingMoney as they land).
+    var start = asNumber(mode.roundStartingMoney, asNumber(state.score, 0) - asNumber(state.roundScore, 0))
+      + asNumber(state.roundOpeningPoints, 0);
     var finish = asNumber(state.score, 0);
     var rows = (Array.isArray(state.history) ? state.history : []).map(function payoutRow(entry, index) {
       return {
@@ -823,9 +852,26 @@
     var restrictionError = challengeValidationError(this, challenge);
     if (restrictionError) return { ok: false, error: restrictionError };
 
+    var cashBefore = asNumber(state.cuddleMoney, 0);
     var result = originalSubmitDraft.apply(this, arguments);
     if (!result || !result.ok) return result;
     var entry = state.history && state.history[state.history.length - 1];
+
+    // A guess that doesn't end the stage: what it paid on the spot goes in
+    // the header now (with a small "+N"), and stays out of the cash-out.
+    if (!result.solved && !state.pendingRoundEnd && entry && !entry.umtInstantShown && mode) {
+      var instant = paidOnTheSpot(entry);
+      if (instant > 0) {
+        entry.umtInstantShown = instant;
+        mode.roundStartingMoney = asNumber(mode.roundStartingMoney, 0) + instant;
+        headerPop(".cuddle-header-points", "+" + Math.round(instant), "points");
+      }
+      var cash = asNumber(state.cuddleMoney, 0) - cashBefore;
+      if (cash > 0) {
+        mode.roundStartingCash = asNumber(mode.roundStartingCash, 0) + cash;
+        headerPop(".cuddle-header-money", "+$" + Math.round(cash), "money");
+      }
+    }
 
     if (result.solved && !wasBoss) {
       if (challenge) {
@@ -900,6 +946,15 @@
     return result;
   };
 
+  // A stage's cash-out waiting or counting: until it's collected, the
+  // header shows what it had before it (the cash-out's starting figures),
+  // not the total it's about to reach.
+  function heldPayout() {
+    var mode = activeGame && activeGame.state ? activeGame.state[MODE_KEY] : null;
+    if (payoutRunning && runningPayoutPayload) return runningPayoutPayload;
+    return mode && mode.pendingPayout && mode.pendingPayout.id !== mode.lastAnimatedPayoutId ? mode.pendingPayout : null;
+  }
+
   function replaceVisibleMoneyCopy(root, game) {
     /* UMT_CUDDLE_STABILITY_V2_MONEY_COPY */
     var state = game && game.state ? game.state : {};
@@ -914,6 +969,8 @@
     var visiblePoints = game && typeof game.bankedScore === "function"
       ? Math.round(game.bankedScore())
       : Math.max(0, Math.round(roundIsLive ? score - provisional : score));
+    var held = heldPayout();
+    if (held && Number.isFinite(Number(held.from))) visiblePoints = Math.max(0, Math.round(Number(held.from)));
     var pointsText = visiblePoints.toLocaleString();
     root.querySelectorAll(".cuddle-header-score").forEach(function updateHeader(element) {
       // The play screen's points carry the next boss's target beside them
@@ -922,7 +979,9 @@
       if (value.textContent !== pointsText) value.textContent = pointsText;
       if (element.getAttribute("aria-label") !== visiblePoints + " points") element.setAttribute("aria-label", visiblePoints + " points");
     });
-    var money = Math.max(0, Math.round(Number(state.cuddleMoney || 0)));
+    // Like the points, the money waits for the cash-out: what the solve
+    // paid shows there, then here.
+    var money = Math.max(0, Math.round(held && Number.isFinite(Number(held.cashFrom)) ? Number(held.cashFrom) : Number(state.cuddleMoney || 0)));
     var moneyText = formatMoney(money);
     root.querySelectorAll(".cuddle-header-money").forEach(function updateHeaderMoney(element) {
       if (element.textContent !== moneyText) element.textContent = moneyText;
@@ -1467,6 +1526,12 @@
     // including the frame or two a full re-render spends replaying it, when
     // the overlay is briefly absent from the page.
     payoutActive: function payoutActive() { return payoutRunning; },
+    // The points the header holds at while a cash-out is waiting or
+    // counting (its starting figure), or null.
+    heldPoints: function heldPoints(game) {
+      var held = heldPayout();
+      return held && (!game || game === activeGame) && Number.isFinite(Number(held.from)) ? Number(held.from) : null;
+    },
     // The labelled lines behind one guess's payout figure. Shared so any
     // layer that rebuilds pendingPayout.rows (cuddle-coach-expansion.js does,
     // to add its unused-row bonus rows) can keep the tap-to-open breakdown

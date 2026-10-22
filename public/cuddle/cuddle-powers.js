@@ -131,6 +131,9 @@
     }, 380);
   }
 
+  // Shared with cuddle-money-mode.js (a guess's on-the-spot payouts).
+  window.CuddleHeaderPop = headerPop;
+
   // -------------------------------------------------------------------------
   // 1. Third-level bonuses
   // -------------------------------------------------------------------------
