@@ -384,3 +384,40 @@ button.umt-clue-word.is-out {
 .cuddle-pair-actions .cuddle-btn span { color: inherit; font-size: 0.72rem; font-weight: 600; opacity: 0.8; }
 @keyframes cuddle-pair-in { from { opacity: 0; transform: translateY(10px) scale(0.96); } }
 @media (prefers-reduced-motion: reduce) { .cuddle-pair-word { animation: none; } }
+
+/* Hints rank III's Test pad above the hand (cuddle-schools.js): drag a
+   consonant onto it, or tap it and then the card. */
+#cuddleScreen .umt-test-pad {
+  display: block;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border: 2px dashed rgba(88, 168, 255, 0.6);
+  border-radius: 14px;
+  background: rgba(88, 168, 255, 0.1);
+  color: #cfe4ff;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+#cuddleScreen .umt-test-pad.is-armed,
+#cuddleScreen .umt-test-pad.umt-drag-hover {
+  border-style: solid;
+  border-color: #58a8ff;
+  background: rgba(88, 168, 255, 0.28);
+  color: #fff;
+}
+#cuddleScreen .umt-test-pad.umt-drag-hover { transform: scale(1.03); }
+#cuddleScreen .umt-test-pad.is-refused {
+  border-color: rgba(233, 92, 118, 0.8);
+  background: rgba(233, 92, 118, 0.16);
+  color: #ffd6de;
+}
+#cuddleScreen .cuddle-card.umt-testable {
+  outline: 2px solid #58a8ff;
+  outline-offset: 2px;
+}

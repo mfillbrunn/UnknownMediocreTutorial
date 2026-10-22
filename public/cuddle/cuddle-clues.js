@@ -360,12 +360,7 @@
     const rule = window.CuddleRebalanceV5 && typeof window.CuddleRebalanceV5.wordRuleNote === "function"
       ? window.CuddleRebalanceV5.wordRuleNote(game) : null;
     if (rule && !rule.letters) chips.push({ icon: rule.icon, label: rule.label, text: rule.text, letters: rule.letters, tone: "rule" });
-    // Hints rank III: once a stage, tap a consonant to test it.
-    const testable = window.CuddleSchools && typeof window.CuddleSchools.testableLetters === "function"
-      ? window.CuddleSchools.testableLetters(game) : [];
-    if (testable.length) {
-      chips.push({ icon: "magnifier", label: "Hints rank", text: "Test a card:", tests: testable, tone: "test" });
-    }
+    // Hints rank III's test has its own pad above the hand (cuddle-schools.js).
     if (level(game, IDS.mistakeShield) > 0 && shieldApplies(game)) {
       const left = shieldsLeft(game, record);
       chips.push({ icon: "shield", label: "Mistake Shield", text: left > 1 ? `${left} shields ready` : left ? "Shield ready" : "Shield used", tone: left ? "" : "spent" });

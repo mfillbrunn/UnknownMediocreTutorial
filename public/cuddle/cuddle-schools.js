@@ -15,7 +15,8 @@
  *   Hints        I   one tile of each stage's first guess shows a compass
  *                       arrow (cuddle-compass.js)
  *                II  after guess 2, a letter turns yellow
- *                III once a stage, tap a consonant in your hand to test it
+ *                III once a stage, test a consonant: drag it to the Test pad
+ *                    above the hand (or tap the pad, then the card)
  *   Cards        I   +1 lucky card every stage
  *                II  +1 idea card and +1 mulligan every stage
  *                III first mulligan each stage is free; a Joker card at start
@@ -552,6 +553,25 @@
     };
   });
 
+  function activeGame() {
+    try { return window.CuddleBranchMap && typeof window.CuddleBranchMap.getActiveGame === "function" ? window.CuddleBranchMap.getActiveGame() : null; } catch (_error) { return null; }
+  }
+
+  // In a Duel, the Duel's own hand and answer (cuddle-expanded-stages.js).
+  function inPlay(game, fn, changed) {
+    var stages = window.CuddleExpandedStages;
+    return stages && typeof stages.withDuel === "function" ? stages.withDuel(game, fn, changed) : fn(game);
+  }
+
+  function testLetter(letter) {
+    var game = activeGame();
+    if (!game) return null;
+    testArmed = false;
+    var result = inPlay(game, function test(g) { return g.schoolTestLetter(letter); }, true);
+    window.dispatchEvent(new Event("cuddle:campaign-update"));
+    return result;
+  }
+
   // Hints III: a consonant in the Clues strip (cuddle-clues.js) tapped to
   // be tested.
   document.addEventListener("click", function testTap(event) {
@@ -559,18 +579,119 @@
     if (!button) return;
     event.preventDefault();
     event.stopPropagation();
-    var game = window.CuddleBranchMap && typeof window.CuddleBranchMap.getActiveGame === "function" ? window.CuddleBranchMap.getActiveGame() : null;
-    if (!game) return;
-    var letter = button.getAttribute("data-school-test");
-    // In a Duel, the Duel's own hand and answer (cuddle-expanded-stages.js).
-    var stages = window.CuddleExpandedStages;
-    if (stages && typeof stages.withDuel === "function") stages.withDuel(game, function test(g) { return g.schoolTestLetter(letter); }, true);
-    else game.schoolTestLetter(letter);
-    window.dispatchEvent(new Event("cuddle:campaign-update"));
+    testLetter(button.getAttribute("data-school-test"));
   }, true);
+
+  // Hints III, from the hand: a "Test here" pad sits above the hand while
+  // the stage's test is unused. Drag a consonant onto it
+  // (cuddle-drag-mode.js calls dropOnTestPad), or tap the pad and then the
+  // consonant.
+  var testArmed = false;
+  function padLetters() {
+    var game = activeGame();
+    if (!game) return [];
+    var stages = window.CuddleExpandedStages;
+    if (stages && typeof stages.duelPlayerTurn === "function" && stages.duelPlayerTurn(game) === false) return [];
+    return inPlay(game, function letters(g) { return testableLetters(g); }) || [];
+  }
+
+  function syncTestPad() {
+    var hand = document.querySelector("#cuddleRoot .cuddle-hand-panel .cuddle-hand");
+    var pad = document.querySelector("#cuddleRoot .umt-test-pad");
+    var letters = hand ? padLetters() : [];
+    if (!letters.length) {
+      testArmed = false;
+      if (pad) pad.remove();
+      return;
+    }
+    if (!pad || pad.parentNode !== hand) {
+      if (pad) pad.remove();
+      pad = document.createElement("button");
+      pad.type = "button";
+      pad.className = "umt-test-pad";
+      pad.setAttribute("data-umt-test-drop", "");
+      // Kept through redraws (cuddle-morph.js); this pass updates it.
+      pad.setAttribute("data-umt-keep", "");
+      hand.insertBefore(pad, hand.firstChild);
+    }
+    var text = testArmed ? "Tap a consonant to test it" : "Test here \u00b7 drag a consonant in";
+    if (pad.textContent !== text) pad.textContent = text;
+    if (pad.classList.contains("is-armed") !== testArmed) pad.classList.toggle("is-armed", testArmed);
+    pad.setAttribute("aria-label", testArmed ? "Testing: tap a consonant card. Tap here again to cancel." : "Test a consonant, once this stage: is it in the answer? Drag one here, or tap here and then the card.");
+    pad.title = "Hints rank: once this stage, learn whether a consonant is in the answer";
+    document.querySelectorAll("#cuddleRoot .cuddle-hand .cuddle-card[data-card-glyph]").forEach(function mark(card) {
+      var can = testArmed && letters.indexOf(String(card.getAttribute("data-card-glyph")).toUpperCase()) !== -1;
+      if (card.classList.contains("umt-testable") !== can) card.classList.toggle("umt-testable", can);
+    });
+  }
+
+  document.addEventListener("click", function padTap(event) {
+    var target = event.target && event.target.closest ? event.target : null;
+    if (!target) return;
+    if (target.closest(".umt-test-pad")) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      testArmed = !testArmed;
+      syncTestPad();
+      return;
+    }
+    if (!testArmed) return;
+    var card = target.closest("#cuddleRoot .cuddle-hand .cuddle-card[data-card-glyph]");
+    if (!card) { testArmed = false; syncTestPad(); return; }
+    var letter = String(card.getAttribute("data-card-glyph")).toUpperCase();
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (padLetters().indexOf(letter) === -1) {
+      flashPad(VOWELS.indexOf(letter) !== -1 ? "Vowels can't be tested" : "That letter is already known");
+      return;
+    }
+    testLetter(letter);
+  }, true);
+
+  function flashPad(message) {
+    var pad = document.querySelector("#cuddleRoot .umt-test-pad");
+    if (!pad) return;
+    pad.textContent = message;
+    pad.classList.add("is-refused");
+    setTimeout(function back() { pad.classList.remove("is-refused"); syncTestPad(); }, 1200);
+  }
+
+  function dropOnTestPad(letter) {
+    var upper = String(letter || "").toUpperCase();
+    if (padLetters().indexOf(upper) === -1) {
+      flashPad(VOWELS.indexOf(upper) !== -1 ? "Vowels can't be tested" : "That letter is already known");
+      return false;
+    }
+    var result = testLetter(upper);
+    return Boolean(result && result.ok);
+  }
+
+  var padFrame = 0;
+  function schedulePad() {
+    if (padFrame) return;
+    padFrame = requestAnimationFrame(function run() {
+      padFrame = 0;
+      try { syncTestPad(); } catch (error) { console.warn("Cuddle schools test pad:", error); }
+    });
+  }
+  function watchPad() {
+    var host = document.getElementById("cuddleScreen");
+    if (!host) { document.addEventListener("DOMContentLoaded", watchPad, { once: true }); return; }
+    new MutationObserver(function changed(mutations) {
+      // Its own updates are no reason to look again.
+      var relevant = mutations.some(function outside(m) {
+        var node = m.target && m.target.nodeType === 1 ? m.target : m.target && m.target.parentElement;
+        return !(node && node.closest && node.closest(".umt-test-pad"));
+      });
+      if (relevant) schedulePad();
+    }).observe(host, { childList: true, subtree: true });
+    schedulePad();
+  }
+  watchPad();
 
   window.CuddleSchools = Object.freeze({
     testableLetters: testableLetters,
+    dropOnTestPad: dropOnTestPad,
     ranks: ranks,
     rankOf: rankOf,
     perk: perk,
