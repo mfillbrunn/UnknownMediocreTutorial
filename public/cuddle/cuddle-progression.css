@@ -834,3 +834,14 @@
   .umt-progress-host .umt-bd-school-list { display: flex; gap: 6px; overflow-x: auto; }
   .umt-progress-host .umt-bd-school { flex: none; width: auto; grid-template-columns: 20px auto auto auto; }
 }
+
+/* A badge's icon (cuddle-badge-art.js) fills whatever holds it, like the
+   drawn icons it replaces. */
+.umt-badge-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}

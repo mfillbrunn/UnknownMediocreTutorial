@@ -1388,6 +1388,8 @@
   let bossTraitOpen = { bossId: null, trait: null };
 
   function rewardIconFile(id) {
+    const art = window.CuddleBadgeArt;
+    if (art && art.has(id)) return art.url(id);
     const slug = String(id || "gift").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();
     return `cuddle/icons/reward-${slug || "gift"}.svg`;
   }

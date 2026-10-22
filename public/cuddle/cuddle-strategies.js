@@ -378,7 +378,9 @@
     var color = school ? school.color : ((tree && tree.SCHOOLLESS && tree.SCHOOLLESS.color) || "#9d97b0");
     var icon = (node && node.icon) || fallbackIcon || "✦";
     var Icons = window.CuddleIcons;
-    var iconHtml = Icons && Icons.hasEmoji(icon) ? Icons.svg(icon) : "<span>" + escapeText(icon) + "</span>";
+    var art = window.CuddleBadgeArt;
+    var iconHtml = node && art && art.has(node.id) ? art.img(node.id)
+      : Icons && Icons.hasEmoji(icon) ? Icons.svg(icon) : "<span>" + escapeText(icon) + "</span>";
     var rarity = String(tier || (node && node.tier) || "common");
     return '<div class="umt-cmb-badge" style="--t:' + color + ";--tier:" + (TIER_COLORS[rarity] || TIER_COLORS.common) + '">'
       + '<svg viewBox="0 0 100 116" aria-hidden="true"><path class="umt-cmb-hex" d="M50 2 L96 28 L96 88 L50 114 L4 88 L4 28 Z"/>'

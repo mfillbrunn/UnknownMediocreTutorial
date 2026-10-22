@@ -232,6 +232,8 @@
   }
 
   function icon(card) {
+    var art = window.CuddleBadgeArt;
+    if (art && card.id && art.has(card.id)) return art.img(card.id);
     var library = window.CuddleIcons;
     if (library && card.icon && typeof library.hasEmoji === "function" && library.hasEmoji(card.icon)) {
       try {

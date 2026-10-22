@@ -1,7 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Pocket money">
-  <rect x="4" y="4" width="88" height="88" rx="22" fill="#fff4cf" stroke="#8a4b08" stroke-width="4"/>
-  <circle cx="48" cy="48" r="27" fill="#f6c956" stroke="#8a4b08" stroke-width="5"/>
-  <circle cx="48" cy="48" r="20" fill="none" stroke="#8a4b08" stroke-width="2.5" stroke-dasharray="3 4"/>
-  <text x="48" y="58" font-size="28" fill="#8a4b08" font-family="Arial, Helvetica, sans-serif" font-weight="900" text-anchor="middle">$</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-hidden="true"><rect x="4" y="4" width="88" height="88" rx="22" fill="#fff2cf" stroke="#6b4a0e" stroke-width="4"/><path d="M22 38h52v26a10 10 0 0 1 -10 10h-32a10 10 0 0 1 -10 -10z" fill="#f2b632" stroke="#6b4a0e" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M22 38l6 -14h40l6 14" fill="#ffffff" stroke="#6b4a0e" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="48" cy="56" r="9" fill="#ffffff" stroke="#6b4a0e" stroke-width="4"/><text x="48" y="57" text-anchor="middle" dominant-baseline="central" font-family="Nunito, Arial Rounded MT Bold, Arial, sans-serif" font-weight="900" font-size="12" fill="#6b4a0e">$</text></svg>

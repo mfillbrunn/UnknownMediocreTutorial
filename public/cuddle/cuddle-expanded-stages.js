@@ -3031,6 +3031,8 @@
     }
 
     function rewardImg(id) {
+      const art = window.CuddleBadgeArt;
+      if (art && art.has(id)) return `<img class="umt-cuddle-svg-icon" src="${escapeHtml(art.url(id))}" alt="" aria-hidden="true">`;
       const slug = String(id || "gift").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[^a-zA-Z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "").toLowerCase() || "gift";
       return `<img class="umt-cuddle-svg-icon" src="cuddle/icons/reward-${escapeHtml(slug)}.svg" alt="" aria-hidden="true"`
