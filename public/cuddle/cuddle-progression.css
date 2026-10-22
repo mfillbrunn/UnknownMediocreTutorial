@@ -845,3 +845,24 @@
   pointer-events: none;
   user-select: none;
 }
+
+/* The play screen's badge button (decoratePlayHeader): a round header
+   button like its neighbours, the badge count in a corner bubble. */
+#cuddleRoot .umt-pt-mini {
+  position: relative;
+  font-size: 1.05rem;
+}
+#cuddleRoot .umt-pt-mini b {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  padding: 1px 4px;
+  border-radius: 999px;
+  color: #04241a;
+  background: #8ff7cd;
+  font-size: 0.65rem;
+  font-weight: 900;
+  line-height: 16px;
+  text-align: center;
+}

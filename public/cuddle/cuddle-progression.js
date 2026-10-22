@@ -854,6 +854,27 @@
     slot.appendChild(button);
   }
 
+  // The play screen's header gets a small badge button too, so the badges
+  // can be checked mid-stage (the same page the map's button opens).
+  function decoratePlayHeader(root, game) {
+    const slot = root.querySelector(".cuddle-shell:not(.cuddle-branch-shell) > .cuddle-header .cuddle-header-side-right");
+    if (!slot) return;
+    const count = buildModel(game).badges.length;
+    let button = slot.querySelector(".umt-pt-mini");
+    if (!button) {
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = "cuddle-icon-btn umt-pt-mini";
+      button.dataset.umtPtOpen = "1";
+      button.innerHTML = `<span aria-hidden="true">⬢</span><b></b>`;
+      slot.insertBefore(button, slot.firstChild);
+    }
+    const label = `Open badges, ${count} collected`;
+    if (button.getAttribute("aria-label") !== label) button.setAttribute("aria-label", label);
+    const badge = button.querySelector("b");
+    if (badge && badge.textContent !== String(count)) badge.textContent = String(count);
+  }
+
   function payoutShowing(game) {
     const money = game && game.state && game.state.cuddleMoneyMode;
     return Boolean((money && money.pendingPayout && money.pendingPayout.id !== money.lastAnimatedPayoutId)
@@ -904,6 +925,7 @@
     root.classList.toggle("umt-starter-pending", Boolean(money && money.starterRewardPending
       && Array.isArray(money.starterRewardChoices) && money.starterRewardChoices.length));
     decorateMapHeader(root, game);
+    decoratePlayHeader(root, game);
     checkForPicks(game);
     checkForStageStart(game);
     checkForQuest(game);
