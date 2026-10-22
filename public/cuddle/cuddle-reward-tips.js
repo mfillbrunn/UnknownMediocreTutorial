@@ -119,9 +119,11 @@
     return { label: school.label, rank: rank + 1, perk: (school.perks || [])[rank] || "" };
   }
 
+  // The tip badge is a toggle: its explanation (umt-tip-why) stays folded
+  // until the badge is tapped, so the cards stay short.
   function chip(kind, reason) {
-    return "<span class=\"umt-tip is-" + kind + "\" role=\"note\" title=\"" + esc(reason) + "\" aria-label=\"Tip: " + esc(LABEL[kind]) + ". " + esc(reason) + "\">"
-      + ICONS[kind] + "<b>Tip</b><span>" + esc(LABEL[kind]) + "</span></span>";
+    return "<span class=\"umt-tip is-" + kind + "\" role=\"button\" tabindex=\"0\" aria-expanded=\"false\" data-umt-tip=\"" + kind + "\" title=\"Why this tip?\" aria-label=\"Tip: " + esc(LABEL[kind]) + ". Tap for why.\">"
+      + ICONS[kind] + "<b>Tip</b><span>" + esc(LABEL[kind]) + "</span><i class=\"umt-tip-more\" aria-hidden=\"true\">?</i></span>";
   }
 
   // How many of your badges count against a Restraint badge, and what it
@@ -200,8 +202,8 @@
         holder = tip.card.querySelector(":scope > .umt-tips");
       }
       holder.insertAdjacentHTML("beforeend", chip(tip.kind, tip.reason));
-      // The reason, readable on a phone too (no hover there).
-      tip.card.insertAdjacentHTML("beforeend", "<span class=\"umt-tip-why is-" + tip.kind + "\">" + ICONS[tip.kind] + "<span>" + esc(tip.reason) + "</span></span>");
+      // The reason, folded until the tip badge is tapped.
+      tip.card.insertAdjacentHTML("beforeend", "<span class=\"umt-tip-why is-" + tip.kind + "\" data-umt-tip-why=\"" + tip.kind + "\" hidden>" + ICONS[tip.kind] + "<span>" + esc(tip.reason) + "</span></span>");
     });
     var modal = grid.closest(".cuddle-upgrade-modal");
     var note = modal && modal.querySelector(".umt-tips-note");
@@ -211,6 +213,37 @@
       note.remove();
     }
   }
+
+  // A tap on a tip badge opens or closes its explanation, and doesn't pick
+  // the card it sits on. Window capture runs before the card's own handlers.
+  function toggleTip(tip) {
+    var card = tip.closest("[data-upgrade-key]");
+    var why = card && card.querySelector("[data-umt-tip-why=\"" + tip.getAttribute("data-umt-tip") + "\"]");
+    if (!why) return;
+    var open = why.hidden;
+    why.hidden = !open;
+    tip.setAttribute("aria-expanded", String(open));
+  }
+  window.addEventListener("click", function onTipTap(event) {
+    var tip = event.target && event.target.closest ? event.target.closest("[data-umt-tip]") : null;
+    if (!tip) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    toggleTip(tip);
+  }, true);
+  ["pointerdown", "mousedown", "touchstart"].forEach(function (type) {
+    window.addEventListener(type, function keepCard(event) {
+      if (event.target && event.target.closest && event.target.closest("[data-umt-tip]")) event.stopImmediatePropagation();
+    }, true);
+  });
+  window.addEventListener("keydown", function onTipKey(event) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    var tip = event.target && event.target.closest ? event.target.closest("[data-umt-tip]") : null;
+    if (!tip) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    toggleTip(tip);
+  }, true);
 
   var pending = false;
   function schedule() {

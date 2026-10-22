@@ -79,3 +79,21 @@
   line-height: 1.35;
   text-align: left;
 }
+
+/* The tip badge opens its explanation (cuddle-reward-tips.js). */
+.umt-tip[data-umt-tip] { cursor: pointer; }
+.umt-tip[data-umt-tip]:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.umt-tip .umt-tip-more {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 2px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.14);
+  font-size: 0.6rem;
+  font-style: normal;
+  font-weight: 900;
+}
+.umt-tip[aria-expanded="true"] .umt-tip-more { background: currentColor; color: #fff; }
+.umt-tip-why[hidden] { display: none; }
