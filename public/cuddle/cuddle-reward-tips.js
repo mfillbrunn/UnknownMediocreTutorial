@@ -119,10 +119,10 @@
     return { label: school.label, rank: rank + 1, perk: (school.perks || [])[rank] || "" };
   }
 
-  // The tip badge is a toggle: its explanation (umt-tip-why) stays folded
-  // until the badge is tapped, so the cards stay short.
+  // The tip badge opens its explanation in a small pop-up (tap it), so the
+  // cards stay short.
   function chip(kind, reason) {
-    return "<span class=\"umt-tip is-" + kind + "\" role=\"button\" tabindex=\"0\" aria-expanded=\"false\" data-umt-tip=\"" + kind + "\" title=\"Why this tip?\" aria-label=\"Tip: " + esc(LABEL[kind]) + ". Tap for why.\">"
+    return "<span class=\"umt-tip is-" + kind + "\" role=\"button\" tabindex=\"0\" aria-expanded=\"false\" data-umt-tip=\"" + kind + "\" data-umt-tip-reason=\"" + esc(reason) + "\" title=\"Why this tip?\" aria-label=\"Tip: " + esc(LABEL[kind]) + ". Tap for why.\">"
       + ICONS[kind] + "<b>Tip</b><span>" + esc(LABEL[kind]) + "</span><i class=\"umt-tip-more\" aria-hidden=\"true\">?</i></span>";
   }
 
@@ -170,7 +170,8 @@
     var key = cards.map(function (card) { return card.getAttribute("data-upgrade-key"); }).join("|");
     if (key === lastKey && grid.querySelector(".umt-tip, [data-umt-tips-done]")) return;
     lastKey = key;
-    grid.querySelectorAll(".umt-tips, .umt-tip-why, .umt-tip-count").forEach(function (el) { el.remove(); });
+    grid.querySelectorAll(".umt-tips, .umt-tip-count").forEach(function (el) { el.remove(); });
+    closeTipPopup();
     grid.setAttribute("data-umt-tips-done", "1");
     var picks = cards.map(function (card) { return { card: card, node: nodeFor(card) }; }).filter(function (item) { return item.node; });
     picks.forEach(function (item) {
@@ -202,9 +203,8 @@
         holder = tip.card.querySelector(":scope > .umt-tips");
       }
       holder.insertAdjacentHTML("beforeend", chip(tip.kind, tip.reason));
-      // The reason, folded until the tip badge is tapped.
-      tip.card.insertAdjacentHTML("beforeend", "<span class=\"umt-tip-why is-" + tip.kind + "\" data-umt-tip-why=\"" + tip.kind + "\" hidden>" + ICONS[tip.kind] + "<span>" + esc(tip.reason) + "</span></span>");
     });
+    fitTips(grid);
     var modal = grid.closest(".cuddle-upgrade-modal");
     var note = modal && modal.querySelector(".umt-tips-note");
     if (tips.length && modal && !note) {
@@ -214,29 +214,74 @@
     }
   }
 
-  // A tap on a tip badge opens or closes its explanation, and doesn't pick
-  // the card it sits on. Window capture runs before the card's own handlers.
+  // Tips sit on the card's top edge, left of the rarity tag. When they
+  // would run into it (two tips, a narrow card), they drop their labels
+  // and show just the icon and "Tip".
+  function fitTips(grid) {
+    grid.querySelectorAll(".umt-tips").forEach(function (holder) {
+      holder.classList.remove("is-compact");
+      var card = holder.parentElement;
+      var tag = card && card.querySelector(".cuddle-v8-rarity-badge");
+      if (!tag) return;
+      var clash = function () { return holder.getBoundingClientRect().right > tag.getBoundingClientRect().left - 6; };
+      if (clash()) holder.classList.add("is-compact");
+    });
+  }
+
+  // A tap on a tip badge opens its explanation in a pop-up beside it (tap
+  // it again, or anywhere else, to close), and doesn't pick the card it
+  // sits on. Window capture runs before the card's own handlers.
+  var popup = null;
+  var popupTip = null;
+  function closeTipPopup() {
+    if (popup) popup.remove();
+    if (popupTip) popupTip.setAttribute("aria-expanded", "false");
+    popup = null;
+    popupTip = null;
+  }
   function toggleTip(tip) {
-    var card = tip.closest("[data-upgrade-key]");
-    var why = card && card.querySelector("[data-umt-tip-why=\"" + tip.getAttribute("data-umt-tip") + "\"]");
-    if (!why) return;
-    var open = why.hidden;
-    why.hidden = !open;
-    tip.setAttribute("aria-expanded", String(open));
+    if (popupTip === tip) { closeTipPopup(); return; }
+    closeTipPopup();
+    var kind = tip.getAttribute("data-umt-tip");
+    popup = document.createElement("div");
+    popup.className = "umt-tip-popup is-" + kind;
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-label", "Why this tip");
+    popup.innerHTML = (ICONS[kind] || "") + "<span>" + esc(tip.getAttribute("data-umt-tip-reason") || "") + "</span>";
+    document.body.appendChild(popup);
+    popupTip = tip;
+    tip.setAttribute("aria-expanded", "true");
+    placeTipPopup();
+  }
+  function placeTipPopup() {
+    if (!popup || !popupTip) return;
+    if (!popupTip.isConnected) { closeTipPopup(); return; }
+    var box = popupTip.getBoundingClientRect();
+    var width = Math.min(280, window.innerWidth - 24);
+    popup.style.width = width + "px";
+    popup.style.left = Math.round(Math.max(12, Math.min(window.innerWidth - width - 12, box.left))) + "px";
+    var below = box.bottom + 8;
+    popup.style.top = Math.round(below + popup.offsetHeight > window.innerHeight - 8 ? box.top - popup.offsetHeight - 8 : below) + "px";
   }
   window.addEventListener("click", function onTipTap(event) {
     var tip = event.target && event.target.closest ? event.target.closest("[data-umt-tip]") : null;
-    if (!tip) return;
+    if (!tip) {
+      if (popup && !(event.target && event.target.closest && event.target.closest(".umt-tip-popup"))) closeTipPopup();
+      return;
+    }
     event.preventDefault();
     event.stopImmediatePropagation();
     toggleTip(tip);
   }, true);
+  window.addEventListener("resize", function () { closeTipPopup(); fitTips(document); });
+  document.addEventListener("scroll", placeTipPopup, true);
   ["pointerdown", "mousedown", "touchstart"].forEach(function (type) {
     window.addEventListener(type, function keepCard(event) {
       if (event.target && event.target.closest && event.target.closest("[data-umt-tip]")) event.stopImmediatePropagation();
     }, true);
   });
   window.addEventListener("keydown", function onTipKey(event) {
+    if (event.key === "Escape" && popup) { closeTipPopup(); return; }
     if (event.key !== "Enter" && event.key !== " ") return;
     var tip = event.target && event.target.closest ? event.target.closest("[data-umt-tip]") : null;
     if (!tip) return;
