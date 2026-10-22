@@ -1,7 +1,9 @@
 /* Cuddle: music and sound effects.
  *
- * Music: one looping track (audio/cuddle-theme.mp3), only once a run is on
- * screen (the road, a stage, the shop...), not on Cuddle's start screen.
+ * Music: the run's theme (two pieces, back and forth), the boss fights' and
+ * the shop's, plus a victory piece when a boss is beaten or the run won and
+ * a loss piece when it's lost; only once a run is on screen (the road, a
+ * stage, the shop...), not on Cuddle's start screen.
  * It fades in and out and pauses off Cuddle or in a hidden tab.
  *
  * Sound effects: small sounds made on the spot with Web Audio (no files),
@@ -63,16 +65,34 @@
   }
 
   // -- music -----------------------------------------------------------------------
-  // Three slots: the run's theme, the boss fights' and the shop's. The one
-  // that fits the screen plays; switching crossfades, and the boss and shop
-  // start from the top each time (the theme picks up where it was). The
-  // boss has two pieces: a fight opens with either one, at random, and
-  // when it ends the other plays, back and forth.
+  // Slots: the run's theme, the boss fights', the shop's, and two that play
+  // once over a moment: a victory (a boss beaten, the run won) and a loss.
+  // The one that fits the screen plays; switching crossfades, and the
+  // others start from the top each time (the theme picks up where it was).
+  // The theme and the boss have two pieces each: either one first, at
+  // random, and when it ends the other plays, back and forth. A victory is
+  // one of its two pieces, at random.
   var TRACKS = {
-    theme: { src: "cuddle/audio/cuddle-theme.mp3", restart: false },
+    theme: { list: ["cuddle/audio/cuddle-theme.mp3", "cuddle/audio/cuddle-theme-2.mp3"], resume: true },
     boss: { list: ["cuddle/audio/cuddle-boss.mp3", "cuddle/audio/cuddle-boss-2.mp3"], restart: true },
-    shop: { src: "cuddle/audio/cuddle-shop.mp3", restart: true }
+    shop: { src: "cuddle/audio/cuddle-shop.mp3", restart: true },
+    victory: { list: ["cuddle/audio/cuddle-victory.mp3", "cuddle/audio/cuddle-victory-2.mp3"], once: true },
+    loss: { src: "cuddle/audio/cuddle-loss.mp3", once: true, restart: true }
   };
+  // The victory or loss playing over the screen: { name, runId }. It holds
+  // until its piece ends; then the screen's own music comes back (none on
+  // the run's end screen).
+  var moment = null;
+  function startMoment(name, runId) {
+    if (moment && moment.name === name && moment.runId === runId) return;
+    moment = { name: name, runId: runId };
+    syncMusic();
+  }
+  function endMoment(track) {
+    if (!moment || TRACKS[moment.name] !== track) return;
+    moment = null;
+    syncMusic();
+  }
 
   function randomPiece(track) {
     return track.list[Math.floor(Math.random() * track.list.length)];
@@ -100,8 +120,9 @@
     if (track.el) return track;
     if (track.list) track.piece = randomPiece(track);
     track.el = new Audio(track.list ? track.piece : track.src);
-    track.el.loop = !track.list;
-    if (track.list) track.el.addEventListener("ended", function () { nextPiece(track); });
+    track.el.loop = !track.list && !track.once;
+    if (track.once) track.el.addEventListener("ended", function () { endMoment(track); });
+    else if (track.list) track.el.addEventListener("ended", function () { nextPiece(track); });
     track.el.preload = "auto";
     track.fade = 0;
     track.target = -1;
@@ -171,6 +192,10 @@
     try { game = window.CuddleBranchMap && window.CuddleBranchMap.getActiveGame(); } catch (_error) { /* none */ }
     var state = game && game.state;
     var el = screen();
+    if (moment && state && String(state.runId || "") !== moment.runId) moment = null;
+    if (moment) return moment.name;
+    // The run's end screen is quiet once its victory or loss has played.
+    if (state && (state.status === "won" || state.status === "lost")) return null;
     if ((state && state.status === "shop") || (el && el.querySelector(".umt-shop-page"))) return "shop";
     var entrance = document.querySelector(".umt-boss-entrance");
     if (entrance && !entrance.classList.contains("is-rival")) return "boss";
@@ -185,13 +210,14 @@
   }
 
   function syncMusic() {
-    if (!wantMusic()) {
+    var name = wantMusic() ? trackFor() : null;
+    if (!name) {
       var leaving = current;
       current = null;
       Object.keys(TRACKS).forEach(function (name) { if (TRACKS[name].el) silence(TRACKS[name], FADE_OUT_MS); });
       return leaving;
     }
-    var track = ensureTrack(trackFor());
+    var track = ensureTrack(name);
     var switching = current && current !== track;
     var fresh = !current;
     current = track;
@@ -199,7 +225,9 @@
     Object.keys(TRACKS).forEach(function (name) { if (TRACKS[name] !== track && TRACKS[name].el) silence(TRACKS[name], CROSS_MS); });
     var wasPlaying = !track.el.paused && track.target > 0;
     if (track.el.paused) {
-      if (track.list) {
+      if (track.list && track.resume) {
+        // The theme carries on where it was.
+      } else if (track.list) {
         // A new fight: either piece, from the top.
         var piece = randomPiece(track);
         if (piece !== track.piece) { track.piece = piece; track.el.src = piece; }
@@ -513,9 +541,24 @@
     var previous = this.__umtSoundStatus;
     this.__umtSoundStatus = key;
     if (!previous || previous === key || previous.split(":")[0] !== String(state.runId || "")) return;
-    if (state.status === "won") play("win");
-    else if (state.status === "lost") play("lose");
+    if (state.status === "won") { play("win"); startMoment("victory", String(state.runId || "")); }
+    else if (state.status === "lost") { play("lose"); startMoment("loss", String(state.runId || "")); }
   });
+
+  // A boss beaten (not a challenge dressed as one, not the Duel's rival):
+  // a victory piece over whatever comes next.
+  if (proto && typeof proto._clearBoss === "function") {
+    var baseClearBoss = proto._clearBoss;
+    proto._clearBoss = function clearBossWithMusic() {
+      var boss = this.state && this.state.boss;
+      var result = baseClearBoss.apply(this, arguments);
+      try {
+        var runId = String(this.state && this.state.runId || "");
+        if (boss && !boss.__umtSynthetic && runId.indexOf(":duel:") === -1) startMoment("victory", runId);
+      } catch (_error) { /* never block the game */ }
+      return result;
+    };
+  }
 
   // The deck running out and shuffling its discards back in.
   if (proto && typeof proto.drawCards === "function") {

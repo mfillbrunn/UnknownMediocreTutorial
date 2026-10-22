@@ -475,9 +475,12 @@
 
   // Golden Ledger: what the money is worth toward a boss's points gate
   // (cuddle-branch-map.js adds it to every gate comparison). Not spent.
-  function ledgerCredit(game) {
+  function ledgerRate(game) {
     if (!game || !game.state || inDuel(game.state)) return 0;
-    var rate = LEDGER_RATES[Math.min(2, levelOf(game, "goldenLedger"))] || 0;
+    return LEDGER_RATES[Math.min(2, levelOf(game, "goldenLedger"))] || 0;
+  }
+  function ledgerCredit(game) {
+    var rate = ledgerRate(game);
     return rate > 0 ? Math.floor(Math.max(0, num(game.state.cuddleMoney)) * rate) : 0;
   }
 
@@ -971,6 +974,7 @@
     ASCETIC_TIERS: ASCETIC_TIERS,
     overtimeBonus: overtimeBonus,
     ledgerCredit: ledgerCredit,
+    ledgerRate: ledgerRate,
     MASTERED_TEXT: MASTERED_TEXT
   });
 }());

@@ -2561,6 +2561,15 @@
     return null;
   }
 
+  function floorRunScore(game) {
+    const state = stateOf(game);
+    const score = asNumber(state && state.score, 0);
+    if (!state || score >= 0) return;
+    state.roundScore = asNumber(state.roundScore, 0) - score;
+    state.score = 0;
+    if (state.pendingRoundEnd && typeof state.pendingRoundEnd === "object") state.pendingRoundEnd.score = 0;
+  }
+
   function reconcilePendingPayout(game) {
     const state = stateOf(game);
     if (!state) return;
@@ -2789,6 +2798,9 @@
     if (spentMega) spentMega.jokerCharges = 0;
 
     custom.paidRoundTokens[token] = true;
+    // A stage can lose points and take them off the total, but the total
+    // ends the stage at 0 at worst (only once every bonus has landed).
+    floorRunScore(game);
     reconcilePendingPayout(game);
     safeSave(game);
     appendNotice(game, custom.lastPayoutLines.map((line) => `${line.label}: +${line.amount} pts`).join(" · "));

@@ -3364,7 +3364,9 @@
     if (held != null) return Math.max(0, held);
     const live = state.status === "playing" || state.status === "questReward" || Boolean(state.pendingRoundEnd);
     if (!live) return Math.max(0, score);
-    const provisional = Math.max(0, (Number(state.roundScore) || 0) - this.stageShownPoints());
+    // Unclamped: a stage running at a loss shows it at the cash-out too,
+    // not guess by guess.
+    const provisional = (Number(state.roundScore) || 0) - this.stageShownPoints();
     return Math.max(0, score - provisional);
   };
 

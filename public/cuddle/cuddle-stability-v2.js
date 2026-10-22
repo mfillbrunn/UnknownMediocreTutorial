@@ -1005,6 +1005,9 @@
     // mid-round, so there's nothing to hold back here.
     const money = Math.max(0, Math.round(number(state.cuddleMoney, 0)));
     root.querySelectorAll(".cuddle-header-money").forEach(el => {
+      // Golden Ledger's points beside it: cuddle-money-mode.js keeps the
+      // pill whole.
+      if (el.querySelector(".umt-ledger-credit")) return;
       el.textContent = `$${money.toLocaleString()}`;
       el.setAttribute("aria-label", `${money} money`);
     });

@@ -787,6 +787,17 @@
     return lines;
   }
 
+  // A stage can lose points (late guesses, a broken challenge...) and take
+  // them off the total, but never below zero. A solved stage is floored
+  // once its last bonus is in (cuddle-rebalance-v5.js floorRunScore); a
+  // lost run here.
+  function floorScore(state) {
+    var score = asNumber(state.score, 0);
+    if (score >= 0) return;
+    state.roundScore = asNumber(state.roundScore, 0) - score;
+    state.score = 0;
+  }
+
   function buildPayout(game, challenge, wasBoss) {
     var state = game.state;
     var mode = ensureMode(game);
@@ -896,6 +907,7 @@
       mode.failedChallenges += 1;
       mode.activeChallenge = null;
     }
+    if (state.status === "lost") floorScore(state);
 
     saveGame(this);
     queueUiEnhancement();
@@ -983,9 +995,32 @@
     // paid shows there, then here.
     var money = Math.max(0, Math.round(held && Number.isFinite(Number(held.cashFrom)) ? Number(held.cashFrom) : Number(state.cuddleMoney || 0)));
     var moneyText = formatMoney(money);
+    // Golden Ledger: the points the money counts as, small beside it.
+    var ledgerRate = 0;
+    try { ledgerRate = Number(window.CuddleNewBadges && window.CuddleNewBadges.ledgerRate(game)) || 0; } catch (_error) { ledgerRate = 0; }
+    var ledgerPoints = ledgerRate > 0 ? Math.floor(money * ledgerRate) : 0;
+    var ledgerText = ledgerRate > 0 ? "(+" + ledgerPoints.toLocaleString() + ")" : "";
+    var moneyLabel = money + " money" + (ledgerRate > 0 ? ", counts as " + ledgerPoints + " points" : "");
     root.querySelectorAll(".cuddle-header-money").forEach(function updateHeaderMoney(element) {
-      if (element.textContent !== moneyText) element.textContent = moneyText;
-      if (element.getAttribute("aria-label") !== money + " money") element.setAttribute("aria-label", money + " money");
+      var credit = element.querySelector(".umt-ledger-credit");
+      if (element.firstChild && element.firstChild.nodeType === 3 && element.childNodes.length === (credit ? 2 : 1)) {
+        if (element.firstChild.nodeValue !== moneyText) element.firstChild.nodeValue = moneyText;
+      } else {
+        element.textContent = moneyText;
+        credit = null;
+      }
+      if (ledgerText) {
+        if (!credit) {
+          credit = document.createElement("small");
+          credit.className = "umt-ledger-credit";
+          credit.title = "Golden Ledger: your money counts as this many points toward a boss's target";
+          element.appendChild(credit);
+        }
+        if (credit.textContent !== ledgerText) credit.textContent = ledgerText;
+      } else if (credit) {
+        credit.remove();
+      }
+      if (element.getAttribute("aria-label") !== moneyLabel) element.setAttribute("aria-label", moneyLabel);
     });
     var stats = root.querySelector(".cuddle-round-intro-stats");
     if (stats) {

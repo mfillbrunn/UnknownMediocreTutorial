@@ -59,6 +59,16 @@
   white-space: nowrap;
 }
 
+/* Golden Ledger's points for the money, small inside the money pill. */
+#cuddleScreen .cuddle-header-money .umt-ledger-credit {
+  margin-left: 0.3em;
+  color: var(--cuddle-text, #f7f4ff);
+  font-size: 0.85em;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+}
+
 #cuddleScreen .cuddle-row-score {
   color: var(--cuddle-points-teal-bright);
   text-shadow: 0 0 12px rgba(62, 207, 142, 0.22);
