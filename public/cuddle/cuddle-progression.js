@@ -126,7 +126,7 @@
     oracleTiles: "Unlocks oracle squares",
     rainyDay: "5% interest per stage",
     encore: "+25 every 3rd solve",
-    vowelBounty: "+3 per vowel solved",
+    vowelBounty: "+4 per vowel solved",
     doubleDown: "+35 on lucky guess",
     vowelLamp: "Shows the vowel count",
     echoFinder: "Shows repeat letters",

@@ -4122,9 +4122,9 @@
         break;
       }
       case "greyscale": {
-        // Greys only: 0.5, 1, then 1.5 a grey -- the Eliminator's engine
-        // (a whole point a grey out-earned every other common badge).
-        upgrades.greyPoints += 0.5;
+        // Greys only: 0.75, 1.5, then 2.25 a grey -- the Eliminator's
+        // engine (a whole point a grey out-earned every other common badge).
+        upgrades.greyPoints += 0.75;
         break;
       }
       case "mulliganValueBoost":

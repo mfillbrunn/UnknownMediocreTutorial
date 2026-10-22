@@ -304,7 +304,7 @@
     return feedback.filter(function is(value) { return value === colour; }).length;
   }
 
-  var MOMENTUM = [0, 2, 4, 7];
+  var MOMENTUM = [0, 3, 5, 9];
   var BIG_OPENER = [0, 5, 8, 15];
   var LAST_STAND = [0, 25, 40, 75];
   var PICKPOCKET = [0, 2, 3, 6];
