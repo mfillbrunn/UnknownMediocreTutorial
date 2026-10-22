@@ -4476,6 +4476,10 @@
       if (!stack) {
         stack = document.createElement("span");
         stack.className = "umt-row-power-icons";
+        // Kept through redraws (cuddle-morph.js): the signature below
+        // already rebuilds it when its content changes, and rebuilding it on
+        // every tap made Quick Mode's clock blink.
+        stack.setAttribute("data-umt-keep", "");
         row.appendChild(stack);
       }
       // A word rule on this row with a known letter shows the letter itself
@@ -4535,6 +4539,7 @@
         }
         stack.appendChild(button);
       });
+      if (stack.querySelector("#cuddleQuickClock")) window.CuddleQuickClock?.paint?.();
     });
   }
 

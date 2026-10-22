@@ -562,6 +562,9 @@
     if (el.textContent !== text) el.textContent = text;
     if (el.classList.contains("is-urgent") !== (left <= 10)) el.classList.toggle("is-urgent", left <= 10);
   }
+  // A redraw rebuilds the clock empty; painting it straight away keeps it
+  // from blinking out until the next tick.
+  window.CuddleQuickClock = { paint: () => { if (quickModeDeadline) paintQuickModeClock(); } };
 
   function bestWinsLine() {
     const best = bestWins();
