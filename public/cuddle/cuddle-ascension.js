@@ -205,8 +205,24 @@
     return has(this, "tightWindow") ? Math.max(3, window - 1) : window;
   };
 
+  // A trial stop under Tight Window: its shorter window made the trial's
+  // own later guesses (a pick from a list, often the 3rd to 5th) cost
+  // points, so late guesses there are free.
+  function onTrialStop(state) {
+    var map = state && state.branchMap;
+    var spot = map && map.position;
+    var row = spot && Array.isArray(map.rows) ? map.rows[Number(spot.row)] : null;
+    var node = row && Array.isArray(row.nodes) ? row.nodes[Number(spot.col)] : null;
+    return Boolean(node && node.type === "trial");
+  }
+
+  proto.lateGuessesFree = function lateGuessesFree() {
+    return has(this, "tightWindow") && onTrialStop(this.state);
+  };
+
   var baseLate = proto._lateGuessPenalty;
   proto._lateGuessPenalty = function lateGuessPenaltyWithAscension() {
+    if (this.lateGuessesFree()) return 0;
     var penalty = baseLate.apply(this, arguments);
     return penalty > 0 && has(this, "heavyToll") ? penalty + TOLL : penalty;
   };

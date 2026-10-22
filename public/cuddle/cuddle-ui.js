@@ -717,7 +717,7 @@
       boss
         ? row("Guesses left", String(Math.max(0, (state.maxGuesses || window.CuddleEngine?.MAX_GUESSES || 6) - state.guessesUsed)))
         : row("Bonus window", `solve within ${bonusWindow} guesses`),
-      boss || !game._lateGuessPenalty ? "" : row(`Each guess past ${bonusWindow}`, `-${latePenaltyAmounts(bonusWindow).replace(/, /g, ", -")} pts`, "is-penalty"),
+      boss || !game._lateGuessPenalty || (typeof game.lateGuessesFree === "function" && game.lateGuessesFree()) ? "" : row(`Each guess past ${bonusWindow}`, `-${latePenaltyAmounts(bonusWindow).replace(/, /g, ", -")} pts`, "is-penalty"),
       row("Each spare guess", `${signed(perSpare)} pts`),
       row("Each unused mulligan", `${signed(rules.mulliganPoints)} pts`),
       rules.questPoints > 0 ? row("Each quest", `${signed(rules.questPoints)} pts`) : ""
@@ -792,7 +792,9 @@
     // (hidden, not removed) so the board keeps its six-row shape, and each
     // new row slides in as it's reached.
     const unlimited = !game.isBossRound() && !Number.isFinite(strictLimit);
-    const lateWindow = unlimited && typeof game._lateGuessPenalty === "function" ? game._solveGuessThreshold() : 0;
+    // No late rows where late guesses are free (a trial under Tight Window).
+    const lateFree = typeof game.lateGuessesFree === "function" && game.lateGuessesFree();
+    const lateWindow = unlimited && !lateFree && typeof game._lateGuessPenalty === "function" ? game._solveGuessThreshold() : 0;
     const liveRow = state.status === "playing" ? state.history.length : -1;
     const arrivalKey = `${state.runId || "run"}:${state.round}:${state.secret || ""}:${liveRow}`;
     const arriving = unlimited && liveRow > 0 && arrivalKey !== lastArrivedRowKey;
