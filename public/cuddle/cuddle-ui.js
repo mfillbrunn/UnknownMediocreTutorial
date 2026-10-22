@@ -503,12 +503,15 @@
   let quickModeTimer = null;
   let quickModeDeadline = 0;
   let quickModeGuessIndex = -1;
+  let quickModeSeconds = 0;
 
   function clearQuickModeTimer() {
     if (quickModeTimer) clearInterval(quickModeTimer);
     quickModeTimer = null;
     quickModeDeadline = 0;
     quickModeGuessIndex = -1;
+    const watch = document.getElementById("cuddleQuickClock");
+    if (watch) watch.remove();
   }
 
   function syncQuickModeTimer() {
@@ -531,6 +534,7 @@
       quickModeGuessIndex = state.guessesUsed;
       quickModeDeadline = Date.now() + seconds * 1000;
     }
+    quickModeSeconds = seconds;
     paintQuickModeClock();
     if (quickModeTimer) return;
     quickModeTimer = setInterval(() => {
@@ -552,19 +556,68 @@
     }, 250);
   }
 
+  // The countdown is a big round watch pinned to the board's corner. It lives on the page body, outside the redrawn screen, so a
+  // tap never rebuilds (or blinks) it; it is placed over the board on
+  // every tick.
+  function quickModeWatch() {
+    let el = document.getElementById("cuddleQuickClock");
+    if (el) return el;
+    el = document.createElement("div");
+    el.id = "cuddleQuickClock";
+    el.className = "umt-quick-watch";
+    el.setAttribute("role", "timer");
+    el.innerHTML = `<span class="umt-quick-watch-time"></span><small>sec</small>`;
+    document.body.appendChild(el);
+    return el;
+  }
+
+  function placeQuickModeWatch(el) {
+    const board = document.querySelector("#cuddleRoot .cuddle-board");
+    const screen = document.getElementById("cuddleScreen");
+    if (!board || !screen || !screen.classList.contains("active")) {
+      if (!el.hidden) el.hidden = true;
+      return;
+    }
+    const box = board.getBoundingClientRect();
+    const size = el.offsetWidth || 72;
+    // Inside the board's bottom-right corner: the rows fill from the top,
+    // so that corner stays clear until the last guesses (the top-right
+    // corner covered the header's buttons).
+    const bottom = Math.min(box.bottom, window.innerHeight);
+    const x = Math.round(box.right - size - 10);
+    const y = Math.round(Math.max(box.top + 10, bottom - size - 10));
+    const left = `${x}px`;
+    const top = `${y}px`;
+    if (el.style.left !== left) el.style.left = left;
+    if (el.style.top !== top) el.style.top = top;
+    // Out of the way of anything opened over the board (a pop-up, the
+    // cash-out, the tour): it would sit on top of it.
+    const under = document.elementFromPoint(x + size / 2, y + size / 2);
+    const covered = Boolean(under && under.closest && under.closest(
+      "[role='dialog'], .cuddle-overlay, .cuddle-money-overlay, .umt-pack-overlay, .umt-boss-entrance, .umt-tut, .umt-help-layer"
+    ));
+    if (el.hidden !== covered) el.hidden = covered;
+  }
+
   function paintQuickModeClock() {
-    const el = document.getElementById("cuddleQuickClock");
-    if (!el) return;
+    if (!quickModeDeadline) return;
+    const el = quickModeWatch();
     const left = Math.max(0, Math.ceil((quickModeDeadline - Date.now()) / 1000));
-    // Written only when the second changes: every write is a page change
-    // other layers react to.
-    const text = `${left}s`;
-    if (el.textContent !== text) el.textContent = text;
+    // Written only when the second changes.
+    const time = el.firstElementChild;
+    if (time && time.textContent !== String(left)) {
+      time.textContent = String(left);
+      el.setAttribute("aria-label", `${left} seconds left for this guess`);
+      el.style.setProperty("--watch-left", String(Math.max(0, Math.min(1, left / (quickModeSeconds || 60)))));
+    }
     if (el.classList.contains("is-urgent") !== (left <= 10)) el.classList.toggle("is-urgent", left <= 10);
+    placeQuickModeWatch(el);
   }
   // A redraw rebuilds the clock empty; painting it straight away keeps it
   // from blinking out until the next tick.
   window.CuddleQuickClock = { paint: () => { if (quickModeDeadline) paintQuickModeClock(); } };
+  window.addEventListener("resize", () => { if (quickModeDeadline) paintQuickModeClock(); });
+  document.addEventListener("scroll", () => { if (quickModeDeadline) paintQuickModeClock(); }, true);
 
   function bestWinsLine() {
     const best = bestWins();
