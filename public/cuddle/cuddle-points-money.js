@@ -90,15 +90,15 @@
   // A three-level power's steps (cuddle-skill-tree.js): 1, 2, then 4.
   var LEVEL_STEP = [0, 1, 2, 4];
 
-  // Relative odds of each kind for one tile. Money and points are always
-  // in the pool; the unlockable kinds scale with their unlock's level
-  // (level 1 unlocks, 2 and 3 make it more common), hint least of all.
+  // Relative odds of each kind for one tile. Every kind needs its badge
+  // (money and points: Bonus Squares); level 1 unlocks it, 2 and 3 make it
+  // more common, hint least of all.
   var TILE_KINDS = [
-    { kind: "money", weight: function () { return 1; } },
-    { kind: "points", weight: function () { return 1; } },
-    { kind: "mulligan", bonus: "mulliganTiles", weight: function (level) { return 0.45 * level; } },
-    { kind: "joker", bonus: "jokerTiles", weight: function (level) { return 0.3 * level; } },
-    { kind: "hint", bonus: "oracleTiles", weight: function (level) { return 0.15 * level; } }
+    { kind: "money", bonus: "bonusSquares", weight: function (level) { return level; } },
+    { kind: "points", bonus: "bonusSquares", weight: function (level) { return level; } },
+    { kind: "mulligan", bonus: "mulliganTiles", weight: function (level) { return 0.9 * level; } },
+    { kind: "joker", bonus: "jokerTiles", weight: function (level) { return 0.6 * level; } },
+    { kind: "hint", bonus: "oracleTiles", weight: function (level) { return 0.4 * level; } }
   ];
 
   function addMoney(state, amount) {
@@ -116,10 +116,13 @@
 
   function pickKind(state, random) {
     var pool = TILE_KINDS.map(function weigh(entry) {
-      var level = entry.bonus ? bonusLevel(state, entry.bonus) : 1;
+      var level = bonusLevel(state, entry.bonus);
       // Levels 1, 2, 3 weigh x1, x2, x4: the third pick is the big one.
       return { kind: entry.kind, weight: level > 0 ? entry.weight(LEVEL_STEP[Math.min(3, Math.floor(level))]) : 0 };
     }).filter(function usable(entry) { return entry.weight > 0; });
+    // Squares from Treasure Map, the shop or a world trait with no square
+    // badge to say what they are: money or points.
+    if (!pool.length) return random() < 0.5 ? "money" : "points";
     var total = pool.reduce(function sum(acc, entry) { return acc + entry.weight; }, 0);
     var roll = random() * total;
     for (var i = 0; i < pool.length; i += 1) {
@@ -143,7 +146,12 @@
       rows[index] = rows[swap];
       rows[swap] = held;
     }
-    var count = rows.filter(function roll() { return random() < TILE_CHANCE_PER_GUESS; }).length
+    // The board's own squares need a square badge; without one a stage
+    // has none (Treasure Map and the rest below still add theirs).
+    var owned = TILE_KINDS.some(function has(entry) { return bonusLevel(state, entry.bonus) > 0; });
+    var bonusExtra = [0, 0, 1, 2][Math.min(3, Math.floor(bonusLevel(state, "bonusSquares")))];
+    var count = (owned ? rows.filter(function roll() { return random() < TILE_CHANCE_PER_GUESS; }).length : 0)
+      + bonusExtra
       + LEVEL_STEP[Math.min(3, Math.floor(bonusLevel(state, "treasureMap")))]
       // Treasure Trove from the shop: +2 tiles while its stages last
       // (counted down by cuddle-shop.js once the stage has begun).

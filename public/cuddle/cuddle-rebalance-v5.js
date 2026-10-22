@@ -71,19 +71,19 @@
     Object.freeze({
       id: IDS.encore, key: IDS.encore, icon: "\uD83C\uDFAC",
       title: "Encore", name: "Encore",
-      description: "Every third stage you solve pays a 30-point encore bonus. Level 2: 45 points. Level 3: 65 points.",
+      description: "Every third stage you solve pays a 25-point encore bonus. Level 2: 40 points. Level 3: 55 points.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.vowelBounty, key: IDS.vowelBounty, icon: "\uD83C\uDD70\uFE0F",
       title: "Vowel Bounty", name: "Vowel Bounty",
-      description: "Every vowel in a word you solve pays 5 points. Level 2: 8 points. Level 3: 15 points.",
+      description: "Every vowel in a word you solve pays 4 points. Level 2: 6 points. Level 3: 10 points.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
       id: IDS.doubleDown, key: IDS.doubleDown, icon: "\uD83C\uDFB2",
       title: "Double Down", name: "Double Down",
-      description: "Each stage names a lucky guess, from the 3rd to the 7th. Solve the word on exactly that guess for +50 points, even if that's past your bonus window. Level 2: +70 points. Level 3: +100 points.",
+      description: "Each stage names a lucky guess, from the 3rd to the 7th. Solve the word on exactly that guess for +35 points, even if that's past your bonus window. Level 2: +50 points. Level 3: +75 points.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     // Insight rewards: clues about the answer at the start of a stage,
@@ -104,7 +104,7 @@
     Object.freeze({
       id: IDS.treasureHunter, key: IDS.treasureHunter, icon: "\uD83D\uDC8E",
       title: "Treasure Hunter", name: "Treasure Hunter",
-      description: "About one stage in three hides a treasure word: solve it before guess 5 (4 in world 2, 3 in world 3) for +$20. Level 2: +$25. Level 3: +$40, in every other stage.",
+      description: "About one stage in three hides a treasure word: solve it before guess 5 (4 in world 2, 3 in world 3) for +$30. Level 2: +$40. Level 3: +$60, in every other stage.",
       maxLevel: 3, maxCount: 3, kind: "upgrade"
     }),
     Object.freeze({
@@ -161,12 +161,6 @@
       title: "Pruning Shears", name: "Pruning Shears",
       description: "Permanently remove one rare consonant from your deck and every future answer. Level 2: two gone. Level 3: four gone. (No run culls more than 8 letters.)",
       maxLevel: 3, maxCount: 3, kind: "upgrade", cull: 1
-    }),
-    Object.freeze({
-      id: IDS.cullTwo, key: IDS.cullTwo, icon: "\u2702\uFE0F",
-      title: "Cull Letters", name: "Cull Letters",
-      description: "Permanently remove one rare consonant from your deck and every future answer. Level 2: two gone. Level 3: four gone. (No run culls more than 8 letters.)",
-      maxLevel: 3, maxCount: 3, kind: "upgrade", cull: 2
     })
   ]);
 
@@ -3213,8 +3207,8 @@
   // in the clue strip (cuddle-clues.js).
   function applyConsonantSweep(game) {
     const level = upgradeLevel(game, IDS.consonantSweep);
-    // Level 2: two letters a guess.
-    for (let index = 0; index < Math.min(2, level); index += 1) sweepOneConsonant(game);
+    // Two letters a guess; level 2: three.
+    for (let index = 0; index < Math.min(3, level + 1); index += 1) sweepOneConsonant(game);
   }
 
   function sweepOneConsonant(game) {
@@ -3297,9 +3291,9 @@
   // pays a flat bonus. The row it lands on carries a die icon (see
   // renderRowPowerIcons). 0 when the reward isn't owned or the stage
   // doesn't pay out (a boss, a no-money stop).
-  // +50 a lucky solve; Level 2: +80; Level 3: +120.
+  // +35 a lucky solve; Level 2: +50; Level 3: +75.
   function doubleDownPoints(game) {
-    return [50, 70, 100][Math.max(1, Math.min(3, upgradeLevel(game, IDS.doubleDown))) - 1];
+    return [35, 50, 75][Math.max(1, Math.min(3, upgradeLevel(game, IDS.doubleDown))) - 1];
   }
   const DOUBLE_DOWN_FIRST = 3;
   const DOUBLE_DOWN_LAST = 7;
@@ -3331,8 +3325,8 @@
     if (vowelLevel > 0) {
       const vowels = secretVowelCount(game);
       if (vowels > 0) {
-        // 5, 8, then 15 a vowel at level 3.
-        const perVowel = [0, 5, 8, 15][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
+        // 4, 6, then 10 a vowel at level 3.
+        const perVowel = [0, 4, 6, 10][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
         addScoreBonus(game, vowels * perVowel, "umtVowelBounty",
           `${vowels} vowel${vowels === 1 ? "" : "s"} in the secret`);
       }
@@ -3340,7 +3334,7 @@
 
     const encoreLevel = upgradeLevel(game, IDS.encore);
     if (encoreLevel > 0) {
-      const ENCORE_POINTS = [30, 45, 65][Math.min(3, encoreLevel) - 1];
+      const ENCORE_POINTS = [25, 40, 55][Math.min(3, encoreLevel) - 1];
       custom.encoreSolves = asInteger(custom.encoreSolves, 0) + 1;
       if (custom.encoreSolves % 3 === 0) {
         addScoreBonus(game, ENCORE_POINTS, "umtEncore", "Every third stage solved");

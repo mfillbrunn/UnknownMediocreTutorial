@@ -26,7 +26,7 @@
   var STORE_KEY = "umt-cuddle-runs-v1";
   // Badges for the systems a first run leaves out.
   var QUEST_BADGES = ["questPoints", "questRefreshes", "questReroll", "surprise-assignment", "questCadence", "questPersistReward", "questDoublePick"];
-  var SQUARE_BADGES = ["treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"];
+  var SQUARE_BADGES = ["bonusSquares", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"];
   // Stages and bosses that need quests.
   var QUEST_CHALLENGES = ["questEndurance", "questTrial"];
   // Stops a calm first world doesn't have.

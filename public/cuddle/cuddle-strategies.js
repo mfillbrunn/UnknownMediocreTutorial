@@ -18,7 +18,7 @@
  * Gambler and purist:
  *   - High Roller (common, 3 levels): every stage bets 10 / 20 / 40
  *     points. Solve by guess 5 (world 1) or guess 4 (worlds 2 and 3) and
- *     it pays 2.5 times the bet (+25 / +50 / +100); later than that and the
+ *     it pays twice the bet (+20 / +40 / +80); later than that and the
  *     bet is lost.
  *   - Hard Mode (common, 3 levels): a stage solved in Wordle hard mode --
  *     every guess keeps each green in place and uses each yellow you were
@@ -74,10 +74,10 @@
   var LEAN_COST_BY_LEVEL = [5, 4, 3];
   var LEAN_BY_WORLD = [20, 40, 100];
   var LEAN_PER_BADGE = 5;
-  var STRIKE_POINTS = [0, 0.5, 1, 1.5];
+  var STRIKE_POINTS = [0, 1, 2, 3];
   var HIGH_ROLLER_BET = [0, 10, 20, 40];
-  // A won bet pays more than it risks: 2.5 times the stake.
-  var HIGH_ROLLER_WIN = [0, 25, 50, 100];
+  // A won bet pays more than it risks: twice the stake.
+  var HIGH_ROLLER_WIN = [0, 20, 40, 80];
   // The guess a High Roller bet must be won by, per world.
   var HIGH_ROLLER_BY = [5, 4, 4];
   var HARD_MODE_POINTS = [0, 35, 60, 100];

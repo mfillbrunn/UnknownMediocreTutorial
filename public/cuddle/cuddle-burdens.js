@@ -57,7 +57,7 @@
   var DEAD_GLYPH = "·";
   var LUCKY_GLYPH = "♣";
   var SWAMP_DEAD = 3;
-  var LUCKY_POINTS = [0, 5, 8, 15];
+  var LUCKY_POINTS = [0, 10, 14, 20];
   // Tiles dealt by level: 1, 2, then 4 (the third pick is the big one).
   var TILES_BY_LEVEL = [0, 1, 2, 4];
   var LUCKY_MULLIGAN_POINTS = 2;
@@ -257,8 +257,9 @@
   // (see _deckJokerCount, read in cuddle-engine.js).
   // Small Joker Cache's Joker cards in the deck: 1, 2, then 4. (Large
   // Joker Cache hands a free Joker card out at stage start instead.)
+  var JOKER_CACHE_TILES = [0, 2, 3, 5];
   function deckJokers(game) {
-    return TILES_BY_LEVEL[powerLevel(game, "jokerCache")];
+    return JOKER_CACHE_TILES[Math.min(3, powerLevel(game, "jokerCache"))];
   }
 
   function ascensionDead(game) {

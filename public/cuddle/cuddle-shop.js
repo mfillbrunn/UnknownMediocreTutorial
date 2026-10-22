@@ -98,6 +98,8 @@
       blurb: "The Cuddle Meter fills up 2 tiles sooner. Level 2: 4 tiles sooner. Level 3: 6 tiles sooner.",
       level: game => Math.max(0, int(coachOf(game).cuddleThresholdStacks)),
       apply: game => { const coach = coachOf(game); coach.cuddleThresholdStacks = Math.min(3, Math.max(0, int(coach.cuddleThresholdStacks)) + 1); } },
+    { id: "keepBonusSquares", icon: "reward-bonus-squares.svg", title: "Bonus Squares", cost: 30, max: 3, bonus: "bonusSquares",
+      blurb: "Money and points squares: a green or yellow on one pays money or points." },
     { id: "keepTreasureMap", icon: "reward-green-value.svg", title: "Treasure Map", cost: 36, max: 3, bonus: "treasureMap",
       blurb: "One more special square appears on the board every stage." },
     { id: "keepMulliganTiles", icon: "reward-quest-reroll.svg", title: "Mulligan Squares", cost: 30, max: 3, bonus: "mulliganTiles",

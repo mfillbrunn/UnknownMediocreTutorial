@@ -50,7 +50,7 @@
 
   // Ascetic: [most badges outside Restraint, what a solve's points are
   // multiplied by], fewest first.
-  var ASCETIC_TIERS = [[5, 2], [10, 1.5]];
+  var ASCETIC_TIERS = [[5, 1.6], [10, 1.3]];
   // Black Market's price by its level.
   var MARKET_PRICES = [50, 45, 40];
   function marketPrice(game) {
@@ -161,7 +161,7 @@
 
   // What Ascetic multiplies a solve by right now: 2, 1.5, or 1 (nothing).
   // Level 2 widens both thresholds: 6 and 12 badges.
-  var ASCETIC_TIERS_2 = [[6, 2], [12, 1.5]];
+  var ASCETIC_TIERS_2 = [[6, 1.6], [12, 1.3]];
   function asceticTiers(game) {
     return levelOf(game, "ascetic") >= 2 ? ASCETIC_TIERS_2 : ASCETIC_TIERS;
   }
@@ -243,7 +243,7 @@
 
   // What each quest reward says once it's a step bigger.
   var MASTERED_TEXT = {
-    stealthGuess: "+2 mulligans for this stage.",
+    stealthGuess: "+4 mulligans for this stage.",
     letterProbe: "3 random consonants from your hand: you see how many times each one is in the answer.",
     sillyWord: "Your next guess can be any 5 letters, even if it isn't a real word. Also +1 mulligan.",
     extraLetters: "+4 more consonants in your hand for your next guess.",
@@ -252,9 +252,9 @@
     umtRuleOut: "3 consonants in your hand that aren't in the answer turn grey, and are swapped for new cards.",
     umtVowelCheck: "3 vowels you haven't tried are tested: you learn if each one is in the answer.",
     umtSpotlight: "2 yellow letters move to their exact spots and turn green (or the next ones you find do).",
-    umtPocketMoney: "Get +$20 right now.",
-    umtQuickPoints: "Get +30 points right now.",
-    umtFishingLine: "Twice this stage, take a card back from your discard pile (tap the hook on your deck)."
+    umtPocketMoney: "Get +$16 right now.",
+    umtQuickPoints: "Get +20 points right now.",
+    umtFishingLine: "3 times this stage, take a card back from your discard pile (tap the hook on your deck)."
   };
 
   function masterChoices(game) {
@@ -681,7 +681,7 @@
       var solved = Boolean(entry && state.secret && entry.word === state.secret);
       if (!inDuel(state)) countOvertime(this);
       if (!solved) bookQuestChain(this);
-      if (!solved && history.length <= (levelOf(this, "goldenOpener") >= 2 ? 2 : 1) && state.status === "playing" && has(this, "goldenOpener")) {
+      if (!solved && history.length <= (levelOf(this, "goldenOpener") >= 2 ? 3 : 2) && state.status === "playing" && has(this, "goldenOpener")) {
         var placed = goldenOpener(this, entry);
         if (placed.length) {
           note(this, "Golden Opener: " + placed.map(function say(item) { return item.letter + " goes in position " + (item.index + 1); }).join(", ") + ".");

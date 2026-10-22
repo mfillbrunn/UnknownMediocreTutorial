@@ -46,7 +46,8 @@
     ["quest value", TIERS.COMMON],
     ["second guess quest", TIERS.COMMON],
     ["bigger mulligan", TIERS.COMMON],
-    ["pruning shears", TIERS.COMMON],
+    // Pruning Shears took over Cull Letters (once Epic) and is Rare.
+    ["pruning shears", TIERS.RARE],
     // Rarity follows points per stage (Opening Verse, Early Finish and
     // Vowel Bounty pay a common-plus amount every stage, so they are Rare;
     // Encore and Double Down pay rarely, so they step down).
@@ -68,6 +69,7 @@
     ["vowel bounty", TIERS.RARE],
     // A one-time letter, so Common.
     ["position peek", TIERS.COMMON],
+    ["bonus squares", TIERS.COMMON],
     ["mulligan squares", TIERS.COMMON],
 
     ["vowel lamp", TIERS.RARE],
@@ -178,7 +180,7 @@
 
   const KNOWN_ORDINARY_NAMES = new Set([
     "second thoughts", "reward refresh", "quest value", "second guess quest",
-    "bigger mulligan", "cull x & y", "pruning shears", "cull letters",
+    "bigger mulligan", "cull x & y", "pruning shears", "cull letters", "bonus squares",
     "opening verse", "quest ink", "wide margins", "grey matters", "gray matters",
     "bigger hand", "mulligan dividend", "early finish", "colour surge", "color surge",
     "greyscale", "grayscale", "reward echo", "precise green", "wild card",
@@ -1926,15 +1928,15 @@
     mulliganSize: 0.5, storybookStart: 0.6, wideChoice: 0.55, mulliganTiles: 0.35,
     mulliganValueBoost: 0.6, earlySolveBoost: 0.35, colourTrade: 0.5, greyscale: 0.7,
     coachMeterThreshold: 0.45, umtVowelBounty: 0.55,
-    umtTreasureHunter: 0.5, umtCullOne: 0.45,
+    umtTreasureHunter: 0.5, bonusSquares: 0.4,
     // Rare ($50-70)
     treasureMap: 0.55, jokerTiles: 0.5, handSizeBoost: 0.9, greenCount: 0.25, umtEchoFinder: 0.2,
     categorySense: 0.6, coachPossibleAnswers: 0.7, coachMeterReward: 0.35,
-    "surprise-assignment": 0.3, umtJokerCache: 0.75, umtRainyDay: 0.6, umtEncore: 0.7,
+    umtCullOne: 0.4, "surprise-assignment": 0.3, umtJokerCache: 0.75, umtRainyDay: 0.6, umtEncore: 0.7,
     umtVowelLamp: 0.5, umtMistakeShield: 0.35, umtHaggler: 0.2,
     // Epic ($75-100)
     oracleTiles: 0.45, "alphabet-compass": 0.6, umtConsonantSweep: 0.8, umtDoubleDown: 0.35,
-    umtYellowHint: 0.95, umtCullTwo: 0.6, umtPatternLens: 0.7
+    umtYellowHint: 0.95, umtPatternLens: 0.7
   });
 
   function priceForTier(tier, seed, id) {

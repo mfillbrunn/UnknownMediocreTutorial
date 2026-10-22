@@ -38,26 +38,6 @@
 .umt-tip.is-points { background: #ffe39a; color: #4a3304; }
 .umt-tip.is-school { background: #b8f0cd; color: #0f4026; }
 
-/* The tip's reason, inside the card. */
-.umt-tip-why {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  margin-top: 6px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(236, 233, 247, 0.85);
-  font-size: 0.74rem;
-  font-weight: 600;
-  line-height: 1.35;
-  text-align: left;
-}
-.umt-tip-why svg { width: 13px; height: 13px; flex: 0 0 auto; margin-top: 1px; }
-.umt-tip-why.is-solve svg { color: #ff9fbf; }
-.umt-tip-why.is-points svg { color: #ffd45e; }
-.umt-tip-why.is-school svg { color: #7ee2a6; }
-
 /* The line that says tips are only suggestions. */
 .umt-tips-note {
   margin: 0 0 4px;
@@ -79,3 +59,47 @@
   line-height: 1.35;
   text-align: left;
 }
+
+/* The tip badge opens its explanation (cuddle-reward-tips.js). */
+.umt-tip[data-umt-tip] { cursor: pointer; }
+.umt-tip[data-umt-tip]:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.umt-tip .umt-tip-more {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 2px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.14);
+  font-size: 0.6rem;
+  font-style: normal;
+  font-weight: 900;
+}
+.umt-tip[aria-expanded="true"] .umt-tip-more { background: currentColor; color: #fff; }
+
+/* Too little room beside the rarity tag: icon and "Tip" only. */
+.umt-tips.is-compact .umt-tip > span { display: none; }
+.umt-tips.is-compact .umt-tip b { padding-right: 0; border-right: 0; }
+.umt-tips.is-compact .umt-tip-more { display: none; }
+
+/* The tip's reason, in a pop-up beside the tapped tip badge. */
+.umt-tip-popup {
+  position: fixed;
+  z-index: 70;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #1d1929;
+  color: #ece9f7;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+.umt-tip-popup svg { width: 15px; height: 15px; flex: 0 0 auto; margin-top: 1px; }
+.umt-tip-popup.is-solve svg { color: #ff9fbf; }
+.umt-tip-popup.is-points svg { color: #ffd45e; }
+.umt-tip-popup.is-school svg { color: #7ee2a6; }

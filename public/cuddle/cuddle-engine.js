@@ -2424,6 +2424,9 @@
           ]).sort();
           break;
         case "extraMulligans":
+          // Second Thoughts: +2 mulligans, then +1 a level (3, then 4).
+          this.state.upgrades.extraMulligans += this.state.upgrades.extraMulligans > 0 ? 1 : 2;
+          break;
         case "mulliganSize":
         case "yellowPoints":
         case "earlyRoundPoint":
@@ -2639,9 +2642,10 @@
   const cuddleV2OriginalRewardEffect = CuddleGame.prototype._applyRewardEffect;
   CuddleGame.prototype._applyRewardEffect = function applyCuddleV2Reward(rewardId) {
     if (rewardId === "stealthGuess") {
-      const gained = this.mulliganGain(1);
+      // Two: one mulligan was the weakest quest reward by far.
+      const gained = this.mulliganGain(2);
       this.state.mulligansLeft = Number(this.state.mulligansLeft || 0) + gained;
-      return gained === 1 ? "Extra Mulligan added for this round." : `${gained} extra mulligans added for this round.`;
+      return `${gained} extra mulligans added for this round.`;
     }
 
     // Letter Count reports two random consonants from the counted hand
@@ -2839,9 +2843,17 @@
       description: "One more card on every reward screen. Level 2: two more. Level 3: two more, and the first refresh on every reward screen is free.",
       max: 3
     },
-    // Special board tiles (cuddle-points-money.js). A run starts with only
-    // money and points squares; these add more of them, and unlock the rarer
-    // kinds -- each unlock taken again makes its kind turn up more often.
+    // Special board tiles (cuddle-points-money.js). A run starts with none:
+    // each of these unlocks a kind (Bonus Squares: money and points), and
+    // taking one again makes its kind turn up more often.
+    {
+      id: "bonusSquares",
+      icon: "💰",
+      title: "Bonus Squares",
+      tier: "common",
+      description: "Money and points squares on the board: a green or yellow on one pays money or points. Level 2: one more square a stage. Level 3: two more.",
+      max: 3
+    },
     {
       id: "treasureMap",
       icon: "🗺️",
@@ -4112,19 +4124,21 @@
         upgrades.handSizeBonus += 1;
         break;
       case "colourTrade": {
-        // +0.5 a green, then 1, then 1.5: an even step each level.
+        // +0.75 a green, then 1.5, then 2.25: an even step each level.
         // A row's colour points are rounded down (see submitDraft).
-        upgrades.greenOnlyPoints += 0.5;
+        upgrades.greenOnlyPoints += 0.75;
         break;
       }
       case "greyscale": {
-        // Greys only: 1, 2, then 3 a grey -- the Eliminator's engine.
-        upgrades.greyPoints += 1;
+        // Greys only: 0.75, 1.5, then 2.25 a grey -- the Eliminator's
+        // engine (a whole point a grey out-earned every other common badge).
+        upgrades.greyPoints += 0.75;
         break;
       }
       case "mulliganValueBoost":
-        // 3, 6, then 9.
-        upgrades.mulliganPointBonus += 3;
+        // 1, 2, then 3 more for each unused mulligan (3 a level made it
+        // the strongest common badge by far).
+        upgrades.mulliganPointBonus += 1;
         break;
       case "earlySolveBoost":
         upgrades.earlyRoundPoint += 5;

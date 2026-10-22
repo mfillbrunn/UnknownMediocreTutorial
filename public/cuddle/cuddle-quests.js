@@ -321,7 +321,7 @@
       id: "stealthGuess",
       icon: "🔁",
       title: "Extra Mulligan",
-      description: "+1 mulligan for this stage."
+      description: "+2 mulligans for this stage."
     },
     // Letter Count ("letterProbe": how many times 2 hand consonants are in
     // the answer) is no longer offered: Rule Out (cuddle-powers.js) covers
