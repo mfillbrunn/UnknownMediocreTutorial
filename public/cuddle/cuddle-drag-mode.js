@@ -112,7 +112,11 @@
     const tile = under && under.closest
       ? under.closest("#cuddleRoot .cuddle-tile[data-drag-index]")
       : null;
-    setHover(tile);
+    // Hints rank III's Test pad (cuddle-schools.js) takes a hand card.
+    const pad = !tile && session.kind === "hand" && under && under.closest
+      ? under.closest("#cuddleRoot [data-umt-test-drop]")
+      : null;
+    setHover(tile || pad);
   }
 
   function onUp(event) {
@@ -137,6 +141,12 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     swallowClickUntil = Date.now() + 1250;
+
+    if (target && target.hasAttribute("data-umt-test-drop")) {
+      const schools = window.CuddleSchools;
+      if (schools && typeof schools.dropOnTestPad === "function") schools.dropOnTestPad(ended.glyph);
+      return;
+    }
 
     const game = activeGame();
     const rawIndex = target ? Number(target.dataset.dragIndex) : NaN;

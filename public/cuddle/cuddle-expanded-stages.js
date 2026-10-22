@@ -906,8 +906,36 @@
 
     // The stop preview on the map (cuddle-branch-map.js) reads a stop's
     // wording from here, and an event's two choices as separate options.
+    // A Duel being played (its own hand, board and answer), or null.
+    function playingDuel(game) {
+      const map = game && game.state && game.state.branchMap;
+      const duel = map && map.expandedDuel;
+      return duel && duel.phase === "playing" && duel.tileState ? duel : null;
+    }
+
     window.CuddleExpandedStages = Object.freeze({
       dragDuelTile: (game, op) => dragDuelTile(game, op || {}),
+      // Runs `fn(game)` with game.state set to the Duel's own state while a
+      // Duel is being played, else as it is: badge layers that act from a
+      // tap (Fish Hook, a school's letter test) reach the Duel's hand this
+      // way. `changed` (true, or a test of the result) says whether it
+      // changed anything; a change inside a Duel is saved and redrawn.
+      withDuel: (game, fn, changed) => {
+        const duel = playingDuel(game);
+        if (!duel) return fn(game);
+        const value = withDuelTileState(game, duel, () => fn(game));
+        if (typeof changed === "function" ? changed(value) : changed) {
+          safeSave(game);
+          window.dispatchEvent(new CustomEvent("cuddle:campaign-update", { detail: { runId: game.state.runId } }));
+        }
+        return value;
+      },
+      // Whether it's the player's turn in a Duel being played (null when
+      // no Duel is).
+      duelPlayerTurn: game => {
+        const duel = playingDuel(game);
+        return duel ? duel.turn === "player" && !duel.mulliganMode : null;
+      },
       // The Duel AI's next word given `rows` ({word, feedback}) so far, at
       // `difficulty` (the Co-pilot stage, cuddle-copilot.js, plays the hard
       // one). It reads every row as its own.
@@ -2181,7 +2209,8 @@
       const normalized = String(glyph || "").toUpperCase();
       // A dead card (cuddle-burdens.js) is selectable too: it can only be
       // mulliganed, and tapping it in play says so (the toggleDraft guard).
-      const deadTile = Boolean(window.CuddleBurdens && (window.CuddleBurdens.isDeadGlyph(normalized) || window.CuddleBurdens.isLuckyGlyph(normalized)));
+      const deadTile = Boolean(window.CuddleBurdens && (window.CuddleBurdens.isDeadGlyph(normalized) || window.CuddleBurdens.isLuckyGlyph(normalized)
+        || window.CuddleBurdens.isIdeaGlyph(normalized)));
       if (!/^[A-Z]$/.test(normalized) && normalized !== Engine.CUDDLE_JOKER_GLYPH && !deadTile) return { ok: false, error: "That card is unavailable." };
       try {
         const result = withDuelTileState(game, duel, state => {
@@ -2720,13 +2749,25 @@
       return `<span class="umt-compass-mark is-${side}">${mark.dir === "L" ? "&larr;" : mark.dir === "R" ? "&rarr;" : "&ndash;"}</span>`;
     }
 
+    // Precise Green (cuddle-ui.js draws the same): how many times the
+    // tile's letter is in the answer.
+    function duelCountMark(duel, row, column, letter, colour) {
+      const entry = duel.tileState && Array.isArray(duel.tileState.history) ? duel.tileState.history[row] : null;
+      const counts = entry && entry.greenLetterCounts;
+      if (!counts || (colour !== "green" && colour !== "yellow")) return "";
+      const count = Number(counts[String(letter).toUpperCase()]) || 0;
+      return count ? `<span class="umt-count-mark" title="${escapeHtml(String(letter).toUpperCase())} is in the answer ${count === 1 ? "once" : `${count} times`}">${count}</span>` : "";
+    }
+
     function renderDuelBoard(game, duel) {
       const rows = (duel.history || []).map((entry, rowIndex) => (
         `<div class="cuddle-board-row umt-duel-row is-${escapeHtml(entry.actor)}">`
         + entry.word.split("").map((letter, index) => {
           const special = duelSpecialTile(duel, rowIndex, index);
           const compass = duelCompassMark(duel, rowIndex, index);
-          return `<span class="cuddle-tile is-${escapeHtml(entry.feedback[index] || "grey")}${entry.jokerIndex === index ? " is-joker" : ""}${special.cls}${compass ? " has-compass" : ""}"${special.attr}>${escapeHtml(letter)}${compass}</span>`;
+          const colour = entry.feedback[index] || "grey";
+          const count = entry.actor === "ai" ? "" : duelCountMark(duel, rowIndex, index, letter, colour);
+          return `<span class="cuddle-tile is-${escapeHtml(colour)}${entry.jokerIndex === index ? " is-joker" : ""}${special.cls}${compass ? " has-compass" : ""}"${special.attr}>${escapeHtml(letter)}${compass}${count}</span>`;
         }).join("")
         + (entry.actor === "ai" ? `<span class="cuddle-row-score umt-duel-who is-ai">AI</span>` : `<span class="cuddle-row-score umt-duel-who is-you"></span>`)
         + `</div>`
@@ -2834,13 +2875,19 @@
       // A dead card (cuddle-burdens.js): no letter, only good for a mulligan.
       const dead = Boolean(window.CuddleBurdens && window.CuddleBurdens.isDeadGlyph(group.glyph));
       const lucky = Boolean(window.CuddleBurdens && window.CuddleBurdens.isLuckyGlyph(group.glyph));
-      if (dead || lucky) {
+      const idea = Boolean(window.CuddleBurdens && window.CuddleBurdens.isIdeaGlyph(group.glyph));
+      if (dead || lucky || idea) {
+        const many = group.cards.length > 1 ? ` ×${group.cards.length}` : "";
         const label = lucky
-          ? `Lucky card${group.cards.length > 1 ? ` ×${group.cards.length}` : ""}: no letter, can't be played.`
-          : `Dead card${group.cards.length > 1 ? ` ×${group.cards.length}` : ""}: no letter, can't be played. Mulligan it away.`;
+          ? `Lucky card${many}: no letter, can't be played.`
+          : idea
+            ? `Idea card${many}: no letter, can't be played. Mulligan it away for a yellow hint.`
+            : `Dead card${many}: no letter, can't be played. Mulligan it away.`;
+        const kind = lucky ? "lucky" : idea ? "idea" : "dead";
+        const face = lucky ? window.CuddleBurdens.cloverSvg() : idea ? window.CuddleBurdens.bulbSvg() : window.CuddleBurdens.skullSvg();
         return (
-          `<button type="button" class="cuddle-card ${lucky ? "is-lucky" : "is-dead"} umt-duel-hand-card${selectedCount ? " is-selected" : ""}" data-cuddle-campaign-action="expanded-duel-card" data-shop-item-id="${escapeHtml(group.glyph)}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${group.cards.length}"${disabled ? " disabled" : ""} aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">`
-          + `<span class="cuddle-card-letter ${lucky ? "cuddle-card-lucky" : "cuddle-card-dead"}" aria-hidden="true">${lucky ? window.CuddleBurdens.cloverSvg() : window.CuddleBurdens.skullSvg()}</span>${group.cards.length > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${group.cards.length}</span>` : ""}</button>`
+          `<button type="button" class="cuddle-card is-${kind} umt-duel-hand-card${selectedCount ? " is-selected" : ""}" data-cuddle-campaign-action="expanded-duel-card" data-shop-item-id="${escapeHtml(group.glyph)}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${group.cards.length}"${disabled ? " disabled" : ""} aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">`
+          + `<span class="cuddle-card-letter cuddle-card-${kind}" aria-hidden="true">${face}</span>${group.cards.length > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${group.cards.length}</span>` : ""}</button>`
         );
       }
       const modeText = duel.mulliganMode
@@ -2965,6 +3012,8 @@
           + `<span class="umt-clue-text${chip.mono ? " is-mono" : ""}">${escapeHtml(chip.text)}`
           + (chip.letters ? chip.letters.map(letter => `<b class="umt-clue-letter">${escapeHtml(letter)}</b>`).join("") : "")
           + (chip.words ? chip.words.map(word => `<b class="umt-clue-word">${escapeHtml(word)}</b>`).join("") : "")
+          // Hints III: tap a consonant to test it (cuddle-schools.js).
+          + (chip.tests && duel.turn === "player" ? chip.tests.map(letter => `<button type="button" class="umt-clue-test" data-school-test="${escapeHtml(letter)}" title="Test ${escapeHtml(letter)}: is it in the answer?">${escapeHtml(letter)}</button>`).join("") : "")
           + `</span></span>`
         )).join("")}</div>`);
       }

@@ -84,6 +84,56 @@
     game.state.roundScore = num(game.state.roundScore) + value;
   }
 
+  // Quest rewards paid on the spot (Quick Points, Pocket Money): straight
+  // into the header's totals, with a small "+15" rising from them, and
+  // left out of the stage's cash-out. The points go to the run's score but
+  // not the stage's (roundScore), so the header -- which holds a stage's
+  // own points back until its cash-out -- shows them at once; the cash-out
+  // counts from where the stage started, so its start moves up with them.
+  function moneyMode(game) {
+    var mode = game.state && game.state.cuddleMoneyMode;
+    return mode && typeof mode === "object" ? mode : null;
+  }
+
+  function instantPoints(game, points) {
+    var state = game.state;
+    state.score = num(state.score) + points;
+    var mode = moneyMode(game);
+    if (mode && Number.isFinite(Number(mode.roundStartingMoney))) mode.roundStartingMoney = num(mode.roundStartingMoney) + points;
+    headerPop(".cuddle-header-points", "+" + points, "points");
+  }
+
+  function instantMoney(game, cash) {
+    var state = game.state;
+    state.cuddleMoney = Math.max(0, num(state.cuddleMoney) + cash);
+    var mode = moneyMode(game);
+    if (mode && Number.isFinite(Number(mode.roundStartingCash))) mode.roundStartingCash = num(mode.roundStartingCash) + cash;
+    headerPop(".cuddle-header-money", "+$" + cash, "money");
+  }
+
+  // A small increment rising from a header counter, once the reward
+  // screen has closed and the header has redrawn.
+  function headerPop(selector, text, kind) {
+    window.setTimeout(function pop() {
+      var target = document.querySelector("#cuddleRoot " + selector);
+      if (!target) return;
+      var box = target.getBoundingClientRect();
+      if (!box.width) return;
+      var el = document.createElement("span");
+      el.className = "umt-header-pop is-" + kind;
+      el.textContent = text;
+      el.setAttribute("aria-hidden", "true");
+      el.style.left = Math.round(box.left + box.width / 2) + "px";
+      el.style.top = Math.round(box.bottom) + "px";
+      document.body.appendChild(el);
+      window.setTimeout(function () { el.remove(); }, 1500);
+      if (window.CuddleAudio) window.CuddleAudio.play(kind === "money" ? "coin" : "bing");
+    }, 380);
+  }
+
+  // Shared with cuddle-money-mode.js (a guess's on-the-spot payouts).
+  window.CuddleHeaderPop = headerPop;
+
   // -------------------------------------------------------------------------
   // 1. Third-level bonuses
   // -------------------------------------------------------------------------
@@ -239,6 +289,12 @@
     };
   });
 
+  // A Duel's history also holds the AI's rows (actor "ai"): what looks at
+  // "your last guess" or "your first guess" counts only the player's own.
+  function playerRows(history) {
+    return (Array.isArray(history) ? history : []).filter(function mine(entry) { return !entry || entry.actor !== "ai"; });
+  }
+
   function shownFeedback(entry) {
     var shown = entry && (Array.isArray(entry.shownFeedback) ? entry.shownFeedback : entry.feedback);
     return Array.isArray(shown) ? shown : [];
@@ -259,8 +315,9 @@
     var before = state && Array.isArray(state.history) ? state.history.length : 0;
     var result = baseSubmit.apply(this, arguments);
     state = this.state;
-    var history = state && Array.isArray(state.history) ? state.history : [];
-    if (!result || !result.ok || history.length <= before || inDuel(state)) return result;
+    var allRows = state && Array.isArray(state.history) ? state.history : [];
+    if (!result || !result.ok || allRows.length <= before) return result;
+    var history = playerRows(allRows);
     try {
       var entry = history[history.length - 1];
       // A Spotlight still owed a yellow (or two) places the next that show.
@@ -336,11 +393,11 @@
   // again after the first).
   var baseSubmitBold = proto.submitDraft;
   proto.submitDraft = function submitDraftWithBoldOpener() {
-    var before = this.state && Array.isArray(this.state.history) ? this.state.history.length : 0;
+    var before = this.state ? playerRows(this.state.history).length : 0;
     var result = baseSubmitBold.apply(this, arguments);
     var state = this.state;
-    if (result && result.ok !== false && state && !inDuel(state) && before === 0
-        && Array.isArray(state.history) && state.history.length === 1 && state.status === "playing"
+    if (result && result.ok !== false && state && before === 0
+        && playerRows(state.history).length === 1 && state.status === "playing"
         && levelOf(this, "boldOpener") >= 2) {
       state.buffs = Object.assign({}, state.buffs || {}, { sillyWord: Math.max(1, num(state.buffs && state.buffs.sillyWord)) });
     }
@@ -350,7 +407,7 @@
   proto._beginRound = function beginRoundWithPowers() {
     var result = baseBegin.apply(this, arguments);
     var state = this.state;
-    if (state && !inDuel(state)) {
+    if (state) {
       // Second Guess Quest: a free quest reroll every stage per level.
       var rerolls = Math.min(3, levelOf(this, "questReroll"));
       if (rerolls > 0) {
@@ -507,12 +564,12 @@
     },
     umtPocketMoney: function pocketMoney(game) {
       var cash = questBoost(game) ? 20 : 10;
-      game.state.cuddleMoney = Math.max(0, num(game.state.cuddleMoney) + cash);
+      instantMoney(game, cash);
       return "Pocket Money: +$" + cash + ".";
     },
     umtQuickPoints: function quickPoints(game) {
       var points = questBoost(game) ? 30 : 15;
-      stageBonus(game, points, "umtQuestQuickPoints", "Quick Points");
+      instantPoints(game, points);
       return "Quick Points: +" + points + " points.";
     },
     // One Fish Hook catch for this stage (cuddle-fish-hook.js).

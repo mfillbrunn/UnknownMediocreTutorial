@@ -3341,12 +3341,32 @@
   // are still provisional (a no-money stage can void them) and are held
   // back; points GRANTED at the stage's start (Opening Verse) are not
   // provisional and count immediately.
+  // A stage's points already shown as banked before its cash-out: a
+  // stage-start grant (Opening Verse) and what a guess paid on the spot
+  // (points squares, quest bonuses: entry.umtInstantShown, set by
+  // cuddle-money-mode.js). The cash-out leaves these out.
+  CuddleGame.prototype.stageShownPoints = function stageShownPoints() {
+    const state = this.state || {};
+    const instant = (Array.isArray(state.history) ? state.history : [])
+      .reduce((total, entry) => total + Math.max(0, Number(entry && entry.umtInstantShown) || 0), 0);
+    return (Number(state.roundOpeningPoints) || 0) + instant;
+  };
+
   CuddleGame.prototype.bankedScore = function bankedScore() {
     const state = this.state || {};
     const score = Number(state.score) || 0;
-    const live = state.status === "playing" && !state.pendingRoundEnd;
+    // A quest reward pick is still mid-stage: counting the stage's points
+    // there made the header jump up, then drop back once it closed. And a
+    // solved stage waits for its cash-out: the header used to jump to the
+    // total before the cash-out had even shown.
+    const held = window.CuddleMoneyMode && typeof window.CuddleMoneyMode.heldPoints === "function"
+      ? window.CuddleMoneyMode.heldPoints(this) : null;
+    if (held != null) return Math.max(0, held);
+    const live = state.status === "playing" || state.status === "questReward" || Boolean(state.pendingRoundEnd);
     if (!live) return Math.max(0, score);
-    const provisional = Math.max(0, (Number(state.roundScore) || 0) - (Number(state.roundOpeningPoints) || 0));
+    // Unclamped: a stage running at a loss shows it at the cash-out too,
+    // not guess by guess.
+    const provisional = (Number(state.roundScore) || 0) - this.stageShownPoints();
     return Math.max(0, score - provisional);
   };
 

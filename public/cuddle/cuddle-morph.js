@@ -146,7 +146,9 @@
     var walk = live.firstChild;
     while (walk) {
       var after_ = walk.nextSibling;
-      if (!rendered.has(walk)) { live.removeChild(walk); changed = true; }
+      // A layer can mark what it keeps up to date itself (data-umt-keep):
+      // clearing it would leave a gap until that layer's next pass.
+      if (!rendered.has(walk) && !(walk.nodeType === 1 && walk.hasAttribute("data-umt-keep"))) { live.removeChild(walk); changed = true; }
       walk = after_;
     }
     var previous = null;

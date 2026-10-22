@@ -328,16 +328,16 @@
       }
       doubles = doubles.concat(state.boss.umtDoubles);
     }
-    // Lucky cards pay on a solve, which a Duel doesn't have; the Duel keeps
-    // its own simpler hand (Jokers handed out up front, no power cards).
+    // A Duel deals the same power cards (lucky, idea and wave cards); its
+    // Jokers are handed out up front instead (cuddle-expanded-stages.js).
     var duel = inDuel(game.state);
     return {
       dead: dead,
       doubles: doubles,
-      lucky: duel ? 0 : luckyCount(game),
+      lucky: luckyCount(game),
       // Idea cards stay 1/2/3: four yellow hints a stage was too easy.
-      idea: duel ? 0 : powerLevel(game, "ideaTiles") + schoolPerk(game, "ideaTiles"),
-      wave: duel ? 0 : TILES_BY_LEVEL[powerLevel(game, "waveTiles")],
+      idea: powerLevel(game, "ideaTiles") + schoolPerk(game, "ideaTiles"),
+      wave: TILES_BY_LEVEL[powerLevel(game, "waveTiles")],
       jokers: duel ? 0 : deckJokers(game)
     };
   }
@@ -479,7 +479,7 @@
       var discardBefore = (this.state.discard || []).length;
       var card = baseDrawOne.apply(this, arguments);
       // The discard only ever empties here by being shuffled back in.
-      if (discardBefore > 0 && !(this.state.discard || []).length && !inDuel(this.state)) {
+      if (discardBefore > 0 && !(this.state.discard || []).length) {
         // Full Circle: once a stage (more trips through the deck gave the
         // whole answer away).
         // Level 2: twice a stage.
@@ -492,7 +492,7 @@
           this.__umtCycles = (this.__umtCycles || 0) + 1;
         }
       }
-      if (!card || inDuel(this.state)) return card;
+      if (!card) return card;
       if (isJokerTile(card)) {
         cashJokerTile(this, card, false);
         continue;
@@ -633,7 +633,7 @@
     var lucky = picked.filter(isLuckyCard);
     var result = baseMulligan.apply(this, arguments);
     state = this.state;
-    if (!result || !result.ok || inDuel(state) || (!ideas.length && !lucky.length)) return result;
+    if (!result || !result.ok || (!ideas.length && !lucky.length)) return result;
     try {
       var spent = new Set(ideas.concat(lucky).map(function id(card) { return card.id; }));
       state.discard = (state.discard || []).filter(function keep(card) { return !spent.has(card.id); });
@@ -705,7 +705,7 @@
     var result = baseSubmit.apply(this, arguments);
     state = this.state;
     var history = state && Array.isArray(state.history) ? state.history : [];
-    if (!result || !result.ok || history.length <= before || inDuel(state)) return result;
+    if (!result || !result.ok || history.length <= before) return result;
     try {
       var entry = history[history.length - 1];
       var solved = Boolean(entry && state.secret && entry.word === state.secret);

@@ -1177,3 +1177,28 @@ button.umt-duel-option:focus-visible {
   background: #2c1517;
   color: #fbdcdc;
 }
+
+/* A quest reward paid on the spot (cuddle-powers.js headerPop): "+15"
+   rising from the header's points, "+$10" from its money. */
+.umt-header-pop {
+  position: fixed;
+  z-index: 10046;
+  translate: -50% 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 900;
+  pointer-events: none;
+  animation: umt-header-pop 1400ms ease-out both;
+}
+.umt-header-pop.is-points { color: #08321f; background: #57d69a; }
+.umt-header-pop.is-money { color: #3a2a05; background: #f6c956; }
+@keyframes umt-header-pop {
+  0% { opacity: 0; transform: translateY(6px) scale(0.8); }
+  15% { opacity: 1; transform: translateY(0) scale(1.08); }
+  30% { transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-22px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .umt-header-pop { animation: none; }
+}

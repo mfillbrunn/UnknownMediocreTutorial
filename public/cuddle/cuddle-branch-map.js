@@ -856,7 +856,7 @@
     // make the header count go backwards.
     var baseline = noMoneyFlag
       ? Number(this.state.score || 0)
-        - Math.max(0, Number(this.state.roundScore || 0) - Number(this.state.roundOpeningPoints || 0))
+        - Math.max(0, Number(this.state.roundScore || 0) - (typeof this.stageShownPoints === "function" ? this.stageShownPoints() : Number(this.state.roundOpeningPoints || 0)))
       : null;
     var result = originalResolvePendingRoundEnd.apply(this, arguments);
     if (noMoneyFlag) {

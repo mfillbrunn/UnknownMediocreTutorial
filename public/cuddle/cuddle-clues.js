@@ -247,8 +247,11 @@
     }
     if (shielded) addMessage(this, "Mistake Shield: no greens or yellows, so you get that guess back.");
     try {
-      const history = this.state && Array.isArray(this.state.history) ? this.state.history : [];
-      const entry = history.length > before ? history[history.length - 1] : null;
+      const allRows = this.state && Array.isArray(this.state.history) ? this.state.history : [];
+      const entry = allRows.length > before ? allRows[allRows.length - 1] : null;
+      // A Duel's history holds the AI's rows too: "after your 2nd guess"
+      // counts the player's own.
+      const history = allRows.filter(row => !row || row.actor !== "ai");
       // Hints that arrive later, so the opening guesses are still a real
       // read: Yellow Guesser Hint after guess 1, Last Light after guess 2.
       const unsolved = entry && String(entry.word || "").toUpperCase() !== String(this.state.secret || "").toUpperCase()
@@ -357,12 +360,7 @@
     const rule = window.CuddleRebalanceV5 && typeof window.CuddleRebalanceV5.wordRuleNote === "function"
       ? window.CuddleRebalanceV5.wordRuleNote(game) : null;
     if (rule && !rule.letters) chips.push({ icon: rule.icon, label: rule.label, text: rule.text, letters: rule.letters, tone: "rule" });
-    // Hints rank III: once a stage, tap a consonant to test it.
-    const testable = window.CuddleSchools && typeof window.CuddleSchools.testableLetters === "function"
-      ? window.CuddleSchools.testableLetters(game) : [];
-    if (testable.length) {
-      chips.push({ icon: "magnifier", label: "Hints rank", text: "Test a card:", tests: testable, tone: "test" });
-    }
+    // Hints rank III's test has its own pad above the hand (cuddle-schools.js).
     if (level(game, IDS.mistakeShield) > 0 && shieldApplies(game)) {
       const left = shieldsLeft(game, record);
       chips.push({ icon: "shield", label: "Mistake Shield", text: left > 1 ? `${left} shields ready` : left ? "Shield ready" : "Shield used", tone: left ? "" : "spent" });

@@ -45,9 +45,9 @@
   // Hints rank I (cuddle-schools.js): one more arrow on a stage's first guess.
   function hintsRankArrow(game, entry) {
     const schools = window.CuddleSchools;
-    const history = game.state && Array.isArray(game.state.history) ? game.state.history : [];
+    // The player's own first guess (a Duel's history holds the AI's rows too).
+    const history = (game.state && Array.isArray(game.state.history) ? game.state.history : []).filter(row => !row || row.actor !== "ai");
     if (!schools || typeof schools.rankOf !== "function" || history[0] !== entry) return 0;
-    if (String(game.state.runId || "").indexOf(":duel:") !== -1) return 0;
     try { return Number(schools.rankOf(game, "prism")) >= 1 ? 1 : 0; } catch (_error) { return 0; }
   }
 
