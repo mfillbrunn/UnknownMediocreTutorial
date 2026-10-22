@@ -952,8 +952,9 @@
           const compass = arrow || (Array.isArray(history?.umtCompass)
             ? history.umtCompass.find(mark => mark && mark.index === column)
             : null);
+          const compassSource = arrow ? "boss" : (history?.umtCompassSource || "badge");
           const compassMark = compass
-            ? `<span class="umt-compass-mark is-${compass.dir === "L" ? "left" : compass.dir === "R" ? "right" : "match"}" title="${compass.dir === "L" ? "The secret's letter here comes earlier in the alphabet" : compass.dir === "R" ? "The secret's letter here comes later in the alphabet" : "This letter matches the secret here"}">${compass.dir === "L" ? "&larr;" : compass.dir === "R" ? "&rarr;" : "&ndash;"}</span>`
+            ? `<span class="umt-compass-mark is-${compass.dir === "L" ? "left" : compass.dir === "R" ? "right" : "match"}" data-dir="${compass.dir}" data-source="${compassSource}" title="${compass.dir === "L" ? "The secret's letter here comes earlier in the alphabet" : compass.dir === "R" ? "The secret's letter here comes later in the alphabet" : "This letter matches the secret here"}">${compass.dir === "L" ? "&larr;" : compass.dir === "R" ? "&rarr;" : "&ndash;"}</span>`
             : "";
           // Precise Green: how many times this letter is in the answer.
           const letterCount = history?.greenLetterCounts && (result === "green" || result === "yellow")
