@@ -176,6 +176,12 @@
 
   // Shows every card that moved back where it was (and the hinted cards
   // in their old look) for `holdMs`, then lets them slide into place.
+  function classSet(value) {
+    var set = {};
+    String(value || "").split(/\s+/).forEach(function add(name) { if (name) set[name] = true; });
+    return set;
+  }
+
   function holdHand(letters, before, holdMs) {
     var held = false;
     handCards().forEach(function hold(card) {
@@ -202,12 +208,22 @@
         // Other layers decorate the card after this render (a hint colour
         // class), so the old look is put back on every change until the
         // hint lands, and the latest look is kept for then.
+        // A redraw while held (a tap) only adds or removes the classes that
+        // changed since its last draw, on top of the old look: those changes
+        // are carried over to the latest look. Taking the held card's whole
+        // class list instead kept the old colour for good (a hinted green
+        // card stayed grey once a letter was tapped during the hold).
         var next = card.className;
         var restoring = false;
         card.className = old.cls;
         var watcher = typeof MutationObserver === "function" ? new MutationObserver(function keepOld() {
           if (restoring || card.className === old.cls) return;
-          next = card.className;
+          var was = classSet(old.cls);
+          var now = classSet(card.className);
+          var wanted = classSet(next);
+          Object.keys(now).forEach(function added(name) { if (!was[name]) wanted[name] = true; });
+          Object.keys(was).forEach(function removed(name) { if (!now[name]) delete wanted[name]; });
+          next = Object.keys(wanted).join(" ");
           restoring = true;
           card.className = old.cls;
           restoring = false;
