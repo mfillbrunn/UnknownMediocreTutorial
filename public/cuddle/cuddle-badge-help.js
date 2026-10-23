@@ -87,7 +87,7 @@
     gracePeriod: ["Each world has a guess window (6 guesses, then 5, then 4); every guess after it costs points. This badge makes your first late guesses free.", ["board", "cashout"]],
     boldOpener: ["Normally every guess must be a real word. With this badge your first guess can be any five letters, so you can test exactly the letters you want.", ["board"]],
     ideaTiles: ["Idea cards go into your deck. An idea card has no letter; mulligan it away and it shows you a letter of the answer (it turns yellow).", ["ideaCard", "mulligan"]],
-    waveTiles: ["Wave cards go into your deck. When you draw one, it washes away every consonant card in your hand (and any dead cards) and deals you new ones. Idea cards it washes away still give their hint.", ["wave", "deadCard"]],
+    waveTiles: ["Wave cards go into your deck. When you draw one, it washes away every consonant card in your hand (and any dead cards), deals you new ones and gives you a mulligan. Idea cards it washes away still give their hint.", ["wave", "deadCard"]],
     fullCircle: ["Your deck is reshuffled when it runs out. Once a stage, when that happens, a letter of the answer is placed in its spot for you.", ["hand", "board"]],
     leanBuild: ["A Restraint badge: it rewards keeping few badges. Each solve pays this bonus, minus 5 points for every badge you have outside the Restraint school (Legendaries don't count).", ["cashout", "reward"]],
     monksVow: ["You can always skip a reward. With this badge a skip pays both points and money, instead of one or the other.", ["reward"]],

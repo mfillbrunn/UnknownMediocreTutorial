@@ -541,6 +541,12 @@
           if (letter) ideaLetters.push(letter);
         });
       }
+      // Losing the hand to a wave is made up for with a mulligan.
+      var mulliganGained = 0;
+      if (swept.length) {
+        mulliganGained = typeof game.mulliganGain === "function" ? game.mulliganGain(1) : 1;
+        state.mulligansLeft = Math.max(0, Number(state.mulligansLeft) || 0) + mulliganGained;
+      }
       var hadLucky = state.hand.some(isLuckyCard);
       var hadJoker = state.hand.some(isJokerTile);
       var drawn = game.drawToHandLimit();
@@ -563,6 +569,7 @@
       drawNote(game, "Wave! " + swept.length + " consonant" + (swept.length === 1 ? "" : "s")
         + (dead.length ? " and " + dead.length + " dead card" + (dead.length === 1 ? "" : "s") : "")
         + " washed out, " + drawn.length + " new ones drawn."
+        + (mulliganGained ? " +" + mulliganGained + " mulligan" + (mulliganGained === 1 ? "" : "s") + "." : "")
         + (ideaLetters.length ? " The idea card" + (ideas.length === 1 ? "" : "s") + " washed out too: " + ideaLetters.join(", ") + (ideaLetters.length === 1 ? " is" : " are") + " in the answer." : ""));
     }
     game.__umtWaves = 0;

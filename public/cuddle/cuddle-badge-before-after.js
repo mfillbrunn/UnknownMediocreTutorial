@@ -37,7 +37,7 @@
       { t: "hand", before: "RSTLNC", after: "RSTLN◇" }],
     luckyClover: ["Nothing pays for luck.", "Lucky cards come into your deck: still in your hand when you solve, each pays points.",
       { t: "pay", before: [["Solved", "+18"]], after: [["Solved", "+18"], ["Lucky card", "+5"]] }],
-    waveTiles: ["Your consonants only change with guesses and mulligans.", "Drawing a wave card swaps every consonant in your hand for new ones, and washes dead cards away.",
+    waveTiles: ["Your consonants only change with guesses and mulligans.", "Drawing a wave card swaps every consonant in your hand for new ones (+1 mulligan), and washes dead cards away.",
       { t: "hand", before: "RSTL·C", after: "BGHMPK" }],
     fishHook: ["A card you discard is gone until the deck comes round again.", "Once a stage, tap the hook to fish a discarded card back into your hand.",
       { t: "hand", before: "RSTLN", after: "RSTLNB" }],
