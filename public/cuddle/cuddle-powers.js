@@ -391,19 +391,40 @@
   }
 
   // Bold Opener: every stage's first guess can be any five letters (level
-  // 2: the first two -- the guess spends the free-form word, so it's given
-  // again after the first).
+  // 2: the first two). Counted per stage from the player's own guesses: a
+  // word the game plays for you (Head Start's opener, the co-pilot, a
+  // Trial's pick) neither uses up a free word nor counts. A guess spends
+  // the free-form word (the engine clears it), so it's handed back while
+  // free words are left.
+  function boldRecord(game) {
+    var state = game.state;
+    var key = [state.runId || "", state.round || 0, state.secret || ""].join(":");
+    if (!state.umtBoldOpener || state.umtBoldOpener.key !== key) state.umtBoldOpener = { key: key, used: 0 };
+    return state.umtBoldOpener;
+  }
+  function autoGuess(game) {
+    return Boolean(game.__umtAutoGuess || game._autopilotPlaying || game._copilotWord || game._presetPickWord);
+  }
   var baseSubmitBold = proto.submitDraft;
   proto.submitDraft = function submitDraftWithBoldOpener() {
-    var before = this.state ? playerRows(this.state.history).length : 0;
-    var result = baseSubmitBold.apply(this, arguments);
     var state = this.state;
-    if (result && result.ok !== false && state && before === 0
-        && playerRows(state.history).length === 1 && !state.pendingRoundEnd
-        // Still playing -- or on a quest reward screen, when the first
-        // guess finished a quest (that used to skip the second free word).
-        && (state.status === "playing" || state.status === "questReward")
-        && levelOf(this, "boldOpener") >= 2) {
+    var allowance = Math.min(2, levelOf(this, "boldOpener"));
+    if (!state || allowance <= 0 || inDuel(state)) return baseSubmitBold.apply(this, arguments);
+    var auto = autoGuess(this);
+    var record = boldRecord(this);
+    var sillyBefore = num(state.buffs && state.buffs.sillyWord);
+    var rows = Array.isArray(state.history) ? state.history.length : 0;
+    var result = baseSubmitBold.apply(this, arguments);
+    state = this.state;
+    if (!result || result.ok === false || !state || !Array.isArray(state.history) || state.history.length <= rows) return result;
+    if (auto) {
+      // The game's own word leaves the player's free word where it was.
+      if (sillyBefore > 0) state.buffs = Object.assign({}, state.buffs || {}, { sillyWord: sillyBefore });
+      return result;
+    }
+    record.used += 1;
+    var stillOn = !state.pendingRoundEnd && (state.status === "playing" || state.status === "questReward");
+    if (record.used < allowance && stillOn) {
       state.buffs = Object.assign({}, state.buffs || {}, { sillyWord: Math.max(1, num(state.buffs && state.buffs.sillyWord)) });
     }
     return result;
