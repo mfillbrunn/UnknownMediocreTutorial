@@ -255,7 +255,14 @@
     umtSpotlight: "2 yellow letters move to their exact spots and turn green (or the next ones you find do).",
     umtPocketMoney: "Get +$16 right now.",
     umtQuickPoints: "Get +20 points right now.",
-    umtFishingLine: "3 times this stage, take a card back from your discard pile (tap the hook on your deck)."
+    umtFishingLine: "3 times this stage, take a card back from your discard pile (tap the hook on your deck).",
+    umtOvertime: "Two more guesses this stage: a boss gives you two more tries; elsewhere the late-guess cost starts two guesses later.",
+    // Clue: yellow hints, or green ones with Quest Clue at level 2.
+    umtClue: function clueText(game) {
+      return levelOf(game, "questClue") >= 2
+        ? "Two green hints: two letters in their exact spots."
+        : "Two yellow hints: two letters that are in the answer.";
+    }
   };
 
   function masterChoices(game) {
@@ -263,7 +270,8 @@
     if (!state || state.status !== "questReward" || !has(game, "questMastery")) return;
     (state.questRewardChoices || []).forEach(function upgrade(choice) {
       if (!choice || choice.umtMastered || !MASTERED_TEXT[choice.id]) return;
-      choice.description = MASTERED_TEXT[choice.id];
+      var text = MASTERED_TEXT[choice.id];
+      choice.description = typeof text === "function" ? text(game) : text;
       choice.umtMastered = true;
     });
   }

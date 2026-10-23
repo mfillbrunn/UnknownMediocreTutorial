@@ -135,6 +135,7 @@
     mistakeShield: "First miss refunded",
     haggler: "Cheaper refreshes",
     lastLight: "Last letter revealed",
+    autopilot: "AI plays every 2nd guess",
     yellowHint: "Reveals 1 letter",
     jokerCache: "2+ Joker cards in your deck",
     jokerCacheLarge: "A free Joker card every stage",

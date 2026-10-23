@@ -943,6 +943,15 @@
         difficulty: difficulty || "hard",
         history: (rows || []).map(row => ({ word: String(row.word || "").toUpperCase(), feedback: row.feedback, actor: "ai" }))
       }),
+      // Autopilot (cuddle-copilot.js): the hard AI's word, limited to words
+      // canBuild(word) says the hand can make and fits(word) allows (what
+      // the hints already say). Null when no such word exists.
+      aiHandWord: (game, rows, canBuild, fits) => chooseAiWord(game, {
+        difficulty: "hard",
+        canBuild,
+        fits,
+        history: (rows || []).map(row => ({ word: String(row.word || "").toUpperCase(), feedback: row.feedback, actor: "ai" }))
+      }),
       stopMeta: (node, game) => metaForNode(node, game),
       eventOptions: node => {
         const definition = node && EVENT_BY_ID[node.expandedEventId];
@@ -1957,14 +1966,17 @@
       const history = duel.history || [];
       const answers = new Set(game.secrets || []);
       const dictionary = unguessedLegalWords(game, duel).filter(word => !AI_NEVER_PLAYS.has(word) || answers.has(word));
-      const hand = drawAiLetters(game, duel);
-      const spellable = dictionary.filter(word => word.split("").every(letter => hand.has(letter)));
-      const legal = spellable.length ? spellable : dictionary;
-      if (!legal.length) return visibleCandidates(game, duel)[0] || null;
+      // Playing from the player's own hand (Autopilot), or from a drawn one.
+      const ownHand = typeof duel.canBuild === "function";
+      const hand = ownHand ? null : drawAiLetters(game, duel);
+      const spellable = dictionary.filter(word => ownHand ? duel.canBuild(word) : word.split("").every(letter => hand.has(letter)));
+      const legal = spellable.length || ownHand ? spellable : dictionary;
+      if (!legal.length) return ownHand ? null : visibleCandidates(game, duel)[0] || null;
       if (style.wildGuess && roll() < style.wildGuess) return pickFrom(legal);
 
       const read = history.filter(entry => entry && (entry.actor === "ai" || roll() < style.readsYourRows));
-      let candidates = legal.filter(word => consistentWithVisibleHistory(word, read));
+      let candidates = legal.filter(word => consistentWithVisibleHistory(word, read)
+        && (typeof duel.fits !== "function" || duel.fits(word)));
       if (!candidates.length) candidates = legal;
       const everyday = candidates.filter(word => answers.has(word));
       if (everyday.length && (everyday.length <= style.goesForIt || (style.commonWords && roll() < style.commonWords))) {

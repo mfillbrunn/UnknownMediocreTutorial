@@ -197,6 +197,9 @@
         { id: "patternLens", icon: "🧩", title: "Pattern Lens", tier: "epic", type: "clues", maxLevel: 1, description: "From your 2nd guess, you see which spots are vowels and which are consonants.", level: g => v5Level(g, "umtPatternLens") },
         { id: "mistakeShield", icon: "🛡️", title: "Mistake Shield", tier: "rare", type: "safety", maxLevel: 1, description: "In bosses and strict stages: if your first guess is all grey, you get that guess back.", level: g => v5Level(g, "umtMistakeShield") },
         { id: "lastLight", icon: "🕯️", title: "Last Light", tier: "legendary", type: "clues", maxLevel: 1, description: "After your 2nd guess, the answer's last letter is filled in for you.", level: g => v5Level(g, "umtLastLight") },
+        { id: "autopilot", icon: "🤖", title: "Autopilot", tier: "legendary", type: "clues", maxLevel: 1,
+          description: "Every 2nd guess (the 2nd, 4th, 6th...) is played for you by the AI: the best word your cards can make right now, using everything the board and your hints show.",
+          level: g => powerLevel(g, "autopilot") },
         { id: "yellowHint", icon: "🟨", title: "Yellow Guesser Hint", tier: "epic", type: "clues", maxLevel: 2,
           levels: ["After your 1st guess, one letter of the answer turns yellow (it's in the word).", "Now it turns green instead: you see exactly where it goes."],
           level: g => v5Level(g, "umtYellowHint") + v5Level(g, "umtClearSight") }
@@ -394,7 +397,7 @@
   const SCHOOL_MEMBERS = {
     flint: ["storybookStart", "earlySolveBoost", "bigOpener", "momentum", "colourTrade", "boldOpener", "encore", "vowelBounty", "fastLane", "goldenOpener"],
     prism: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "yellowHint", "alphabet-compass",
-      "oracleTiles", "lastLight", "allThemesBoss", "revealGreen"],
+      "oracleTiles", "lastLight", "allThemesBoss", "revealGreen", "autopilot"],
     flora: ["luckyClover", "fishHook", "ideaTiles", "waveTiles", "fullCircle", "jokerCache", "jokerCacheLarge", "jokerTiles", "mulliganTiles",
       "treasureMap", "bonusSquares", "extraMulligans", "mulliganSize", "handSizeBoost", "doubleMulligans", "biggerMulligans"],
     parchment: ["greyscale", "strikeThrough", "cullOne", "cullRare", "consonantSweep", "freeVowelSweep",

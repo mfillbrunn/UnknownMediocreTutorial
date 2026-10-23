@@ -202,7 +202,9 @@
   var NEW_POWERS = ["momentum", "bigOpener", "lastStand", "pickpocket", "gracePeriod", "boldOpener", "luckyClover", "ideaTiles", "waveTiles", "fullCircle", "leanBuild", "monksVow", "strikeThrough", "highRoller", "hardMode", "combine", "fishHook",
     // cuddle-new-badges.js
     "cleanSlate", "ascetic", "questMastery", "overtime", "questChain", "questScout", "questClue", "blackMarket", "treasureChest",
-    "insertCoin", "goldenLedger", "fastLane", "goldenOpener"];
+    "insertCoin", "goldenLedger", "fastLane", "goldenOpener",
+    // cuddle-copilot.js
+    "autopilot"];
 
   function powerCard(id) {
     var registry = tree();

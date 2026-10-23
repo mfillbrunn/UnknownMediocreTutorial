@@ -192,6 +192,8 @@ const GLYPHS = {
   echoFinder: () => tile(18, 30, 30, "E") + tile(48, 30, 30, "E", W, ink()) + line("M30 70c6 6 30 6 36 0", acc(), 4),
   patternLens: () => tile(16, 40, 22, "") + tile(38, 40, 22, "", W) + tile(60, 40, 22, "") + magnifier(58, 38),
   lastLight: () => candle(48, 52),
+  // A robot head over a letter tile.
+  autopilot: () => rect(26, 22, 44, 34, 10, acc()) + circle(39, 39, 5, W, null) + circle(57, 39, 5, W, null) + line("M48 22v-8", ink(), 4) + circle(48, 12, 4, ink(), null) + tile(30, 60, 36, "A", W, ink()),
   yellowHint: () => tile(24, 24, 48, "", acc()) + text(48, 49, "?", 32, W),
   "alphabet-compass": () => circle(48, 48, 28, W) + path_("M48 22l8 26h-16z", acc()) + path_("M48 74l-8 -26h16z", ink(), null) + circle(48, 48, 4, W),
   consonantSweep: () => tile(24, 28, 40, "K", W, ink()) + line("M20 72L72 22", acc(), 7),
@@ -277,7 +279,7 @@ const GLYPHS = {
 // Which palette each symbol takes.
 const TYPES = {
   letters: ["extraMulligans", "mulliganSize", "cullOne", "cullTwo", "handSizeBoost", "jokerCache", "jokerCacheLarge", "coachMeterThreshold", "coachMeterReward", "waveTiles", "combine", "fishHook", "cleanSlate", "cullRare", "doubleMulligans", "biggerMulligans", "stealthGuess", "extraLetters", "jokerToken", "umtFishingLine"],
-  clues: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "lastLight", "yellowHint", "alphabet-compass", "consonantSweep", "coachPossibleAnswers", "boldOpener", "ideaTiles", "fullCircle", "goldenOpener", "freeVowelSweep", "revealGreen", "allThemesBoss", "revealCategory", "umtRuleOut", "umtVowelCheck", "umtSpotlight", "sillyWord", "umtClue"],
+  clues: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "lastLight", "yellowHint", "alphabet-compass", "consonantSweep", "coachPossibleAnswers", "boldOpener", "ideaTiles", "fullCircle", "goldenOpener", "freeVowelSweep", "revealGreen", "allThemesBoss", "revealCategory", "umtRuleOut", "umtVowelCheck", "umtSpotlight", "sillyWord", "umtClue", "autopilot"],
   points: ["storybookStart", "mulliganValueBoost", "earlySolveBoost", "colourTrade", "greyscale", "encore", "vowelBounty", "doubleDown", "momentum", "bigOpener", "lastStand", "leanBuild", "strikeThrough", "highRoller", "hardMode", "luckyClover", "ascetic", "umtQuickPoints"],
   money: ["wideChoice", "rewardEcho", "rainyDay", "haggler", "treasureHunter", "pickpocket", "monksVow", "blackMarket", "treasureChest", "insertCoin", "goldenLedger", "umtPocketMoney"],
   quests: ["questRefreshes", "questPoints", "questReroll", "surprise-assignment", "questMastery", "overtime", "questChain", "questScout", "questClue", "questDoublePick", "questCadence", "questPersistReward"],

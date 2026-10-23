@@ -71,6 +71,7 @@
     treasureHunter: ["Some stages hide a treasure word, marked with a diamond in the theme line. Solve it quickly and it pays this money.", ["themes", "header"]],
     patternLens: ["From your 2nd guess, the clues above the board show the answer's shape: which spots are vowels (V) and which are consonants (C).", ["clues"]],
     mistakeShield: ["Bosses and strict stages end the run when you run out of guesses. If your first guess there is all grey, this badge gives that guess back, so a bad opener doesn't cost you a guess.", ["board", "map"]],
+    autopilot: ["On every 2nd guess (the 2nd, 4th, 6th...) the AI plays for you. It picks the best word your hand can make right now, from what the board and your hints show (never from tiles hidden from you), and plays it with your own cards. If no word fits your cards, or a stage's rule turns its word down, that guess is yours instead.", ["board", "hand"]],
     lastLight: ["After your 2nd guess, the answer's last letter is placed in its spot for you, as if you had found it green.", ["board"]],
     yellowHint: ["After your 1st guess, a letter of the answer you haven't found yet is marked for you: at level 1 it turns yellow (it's in the word), at level 2 green (its exact spot).", ["board", "hand"]],
     jokerCache: ["Joker cards go into your deck each stage. A Joker can stand in for any letter, so it fills a gap your hand can't. You can use one Joker per word.", ["jokerCard", "specialCards"]],
