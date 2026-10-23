@@ -2957,10 +2957,10 @@
         + `<div class="umt-stop-head">${stopMedallion("duel")}<h2>Word Duel</h2></div>`
         + `<p class="umt-stop-lead">Take turns guessing against the AI. First to solve wins. ${duelLossEndsRun(game) ? "If the AI wins, the run ends." : duelLossPoints(game) ? `If the AI wins, you lose ${duelLossPoints(game)} points.` : "If the AI wins, you just get no reward."}</p>`
         + `<div class="umt-duel-options">`
-        + `<div class="umt-duel-option is-easy">${pips(1)}<b>Easy AI</b><span class="umt-duel-win">Win: ${richText("+$10 · pick 1")}</span>`
+        + `<div class="umt-duel-option is-easy">${pips(1)}<b>Easy AI</b><span class="umt-duel-win">Win: ${richText("+$10 · Epic badge")}</span>`
         + `<span class="umt-duel-cost-label">Costs one to start:</span><div class="umt-duel-costs">${easyCosts}</div></div>`
-        + `<button type="button" class="umt-duel-option is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium">${pips(2)}<b>Medium AI</b><span class="umt-duel-win">Win: ${richText("+$18 · pick 1")}</span><span class="umt-duel-free">Free</span></button>`
-        + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard">${pips(3)}<b>Hard AI</b><span class="umt-duel-win">Win: ${richText("+$38 · +1 power · pick 1")}</span><span class="umt-duel-free">Free</span></button>`
+        + `<button type="button" class="umt-duel-option is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium">${pips(2)}<b>Medium AI</b><span class="umt-duel-win">Win: ${richText("+$18 · Epic badge")}</span><span class="umt-duel-free">Free</span></button>`
+        + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard">${pips(3)}<b>Hard AI</b><span class="umt-duel-win">Win: ${richText("+$38 · +1 power · Epic badge")}</span><span class="umt-duel-free">Free</span></button>`
         + `</div>`
         + `</section>`
       );

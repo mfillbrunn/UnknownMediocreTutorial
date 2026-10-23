@@ -1,0 +1,68 @@
+/* How a Trial and a Word Duel work (cuddle-stop-tutorials.js). The sheet
+   is the badge help's card (cuddle-badge-help.css); these are its steps. */
+.umt-stop-tut-steps {
+  display: grid;
+  gap: 18px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: umt-tut-step;
+}
+.umt-stop-tut-steps li {
+  display: grid;
+  gap: 6px;
+  counter-increment: umt-tut-step;
+}
+.umt-stop-tut .umt-stop-tut-steps h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #ece9f7;
+  font-size: 1rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.umt-stop-tut-steps h3::before {
+  content: counter(umt-tut-step);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--help-color);
+  color: #17131f;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+.umt-stop-tut-note {
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(236, 233, 247, 0.8);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.umt-stop-tut-done {
+  justify-self: stretch;
+  margin-top: 4px;
+}
+
+/* "How it works" on a Trial's or a Duel's start screen. */
+.umt-stop-how {
+  display: block;
+  margin: 10px auto 0;
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.umt-stop-how:focus-visible { outline: 2px solid #c79bff; outline-offset: 2px; }
