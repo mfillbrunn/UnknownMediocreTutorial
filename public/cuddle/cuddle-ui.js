@@ -1217,6 +1217,9 @@
   // pick from a short list instead of tiles. A tap selects a word; "Lock
   // in" plays it, since a wrong pick ends the run.
   let presetSelection = { key: "", word: "" };
+  // The pick folded away ("Hide list"), so the guesses above can be read;
+  // per pick, so a new pick opens unfolded.
+  let presetHiddenKey = "";
 
   // A trial's words the player has crossed out by hand (nothing is crossed
   // out for them: telling which ones the guesses ruled out is the trial).
@@ -1259,10 +1262,20 @@
         + `</button></div>`;
     }).join("");
     const left = pick.words.length - pick.words.filter(word => struck.includes(word)).length;
+    if (presetHiddenKey === pick.key) {
+      return `
+      <section class="cuddle-hand-panel cuddle-preset-pick is-folded" aria-label="The answer pick, hidden">
+        <div class="cuddle-preset-fold">
+          <span><b>Your final pick is waiting</b>${chosen ? ` · ${escapeHtml(chosen)} selected` : ` · ${left} word${left === 1 ? "" : "s"} left`}</span>
+          <button type="button" class="cuddle-btn cuddle-btn-primary" data-action="preset-show">Show the list</button>
+        </div>
+      </section>`;
+    }
     return `
       <section class="cuddle-hand-panel cuddle-preset-pick" aria-labelledby="cuddlePresetTitle">
         <div class="cuddle-preset-head">
-          <span class="cuddle-preset-kicker">${early ? "Preset Trial · answer early" : "Preset Trial · last guess"}</span>
+          <div class="cuddle-preset-top"><span class="cuddle-preset-kicker">${early ? "Preset Trial · answer early" : "Preset Trial · last guess"}</span>
+          <button type="button" class="cuddle-preset-hide" data-action="preset-hide" aria-label="Hide the list to see your guesses">Hide list</button></div>
           <h3 id="cuddlePresetTitle">The answer is one of these ${pick.words.length} words</h3>
           <p>${early ? "Lock in your answer now? It's your final answer: right passes the trial, wrong ends the run." : "Check each word against your guesses above. A wrong pick ends the run."}
             Tap ✕ to cross out a word that can't be it${struck.length ? ` (${left} left)` : ""}.</p>
@@ -2253,6 +2266,15 @@
         void shareFinishedRun();
         return false;
       /* UMT_CUDDLE_SINGLEPLAYER_V2: ACTIONS END */
+      // Fold the pick away to read the board, and bring it back.
+      case "preset-hide": {
+        const pick = typeof game.presetPick === "function" ? game.presetPick() : null;
+        presetHiddenKey = pick ? pick.key : "";
+        return true;
+      }
+      case "preset-show":
+        presetHiddenKey = "";
+        return true;
       case "preset-select":
         if (presetStruck().includes(String(dataset.word || ""))) return false;
         presetSelection = { key: presetSelection.key, word: String(dataset.word || "") };
