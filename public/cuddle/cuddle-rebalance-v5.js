@@ -2977,7 +2977,11 @@
         return;
       }
       try {
-        const result = game.submitDraft();
+        // Played by the game, not the player (Bold Opener's free words
+        // are the player's own, cuddle-powers.js).
+        game.__umtAutoGuess = true;
+        let result;
+        try { result = game.submitDraft(); } finally { game.__umtAutoGuess = false; }
         afterResult(result, (value) => {
           const ok = !value || value.ok !== false;
           if (!ok || guessesUsed(game) < 1) {
