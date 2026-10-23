@@ -872,6 +872,13 @@
 
   window.CuddleAudio = Object.freeze({
     play: play,
+    // A victory or loss over the screen for the run on now (the world
+    // crossing replays the victory if it had ended).
+    moment: function (name) {
+      var game = null;
+      try { game = window.CuddleBranchMap && window.CuddleBranchMap.getActiveGame(); } catch (_error) { /* none */ }
+      if (TRACKS[name] && game && game.state) startMoment(name, String(game.state.runId || ""));
+    },
     sounds: Object.keys(SOUNDS),
     settings: function () { return { music: settings.music, sfx: settings.sfx, unlocked: unlocked, output: ctx ? ctx.state : "none", level: current && current.el ? level(current) : 0, playing: Boolean(current && current.el && !current.el.paused), track: current ? Object.keys(TRACKS).filter(function (n) { return TRACKS[n] === current; })[0] : null, piece: current && current.list ? current.piece : null }; }
   });

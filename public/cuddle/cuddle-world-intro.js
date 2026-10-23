@@ -59,7 +59,9 @@
   // Anything else on screen goes first.
   function busy(state) {
     var money = window.CuddleMoneyMode;
+    var travel = window.CuddleWorldTravel;
     return Boolean(state.umtPackOffer
+      || (travel && travel.active())
       || document.querySelector(".umt-pack-overlay")
       || document.getElementById("cuddleMoneyPayoutOverlay")
       || document.querySelector(".umt-pt-overlay")
@@ -128,6 +130,10 @@
       return;
     }
     if (existing && shownFor === index) return;
+    // A new world: the road there plays first (cuddle-world-travel.js),
+    // and this intro follows when it ends.
+    var travel = window.CuddleWorldTravel;
+    if (!existing && travel && travel.pending(game, index) && travel.play(game, index)) return;
     if (!existing) {
       existing = document.createElement("div");
       existing.className = "umt-wi-overlay";
