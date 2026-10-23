@@ -1611,7 +1611,7 @@
     const eventPick = waystone && state.umtEventPick ? state.umtEventPick : null;
     const eventTier = eventPick ? String(eventPick.tier || "").replace(/^./, c => c.toUpperCase()) : "";
     const kicker = eventPick
-      ? `EVENT · ${String(eventPick.title || "").toUpperCase()}`
+      ? (eventPick.kicker || `EVENT · ${String(eventPick.title || "").toUpperCase()}`)
       : legendary
       ? "BOSS DEFEATED"
       : milestone

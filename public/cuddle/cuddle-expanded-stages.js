@@ -2450,14 +2450,19 @@
       if (!duel || duel.phase !== "won") return { ok: false, error: "The Duel has not been won." };
       map.expandedDuel = null;
       game.state.lastMessage = duel.message;
-      // A won Duel ends like a cleared stage: pick an upgrade, then the
-      // road (chooseUpgrade returns to the map).
-      const choices = typeof game._generateUpgradeChoices === "function" ? game._generateUpgradeChoices() : [];
+      // A won Duel ends like a cleared stage, with a better pick: one of
+      // three Epic badges, then the road (chooseUpgrade returns to the map).
+      const epic = tierChoices(game, "epic");
+      const choices = epic.length ? epic : (typeof game._generateUpgradeChoices === "function" ? game._generateUpgradeChoices() : []);
       if (Array.isArray(choices) && choices.length) {
         game.state.status = "upgrade";
         game.state.upgradePhase = "round";
         game.state.upgradeMilestone = null;
         game.state.upgradeChoices = choices;
+        if (epic.length) {
+          game.state.waystoneOffer = true;
+          game.state.umtEventPick = { title: "Word Duel", kicker: "WORD DUEL WON", tier: "epic" };
+        }
       } else {
         game.state.status = MAP_STATUS;
       }
@@ -3447,6 +3452,7 @@
 
     window.CuddleBranchMap = Object.freeze(Object.assign({}, branchExport, {
       version: VERSION,
+      tierChoices,
       renderMapScreen: renderMapWithExpandedStages,
       getActiveGame: branchExport.getActiveGame || (() => window.CuddleMoneyMode && window.CuddleMoneyMode.getActiveGame ? window.CuddleMoneyMode.getActiveGame() : null)
     }));
