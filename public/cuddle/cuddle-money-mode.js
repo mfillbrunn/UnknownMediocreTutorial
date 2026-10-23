@@ -1335,7 +1335,7 @@
           .map(function normalize(line) {
             return { label: String(line && line.label || ""), amount: Math.round(asNumber(line && line.amount, 0)), money: Math.round(asNumber(line && line.money, 0)) };
           })
-          .filter(function keep(line) { return line.label && line.amount; })
+          .filter(function keep(line) { return line.label && (line.amount || line.money); })
       : [];
     var lines = solveLines.concat(stageLines);
     var listed = lines.reduce(function sum(total, line) { return total + line.amount; }, 0);
@@ -1349,7 +1349,7 @@
       + lines.map(function row(line) {
           return "<div class=\"umt-stage-bonus-line\"><span>" + escapeHtml(line.label) + "</span>"
             + (line.money ? "<em class=\"umt-stage-bonus-money\">+$" + line.money + "</em>" : "")
-            + "<strong>" + formatPointsDelta(line.amount) + "</strong></div>";
+            + (line.amount || !line.money ? "<strong>" + formatPointsDelta(line.amount) + "</strong>" : "") + "</div>";
         }).join("")
       + "</div>";
   }

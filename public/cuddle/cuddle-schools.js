@@ -127,9 +127,11 @@
     return Boolean(last && num(last.latePenalty) > 0);
   }
 
-  function payMoney(game, amount, label) {
+  function payMoney(game, amount, label, field) {
     if (!amount || lateGuess(game.state)) return 0;
     game.state.cuddleMoney = Math.max(0, num(game.state.cuddleMoney) + amount);
+    // Paid on the solve: listed in the cash-out.
+    if (field && window.CuddlePayoutLines) window.CuddlePayoutLines.addMoney(game, field, label, amount);
     note(game, label + ": +$" + amount + ".");
     return amount;
   }
@@ -435,10 +437,10 @@
             if (flint >= 2) mine.speedNext = { mulligan: true, letter: flint >= 3 };
           }
           var gold = num(now.gold);
-          if (gold >= 1) payMoney(this, GOLD_MONEY, "Money rank");
+          if (gold >= 1) payMoney(this, GOLD_MONEY, "Money rank", "umtSchoolGold");
           if (gold >= 3) {
             var interest = Math.min(GOLD_INTEREST_CAP, Math.floor(num(state.cuddleMoney) * GOLD_INTEREST));
-            if (interest > 0) payMoney(this, interest, "Money rank interest");
+            if (interest > 0) payMoney(this, interest, "Money rank interest", "umtSchoolGoldInterest");
           }
           if (num(now.pearl) >= 2 && mine.mulliganed !== key) {
             if (stageBonus(this, PEARL_CLEAN, "umtSchoolPearl", "Restraint rank") > 0) note(this, "Restraint rank: solved without a mulligan, +" + PEARL_CLEAN + " points.");

@@ -2792,12 +2792,13 @@
     if (spentMega) spentMega.jokerCharges = 0;
 
     custom.paidRoundTokens[token] = true;
+    payStageInterest(game);
     // A stage can lose points and take them off the total, but the total
     // ends the stage at 0 at worst (only once every bonus has landed).
     floorRunScore(game);
     reconcilePendingPayout(game);
     safeSave(game);
-    appendNotice(game, custom.lastPayoutLines.map((line) => `${line.label}: +${line.amount} pts`).join(" · "));
+    appendNotice(game, custom.lastPayoutLines.filter((line) => line.amount).map((line) => `${line.label}: +${line.amount} pts`).join(" · "));
     scheduleUi();
   }
 
@@ -3149,6 +3150,22 @@
       && item.requires.every((need) => need === id || upgradeLevel(game, need) > 0)) || null;
   }
 
+  // Money a stage paid that isn't points (interest...): its own line in the
+  // cash-out's bonus box, with the amount in gold.
+  function recordMoneyLine(game, field, label, money) {
+    const custom = customState(game);
+    const value = Math.round(asNumber(money, 0));
+    if (!custom || value <= 0) return;
+    if (!Array.isArray(custom.lastPayoutLines)) custom.lastPayoutLines = [];
+    const token = roundToken(game);
+    const existing = custom.lastPayoutLines.find((line) => line && line.field === field && line.roundToken === token);
+    if (existing) existing.money = asNumber(existing.money, 0) + value;
+    else custom.lastPayoutLines.push({ label, amount: 0, money: value, roundToken: token, key: `${field}|money`, field, qty: null, hits: 1 });
+  }
+  window.CuddlePayoutLines = Object.freeze({ addMoney: recordMoneyLine });
+
+  // Rainy Day: paid when the stage is solved, so it shows in that stage's
+  // cash-out.
   function payStageInterest(game) {
     const level = upgradeLevel(game, IDS.rainyDay);
     const state = stateOf(game);
@@ -3167,6 +3184,7 @@
     const interest = Math.min(cap, Math.floor(balance * [0, 0.05, 0.08, 0.15][tier]));
     if (interest <= 0) return;
     state.cuddleMoney = Math.max(0, asNumber(state.cuddleMoney, 0)) + interest;
+    recordMoneyLine(game, "umtRainyDay", "Rainy Day interest", interest);
     appendNotice(game, `Rainy Day Fund paid $${interest} in interest.`);
   }
 
@@ -3362,7 +3380,6 @@
     // tiles it will mark (cuddle-points-money.js).
     if (typeof game._avoidMaskedSpecialTiles === "function") game._avoidMaskedSpecialTiles();
     applyTrainingWheels(game);
-    payStageInterest(game);
     initializeHintSchedule(game);
     // Yellow Guesser Hint picks its letter now and shows it after the
     // stage's first guess (cuddle-clues.js).
