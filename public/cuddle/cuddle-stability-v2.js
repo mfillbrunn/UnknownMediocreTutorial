@@ -999,7 +999,9 @@
     root.querySelectorAll(".cuddle-header-score").forEach(score => {
       // Only the number: the play screen keeps the boss target beside it.
       (score.querySelector(".cuddle-header-points-value") || score).textContent = amount.toLocaleString();
-      score.setAttribute("aria-label", `${amount} points`);
+      // Golden Ledger's credit beside the number: cuddle-money-mode.js
+      // owns the label then.
+      if (!score.querySelector(".umt-ledger-credit")) score.setAttribute("aria-label", `${amount} points`);
       score.classList.add("umt-plain-points-counter");
     });
     // Money: unlike Points, never provisional -- it's only ever granted on
@@ -1007,9 +1009,6 @@
     // mid-round, so there's nothing to hold back here.
     const money = Math.max(0, Math.round(number(state.cuddleMoney, 0)));
     root.querySelectorAll(".cuddle-header-money").forEach(el => {
-      // Golden Ledger's points beside it: cuddle-money-mode.js keeps the
-      // pill whole.
-      if (el.querySelector(".umt-ledger-credit")) return;
       el.textContent = `$${money.toLocaleString()}`;
       el.setAttribute("aria-label", `${money} money`);
     });

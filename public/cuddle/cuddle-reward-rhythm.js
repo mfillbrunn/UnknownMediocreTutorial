@@ -120,7 +120,24 @@
       seen[name] = true;
       return true;
     });
-    return shuffled(pool, randomOf(game)).slice(0, count).map(withKey);
+    return weightedPick(pool, count, randomOf(game)).map(withKey);
+  }
+
+  // Level-ups favour the cheaper badges: a common badge comes up for its
+  // next level most often, an epic or legendary least.
+  var LEVEL_WEIGHT = { common: 4, rare: 3, epic: 1.5, legendary: 1 };
+  function levelWeight(card) {
+    var node = nodeFor(card);
+    var tier = String((node && node.tier) || card.__cuddleV8Tier || card.tier || "common").toLowerCase();
+    return LEVEL_WEIGHT[tier] || LEVEL_WEIGHT.common;
+  }
+  // Drawn without repeats, each card's chance in line with its weight.
+  function weightedPick(pool, count, random) {
+    return pool
+      .map(function (card) { return { card: card, key: Math.pow(Math.max(random(), 1e-9), 1 / levelWeight(card)) }; })
+      .sort(function (a, b) { return b.key - a.key; })
+      .slice(0, count)
+      .map(function (entry) { return entry.card; });
   }
 
   function newChoices(game, generated, count) {
@@ -144,8 +161,33 @@
   // Settles the offer on screen. Runs on the finished offer, after every
   // layer that wraps the draw has had its say, except a school's promised
   // Epic offer (cuddle-schools.js), which is kept.
+  // The stop the run is standing on.
+  function currentNode(state) {
+    var map = state && state.branchMap;
+    var position = map && map.position;
+    var row = position && Array.isArray(map.rows) ? map.rows[Number(position.row)] : null;
+    return row && Array.isArray(row.nodes) ? row.nodes[Number(position.col)] || null : null;
+  }
+
+  // A passed Trial pays one of three Rare badges instead of the turn's
+  // pick (a won Duel pays an Epic one, cuddle-expanded-stages.js).
+  function trialPick(game) {
+    var state = game.state;
+    if (!ordinaryPick(state)) return false;
+    var node = currentNode(state);
+    var map = window.CuddleBranchMap;
+    if (!node || node.type !== "trial" || !map || typeof map.tierChoices !== "function") return false;
+    var choices = map.tierChoices(game, "rare");
+    if (!choices.length) return false;
+    state.upgradeChoices = choices;
+    state.waystoneOffer = true;
+    state.umtEventPick = { title: "Trial", kicker: "TRIAL PASSED", tier: "rare" };
+    return true;
+  }
+
   function apply(game) {
     var state = game.state;
+    if (trialPick(game)) return;
     if (!ordinaryPick(state) || !tree() || !Array.isArray(state.upgradeChoices) || !state.upgradeChoices.length) return;
     if (state.umtSchools && state.umtSchools.epicNext) return;
     var rhythm = turn(state);

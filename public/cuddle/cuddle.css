@@ -727,8 +727,10 @@
    specific board tile (data-drag-index, set in cuddle-ui.js's renderBoard)
    places the letter there instead of wherever the word currently ends. */
 #cuddleScreen .cuddle-tile[data-drag-index] {
-  touch-action: none;
   transition: outline-color 0.12s ease, background 0.12s ease;
+}
+#cuddleScreen .cuddle-tile[data-drag-index]:not(:empty) {
+  touch-action: none;
 }
 
 #cuddleScreen .cuddle-tile[data-drag-index].drag-hover {
@@ -4237,6 +4239,38 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+
+.cuddle-preset-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* "Hide list": folds the pick away so the guesses above can be read. */
+.cuddle-preset-hide {
+  flex: 0 0 auto;
+  padding: 5px 12px;
+  border: 1px solid rgba(213, 166, 255, 0.45);
+  border-radius: 999px;
+  background: rgba(213, 166, 255, 0.1);
+  color: var(--cuddle-text);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.cuddle-preset-hide:focus-visible { outline: 2px solid var(--cuddle-accent); outline-offset: 2px; }
+
+.cuddle-preset-fold {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+.cuddle-preset-fold b { color: var(--cuddle-accent); }
+.cuddle-preset-fold .cuddle-btn { flex: 0 0 auto; }
 
 .cuddle-preset-head h3 {
   margin: 0;

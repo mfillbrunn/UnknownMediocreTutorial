@@ -2062,11 +2062,11 @@
     const word = previous ? String(previous.word || "").toUpperCase() : "";
     if (word.length !== 5) return null;
     // Y counts as a vowel here: so many words end in Y, and so few start
-    // with it, that chaining on it stranded the hand.
-    const consonant = word.split("").reverse().find((letter) => !"AEIOUY".includes(letter));
-    // Hardly any word starts with J, Q, V, X or Z: after one of those, the
-    // chain is let off for that guess.
-    return consonant && !"JQVXZ".includes(consonant) ? consonant : null;
+    // with it, that chaining on it stranded the hand. Hardly any word
+    // starts with J, Q, V, X or Z either, so the chain skips back past
+    // those to the consonant before (KMSVY chains on S). Only a word with
+    // no other consonant lets the chain off for that guess.
+    return word.split("").reverse().find((letter) => !"AEIOUY".includes(letter) && !"JQVXZ".includes(letter)) || null;
   }
 
   // What Locked In holds you to: the greens and yellows the board showed
@@ -2792,12 +2792,13 @@
     if (spentMega) spentMega.jokerCharges = 0;
 
     custom.paidRoundTokens[token] = true;
+    payStageInterest(game);
     // A stage can lose points and take them off the total, but the total
     // ends the stage at 0 at worst (only once every bonus has landed).
     floorRunScore(game);
     reconcilePendingPayout(game);
     safeSave(game);
-    appendNotice(game, custom.lastPayoutLines.map((line) => `${line.label}: +${line.amount} pts`).join(" · "));
+    appendNotice(game, custom.lastPayoutLines.filter((line) => line.amount).map((line) => `${line.label}: +${line.amount} pts`).join(" · "));
     scheduleUi();
   }
 
@@ -3149,6 +3150,22 @@
       && item.requires.every((need) => need === id || upgradeLevel(game, need) > 0)) || null;
   }
 
+  // Money a stage paid that isn't points (interest...): its own line in the
+  // cash-out's bonus box, with the amount in gold.
+  function recordMoneyLine(game, field, label, money) {
+    const custom = customState(game);
+    const value = Math.round(asNumber(money, 0));
+    if (!custom || value <= 0) return;
+    if (!Array.isArray(custom.lastPayoutLines)) custom.lastPayoutLines = [];
+    const token = roundToken(game);
+    const existing = custom.lastPayoutLines.find((line) => line && line.field === field && line.roundToken === token);
+    if (existing) existing.money = asNumber(existing.money, 0) + value;
+    else custom.lastPayoutLines.push({ label, amount: 0, money: value, roundToken: token, key: `${field}|money`, field, qty: null, hits: 1 });
+  }
+  window.CuddlePayoutLines = Object.freeze({ addMoney: recordMoneyLine });
+
+  // Rainy Day: paid when the stage is solved, so it shows in that stage's
+  // cash-out.
   function payStageInterest(game) {
     const level = upgradeLevel(game, IDS.rainyDay);
     const state = stateOf(game);
@@ -3167,6 +3184,7 @@
     const interest = Math.min(cap, Math.floor(balance * [0, 0.05, 0.08, 0.15][tier]));
     if (interest <= 0) return;
     state.cuddleMoney = Math.max(0, asNumber(state.cuddleMoney, 0)) + interest;
+    recordMoneyLine(game, "umtRainyDay", "Rainy Day interest", interest);
     appendNotice(game, `Rainy Day Fund paid $${interest} in interest.`);
   }
 
@@ -3362,7 +3380,6 @@
     // tiles it will mark (cuddle-points-money.js).
     if (typeof game._avoidMaskedSpecialTiles === "function") game._avoidMaskedSpecialTiles();
     applyTrainingWheels(game);
-    payStageInterest(game);
     initializeHintSchedule(game);
     // Yellow Guesser Hint picks its letter now and shows it after the
     // stage's first guess (cuddle-clues.js).
@@ -3994,30 +4011,31 @@
     randomOpener: { title: "Head Start", description: "A random legal word automatically consumes the first guess.", shape: "die" },
     deepFog: { title: "Deep Fog", description: "The marked tiles are hidden on each affected guess.", shape: "fog" },
     countedSteps: { title: "Counted Steps", description: "The marked tiles show only a green and yellow count, not which tile was which. The rest of the row reports normally.", shape: "count", multiplayerId: "countOnly" },
-    blueMoon: { title: "Blue Moon", description: "On the marked tiles, green and yellow are merged into one blue result. The rest of the row reports normally.", shape: "merge" },
-    littleLie: { title: "Little Lies", description: "The marked tiles show a deliberately false colour. The rest of the row reports normally.", shape: "lie" },
+    blueMoon: { title: "Blue Moon", description: "On the marked tiles, green and yellow are merged into one blue result. The rest of the row reports normally.", shape: "blueTile" },
+    littleLie: { title: "Little Lies", description: "The marked tiles show a deliberately false colour. The rest of the row reports normally.", shape: "mask" },
     doubleBlind: { title: "Double Blind", description: "The first guesses combine count-only and hidden-position feedback on their marked tiles.", shape: "blind" },
     signalStorm: { title: "Signal Storm", description: "Affected guesses cycle through several feedback disruptions on their marked tiles.", shape: "storm" },
-    noSafetyNet: { title: "No Safety Net", description: "Mulligans and skipped guesses are disabled for this Wordle.", shape: "noShield" },
-    perfectOpener: { title: "Perfect Opener", description: "This word must use five different letters.", shape: "unique" },
-    consonantCrunch: { title: "Consonant Crunch", description: "This word may contain at most one vowel.", shape: "consonant" },
-    letterDemand: { title: "Letter Demand", description: "This word must use the letter shown above the board. If you hold no card of it, you're handed one.", shape: "tag" },
-    letterBan: { title: "Banned Letter", description: "This word may not use the letter shown above the board. A new letter is banned every guess.", shape: "noShield" },
-    wordChain: { title: "Word Chain", description: "This word must start with the last consonant of your guess before. If you hold no card of it, you're handed one.", shape: "scroll" },
-    lockedIn: { title: "Locked In", description: "Wordle's Hard Mode: this word must keep every green letter in its place and use every yellow one.", shape: "noShield" },
-    shroudedEdges: { title: "Shrouded Edges", description: "The same marked positions remain hidden on every affected guess.", shape: "edges" },
+    noSafetyNet: { title: "No Safety Net", description: "Mulligans and skipped guesses are disabled for this Wordle.", shape: "noMulligan" },
+    perfectOpener: { title: "Perfect Opener", description: "This word must use five different letters.", shape: "distinct" },
+    consonantCrunch: { title: "Consonant Crunch", description: "This word may contain at most one vowel.", shape: "oneVowel" },
+    letterDemand: { title: "Letter Demand", description: "This word must use the letter shown above the board. If you hold no card of it, you're handed one.", shape: "demand" },
+    letterBan: { title: "Banned Letter", description: "This word may not use the letter shown above the board. A new letter is banned every guess.", shape: "ban" },
+    wordChain: { title: "Word Chain", description: "This word must start with the last consonant of your guess before. If you hold no card of it, you're handed one.", shape: "chain" },
+    lockedIn: { title: "Locked In", description: "Wordle's Hard Mode: this word must keep every green letter in its place and use every yellow one.", shape: "lock" },
+    shroudedEdges: { title: "Shrouded Edges", description: "The same marked positions remain hidden on every affected guess.", shape: "hiddenTiles" },
     countOnly: { title: "Count Only", description: "The marked tiles report only how many of them are green and how many yellow, never which is which. Every other tile in the row shows its real colour.", shape: "count", multiplayerId: "countOnly" },
     delayedFeedback: { title: "Delayed Feedback", description: "The marked tiles hold back their colours for one guess: each row's hidden tiles are revealed when you submit the next guess. Every other tile in the row shows its real colour immediately.", shape: "clock" },
     hideFeedback: { title: "Hide Feedback", description: "One marked tile hides its colour on this guess.", shape: "blind" },
-    hiddenMargins: { title: "Hidden Tiles", description: "Two marked tiles hide their colour on this guess.", shape: "edges" },
+    hiddenMargins: { title: "Hidden Tiles", description: "Two marked tiles hide their colour on this guess.", shape: "hiddenTiles" },
     chimera: { title: "Chimera", description: "A mixed boss: each guess of its window carries a different constraint.", shape: "storm" },
-    rareWord: { title: "Rare Word", description: "The answer is a rare, unusual word.", shape: "unique" },
-    blueMode: { title: "Blue Mode", description: "On the marked tiles green and yellow both show as blue, so you learn the letter is in the secret but not whether it is placed right. Every other tile in the row shows its real colour.", shape: "merge" },
-    arrowMode: { title: "Arrow Signs", description: "The marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.", shape: "alphaCompass" },
-    arrowSigns: { title: "Arrow Signs", description: "The marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.", shape: "alphaCompass" },
-    fakeFeedback: { title: "Fake Feedback", description: "The marked tiles show a colour that is deliberately wrong. Every other tile in the row shows its real colour.", shape: "lie" },
+    rareWord: { title: "Rare Word", description: "The answer is a rare, unusual word.", shape: "gem" },
+    blueMode: { title: "Blue Mode", description: "On the marked tiles green and yellow both show as blue, so you learn the letter is in the secret but not whether it is placed right. Every other tile in the row shows its real colour.", shape: "blueTile" },
+    arrowMode: { title: "Arrow Signs", description: "The marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.", shape: "arrows" },
+    arrowSigns: { title: "Arrow Signs", description: "The marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.", shape: "arrows" },
+    fakeFeedback: { title: "Fake Feedback", description: "The marked tiles show a colour that is deliberately wrong. Every other tile in the row shows its real colour.", shape: "mask" },
+    singleLie: { title: "One Little Lie", description: "The marked tile shows a colour that is deliberately wrong. Every other tile in the row shows its real colour.", shape: "mask" },
     quickMode: { title: "Quick Mode", description: "One minute for this guess; run out of time and it is lost. As a curse: that guess scores 0 points.", shape: "hourglass" },
-    noMulligans: { title: "Steady Hand", description: "At most one mulligan before this guess.", shape: "noShield" },
+    noMulligans: { title: "Steady Hand", description: "At most one mulligan before this guess.", shape: "noMulligan" },
     shortHand: { title: "Short Hand", description: "The round has a smaller hand or fewer guesses.", shape: "hand" },
     questTrial: { title: "Quest Trial", description: "A quest requirement applies to every affected guess.", shape: "scroll" },
     questEndurance: { title: "Endurance Trial", description: "This guess comes with a quest. Miss it and your hand is one letter smaller for the rest of the stage.", shape: "hand" },
@@ -4078,7 +4096,23 @@
     const yellow = "var(--tile-yellow, #d6a925)";
     const green = "var(--tile-green, #3aa76d)";
     const paper = "var(--surface, #f4f5f7)";
+    const blue = "var(--tile-blue, #4a8fe7)";
+    const red = "#ff5d6c";
+    const dark = "#2a2238";
     switch (shape) {
+      // Rule icons beside a guess: each shows what the rule does to a tile.
+      case "arrows": return `<rect x="12" y="12" width="96" height="96" rx="20" fill="${ink}"/><g fill="none" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"><path d="M88 42H34m14-14L34 42l14 14" stroke="${dark}"/><path d="M32 80h54M72 66l14 14-14 14" stroke="${yellow}"/></g>`;
+      case "blueTile": return `<rect x="14" y="24" width="82" height="82" rx="18" fill="${blue}"/><text x="55" y="83" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="50" font-weight="900">A</text><circle cx="88" cy="26" r="15" fill="${yellow}"/><path d="M88 11a15 15 0 0 1 0 30z" fill="${green}"/>`;
+      case "mask": return `<path d="M14 30c30-12 62-12 92 0 0 40-18 70-46 70S14 70 14 30z" fill="${ink}"/><path d="M30 50c6-6 16-6 22 0M68 50c6-6 16-6 22 0" fill="none" stroke="${dark}" stroke-width="8" stroke-linecap="round"/><path d="M40 72c12 10 28 10 40 0" fill="none" stroke="${yellow}" stroke-width="9" stroke-linecap="round"/>`;
+      case "hiddenTiles": return `<rect x="6" y="36" width="32" height="48" rx="8" fill="${green}"/><g fill="${ink}"><rect x="44" y="36" width="32" height="48" rx="8"/><rect x="82" y="36" width="32" height="48" rx="8"/></g><g fill="${dark}" font-family="system-ui,sans-serif" font-size="32" font-weight="900" text-anchor="middle"><text x="60" y="72">?</text><text x="98" y="72">?</text></g>`;
+      case "noMulligan": return `<rect x="22" y="14" width="62" height="84" rx="12" fill="${ink}"/><path d="M68 56a15 15 0 1 1-6-12" fill="none" stroke="${dark}" stroke-width="8" stroke-linecap="round"/><path d="M66 34v12H54" fill="none" stroke="${dark}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="84" cy="84" r="24" fill="none" stroke="${red}" stroke-width="9"/><path d="M67 101l34-34" stroke="${red}" stroke-width="9" stroke-linecap="round"/>`;
+      case "distinct": return `<g fill="${ink}"><rect x="4" y="34" width="34" height="52" rx="8"/><rect x="43" y="34" width="34" height="52" rx="8"/><rect x="82" y="34" width="34" height="52" rx="8"/></g><g fill="${dark}" font-family="system-ui,sans-serif" font-size="32" font-weight="900" text-anchor="middle"><text x="21" y="71">A</text><text x="60" y="71">B</text><text x="99" y="71">C</text></g>`;
+      case "oneVowel": return `<rect x="14" y="24" width="82" height="82" rx="18" fill="${ink}"/><text x="55" y="83" text-anchor="middle" fill="${dark}" font-family="system-ui,sans-serif" font-size="50" font-weight="900">A</text><circle cx="90" cy="28" r="20" fill="${yellow}"/><text x="90" y="39" text-anchor="middle" fill="#1d1929" font-family="system-ui,sans-serif" font-size="30" font-weight="900">1</text>`;
+      case "demand": return `<rect x="14" y="24" width="82" height="82" rx="18" fill="${green}"/><text x="55" y="83" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="50" font-weight="900">A</text><circle cx="90" cy="28" r="20" fill="#fff"/><path d="M80 28l7 7 13-14" fill="none" stroke="${green}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>`;
+      case "ban": return `<rect x="22" y="22" width="76" height="76" rx="16" fill="${ink}"/><text x="60" y="79" text-anchor="middle" fill="${dark}" font-family="system-ui,sans-serif" font-size="48" font-weight="900">A</text><circle cx="60" cy="60" r="48" fill="none" stroke="${red}" stroke-width="10"/><path d="M26 94 94 26" stroke="${red}" stroke-width="10" stroke-linecap="round"/>`;
+      case "chain": return `<g fill="none" stroke-width="13"><rect x="8" y="40" width="62" height="40" rx="20" stroke="${ink}"/><rect x="50" y="40" width="62" height="40" rx="20" stroke="${yellow}"/></g>`;
+      case "lock": return `<path d="M36 54V38c0-14 10-24 24-24s24 10 24 24v16" fill="none" stroke="${ink}" stroke-width="12"/><rect x="20" y="50" width="80" height="58" rx="14" fill="${ink}"/><rect x="44" y="64" width="32" height="30" rx="7" fill="${green}"/>`;
+      case "gem": return `<path d="M30 20h60l22 28-52 58L8 48z" fill="${ink}"/><path d="M8 48h104M44 20 34 48l26 58 26-58-10-28" fill="none" stroke="${dark}" stroke-width="5" stroke-linejoin="round"/><path d="M34 48 60 106 86 48z" fill="${yellow}" opacity=".85"/>`;
       case "grid": return `<g fill="${ink}"><rect x="14" y="14" width="40" height="40" rx="8"/><rect x="66" y="14" width="40" height="40" rx="8"/><rect x="14" y="66" width="40" height="40" rx="8"/><rect x="66" y="66" width="40" height="40" rx="8"/></g>`;
       case "tags": return `<path d="M13 27h57l36 33-36 33H13z" fill="${ink}"/><circle cx="31" cy="60" r="8" fill="${paper}"/><path d="M38 14h47l28 25-28 25" fill="none" stroke="${yellow}" stroke-width="10" stroke-linejoin="round"/>`;
       case "tag": return `<path d="M15 32h57l34 28-34 28H15z" fill="${ink}"/><circle cx="34" cy="60" r="8" fill="${yellow}"/>`;
@@ -4530,6 +4564,10 @@
         } else {
           button.innerHTML = powerSvg(id);
           button.title = `${scope}. Click for details`;
+          // A Word Chain guess with nothing to chain on is let off.
+          if (id === "wordChain" && (history || (index === asInteger(state?.guessesUsed, 0) && state?.status === "playing"))) {
+            button.dataset.umtPowerNote = "Let off for this guess: the word before has no consonant to start a word with, so any word goes.";
+          }
           button.setAttribute("aria-label", `${scope}. Open explanation.`);
         }
         // Quick Mode's countdown is a watch over the board's corner
@@ -4569,7 +4607,7 @@
     document.querySelectorAll(".umt-power-info-overlay").forEach((element) => element.remove());
   }
 
-  function openPowerInfo(id, scope) {
+  function openPowerInfo(id, scope, note) {
     closePowerInfo();
     const info = powerInfo(id);
     const overlay = document.createElement("div");
@@ -4581,6 +4619,7 @@
       <small>${escapeMarkup(scope || "Active power")}</small>
       <h2 id="umtPowerInfoTitle">${escapeMarkup(info.title)}</h2>
       <p>${escapeMarkup(info.description)}</p>
+      ${note ? `<p class="umt-power-info-note"><b>${escapeMarkup(note)}</b></p>` : ""}
     </section>`;
     document.body.appendChild(overlay);
     overlay.querySelector(".umt-power-info-close")?.focus();
@@ -4734,6 +4773,12 @@
     // Only real changes: this runs after every DOM change, and rewriting
     // the same values would wake every observer again.
     if (!row.classList.contains("umt-active-draft-row")) row.classList.add("umt-active-draft-row");
+    // Rows already guessed lose the mark (the board is updated in place,
+    // so it used to stay on every past row, and their tiles then blocked
+    // touch scrolling of the board).
+    rows.forEach((other) => {
+      if (other !== row && other.classList.contains("umt-active-draft-row")) other.classList.remove("umt-active-draft-row");
+    });
     Array.from(row.querySelectorAll(".cuddle-tile")).slice(0, 5).forEach((tile, index) => {
       if (tile.dataset.umtDraftSlot !== String(index)) tile.dataset.umtDraftSlot = String(index);
       if (tile.hasAttribute("data-draft-index")) {
@@ -4968,7 +5013,7 @@
       if (powerButton) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        openPowerInfo(powerButton.dataset.umtPowerInfo, powerButton.dataset.umtPowerScope);
+        openPowerInfo(powerButton.dataset.umtPowerInfo, powerButton.dataset.umtPowerScope, powerButton.dataset.umtPowerNote);
         return;
       }
       const target = event.target && event.target.closest ? event.target.closest("[data-shop-item-id], button") : null;

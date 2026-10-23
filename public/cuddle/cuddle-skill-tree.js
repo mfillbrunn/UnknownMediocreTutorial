@@ -197,6 +197,9 @@
         { id: "patternLens", icon: "🧩", title: "Pattern Lens", tier: "epic", type: "clues", maxLevel: 1, description: "From your 2nd guess, you see which spots are vowels and which are consonants.", level: g => v5Level(g, "umtPatternLens") },
         { id: "mistakeShield", icon: "🛡️", title: "Mistake Shield", tier: "rare", type: "safety", maxLevel: 1, description: "In bosses and strict stages: if your first guess is all grey, you get that guess back.", level: g => v5Level(g, "umtMistakeShield") },
         { id: "lastLight", icon: "🕯️", title: "Last Light", tier: "legendary", type: "clues", maxLevel: 1, description: "After your 2nd guess, the answer's last letter is filled in for you.", level: g => v5Level(g, "umtLastLight") },
+        { id: "autopilot", icon: "🤖", title: "Autopilot", tier: "legendary", type: "clues", maxLevel: 1,
+          description: "Every 2nd guess (the 2nd, 4th, 6th...) is played for you by the AI: the best word your cards can make right now, using everything the board and your hints show.",
+          level: g => powerLevel(g, "autopilot") },
         { id: "yellowHint", icon: "🟨", title: "Yellow Guesser Hint", tier: "epic", type: "clues", maxLevel: 2,
           levels: ["After your 1st guess, one letter of the answer turns yellow (it's in the word).", "Now it turns green instead: you see exactly where it goes."],
           level: g => v5Level(g, "umtYellowHint") + v5Level(g, "umtClearSight") }
@@ -264,7 +267,7 @@
           levels: ["1 idea card goes in your deck. Mulligan it away to see one letter of the answer.", "2 idea cards go in your deck.", "3 idea cards go in your deck."],
           level: g => powerLevel(g, "ideaTiles") },
         { id: "waveTiles", icon: "🌊", title: "Wave Cards", tier: "common", type: "letters", maxLevel: 3,
-          levels: ["1 wave card goes in your deck. When you draw it, all your consonants are swapped for new ones. Dead cards wash away too, and idea cards give their yellow hint.", "2 wave cards go in your deck.", "4 wave cards go in your deck."],
+          levels: ["1 wave card goes in your deck. When you draw it, all your consonants are swapped for new ones and you get a mulligan. Dead cards wash away too, and idea cards give their yellow hint.", "2 wave cards go in your deck.", "4 wave cards go in your deck."],
           level: g => powerLevel(g, "waveTiles") },
         { id: "fullCircle", icon: "♻️", title: "Full Circle", tier: "epic", type: "clues", maxLevel: 1,
           description: "Once a stage, when your deck runs out and starts over, a letter is placed in its spot.",
@@ -308,9 +311,12 @@
         { id: "questMastery", icon: "📜", title: "Quest Mastery", tier: "legendary", type: "quests", maxLevel: 1,
           description: "Every quest reward is one step bigger: 2 mulligans instead of 1, 3 vowels checked instead of 2, 3 letters ruled out instead of 2, and so on.",
           level: g => powerLevel(g, "questMastery") },
-        { id: "overtime", icon: "⏱️", title: "Overtime", tier: "legendary", type: "quests", maxLevel: 1,
-          description: "Each quest you finish gives you 1 more guess this stage: a boss fight is a guess longer, and on other stages the late-guess cost starts a guess later.",
+        { id: "overtime", icon: "⏱️", title: "Overtime", tier: "epic", type: "quests", maxLevel: 1,
+          description: "Adds Overtime to your quest rewards, always on offer: pick it for 1 more guess this stage (a boss fight is a guess longer; on other stages the late-guess cost starts a guess later).",
           level: g => powerLevel(g, "overtime") },
+        { id: "questClue", icon: "🔍", title: "Quest Clue", tier: "epic", type: "quests", maxLevel: 2,
+          levels: ["Adds Clue to your quest rewards, always on offer: pick it for a yellow hint (a letter in the answer).", "Clue gives a green hint instead: a letter in its exact spot."],
+          level: g => powerLevel(g, "questClue") },
         { id: "questChain", icon: "⛓️", title: "Quest Chain", tier: "legendary", type: "quests", maxLevel: 1,
           description: "Each quest you finish puts a new quest (a random one) on your next guess, if it doesn't already have one. Finish that one too and the chain goes on.",
           level: g => powerLevel(g, "questChain") },
@@ -391,7 +397,7 @@
   const SCHOOL_MEMBERS = {
     flint: ["storybookStart", "earlySolveBoost", "bigOpener", "momentum", "colourTrade", "boldOpener", "encore", "vowelBounty", "fastLane", "goldenOpener"],
     prism: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "yellowHint", "alphabet-compass",
-      "oracleTiles", "lastLight", "allThemesBoss", "revealGreen"],
+      "oracleTiles", "lastLight", "allThemesBoss", "revealGreen", "autopilot"],
     flora: ["luckyClover", "fishHook", "ideaTiles", "waveTiles", "fullCircle", "jokerCache", "jokerCacheLarge", "jokerTiles", "mulliganTiles",
       "treasureMap", "bonusSquares", "extraMulligans", "mulliganSize", "handSizeBoost", "doubleMulligans", "biggerMulligans"],
     parchment: ["greyscale", "strikeThrough", "cullOne", "cullRare", "consonantSweep", "freeVowelSweep",
@@ -399,7 +405,7 @@
     gold: ["pickpocket", "haggler", "wideChoice", "treasureHunter", "rainyDay", "doubleDown", "highRoller", "lastStand",
       "blackMarket", "treasureChest", "insertCoin", "goldenLedger"],
     brass: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment", "questCadence", "questPersistReward", "questDoublePick",
-      "questMastery", "overtime", "questChain", "questScout"],
+      "questMastery", "overtime", "questChain", "questScout", "questClue"],
     pearl: ["hardMode", "mulliganValueBoost", "monksVow", "leanBuild", "gracePeriod", "mistakeShield", "cleanSlate", "ascetic"]
   };
   const SCHOOL_OF = {};
@@ -448,6 +454,7 @@
     fishHook: ["Fish 1 discard a stage", "Fished letter tested", "Auto-hooks a right letter"],
     questCadence: ["Quests on 2, 3, 5", "Quests on 1, 2, 3, 5"],
     questScout: ["1 quest letter placed", "2 quest letters placed"],
+    questClue: ["Clue reward: yellow hint", "Clue reward: green hint"],
     insertCoin: ["Extra guess for $100", "Extra guess for $75"],
     goldenLedger: ["$1 counts as 0.5 points", "$1 counts as 1 point"],
     fastLane: ["Tricky guesses come 1 later", "Tricky guesses come 2 later", "Tricky guesses come 3 later"]

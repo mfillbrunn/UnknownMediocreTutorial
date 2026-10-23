@@ -984,43 +984,48 @@
     var held = heldPayout();
     if (held && Number.isFinite(Number(held.from))) visiblePoints = Math.max(0, Math.round(Number(held.from)));
     var pointsText = visiblePoints.toLocaleString();
-    root.querySelectorAll(".cuddle-header-score").forEach(function updateHeader(element) {
-      // The play screen's points carry the next boss's target beside them
-      // (cuddle-ui.js): only the number itself is rewritten.
-      var value = element.querySelector(".cuddle-header-points-value") || element;
-      if (value.textContent !== pointsText) value.textContent = pointsText;
-      if (element.getAttribute("aria-label") !== visiblePoints + " points") element.setAttribute("aria-label", visiblePoints + " points");
-    });
     // Like the points, the money waits for the cash-out: what the solve
     // paid shows there, then here.
     var money = Math.max(0, Math.round(held && Number.isFinite(Number(held.cashFrom)) ? Number(held.cashFrom) : Number(state.cuddleMoney || 0)));
     var moneyText = formatMoney(money);
-    // Golden Ledger: the points the money counts as, small beside it.
+    // Golden Ledger: the points the money counts as, small beside the
+    // points (not the money).
     var ledgerRate = 0;
     try { ledgerRate = Number(window.CuddleNewBadges && window.CuddleNewBadges.ledgerRate(game)) || 0; } catch (_error) { ledgerRate = 0; }
     var ledgerPoints = ledgerRate > 0 ? Math.floor(money * ledgerRate) : 0;
     var ledgerText = ledgerRate > 0 ? "(+" + ledgerPoints.toLocaleString() + ")" : "";
-    var moneyLabel = money + " money" + (ledgerRate > 0 ? ", counts as " + ledgerPoints + " points" : "");
-    root.querySelectorAll(".cuddle-header-money").forEach(function updateHeaderMoney(element) {
+    var pointsLabel = visiblePoints + " points" + (ledgerRate > 0 ? ", plus " + ledgerPoints + " from your money" : "");
+    root.querySelectorAll(".cuddle-header-score").forEach(function updateHeader(element) {
+      // The play screen's points carry the next boss's target beside them
+      // (cuddle-ui.js): only the number itself is rewritten.
+      var value = element.querySelector(".cuddle-header-points-value");
       var credit = element.querySelector(".umt-ledger-credit");
-      if (element.firstChild && element.firstChild.nodeType === 3 && element.childNodes.length === (credit ? 2 : 1)) {
-        if (element.firstChild.nodeValue !== moneyText) element.firstChild.nodeValue = moneyText;
-      } else {
-        element.textContent = moneyText;
+      if (!value && ledgerText) {
+        // A bare number: wrap it so the credit can sit beside it.
+        value = document.createElement("span");
+        value.className = "cuddle-header-points-value";
+        element.textContent = "";
+        element.appendChild(value);
         credit = null;
       }
+      value = value || element;
+      if (value.textContent !== pointsText) value.textContent = pointsText;
       if (ledgerText) {
         if (!credit) {
           credit = document.createElement("small");
           credit.className = "umt-ledger-credit";
-          credit.title = "Golden Ledger: your money counts as this many points toward a boss's target";
-          element.appendChild(credit);
+          credit.title = "Golden Ledger: your money adds this many points toward a boss's target";
+          value.insertAdjacentElement("afterend", credit);
         }
         if (credit.textContent !== ledgerText) credit.textContent = ledgerText;
       } else if (credit) {
         credit.remove();
       }
-      if (element.getAttribute("aria-label") !== moneyLabel) element.setAttribute("aria-label", moneyLabel);
+      if (element.getAttribute("aria-label") !== pointsLabel) element.setAttribute("aria-label", pointsLabel);
+    });
+    root.querySelectorAll(".cuddle-header-money").forEach(function updateHeaderMoney(element) {
+      if (element.textContent !== moneyText) element.textContent = moneyText;
+      if (element.getAttribute("aria-label") !== money + " money") element.setAttribute("aria-label", money + " money");
     });
     var stats = root.querySelector(".cuddle-round-intro-stats");
     if (stats) {
@@ -1330,7 +1335,7 @@
           .map(function normalize(line) {
             return { label: String(line && line.label || ""), amount: Math.round(asNumber(line && line.amount, 0)), money: Math.round(asNumber(line && line.money, 0)) };
           })
-          .filter(function keep(line) { return line.label && line.amount; })
+          .filter(function keep(line) { return line.label && (line.amount || line.money); })
       : [];
     var lines = solveLines.concat(stageLines);
     var listed = lines.reduce(function sum(total, line) { return total + line.amount; }, 0);
@@ -1344,7 +1349,7 @@
       + lines.map(function row(line) {
           return "<div class=\"umt-stage-bonus-line\"><span>" + escapeHtml(line.label) + "</span>"
             + (line.money ? "<em class=\"umt-stage-bonus-money\">+$" + line.money + "</em>" : "")
-            + "<strong>" + formatPointsDelta(line.amount) + "</strong></div>";
+            + (line.amount || !line.money ? "<strong>" + formatPointsDelta(line.amount) + "</strong>" : "") + "</div>";
         }).join("")
       + "</div>";
   }

@@ -201,8 +201,10 @@
 
   var NEW_POWERS = ["momentum", "bigOpener", "lastStand", "pickpocket", "gracePeriod", "boldOpener", "luckyClover", "ideaTiles", "waveTiles", "fullCircle", "leanBuild", "monksVow", "strikeThrough", "highRoller", "hardMode", "combine", "fishHook",
     // cuddle-new-badges.js
-    "cleanSlate", "ascetic", "questMastery", "overtime", "questChain", "questScout", "blackMarket", "treasureChest",
-    "insertCoin", "goldenLedger", "fastLane", "goldenOpener"];
+    "cleanSlate", "ascetic", "questMastery", "overtime", "questChain", "questScout", "questClue", "blackMarket", "treasureChest",
+    "insertCoin", "goldenLedger", "fastLane", "goldenOpener",
+    // cuddle-copilot.js
+    "autopilot"];
 
   function powerCard(id) {
     var registry = tree();
@@ -397,7 +399,10 @@
     var result = baseSubmitBold.apply(this, arguments);
     var state = this.state;
     if (result && result.ok !== false && state && before === 0
-        && playerRows(state.history).length === 1 && state.status === "playing"
+        && playerRows(state.history).length === 1 && !state.pendingRoundEnd
+        // Still playing -- or on a quest reward screen, when the first
+        // guess finished a quest (that used to skip the second free word).
+        && (state.status === "playing" || state.status === "questReward")
         && levelOf(this, "boldOpener") >= 2) {
       state.buffs = Object.assign({}, state.buffs || {}, { sillyWord: Math.max(1, num(state.buffs && state.buffs.sillyWord)) });
     }
@@ -432,7 +437,13 @@
     { id: "umtSpotlight", icon: "👁️", title: "Spotlight", description: "A yellow letter moves to its exact spot and turns green (or the next yellow you find does)." },
     { id: "umtPocketMoney", icon: "💰", title: "Pocket Money", description: "Get +$8 right now." },
     { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "Get +10 points right now." },
-    { id: "umtFishingLine", icon: "🪝", title: "Fishing Line", description: "Twice this stage, take a card back from your discard pile (tap the hook on your deck)." }
+    { id: "umtFishingLine", icon: "🪝", title: "Fishing Line", description: "Twice this stage, take a card back from your discard pile (tap the hook on your deck)." },
+    // Only with the badge that adds them (needs), and then always offered.
+    { id: "umtOvertime", icon: "⏱️", title: "Overtime", needs: "overtime", noDuel: true,
+      description: "One more guess this stage: a boss gives you one more try; elsewhere the late-guess cost starts a guess later." },
+    { id: "umtClue", icon: "🔍", title: "Clue", needs: "questClue",
+      description: "A yellow hint: a letter that's in the answer.",
+      descriptions: ["A yellow hint: a letter that's in the answer.", "A green hint: a letter in its exact spot."] }
   ];
 
   function uniqueSorted(list) {
@@ -572,6 +583,28 @@
       instantPoints(game, points);
       return "Quick Points: +" + points + " points.";
     },
+    // Overtime (badge): one more guess this stage (cuddle-new-badges.js).
+    umtOvertime: function overtime(game) {
+      var badges = window.CuddleNewBadges;
+      var extra = questBoost(game) ? 2 : 1;
+      for (var index = 0; index < extra; index += 1) {
+        if (badges && typeof badges.grantOvertime === "function") badges.grantOvertime(game);
+      }
+      return "Overtime: " + (extra > 1 ? extra + " more guesses" : "one more guess") + " this stage.";
+    },
+    // Clue (Quest Clue badge): a yellow hint, a green one at level 2.
+    umtClue: function clue(game) {
+      var debug = window.CuddleRebalanceV5 && window.CuddleRebalanceV5.debug;
+      var green = levelOf(game, "questClue") >= 2;
+      var count = questBoost(game) ? 2 : 1;
+      var given = 0;
+      for (var index = 0; index < count; index += 1) {
+        var grant = debug && (green ? debug.grantGreenHint : debug.grantYellowHint);
+        if (typeof grant === "function" && grant(game, "Clue")) given += 1;
+      }
+      if (!given) return "Clue: there's no " + (green ? "green" : "yellow") + " hint left to give.";
+      return "Clue: " + (given > 1 ? given + " " : "a ") + (green ? "green" : "yellow") + " hint" + (given > 1 ? "s" : "") + ".";
+    },
     // One Fish Hook catch for this stage (cuddle-fish-hook.js).
     umtFishingLine: function fishingLine(game) {
       var hook = window.CuddleFishHook;
@@ -584,6 +617,25 @@
       }
       return "Fishing Line: " + (questBoost(game) ? 3 : 2) + " catches. Tap the hook on your deck to take cards back from the discard pile.";
     }
+  };
+
+  // Overtime picked for a quest finished on the guess that ran out: the
+  // engine would drop the reward (the stage is over); here it buys the
+  // guess, and the stage goes on (cuddle-new-badges.js resolves it).
+  var baseChooseQuestReward = proto.chooseQuestReward;
+  proto.chooseQuestReward = function chooseQuestRewardWithOvertime(rewardId) {
+    var state = this.state;
+    var pending = state && state.pendingRoundEnd;
+    if (rewardId === "umtOvertime" && state && state.status === "questReward" && pending && pending.type === "outOfGuesses"
+        && (state.questRewardChoices || []).some(function offered(item) { return item && item.id === rewardId; })) {
+      state.lastMessage = QUEST_EFFECTS.umtOvertime(this);
+      state.questRewardChoices = [];
+      state.questRewardRefreshesLeft = 0;
+      this._resolvePendingRoundEnd();
+      save(this);
+      return { ok: true, message: state.lastMessage };
+    }
+    return baseChooseQuestReward.apply(this, arguments);
   };
 
   var baseReward = proto._applyRewardEffect;
@@ -610,24 +662,45 @@
     var previousChoices = book.rewardChoices;
     var previousGet = book.getReward;
     var extra = QUEST_REWARDS.map(function copy(item) { return Object.freeze(Object.assign({}, item)); });
+    function activeGame() {
+      var map = window.CuddleBranchMap;
+      return map && typeof map.getActiveGame === "function" ? map.getActiveGame() : null;
+    }
+    // A reward a badge adds: there only while the badge is held, worded
+    // for its level.
+    function present(item, game) {
+      var copy = Object.assign({}, item);
+      if (item.descriptions) copy.description = item.descriptions[Math.max(0, Math.min(item.descriptions.length, levelOf(game, item.needs)) - 1)];
+      delete copy.descriptions;
+      return copy;
+    }
+    function available(item, game) {
+      if (!item.needs) return true;
+      if (!game || levelOf(game, item.needs) <= 0) return false;
+      return !(item.noDuel && inDuel(game.state));
+    }
     function getReward(id) {
       var mine = extra.find(function match(item) { return item.id === id; });
-      return mine ? Object.assign({}, mine) : (typeof previousGet === "function" ? previousGet(id) : null);
+      return mine ? present(mine, activeGame()) : (typeof previousGet === "function" ? previousGet(id) : null);
     }
     // The existing draw picks from its own list (it knows when Category
     // Whisper is useless); the new rewards are shuffled in alongside.
     function rewardChoices(count, random) {
       var wanted = Math.max(0, Math.floor(num(count, 3)));
       var draw = typeof random === "function" ? random : Math.random;
+      var game = activeGame();
       var base = typeof previousChoices === "function" ? previousChoices(99, draw) : [];
-      var pool = base.concat(extra.map(function copy(item) { return Object.assign({}, item); }));
+      var pool = base.concat(extra.filter(function plain(item) { return !item.needs; }).map(function copy(item) { return Object.assign({}, item); }));
       for (var index = pool.length - 1; index > 0; index -= 1) {
         var swap = Math.floor(draw() * (index + 1));
         var held = pool[index];
         pool[index] = pool[swap];
         pool[swap] = held;
       }
-      return pool.slice(0, wanted);
+      // The rewards a badge adds are always among the choices.
+      var added = extra.filter(function owned(item) { return item.needs && available(item, game); })
+        .map(function copy(item) { return present(item, game); });
+      return added.concat(pool).slice(0, wanted);
     }
     window.CuddleQuestBook = Object.freeze(Object.assign({}, book, {
       REWARDS: Object.freeze((Array.isArray(book.REWARDS) ? book.REWARDS : []).concat(extra)),

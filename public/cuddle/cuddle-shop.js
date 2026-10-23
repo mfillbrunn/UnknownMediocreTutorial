@@ -1,6 +1,7 @@
 /* CUDDLE SHOP -- The Wandering Paw
  * Every shop stocks three shelves, all bought with money:
- *   For the road    2 one-time supplies for your next regular stage(s)
+ *   For the road    2 one-time supplies for your next non-boss stage(s);
+ *                   not in the final shop (only the final boss is left)
  *   For the boss    2 one-time supplies for the next boss
  *   Keeps forever   3 permanent upgrades for the rest of the run
  *   Trade           money for points on the spot, in every shop: +10
@@ -36,17 +37,17 @@
   // sits right before a boss, and boss help has its own shelf.
   const ROAD_ITEMS = Object.freeze([
     { id: "roadJoker", icon: "joker.svg", title: "Pocket Joker", cost: 16, stages: 1,
-      blurb: "Start your next stage with a Joker card in hand." },
+      blurb: "Start your next non-boss stage with a Joker card in hand." },
     { id: "roadAmber", icon: "reward-golden-compass.svg", title: "Amber Lens", cost: 12, stages: 1,
-      blurb: "Your next stage opens with one letter of the answer revealed (not where it goes)." },
+      blurb: "Your next non-boss stage opens with one letter of the answer revealed (not where it goes)." },
     { id: "roadLanterns", icon: "hint.svg", title: "Twin Lanterns", cost: 24, stages: 2,
-      blurb: "Your next two stages each open with one exact letter already in place." },
+      blurb: "Your next two non-boss stages each open with one exact letter already in place." },
     { id: "roadMulligans", icon: "mulligan.svg", title: "Spare Mulligans", cost: 14, stages: 2,
-      blurb: "+1 mulligan in each of your next two stages." },
+      blurb: "+1 mulligan in each of your next two non-boss stages." },
     { id: "roadTrove", icon: "reward-coins.svg", title: "Treasure Trove", cost: 15, stages: 2,
-      blurb: "Two extra special squares on the board in each of your next two stages." },
+      blurb: "Two extra special squares on the board in each of your next two non-boss stages." },
     { id: "roadWhisper", icon: "theme.svg", title: "Theme Whisper", cost: 10, stages: 2,
-      blurb: "Your next two stages each reveal one theme of the answer." }
+      blurb: "Your next two non-boss stages each reveal one theme of the answer." }
   ]);
 
   // Boss supplies ride on the Cuddle Coach boss kit (cuddle-coach-
@@ -230,7 +231,7 @@
 
   const SHELVES = Object.freeze([
     { id: "road", items: ROAD_ITEMS, count: 2, kind: "wordle", title: "For the road",
-      note: "One-time supplies for your next regular stages" },
+      note: "One-time supplies for your next non-boss stages (not the boss)" },
     { id: "boss", items: BOSS_ITEMS, count: 2, kind: "boss", title: "For the boss",
       note: "One-time supplies, spent when the next boss begins" },
     // Stocked from the whole reward pool, not a fixed list (keepStock).
@@ -260,7 +261,7 @@
   // The last shop, before the final boss: permanent upgrades are cheaper
   // (little run is left to use them), and the one-time supplies cost more
   // (the boss is all that's left to spend them on).
-  const FINAL_SHOP_PRICE = Object.freeze({ keep: 0.75, road: 1.5, boss: 1.5 });
+  const FINAL_SHOP_PRICE = Object.freeze({ keep: 0.75, boss: 1.5 });
 
   function isFinalShop(game) {
     const done = Array.isArray(game.state.bossGatesDone) ? game.state.bossGatesDone : [];
@@ -528,6 +529,8 @@
         });
         return;
       }
+      // The final shop has no road left after it: only the final boss.
+      if (shelf.id === "road" && isFinalShop(this)) return;
       (stock[shelf.id] || []).forEach(id => {
         const item = ALL_ITEMS.get(id);
         if (!item) return;
@@ -622,6 +625,7 @@
     if (!item || !shelf || !(stock[shelf.id] || []).includes(id)) return { ok: false, error: "That isn't on the shelves here." };
     const bought = boughtHere(this);
     if (bought.includes(id)) return { ok: false, error: `${item.title} is sold out here.` };
+    if (shelf.id === "road" && isFinalShop(this)) return { ok: false, error: "Only the final boss is left: there are no more non-boss stages." };
     if (shelf.id === "keep" && isMaxed(this, item)) return { ok: false, error: `${item.title} is already maxed.` };
     const cost = priceOf(this, shelf.id, item.cost);
     if (money(this) < cost) return { ok: false, error: `You need $${cost} for ${item.title}.` };

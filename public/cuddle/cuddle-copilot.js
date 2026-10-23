@@ -11,6 +11,11 @@
  * the co-pilot is thinking, and about a second later its word goes in.
  * Its rows wear a small robot badge. Loaded after every other layer so its
  * submit and canSubmit wrappers are the outermost ones.
+ *
+ * Autopilot (a legendary badge) does the same on every stage, but the AI
+ * plays from your hand: the best word your cards can make right now, read
+ * from the rows you can see and what your hints say. If no word fits, or
+ * the stage's rules turn it down, that guess is yours after all.
  */
 (function () {
   "use strict";
@@ -46,19 +51,41 @@
     return ids.indexOf(ID) !== -1;
   }
 
+  // Autopilot: held, and a stage where the next guess is an ordinary one.
+  var BADGE = "autopilot";
+  function autopilotLevel(game) {
+    var tree = window.CuddleSkillTree;
+    var node = tree && tree.findNode(BADGE);
+    try { return node ? Number(tree.level(game, node)) || 0 : 0; } catch (_error) { return 0; }
+  }
+  function autopilotStage(game) {
+    var state = game && game.state;
+    if (!state || inDuel(state) || state.status !== "playing" || state.umtCoinOffer) return false;
+    if (copilotStage(game) || autopilotLevel(game) <= 0) return false;
+    // A Trial's pick is the player's own.
+    if (typeof game.presetPick === "function" && game.presetPick()) return false;
+    return true;
+  }
+  function turnKey(state) {
+    return [state.runId || "", state.round || 0, state.secret || "", (state.history || []).length].join(":");
+  }
+
   // The AI's turn: the next guess is an even one (2nd, 4th, 6th...).
   function aiTurn(game) {
-    if (!copilotStage(game)) return false;
+    var copilot = copilotStage(game);
+    if (!copilot && !autopilotStage(game)) return false;
     var state = game.state;
     if (state.pendingRoundEnd) return false;
     var made = Array.isArray(state.history) ? state.history.length : 0;
-    return made % 2 === 1;
+    if (made % 2 !== 1) return false;
+    // A turn Autopilot couldn't play goes back to the player.
+    return copilot || state.umtAutopilotSkip !== turnKey(state);
   }
 
   // While it's the AI's turn, the player's own submit waits.
   var baseSubmit = proto.submitDraft;
   proto.submitDraft = function submitDraftWithCopilot() {
-    if (!this._copilotWord && aiTurn(this)) {
+    if (!this._copilotWord && !this._autopilotPlaying && aiTurn(this)) {
       return { ok: false, error: "Co-pilot's turn: the AI makes this guess." };
     }
     return baseSubmit.apply(this, arguments);
@@ -80,6 +107,7 @@
   // quests and the solve all work as usual.
   proto.copilotGuess = function copilotGuess() {
     if (!aiTurn(this)) return { ok: false, error: "It isn't the co-pilot's turn." };
+    if (!copilotStage(this)) return autopilotGuess(this);
     var stages = window.CuddleExpandedStages;
     var state = this.state;
     if (!stages || typeof stages.aiWord !== "function") return { ok: false, error: "The co-pilot isn't available." };
@@ -115,6 +143,101 @@
     try { this.save(); } catch (_error) { /* next save */ }
     return result;
   };
+
+  // Autopilot's guess, built from the hand's own cards and submitted like
+  // the player's would be (so the stage's rules still apply).
+  function handCards(game) {
+    return (game.state.hand || []).filter(function letter(card) {
+      return card && /^[A-Z]$/.test(String(card.glyph || ""));
+    });
+  }
+  function infinite(game, card) {
+    return typeof game.isInfiniteCard === "function" && game.isInfiniteCard(card);
+  }
+  function canBuildWith(game) {
+    var unlimited = {};
+    var counts = {};
+    handCards(game).forEach(function add(card) {
+      if (infinite(game, card)) unlimited[card.glyph] = true;
+      else counts[card.glyph] = (counts[card.glyph] || 0) + 1;
+    });
+    return function canBuild(word) {
+      var need = {};
+      for (var i = 0; i < word.length; i += 1) {
+        var letter = word[i];
+        if (unlimited[letter]) continue;
+        need[letter] = (need[letter] || 0) + 1;
+        if (need[letter] > (counts[letter] || 0)) return false;
+      }
+      return true;
+    };
+  }
+  // What the hints already say about the answer.
+  function fitsHints(state) {
+    var absent = (state.knownAbsent || []).concat(state.removedLetters || []);
+    var present = state.knownPresent || [];
+    var placed = state.revealedPositions || [];
+    return function fits(word) {
+      for (var i = 0; i < absent.length; i += 1) if (word.indexOf(absent[i]) !== -1) return false;
+      for (var j = 0; j < present.length; j += 1) if (word.indexOf(present[j]) === -1) return false;
+      for (var k = 0; k < 5; k += 1) if (placed[k] && word[k] !== placed[k]) return false;
+      return true;
+    };
+  }
+  // Only rows whose every tile shows its real colour: the AI knows what
+  // you know, nothing a masked or false tile hides.
+  function visibleRows(state) {
+    return (state.history || []).filter(function plain(entry) {
+      var shown = entry && (Array.isArray(entry.shownFeedback) ? entry.shownFeedback : entry.feedback);
+      return Array.isArray(shown) && shown.length === 5 && !(entry.maskedIndices || []).length
+        && shown.every(function real(value) { return value === "green" || value === "yellow" || value === "grey"; });
+    }).map(function row(entry) { return { word: entry.word, feedback: entry.shownFeedback || entry.feedback }; });
+  }
+  function skipTurn(game, why) {
+    game.state.umtAutopilotSkip = turnKey(game.state);
+    game.state.lastMessage = "Autopilot: " + why + " This guess is yours.";
+    try { game.save(); } catch (_error) { /* next save */ }
+    return { ok: false, error: game.state.lastMessage };
+  }
+  function autopilotGuess(game) {
+    var stages = window.CuddleExpandedStages;
+    var state = game.state;
+    if (!stages || typeof stages.aiHandWord !== "function") return skipTurn(game, "the AI isn't available.");
+    var word = "";
+    try {
+      word = String(stages.aiHandWord(game, visibleRows(state), canBuildWith(game), fitsHints(state)) || "").toUpperCase();
+    } catch (error) {
+      console.warn("Cuddle autopilot: no word.", error);
+    }
+    if (!/^[A-Z]{5}$/.test(word)) return skipTurn(game, "no word fits your cards.");
+    var used = {};
+    var ids = [];
+    word.split("").forEach(function take(letter) {
+      var card = handCards(game).find(function match(item) {
+        return item.glyph === letter && (infinite(game, item) || !used[item.id]);
+      });
+      if (card) { used[card.id] = true; ids.push(card.id); }
+    });
+    if (ids.length !== 5) return skipTurn(game, "no word fits your cards.");
+    var savedDraft = Array.isArray(state.draft) ? state.draft.slice() : [];
+    var before = state.history.length;
+    state.draft = ids;
+    game._autopilotPlaying = true;
+    var result;
+    try {
+      result = game.submitDraft();
+    } finally {
+      game._autopilotPlaying = false;
+    }
+    if (!result || result.ok === false) {
+      state.draft = savedDraft;
+      return skipTurn(game, "its word " + word + " isn't allowed here.");
+    }
+    var entry = state.history[before];
+    if (entry) entry.umtCopilot = true;
+    try { game.save(); } catch (_error) { /* next save */ }
+    return result;
+  }
 
   // -- the AI's turn on screen -------------------------------------------------
   var thinking = null;
@@ -197,5 +320,5 @@
   }
   attach();
 
-  window.CuddleCopilot = Object.freeze({ isStage: copilotStage, aiTurn: aiTurn });
+  window.CuddleCopilot = Object.freeze({ isStage: copilotStage, aiTurn: aiTurn, autopilot: autopilotStage });
 }());

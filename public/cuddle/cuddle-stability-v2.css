@@ -210,7 +210,7 @@
 
 /* Positional drag feedback. */
 #cuddleRoot .cuddle-card[data-card-glyph],
-#cuddleRoot .cuddle-tile[data-drag-index] {
+#cuddleRoot .cuddle-tile[data-drag-index]:not(:empty) {
   touch-action: none;
 }
 .drag-letter-ghost,

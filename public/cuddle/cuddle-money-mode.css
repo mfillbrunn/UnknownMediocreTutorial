@@ -59,14 +59,22 @@
   white-space: nowrap;
 }
 
-/* Golden Ledger's points for the money, small inside the money pill. */
-#cuddleScreen .cuddle-header-money .umt-ledger-credit {
-  margin-left: 0.3em;
-  color: var(--cuddle-text, #f7f4ff);
-  font-size: 0.85em;
-  font-weight: 800;
+/* Golden Ledger's points from the money, small under the points number
+   (the header line has no width to spare). */
+#cuddleScreen .cuddle-header-score:has(.umt-ledger-credit) {
+  position: relative;
+}
+#cuddleScreen .cuddle-header-score .umt-ledger-credit {
+  position: absolute;
+  left: 10px;
+  top: calc(100% - 1px);
+  color: var(--cuddle-money-gold-bright);
+  font-size: 0.62rem;
+  font-weight: 850;
   letter-spacing: 0.02em;
-  opacity: 0.85;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 #cuddleScreen .cuddle-row-score {
