@@ -1,7 +1,8 @@
 /* Cuddle: how a Trial and a Word Duel work.
  *
- * The first time a player reaches a Trial's or a Duel's start screen, a
- * sheet walks through it step by step, with pictures from the game
+ * The first time a player reaches a Duel's start screen, or a Trial's of
+ * a kind they haven't met (Preset, Open, Pair), a sheet walks through it
+ * step by step, with pictures from the game
  * (help/trial-*.webp, help/duel-*.webp). It looks like the badge help
  * (cuddle-badge-help.css). After that, a "How it works" button on the
  * same start screen opens it again.
@@ -14,17 +15,44 @@
   var STORE = "umt-cuddle-stop-tutorials-v1";
 
   var GUIDES = {
-    trial: {
-      title: "Trial",
-      kicker: "How a Trial works",
+    // One guide per kind of Trial, each shown the first time that kind
+    // comes up.
+    "trial-blind": {
+      title: "Preset Trial",
+      kicker: "How a Preset Trial works",
       color: "#e6c27a",
       steps: [
-        ["Choose how hard", "A Trial asks you to find the answer among a short list of words. Harder means more words to choose from, and a bigger prize.", "trial-levels"],
-        ["Guess as usual", "Play your guesses like any Wordle. Every colour you see rules words out. In a Preset Trial the list stays hidden until your last guess.", "trial-board"],
-        ["Pick the answer", "On the last guess you don't type: the answer is one of the listed words. Check each one against your colours, tap × to cross out a word that can't be it, then pick. A wrong pick ends the run.", "trial-pick"],
+        ["Choose how hard", "The answer is one of a short list of words. Harder means more words to choose from, and a bigger prize.", "trial-levels"],
+        ["Three guesses, as usual", "Play three guesses like any Wordle. Every colour you see rules words out. The list stays hidden until your last guess.", "trial-board"],
+        ["Pick the answer", "On guess 4 you don't type: the answer is one of the listed words. Check each one against your colours, tap × to cross out a word that can't be it, then pick. Hide list shows your guesses again. A wrong pick ends the run.", "trial-pick"],
         ["Pass, and take a Rare badge", "A right pick pays the Trial's points and money, and you choose one of three Rare badges.", "trial-reward"]
       ],
-      note: "Other Trials: an Open Trial shows its list from the start, and you can pick early. A Pair Trial has no typing: each guess is one of two words you tap. The sooner you pass, the more it pays."
+      note: "There are three kinds of Trial: Preset (the list comes at the end), Open (the list is there from the start) and Pair (no typing). Each explains itself the first time you meet it."
+    },
+    "trial-open": {
+      title: "Open Trial",
+      kicker: "How an Open Trial works",
+      color: "#e6c27a",
+      steps: [
+        ["Choose how hard", "The answer is one of the listed words. Harder means more words on the list, and a bigger prize.", "trial-open-levels"],
+        ["The list is there from the start", "The words sit above the board the whole time. Guess as usual and check each word against the colours you see.", "trial-open-list"],
+        ["Pick on guess 3, or sooner", "After two guesses, guess 3 is the pick. Sure already? Tap Answer now to lock in early (Keep guessing backs out). Tap × to cross out words that can't be it. A wrong pick ends the run.", "trial-open-early"],
+        ["Pass, and take a Rare badge", "A right pick pays the Trial's points and money, and you choose one of three Rare badges.", "trial-reward"]
+      ],
+      note: "Use your guesses to split the list: a word that tests letters several listed words share tells you the most."
+    },
+    "trial-pairs": {
+      title: "Pair Trial",
+      kicker: "How a Pair Trial works",
+      color: "#e6c27a",
+      steps: [
+        ["Choose how hard", "The answer is one of the listed words, shown from the start. Harder means more words on the list, and a bigger prize.", "trial-pair-levels"],
+        ["No typing: tap one of two words", "Each guess, you're offered two words: tap one to play it. If it's the answer, you pass straight away.", "trial-pair-choose"],
+        ["Read the board", "The word you played shows its colours like any guess. Use them to rule words off the list.", "trial-pair-board"],
+        ["Pick now, or see two more", "After each guess: pick the answer from the list, or show two more words to play. The sooner you pass, the more it pays; by guess 5 you must pick. A wrong pick ends the run.", "trial-pair-next"],
+        ["Pass, and take a Rare badge", "A right pick pays its share of the Trial's points and money, and you choose one of three Rare badges.", "trial-reward"]
+      ],
+      note: "Each pick button says what passing pays right now, so you can weigh picking early against learning more."
     },
     duel: {
       title: "Word Duel",
@@ -47,7 +75,11 @@
   }
 
   function seen() {
-    try { return JSON.parse(localStorage.getItem(STORE) || "{}") || {}; } catch (_error) { return {}; }
+    var all;
+    try { all = JSON.parse(localStorage.getItem(STORE) || "{}") || {}; } catch (_error) { all = {}; }
+    // The single Trial guide of before was the Preset Trial's.
+    if (all.trial) all["trial-blind"] = true;
+    return all;
   }
   function markSeen(kind) {
     var all = seen();
@@ -103,21 +135,41 @@
     return true;
   }
 
+  // Which kind of Trial the run is standing on: "blind" (Preset),
+  // "open" or "pairs" (cuddle-curses.js).
+  function trialKind() {
+    try {
+      var game = window.CuddleBranchMap && window.CuddleBranchMap.getActiveGame();
+      var map = game && game.state && game.state.branchMap;
+      var position = map && map.position;
+      var row = position && map.rows ? map.rows[Number(position.row)] : null;
+      var node = row && row.nodes ? row.nodes[Number(position.col)] : null;
+      var kind = node && node.trialKind;
+      return kind === "open" || kind === "pairs" ? kind : "blind";
+    } catch (_error) {
+      return "blind";
+    }
+  }
+
   // The start screens: a Trial's difficulty choice, a Duel's rival choice.
   var SCREENS = [
-    { kind: "trial", marker: "[data-umt-trial-level]" },
-    { kind: "duel", marker: "[data-cuddle-campaign-action='expanded-duel-start']" }
+    { kind: function () { return "trial-" + trialKind(); }, marker: "[data-umt-trial-level]" },
+    { kind: function () { return "duel"; }, marker: "[data-cuddle-campaign-action='expanded-duel-start']" }
   ];
 
   function decorate() {
     SCREENS.forEach(function (screen) {
       var marker = document.querySelector("#cuddleScreen " + screen.marker);
       if (!marker) return;
+      var kind = screen.kind();
       var panel = marker.closest(".umt-stop-panel") || marker.parentElement;
-      if (panel && !panel.querySelector(":scope > .umt-stop-how")) {
-        panel.insertAdjacentHTML("beforeend", "<button type=\"button\" class=\"umt-stop-how\" data-umt-keep data-umt-stop-tut=\"" + screen.kind + "\">How it works</button>");
+      var how = panel && panel.querySelector(":scope > .umt-stop-how");
+      if (panel && !how) {
+        panel.insertAdjacentHTML("beforeend", "<button type=\"button\" class=\"umt-stop-how\" data-umt-keep data-umt-stop-tut=\"" + kind + "\">How it works</button>");
+      } else if (how && how.getAttribute("data-umt-stop-tut") !== kind) {
+        how.setAttribute("data-umt-stop-tut", kind);
       }
-      if (!seen()[screen.kind] && !document.querySelector(".umt-stop-tut-layer")) open(screen.kind);
+      if (!seen()[kind] && !document.querySelector(".umt-stop-tut-layer")) open(kind);
     });
   }
 

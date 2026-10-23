@@ -1,0 +1,128 @@
+/* The road from one world to the next (cuddle-world-travel.js). */
+.umt-world-travel {
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  overflow: hidden;
+  background: #0b0912;
+  color: #f4f1ff;
+  cursor: pointer;
+  animation: umt-wt-in 400ms ease-out both, umt-wt-out 500ms ease-in 4700ms both;
+}
+.umt-wt-strip {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  width: 200%;
+  animation: umt-wt-slide 3200ms cubic-bezier(.55, .05, .35, 1) 900ms both;
+}
+.umt-wt-scene {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  flex: 0 0 50%;
+  width: 50%;
+  height: 100%;
+}
+/* The world's light in its sky: a sun, a moon, a glow. */
+.umt-wt-scene::before {
+  content: "";
+  position: absolute;
+  left: 58%;
+  top: 30%;
+  width: 34vmin;
+  height: 34vmin;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--wt-glow) 0 22%, transparent 70%);
+  opacity: 0.35;
+}
+/* The landscape band: as wide as the screen, at most 60% of its height. */
+.umt-wt-scene svg {
+  display: block;
+  width: 100%;
+  height: min(60vw, 60vh);
+}
+/* The traveller hops along the road while the land slides by. */
+.umt-wt-traveller {
+  position: absolute;
+  left: 50%;
+  /* On the road: 26/240 of the landscape band up from the bottom. */
+  bottom: calc(min(60vw, 60vh) * 0.108 - 12px);
+  width: 34px;
+  height: 34px;
+  margin-left: -17px;
+  animation: umt-wt-walk 3200ms linear 900ms both;
+}
+.umt-wt-traveller span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50% 50% 46% 46%;
+  background: radial-gradient(circle at 35% 35%, #ffffff, #ffd7e8 60%, #f29bc4);
+  box-shadow: 0 0 18px var(--wt-to, #ffffff);
+  animation: umt-wt-hop 400ms ease-in-out 900ms 8 both;
+}
+.umt-wt-text {
+  position: absolute;
+  inset: 12% 16px auto;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+}
+.umt-wt-text p {
+  grid-area: 1 / 1;
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+.umt-wt-text span {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.umt-wt-text b {
+  font-size: clamp(1.6rem, 7vw, 2.4rem);
+  font-weight: 900;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+.umt-wt-text i {
+  font-size: 0.95rem;
+  font-style: normal;
+  opacity: 0.85;
+}
+.umt-wt-from b { color: var(--wt-from); }
+.umt-wt-to b { color: var(--wt-to); }
+.umt-wt-from { animation: umt-wt-fade-out 600ms ease-in 1400ms both; }
+.umt-wt-to { animation: umt-wt-fade-in 700ms ease-out 3300ms both; }
+.umt-wt-skip {
+  position: absolute;
+  left: 50%;
+  /* Above the landscape, clear of the road. */
+  bottom: calc(min(60vw, 60vh) + 10px);
+  transform: translateX(-50%);
+  border: 0;
+  background: none;
+  color: rgba(244, 241, 255, 0.6);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+@keyframes umt-wt-in { from { opacity: 0; } }
+@keyframes umt-wt-out { to { opacity: 0; } }
+@keyframes umt-wt-slide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes umt-wt-walk { 0% { transform: translateX(-30vw); } 50% { transform: translateX(0); } 100% { transform: translateX(10vw); } }
+@keyframes umt-wt-hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+@keyframes umt-wt-fade-in { from { opacity: 0; transform: translateY(10px); } }
+@keyframes umt-wt-fade-out { to { opacity: 0; transform: translateY(-10px); } }
+
+/* Reduced motion: the new world, still, with its name. */
+.umt-world-travel.is-still,
+.umt-world-travel.is-still * { animation: none !important; }
+.umt-world-travel.is-still .umt-wt-strip { transform: translateX(-50%); }
+.umt-world-travel.is-still .umt-wt-from { opacity: 0; }

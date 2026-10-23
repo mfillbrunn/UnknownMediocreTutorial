@@ -4677,6 +4677,12 @@
         const shown = Array.isArray(entry.shownFeedback)
           ? entry.shownFeedback
           : (Array.isArray(entry.feedback) ? entry.feedback : []);
+        // A grey copy says nothing when another copy of the letter in the
+        // same row is hidden or lying: DRAMA with its first A held back and
+        // the second grey can still have an A (the grey only rules out a
+        // second one). Greens and yellows still count.
+        const rowHidden = word.split("").some((letter, index) => letter === glyph
+          && (liedAt(entry, index) || shown[index] === "unknown" || shown[index] == null));
         word.split("").forEach((letter, index) => {
           if (letter !== glyph) return;
           if (liedAt(entry, index)) {
@@ -4689,6 +4695,7 @@
             return;
           }
           if (!["green", "yellow", "grey", "blue"].includes(result)) return;
+          if (result === "grey" && rowHidden) return;
           reliableSeen = true;
           if (result === "green") {
             positive = true;
