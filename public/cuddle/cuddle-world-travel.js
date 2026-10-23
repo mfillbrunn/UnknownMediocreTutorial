@@ -180,6 +180,10 @@
   window.CuddleWorldTravel = Object.freeze({
     pending: pending,
     play: play,
+    // A world's landscape (sky and scenery), for other scenes to reuse
+    // (cuddle-end-parade.js).
+    scene: scene,
+    worldAt: worldAt,
     active: function () { return Boolean(document.querySelector(".umt-world-travel")); }
   });
 }());
