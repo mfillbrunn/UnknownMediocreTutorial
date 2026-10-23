@@ -2062,11 +2062,11 @@
     const word = previous ? String(previous.word || "").toUpperCase() : "";
     if (word.length !== 5) return null;
     // Y counts as a vowel here: so many words end in Y, and so few start
-    // with it, that chaining on it stranded the hand.
-    const consonant = word.split("").reverse().find((letter) => !"AEIOUY".includes(letter));
-    // Hardly any word starts with J, Q, V, X or Z: after one of those, the
-    // chain is let off for that guess.
-    return consonant && !"JQVXZ".includes(consonant) ? consonant : null;
+    // with it, that chaining on it stranded the hand. Hardly any word
+    // starts with J, Q, V, X or Z either, so the chain skips back past
+    // those to the consonant before (KMSVY chains on S). Only a word with
+    // no other consonant lets the chain off for that guess.
+    return word.split("").reverse().find((letter) => !"AEIOUY".includes(letter) && !"JQVXZ".includes(letter)) || null;
   }
 
   // What Locked In holds you to: the greens and yellows the board showed
@@ -4564,6 +4564,10 @@
         } else {
           button.innerHTML = powerSvg(id);
           button.title = `${scope}. Click for details`;
+          // A Word Chain guess with nothing to chain on is let off.
+          if (id === "wordChain" && (history || (index === asInteger(state?.guessesUsed, 0) && state?.status === "playing"))) {
+            button.dataset.umtPowerNote = "Let off for this guess: the word before has no consonant to start a word with, so any word goes.";
+          }
           button.setAttribute("aria-label", `${scope}. Open explanation.`);
         }
         // Quick Mode's countdown is a watch over the board's corner
@@ -4603,7 +4607,7 @@
     document.querySelectorAll(".umt-power-info-overlay").forEach((element) => element.remove());
   }
 
-  function openPowerInfo(id, scope) {
+  function openPowerInfo(id, scope, note) {
     closePowerInfo();
     const info = powerInfo(id);
     const overlay = document.createElement("div");
@@ -4615,6 +4619,7 @@
       <small>${escapeMarkup(scope || "Active power")}</small>
       <h2 id="umtPowerInfoTitle">${escapeMarkup(info.title)}</h2>
       <p>${escapeMarkup(info.description)}</p>
+      ${note ? `<p class="umt-power-info-note"><b>${escapeMarkup(note)}</b></p>` : ""}
     </section>`;
     document.body.appendChild(overlay);
     overlay.querySelector(".umt-power-info-close")?.focus();
@@ -5008,7 +5013,7 @@
       if (powerButton) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        openPowerInfo(powerButton.dataset.umtPowerInfo, powerButton.dataset.umtPowerScope);
+        openPowerInfo(powerButton.dataset.umtPowerInfo, powerButton.dataset.umtPowerScope, powerButton.dataset.umtPowerNote);
         return;
       }
       const target = event.target && event.target.closest ? event.target.closest("[data-shop-item-id], button") : null;
