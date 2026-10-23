@@ -52,6 +52,12 @@
     return out;
   }
 
+  // A walker: its figure, two feet stepping in turn, and dust behind.
+  function walker(kind, figure) {
+    return '<span class="umt-parade-walker is-' + kind + '"><span class="umt-parade-body">' + figure + "</span>"
+      + '<i class="umt-parade-foot is-back"></i><i class="umt-parade-foot is-front"></i>'
+      + '<i class="umt-parade-dust"></i></span>';
+  }
   function role(id) {
     return '<svg viewBox="0 0 120 120" aria-hidden="true"><use href="#' + id + '"></use></svg>';
   }
@@ -61,9 +67,9 @@
       + landscapes(game)
       + '<div class="umt-parade-tiles">' + tiles() + "</div>"
       + '<div class="umt-parade-walkers">'
-      + '<span class="umt-parade-walker is-setter">' + role("icon-role-secretkeeper") + "</span>"
-      + '<span class="umt-parade-walker is-cuddle"><img src="cuddle/icons/cuddle-logo.svg" alt="" draggable="false"></span>'
-      + '<span class="umt-parade-walker is-guesser">' + role("icon-role-guesser") + "</span>"
+      + walker("setter", role("icon-role-secretkeeper"))
+      + walker("cuddle", '<img src="cuddle/icons/cuddle-logo.svg" alt="" draggable="false">')
+      + walker("guesser", role("icon-role-guesser"))
       + "</div></div>";
   }
 

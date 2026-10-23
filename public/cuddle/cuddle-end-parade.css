@@ -10,17 +10,26 @@
   pointer-events: none;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
-/* The worlds roll by, right to left, and the loop joins up on the first. */
+/* The worlds roll by, right to left. Each world overlaps the one before
+   by a third and fades in over it, so one land melts into the next; the
+   strip ends on the first world again, so the loop joins up. */
+.umt-parade { container-type: inline-size; }
 .umt-parade-strip {
+  --overlap: 0.34;
   position: absolute;
   inset: 0;
   display: flex;
-  width: calc(var(--parade-count) * 100%);
+  width: max-content;
   animation: umt-parade-roll calc((var(--parade-count) - 1) * 12s) linear infinite;
 }
 .umt-parade-strip .umt-wt-scene {
-  flex: 0 0 calc(100% / var(--parade-count));
-  width: calc(100% / var(--parade-count));
+  flex: 0 0 100cqw;
+  width: 100cqw;
+}
+.umt-parade-strip .umt-wt-scene + .umt-wt-scene {
+  margin-left: calc(-100cqw * var(--overlap));
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 calc(100% * var(--overlap)));
+  mask-image: linear-gradient(90deg, transparent 0, #000 calc(100% * var(--overlap)));
 }
 .umt-parade-strip .umt-wt-scene svg { height: var(--parade-land); }
 .umt-parade-strip .umt-wt-scene::before { top: 6%; width: 70px; height: 70px; }
@@ -43,41 +52,99 @@
 .umt-parade-tile.is-green { background: var(--tile-green, #3aa76d); }
 .umt-parade-tile.is-yellow { background: var(--tile-yellow, #d6a925); }
 .umt-parade-tile.is-grey { background: #5b5870; }
-/* The three friends walk the road while the land rolls past. */
+/* The three friends walk right along the road while the land rolls
+   past: each leans into the walk, bobs with every step, and its feet
+   take turns, kicking up a little dust behind. */
 .umt-parade-walkers {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--parade-land) * 0.108 - 4px);
+  bottom: calc(var(--parade-land) * 0.108 - 2px);
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: 10px;
   transform: translateX(-50%);
 }
 .umt-parade-walker {
+  position: relative;
   display: block;
   width: 40px;
-  height: 40px;
-  animation: umt-parade-hop 900ms ease-in-out infinite;
+  height: 46px;
 }
-.umt-parade-walker svg,
-.umt-parade-walker img { display: block; width: 100%; height: 100%; }
-.umt-parade-walker.is-cuddle {
-  width: 50px;
-  height: 50px;
-  animation: umt-parade-float 2.4s ease-in-out infinite;
+.umt-parade-walker.is-cuddle { width: 50px; height: 56px; --feet: #7ee2a6; }
+.umt-parade-body {
+  position: absolute;
+  inset: 0 0 6px;
+  transform-origin: 50% 100%;
+  animation: umt-parade-step 520ms ease-in-out infinite;
 }
-.umt-parade-walker.is-setter { color: #c79bff; animation-delay: -300ms; }
-.umt-parade-walker.is-guesser { color: #7cc8ff; animation-delay: -600ms; }
+.umt-parade-body svg,
+.umt-parade-body img { display: block; width: 100%; height: 100%; }
+.umt-parade-foot {
+  position: absolute;
+  bottom: 0;
+  width: 11px;
+  height: 6px;
+  border-radius: 6px 6px 3px 3px;
+  /* Light, in each walker's own colour, so they show on a dark road. */
+  background: var(--feet, #f4f1ff);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.25);
+  animation: umt-parade-foot 520ms ease-in-out infinite;
+}
+.umt-parade-foot.is-back { left: 30%; animation-delay: -260ms; }
+.umt-parade-foot.is-front { left: 52%; }
+.umt-parade-dust {
+  position: absolute;
+  left: 4px;
+  bottom: 1px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  animation: umt-parade-dust 520ms ease-out infinite;
+}
+.umt-parade-walker.is-setter { color: #c79bff; --feet: #c79bff; }
+.umt-parade-walker.is-setter .umt-parade-body,
+.umt-parade-walker.is-setter .umt-parade-foot,
+.umt-parade-walker.is-setter .umt-parade-dust { animation-delay: -170ms; }
+.umt-parade-walker.is-setter .umt-parade-foot.is-back { animation-delay: -430ms; }
+.umt-parade-walker.is-guesser { color: #7cc8ff; --feet: #7cc8ff; }
+.umt-parade-walker.is-guesser .umt-parade-body,
+.umt-parade-walker.is-guesser .umt-parade-foot,
+.umt-parade-walker.is-guesser .umt-parade-dust { animation-delay: -340ms; }
+.umt-parade-walker.is-guesser .umt-parade-foot.is-back { animation-delay: -80ms; }
+/* The cuddle creature floats a little higher, with a softer step. */
+.umt-parade-walker.is-cuddle .umt-parade-body { animation-name: umt-parade-step-float; animation-duration: 1040ms; }
 
+/* To the last world (the first again): each step is one world less the
+   overlap. */
 @keyframes umt-parade-roll {
-  to { transform: translateX(calc(-100% * (var(--parade-count) - 1) / var(--parade-count))); }
+  to { transform: translateX(calc(-100cqw * (1 - var(--overlap)) * (var(--parade-count) - 1))); }
 }
 @keyframes umt-parade-drift {
   from { transform: translateX(0) rotate(0deg); }
   to { transform: translateX(-560px) rotate(-25deg); }
 }
-@keyframes umt-parade-hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
-@keyframes umt-parade-float { 0%, 100% { transform: translateY(-4px) rotate(-4deg); } 50% { transform: translateY(-16px) rotate(4deg); } }
+/* Leaning right (into the walk), up on each step. */
+@keyframes umt-parade-step {
+  0%, 100% { transform: translateY(0) rotate(7deg); }
+  50% { transform: translateY(-6px) rotate(10deg); }
+}
+@keyframes umt-parade-step-float {
+  0%, 100% { transform: translateY(-6px) rotate(6deg); }
+  50% { transform: translateY(-14px) rotate(11deg); }
+}
+/* A foot swings forward (right) off the ground, then plants and drifts
+   back as the body moves on. */
+@keyframes umt-parade-foot {
+  0% { transform: translateX(-5px) translateY(0); }
+  25% { transform: translateX(0) translateY(-4px); }
+  50% { transform: translateX(5px) translateY(0); }
+  100% { transform: translateX(-5px) translateY(0); }
+}
+@keyframes umt-parade-dust {
+  0% { transform: translate(0, 0) scale(0.4); opacity: 0.6; }
+  100% { transform: translate(-14px, -6px) scale(1.3); opacity: 0; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .umt-parade *, .umt-parade-strip { animation: none !important; }
