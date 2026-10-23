@@ -399,7 +399,10 @@
     var result = baseSubmitBold.apply(this, arguments);
     var state = this.state;
     if (result && result.ok !== false && state && before === 0
-        && playerRows(state.history).length === 1 && state.status === "playing"
+        && playerRows(state.history).length === 1 && !state.pendingRoundEnd
+        // Still playing -- or on a quest reward screen, when the first
+        // guess finished a quest (that used to skip the second free word).
+        && (state.status === "playing" || state.status === "questReward")
         && levelOf(this, "boldOpener") >= 2) {
       state.buffs = Object.assign({}, state.buffs || {}, { sillyWord: Math.max(1, num(state.buffs && state.buffs.sillyWord)) });
     }
