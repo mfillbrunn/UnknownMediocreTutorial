@@ -110,7 +110,9 @@
 
 /* Pointer Events drag-and-drop, modeled on the multiplayer draft-row interaction. */
 .cuddle-card[data-card-glyph],
-.umt-active-draft-row .cuddle-tile {
+/* Only a tile holding a letter can be dragged; empty slots and past rows
+   keep touch scrolling of the board. */
+.umt-active-draft-row .cuddle-tile:not(:empty) {
   touch-action: none;
 }
 

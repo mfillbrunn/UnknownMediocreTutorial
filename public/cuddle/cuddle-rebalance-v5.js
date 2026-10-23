@@ -4751,6 +4751,12 @@
     // Only real changes: this runs after every DOM change, and rewriting
     // the same values would wake every observer again.
     if (!row.classList.contains("umt-active-draft-row")) row.classList.add("umt-active-draft-row");
+    // Rows already guessed lose the mark (the board is updated in place,
+    // so it used to stay on every past row, and their tiles then blocked
+    // touch scrolling of the board).
+    rows.forEach((other) => {
+      if (other !== row && other.classList.contains("umt-active-draft-row")) other.classList.remove("umt-active-draft-row");
+    });
     Array.from(row.querySelectorAll(".cuddle-tile")).slice(0, 5).forEach((tile, index) => {
       if (tile.dataset.umtDraftSlot !== String(index)) tile.dataset.umtDraftSlot = String(index);
       if (tile.hasAttribute("data-draft-index")) {

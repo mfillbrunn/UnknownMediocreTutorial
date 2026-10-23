@@ -727,8 +727,10 @@
    specific board tile (data-drag-index, set in cuddle-ui.js's renderBoard)
    places the letter there instead of wherever the word currently ends. */
 #cuddleScreen .cuddle-tile[data-drag-index] {
-  touch-action: none;
   transition: outline-color 0.12s ease, background 0.12s ease;
+}
+#cuddleScreen .cuddle-tile[data-drag-index]:not(:empty) {
+  touch-action: none;
 }
 
 #cuddleScreen .cuddle-tile[data-drag-index].drag-hover {
