@@ -10,9 +10,10 @@
  *   Quest Mastery (legendary) every quest reward is one step bigger (2
  *                            mulligans instead of 1, 3 vowels checked
  *                            instead of 2, ...).
- *   Overtime (legendary)     each quest finished gives 1 more guess this
- *                            stage: a boss fight runs a guess longer; on
- *                            other stages the late-guess cost starts later.
+ *   Overtime (epic)          adds the Overtime quest reward, always on
+ *                            offer: 1 more guess this stage (a boss fight
+ *                            runs a guess longer; on other stages the
+ *                            late-guess cost starts later).
  *   Quest Chain (legendary)  each quest finished puts a random quest on
  *                            the next guess (if it has none), so quests
  *                            can chain on.
@@ -352,21 +353,17 @@
     return record && record.key === stageKey(state) ? num(record.extra) : 0;
   }
 
-  // Counts the latest guess's finished quest, once. A boss fight's guess
-  // cap grows with it; elsewhere _solveGuessThreshold reads the count.
-  function countOvertime(game) {
-    var state = game.state;
-    if (!has(game, "overtime")) return false;
-    var history = Array.isArray(state.history) ? state.history : [];
-    var entry = history[history.length - 1];
-    if (!entry || !entry.questComplete || entry.umtOvertime) return false;
-    entry.umtOvertime = true;
+  // The Overtime quest reward (the badge adds it to the quest rewards, see
+  // cuddle-powers.js): one more guess this stage. A boss fight's guess cap
+  // grows with it; elsewhere _solveGuessThreshold reads the count.
+  function grantOvertime(game) {
+    var state = game && game.state;
+    if (!state || inDuel(state)) return false;
     var key = stageKey(state);
     var record = state.umtOvertime && state.umtOvertime.key === key ? state.umtOvertime : { key: key, extra: 0 };
     record.extra = num(record.extra) + 1;
     state.umtOvertime = record;
     if (isBoss(game)) state.maxGuesses = Math.max(1, num(state.maxGuesses) || 6) + 1;
-    note(game, "Overtime: +1 guess this stage.");
     return true;
   }
 
@@ -445,9 +442,9 @@
     var pending = state && state.pendingRoundEnd;
     if (!pending || inDuel(state)) return baseResolve.apply(this, arguments);
 
-    // A quest finished on the guess that ran out: Overtime's extra guess
-    // comes first, and may mean the stage isn't over after all.
-    if (pending.type === "outOfGuesses" && countOvertime(this)) {
+    // Overtime picked as the reward for a quest finished on the guess that
+    // ran out: the stage isn't over after all.
+    if (pending.type === "outOfGuesses" && overtimeBonus(this) > 0) {
       var limit = typeof this._hardGuessLimit === "function" ? this._hardGuessLimit() : Infinity;
       if (num(state.guessesUsed) < limit) {
         state.pendingRoundEnd = null;
@@ -679,7 +676,6 @@
     try {
       var entry = history[history.length - 1];
       var solved = Boolean(entry && state.secret && entry.word === state.secret);
-      if (!inDuel(state)) countOvertime(this);
       if (!solved) bookQuestChain(this);
       if (!solved && history.length <= (levelOf(this, "goldenOpener") >= 2 ? 3 : 2) && state.status === "playing" && has(this, "goldenOpener")) {
         var placed = goldenOpener(this, entry);
@@ -973,6 +969,7 @@
     asceticMultiplier: asceticMultiplier,
     ASCETIC_TIERS: ASCETIC_TIERS,
     overtimeBonus: overtimeBonus,
+    grantOvertime: grantOvertime,
     ledgerCredit: ledgerCredit,
     ledgerRate: ledgerRate,
     MASTERED_TEXT: MASTERED_TEXT

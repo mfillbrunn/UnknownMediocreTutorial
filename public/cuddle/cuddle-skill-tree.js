@@ -308,9 +308,12 @@
         { id: "questMastery", icon: "📜", title: "Quest Mastery", tier: "legendary", type: "quests", maxLevel: 1,
           description: "Every quest reward is one step bigger: 2 mulligans instead of 1, 3 vowels checked instead of 2, 3 letters ruled out instead of 2, and so on.",
           level: g => powerLevel(g, "questMastery") },
-        { id: "overtime", icon: "⏱️", title: "Overtime", tier: "legendary", type: "quests", maxLevel: 1,
-          description: "Each quest you finish gives you 1 more guess this stage: a boss fight is a guess longer, and on other stages the late-guess cost starts a guess later.",
+        { id: "overtime", icon: "⏱️", title: "Overtime", tier: "epic", type: "quests", maxLevel: 1,
+          description: "Adds Overtime to your quest rewards, always on offer: pick it for 1 more guess this stage (a boss fight is a guess longer; on other stages the late-guess cost starts a guess later).",
           level: g => powerLevel(g, "overtime") },
+        { id: "questClue", icon: "🔍", title: "Quest Clue", tier: "epic", type: "quests", maxLevel: 2,
+          levels: ["Adds Clue to your quest rewards, always on offer: pick it for a yellow hint (a letter in the answer).", "Clue gives a green hint instead: a letter in its exact spot."],
+          level: g => powerLevel(g, "questClue") },
         { id: "questChain", icon: "⛓️", title: "Quest Chain", tier: "legendary", type: "quests", maxLevel: 1,
           description: "Each quest you finish puts a new quest (a random one) on your next guess, if it doesn't already have one. Finish that one too and the chain goes on.",
           level: g => powerLevel(g, "questChain") },
@@ -399,7 +402,7 @@
     gold: ["pickpocket", "haggler", "wideChoice", "treasureHunter", "rainyDay", "doubleDown", "highRoller", "lastStand",
       "blackMarket", "treasureChest", "insertCoin", "goldenLedger"],
     brass: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment", "questCadence", "questPersistReward", "questDoublePick",
-      "questMastery", "overtime", "questChain", "questScout"],
+      "questMastery", "overtime", "questChain", "questScout", "questClue"],
     pearl: ["hardMode", "mulliganValueBoost", "monksVow", "leanBuild", "gracePeriod", "mistakeShield", "cleanSlate", "ascetic"]
   };
   const SCHOOL_OF = {};
@@ -448,6 +451,7 @@
     fishHook: ["Fish 1 discard a stage", "Fished letter tested", "Auto-hooks a right letter"],
     questCadence: ["Quests on 2, 3, 5", "Quests on 1, 2, 3, 5"],
     questScout: ["1 quest letter placed", "2 quest letters placed"],
+    questClue: ["Clue reward: yellow hint", "Clue reward: green hint"],
     insertCoin: ["Extra guess for $100", "Extra guess for $75"],
     goldenLedger: ["$1 counts as 0.5 points", "$1 counts as 1 point"],
     fastLane: ["Tricky guesses come 1 later", "Tricky guesses come 2 later", "Tricky guesses come 3 later"]

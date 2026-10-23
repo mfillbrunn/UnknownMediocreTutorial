@@ -156,7 +156,8 @@
     cleanSlate: "Skips level up a badge",
     ascetic: "x1.6 with ≤5 non-Restraint badges, x1.3 with ≤10",
     questMastery: "Quest rewards one step bigger",
-    overtime: "+1 guess per quest",
+    overtime: "Overtime quest reward",
+    questClue: "Clue quest reward",
     questChain: "Quests chain on",
     blackMarket: "$50 for a random badge",
     treasureChest: "A free Large Pack",
@@ -653,6 +654,10 @@
       document.querySelectorAll("#cuddleRoot .cuddle-v3-toast.is-synergy").forEach((el) => el.remove());
     }
 
+    // The badge was just seen on the card that was picked (or the pack,
+    // or the event), so it isn't revealed again -- only a combo the pick
+    // completed is news worth opening the badges for.
+    if (!newComboIds.size) return;
     // Let the pick's own screen change settle first (a pick usually moves
     // the run straight on to the map).
     clearTimeout(watch.pending);

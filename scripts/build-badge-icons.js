@@ -240,6 +240,10 @@ const GLYPHS = {
   "surprise-assignment": () => scroll(48, 48, text(48, 49, "!", 28, acc())),
   questMastery: () => trophyRibbon(48, 44),
   overtime: () => clock(44, 50, 20) + plusBadge(68, 28, 11),
+  // A quest scroll with a hint tile on it.
+  questClue: () => rect(20, 22, 44, 52, 8, W) + line("M30 36h24M30 46h16", ink(), 4) + tile(48, 46, 30, "?", acc()),
+  // A hint: a lit letter tile with a sparkle.
+  umtClue: () => tile(22, 28, 44, "A", acc()) + star(68, 28, 12, W),
   questChain: () => chain(52, 50),
   questScout: () => `<g transform="rotate(-25 48 48)">${rect(18, 40, 48, 16, 6, acc())}${rect(62, 37, 14, 22, 4, W)}</g>` + line("M40 62l-8 14M48 62l8 14", ink(), 4),
   questDoublePick: () => check(18, 44, 30, acc(), 8) + check(46, 44, 30, ink(), 8),
@@ -273,10 +277,10 @@ const GLYPHS = {
 // Which palette each symbol takes.
 const TYPES = {
   letters: ["extraMulligans", "mulliganSize", "cullOne", "cullTwo", "handSizeBoost", "jokerCache", "jokerCacheLarge", "coachMeterThreshold", "coachMeterReward", "waveTiles", "combine", "fishHook", "cleanSlate", "cullRare", "doubleMulligans", "biggerMulligans", "stealthGuess", "extraLetters", "jokerToken", "umtFishingLine"],
-  clues: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "lastLight", "yellowHint", "alphabet-compass", "consonantSweep", "coachPossibleAnswers", "boldOpener", "ideaTiles", "fullCircle", "goldenOpener", "freeVowelSweep", "revealGreen", "allThemesBoss", "revealCategory", "umtRuleOut", "umtVowelCheck", "umtSpotlight", "sillyWord"],
+  clues: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "lastLight", "yellowHint", "alphabet-compass", "consonantSweep", "coachPossibleAnswers", "boldOpener", "ideaTiles", "fullCircle", "goldenOpener", "freeVowelSweep", "revealGreen", "allThemesBoss", "revealCategory", "umtRuleOut", "umtVowelCheck", "umtSpotlight", "sillyWord", "umtClue"],
   points: ["storybookStart", "mulliganValueBoost", "earlySolveBoost", "colourTrade", "greyscale", "encore", "vowelBounty", "doubleDown", "momentum", "bigOpener", "lastStand", "leanBuild", "strikeThrough", "highRoller", "hardMode", "luckyClover", "ascetic", "umtQuickPoints"],
   money: ["wideChoice", "rewardEcho", "rainyDay", "haggler", "treasureHunter", "pickpocket", "monksVow", "blackMarket", "treasureChest", "insertCoin", "goldenLedger", "umtPocketMoney"],
-  quests: ["questRefreshes", "questPoints", "questReroll", "surprise-assignment", "questMastery", "overtime", "questChain", "questScout", "questDoublePick", "questCadence", "questPersistReward"],
+  quests: ["questRefreshes", "questPoints", "questReroll", "surprise-assignment", "questMastery", "overtime", "questChain", "questScout", "questClue", "questDoublePick", "questCadence", "questPersistReward"],
   tiles: ["bonusSquares", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"],
   safety: ["mistakeShield", "gracePeriod", "fastLane", "secondCup"]
 };
