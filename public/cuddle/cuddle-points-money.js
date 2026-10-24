@@ -235,7 +235,10 @@
     var points = 0;
     var notes = [];
     // Squares school (cuddle-schools.js): rank I pays a yellow like a
-    // green; rank II lets a yellow or green set off the squares beside it.
+    // green; rank II lets a yellow or green beside a square set it off too.
+    // Being set off from beside is just that -- it pays what a yellow on
+    // the square would, never more. (Devil squares go off on their own
+    // tile's grey only, below.)
     var schools = window.CuddleSchools;
     var even = schools && typeof schools.perk === "function" && schools.perk(game, "squaresEven") > 0;
     var spread = schools && typeof schools.perk === "function" && schools.perk(game, "squaresSpread") > 0;
@@ -244,8 +247,7 @@
       if (own === "green" || own === "yellow") return own;
       if (!spread) return null;
       var sides = [feedback[col - 1], feedback[col + 1]];
-      if (sides.indexOf("green") !== -1) return "green";
-      return sides.indexOf("yellow") !== -1 ? "yellow" : null;
+      return sides.indexOf("green") !== -1 || sides.indexOf("yellow") !== -1 ? "yellow" : null;
     };
     tiles.forEach(function pay(tile) {
       if (!tile || tile.paid || Number(tile.row) !== row) return;

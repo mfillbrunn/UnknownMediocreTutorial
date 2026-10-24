@@ -23,8 +23,9 @@
  *                    draw turns angel; tap an angel and it flies to heaven
  *                    for +10 points, and a new card is drawn
  *   Squares      I   a yellow on a square pays like a green
- *                II  a yellow or green also sets off the squares beside it
- *                    (cuddle-points-money.js)
+ *                II  a square is also set off by a yellow or green beside
+ *                    it, paying as a yellow on it would (not devil
+ *                    squares; cuddle-points-money.js)
  *                III 2 devil squares every stage: a letter not in the
  *                    answer on one tests every consonant left in the hand
  *                    (those not in it are thrown out)
