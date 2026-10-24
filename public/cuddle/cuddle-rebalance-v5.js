@@ -3229,6 +3229,9 @@
   // in the clue strip (cuddle-clues.js).
   function applyConsonantSweep(game) {
     const level = upgradeLevel(game, IDS.consonantSweep);
+    // Only with the badge (level 0 used to sweep one letter a guess for
+    // everyone).
+    if (level <= 0) return;
     // Two letters a guess; level 2: three.
     for (let index = 0; index < Math.min(3, level + 1); index += 1) sweepOneConsonant(game);
   }
