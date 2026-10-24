@@ -390,7 +390,7 @@
     prism: { label: "Hints", color: "#58a8ff", blurb: "Learn about the answer before you guess it.",
       ranks: [4, 9, 15], perks: ["One tile of your first guess shows an arrow (earlier or later in the alphabet)", "After your 2nd guess, 1 letter turns yellow", "Once per stage, drag a consonant to the Test pad to learn if it's in the answer"] },
     flora: { label: "Cards", color: "#46cf86", blurb: "Special cards in your hand and deck (lucky, idea, wave, Joker), special squares on the board, and mulligans.",
-      ranks: [4, 9, 15], perks: ["+1 lucky card every stage", "+1 idea card and +1 mulligan every stage", "Your first mulligan each stage is free, and each stage starts with a Joker card"] },
+      ranks: [4, 9, 15], perks: ["+1 lucky card every stage", "+1 idea card and +1 mulligan every stage", "+2 angel cards every stage, and every dead card turns angel: drawn, it flies off for +10 points and you draw another"] },
     parchment: { label: "Elimination", color: "#c9ae84", blurb: "Rule letters out and cull them.",
       ranks: [4, 9, 15], perks: ["Each grey tile gives +1 point", "Each stage starts with 1 consonant crossed out", "After each guess, crossed-out consonants in your hand are swapped for new cards"] },
     gold: { label: "Money", color: "#f5cf3a", blurb: "Earn, save and gamble money.",

@@ -19,7 +19,9 @@
  *                    above the hand (or tap the pad, then the card)
  *   Cards        I   +1 lucky card every stage
  *                II  +1 idea card and +1 mulligan every stage
- *                III first mulligan each stage is free; a Joker card at start
+ *                III +2 angel cards every stage, and every dead card is an
+ *                    angel: drawn, it flies off for +10 points and the
+ *                    draw goes on
  *   Elimination  I   each grey tile +1 point
  *                II  each stage starts with a consonant crossed out
  *                III crossed-out consonants in hand are swapped after a guess
@@ -100,6 +102,9 @@
     switch (name) {
       case "luckyTiles": return rankOf(game, "flora") >= 1 ? 1 : 0;
       case "ideaTiles": return rankOf(game, "flora") >= 2 ? 1 : 0;
+      // Cards III: 2 angel cards a stage, and dead cards come as angels
+      // (cuddle-burdens.js).
+      case "angelCards": return rankOf(game, "flora") >= 3 ? 2 : 0;
       case "shopDiscount": return rankOf(game, "gold") >= 2 ? GOLD_DISCOUNT : 0;
       default: return 0;
     }
@@ -373,7 +378,6 @@
         // Hints I is an arrow on the first guess (cuddle-compass.js).
         if (num(now.parchment) >= 2) ruleOut(this, false, "Elimination rank");
         if (num(now.flora) >= 2) addMulligans(this, 1);
-        if (num(now.flora) >= 3) giveJoker(this);
         // What a fast solve last stage earned (Speed II and III).
         var speed = mine.speedNext;
         mine.speedNext = null;
@@ -527,7 +531,6 @@
   keepEpicOnTop();
 
   // Restraint II: a stage where a mulligan was used doesn't pay its bonus.
-  // Cards III: the first mulligan each stage gives its mulligan back.
   wrap("mulligan", function build(original) {
     return function mulliganWithSchools() {
       var result = original.apply(this, arguments);
@@ -535,11 +538,6 @@
       if (!result || !result.ok || !state) return result;
       var mine = record(state);
       var key = stageKey(state);
-      if (rankOf(this, "flora") >= 3 && mine.freeMulligan !== key) {
-        mine.freeMulligan = key;
-        state.mulligansLeft = Math.max(0, num(state.mulligansLeft)) + 1;
-        note(this, "Cards rank: that mulligan was free.");
-      }
       mine.mulliganed = key;
       keepEpicOnTop();
       save(this);

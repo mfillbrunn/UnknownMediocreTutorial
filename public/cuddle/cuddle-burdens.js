@@ -64,6 +64,10 @@
   var IDEA_GLYPH = "◇";
   var WAVE_GLYPH = "≈";
   var JOKER_TILE_GLYPH = "◆";
+  // An angel card: a dead card redeemed (Cards rank III, cuddle-schools.js).
+  // Drawn, it flies off for ANGEL_POINTS and the draw goes on.
+  var ANGEL_GLYPH = "✧";
+  var ANGEL_POINTS = 10;
   // Doubled from the less useful half of the alphabet: a second S or T
   // would be a gift.
   var WEAK = ["J", "Q", "X", "Z", "V", "K", "W", "F", "B", "P", "G", "Y", "H", "M"];
@@ -163,9 +167,13 @@
     return Boolean(card && (card.jokerTile || card.glyph === JOKER_TILE_GLYPH));
   }
 
+  function isAngelCard(card) {
+    return Boolean(card && (card.angel || card.glyph === ANGEL_GLYPH));
+  }
+
   // Tiles with no letter. None of them can go in a word.
   function isBlankCard(card) {
-    return isDeadCard(card) || isLuckyCard(card) || isIdeaCard(card) || isWaveCard(card) || isJokerTile(card);
+    return isDeadCard(card) || isLuckyCard(card) || isIdeaCard(card) || isWaveCard(card) || isJokerTile(card) || isAngelCard(card);
   }
 
   function isDeadCard(card) {
@@ -332,8 +340,11 @@
     // A Duel deals the same power cards (lucky, idea and wave cards); its
     // Jokers are handed out up front instead (cuddle-expanded-stages.js).
     var duel = inDuel(game.state);
+    // Cards rank III: 2 more, and every dead card is dealt as an angel.
+    var angels = schoolPerk(game, "angelCards");
     return {
-      dead: dead,
+      dead: angels ? 0 : dead,
+      angels: angels ? dead + angels : 0,
       doubles: doubles,
       lucky: luckyCount(game),
       // Idea cards stay 1/2/3: four yellow hints a stage was too easy.
@@ -348,7 +359,7 @@
     var result = basePrepare.apply(this, arguments);
     try {
       var extras = extrasFor(this);
-      if (!extras.dead && !extras.doubles.length && !extras.lucky && !extras.idea && !extras.wave && !extras.jokers) return result;
+      if (!extras.dead && !extras.angels && !extras.doubles.length && !extras.lucky && !extras.idea && !extras.wave && !extras.jokers) return result;
       var state = this.state;
       var game = this;
       var deckGlyphs = new Set(this._baseDeckGlyphs());
@@ -356,6 +367,9 @@
       var finite = state.hand.filter(function drop(card) { return !game.isInfiniteCard(card); }).concat(state.deck);
       for (var i = 0; i < extras.dead; i += 1) {
         finite.push({ id: this._nextId("dead"), glyph: DEAD_GLYPH, source: "deck", dead: true });
+      }
+      for (var a = 0; a < extras.angels; a += 1) {
+        finite.push({ id: this._nextId("angel"), glyph: ANGEL_GLYPH, source: "deck", angel: true });
       }
       for (var j = 0; j < extras.lucky; j += 1) {
         finite.push({ id: this._nextId("lucky"), glyph: LUCKY_GLYPH, source: "deck", lucky: true });
@@ -386,6 +400,12 @@
       }
       // A Joker card dealt straight into the opening hand is a Joker now.
       state.hand.filter(isJokerTile).forEach(function open(card) { cashJokerTile(game, card, true); });
+      // Angels dealt into it fly off, and the hand draws on to fill.
+      var opening = state.hand.filter(isAngelCard);
+      if (opening.length) {
+        opening.forEach(function fly(card) { cashAngel(game, card); });
+        this.drawToHandLimit();
+      }
     } catch (error) {
       console.warn("Cuddle burdens: dealing failed.", error);
     }
@@ -471,6 +491,21 @@
     if (!quiet) drawNote(game, "Joker card: +1 Joker.");
   }
 
+  // Drawing an angel card: it flies off ("to heaven") for its points.
+  function cashAngel(game, card) {
+    removeFromHand(game.state, card);
+    var rebalance = window.CuddleRebalanceV5;
+    var paid = rebalance && typeof rebalance.addStageBonus === "function"
+      ? Number(rebalance.addStageBonus(game, ANGEL_POINTS, "umtAngelCards", "Angel cards")) || 0
+      : 0;
+    if (!paid) {
+      game.state.score = (Number(game.state.score) || 0) + ANGEL_POINTS;
+      game.state.roundScore = (Number(game.state.roundScore) || 0) + ANGEL_POINTS;
+    }
+    game.__umtAngels = (game.__umtAngels || 0) + 1;
+    drawNote(game, "Angel card: +" + ANGEL_POINTS + " points.");
+  }
+
   // Draws stop on power cards: a Joker card turns into a Joker, a wave is
   // queued (it fires once the draw that found it is finished), and the
   // draw goes on so the hand still fills.
@@ -496,6 +531,10 @@
       if (!card) return card;
       if (isJokerTile(card)) {
         cashJokerTile(this, card, false);
+        continue;
+      }
+      if (isAngelCard(card)) {
+        cashAngel(this, card);
         continue;
       }
       if (isWaveCard(card)) {
@@ -1165,6 +1204,7 @@
     SWAMP_DEAD: SWAMP_DEAD,
     HARD_BOSS: HARD_BOSS,
     isDeadCard: isDeadCard,
+    isAngelCard: isAngelCard,
     isDeadGlyph: isDeadGlyph,
     skullSvg: skullSvg,
     cloverSvg: cloverSvg,
