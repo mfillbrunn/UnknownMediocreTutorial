@@ -159,6 +159,7 @@
     questMastery: "Quest rewards one step bigger",
     overtime: "One More Guess quest reward",
     questClue: "Clue quest reward",
+    jokerLens: "Joker shows its letter",
     questChain: "Quests chain on",
     blackMarket: "$50 for a random badge",
     treasureChest: "A free Large Pack",

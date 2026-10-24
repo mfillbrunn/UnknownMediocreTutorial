@@ -174,6 +174,7 @@ const GLYPHS = {
   cullOne: () => scissors(48, 46),
   cullTwo: () => scissors(40, 44) + tile(56, 54, 22, "Q"),
   handSizeBoost: () => card(18, 30, 24, 36, W, -14) + card(36, 26, 24, 36, acc()) + card(54, 30, 24, 36, W, 14) + line("M20 22h56", ink(), 4) + path_("M24 17l-6 5l6 5M72 17l6 5l-6 5", "none"),
+  jokerLens: () => card(16, 22, 34, 48, W) + star(33, 46, 10) + tile(46, 38, 30, "R", acc()),
   jokerCache: () => card(30, 20, 36, 52, W) + star(48, 46, 13),
   jokerCacheLarge: () => card(22, 24, 34, 48, W, -12) + card(40, 20, 34, 48, W, 8) + star(57, 44, 12),
   coachMeterThreshold: () => heart(48, 44, 22, W) + path_("M30 56a20 20 0 0 1 36 0", "none", acc(), 6) + line("M48 56l8 -10"),
@@ -278,7 +279,7 @@ const GLYPHS = {
 
 // Which palette each symbol takes.
 const TYPES = {
-  letters: ["extraMulligans", "mulliganSize", "cullOne", "cullTwo", "handSizeBoost", "jokerCache", "jokerCacheLarge", "coachMeterThreshold", "coachMeterReward", "waveTiles", "combine", "fishHook", "cleanSlate", "cullRare", "doubleMulligans", "biggerMulligans", "stealthGuess", "extraLetters", "jokerToken", "umtFishingLine"],
+  letters: ["extraMulligans", "mulliganSize", "cullOne", "cullTwo", "handSizeBoost", "jokerCache", "jokerCacheLarge", "jokerLens", "coachMeterThreshold", "coachMeterReward", "waveTiles", "combine", "fishHook", "cleanSlate", "cullRare", "doubleMulligans", "biggerMulligans", "stealthGuess", "extraLetters", "jokerToken", "umtFishingLine"],
   clues: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "lastLight", "yellowHint", "alphabet-compass", "consonantSweep", "coachPossibleAnswers", "boldOpener", "ideaTiles", "fullCircle", "goldenOpener", "freeVowelSweep", "revealGreen", "allThemesBoss", "revealCategory", "umtRuleOut", "umtVowelCheck", "umtSpotlight", "sillyWord", "umtClue", "autopilot"],
   points: ["storybookStart", "mulliganValueBoost", "earlySolveBoost", "colourTrade", "greyscale", "encore", "vowelBounty", "doubleDown", "momentum", "bigOpener", "lastStand", "leanBuild", "strikeThrough", "highRoller", "hardMode", "luckyClover", "ascetic", "umtQuickPoints"],
   money: ["wideChoice", "rewardEcho", "rainyDay", "haggler", "treasureHunter", "pickpocket", "monksVow", "blackMarket", "treasureChest", "insertCoin", "goldenLedger", "umtPocketMoney"],

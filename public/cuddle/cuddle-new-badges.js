@@ -875,6 +875,42 @@
       + "</div></section>";
   }
 
+  // Joker Lens level 2: while a finished word with a Joker could be more
+  // than one real word, the Joker moves on to the next letter that works
+  // every so often (cuddle-engine.js cycleJoker); submitting plays the
+  // one showing. Only the letter on the tile changes, not the whole board.
+  var JOKER_CYCLE_MS = 1800;
+  var jokerTimer = null;
+  function jokerCycling(game) {
+    var state = game && game.state;
+    if (!state || state.status !== "playing" || levelOf(game, "jokerLens") < 2) return false;
+    if (typeof game.jokerPreview !== "function") return false;
+    var preview = game.jokerPreview();
+    return Boolean(preview && preview.count > 1);
+  }
+  function paintJoker(game) {
+    if (jokerCycling(game)) {
+      if (!jokerTimer) jokerTimer = window.setInterval(stepJoker, JOKER_CYCLE_MS);
+    } else if (jokerTimer) {
+      window.clearInterval(jokerTimer);
+      jokerTimer = null;
+    }
+  }
+  function stepJoker() {
+    var game = activeGame();
+    var tile = document.querySelector("#cuddleRoot [data-joker-as]");
+    if (!game || !tile || !jokerCycling(game) || document.hidden) {
+      if (game) paintJoker(game);
+      return;
+    }
+    var preview = game.cycleJoker();
+    if (!preview) return;
+    tile.textContent = preview.letter;
+    tile.classList.remove("is-turning");
+    void tile.offsetWidth;
+    tile.classList.add("is-turning");
+  }
+
   var paintPending = false;
   function paint() {
     paintPending = false;
@@ -884,6 +920,7 @@
     try {
       paintScout(game, root);
       paintCoin(game);
+      paintJoker(game);
     } catch (error) {
       console.warn("Cuddle new badges: paint failed.", error);
     }

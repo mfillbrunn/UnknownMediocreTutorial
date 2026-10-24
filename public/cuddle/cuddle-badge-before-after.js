@@ -29,6 +29,8 @@
       { t: "stat", label: "Cards one mulligan can swap", before: "3", after: "4" }],
     handSizeBoost: ["Your hand holds a set number of consonant cards.", "Your hand holds more consonants, so more words are possible.",
       { t: "hand", before: "RSTLNC", after: "RSTLNCM" }],
+    jokerLens: ["A Joker shows ★ until you submit.", "The Joker shows the letter it will be; at level 2 it cycles through every letter that works.",
+      { t: "text", before: "S★ORE", after: "S★ORE → SNORE / SCORE / SPORE" }],
     jokerCache: ["No Joker cards: a word needs real cards for every letter.", "Joker cards go into your deck; drawn, one can be any letter.",
       { t: "hand", before: "RSTLNC", after: "RSTLN★" }],
     jokerCacheLarge: ["Stages start with just your normal hand.", "Every stage starts with a Joker card on top of your hand.",

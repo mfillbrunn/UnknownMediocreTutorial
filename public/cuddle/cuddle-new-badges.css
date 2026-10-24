@@ -81,3 +81,17 @@
 @media (prefers-reduced-motion: reduce) {
   .umt-coin-card { animation: none; }
 }
+
+/* Joker Lens: the letter a Joker will become, on its tile. */
+#cuddleScreen .cuddle-joker-as {
+  display: inline-block;
+}
+#cuddleScreen .cuddle-joker-as.is-turning {
+  animation: umt-joker-turn 420ms ease-out;
+}
+@keyframes umt-joker-turn {
+  from { opacity: 0; transform: rotateX(80deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #cuddleScreen .cuddle-joker-as.is-turning { animation: none; }
+}

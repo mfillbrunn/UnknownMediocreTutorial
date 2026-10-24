@@ -36,6 +36,16 @@
   const RECONNECT_GRACE_MS = 30000;
   const RECONNECT_RETRY_MS = 3000;
 
+  // Joker Lens (cuddle-skill-tree.js): the letter the draft's Joker
+  // would become, once the word is finished and some letter works.
+  function jokerLensLetter(game) {
+    const tree = window.CuddleSkillTree;
+    const node = tree && typeof tree.findNode === "function" ? tree.findNode("jokerLens") : null;
+    if (!node || !(tree.level(game, node) > 0) || typeof game.jokerPreview !== "function") return null;
+    const preview = game.jokerPreview();
+    return preview ? preview.letter : null;
+  }
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -928,6 +938,8 @@
           + (isJokerTile ? " is-joker" : "") + moneyClass
           + (masked ? ` umt-masked-tile${isDraft ? " is-mask-pending" : ""}` : "");
         const maskStyle = masked ? maskPulse : "";
+        // Joker Lens: the draft's Joker shows the letter it will become.
+        const jokerAs = isJokerTile && draftCard ? jokerLensLetter(game) : null;
         if (draftCard) {
           tiles.push(`
             <button type="button" class="cuddle-tile is-draft-tile${tileClass}"${maskStyle}
@@ -935,7 +947,7 @@
               data-drag-index="${column}"${moneyBadge}
               aria-label="Remove ${escapeHtml(draftCard.glyph)} from the current word"
               title="Click to return ${escapeHtml(draftCard.glyph)} to your hand">
-              ${escapeHtml(letter)}
+              ${jokerAs ? `<span class="cuddle-joker-as" data-joker-as>${escapeHtml(jokerAs)}</span>` : escapeHtml(letter)}
             </button>`);
         } else if (isDraft) {
           // Empty, but still a live target -- Drag Mode (cuddle-drag-mode.js)
