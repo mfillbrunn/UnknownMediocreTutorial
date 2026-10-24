@@ -1688,6 +1688,9 @@
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleUpgradeTitle">
         <section class="cuddle-modal cuddle-modal-wide cuddle-upgrade-modal cuddle-compact-cards">
+          <span class="cuddle-upgrade-wallet" data-upgrade-wallet aria-label="Money: $${Number(state.cuddleMoney || 0)}">
+            <span>Money</span><b>$${Number(state.cuddleMoney || 0).toLocaleString()}</b>
+          </span>
           ${kicker ? `<span class="cuddle-modal-kicker">${kicker}</span>` : ""}
           <h2 id="cuddleUpgradeTitle">${heading}</h2>
           ${body ? `<p>${body}</p>` : ""}
