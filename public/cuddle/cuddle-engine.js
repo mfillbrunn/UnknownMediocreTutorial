@@ -132,20 +132,23 @@
   const UNUSED_MULLIGAN_POINTS = 1;
   // A guess past the round's "quick solve" window (_solveGuessThreshold(),
   // 6/5/4 as boss gates clear) costs points (see _lateGuessPenalty): a
-  // flat 10 each in world one, a flat 20 each in world two, and in world
-  // three 30 for the first, then 10 more for every guess after it --
+  // flat 7 each in world one, a flat 13 each in world two, and in world
+  // three 20 for the first, then 7 more for every guess after it --
   // separate from EARLY_GUESS_POINTS above, which only ever pays out on
-  // the guesses a solve never needed.
-  const LATE_GUESS_PENALTIES = [10, 20, 30];
+  // the guesses a solve never needed. A late guess still scores like any
+  // other; the penalty comes on top. (A third lower than the 10/20/30 it
+  // was, when late guesses also earned nothing: solving in few guesses
+  // outweighed the points and quests a longer stage could bring.)
+  const LATE_GUESS_PENALTIES = [7, 13, 20];
   // No run culls more than this many letters in all (Pruning Shears, Cull
   // Letters, Deep Cull): past about 8, stages stop being a puzzle.
   const CULL_CAP = 8;
   // Deep Cull (legendary) takes this many letters at once.
   const DEEP_CULL_LETTERS = 3;
-  const LATE_GUESS_STEP_WORLD_THREE = 10;
-  // Easy: a flat, gentler cost per late guess -- free in world one, then 5
-  // and 10 points (no extra step in world three).
-  const EASY_LATE_GUESS_PENALTIES = [0, 5, 10];
+  const LATE_GUESS_STEP_WORLD_THREE = 7;
+  // Easy: a flat, gentler cost per late guess -- free in world one, then 3
+  // and 7 points (no extra step in world three).
+  const EASY_LATE_GUESS_PENALTIES = [0, 3, 7];
   // A flat bonus for solving within that same window at all, in addition
   // to the scaled-by-unused-guesses EARLY_GUESS_POINTS payout above.
   const EARLY_SOLVE_BONUS = 0;
@@ -1244,8 +1247,6 @@
     wouldDraftCompleteQuest() {
       const quest = this.state.activeQuest;
       if (!quest) return false;
-      // A late guess earns nothing, quests included (submitDraft).
-      if (this.state.guessesUsed + 1 > this._solveGuessThreshold()) return false;
       const word = this.getDraftWord();
       if (word.length !== 5 || word.includes(" ")) return false;
       const feedback = evaluateFeedback(this.state.secret, word);
@@ -1475,19 +1476,17 @@
       // scoring step, so a points square counts toward this guess's row score
       // -- and toward a solve on this very guess -- before the round
       // resolves further down.
-      // A guess past the round's quick-solve window (see latePenalty below)
-      // earns nothing at all -- colours, special squares, quests, solve
-      // bonuses -- only its penalty. (Stage bonuses paid through the
-      // rebalance layer's addScoreBonus are refused the same way.)
+      // A guess past the round's quick-solve window scores like any other
+      // and pays its penalty on top (see latePenalty below).
       const lateGuess = this.state.guessesUsed + 1 > this._solveGuessThreshold();
       const tilePointsRaw = typeof this._scoreSpecialTiles === "function"
         ? Math.max(0, Number(this._scoreSpecialTiles(this.state.history.length, feedback)) || 0)
         : 0;
-      const tilePoints = lateGuess ? 0 : tilePointsRaw;
+      const tilePoints = tilePointsRaw;
       // Colour Surge pays half points a green, so a row's colour total is
       // rounded down (two greens at +0.5 make +1).
       const colourPoints = Math.floor(greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue + 1e-9);
-      const scoreDelta = (lateGuess ? 0 : colourPoints) + tilePoints;
+      const scoreDelta = colourPoints + tilePoints;
       if (shielded) this.state.buffs.greyShield -= 1;
 
       const activeQuest = this.state.activeQuest;
@@ -1587,7 +1586,7 @@
       };
 
       let questComplete = false;
-      if (activeQuest && !lateGuess) {
+      if (activeQuest) {
         const requiredLetters = [];
         this.state.history.forEach(previous => {
           previous.word.split("").forEach((letter, index) => {
@@ -3663,9 +3662,7 @@
 
     let questExtra = 0;
     let solveExtra = 0;
-    // A late guess earns nothing but its penalty.
-    const lateBefore = Number(state.guessesUsed || 0) + 1 > this._solveGuessThreshold();
-    if (!bossBefore && !lateBefore) {
+    if (!bossBefore) {
       let questComplete = false;
       if (state.activeQuest) {
         try {

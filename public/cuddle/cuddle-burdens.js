@@ -698,7 +698,7 @@
   function stageBonus(game, amount, field, label) {
     var rebalance = window.CuddleRebalanceV5;
     if (rebalance && typeof rebalance.addStageBonus === "function") {
-      // 0 when refused (a guess past the window earns nothing).
+      // 0 when nothing was paid.
       return Number(rebalance.addStageBonus(game, amount, field, label)) || 0;
     }
     game.state.score = (Number(game.state.score) || 0) + amount;

@@ -2595,11 +2595,6 @@
     if (!value) return 0;
     const state = stateOf(game);
     if (!state) return 0;
-    // A guess past the stage's guess window earns nothing but its
-    // penalty: no stage bonus rides on it (a loss -- a lost High Roller
-    // bet -- still lands).
-    const lastGuess = Array.isArray(state.history) && state.history.length ? state.history[state.history.length - 1] : null;
-    if (value > 0 && lastGuess && asNumber(lastGuess.latePenalty, 0) > 0) return 0;
     state.score = asNumber(state.score, 0) + value;
     state.roundScore = asNumber(state.roundScore, 0) + value;
     if (state.pendingRoundEnd && typeof state.pendingRoundEnd === "object") {
@@ -2735,7 +2730,7 @@
     }
 
     // A stage pays for its tier alone (stageTier), in points and the same
-    // in money; a late solve (past the guess window) earns nothing.
+    // in money.
     const challenge = activeChallenge(game) || (snapshot && snapshot.challenge);
     const variant = activeVariant(game);
     if (variant && !variant.stagePaid) {
@@ -3203,13 +3198,6 @@
     if (custom.streakToken !== token) {
       custom.streakToken = token;
       custom.streakCount = 0;
-    }
-    // A guess past the quick-solve window earns nothing but its penalty,
-    // and breaks the streak.
-    const latest = Array.isArray(state.history) ? state.history[state.history.length - 1] : null;
-    if (latest && asNumber(latest.latePenalty, 0) > 0) {
-      custom.streakCount = 0;
-      return;
     }
     const gainedGreen = knownPositionCount(game) > asInteger(before.greens, 0);
     if (!gainedGreen) {

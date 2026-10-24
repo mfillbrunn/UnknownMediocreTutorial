@@ -121,14 +121,8 @@
     return value;
   }
 
-  function lateGuess(state) {
-    var history = Array.isArray(state.history) ? state.history : [];
-    var last = history[history.length - 1];
-    return Boolean(last && num(last.latePenalty) > 0);
-  }
-
   function payMoney(game, amount, label, field) {
-    if (!amount || lateGuess(game.state)) return 0;
+    if (!amount) return 0;
     game.state.cuddleMoney = Math.max(0, num(game.state.cuddleMoney) + amount);
     // Paid on the solve: listed in the cash-out.
     if (field && window.CuddlePayoutLines) window.CuddlePayoutLines.addMoney(game, field, label, amount);
@@ -406,8 +400,6 @@
       var history = allRows.filter(function mine(row) { return !row || row.actor !== "ai"; });
       try {
         var entry = history[history.length - 1];
-        // A guess past the window earns nothing but its penalty.
-        if (num(entry && entry.latePenalty) > 0) return result;
         var now = ranks(this);
         var mine = record(state);
         var key = stageKey(state);

@@ -49,15 +49,32 @@
   left: 50%;
   /* On the road: 26/240 of the landscape band up from the bottom. */
   bottom: calc(min(60vw, 60vh) * 0.108 - 4px);
-  width: 52px;
-  height: 60px;
-  margin-left: -26px;
+  width: 48px;
+  height: 64px;
+  margin-left: -24px;
   animation: umt-wt-walk 3200ms linear 900ms both;
 }
-.umt-wt-traveller .umt-parade-walker {
+.umt-wt-guesser {
+  display: block;
   width: 100%;
   height: 100%;
+  overflow: visible;
   filter: drop-shadow(0 0 10px var(--wt-to, #ffffff));
+}
+/* A step every 560ms: legs swing from the hip and arms from the
+   shoulder, each pair in turn, and the body bobs on every step. */
+.umt-wt-leg,
+.umt-wt-arm {
+  transform-box: view-box;
+  animation: umt-wt-swing 560ms ease-in-out infinite alternate;
+}
+.umt-wt-leg { transform-origin: 60px 112px; }
+.umt-wt-arm { transform-origin: 60px 88px; animation-name: umt-wt-arm-swing; }
+.umt-wt-arm.is-front { animation-name: umt-wt-arm-swing-back; }
+.umt-wt-leg.is-back { animation-name: umt-wt-swing-back; }
+.umt-wt-torso {
+  transform-box: view-box;
+  animation: umt-wt-bob 280ms ease-in-out infinite alternate;
 }
 .umt-wt-text {
   position: absolute;
@@ -114,6 +131,11 @@
 @keyframes umt-wt-out { to { opacity: 0; } }
 @keyframes umt-wt-slide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes umt-wt-walk { 0% { transform: translateX(-30vw); } 50% { transform: translateX(0); } 100% { transform: translateX(10vw); } }
+@keyframes umt-wt-swing { from { transform: rotate(-28deg); } to { transform: rotate(28deg); } }
+@keyframes umt-wt-swing-back { from { transform: rotate(28deg); } to { transform: rotate(-28deg); } }
+@keyframes umt-wt-arm-swing { from { transform: rotate(-38deg); } to { transform: rotate(38deg); } }
+@keyframes umt-wt-arm-swing-back { from { transform: rotate(38deg); } to { transform: rotate(-38deg); } }
+@keyframes umt-wt-bob { from { transform: translateY(0); } to { transform: translateY(-4px); } }
 @keyframes umt-wt-fade-in { from { opacity: 0; transform: translateY(10px); } }
 @keyframes umt-wt-fade-out { to { opacity: 0; transform: translateY(-10px); } }
 

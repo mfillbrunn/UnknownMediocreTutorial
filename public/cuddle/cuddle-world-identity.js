@@ -42,7 +42,7 @@
     tides: { icon: "🌊", name: "Deep Water", stage: "Lagoon",
       text: "Every letter in your hand that's in the answer shows blue: you can't tell green from yellow there. The board still shows the colours." },
     citadel: { icon: "👁️", name: "Watchtower", stage: "Hall",
-      text: "Guesses past the guess window cost 10 points more, but solving within it pays +15." },
+      text: "Guesses past the guess window cost 7 points more, but solving within it pays +15." },
     storm: { icon: "⚡", name: "Lightning", stage: "Ledge",
       text: "Your third guess in every stage pays double tile points." },
     forge: { icon: "🔥", name: "Forge Heat", stage: "Anvil",
@@ -223,7 +223,6 @@
     if (!result || !result.ok || !theme || history.length <= before) return result;
     try {
       var entry = history[history.length - 1];
-      var late = num(entry && entry.latePenalty) > 0;
       var solved = Boolean(entry && state.secret && entry.word === state.secret);
       var feedback = feedbackOf(entry);
       var trait = record(state);
@@ -245,14 +244,14 @@
           note(this, "The woods whisper: " + letter + " isn't in the answer.");
         }
       }
-      if (theme === "storm" && history.length === 3 && !late && num(entry.scoreDelta) > 0) {
+      if (theme === "storm" && history.length === 3 && num(entry.scoreDelta) > 0) {
         stageBonus(this, num(entry.scoreDelta), "umtWorldLightning", "Lightning");
       }
-      if (theme === "forge" && !late) {
+      if (theme === "forge") {
         var heat = count(feedback, "green") * 2 - count(feedback, "grey");
         if (heat) stageBonus(this, heat, "umtWorldForgeHeat", "Forge Heat");
       }
-      if (solved && !late) {
+      if (solved) {
         if (theme === "citadel" && typeof this._solveGuessThreshold === "function" && history.length <= this._solveGuessThreshold()) {
           stageBonus(this, 15, "umtWorldWatchtower", "Watchtower");
         }
@@ -267,12 +266,12 @@
     return result;
   };
 
-  // Watchtower: late guesses cost 10 more.
+  // Watchtower: late guesses cost 7 more.
   var baseLate = proto._lateGuessPenalty;
   if (typeof baseLate === "function") {
     proto._lateGuessPenalty = function lateGuessPenaltyWithWatchtower() {
       var penalty = baseLate.apply(this, arguments);
-      return penalty > 0 && traitOf(this) === "citadel" ? penalty + 10 : penalty;
+      return penalty > 0 && traitOf(this) === "citadel" ? penalty + 7 : penalty;
     };
   }
 

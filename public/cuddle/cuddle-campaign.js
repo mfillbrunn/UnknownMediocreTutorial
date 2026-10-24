@@ -811,18 +811,10 @@
   // Whether the word being built would complete this quest if submitted
   // now -- from the draft and what's already known, never the secret. Only
   // a word that could actually be submitted counts.
-  // A guess past the stage's guess window earns nothing, quests included
-  // (cuddle-engine.js's lateGuess), so open quests wait on it.
-  function nextGuessLate(game) {
-    const state = game && game.state;
-    if (!state || typeof game._solveGuessThreshold !== "function") return false;
-    return (Number(state.guessesUsed) || 0) + 1 > game._solveGuessThreshold();
-  }
-
   function draftMeetsQuest(game, quest) {
     if (!game || !quest || FEEDBACK_QUESTS.has(quest.id)) return false;
     const state = game.state || {};
-    if (state.status !== "playing" || nextGuessLate(game)) return false;
+    if (state.status !== "playing") return false;
     const word = typeof game.getDraftWord === "function" ? String(game.getDraftWord() || "") : "";
     if (!/^[A-Z]{5}$/.test(word)) return false;
     const submit = typeof game.canSubmit === "function" ? game.canSubmit() : null;
@@ -1177,14 +1169,13 @@
         const quest = quests[shown];
         const index = shown;
         const ready = draftMeetsQuest(game, quest);
-        const paused = state.status === "playing" && nextGuessLate(game);
         // Tapping a quest opens its full explanation (openQuestInfo).
         return (
-          `<span class="cuddle-quest-inline${ready ? " is-ready" : ""}${paused ? " is-paused" : ""}${tabs ? " has-tabs" : ""}" role="button" tabindex="0" data-quest-info="${index}"`
+          `<span class="cuddle-quest-inline${ready ? " is-ready" : ""}${tabs ? " has-tabs" : ""}" role="button" tabindex="0" data-quest-info="${index}"`
           + ` title="${ready ? "Your word meets this quest. " : ""}Tap for details">`
           + tabs
-          + `<span class="cuddle-quest-tag">${ready ? '<span aria-hidden="true">✓</span> Ready' : paused ? "Paused" : `<span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> ${index === 1 ? "Kept" : "Quest"}`}</span>`
-          + `<span class="cuddle-quest-body"><b>${escapeHtml(quest.title || "Quest")}:</b> <span>${paused ? "Late guesses don't count for quests." : escapeHtml(quest.description)}</span></span>`
+          + `<span class="cuddle-quest-tag">${ready ? '<span aria-hidden="true">✓</span> Ready' : `<span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> ${index === 1 ? "Kept" : "Quest"}`}</span>`
+          + `<span class="cuddle-quest-body"><b>${escapeHtml(quest.title || "Quest")}:</b> <span>${escapeHtml(quest.description)}</span></span>`
           + `</span>`
         );
       })() : "";

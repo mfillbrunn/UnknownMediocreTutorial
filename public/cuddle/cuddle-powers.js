@@ -352,8 +352,6 @@
         state.umtSpotlightPendingCount = placed < owed ? owed - placed : 0;
       }
 
-      // A guess past the window earns nothing but its penalty.
-      if (num(entry && entry.latePenalty) > 0) return result;
       var feedback = shownFeedback(entry);
       var greens = countOf(feedback, "green");
 

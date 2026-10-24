@@ -741,10 +741,6 @@
   // move those rates mid-run.
   function rowBreakdown(entry) {
     if (!entry) return [];
-    // A guess past the quick-solve window earns nothing but its penalty.
-    if (asNumber(entry.latePenalty, 0) > 0) {
-      return [{ label: "Too many guesses", detail: "Past the guess limit: no tile points", amount: -Math.round(asNumber(entry.latePenalty, 0)) }];
-    }
     var lines = [];
     var rates = entry.tileRates || {};
     var tile = function addTile(count, rate, label) {
