@@ -703,6 +703,16 @@
 
   // Mulligans: idea cards give a yellow hint each, lucky cards +5 points
   // each; both are spent.
+  function refillJoker(game) {
+    var state = game.state;
+    var glyph = Engine.CUDDLE_JOKER_GLYPH;
+    var mega = state.megaState;
+    if (!glyph || !mega || Number(mega.jokerCharges) <= 0) return;
+    if ((state.hand || []).some(function held(card) { return card.source === "joker" && card.glyph === glyph; })) return;
+    mega.jokerCharges -= 1;
+    state.hand.push({ id: game._nextId("joker"), glyph: glyph, source: "joker" });
+  }
+
   var baseMulligan = proto.mulligan;
   proto.mulligan = function mulliganWithPowerTiles(cardIds) {
     var state = this.state;
@@ -710,8 +720,12 @@
     var picked = (cardIds || []).map(function find(id) { return game.getHandCard(id); }).filter(Boolean);
     var ideas = picked.filter(isIdeaCard);
     var lucky = picked.filter(isLuckyCard);
+    var jokerOut = picked.some(function joker(card) { return card.source === "joker"; });
     var result = baseMulligan.apply(this, arguments);
     state = this.state;
+    // The Joker in hand stands for all your Joker uses (its count): a
+    // mulligan spends just the one, and the next comes back into the hand.
+    if (result && result.ok && jokerOut) refillJoker(this);
     if (!result || !result.ok || (!ideas.length && !lucky.length)) return result;
     try {
       var spent = new Set(ideas.concat(lucky).map(function id(card) { return card.id; }));
