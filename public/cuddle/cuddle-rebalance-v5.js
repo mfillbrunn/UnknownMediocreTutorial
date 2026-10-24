@@ -2132,16 +2132,18 @@
     return null;
   }
 
-  // Letter Demand and Word Chain hand you a card of the letter they ask for
-  // when your hand has none, so the rule can always be met. The card is
-  // taken back when the guess no longer asks for it.
+  // Letter Demand and Word Chain (the challenge, or the Word Chain quest)
+  // hand you a card of the letter they ask for when your hand has none, so
+  // the rule can always be met. The card is taken back when the guess no
+  // longer asks for it.
   function syncRuleCards(game) {
     const state = stateOf(game);
     if (!state || !Array.isArray(state.hand) || state.status !== "playing") return;
     const used = guessesUsed(game);
     const effect = planEffect(game, used);
+    const quest = state.activeQuest && state.activeQuest.id === "wordChain" ? state.activeQuest.chainLetter : null;
     const wanted = effect === "letterDemand" ? demandLetter(game, used)
-      : effect === "wordChain" ? chainLetter(game, used) : null;
+      : effect === "wordChain" ? chainLetter(game, used) : quest || null;
     const draft = new Set(state.draft || []);
     state.hand = state.hand.filter((card) => !(card && card.umtRuleGift && card.glyph !== wanted && !draft.has(card.id)));
     if (!wanted || typeof game._newCard !== "function") return;
