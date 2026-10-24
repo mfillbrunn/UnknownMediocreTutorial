@@ -25,7 +25,7 @@
  *     shown -- pays +35 / +60 / +100 points (it's hard with a hand of
  *     cards).
  *
- * Combine (rare): taking it turns one of your badges into a random badge
+ * Improve (rare; id "combine"): taking it turns one of your badges into a random badge
  * one rarity higher (common -> rare -> epic -> legendary). It can only
  * reshape the playstyle badges (the ones this file and cuddle-powers.js
  * keep in state.umtPowers); it isn't a badge itself and is only offered
@@ -263,7 +263,7 @@
     return true;
   }
 
-  // -- Combine ---------------------------------------------------------------
+  // -- Improve (id "combine") --------------------------------------------------
   function tierOf(item) {
     return String(item && (item.tier || item.rarity || item.rewardTier || item.__cuddleV8Tier) || "").toLowerCase();
   }
@@ -293,7 +293,7 @@
     var state = game.state;
     var tree = registry();
     var pool = combinable(game);
-    if (!pool.length) return { ok: false, error: "You have no badge Combine can reshape." };
+    if (!pool.length) return { ok: false, error: "You have no badge Improve can raise." };
     var random = randomOf(game);
     var fromId = pool[Math.floor(random() * pool.length)];
     var from = tree.findNode(fromId);
@@ -323,7 +323,7 @@
         if (entry.rewardId === fromId + ":combined") entry.rewardId = fromId;
         delete entry.combinedId;
       });
-      return { ok: false, error: "Combine couldn't finish: " + ((granted && granted.error) || "unknown error") };
+      return { ok: false, error: "Improve couldn't finish: " + ((granted && granted.error) || "unknown error") };
     }
     return { ok: true, from: from.title, fromId: fromId, to: target.title || target.name, toId: target.id, toIcon: target.icon, tier: wanted };
   }
@@ -338,7 +338,7 @@
     if (this.state && typeof this._culledLetterCount === "function" && this._culledLetterCount() >= CULL_CAP) {
       list = list.filter(function keep(item) { return !item || CULL_IDS.indexOf(item.id) === -1; });
     }
-    // Combine is offered only while it has something to reshape.
+    // Improve is offered only while it has something to raise.
     if (!this.state || combinable(this).length) return list;
     return list.filter(function keep(item) { return !item || item.id !== "combine"; });
   };
@@ -354,7 +354,7 @@
     var result = combine(this);
     if (!result.ok) return result;
     state = this.state;
-    state.lastMessage = "Combine: " + result.from + " became " + result.to + " (" + result.tier + ").";
+    state.lastMessage = "Improve: " + result.from + " became " + result.to + " (" + result.tier + ").";
     playCombineFx(result);
     state.upgradeChoices = [];
     state.upgradePhase = null;
@@ -364,7 +364,7 @@
     return { ok: true, combined: result };
   };
 
-  // -- Combine: the old badge turns into the new one ---------------------------
+  // -- Improve: the old badge turns into the new one ---------------------------
   // The old badge glows and shatters into sparks; the new one grows out of
   // the flash and the view zooms in on it. Tap anywhere to close early.
   var TIER_COLORS = { common: "#c98a4b", rare: "#c6d0de", epic: "#b98cff", legendary: "#f6c956" };
@@ -402,7 +402,7 @@
     var layer = document.createElement("div");
     layer.className = "umt-cmb-layer";
     layer.setAttribute("role", "status");
-    layer.setAttribute("aria-label", "Combine: " + result.from + " became " + result.to);
+    layer.setAttribute("aria-label", "Improve: " + result.from + " became " + result.to);
     layer.innerHTML = '<div class="umt-cmb-stage">'
       + '<div class="umt-cmb-old">' + badgeFace(fromNode, "", result.from) + "</div>"
       + '<div class="umt-cmb-flash" aria-hidden="true"></div>'
@@ -411,7 +411,7 @@
       }).join("") + "</div>"
       + '<div class="umt-cmb-new">' + badgeFace(toNode, result.toIcon, result.to, result.tier) + "</div>"
       + "</div>"
-      + '<p class="umt-cmb-caption"><b>Combine</b> ' + escapeText(result.from) + " → <em>" + escapeText(result.to) + "</em></p>";
+      + '<p class="umt-cmb-caption"><b>Improve</b> ' + escapeText(result.from) + " → <em>" + escapeText(result.to) + "</em></p>";
     var close = function closeFx() {
       if (!layer.parentNode) return;
       layer.classList.add("is-leaving");

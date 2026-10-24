@@ -292,7 +292,7 @@
         { id: "hardMode", icon: "🎯", title: "Hard Mode", tier: "common", type: "points", maxLevel: 3,
           levels: ["Solve in hard mode: +35 points. (Every guess keeps your greens in place and uses your yellows.)", "Solve in hard mode: +60 points.", "Solve in hard mode: +100 points."],
           level: g => powerLevel(g, "hardMode") },
-        { id: "combine", icon: "🧩", title: "Combine", tier: "rare", type: "letters", maxLevel: 1,
+        { id: "combine", icon: "🧩", title: "Improve", tier: "rare", type: "letters", maxLevel: 1,
           description: "Turns one of your playstyle badges into a random badge one rarity higher.",
           level: () => 0 },
         { id: "luckyClover", icon: "🍀", title: "Lucky Clover", tier: "rare", type: "points", maxLevel: 3,
