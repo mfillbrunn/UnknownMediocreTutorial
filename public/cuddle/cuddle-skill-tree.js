@@ -296,7 +296,7 @@
           description: "Turns one of your playstyle badges into a random badge one rarity higher.",
           level: () => 0 },
         { id: "luckyClover", icon: "🍀", title: "Lucky Clover", tier: "rare", type: "points", maxLevel: 3,
-          levels: ["1 lucky card goes in your deck. Have it in your hand when you solve: +10 points (mulligan it: +2 points).", "2 lucky cards: +14 points each when you solve.", "4 lucky cards: +20 points each when you solve."],
+          levels: ["1 lucky card goes in your deck. Have it in your hand when you solve: +10 points (mulligan it: +2 points).", "2 lucky cards: +14 points each when you solve.", "4 lucky cards: +20 points each when you solve, +1 more each for every badge you hold."],
           level: g => powerLevel(g, "luckyClover") },
         // cuddle-fish-hook.js
         { id: "fishHook", icon: "🪝", title: "Fish Hook", tier: "rare", type: "letters", maxLevel: 3,
@@ -465,7 +465,7 @@
     highRoller: ["Bet 10, win 20", "Bet 20, win 40", "Bet 40, win 80"],
     hardMode: ["+35 hard-mode solve", "+60 hard-mode solve", "+100 hard-mode solve"],
     waveTiles: ["1 wave card", "2 wave cards", "4 wave cards"],
-    luckyClover: ["1 lucky card, +10", "2 lucky cards, +14 each", "4 lucky cards, +20 each"],
+    luckyClover: ["1 lucky card, +10", "2 lucky cards, +14 each", "4 lucky cards, +20 +1 a badge each"],
     fishHook: ["Fish 1 discard a stage", "Fished letter tested", "Auto-hooks a right letter"],
     questCadence: ["Quests on 2, 3, 5", "Quests on 1, 2, 3, 5"],
     questScout: ["1 quest letter placed", "2 quest letters placed"],

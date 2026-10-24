@@ -270,6 +270,25 @@
     }
   }
 
+  // Lucky Clover's top level: each lucky card pays 1 more point for every
+  // badge you hold.
+  var LUCKY_PER_BADGE = 1;
+  function heldBadges(game) {
+    var tree = window.CuddleSkillTree;
+    if (!tree || !Array.isArray(tree.BRANCHES) || typeof tree.isOwned !== "function") return 0;
+    var count = 0;
+    tree.BRANCHES.forEach(function branch(group) {
+      (group.nodes || []).forEach(function node(item) {
+        if (item && item.type !== "combo" && tree.isOwned(game, item)) count += 1;
+      });
+    });
+    return count;
+  }
+  function luckyPoints(game) {
+    var level = luckyLevel(game);
+    return LUCKY_POINTS[Math.max(1, level)] + (level >= 3 ? LUCKY_PER_BADGE * heldBadges(game) : 0);
+  }
+
   function luckyCount(game) {
     return TILES_BY_LEVEL[luckyLevel(game)] + schoolPerk(game, "luckyTiles");
   }
@@ -776,7 +795,7 @@
       var held = (state.hand || []).filter(isLuckyCard).length;
       if (!held) return result;
       // Flora's own lucky card pays the first level's 10 without the badge.
-      var points = held * LUCKY_POINTS[Math.max(1, level)] * Math.max(1, schoolPerk(this, "luckyMultiplier"));
+      var points = held * luckyPoints(this) * Math.max(1, schoolPerk(this, "luckyMultiplier"));
       if (stageBonus(this, points, "umtLuckyClover", held === 1 ? "Lucky card" : "Lucky cards x" + held) > 0) {
         state.lastMessage = ((state.lastMessage || "") + " Lucky Clover: +" + points + " points.").trim();
       }
@@ -1273,6 +1292,7 @@
     DEAD_GLYPH: DEAD_GLYPH,
     LUCKY_GLYPH: LUCKY_GLYPH,
     LUCKY_POINTS: LUCKY_POINTS,
+    luckyPoints: luckyPoints,
     SWAMP_DEAD: SWAMP_DEAD,
     HARD_BOSS: HARD_BOSS,
     isDeadCard: isDeadCard,

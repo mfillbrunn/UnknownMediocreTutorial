@@ -1173,7 +1173,7 @@
         || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
       // Without Lucky Clover (a lucky card from the Cards school) it pays
       // the first level's points.
-      const per = window.CuddleBurdens.LUCKY_POINTS[Math.max(1, window.CuddleBurdens.luckyLevel(game))] || 0;
+      const per = window.CuddleBurdens.luckyPoints(game) || 0;
       const luckyLabel = `Lucky card${luckyCount > 1 ? ` ×${luckyCount}` : ""}: no letter, can't be played. Still in hand when you solve: +${per} points each; mulliganed: +${window.CuddleBurdens.LUCKY_MULLIGAN_POINTS}.`;
       return `
       <button class="cuddle-card is-lucky${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${luckyCount}" ${luckyDisabled ? "disabled" : ""}
@@ -2515,7 +2515,7 @@
       return { tone: "idea", title: "Idea card", lines: ["It has no letter, so it can't be played.", "Mulligan it away: one letter of the answer turns yellow."] };
     }
     if (cardButton.classList.contains("is-lucky")) {
-      const per = burdens.LUCKY_POINTS[Math.max(1, burdens.luckyLevel(game))] || 0;
+      const per = burdens.luckyPoints(game) || 0;
       return { tone: "lucky", title: "Lucky card", lines: ["It has no letter, so it can't be played.", `Keep it in your hand when you solve: +${per} points.`, `Or mulligan it away now: +${burdens.LUCKY_MULLIGAN_POINTS} points.`] };
     }
     return null;
