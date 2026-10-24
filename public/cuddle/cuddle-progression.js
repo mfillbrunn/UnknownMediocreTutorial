@@ -157,7 +157,7 @@
     cleanSlate: "Skips level up a badge",
     ascetic: "x1.6 with ≤5 non-Restraint badges, x1.3 with ≤10",
     questMastery: "Quest rewards one step bigger",
-    overtime: "Overtime quest reward",
+    overtime: "One More Guess quest reward",
     questClue: "Clue quest reward",
     questChain: "Quests chain on",
     blackMarket: "$50 for a random badge",

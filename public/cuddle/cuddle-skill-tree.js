@@ -312,7 +312,7 @@
           description: "Every quest reward is one step bigger: 2 mulligans instead of 1, 3 vowels checked instead of 2, 3 letters ruled out instead of 2, and so on.",
           level: g => powerLevel(g, "questMastery") },
         { id: "overtime", icon: "⏱️", title: "Overtime", tier: "epic", type: "quests", maxLevel: 1,
-          description: "Adds Overtime to your quest rewards, always on offer: pick it for 1 more guess this stage (a boss fight is a guess longer; on other stages the late-guess cost starts a guess later).",
+          description: "Adds the quest reward One More Guess, always on offer: pick it for 1 more guess this stage (a boss fight is a guess longer; on other stages the late-guess cost starts a guess later).",
           level: g => powerLevel(g, "overtime") },
         { id: "questClue", icon: "🔍", title: "Quest Clue", tier: "epic", type: "quests", maxLevel: 2,
           levels: ["Adds Clue to your quest rewards, always on offer: pick it for a yellow hint (a letter in the answer).", "Clue gives a green hint instead: a letter in its exact spot."],

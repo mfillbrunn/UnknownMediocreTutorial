@@ -10,7 +10,7 @@
  *   Quest Mastery (legendary) every quest reward is one step bigger (2
  *                            mulligans instead of 1, 3 vowels checked
  *                            instead of 2, ...).
- *   Overtime (epic)          adds the Overtime quest reward, always on
+ *   Overtime (epic)          adds the One More Guess quest reward, always on
  *                            offer: 1 more guess this stage (a boss fight
  *                            runs a guess longer; on other stages the
  *                            late-guess cost starts later).
@@ -361,7 +361,7 @@
     return record && record.key === stageKey(state) ? num(record.extra) : 0;
   }
 
-  // The Overtime quest reward (the badge adds it to the quest rewards, see
+  // The One More Guess quest reward (the badge adds it to the quest rewards, see
   // cuddle-powers.js): one more guess this stage. A boss fight's guess cap
   // grows with it; elsewhere _solveGuessThreshold reads the count.
   function grantOvertime(game) {

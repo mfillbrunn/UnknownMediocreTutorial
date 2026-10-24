@@ -460,7 +460,7 @@
     { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "Get +10 points right now." },
     { id: "umtFishingLine", icon: "🪝", title: "Fishing Line", description: "Twice this stage, take a card back from your discard pile (tap the hook on your deck)." },
     // Only with the badge that adds them (needs), and then always offered.
-    { id: "umtOvertime", icon: "⏱️", title: "Overtime", needs: "overtime", noDuel: true,
+    { id: "umtOvertime", icon: "⏱️", title: "One More Guess", needs: "overtime", noDuel: true,
       description: "One more guess this stage: a boss gives you one more try; elsewhere the late-guess cost starts a guess later." },
     { id: "umtClue", icon: "🔍", title: "Clue", needs: "questClue",
       description: "A yellow hint: a letter that's in the answer.",
