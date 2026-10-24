@@ -2513,9 +2513,6 @@
 }
 .cuddle-quest-tab:focus-visible { outline: 2px solid #f6c956; outline-offset: 2px; }
 
-.cuddle-quest-inline.is-paused { opacity: 0.6; }
-.cuddle-quest-inline.is-paused .cuddle-quest-tag { background: rgba(255, 255, 255, 0.12); color: #d8d3e6; }
-
 .cuddle-quest-tag {
   flex: 0 0 auto;
   padding: 4px 9px;
