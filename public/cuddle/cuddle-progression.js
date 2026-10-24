@@ -159,6 +159,7 @@
     questMastery: "Quest rewards one step bigger",
     overtime: "One More Guess quest reward",
     questClue: "Clue quest reward",
+    questSatchel: "Quest brings a letter",
     jokerLens: "Joker shows its letter",
     questChain: "Quests chain on",
     blackMarket: "$50 for a random badge",
@@ -407,7 +408,7 @@
     const list = rows.map((row) => `<button type="button" class="umt-bd-school${open && open.id === row.id ? " is-open" : ""}" data-umt-school="${esc(row.id)}"`
       + ` style="--s:${row.info.color}" aria-expanded="${open && open.id === row.id ? "true" : "false"}"`
       + ` aria-label="${esc(row.info.label)}: ${row.count} badge${row.count === 1 ? "" : "s"}${row.rank ? `, rank ${NUMERAL[row.rank]}` : ""}">`
-      + `<i class="umt-bd-school-tile" aria-hidden="true">${esc(row.info.label.charAt(0))}</i>`
+      + `<i class="umt-bd-school-tile" aria-hidden="true">${esc(row.info.mark || row.info.label.charAt(0))}</i>`
       + `<span class="umt-bd-school-name">${esc(row.info.label)}</span>`
       + `<b class="umt-bd-school-count">${row.count}</b>`
       + `<em class="umt-bd-school-rank">${row.rank ? NUMERAL[row.rank] : "–"}</em></button>`).join("");

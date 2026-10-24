@@ -191,3 +191,95 @@ body.umt-wave-active.umt-wave-new-joker #cuddleScreen .cuddle-hand-panel .cuddle
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 228, 120, 0.85), rgba(255, 200, 60, 0) 70%);
 }
+
+/* An angel card (Cards rank III): a dead card that turned over when it
+   was drawn. Soft sky and gold; it bobs a little, asking to be tapped. */
+#cuddleScreen .cuddle-card.is-angel {
+  position: relative;
+  border-color: rgba(255, 216, 96, 0.75);
+  background: linear-gradient(170deg, #fdf7ff, #dcd3ff 55%, #bcd9ff);
+  color: #2b2238;
+  box-shadow: 0 0 0 2px rgba(255, 216, 96, 0.25), 0 4px 14px rgba(255, 216, 96, 0.35);
+  animation: umt-angel-hover 2.4s ease-in-out infinite;
+}
+.cuddle-card-angel {
+  display: grid;
+  place-items: center;
+  width: 78%;
+  height: 78%;
+}
+.cuddle-card-angel .umt-angel-face,
+.cuddle-card-angel-was .umt-dead-skull {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* Turning over: the card bounces up and flips left to right; the dead
+   card's face shows until the flip is edge-on, then the angel's. */
+#cuddleScreen .cuddle-card.is-angel.is-turning {
+  animation: umt-angel-turn 1000ms cubic-bezier(.3, .7, .4, 1) both, umt-angel-hover 2.4s ease-in-out 1000ms infinite;
+}
+.cuddle-card-angel-was {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 15%;
+  border-radius: inherit;
+  background: linear-gradient(160deg, #3a3446, #26212f);
+  opacity: 0;
+  pointer-events: none;
+}
+.cuddle-card.is-angel.is-turning .cuddle-card-angel-was {
+  animation: umt-angel-was 1000ms steps(1, end) both;
+}
+@keyframes umt-angel-turn {
+  0% { transform: translateY(0) rotateY(0deg); }
+  25% { transform: translateY(-14px) rotateY(0deg); }
+  50% { transform: translateY(-16px) rotateY(90deg); }
+  75% { transform: translateY(-6px) rotateY(180deg); }
+  88% { transform: translateY(2px) rotateY(180deg); }
+  100% { transform: translateY(0) rotateY(180deg); }
+}
+/* The face under the flip is mirrored back, so the angel reads the right
+   way round once the card has turned. */
+.cuddle-card.is-angel.is-turning > * {
+  animation: umt-angel-unmirror 1000ms steps(1, end) both;
+}
+@keyframes umt-angel-unmirror {
+  0%, 49% { transform: scaleX(1); }
+  50%, 100% { transform: scaleX(-1); }
+}
+@keyframes umt-angel-was {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+@keyframes umt-angel-hover {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -3px; }
+}
+.umt-tap-particle.is-angel-flight {
+  width: 54px;
+  height: 54px;
+  filter: drop-shadow(0 0 12px rgba(255, 230, 150, 0.9));
+}
+.umt-tap-particle.is-angel-flight svg { display: block; width: 100%; height: 100%; }
+.umt-tap-particle.is-angel-points {
+  color: #ffd860;
+  font-weight: 900;
+  font-size: 1.2rem;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+.umt-tap-particle.is-angel-spark {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff3c4;
+  box-shadow: 0 0 8px #ffd860;
+}
+@media (prefers-reduced-motion: reduce) {
+  #cuddleScreen .cuddle-card.is-angel,
+  #cuddleScreen .cuddle-card.is-angel.is-turning,
+  .cuddle-card.is-angel.is-turning > * { animation: none; }
+}

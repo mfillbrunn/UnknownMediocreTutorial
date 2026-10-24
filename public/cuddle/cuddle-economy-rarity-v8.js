@@ -2743,7 +2743,7 @@
     line.style.setProperty("--school", school.color);
     const tile = document.createElement("i");
     tile.setAttribute("aria-hidden", "true");
-    tile.textContent = school.label.charAt(0);
+    tile.textContent = school.mark || school.label.charAt(0);
     const gain = document.createElement("b");
     gain.textContent = `+${weight} ${school.label}`;
     line.append(tile, gain);

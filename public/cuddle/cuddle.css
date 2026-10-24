@@ -537,6 +537,7 @@
 .cuddle-tile.is-special-mulligan { --special: #7cc8ff; }
 .cuddle-tile.is-special-joker { --special: #ff8fc7; }
 .cuddle-tile.is-special-hint { --special: #5ee0e0; }
+.cuddle-tile.is-special-devil { --special: #ff5a4f; }
 
 .cuddle-tile.is-special-tile[data-special]::before {
   content: attr(data-special);

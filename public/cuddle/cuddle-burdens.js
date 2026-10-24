@@ -64,6 +64,11 @@
   var IDEA_GLYPH = "◇";
   var WAVE_GLYPH = "≈";
   var JOKER_TILE_GLYPH = "◆";
+  // An angel card: a dead card redeemed (Cards rank III, cuddle-schools.js).
+  // A dead card drawn turns into one in the hand (it flips over); tapped,
+  // it flies off to heaven for ANGEL_POINTS and a new card is drawn.
+  var ANGEL_GLYPH = "✧";
+  var ANGEL_POINTS = 10;
   // Doubled from the less useful half of the alphabet: a second S or T
   // would be a gift.
   var WEAK = ["J", "Q", "X", "Z", "V", "K", "W", "F", "B", "P", "G", "Y", "H", "M"];
@@ -91,6 +96,19 @@
   function hardBurdenFor(id) {
     return id ? (HARD_BOSS[id] || HARD_BOSS_DEFAULT) : null;
   }
+
+  // An angel card's face: the same round little face, now with a halo,
+  // wings and a smile.
+  var ANGEL_SVG = '<svg class="umt-angel-face" viewBox="0 0 40 40" aria-hidden="true" focusable="false">'
+    + '<path d="M9 20c-6-1-8-6-7-10 3 2 6 2 9 4M31 20c6-1 8-6 7-10-3 2-6 2-9 4" fill="#ffffff" stroke="#c9b6ea" stroke-width="1.6" stroke-linejoin="round"/>'
+    + '<ellipse cx="20" cy="5.5" rx="8" ry="2.6" fill="none" stroke="#ffd860" stroke-width="2.4"/>'
+    + '<circle cx="20" cy="21" r="11.5" fill="#fff7ec" stroke="#2b2238" stroke-width="2.2"/>'
+    + '<ellipse cx="12.6" cy="24.6" rx="2.2" ry="1.3" fill="#f4a7c0" opacity="0.85"/>'
+    + '<ellipse cx="27.4" cy="24.6" rx="2.2" ry="1.3" fill="#f4a7c0" opacity="0.85"/>'
+    + '<path d="M14 20.5q2-2.4 4 0M22 20.5q2-2.4 4 0" fill="none" stroke="#2b2238" stroke-width="1.8" stroke-linecap="round"/>'
+    + '<path d="M16.5 25.5q3.5 3 7 0" fill="none" stroke="#2b2238" stroke-width="1.8" stroke-linecap="round"/>'
+    + '<path d="M13 32.5c2 4 12 4 14 0" fill="#ffffff" stroke="#c9b6ea" stroke-width="1.4"/>'
+    + '</svg>';
 
   // A dead card's face: a small, round, friendly skull.
   var SKULL_SVG = '<svg class="umt-dead-skull" viewBox="0 0 40 40" aria-hidden="true" focusable="false">'
@@ -163,9 +181,13 @@
     return Boolean(card && (card.jokerTile || card.glyph === JOKER_TILE_GLYPH));
   }
 
+  function isAngelCard(card) {
+    return Boolean(card && (card.angel || card.glyph === ANGEL_GLYPH));
+  }
+
   // Tiles with no letter. None of them can go in a word.
   function isBlankCard(card) {
-    return isDeadCard(card) || isLuckyCard(card) || isIdeaCard(card) || isWaveCard(card) || isJokerTile(card);
+    return isDeadCard(card) || isLuckyCard(card) || isIdeaCard(card) || isWaveCard(card) || isJokerTile(card) || isAngelCard(card);
   }
 
   function isDeadCard(card) {
@@ -332,8 +354,9 @@
     // A Duel deals the same power cards (lucky, idea and wave cards); its
     // Jokers are handed out up front instead (cuddle-expanded-stages.js).
     var duel = inDuel(game.state);
+    // Cards rank III: 2 more dead cards, which turn angel when drawn.
     return {
-      dead: dead,
+      dead: dead + schoolPerk(game, "angelCards"),
       doubles: doubles,
       lucky: luckyCount(game),
       // Idea cards stay 1/2/3: four yellow hints a stage was too easy.
@@ -386,6 +409,8 @@
       }
       // A Joker card dealt straight into the opening hand is a Joker now.
       state.hand.filter(isJokerTile).forEach(function open(card) { cashJokerTile(game, card, true); });
+      // Dead cards dealt into it turn angel (Cards rank III).
+      state.hand.filter(isDeadCard).forEach(function turn(card) { turnAngel(game, card); });
     } catch (error) {
       console.warn("Cuddle burdens: dealing failed.", error);
     }
@@ -471,6 +496,32 @@
     if (!quiet) drawNote(game, "Joker card: +1 Joker.");
   }
 
+  // Cards rank III: a dead card that reaches the hand turns angel. Ids
+  // turned this moment flip over on screen (umtFreshAngels, not saved).
+  function turnAngel(game, card) {
+    if (!isDeadCard(card) || schoolPerk(game, "angelCards") <= 0) return false;
+    card.dead = false;
+    card.angel = true;
+    card.glyph = ANGEL_GLYPH;
+    if (!game.__umtFreshAngels) game.__umtFreshAngels = {};
+    game.__umtFreshAngels[card.id] = Date.now();
+    return true;
+  }
+
+  // Tapping an angel: it flies off to heaven, pays its points, and a new
+  // card is drawn in its place.
+  proto.releaseAngel = function releaseAngel(cardId) {
+    var state = this.state;
+    var card = state && (state.hand || []).find(function same(item) { return item.id === cardId; });
+    if (!card || !isAngelCard(card) || state.status !== "playing") return { ok: false };
+    removeFromHand(state, card);
+    stageBonus(this, ANGEL_POINTS, "umtAngelCards", "Angel cards");
+    var drawn = typeof this.drawToHandLimit === "function" ? this.drawToHandLimit() : [];
+    state.lastMessage = "An angel flew to heaven: +" + ANGEL_POINTS + " points.";
+    if (typeof this.save === "function") this.save();
+    return { ok: true, points: ANGEL_POINTS, drawn: drawn };
+  };
+
   // Draws stop on power cards: a Joker card turns into a Joker, a wave is
   // queued (it fires once the draw that found it is finished), and the
   // draw goes on so the hand still fills.
@@ -498,6 +549,7 @@
         cashJokerTile(this, card, false);
         continue;
       }
+      if (isDeadCard(card)) turnAngel(this, card);
       if (isWaveCard(card)) {
         removeFromHand(this.state, card);
         this.__umtWaves = (this.__umtWaves || 0) + 1;
@@ -682,6 +734,7 @@
   var DEAD_ERROR = "A dead card has no letter. Mulligan it away.";
   var LUCKY_ERROR = "A lucky card has no letter. Keep it in hand: it pays out when you solve.";
   var IDEA_ERROR = "An idea card has no letter. Mulligan it away for a yellow hint.";
+  var ANGEL_ERROR = "An angel card has no letter. Tap it to send it to heaven.";
   ["toggleDraft", "insertDraftCardAt"].forEach(function guard(name) {
     var base = proto[name];
     if (typeof base !== "function") return;
@@ -690,6 +743,7 @@
       if (isDeadCard(card)) return { ok: false, error: DEAD_ERROR };
       if (isLuckyCard(card)) return { ok: false, error: LUCKY_ERROR };
       if (isIdeaCard(card)) return { ok: false, error: IDEA_ERROR };
+      if (isAngelCard(card)) return { ok: false, error: ANGEL_ERROR };
       return base.apply(this, arguments);
     };
   });
@@ -1063,6 +1117,63 @@
     }, 1900);
   }
 
+  // -- an angel flying to heaven ---------------------------------------------
+  // Tap an angel card: it lifts off the hand and flies up and away, wings
+  // beating, with a "+10" and a few sparkles; the hand draws a new card.
+  function angelFlight(card) {
+    if (!card || reducedMotion() || !document.body) return;
+    var box = card.getBoundingClientRect();
+    var layer = burstLayer();
+    layer.classList.add("is-raised");
+    var x = box.left + box.width / 2;
+    var y = box.top + box.height / 2;
+    var angel = particle(layer, ANGEL_SVG, "is-angel-flight", x, y);
+    var points = particle(layer, "+" + ANGEL_POINTS, "is-angel-points", x, y - box.height / 2);
+    var made = [angel, points];
+    var rise = Math.max(260, y + 40);
+    if (typeof angel.animate === "function") {
+      angel.animate([
+        { transform: "translate(-50%, -50%) scale(1)", opacity: 1 },
+        { transform: "translate(-50%, calc(-50% - 18px)) scale(1.35)", opacity: 1, offset: 0.15 },
+        { transform: "translate(calc(-50% - 14px), calc(-50% - " + rise * 0.4 + "px)) scale(1.1)", opacity: 1, offset: 0.45 },
+        { transform: "translate(calc(-50% + 12px), calc(-50% - " + rise * 0.75 + "px)) scale(0.8)", opacity: 0.9, offset: 0.75 },
+        { transform: "translate(-50%, calc(-50% - " + rise + "px)) scale(0.45)", opacity: 0 }
+      ], { duration: 1500, easing: "cubic-bezier(.3,.1,.4,1)", fill: "both" });
+      points.animate([
+        { transform: "translate(-50%, -50%) scale(0.6)", opacity: 0 },
+        { transform: "translate(-50%, calc(-50% - 24px)) scale(1.15)", opacity: 1, offset: 0.25 },
+        { transform: "translate(-50%, calc(-50% - 54px)) scale(1)", opacity: 0 }
+      ], { duration: 1100, easing: "ease-out", fill: "both" });
+      for (var i = 0; i < 6; i += 1) {
+        var spark = particle(layer, "", "is-angel-spark", x + (i - 2.5) * 7, y);
+        var dx = (i - 2.5) * 10;
+        spark.animate([
+          { transform: "translate(-50%, -50%) scale(0.3)", opacity: 0 },
+          { transform: "translate(calc(-50% + " + dx * 0.5 + "px), calc(-50% - 40px)) scale(1)", opacity: 1, offset: 0.3 },
+          { transform: "translate(calc(-50% + " + dx + "px), calc(-50% - 110px)) scale(0.4)", opacity: 0 }
+        ], { duration: 1000 + i * 60, delay: 80 + i * 50, easing: "ease-out", fill: "both" });
+        made.push(spark);
+      }
+    }
+    setTimeout(function cleanUp() {
+      made.forEach(function drop(el) { el.remove(); });
+    }, 1800);
+  }
+
+  document.addEventListener("click", function onAngel(event) {
+    var card = event.target && event.target.closest && event.target.closest("#cuddleScreen .cuddle-card[data-umt-angel]");
+    if (!card) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    var game = activeGame();
+    if (!game || typeof game.releaseAngel !== "function") return;
+    angelFlight(card);
+    var result = game.releaseAngel(card.getAttribute("data-umt-angel"));
+    if (result && result.ok) {
+      try { window.dispatchEvent(new Event("cuddle:campaign-update")); } catch (_error) { /* next tap renders */ }
+    }
+  }, true);
+
   document.addEventListener("pointerdown", function onTapBurst(event) {
     var card = event.target && event.target.closest && event.target.closest("#cuddleScreen .cuddle-card.is-lucky, #cuddleScreen .cuddle-card.is-dead, #cuddleScreen .cuddle-card.is-joker, #cuddleScreen .cuddle-card.is-idea");
     if (card) burstFor(card);
@@ -1165,6 +1276,14 @@
     SWAMP_DEAD: SWAMP_DEAD,
     HARD_BOSS: HARD_BOSS,
     isDeadCard: isDeadCard,
+    isAngelCard: isAngelCard,
+    isAngelGlyph: function isAngelGlyph(glyph) { return glyph === ANGEL_GLYPH; },
+    angelSvg: function angelSvg() { return ANGEL_SVG; },
+    isFreshAngel: function isFreshAngel(game, cardId) {
+      var at = game && game.__umtFreshAngels && game.__umtFreshAngels[cardId];
+      return Boolean(at && Date.now() - at < 1400);
+    },
+    ANGEL_POINTS: ANGEL_POINTS,
     isDeadGlyph: isDeadGlyph,
     skullSvg: skullSvg,
     cloverSvg: cloverSvg,

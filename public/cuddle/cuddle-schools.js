@@ -1,13 +1,13 @@
 /* Cuddle: schools.
  *
  * Every badge belongs to a school (cuddle-skill-tree.js SCHOOLS): Speed,
- * Hints, Tiles, Elimination, Money, Quests or Restraint (a few general
- * badges belong to none). The ids are older names: flint, prism, flora,
- * parchment, gold, brass, pearl. Each level of a badge adds its rarity's
- * weight to its school (common 1, rare 2, epic 3, legendary 5); a
- * school's points unlock its three ranks (4 / 9 / 15, Restraint 3 / 6 /
- * 9), and each rank adds a perk. The ranks replaced the old two-badge
- * combos.
+ * Hints, Cards, Squares, Elimination, Money, Quests or Restraint (a few
+ * general badges belong to none). The ids are older names: flint, prism,
+ * flora, tile, parchment, gold, brass, pearl. Each level of a badge adds
+ * its rarity's weight to its school (common 1, rare 2, epic 3, legendary
+ * 5); a school's points unlock its three ranks (4 / 9 / 15, Restraint
+ * 3 / 6 / 9), and each rank adds a perk. The ranks replaced the old
+ * two-badge combos.
  *
  *   Speed        I   solve by guess 3: +10 points
  *                II  solve by guess 3: +1 mulligan next stage
@@ -19,7 +19,16 @@
  *                    above the hand (or tap the pad, then the card)
  *   Cards        I   +1 lucky card every stage
  *                II  +1 idea card and +1 mulligan every stage
- *                III first mulligan each stage is free; a Joker card at start
+ *                III +2 dead cards every stage, and every dead card you
+ *                    draw turns angel; tap an angel and it flies to heaven
+ *                    for +10 points, and a new card is drawn
+ *   Squares      I   a yellow on a square pays like a green
+ *                II  a square is also set off by a yellow or green beside
+ *                    it, paying as a yellow on it would (not devil
+ *                    squares; cuddle-points-money.js)
+ *                III 2 devil squares every stage: a letter not in the
+ *                    answer on one tests every consonant left in the hand
+ *                    (those not in it are thrown out)
  *   Elimination  I   each grey tile +1 point
  *                II  each stage starts with a consonant crossed out
  *                III crossed-out consonants in hand are swapped after a guess
@@ -100,6 +109,14 @@
     switch (name) {
       case "luckyTiles": return rankOf(game, "flora") >= 1 ? 1 : 0;
       case "ideaTiles": return rankOf(game, "flora") >= 2 ? 1 : 0;
+      // Cards III: 2 more dead cards a stage, and dead cards turn angel
+      // when drawn (cuddle-burdens.js).
+      case "angelCards": return rankOf(game, "flora") >= 3 ? 2 : 0;
+      // Squares I and II (cuddle-points-money.js).
+      case "squaresEven": return rankOf(game, "tile") >= 1 ? 1 : 0;
+      case "squaresSpread": return rankOf(game, "tile") >= 2 ? 1 : 0;
+      // Squares III: devil squares a stage (cuddle-points-money.js).
+      case "squaresDevil": return rankOf(game, "tile") >= 3 ? 2 : 0;
       case "shopDiscount": return rankOf(game, "gold") >= 2 ? GOLD_DISCOUNT : 0;
       default: return 0;
     }
@@ -373,7 +390,6 @@
         // Hints I is an arrow on the first guess (cuddle-compass.js).
         if (num(now.parchment) >= 2) ruleOut(this, false, "Elimination rank");
         if (num(now.flora) >= 2) addMulligans(this, 1);
-        if (num(now.flora) >= 3) giveJoker(this);
         // What a fast solve last stage earned (Speed II and III).
         var speed = mine.speedNext;
         mine.speedNext = null;
@@ -527,7 +543,6 @@
   keepEpicOnTop();
 
   // Restraint II: a stage where a mulligan was used doesn't pay its bonus.
-  // Cards III: the first mulligan each stage gives its mulligan back.
   wrap("mulligan", function build(original) {
     return function mulliganWithSchools() {
       var result = original.apply(this, arguments);
@@ -535,11 +550,6 @@
       if (!result || !result.ok || !state) return result;
       var mine = record(state);
       var key = stageKey(state);
-      if (rankOf(this, "flora") >= 3 && mine.freeMulligan !== key) {
-        mine.freeMulligan = key;
-        state.mulligansLeft = Math.max(0, num(state.mulligansLeft)) + 1;
-        note(this, "Cards rank: that mulligan was free.");
-      }
       mine.mulliganed = key;
       keepEpicOnTop();
       save(this);

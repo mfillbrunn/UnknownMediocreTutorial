@@ -812,7 +812,8 @@
     points: { glyph: "●", title: "Points square (green dot): a yellow here pays 5 points, a green 10" },
     mulligan: { glyph: "↻", title: "Mulligan square: a yellow or green here gives an extra mulligan" },
     joker: { glyph: "★", title: "Joker square: a yellow or green here gives you a Joker card" },
-    hint: { glyph: "?", title: "Oracle square: a yellow or green here reveals a letter and its position" }
+    hint: { glyph: "?", title: "Oracle square: a yellow or green here reveals a letter and its position" },
+    devil: { glyph: "♆", title: "Devil square: a letter here that's not in the answer tests every consonant left in your hand; the ones not in the answer are thrown out" }
   });
 
   // The last "new row" the board animated in, so a re-render of the same
@@ -915,7 +916,7 @@
         let bursting = false;
         let burstShift = 0;
         if (moneyTile && moneyTile.paid && moneyTile.payout > 0 && history
-            && row === state.history.length - 1 && (result === "green" || result === "yellow")) {
+            && row === state.history.length - 1 && (result === "green" || result === "yellow" || moneyTile.hit)) {
           if (!specialBurstStart.has(burstKey)) specialBurstStart.set(burstKey, Date.now());
           burstShift = Date.now() - specialBurstStart.get(burstKey);
           bursting = burstShift < SPECIAL_BURST_MS;
@@ -924,7 +925,8 @@
           ? ""
           : ` is-special-tile is-special-${tileKind}`
             + (moneyTile.paid ? (moneyTile.payout > 0 ? " is-special-won" : " is-special-missed") : "")
-            + (bursting ? ` is-special-burst is-burst-${result}` : "");
+            // A square set off from beside it (Squares II) bursts gold.
+            + (bursting ? ` is-special-burst is-burst-${result === "green" ? "green" : "yellow"}` : "");
         // data-special draws the unplayed tile's watermark; once paid, the
         // same attribute carries the payout ("+$4", "+10", "Hint") instead.
         const moneyBadge = !moneyTile || (moneyTile.paid && !moneyTile.payout)
@@ -1133,6 +1135,20 @@
         aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(deadLabel)}" title="${escapeHtml(deadLabel)}">
         <span class="cuddle-card-letter cuddle-card-dead" aria-hidden="true">${window.CuddleBurdens.skullSvg()}</span>
         ${deadCount > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${deadCount}</span>` : ""}
+      </button>`;
+    }
+    // An angel card (Cards rank III, cuddle-burdens.js): a dead card that
+    // turned over when drawn. Tapped, it flies to heaven for points.
+    if (window.CuddleBurdens?.isAngelGlyph?.(group.glyph)) {
+      const card = group.cards[0];
+      const fresh = window.CuddleBurdens.isFreshAngel(game, card.id);
+      const angelLabel = `Angel card: tap to send it to heaven for +${window.CuddleBurdens.ANGEL_POINTS} points and draw a new card.`;
+      return `
+      <button class="cuddle-card is-angel${fresh ? " is-turning" : ""}" data-umt-angel="${escapeHtml(card.id)}" ${state.status !== "playing" ? "disabled" : ""}
+        aria-label="${escapeHtml(angelLabel)}" title="${escapeHtml(angelLabel)}">
+        <span class="cuddle-card-letter cuddle-card-angel" aria-hidden="true">${window.CuddleBurdens.angelSvg()}</span>
+        ${fresh ? `<span class="cuddle-card-angel-was" aria-hidden="true">${window.CuddleBurdens.skullSvg()}</span>` : ""}
+        ${group.cards.length > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${group.cards.length}</span>` : ""}
       </button>`;
     }
     // An idea card (Idea Cards): no letter; mulligan it away for a yellow hint.

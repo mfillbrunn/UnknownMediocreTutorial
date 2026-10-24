@@ -1268,8 +1268,9 @@
       }));
     }
 
-    _drawOne() {
-      if (this.getCountedHandSize() >= this.getHandLimit()) return null;
+    // overLimit: a reward card, which goes on top of a full hand.
+    _drawOne(overLimit = false) {
+      if (!overLimit && this.getCountedHandSize() >= this.getHandLimit()) return null;
       while (true) {
         if (!this.state.deck.length && this.state.discard.length) {
           this.state.deck = shuffle(this.state.discard, this.random);
@@ -1302,17 +1303,11 @@
       return this.drawCards(Math.max(0, this.getHandLimit() - this.getCountedHandSize()));
     }
 
+    // A hand is never cut down to its limit: a card given on top of a full
+    // hand just stays until it's played, and the next refill draws nothing
+    // until the hand is back under the limit. (Only an effect that shrinks
+    // the hand on purpose, like Endurance Trial, takes cards away.)
     _makeRoomForRewardCard() {
-      if (this.getCountedHandSize() < this.getHandLimit()) return true;
-      const candidates = this.state.hand.filter(card => (
-        this.cardCountsTowardHandLimit(card)
-        && card.source !== "joker"
-        && !this.isInfiniteCard(card)
-        && !this.state.draft.includes(card.id)
-      ));
-      if (!candidates.length) return false;
-      const victim = candidates[Math.floor(this.random() * candidates.length)];
-      this._discardCards([victim.id]);
       return true;
     }
 
@@ -1329,7 +1324,7 @@
       const drawn = [];
       for (let index = 0; index < count; index += 1) {
         if (!this._makeRoomForRewardCard()) break;
-        const card = this._drawOne();
+        const card = this._drawOne(true);
         if (!card) break;
         drawn.push(card);
       }
@@ -1396,25 +1391,10 @@
       if (deadCardIds.length) this._discardCards(deadCardIds);
     }
 
-    _trimHandToLimit() {
-      while (this.getCountedHandSize() > this.getHandLimit()) {
-        let removableIndex = -1;
-        for (let index = this.state.hand.length - 1; index >= 0; index -= 1) {
-          const card = this.state.hand[index];
-          // A Joker takes a slot in the hand but is never the card let go.
-          if (this.cardCountsTowardHandLimit(card)
-              && card.source !== "joker"
-              && !this.isInfiniteCard(card)
-              && !this.state.draft.includes(card.id)) {
-            removableIndex = index;
-            break;
-          }
-        }
-        if (removableIndex < 0) break;
-        const [card] = this.state.hand.splice(removableIndex, 1);
-        if (card.source === "deck") this.state.discard.push(card);
-      }
-    }
+    // A hand over its limit is left alone (see _makeRoomForRewardCard):
+    // cards beyond it stay until they're played. Still called on load and
+    // after letters turn infinite, so it stays as a no-op.
+    _trimHandToLimit() {}
 
     _syncInfiniteCards() {
       const previous = new Set([
