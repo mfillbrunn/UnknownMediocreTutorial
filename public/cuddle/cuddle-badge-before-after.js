@@ -89,8 +89,8 @@
       { t: "stat", label: "Quest rewards you take", before: "1", after: "2" }],
     questCadence: ["Quests come on guesses 2 and 5.", "You get quests on more guesses (3, then 1 as well).",
       { t: "stat", label: "Quests in a stage", before: "2", after: "3" }],
-    questPersistReward: ["A quest you miss is gone.", "A quest you miss stays open for the rest of the stage.",
-      { t: "text", before: "Missed: quest gone", after: "Missed: still open next guess" }],
+    questPersistReward: ["A quest you miss is gone.", "A quest you miss stays open beside the next one: two at once.",
+      { t: "text", before: "Missed: quest gone", after: "Quests 1 and 2 both open" }],
 
     // ---- Hints --------------------------------------------------------------
     categorySense: ["No theme shown: any word could be the answer.", "The theme line shows what kind of word it is from the start.",

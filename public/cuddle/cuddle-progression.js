@@ -151,7 +151,7 @@
     revealGreen: "Next stage: 1 letter",
     questDoublePick: "Pick 2 quest rewards",
     questCadence: "One more quest guess",
-    questPersistReward: "Quests last all stage",
+    questPersistReward: "Missed quests stay open",
     allThemesBoss: "All themes revealed",
     secondCup: "1 rescue guess per run",
     cleanSlate: "Skips level up a badge",

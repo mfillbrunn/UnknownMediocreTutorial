@@ -5400,7 +5400,9 @@
         mega.activeQuests.push(extra);
       }
     } else if (!this.state.activeQuest) {
-      mega.activeQuests = [];
+      // No quest on this guess; a lasting one (Lasting Quests) stays open.
+      const lasting = mega.questPersistsForRound ? mega.activeQuests.slice(1).filter(Boolean) : [];
+      mega.activeQuests = lasting.length ? [null].concat(lasting) : [];
     }
     this.state.activeQuests = mega.activeQuests.filter(Boolean).slice();
   };
@@ -5604,14 +5606,13 @@
 
     const entry = this.state.history[this.state.history.length - 1];
 
-    // Lasting Quests: a missed quest stays up for the rest of the stage.
-    // The base engine clears the primary quest after every guess, and only
-    // the extra concurrent quests below were being kept -- so with the usual
-    // single quest the reward did nothing.
-    if (mega.questPersistsForRound && primaryQuestBefore && entry && !entry.questComplete
-        && this.state.status === "playing") {
-      this.state.activeQuest = primaryQuestBefore;
-    }
+    // Lasting Quests: a missed quest stays open for the rest of the stage,
+    // beside the next one rather than in its place -- it moves to the
+    // second slot (mega.activeQuests[1]), so new quests still come on
+    // their guesses and two can be open at once. The second slot holds the
+    // latest missed quest.
+    const lastingMissed = mega.questPersistsForRound && primaryQuestBefore && entry && !entry.questComplete
+      && this.state.status === "playing" && !this.isBossRound() ? primaryQuestBefore : null;
 
     if (jokerLetter && entry) {
       entry.jokerLetter = jokerLetter;
@@ -5679,9 +5680,10 @@
           remaining.push(quest);
         }
       });
-      mega.activeQuests = [this.state.activeQuest || null, ...remaining].filter((quest, index) => index === 0 || quest);
+      const kept = lastingMissed ? [lastingMissed] : remaining.slice(-1);
+      mega.activeQuests = [this.state.activeQuest || null, ...kept];
     } else {
-      mega.activeQuests[0] = this.state.activeQuest || null;
+      mega.activeQuests = [this.state.activeQuest || null].concat(lastingMissed ? [lastingMissed] : mega.activeQuests.slice(1).filter(Boolean));
     }
     this.state.activeQuests = mega.activeQuests.filter(Boolean).slice();
 
@@ -5763,7 +5765,7 @@
       lines.push(`Difficulty: ${mega.difficulty === "easy" ? "Educational" : mega.difficulty[0].toUpperCase() + mega.difficulty.slice(1)}`);
     }
     if (mega.extraGuesses) lines.push(`+${mega.extraGuesses} guess${mega.extraGuesses === 1 ? "" : "es"} every round`);
-    if (mega.questPersistsForRound) lines.push("Missed quests stay active for the rest of the stage");
+    if (mega.questPersistsForRound) lines.push("Missed quests stay open for the rest of the stage, beside the next one");
     if (Number(mega.jokerPerRoundBonus || 0) > 0) {
       lines.push(`🃏 +${mega.jokerPerRoundBonus} joker charge${mega.jokerPerRoundBonus === 1 ? "" : "s"} every round`);
     }

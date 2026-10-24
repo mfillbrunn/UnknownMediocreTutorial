@@ -360,7 +360,7 @@
         { id: "questCadence", icon: "❗", title: "Quest Cadence", tier: "epic", type: "quests", maxLevel: 2,
           levels: ["You also get a quest on guess 3 (quests on guesses 2, 3 and 5).", "You also get a quest on guess 1 (quests on guesses 1, 2, 3 and 5)."],
           level: g => upgradeCount(g, "questCadence") },
-        { id: "questPersistReward", icon: "⏳", title: "Lasting Quests", tier: "legendary", type: "quests", maxLevel: 1, description: "If you miss a quest, it stays open for the rest of the stage.", level: g => (g?.state?.megaState?.questPersistsForRound ? 1 : 0) },
+        { id: "questPersistReward", icon: "⏳", title: "Lasting Quests", tier: "epic", type: "quests", maxLevel: 1, description: "A quest you don't finish stays open for the rest of the stage, beside the next quest: up to two at once (tap 1 or 2 to see each).", level: g => (g?.state?.megaState?.questPersistsForRound ? 1 : 0) },
         { id: "allThemesBoss", icon: "🔮", title: "All-Seeing Atlas", tier: "legendary", type: "clues", maxLevel: 1, description: "Every stage starts by showing all of the answer's themes.", level: g => (bossRewardOwned(g, "umtAllThemes") ? 1 : 0) },
         { id: "secondCup", icon: "☕", title: "Second Cup", tier: "epic", type: "safety", maxLevel: 1, description: "Once per run: +1 extra guess when a boss or strict stage would end.", level: g => (bossRewardOwned(g, "secondCup") ? Math.max(1, Number(coachState(g)?.secondCupLevel) || 0) : 0) }
       ]

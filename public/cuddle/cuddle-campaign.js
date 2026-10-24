@@ -734,13 +734,27 @@
     document.querySelectorAll(".cuddle-quest-info-overlay").forEach(element => element.remove());
   }
 
+  // The open quests, in the quest bar's order: this guess's quest, then
+  // one kept open by Lasting Quests. The tab showing (1 or 2) is kept per
+  // set of quests.
+  function openQuests(state) {
+    const quests = [];
+    [state.activeQuest, ...(Array.isArray(state.activeQuests) ? state.activeQuests : [])].forEach(quest => {
+      if (quest && !quests.includes(quest) && !quests.some(other => other.id === quest.id && other.title === quest.title)) quests.push(quest);
+    });
+    return quests;
+  }
+  let questTabs = { key: "", index: 0 };
+
   function openQuestInfo(game, index, source) {
     // A Duel keeps its own stage state (cuddle-expanded-stages.js).
     const state = source === "duel"
       ? game && game.state && game.state.branchMap && game.state.branchMap.expandedDuel && game.state.branchMap.expandedDuel.tileState
       : game && game.state;
     if (!state) return;
-    const quests = [state.activeQuest, ...(Array.isArray(state.activeQuests) ? state.activeQuests.slice(1) : [])].filter(Boolean);
+    const quests = source === "duel"
+      ? [state.activeQuest, ...(Array.isArray(state.activeQuests) ? state.activeQuests.slice(1) : [])].filter(Boolean)
+      : openQuests(state);
     const quest = quests[index];
     if (!quest) return;
     closeQuestInfo();
@@ -761,6 +775,16 @@
     (document.getElementById("cuddleScreen") || document.body).appendChild(overlay);
     overlay.querySelector("[data-close-quest-info]")?.focus();
   }
+
+  // Quest tabs 1 and 2: show the other open quest in the same place.
+  document.addEventListener("click", event => {
+    const tab = event.target.closest && event.target.closest("[data-quest-tab]");
+    if (!tab) return;
+    event.preventDefault();
+    event.stopPropagation();
+    questTabs = { key: questTabs.key, index: Number(tab.dataset.questTab) || 0 };
+    window.dispatchEvent(new CustomEvent("cuddle:campaign-update", { detail: {} }));
+  }, true);
 
   document.addEventListener("click", event => {
     if (event.target.closest("[data-close-quest-info]") || event.target.classList?.contains("cuddle-quest-info-overlay")) {
@@ -1127,21 +1151,34 @@
       // taking a whole row of its own. Concurrent quests (Quest Cadence
       // boss reward) get one span each, wrapping onto their own line if
       // there's no room.
-      const quests = [state.activeQuest, ...(Array.isArray(state.activeQuests) ? state.activeQuests.slice(1) : [])]
-        .filter(Boolean);
-      const questText = quests
-        .map((quest, index) => {
-          const ready = draftMeetsQuest(game, quest);
-          // Tapping a quest opens its full explanation (openQuestInfo).
-          return (
-          `<span class="cuddle-quest-inline${ready ? " is-ready" : ""}" role="button" tabindex="0" data-quest-info="${index}"`
+      // The quest on this guess first, then one kept open by Lasting
+      // Quests (megaState.activeQuests[1]).
+      const quests = openQuests(state);
+      const questKey = quests.map(quest => quest.id).join("|");
+      if (questTabs.key !== questKey) questTabs = { key: questKey, index: 0 };
+      const shown = Math.min(questTabs.index, Math.max(0, quests.length - 1));
+      // Two open: tabs 1 and 2 in front, and the chosen one shown in the
+      // same place. A tab whose quest your word already meets gets a dot.
+      const tabs = quests.length > 1
+        ? `<span class="cuddle-quest-tabs" role="group" aria-label="Open quests">${quests.map((quest, index) =>
+          `<button type="button" class="cuddle-quest-tab${index === shown ? " is-on" : ""}${index !== shown && draftMeetsQuest(game, quest) ? " is-ready" : ""}"`
+          + ` data-quest-tab="${index}" aria-pressed="${index === shown ? "true" : "false"}"`
+          + ` aria-label="Quest ${index + 1}${index === 1 ? " (kept open)" : ""}">${index + 1}</button>`).join("")}</span>`
+        : "";
+      const questText = quests.length ? (() => {
+        const quest = quests[shown];
+        const index = shown;
+        const ready = draftMeetsQuest(game, quest);
+        // Tapping a quest opens its full explanation (openQuestInfo).
+        return (
+          `<span class="cuddle-quest-inline${ready ? " is-ready" : ""}${tabs ? " has-tabs" : ""}" role="button" tabindex="0" data-quest-info="${index}"`
           + ` title="${ready ? "Your word meets this quest. " : ""}Tap for details">`
-          + `<span class="cuddle-quest-tag">${ready ? '<span aria-hidden="true">✓</span> Ready' : `<span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> Quest`}</span>`
+          + tabs
+          + `<span class="cuddle-quest-tag">${ready ? '<span aria-hidden="true">✓</span> Ready' : `<span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> ${index === 1 ? "Kept" : "Quest"}`}</span>`
           + `<span class="cuddle-quest-body"><b>${escapeHtml(quest.title || "Quest")}:</b> <span>${escapeHtml(quest.description)}</span></span>`
           + `</span>`
-          );
-        })
-        .join("");
+        );
+      })() : "";
       // Plain text, deliberately not folded into the theme's pill-chip list
       // (see secretsRemainingInline's comment in cuddle-coach-expansion.js).
       const secretsRemaining = typeof window.CuddleCoachExpansion?.renderSecretsRemaining === "function"

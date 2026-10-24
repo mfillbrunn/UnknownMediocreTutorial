@@ -2465,6 +2465,54 @@
   line-height: 1.3;
 }
 
+/* Lasting Quests: two open quests, tabs 1 and 2 in front of the one
+   shown (cuddle-campaign.js). */
+.cuddle-quest-tabs {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+#cuddleScreen .cuddle-quest-tab {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  min-width: 0;
+  height: 26px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid rgba(246, 201, 86, 0.45);
+  border-radius: 50%;
+  background: transparent;
+  color: #f6c956;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+#cuddleScreen .cuddle-quest-tab:not(.is-on) {
+  box-shadow: none;
+}
+#cuddleScreen .cuddle-quest-tab.is-on {
+  border-color: #f6c956;
+  background: #f6c956;
+  color: #2a1d05;
+  box-shadow: none;
+}
+/* The other quest would be finished by the word you're building. */
+.cuddle-quest-tab.is-ready::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3ecf8e;
+  box-shadow: 0 0 0 2px #1d1929;
+}
+.cuddle-quest-tab:focus-visible { outline: 2px solid #f6c956; outline-offset: 2px; }
+
 .cuddle-quest-tag {
   flex: 0 0 auto;
   padding: 4px 9px;
