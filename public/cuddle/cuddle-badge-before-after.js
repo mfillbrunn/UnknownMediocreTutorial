@@ -123,7 +123,7 @@
       { t: "row", before: [".....", "....."], after: ["..A..", "..g.."] }],
     boldOpener: ["Your first guess must be a real word.", "Your first guess can be any five letters, to test exactly the ones you want.",
       { t: "row", before: ["CRANE", "....."], after: ["RSTLN", "....."] }],
-    goldenOpener: ["Yellows in your first guess stay yellow.", "Every yellow in your first guess moves to its spot and turns green.",
+    goldenOpener: ["Yellows in your first guess stay yellow.", "Every yellow in your first guess moves to its spot and turns green (level 2: first 2 guesses; level 3: first 3).",
       { t: "row", before: ["CRANE", "xyxxy"], after: ["CRANE", "xgxxg"] }],
     mistakeShield: ["An all-grey first guess in a boss costs you a guess.", "You get that guess back.",
       { t: "stat", label: "Guesses left after an all-grey opener", before: "4", after: "5" }],

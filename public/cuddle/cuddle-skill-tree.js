@@ -341,7 +341,7 @@
             "They start 2 guesses later.", "They start 3 guesses later."],
           level: g => powerLevel(g, "fastLane") },
         { id: "goldenOpener", icon: "🌟", title: "Golden Opener", tier: "legendary", type: "clues", maxLevel: 1,
-          description: "Every yellow letter in your first 2 guesses moves to its spot and turns green.",
+          description: "Every yellow letter in your first guess moves to its spot and turns green (level 2: first 2 guesses; level 3: first 3).",
           level: g => powerLevel(g, "goldenOpener") }
       ]
     },
@@ -514,8 +514,8 @@
       ["$50 badge", "$45 badge", "$40 badge"]],
     treasureChest: [3, ["Opens a free Large Pack", "Opens another free Large Pack", "Opens a third free Large Pack"],
       ["1 pack", "2 packs", "3 packs"]],
-    goldenOpener: [2, ["Yellow letters in your first 2 guesses move to their spots", "Yellow letters in your first 3 guesses move to their spots"],
-      ["Guesses 1 and 2", "Guesses 1 to 3"]],
+    goldenOpener: [3, ["Yellow letters in your first guess move to their spots", "Yellow letters in your first 2 guesses move to their spots", "Yellow letters in your first 3 guesses move to their spots"],
+      ["Guess 1", "Guesses 1 and 2", "Guesses 1 to 3"]],
     questReroll: [3, ["Once a stage, swap your quest for a new one for free", "Twice a stage, swap your quest for a new one for free", "3 times a stage, swap your quest for a new one for free"],
       ["1 free swap", "2 free swaps", "3 free swaps"]],
     greenCount: [2, ["A green tile shows how many times its letter is in the answer", "Green and yellow tiles show how many times their letter is in the answer"],
