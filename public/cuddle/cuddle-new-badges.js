@@ -685,7 +685,11 @@
       var entry = history[history.length - 1];
       var solved = Boolean(entry && state.secret && entry.word === state.secret);
       if (!solved) bookQuestChain(this);
-      if (!solved && history.length <= (levelOf(this, "goldenOpener") >= 2 ? 3 : 2) && state.status === "playing" && has(this, "goldenOpener")) {
+      if (!solved && history.length <= Math.min(3, levelOf(this, "goldenOpener"))
+          // Still playing, or on a quest reward screen when this guess
+          // finished a quest (that used to skip the guess).
+          && (state.status === "playing" || state.status === "questReward") && !state.pendingRoundEnd
+          && has(this, "goldenOpener")) {
         var placed = goldenOpener(this, entry);
         if (placed.length) {
           note(this, "Golden Opener: " + placed.map(function say(item) { return item.letter + " goes in position " + (item.index + 1); }).join(", ") + ".");
