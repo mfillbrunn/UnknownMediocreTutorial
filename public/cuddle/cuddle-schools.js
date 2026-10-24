@@ -25,7 +25,9 @@
  *   Squares      I   a yellow on a square pays like a green
  *                II  a yellow or green also sets off the squares beside it
  *                    (cuddle-points-money.js)
- *                III still to come
+ *                III 2 devil squares every stage: a letter not in the
+ *                    answer on one tests every consonant left in the hand
+ *                    (those not in it are thrown out)
  *   Elimination  I   each grey tile +1 point
  *                II  each stage starts with a consonant crossed out
  *                III crossed-out consonants in hand are swapped after a guess
@@ -112,6 +114,8 @@
       // Squares I and II (cuddle-points-money.js).
       case "squaresEven": return rankOf(game, "tile") >= 1 ? 1 : 0;
       case "squaresSpread": return rankOf(game, "tile") >= 2 ? 1 : 0;
+      // Squares III: devil squares a stage (cuddle-points-money.js).
+      case "squaresDevil": return rankOf(game, "tile") >= 3 ? 2 : 0;
       case "shopDiscount": return rankOf(game, "gold") >= 2 ? GOLD_DISCOUNT : 0;
       default: return 0;
     }

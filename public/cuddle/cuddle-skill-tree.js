@@ -394,7 +394,7 @@
     flora: { label: "Cards", color: "#46cf86", blurb: "Special cards in your hand and deck (lucky, idea, wave, Joker) and mulligans.",
       ranks: [4, 9, 15], perks: ["+1 lucky card every stage", "+1 idea card and +1 mulligan every stage", "+2 dead cards every stage, and dead cards turn angel when drawn: tap an angel to send it to heaven for +10 points and a new card"] },
     tile: { label: "Squares", mark: "▦", color: "#9b7bff", blurb: "Special squares on the board, and more from each one.",
-      ranks: [4, 9, 15], perks: ["A yellow on a square pays the same as a green", "A yellow or green also sets off the squares to its left and right", "Still to come"] },
+      ranks: [4, 9, 15], perks: ["A yellow on a square pays the same as a green", "A yellow or green also sets off the squares to its left and right", "2 devil squares every stage: put a letter that's not in the answer on one, and every consonant left in your hand is tested; the ones not in the answer are thrown out"] },
     parchment: { label: "Elimination", color: "#c9ae84", blurb: "Rule letters out and cull them.",
       ranks: [4, 9, 15], perks: ["Each grey tile gives +1 point", "Each stage starts with 1 consonant crossed out", "After each guess, crossed-out consonants in your hand are swapped for new cards"] },
     gold: { label: "Money", color: "#f5cf3a", blurb: "Earn, save and gamble money.",

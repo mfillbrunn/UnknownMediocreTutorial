@@ -18,7 +18,7 @@
     themes: "The theme line above the board: what kind of word the answer is.",
     clues: "Clues above the board: answers still possible, vowel count, a repeated letter, the vowel/consonant pattern, and tested letters.",
     compass: "Compass arrows under a tile: the answer's letter there comes earlier (←) or later (→) in the ABCs.",
-    squares: "Special squares on the board: $ money, ● points, ↻ mulligan, ★ Joker, ? oracle. A green or yellow on one pays out.",
+    squares: "Special squares on the board: $ money, ● points, ↻ mulligan, ★ Joker, ? oracle. A green or yellow on one pays out. (♆ devil squares, from the Squares school, go off on a grey instead.)",
     specialCards: "Special cards in your hand: a Joker (★), an idea card (bulb), a lucky card (clover) and a dead card (skull).",
     luckyCard: "A lucky card: no letter. Keep it in your hand until you solve for points.",
     ideaCard: "An idea card: no letter. Mulligan it away to learn a letter of the answer.",

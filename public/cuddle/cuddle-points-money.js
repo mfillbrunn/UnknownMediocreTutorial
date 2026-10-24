@@ -160,7 +160,7 @@
       + (window.CuddleWorldIdentity ? window.CuddleWorldIdentity.extraSpecialTiles(game) : 0);
     // One tile per row at most, so they spread across the window instead
     // of stacking into a single lucky guess.
-    return rows
+    var placed = rows
       .slice(0, Math.min(count, rows.length))
       .map(function place(chosenRow) {
         return {
@@ -172,7 +172,52 @@
           label: ""
         };
       })
-      .sort(function byRow(a, b) { return a.row - b.row; });
+      ;
+    // Squares III (cuddle-schools.js): devil squares, on top of the rest
+    // (they may share a guess with another square, never its tile).
+    var devils = window.CuddleSchools && typeof window.CuddleSchools.perk === "function"
+      ? Number(window.CuddleSchools.perk(game, "squaresDevil")) || 0 : 0;
+    for (var d = 0, tries = 0; d < devils && tries < 40; tries += 1) {
+      var spot = { row: Math.floor(random() * threshold), col: Math.floor(random() * TILE_COLUMNS) };
+      if (placed.some(function taken(tile) { return tile.row === spot.row && tile.col === spot.col; })) continue;
+      placed.push({ row: spot.row, col: spot.col, kind: "devil", paid: false, payout: 0, label: "" });
+      d += 1;
+    }
+    return placed.sort(function byRow(a, b) { return a.row - b.row || a.col - b.col; });
+  }
+
+  // A devil square set off (a letter not in the answer on it): after the
+  // guess, every consonant that was held back from it (in the hand, not in
+  // the word; `held` lists those card ids) is tested. Those not in the
+  // answer are ruled out and thrown away, as if played; those in it turn
+  // yellow and stay. The hand then refills.
+  function devilTest(game, held) {
+    var state = game.state;
+    var secret = String(state.secret || "").toUpperCase();
+    var letters = [];
+    (state.hand || []).forEach(function each(card) {
+      if (!card || held.indexOf(card.id) === -1) return;
+      var letter = String(card && card.glyph || "").toUpperCase();
+      if (!/^[A-Z]$/.test(letter) || "AEIOU".indexOf(letter) !== -1 || letters.indexOf(letter) !== -1) return;
+      if (card.source === "joker" || (typeof game.isInfiniteCard === "function" && game.isInfiniteCard(card))) return;
+      letters.push(letter);
+    });
+    if (!letters.length) return "Devil square: no consonants left in your hand to test.";
+    var present = letters.filter(function inWord(letter) { return secret.indexOf(letter) !== -1; });
+    var absent = letters.filter(function out(letter) { return secret.indexOf(letter) === -1; });
+    if (present.length) state.knownPresent = Array.from(new Set((state.knownPresent || []).concat(present))).sort();
+    if (absent.length) {
+      state.knownAbsent = Array.from(new Set((state.knownAbsent || []).concat(absent))).sort();
+      var ids = state.hand.filter(function gone(card) {
+        return card && card.source !== "joker" && absent.indexOf(String(card.glyph || "").toUpperCase()) !== -1;
+      }).map(function id(card) { return card.id; });
+      if (ids.length && typeof game._discardCards === "function") game._discardCards(ids);
+    }
+    if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
+    if (typeof game.drawToHandLimit === "function") game.drawToHandLimit();
+    return "Devil square: tested " + letters.join(", ")
+      + (absent.length ? "; " + absent.join(", ") + " not in the answer, thrown out" : "")
+      + (present.length ? "; " + present.join(", ") + " in it" : "");
   }
 
   // Pays every special square on `row` from this guess's TRUE colours -- not
@@ -204,6 +249,15 @@
     };
     tiles.forEach(function pay(tile) {
       if (!tile || tile.paid || Number(tile.row) !== row) return;
+      // A devil square goes off on a letter that's NOT in the answer.
+      if (tile.kind === "devil") {
+        tile.paid = true;
+        tile.hit = feedback[Number(tile.col)] === "grey";
+        tile.payout = tile.hit ? 1 : 0;
+        tile.label = tile.hit ? "Test" : "";
+        if (tile.hit) state.pendingDevilTests = Math.max(0, Number(state.pendingDevilTests) || 0) + 1;
+        return;
+      }
       var result = lit(Number(tile.col));
       var hit = Boolean(result);
       var green = result === "green" || (hit && even);
@@ -251,6 +305,7 @@
     var state = this.state;
     if (state) {
       state.pendingTileHints = 0;
+      state.pendingDevilTests = 0;
       state.pendingTileNotes = [];
       // Every stage rolls them, boss fights included.
       state.cuddleMoneyTiles = rollSpecialTiles(this);
@@ -315,6 +370,11 @@
 
   var originalSubmitDraft = proto.submitDraft;
   proto.submitDraft = function submitDraftWithSpecialTiles() {
+    var before = this.state;
+    // The cards held back from this guess, for a devil square's test.
+    var held = before && Array.isArray(before.hand) ? before.hand.filter(function kept(card) {
+      return card && (before.draft || []).indexOf(card.id) === -1;
+    }).map(function id(card) { return card.id; }) : [];
     var result = originalSubmitDraft.apply(this, arguments);
     var state = this.state;
     if (!state) return result;
@@ -322,6 +382,10 @@
     state.pendingTileNotes = [];
     var hints = Math.max(0, Number(state.pendingTileHints) || 0);
     state.pendingTileHints = 0;
+    var devils = Math.max(0, Number(state.pendingDevilTests) || 0);
+    state.pendingDevilTests = 0;
+    // A devil test while the hand is still in play (not on a solve).
+    if (devils > 0 && (state.status === "playing" || state.status === "questReward")) notes.push(devilTest(this, held));
     // Hints only mean something while the round is still being played. A
     // guess that also completes a quest opens the quest reward first: the
     // hint waits for it (revealTileHints, after chooseQuestReward) instead
