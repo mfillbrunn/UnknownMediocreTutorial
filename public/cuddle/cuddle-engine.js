@@ -1244,6 +1244,8 @@
     wouldDraftCompleteQuest() {
       const quest = this.state.activeQuest;
       if (!quest) return false;
+      // A late guess earns nothing, quests included (submitDraft).
+      if (this.state.guessesUsed + 1 > this._solveGuessThreshold()) return false;
       const word = this.getDraftWord();
       if (word.length !== 5 || word.includes(" ")) return false;
       const feedback = evaluateFeedback(this.state.secret, word);
