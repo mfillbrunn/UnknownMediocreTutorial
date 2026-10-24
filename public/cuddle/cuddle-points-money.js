@@ -189,11 +189,24 @@
     if (!tiles || !Array.isArray(feedback)) return 0;
     var points = 0;
     var notes = [];
+    // Squares school (cuddle-schools.js): rank I pays a yellow like a
+    // green; rank II lets a yellow or green set off the squares beside it.
+    var schools = window.CuddleSchools;
+    var even = schools && typeof schools.perk === "function" && schools.perk(game, "squaresEven") > 0;
+    var spread = schools && typeof schools.perk === "function" && schools.perk(game, "squaresSpread") > 0;
+    var lit = function lit(col) {
+      var own = feedback[col];
+      if (own === "green" || own === "yellow") return own;
+      if (!spread) return null;
+      var sides = [feedback[col - 1], feedback[col + 1]];
+      if (sides.indexOf("green") !== -1) return "green";
+      return sides.indexOf("yellow") !== -1 ? "yellow" : null;
+    };
     tiles.forEach(function pay(tile) {
       if (!tile || tile.paid || Number(tile.row) !== row) return;
-      var result = feedback[Number(tile.col)];
-      var hit = result === "green" || result === "yellow";
-      var green = result === "green";
+      var result = lit(Number(tile.col));
+      var hit = Boolean(result);
+      var green = result === "green" || (hit && even);
       var kind = tile.kind || "money";
       tile.paid = true;
       tile.hit = hit;

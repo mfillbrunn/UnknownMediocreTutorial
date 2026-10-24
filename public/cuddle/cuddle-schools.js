@@ -1,13 +1,13 @@
 /* Cuddle: schools.
  *
  * Every badge belongs to a school (cuddle-skill-tree.js SCHOOLS): Speed,
- * Hints, Tiles, Elimination, Money, Quests or Restraint (a few general
- * badges belong to none). The ids are older names: flint, prism, flora,
- * parchment, gold, brass, pearl. Each level of a badge adds its rarity's
- * weight to its school (common 1, rare 2, epic 3, legendary 5); a
- * school's points unlock its three ranks (4 / 9 / 15, Restraint 3 / 6 /
- * 9), and each rank adds a perk. The ranks replaced the old two-badge
- * combos.
+ * Hints, Cards, Squares, Elimination, Money, Quests or Restraint (a few
+ * general badges belong to none). The ids are older names: flint, prism,
+ * flora, tile, parchment, gold, brass, pearl. Each level of a badge adds
+ * its rarity's weight to its school (common 1, rare 2, epic 3, legendary
+ * 5); a school's points unlock its three ranks (4 / 9 / 15, Restraint
+ * 3 / 6 / 9), and each rank adds a perk. The ranks replaced the old
+ * two-badge combos.
  *
  *   Speed        I   solve by guess 3: +10 points
  *                II  solve by guess 3: +1 mulligan next stage
@@ -22,6 +22,10 @@
  *                III +2 dead cards every stage, and every dead card you
  *                    draw turns angel; tap an angel and it flies to heaven
  *                    for +10 points, and a new card is drawn
+ *   Squares      I   a yellow on a square pays like a green
+ *                II  a yellow or green also sets off the squares beside it
+ *                    (cuddle-points-money.js)
+ *                III still to come
  *   Elimination  I   each grey tile +1 point
  *                II  each stage starts with a consonant crossed out
  *                III crossed-out consonants in hand are swapped after a guess
@@ -105,6 +109,9 @@
       // Cards III: 2 more dead cards a stage, and dead cards turn angel
       // when drawn (cuddle-burdens.js).
       case "angelCards": return rankOf(game, "flora") >= 3 ? 2 : 0;
+      // Squares I and II (cuddle-points-money.js).
+      case "squaresEven": return rankOf(game, "tile") >= 1 ? 1 : 0;
+      case "squaresSpread": return rankOf(game, "tile") >= 2 ? 1 : 0;
       case "shopDiscount": return rankOf(game, "gold") >= 2 ? GOLD_DISCOUNT : 0;
       default: return 0;
     }

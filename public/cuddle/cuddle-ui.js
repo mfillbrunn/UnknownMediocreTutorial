@@ -915,7 +915,7 @@
         let bursting = false;
         let burstShift = 0;
         if (moneyTile && moneyTile.paid && moneyTile.payout > 0 && history
-            && row === state.history.length - 1 && (result === "green" || result === "yellow")) {
+            && row === state.history.length - 1 && (result === "green" || result === "yellow" || moneyTile.hit)) {
           if (!specialBurstStart.has(burstKey)) specialBurstStart.set(burstKey, Date.now());
           burstShift = Date.now() - specialBurstStart.get(burstKey);
           bursting = burstShift < SPECIAL_BURST_MS;
@@ -924,7 +924,8 @@
           ? ""
           : ` is-special-tile is-special-${tileKind}`
             + (moneyTile.paid ? (moneyTile.payout > 0 ? " is-special-won" : " is-special-missed") : "")
-            + (bursting ? ` is-special-burst is-burst-${result}` : "");
+            // A square set off from beside it (Squares II) bursts gold.
+            + (bursting ? ` is-special-burst is-burst-${result === "green" ? "green" : "yellow"}` : "");
         // data-special draws the unplayed tile's watermark; once paid, the
         // same attribute carries the payout ("+$4", "+10", "Hint") instead.
         const moneyBadge = !moneyTile || (moneyTile.paid && !moneyTile.payout)

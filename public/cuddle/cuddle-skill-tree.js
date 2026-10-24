@@ -377,8 +377,10 @@
   ]);
 
   // Schools. Every badge belongs to one school (or none); the ids are
-  // older names (flint = Speed, prism = Hints, flora = Tiles, parchment =
-  // Elimination, gold = Money, brass = Quests, pearl = Restraint);
+  // older names (flint = Speed, prism = Hints, flora = Cards, tile =
+  // Squares, parchment = Elimination, gold = Money, brass = Quests, pearl =
+  // Restraint); a school's mark on its crest is its label's first letter
+  // unless it has its own (Squares and Speed would both be S);
   // each level of a badge adds its rarity's weight to its school, and a
   // school's points unlock its ranks. The perks themselves live in
   // cuddle-schools.js.
@@ -389,8 +391,10 @@
       ranks: [4, 9, 15], perks: ["Solve by guess 3: +10 points", "Solve by guess 3: +1 mulligan next stage", "Solve by guess 3: your next stage starts with 1 letter placed"] },
     prism: { label: "Hints", color: "#58a8ff", blurb: "Learn about the answer before you guess it.",
       ranks: [4, 9, 15], perks: ["One tile of your first guess shows an arrow (earlier or later in the alphabet)", "After your 2nd guess, 1 letter turns yellow", "Once per stage, drag a consonant to the Test pad to learn if it's in the answer"] },
-    flora: { label: "Cards", color: "#46cf86", blurb: "Special cards in your hand and deck (lucky, idea, wave, Joker), special squares on the board, and mulligans.",
+    flora: { label: "Cards", color: "#46cf86", blurb: "Special cards in your hand and deck (lucky, idea, wave, Joker) and mulligans.",
       ranks: [4, 9, 15], perks: ["+1 lucky card every stage", "+1 idea card and +1 mulligan every stage", "+2 dead cards every stage, and dead cards turn angel when drawn: tap an angel to send it to heaven for +10 points and a new card"] },
+    tile: { label: "Squares", mark: "▦", color: "#9b7bff", blurb: "Special squares on the board, and more from each one.",
+      ranks: [4, 9, 15], perks: ["A yellow on a square pays the same as a green", "A yellow or green also sets off the squares to its left and right", "Still to come"] },
     parchment: { label: "Elimination", color: "#c9ae84", blurb: "Rule letters out and cull them.",
       ranks: [4, 9, 15], perks: ["Each grey tile gives +1 point", "Each stage starts with 1 consonant crossed out", "After each guess, crossed-out consonants in your hand are swapped for new cards"] },
     gold: { label: "Money", color: "#f5cf3a", blurb: "Earn, save and gamble money.",
@@ -406,9 +410,10 @@
   const SCHOOL_MEMBERS = {
     flint: ["storybookStart", "earlySolveBoost", "bigOpener", "momentum", "colourTrade", "boldOpener", "encore", "vowelBounty", "fastLane", "goldenOpener"],
     prism: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "yellowHint", "alphabet-compass",
-      "oracleTiles", "lastLight", "allThemesBoss", "revealGreen", "autopilot"],
-    flora: ["luckyClover", "fishHook", "ideaTiles", "waveTiles", "fullCircle", "jokerCache", "jokerCacheLarge", "jokerTiles", "jokerLens", "mulliganTiles",
-      "treasureMap", "bonusSquares", "extraMulligans", "mulliganSize", "handSizeBoost", "doubleMulligans", "biggerMulligans"],
+      "lastLight", "allThemesBoss", "revealGreen", "autopilot"],
+    flora: ["luckyClover", "fishHook", "ideaTiles", "waveTiles", "fullCircle", "jokerCache", "jokerCacheLarge", "jokerLens",
+      "extraMulligans", "mulliganSize", "handSizeBoost", "doubleMulligans", "biggerMulligans"],
+    tile: ["treasureMap", "bonusSquares", "mulliganTiles", "jokerTiles", "oracleTiles"],
     parchment: ["greyscale", "strikeThrough", "cullOne", "cullRare", "consonantSweep", "freeVowelSweep",
       "coachPossibleAnswers", "coachMeterThreshold", "coachMeterReward"],
     gold: ["pickpocket", "haggler", "wideChoice", "treasureHunter", "rainyDay", "doubleDown", "highRoller", "lastStand",
