@@ -185,8 +185,8 @@
     // ---- Money --------------------------------------------------------------
     wideChoice: ["A reward screen shows 3 cards.", "It shows more cards to choose from.",
       { t: "stat", label: "Reward cards to pick from", before: "3", after: "4" }],
-    rewardEcho: ["The next reward counts once.", "The next reward you take counts twice.",
-      { t: "text", before: "Bigger Hand: +1 consonant", after: "Bigger Hand twice: +2 consonants" }],
+    rewardEcho: ["The next badge you pick comes at level 1.", "The next badge you pick comes at its top level.",
+      { t: "text", before: "Bigger Hand: +1 consonant", after: "Bigger Hand level 3: +3 consonants" }],
     rainyDay: ["Money you keep just sits there.", "After each stage, your money earns interest.",
       { t: "stat", label: "Money after a stage, from $100", before: "$100", after: "$105" }],
     haggler: ["Refreshing reward cards costs $3, then $5, then $7.", "Refreshes cost less: $0, then $1, then $3.",

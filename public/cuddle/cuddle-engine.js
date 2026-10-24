@@ -4393,7 +4393,7 @@
     key: "rewardEcho",
     icon: "🔁",
     title: "Reward Echo",
-    description: "The next round reward you pick is applied twice."
+    description: "The next badge you pick on a reward screen comes at its top level."
   });
 
   // Fields safe to diff-and-replay: pure accumulators everywhere they're
@@ -4437,7 +4437,7 @@
       state.upgradeChoices = [];
       state.upgradePhase = null;
       state.upgradeMilestone = null;
-      state.lastMessage = "Reward Echo armed: your next round reward will be applied twice.";
+      state.lastMessage = "Reward Echo armed: the next badge you pick comes at its top level.";
       this._advanceRound();
       this.save();
       return { ok: true };

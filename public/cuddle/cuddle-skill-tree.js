@@ -143,7 +143,7 @@
         { id: "greyscale", icon: "⬛", title: "Greyscale", tier: "common", type: "points", maxLevel: 3,
           levels: ["Each grey tile (a letter not in the word) gives +0.75 points.", "Each grey tile gives +1.5 points.", "Each grey tile gives +2.25 points."],
           level: g => Number(g?.state?.balanceRewardCounts?.greyscale) || 0 },
-        { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", type: "money", maxLevel: 1, description: "The next reward you pick counts twice.", level: g => ledgerCount(g, "rewardEcho") },
+        { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", type: "money", maxLevel: 1, description: "The next badge you pick on a reward screen comes at its top level.", level: g => ledgerCount(g, "rewardEcho") },
         { id: "greenCount", icon: "🔢", title: "Precise Green", tier: "rare", type: "clues", maxLevel: 1, description: "A green tile also shows how many times its letter is in the answer.",
           level: g => Math.max(Number(g?.state?.megaState?.greenCountLevel) || 0, g?.state?.megaState?.greenCountUnlocked ? 1 : 0) },
         { id: "surprise-assignment", icon: "📜", title: "Surprise Assignment", tier: "rare", type: "quests", maxLevel: 3,
@@ -544,7 +544,7 @@
       ["2 vowels", "3 vowels"]],
     secondCup: [2, ["Once a run: +1 guess when a boss or strict stage would end", "Twice a run: +1 guess when a boss or strict stage would end"],
       ["Once a run", "Twice a run"]],
-    rewardEcho: [3, ["The next reward you pick counts twice", "Another reward you pick counts twice", "A third reward you pick counts twice"],
+    rewardEcho: [3, ["The next badge you pick comes at its top level", "Another badge you pick comes at its top level", "A third badge you pick comes at its top level"],
       ["1 echo", "2 echoes", "3 echoes"]]
   };
   for (const branch of BRANCHES) {

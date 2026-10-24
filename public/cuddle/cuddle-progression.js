@@ -116,7 +116,7 @@
     earlySolveBoost: "+5 per spare guess",
     colourTrade: "Greens worth more",
     greyscale: "Greys worth more",
-    rewardEcho: "Next reward counts twice",
+    rewardEcho: "Next badge at top level",
     greenCount: "Greens show count",
     "surprise-assignment": "+1 surprise quest",
     treasureMap: "+1 special square",
