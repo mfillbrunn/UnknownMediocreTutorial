@@ -3,7 +3,7 @@
  * After a boss falls, the first time the player stands on the new world's
  * map, a short scene plays before the world's intro (cuddle-world-intro.js
  * waits for it): the old world's landscape slides away, a little traveller
- * hops along the road, and the new world's landscape comes in with its
+ * (the Guesser) walks along the road, and the new world's landscape comes in with its
  * name. Each landscape is drawn from its world's own colours and scenery
  * (cuddle-worlds.js themes), so every crossing looks different. The
  * victory music carries on through it (or plays again if it had ended).
@@ -152,7 +152,12 @@
     layer.style.setProperty("--wt-from", from.accent || "#ffffff");
     layer.style.setProperty("--wt-to", to.accent || "#ffffff");
     layer.innerHTML = '<div class="umt-wt-strip">' + scene(from, "a") + scene(to, "b") + "</div>"
-      + '<div class="umt-wt-traveller" aria-hidden="true"><span></span></div>'
+      // The Guesser from multiplayer (index.html's #icon-role-guesser),
+      // walking like the win screen's parade (cuddle-end-parade.css).
+      + '<div class="umt-wt-traveller" aria-hidden="true"><span class="umt-parade-walker is-guesser">'
+      + '<span class="umt-parade-body"><svg viewBox="0 0 120 120"><use href="#icon-role-guesser"></use></svg></span>'
+      + '<i class="umt-parade-foot is-back"></i><i class="umt-parade-foot is-front"></i><i class="umt-parade-dust"></i>'
+      + "</span></div>"
       + '<div class="umt-wt-text">'
       + '<p class="umt-wt-from"><span>World ' + index + " cleared</span><b>" + esc(from.name) + "</b></p>"
       + '<p class="umt-wt-to"><span>World ' + (index + 1) + "</span><b>" + esc(to.name) + "</b>"

@@ -42,25 +42,22 @@
   width: 100%;
   height: min(60vw, 60vh);
 }
-/* The traveller hops along the road while the land slides by. */
+/* The traveller (the Guesser) walks along the road while the land
+   slides by. */
 .umt-wt-traveller {
   position: absolute;
   left: 50%;
   /* On the road: 26/240 of the landscape band up from the bottom. */
-  bottom: calc(min(60vw, 60vh) * 0.108 - 12px);
-  width: 34px;
-  height: 34px;
-  margin-left: -17px;
+  bottom: calc(min(60vw, 60vh) * 0.108 - 4px);
+  width: 52px;
+  height: 60px;
+  margin-left: -26px;
   animation: umt-wt-walk 3200ms linear 900ms both;
 }
-.umt-wt-traveller span {
-  display: block;
+.umt-wt-traveller .umt-parade-walker {
   width: 100%;
   height: 100%;
-  border-radius: 50% 50% 46% 46%;
-  background: radial-gradient(circle at 35% 35%, #ffffff, #ffd7e8 60%, #f29bc4);
-  box-shadow: 0 0 18px var(--wt-to, #ffffff);
-  animation: umt-wt-hop 400ms ease-in-out 900ms 8 both;
+  filter: drop-shadow(0 0 10px var(--wt-to, #ffffff));
 }
 .umt-wt-text {
   position: absolute;
@@ -117,7 +114,6 @@
 @keyframes umt-wt-out { to { opacity: 0; } }
 @keyframes umt-wt-slide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes umt-wt-walk { 0% { transform: translateX(-30vw); } 50% { transform: translateX(0); } 100% { transform: translateX(10vw); } }
-@keyframes umt-wt-hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
 @keyframes umt-wt-fade-in { from { opacity: 0; transform: translateY(10px); } }
 @keyframes umt-wt-fade-out { to { opacity: 0; transform: translateY(-10px); } }
 
