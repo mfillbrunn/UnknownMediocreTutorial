@@ -1301,15 +1301,12 @@
     }
     return `
       <section class="cuddle-hand-panel cuddle-preset-pick" aria-labelledby="cuddlePresetTitle">
-        <div class="cuddle-preset-head">
-          <div class="cuddle-preset-top"><span class="cuddle-preset-kicker">${early ? "Preset Trial · answer early" : "Preset Trial · last guess"}</span>
-          <button type="button" class="cuddle-preset-hide" data-action="preset-hide" aria-label="Hide the list to see your guesses">Hide list</button></div>
-          <h3 id="cuddlePresetTitle">The answer is one of these ${pick.words.length} words</h3>
-          <p>${early ? "Lock in your answer now? It's your final answer: right passes the trial, wrong ends the run." : "Check each word against your guesses above. A wrong pick ends the run."}
-            Tap ✕ to cross out a word that can't be it${struck.length ? ` (${left} left)` : ""}.</p>
+        <div class="cuddle-preset-top">
+          <h3 id="cuddlePresetTitle">Pick a word</h3>
+          <button type="button" class="cuddle-preset-hide" data-action="preset-hide" aria-label="Hide the list to see your guesses">Hide list</button>
         </div>
         <div class="cuddle-preset-words">${words}</div>
-        <button type="button" class="cuddle-btn cuddle-btn-primary cuddle-preset-lock" data-action="preset-lock"${chosen ? "" : " disabled"}>${chosen ? `Lock in ${escapeHtml(chosen)}` : "Pick a word"}</button>
+        <button type="button" class="cuddle-btn cuddle-btn-primary cuddle-preset-lock" data-action="preset-lock"${chosen ? "" : " disabled"}>${chosen ? `Lock in ${escapeHtml(chosen)}` : "Lock in a word"}</button>
         ${early ? `<button type="button" class="cuddle-btn cuddle-btn-ghost cuddle-preset-back" data-action="preset-back">Keep guessing</button>` : ""}
       </section>`;
   }

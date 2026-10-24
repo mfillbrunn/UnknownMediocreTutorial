@@ -170,11 +170,11 @@ button.umt-clue-word.is-out {
 }
 .umt-clue-answer:focus-visible { outline: 2px solid #d5a6ff; outline-offset: 2px; }
 
-/* The pick: each word with a cross-out button on its left. The word list
-   scrolls inside the panel, so the board and its feedback stay in view
-   above it. */
+/* The pick: each word with a cross-out button on its left. The list gets
+   most of the screen (the board above shrinks; "Hide list" brings the
+   guesses back), and scrolls inside the panel when it's longer. */
 .cuddle-preset-pick {
-  max-height: min(54vh, 460px);
+  max-height: min(74vh, 680px);
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
 .cuddle-preset-pick .cuddle-preset-words {
