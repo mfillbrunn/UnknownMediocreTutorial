@@ -204,7 +204,20 @@
     "cleanSlate", "ascetic", "questMastery", "overtime", "questChain", "questScout", "questClue", "blackMarket", "treasureChest",
     "insertCoin", "goldenLedger", "fastLane", "goldenOpener",
     // cuddle-copilot.js
-    "autopilot"];
+    "autopilot",
+    // Joker Lens: drawn in cuddle-ui.js, cycled in cuddle-new-badges.js
+    "jokerLens"];
+
+  // Powers only offered once they'd do something.
+  var OFFER_WHEN = {
+    // A way to get Jokers.
+    jokerLens: function hasJokers(game) {
+      var mega = game.state && game.state.megaState;
+      return Boolean(mega && (mega.hasJokerUnlocked || Number(mega.jokerCharges) > 0))
+        || ["jokerCache", "jokerCacheLarge", "jokerTiles"].some(function held(id) { return levelOf(game, id) > 0; })
+        || (game.state.hand || []).some(function joker(card) { return card && card.source === "joker"; });
+    }
+  };
 
   function powerCard(id) {
     var registry = tree();
@@ -238,6 +251,7 @@
     NEW_POWERS.forEach(function add(id) {
       var node = registry && registry.findNode(id);
       if (!node || levelOf(game, id) >= node.maxLevel) return;
+      if (OFFER_WHEN[id] && !OFFER_WHEN[id](game)) return;
       if (list.some(function same(item) { return item && item.id === id; })) return;
       var card = powerCard(id);
       if (card) list.push(card);
@@ -460,7 +474,7 @@
     { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "Get +10 points right now." },
     { id: "umtFishingLine", icon: "🪝", title: "Fishing Line", description: "Twice this stage, take a card back from your discard pile (tap the hook on your deck)." },
     // Only with the badge that adds them (needs), and then always offered.
-    { id: "umtOvertime", icon: "⏱️", title: "Overtime", needs: "overtime", noDuel: true,
+    { id: "umtOvertime", icon: "⏱️", title: "One More Guess", needs: "overtime", noDuel: true,
       description: "One more guess this stage: a boss gives you one more try; elsewhere the late-guess cost starts a guess later." },
     { id: "umtClue", icon: "🔍", title: "Clue", needs: "questClue",
       description: "A yellow hint: a letter that's in the answer.",

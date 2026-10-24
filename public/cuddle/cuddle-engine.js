@@ -1244,6 +1244,8 @@
     wouldDraftCompleteQuest() {
       const quest = this.state.activeQuest;
       if (!quest) return false;
+      // A late guess earns nothing, quests included (submitDraft).
+      if (this.state.guessesUsed + 1 > this._solveGuessThreshold()) return false;
       const word = this.getDraftWord();
       if (word.length !== 5 || word.includes(" ")) return false;
       const feedback = evaluateFeedback(this.state.secret, word);
@@ -4946,37 +4948,77 @@
   // ------------------------------------------------------------------
   const JOKER_GLYPH = "★";
 
-  function resolveJokerWord(game, rawWord) {
-    if (!rawWord.includes(JOKER_GLYPH)) return null;
+  // Every letter that turns this word into a real one, best tier first:
+  // never tried this stage, then known present, then known absent.
+  function jokerOptions(game, rawWord) {
+    if (!rawWord.includes(JOKER_GLYPH)) return [];
     const removed = new Set(game.state.removedLetters || []);
     const tried = new Set();
     (game.state.history || []).forEach(entry => {
       String(entry.word || "").split("").forEach(letter => tried.add(letter));
     });
-    const tierUnchosen = [];
-    const tierKnown = [];
-    const tierExhausted = [];
+    const tiers = [[], [], []];
     LETTERS.forEach(letter => {
       if (removed.has(letter)) return;
-      if (!tried.has(letter)) {
-        tierUnchosen.push(letter);
-        return;
+      let tier = 0;
+      if (tried.has(letter)) {
+        const status = game.getCardKnowledgeStatus(letter);
+        if (status === "yellow" || status === "green") tier = 1;
+        else if (status === "red") tier = 2;
+        else return;
       }
-      const status = game.getCardKnowledgeStatus(letter);
-      if (status === "yellow" || status === "green") tierKnown.push(letter);
-      else if (status === "red") tierExhausted.push(letter);
+      const candidateWord = rawWord.split("").map(ch => (ch === JOKER_GLYPH ? letter : ch)).join("");
+      if (!game.guessSet.has(candidateWord)) return;
+      if ([...removed].some(l => candidateWord.includes(l))) return;
+      tiers[tier].push({ letter, word: candidateWord, tier });
     });
-    for (const tier of [tierUnchosen, tierKnown, tierExhausted]) {
-      const candidates = shuffle(tier, game.random);
-      for (const letter of candidates) {
-        const candidateWord = rawWord.split("").map(ch => (ch === JOKER_GLYPH ? letter : ch)).join("");
-        if (!game.guessSet.has(candidateWord)) continue;
-        if (removed.has(letter) || [...removed].some(l => candidateWord.includes(l))) continue;
-        return { letter, word: candidateWord };
-      }
-    }
-    return null;
+    return tiers[0].concat(tiers[1], tiers[2]);
   }
+
+  // The letter chosen for each draft word on this guess, so the same word
+  // always gets the same letter: taking tiles out and back, or changing
+  // the word and returning to it, doesn't reroll it. Reset each guess.
+  function jokerPins(game) {
+    const key = `${game.state.secret || ""}:${(game.state.history || []).length}`;
+    let pins = game.state.umtJokerPins;
+    if (!pins || pins.key !== key || !pins.picks) pins = game.state.umtJokerPins = { key, picks: {} };
+    return pins;
+  }
+
+  function resolveJokerWord(game, rawWord) {
+    const options = jokerOptions(game, rawWord);
+    if (!options.length) return null;
+    const pins = jokerPins(game);
+    const pinned = options.find(option => option.letter === pins.picks[rawWord]);
+    if (pinned) return { letter: pinned.letter, word: pinned.word };
+    // A random letter from the best tier, kept from now on.
+    const best = options.filter(option => option.tier === options[0].tier);
+    const pick = shuffle(best, game.random)[0];
+    pins.picks[rawWord] = pick.letter;
+    return { letter: pick.letter, word: pick.word };
+  }
+
+  // For Joker Lens (cuddle-new-badges.js): the letter the Joker in the
+  // draft would become and how many letters would work.
+  CuddleGame.prototype.jokerPreview = function jokerPreview() {
+    const rawWord = this.getDraftWord();
+    if (rawWord.length !== 5 || !rawWord.includes(JOKER_GLYPH)) return null;
+    const options = jokerOptions(this, rawWord);
+    const chosen = resolveJokerWord(this, rawWord);
+    return chosen ? { letter: chosen.letter, word: chosen.word, count: options.length } : null;
+  };
+  // Joker Lens level 2: move the draft's Joker on to the next letter that
+  // works; submitting plays whichever is showing.
+  CuddleGame.prototype.cycleJoker = function cycleJoker() {
+    const rawWord = this.getDraftWord();
+    if (rawWord.length !== 5 || !rawWord.includes(JOKER_GLYPH)) return null;
+    const options = jokerOptions(this, rawWord);
+    if (options.length < 2) return this.jokerPreview();
+    const pins = jokerPins(this);
+    const at = options.findIndex(option => option.letter === pins.picks[rawWord]);
+    pins.picks[rawWord] = options[(at + 1) % options.length].letter;
+    return this.jokerPreview();
+  };
 
   // The letter a Joker in this word would become ({ letter, word } or null),
   // for screens that build words outside submitDraft (the Word Duel).
@@ -5400,7 +5442,9 @@
         mega.activeQuests.push(extra);
       }
     } else if (!this.state.activeQuest) {
-      mega.activeQuests = [];
+      // No quest on this guess; a lasting one (Lasting Quests) stays open.
+      const lasting = mega.questPersistsForRound ? mega.activeQuests.slice(1).filter(Boolean) : [];
+      mega.activeQuests = lasting.length ? [null].concat(lasting) : [];
     }
     this.state.activeQuests = mega.activeQuests.filter(Boolean).slice();
   };
@@ -5604,14 +5648,13 @@
 
     const entry = this.state.history[this.state.history.length - 1];
 
-    // Lasting Quests: a missed quest stays up for the rest of the stage.
-    // The base engine clears the primary quest after every guess, and only
-    // the extra concurrent quests below were being kept -- so with the usual
-    // single quest the reward did nothing.
-    if (mega.questPersistsForRound && primaryQuestBefore && entry && !entry.questComplete
-        && this.state.status === "playing") {
-      this.state.activeQuest = primaryQuestBefore;
-    }
+    // Lasting Quests: a missed quest stays open for the rest of the stage,
+    // beside the next one rather than in its place -- it moves to the
+    // second slot (mega.activeQuests[1]), so new quests still come on
+    // their guesses and two can be open at once. The second slot holds the
+    // latest missed quest.
+    const lastingMissed = mega.questPersistsForRound && primaryQuestBefore && entry && !entry.questComplete
+      && this.state.status === "playing" && !this.isBossRound() ? primaryQuestBefore : null;
 
     if (jokerLetter && entry) {
       entry.jokerLetter = jokerLetter;
@@ -5679,9 +5722,10 @@
           remaining.push(quest);
         }
       });
-      mega.activeQuests = [this.state.activeQuest || null, ...remaining].filter((quest, index) => index === 0 || quest);
+      const kept = lastingMissed ? [lastingMissed] : remaining.slice(-1);
+      mega.activeQuests = [this.state.activeQuest || null, ...kept];
     } else {
-      mega.activeQuests[0] = this.state.activeQuest || null;
+      mega.activeQuests = [this.state.activeQuest || null].concat(lastingMissed ? [lastingMissed] : mega.activeQuests.slice(1).filter(Boolean));
     }
     this.state.activeQuests = mega.activeQuests.filter(Boolean).slice();
 
@@ -5763,7 +5807,7 @@
       lines.push(`Difficulty: ${mega.difficulty === "easy" ? "Educational" : mega.difficulty[0].toUpperCase() + mega.difficulty.slice(1)}`);
     }
     if (mega.extraGuesses) lines.push(`+${mega.extraGuesses} guess${mega.extraGuesses === 1 ? "" : "es"} every round`);
-    if (mega.questPersistsForRound) lines.push("Missed quests stay active for the rest of the stage");
+    if (mega.questPersistsForRound) lines.push("Missed quests stay open for the rest of the stage, beside the next one");
     if (Number(mega.jokerPerRoundBonus || 0) > 0) {
       lines.push(`🃏 +${mega.jokerPerRoundBonus} joker charge${mega.jokerPerRoundBonus === 1 ? "" : "s"} every round`);
     }

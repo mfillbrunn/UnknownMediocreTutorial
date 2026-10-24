@@ -620,7 +620,7 @@
       id: "questPersistReward",
       icon: "⏳",
       title: "Lasting Quests",
-      description: "A quest you don't complete stays active for the rest of the stage instead of expiring after one guess, boss fights included."
+      description: "A quest you don't finish stays open for the rest of the stage, beside the next quest: up to two at once (tap 1 or 2 to see each)."
     }
     // Second Cup and Golden Thread are listed by cuddle-coach-expansion.js,
     // All-Seeing Atlas by cuddle-rebalance-v5.js.

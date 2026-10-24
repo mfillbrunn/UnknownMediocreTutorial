@@ -74,6 +74,7 @@
     autopilot: ["On every 2nd guess (the 2nd, 4th, 6th...) the AI plays for you. It picks the best word your hand can make right now, from what the board and your hints show (never from tiles hidden from you), and plays it with your own cards. If no word fits your cards, or a stage's rule turns its word down, that guess is yours instead.", ["board", "hand"]],
     lastLight: ["After your 2nd guess, the answer's last letter is placed in its spot for you, as if you had found it green.", ["board"]],
     yellowHint: ["After your 1st guess, a letter of the answer you haven't found yet is marked for you: at level 1 it turns yellow (it's in the word), at level 2 green (its exact spot).", ["board", "hand"]],
+    jokerLens: ["A Joker becomes whatever letter makes your word real, but normally you only find out after submitting. With Joker Lens, once the word is finished the Joker tile shows the letter it will become. At level 2, if more than one letter works, the tile slowly cycles through them (one every couple of seconds): submit while the one you want is showing.", ["jokerCard"]],
     jokerCache: ["Joker cards go into your deck each stage. A Joker can stand in for any letter, so it fills a gap your hand can't. You can use one Joker per word.", ["jokerCard", "specialCards"]],
     jokerCacheLarge: ["Every stage starts with a Joker card already in your hand, on top of your normal hand. A Joker can stand in for any letter (one per word).", ["jokerCard", "specialCards"]],
     "alphabet-compass": ["After each guess, small arrows appear under some tiles: ← means the answer's letter in that spot comes earlier in the ABCs, → later. Higher levels mark more tiles.", ["compass"]],
@@ -101,7 +102,7 @@
     cleanSlate: ["A Restraint badge: whenever you skip a reward, one of your badges levels up at random, so skipping doesn't mean falling behind.", ["reward"]],
     ascetic: ["A Restraint badge: every stage you solve pays 1.6 times while you have 5 badges or fewer outside the Restraint school, and 1.3 times with 10 or fewer (Legendaries don't count). With more than 10 it pays nothing extra.", ["cashout", "reward"]],
     questMastery: ["Every reward a finished quest offers is one step bigger than usual: more mulligans, more letters checked, more letters ruled out.", ["questReward"]],
-    overtime: ["Every time a quest asks you to pick a reward, Overtime is one of the choices. Picking it buys one more guess this stage: a boss gets one more try, and on other stages the late-guess cost starts a guess later.", ["quest", "board"]],
+    overtime: ["Every time a quest asks you to pick a reward, One More Guess is one of the choices. Picking it buys one more guess this stage: a boss gets one more try, and on other stages the late-guess cost starts a guess later.", ["quest", "board"]],
     questClue: ["Every time a quest asks you to pick a reward, Clue is one of the choices. Picking it gives you a yellow hint (a letter that's in the answer); at level 2 it's a green hint (a letter in its exact spot).", ["quest", "board"]],
     questChain: ["When you finish a quest, a new one appears on your next guess (if that guess doesn't have one). Keep finishing them and the chain goes on.", ["quest", "questReward"]],
     questScout: ["When a quest appears, a word you could play from your hand that would finish it is found, and some of its letters are placed in your word for you.", ["quest"]],
@@ -118,7 +119,7 @@
     revealGreen: ["One time only: your next stage starts with one letter of the answer already in its spot.", ["board"]],
     questDoublePick: ["When you finish a quest, you take 2 of its rewards instead of 1.", ["questReward"]],
     questCadence: ["Quests normally come on guesses 2 and 5. This badge adds guess 3, then guess 1, so you get more quests every stage.", ["quest"]],
-    questPersistReward: ["Normally a quest you miss is gone. With this badge it stays open, so you can still finish it on a later guess this stage.", ["quest"]],
+    questPersistReward: ["Normally a quest you miss is gone. With this badge it stays open for the rest of the stage, and new quests still come on their guesses, so you can have two at once. The quest bar then shows tabs 1 and 2: tap one to see that quest. Your guesses count for both.", ["quest"]],
     allThemesBoss: ["Every stage starts with all of the answer's themes shown in the theme line.", ["themes"]],
     secondCup: ["Once in the whole run: when a boss or strict stage is about to end because you're out of guesses, you get one more guess.", ["board", "map"]]
   };
