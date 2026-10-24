@@ -244,6 +244,7 @@ const GLYPHS = {
   questMastery: () => trophyRibbon(48, 44),
   overtime: () => clock(44, 50, 20) + plusBadge(68, 28, 11),
   // A quest scroll with a hint tile on it.
+  questSatchel: () => rect(18, 30, 48, 42, 10, W) + line("M30 30v-6c0-6 4-9 12-9s12 3 12 9v6", ink(), 4) + star(42, 51, 10),
   questClue: () => rect(20, 22, 44, 52, 8, W) + line("M30 36h24M30 46h16", ink(), 4) + tile(48, 46, 30, "?", acc()),
   // A hint: a lit letter tile with a sparkle.
   umtClue: () => tile(22, 28, 44, "A", acc()) + star(68, 28, 12, W),
@@ -283,7 +284,7 @@ const TYPES = {
   clues: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "lastLight", "yellowHint", "alphabet-compass", "consonantSweep", "coachPossibleAnswers", "boldOpener", "ideaTiles", "fullCircle", "goldenOpener", "freeVowelSweep", "revealGreen", "allThemesBoss", "revealCategory", "umtRuleOut", "umtVowelCheck", "umtSpotlight", "sillyWord", "umtClue", "autopilot"],
   points: ["storybookStart", "mulliganValueBoost", "earlySolveBoost", "colourTrade", "greyscale", "encore", "vowelBounty", "doubleDown", "momentum", "bigOpener", "lastStand", "leanBuild", "strikeThrough", "highRoller", "hardMode", "luckyClover", "ascetic", "umtQuickPoints"],
   money: ["wideChoice", "rewardEcho", "rainyDay", "haggler", "treasureHunter", "pickpocket", "monksVow", "blackMarket", "treasureChest", "insertCoin", "goldenLedger", "umtPocketMoney"],
-  quests: ["questRefreshes", "questPoints", "questReroll", "surprise-assignment", "questMastery", "overtime", "questChain", "questScout", "questClue", "questDoublePick", "questCadence", "questPersistReward"],
+  quests: ["questRefreshes", "questPoints", "questReroll", "surprise-assignment", "questMastery", "overtime", "questChain", "questScout", "questClue", "questSatchel", "questDoublePick", "questCadence", "questPersistReward"],
   tiles: ["bonusSquares", "treasureMap", "mulliganTiles", "jokerTiles", "oracleTiles"],
   safety: ["mistakeShield", "gracePeriod", "fastLane", "secondCup"]
 };

@@ -81,6 +81,8 @@
       { t: "text", before: "Reward: +1 mulligan", after: "Reward: +2 mulligans" }],
     overtime: ["Quest rewards are the usual choices.", "One More Guess is always one of them: one more guess this stage.",
       { t: "text", before: "Reward: Pocket Money", after: "Reward: One More Guess" }],
+    questSatchel: ["A quest comes up with your usual hand.", "A quest brings 1 more letter (level 2: a Joker; level 3: both).",
+      { t: "hand", before: "RSTLN", after: "RSTLNC" }],
     questClue: ["Quest rewards are the usual choices.", "Clue is always one of them: a yellow hint (green at level 2).",
       { t: "text", before: "Reward: Pocket Money", after: "Reward: Clue, a yellow hint" }],
     questChain: ["After a quest, the next one comes on its usual guess.", "Finishing a quest puts a new one on your very next guess.",

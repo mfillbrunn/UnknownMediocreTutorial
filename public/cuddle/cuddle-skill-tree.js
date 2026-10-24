@@ -324,6 +324,11 @@
         { id: "questChain", icon: "⛓️", title: "Quest Chain", tier: "legendary", type: "quests", maxLevel: 1,
           description: "Each quest you finish puts a new quest (a random one) on your next guess, if it doesn't already have one. Finish that one too and the chain goes on.",
           level: g => powerLevel(g, "questChain") },
+        { id: "questSatchel", icon: "🎒", title: "Quest Satchel", tier: "rare", type: "quests", maxLevel: 3,
+          levels: ["When a quest comes up, you hold 1 more letter for that guess. Unplayed, it stays in your hand.",
+            "When a quest comes up, you get a Joker card instead (a card that can be any letter).",
+            "When a quest comes up, you get a Joker and hold 1 more letter."],
+          level: g => powerLevel(g, "questSatchel") },
         { id: "questScout", icon: "🔭", title: "Quest Scout", tier: "rare", type: "quests", maxLevel: 2,
           levels: ["When a quest appears, a word from your hand that fulfills it is found (but not shown): 1 of its letters is placed in its spot in your word.",
             "2 of the quest word's letters are placed."],
@@ -409,7 +414,7 @@
     gold: ["pickpocket", "haggler", "wideChoice", "treasureHunter", "rainyDay", "doubleDown", "highRoller", "lastStand",
       "blackMarket", "treasureChest", "insertCoin", "goldenLedger"],
     brass: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment", "questCadence", "questPersistReward", "questDoublePick",
-      "questMastery", "overtime", "questChain", "questScout", "questClue"],
+      "questMastery", "overtime", "questChain", "questScout", "questClue", "questSatchel"],
     pearl: ["hardMode", "mulliganValueBoost", "monksVow", "leanBuild", "gracePeriod", "mistakeShield", "cleanSlate", "ascetic"]
   };
   const SCHOOL_OF = {};
@@ -460,6 +465,7 @@
     questCadence: ["Quests on 2, 3, 5", "Quests on 1, 2, 3, 5"],
     questScout: ["1 quest letter placed", "2 quest letters placed"],
     questClue: ["Clue reward: yellow hint", "Clue reward: green hint"],
+    questSatchel: ["+1 letter on a quest", "A Joker on a quest", "Joker and +1 letter on a quest"],
     insertCoin: ["Extra guess for $100", "Extra guess for $75"],
     goldenLedger: ["$1 counts as 0.5 points", "$1 counts as 1 point"],
     fastLane: ["Tricky guesses come 1 later", "Tricky guesses come 2 later", "Tricky guesses come 3 later"]

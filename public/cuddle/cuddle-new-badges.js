@@ -782,6 +782,52 @@
     state.umtQuestHint = { key: key, spots: spots };
   }
 
+  // ---------------------------------------------------------------------------
+  // Quest Satchel: when a quest comes up, its guess gets one more letter
+  // (level 1), a Joker (level 2) or both (level 3). The letter is drawn
+  // at once, and the hand holds one more for that guess; cards left
+  // unplayed stay, as a hand is never cut down to its limit
+  // (cuddle-engine.js _trimHandToLimit). The Joker sits on top of the
+  // hand, outside the limit, until it's played.
+  // ---------------------------------------------------------------------------
+
+  function satchelGuessKey(state) {
+    return stageKey(state) + ":" + num(state.guessesUsed);
+  }
+
+  function packSatchel(game) {
+    var state = game.state;
+    var level = Math.min(3, levelOf(game, "questSatchel"));
+    if (!level || state.status !== "playing" || !state.activeQuest) return;
+    var key = scoutKey(state);
+    if (state.umtQuestSatchel && state.umtQuestSatchel.key === key) return;
+    var letter = level === 1 || level === 3;
+    state.umtQuestSatchel = { key: key, guess: satchelGuessKey(state), letter: letter };
+    var notes = [];
+    if (level >= 2) {
+      state.hand.push({ id: game._nextId("joker"), glyph: Engine.CUDDLE_JOKER_GLYPH || "\u2605", source: "joker", freeJoker: true });
+      notes.push("a Joker");
+    }
+    if (letter) {
+      // Drawn on top of the hand, even one already over its limit; the
+      // +1 limit for this guess (getHandLimitWithSatchel) stops a refill
+      // later this turn from simply drawing one card fewer.
+      var drawn = typeof game._drawOne === "function" ? game._drawOne(true) : null;
+      notes.push(drawn ? "an extra letter (" + drawn.glyph + ")" : "an extra letter");
+    }
+    note(game, "Quest Satchel: " + notes.join(" and ") + " for this quest.");
+  }
+
+  var baseHandLimit = proto.getHandLimit;
+  if (typeof baseHandLimit === "function") {
+    proto.getHandLimit = function getHandLimitWithSatchel() {
+      var limit = baseHandLimit.apply(this, arguments);
+      var state = this.state;
+      var satchel = state && state.umtQuestSatchel;
+      return satchel && satchel.letter && satchel.guess === satchelGuessKey(state) ? limit + 1 : limit;
+    };
+  }
+
   var baseEnsureQuest = proto._ensureQuestForNextGuess;
   if (typeof baseEnsureQuest === "function") {
     proto._ensureQuestForNextGuess = function ensureQuestWithScout() {
@@ -795,6 +841,11 @@
         scoutQuest(this);
       } catch (error) {
         console.warn("Cuddle new badges: Quest Scout failed.", error);
+      }
+      try {
+        packSatchel(this);
+      } catch (error) {
+        console.warn("Cuddle new badges: Quest Satchel failed.", error);
       }
       return result;
     };
