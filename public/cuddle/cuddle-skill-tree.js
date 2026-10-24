@@ -412,7 +412,7 @@
     prism: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "yellowHint", "alphabet-compass",
       "lastLight", "allThemesBoss", "revealGreen", "autopilot"],
     flora: ["luckyClover", "fishHook", "ideaTiles", "waveTiles", "fullCircle", "jokerCache", "jokerCacheLarge", "jokerLens",
-      "extraMulligans", "mulliganSize", "mulliganValueBoost", "handSizeBoost", "doubleMulligans", "biggerMulligans"],
+      "extraMulligans", "mulliganSize", "handSizeBoost", "doubleMulligans", "biggerMulligans"],
     tile: ["treasureMap", "bonusSquares", "mulliganTiles", "jokerTiles", "oracleTiles"],
     parchment: ["greyscale", "strikeThrough", "cullOne", "cullRare", "consonantSweep", "freeVowelSweep",
       "coachPossibleAnswers", "coachMeterThreshold", "coachMeterReward"],
@@ -420,7 +420,7 @@
       "blackMarket", "treasureChest", "insertCoin", "goldenLedger"],
     brass: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment", "questCadence", "questPersistReward", "questDoublePick",
       "questMastery", "overtime", "questChain", "questScout", "questClue", "questSatchel"],
-    pearl: ["hardMode", "monksVow", "leanBuild", "gracePeriod", "mistakeShield", "cleanSlate", "ascetic"]
+    pearl: ["hardMode", "mulliganValueBoost", "monksVow", "leanBuild", "gracePeriod", "mistakeShield", "cleanSlate", "ascetic"]
   };
   const SCHOOL_OF = {};
   Object.entries(SCHOOL_MEMBERS).forEach(([school, ids]) => ids.forEach(id => { SCHOOL_OF[id] = school; }));
