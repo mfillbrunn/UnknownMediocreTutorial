@@ -1135,6 +1135,20 @@
         ${deadCount > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${deadCount}</span>` : ""}
       </button>`;
     }
+    // An angel card (Cards rank III, cuddle-burdens.js): a dead card that
+    // turned over when drawn. Tapped, it flies to heaven for points.
+    if (window.CuddleBurdens?.isAngelGlyph?.(group.glyph)) {
+      const card = group.cards[0];
+      const fresh = window.CuddleBurdens.isFreshAngel(game, card.id);
+      const angelLabel = `Angel card: tap to send it to heaven for +${window.CuddleBurdens.ANGEL_POINTS} points and draw a new card.`;
+      return `
+      <button class="cuddle-card is-angel${fresh ? " is-turning" : ""}" data-umt-angel="${escapeHtml(card.id)}" ${state.status !== "playing" ? "disabled" : ""}
+        aria-label="${escapeHtml(angelLabel)}" title="${escapeHtml(angelLabel)}">
+        <span class="cuddle-card-letter cuddle-card-angel" aria-hidden="true">${window.CuddleBurdens.angelSvg()}</span>
+        ${fresh ? `<span class="cuddle-card-angel-was" aria-hidden="true">${window.CuddleBurdens.skullSvg()}</span>` : ""}
+        ${group.cards.length > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${group.cards.length}</span>` : ""}
+      </button>`;
+    }
     // An idea card (Idea Cards): no letter; mulligan it away for a yellow hint.
     if (window.CuddleBurdens?.isIdeaGlyph(group.glyph)) {
       const ideaCount = group.cards.length;
