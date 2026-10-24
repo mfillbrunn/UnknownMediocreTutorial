@@ -1631,7 +1631,6 @@
   function renderUpgradeOverlay(state) {
     const milestone = state.upgradePhase === "milestone";
     const startingRewards = state.upgradePhase === "difficultyStart";
-    const summary = state.lastRoundSummary;
     const refreshCost = typeof game.getUpgradeRefreshCost === "function"
       ? game.getUpgradeRefreshCost()
       : null;
@@ -1661,7 +1660,8 @@
         ? "STARTING REWARDS"
         : waystone
           ? "FREE UPGRADE"
-          : `ROUND ${summary?.round || state.round} CLEARED`;
+          // An ordinary after-stage pick: just its heading.
+          : "";
     // The after-stage pick takes turns (cuddle-reward-rhythm.js): a level
     // for a badge you hold, then a new badge.
     const rhythm = window.CuddleRewardRhythm ? window.CuddleRewardRhythm.shown(state) : null;
@@ -1684,18 +1684,11 @@
       ? `Your total score reached ${state.upgradeMilestone}. This choice is in addition to the round reward.`
       : startingRewards
         ? "Pick a reward to begin the run with."
-        : rhythm === "level"
-          ? "One of your badges goes up a level. Next stage: a new badge."
-          : rhythm === "new"
-            ? "Next stage: level up one of your badges."
-            : "";
+        : "";
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleUpgradeTitle">
         <section class="cuddle-modal cuddle-modal-wide cuddle-upgrade-modal cuddle-compact-cards">
-          <span class="cuddle-upgrade-wallet" data-upgrade-wallet aria-label="Money: $${Number(state.cuddleMoney || 0)}">
-            <span>Money</span><b>$${Number(state.cuddleMoney || 0).toLocaleString()}</b>
-          </span>
-          <span class="cuddle-modal-kicker">${kicker}</span>
+          ${kicker ? `<span class="cuddle-modal-kicker">${kicker}</span>` : ""}
           <h2 id="cuddleUpgradeTitle">${heading}</h2>
           ${body ? `<p>${body}</p>` : ""}
           <div class="cuddle-choice-grid">
