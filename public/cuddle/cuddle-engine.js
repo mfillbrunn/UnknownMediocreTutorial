@@ -4393,7 +4393,7 @@
     key: "rewardEcho",
     icon: "🔁",
     title: "Reward Echo",
-    description: "The next round reward you pick is applied twice."
+    description: "The next badge you pick on a reward screen comes at its top level."
   });
 
   // Fields safe to diff-and-replay: pure accumulators everywhere they're
@@ -4437,7 +4437,7 @@
       state.upgradeChoices = [];
       state.upgradePhase = null;
       state.upgradeMilestone = null;
-      state.lastMessage = "Reward Echo armed: your next round reward will be applied twice.";
+      state.lastMessage = "Reward Echo armed: the next badge you pick comes at its top level.";
       this._advanceRound();
       this.save();
       return { ok: true };
@@ -5781,7 +5781,7 @@
     const mega = ensureMega(this);
     const lines = composedCurrentModifications.call(this).filter(line => !String(line).startsWith("No run upgrades yet"));
     if (mega.difficulty && mega.difficulty !== "hard") {
-      lines.push(`Difficulty: ${mega.difficulty === "easy" ? "Educational" : mega.difficulty[0].toUpperCase() + mega.difficulty.slice(1)}`);
+      lines.push(`Difficulty: ${mega.difficulty === "easy" ? "Tutorial" : mega.difficulty[0].toUpperCase() + mega.difficulty.slice(1)}`);
     }
     if (mega.extraGuesses) lines.push(`+${mega.extraGuesses} guess${mega.extraGuesses === 1 ? "" : "es"} every round`);
     if (mega.questPersistsForRound) lines.push("Missed quests stay open for the rest of the stage, beside the next one");

@@ -18,7 +18,7 @@
 }
 .umt-skip-btn.is-money { color: #f6c956; }
 
-/* Combine (cuddle-strategies.js playCombineFx): the old badge glows,
+/* Improve (cuddle-strategies.js playCombineFx): the old badge glows,
    shatters into sparks, and the new one grows out of the flash while the
    view zooms in on it. */
 .umt-cmb-layer {

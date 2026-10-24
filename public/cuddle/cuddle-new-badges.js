@@ -219,6 +219,83 @@
     return levelOf(game, "cleanSlate") >= 2 ? 2 : 1;
   }
 
+  // ---------------------------------------------------------------------------
+  // Reward Echo: the next reward you pick on a reward screen comes at its
+  // top level. The armed Echo is taken off before the pick runs (so the
+  // older "counts twice" handling in cuddle-engine.js, cuddle-rebalance-v5.js
+  // and cuddle-coach-expansion.js never sees it), then the badge is granted
+  // again until it's maxed. Badges given outside a reward screen (packs,
+  // the shop, events: _grantUpgradeChoice, which stubs _advanceRound) leave
+  // it armed.
+  // ---------------------------------------------------------------------------
+
+  function nodeFor(choice) {
+    var tree = registry();
+    if (!tree || !choice) return null;
+    return tree.findNode(choice.key || choice.id)
+      || (typeof tree.findNodeByName === "function" ? tree.findNodeByName(choice.title || choice.name) : null);
+  }
+
+  function maxOut(game, choice) {
+    var tree = registry();
+    var node = nodeFor(choice);
+    if (!tree || !node) return 0;
+    var raised = 0;
+    for (var guard = 0; guard < 6; guard += 1) {
+      if (num(tree.level(game, node)) >= num(node.maxLevel || 1)) break;
+      var card = (game._upgradeCatalog() || []).find(function same(item) {
+        return item && (item.key || item.id) === (choice.key || choice.id);
+      });
+      if (!card) break;
+      var result = null;
+      try {
+        result = game._grantUpgradeChoice(Object.assign({}, card, { key: card.key || card.id }));
+      } catch (_error) {
+        result = null;
+      }
+      if (!result || result.ok === false) break;
+      raised += 1;
+    }
+    return raised;
+  }
+
+  var baseChooseUpgrade = proto.chooseUpgrade;
+  if (typeof baseChooseUpgrade === "function") {
+    proto.chooseUpgrade = function chooseUpgradeWithEcho(choiceKey) {
+      var state = this.state;
+      var outOfBand = Object.prototype.hasOwnProperty.call(this, "_advanceRound");
+      var choice = state && state.status === "upgrade" && Array.isArray(state.upgradeChoices)
+        ? state.upgradeChoices.find(function match(item) { return item && String(item.key || item.id) === String(choiceKey); })
+        : null;
+      if (outOfBand && state && state.pendingRewardEcho) {
+        // Hidden from the layers below for this grant, so it waits.
+        state.pendingRewardEcho = false;
+        try {
+          return baseChooseUpgrade.apply(this, arguments);
+        } finally {
+          state.pendingRewardEcho = true;
+        }
+      }
+      var armed = Boolean(state && state.pendingRewardEcho && choice && choice.id !== "rewardEcho");
+      if (!armed) return baseChooseUpgrade.apply(this, arguments);
+      state.pendingRewardEcho = false;
+      var result = baseChooseUpgrade.apply(this, arguments);
+      if (!result || result.ok === false) {
+        state.pendingRewardEcho = true;
+        return result;
+      }
+      var raised = 0;
+      try {
+        raised = maxOut(this, choice);
+      } catch (error) {
+        console.warn("Cuddle new badges: Reward Echo failed.", error);
+      }
+      note(this, "Reward Echo: " + (choice.title || "that badge") + (raised ? " went straight to its top level." : " was already at its top level."));
+      save(this);
+      return result;
+    };
+  }
+
   var baseSkip = proto.skipUpgrade;
   if (typeof baseSkip === "function") {
     proto.skipUpgrade = function skipUpgradeWithCleanSlate() {

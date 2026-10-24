@@ -46,7 +46,7 @@
       kicker: "How a Pair Trial works",
       color: "#e6c27a",
       steps: [
-        ["Choose how hard", "The answer is one of the listed words, shown from the start. Harder means more words on the list, and a bigger prize.", "trial-pair-levels"],
+        ["Choose how hard", "The answer is one of the listed words, shown from the start. Harder means more words on the list, and a bigger prize. On Hard, the words also look alike.", "trial-pair-levels"],
         ["No typing: tap one of two words", "Each guess, you're offered two words: tap one to play it. If it's the answer, you pass straight away.", "trial-pair-choose"],
         ["Read the board", "The word you played shows its colours like any guess. Use them to rule words off the list.", "trial-pair-board"],
         ["Pick now, or see two more", "After each guess: pick the answer from the list, or show two more words to play. The sooner you pass, the more it pays; by guess 5 you must pick. A wrong pick ends the run.", "trial-pair-next"],

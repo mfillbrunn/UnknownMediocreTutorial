@@ -143,7 +143,7 @@
         { id: "greyscale", icon: "⬛", title: "Greyscale", tier: "common", type: "points", maxLevel: 3,
           levels: ["Each grey tile (a letter not in the word) gives +0.75 points.", "Each grey tile gives +1.5 points.", "Each grey tile gives +2.25 points."],
           level: g => Number(g?.state?.balanceRewardCounts?.greyscale) || 0 },
-        { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", type: "money", maxLevel: 1, description: "The next reward you pick counts twice.", level: g => ledgerCount(g, "rewardEcho") },
+        { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", type: "money", maxLevel: 1, description: "The next badge you pick on a reward screen comes at its top level.", level: g => ledgerCount(g, "rewardEcho") },
         { id: "greenCount", icon: "🔢", title: "Precise Green", tier: "rare", type: "clues", maxLevel: 1, description: "A green tile also shows how many times its letter is in the answer.",
           level: g => Math.max(Number(g?.state?.megaState?.greenCountLevel) || 0, g?.state?.megaState?.greenCountUnlocked ? 1 : 0) },
         { id: "surprise-assignment", icon: "📜", title: "Surprise Assignment", tier: "rare", type: "quests", maxLevel: 3,
@@ -292,11 +292,11 @@
         { id: "hardMode", icon: "🎯", title: "Hard Mode", tier: "common", type: "points", maxLevel: 3,
           levels: ["Solve in hard mode: +35 points. (Every guess keeps your greens in place and uses your yellows.)", "Solve in hard mode: +60 points.", "Solve in hard mode: +100 points."],
           level: g => powerLevel(g, "hardMode") },
-        { id: "combine", icon: "🧩", title: "Combine", tier: "rare", type: "letters", maxLevel: 1,
+        { id: "combine", icon: "🧩", title: "Improve", tier: "rare", type: "letters", maxLevel: 1,
           description: "Turns one of your playstyle badges into a random badge one rarity higher.",
           level: () => 0 },
         { id: "luckyClover", icon: "🍀", title: "Lucky Clover", tier: "rare", type: "points", maxLevel: 3,
-          levels: ["1 lucky card goes in your deck. Have it in your hand when you solve: +10 points (mulligan it: +2 points).", "2 lucky cards: +14 points each when you solve.", "4 lucky cards: +20 points each when you solve."],
+          levels: ["1 lucky card goes in your deck. Have it in your hand when you solve: +10 points (mulligan it: +2 points).", "2 lucky cards: +14 points each when you solve.", "4 lucky cards: +20 points each when you solve, +1 more each for every badge you hold."],
           level: g => powerLevel(g, "luckyClover") },
         // cuddle-fish-hook.js
         { id: "fishHook", icon: "🪝", title: "Fish Hook", tier: "rare", type: "letters", maxLevel: 3,
@@ -412,7 +412,7 @@
     prism: ["categorySense", "greenCount", "vowelLamp", "echoFinder", "patternLens", "yellowHint", "alphabet-compass",
       "lastLight", "allThemesBoss", "revealGreen", "autopilot"],
     flora: ["luckyClover", "fishHook", "ideaTiles", "waveTiles", "fullCircle", "jokerCache", "jokerCacheLarge", "jokerLens",
-      "extraMulligans", "mulliganSize", "mulliganValueBoost", "handSizeBoost", "doubleMulligans", "biggerMulligans"],
+      "extraMulligans", "mulliganSize", "handSizeBoost", "doubleMulligans", "biggerMulligans"],
     tile: ["treasureMap", "bonusSquares", "mulliganTiles", "jokerTiles", "oracleTiles"],
     parchment: ["greyscale", "strikeThrough", "cullOne", "cullRare", "consonantSweep", "freeVowelSweep",
       "coachPossibleAnswers", "coachMeterThreshold", "coachMeterReward"],
@@ -420,7 +420,7 @@
       "blackMarket", "treasureChest", "insertCoin", "goldenLedger"],
     brass: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment", "questCadence", "questPersistReward", "questDoublePick",
       "questMastery", "overtime", "questChain", "questScout", "questClue", "questSatchel"],
-    pearl: ["hardMode", "monksVow", "leanBuild", "gracePeriod", "mistakeShield", "cleanSlate", "ascetic"]
+    pearl: ["hardMode", "mulliganValueBoost", "monksVow", "leanBuild", "gracePeriod", "mistakeShield", "cleanSlate", "ascetic"]
   };
   const SCHOOL_OF = {};
   Object.entries(SCHOOL_MEMBERS).forEach(([school, ids]) => ids.forEach(id => { SCHOOL_OF[id] = school; }));
@@ -465,7 +465,7 @@
     highRoller: ["Bet 10, win 20", "Bet 20, win 40", "Bet 40, win 80"],
     hardMode: ["+35 hard-mode solve", "+60 hard-mode solve", "+100 hard-mode solve"],
     waveTiles: ["1 wave card", "2 wave cards", "4 wave cards"],
-    luckyClover: ["1 lucky card, +10", "2 lucky cards, +14 each", "4 lucky cards, +20 each"],
+    luckyClover: ["1 lucky card, +10", "2 lucky cards, +14 each", "4 lucky cards, +20 +1 a badge each"],
     fishHook: ["Fish 1 discard a stage", "Fished letter tested", "Auto-hooks a right letter"],
     questCadence: ["Quests on 2, 3, 5", "Quests on 1, 2, 3, 5"],
     questScout: ["1 quest letter placed", "2 quest letters placed"],
@@ -544,7 +544,7 @@
       ["2 vowels", "3 vowels"]],
     secondCup: [2, ["Once a run: +1 guess when a boss or strict stage would end", "Twice a run: +1 guess when a boss or strict stage would end"],
       ["Once a run", "Twice a run"]],
-    rewardEcho: [3, ["The next reward you pick counts twice", "Another reward you pick counts twice", "A third reward you pick counts twice"],
+    rewardEcho: [3, ["The next badge you pick comes at its top level", "Another badge you pick comes at its top level", "A third badge you pick comes at its top level"],
       ["1 echo", "2 echoes", "3 echoes"]]
   };
   for (const branch of BRANCHES) {

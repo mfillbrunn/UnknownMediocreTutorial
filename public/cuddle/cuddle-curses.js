@@ -72,7 +72,31 @@
     return count;
   }
 
-  function buildChoices(game, size) {
+  // How alike two words look: a letter in the same spot counts 3, any
+  // other shared letter 1.
+  function likeness(word, other) {
+    var score = 0;
+    var rest = other.split("");
+    for (var i = 0; i < 5; i += 1) {
+      if (word[i] === other[i]) {
+        score += 3;
+        rest[i] = "";
+      }
+    }
+    for (var j = 0; j < 5; j += 1) {
+      if (word[j] === other[j]) continue;
+      var at = rest.indexOf(word[j]);
+      if (at !== -1) {
+        score += 1;
+        rest[at] = "";
+      }
+    }
+    return score;
+  }
+
+  // closeTo: a Hard Pair trial's list is drawn from the words most like
+  // the answer (so most like each other too), instead of any words.
+  function buildChoices(game, size, closeTo) {
     var state = game.state;
     var secret = String(state.secret || "").toUpperCase();
     var removed = Array.isArray(state.removedLetters) ? state.removedLetters : [];
@@ -95,6 +119,14 @@
     });
     // Ruled-out words, the hardest to rule out first; a word the board
     // can't tell from the answer is only used if nothing else is left.
+    if (closeTo) {
+      // The closest few times the list's size, then a random pick of them,
+      // so the same answer doesn't always bring the same list.
+      var alike = scored.map(function rate(item) { return { word: item.word, score: likeness(item.word, secret) }; })
+        .sort(function closest(a, b) { return b.score - a.score; })
+        .slice(0, Math.max(size * 3, 12));
+      return shuffled(alike, random).slice(0, size - 1).map(function word(item) { return item.word; }).concat(secret).sort();
+    }
     var ruledOut = scored.filter(function out(item) { return item.misses > 0; })
       .sort(function closest(a, b) { return a.misses - b.misses; });
     var shortlist = shuffled(ruledOut.slice(0, Math.max(size * 4, 12)), random);
@@ -187,7 +219,7 @@
     var mega = megaOf(state);
     var key = stageKey(state);
     if (!mega.presetOpen || mega.presetOpen.key !== key || !Array.isArray(mega.presetOpen.words)) {
-      mega.presetOpen = { key: key, words: buildChoices(this, trialSize(node)) };
+      mega.presetOpen = { key: key, words: buildChoices(this, trialSize(node), isPairTrial(node) && node.trialDifficulty === "hard") };
     }
     return mega.presetOpen.words;
   };

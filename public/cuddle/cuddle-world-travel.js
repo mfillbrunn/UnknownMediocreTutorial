@@ -2,10 +2,10 @@
  *
  * After a boss falls, the first time the player stands on the new world's
  * map, a short scene plays before the world's intro (cuddle-world-intro.js
- * waits for it): the old world's landscape slides away, a little traveller
- * (the Guesser) walks along the road, and the new world's landscape comes in with its
- * name. Each landscape is drawn from its world's own colours and scenery
- * (cuddle-worlds.js themes), so every crossing looks different. The
+ * waits for it): the old world's landscape slides away and the new
+ * world's landscape comes in with its name. Each landscape is drawn from
+ * its world's own colours and scenery (cuddle-worlds.js themes), so every
+ * crossing looks different. The
  * victory music carries on through it (or plays again if it had ended).
  * A tap skips it. Played crossings are kept on the run
  * (state.umtWorldTravel), so a reload doesn't replay them.
@@ -16,44 +16,6 @@
   if (window.CuddleWorldTravel) return;
 
   var DURATION = 5200;
-
-  // The Guesser from multiplayer (index.html's #icon-role-guesser) seen
-  // from the side, facing right: his glasses, hair and hoodie, with legs
-  // and arms that swing in turn (cuddle-world-travel.css).
-  var INK = "#241a30";
-  var SKIN = "#f4ede0";
-  function limb(kind, side, d, fill, extra, stroke) {
-    return '<g class="umt-wt-' + kind + " is-" + side + '"><path d="' + d + '" fill="' + fill + '"'
-      + (stroke ? ' stroke="' + stroke + '" stroke-width="2.5"' : "") + "/>" + (extra || "") + "</g>";
-  }
-  var LEG = "M53 112h13l-1 30h-11z";
-  var SHOE = '<path d="M51 140h16c6 0 10 3 10 7H51z" fill="' + INK + '"/>';
-  var ARM = "M56 86c4-2 9-1 10 3l-3 25c-1 4-8 4-9 0z";
-  var HAND = '<circle cx="59" cy="116" r="5" fill="' + SKIN + '"/>';
-  var GUESSER_SIDE = '<svg class="umt-wt-guesser" viewBox="0 0 120 160">'
-    + limb("leg", "back", LEG, "#2f3a66", SHOE)
-    + limb("arm", "back", ARM, "#5a9fd6", HAND)
-    + '<g class="umt-wt-torso">'
-    // Hoodie
-    + '<path d="M40 92c0-12 9-20 21-20s21 8 21 20v22c0 4-3 6-7 6H47c-4 0-7-2-7-6z" fill="#7cc8ff"/>'
-    + '<path d="M44 82c4-6 10-9 17-9" stroke="#5a9fd6" stroke-width="4" fill="none" stroke-linecap="round"/>'
-    // Head
-    + '<circle cx="62" cy="46" r="29" fill="' + SKIN + '"/>'
-    + '<path d="M89 49c3 1 4 4 1 6l-3 1z" fill="' + SKIN + '"/>'
-    // Hair: over the top and down the back
-    + '<path d="M34 50c-3-22 10-37 30-37 15 0 25 7 27 19-9 2-18-1-24-8-6 8-16 13-27 14 0 5-1 9-3 12z" fill="' + INK + '"/>'
-    // Ear
-    + '<circle cx="50" cy="52" r="6" fill="' + SKIN + '" stroke="' + INK + '" stroke-width="2"/>'
-    // Glasses: the near lens and its arm back to the ear
-    + '<path d="M54 47H72" stroke="' + INK + '" stroke-width="4" stroke-linecap="round"/>'
-    + '<circle cx="80" cy="47" r="10" fill="' + SKIN + '" stroke="' + INK + '" stroke-width="5"/>'
-    + '<circle cx="84" cy="48" r="3.5" fill="' + INK + '"/>'
-    // Smile
-    + '<path d="M74 64q6 4 11-1" stroke="' + INK + '" stroke-width="3" fill="none" stroke-linecap="round"/>'
-    + "</g>"
-    + limb("leg", "front", LEG, "#3b4a7a", SHOE)
-    + limb("arm", "front", ARM, "#7cc8ff", HAND, "#3f86c2")
-    + "</svg>";
 
   function esc(value) {
     return String(value == null ? "" : value)
@@ -190,7 +152,6 @@
     layer.style.setProperty("--wt-from", from.accent || "#ffffff");
     layer.style.setProperty("--wt-to", to.accent || "#ffffff");
     layer.innerHTML = '<div class="umt-wt-strip">' + scene(from, "a") + scene(to, "b") + "</div>"
-      + '<div class="umt-wt-traveller" aria-hidden="true">' + GUESSER_SIDE + "</div>"
       + '<div class="umt-wt-text">'
       + '<p class="umt-wt-from"><span>World ' + index + " cleared</span><b>" + esc(from.name) + "</b></p>"
       + '<p class="umt-wt-to"><span>World ' + (index + 1) + "</span><b>" + esc(to.name) + "</b>"

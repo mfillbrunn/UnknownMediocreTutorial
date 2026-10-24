@@ -694,7 +694,7 @@
           ${window.CuddleAchievements ? `<p class="umt-newrun-cost"><span class="umt-coin" aria-hidden="true"></span>${window.CuddleAchievements.freePlay ? "Free to play right now" : `Costs 1 Cuddle Coin · you have <b>${window.CuddleAchievements.coins()}</b>`}</p>` : ""}
           ${newRunCoinNote ? `<p class="umt-newrun-broke" role="alert">No Cuddle Coins left. You get 1 free each day, and 1 for each achievement you claim.</p>` : ""}
           <div class="cuddle-difficulty-row">
-            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Educational</button>
+            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Tutorial</button>
             <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Medium</button>
             ${hardLocked()
               ? `<button class="cuddle-btn cuddle-btn-primary is-locked" data-action="new-run-hard" aria-disabled="true" aria-label="Hard, locked: win a run on Medium to unlock it">${lockIcon()}Hard</button>`
@@ -1173,7 +1173,7 @@
         || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
       // Without Lucky Clover (a lucky card from the Cards school) it pays
       // the first level's points.
-      const per = window.CuddleBurdens.LUCKY_POINTS[Math.max(1, window.CuddleBurdens.luckyLevel(game))] || 0;
+      const per = window.CuddleBurdens.luckyPoints(game) || 0;
       const luckyLabel = `Lucky card${luckyCount > 1 ? ` ×${luckyCount}` : ""}: no letter, can't be played. Still in hand when you solve: +${per} points each; mulliganed: +${window.CuddleBurdens.LUCKY_MULLIGAN_POINTS}.`;
       return `
       <button class="cuddle-card is-lucky${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${luckyCount}" ${luckyDisabled ? "disabled" : ""}
@@ -1809,8 +1809,8 @@
   // apart from the run save itself so a new run never wipes it. The win
   // screen compares against the best earlier win on the same difficulty.
   var RECORDS_KEY = "umtCuddleRecords";
-  // Easy is shown as "Educational" (the id stays "easy").
-  var DIFFICULTY_NAMES = { easy: "Educational", medium: "Medium", hard: "Hard" };
+  // Easy is shown as "Tutorial" (the id stays "easy").
+  var DIFFICULTY_NAMES = { easy: "Tutorial", medium: "Medium", hard: "Hard" };
 
   function readRecords() {
     try {
@@ -1988,7 +1988,8 @@
   }
 
   function renderWinOverlay(state) {
-    const totalRounds = window.CuddleEngine.THRESHOLDS.length;
+    // The stages this run actually cleared (cuddle-run-stats.js), not a fixed count.
+    const totalRounds = Number(state.umtRunStats && state.umtRunStats.stages) || window.CuddleEngine.THRESHOLDS.length;
     const standing = recordWin(state);
     const elapsed = winElapsed(state, standing);
     const playing = elapsed !== null && elapsed < WIN_TIMING.countFrom + WIN_TIMING.countFor + 1600;
@@ -2009,7 +2010,7 @@
       <div class="cuddle-overlay cuddle-win-overlay${playing ? " is-celebrating" : ""}" role="dialog" aria-modal="true" aria-labelledby="cuddleEndTitle"
         style="--win-t:${playing ? -elapsed : -99999}ms">
         <section class="cuddle-modal cuddle-end-modal cuddle-win-modal">
-          <span class="cuddle-modal-kicker">${totalRounds} ROUNDS CLEARED · ${difficultyName.toUpperCase()}${state.umtAscension && state.umtAscension.level > 0 ? ` · ASCENSION ${state.umtAscension.level}` : ""}</span>
+          <span class="cuddle-modal-kicker">${totalRounds} STAGE${totalRounds === 1 ? "" : "S"} CLEARED · ${difficultyName.toUpperCase()}${state.umtAscension && state.umtAscension.level > 0 ? ` · ASCENSION ${state.umtAscension.level}` : ""}</span>
           <div class="cuddle-win-row" aria-hidden="true">
             ${"CHAMP".split("").map((letter, index) => `<span class="cuddle-win-tile" style="--i:${index}">${letter}</span>`).join("")}
           </div>
@@ -2065,11 +2066,12 @@
 
   function renderEndOverlay(state, won) {
     if (won) return renderWinOverlay(state);
-    const totalRounds = window.CuddleEngine.THRESHOLDS.length;
+    // The stages this run actually cleared (cuddle-run-stats.js), not a fixed count.
+    const totalRounds = Number(state.umtRunStats && state.umtRunStats.stages) || window.CuddleEngine.THRESHOLDS.length;
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleEndTitle">
         <section class="cuddle-modal cuddle-end-modal">
-          <span class="cuddle-modal-kicker">${won ? `${totalRounds} ROUNDS CLEARED` : "RUN ENDED"}</span>
+          <span class="cuddle-modal-kicker">${won ? `${totalRounds} STAGE${totalRounds === 1 ? "" : "S"} CLEARED` : "RUN ENDED"}</span>
           <div class="cuddle-end-icon" aria-hidden="true">${won ? "🏆" : "🌙"}</div>
           <h2 id="cuddleEndTitle">${won ? "Cuddle complete" : "The deck goes quiet"}</h2>
           <p>${won
@@ -2515,7 +2517,7 @@
       return { tone: "idea", title: "Idea card", lines: ["It has no letter, so it can't be played.", "Mulligan it away: one letter of the answer turns yellow."] };
     }
     if (cardButton.classList.contains("is-lucky")) {
-      const per = burdens.LUCKY_POINTS[Math.max(1, burdens.luckyLevel(game))] || 0;
+      const per = burdens.luckyPoints(game) || 0;
       return { tone: "lucky", title: "Lucky card", lines: ["It has no letter, so it can't be played.", `Keep it in your hand when you solve: +${per} points.`, `Or mulligan it away now: +${burdens.LUCKY_MULLIGAN_POINTS} points.`] };
     }
     return null;

@@ -270,6 +270,25 @@
     }
   }
 
+  // Lucky Clover's top level: each lucky card pays 1 more point for every
+  // badge you hold.
+  var LUCKY_PER_BADGE = 1;
+  function heldBadges(game) {
+    var tree = window.CuddleSkillTree;
+    if (!tree || !Array.isArray(tree.BRANCHES) || typeof tree.isOwned !== "function") return 0;
+    var count = 0;
+    tree.BRANCHES.forEach(function branch(group) {
+      (group.nodes || []).forEach(function node(item) {
+        if (item && item.type !== "combo" && tree.isOwned(game, item)) count += 1;
+      });
+    });
+    return count;
+  }
+  function luckyPoints(game) {
+    var level = luckyLevel(game);
+    return LUCKY_POINTS[Math.max(1, level)] + (level >= 3 ? LUCKY_PER_BADGE * heldBadges(game) : 0);
+  }
+
   function luckyCount(game) {
     return TILES_BY_LEVEL[luckyLevel(game)] + schoolPerk(game, "luckyTiles");
   }
@@ -684,6 +703,16 @@
 
   // Mulligans: idea cards give a yellow hint each, lucky cards +5 points
   // each; both are spent.
+  function refillJoker(game) {
+    var state = game.state;
+    var glyph = Engine.CUDDLE_JOKER_GLYPH;
+    var mega = state.megaState;
+    if (!glyph || !mega || Number(mega.jokerCharges) <= 0) return;
+    if ((state.hand || []).some(function held(card) { return card.source === "joker" && card.glyph === glyph; })) return;
+    mega.jokerCharges -= 1;
+    state.hand.push({ id: game._nextId("joker"), glyph: glyph, source: "joker" });
+  }
+
   var baseMulligan = proto.mulligan;
   proto.mulligan = function mulliganWithPowerTiles(cardIds) {
     var state = this.state;
@@ -691,8 +720,12 @@
     var picked = (cardIds || []).map(function find(id) { return game.getHandCard(id); }).filter(Boolean);
     var ideas = picked.filter(isIdeaCard);
     var lucky = picked.filter(isLuckyCard);
+    var jokerOut = picked.some(function joker(card) { return card.source === "joker"; });
     var result = baseMulligan.apply(this, arguments);
     state = this.state;
+    // The Joker in hand stands for all your Joker uses (its count): a
+    // mulligan spends just the one, and the next comes back into the hand.
+    if (result && result.ok && jokerOut) refillJoker(this);
     if (!result || !result.ok || (!ideas.length && !lucky.length)) return result;
     try {
       var spent = new Set(ideas.concat(lucky).map(function id(card) { return card.id; }));
@@ -776,7 +809,7 @@
       var held = (state.hand || []).filter(isLuckyCard).length;
       if (!held) return result;
       // Flora's own lucky card pays the first level's 10 without the badge.
-      var points = held * LUCKY_POINTS[Math.max(1, level)] * Math.max(1, schoolPerk(this, "luckyMultiplier"));
+      var points = held * luckyPoints(this) * Math.max(1, schoolPerk(this, "luckyMultiplier"));
       if (stageBonus(this, points, "umtLuckyClover", held === 1 ? "Lucky card" : "Lucky cards x" + held) > 0) {
         state.lastMessage = ((state.lastMessage || "") + " Lucky Clover: +" + points + " points.").trim();
       }
@@ -1273,6 +1306,7 @@
     DEAD_GLYPH: DEAD_GLYPH,
     LUCKY_GLYPH: LUCKY_GLYPH,
     LUCKY_POINTS: LUCKY_POINTS,
+    luckyPoints: luckyPoints,
     SWAMP_DEAD: SWAMP_DEAD,
     HARD_BOSS: HARD_BOSS,
     isDeadCard: isDeadCard,

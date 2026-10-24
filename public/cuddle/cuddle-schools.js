@@ -44,7 +44,7 @@
  *
  * Perks that live inside another layer's effect (lucky and idea cards,
  * the meter, Rainy Day, Lean Build) ask perk(game, name) for their number.
- * Ranks are read live from the badges, so they follow Combine too.
+ * Ranks are read live from the badges, so they follow Improve too.
  */
 (function () {
   "use strict";
