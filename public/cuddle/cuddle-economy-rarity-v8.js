@@ -75,7 +75,7 @@
     ["vowel lamp", TIERS.RARE],
     ["pattern lens", TIERS.EPIC],
     ["mistake shield", TIERS.RARE],
-    ["bigger hand", TIERS.RARE],
+    ["bigger hand", TIERS.EPIC],
     ["reward echo", TIERS.RARE],
     ["precise green", TIERS.RARE],
     ["theme sense", TIERS.RARE],

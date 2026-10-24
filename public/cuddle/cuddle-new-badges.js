@@ -17,7 +17,7 @@
  *   Quest Chain (legendary)  each quest finished puts a random quest on
  *                            the next guess (if it has none), so quests
  *                            can chain on.
- *   Quest Scout (epic, 2)    when a quest appears, a word from the hand
+ *   Quest Scout (rare, 2)    when a quest appears, a word from the hand
  *                            that fulfills it is found but kept hidden: 1
  *                            (2) of its letters is shown in its spot.
  * Money
