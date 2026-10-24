@@ -68,6 +68,20 @@
     return shown(document.querySelector(selector));
   }
 
+  // Shown and actually on top: nothing (a solve animation, a cash-out)
+  // covers its middle. The tour's own card doesn't count.
+  function onTop(selector) {
+    var element = document.querySelector(selector);
+    if (!shown(element) || typeof document.elementsFromPoint !== "function") return shown(element);
+    var box = element.getBoundingClientRect();
+    var stack = document.elementsFromPoint(box.left + box.width / 2, box.top + Math.min(box.height / 2, 60));
+    for (var i = 0; i < stack.length; i += 1) {
+      if (stack[i].closest && stack[i].closest(".umt-tut")) continue;
+      return element.contains(stack[i]);
+    }
+    return false;
+  }
+
   // Easy (cuddle-easy-mode.js) is a short straight road with no badges on
   // show: some cards have an Easy version, and some don't apply there.
   function easyRun(game) {
@@ -88,7 +102,8 @@
   }
 
   // Overlays that come first; a scene waits until they've gone.
-  var BUSY = [".umt-wi-overlay", ".umt-pt-overlay", ".umt-boss-entrance", ".cuddle-quest-info", ".umt-bd-overlay"];
+  // (.umt-fb: the "Did you have fun?" card after a run, player-insights.js.)
+  var BUSY = [".umt-wi-overlay", ".umt-pt-overlay", ".umt-boss-entrance", ".cuddle-quest-info", ".umt-bd-overlay", ".umt-fb"];
 
   function busy(except) {
     return BUSY.some(function check(selector) { return (except || []).indexOf(selector) === -1 && present(selector); });
@@ -237,6 +252,7 @@
       at: "top",
       cards: [
         { title: "Find the secret word", text: "Each stage hides a five-letter word. Build a guess from your letter cards and tap <b>Submit word</b>. <span class=\"umt-tut-g\">Green</span>: right letter, right spot. <span class=\"umt-tut-y\">Yellow</span>: in the word, wrong spot. Grey: not in the word." },
+        { title: "Building a word", text: "Tap a card to put its letter in the next empty spot. Changed your mind? Tap a letter in your word to send it back, or tap <b>⌫</b> to take off the last one. Vowels can be used as often as you like.", focus: ".cuddle-hand" },
         { title: "Your cards", text: "<b>Vowels</b> are always in your hand. <b>Consonants</b> are cards: this time every consonant of the answer is already in your hand, so you only need to find the order.", focus: ".cuddle-hand" },
         { title: "Themes", text: "The tags at the top are the answer's <b>themes</b>, a hint about what kind of word it is.", focus: ".cuddle-category-chips" },
         { title: "A hint for this one", text: "The answer uses all three of your consonants, <b>S</b>, <b>C</b> and <b>B</b>, in that order, with two vowels in between. And it's a fun activity!", focus: ".cuddle-hand" }
@@ -260,8 +276,9 @@
       except: [".umt-pt-overlay"],
       at: "top",
       cards: [
-        { title: "Points", text: "Solved! Every tile you revealed pays points: a yellow 1, a green 2. Every guess you didn't need pays a bonus row too, so solving sooner pays more.", focus: ".cuddle-money-payout-rows" },
-        { title: "You need points", text: "Points add up over the run, and you'll need them: the <b>boss</b> at the end only lets you challenge it once you have enough points: 30 in this run. Every solved stage gets you closer. Tap <b>Collect</b> to bank these.", focus: ".cuddle-money-collect" }
+        { title: "Points", text: "Solved! Every tile you revealed pays points: a yellow 1, a green 2. Every guess you didn't need pays a bonus row too, so solving sooner pays more. Tap a row to see what it paid.", focus: ".cuddle-money-payout-rows" },
+        { title: "You need points", text: "Points add up over the run, and you'll need them: the <b>boss</b> at the end only lets you challenge it once you have enough points: 30 in this run. Every solved stage gets you closer. Tap <b>Collect</b> to bank these.", focus: ".cuddle-money-collect" },
+        { title: "And money", text: "The <b class=\"umt-tut-gold\">$</b> beside your points is <b>money</b>. In a full run you spend it in shops, on badge packs and on new choices. Here it just adds up, so don't worry about it yet.", focus: ".cuddle-header-money, .cuddle-money-collect" }
       ]
     },
     {
@@ -289,11 +306,23 @@
     {
       id: "e-badge",
       when: function when(game, state) {
-        return state.status === "upgrade" && present(".cuddle-choice-grid") && !moneyOverlayUp();
+        // Once the choices are really up: the solve animation and the
+        // cash-out come first.
+        return state.status === "upgrade" && onTop(".cuddle-choice-grid") && !moneyOverlayUp();
       },
       at: "top",
       cards: [
         { title: "Pick a badge", text: "After a stage you pick one of these. Each is a <b>badge</b>: it stays with you for the rest of the run and makes you better, usually with a hint about the answer. Tap a badge's <b>?</b> to see how it works. Pick the one that sounds most useful.", focus: ".cuddle-choice-grid", at: "bottom" }
+      ]
+    },
+    {
+      // Back in play with a badge: where to find it again.
+      id: "e-mybadges",
+      when: function when(game, state) { return playing(state) && stagesSolved(state) >= 2 && !state.boss && present(".umt-pt-mini"); },
+      needs: ["e-badge"],
+      at: "bottom",
+      cards: [
+        { title: "Your badges", text: "Every badge you pick waits behind the <b>badges button</b> at the top, the one with a number (how many you have). Tap it any time to see your badges and what each one does.", focus: ".umt-pt-mini" }
       ]
     },
     {
@@ -311,8 +340,17 @@
       },
       at: "top",
       cards: [
-        { title: "The boss", text: "The last stop is a <b>boss</b>. A boss bends one rule of Wordle for a guess or two: tap its icon beside a row to read what it does." },
+        { title: "The boss", text: "The last stop is a <b>boss</b>. A boss bends one rule of Wordle for a guess or two. Pick the boss you'd rather face: each says what it bends. In the fight, tap its icon beside a row to read it again." },
         { title: "How you win", text: "Solve the boss's word within its guesses and you <b>win the run</b>. Run out of guesses and the run is over. Good luck!" }
+      ]
+    },
+    {
+      id: "e-won",
+      when: function when(game, state) { return state.status === "won" && onTop(".cuddle-win-modal") && !moneyOverlayUp(); },
+      at: "bottom",
+      cards: [
+        { title: "You did it!", text: "You know the basics now: guess with your cards, read the colours, mulligan what you don't need, and pick badges that help." },
+        { title: "What's next", text: "<b>Medium</b> is the full game: three worlds and three bosses, forks in the road, <b>quests</b>, special <b>squares</b> on the board, <b>shops</b> to spend your money in, Duels and Trials. Every new thing explains itself the first time you meet it." }
       ]
     }
   ];

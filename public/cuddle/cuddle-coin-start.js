@@ -25,8 +25,8 @@
 
   function subtitle(options) {
     var difficulty = String(options && options.difficulty || "hard").toLowerCase();
-    // Easy is shown as "Educational" (the id stays "easy").
-    var name = difficulty === "easy" ? "Educational" : difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+    // Easy is shown as "Tutorial" (the id stays "easy").
+    var name = difficulty === "easy" ? "Tutorial" : difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
     var level = Number(options && options.ascension) || 0;
     return level > 0 ? name + " · Ascension " + level : name;
   }

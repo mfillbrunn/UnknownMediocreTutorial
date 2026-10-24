@@ -174,6 +174,18 @@
     return TOUR_WORDS[stageNumber(state)] || null;
   }
 
+  // After the tour's set words, answers come from everyday words a new
+  // player knows (the full answer list has the likes of BATED and GORED);
+  // the full list is the fallback when none of these fits the stage.
+  var EVERYDAY_WORDS = ("APPLE BEACH BREAD BRICK BRUSH CANDY CHAIR CHALK CHEST CLOCK CLOUD COUCH CROWN DANCE DREAM DRESS "
+    + "DRINK EAGLE EARTH FENCE FIELD FLAME FLOOR FLOUR FRUIT GHOST GIANT GLASS GLOVE GRAPE GRASS HEART HONEY HORSE "
+    + "HOUSE JUICE KNIFE LEMON LIGHT MAGIC MONEY MOUSE MUSIC NIGHT OCEAN PAINT PAPER PARTY PEACH PHONE PIANO PIZZA "
+    + "PLANE PLANT PLATE QUEEN RIVER ROBOT SHEEP SHIRT SHOES SKIRT SMILE SNAKE SPOON STONE STORM SUGAR TABLE TEETH "
+    + "TIGER TOAST TOWEL TRAIN TRUCK WATER WHALE WHEEL WORLD ZEBRA BEARD BLOOM BOARD BRAIN CABIN CAMEL CLOWN CORAL "
+    + "CREAM DAISY DRUMS FAIRY FLUTE FROST GRAIN HAPPY JELLY LADLE LIMIT LUNCH MAPLE MELON NURSE OLIVE ONION OTTER "
+    + "PANDA PEARL PENNY PILOT QUILT RADIO SALAD SAUCE SCARF SHELL SHORE SKATE SLEEP SNACK SPACE SPOOL STAMP STARS "
+    + "STEAM STICK SWEET SWING THUMB TOOTH TOWER TULIP UNCLE VOICE WAGON WATCH WITCH YOUTH").split(" ");
+
   var basePickSecret = proto._pickSecret;
   if (typeof basePickSecret === "function") {
     proto._pickSecret = function pickSecretEasy() {
@@ -181,6 +193,12 @@
       var map = this.state && this.state.branchMap;
       var tour = isEasy(this) && map && map.position ? tourWord(this.state) : null;
       if (tour && this.getActiveWords().indexOf(tour.word) !== -1) return tour.word;
+      if (isEasy(this) && map && map.position) {
+        var active = this.getActiveWords() || [];
+        var used = (this.state.usedSecrets || []).concat([this.state.secret]);
+        var everyday = EVERYDAY_WORDS.filter(function fits(word) { return active.indexOf(word) !== -1 && used.indexOf(word) === -1; });
+        if (everyday.length) return everyday[Math.floor(this.random() * everyday.length)];
+      }
       return basePickSecret.apply(this, arguments);
     };
   }
@@ -487,7 +505,7 @@
   if (typeof baseDraw === "function") {
     proto.drawToHandLimit = function drawToHandLimitEasy() {
       if (!isEasy(this) || !this.state || this.state.status !== "playing" || !this.state.secret) return baseDraw.apply(this, arguments);
-      try { dealAnswer(this); } catch (error) { console.warn("Cuddle Educational: dealing the answer failed.", error); }
+      try { dealAnswer(this); } catch (error) { console.warn("Cuddle Tutorial: dealing the answer failed.", error); }
       return [];
     };
   }
@@ -530,7 +548,7 @@
       if (isEasy(this) && this.state && !mulligansOn(this.state)) this.state.mulligansLeft = 0;
       var result = baseSubmit.apply(this, arguments);
       if (isEasy(this) && this.state && this.state.status === "playing") {
-        try { dealAnswer(this); } catch (error) { console.warn("Cuddle Educational: dealing the answer failed.", error); }
+        try { dealAnswer(this); } catch (error) { console.warn("Cuddle Tutorial: dealing the answer failed.", error); }
       }
       return result;
     };
