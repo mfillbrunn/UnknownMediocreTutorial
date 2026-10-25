@@ -1654,8 +1654,10 @@
       ? `POINTS MILESTONE · ${state.upgradeMilestone}`
       : startingRewards
         ? "STARTING REWARDS"
+        : state.umtLevelStop
+          ? `LEVEL-UPS · ${state.umtLevelStop.pick} OF ${state.umtLevelStop.of}`
         : waystone
-          ? "FREE UPGRADE"
+          ? "NEW BADGE"
           // An ordinary after-stage pick: just its heading.
           : "";
     // The after-stage pick takes turns (cuddle-reward-rhythm.js): a level
@@ -1685,6 +1687,10 @@
       ? pickWhat("a bonus")
       : startingRewards
         ? "Choose a starting reward"
+        : state.umtLevelStop
+          ? "Level up a badge"
+        : waystone && !eventPick
+          ? "Choose a new badge"
         : rhythm === "level"
           ? "Level up a badge"
           : rhythm === "new"

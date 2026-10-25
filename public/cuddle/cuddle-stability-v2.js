@@ -12,6 +12,7 @@
     theme: "stage-theme.svg",
     challenge: "stage-challenge.svg",
     upgrade: "stage-upgrade.svg",
+    levelup: "stage-upgrade.svg",
     shop: "stage-shop.svg",
     event: "stage-event.svg",
     boss: "stage-boss.svg",
@@ -267,11 +268,12 @@
   }
 
   // Each world: three rows of wordle stops (normal/theme/challenge), then a
-  // fork right before the boss -- a Shop on one side, a Free Upgrade on the
-  // other -- so every run gets exactly one of the two before each boss.
+  // three-way fork right before the boss -- a Shop, a New Badge (Free
+  // Upgrade) and a Level-Up stop -- so every run gets one of them before
+  // each boss.
   // Events ride along as an occasional lane in a world's middle row (only
   // when that row has all three lanes, so two wordle lanes always remain).
-  const REST_LANES = [0, 2];
+  const REST_LANES = [0, 1, 2];
   const WORDLE_TYPES = ["normal", "theme", "challenge"];
 
   // A theme's path (cuddle-worlds.js `path`), laid over its world's Wordle
@@ -371,7 +373,7 @@
         });
       }
       applyThemePath(rows, firstRow, rows.length, world, theme.path || {}, random);
-      const restTypes = shuffled(["shop", "upgrade"], random);
+      const restTypes = shuffled(["shop", "upgrade", "levelup"], random);
       const rowIndex = rows.length;
       rows.push({
         kind: "stops",

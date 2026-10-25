@@ -137,6 +137,7 @@
     challenge: { icon: "⚡", title: "Mini Challenge", label: "Challenge", description: "A round that always offers a challenge: take it for extra money, or wave it off.", playsRound: true },
     shop: { icon: "🛒", title: "The Wandering Paw", label: "Shop", description: "Spend money on one-use supplies. No Wordle here.", playsRound: false },
     upgrade: { icon: "✨", title: "Free Upgrade", label: "Upgrade", description: "Take a free permanent upgrade. No Wordle here.", playsRound: false },
+    levelup: { icon: "⏫", title: "Level-Ups", label: "Level-Up", description: "Level up two different badges you hold. No Wordle here.", playsRound: false },
     event: { icon: "❔", title: "Event", label: "Event", description: "A trade: something gained now for something given up.", playsRound: false },
     boss: { icon: "💀", title: "Boss", label: "Boss", description: "A boss round: pass or fail, and its reward is permanent.", playsRound: true },
     trial: { icon: "📜", title: "Preset Trial", label: "Trial", description: "On guess 3, the answer is one of a few listed words. Pick it to pass. A wrong pick ends the run.", playsRound: true }
@@ -607,6 +608,12 @@
 
   function openUpgradeStop(game) {
     var choices = typeof game._generateUpgradeChoices === "function" ? game._generateUpgradeChoices() : [];
+    // A Free Upgrade is a new badge; levels are the Level-Up stop's.
+    var rhythm = window.CuddleRewardRhythm;
+    if (rhythm && typeof rhythm.newChoices === "function") {
+      var fresh = rhythm.newChoices(game, choices, Math.max(3, choices.length));
+      if (fresh.length) choices = fresh;
+    }
     if (!choices.length) {
       game.state.lastMessage = "The waystone had nothing left to offer.";
       returnToMap(game);
@@ -620,6 +627,29 @@
     // cuddle-engine.js). Cleared once the pick is made or a round begins.
     game.state.waystoneOffer = true;
     game.state.lastMessage = "A waystone: take one permanent upgrade.";
+  }
+
+  // The Level-Up stop: two picks in a row, each a level for a badge you
+  // hold, the second never the badge the first raised. With nothing to
+  // level yet, it hands out a new badge instead.
+  var LEVEL_UP_PICKS = 2;
+
+  function openLevelUpStop(game) {
+    var rhythm = window.CuddleRewardRhythm;
+    var choices = rhythm && typeof rhythm.levelChoices === "function" ? rhythm.levelChoices(game, 3, []) : [];
+    if (!choices.length) {
+      game.state.umtLevelStop = null;
+      openUpgradeStop(game);
+      game.state.lastMessage = "No badge to level up yet: take a new one instead.";
+      return;
+    }
+    game.state.umtLevelStop = { pick: 1, of: LEVEL_UP_PICKS, done: [] };
+    game.state.status = "upgrade";
+    game.state.upgradePhase = "round";
+    game.state.upgradeMilestone = null;
+    game.state.upgradeChoices = choices;
+    game.state.waystoneOffer = true;
+    game.state.lastMessage = "Level up two of your badges.";
   }
 
   // Bosses go through the real _openBossGate/chooseBoss chain (which retimes
@@ -736,6 +766,10 @@
       openUpgradeStop(game);
       return { ok: true };
     }
+    if (node.type === "levelup") {
+      openLevelUpStop(game);
+      return { ok: true };
+    }
     if (node.type === "event") {
       var message = applyEvent(game, node);
       returnToMap(game);
@@ -803,6 +837,8 @@
   };
 
   var originalChooseUpgrade = proto.chooseUpgrade;
+  // (The Level-Up stop's second pick is cuddle-reward-rhythm.js's, the
+  // outermost chooseUpgrade, so every badge's own pick handling has run.)
   proto.chooseUpgrade = function chooseUpgradeClosingWaystone() {
     var result = originalChooseUpgrade.apply(this, arguments);
     if (this.state && this.state.status !== "upgrade") {
@@ -816,6 +852,7 @@
   var originalBeginRound = proto._beginRound;
   proto._beginRound = function beginRoundWithBranchPenalty() {
     this.state.waystoneOffer = false;
+    this.state.umtLevelStop = null;
     this.state.legendaryOffer = false;
     this.state.umtEventPick = null;
     var result = originalBeginRound.apply(this, arguments);
@@ -1075,7 +1112,8 @@
       if (VARIANT_CAPTIONS[variant.kind]) return VARIANT_CAPTIONS[variant.kind];
     }
     if (node.type === "theme") return "Themed";
-    if (kind === "upgrade") return "Free Upgrade";
+    if (kind === "upgrade") return "New Badge";
+    if (kind === "levelup") return "Level-Ups";
     return window.CuddleWorlds.KIND_NAMES[kind] || "Wordle";
   }
 
@@ -1589,7 +1627,10 @@
       brief.options = null;
     } else if (kind === "upgrade") {
       brief.summary = "A quiet waystone. No Wordle here.";
-      brief.gets.push({ type: "perk", text: "Pick 1 of 3 free permanent upgrades" });
+      brief.gets.push({ type: "perk", text: "Pick 1 of 3 new badges" });
+    } else if (kind === "levelup") {
+      brief.summary = "A training ground. No Wordle here.";
+      brief.gets.push({ type: "perk", text: "Level up 2 different badges you hold" });
     } else if (kind === "duel") {
       brief.summary = meta ? meta.description : "Race an AI to the answer.";
     } else if (kind === "trial") {

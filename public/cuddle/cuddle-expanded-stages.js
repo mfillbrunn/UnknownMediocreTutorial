@@ -96,7 +96,8 @@
   const BASE_STAGE_META = Object.freeze({
     normal: Object.freeze({ title: "Wordle", label: "Wordle", icon: "stage-normal.svg", description: "A standard Cuddle Wordle round." }),
     theme: Object.freeze({ title: "Themed Wordle", label: "Theme", icon: "stage-theme.svg", description: "Theme reveals scale by act: all, all but one, then one." }),
-    upgrade: Object.freeze({ title: "Free Upgrade", label: "Upgrade", icon: "stage-upgrade.svg", description: "Choose a permanent upgrade." }),
+    upgrade: Object.freeze({ title: "New Badge", label: "Upgrade", icon: "stage-upgrade.svg", description: "Choose a new badge." }),
+    levelup: Object.freeze({ title: "Level-Ups", label: "Level-Up", icon: "stage-upgrade.svg", description: "Level up two different badges you hold." }),
     shop: Object.freeze({ title: "Wandering Paw", label: "Shop", icon: "stage-shop.svg", description: "Spend money on run supplies." }),
     event: Object.freeze({ title: "Mystery Event", label: "Event", icon: "stage-event-choice.svg", description: "Something happens on the road here. You only find out what when you arrive." }),
     boss: Object.freeze({ title: "Boss", label: "Boss", icon: "stage-boss.svg", description: "A boss Wordle with permanent stakes." }),
@@ -3192,7 +3193,8 @@
         row("trial", "Trial", "Find the answer among a list of words. Open Trial: the list shows from the start, and you pick after two guesses. Preset Trial: three guesses, then the list. Pair Trial: no typing, each guess is one of two words. A right pick passes, a wrong one ends the run."),
         row("event", "Event", "A choice: a safe reward, or a bigger one with a cost."),
         row("shop", "Shop", "Spend money on supplies for the next stages or the next boss, and sell a badge."),
-        row("upgrade", "Free Upgrade", "Choose a free badge."),
+        row("upgrade", "New Badge", "Choose a new badge."),
+        row("levelup", "Level-Ups", "Level up two different badges you hold."),
         row("duel", "Duel", "Take turns guessing with an AI: the first to solve wins money. Losing costs nothing on Easy, 50 points on Medium, and ends the run on Hard. Never in world 1."),
         row("mystery", "Unknown", "Stays hidden until you step onto it. Usually a Wordle, sometimes a Duel or a Trial. Pays +20 points."),
         row("boss", "Boss", "Guards the end of each world. The number on it is the points you need before you can challenge it. Beat it for a permanent reward."),
@@ -3213,7 +3215,7 @@
     }
 
     function renderLegacyLegend() {
-      const standard = ["normal", "theme", "event", "upgrade", "shop", "duel", "mystery", "boss"];
+      const standard = ["normal", "theme", "event", "upgrade", "levelup", "shop", "duel", "mystery", "boss"];
       const standardRows = standard.map(type => {
         const meta = BASE_STAGE_META[type];
         return `<li>${stageImage(meta, "umt-legend-icon")}<span><strong>${escapeHtml(meta.title)}</strong><small>${richText(meta.description)}</small></span></li>`;

@@ -110,8 +110,10 @@
     }).filter(Boolean);
   }
 
-  function levelChoices(game, count) {
+  // skip: badge ids not to offer (a Level-Up stop's first pick).
+  function levelChoices(game, count, skip) {
     var seen = {};
+    (skip || []).forEach(function (name) { seen[name] = true; });
     var pool = catalog(game).concat(bossGradeCards(game)).filter(function (card) {
       var bossGrade = BOSS_GRADE.indexOf(card.id) !== -1;
       if ((String(card.key || "").indexOf("legendary:") === 0 && !bossGrade) || !canLevel(game, card)) return false;
@@ -234,8 +236,59 @@
     };
   });
 
+  // The Level-Up stop (cuddle-branch-map.js openLevelUpStop): after its
+  // first pick, a second one, never the badge just raised.
+  var pickedBefore = proto.chooseUpgrade;
+  if (typeof pickedBefore === "function") {
+    proto.chooseUpgrade = function chooseUpgradeLevelStop(choiceKey) {
+      var state = this.state;
+      var stop = state && state.status === "upgrade" ? state.umtLevelStop : null;
+      var picked = stop && (state.upgradeChoices || []).find(function (item) { return item.key === choiceKey; });
+      if (!stop) return pickedBefore.apply(this, arguments);
+      // Whether a second pick follows is known up front: if so, the stop
+      // isn't left behind yet (no _advanceRound, so no stage-clear money
+      // twice and no step on the road).
+      var done = stop.done.concat(picked ? [nameOf(picked)] : []);
+      var next = stop.pick < stop.of ? levelChoices(this, 3, done) : [];
+      var result;
+      if (next.length) {
+        this._advanceRound = function holdLevelStop() { return undefined; };
+        try {
+          result = pickedBefore.apply(this, arguments);
+        } finally {
+          delete this._advanceRound;
+        }
+      } else {
+        result = pickedBefore.apply(this, arguments);
+      }
+      if (!result || result.ok === false) return result;
+      state = this.state;
+      stop.done = done;
+      if (!next.length) {
+        state.umtLevelStop = null;
+        return result;
+      }
+      stop.pick += 1;
+      state.umtLevelStop = stop;
+      state.status = "upgrade";
+      state.upgradePhase = "round";
+      state.upgradeMilestone = null;
+      state.upgradeChoices = next;
+      state.waystoneOffer = true;
+      try { this.save(); } catch (_error) { /* next save */ }
+      return result;
+    };
+  }
+
   window.CuddleRewardRhythm = Object.freeze({
     newOfTier: newOfTier,
+    levelChoices: levelChoices,
+    // New badges only, from an offer (topped up from the catalog).
+    newChoices: function (game, generated, count) {
+      var picks = newChoices(game, generated || [], count);
+      return picks.filter(function (card) { return levelOf(game, card) <= 0; });
+    },
+    nameOf: nameOf,
     // "level" or "new" for the reward screen on now, or null.
     shown: function shown(state) {
       return ordinaryPick(state) && state.umtRewardRhythm ? state.umtRewardRhythm.shown || null : null;
