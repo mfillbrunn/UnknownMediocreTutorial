@@ -647,7 +647,9 @@ button.umt-duel-option:focus-visible {
   text-shadow: 0 2px 10px rgba(10, 8, 18, 0.9), 0 0 2px rgba(10, 8, 18, 0.9);
 }
 
-/* Duel: the AI's rows carry a clear "AI" tag. */
+/* Duel: the AI's rows carry a clear "AI" tag; a row Autopilot played for
+   you an "Auto" one in your own (green) colour. */
+.umt-duel-who.is-auto,
 .umt-duel-who.is-ai {
   display: inline-grid;
   place-items: center;
@@ -782,6 +784,7 @@ button.umt-duel-option:focus-visible {
   .umt-duel-dots i, #cuddleRoot .umt-duel-status.is-your-turn { animation: none; }
 }
 #cuddleRoot .umt-duel-who.is-ai { color: #e3d4ff; }
+#cuddleRoot .umt-duel-who.is-auto { border-color: rgba(126, 226, 166, 0.6); background: rgba(126, 226, 166, 0.14); color: #c9f5da; }
 #cuddleRoot .umt-duel-status-count {
   background: rgba(var(--turn), .12);
   color: rgb(var(--turn));

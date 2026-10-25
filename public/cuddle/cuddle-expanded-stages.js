@@ -952,6 +952,22 @@
         fits,
         history: (rows || []).map(row => ({ word: String(row.word || "").toUpperCase(), feedback: row.feedback, actor: "ai" }))
       }),
+      // Submits the player's word in a Duel being played, as the Submit
+      // button does (Autopilot, cuddle-copilot.js, plays the player's turn
+      // through it). The new row is marked umtAutopilot when `auto` is set.
+      submitDuel: (game, auto) => {
+        const result = submitDuelTiles(game);
+        const duel = playingDuel(game) || ensureMap(game).expandedDuel;
+        if (auto && result && result.ok && duel && Array.isArray(duel.history)) {
+          const mine = duel.history.filter(entry => entry && entry.actor === "player");
+          if (mine.length) mine[mine.length - 1].umtAutopilot = true;
+          safeSave(game);
+        }
+        // The rival's move is scheduled on a redraw, which a Submit tap
+        // brings and this call doesn't: schedule it here.
+        if (result && result.ok && duel && duel.phase === "playing" && duel.turn === "ai") scheduleAiMove(game);
+        return result;
+      },
       stopMeta: (node, game) => metaForNode(node, game),
       eventOptions: node => {
         const definition = node && EVENT_BY_ID[node.expandedEventId];
@@ -2786,7 +2802,10 @@
           const count = entry.actor === "ai" ? "" : duelCountMark(duel, rowIndex, index, letter, colour);
           return `<span class="cuddle-tile is-${escapeHtml(colour)}${entry.jokerIndex === index ? " is-joker" : ""}${special.cls}${compass ? " has-compass" : ""}"${special.attr}>${escapeHtml(letter)}${compass}${count}</span>`;
         }).join("")
-        + (entry.actor === "ai" ? `<span class="cuddle-row-score umt-duel-who is-ai">AI</span>` : `<span class="cuddle-row-score umt-duel-who is-you"></span>`)
+        // The rival AI's rows say AI; a row Autopilot played for you says so.
+        + (entry.actor === "ai" ? `<span class="cuddle-row-score umt-duel-who is-ai">AI</span>`
+          : entry.umtAutopilot ? `<span class="cuddle-row-score umt-duel-who is-auto" title="Played for you by Autopilot">Auto</span>`
+            : `<span class="cuddle-row-score umt-duel-who is-you"></span>`)
         + `</div>`
       ));
       if (duel.phase === "playing" && duel.turn === "ai") {
