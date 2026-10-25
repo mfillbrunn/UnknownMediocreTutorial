@@ -269,7 +269,7 @@
         { id: "boldOpener", icon: "🪄", title: "Bold Opener", tier: "epic", type: "clues", maxLevel: 1,
           description: "Your 1st guess can be any 5 letters, even if it isn't a real word.",
           level: g => powerLevel(g, "boldOpener") },
-        { id: "ideaTiles", icon: "💡", title: "Idea Cards", tier: "epic", type: "clues", maxLevel: 3,
+        { id: "ideaTiles", icon: "💡", title: "Idea Cards", tier: "legendary", type: "clues", maxLevel: 3,
           levels: ["1 idea card goes in your deck. Mulligan it away to see one letter of the answer.", "2 idea cards go in your deck.", "One of the 2 becomes a super idea card: mulligan it away and a letter of the answer turns green, in its spot."],
           level: g => powerLevel(g, "ideaTiles") },
         { id: "waveTiles", icon: "🌊", title: "Wave Cards", tier: "common", type: "letters", maxLevel: 3,
