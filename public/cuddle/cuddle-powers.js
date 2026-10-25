@@ -133,6 +133,8 @@
 
   // Shared with cuddle-money-mode.js (a guess's on-the-spot payouts).
   window.CuddleHeaderPop = headerPop;
+  // Shared with cuddle-burdens.js (lucky cards mulliganed, angel cards).
+  window.CuddleInstantPoints = instantPoints;
 
   // -------------------------------------------------------------------------
   // 1. Third-level bonuses

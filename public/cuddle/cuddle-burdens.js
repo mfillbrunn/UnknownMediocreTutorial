@@ -534,7 +534,7 @@
     var card = state && (state.hand || []).find(function same(item) { return item.id === cardId; });
     if (!card || !isAngelCard(card) || state.status !== "playing") return { ok: false };
     removeFromHand(state, card);
-    stageBonus(this, ANGEL_POINTS, "umtAngelCards", "Angel cards");
+    pointsNow(this, ANGEL_POINTS);
     var drawn = typeof this.drawToHandLimit === "function" ? this.drawToHandLimit() : [];
     state.lastMessage = "An angel flew to heaven: +" + ANGEL_POINTS + " points.";
     if (typeof this.save === "function") this.save();
@@ -756,9 +756,8 @@
       state.discard = (state.discard || []).filter(function keep(card) { return !spent.has(card.id); });
       if (lucky.length) {
         var points = lucky.length * LUCKY_MULLIGAN_POINTS;
-        if (stageBonus(this, points, "umtLuckyMulligan", "Lucky cards mulliganed") > 0) {
-          note(this, "Lucky card" + (lucky.length === 1 ? "" : "s") + " mulliganed: +" + points + " points.");
-        }
+        pointsNow(this, points);
+        note(this, "Lucky card" + (lucky.length === 1 ? "" : "s") + " mulliganed: +" + points + " points.");
       }
       if (ideas.length) {
         var letters = [];
@@ -806,6 +805,14 @@
   });
 
   // -- lucky cards pay out on a solve ----------------------------------------
+  // Points paid on the spot, like a quest reward's: straight into the
+  // header with a "+10" rising from it, and left out of the cash-out.
+  function pointsNow(game, amount) {
+    if (!amount) return;
+    if (typeof window.CuddleInstantPoints === "function") window.CuddleInstantPoints(game, amount);
+    else game.state.score = (Number(game.state.score) || 0) + amount;
+  }
+
   function stageBonus(game, amount, field, label) {
     var rebalance = window.CuddleRebalanceV5;
     if (rebalance && typeof rebalance.addStageBonus === "function") {
