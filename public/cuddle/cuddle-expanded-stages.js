@@ -2480,7 +2480,10 @@
       game.state.lastMessage = duel.message;
       // A won Duel ends like a cleared stage, with a better pick: one of
       // three Epic badges, then the road (chooseUpgrade returns to the map).
-      const epic = tierChoices(game, "epic");
+      // New badges only: a level-up is the ordinary pick's (cuddle-reward-rhythm.js).
+      const rhythm = window.CuddleRewardRhythm;
+      const drawn = tierChoices(game, "epic");
+      const epic = rhythm && typeof rhythm.newOfTier === "function" ? rhythm.newOfTier(game, drawn, "epic") : drawn;
       const choices = epic.length ? epic : (typeof game._generateUpgradeChoices === "function" ? game._generateUpgradeChoices() : []);
       if (Array.isArray(choices) && choices.length) {
         game.state.status = "upgrade";

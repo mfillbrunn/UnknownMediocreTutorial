@@ -169,6 +169,23 @@
     return row && Array.isArray(row.nodes) ? row.nodes[Number(position.col)] || null : null;
   }
 
+  // A Trial or Duel pays a new badge, not a level: badges of its tier you
+  // don't hold yet, topped up from the catalog when the draw brought ones
+  // you have.
+  function newOfTier(game, drawn, tier) {
+    var picks = (drawn || []).filter(function (card) { return levelOf(game, card) <= 0; });
+    var taken = {};
+    picks.forEach(function (card) { taken[nameOf(card)] = true; });
+    var spare = shuffled(catalog(game).filter(function (card) {
+      return card.__cuddleV8Tier === tier && levelOf(game, card) === 0 && !taken[nameOf(card)];
+    }), randomOf(game));
+    for (var i = 0; i < spare.length && picks.length < 3; i += 1) {
+      taken[nameOf(spare[i])] = true;
+      picks.push(withKey(spare[i]));
+    }
+    return picks;
+  }
+
   // A passed Trial pays one of three Rare badges instead of the turn's
   // pick (a won Duel pays an Epic one, cuddle-expanded-stages.js).
   function trialPick(game) {
@@ -177,7 +194,7 @@
     var node = currentNode(state);
     var map = window.CuddleBranchMap;
     if (!node || node.type !== "trial" || !map || typeof map.tierChoices !== "function") return false;
-    var choices = map.tierChoices(game, "rare");
+    var choices = newOfTier(game, map.tierChoices(game, "rare"), "rare");
     if (!choices.length) return false;
     state.upgradeChoices = choices;
     state.waystoneOffer = true;
@@ -218,6 +235,7 @@
   });
 
   window.CuddleRewardRhythm = Object.freeze({
+    newOfTier: newOfTier,
     // "level" or "new" for the reward screen on now, or null.
     shown: function shown(state) {
       return ordinaryPick(state) && state.umtRewardRhythm ? state.umtRewardRhythm.shown || null : null;
