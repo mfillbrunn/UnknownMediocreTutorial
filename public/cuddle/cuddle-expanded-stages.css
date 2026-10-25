@@ -1114,6 +1114,9 @@ button.umt-duel-option:focus-visible {
 .umt-trial-pick-panel { width: min(400px, 100%); margin: 0; box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55); }
 .umt-trial-pick-panel h2 { margin: 0 0 4px; color: #e8c98a; }
 .umt-trial-pick .umt-duel-option { width: 100%; font: inherit; text-align: left; cursor: pointer; grid-template-areas: "pips name" "pips win"; grid-template-columns: auto minmax(0, 1fr); }
+/* A Hard Trial's note: its first guess carries a challenge. */
+.umt-trial-pick .umt-duel-option:has(.umt-trial-twist) { grid-template-areas: "pips name" "pips win" "pips twist"; }
+.umt-trial-pick .umt-duel-option .umt-trial-twist { grid-area: twist; color: #ff9a9a; font-size: 0.78rem; font-weight: 800; }
 
 /* The Duel's quest reward screen names the quest just completed. */
 .umt-duel-quest-done {

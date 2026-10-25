@@ -22,7 +22,7 @@
       kicker: "How a Preset Trial works",
       color: "#e6c27a",
       steps: [
-        ["Choose how hard", "The answer is one of a short list of words. Harder means more words to choose from, and a bigger prize.", "trial-levels"],
+        ["Choose how hard", "The answer is one of a short list of words. Harder means more words to choose from, and a bigger prize. On Hard, your first guess also has a challenge (you see which when you play it).", "trial-levels"],
         ["Three guesses, as usual", "Play three guesses like any Wordle. Every colour you see rules words out. The list stays hidden until your last guess.", "trial-board"],
         ["Pick the answer", "On guess 4 you don't type: the answer is one of the listed words. Check each one against your colours, tap × to cross out a word that can't be it, then pick. Hide list shows your guesses again. A wrong pick ends the run.", "trial-pick"],
         ["Pass, and take a Rare badge", "A right pick pays the Trial's points and money, and you choose one of three Rare badges.", "trial-reward"]
@@ -34,7 +34,7 @@
       kicker: "How an Open Trial works",
       color: "#e6c27a",
       steps: [
-        ["Choose how hard", "The answer is one of the listed words. Harder means more words on the list, and a bigger prize.", "trial-open-levels"],
+        ["Choose how hard", "The answer is one of the listed words. Harder means more words on the list, and a bigger prize. On Hard, your first guess also has a challenge (you see which when you play it).", "trial-open-levels"],
         ["The list is there from the start", "The words sit above the board the whole time. Guess as usual and check each word against the colours you see.", "trial-open-list"],
         ["Pick on guess 3, or sooner", "After two guesses, guess 3 is the pick. Sure already? Tap Answer now to lock in early (Keep guessing backs out). Tap × to cross out words that can't be it. A wrong pick ends the run.", "trial-open-early"],
         ["Pass, and take a Rare badge", "A right pick pays the Trial's points and money, and you choose one of three Rare badges.", "trial-reward"]
@@ -46,7 +46,7 @@
       kicker: "How a Pair Trial works",
       color: "#e6c27a",
       steps: [
-        ["Choose how hard", "The answer is one of the listed words, shown from the start. Harder means more words on the list, and a bigger prize. On Hard, the words also look alike.", "trial-pair-levels"],
+        ["Choose how hard", "The answer is one of the listed words, shown from the start. Harder means more words on the list, and a bigger prize. On Hard, the words also look alike, and your first guess has a challenge.", "trial-pair-levels"],
         ["No typing: tap one of two words", "Each guess, you're offered two words: tap one to play it. If it's the answer, you pass straight away.", "trial-pair-choose"],
         ["Read the board", "The word you played shows its colours like any guess. Use them to rule words off the list.", "trial-pair-board"],
         ["Pick now, or see two more", "After each guess: pick the answer from the list, or show two more words to play. The sooner you pass, the more it pays; by guess 5 you must pick. A wrong pick ends the run.", "trial-pair-next"],

@@ -1869,6 +1869,45 @@
     return delay > 0 && Array.isArray(plan) ? Array.from({ length: delay }, () => null).concat(plan) : plan;
   }
 
+  // A Hard Trial (cuddle-curses.js): its first guess carries a challenge,
+  // not named until it's played. Only ones that change what a guess shows
+  // (a word rule could rule out both words a Pair Trial offers), and not
+  // Fake Feedback: a wrong pick ends the run. It lands on the first guess
+  // nothing else claims -- a free opener, or a beaten boss's curse, pushes
+  // it to the next one -- and pays nothing (the Trial pays as it always does).
+  const TRIAL_CHALLENGES = Object.freeze(["countOnly", "hiddenMargins", "blueMode", "arrowMode", "delayedFeedback"]);
+  function startTrialChallenge(game) {
+    const custom = customState(game);
+    const state = stateOf(game);
+    if (!custom || !state || activeChallenge(game)) return null;
+    const id = TRIAL_CHALLENGES[hash32(`${mapSeed(game)}:trial:${roundToken(game)}`) % TRIAL_CHALLENGES.length];
+    const challenge = challengeById(id);
+    const engine = window.CuddleEngine;
+    let at = (state.history || []).length + freeOpeners(game);
+    for (let guard = 0; guard < 8; guard += 1) {
+      let curse = null;
+      try {
+        curse = engine && typeof engine.ratchetForGuess === "function" ? engine.ratchetForGuess(game, at + 1) : null;
+      } catch (_error) {
+        curse = null;
+      }
+      if (!curse) break;
+      at += 1;
+    }
+    const plan = Array.from({ length: at }, () => null).concat([id]);
+    custom.activeChallenge = {
+      ...challenge,
+      plan,
+      masks: plan,
+      reward: 0,
+      roundToken: roundToken(game),
+      paid: true,
+      mandatory: true,
+      trialChallenge: true
+    };
+    return id;
+  }
+
   function beginVariant(game, pending) {
     const custom = customState(game);
     if (!custom) return;
@@ -5485,6 +5524,8 @@
       // The constraint on a guess (0-based) of the live stage -- its
       // challenge's, or a mixed boss's -- for the engine and the timer.
       planEffect: (game, used) => planEffect(game || publicActiveGame(), used),
+      // A Hard Trial's hidden first-guess challenge (cuddle-curses.js).
+      startTrialChallenge: (game) => startTrialChallenge(game || publicActiveGame()),
       guessTimerSeconds: (game) => {
         const live = game || publicActiveGame();
         return live && planEffect(live, guessesUsed(live)) === "quickMode" ? 60 : 0;
