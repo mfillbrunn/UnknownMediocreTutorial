@@ -1657,7 +1657,9 @@
       : startingRewards
         ? "STARTING REWARDS"
         : state.umtLevelStop
-          ? `LEVEL-UPS · ${state.umtLevelStop.pick} OF ${state.umtLevelStop.of}`
+          ? (state.umtLevelStop.badgeFirst
+            ? `LEVEL-UPS · ${state.umtLevelStop.pick - 1} OF ${state.umtLevelStop.of - 1}`
+            : `LEVEL-UPS · ${state.umtLevelStop.pick} OF ${state.umtLevelStop.of}`)
         : waystone
           ? "NEW BADGE"
           // An ordinary after-stage pick: just its heading.

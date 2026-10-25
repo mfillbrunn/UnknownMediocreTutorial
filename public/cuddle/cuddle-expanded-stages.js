@@ -2056,10 +2056,7 @@
         game.state.cuddleMoney += earnedMoney;
         messages.push(`+$${earnedMoney} from tiles and powers.`);
       }
-      if (duel.difficulty === "hard") {
-        const upgrade = grantRandomUpgrade(game);
-        messages.push(upgrade.message);
-      }
+      // (Hard's extra: level-ups after the Epic badge, continueAfterDuel.)
       duel.rewardGranted = true;
       duel.phase = "won";
       duel.turn = null;
@@ -2494,6 +2491,8 @@
         if (epic.length) {
           game.state.waystoneOffer = true;
           game.state.umtEventPick = { title: "Word Duel", kicker: "WORD DUEL WON", tier: "epic" };
+          // Hard: level-ups after the badge (cuddle-reward-rhythm.js).
+          if (duel.difficulty === "hard" && rhythm && typeof rhythm.levelsAfterBadge === "function") rhythm.levelsAfterBadge(game);
         }
       } else {
         game.state.status = MAP_STATUS;
@@ -2987,6 +2986,7 @@
         + richText(EASY_COST_LABELS[item.id] || (item.upgrade ? `−1 level: ${item.upgrade.title}` : item.title)) + `</button>`
       )).join("");
       const pips = count => `<span class="umt-duel-pips" aria-hidden="true">${[1, 2, 3].map(n => `<i${n <= count ? ' class="is-on"' : ""}></i>`).join("")}</span>`;
+      const hardLevels = window.CuddleRewardRhythm && typeof window.CuddleRewardRhythm.bonusLevels === "function" ? window.CuddleRewardRhythm.bonusLevels(game.state) : 1;
       return (
         `<section class="umt-stop-panel umt-duel-choose">`
         + `<div class="umt-stop-head">${stopMedallion("duel")}<h2>Word Duel</h2></div>`
@@ -2995,7 +2995,7 @@
         + `<div class="umt-duel-option is-easy">${pips(1)}<b>Easy AI</b><span class="umt-duel-win">Win: ${richText("+$10 · Epic badge")}</span>`
         + `<span class="umt-duel-cost-label">Costs one to start:</span><div class="umt-duel-costs">${easyCosts}</div></div>`
         + `<button type="button" class="umt-duel-option is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium">${pips(2)}<b>Medium AI</b><span class="umt-duel-win">Win: ${richText("+$18 · Epic badge")}</span><span class="umt-duel-free">Free</span></button>`
-        + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard">${pips(3)}<b>Hard AI</b><span class="umt-duel-win">Win: ${richText("+$38 · free random badge · Epic badge")}</span><span class="umt-duel-free">Free</span></button>`
+        + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard">${pips(3)}<b>Hard AI</b><span class="umt-duel-win">Win: ${richText(`+$38 · Epic badge · ${hardLevels} level-up${hardLevels === 1 ? "" : "s"}`)}</span><span class="umt-duel-free">Free</span></button>`
         + `</div>`
         + `</section>`
       );

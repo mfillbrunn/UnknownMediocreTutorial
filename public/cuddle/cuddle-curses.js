@@ -135,6 +135,8 @@
   var PAIR_PAY = [1, 0.75, 0.5, 0.35, 0.25];
   var PAIR_PICK_GUESS = 5;
   var TRIAL_ORDER = ["easy", "medium", "hard"];
+  // Easy pays the same Rare badge as Medium, but costs this to choose.
+  var EASY_TRIAL_COST = 10;
 
   function trialLevel(node) {
     return node && TRIAL_LEVELS[node.trialDifficulty] ? TRIAL_LEVELS[node.trialDifficulty] : null;
@@ -496,12 +498,18 @@
     var pips = function pips(count) {
       return '<span class="umt-duel-pips" aria-hidden="true">' + [1, 2, 3].map(function pip(n) { return "<i" + (n <= count ? ' class="is-on"' : "") + "></i>"; }).join("") + "</span>";
     };
+    var rhythm = window.CuddleRewardRhythm;
+    var levels = rhythm && typeof rhythm.bonusLevels === "function" ? rhythm.bonusLevels(state) : 1;
+    var money = Math.max(0, Number(state.cuddleMoney) || 0);
     var options = TRIAL_ORDER.map(function option(id, index) {
       var level = TRIAL_LEVELS[id];
       var words = pairs ? level.pairs : open ? level.open : level.blind;
-      return '<button type="button" class="umt-duel-option is-' + id + '" data-umt-trial-level="' + id + '">' + pips(index + 1)
+      var badge = id === "hard" ? "Rare badge + " + levels + " level-up" + (levels === 1 ? "" : "s") : "Rare badge";
+      var short = id === "easy" && money < EASY_TRIAL_COST;
+      return '<button type="button" class="umt-duel-option is-' + id + '" data-umt-trial-level="' + id + '"' + (short ? " disabled" : "") + ">" + pips(index + 1)
         + "<b>" + level.label + "</b>"
-        + '<span class="umt-duel-win">' + words + " words · Pass: " + (pairs ? "up to " : "") + "+" + level.points + " points · +$" + level.money + "</span>"
+        + '<span class="umt-duel-win">' + words + " words · Pass: " + (pairs ? "up to " : "") + "+" + level.points + " points · +$" + level.money + " · " + badge + "</span>"
+        + (id === "easy" ? '<span class="umt-duel-cost-label">' + (short ? "Costs $" + EASY_TRIAL_COST + ": not enough money" : "Costs $" + EASY_TRIAL_COST) + "</span>" : "")
         // Hard's first guess carries a challenge, not named until it's played.
         + (id === "hard" ? '<span class="umt-trial-twist">First guess has a challenge</span>' : "")
         + "</button>";
@@ -538,6 +546,11 @@
       ? window.CuddleBranchMap.getActiveGame() : null;
     var node = game && trialNode(game.state);
     if (!node || !TRIAL_LEVELS[button.dataset.umtTrialLevel]) return;
+    if (button.dataset.umtTrialLevel === "easy") {
+      var wallet = Math.max(0, Number(game.state.cuddleMoney) || 0);
+      if (wallet < EASY_TRIAL_COST) return;
+      game.state.cuddleMoney = wallet - EASY_TRIAL_COST;
+    }
     node.trialDifficulty = button.dataset.umtTrialLevel;
     // Hard: the first guess carries a challenge (cuddle-rebalance-v5.js).
     if (node.trialDifficulty === "hard" && window.CuddleRebalanceV5 && typeof window.CuddleRebalanceV5.startTrialChallenge === "function") {

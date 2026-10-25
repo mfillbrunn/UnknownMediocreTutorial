@@ -210,7 +210,20 @@
     state.upgradeChoices = choices;
     state.waystoneOffer = true;
     state.umtEventPick = { title: "Trial", kicker: "TRIAL PASSED", tier: "rare" };
+    // A Hard trial: level-ups after the badge.
+    if (node.trialDifficulty === "hard") levelsAfterBadge(game);
     return true;
+  }
+
+  // A Hard Trial or Duel pays its badge, then level-ups: 1 in world 1, 2 in
+  // world 2, 3 in world 3, picked one after another (different badges).
+  function bonusLevels(state) {
+    return Math.max(0, Math.min(2, Array.isArray(state && state.bossGatesDone) ? state.bossGatesDone.length : 0)) + 1;
+  }
+
+  function levelsAfterBadge(game) {
+    var state = game.state;
+    state.umtLevelStop = { pick: 1, of: 1 + bonusLevels(state), done: [], waystone: true, badgeFirst: true };
   }
 
   function apply(game) {
@@ -284,6 +297,8 @@
       }
       stop.pick += 1;
       state.umtLevelStop = stop;
+      // After a Trial's or Duel's badge, the level-ups have their own heading.
+      state.umtEventPick = null;
       state.status = "upgrade";
       state.upgradePhase = "round";
       state.upgradeMilestone = null;
@@ -298,6 +313,8 @@
 
   window.CuddleRewardRhythm = Object.freeze({
     newOfTier: newOfTier,
+    levelsAfterBadge: levelsAfterBadge,
+    bonusLevels: bonusLevels,
     levelChoices: levelChoices,
     // New badges only, from an offer (topped up from the catalog).
     newChoices: function (game, generated, count) {
