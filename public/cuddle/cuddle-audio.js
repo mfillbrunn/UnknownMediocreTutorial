@@ -533,7 +533,7 @@
     if (type === "trial") play("trial");
     else if (type === "duel") play("duel");
     else if (type === "shop") play("shop");
-    else if (type === "event" || type === "upgrade") play("toast");
+    else if (type === "event" || type === "upgrade" || type === "levelup") play("toast");
     else play("stage");
   });
 

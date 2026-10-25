@@ -4088,6 +4088,7 @@
     umtConsonantSweep: { title: "Process of Elimination", description: "After every guess, boss fights included, one more consonant that isn't in the answer is ruled out and shown: one after your first guess, a second after your second, and so on.", shape: "eliminate" },
     goldenCompass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
     compass: { title: "Golden Compass", description: "Highlights one useful letter from a strong candidate word.", shape: "compass" },
+    umtTreasure: { title: "Treasure Word", description: "This stage's answer is a treasure word (Treasure Hunter). Solve it on this guess, or sooner, for bonus money.", shape: "chest" },
     umtDoubleDown: { title: "Double Down", description: "Your lucky guess this stage: solve the word on exactly this guess for its bonus (+50, +70 or +100 by level).", shape: "die" },
     "alphabet-compass": { title: "Alphabet Compass", description: "After every guess, some of its tiles show whether the secret's letter there comes earlier or later in the alphabet.", shape: "alphaCompass" }
   });
@@ -4152,6 +4153,7 @@
       case "grid": return `<g fill="${ink}"><rect x="14" y="14" width="40" height="40" rx="8"/><rect x="66" y="14" width="40" height="40" rx="8"/><rect x="14" y="66" width="40" height="40" rx="8"/><rect x="66" y="66" width="40" height="40" rx="8"/></g>`;
       case "tags": return `<path d="M13 27h57l36 33-36 33H13z" fill="${ink}"/><circle cx="31" cy="60" r="8" fill="${paper}"/><path d="M38 14h47l28 25-28 25" fill="none" stroke="${yellow}" stroke-width="10" stroke-linejoin="round"/>`;
       case "tag": return `<path d="M15 32h57l34 28-34 28H15z" fill="${ink}"/><circle cx="34" cy="60" r="8" fill="${yellow}"/>`;
+      case "chest": return `<path d="M18 52c0-17 12-28 42-28s42 11 42 28z" fill="#f2b632" stroke="#7a4b12" stroke-width="5" stroke-linejoin="round"/><rect x="18" y="52" width="84" height="46" rx="6" fill="#d98c1f" stroke="#7a4b12" stroke-width="5"/><path d="M18 64h84" stroke="#7a4b12" stroke-width="5"/><rect x="51" y="56" width="18" height="20" rx="4" fill="#ffe28a" stroke="#7a4b12" stroke-width="4"/><circle cx="60" cy="66" r="3" fill="#7a4b12"/><path d="M92 14l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#fff6c8"/>`;
       case "die": return `<rect x="16" y="16" width="88" height="88" rx="18" fill="${ink}"/><g fill="${paper}"><circle cx="38" cy="38" r="8"/><circle cx="82" cy="38" r="8"/><circle cx="60" cy="60" r="8"/><circle cx="38" cy="82" r="8"/><circle cx="82" cy="82" r="8"/></g>`;
       case "fog": return `<g fill="none" stroke="${ink}" stroke-width="11" stroke-linecap="round"><path d="M13 37h64M29 60h78M13 83h64"/></g><rect x="80" y="24" width="25" height="25" rx="6" fill="${yellow}"/><rect x="15" y="71" width="25" height="25" rx="6" fill="${green}"/>`;
       case "count": return `<rect x="13" y="18" width="94" height="84" rx="17" fill="${ink}"/><g fill="${paper}"><circle cx="35" cy="44" r="8"/><circle cx="60" cy="44" r="8"/><circle cx="85" cy="44" r="8"/></g><text x="60" y="88" text-anchor="middle" fill="${yellow}" font-family="system-ui,sans-serif" font-size="34" font-weight="900">3</text>`;
@@ -4538,7 +4540,13 @@
       const span = effects.length ? rowMaskSpan(game, index) : [];
       // Double Down's lucky guess rides along with whatever else the row
       // carries; it claims no tiles.
-      const ids = doubleDownGuess(game) === index + 1 ? effects.concat("umtDoubleDown") : effects;
+      let ids = doubleDownGuess(game) === index + 1 ? effects.concat("umtDoubleDown") : effects;
+      // The treasure word's last paying guess: a chest, sharing the row's
+      // space with any challenge, and the row sparkles gold until played.
+      const treasure = window.CuddleClues && typeof window.CuddleClues.treasureNow === "function" ? window.CuddleClues.treasureNow(game) : null;
+      const treasureRow = Boolean(treasure && treasure.guess === index + 1 && !history);
+      if (treasureRow) ids = ids.concat("umtTreasure");
+      if (row.classList.contains("umt-treasure-row") !== treasureRow) row.classList.toggle("umt-treasure-row", treasureRow);
       markMaskedTiles(row, span, Boolean(history));
 
       // Once a guess's Count Only result is in (the row's own score column
@@ -4600,6 +4608,12 @@
         } else {
           button.innerHTML = powerSvg(id);
           button.title = `${scope}. Click for details`;
+          if (id === "umtTreasure" && treasure) {
+            button.classList.add("umt-treasure-button");
+            button.dataset.umtPowerScope = `Guess ${index + 1}`;
+            button.dataset.umtPowerNote = `Solve it on guess ${index + 1} or sooner for +$${treasure.prize}.`;
+            button.title = `Treasure word: solve by guess ${index + 1} for +$${treasure.prize}. Click for details`;
+          }
           // A Word Chain guess with nothing to chain on is let off.
           if (id === "wordChain" && (history || (index === asInteger(state?.guessesUsed, 0) && state?.status === "playing"))) {
             button.dataset.umtPowerNote = "Let off for this guess: the word before has no consonant to start a word with, so any word goes.";

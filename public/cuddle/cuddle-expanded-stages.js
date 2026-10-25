@@ -96,7 +96,8 @@
   const BASE_STAGE_META = Object.freeze({
     normal: Object.freeze({ title: "Wordle", label: "Wordle", icon: "stage-normal.svg", description: "A standard Cuddle Wordle round." }),
     theme: Object.freeze({ title: "Themed Wordle", label: "Theme", icon: "stage-theme.svg", description: "Theme reveals scale by act: all, all but one, then one." }),
-    upgrade: Object.freeze({ title: "Free Upgrade", label: "Upgrade", icon: "stage-upgrade.svg", description: "Choose a permanent upgrade." }),
+    upgrade: Object.freeze({ title: "New Badge", label: "Upgrade", icon: "stage-upgrade.svg", description: "Choose a new badge." }),
+    levelup: Object.freeze({ title: "Level-Ups", label: "Level-Up", icon: "stage-upgrade.svg", description: "Level up two different badges you hold." }),
     shop: Object.freeze({ title: "Wandering Paw", label: "Shop", icon: "stage-shop.svg", description: "Spend money on run supplies." }),
     event: Object.freeze({ title: "Mystery Event", label: "Event", icon: "stage-event-choice.svg", description: "Something happens on the road here. You only find out what when you arrive." }),
     boss: Object.freeze({ title: "Boss", label: "Boss", icon: "stage-boss.svg", description: "A boss Wordle with permanent stakes." }),
@@ -2055,10 +2056,7 @@
         game.state.cuddleMoney += earnedMoney;
         messages.push(`+$${earnedMoney} from tiles and powers.`);
       }
-      if (duel.difficulty === "hard") {
-        const upgrade = grantRandomUpgrade(game);
-        messages.push(upgrade.message);
-      }
+      // (Hard's extra: level-ups after the Epic badge, continueAfterDuel.)
       duel.rewardGranted = true;
       duel.phase = "won";
       duel.turn = null;
@@ -2480,7 +2478,10 @@
       game.state.lastMessage = duel.message;
       // A won Duel ends like a cleared stage, with a better pick: one of
       // three Epic badges, then the road (chooseUpgrade returns to the map).
-      const epic = tierChoices(game, "epic");
+      // New badges only: a level-up is the ordinary pick's (cuddle-reward-rhythm.js).
+      const rhythm = window.CuddleRewardRhythm;
+      const drawn = tierChoices(game, "epic");
+      const epic = rhythm && typeof rhythm.newOfTier === "function" ? rhythm.newOfTier(game, drawn, "epic") : drawn;
       const choices = epic.length ? epic : (typeof game._generateUpgradeChoices === "function" ? game._generateUpgradeChoices() : []);
       if (Array.isArray(choices) && choices.length) {
         game.state.status = "upgrade";
@@ -2490,6 +2491,8 @@
         if (epic.length) {
           game.state.waystoneOffer = true;
           game.state.umtEventPick = { title: "Word Duel", kicker: "WORD DUEL WON", tier: "epic" };
+          // Hard: level-ups after the badge (cuddle-reward-rhythm.js).
+          if (duel.difficulty === "hard" && rhythm && typeof rhythm.levelsAfterBadge === "function") rhythm.levelsAfterBadge(game);
         }
       } else {
         game.state.status = MAP_STATUS;
@@ -2983,6 +2986,7 @@
         + richText(EASY_COST_LABELS[item.id] || (item.upgrade ? `−1 level: ${item.upgrade.title}` : item.title)) + `</button>`
       )).join("");
       const pips = count => `<span class="umt-duel-pips" aria-hidden="true">${[1, 2, 3].map(n => `<i${n <= count ? ' class="is-on"' : ""}></i>`).join("")}</span>`;
+      const hardLevels = window.CuddleRewardRhythm && typeof window.CuddleRewardRhythm.bonusLevels === "function" ? window.CuddleRewardRhythm.bonusLevels(game.state) : 1;
       return (
         `<section class="umt-stop-panel umt-duel-choose">`
         + `<div class="umt-stop-head">${stopMedallion("duel")}<h2>Word Duel</h2></div>`
@@ -2991,7 +2995,7 @@
         + `<div class="umt-duel-option is-easy">${pips(1)}<b>Easy AI</b><span class="umt-duel-win">Win: ${richText("+$10 · Epic badge")}</span>`
         + `<span class="umt-duel-cost-label">Costs one to start:</span><div class="umt-duel-costs">${easyCosts}</div></div>`
         + `<button type="button" class="umt-duel-option is-medium" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="medium">${pips(2)}<b>Medium AI</b><span class="umt-duel-win">Win: ${richText("+$18 · Epic badge")}</span><span class="umt-duel-free">Free</span></button>`
-        + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard">${pips(3)}<b>Hard AI</b><span class="umt-duel-win">Win: ${richText("+$38 · free random badge · Epic badge")}</span><span class="umt-duel-free">Free</span></button>`
+        + `<button type="button" class="umt-duel-option is-hard" data-cuddle-campaign-action="expanded-duel-start" data-shop-item-id="hard">${pips(3)}<b>Hard AI</b><span class="umt-duel-win">Win: ${richText(`+$38 · Epic badge · ${hardLevels} level-up${hardLevels === 1 ? "" : "s"}`)}</span><span class="umt-duel-free">Free</span></button>`
         + `</div>`
         + `</section>`
       );
@@ -3189,7 +3193,8 @@
         row("trial", "Trial", "Find the answer among a list of words. Open Trial: the list shows from the start, and you pick after two guesses. Preset Trial: three guesses, then the list. Pair Trial: no typing, each guess is one of two words. A right pick passes, a wrong one ends the run."),
         row("event", "Event", "A choice: a safe reward, or a bigger one with a cost."),
         row("shop", "Shop", "Spend money on supplies for the next stages or the next boss, and sell a badge."),
-        row("upgrade", "Free Upgrade", "Choose a free badge."),
+        row("upgrade", "New Badge", "Choose a new badge."),
+        row("levelup", "Level-Ups", "Level up two different badges you hold."),
         row("duel", "Duel", "Take turns guessing with an AI: the first to solve wins money. Losing costs nothing on Easy, 50 points on Medium, and ends the run on Hard. Never in world 1."),
         row("mystery", "Unknown", "Stays hidden until you step onto it. Usually a Wordle, sometimes a Duel or a Trial. Pays +20 points."),
         row("boss", "Boss", "Guards the end of each world. The number on it is the points you need before you can challenge it. Beat it for a permanent reward."),
@@ -3210,7 +3215,7 @@
     }
 
     function renderLegacyLegend() {
-      const standard = ["normal", "theme", "event", "upgrade", "shop", "duel", "mystery", "boss"];
+      const standard = ["normal", "theme", "event", "upgrade", "levelup", "shop", "duel", "mystery", "boss"];
       const standardRows = standard.map(type => {
         const meta = BASE_STAGE_META[type];
         return `<li>${stageImage(meta, "umt-legend-icon")}<span><strong>${escapeHtml(meta.title)}</strong><small>${richText(meta.description)}</small></span></li>`;

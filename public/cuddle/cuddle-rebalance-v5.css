@@ -707,3 +707,30 @@ html.umt-mandatory-challenge .cuddle-challenge-decline {
   .umt-quick-watch.is-urgent { animation: none; }
 }
 .umt-quick-watch[hidden] { display: none; }
+
+/* The treasure word's last paying guess (Treasure Hunter): its row's
+   empty tiles sparkle gold, and a chest sits with the row's icons. */
+#cuddleScreen .cuddle-board-row.umt-treasure-row > .cuddle-tile {
+  border: 2px solid #f2c14e;
+  background-color: rgba(242, 193, 78, 0.16);
+  background-image: linear-gradient(115deg, rgba(242, 193, 78, 0) 30%, rgba(255, 244, 196, 0.75) 48%, rgba(242, 193, 78, 0) 66%);
+  background-size: 260% 100%;
+  box-shadow: 0 0 12px rgba(242, 193, 78, 0.6), inset 0 0 8px rgba(255, 226, 138, 0.45);
+  animation: umt-treasure-shine 2.6s linear infinite;
+}
+#cuddleScreen .cuddle-board-row.umt-treasure-row > .cuddle-tile:nth-child(2) { animation-delay: 0.12s; }
+#cuddleScreen .cuddle-board-row.umt-treasure-row > .cuddle-tile:nth-child(3) { animation-delay: 0.24s; }
+#cuddleScreen .cuddle-board-row.umt-treasure-row > .cuddle-tile:nth-child(4) { animation-delay: 0.36s; }
+#cuddleScreen .cuddle-board-row.umt-treasure-row > .cuddle-tile:nth-child(5) { animation-delay: 0.48s; }
+@keyframes umt-treasure-shine {
+  from { background-position: 130% 0; }
+  to { background-position: -130% 0; }
+}
+#cuddleScreen .umt-power-icon-button.umt-treasure-button {
+  background: #3a2a0c;
+  border-color: #f2c14e;
+  box-shadow: 0 0 8px rgba(242, 193, 78, 0.55);
+}
+@media (prefers-reduced-motion: reduce) {
+  #cuddleScreen .cuddle-board-row.umt-treasure-row > .cuddle-tile { animation: none; }
+}

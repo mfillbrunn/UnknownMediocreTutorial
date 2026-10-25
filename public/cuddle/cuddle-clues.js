@@ -338,14 +338,17 @@
     if (sweep && sweep.secret === secret && Array.isArray(sweep.letters) && sweep.letters.length) {
       chips.push({ icon: "🔍", label: "Process of Elimination", text: "Not", letters: sweep.letters, tone: "sweep" });
     }
+    // While the pick is open, its own list is the one to read: the strip
+    // above the board leaves its copy out.
+    const picking = typeof game.presetPick === "function" && Boolean(game.presetPick());
     // Preset Trial boss: the answer is one of these words.
     const preset = state.megaState && state.megaState.presetWords;
-    if (state.boss && state.boss.id === "presetWordsTrial" && Array.isArray(preset) && preset.length) {
+    if (!picking && state.boss && state.boss.id === "presetWordsTrial" && Array.isArray(preset) && preset.length) {
       chips.push({ icon: "scroll", label: "Preset Trial", text: "Answer is one of", words: preset, tone: "preset" });
     }
     // An Open trial's list, shown from the first guess (cuddle-curses.js).
     const openList = typeof game.presetOpenList === "function" ? game.presetOpenList() : null;
-    if (Array.isArray(openList) && openList.length) {
+    if (!picking && Array.isArray(openList) && openList.length) {
       // Before the pick's own guess, "Answer now" opens the pick early
       // (cuddle-ui.js "pair-pick").
       const pickGuess = typeof game.presetPickGuess === "function" ? game.presetPickGuess() : 0;
@@ -380,8 +383,9 @@
     const all = clueChips(game);
     const treasure = all.find(chip => chip.treasure);
     const chips = all.filter(chip => !chip.treasure);
+    // The treasure word's mark is a chest on its guess row now.
     root.querySelectorAll(".umt-treasure-diamond").forEach(element => element.remove());
-    if (treasure) placeTreasureDiamond(root, treasure);
+    void treasure;
     // Letters excluded for the whole run (Pruning Shears and friends) sit with
     // the clues instead of on a line of their own under the board.
     const removed = Array.isArray(game.state.removedLetters) ? game.state.removedLetters : [];
@@ -477,5 +481,18 @@
     else setInterval(installRenderHook, 1000);
   }());
 
-  window.CuddleClues = Object.freeze({ ids: IDS, clueChips });
+  // The treasure word while it can still be claimed: the last guess that
+  // pays it (1-based) and the prize, else null. Its row carries a chest
+  // (cuddle-rebalance-v5.js row icons).
+  function treasureNow(game) {
+    const state = game && game.state;
+    if (!state || state.status !== "playing" || isBoss(game)) return null;
+    const record = clues(game);
+    if (!record.treasure || record.treasurePaid) return null;
+    const deadline = treasureDeadline(game);
+    if (num(state.guessesUsed) + 1 >= deadline) return null;
+    return { guess: deadline - 1, prize: treasurePrize(game) };
+  }
+
+  window.CuddleClues = Object.freeze({ ids: IDS, clueChips, treasureNow });
 }());

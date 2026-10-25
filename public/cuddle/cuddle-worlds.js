@@ -148,6 +148,7 @@
     event: "#b98cff",
     shop: "#f6c956",
     upgrade: "#5ad1ff",
+    levelup: "#7be38f",
     duel: "#ff7ab6",
     trial: "#e8c98a",
     mystery: "#c7bfff",
@@ -161,6 +162,7 @@
     event: "Event",
     shop: "Shop",
     upgrade: "Upgrade",
+    levelup: "Level-Up",
     duel: "Duel",
     trial: "Trial",
     mystery: "Unknown",
@@ -199,6 +201,11 @@
       '<path d="M6.2 3.5h11.6L22 9.2 12 21 2 9.2z" fill="#5ad1ff"/>'
       + '<path d="M2 9.2h20M9.2 3.5 7.6 9.2 12 21M14.8 3.5l1.6 5.7L12 21" stroke="#e3f8ff" stroke-width=".9" fill="none" stroke-linejoin="round"/>'
       + '<path d="M6.2 3.5 7.6 9.2 2 9.2z" fill="#9be6ff"/>',
+    // Two arrows up: two of your badges go up a level.
+    levelup:
+      '<circle cx="12" cy="12" r="10" fill="#1f5a35" stroke="#7be38f" stroke-width="1.4"/>'
+      + '<path d="M6.6 12.4 12 7l5.4 5.4" fill="none" stroke="#c9f7d2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'
+      + '<path d="M6.6 17.6 12 12.2l5.4 5.4" fill="none" stroke="#7be38f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
     duel:
       '<path d="M3.5 3.5 14.5 14.5M20.5 3.5 9.5 14.5" stroke="#ffe3ef" stroke-width="2.2" stroke-linecap="round"/>'
       + '<path d="M12.6 16.4l4-4M7.4 12.4l4 4" stroke="#ff7ab6" stroke-width="2.2" stroke-linecap="round"/>'
@@ -264,6 +271,7 @@
       case "event": return "event";
       case "shop": return "shop";
       case "upgrade": return "upgrade";
+      case "levelup": return "levelup";
       case "duel": return "duel";
       case "trial": return "trial";
       case "mystery": return node.mysteryRevealed ? kindForNode({ type: node.mysteryType }) : "mystery";

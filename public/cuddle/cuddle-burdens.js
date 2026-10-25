@@ -5,8 +5,8 @@
  *
  *   Dead card    a blank tile shuffled into the deck. It has no letter, so
  *                it can't go in a word; it just takes a hand slot until it
- *                is mulliganed away (and it comes back when the discard is
- *                reshuffled).
+ *                is mulliganed away. A mulliganed dead card is gone for the
+ *                rest of the stage, and a real card is drawn in its place.
  *   Doubled      a second copy of a few less useful consonants (J, V, W,
  *   consonants   K ...). More copies of weak letters crowd out good ones.
  *
@@ -62,6 +62,9 @@
   var TILES_BY_LEVEL = [0, 1, 2, 4];
   var LUCKY_MULLIGAN_POINTS = 2;
   var IDEA_GLYPH = "◇";
+  // A super idea card (Idea Cards level 3): mulliganed, it places a letter
+  // in its spot (green) instead of a yellow.
+  var SUPER_IDEA_GLYPH = "◆";
   var WAVE_GLYPH = "≈";
   var JOKER_TILE_GLYPH = "◆";
   // An angel card: a dead card redeemed (Cards rank III, cuddle-schools.js).
@@ -166,11 +169,15 @@
   }
 
   function isIdeaCard(card) {
-    return Boolean(card && (card.idea || card.glyph === IDEA_GLYPH));
+    return Boolean(card && (card.idea || card.glyph === IDEA_GLYPH || card.glyph === SUPER_IDEA_GLYPH));
+  }
+
+  function isSuperIdea(card) {
+    return Boolean(card && (card.superIdea || card.glyph === SUPER_IDEA_GLYPH));
   }
 
   function isIdeaGlyph(glyph) {
-    return glyph === IDEA_GLYPH;
+    return glyph === IDEA_GLYPH || glyph === SUPER_IDEA_GLYPH;
   }
 
   function isWaveCard(card) {
@@ -378,8 +385,10 @@
       dead: dead + schoolPerk(game, "angelCards"),
       doubles: doubles,
       lucky: luckyCount(game),
-      // Idea cards stay 1/2/3: four yellow hints a stage was too easy.
-      idea: powerLevel(game, "ideaTiles") + schoolPerk(game, "ideaTiles"),
+      // Idea Cards: 1 card, then 2; level 3 makes one of the two a super
+      // idea (a green). The Cards school's own idea card comes on top.
+      idea: Math.min(2, powerLevel(game, "ideaTiles")) - (powerLevel(game, "ideaTiles") >= 3 ? 1 : 0) + schoolPerk(game, "ideaTiles"),
+      superIdea: powerLevel(game, "ideaTiles") >= 3 ? 1 : 0,
       wave: TILES_BY_LEVEL[powerLevel(game, "waveTiles")],
       jokers: duel ? 0 : deckJokers(game)
     };
@@ -390,7 +399,7 @@
     var result = basePrepare.apply(this, arguments);
     try {
       var extras = extrasFor(this);
-      if (!extras.dead && !extras.doubles.length && !extras.lucky && !extras.idea && !extras.wave && !extras.jokers) return result;
+      if (!extras.dead && !extras.doubles.length && !extras.lucky && !extras.idea && !extras.superIdea && !extras.wave && !extras.jokers) return result;
       var state = this.state;
       var game = this;
       var deckGlyphs = new Set(this._baseDeckGlyphs());
@@ -404,6 +413,9 @@
       }
       for (var k = 0; k < extras.idea; k += 1) {
         finite.push({ id: this._nextId("idea"), glyph: IDEA_GLYPH, source: "deck", idea: true });
+      }
+      for (var s = 0; s < (extras.superIdea || 0); s += 1) {
+        finite.push({ id: this._nextId("idea"), glyph: SUPER_IDEA_GLYPH, source: "deck", idea: true, superIdea: true });
       }
       for (var m = 0; m < extras.jokers; m += 1) {
         finite.push({ id: this._nextId("jokertile"), glyph: JOKER_TILE_GLYPH, source: "deck", jokerTile: true });
@@ -534,7 +546,7 @@
     var card = state && (state.hand || []).find(function same(item) { return item.id === cardId; });
     if (!card || !isAngelCard(card) || state.status !== "playing") return { ok: false };
     removeFromHand(state, card);
-    stageBonus(this, ANGEL_POINTS, "umtAngelCards", "Angel cards");
+    pointsNow(this, ANGEL_POINTS);
     var drawn = typeof this.drawToHandLimit === "function" ? this.drawToHandLimit() : [];
     state.lastMessage = "An angel flew to heaven: +" + ANGEL_POINTS + " points.";
     if (typeof this.save === "function") this.save();
@@ -607,8 +619,8 @@
       if (ideas.length) {
         var spent = new Set(ideas.map(function id(card) { return card.id; }));
         state.hand = state.hand.filter(function keep(card) { return !spent.has(card.id); });
-        ideas.forEach(function hint() {
-          var letter = yellowHint(game);
+        ideas.forEach(function hint(card) {
+          var letter = isSuperIdea(card) ? greenHint(game) || yellowHint(game) : yellowHint(game);
           if (letter) ideaLetters.push(letter);
         });
       }
@@ -701,7 +713,22 @@
     return letter;
   }
 
-  // Mulligans: idea cards give a yellow hint each, lucky cards +5 points
+  // A super idea's hint: a letter of the answer placed in its spot. Falls
+  // back to nothing when every spot is already known.
+  function greenHint(game) {
+    var state = game.state;
+    if (typeof game._revealPositionPeek !== "function") return "";
+    var before = (state.revealedPositions || []).slice();
+    game._revealPositionPeek();
+    var placed = "";
+    (state.revealedPositions || []).forEach(function fresh(letter, index) {
+      if (letter && !before[index] && !placed) placed = letter;
+    });
+    if (placed && window.CuddleHintFx) window.CuddleHintFx.note(game, placed, "Super idea");
+    return placed;
+  }
+
+  // Mulligans: idea cards give a yellow hint each (a super idea a green), lucky cards +5 points
   // each; both are spent.
   function refillJoker(game) {
     var state = game.state;
@@ -721,7 +748,31 @@
     var ideas = picked.filter(isIdeaCard);
     var lucky = picked.filter(isLuckyCard);
     var jokerOut = picked.some(function joker(card) { return card.source === "joker"; });
-    var result = baseMulligan.apply(this, arguments);
+    // A dead card mulliganed is gone for good (its soul floats off), and
+    // what it's swapped for is a real card: the other dead cards sit out
+    // the draw.
+    var deadOut = picked.filter(isDeadCard);
+    var benched = [];
+    if (deadOut.length && state) {
+      benched = (state.deck || []).filter(isDeadCard).concat((state.discard || []).filter(isDeadCard));
+      state.deck = (state.deck || []).filter(function live(card) { return !isDeadCard(card); });
+      state.discard = (state.discard || []).filter(function live(card) { return !isDeadCard(card); });
+    }
+    var result;
+    try {
+      result = baseMulligan.apply(this, arguments);
+    } finally {
+      if (deadOut.length && this.state) {
+        var gone = new Set(deadOut.map(function id(card) { return card.id; }));
+        var deck = this.state.deck;
+        this.state.discard = (this.state.discard || []).filter(function keep(card) { return !gone.has(card.id); });
+        // The benched ones go back in at random spots.
+        benched.forEach(function back(card) {
+          if (gone.has(card.id)) return;
+          deck.splice(Math.floor(game.random() * (deck.length + 1)), 0, card);
+        });
+      }
+    }
     state = this.state;
     // The Joker in hand stands for all your Joker uses (its count): a
     // mulligan spends just the one, and the next comes back into the hand.
@@ -732,19 +783,26 @@
       state.discard = (state.discard || []).filter(function keep(card) { return !spent.has(card.id); });
       if (lucky.length) {
         var points = lucky.length * LUCKY_MULLIGAN_POINTS;
-        if (stageBonus(this, points, "umtLuckyMulligan", "Lucky cards mulliganed") > 0) {
-          note(this, "Lucky card" + (lucky.length === 1 ? "" : "s") + " mulliganed: +" + points + " points.");
-        }
+        pointsNow(this, points);
+        note(this, "Lucky card" + (lucky.length === 1 ? "" : "s") + " mulliganed: +" + points + " points.");
       }
       if (ideas.length) {
         var letters = [];
-        ideas.forEach(function hint() {
-          var letter = yellowHint(game);
+        var greens = [];
+        ideas.forEach(function hint(card) {
+          var green = isSuperIdea(card) ? greenHint(game) : "";
+          if (green) greens.push(green);
+          var letter = green ? "" : yellowHint(game);
           if (letter) letters.push(letter);
         });
+        if (greens.length) {
+          note(this, "Super idea! " + greens.join(", ") + (greens.length === 1 ? " is" : " are") + " in place.");
+        }
         if (letters.length) {
           this.drawToHandLimit();
           note(this, "Idea! " + letters.join(", ") + (letters.length === 1 ? " is" : " are") + " in the answer.");
+        } else if (greens.length) {
+          this.drawToHandLimit();
         } else {
           note(this, "Idea: you already know every letter of the answer.");
         }
@@ -782,6 +840,14 @@
   });
 
   // -- lucky cards pay out on a solve ----------------------------------------
+  // Points paid on the spot, like a quest reward's: straight into the
+  // header with a "+10" rising from it, and left out of the cash-out.
+  function pointsNow(game, amount) {
+    if (!amount) return;
+    if (typeof window.CuddleInstantPoints === "function") window.CuddleInstantPoints(game, amount);
+    else game.state.score = (Number(game.state.score) || 0) + amount;
+  }
+
   function stageBonus(game, amount, field, label) {
     var rebalance = window.CuddleRebalanceV5;
     if (rebalance && typeof rebalance.addStageBonus === "function") {
@@ -1328,6 +1394,7 @@
     LUCKY_MULLIGAN_POINTS: LUCKY_MULLIGAN_POINTS,
     isIdeaCard: isIdeaCard,
     isIdeaGlyph: isIdeaGlyph,
+    SUPER_IDEA_GLYPH: SUPER_IDEA_GLYPH,
     isWaveCard: isWaveCard,
     isJokerTile: isJokerTile,
     isLuckyCard: isLuckyCard,

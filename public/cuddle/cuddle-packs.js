@@ -39,7 +39,8 @@
   ]);
   // The free pack a run starts with (cuddle-money-mode.js); never for sale.
   var STARTER = Object.freeze({ id: "starter", name: "Large", commons: 0, specials: 3, flex: 0, prices: [] });
-  // Hard's free starting pack: two cards, in one of three mixes.
+  // The free Starting Pack on Medium and Hard: two cards, in one of three
+  // mixes. (The id is from when only Hard had it.)
   var HARD_STARTER = Object.freeze({ id: "hardStarter", name: "Starting", commons: 0, specials: 0, flex: 0, prices: [] });
   var HARD_STARTER_MIXES = [
     { specials: ["epic"], commons: 1, weight: 45 },
@@ -266,7 +267,9 @@
     var short = !free && wallet < offer.price;
     var size = sizeOf(offer);
     var total = size.commons + size.specials + (size.flex || 0);
-    var name = (size.name ? size.name + " " : "") + "Pack";
+    // The free pack a run opens with is the Starting Pack, whatever's in it.
+    var sizeName = offer.starter ? "Starting" : size.name;
+    var name = (sizeName ? sizeName + " " : "") + "Pack";
     var title = offer.gift ? (offer.giftTitle || "A free " + name) : offer.starter ? "Your Starting Pack" : "A " + name + " is for sale";
     var kicker = offer.gift ? (offer.giftKicker || "Gift") : offer.starter ? "Starting bonus" : "Stage cleared · World " + offer.world;
     // The pack itself opens it too (when it can be opened).
@@ -274,11 +277,12 @@
       + '<span class="umt-pack-kicker">' + kicker + "</span>"
       + '<h2 id="umtPackTitle">' + title + "</h2>"
       + '<div class="umt-pack-stage">'
-      + '<button type="button" class="umt-pack-sealed is-' + size.id + '" data-umt-pack="buy"' + (short ? " disabled" : "")
+      + '<button type="button" class="umt-pack-sealed is-' + size.id + (offer.starter ? " is-starter" : "") + '" data-umt-pack="buy"' + (short ? " disabled" : "")
       + ' aria-label="' + (free ? "Open the pack" : "Buy and open the pack for $" + offer.price) + '">'
       + '<span class="umt-pack-foil" aria-hidden="true"></span>'
-      + '<span class="umt-pack-name">' + (size.name ? size.name + "<br>" : "") + "Pack</span>"
-      + '<span class="umt-pack-count">' + total + " upgrades</span></button></div>"
+      + '<span class="umt-pack-name">' + (sizeName ? sizeName + "<br>" : "") + "Pack</span>"
+      // The Starting Pack doesn't count its badges.
+      + (offer.starter ? "" : '<span class="umt-pack-count">' + total + " upgrades</span>") + "</button></div>"
       + '<div class="umt-pack-actions">'
       + (free
         ? '<button type="button" class="cuddle-btn cuddle-btn-primary" data-umt-pack="buy">Open the pack</button>'

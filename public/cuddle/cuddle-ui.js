@@ -695,12 +695,11 @@
           ${newRunCoinNote ? `<p class="umt-newrun-broke" role="alert">No Cuddle Coins left. You get 1 free each day, and 1 for each achievement you claim.</p>` : ""}
           <div class="cuddle-difficulty-row">
             <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Tutorial</button>
-            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Medium</button>
+            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Standard</button>
             ${hardLocked()
-              ? `<button class="cuddle-btn cuddle-btn-primary is-locked" data-action="new-run-hard" aria-disabled="true" aria-label="Hard, locked: win a run on Medium to unlock it">${lockIcon()}Hard</button>`
+              ? `<button class="cuddle-btn cuddle-btn-primary is-locked" data-action="new-run-hard" aria-disabled="true" aria-label="Hard, locked: win a Standard run to unlock it">${lockIcon()}Hard</button>`
               : `<button class="cuddle-btn cuddle-btn-primary" data-action="new-run-hard">${escapeHtml(window.CuddleAscension ? window.CuddleAscension.hardLabel() : "Hard")}</button>`}
           </div>
-          <div class="cuddle-difficulty-help" aria-hidden="true"><span>More help</span><span>The usual run</span>${hardLocked() ? `<span class="is-locked">Win on Medium to unlock</span>` : "<span>Tougher bosses</span>"}</div>
           ${window.CuddleAscension ? window.CuddleAscension.pickerHtml() : ""}
           <details class="cuddle-newrun-more"${seedDraft ? " open" : ""}>
             <summary>More options</summary>
@@ -1157,9 +1156,11 @@
       const ideaDisabled = state.status !== "playing"
         || (actionMode !== "play" && selectable.length === 0)
         || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
-      const ideaLabel = `Idea card${ideaCount > 1 ? ` ×${ideaCount}` : ""}: no letter, can't be played. Mulligan it away for a yellow hint.`;
+      // A super idea (Idea Cards level 3) gives a green instead.
+      const superIdea = group.glyph === window.CuddleBurdens.SUPER_IDEA_GLYPH;
+      const ideaLabel = `${superIdea ? "Super idea card" : "Idea card"}${ideaCount > 1 ? ` ×${ideaCount}` : ""}: no letter, can't be played. Mulligan it away for a ${superIdea ? "green hint: a letter in its spot" : "yellow hint"}.`;
       return `
-      <button class="cuddle-card is-idea${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${ideaCount}" ${ideaDisabled ? "disabled" : ""}
+      <button class="cuddle-card is-idea${superIdea ? " is-super-idea" : ""}${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${ideaCount}" ${ideaDisabled ? "disabled" : ""}
         aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(ideaLabel)}" title="${escapeHtml(ideaLabel)}">
         <span class="cuddle-card-letter cuddle-card-idea" aria-hidden="true">${window.CuddleBurdens.bulbSvg()}</span>
         ${ideaCount > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${ideaCount}</span>` : ""}
@@ -1655,8 +1656,12 @@
       ? `POINTS MILESTONE · ${state.upgradeMilestone}`
       : startingRewards
         ? "STARTING REWARDS"
+        : state.umtLevelStop
+          ? (state.umtLevelStop.badgeFirst
+            ? `LEVEL-UPS · ${state.umtLevelStop.pick - 1} OF ${state.umtLevelStop.of - 1}`
+            : `LEVEL-UPS · ${state.umtLevelStop.pick} OF ${state.umtLevelStop.of}`)
         : waystone
-          ? "FREE UPGRADE"
+          ? "NEW BADGE"
           // An ordinary after-stage pick: just its heading.
           : "";
     // The after-stage pick takes turns (cuddle-reward-rhythm.js): a level
@@ -1686,6 +1691,10 @@
       ? pickWhat("a bonus")
       : startingRewards
         ? "Choose a starting reward"
+        : state.umtLevelStop
+          ? "Level up a badge"
+        : waystone && !eventPick
+          ? "Choose a new badge"
         : rhythm === "level"
           ? "Level up a badge"
           : rhythm === "new"
@@ -1819,7 +1828,7 @@
   // screen compares against the best earlier win on the same difficulty.
   var RECORDS_KEY = "umtCuddleRecords";
   // Easy is shown as "Tutorial" (the id stays "easy").
-  var DIFFICULTY_NAMES = { easy: "Tutorial", medium: "Medium", hard: "Hard" };
+  var DIFFICULTY_NAMES = { easy: "Tutorial", medium: "Standard", hard: "Hard" };
 
   function readRecords() {
     try {
@@ -2521,6 +2530,9 @@
     if (!burdens) return null;
     if (cardButton.classList.contains("is-dead")) {
       return { tone: "dead", title: "Dead card", lines: ["It has no letter, so it can't be played. It just takes up a spot in your hand.", "Mulligan it away to get rid of it."] };
+    }
+    if (cardButton.classList.contains("is-super-idea")) {
+      return { tone: "idea", title: "Super idea card", lines: ["It has no letter, so it can't be played.", "Mulligan it away: one letter of the answer turns green, in its spot."] };
     }
     if (cardButton.classList.contains("is-idea")) {
       return { tone: "idea", title: "Idea card", lines: ["It has no letter, so it can't be played.", "Mulligan it away: one letter of the answer turns yellow."] };

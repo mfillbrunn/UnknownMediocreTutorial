@@ -1,10 +1,13 @@
 /* Cuddle: the reward after a stage alternates.
  *
- * The pick after each cleared stage used to mix new badges and levels of
- * ones already held. Now it takes turns:
- *   - 1st, 3rd, 5th... stage: level up, a choice of badges you hold that
- *     can still go a level higher;
- *   - 2nd, 4th, 6th... stage: a new badge, a choice of ones you don't hold.
+ * The pick after each cleared stage takes turns between a new badge (a
+ * choice of ones you don't hold) and level-ups (badges you hold that can
+ * still go a level higher), counted afresh in each world:
+ *   - world 1: new badge, 1 level-up, new badge, 1 level-up...
+ *   - world 2: 2 level-ups, new badge, 2 level-ups, new badge...
+ *   - world 3: 3 level-ups, new badge, 3 level-ups, new badge...
+ * Several level-ups are picked one after another, each a different badge
+ * (the Level-Up stop's two picks work the same way).
  * A level-up stage with nothing left to level offers new badges instead.
  * Only the ordinary after-stage pick follows this: a Free Upgrade stop, an
  * event's pick, a boss's legendary pick and the starting rewards keep
@@ -75,11 +78,17 @@
   function turn(state) {
     var rhythm = state.umtRewardRhythm;
     if (!rhythm || typeof rhythm !== "object") rhythm = state.umtRewardRhythm = { count: 0, key: null, mode: null };
-    var key = [state.runId || "", state.round || 0, state.secret || "", (state.bossGatesDone || []).length].join(":");
+    var world = Math.max(0, Math.min(2, (state.bossGatesDone || []).length));
+    var key = [state.runId || "", state.round || 0, state.secret || "", world].join(":");
     if (rhythm.key !== key) {
+      // Counted per world: a new world starts its own turns.
+      if (rhythm.world !== world) rhythm.count = 0;
+      rhythm.world = world;
       rhythm.count += 1;
       rhythm.key = key;
-      rhythm.mode = rhythm.count % 2 === 1 ? "level" : "new";
+      var first = world === 0 ? "new" : "level";
+      rhythm.mode = rhythm.count % 2 === 1 ? first : (first === "new" ? "level" : "new");
+      rhythm.picks = world + 1;
     }
     return rhythm;
   }
@@ -110,8 +119,10 @@
     }).filter(Boolean);
   }
 
-  function levelChoices(game, count) {
+  // skip: badge ids not to offer (a Level-Up stop's first pick).
+  function levelChoices(game, count, skip) {
     var seen = {};
+    (skip || []).forEach(function (name) { seen[name] = true; });
     var pool = catalog(game).concat(bossGradeCards(game)).filter(function (card) {
       var bossGrade = BOSS_GRADE.indexOf(card.id) !== -1;
       if ((String(card.key || "").indexOf("legendary:") === 0 && !bossGrade) || !canLevel(game, card)) return false;
@@ -169,6 +180,23 @@
     return row && Array.isArray(row.nodes) ? row.nodes[Number(position.col)] || null : null;
   }
 
+  // A Trial or Duel pays a new badge, not a level: badges of its tier you
+  // don't hold yet, topped up from the catalog when the draw brought ones
+  // you have.
+  function newOfTier(game, drawn, tier) {
+    var picks = (drawn || []).filter(function (card) { return levelOf(game, card) <= 0; });
+    var taken = {};
+    picks.forEach(function (card) { taken[nameOf(card)] = true; });
+    var spare = shuffled(catalog(game).filter(function (card) {
+      return card.__cuddleV8Tier === tier && levelOf(game, card) === 0 && !taken[nameOf(card)];
+    }), randomOf(game));
+    for (var i = 0; i < spare.length && picks.length < 3; i += 1) {
+      taken[nameOf(spare[i])] = true;
+      picks.push(withKey(spare[i]));
+    }
+    return picks;
+  }
+
   // A passed Trial pays one of three Rare badges instead of the turn's
   // pick (a won Duel pays an Epic one, cuddle-expanded-stages.js).
   function trialPick(game) {
@@ -177,12 +205,25 @@
     var node = currentNode(state);
     var map = window.CuddleBranchMap;
     if (!node || node.type !== "trial" || !map || typeof map.tierChoices !== "function") return false;
-    var choices = map.tierChoices(game, "rare");
+    var choices = newOfTier(game, map.tierChoices(game, "rare"), "rare");
     if (!choices.length) return false;
     state.upgradeChoices = choices;
     state.waystoneOffer = true;
     state.umtEventPick = { title: "Trial", kicker: "TRIAL PASSED", tier: "rare" };
+    // A Hard trial: level-ups after the badge.
+    if (node.trialDifficulty === "hard") levelsAfterBadge(game);
     return true;
+  }
+
+  // A Hard Trial or Duel pays its badge, then level-ups: 1 in world 1, 2 in
+  // world 2, 3 in world 3, picked one after another (different badges).
+  function bonusLevels(state) {
+    return Math.max(0, Math.min(2, Array.isArray(state && state.bossGatesDone) ? state.bossGatesDone.length : 0)) + 1;
+  }
+
+  function levelsAfterBadge(game) {
+    var state = game.state;
+    state.umtLevelStop = { pick: 1, of: 1 + bonusLevels(state), done: [], waystone: true, badgeFirst: true };
   }
 
   function apply(game) {
@@ -194,14 +235,19 @@
     var offered = state.upgradeChoices;
     var count = offered.length;
     if (rhythm.mode === "level") {
-      var levels = levelChoices(game, Math.max(3, count));
+      // A refresh of a later pick keeps leaving out the badges already raised.
+      var stop = state.umtLevelStop && state.umtLevelStop.key === rhythm.key ? state.umtLevelStop : null;
+      var levels = levelChoices(game, Math.max(3, count), stop ? stop.done : []);
       if (levels.length) {
         rhythm.shown = "level";
         state.upgradeChoices = levels;
+        var picks = Number(rhythm.picks) || 1;
+        if (!stop) state.umtLevelStop = picks > 1 ? { pick: 1, of: picks, done: [], key: rhythm.key } : null;
         return;
       }
     }
     rhythm.shown = "new";
+    if (state.umtLevelStop && state.umtLevelStop.key) state.umtLevelStop = null;
     state.upgradeChoices = newChoices(game, offered, count);
   }
 
@@ -217,7 +263,65 @@
     };
   });
 
+  // The Level-Up stop (cuddle-branch-map.js openLevelUpStop): after its
+  // first pick, a second one, never the badge just raised.
+  var pickedBefore = proto.chooseUpgrade;
+  if (typeof pickedBefore === "function") {
+    proto.chooseUpgrade = function chooseUpgradeLevelStop(choiceKey) {
+      var state = this.state;
+      var stop = state && state.status === "upgrade" ? state.umtLevelStop : null;
+      var picked = stop && (state.upgradeChoices || []).find(function (item) { return item.key === choiceKey; });
+      if (!stop) return pickedBefore.apply(this, arguments);
+      // Whether a second pick follows is known up front: if so, the stop
+      // isn't left behind yet (no _advanceRound, so no stage-clear money
+      // twice and no step on the road).
+      var done = stop.done.concat(picked ? [nameOf(picked)] : []);
+      var next = stop.pick < stop.of ? levelChoices(this, 3, done) : [];
+      var result;
+      if (next.length) {
+        this._advanceRound = function holdLevelStop() { return undefined; };
+        try {
+          result = pickedBefore.apply(this, arguments);
+        } finally {
+          delete this._advanceRound;
+        }
+      } else {
+        result = pickedBefore.apply(this, arguments);
+      }
+      if (!result || result.ok === false) return result;
+      state = this.state;
+      stop.done = done;
+      if (!next.length) {
+        state.umtLevelStop = null;
+        return result;
+      }
+      stop.pick += 1;
+      state.umtLevelStop = stop;
+      // After a Trial's or Duel's badge, the level-ups have their own heading.
+      state.umtEventPick = null;
+      state.status = "upgrade";
+      state.upgradePhase = "round";
+      state.upgradeMilestone = null;
+      state.upgradeChoices = next;
+      // A Level-Up stop's offer stays a waystone's (no refreshes); an
+      // after-stage pick stays an ordinary one.
+      state.waystoneOffer = Boolean(stop.waystone);
+      try { this.save(); } catch (_error) { /* next save */ }
+      return result;
+    };
+  }
+
   window.CuddleRewardRhythm = Object.freeze({
+    newOfTier: newOfTier,
+    levelsAfterBadge: levelsAfterBadge,
+    bonusLevels: bonusLevels,
+    levelChoices: levelChoices,
+    // New badges only, from an offer (topped up from the catalog).
+    newChoices: function (game, generated, count) {
+      var picks = newChoices(game, generated || [], count);
+      return picks.filter(function (card) { return levelOf(game, card) <= 0; });
+    },
+    nameOf: nameOf,
     // "level" or "new" for the reward screen on now, or null.
     shown: function shown(state) {
       return ordinaryPick(state) && state.umtRewardRhythm ? state.umtRewardRhythm.shown || null : null;
