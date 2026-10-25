@@ -1301,15 +1301,12 @@
     }
     return `
       <section class="cuddle-hand-panel cuddle-preset-pick" aria-labelledby="cuddlePresetTitle">
-        <div class="cuddle-preset-head">
-          <div class="cuddle-preset-top"><span class="cuddle-preset-kicker">${early ? "Preset Trial · answer early" : "Preset Trial · last guess"}</span>
-          <button type="button" class="cuddle-preset-hide" data-action="preset-hide" aria-label="Hide the list to see your guesses">Hide list</button></div>
-          <h3 id="cuddlePresetTitle">The answer is one of these ${pick.words.length} words</h3>
-          <p>${early ? "Lock in your answer now? It's your final answer: right passes the trial, wrong ends the run." : "Check each word against your guesses above. A wrong pick ends the run."}
-            Tap ✕ to cross out a word that can't be it${struck.length ? ` (${left} left)` : ""}.</p>
+        <div class="cuddle-preset-top">
+          <h3 id="cuddlePresetTitle">Pick a word</h3>
+          <button type="button" class="cuddle-preset-hide" data-action="preset-hide" aria-label="Hide the list to see your guesses">Hide list</button>
         </div>
         <div class="cuddle-preset-words">${words}</div>
-        <button type="button" class="cuddle-btn cuddle-btn-primary cuddle-preset-lock" data-action="preset-lock"${chosen ? "" : " disabled"}>${chosen ? `Lock in ${escapeHtml(chosen)}` : "Pick a word"}</button>
+        <button type="button" class="cuddle-btn cuddle-btn-primary cuddle-preset-lock" data-action="preset-lock"${chosen ? "" : " disabled"}>${chosen ? `Lock in ${escapeHtml(chosen)}` : "Lock in a word"}</button>
         ${early ? `<button type="button" class="cuddle-btn cuddle-btn-ghost cuddle-preset-back" data-action="preset-back">Keep guessing</button>` : ""}
       </section>`;
   }
@@ -1631,7 +1628,6 @@
   function renderUpgradeOverlay(state) {
     const milestone = state.upgradePhase === "milestone";
     const startingRewards = state.upgradePhase === "difficultyStart";
-    const summary = state.lastRoundSummary;
     const refreshCost = typeof game.getUpgradeRefreshCost === "function"
       ? game.getUpgradeRefreshCost()
       : null;
@@ -1661,16 +1657,33 @@
         ? "STARTING REWARDS"
         : waystone
           ? "FREE UPGRADE"
-          : `ROUND ${summary?.round || state.round} CLEARED`;
+          // An ordinary after-stage pick: just its heading.
+          : "";
     // The after-stage pick takes turns (cuddle-reward-rhythm.js): a level
     // for a badge you hold, then a new badge.
     const rhythm = window.CuddleRewardRhythm ? window.CuddleRewardRhythm.shown(state) : null;
+    // Whether the choices are new badges, level-ups of badges you hold, or
+    // both, so the heading says which (a Trial's or Duel's pick can mix them).
+    const tree = window.CuddleSkillTree;
+    const held = choice => {
+      const node = tree && typeof tree.findNode === "function"
+        ? (tree.findNode(choice.key || choice.id) || (typeof tree.findNodeByName === "function" ? tree.findNodeByName(choice.title) : null))
+        : null;
+      try { return Boolean(node && Number(tree.level(game, node)) > 0); } catch (_error) { return false; }
+    };
+    const heldCount = state.upgradeChoices.filter(held).length;
+    const pickWhat = (prefix) => heldCount === 0
+      ? `Choose ${prefix} badge`
+      : heldCount === state.upgradeChoices.length
+        ? `Level up ${prefix} badge`
+        : `Choose ${prefix} badge or level-up`;
+    const article = word => (/^[AEIOU]/.test(word) ? "an" : "a");
     const heading = eventPick
-      ? `Choose ${/^[AEIOU]/.test(eventTier) ? "an" : "a"} ${eventTier} upgrade`
+      ? pickWhat(`${article(eventTier)} ${eventTier}`)
       : legendary
       ? "Choose a legendary reward"
       : milestone
-      ? "Choose a bonus upgrade"
+      ? pickWhat("a bonus")
       : startingRewards
         ? "Choose a starting reward"
         : rhythm === "level"
@@ -1684,18 +1697,14 @@
       ? `Your total score reached ${state.upgradeMilestone}. This choice is in addition to the round reward.`
       : startingRewards
         ? "Pick a reward to begin the run with."
-        : rhythm === "level"
-          ? "One of your badges goes up a level. Next stage: a new badge."
-          : rhythm === "new"
-            ? "Next stage: level up one of your badges."
-            : "";
+        : "";
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleUpgradeTitle">
         <section class="cuddle-modal cuddle-modal-wide cuddle-upgrade-modal cuddle-compact-cards">
           <span class="cuddle-upgrade-wallet" data-upgrade-wallet aria-label="Money: $${Number(state.cuddleMoney || 0)}">
             <span>Money</span><b>$${Number(state.cuddleMoney || 0).toLocaleString()}</b>
           </span>
-          <span class="cuddle-modal-kicker">${kicker}</span>
+          ${kicker ? `<span class="cuddle-modal-kicker">${kicker}</span>` : ""}
           <h2 id="cuddleUpgradeTitle">${heading}</h2>
           ${body ? `<p>${body}</p>` : ""}
           <div class="cuddle-choice-grid">

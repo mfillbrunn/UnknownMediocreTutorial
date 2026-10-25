@@ -205,13 +205,6 @@
       holder.insertAdjacentHTML("beforeend", chip(tip.kind, tip.reason));
     });
     fitTips(grid);
-    var modal = grid.closest(".cuddle-upgrade-modal");
-    var note = modal && modal.querySelector(".umt-tips-note");
-    if (tips.length && modal && !note) {
-      grid.insertAdjacentHTML("beforebegin", "<p class=\"umt-tips-note\">Tips are only suggestions, from how your run is going. Any pick is fine.</p>");
-    } else if (!tips.length && note) {
-      note.remove();
-    }
   }
 
   // Tips sit on the card's top edge, left of the rarity tag. When they

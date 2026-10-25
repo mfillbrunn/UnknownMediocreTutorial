@@ -12,10 +12,14 @@
  * Its rows wear a small robot badge. Loaded after every other layer so its
  * submit and canSubmit wrappers are the outermost ones.
  *
- * Autopilot (a legendary badge) does the same on every stage, but the AI
- * plays from your hand: the best word your cards can make right now, read
- * from the rows you can see and what your hints say. If no word fits, or
- * the stage's rules turn it down, that guess is yours after all.
+ * Autopilot (a legendary badge) plays for you on every stage, Duels
+ * included (there it takes your own turns, never the rival's):
+ *   level 1  every 3rd guess, the best word your cards can make;
+ *   level 2  every 3rd guess, the best word from any letters;
+ *   level 3  every 2nd guess, from any letters.
+ * It reads the rows you can see and what your hints say. If no word fits,
+ * or the stage's rules turn it down, that guess is yours after all. Its
+ * rows say "Auto"; a Co-pilot stage's or a rival's say "AI".
  */
 (function () {
   "use strict";
@@ -58,6 +62,13 @@
     var node = tree && tree.findNode(BADGE);
     try { return node ? Number(tree.level(game, node)) || 0 : 0; } catch (_error) { return 0; }
   }
+  // Every how many of your guesses it plays, and whether from any letters.
+  function autopilotEvery(game) {
+    return autopilotLevel(game) >= 3 ? 2 : 3;
+  }
+  function anyLetters(game) {
+    return autopilotLevel(game) >= 2;
+  }
   function autopilotStage(game) {
     var state = game && game.state;
     if (!state || inDuel(state) || state.status !== "playing" || state.umtCoinOffer) return false;
@@ -70,14 +81,16 @@
     return [state.runId || "", state.round || 0, state.secret || "", (state.history || []).length].join(":");
   }
 
-  // The AI's turn: the next guess is an even one (2nd, 4th, 6th...).
+  // The AI's turn: on a Co-pilot stage every 2nd guess; with Autopilot
+  // every 3rd (every 2nd at level 3).
   function aiTurn(game) {
     var copilot = copilotStage(game);
     if (!copilot && !autopilotStage(game)) return false;
     var state = game.state;
     if (state.pendingRoundEnd) return false;
     var made = Array.isArray(state.history) ? state.history.length : 0;
-    if (made % 2 !== 1) return false;
+    var every = copilot ? 2 : autopilotEvery(game);
+    if ((made + 1) % every !== 0) return false;
     // A turn Autopilot couldn't play goes back to the player.
     return copilot || state.umtAutopilotSkip !== turnKey(state);
   }
@@ -86,7 +99,10 @@
   var baseSubmit = proto.submitDraft;
   proto.submitDraft = function submitDraftWithCopilot() {
     if (!this._copilotWord && !this._autopilotPlaying && aiTurn(this)) {
-      return { ok: false, error: "Co-pilot's turn: the AI makes this guess." };
+      return { ok: false, error: copilotStage(this) ? "Co-pilot's turn: the AI makes this guess." : "Autopilot's turn: it makes this guess." };
+    }
+    if (!this._autopilotPlaying && duelAutopilotDue(this)) {
+      return { ok: false, error: "Autopilot's turn: it makes this guess." };
     }
     return baseSubmit.apply(this, arguments);
   };
@@ -119,30 +135,44 @@
       console.warn("Cuddle co-pilot: no word.", error);
     }
     if (!/^[A-Z]{5}$/.test(word)) return { ok: false, error: "The co-pilot couldn't find a word." };
-    var game = this;
+    var result = playLooseWord(this, word, "copilot");
+    if (!result || result.ok === false) return result || { ok: false, error: "The co-pilot's guess could not be played." };
+    return result;
+  };
+
+  // Plays `word` from five one-turn cards (not the hand), past the hand and
+  // the stage's word rules; `kind` marks the row ("copilot" or "auto").
+  function playLooseWord(game, word, kind) {
+    var state = game.state;
     var savedDraft = Array.isArray(state.draft) ? state.draft.slice() : [];
     var cards = word.split("").map(function make(letter) { return game._newCard(letter, "extra"); });
     var ids = cards.map(function id(card) { return card.id; });
     state.hand = state.hand.concat(cards);
     state.draft = ids.slice();
     var before = state.history.length;
-    this._copilotWord = word;
+    game._copilotWord = word;
+    game._autopilotPlaying = kind === "auto";
     var result;
     try {
-      result = this.submitDraft();
+      result = game.submitDraft();
     } finally {
-      this._copilotWord = null;
+      game._copilotWord = null;
+      game._autopilotPlaying = false;
     }
     if (!result || result.ok === false) {
       state.hand = state.hand.filter(function keep(card) { return ids.indexOf(card.id) === -1; });
       state.draft = savedDraft;
-      return result || { ok: false, error: "The co-pilot's guess could not be played." };
+      return result;
     }
-    var entry = state.history[before];
-    if (entry) entry.umtCopilot = true;
-    try { this.save(); } catch (_error) { /* next save */ }
+    markRow(state.history[before], kind);
+    try { game.save(); } catch (_error) { /* next save */ }
     return result;
-  };
+  }
+  function markRow(entry, kind) {
+    if (!entry) return;
+    entry.umtCopilot = true;
+    if (kind === "auto") entry.umtAutopilot = true;
+  }
 
   // Autopilot's guess, built from the hand's own cards and submitted like
   // the player's would be (so the stage's rules still apply).
@@ -199,17 +229,32 @@
     try { game.save(); } catch (_error) { /* next save */ }
     return { ok: false, error: game.state.lastMessage };
   }
-  function autopilotGuess(game) {
+  // Autopilot's word for the state in play: from the hand (level 1) or any
+  // letters (level 2+), never one already played.
+  function autopilotWord(game) {
     var stages = window.CuddleExpandedStages;
     var state = game.state;
-    if (!stages || typeof stages.aiHandWord !== "function") return skipTurn(game, "the AI isn't available.");
-    var word = "";
+    if (!stages || typeof stages.aiHandWord !== "function") return "";
+    var played = (state.history || []).map(function word(entry) { return String(entry && entry.word || "").toUpperCase(); });
+    var hints = fitsHints(state);
+    var fits = function fits(word) { return played.indexOf(word) === -1 && hints(word); };
+    var canBuild = anyLetters(game) ? function any() { return true; } : canBuildWith(game);
     try {
-      word = String(stages.aiHandWord(game, visibleRows(state), canBuildWith(game), fitsHints(state)) || "").toUpperCase();
+      return String(stages.aiHandWord(game, visibleRows(state), canBuild, fits) || "").toUpperCase();
     } catch (error) {
       console.warn("Cuddle autopilot: no word.", error);
+      return "";
     }
-    if (!/^[A-Z]{5}$/.test(word)) return skipTurn(game, "no word fits your cards.");
+  }
+
+  function autopilotGuess(game) {
+    var state = game.state;
+    var word = autopilotWord(game);
+    if (!/^[A-Z]{5}$/.test(word)) return skipTurn(game, anyLetters(game) ? "no word fits what you know." : "no word fits your cards.");
+    if (anyLetters(game)) {
+      var loose = playLooseWord(game, word, "auto");
+      return loose && loose.ok !== false ? loose : skipTurn(game, "its word " + word + " isn't allowed here.");
+    }
     var used = {};
     var ids = [];
     word.split("").forEach(function take(letter) {
@@ -233,9 +278,77 @@
       state.draft = savedDraft;
       return skipTurn(game, "its word " + word + " isn't allowed here.");
     }
-    var entry = state.history[before];
-    if (entry) entry.umtCopilot = true;
+    markRow(state.history[before], "auto");
     try { game.save(); } catch (_error) { /* next save */ }
+    return result;
+  }
+
+  // -- Autopilot in a Duel -------------------------------------------------------
+  // It plays your own turns (every 3rd of yours, every 2nd at level 3),
+  // through the Duel's Submit; the rival AI keeps its turns. `game.state`
+  // is the Duel's own state while inside withDuel.
+  function duelMine(state) {
+    return (state.history || []).filter(function mine(entry) { return entry && entry.actor !== "ai"; }).length;
+  }
+  function duelAutopilotDue(game) {
+    var state = game && game.state;
+    if (!state || !inDuel(state) || state.status !== "playing" || autopilotLevel(game) <= 0) return false;
+    var mine = duelMine(state);
+    if ((mine + 1) % autopilotEvery(game) !== 0) return false;
+    return state.umtAutopilotSkip !== mine;
+  }
+  function duelTurn(game) {
+    var stages = window.CuddleExpandedStages;
+    if (!stages || typeof stages.withDuel !== "function" || typeof stages.duelPlayerTurn !== "function") return false;
+    if (stages.duelPlayerTurn(game) !== true) return false;
+    return Boolean(stages.withDuel(game, function check(g) { return duelAutopilotDue(g); }));
+  }
+  function duelAutopilotGuess(game) {
+    var stages = window.CuddleExpandedStages;
+    if (!duelTurn(game) || typeof stages.submitDuel !== "function") return { ok: false };
+    var plan = stages.withDuel(game, function build(g) {
+      var state = g.state;
+      var word = autopilotWord(g);
+      if (!/^[A-Z]{5}$/.test(word)) {
+        state.umtAutopilotSkip = duelMine(state);
+        state.lastMessage = "Autopilot: no word fits. This guess is yours.";
+        return null;
+      }
+      var ids = [];
+      if (anyLetters(g)) {
+        var cards = word.split("").map(function make(letter) { return g._newCard(letter, "extra"); });
+        state.hand = state.hand.concat(cards);
+        ids = cards.map(function id(card) { return card.id; });
+      } else {
+        var used = {};
+        word.split("").forEach(function take(letter) {
+          var card = handCards(g).find(function match(item) { return item.glyph === letter && (infinite(g, item) || !used[item.id]); });
+          if (card) { used[card.id] = true; ids.push(card.id); }
+        });
+        if (ids.length !== 5) { state.umtAutopilotSkip = duelMine(state); return null; }
+      }
+      state.draft = ids;
+      return { word: word, loose: anyLetters(g), ids: ids };
+    }, true);
+    if (!plan) return { ok: false };
+    game._autopilotPlaying = true;
+    game._copilotWord = plan.loose ? plan.word : null;
+    var result;
+    try {
+      result = stages.submitDuel(game, true);
+    } finally {
+      game._autopilotPlaying = false;
+      game._copilotWord = null;
+    }
+    if (!result || result.ok === false) {
+      // Turned down: the cards go back, and this turn is the player's.
+      stages.withDuel(game, function undo(g) {
+        var state = g.state;
+        if (plan.loose) state.hand = state.hand.filter(function keep(card) { return plan.ids.indexOf(card.id) === -1; });
+        state.draft = [];
+        state.umtAutopilotSkip = duelMine(state);
+      }, true);
+    }
     return result;
   }
 
@@ -255,11 +368,12 @@
     rows.forEach(function mark(row, index) {
       var entry = state.history[index];
       var ai = Boolean(entry && entry.umtCopilot);
+      var auto = Boolean(entry && entry.umtAutopilot) || (!entry && !copilotStage(game));
       if (ai !== row.classList.contains("is-copilot-row")) row.classList.toggle("is-copilot-row", ai);
       var waiting = turn && index === state.history.length;
       if (waiting !== row.classList.contains("is-copilot-turn")) row.classList.toggle("is-copilot-turn", waiting);
       var badge = row.querySelector(":scope > .umt-copilot-badge");
-      var label = ai ? "AI" : waiting ? "AI thinking…" : "";
+      var label = ai ? (auto ? "Auto" : "AI") : waiting ? (auto ? "Autopilot…" : "AI thinking…") : "";
       if (label && (!badge || badge.textContent !== label)) {
         if (!badge) {
           badge = document.createElement("span");
@@ -274,9 +388,23 @@
     });
   }
 
+  var duelThinking = false;
+  function duelTick(game) {
+    if (duelThinking || !duelTurn(game)) return;
+    duelThinking = true;
+    setTimeout(function play() {
+      duelThinking = false;
+      var live = activeGame();
+      if (!live || !duelTurn(live)) return;
+      duelAutopilotGuess(live);
+      try { window.dispatchEvent(new Event("cuddle:campaign-update")); } catch (_error) { /* next render */ }
+    }, THINK_MS);
+  }
+
   function tick() {
     var game = activeGame();
     if (!game || !game.state) return;
+    duelTick(game);
     markBoard(game);
     if (!aiTurn(game)) {
       thinking = null;

@@ -129,8 +129,8 @@
       id: "wordChain",
       icon: "🔗",
       title: "Word Chain",
-      description: quest => `Start with ${quest.chainLetter} (your last word's end).`,
-      detail: quest => `Your word must start with ${quest.chainLetter}, the last letter of your previous guess.`,
+      description: quest => `Start with ${quest.chainLetter} (from your last word).`,
+      detail: quest => `Your word must start with ${quest.chainLetter}, the last consonant of your previous guess. No ${quest.chainLetter} in your hand? You're given one for this guess.`,
       test: ({ word, quest }) => word.startsWith(quest.chainLetter)
     },
     {
@@ -774,7 +774,12 @@
       if (definition.id === "wordChain") {
         const previous = history[history.length - 1];
         if (!previous) return;
-        extra.chainLetter = previous.word.slice(-1);
+        // As the Word Chain challenge does (cuddle-rebalance-v5.js
+        // chainLetter): the last consonant, Y counted as a vowel and
+        // J/Q/V/X/Z skipped, since so few words start with those.
+        extra.chainLetter = String(previous.word || "").toUpperCase().split("").reverse()
+          .find(letter => !"AEIOUY".includes(letter) && !"JQVXZ".includes(letter));
+        if (!extra.chainLetter) return;
       }
       if (definition.needsHistory && !(history || []).some(entry => entry?.word)) return;
       const meta = questMeta(definition, extra);

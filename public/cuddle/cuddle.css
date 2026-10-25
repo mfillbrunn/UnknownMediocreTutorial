@@ -4321,7 +4321,8 @@
 .cuddle-preset-fold b { color: var(--cuddle-accent); }
 .cuddle-preset-fold .cuddle-btn { flex: 0 0 auto; }
 
-.cuddle-preset-head h3 {
+.cuddle-preset-head h3,
+.cuddle-preset-top h3 {
   margin: 0;
   font-size: 1.02rem;
   line-height: 1.25;
