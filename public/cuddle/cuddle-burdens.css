@@ -283,3 +283,12 @@ body.umt-wave-active.umt-wave-new-joker #cuddleScreen .cuddle-hand-panel .cuddle
   #cuddleScreen .cuddle-card.is-angel.is-turning,
   .cuddle-card.is-angel.is-turning > * { animation: none; }
 }
+
+/* A super idea card (Idea Cards level 3): a green bulb glow, for the green
+   hint it gives. */
+#cuddleScreen .cuddle-card.is-idea.is-super-idea {
+  background: linear-gradient(180deg, #2f7a4f, #1d5236);
+  border-color: #7be38f;
+  box-shadow: 0 0 10px rgba(123, 227, 143, 0.55);
+}
+#cuddleScreen .cuddle-card.is-idea.is-super-idea .umt-idea-bulb path:first-child { fill: #b8f5c4; stroke: #1d6b3a; }

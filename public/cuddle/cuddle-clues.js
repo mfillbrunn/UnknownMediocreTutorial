@@ -380,8 +380,9 @@
     const all = clueChips(game);
     const treasure = all.find(chip => chip.treasure);
     const chips = all.filter(chip => !chip.treasure);
+    // The treasure word's mark is a chest on its guess row now.
     root.querySelectorAll(".umt-treasure-diamond").forEach(element => element.remove());
-    if (treasure) placeTreasureDiamond(root, treasure);
+    void treasure;
     // Letters excluded for the whole run (Pruning Shears and friends) sit with
     // the clues instead of on a line of their own under the board.
     const removed = Array.isArray(game.state.removedLetters) ? game.state.removedLetters : [];
@@ -477,5 +478,18 @@
     else setInterval(installRenderHook, 1000);
   }());
 
-  window.CuddleClues = Object.freeze({ ids: IDS, clueChips });
+  // The treasure word while it can still be claimed: the last guess that
+  // pays it (1-based) and the prize, else null. Its row carries a chest
+  // (cuddle-rebalance-v5.js row icons).
+  function treasureNow(game) {
+    const state = game && game.state;
+    if (!state || state.status !== "playing" || isBoss(game)) return null;
+    const record = clues(game);
+    if (!record.treasure || record.treasurePaid) return null;
+    const deadline = treasureDeadline(game);
+    if (num(state.guessesUsed) + 1 >= deadline) return null;
+    return { guess: deadline - 1, prize: treasurePrize(game) };
+  }
+
+  window.CuddleClues = Object.freeze({ ids: IDS, clueChips, treasureNow });
 }());

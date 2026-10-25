@@ -1156,9 +1156,11 @@
       const ideaDisabled = state.status !== "playing"
         || (actionMode !== "play" && selectable.length === 0)
         || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
-      const ideaLabel = `Idea card${ideaCount > 1 ? ` ×${ideaCount}` : ""}: no letter, can't be played. Mulligan it away for a yellow hint.`;
+      // A super idea (Idea Cards level 3) gives a green instead.
+      const superIdea = group.glyph === window.CuddleBurdens.SUPER_IDEA_GLYPH;
+      const ideaLabel = `${superIdea ? "Super idea card" : "Idea card"}${ideaCount > 1 ? ` ×${ideaCount}` : ""}: no letter, can't be played. Mulligan it away for a ${superIdea ? "green hint: a letter in its spot" : "yellow hint"}.`;
       return `
-      <button class="cuddle-card is-idea${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${ideaCount}" ${ideaDisabled ? "disabled" : ""}
+      <button class="cuddle-card is-idea${superIdea ? " is-super-idea" : ""}${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${ideaCount}" ${ideaDisabled ? "disabled" : ""}
         aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(ideaLabel)}" title="${escapeHtml(ideaLabel)}">
         <span class="cuddle-card-letter cuddle-card-idea" aria-hidden="true">${window.CuddleBurdens.bulbSvg()}</span>
         ${ideaCount > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${ideaCount}</span>` : ""}
@@ -2526,6 +2528,9 @@
     if (!burdens) return null;
     if (cardButton.classList.contains("is-dead")) {
       return { tone: "dead", title: "Dead card", lines: ["It has no letter, so it can't be played. It just takes up a spot in your hand.", "Mulligan it away to get rid of it."] };
+    }
+    if (cardButton.classList.contains("is-super-idea")) {
+      return { tone: "idea", title: "Super idea card", lines: ["It has no letter, so it can't be played.", "Mulligan it away: one letter of the answer turns green, in its spot."] };
     }
     if (cardButton.classList.contains("is-idea")) {
       return { tone: "idea", title: "Idea card", lines: ["It has no letter, so it can't be played.", "Mulligan it away: one letter of the answer turns yellow."] };
