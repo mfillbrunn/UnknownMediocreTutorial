@@ -16,6 +16,13 @@
   // of three after each boss (legendaryChoices below).
   const DEFAULT_WEIGHTS = Object.freeze({ common: 55, rare: 35, epic: 10, legendary: 0 });
   const BOOSTED_WEIGHTS = Object.freeze({ common: 35, rare: 40, epic: 25, legendary: 0 });
+  // Later worlds lean rarer: world 2, then world 3 (by bosses beaten), each
+  // with its Rarity Lens version.
+  const WORLD_WEIGHTS = Object.freeze([
+    [DEFAULT_WEIGHTS, BOOSTED_WEIGHTS],
+    [Object.freeze({ common: 38, rare: 40, epic: 22, legendary: 0 }), Object.freeze({ common: 22, rare: 42, epic: 36, legendary: 0 })],
+    [Object.freeze({ common: 22, rare: 43, epic: 35, legendary: 0 }), Object.freeze({ common: 12, rare: 40, epic: 48, legendary: 0 })]
+  ]);
   const SHOP_WEIGHTS = Object.freeze({ common: 45, rare: 35, epic: 20, legendary: 0 });
   const PRICE_RANGES = Object.freeze({
     common: [25, 40],
@@ -1815,9 +1822,9 @@
     };
     const enough = Object.keys(grouped).filter((tier) => grouped[tier].length >= count);
     const available = enough.length ? enough : Object.keys(grouped).filter((tier) => grouped[tier].length > 0);
-    const weights = hasNamedUpgrade(state, ["rarity lens"]) || upgradeStack(state, "rarity-lens") > 0
-      ? BOOSTED_WEIGHTS
-      : DEFAULT_WEIGHTS;
+    const lens = hasNamedUpgrade(state, ["rarity lens"]) || upgradeStack(state, "rarity-lens") > 0;
+    const world = Math.max(0, Math.min(2, Array.isArray(state && state.bossGatesDone) ? state.bossGatesDone.length : 0));
+    const weights = WORLD_WEIGHTS[world][lens ? 1 : 0];
     const tier = weightedTier(weights, available, seed);
     const selected = shuffle(grouped[tier] || [], seed == null ? null : `${seed}:shuffle`).slice(0, count);
     selected.forEach((def) => { def.__cuddleV8OfferTier = tier; });

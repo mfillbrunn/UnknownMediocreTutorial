@@ -1,10 +1,13 @@
 /* Cuddle: the reward after a stage alternates.
  *
- * The pick after each cleared stage used to mix new badges and levels of
- * ones already held. Now it takes turns:
- *   - 1st, 3rd, 5th... stage: level up, a choice of badges you hold that
- *     can still go a level higher;
- *   - 2nd, 4th, 6th... stage: a new badge, a choice of ones you don't hold.
+ * The pick after each cleared stage takes turns between a new badge (a
+ * choice of ones you don't hold) and level-ups (badges you hold that can
+ * still go a level higher), counted afresh in each world:
+ *   - world 1: new badge, 1 level-up, new badge, 1 level-up...
+ *   - world 2: 2 level-ups, new badge, 2 level-ups, new badge...
+ *   - world 3: 3 level-ups, new badge, 3 level-ups, new badge...
+ * Several level-ups are picked one after another, each a different badge
+ * (the Level-Up stop's two picks work the same way).
  * A level-up stage with nothing left to level offers new badges instead.
  * Only the ordinary after-stage pick follows this: a Free Upgrade stop, an
  * event's pick, a boss's legendary pick and the starting rewards keep
@@ -75,11 +78,17 @@
   function turn(state) {
     var rhythm = state.umtRewardRhythm;
     if (!rhythm || typeof rhythm !== "object") rhythm = state.umtRewardRhythm = { count: 0, key: null, mode: null };
-    var key = [state.runId || "", state.round || 0, state.secret || "", (state.bossGatesDone || []).length].join(":");
+    var world = Math.max(0, Math.min(2, (state.bossGatesDone || []).length));
+    var key = [state.runId || "", state.round || 0, state.secret || "", world].join(":");
     if (rhythm.key !== key) {
+      // Counted per world: a new world starts its own turns.
+      if (rhythm.world !== world) rhythm.count = 0;
+      rhythm.world = world;
       rhythm.count += 1;
       rhythm.key = key;
-      rhythm.mode = rhythm.count % 2 === 1 ? "level" : "new";
+      var first = world === 0 ? "new" : "level";
+      rhythm.mode = rhythm.count % 2 === 1 ? first : (first === "new" ? "level" : "new");
+      rhythm.picks = world + 1;
     }
     return rhythm;
   }
@@ -213,14 +222,19 @@
     var offered = state.upgradeChoices;
     var count = offered.length;
     if (rhythm.mode === "level") {
-      var levels = levelChoices(game, Math.max(3, count));
+      // A refresh of a later pick keeps leaving out the badges already raised.
+      var stop = state.umtLevelStop && state.umtLevelStop.key === rhythm.key ? state.umtLevelStop : null;
+      var levels = levelChoices(game, Math.max(3, count), stop ? stop.done : []);
       if (levels.length) {
         rhythm.shown = "level";
         state.upgradeChoices = levels;
+        var picks = Number(rhythm.picks) || 1;
+        if (!stop) state.umtLevelStop = picks > 1 ? { pick: 1, of: picks, done: [], key: rhythm.key } : null;
         return;
       }
     }
     rhythm.shown = "new";
+    if (state.umtLevelStop && state.umtLevelStop.key) state.umtLevelStop = null;
     state.upgradeChoices = newChoices(game, offered, count);
   }
 
@@ -274,7 +288,9 @@
       state.upgradePhase = "round";
       state.upgradeMilestone = null;
       state.upgradeChoices = next;
-      state.waystoneOffer = true;
+      // A Level-Up stop's offer stays a waystone's (no refreshes); an
+      // after-stage pick stays an ordinary one.
+      state.waystoneOffer = Boolean(stop.waystone);
       try { this.save(); } catch (_error) { /* next save */ }
       return result;
     };

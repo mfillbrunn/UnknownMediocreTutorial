@@ -643,7 +643,7 @@
       game.state.lastMessage = "No badge to level up yet: take a new one instead.";
       return;
     }
-    game.state.umtLevelStop = { pick: 1, of: LEVEL_UP_PICKS, done: [] };
+    game.state.umtLevelStop = { pick: 1, of: LEVEL_UP_PICKS, done: [], waystone: true };
     game.state.status = "upgrade";
     game.state.upgradePhase = "round";
     game.state.upgradeMilestone = null;
