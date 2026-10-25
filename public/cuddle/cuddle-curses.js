@@ -533,7 +533,10 @@
       var words = pairs ? level.pairs : open ? level.open : level.blind;
       return '<button type="button" class="umt-duel-option is-' + id + '" data-umt-trial-level="' + id + '">' + pips(index + 1)
         + "<b>" + level.label + "</b>"
-        + '<span class="umt-duel-win">' + words + " words · Pass: " + (pairs ? "up to " : "") + "+" + level.points + " points · +$" + level.money + "</span></button>";
+        + '<span class="umt-duel-win">' + words + " words · Pass: " + (pairs ? "up to " : "") + "+" + level.points + " points · +$" + level.money + "</span>"
+        // Hard's first guess carries a challenge, not named until it's played.
+        + (id === "hard" ? '<span class="umt-trial-twist">First guess has a challenge</span>' : "")
+        + "</button>";
     }).join("");
     return '<div class="umt-trial-pick" role="dialog" aria-modal="true" aria-labelledby="umtTrialPickTitle">'
       + '<section class="umt-stop-panel umt-duel-choose umt-trial-pick-panel">'
@@ -568,6 +571,10 @@
     var node = game && trialNode(game.state);
     if (!node || !TRIAL_LEVELS[button.dataset.umtTrialLevel]) return;
     node.trialDifficulty = button.dataset.umtTrialLevel;
+    // Hard: the first guess carries a challenge (cuddle-rebalance-v5.js).
+    if (node.trialDifficulty === "hard" && window.CuddleRebalanceV5 && typeof window.CuddleRebalanceV5.startTrialChallenge === "function") {
+      try { window.CuddleRebalanceV5.startTrialChallenge(game); } catch (error) { console.warn("Cuddle trial: challenge failed.", error); }
+    }
     try { game.save(); } catch (_error) { /* next save */ }
     var layer = document.querySelector(".umt-trial-pick");
     if (layer) layer.remove();
