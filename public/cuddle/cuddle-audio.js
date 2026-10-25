@@ -73,7 +73,7 @@
   // random, and when it ends the other plays, back and forth. A victory is
   // one of its two pieces, at random.
   var TRACKS = {
-    theme: { list: ["cuddle/audio/cuddle-theme.mp3", "cuddle/audio/cuddle-theme-2.mp3"], resume: true },
+    theme: { list: ["cuddle/audio/cuddle-theme.mp3", "cuddle/audio/cuddle-theme-2.mp3", "cuddle/audio/cuddle-theme-3.mp3"], resume: true },
     boss: { list: ["cuddle/audio/cuddle-boss.mp3", "cuddle/audio/cuddle-boss-2.mp3"], restart: true },
     shop: { src: "cuddle/audio/cuddle-shop.mp3", restart: true },
     duel: { src: "cuddle/audio/cuddle-duel.mp3", restart: true },
