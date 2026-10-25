@@ -338,14 +338,17 @@
     if (sweep && sweep.secret === secret && Array.isArray(sweep.letters) && sweep.letters.length) {
       chips.push({ icon: "🔍", label: "Process of Elimination", text: "Not", letters: sweep.letters, tone: "sweep" });
     }
+    // While the pick is open, its own list is the one to read: the strip
+    // above the board leaves its copy out.
+    const picking = typeof game.presetPick === "function" && Boolean(game.presetPick());
     // Preset Trial boss: the answer is one of these words.
     const preset = state.megaState && state.megaState.presetWords;
-    if (state.boss && state.boss.id === "presetWordsTrial" && Array.isArray(preset) && preset.length) {
+    if (!picking && state.boss && state.boss.id === "presetWordsTrial" && Array.isArray(preset) && preset.length) {
       chips.push({ icon: "scroll", label: "Preset Trial", text: "Answer is one of", words: preset, tone: "preset" });
     }
     // An Open trial's list, shown from the first guess (cuddle-curses.js).
     const openList = typeof game.presetOpenList === "function" ? game.presetOpenList() : null;
-    if (Array.isArray(openList) && openList.length) {
+    if (!picking && Array.isArray(openList) && openList.length) {
       // Before the pick's own guess, "Answer now" opens the pick early
       // (cuddle-ui.js "pair-pick").
       const pickGuess = typeof game.presetPickGuess === "function" ? game.presetPickGuess() : 0;
