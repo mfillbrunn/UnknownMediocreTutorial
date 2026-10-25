@@ -2735,10 +2735,13 @@
     element.querySelector(":scope > .cuddle-v8-category-badge")?.remove();
     element.querySelector(":scope > .cuddle-v8-level-tag")?.remove();
     element.querySelector(":scope > .cuddle-v8-school-line")?.remove();
+    element.querySelector(":scope > .cuddle-v8-school-tag")?.remove();
+    element.querySelector(":scope > .cuddle-v8-tag-row")?.remove();
   }
 
-  // The card's school, on its own strip where combos used to show: the
-  // school points this pick adds, and the rank it would reach.
+  // The card's school: a small tag under the rarity pill, just its name.
+  // A pick that would take the school up a rank makes the tag pulse; the
+  // details (points, the rank's perk) are in its tooltip.
   function schoolLine(tree, node, game) {
     const school = node.school && tree.SCHOOLS ? tree.SCHOOLS[node.school] : null;
     if (!school) return null;
@@ -2746,26 +2749,24 @@
     if (window.CuddleFirstRun && window.CuddleFirstRun.schoolsHidden(game)) return null;
     const weight = (tree.TIER_WEIGHT && tree.TIER_WEIGHT[node.tier]) || 1;
     const line = document.createElement("span");
-    line.className = "cuddle-v8-school-line";
+    line.className = "cuddle-v8-school-tag";
     line.style.setProperty("--school", school.color);
-    const tile = document.createElement("i");
-    tile.setAttribute("aria-hidden", "true");
-    tile.textContent = school.mark || school.label.charAt(0);
-    const gain = document.createElement("b");
-    gain.textContent = `+${weight} ${school.label}`;
-    line.append(tile, gain);
+    line.textContent = school.label;
     let have = 0;
     try { have = Number(game && typeof tree.schoolPoints === "function" ? tree.schoolPoints(game)[node.school] : 0) || 0; } catch (_error) { have = 0; }
     const before = typeof tree.schoolRank === "function" ? tree.schoolRank(node.school, have) : 0;
     const after = typeof tree.schoolRank === "function" ? tree.schoolRank(node.school, have + weight) : 0;
-    const note = document.createElement("small");
-    note.textContent = after > before
-      ? `${school.label} ${["", "I", "II", "III"][after]}: ${school.perks[after - 1]}`
+    const note = after > before
+      ? `Takes ${school.label} to rank ${["", "I", "II", "III"][after]}: ${school.perks[after - 1]}`
       : school.ranks[before]
-        ? `${have + weight} of ${school.ranks[before]} for ${school.label} ${["", "I", "II", "III"][before + 1]}`
-        : "top rank";
-    if (after > before) line.classList.add("is-rank-up");
-    line.append(note);
+        ? `+${weight} ${school.label}: ${have + weight} of ${school.ranks[before]} for rank ${["", "I", "II", "III"][before + 1]}`
+        : `${school.label}: top rank`;
+    if (after > before) {
+      line.classList.add("is-rank-up");
+      line.textContent = `${school.label} ↑`;
+    }
+    line.title = note;
+    line.setAttribute("aria-label", note);
     return line;
   }
 
@@ -2836,22 +2837,21 @@
       // (The type chip -- Points, Quests... -- is left off: the school
       // strip below already groups the card, and the card had too many
       // labels.)
-      if (!isBossReward || element.classList.contains("cuddle-choice")) {
-        const line = schoolLine(tree, node, game);
-        if (line) {
-          const description = element.querySelector(":scope > small");
-          if (description) description.after(line);
-          else element.append(line);
-        }
-      }
-
+      // The level tag and the school tag share one small row under the title.
+      const line = !isBossReward || element.classList.contains("cuddle-choice") ? schoolLine(tree, node, game) : null;
+      const row = document.createElement("span");
+      row.className = "cuddle-v8-tag-row";
       if (!isBossReward && levelTagText) {
-        const title = themeTitleElement(element);
         const tag = document.createElement("span");
         tag.className = "cuddle-v8-level-tag";
         tag.textContent = levelTagText;
-        if (title) title.insertAdjacentElement("afterend", tag);
-        else element.appendChild(tag);
+        row.append(tag);
+      }
+      if (line) row.append(line);
+      if (row.childElementCount) {
+        const title = themeTitleElement(element);
+        if (title) title.insertAdjacentElement("afterend", row);
+        else element.appendChild(row);
       }
     }
   }

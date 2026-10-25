@@ -119,11 +119,12 @@
     return { label: school.label, rank: rank + 1, perk: (school.perks || [])[rank] || "" };
   }
 
-  // The tip badge opens its explanation in a small pop-up (tap it), so the
-  // cards stay short.
-  function chip(kind, reason) {
-    return "<span class=\"umt-tip is-" + kind + "\" role=\"button\" tabindex=\"0\" aria-expanded=\"false\" data-umt-tip=\"" + kind + "\" data-umt-tip-reason=\"" + esc(reason) + "\" title=\"Why this tip?\" aria-label=\"Tip: " + esc(LABEL[kind]) + ". Tap for why.\">"
-      + ICONS[kind] + "<b>Tip</b><span>" + esc(LABEL[kind]) + "</span><i class=\"umt-tip-more\" aria-hidden=\"true\">?</i></span>";
+  // A recommended card carries just a heart; tapped, it opens why (every
+  // reason this card is recommended) in a small pop-up.
+  function chip(reasons) {
+    var lines = reasons.map(function (tip) { return tip.kind + "|" + tip.reason; }).join("\n");
+    return "<span class=\"umt-tip is-heart\" role=\"button\" tabindex=\"0\" aria-expanded=\"false\" data-umt-tip=\"heart\" data-umt-tip-reason=\"" + esc(lines) + "\" title=\"Recommended: tap for why\" aria-label=\"Recommended. Tap for why.\">"
+      + ICONS.solve + "</span>";
   }
 
   // How many of your badges count against a Restraint badge, and what it
@@ -196,13 +197,13 @@
       return Boolean(up);
     });
     if (ranked) tips.push(ranked);
+    var byCard = new Map();
     tips.forEach(function (tip) {
-      var holder = tip.card.querySelector(":scope > .umt-tips");
-      if (!holder) {
-        tip.card.insertAdjacentHTML("afterbegin", "<span class=\"umt-tips\"></span>");
-        holder = tip.card.querySelector(":scope > .umt-tips");
-      }
-      holder.insertAdjacentHTML("beforeend", chip(tip.kind, tip.reason));
+      if (!byCard.has(tip.card)) byCard.set(tip.card, []);
+      byCard.get(tip.card).push(tip);
+    });
+    byCard.forEach(function (reasons, card) {
+      card.insertAdjacentHTML("afterbegin", "<span class=\"umt-tips\">" + chip(reasons) + "</span>");
     });
     fitTips(grid);
   }
@@ -235,12 +236,15 @@
   function toggleTip(tip) {
     if (popupTip === tip) { closeTipPopup(); return; }
     closeTipPopup();
-    var kind = tip.getAttribute("data-umt-tip");
     popup = document.createElement("div");
-    popup.className = "umt-tip-popup is-" + kind;
+    popup.className = "umt-tip-popup is-heart";
     popup.setAttribute("role", "dialog");
-    popup.setAttribute("aria-label", "Why this tip");
-    popup.innerHTML = (ICONS[kind] || "") + "<span>" + esc(tip.getAttribute("data-umt-tip-reason") || "") + "</span>";
+    popup.setAttribute("aria-label", "Why it's recommended");
+    popup.innerHTML = "<strong>Recommended</strong>" + String(tip.getAttribute("data-umt-tip-reason") || "").split("\n").filter(Boolean).map(function (line) {
+      var cut = line.indexOf("|");
+      var kind = line.slice(0, cut);
+      return "<p class=\"is-" + esc(kind) + "\">" + (ICONS[kind] || "") + "<span><b>" + esc(LABEL[kind] || "") + ".</b> " + esc(line.slice(cut + 1)) + "</span></p>";
+    }).join("");
     document.body.appendChild(popup);
     popupTip = tip;
     tip.setAttribute("aria-expanded", "true");
