@@ -317,8 +317,7 @@
     var state = game.state;
     var mode = defaultModeState(false);
     // A run starts with a free Upgrade Pack (cuddle-packs.js) instead of a
-    // pick of three: the starter (three specials) on Easy and Medium, a
-    // Medium pack (a Common and a special) on Hard.
+    // pick of three (its size just below).
     mode.starterRewardPending = false;
     mode.starterRewardClaimed = true;
     mode.starterRewardChoices = [];
@@ -326,8 +325,9 @@
     state.umtPackOffer = {
       id: (window.CuddleSeed ? window.CuddleSeed.text(state) : (state.runId || "run")) + ":starter-pack",
       // Easy and Medium start small (2 Commons), so a new player meets
-      // badges one or two at a time; Hard gets a Medium pack.
-      size: difficulty === "hard" ? "medium" : "small",
+      // badges one or two at a time; Hard gets two cards, an Epic and a
+      // Common, two Rares, or a Legendary and a Common (cuddle-packs.js).
+      size: difficulty === "hard" ? "hardStarter" : "small",
       price: 0,
       world: 1,
       starter: true,

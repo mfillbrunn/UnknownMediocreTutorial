@@ -39,6 +39,13 @@
   ]);
   // The free pack a run starts with (cuddle-money-mode.js); never for sale.
   var STARTER = Object.freeze({ id: "starter", name: "Large", commons: 0, specials: 3, flex: 0, prices: [] });
+  // Hard's free starting pack: two cards, in one of three mixes.
+  var HARD_STARTER = Object.freeze({ id: "hardStarter", name: "Starting", commons: 0, specials: 0, flex: 0, prices: [] });
+  var HARD_STARTER_MIXES = [
+    { specials: ["epic"], commons: 1, weight: 45 },
+    { specials: ["rare", "rare"], commons: 0, weight: 45 },
+    { specials: ["legendary"], commons: 1, weight: 10 }
+  ];
   var SPECIAL_ODDS = [["rare", 75], ["epic", 20], ["legendary", 5]];
   var TIER_LABEL = { common: "Common", rare: "Rare", epic: "Epic", legendary: "Legendary" };
   // The opening, in four beats: shake, swell, rip (with a spray of
@@ -84,6 +91,7 @@
   // Offers saved before sizes existed were the old 2 Commons + 1 special.
   function sizeOf(offer) {
     if (offer && offer.size === "starter") return STARTER;
+    if (offer && offer.size === HARD_STARTER.id) return HARD_STARTER;
     for (var i = 0; i < SIZES.length; i += 1) if (offer && SIZES[i].id === offer.size) return SIZES[i];
     return { id: "classic", name: "", commons: 2, specials: 1, prices: [] };
   }
@@ -173,6 +181,12 @@
     for (var flex = 0; flex < (size.flex || 0); flex += 1) {
       if (random() < 0.5) commons += 1;
       else specials.push(rollSpecialTier(random));
+    }
+    if (size === HARD_STARTER) {
+      var roll = random() * HARD_STARTER_MIXES.reduce(function sum(acc, mix) { return acc + mix.weight; }, 0);
+      var mix = HARD_STARTER_MIXES.find(function pick(item) { roll -= item.weight; return roll < 0; }) || HARD_STARTER_MIXES[0];
+      specials = mix.specials.slice();
+      commons = mix.commons;
     }
     var cards = api.packRewards(this, specials, offer.id + ":" + specials.join("-"), commons) || [];
     if (!cards.length) return { ok: false, error: "There are no upgrades left to put in a pack." };
