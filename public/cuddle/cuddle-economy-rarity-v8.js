@@ -2766,10 +2766,11 @@
   // not just the current count -- what a level number alone doesn't say
   // is whether this pick is your first copy or your last one before the
   // cap.
-  // Only a pick that levels up a badge you already have says so ("Level 2
-  // of 3"); a first pick, or a one-time badge, needs no tag.
+  // Every pick says which it is: a badge you don't have yet is "New badge",
+  // one you have goes up a level ("Level 2 of 3").
   function formatLevelTag(current, maxLevel) {
-    if (Number(maxLevel) === 1 || !(Number(current) >= 1)) return "";
+    if (!(Number(current) >= 1)) return "New badge";
+    if (Number(maxLevel) === 1) return "";
     const capped = Number.isFinite(maxLevel);
     const next = capped ? Math.min(current + 1, maxLevel) : current + 1;
     // The third level of a power is its big one (cuddle-skill-tree.js).
