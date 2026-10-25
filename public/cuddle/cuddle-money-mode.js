@@ -324,10 +324,10 @@
     var difficulty = String((state.megaState && state.megaState.difficulty) || state.difficulty || "").toLowerCase();
     state.umtPackOffer = {
       id: (window.CuddleSeed ? window.CuddleSeed.text(state) : (state.runId || "run")) + ":starter-pack",
-      // Easy and Medium start small (2 Commons), so a new player meets
-      // badges one or two at a time; Hard gets two cards, an Epic and a
-      // Common, two Rares, or a Legendary and a Common (cuddle-packs.js).
-      size: difficulty === "hard" ? "hardStarter" : "small",
+      // Easy starts small (2 Commons), so a new player meets badges one or
+      // two at a time; Medium and Hard get two cards, an Epic and a Common,
+      // two Rares, or a Legendary and a Common (cuddle-packs.js).
+      size: difficulty === "hard" || difficulty === "medium" ? "hardStarter" : "small",
       price: 0,
       world: 1,
       starter: true,
