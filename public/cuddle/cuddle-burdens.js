@@ -5,8 +5,8 @@
  *
  *   Dead card    a blank tile shuffled into the deck. It has no letter, so
  *                it can't go in a word; it just takes a hand slot until it
- *                is mulliganed away (and it comes back when the discard is
- *                reshuffled).
+ *                is mulliganed away. A mulliganed dead card is gone for the
+ *                rest of the stage, and a real card is drawn in its place.
  *   Doubled      a second copy of a few less useful consonants (J, V, W,
  *   consonants   K ...). More copies of weak letters crowd out good ones.
  *
@@ -721,7 +721,31 @@
     var ideas = picked.filter(isIdeaCard);
     var lucky = picked.filter(isLuckyCard);
     var jokerOut = picked.some(function joker(card) { return card.source === "joker"; });
-    var result = baseMulligan.apply(this, arguments);
+    // A dead card mulliganed is gone for good (its soul floats off), and
+    // what it's swapped for is a real card: the other dead cards sit out
+    // the draw.
+    var deadOut = picked.filter(isDeadCard);
+    var benched = [];
+    if (deadOut.length && state) {
+      benched = (state.deck || []).filter(isDeadCard).concat((state.discard || []).filter(isDeadCard));
+      state.deck = (state.deck || []).filter(function live(card) { return !isDeadCard(card); });
+      state.discard = (state.discard || []).filter(function live(card) { return !isDeadCard(card); });
+    }
+    var result;
+    try {
+      result = baseMulligan.apply(this, arguments);
+    } finally {
+      if (deadOut.length && this.state) {
+        var gone = new Set(deadOut.map(function id(card) { return card.id; }));
+        var deck = this.state.deck;
+        this.state.discard = (this.state.discard || []).filter(function keep(card) { return !gone.has(card.id); });
+        // The benched ones go back in at random spots.
+        benched.forEach(function back(card) {
+          if (gone.has(card.id)) return;
+          deck.splice(Math.floor(game.random() * (deck.length + 1)), 0, card);
+        });
+      }
+    }
     state = this.state;
     // The Joker in hand stands for all your Joker uses (its count): a
     // mulligan spends just the one, and the next comes back into the hand.
