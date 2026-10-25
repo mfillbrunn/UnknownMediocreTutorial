@@ -32,7 +32,7 @@
     // Cuddle never needs an account (progress lives in this browser); this
     // is just a thank-you coin for making one.
     { id: "signUp", group: "account", icon: "🔑", title: "Signed Up", text: "Create a free account. Cuddle never needs one, but here's a coin for it." },
-    { id: "winMedium", group: "wins", icon: "🏆", title: "Medium Win", text: "Win a run on Medium." },
+    { id: "winMedium", group: "wins", icon: "🏆", title: "Standard Win", text: "Win a Standard run." },
     { id: "winHard", group: "wins", icon: "🏆", title: "Hard Win", text: "Win a run on Hard." },
     { id: "flawless", group: "wins", icon: "⭐", title: "Flawless", text: "Win a run without ever guessing past the guess window." },
     { id: "firstBoss", group: "run", icon: "💀", title: "Boss Down", text: "Defeat your first boss." },

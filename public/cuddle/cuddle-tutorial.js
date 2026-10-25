@@ -350,7 +350,7 @@
       at: "bottom",
       cards: [
         { title: "You did it!", text: "You know the basics now: guess with your cards, read the colours, mulligan what you don't need, and pick badges that help." },
-        { title: "What's next", text: "<b>Medium</b> is the full game: three worlds and three bosses, forks in the road, <b>quests</b>, special <b>squares</b> on the board, <b>shops</b> to spend your money in, Duels and Trials. Every new thing explains itself the first time you meet it." }
+        { title: "What's next", text: "<b>Standard</b> is the full game: three worlds and three bosses, forks in the road, <b>quests</b>, special <b>squares</b> on the board, <b>shops</b> to spend your money in, Duels and Trials. Every new thing explains itself the first time you meet it." }
       ]
     }
   ];

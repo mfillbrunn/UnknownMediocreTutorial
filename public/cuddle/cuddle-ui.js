@@ -695,12 +695,11 @@
           ${newRunCoinNote ? `<p class="umt-newrun-broke" role="alert">No Cuddle Coins left. You get 1 free each day, and 1 for each achievement you claim.</p>` : ""}
           <div class="cuddle-difficulty-row">
             <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Tutorial</button>
-            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Medium</button>
+            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Standard</button>
             ${hardLocked()
-              ? `<button class="cuddle-btn cuddle-btn-primary is-locked" data-action="new-run-hard" aria-disabled="true" aria-label="Hard, locked: win a run on Medium to unlock it">${lockIcon()}Hard</button>`
+              ? `<button class="cuddle-btn cuddle-btn-primary is-locked" data-action="new-run-hard" aria-disabled="true" aria-label="Hard, locked: win a Standard run to unlock it">${lockIcon()}Hard</button>`
               : `<button class="cuddle-btn cuddle-btn-primary" data-action="new-run-hard">${escapeHtml(window.CuddleAscension ? window.CuddleAscension.hardLabel() : "Hard")}</button>`}
           </div>
-          <div class="cuddle-difficulty-help" aria-hidden="true"><span>More help</span><span>The usual run</span>${hardLocked() ? `<span class="is-locked">Win on Medium to unlock</span>` : "<span>Tougher bosses</span>"}</div>
           ${window.CuddleAscension ? window.CuddleAscension.pickerHtml() : ""}
           <details class="cuddle-newrun-more"${seedDraft ? " open" : ""}>
             <summary>More options</summary>
@@ -1819,7 +1818,7 @@
   // screen compares against the best earlier win on the same difficulty.
   var RECORDS_KEY = "umtCuddleRecords";
   // Easy is shown as "Tutorial" (the id stays "easy").
-  var DIFFICULTY_NAMES = { easy: "Tutorial", medium: "Medium", hard: "Hard" };
+  var DIFFICULTY_NAMES = { easy: "Tutorial", medium: "Standard", hard: "Hard" };
 
   function readRecords() {
     try {

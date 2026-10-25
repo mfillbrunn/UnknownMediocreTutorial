@@ -14,7 +14,7 @@
  * already earned (up to two again), so new things arrive a couple at a
  * time rather than all at once.
  *
- * Hard opens once a Medium run is won.
+ * Hard opens once a Standard run is won.
  *
  * Kept in this browser (localStorage), like the coins and achievements.
  * Players from before this existed start with credit for what they've
@@ -389,7 +389,7 @@
     if (state.status === "won" && (difficulty === "medium" || difficulty === "hard") && !data.hard) {
       data.hard = true;
       changed = true;
-      toast({ icon: "🔓", title: "Hard unlocked", text: "You won a Medium run. Hard runs are open now." });
+      toast({ icon: "🔓", title: "Hard unlocked", text: "You won a Standard run. Hard runs are open now." });
     }
     // At most RUN_UNLOCKS open in this run; the rest wait for the next one.
     var used = Math.max(0, Number(data.runOpened[id]) || 0);
@@ -428,7 +428,7 @@
     if (!next) {
       return '<span class="umt-unl-head"><b>Unlocks</b><small>All unlocked</small></span>'
         + '<span class="umt-unl-track"><i style="width:100%"></i></span>'
-        + '<small class="umt-unl-next">' + (hardUnlocked() ? "Every challenge, boss, world and badge is in the game." : "Win a Medium run to unlock Hard.") + "</small>";
+        + '<small class="umt-unl-next">' + (hardUnlocked() ? "Every challenge, boss, world and badge is in the game." : "Win a Standard run to unlock Hard.") + "</small>";
     }
     var ready = waiting();
     var from = data.opened ? STEPS[data.opened - 1].points : 0;
@@ -474,7 +474,7 @@
         + '<div class="umt-unl-chips">' + stepChips(step) + "</div></section>";
     }).join("");
     var hard = '<section class="umt-unl-level' + (hardUnlocked() ? " is-open" : "") + '">'
-      + "<header><b>Hard</b><span>Win a Medium run</span><em>" + (hardUnlocked() ? "Unlocked" : "Locked") + "</em></header></section>";
+      + "<header><b>Hard</b><span>Win a Standard run</span><em>" + (hardUnlocked() ? "Unlocked" : "Locked") + "</em></header></section>";
     return '<div class="umt-unl-overlay" role="dialog" aria-modal="true" aria-labelledby="umtUnlTitle">'
       + '<section class="umt-unl-modal">'
       + '<header class="umt-unl-modal-head"><div><h2 id="umtUnlTitle">Unlocks</h2><p>' + have.toLocaleString() + " progress points · " + data.opened + " of " + STEPS.length + " unlocked</p></div>"
