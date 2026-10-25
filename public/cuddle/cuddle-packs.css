@@ -304,6 +304,13 @@
 
 .umt-pack-sealed.is-large .umt-pack-name { font-size: 1.3rem; }
 
+/* The Starting Pack: a teal wrapper, set apart from the packs for sale. */
+.umt-pack-sealed.is-starter {
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0 4px, transparent 4px 10px),
+    linear-gradient(155deg, #3f9a9c 0%, #22606e 55%, #163a4a 100%);
+}
+
 /* The opening (cuddle-packs.js drives the shake, swell and rip). */
 .umt-pack-stage {
   position: relative;

@@ -277,11 +277,12 @@
       + '<span class="umt-pack-kicker">' + kicker + "</span>"
       + '<h2 id="umtPackTitle">' + title + "</h2>"
       + '<div class="umt-pack-stage">'
-      + '<button type="button" class="umt-pack-sealed is-' + size.id + '" data-umt-pack="buy"' + (short ? " disabled" : "")
+      + '<button type="button" class="umt-pack-sealed is-' + size.id + (offer.starter ? " is-starter" : "") + '" data-umt-pack="buy"' + (short ? " disabled" : "")
       + ' aria-label="' + (free ? "Open the pack" : "Buy and open the pack for $" + offer.price) + '">'
       + '<span class="umt-pack-foil" aria-hidden="true"></span>'
       + '<span class="umt-pack-name">' + (sizeName ? sizeName + "<br>" : "") + "Pack</span>"
-      + '<span class="umt-pack-count">' + total + " upgrades</span></button></div>"
+      // The Starting Pack doesn't count its badges.
+      + (offer.starter ? "" : '<span class="umt-pack-count">' + total + " upgrades</span>") + "</button></div>"
       + '<div class="umt-pack-actions">'
       + (free
         ? '<button type="button" class="cuddle-btn cuddle-btn-primary" data-umt-pack="buy">Open the pack</button>'
