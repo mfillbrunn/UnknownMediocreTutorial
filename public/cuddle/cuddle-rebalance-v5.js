@@ -1715,9 +1715,12 @@
     const state = stateOf(game) || {};
     const removed = new Set(state.removedLetters || []);
     const guessable = game && game.guessSet;
-    return (window.CuddleRareWords || []).filter((word) =>
+    const pool = (window.CuddleRareWords || []).filter((word) =>
       (!guessable || typeof guessable.has !== "function" || guessable.has(word))
       && ![...removed].some((letter) => word.includes(letter)));
+    // Standard draws from the more familiar rare words (cuddle-word-frequency.js).
+    const frequency = window.CuddleWordFrequency;
+    return frequency && typeof frequency.narrow === "function" ? frequency.narrow(game, pool) : pool;
   }
 
   function challengeById(id) {
