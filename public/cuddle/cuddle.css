@@ -4890,7 +4890,7 @@
 /* The Play button: the Guesser, his glasses spelling PLAY. */
 #cuddleScreen .cuddle-play-btn {
   display: block;
-  width: min(240px, 64vw);
+  width: min(280px, 72vw);
   margin: 4px auto 14px;
   padding: 0;
   border: 0;

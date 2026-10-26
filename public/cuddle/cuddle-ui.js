@@ -631,10 +631,6 @@
 
   // The home page: just Cuddle and four buttons. Tutorial, New run and
   // More each open a small menu of their own.
-  // The Play button: the Guesser (index.html's #icon-role-guesser), whose
-  // glasses spell PLAY: the P his left lens, the L his nose, the A his
-  // right lens, the Y the arm to his ear.
-  const PLAY_FACE = `<svg viewBox="0 0 120 120" class="cuddle-play-face" aria-hidden="true" focusable="false"><path fill="#60a5fa" d="M14 116c2-28 19-43 46-43s44 15 46 43z"/><circle fill="#f4ede0" cx="24" cy="52" r="9"/><circle fill="#f4ede0" cx="96" cy="52" r="9"/><path fill="#f4ede0" d="M60 12c-22 0-36 16-36 40 0 23 15 39 36 39s36-16 36-39c0-24-14-40-36-40z"/><path fill="#241a30" d="M25 36C28 17 41 8 60 8c18 0 31 8 35 23-11 1-19-3-25-11-10 8-24 13-45 16z"/><g transform="translate(0 6)" fill="none" stroke="#241a30" stroke-linecap="round" stroke-linejoin="round"><path stroke-width="5" d="M11 46h11"/><path stroke-width="7" d="M24 36V76"/><path stroke-width="7" fill="#f4ede0" d="M24 36h13a14 14 0 0 1 0 28H24"/><path stroke-width="6" d="M57 47V62H65"/><path stroke-width="7" fill="#f4ede0" d="M68 68L81 33L94 68"/><path stroke-width="6" d="M73 57H89"/><path stroke-width="6" d="M98 37L104 46L110 37M104 46V60"/><path stroke-width="4" d="M50 76q10 6 20 0"/></g><circle fill="#241a30" cx="39" cy="57" r="4"/><circle fill="#241a30" cx="81" cy="56" r="5.5"/><circle fill="#f4ede0" cx="79.6" cy="54.3" r="1.7"/><circle fill="#f4ede0" cx="60" cy="102" r="13"/><path fill="#241a30" d="M52 98c0-6 4-10 10-10 6 0 10 4 10 9 0 4-2 6-6 9-2 1-3 3-3 5h-7c0-5 2-7 6-10 2-2 3-3 3-5 0-2-1-3-4-3-3 0-4 2-4 5z"/><circle fill="#241a30" cx="60" cy="113" r="3"/></svg>`;
 
   function renderLanding() {
     const state = currentState();
@@ -650,7 +646,7 @@
         <section class="cuddle-hero">
           <h1>CUDDLE</h1>
           <p class="cuddle-tagline">Guess words, collect upgrades, beat the bosses.</p>
-          <button type="button" class="cuddle-play-btn" data-action="menu-play" aria-label="Play">${PLAY_FACE}</button>
+          <button type="button" class="cuddle-play-btn" data-action="menu-play" aria-label="Play"><img class="cuddle-play-face" src="cuddle/icons/play-guesser.webp" alt="" width="560" height="505"></button>
           <div class="cuddle-landing-actions cuddle-landing-pair">
             <button class="cuddle-btn ${needsTutorial() && !hasRun ? "cuddle-btn-primary" : "cuddle-btn-ghost"}" data-action="menu-tutorial">Tutorial</button>
             <button class="cuddle-btn cuddle-btn-ghost" data-action="menu-more">More</button>
