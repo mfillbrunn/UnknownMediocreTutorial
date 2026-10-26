@@ -166,7 +166,8 @@
   // The deck tile stack, shared by the stage hand and the Duel hand.
   function deckHtml(count, key) {
     var left = Math.max(0, Number(count) || 0);
-    var label = left + " card" + (left === 1 ? "" : "s") + " left in the deck";
+    // The play screen's deck can be tapped to wash out the hand (cuddle-washout.js); a Duel's can't.
+    var label = left + " card" + (left === 1 ? "" : "s") + " left in the deck" + (String(key).indexOf("duel:") === 0 ? "." : ". Tap to wash out your hand.");
     return '<div class="cuddle-deck' + (left ? "" : " is-empty") + '" data-deck-key="' + String(key).replace(/[^\w:.-]/g, "") + '" role="img" aria-label="' + label + '" title="' + label + '">'
       + '<span class="cuddle-deck-card"></span><span class="cuddle-deck-card"></span><span class="cuddle-deck-card"></span>'
       + '<b class="cuddle-deck-count">' + left + "</b></div>";
