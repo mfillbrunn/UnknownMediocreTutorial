@@ -2782,7 +2782,8 @@
       const mark = entry && Array.isArray(entry.umtCompass) ? entry.umtCompass.find(item => item && item.index === column) : null;
       if (!mark) return "";
       const side = mark.dir === "L" ? "left" : mark.dir === "R" ? "right" : "match";
-      return `<span class="umt-compass-mark is-${side}" data-dir="${mark.dir}" data-source="${escapeHtml(entry.umtCompassSource || "badge")}">${mark.dir === "L" ? "&larr;" : mark.dir === "R" ? "&rarr;" : "&ndash;"}</span>`;
+      const arrow = window.CuddleCompass ? window.CuddleCompass.glyph(mark) : mark.dir === "L" ? "&larr;" : mark.dir === "R" ? "&rarr;" : "&ndash;";
+      return `<span class="umt-compass-mark is-${side}${mark.far ? " is-far" : ""}" data-dir="${mark.dir}"${mark.far ? ' data-far="1"' : ""} data-source="${escapeHtml(entry.umtCompassSource || "badge")}">${arrow}</span>`;
     }
 
     // Precise Green (cuddle-ui.js draws the same): how many times the

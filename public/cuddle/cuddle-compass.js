@@ -17,9 +17,11 @@
   "use strict";
 
   const STACK_KEY = "alphabet-compass";
-  // Copies held: one or two tiles per guess, and the third copy (Full
-  // Alphabet Compass) covers all five.
+  // Copies held: one or two tiles per guess. The third copy (Full Alphabet
+  // Compass) keeps two tiles but tells near from far: a single arrow when
+  // the answer's letter is within FAR letters, a double arrow past that.
   const MAX_COPIES = 3;
+  const FAR = 7;
 
   function copiesOwned(state) {
     const economy = window.CuddleEconomyRarityV8;
@@ -74,7 +76,8 @@
     const state = game.state;
     const copies = copiesOwned(state);
     const schoolArrow = hintsRankArrow(game, entry);
-    const count = copies >= MAX_COPIES ? 5 : Math.min(5, copies + schoolArrow);
+    const count = Math.min(5, Math.min(copies, 2) + schoolArrow);
+    const distance = copies >= MAX_COPIES;
     if (!count || !entry || entry.umtCompass) return;
     const secret = String(state.secret || "").toUpperCase();
     const word = String(entry.word || "").toUpperCase();
@@ -85,7 +88,11 @@
     const open = [0, 1, 2, 3, 4].filter(index => !masked.has(index) && !known.has(index) && word[index] !== secret[index]);
     entry.umtCompass = shuffled(open, random).slice(0, count)
       .sort((a, b) => a - b)
-      .map(index => ({ index, dir: reading(secret[index], word[index]) }));
+      .map(index => {
+        const mark = { index, dir: reading(secret[index], word[index]) };
+        if (distance && Math.abs(secret.charCodeAt(index) - word.charCodeAt(index)) > FAR) mark.far = true;
+        return mark;
+      });
     // Where the arrows came from, for the note a tap on one shows.
     entry.umtCompassSource = copies && schoolArrow ? "both" : copies ? "badge" : "hints";
   }
@@ -98,10 +105,22 @@
     both: "From your Alphabet Compass badge, plus one from the Hints school (rank I) on your first guess.",
     boss: "From Arrow Signs: these tiles show an arrow instead of a colour."
   };
-  function meaning(dir) {
+  function meaning(dir, far) {
+    if (far) {
+      return dir === "L" ? `⇇ The answer's letter here comes much earlier in the alphabet (more than ${FAR} letters back).`
+        : `⇉ The answer's letter here comes much later in the alphabet (more than ${FAR} letters on).`;
+    }
     return dir === "L" ? "← The answer's letter here comes earlier in the alphabet."
       : dir === "R" ? "→ The answer's letter here comes later in the alphabet."
         : "– This letter is right here (green).";
+  }
+
+  // The mark's arrow: single, double (far, Full Alphabet Compass) or a dash.
+  function glyph(mark) {
+    if (!mark) return "";
+    if (mark.dir === "L") return mark.far ? "&#x21C7;" : "&larr;";
+    if (mark.dir === "R") return mark.far ? "&#x21C9;" : "&rarr;";
+    return "&ndash;";
   }
   let bubble = null;
   let bubbleTimer = 0;
@@ -119,7 +138,7 @@
     bubble = document.createElement("div");
     bubble.className = "umt-compass-note";
     bubble.setAttribute("role", "status");
-    bubble.innerHTML = `<strong>${meaning(mark.dataset.dir)}</strong><span>${SOURCES[mark.dataset.source] || SOURCES.badge}</span>`;
+    bubble.innerHTML = `<strong>${meaning(mark.dataset.dir, mark.dataset.far === "1")}</strong><span>${SOURCES[mark.dataset.source] || SOURCES.badge}</span>`;
     document.body.appendChild(bubble);
     const box = mark.getBoundingClientRect();
     const width = Math.min(260, window.innerWidth - 24);
@@ -157,5 +176,5 @@
     }, 50);
   }
 
-  window.CuddleCompass = Object.freeze({ markEntry, copiesOwned, reading });
+  window.CuddleCompass = Object.freeze({ markEntry, copiesOwned, reading, glyph, FAR });
 })();

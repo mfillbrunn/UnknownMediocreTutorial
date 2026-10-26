@@ -223,7 +223,7 @@
           level: g => powerLevel(g, "jokerLens") },
         { id: "jokerCacheLarge", icon: "🃏", title: "Large Joker Cache", tier: "legendary", type: "letters", maxLevel: 1, description: "Every stage starts with a Joker card in your hand (a card that can be any letter). It doesn't count toward your hand limit.", level: g => v5Level(g, "umtJokerCacheLarge") },
         { id: "alphabet-compass", icon: "🧭", title: "Alphabet Compass", tier: "epic", type: "clues", maxLevel: 3,
-          levels: ["After each guess, 1 tile shows if the answer's letter there comes earlier or later in the ABCs.", "After each guess, 2 tiles show earlier or later.", "After each guess, every tile shows earlier or later."],
+          levels: ["After each guess, 1 tile shows if the answer's letter there comes earlier or later in the ABCs.", "After each guess, 2 tiles show earlier or later.", "After each guess, 2 tiles show earlier or later, and how far: a single arrow means within 7 letters, a double arrow more than 7."],
           level: g => (window.CuddleCompass && g?.state ? window.CuddleCompass.copiesOwned(g.state) : 0) },
         { id: "consonantSweep", icon: "🔍", title: "Process of Elimination", tier: "epic", type: "clues", maxLevel: 1, description: "After each guess, 1 more consonant is crossed out (it's not in the answer).", level: g => Math.max(upgradeCount(g, "consonantSweep"), upgradeCount(g, "umtConsonantSweep"),
             Number(g?.state?.cuddleRebalanceV5?.upgrades?.umtConsonantSweep) || 0) }
@@ -452,7 +452,7 @@
     vowelBounty: ["+4 per vowel", "+6 per vowel", "+10 per vowel"],
     treasureHunter: ["Treasure +$30", "Treasure +$40", "Treasure +$60, every 2nd"],
     yellowHint: ["1 letter shown", "1 letter placed"],
-    "alphabet-compass": ["1 compass tile", "2 compass tiles", "Every tile"],
+    "alphabet-compass": ["1 compass tile", "2 compass tiles", "Near / far arrows"],
     coachMeterThreshold: ["Meter 2 sooner", "Meter 4 sooner", "Meter 6 sooner"],
     coachMeterReward: ["Meter + consonant test", "Meter + Joker card", "Meter + yellow hint, once a stage"],
     momentum: ["+3 per better guess", "+5 per better guess", "+9 per better guess"],

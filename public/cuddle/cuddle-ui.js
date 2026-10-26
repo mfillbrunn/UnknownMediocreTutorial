@@ -1045,7 +1045,7 @@
             : null);
           const compassSource = arrow ? "boss" : (history?.umtCompassSource || "badge");
           const compassMark = compass
-            ? `<span class="umt-compass-mark is-${compass.dir === "L" ? "left" : compass.dir === "R" ? "right" : "match"}" data-dir="${compass.dir}" data-source="${compassSource}" title="${compass.dir === "L" ? "The secret's letter here comes earlier in the alphabet" : compass.dir === "R" ? "The secret's letter here comes later in the alphabet" : "This letter matches the secret here"}">${compass.dir === "L" ? "&larr;" : compass.dir === "R" ? "&rarr;" : "&ndash;"}</span>`
+            ? `<span class="umt-compass-mark is-${compass.dir === "L" ? "left" : compass.dir === "R" ? "right" : "match"}" ${compass.far ? " is-far" : ""}" data-dir="${compass.dir}"${compass.far ? ' data-far="1"' : ""} data-source="${compassSource}" title="${compass.dir === "L" ? `The secret's letter here comes ${compass.far ? "much " : ""}earlier in the alphabet` : compass.dir === "R" ? `The secret's letter here comes ${compass.far ? "much " : ""}later in the alphabet` : "This letter matches the secret here"}">${window.CuddleCompass ? window.CuddleCompass.glyph(compass) : compass.dir === "L" ? "&larr;" : compass.dir === "R" ? "&rarr;" : "&ndash;"}</span>`
             : "";
           // Precise Green: how many times this letter is in the answer.
           const letterCount = history?.greenLetterCounts && (result === "green" || result === "yellow")
@@ -1411,6 +1411,7 @@
           <p>If it's the answer, you pass: ${pay(panel.payNow)}.</p>
         </div>
         <div class="cuddle-pair-words">${words}</div>
+        <button type="button" class="cuddle-btn cuddle-btn-ghost cuddle-pair-redraw" data-action="pair-redraw"${panel.mulligans > 0 ? "" : " disabled"}>Mulligan: 2 new words <span>${panel.mulligans} left</span></button>
       </section>`;
     }
     return `
@@ -2443,6 +2444,11 @@
         const result = typeof game.submitPairWord === "function" ? game.submitPairWord(String(dataset.word || "")) : { ok: false };
         setUiMessage(result.ok ? "" : result.error || "");
         resetActionMode();
+        return true;
+      }
+      case "pair-redraw": {
+        const result = typeof game.presetPairRedraw === "function" ? game.presetPairRedraw() : { ok: false };
+        setUiMessage(result.ok ? "" : result.error || "");
         return true;
       }
       case "pair-next":
