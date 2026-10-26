@@ -1029,7 +1029,11 @@
           const countMark = letterCount
             ? `<span class="umt-count-mark" title="${escapeHtml(String(letter || "").toUpperCase())} is in the answer ${letterCount === 1 ? "once" : `${letterCount} times`}">${letterCount}</span>`
             : "";
-          tiles.push(`<span class="cuddle-tile${tileClass}${compass ? " has-compass" : ""}${arrow ? " is-arrow-sign" : ""}"${moneyBadge}${burstStyle}>${escapeHtml(letter)}${compassMark}${countMark}</span>`);
+          // Echo Peaks (cuddle-world-identity.js): how many times the
+          // answer holds this found letter.
+          const echoCount = history?.umtEcho && history.umtEcho[column];
+          const echoMark = echoCount ? `<span class="umt-echo-mark" title="The answer has this letter ${echoCount} times">×${echoCount}</span>` : "";
+          tiles.push(`<span class="cuddle-tile${tileClass}${compass ? " has-compass" : ""}${arrow ? " is-arrow-sign" : ""}"${moneyBadge}${burstStyle}>${escapeHtml(letter)}${compassMark}${countMark}${echoMark}</span>`);
         }
       }
       // Count Only replaces the row's score with the only thing it tells you:

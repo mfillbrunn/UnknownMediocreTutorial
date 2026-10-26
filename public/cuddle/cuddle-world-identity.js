@@ -29,6 +29,8 @@
       text: "After your first guess in each stage, the woods whisper one letter that isn't in the answer." },
     meadow: { icon: "🍀", name: "In Bloom", stage: "Field",
       text: "Two more special squares grow on the board in every stage." },
+    mountains: { icon: "⛰️", name: "Echo Peaks", stage: "Trail",
+      text: "When a guess finds a letter (yellow or green) that the answer holds more than once, the mountain echoes it: the tile shows how many times the letter is in the answer." },
     marsh: { icon: "✨", name: "Fireflies", stage: "Pool",
       text: "Every stage opens with one vowel tested for free: you learn whether it's in the answer." },
     caverns: { icon: "👯", name: "Echoes", stage: "Grotto",
@@ -244,6 +246,26 @@
           note(this, "The woods whisper: " + letter + " isn't in the answer.");
         }
       }
+      // Echo Peaks: a found letter that the answer repeats shows its count.
+      if (theme === "mountains" && !solved) {
+        var answer = String(state.secret || "").toUpperCase();
+        var word = String(entry.word || "").toUpperCase();
+        var echo = {};
+        var heard = [];
+        word.split("").forEach(function each(letter, index) {
+          if (feedback[index] !== "yellow" && feedback[index] !== "green") return;
+          var inAnswer = answer.split(letter).length - 1;
+          var inGuess = word.split(letter).length - 1;
+          if (inAnswer > inGuess && heard.indexOf(letter) === -1) {
+            echo[index] = inAnswer;
+            heard.push(letter + (inAnswer === 2 ? " twice" : " " + inAnswer + " times"));
+          }
+        });
+        if (heard.length) {
+          entry.umtEcho = echo;
+          note(this, "Echo: the answer has " + heard.join(", ") + ".");
+        }
+      }
       if (theme === "storm" && history.length === 3 && num(entry.scoreDelta) > 0) {
         stageBonus(this, num(entry.scoreDelta), "umtWorldLightning", "Lightning");
       }
@@ -349,7 +371,7 @@
 
   // The moving backdrop: the same particles on every redraw, each placed
   // where it would be by now, so a redraw never makes them jump.
-  var PARTICLES = { woods: 14, meadow: 18, marsh: 12, caverns: 16, frost: 30, library: 16, swamp: 14, tides: 20, citadel: 18, storm: 34, forge: 22, glacier: 24 };
+  var PARTICLES = { woods: 14, meadow: 18, marsh: 12, caverns: 16, frost: 30, mountains: 20, library: 16, swamp: 14, tides: 20, citadel: 18, storm: 34, forge: 22, glacier: 24 };
 
   function seeded(seed) {
     var x = seed * 9301 + 49297;
@@ -368,7 +390,7 @@
       var duration = 6 + rand() * 10;
       if (theme === "storm") duration = 0.7 + rand() * 0.6;
       if (theme === "forge") duration = 2.5 + rand() * 3;
-      if (theme === "frost" || theme === "glacier") duration = 8 + rand() * 9;
+      if (theme === "frost" || theme === "glacier" || theme === "mountains") duration = 8 + rand() * 9;
       if (theme === "tides") duration = 7 + rand() * 7;
       var offset = rand() * duration;
       var delay = -((now + offset) % duration);

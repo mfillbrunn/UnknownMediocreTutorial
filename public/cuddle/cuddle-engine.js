@@ -555,7 +555,11 @@
     // How many mulligans a round starts with. Double Mulligans (a boss
     // reward) doubles whatever the base plus per-round upgrades come to.
     getMulliganAllowance() {
-      const base = BASE_MULLIGANS + (Number(this.state?.upgrades?.extraMulligans) || 0);
+      // The difficulty's own starting mulligans (megaState.startMulligans)
+      // are kept apart from Second Thoughts' count, so the badge isn't
+      // half-owned from the first stage.
+      const base = BASE_MULLIGANS + (Number(this.state?.upgrades?.extraMulligans) || 0)
+        + (Number(this.state?.megaState?.startMulligans) || 0);
       return this.mulliganGain(base);
     }
 
@@ -3484,6 +3488,9 @@
         return { ok: true };
       }
       case "extraMulligans":
+        // Second Thoughts: +2 mulligans, then +1 a level, however it's taken.
+        state.upgrades.extraMulligans = Number(state.upgrades.extraMulligans || 0) + (Number(state.upgrades.extraMulligans || 0) > 0 ? 1 : 2);
+        return { ok: true };
       case "mulliganSize":
       case "yellowPoints":
       case "earlyRoundPoint":
@@ -4617,8 +4624,7 @@
     this.state.cuddleMoney = STARTING_MONEY[chosen];
 
     if (chosen !== "hard") {
-      const extraMulligans = chosen === "medium" ? 2 : 3;
-      this.state.upgrades.extraMulligans = Number(this.state.upgrades.extraMulligans || 0) + extraMulligans;
+      mega.startMulligans = chosen === "medium" ? 2 : 3;
       if (chosen === "easy") {
         // "Make mulligan one larger" -- one extra card per mulligan use.
         this.state.upgrades.mulliganSize = Number(this.state.upgrades.mulliganSize || 0) + 1;
