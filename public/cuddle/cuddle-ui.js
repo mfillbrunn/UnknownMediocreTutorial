@@ -647,12 +647,12 @@
           <h1>CUDDLE</h1>
           <p class="cuddle-tagline">Guess words, collect upgrades, beat the bosses.</p>
           <div class="cuddle-landing-actions">
-            <button class="cuddle-btn cuddle-btn-ghost" data-action="menu-tutorial">Tutorial</button>
+            <button class="cuddle-btn ${needsTutorial() && !hasRun ? "cuddle-btn-primary" : "cuddle-btn-ghost"}" data-action="menu-tutorial">Tutorial</button>
             ${hasRun ? `<button class="cuddle-btn cuddle-btn-primary cuddle-continue-btn" data-action="continue">
               <span>${finished ? "Review run" : "Continue run"}</span>
               <small>${escapeHtml(where)}${seed ? ` · Seed ${escapeHtml(seed)}` : ""}</small>
             </button>` : ""}
-            <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="menu-newrun">New run</button>
+            <button class="cuddle-btn ${hasRun || needsTutorial() ? "" : "cuddle-btn-primary"}" data-action="menu-newrun">New run</button>
             <button class="cuddle-btn cuddle-btn-ghost" data-action="menu-more">More</button>
           </div>
         </section>
@@ -690,6 +690,15 @@
         ${window.CuddleUnlocks ? window.CuddleUnlocks.landingHtml() : ""}`);
     }
     const hardText = window.CuddleAscension ? window.CuddleAscension.hardLabel() : "Hard";
+    if (needsTutorial()) {
+      return menu("New run", `
+        <div class="cuddle-menu-list">
+          <button class="cuddle-btn is-locked" data-action="new-run-medium" aria-disabled="true">${lockIcon()}Standard</button>
+          <button class="cuddle-btn is-locked" data-action="new-run-hard" aria-disabled="true">${lockIcon()}Hard</button>
+          <p class="cuddle-menu-note">Play the Tutorial run first. It's short, and it opens the full game.</p>
+          <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Play the Tutorial run</button>
+        </div>`);
+    }
     return menu("New run", `
       <div class="cuddle-menu-list">
         <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Standard</button>
@@ -700,7 +709,7 @@
       </div>
       ${newRunCoinNote ? `<p class="umt-newrun-broke" role="alert">No Cuddle Coins left. You get 1 free each day, and 1 for each achievement you claim.</p>` : ""}
       <details class="cuddle-newrun-more"${seedDraft ? " open" : ""}>
-        <summary>${wallet ? `<span class="cuddle-landing-cost"><span class="umt-coin" aria-hidden="true"></span>${wallet.freePlay ? "Free right now" : `1 coin a run · you have ${wallet.coins()}`}</span> · ` : ""}Play a seed</summary>
+        <summary>Play a seed</summary>
         <label class="cuddle-seed-field">
           <span>Seed</span>
           <input id="cuddleSeedInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
@@ -738,6 +747,14 @@
           </div>
         </section>
       </div>`;
+  }
+
+  // A new player plays the Tutorial run first: Standard and Hard open once
+  // a run has been played through (cuddle-first-run.js counts it when it
+  // ends or beats its boss), so anyone who has played before is past it.
+  function needsTutorial() {
+    const first = window.CuddleFirstRun;
+    return Boolean(first && typeof first.experienced === "function" && !first.experienced());
   }
 
   // Hard opens once a Medium run is won (cuddle-unlocks.js).
@@ -2338,10 +2355,11 @@
         requestNewRun("easy");
         return true;
       case "new-run-medium":
+        if (needsTutorial()) return false;
         requestNewRun("medium");
         return true;
       case "new-run-hard": {
-        if (hardLocked()) return false;
+        if (hardLocked() || needsTutorial()) return false;
         const ladder = window.CuddleAscension && typeof window.CuddleAscension.ladder === "function" ? window.CuddleAscension.ladder() : null;
         if (ladder && ladder.unlocked > 0) hardPickOpen = true;
         else requestNewRun("hard");
