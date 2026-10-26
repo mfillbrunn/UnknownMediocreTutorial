@@ -5,6 +5,8 @@
  *   - Hard: the most common 85% (only the obscure tail is left out).
  * A Rare Word stage draws from the rare list (cuddle-rare-words.js, most
  * common first): its more familiar 60% on Standard, all of it on Hard.
+ * One Rare Word stage in five draws an ordinary answer instead
+ * (cuddle-rebalance-v5.js RARE_NORMAL_CHANCE).
  * The Tutorial keeps its own everyday words (cuddle-easy-mode.js).
  *
  * How common a word is comes from the server's frequency table

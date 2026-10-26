@@ -1702,6 +1702,16 @@
     return Boolean(active && active.rareSecret);
   }
 
+  // A Rare Word stage that drew an ordinary answer (see _pickSecret).
+  const RARE_NORMAL_CHANCE = 0.2;
+  function rareNormalNow(game) {
+    if (game && game.__umtNormalPick) return true;
+    const custom = customState(game);
+    const state = stateOf(game) || {};
+    const secret = String(state.secret || "").toUpperCase();
+    return Boolean(custom && custom.rareNormalSecret && secret && !game.__umtPickingSecret && custom.rareNormalSecret === secret);
+  }
+
   function rareSecretNow(game) {
     // While a new stage picks its answer, the old one is still in state.
     if (game && game.__umtPickingSecret) return false;
@@ -5161,12 +5171,22 @@
     // On a Rare Word stage the whole candidate pool is the rare list: the
     // secret is picked from it, and quests and "possible answers" read the
     // same pool, so none of them contradict the answer.
+    // One Rare Word stage in five (RARE_NORMAL_CHANCE) draws an ordinary
+    // answer instead; the stage remembers it by its secret, so its pool,
+    // counters and hints read the ordinary words.
     wrapMethod(prototype, "_pickSecret", function (original, args) {
       this.__umtPickingSecret = true;
+      const custom = customState(this);
+      const rare = rareStage(this);
+      // Rolled only on a Rare Word stage, so other stages' seeded picks stay as they were.
+      this.__umtNormalPick = rare && (typeof this.random === "function" ? this.random() : Math.random()) < RARE_NORMAL_CHANCE;
       try {
-        return original.apply(this, args);
+        const word = original.apply(this, args);
+        if (custom) custom.rareNormalSecret = this.__umtNormalPick ? String(word || "").toUpperCase() : null;
+        return word;
       } finally {
         this.__umtPickingSecret = false;
+        this.__umtNormalPick = false;
       }
     });
 
@@ -5174,7 +5194,7 @@
     // is a rare stage whatever path set it up (a revealed mystery stop, a
     // stacked stop, a reload), so the counter can never leave the answer out.
     wrapMethod(prototype, "getActiveWords", function (original, args) {
-      if (rareStage(this) || rareSecretNow(this)) {
+      if (!rareNormalNow(this) && (rareStage(this) || rareSecretNow(this))) {
         const pool = rareWordPool(this);
         if (pool.length) return pool;
       }
