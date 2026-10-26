@@ -629,60 +629,84 @@
   window.addEventListener("resize", () => { if (quickModeDeadline) paintQuickModeClock(); });
   document.addEventListener("scroll", () => { if (quickModeDeadline) paintQuickModeClock(); }, true);
 
-  // The home page: where the saved run stands and Continue, then the three
-  // ways to start one, then achievements, unlocks and rankings.
+  // The home page: just Cuddle and four buttons. Tutorial, New run and
+  // More each open a small menu of their own.
   function renderLanding() {
     const state = currentState();
     const hasRun = Boolean(state);
     const finished = state?.status === "won" || state?.status === "lost";
-    const continueLabel = finished ? "Review run" : "Continue run";
-    const wallet = window.CuddleAchievements;
-    const hardText = window.CuddleAscension ? window.CuddleAscension.hardLabel().replace(/^Hard/, "New Hard run") : "New Hard run";
+    const seed = hasRun && window.CuddleSeed ? window.CuddleSeed.current({ state }) : "";
+    const where = hasRun ? (finished ? (state.status === "won" ? "Run won" : "Run ended") : `Stage ${state.round}`) : "";
     return `
       <div class="cuddle-landing">
         <div class="cuddle-landing-top">
           <button class="cuddle-icon-btn" data-action="back" aria-label="Back to game choice">←</button>
-          ${wallet ? `<span class="umt-coin-chip" title="${wallet.freePlay ? "Cuddle Coins: runs are free right now" : "Cuddle Coins: a run costs 1"}"><span class="umt-coin" aria-hidden="true"></span><b data-umt-coin-count>${wallet.coins()}</b></span>` : ""}
-          <button class="cuddle-icon-btn" data-action="rules" aria-label="How to play Cuddle">?</button>
         </div>
         <section class="cuddle-hero">
           <div class="cuddle-logo is-art" aria-hidden="true"><img class="cuddle-logo-img" src="cuddle/icons/cuddle-logo.svg" alt="" width="112" height="112"></div>
           <h1>CUDDLE</h1>
           <p class="cuddle-tagline">Guess words, collect upgrades, beat the bosses.</p>
-          ${hasRun ? `<div class="cuddle-continue">
-            <div class="cuddle-save-summary">
-              <span>${finished ? (state.status === "won" ? "Run won" : "Run ended") : `Stage ${state.round}`}</span>
-              ${seedChip(state)}
-            </div>
-            <button class="cuddle-btn cuddle-btn-primary" data-action="continue">${escapeHtml(continueLabel)}</button>
-          </div>` : ""}
           <div class="cuddle-landing-actions">
-            <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-medium">New Standard run</button>
-            ${hardLocked()
-              ? `<button class="cuddle-btn is-locked" data-action="new-run-hard" aria-disabled="true" aria-label="New Hard run, locked: win a Standard run to unlock it">${lockIcon()}New Hard run</button>`
-              : `<button class="cuddle-btn" data-action="new-run-hard">${escapeHtml(hardText)}</button>`}
-            ${newRunCoinNote ? `<p class="umt-newrun-broke" role="alert">No Cuddle Coins left. You get 1 free each day, and 1 for each achievement you claim.</p>` : ""}
-            <details class="cuddle-newrun-more"${seedDraft ? " open" : ""}>
-              <summary>${wallet ? `<span class="cuddle-landing-cost"><span class="umt-coin" aria-hidden="true"></span>${wallet.freePlay ? "Free right now" : "1 coin a run"}</span> · ` : ""}Play a seed</summary>
-              <label class="cuddle-seed-field">
-                <span>Seed</span>
-                <input id="cuddleSeedInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
-                  maxlength="16" placeholder="Random" value="${escapeHtml(seedDraft)}">
-              </label>
-            </details>
+            <button class="cuddle-btn cuddle-btn-ghost" data-action="menu-tutorial">Tutorial</button>
+            ${hasRun ? `<button class="cuddle-btn cuddle-btn-primary cuddle-continue-btn" data-action="continue">
+              <span>${finished ? "Review run" : "Continue run"}</span>
+              <small>${escapeHtml(where)}${seed ? ` · Seed ${escapeHtml(seed)}` : ""}</small>
+            </button>` : ""}
+            <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="menu-newrun">New run</button>
+            <button class="cuddle-btn cuddle-btn-ghost" data-action="menu-more">More</button>
           </div>
-          <div class="cuddle-landing-links">
-            <button class="cuddle-btn cuddle-btn-ghost" data-action="new-run-easy">Tutorial</button>
-            <button class="cuddle-btn cuddle-btn-ghost" data-action="rules">Rules</button>
-            ${wallet ? `<button class="cuddle-btn cuddle-btn-ghost" data-action="achievements">Achievements</button>` : ""}
-            ${window.CuddleRankings ? `<button class="cuddle-btn cuddle-btn-ghost cuddle-rankings-btn" data-action="rankings">Rankings</button>` : ""}
-          </div>
-          ${window.CuddleUnlocks ? window.CuddleUnlocks.landingHtml() : ""}
         </section>
+        ${landingMenu ? renderLandingMenu() : ""}
         ${hardPickOpen ? renderHardPick() : ""}
         ${confirmNewRun ? renderConfirmNewRun(state) : ""}
         ${rulesOpen ? renderRulesOverlay() : ""}
       </div>`;
+  }
+
+  // The home page's small menus.
+  function renderLandingMenu() {
+    const wallet = window.CuddleAchievements;
+    const menu = (title, body) => `
+      <div class="cuddle-overlay cuddle-newrun-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleMenuTitle">
+        <section class="cuddle-modal cuddle-newrun-modal cuddle-landing-menu">
+          <button class="cuddle-modal-close" data-action="close-menu" aria-label="Close">×</button>
+          <h2 id="cuddleMenuTitle">${title}</h2>
+          ${body}
+        </section>
+      </div>`;
+    if (landingMenu === "tutorial") {
+      return menu("Tutorial", `
+        <div class="cuddle-menu-list">
+          <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Tutorial run</button>
+          <button class="cuddle-btn" data-action="rules">Rules</button>
+        </div>`);
+    }
+    if (landingMenu === "more") {
+      return menu("More", `
+        <div class="cuddle-menu-list">
+          ${wallet ? `<button class="cuddle-btn" data-action="achievements">Achievements</button>` : ""}
+          ${window.CuddleRankings ? `<button class="cuddle-btn" data-action="rankings">Rankings</button>` : ""}
+        </div>
+        ${window.CuddleUnlocks ? window.CuddleUnlocks.landingHtml() : ""}`);
+    }
+    const hardText = window.CuddleAscension ? window.CuddleAscension.hardLabel() : "Hard";
+    return menu("New run", `
+      <div class="cuddle-menu-list">
+        <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Standard</button>
+        ${hardLocked()
+          ? `<button class="cuddle-btn is-locked" data-action="new-run-hard" aria-disabled="true" aria-label="Hard, locked: win a Standard run to unlock it">${lockIcon()}Hard</button>
+             <p class="cuddle-menu-note">Win a Standard run to unlock Hard.</p>`
+          : `<button class="cuddle-btn" data-action="new-run-hard">${escapeHtml(hardText)}</button>`}
+      </div>
+      ${newRunCoinNote ? `<p class="umt-newrun-broke" role="alert">No Cuddle Coins left. You get 1 free each day, and 1 for each achievement you claim.</p>` : ""}
+      <details class="cuddle-newrun-more"${seedDraft ? " open" : ""}>
+        <summary>${wallet ? `<span class="cuddle-landing-cost"><span class="umt-coin" aria-hidden="true"></span>${wallet.freePlay ? "Free right now" : `1 coin a run · you have ${wallet.coins()}`}</span> · ` : ""}Play a seed</summary>
+        <label class="cuddle-seed-field">
+          <span>Seed</span>
+          <input id="cuddleSeedInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
+            maxlength="16" placeholder="Random" value="${escapeHtml(seedDraft)}">
+        </label>
+      </details>`);
   }
 
   // New Hard run, once the Ascension ladder is open: pick the level (it
@@ -2209,6 +2233,8 @@
   // "start over?" check (the difficulty waiting on it).
   let hardPickOpen = false;
   let confirmNewRun = null;
+  // The open home-page menu: "tutorial", "newrun", "more" or null.
+  let landingMenu = null;
 
   function liveRun() {
     const state = currentState();
@@ -2243,6 +2269,7 @@
     newRunCoinNote = false;
     hardPickOpen = false;
     confirmNewRun = null;
+    landingMenu = null;
     game = new window.CuddleEngine.CuddleGame(wordLists);
     if (window.CuddleSeed) window.CuddleSeed.setNext(seedDraft);
     seedDraft = "";
@@ -2320,6 +2347,15 @@
         else requestNewRun("hard");
         return true;
       }
+      case "menu-tutorial":
+      case "menu-newrun":
+      case "menu-more":
+        landingMenu = action.slice(5);
+        newRunCoinNote = false;
+        return true;
+      case "close-menu":
+        landingMenu = null;
+        return true;
       case "hard-pick-go":
         requestNewRun("hard");
         return true;
