@@ -4816,3 +4816,36 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 .umt-compass-note strong { color: #fff; font-size: 0.85rem; }
+
+/* The home page: the saved run (stage and seed) over Continue, then the
+   ways to start a run, then the smaller links. */
+.cuddle-continue {
+  display: grid;
+  gap: 8px;
+  width: min(390px, 100%);
+  margin-bottom: 14px;
+}
+.cuddle-continue .cuddle-save-summary {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0;
+  padding: 9px 12px;
+  color: var(--cuddle-text);
+  font-weight: 800;
+}
+.cuddle-landing-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 8px;
+  width: min(390px, 100%);
+  margin-top: 14px;
+}
+.cuddle-confirm-modal { width: min(380px, 100%); }
+.cuddle-confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 14px;
+}

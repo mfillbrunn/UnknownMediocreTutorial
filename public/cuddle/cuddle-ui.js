@@ -629,48 +629,91 @@
   window.addEventListener("resize", () => { if (quickModeDeadline) paintQuickModeClock(); });
   document.addEventListener("scroll", () => { if (quickModeDeadline) paintQuickModeClock(); }, true);
 
-  function bestWinsLine() {
-    const best = bestWins();
-    const keys = Object.keys(DIFFICULTY_NAMES).filter(key => key in best);
-    if (!keys.length) return "";
-    return `<p class="cuddle-best-wins"><span>Best wins</span>${Object.keys(DIFFICULTY_NAMES).map(key => (
-      `<b>${DIFFICULTY_NAMES[key]} ${key in best ? Number(best[key]).toLocaleString() : "—"}</b>`
-    )).join("")}</p>`;
-  }
-
+  // The home page: where the saved run stands and Continue, then the three
+  // ways to start one, then achievements, unlocks and rankings.
   function renderLanding() {
     const state = currentState();
     const hasRun = Boolean(state);
     const finished = state?.status === "won" || state?.status === "lost";
     const continueLabel = finished ? "Review run" : "Continue run";
+    const wallet = window.CuddleAchievements;
+    const hardText = window.CuddleAscension ? window.CuddleAscension.hardLabel().replace(/^Hard/, "New Hard run") : "New Hard run";
     return `
       <div class="cuddle-landing">
         <div class="cuddle-landing-top">
           <button class="cuddle-icon-btn" data-action="back" aria-label="Back to game choice">←</button>
-          ${window.CuddleAchievements ? `<span class="umt-coin-chip" title="${window.CuddleAchievements.freePlay ? "Cuddle Coins: runs are free right now" : "Cuddle Coins: a run costs 1"}"><span class="umt-coin" aria-hidden="true"></span><b data-umt-coin-count>${window.CuddleAchievements.coins()}</b></span>` : ""}
+          ${wallet ? `<span class="umt-coin-chip" title="${wallet.freePlay ? "Cuddle Coins: runs are free right now" : "Cuddle Coins: a run costs 1"}"><span class="umt-coin" aria-hidden="true"></span><b data-umt-coin-count>${wallet.coins()}</b></span>` : ""}
           <button class="cuddle-icon-btn" data-action="rules" aria-label="How to play Cuddle">?</button>
         </div>
         <section class="cuddle-hero">
           <div class="cuddle-logo is-art" aria-hidden="true"><img class="cuddle-logo-img" src="cuddle/icons/cuddle-logo.svg" alt="" width="112" height="112"></div>
           <h1>CUDDLE</h1>
           <p class="cuddle-tagline">Guess words, collect upgrades, beat the bosses.</p>
-          ${hasRun ? `<div class="cuddle-save-summary">
-            <span>${finished ? (state.status === "won" ? "Run won" : "Run ended") : `Stage ${state.round}`}</span>
-            <strong>${Number(state.score || 0).toLocaleString()} pts</strong>
-            ${seedChip(state)}
+          ${hasRun ? `<div class="cuddle-continue">
+            <div class="cuddle-save-summary">
+              <span>${finished ? (state.status === "won" ? "Run won" : "Run ended") : `Stage ${state.round}`}</span>
+              ${seedChip(state)}
+            </div>
+            <button class="cuddle-btn cuddle-btn-primary" data-action="continue">${escapeHtml(continueLabel)}</button>
           </div>` : ""}
           <div class="cuddle-landing-actions">
-            ${hasRun ? `<button class="cuddle-btn cuddle-btn-primary" data-action="continue">${escapeHtml(continueLabel)}</button>` : ""}
-            <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run">New run</button>
-            ${window.CuddleAchievements ? `<button class="cuddle-btn cuddle-btn-ghost" data-action="achievements">Achievements</button>` : ""}
-            <button class="cuddle-btn cuddle-btn-ghost" data-action="rules">Rules</button>
-            ${window.CuddleTutorial && window.CuddleTutorial.isDone() ? `<button type="button" class="cuddle-tut-replay" data-umt-tut="replay">Replay the tour</button>` : ""}
+            <button class="cuddle-btn cuddle-btn-ghost" data-action="new-run-easy">Tutorial</button>
+            <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-medium">New Standard run</button>
+            ${hardLocked()
+              ? `<button class="cuddle-btn is-locked" data-action="new-run-hard" aria-disabled="true" aria-label="New Hard run, locked: win a Standard run to unlock it">${lockIcon()}New Hard run</button>`
+              : `<button class="cuddle-btn" data-action="new-run-hard">${escapeHtml(hardText)}</button>`}
+            ${wallet ? `<p class="umt-newrun-cost"><span class="umt-coin" aria-hidden="true"></span>${wallet.freePlay ? "Runs are free right now" : `A new run costs 1 Cuddle Coin · you have <b>${wallet.coins()}</b>`}</p>` : ""}
+            ${newRunCoinNote ? `<p class="umt-newrun-broke" role="alert">No Cuddle Coins left. You get 1 free each day, and 1 for each achievement you claim.</p>` : ""}
+            <details class="cuddle-newrun-more"${seedDraft ? " open" : ""}>
+              <summary>Play a seed</summary>
+              <label class="cuddle-seed-field">
+                <span>Seed</span>
+                <input id="cuddleSeedInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                  maxlength="16" placeholder="Random" value="${escapeHtml(seedDraft)}">
+              </label>
+            </details>
           </div>
-          ${bestWinsLine()}
+          <div class="cuddle-landing-links">
+            ${wallet ? `<button class="cuddle-btn cuddle-btn-ghost" data-action="achievements">Achievements</button>` : ""}
+            ${window.CuddleRankings ? `<button class="cuddle-btn cuddle-btn-ghost cuddle-rankings-btn" data-action="rankings">Rankings</button>` : ""}
+          </div>
           ${window.CuddleUnlocks ? window.CuddleUnlocks.landingHtml() : ""}
+          ${window.CuddleTutorial && window.CuddleTutorial.isDone() ? `<button type="button" class="cuddle-tut-replay" data-umt-tut="replay">Replay the tour</button>` : ""}
         </section>
-        ${newRunOpen ? renderNewRunOverlay(hasRun) : ""}
+        ${hardPickOpen ? renderHardPick() : ""}
+        ${confirmNewRun ? renderConfirmNewRun(state) : ""}
         ${rulesOpen ? renderRulesOverlay() : ""}
+      </div>`;
+  }
+
+  // New Hard run, once the Ascension ladder is open: pick the level (it
+  // stays picked for next time), then start.
+  function renderHardPick() {
+    const label = window.CuddleAscension ? window.CuddleAscension.hardLabel().replace(/^Hard/, "Start Hard run") : "Start Hard run";
+    return `
+      <div class="cuddle-overlay cuddle-newrun-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleHardPickTitle">
+        <section class="cuddle-modal cuddle-newrun-modal">
+          <button class="cuddle-modal-close" data-action="close-hard-pick" aria-label="Close">×</button>
+          <h2 id="cuddleHardPickTitle">New Hard run</h2>
+          ${window.CuddleAscension ? window.CuddleAscension.pickerHtml() : ""}
+          <button class="cuddle-btn cuddle-btn-primary" data-action="hard-pick-go">${escapeHtml(label)}</button>
+        </section>
+      </div>`;
+  }
+
+  // Starting over while a run is still going asks first.
+  function renderConfirmNewRun(state) {
+    const name = { easy: "Tutorial", medium: "Standard run", hard: "Hard run" }[confirmNewRun] || "run";
+    return `
+      <div class="cuddle-overlay cuddle-newrun-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleConfirmTitle">
+        <section class="cuddle-modal cuddle-newrun-modal cuddle-confirm-modal">
+          <h2 id="cuddleConfirmTitle">Start a new ${escapeHtml(name)}?</h2>
+          <p class="cuddle-newrun-note">Your current run${state ? ` (stage ${Number(state.round) || 1})` : ""} will be lost.</p>
+          <div class="cuddle-confirm-actions">
+            <button class="cuddle-btn" data-action="cancel-new-run">Keep my run</button>
+            <button class="cuddle-btn cuddle-btn-primary" data-action="confirm-new-run">Start new</button>
+          </div>
+        </section>
       </div>`;
   }
 
@@ -681,36 +724,6 @@
 
   function lockIcon() {
     return window.CuddleIcons ? window.CuddleIcons.svg("🔒", "cuddle-lock-icon") : "🔒 ";
-  }
-
-  // "New run": pick a difficulty, optionally with a seed.
-  function renderNewRunOverlay(hasRun) {
-    return `
-      <div class="cuddle-overlay cuddle-newrun-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleNewRunTitle">
-        <section class="cuddle-modal cuddle-newrun-modal">
-          <button class="cuddle-modal-close" data-action="close-new-run" aria-label="Close">×</button>
-          <h2 id="cuddleNewRunTitle">New run</h2>
-          ${hasRun ? `<p class="cuddle-newrun-note">This replaces your saved run.</p>` : ""}
-          ${window.CuddleAchievements ? `<p class="umt-newrun-cost"><span class="umt-coin" aria-hidden="true"></span>${window.CuddleAchievements.freePlay ? "Free to play right now" : `Costs 1 Cuddle Coin · you have <b>${window.CuddleAchievements.coins()}</b>`}</p>` : ""}
-          ${newRunCoinNote ? `<p class="umt-newrun-broke" role="alert">No Cuddle Coins left. You get 1 free each day, and 1 for each achievement you claim.</p>` : ""}
-          <div class="cuddle-difficulty-row">
-            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Tutorial</button>
-            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Standard</button>
-            ${hardLocked()
-              ? `<button class="cuddle-btn cuddle-btn-primary is-locked" data-action="new-run-hard" aria-disabled="true" aria-label="Hard, locked: win a Standard run to unlock it">${lockIcon()}Hard</button>`
-              : `<button class="cuddle-btn cuddle-btn-primary" data-action="new-run-hard">${escapeHtml(window.CuddleAscension ? window.CuddleAscension.hardLabel() : "Hard")}</button>`}
-          </div>
-          ${window.CuddleAscension ? window.CuddleAscension.pickerHtml() : ""}
-          <details class="cuddle-newrun-more"${seedDraft ? " open" : ""}>
-            <summary>More options</summary>
-            <label class="cuddle-seed-field">
-              <span>Seed</span>
-              <input id="cuddleSeedInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
-                maxlength="16" placeholder="Random" value="${escapeHtml(seedDraft)}">
-            </label>
-          </details>
-        </section>
-      </div>`;
   }
 
   function renderRun() {
@@ -2192,7 +2205,25 @@
   // rebuilds the box.
   let seedDraft = "";
   // The New run popup.
-  let newRunOpen = false;
+  // The home page's pop-ups: New Hard run's Ascension pick, and the
+  // "start over?" check (the difficulty waiting on it).
+  let hardPickOpen = false;
+  let confirmNewRun = null;
+
+  function liveRun() {
+    const state = currentState();
+    return Boolean(state && state.status !== "won" && state.status !== "lost");
+  }
+
+  // Asks first when a run is still going.
+  function requestNewRun(difficulty) {
+    hardPickOpen = false;
+    if (liveRun()) {
+      confirmNewRun = difficulty;
+      return;
+    }
+    startNewRun(difficulty);
+  }
 
   function seedChip(state) {
     const seed = window.CuddleSeed ? window.CuddleSeed.current({ state }) : "";
@@ -2210,8 +2241,8 @@
       return;
     }
     newRunCoinNote = false;
-    // The New run popup already says the saved run will be replaced.
-    newRunOpen = false;
+    hardPickOpen = false;
+    confirmNewRun = null;
     game = new window.CuddleEngine.CuddleGame(wordLists);
     if (window.CuddleSeed) window.CuddleSeed.setNext(seedDraft);
     seedDraft = "";
@@ -2266,25 +2297,43 @@
         return true;
       }
       case "new-run":
-        newRunOpen = true;
-        newRunCoinNote = false;
+        // (From anywhere else: the home page is where runs start.)
+        landing = true;
         rulesOpen = false;
         return true;
       case "achievements":
         if (window.CuddleAchievements) window.CuddleAchievements.open();
         return false;
-      case "close-new-run":
-        newRunOpen = false;
-        return true;
+      case "rankings":
+        if (window.CuddleRankings) window.CuddleRankings.open();
+        return false;
       case "new-run-easy":
-        startNewRun("easy");
+        requestNewRun("easy");
         return true;
       case "new-run-medium":
-        startNewRun("medium");
+        requestNewRun("medium");
         return true;
-      case "new-run-hard":
+      case "new-run-hard": {
         if (hardLocked()) return false;
-        startNewRun("hard");
+        const ladder = window.CuddleAscension && typeof window.CuddleAscension.ladder === "function" ? window.CuddleAscension.ladder() : null;
+        if (ladder && ladder.unlocked > 0) hardPickOpen = true;
+        else requestNewRun("hard");
+        return true;
+      }
+      case "hard-pick-go":
+        requestNewRun("hard");
+        return true;
+      case "close-hard-pick":
+        hardPickOpen = false;
+        return true;
+      case "confirm-new-run": {
+        const difficulty = confirmNewRun;
+        confirmNewRun = null;
+        if (difficulty) startNewRun(difficulty);
+        return true;
+      }
+      case "cancel-new-run":
+        confirmNewRun = null;
         return true;
       case "ascension-pick":
         if (window.CuddleAscension) window.CuddleAscension.select(Number(dataset.level));

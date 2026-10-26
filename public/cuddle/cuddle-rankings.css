@@ -1,0 +1,59 @@
+/* Cuddle rankings (cuddle-rankings.js): Mine / Everyone, Standard / Hard. */
+
+.umt-rank-overlay { z-index: 80; }
+.umt-rank-modal { display: flex; flex-direction: column; gap: 10px; max-height: min(86vh, 640px); }
+.umt-rank-modal h2 { margin: 0; }
+
+.umt-rank-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.umt-rank-tab {
+  flex: 1;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(247, 244, 255, 0.72);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.umt-rank-tab.is-on { background: #f7f4ff; color: #241a33; }
+.umt-rank-tabs.is-small .umt-rank-tab { padding: 5px 8px; font-size: 0.76rem; }
+.umt-rank-tab:focus-visible { outline: 2px solid #c9a7ff; outline-offset: 2px; }
+
+.umt-rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.umt-rank-row {
+  display: grid;
+  grid-template-columns: 26px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.86rem;
+}
+.umt-rank-row.is-mine { background: rgba(201, 167, 255, 0.2); box-shadow: inset 0 0 0 1px rgba(201, 167, 255, 0.55); }
+.umt-rank-pos { color: rgba(247, 244, 255, 0.55); font-weight: 900; font-variant-numeric: tabular-nums; text-align: right; }
+.umt-rank-row:nth-child(1) .umt-rank-pos { color: #f6c956; }
+.umt-rank-row:nth-child(2) .umt-rank-pos { color: #d6dde6; }
+.umt-rank-row:nth-child(3) .umt-rank-pos { color: #e0a26a; }
+.umt-rank-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.umt-rank-asc { margin-left: 4px; padding: 0 5px; border-radius: 6px; background: rgba(255, 90, 106, 0.25); color: #ffb3bc; font-size: 0.7rem; font-style: normal; font-weight: 900; }
+.umt-rank-result { color: rgba(247, 244, 255, 0.55); font-size: 0.74rem; }
+.umt-rank-result.is-won { color: #7be38f; font-weight: 800; }
+.umt-rank-score { color: #57d69a; font-variant-numeric: tabular-nums; }
+.umt-rank-empty { margin: 8px 0; color: rgba(247, 244, 255, 0.7); font-size: 0.88rem; text-align: center; }
