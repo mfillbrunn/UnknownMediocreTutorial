@@ -866,8 +866,11 @@
     // blue like the board drew it, rather than claiming a yellow that
     // would quietly rule out the green it might really be. A later
     // unmasked guess on the same letter settles it and this goes false.
+    // Shown blue somewhere, and never shown green: a blue could be a green,
+    // so a yellow elsewhere doesn't settle it -- only a green does.
     isGlyphBlue(glyph) {
       const letter = glyphForLetter(glyph);
+      if ((this.state?.revealedPositions || []).includes(letter)) return false;
       let sawBlue = false;
       for (const entry of this.state?.history || []) {
         if (entry?.fakeFeedback) continue;
@@ -875,7 +878,7 @@
         const shown = Array.isArray(entry?.shownFeedback) ? entry.shownFeedback : entry?.feedback || [];
         for (let index = 0; index < word.length; index += 1) {
           if (word[index] !== letter) continue;
-          if (shown[index] === "green" || shown[index] === "yellow") return false;
+          if (shown[index] === "green") return false;
           if (shown[index] === "blue") sawBlue = true;
         }
       }

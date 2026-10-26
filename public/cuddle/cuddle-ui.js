@@ -1114,7 +1114,7 @@
       if (window.CuddleBurdens?.isIdeaGlyph(glyph)) return 180;
       const status = game.getCardKnowledgeStatus(glyph);
       if (status === "unused" && typeof game.isGlyphUnknown === "function" && game.isGlyphUnknown(glyph)) return 1.8;
-      if (status === "yellow" && typeof game.isGlyphBlue === "function" && game.isGlyphBlue(glyph)) return 1.5;
+      if ((status === "yellow" || status === "green") && typeof game.isGlyphBlue === "function" && game.isGlyphBlue(glyph)) return 1.5;
       return CARD_STATUS_ORDER[status] ?? 99;
     };
     const sortByColorThenLetter = (a, b) => (
@@ -1161,7 +1161,7 @@
     // Blue Mode's letters read yellow to the scoring logic (all it can
     // safely conclude is "present"), but the player was only ever shown
     // blue -- so the hand shows blue too, matching the board.
-    const blueOnly = trueStatus === "yellow"
+    const blueOnly = (trueStatus === "yellow" || trueStatus === "green")
       && typeof game.isGlyphBlue === "function" && game.isGlyphBlue(group.glyph);
     // A water world (cuddle-world-identity.js) shows every letter known to
     // be in the answer as blue in the hand, green or yellow.
