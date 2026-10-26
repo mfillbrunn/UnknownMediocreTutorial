@@ -7,22 +7,26 @@
 // leaving out names, brands, foreign words, plurals and anything
 // offensive. The near-gibberish in excluded_rare_or_obsolete_guesses.txt
 // is deliberately not used.
+//
+// Listed most common first (the Frequency column of allowed_words.txt):
+// Standard's Rare Word stages draw from the more familiar part of the
+// list, Hard's from all of it (cuddle-word-frequency.js).
 (function () {
   "use strict";
   window.CuddleRareWords = Object.freeze([
-    "ALEPH", "ALGAL", "ALKYL", "ALVAR", "AMIDE", "AMINE", "ANION", "AREAL", "ARETE", "ATMAN", "AUGHT", "AURUM",
-    "AUXIN", "BASSO", "BIGHT", "BLEST", "BOMBE", "BRANE", "BREVE", "BUTYL", "CALLA", "CALYX", "CANTO", "CAUDA",
-    "CEIBA", "CHELA", "CHERT", "CHINE", "CLARY", "CODON", "CONEY", "COTTA", "CRAKE", "CREEL", "CULEX", "DEISM",
-    "DERMA", "DICTA", "DIMER", "DJINN", "DOLOR", "DORIC", "DOWER", "DRYAD", "DUCAL", "DURUM", "ELAND", "ELVEN",
-    "EMMET", "ENROL", "ERGOT", "ESKER", "FICHE", "FLUOR", "FORAM", "FOSSE", "GAULT", "GEOID", "GHAST", "GHYLL",
-    "GLEBE", "GLIAL", "GLUON", "GREBE", "HALLO", "HALON", "HEALD", "HENGE", "HOSTA", "ILEUM", "IMAGO", "INFIX",
-    "INGLE", "JUNCO", "KAPOK", "KARST", "KAURI", "KETCH", "KYLIX", "LAIRD", "LAVER", "LIANA", "LIDAR", "LIVRE",
-    "LOACH", "LOCUM", "LOSSY", "LUPIN", "LYASE", "MANTA", "MASER", "MATIN", "MIMEO", "MINKE", "MITRE", "MOIRE",
-    "MONAD", "MOTTE", "MUFTI", "NONCE", "OATEN", "ODOUR", "OHMIC", "ORIEL", "OUTRO", "PEASE", "PHLOX", "PIEZO",
-    "PIPIT", "PITTA", "PRANA", "QUINT", "QUIRE", "RADIX", "RAMIE", "RECTO", "REDOX", "RIYAL", "RONDO", "RUMEN",
-    "RUNIC", "SABOT", "SEDUM", "SEPTA", "SIBYL", "SIGIL", "SISAL", "SKINK", "SMOLT", "SNOOK", "SPAKE", "SPOOR",
-    "SPRUE", "STIPE", "STUPA", "STYLI", "SUMMA", "TABLA", "TAKIN", "TANKA", "TELEX", "TENON", "TESTA", "THANE",
-    "THERM", "THIOL", "THUJA", "TINEA", "TITRE", "TONNE", "TOQUE", "TORIC", "TORII", "TRINE", "UNARY", "VEENA",
-    "VETCH", "VINCA", "VIREO", "VOCAB", "VOXEL", "WEALD", "XYLEM", "YOGIC", "ZLOTY"
+    "TONNE", "TELEX", "LAIRD", "ENROL", "FICHE", "BUTYL", "CODON", "MITRE", "DOLOR", "ALEPH", "AMINE", "SPAKE",
+    "TORIC", "TITRE", "ZLOTY", "LIVRE", "ODOUR", "CANTO", "ALKYL", "CALLA", "REDOX", "CONEY", "PEASE", "MANTA",
+    "SUMMA", "ELVEN", "LUPIN", "HALLO", "RADIX", "STYLI", "ALGAL", "COTTA", "ANION", "THERM", "BRANE", "DIMER",
+    "PRANA", "EMMET", "THANE", "TABLA", "RIYAL", "LIDAR", "VOCAB", "LOSSY", "GLUON", "BASSO", "NONCE", "KARST",
+    "PIEZO", "TAKIN", "CHINE", "GLEBE", "MOTTE", "OUTRO", "GREBE", "RONDO", "FLUOR", "HOSTA", "LYASE", "AMIDE",
+    "KYLIX", "QUINT", "GLIAL", "IMAGO", "HEALD", "TRINE", "UNARY", "SNOOK", "CLARY", "VIREO", "AREAL", "TESTA",
+    "SISAL", "DERMA", "BREVE", "LOCUM", "ESKER", "INGLE", "BIGHT", "CALYX", "MONAD", "MIMEO", "VOXEL", "LAVER",
+    "CREEL", "FOSSE", "PHLOX", "GAULT", "RUMEN", "MATIN", "ORIEL", "AUGHT", "MUFTI", "SEPTA", "FORAM", "TENON",
+    "LIANA", "OATEN", "DURUM", "STIPE", "DJINN", "RUNIC", "RECTO", "THIOL", "HALON", "ARETE", "DOWER", "ILEUM",
+    "MASER", "ATMAN", "KAPOK", "LOACH", "INFIX", "DICTA", "KETCH", "WEALD", "GHAST", "BLEST", "TOQUE", "ELAND",
+    "AUXIN", "XYLEM", "VETCH", "QUIRE", "TANKA", "TINEA", "AURUM", "DUCAL", "SABOT", "CEIBA", "YOGIC", "BOMBE",
+    "VINCA", "KAURI", "SPOOR", "HENGE", "CHERT", "PIPIT", "SEDUM", "DORIC", "GHYLL", "MINKE", "DRYAD", "CAUDA",
+    "SIGIL", "STUPA", "TORII", "OHMIC", "PITTA", "THUJA", "SIBYL", "SMOLT", "MOIRE", "SPRUE", "JUNCO", "CRAKE",
+    "CHELA", "VEENA", "ALVAR", "DEISM", "GEOID", "SKINK", "RAMIE", "ERGOT", "CULEX"
   ]);
 })();

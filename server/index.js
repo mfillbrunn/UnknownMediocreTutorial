@@ -20,6 +20,7 @@ const { registerCuddleRankingRoutes } = require("./routes/cuddleRankings");
 const { createStaticAssets } = require("./staticAssets");
 // UMT_CUDDLE_CAMPAIGN_THEME_ROUTE_IMPORT START
 const { registerCuddleWordThemeRoutes } = require("./cuddle/wordThemes");
+const { registerCuddleWordFrequencyRoutes } = require("./cuddle/wordFrequency");
 // UMT_CUDDLE_CAMPAIGN_THEME_ROUTE_IMPORT END
 
 
@@ -98,6 +99,7 @@ app.get("/api/allowed-guesses", (req, res) => res.json(ALLOWED_GUESSES));
 // UMT_CUDDLE_CAMPAIGN_THEME_ROUTE START
 app.use("/api/cuddle", express.json({ limit: "8kb" }));
 registerCuddleWordThemeRoutes(app, { allowedSecrets: ALLOWED_SECRETS });
+registerCuddleWordFrequencyRoutes(app, { allowedSecrets: ALLOWED_SECRETS });
 // UMT_CUDDLE_CAMPAIGN_THEME_ROUTE END
 
 // Bug reports post JSON, and nothing else on this server did before, so the
