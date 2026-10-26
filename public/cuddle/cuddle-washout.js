@@ -1,11 +1,10 @@
 /* Cuddle: washing out the hand.
  *
- * Tap the deck beside Mulligan to wash out the hand: every consonant card
- * goes back and new ones are drawn, mulligans or not. It costs a guess:
- *   - an ordinary stage counts one guess further along, so its quick-solve
- *     window (and the late-guess penalties past it) comes a guess sooner;
- *   - a boss fight or a strict stage loses one of its guesses.
- * It's refused when it would leave no guess to play. Vowels, Jokers and
+ * Tap the deck (or the ✕ on it) to wash out the hand: every consonant card
+ * goes back, new ones are drawn, and you get 2 more mulligans. It costs a
+ * guess: the board fills a row marked "Washed out", like a guess with no
+ * word (the same as a Quick Mode guess that ran out of time). It's refused
+ * when it would leave no guess to play. Vowels, Jokers and
  * special cards (lucky, idea, dead, angel) stay in the hand. Duels keep
  * their own deck and aren't washed.
  */
@@ -18,32 +17,15 @@
   var proto = Game.prototype;
   proto.__umtWashout = true;
 
+  var WASH_MULLIGANS = 2;
+
   function num(value) {
     var parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
-  function stageToken(state) {
-    return [state.runId || "", state.round || 0, state.secret || ""].join(":");
-  }
-
-  // This stage's washes: { token, used }.
-  function washesUsed(state) {
-    var record = state && state.umtWashout;
-    return record && record.token === stageToken(state) ? num(record.used) : 0;
-  }
-
   function inDuel(state) {
     return String((state && state.runId) || "").indexOf(":duel:") !== -1;
-  }
-
-  // An ordinary stage's window comes a guess sooner for each wash.
-  var baseThreshold = proto._solveGuessThreshold;
-  if (typeof baseThreshold === "function") {
-    proto._solveGuessThreshold = function solveGuessThresholdAfterWashout() {
-      var value = baseThreshold.apply(this, arguments);
-      return Math.max(1, value - washesUsed(this.state));
-    };
   }
 
   // The consonant letter cards a wash sends back.
@@ -70,7 +52,7 @@
     if (inDuel(state)) return "Duels keep their own deck.";
     if (typeof this.presetPick === "function" && this.presetPick()) return "Pick the answer first.";
     if (!washable(this).length) return "There are no consonants in your hand to wash out.";
-    if (guessesLeft(this) < 2) return "Washing out costs a guess, and this is your last one.";
+    if (guessesLeft(this) < 2) return "It costs a guess, and this is your last one.";
     return "";
   };
 
@@ -85,15 +67,30 @@
     var cards = washable(this);
     state.draft = [];
     this._discardCards(cards.map(function id(card) { return card.id; }));
-    // The guess it costs.
-    var token = stageToken(state);
-    state.umtWashout = { token: token, used: washesUsed(state) + 1 };
-    var strict = (typeof this.isBossRound === "function" && this.isBossRound()) || state.strictGuessLimit;
-    if (strict && !state.strictGuessLimit) state.maxGuesses = Math.max(1, num(state.maxGuesses) - 1);
-    if (state.strictGuessLimit) state.maxGuesses = this._solveGuessThreshold();
+    // The guess it costs: a row with no word.
+    state.guessesUsed = num(state.guessesUsed) + 1;
+    state.history.push({
+      word: "",
+      feedback: [],
+      shownFeedback: [],
+      timedOut: true,
+      umtWashout: true,
+      scoreDelta: 0,
+      yellowCount: 0,
+      greenCount: 0,
+      greyCount: 0,
+      usedCards: [],
+      replacements: 0,
+      infiniteUnlocked: [],
+      questId: state.activeQuest ? state.activeQuest.id || null : null,
+      questComplete: false,
+      earlyBonus: 0
+    });
+    var gained = typeof this.mulliganGain === "function" ? this.mulliganGain(WASH_MULLIGANS) : WASH_MULLIGANS;
+    state.mulligansLeft = num(state.mulligansLeft) + gained;
     var drawn = this.drawToHandLimit();
-    state.lastMessage = "Washed out " + cards.length + " consonant" + (cards.length === 1 ? "" : "s")
-      + (strict ? ": one guess fewer this stage." : ": this stage counts one guess further along.");
+    state.lastMessage = "Washed out: new consonants, +" + gained + " mulligans.";
+    if (typeof this._ensureQuestForNextGuess === "function") this._ensureQuestForNextGuess();
     if (window.CuddleDeckFx && typeof window.CuddleDeckFx.shuffle === "function") window.CuddleDeckFx.shuffle();
     if (typeof this.save === "function") this.save();
     return { ok: true, washed: cards.length, drawn: Array.isArray(drawn) ? drawn.length : 0 };
@@ -116,11 +113,6 @@
   function ask(game) {
     closeAsk();
     var blocked = game.washoutBlocked();
-    var strict = (typeof game.isBossRound === "function" && game.isBossRound()) || game.state.strictGuessLimit;
-    var count = game.washoutCount();
-    var cost = strict
-      ? "It costs a guess: you'll have one guess fewer this stage."
-      : "It costs a guess: this stage counts one guess further along, so the quick-solve window comes a guess sooner.";
     var host = document.getElementById("cuddleScreen") || document.body;
     host.insertAdjacentHTML("beforeend",
       '<div class="cuddle-overlay umt-washout-overlay" role="dialog" aria-modal="true" aria-labelledby="umtWashoutTitle">'
@@ -129,8 +121,8 @@
       + (blocked
         ? '<p class="umt-washout-text">' + blocked + "</p>"
           + '<div class="umt-washout-actions is-single"><button type="button" class="cuddle-btn" data-umt-washout="cancel">OK</button></div>'
-        : '<p class="umt-washout-text">All ' + count + " consonant" + (count === 1 ? "" : "s") + " in your hand go back and you draw new ones, even without a mulligan. Vowels and special cards stay.</p>"
-          + '<p class="umt-washout-cost">' + cost + "</p>"
+        : '<p class="umt-washout-text">New consonants and +' + WASH_MULLIGANS + " mulligans.</p>"
+          + '<p class="umt-washout-cost">Costs a guess.</p>'
           + '<div class="umt-washout-actions"><button type="button" class="cuddle-btn" data-umt-washout="cancel">Keep my hand</button>'
           + '<button type="button" class="cuddle-btn cuddle-btn-primary" data-umt-washout="go">Wash out</button></div>')
       + "</section></div>");
