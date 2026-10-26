@@ -1,0 +1,10 @@
+/* Washing out the hand (cuddle-washout.js): the deck is tappable, and asks first. */
+#cuddleScreen .cuddle-hand-panel .cuddle-deck { cursor: pointer; }
+#cuddleScreen .cuddle-hand-panel .cuddle-deck:active { transform: scale(0.95); }
+.umt-washout-overlay { z-index: 85; }
+.umt-washout-modal { width: min(360px, 100%); text-align: center; }
+.umt-washout-modal h2 { margin: 0 0 8px; }
+.umt-washout-text { margin: 0 0 8px; color: rgba(247, 244, 255, 0.82); font-size: 0.9rem; line-height: 1.4; }
+.umt-washout-cost { margin: 0 0 14px; color: #ffb3bc; font-size: 0.84rem; font-weight: 700; line-height: 1.4; }
+.umt-washout-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.umt-washout-actions.is-single { grid-template-columns: 1fr; }

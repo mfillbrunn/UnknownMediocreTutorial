@@ -2200,7 +2200,7 @@
           <h2 id="cuddleRulesTitle">Cuddle rules</h2>
           <div class="cuddle-rules-grid">
             <article><strong>Guess the word</strong><p>Each stage hides a five-letter word. Build guesses from your tiles. ${tile("green", "Green")} right spot, ${tile("yellow", "Yellow")} wrong spot, ${tile("grey", "Grey")} not in the word.</p></article>
-            <article><strong>Your tiles</strong><p>Vowels stay in your hand and turn ${tile("red", "red")} once ruled out. Consonants are used up when you guess with them and redrawn from your deck. A mulligan (${rules.mulligans} per stage) swaps consonants you can't use.</p></article>
+            <article><strong>Your tiles</strong><p>Vowels stay in your hand and turn ${tile("red", "red")} once ruled out. Consonants are used up when you guess with them and redrawn from your deck. A mulligan (${rules.mulligans} per stage) swaps consonants you can't use. Out of luck? Tap your deck to wash out every consonant at the cost of a guess.</p></article>
             <article><strong>Points</strong><p>Every tile pays: grey ${rules.greyPoints}, yellow ${rules.yellowPoints}, green ${rules.greenPoints}. Unused rows and mulligans pay a bonus. Solve within the world's guess window (6, then 5, then 4) or each extra guess costs points.</p></article>
             <article><strong>Money</strong><p>Clearing a stage pays $10, and challenges pay more. Spend it in shops, on packs, at events and on reward refreshes.</p></article>
             <article><strong>The map</strong><p>Pick a stop on each row: Wordle stages (some with a challenge, skulls show how hard), events, trials and duels. Before each boss: a shop, a new badge, or level-ups.</p></article>
