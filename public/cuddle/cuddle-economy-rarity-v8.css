@@ -392,3 +392,47 @@
 }
 .cuddle-v8-school-line.is-rank-up { border-color: var(--school, #ccc); }
 .cuddle-v8-school-line.is-rank-up small { color: #f7f4ff; font-weight: 750; }
+
+/* The card's school: a small tag under the rarity pill. Pulses when this
+   pick would take the school up a rank. */
+.cuddle-v8-school-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid color-mix(in srgb, var(--school, #ccc) 70%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--school, #ccc) 18%, #1a1424);
+  color: var(--school, #ccc);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.cuddle-v8-school-tag.is-rank-up {
+  background: var(--school, #ccc);
+  color: #1a1220;
+  animation: cuddle-v8-school-pulse 1.4s ease-in-out infinite;
+}
+@keyframes cuddle-v8-school-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--school, #ccc) 70%, transparent); transform: scale(1); }
+  50% { box-shadow: 0 0 10px 3px color-mix(in srgb, var(--school, #ccc) 60%, transparent); transform: scale(1.08); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cuddle-v8-school-tag.is-rank-up { animation: none; }
+}
+
+/* The level tag and the school tag, side by side under the title. */
+.cuddle-v8-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  align-self: start;
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+}
+.cuddle-v8-tag-row { margin-top: 2px; }
+.cuddle-v8-tag-row > .cuddle-v8-level-tag { margin: 0; }

@@ -16,6 +16,7 @@ const { getDailyConfig } = require("./utils/dailyConfig");
 const { buildPublicDailyView } = require("./utils/dailyPublicView");
 const { registerBugReportRoutes } = require("./routes/bugReports");
 const { registerPlayerInsightRoutes } = require("./routes/playerInsights");
+const { registerCuddleRankingRoutes } = require("./routes/cuddleRankings");
 const { createStaticAssets } = require("./staticAssets");
 // UMT_CUDDLE_CAMPAIGN_THEME_ROUTE_IMPORT START
 const { registerCuddleWordThemeRoutes } = require("./cuddle/wordThemes");
@@ -109,6 +110,10 @@ registerBugReportRoutes(app, { supabase });
 // when the tab closes, which still carries a JSON content type.
 app.use(["/api/play-run", "/api/feedback"], express.json({ limit: "16kb" }));
 registerPlayerInsightRoutes(app, { supabase });
+
+// Cuddle's rankings (table in server/sql/cuddle_rankings.sql).
+app.use("/api/cuddle/score", express.json({ limit: "4kb" }));
+registerCuddleRankingRoutes(app, { supabase });
 
 app.get("/api/daily", (req, res) => {
   const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
