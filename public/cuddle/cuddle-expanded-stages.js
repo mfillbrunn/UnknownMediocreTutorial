@@ -2915,6 +2915,17 @@
       const dead = Boolean(window.CuddleBurdens && window.CuddleBurdens.isDeadGlyph(group.glyph));
       const lucky = Boolean(window.CuddleBurdens && window.CuddleBurdens.isLuckyGlyph(group.glyph));
       const idea = Boolean(window.CuddleBurdens && window.CuddleBurdens.isIdeaGlyph(group.glyph));
+      // An angel card (Cards rank III): tapped, it flies to heaven
+      // (cuddle-burdens.js, which runs it inside the Duel's own hand).
+      if (window.CuddleBurdens && typeof window.CuddleBurdens.isAngelGlyph === "function" && window.CuddleBurdens.isAngelGlyph(group.glyph)) {
+        const card = group.cards[0];
+        const label = `Angel card: tap to send it to heaven for +${window.CuddleBurdens.ANGEL_POINTS} points and draw a new card.`;
+        return (
+          `<button type="button" class="cuddle-card is-angel umt-duel-hand-card" data-umt-angel="${escapeHtml(card.id)}"${enabled ? "" : " disabled"} aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">`
+          + `<span class="cuddle-card-letter cuddle-card-angel" aria-hidden="true">${window.CuddleBurdens.angelSvg()}</span>`
+          + `${group.cards.length > 1 ? `<span class="cuddle-card-count" aria-hidden="true">×${group.cards.length}</span>` : ""}</button>`
+        );
+      }
       if (dead || lucky || idea) {
         const many = group.cards.length > 1 ? ` ×${group.cards.length}` : "";
         const label = lucky

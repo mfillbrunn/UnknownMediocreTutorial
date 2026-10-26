@@ -385,10 +385,8 @@
       dead: dead + schoolPerk(game, "angelCards"),
       doubles: doubles,
       lucky: luckyCount(game),
-      // Idea Cards: 1 card, then 2; level 3 makes one of the two a super
-      // idea (a green). The Cards school's own idea card comes on top.
-      idea: Math.min(2, powerLevel(game, "ideaTiles")) - (powerLevel(game, "ideaTiles") >= 3 ? 1 : 0) + schoolPerk(game, "ideaTiles"),
-      superIdea: powerLevel(game, "ideaTiles") >= 3 ? 1 : 0,
+      idea: ideaCounts(game).idea,
+      superIdea: ideaCounts(game).superIdea,
       wave: TILES_BY_LEVEL[powerLevel(game, "waveTiles")],
       jokers: duel ? 0 : deckJokers(game)
     };
@@ -711,6 +709,17 @@
     state.knownPresent = Array.from(new Set((state.knownPresent || []).concat([letter]))).sort();
     if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
     return letter;
+  }
+
+  // Idea Cards: level 1 deals an idea card; level 2 makes it a super idea
+  // (a green); level 3 makes two super ideas -- the Cards school's own idea
+  // card is the second when there is one, else the badge adds it.
+  function ideaCounts(game) {
+    var level = powerLevel(game, "ideaTiles");
+    var school = schoolPerk(game, "ideaTiles");
+    if (level >= 3) return { idea: 0, superIdea: 2 };
+    if (level === 2) return { idea: school, superIdea: 1 };
+    return { idea: (level >= 1 ? 1 : 0) + school, superIdea: 0 };
   }
 
   // A super idea's hint: a letter of the answer placed in its spot. Falls
@@ -1267,7 +1276,12 @@
     var game = activeGame();
     if (!game || typeof game.releaseAngel !== "function") return;
     angelFlight(card);
-    var result = game.releaseAngel(card.getAttribute("data-umt-angel"));
+    var id = card.getAttribute("data-umt-angel");
+    // In a Duel the angel is in the Duel's own hand.
+    var stages = window.CuddleExpandedStages;
+    var result = stages && typeof stages.withDuel === "function"
+      ? stages.withDuel(game, function release(g) { return g.releaseAngel(id); }, function done(value) { return Boolean(value && value.ok); })
+      : game.releaseAngel(id);
     if (result && result.ok) {
       try { window.dispatchEvent(new Event("cuddle:campaign-update")); } catch (_error) { /* next tap renders */ }
     }
