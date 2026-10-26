@@ -631,6 +631,10 @@
 
   // The home page: just Cuddle and four buttons. Tutorial, New run and
   // More each open a small menu of their own.
+  // The Play button: the Guesser, whose glasses spell PLAY (the P his left
+  // lens, the L his nose, the A his right lens, the Y the arm to his ear).
+  const PLAY_FACE = `<svg viewBox="0 0 132 124" class="cuddle-play-face" aria-hidden="true" focusable="false"><path fill="#7b5cff" d="M18 124c2-28 20-42 48-42s46 14 48 42z"/><circle fill="#f4ede0" cx="22" cy="56" r="9"/><circle fill="#f4ede0" cx="110" cy="56" r="9"/><path fill="#f4ede0" d="M66 14c-27 0-42 17-42 41 0 24 18 40 42 40s42-16 42-40c0-24-15-41-42-41z"/><path fill="#241a30" d="M25 42C27 20 43 9 66 9c21 0 37 10 41 29-12 1-21-4-28-13-11 9-27 14-54 17z"/><!-- the glasses spell PLAY: P left lens, L the nose, A right lens, Y the arm --><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#241a30" stroke-width="10"><path d="M28 40V86"/><path d="M28 40h13a15 15 0 0 1 0 30H28"/><path d="M62 52V70H72"/><path d="M76 76L89 38L102 76"/><path d="M81 64H97"/><path d="M104 34L112 46L120 34M112 46V62"/></g><g stroke="#f6c956" stroke-width="5"><path d="M28 40V86"/><path d="M28 40h13a15 15 0 0 1 0 30H28"/><path d="M62 52V70H72"/><path d="M76 76L89 38L102 76"/><path d="M81 64H97"/><path d="M104 34L112 46L120 34M112 46V62"/></g><path stroke="#241a30" stroke-width="4" d="M56 83q10 6 20 0"/></g><circle fill="#241a30" cx="41" cy="55" r="5"/><circle fill="#241a30" cx="89" cy="55" r="5"/><circle fill="#fff" cx="39.5" cy="53.5" r="1.6"/><circle fill="#fff" cx="87.5" cy="53.5" r="1.6"/></svg>`;
+
   function renderLanding() {
     const state = currentState();
     const hasRun = Boolean(state);
@@ -643,16 +647,11 @@
           <button class="cuddle-icon-btn" data-action="back" aria-label="Back to game choice">←</button>
         </div>
         <section class="cuddle-hero">
-          <div class="cuddle-logo is-art" aria-hidden="true"><img class="cuddle-logo-img" src="cuddle/icons/cuddle-logo.svg" alt="" width="112" height="112"></div>
           <h1>CUDDLE</h1>
           <p class="cuddle-tagline">Guess words, collect upgrades, beat the bosses.</p>
-          <div class="cuddle-landing-actions">
+          <button type="button" class="cuddle-play-btn" data-action="menu-play" aria-label="Play">${PLAY_FACE}</button>
+          <div class="cuddle-landing-actions cuddle-landing-pair">
             <button class="cuddle-btn ${needsTutorial() && !hasRun ? "cuddle-btn-primary" : "cuddle-btn-ghost"}" data-action="menu-tutorial">Tutorial</button>
-            ${hasRun ? `<button class="cuddle-btn cuddle-btn-primary cuddle-continue-btn" data-action="continue">
-              <span>${finished ? "Review run" : "Continue run"}</span>
-              <small>${escapeHtml(where)}${seed ? ` · Seed ${escapeHtml(seed)}` : ""}</small>
-            </button>` : ""}
-            <button class="cuddle-btn ${hasRun || needsTutorial() ? "" : "cuddle-btn-primary"}" data-action="menu-newrun">New run</button>
             <button class="cuddle-btn cuddle-btn-ghost" data-action="menu-more">More</button>
           </div>
         </section>
@@ -674,6 +673,20 @@
           ${body}
         </section>
       </div>`;
+    if (landingMenu === "play") {
+      const state = currentState();
+      const finished = state?.status === "won" || state?.status === "lost";
+      const seed = state && window.CuddleSeed ? window.CuddleSeed.current({ state }) : "";
+      const where = state ? (finished ? (state.status === "won" ? "Run won" : "Run ended") : `Stage ${state.round}`) : "";
+      return menu("Play", `
+        <div class="cuddle-menu-list">
+          ${state ? `<button class="cuddle-btn cuddle-btn-primary cuddle-continue-btn" data-action="continue">
+            <span>${finished ? "Review run" : "Continue run"}</span>
+            <small>${escapeHtml(where)}${seed ? ` · Seed ${escapeHtml(seed)}` : ""}</small>
+          </button>` : ""}
+          <button class="cuddle-btn ${state ? "" : "cuddle-btn-primary"}" data-action="menu-newrun">New run</button>
+        </div>`);
+    }
     if (landingMenu === "tutorial") {
       return menu("Tutorial", `
         <div class="cuddle-menu-list">
@@ -2324,6 +2337,7 @@
         setUiMessage("");
         return true;
       case "continue":
+        landingMenu = null;
         landing = false;
         rulesOpen = false;
         detailsOpen = false;
@@ -2369,6 +2383,7 @@
         else requestNewRun("hard");
         return true;
       }
+      case "menu-play":
       case "menu-tutorial":
       case "menu-newrun":
       case "menu-more":
