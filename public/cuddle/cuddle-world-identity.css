@@ -13,7 +13,7 @@
   --wt-letter-shadow: none;
 }
 
-/* -- the nine themes ---------------------------------------------------------- */
+/* -- the themes ---------------------------------------------------------- */
 #cuddleRoot[data-umt-theme="woods"] {
   --wt-bg: radial-gradient(120% 60% at 50% 0%, rgba(62, 207, 142, .2), transparent 70%), linear-gradient(180deg, #0f2a20, #07130e);
   --wt-board: rgba(14, 36, 26, .92);
@@ -36,6 +36,54 @@
   --wt-accent: #ffe08a;
   --wt-radius: 50%;
   --wt-card-radius: 22px;
+  --wt-font: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI", system-ui, sans-serif;
+}
+#cuddleRoot[data-umt-theme="city"] {
+  --wt-bg: radial-gradient(70% 40% at 50% 0%, rgba(255, 143, 177, .2), transparent 70%), linear-gradient(180deg, #1c1830, #0b0915);
+  --wt-board: rgba(28, 24, 46, .92);
+  --wt-board-border: rgba(255, 210, 122, .42);
+  --wt-tile-bg: rgba(255, 210, 122, .07);
+  --wt-tile-border: rgba(255, 210, 122, .32);
+  --wt-panel: rgba(26, 22, 42, .92);
+  --wt-accent: #ffd27a;
+  --wt-radius: 6px;
+  --wt-card-radius: 8px;
+  --wt-letter-spacing: .03em;
+  --wt-letter-shadow: 0 0 8px rgba(255, 210, 122, .45);
+}
+#cuddleRoot[data-umt-theme="farm"] {
+  --wt-bg: radial-gradient(80% 50% at 15% 0%, rgba(255, 207, 90, .28), transparent 70%), linear-gradient(180deg, #2a2412, #120e07);
+  --wt-board: rgba(48, 36, 18, .9);
+  --wt-board-border: rgba(255, 207, 90, .4);
+  --wt-tile-bg: rgba(255, 220, 140, .08);
+  --wt-tile-border: rgba(232, 135, 58, .38);
+  --wt-panel: rgba(42, 32, 16, .92);
+  --wt-accent: #ffcf5a;
+  --wt-radius: 10px;
+  --wt-card-radius: 12px;
+  --wt-font: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI", system-ui, sans-serif;
+}
+#cuddleRoot[data-umt-theme="river"] {
+  --wt-bg: radial-gradient(110% 45% at 50% 100%, rgba(79, 179, 217, .26), transparent 70%), linear-gradient(180deg, #10283a, #06121b);
+  --wt-board: rgba(14, 38, 54, .88);
+  --wt-board-border: rgba(143, 224, 255, .38);
+  --wt-tile-bg: rgba(143, 224, 255, .07);
+  --wt-tile-border: rgba(143, 224, 255, .3);
+  --wt-panel: rgba(12, 34, 48, .9);
+  --wt-accent: #8fe0ff;
+  --wt-radius: 14px;
+  --wt-card-radius: 16px;
+}
+#cuddleRoot[data-umt-theme="clouds"] {
+  --wt-bg: radial-gradient(90% 50% at 50% 0%, rgba(230, 236, 255, .26), transparent 70%), linear-gradient(180deg, #2a3560, #121735);
+  --wt-board: rgba(40, 50, 92, .82);
+  --wt-board-border: rgba(230, 236, 255, .48);
+  --wt-tile-bg: rgba(255, 255, 255, .1);
+  --wt-tile-border: rgba(230, 236, 255, .4);
+  --wt-panel: rgba(36, 45, 84, .88);
+  --wt-accent: #e6ecff;
+  --wt-radius: 18px;
+  --wt-card-radius: 20px;
   --wt-font: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI", system-ui, sans-serif;
 }
 #cuddleRoot[data-umt-theme="marsh"] {
@@ -360,6 +408,66 @@
   background: #ffd08a;
   box-shadow: 0 0 6px 1px rgba(255, 140, 50, .8);
   animation-name: umt-wa-spark;
+}
+
+/* City: lit windows blinking on and off, and the odd pink neon. */
+.umt-wa[data-theme="city"] .umt-wa-glow { background: radial-gradient(90% 30% at 50% 104%, rgba(255, 143, 177, .2), transparent 70%); }
+.umt-wa[data-theme="city"] .umt-wa-p {
+  top: var(--y);
+  width: calc(5px * var(--s));
+  height: calc(7px * var(--s));
+  border-radius: 1px;
+  background: #ffd27a;
+  box-shadow: 0 0 8px rgba(255, 210, 122, .7);
+  animation-name: umt-wa-blink;
+  animation-timing-function: steps(1, end);
+}
+.umt-wa[data-theme="city"] .umt-wa-p.is-alt { background: #ff8fb1; box-shadow: 0 0 10px rgba(255, 143, 177, .8); }
+
+/* Farm: golden chaff drifting down in the sun. */
+.umt-wa[data-theme="farm"] .umt-wa-glow { background: radial-gradient(circle at 12% 4%, rgba(255, 220, 130, .4), rgba(255, 207, 90, .06) 100px, transparent 200px); }
+.umt-wa[data-theme="farm"] .umt-wa-p {
+  width: calc(3px * var(--s));
+  height: calc(11px * var(--s));
+  border-radius: 2px;
+  background: #ffcf5a;
+  opacity: .55;
+}
+.umt-wa[data-theme="farm"] .umt-wa-p.is-alt { width: calc(7px * var(--s)); height: calc(7px * var(--s)); border-radius: 50%; background: #fff1c2; }
+
+/* River: leaves floating along on the current. */
+.umt-wa[data-theme="river"] .umt-wa-p {
+  top: var(--y);
+  left: -6%;
+  width: calc(12px * var(--s));
+  height: calc(7px * var(--s));
+  border-radius: 0 100% 0 100%;
+  background: #7fcf9a;
+  opacity: .5;
+  animation-name: umt-wa-drift;
+}
+.umt-wa[data-theme="river"] .umt-wa-p.is-alt { border-radius: 50%; width: calc(6px * var(--s)); height: calc(6px * var(--s)); background: #bfeeff; }
+
+/* Clouds: big soft puffs sailing past. */
+.umt-wa[data-theme="clouds"] .umt-wa-p {
+  top: var(--y);
+  left: -30%;
+  width: calc(90px * var(--s));
+  height: calc(30px * var(--s));
+  border-radius: 999px;
+  background: radial-gradient(60% 90% at 35% 60%, rgba(255, 255, 255, .5), transparent 70%), radial-gradient(50% 100% at 68% 45%, rgba(255, 255, 255, .45), transparent 70%);
+  opacity: .5;
+  animation-name: umt-wa-drift;
+}
+@keyframes umt-wa-drift {
+  from { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(70vw, calc(var(--sway) * .4), 0) rotate(calc(var(--r) / 4)); }
+  to { transform: translate3d(140vw, 0, 0) rotate(calc(var(--r) / 2)); }
+}
+@keyframes umt-wa-blink {
+  0%, 100% { opacity: .15; }
+  30% { opacity: .85; }
+  70% { opacity: .35; }
 }
 
 @keyframes umt-wa-fall {
