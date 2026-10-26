@@ -163,4 +163,46 @@
   document.addEventListener("keydown", function (event) {
     if (event.key === "Escape") closeAsk();
   });
+
+  // A small ✕ floating on the deck's corner (the Fish Hook takes the other)
+  // opens the same question.
+  function placeButton() {
+    var game = activeGame();
+    var row = document.querySelector("#cuddleScreen .cuddle-hand-panel .cuddle-submit-row.has-deck");
+    if (row && row.closest("[class*='umt-duel']")) row = null;
+    var existing = document.querySelector("#cuddleScreen .umt-washout-btn");
+    var show = Boolean(row && game && game.state && game.state.status === "playing" && !inDuel(game.state))
+      && !row.classList.contains("is-mulligan-mode");
+    if (!show) {
+      if (existing) existing.remove();
+      return;
+    }
+    if (existing && existing.parentNode === row) return;
+    if (existing) existing.remove();
+    row.insertAdjacentHTML("beforeend", '<button type="button" class="umt-washout-btn" data-umt-washout-open aria-label="Wash out your hand (costs a guess)" title="Wash out your hand (costs a guess)">✕</button>');
+  }
+
+  document.addEventListener("click", function onWashoutButton(event) {
+    var button = event.target && event.target.closest && event.target.closest("[data-umt-washout-open]");
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    var game = activeGame();
+    if (game && game.state) ask(game);
+  }, true);
+
+  (function attach() {
+    var host = document.getElementById("cuddleScreen");
+    if (!host) {
+      document.addEventListener("DOMContentLoaded", attach, { once: true });
+      return;
+    }
+    var pending = false;
+    new MutationObserver(function schedule() {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(function run() { pending = false; placeButton(); });
+    }).observe(host, { childList: true, subtree: true });
+    placeButton();
+  }());
 }());

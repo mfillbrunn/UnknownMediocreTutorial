@@ -8,3 +8,28 @@
 .umt-washout-cost { margin: 0 0 14px; color: #ffb3bc; font-size: 0.84rem; font-weight: 700; line-height: 1.4; }
 .umt-washout-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 .umt-washout-actions.is-single { grid-template-columns: 1fr; }
+
+/* The ✕ on the deck's top-right corner (the Fish Hook hangs on the left). */
+.umt-washout-btn {
+  position: absolute;
+  top: -12px;
+  left: 28px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid rgba(255, 140, 160, 0.85);
+  border-radius: 50%;
+  background: #3a1624;
+  color: #ffb3c1;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 0 0 3px rgba(255, 120, 150, 0.16), 0 4px 10px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+.umt-washout-btn:active { transform: scale(0.9); }
+.umt-washout-btn:focus-visible { outline: 2px solid #ffb3c1; outline-offset: 2px; }
