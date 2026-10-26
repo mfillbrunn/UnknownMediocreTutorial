@@ -4837,11 +4837,22 @@
 }
 .cuddle-landing-links {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
   width: min(390px, 100%);
-  margin-top: 14px;
+  margin-top: 12px;
 }
+#cuddleScreen .cuddle-landing-links .cuddle-btn {
+  min-height: 0;
+  padding: 8px 10px;
+  font-size: 0.84rem;
+}
+/* A little more room for the essentials: a smaller logo and tagline. */
+#cuddleScreen .cuddle-landing .cuddle-logo-img { width: 80px; height: 80px; }
+#cuddleScreen .cuddle-landing .cuddle-tagline { margin-bottom: 14px; font-size: 0.86rem; }
+.cuddle-landing-cost { display: inline-flex; align-items: center; gap: 4px; }
+.cuddle-landing-cost .umt-coin { width: 14px; height: 14px; }
+.cuddle-rules-modal .cuddle-tut-replay { display: block; margin: 10px auto 0; }
 .cuddle-confirm-modal { width: min(380px, 100%); }
 .cuddle-confirm-actions {
   display: grid;

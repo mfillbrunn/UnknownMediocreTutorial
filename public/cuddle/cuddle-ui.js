@@ -657,15 +657,13 @@
             <button class="cuddle-btn cuddle-btn-primary" data-action="continue">${escapeHtml(continueLabel)}</button>
           </div>` : ""}
           <div class="cuddle-landing-actions">
-            <button class="cuddle-btn cuddle-btn-ghost" data-action="new-run-easy">Tutorial</button>
             <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-medium">New Standard run</button>
             ${hardLocked()
               ? `<button class="cuddle-btn is-locked" data-action="new-run-hard" aria-disabled="true" aria-label="New Hard run, locked: win a Standard run to unlock it">${lockIcon()}New Hard run</button>`
               : `<button class="cuddle-btn" data-action="new-run-hard">${escapeHtml(hardText)}</button>`}
-            ${wallet ? `<p class="umt-newrun-cost"><span class="umt-coin" aria-hidden="true"></span>${wallet.freePlay ? "Runs are free right now" : `A new run costs 1 Cuddle Coin · you have <b>${wallet.coins()}</b>`}</p>` : ""}
             ${newRunCoinNote ? `<p class="umt-newrun-broke" role="alert">No Cuddle Coins left. You get 1 free each day, and 1 for each achievement you claim.</p>` : ""}
             <details class="cuddle-newrun-more"${seedDraft ? " open" : ""}>
-              <summary>Play a seed</summary>
+              <summary>${wallet ? `<span class="cuddle-landing-cost"><span class="umt-coin" aria-hidden="true"></span>${wallet.freePlay ? "Free right now" : "1 coin a run"}</span> · ` : ""}Play a seed</summary>
               <label class="cuddle-seed-field">
                 <span>Seed</span>
                 <input id="cuddleSeedInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
@@ -674,11 +672,12 @@
             </details>
           </div>
           <div class="cuddle-landing-links">
+            <button class="cuddle-btn cuddle-btn-ghost" data-action="new-run-easy">Tutorial</button>
+            <button class="cuddle-btn cuddle-btn-ghost" data-action="rules">Rules</button>
             ${wallet ? `<button class="cuddle-btn cuddle-btn-ghost" data-action="achievements">Achievements</button>` : ""}
             ${window.CuddleRankings ? `<button class="cuddle-btn cuddle-btn-ghost cuddle-rankings-btn" data-action="rankings">Rankings</button>` : ""}
           </div>
           ${window.CuddleUnlocks ? window.CuddleUnlocks.landingHtml() : ""}
-          ${window.CuddleTutorial && window.CuddleTutorial.isDone() ? `<button type="button" class="cuddle-tut-replay" data-umt-tut="replay">Replay the tour</button>` : ""}
         </section>
         ${hardPickOpen ? renderHardPick() : ""}
         ${confirmNewRun ? renderConfirmNewRun(state) : ""}
@@ -2149,11 +2148,12 @@
             <article><strong>Your tiles</strong><p>Vowels stay in your hand and turn ${tile("red", "red")} once ruled out. Consonants are used up when you guess with them and redrawn from your deck. A mulligan (${rules.mulligans} per stage) swaps consonants you can't use.</p></article>
             <article><strong>Points</strong><p>Every tile pays: grey ${rules.greyPoints}, yellow ${rules.yellowPoints}, green ${rules.greenPoints}. Unused rows and mulligans pay a bonus. Solve within the world's guess window (6, then 5, then 4) or each extra guess costs points.</p></article>
             <article><strong>Money</strong><p>Clearing a stage pays $10, and challenges pay more. Spend it in shops, on packs, at events and on reward refreshes.</p></article>
-            <article><strong>The map</strong><p>Pick a stop on each row: Wordle stages (some with a challenge, skulls show how hard), shops, events, free upgrades and duels.</p></article>
-            <article><strong>Upgrades</strong><p>After each stage, pick one upgrade for the rest of the run. Common, Rare or Epic; Legendary only after a boss. Quests pop up every few guesses and pay a bonus pick.</p></article>
+            <article><strong>The map</strong><p>Pick a stop on each row: Wordle stages (some with a challenge, skulls show how hard), events, trials and duels. Before each boss: a shop, a new badge, or level-ups.</p></article>
+            <article><strong>Badges</strong><p>After each stage, take a new badge or level up ones you hold; they last the whole run. Common, Rare or Epic; Legendary only after a boss. Quests pop up every few guesses and pay a bonus pick.</p></article>
             <article><strong>Bosses</strong><p>Each world ends in a boss you can only face with enough points. Bosses bend the rules and leave a curse, but give a Legendary pick. Beat the final boss to win.</p></article>
           </div>
           <button class="cuddle-btn cuddle-btn-primary" data-action="close-rules">Got it</button>
+          ${landing && window.CuddleTutorial && window.CuddleTutorial.isDone() ? `<button type="button" class="cuddle-tut-replay" data-umt-tut="replay">Replay the tour</button>` : ""}
         </section>
       </div>`;
   }
