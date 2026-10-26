@@ -646,7 +646,7 @@
         <section class="cuddle-hero">
           <h1>CUDDLE</h1>
           <p class="cuddle-tagline">Guess words, collect upgrades, beat the bosses.</p>
-          <button type="button" class="cuddle-play-btn" data-action="menu-play" aria-label="Play"><img class="cuddle-play-face" src="cuddle/icons/play-guesser.webp" alt="" width="560" height="505"></button>
+          <button type="button" class="cuddle-play-btn" data-action="menu-play" aria-label="Play"><img class="cuddle-play-face" src="cuddle/icons/play-guesser.webp?v=2" alt="" width="560" height="560"></button>
           <div class="cuddle-landing-actions cuddle-landing-pair">
             <button class="cuddle-btn ${needsTutorial() && !hasRun ? "cuddle-btn-primary" : "cuddle-btn-ghost"}" data-action="menu-tutorial">Tutorial</button>
             <button class="cuddle-btn cuddle-btn-ghost" data-action="menu-more">More</button>
