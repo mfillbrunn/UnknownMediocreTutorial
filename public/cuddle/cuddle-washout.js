@@ -67,8 +67,15 @@
     var cards = washable(this);
     state.draft = [];
     this._discardCards(cards.map(function id(card) { return card.id; }));
-    // The guess it costs: a row with no word.
+    // The guess it costs: a row with no word. It pays nothing, but past the
+    // quick-solve window it costs the late-guess penalty like any guess.
+    var late = num(state.guessesUsed) + 1 > this._solveGuessThreshold();
     state.guessesUsed = num(state.guessesUsed) + 1;
+    var penalty = late && typeof this._lateGuessPenalty === "function" ? Math.max(0, num(this._lateGuessPenalty(state.guessesUsed))) : 0;
+    if (penalty) {
+      state.score = num(state.score) - penalty;
+      state.roundScore = num(state.roundScore) - penalty;
+    }
     state.history.push({
       word: "",
       feedback: [],
@@ -76,6 +83,7 @@
       timedOut: true,
       umtWashout: true,
       scoreDelta: 0,
+      latePenalty: penalty,
       yellowCount: 0,
       greenCount: 0,
       greyCount: 0,
@@ -89,7 +97,7 @@
     var gained = typeof this.mulliganGain === "function" ? this.mulliganGain(WASH_MULLIGANS) : WASH_MULLIGANS;
     state.mulligansLeft = num(state.mulligansLeft) + gained;
     var drawn = this.drawToHandLimit();
-    state.lastMessage = "Washed out: new consonants, +" + gained + " mulligans.";
+    state.lastMessage = "Washed out: new consonants, +" + gained + " mulligans." + (penalty ? " Late guess: -" + penalty + " points." : "");
     if (typeof this._ensureQuestForNextGuess === "function") this._ensureQuestForNextGuess();
     if (window.CuddleDeckFx && typeof window.CuddleDeckFx.shuffle === "function") window.CuddleDeckFx.shuffle();
     if (typeof this.save === "function") this.save();

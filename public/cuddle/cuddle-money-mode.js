@@ -809,6 +809,7 @@
         word: String(entry && entry.word || "").toUpperCase(),
         feedback: (entry && (entry.shownFeedback || entry.feedback) || []).slice(),
         timedOut: Boolean(entry && entry.timedOut),
+        washout: Boolean(entry && entry.umtWashout),
         late: Boolean(entry && asNumber(entry.latePenalty, 0) > 0),
         amount: Math.round(rowMoney(entry)),
         breakdown: rowBreakdown(entry)
@@ -1142,7 +1143,7 @@
     var listed = lines.reduce(function sum(total, line) { return total + Math.round(asNumber(line.amount, 0)); }, 0);
     var remainder = Math.round(asNumber(row.amount, 0)) - listed;
     if (remainder) lines.push({ label: lines.length ? "Round bonus" : "Round total", amount: remainder });
-    if (!lines.length) return "<p class=\"cuddle-money-row-detail-empty\">This guess paid nothing.</p>";
+    if (!lines.length) return "<p class=\"cuddle-money-row-detail-empty\">" + (row.washout ? "Washed out the hand: no points." : "This guess paid nothing.") + "</p>";
     return "<dl class=\"cuddle-money-row-detail-list\">" + lines.map(function detailLine(line) {
       var amount = Math.round(asNumber(line.amount, 0));
       return "<div class=\"cuddle-money-row-detail-line" + (amount < 0 ? " is-negative" : "") + "\">"
@@ -1153,12 +1154,12 @@
   }
 
   function payoutRowMarkup(row) {
-    var word = row.timedOut ? "TIME!" : (row.word || "     ").padEnd(5, " ").slice(0, 5);
+    var word = row.washout ? "WASH!" : row.timedOut ? "TIME!" : (row.word || "     ").padEnd(5, " ").slice(0, 5);
     // A guess past the limit shows red: it only cost points.
     var tiles = word.split("").map(function payoutTile(letter, index) {
       return tileMarkup(letter === " " ? "" : letter, row.late ? "late" : (row.feedback[index] || ""));
     }).join("");
-    var label = row.bonusRow ? "the unused guesses" : row.timedOut ? "timed-out guess" : "guess " + (asNumber(row.index, 0) + 1);
+    var label = row.bonusRow ? "the unused guesses" : row.washout ? "washed-out guess" : row.timedOut ? "timed-out guess" : "guess " + (asNumber(row.index, 0) + 1);
     // The row's main line is a button so the breakdown is reachable by
     // keyboard and reads as tappable; the delegated handler does the toggle.
     return "<div class=\"cuddle-money-payout-row" + (row.late ? " is-late" : "") + "\" data-payout-row=\"" + row.index + "\">"
