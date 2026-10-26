@@ -4886,3 +4886,29 @@
   font-size: 1rem;
   font-weight: 800;
 }
+
+/* The Play button: the Guesser, his glasses spelling PLAY. */
+#cuddleScreen .cuddle-play-btn {
+  display: block;
+  width: min(240px, 64vw);
+  margin: 4px auto 14px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.35));
+  transition: transform 160ms ease;
+  animation: cuddle-play-bob 3.2s ease-in-out infinite;
+}
+#cuddleScreen .cuddle-play-btn:hover { transform: scale(1.04); }
+#cuddleScreen .cuddle-play-btn:active { transform: scale(0.96); }
+#cuddleScreen .cuddle-play-btn:focus-visible { outline: 3px solid #f6c956; outline-offset: 6px; border-radius: 24px; }
+#cuddleScreen .cuddle-play-face { display: block; width: 100%; height: auto; }
+@keyframes cuddle-play-bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #cuddleScreen .cuddle-play-btn { animation: none; }
+}
+#cuddleScreen .cuddle-landing-pair { grid-template-columns: 1fr 1fr; }

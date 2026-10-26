@@ -73,10 +73,11 @@
   // random, and when it ends the other plays, back and forth. A victory is
   // one of its two pieces, at random.
   var TRACKS = {
-    theme: { list: ["cuddle/audio/cuddle-theme.mp3", "cuddle/audio/cuddle-theme-2.mp3", "cuddle/audio/cuddle-theme-3.mp3"], resume: true },
+    theme: { list: ["cuddle/audio/cuddle-theme.mp3", "cuddle/audio/cuddle-theme-2.mp3"], resume: true },
+    // Echo Mountains' own song, in place of the theme there.
+    mountains: { src: "cuddle/audio/cuddle-theme-3.mp3", resume: true },
     boss: { list: ["cuddle/audio/cuddle-boss.mp3", "cuddle/audio/cuddle-boss-2.mp3"], restart: true },
     shop: { src: "cuddle/audio/cuddle-shop.mp3", restart: true },
-    duel: { src: "cuddle/audio/cuddle-duel.mp3", restart: true },
     victory: { list: ["cuddle/audio/cuddle-victory.mp3", "cuddle/audio/cuddle-victory-2.mp3"], once: true },
     loss: { src: "cuddle/audio/cuddle-loss.mp3", once: true, restart: true }
   };
@@ -188,6 +189,15 @@
   }
 
   // Which track fits what's on screen.
+  function inMountains(game) {
+    try {
+      var world = game && game.state && game.state.runId && window.CuddleWorlds ? window.CuddleWorlds.currentWorld(game) : null;
+      return Boolean(world && world.theme === "mountains");
+    } catch (_error) {
+      return false;
+    }
+  }
+
   function trackFor() {
     var game = null;
     try { game = window.CuddleBranchMap && window.CuddleBranchMap.getActiveGame(); } catch (_error) { /* none */ }
@@ -200,14 +210,11 @@
     if ((state && state.status === "shop") || (el && el.querySelector(".umt-shop-page"))) return "shop";
     var entrance = document.querySelector(".umt-boss-entrance");
     if (entrance && !entrance.classList.contains("is-rival")) return "boss";
-    // A Word Duel: from the rival's entrance until the Duel is over.
-    if (entrance && entrance.classList.contains("is-rival")) return "duel";
-    var duel = state && state.branchMap && state.branchMap.expandedDuel;
-    if (duel && duel.phase === "playing") return "duel";
+    // (A Word Duel plays the regular theme.)
     // A quest reward pick mid-fight is still the fight.
     if (state && (state.status === "playing" || state.status === "questReward") && state.boss && !state.boss.__umtSynthetic
         && String(state.runId || "").indexOf(":duel:") === -1) return "boss";
-    return "theme";
+    return inMountains(game) ? "mountains" : "theme";
   }
 
   function wantMusic() {

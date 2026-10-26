@@ -77,7 +77,11 @@
       Object.freeze({ theme: "marsh", decor: "marsh", name: "Misty Marsh", tagline: "One narrow boardwalk", accent: "#9fe3d0", glow: "#5fbfa8",
         skyTop: "#14282a", skyBottom: "#0b1719", bossTitle: "The Marsh Rises", bossLine: "Something long and patient stirs under the reeds.",
         rows: 4, lanes: "linear", ease: 0, blurb: "A long, narrow walk: one more stop, fewer forks.",
-        challenges: ["fakeFeedback", "delayedFeedback", "hiddenMargins"], path: { mystery: 2 }, pathBlurb: "Two stops lost in the mist: you only see them when you arrive." })
+        challenges: ["fakeFeedback", "delayedFeedback", "hiddenMargins"], path: { mystery: 2 }, pathBlurb: "Two stops lost in the mist: you only see them when you arrive." }),
+      Object.freeze({ theme: "mountains", decor: "frost", name: "Echo Mountains", tagline: "Every call comes back twice", accent: "#c9dcff", glow: "#8fb4ff",
+        skyTop: "#1b2540", skyBottom: "#0e1428", bossTitle: "The Mountain Answers", bossLine: "Your voice comes back from the summit, and something else with it.",
+        rows: 3, lanes: "mixed", ease: 0, blurb: "High trails where repeated letters give themselves away.",
+        challenges: ["perfectOpener", "consonantCrunch", "countOnly"], path: { events: 1 }, pathBlurb: "One event on the trail." })
     ]),
     Object.freeze([
       Object.freeze({ theme: "caverns", decor: "caverns", rows: 3, lanes: "mixed", ease: 0, blurb: "Three rows of glowing forks.",

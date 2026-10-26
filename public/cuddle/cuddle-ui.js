@@ -631,6 +631,11 @@
 
   // The home page: just Cuddle and four buttons. Tutorial, New run and
   // More each open a small menu of their own.
+  // The Play button: the Guesser (index.html's #icon-role-guesser), whose
+  // glasses spell PLAY: the P his left lens, the L his nose, the A his
+  // right lens, the Y the arm to his ear.
+  const PLAY_FACE = `<svg viewBox="0 0 120 120" class="cuddle-play-face" aria-hidden="true" focusable="false"><path fill="#60a5fa" d="M14 116c2-28 19-43 46-43s44 15 46 43z"/><circle fill="#f4ede0" cx="24" cy="52" r="9"/><circle fill="#f4ede0" cx="96" cy="52" r="9"/><path fill="#f4ede0" d="M60 12c-22 0-36 16-36 40 0 23 15 39 36 39s36-16 36-39c0-24-14-40-36-40z"/><path fill="#241a30" d="M25 36C28 17 41 8 60 8c18 0 31 8 35 23-11 1-19-3-25-11-10 8-24 13-45 16z"/><g transform="translate(0 6)" fill="none" stroke="#241a30" stroke-linecap="round" stroke-linejoin="round"><path stroke-width="5" d="M11 46h11"/><path stroke-width="7" d="M24 36V76"/><path stroke-width="7" fill="#f4ede0" d="M24 36h13a14 14 0 0 1 0 28H24"/><path stroke-width="6" d="M57 47V62H65"/><path stroke-width="7" fill="#f4ede0" d="M68 68L81 33L94 68"/><path stroke-width="6" d="M73 57H89"/><path stroke-width="6" d="M98 37L104 46L110 37M104 46V60"/><path stroke-width="4" d="M50 76q10 6 20 0"/></g><circle fill="#241a30" cx="39" cy="57" r="4"/><circle fill="#241a30" cx="81" cy="56" r="5.5"/><circle fill="#f4ede0" cx="79.6" cy="54.3" r="1.7"/><circle fill="#f4ede0" cx="60" cy="102" r="13"/><path fill="#241a30" d="M52 98c0-6 4-10 10-10 6 0 10 4 10 9 0 4-2 6-6 9-2 1-3 3-3 5h-7c0-5 2-7 6-10 2-2 3-3 3-5 0-2-1-3-4-3-3 0-4 2-4 5z"/><circle fill="#241a30" cx="60" cy="113" r="3"/></svg>`;
+
   function renderLanding() {
     const state = currentState();
     const hasRun = Boolean(state);
@@ -643,16 +648,11 @@
           <button class="cuddle-icon-btn" data-action="back" aria-label="Back to game choice">←</button>
         </div>
         <section class="cuddle-hero">
-          <div class="cuddle-logo is-art" aria-hidden="true"><img class="cuddle-logo-img" src="cuddle/icons/cuddle-logo.svg" alt="" width="112" height="112"></div>
           <h1>CUDDLE</h1>
           <p class="cuddle-tagline">Guess words, collect upgrades, beat the bosses.</p>
-          <div class="cuddle-landing-actions">
-            <button class="cuddle-btn cuddle-btn-ghost" data-action="menu-tutorial">Tutorial</button>
-            ${hasRun ? `<button class="cuddle-btn cuddle-btn-primary cuddle-continue-btn" data-action="continue">
-              <span>${finished ? "Review run" : "Continue run"}</span>
-              <small>${escapeHtml(where)}${seed ? ` · Seed ${escapeHtml(seed)}` : ""}</small>
-            </button>` : ""}
-            <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="menu-newrun">New run</button>
+          <button type="button" class="cuddle-play-btn" data-action="menu-play" aria-label="Play">${PLAY_FACE}</button>
+          <div class="cuddle-landing-actions cuddle-landing-pair">
+            <button class="cuddle-btn ${needsTutorial() && !hasRun ? "cuddle-btn-primary" : "cuddle-btn-ghost"}" data-action="menu-tutorial">Tutorial</button>
             <button class="cuddle-btn cuddle-btn-ghost" data-action="menu-more">More</button>
           </div>
         </section>
@@ -674,6 +674,20 @@
           ${body}
         </section>
       </div>`;
+    if (landingMenu === "play") {
+      const state = currentState();
+      const finished = state?.status === "won" || state?.status === "lost";
+      const seed = state && window.CuddleSeed ? window.CuddleSeed.current({ state }) : "";
+      const where = state ? (finished ? (state.status === "won" ? "Run won" : "Run ended") : `Stage ${state.round}`) : "";
+      return menu("Play", `
+        <div class="cuddle-menu-list">
+          ${state ? `<button class="cuddle-btn cuddle-btn-primary cuddle-continue-btn" data-action="continue">
+            <span>${finished ? "Review run" : "Continue run"}</span>
+            <small>${escapeHtml(where)}${seed ? ` · Seed ${escapeHtml(seed)}` : ""}</small>
+          </button>` : ""}
+          <button class="cuddle-btn ${state ? "" : "cuddle-btn-primary"}" data-action="menu-newrun">New run</button>
+        </div>`);
+    }
     if (landingMenu === "tutorial") {
       return menu("Tutorial", `
         <div class="cuddle-menu-list">
@@ -690,6 +704,15 @@
         ${window.CuddleUnlocks ? window.CuddleUnlocks.landingHtml() : ""}`);
     }
     const hardText = window.CuddleAscension ? window.CuddleAscension.hardLabel() : "Hard";
+    if (needsTutorial()) {
+      return menu("New run", `
+        <div class="cuddle-menu-list">
+          <button class="cuddle-btn is-locked" data-action="new-run-medium" aria-disabled="true">${lockIcon()}Standard</button>
+          <button class="cuddle-btn is-locked" data-action="new-run-hard" aria-disabled="true">${lockIcon()}Hard</button>
+          <p class="cuddle-menu-note">Play the Tutorial run first. It's short, and it opens the full game.</p>
+          <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-easy">Play the Tutorial run</button>
+        </div>`);
+    }
     return menu("New run", `
       <div class="cuddle-menu-list">
         <button class="cuddle-btn cuddle-btn-primary" data-action="new-run-medium">Standard</button>
@@ -700,7 +723,7 @@
       </div>
       ${newRunCoinNote ? `<p class="umt-newrun-broke" role="alert">No Cuddle Coins left. You get 1 free each day, and 1 for each achievement you claim.</p>` : ""}
       <details class="cuddle-newrun-more"${seedDraft ? " open" : ""}>
-        <summary>${wallet ? `<span class="cuddle-landing-cost"><span class="umt-coin" aria-hidden="true"></span>${wallet.freePlay ? "Free right now" : `1 coin a run · you have ${wallet.coins()}`}</span> · ` : ""}Play a seed</summary>
+        <summary>Play a seed</summary>
         <label class="cuddle-seed-field">
           <span>Seed</span>
           <input id="cuddleSeedInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
@@ -738,6 +761,14 @@
           </div>
         </section>
       </div>`;
+  }
+
+  // A new player plays the Tutorial run first: Standard and Hard open once
+  // a run has been played through (cuddle-first-run.js counts it when it
+  // ends or beats its boss), so anyone who has played before is past it.
+  function needsTutorial() {
+    const first = window.CuddleFirstRun;
+    return Boolean(first && typeof first.experienced === "function" && !first.experienced());
   }
 
   // Hard opens once a Medium run is won (cuddle-unlocks.js).
@@ -1012,7 +1043,11 @@
           const countMark = letterCount
             ? `<span class="umt-count-mark" title="${escapeHtml(String(letter || "").toUpperCase())} is in the answer ${letterCount === 1 ? "once" : `${letterCount} times`}">${letterCount}</span>`
             : "";
-          tiles.push(`<span class="cuddle-tile${tileClass}${compass ? " has-compass" : ""}${arrow ? " is-arrow-sign" : ""}"${moneyBadge}${burstStyle}>${escapeHtml(letter)}${compassMark}${countMark}</span>`);
+          // Echo Peaks (cuddle-world-identity.js): how many times the
+          // answer holds this found letter.
+          const echoCount = history?.umtEcho && history.umtEcho[column];
+          const echoMark = echoCount ? `<span class="umt-echo-mark" title="The answer has this letter ${echoCount} times">×${echoCount}</span>` : "";
+          tiles.push(`<span class="cuddle-tile${tileClass}${compass ? " has-compass" : ""}${arrow ? " is-arrow-sign" : ""}"${moneyBadge}${burstStyle}>${escapeHtml(letter)}${compassMark}${countMark}${echoMark}</span>`);
         }
       }
       // Count Only replaces the row's score with the only thing it tells you:
@@ -1093,7 +1128,7 @@
       if (window.CuddleBurdens?.isIdeaGlyph(glyph)) return 180;
       const status = game.getCardKnowledgeStatus(glyph);
       if (status === "unused" && typeof game.isGlyphUnknown === "function" && game.isGlyphUnknown(glyph)) return 1.8;
-      if (status === "yellow" && typeof game.isGlyphBlue === "function" && game.isGlyphBlue(glyph)) return 1.5;
+      if ((status === "yellow" || status === "green") && typeof game.isGlyphBlue === "function" && game.isGlyphBlue(glyph)) return 1.5;
       return CARD_STATUS_ORDER[status] ?? 99;
     };
     const sortByColorThenLetter = (a, b) => (
@@ -1140,7 +1175,7 @@
     // Blue Mode's letters read yellow to the scoring logic (all it can
     // safely conclude is "present"), but the player was only ever shown
     // blue -- so the hand shows blue too, matching the board.
-    const blueOnly = trueStatus === "yellow"
+    const blueOnly = (trueStatus === "yellow" || trueStatus === "green")
       && typeof game.isGlyphBlue === "function" && game.isGlyphBlue(group.glyph);
     // A water world (cuddle-world-identity.js) shows every letter known to
     // be in the answer as blue in the hand, green or yellow.
@@ -2303,6 +2338,7 @@
         setUiMessage("");
         return true;
       case "continue":
+        landingMenu = null;
         landing = false;
         rulesOpen = false;
         detailsOpen = false;
@@ -2338,15 +2374,17 @@
         requestNewRun("easy");
         return true;
       case "new-run-medium":
+        if (needsTutorial()) return false;
         requestNewRun("medium");
         return true;
       case "new-run-hard": {
-        if (hardLocked()) return false;
+        if (hardLocked() || needsTutorial()) return false;
         const ladder = window.CuddleAscension && typeof window.CuddleAscension.ladder === "function" ? window.CuddleAscension.ladder() : null;
         if (ladder && ladder.unlocked > 0) hardPickOpen = true;
         else requestNewRun("hard");
         return true;
       }
+      case "menu-play":
       case "menu-tutorial":
       case "menu-newrun":
       case "menu-more":
