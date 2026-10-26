@@ -31,6 +31,14 @@
       text: "Two more special squares grow on the board in every stage." },
     mountains: { icon: "⛰️", name: "Echo Peaks", stage: "Trail",
       text: "When a guess finds a letter (yellow or green) that the answer holds more than once, the mountain echoes it: the tile shows how many times the letter is in the answer." },
+    city: { icon: "🏮", name: "Street Lamps", stage: "Block",
+      text: "Every stage opens with one letter of the answer lit up: you know it's in the answer, not where." },
+    farm: { icon: "🌾", name: "Harvest", stage: "Paddock",
+      text: "Every yellow and green tile pays 1 more point." },
+    river: { icon: "🛶", name: "Driftwood", stage: "Bend",
+      text: "One extra mulligan in every stage." },
+    clouds: { icon: "☁️", name: "Silver Lining", stage: "Puff",
+      text: "A guess that comes back all grey still pays +4 points." },
     marsh: { icon: "✨", name: "Fireflies", stage: "Pool",
       text: "Every stage opens with one vowel tested for free: you learn whether it's in the answer." },
     caverns: { icon: "👯", name: "Echoes", stage: "Grotto",
@@ -192,6 +200,19 @@
           trait.firefly = { letter: vowel, present: present };
           note(this, "Fireflies: " + vowel + (present ? " is in the answer." : " isn't in the answer."));
         }
+      } else if (theme === "city" && !trait.lamp && secret.length === 5) {
+        var seen = new Set((state.knownPresent || []).concat(state.knownAbsent || []));
+        var lit = pickOne(this, Array.from(new Set(secret.split(""))).filter(function fresh(letter) {
+          return "AEIOU".indexOf(letter) === -1 && !seen.has(letter);
+        }));
+        if (lit) {
+          trait.lamp = lit;
+          state.knownPresent = uniqueSorted((state.knownPresent || []).concat([lit]));
+          note(this, "Street Lamps: " + lit + " is in the answer.");
+        }
+      } else if (theme === "river" && !trait.drift) {
+        trait.drift = true;
+        state.mulligansLeft = num(state.mulligansLeft) + 1;
       } else if (theme === "frost" && !trait.iced) {
         trait.iced = true;
         state.mulligansLeft = Math.max(0, num(state.mulligansLeft) - 1);
@@ -268,6 +289,14 @@
       }
       if (theme === "storm" && history.length === 3 && num(entry.scoreDelta) > 0) {
         stageBonus(this, num(entry.scoreDelta), "umtWorldLightning", "Lightning");
+      }
+      if (theme === "farm") {
+        var crop = count(feedback, "green") + count(feedback, "yellow");
+        if (crop) stageBonus(this, crop, "umtWorldHarvest", "Harvest");
+      }
+      if (theme === "clouds" && feedback.length && count(feedback, "grey") === feedback.length) {
+        stageBonus(this, 4, "umtWorldSilverLining", "Silver Lining");
+        note(this, "Silver Lining: +4 points.");
       }
       if (theme === "forge") {
         var heat = count(feedback, "green") * 2 - count(feedback, "grey");
@@ -371,7 +400,7 @@
 
   // The moving backdrop: the same particles on every redraw, each placed
   // where it would be by now, so a redraw never makes them jump.
-  var PARTICLES = { woods: 14, meadow: 18, marsh: 12, caverns: 16, frost: 30, mountains: 20, library: 16, swamp: 14, tides: 20, citadel: 18, storm: 34, forge: 22, glacier: 24 };
+  var PARTICLES = { city: 16, farm: 16, river: 18, clouds: 10, woods: 14, meadow: 18, marsh: 12, caverns: 16, frost: 30, mountains: 20, library: 16, swamp: 14, tides: 20, citadel: 18, storm: 34, forge: 22, glacier: 24 };
 
   function seeded(seed) {
     var x = seed * 9301 + 49297;
@@ -391,7 +420,8 @@
       if (theme === "storm") duration = 0.7 + rand() * 0.6;
       if (theme === "forge") duration = 2.5 + rand() * 3;
       if (theme === "frost" || theme === "glacier" || theme === "mountains") duration = 8 + rand() * 9;
-      if (theme === "tides") duration = 7 + rand() * 7;
+      if (theme === "tides" || theme === "river") duration = 7 + rand() * 7;
+      if (theme === "clouds") duration = 30 + rand() * 30;
       var offset = rand() * duration;
       var delay = -((now + offset) % duration);
       var style = "--x:" + (rand() * 100).toFixed(1) + "%;--y:" + (rand() * 100).toFixed(1) + "%;--s:" + (0.6 + rand() * 0.9).toFixed(2)

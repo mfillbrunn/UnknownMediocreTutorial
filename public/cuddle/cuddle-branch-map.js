@@ -1178,6 +1178,35 @@
           + "<path d=\"M0 12V-4\" stroke=\"#5e8a3a\" stroke-width=\"1.6\"/>"
           + "<circle cy=\"-8\" r=\"3\" fill=\"" + petal + "\"/><circle cx=\"-4\" cy=\"-5\" r=\"3\" fill=\"" + petal + "\"/><circle cx=\"4\" cy=\"-5\" r=\"3\" fill=\"" + petal + "\"/>"
           + "<circle cy=\"-5.5\" r=\"2\" fill=\"#f2a93b\"/></g>");
+      } else if (decor === "city") {
+        // A little house block with lit windows.
+        var tall = 18 + Math.floor(random() * 3) * 6;
+        var lit = random() < 0.5 ? "#ffd27a" : "#ff8fb1";
+        parts.push("<g transform=\"translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") scale(" + scale.toFixed(2) + ")\">"
+          + "<rect x=\"-9\" y=\"" + (14 - tall) + "\" width=\"18\" height=\"" + tall + "\" rx=\"1.5\" fill=\"#241d3a\" stroke=\"#3d3260\" stroke-width=\"1\"/>"
+          + "<rect x=\"-5\" y=\"" + (18 - tall) + "\" width=\"4\" height=\"4\" fill=\"" + lit + "\"/><rect x=\"1\" y=\"" + (24 - tall) + "\" width=\"4\" height=\"4\" fill=\"#ffd27a\" fill-opacity=\".7\"/>"
+          + "<rect x=\"-5\" y=\"6\" width=\"4\" height=\"4\" fill=\"#ffd27a\" fill-opacity=\".45\"/></g>");
+      } else if (decor === "farm") {
+        // A red barn now and then, haystacks between.
+        if (random() < 0.35) {
+          parts.push("<g transform=\"translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") scale(" + scale.toFixed(2) + ")\">"
+            + "<path d=\"M-12 14V-2L0-12 12-2v16z\" fill=\"#9a3a2a\"/><path d=\"M-13-1 0-13 13-1\" stroke=\"#f2e2c4\" stroke-width=\"1.6\" fill=\"none\"/>"
+            + "<path d=\"M-4 14V4h8v10M-4 4l8 10M4 4l-8 10\" stroke=\"#f2e2c4\" stroke-width=\"1.2\" fill=\"none\"/></g>");
+        } else {
+          parts.push("<g transform=\"translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") scale(" + scale.toFixed(2) + ")\">"
+            + "<path d=\"M-12 14C-12 2-6-4 0-4S12 2 12 14z\" fill=\"#c99a3a\"/><path d=\"M-7 8h14M-9 12h18\" stroke=\"#e8c26a\" stroke-width=\"1\"/></g>");
+        }
+      } else if (decor === "river") {
+        // Willows leaning over a strip of water.
+        parts.push("<g transform=\"translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") scale(" + scale.toFixed(2) + ")\">"
+          + "<ellipse cy=\"15\" rx=\"17\" ry=\"3.5\" fill=\"#1a4a66\"/><path d=\"M-10 15q5-2 10 0t10 0\" stroke=\"#8fe0ff\" stroke-width=\"1\" fill=\"none\" opacity=\".7\"/>"
+          + "<path d=\"M0 13V-10\" stroke=\"#4a3a24\" stroke-width=\"2.4\"/>"
+          + "<path d=\"M0-12C-10-14-14-4-13 8M0-12C-5-10-7 0-6 10M0-12C5-10 7 0 6 10M0-12C10-14 14-4 13 8\" stroke=\"#5fa06a\" stroke-width=\"2\" fill=\"none\" stroke-linecap=\"round\"/></g>");
+      } else if (decor === "clouds") {
+        // Soft cloud puffs.
+        parts.push("<g transform=\"translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") scale(" + scale.toFixed(2) + ")\" opacity=\".85\">"
+          + "<ellipse cx=\"-7\" cy=\"6\" rx=\"9\" ry=\"7\" fill=\"#c9d4f5\"/><ellipse cx=\"3\" cy=\"1\" rx=\"11\" ry=\"10\" fill=\"#e6ecff\"/>"
+          + "<ellipse cx=\"12\" cy=\"7\" rx=\"8\" ry=\"6\" fill=\"#c9d4f5\"/><rect x=\"-15\" y=\"6\" width=\"34\" height=\"7\" rx=\"3.5\" fill=\"#dfe6ff\"/></g>");
       } else if (decor === "marsh") {
         parts.push("<g transform=\"translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") scale(" + scale.toFixed(2) + ")\" opacity=\".85\">"
           + "<ellipse cy=\"14\" rx=\"16\" ry=\"3.5\" fill=\"#1d3c3a\"/>"

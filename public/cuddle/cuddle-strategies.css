@@ -382,6 +382,9 @@ button.umt-clue-word.is-out {
 .cuddle-pair-actions { display: grid; gap: 8px; }
 .cuddle-pair-actions .cuddle-btn { display: grid; gap: 1px; padding-block: 10px; }
 .cuddle-pair-actions .cuddle-btn span { color: inherit; font-size: 0.72rem; font-weight: 600; opacity: 0.8; }
+/* A mulligan swaps the pair for two other words. */
+.cuddle-pair-redraw { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 10px; padding-block: 8px; font-size: 0.86rem; }
+.cuddle-pair-redraw span { font-size: 0.72rem; font-weight: 600; opacity: 0.75; }
 @keyframes cuddle-pair-in { from { opacity: 0; transform: translateY(10px) scale(0.96); } }
 @media (prefers-reduced-motion: reduce) { .cuddle-pair-word { animation: none; } }
 

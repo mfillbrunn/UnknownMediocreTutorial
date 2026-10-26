@@ -1011,6 +1011,14 @@
 #cuddleRoot[data-umt-theme="forge"] { --umt-world-tint: rgba(255, 122, 47, .16); --umt-world-glow: rgba(255, 196, 107, .11); }
 #cuddleRoot .cuddle-branch-shell[data-umt-theme="tides"],
 #cuddleRoot[data-umt-theme="tides"] { --umt-world-tint: rgba(47, 140, 255, .17); --umt-world-glow: rgba(127, 211, 255, .10); }
+#cuddleRoot .cuddle-branch-shell[data-umt-theme="city"],
+#cuddleRoot[data-umt-theme="city"] { --umt-world-tint: rgba(255, 143, 177, .13); --umt-world-glow: rgba(255, 210, 122, .10); }
+#cuddleRoot .cuddle-branch-shell[data-umt-theme="farm"],
+#cuddleRoot[data-umt-theme="farm"] { --umt-world-tint: rgba(232, 135, 58, .14); --umt-world-glow: rgba(255, 207, 90, .11); }
+#cuddleRoot .cuddle-branch-shell[data-umt-theme="river"],
+#cuddleRoot[data-umt-theme="river"] { --umt-world-tint: rgba(79, 179, 217, .15); --umt-world-glow: rgba(143, 224, 255, .10); }
+#cuddleRoot .cuddle-branch-shell[data-umt-theme="clouds"],
+#cuddleRoot[data-umt-theme="clouds"] { --umt-world-tint: rgba(169, 196, 255, .16); --umt-world-glow: rgba(230, 236, 255, .12); }
 #cuddleRoot .cuddle-branch-shell[data-umt-theme="glacier"],
 #cuddleRoot[data-umt-theme="glacier"] { --umt-world-tint: rgba(95, 184, 255, .15); --umt-world-glow: rgba(230, 247, 255, .11); }
 
@@ -1021,6 +1029,10 @@
 #cuddleRoot .umt-map-spark-storm { fill: #e9e2ff; filter: drop-shadow(0 0 4px #8f7dff); animation-duration: 2.2s; }
 #cuddleRoot .umt-map-spark-forge { fill: #ffc46b; filter: drop-shadow(0 0 3px #ff7a2f); animation-name: umt-spark-rise; }
 #cuddleRoot .umt-map-spark-tides { fill: #cdeeff; filter: drop-shadow(0 0 3px #2f8cff); opacity: .7; animation-name: umt-spark-rise; }
+#cuddleRoot .umt-map-spark-city { fill: #ffd27a; filter: drop-shadow(0 0 3px #ff8fb1); }
+#cuddleRoot .umt-map-spark-farm { fill: #fff1c2; filter: drop-shadow(0 0 3px #ffcf5a); }
+#cuddleRoot .umt-map-spark-river { fill: #bfeeff; filter: drop-shadow(0 0 3px #4fb3d9); opacity: .7; }
+#cuddleRoot .umt-map-spark-clouds { fill: #ffffff; filter: drop-shadow(0 0 3px #a9c4ff); }
 #cuddleRoot .umt-map-spark-glacier { fill: #f2fbff; filter: drop-shadow(0 0 2px #bfe9ff); animation-name: umt-spark-fall; }
 
 /* No glow filter on the sparks: a filter on an animating shape is redrawn

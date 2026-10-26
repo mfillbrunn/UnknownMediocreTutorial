@@ -133,7 +133,12 @@
   // A Pair trial's pass pays this share of its bonus by the guess it's
   // solved on (1st, 2nd, 3rd, 4th, 5th).
   var PAIR_PAY = [1, 0.75, 0.5, 0.35, 0.25];
+  // The guess the answer must be picked on at the latest (one sooner on a
+  // Hard Pair trial).
   var PAIR_PICK_GUESS = 5;
+  function pairPickGuess(node) {
+    return node && node.trialDifficulty === "hard" ? PAIR_PICK_GUESS - 1 : PAIR_PICK_GUESS;
+  }
   var TRIAL_ORDER = ["easy", "medium", "hard"];
   // Easy pays the same Rare badge as Medium, but costs this to choose.
   var EASY_TRIAL_COST = 10;
@@ -143,7 +148,7 @@
   }
 
   function trialPickGuess(node) {
-    if (node && node.trialKind === "pairs") return PAIR_PICK_GUESS;
+    if (node && node.trialKind === "pairs") return pairPickGuess(node);
     return node && node.trialKind === "open" ? 3 : 4;
   }
 
@@ -433,7 +438,9 @@
         return { word: item, listed: (game.presetOpenList() || []).indexOf(item) !== -1 };
       }),
       guess: guess,
-      lastProbe: guess === PAIR_PICK_GUESS - 1,
+      lastProbe: guess === pairPickGuess(trial) - 1,
+      pickBy: pairPickGuess(trial),
+      mulligans: Math.max(0, Number(state.mulligansLeft) || 0),
       payNow: trialBonus(trial, guess),
       payNext: trialBonus(trial, guess + 1)
     };
@@ -448,6 +455,25 @@
     record.pair = drawPair(this);
     try { this.save(); } catch (_error) { /* next save */ }
     return true;
+  };
+
+  // A mulligan swaps the two words shown for two others (no guess spent).
+  proto.presetPairRedraw = function presetPairRedraw() {
+    var panel = this.presetPairPanel();
+    if (!panel || panel.phase !== "pair") return { ok: false, error: "There's no pair of words to swap." };
+    var state = this.state;
+    if ((Number(state.mulligansLeft) || 0) <= 0) return { ok: false, error: "No mulligans left." };
+    var record = pairRecord(this);
+    var old = record.pair.slice();
+    var fresh = [];
+    for (var tries = 0; tries < 6 && fresh.length < 2; tries += 1) {
+      fresh = drawPair(this).filter(function unseen(word) { return old.indexOf(word) === -1; });
+    }
+    if (fresh.length < 2) fresh = drawPair(this);
+    record.pair = fresh.slice(0, 2).sort();
+    state.mulligansLeft = (Number(state.mulligansLeft) || 0) - 1;
+    try { this.save(); } catch (_error) { /* next save */ }
+    return { ok: true };
   };
 
   // Plays one of the two words shown as this guess (not the final answer:
@@ -518,7 +544,7 @@
       + '<section class="umt-stop-panel umt-duel-choose umt-trial-pick-panel">'
       + '<h2 id="umtTrialPickTitle">' + (pairs ? "Pair Trial" : open ? "Open Trial" : "Preset Trial") + "</h2>"
       + '<p class="umt-stop-lead">' + (pairs
-        ? "The answer is one of the listed words. Each guess, choose one of two words to play. After each, see two more or pick the answer. The sooner you pass, the more it pays."
+        ? "The answer is one of the listed words. Each guess, choose one of two words to play (a mulligan swaps them for two others). After each, see two more or pick the answer: by guess " + PAIR_PICK_GUESS + ", or guess " + (PAIR_PICK_GUESS - 1) + " on Hard. The sooner you pass, the more it pays."
         : open
           ? "The answer is one of the listed words, shown from the start. Two guesses, then pick it."
           : "Three guesses, then the answer is one of a list. Pick it.")

@@ -1600,7 +1600,7 @@
   function makeFullAlphabetCompassReward(template) {
     const def = makeAlphabetCompassReward(template);
     setName(def, "Full Alphabet Compass");
-    setDescription(def, "Completes the Alphabet Compass: after every guess, every tile shows whether the answer's letter there comes earlier or later in the alphabet.");
+    setDescription(def, "Completes the Alphabet Compass: its arrows also tell near from far. A single arrow means the answer's letter is within 7 letters; a double arrow (⇇ ⇉) means more than 7.");
     setTier(def, TIERS.LEGENDARY);
     def.available = (state) => upgradeStack(state, "alphabet-compass") === ALPHABET_COMPASS_MAX - 1;
     return def;

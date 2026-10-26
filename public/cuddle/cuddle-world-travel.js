@@ -42,6 +42,36 @@
         out += '<ellipse cx="90" cy="200" rx="160" ry="60" fill="' + g + '" opacity=".35"/><ellipse cx="320" cy="205" rx="170" ry="55" fill="' + g + '" opacity=".28"/>';
         for (i = 0; i < 14; i += 1) out += '<circle cx="' + (20 + i * 28) + '" cy="' + (176 + (i % 3) * 6) + '" r="4" fill="' + a + '"/>';
         break;
+      case "city":
+        for (i = 0; i < 12; i += 1) {
+          var bx = 4 + i * 34;
+          var bh2 = 50 + (i * 37) % 70;
+          out += '<rect x="' + bx + '" y="' + (196 - bh2) + '" width="28" height="' + bh2 + '" fill="' + g + '" opacity=".5"/>';
+          for (var w = 0; w < 3; w += 1) out += '<rect x="' + (bx + 5 + (w % 2) * 11) + '" y="' + (204 - bh2 + w * 14) + '" width="6" height="7" fill="' + a + '" opacity="' + ((i + w) % 3 ? ".85" : ".3") + '"/>';
+        }
+        break;
+      case "farm":
+        out += '<path d="M0 196 Q100 150 200 170 T400 160 V196 Z" fill="' + g + '" opacity=".35"/>';
+        out += '<path d="M250 196 V146 L280 122 L310 146 V196 Z" fill="#9a3a2a" opacity=".85"/><path d="M248 147 L280 120 L312 147" stroke="#f2e2c4" stroke-width="3" fill="none"/>';
+        for (i = 0; i < 9; i += 1) out += '<path d="M' + (12 + i * 24) + ' 196 c2 -16 6 -24 4 -34" stroke="' + a + '" stroke-width="3" fill="none" opacity=".8"/>';
+        out += '<circle cx="70" cy="50" r="22" fill="' + a + '" opacity=".85"/>';
+        break;
+      case "river":
+        for (i = 0; i < 3; i += 1) out += '<path d="M0 ' + (172 + i * 8) + ' q25 -6 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0" stroke="' + a + '" stroke-width="2.5" fill="none" opacity="' + (0.7 - i * 0.2) + '"/>';
+        for (i = 0; i < 5; i += 1) {
+          var wx = 30 + i * 85;
+          out += '<path d="M' + wx + ' 170 V110" stroke="#4a3a24" stroke-width="5"/>';
+          out += '<path d="M' + wx + ' 106 c-30 0 -34 30 -32 60 M' + wx + ' 106 c-12 6 -14 30 -12 56 M' + wx + ' 106 c12 6 14 30 12 56 M' + wx + ' 106 c30 0 34 30 32 60" stroke="' + g + '" stroke-width="4" fill="none" opacity=".75"/>';
+        }
+        break;
+      case "clouds":
+        for (i = 0; i < 6; i += 1) {
+          var ccx = 30 + i * 70;
+          var ccy = 60 + (i * 41) % 100;
+          out += '<ellipse cx="' + ccx + '" cy="' + ccy + '" rx="34" ry="14" fill="' + a + '" opacity=".55"/><ellipse cx="' + (ccx + 12) + '" cy="' + (ccy - 10) + '" rx="20" ry="14" fill="' + a + '" opacity=".6"/>';
+        }
+        out += '<rect x="0" y="180" width="400" height="16" fill="' + a + '" opacity=".35"/>';
+        break;
       case "marsh":
         out += '<rect x="0" y="178" width="400" height="30" fill="' + g + '" opacity=".25"/>';
         for (i = 0; i < 16; i += 1) out += '<path d="M' + (12 + i * 25) + ' 190 q4 -' + (34 + (i % 4) * 9) + ' 2 -' + (50 + (i % 3) * 12) + '" stroke="' + a + '" stroke-width="3" fill="none" opacity=".75"/>';
