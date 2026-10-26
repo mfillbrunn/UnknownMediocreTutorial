@@ -251,12 +251,15 @@
         .filter(item => item && item.id && item.label)
         .map(item => ({ id: String(item.id), label: String(item.label), group: String(item.group || "other") }));
       const seen = new Set(liveCampaign.revealedCategories.map(item => item.id));
+      let added = 0;
       additions.forEach(item => {
         if (!seen.has(item.id)) {
           liveCampaign.revealedCategories.push(item);
           seen.add(item.id);
+          added += 1;
         }
       });
+      if (added && source === "guaranteed") floatWorldBonus();
       liveCampaign.noCategory = Boolean(payload.noCategory);
       liveCampaign.categoryExhausted = Boolean(payload.exhausted);
       // This message names the revealed category outright (e.g. "Category
@@ -339,13 +342,48 @@
     return GUARANTEED_REVEAL_GUESS[difficulty] || GUARANTEED_REVEAL_GUESS.hard;
   }
 
-  // Fires once per round, on top of (not instead of) Theme Sense / Category
-  // Whisper -- even a run that has never touched the theme mechanic gets one
-  // category by this guess. queueCategoryReveal already no-ops harmlessly if
-  // every category is already known or the word has none.
+  // A World 1 help: once per stage, on top of (not instead of) Theme Sense /
+  // Category Whisper -- even a run that has never touched the theme
+  // mechanic gets one category by this guess. Later worlds don't get it.
+  // queueCategoryReveal already no-ops harmlessly if every category is
+  // already known or the word has none.
+  function inFirstWorld(game) {
+    const worlds = window.CuddleWorlds;
+    if (!worlds || typeof worlds.currentWorld !== "function") return true;
+    try {
+      return Number(worlds.currentWorld(game)?.index) === 0;
+    } catch (_error) {
+      return true;
+    }
+  }
+
+  // "World 1 bonus: new theme" rising from the theme line, with a soft
+  // boop, once the line has redrawn with the new theme.
+  function floatWorldBonus() {
+    window.setTimeout(() => {
+      const chips = document.querySelectorAll("#cuddleRoot .cuddle-category-readout");
+      const target = chips[chips.length - 1];
+      const box = target ? target.getBoundingClientRect() : null;
+      if (!box || !box.width) return;
+      const el = document.createElement("span");
+      el.className = "umt-theme-bonus-pop";
+      el.innerHTML = "<b>World 1 bonus</b> New theme revealed";
+      el.setAttribute("role", "status");
+      el.style.left = `${Math.round(box.left + box.width / 2)}px`;
+      el.style.top = `${Math.round(box.top)}px`;
+      document.body.appendChild(el);
+      target.classList.remove("is-bonus-new");
+      void target.offsetWidth;
+      target.classList.add("is-bonus-new");
+      window.setTimeout(() => el.remove(), 2400);
+      if (window.CuddleAudio) window.CuddleAudio.play("hint");
+    }, 120);
+  }
+
   function ensureGuaranteedCategoryReveal(game) {
     const campaign = resetCategoryStateForSecret(game);
     if (!campaign || campaign.guaranteedRevealDone) return;
+    if (!inFirstWorld(game)) return;
     const guessesUsed = Number(game.state?.guessesUsed || 0);
     if (guessesUsed < guaranteedRevealGuess(game) - 1) return;
     campaign.guaranteedRevealDone = true;
