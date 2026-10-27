@@ -1806,11 +1806,18 @@
     ordinary.push(...LEGENDARY_PICKS);
     const unique = new Map();
     for (const def of ordinary) {
-      if (!rewardAvailable(def, context, state)) continue;
+      if (RETIRED_NAMES.has(norm(getName(def))) || !rewardAvailable(def, context, state)) continue;
       unique.set(norm(getName(def)), atNextLevelTier(def, state));
     }
     return [...unique.values()];
   }
+
+  // Treasure Map was folded into Bonus Squares (cuddle-points-money.js): a
+  // run that holds it keeps it, but it isn't offered any more.
+  const RETIRED_NAMES = new Set(["treasure map"]);
+  // Badges that turn up more often within their rarity: each extra weight
+  // is one more ticket in the draw.
+  const FAVOURED = Object.freeze({ "bonus squares": 2 });
 
   function chooseSameTier(count, context, state, seed = null) {
     const pool = allOrdinaryCandidates(context, state);
@@ -1826,7 +1833,11 @@
     const world = Math.max(0, Math.min(2, Array.isArray(state && state.bossGatesDone) ? state.bossGatesDone.length : 0));
     const weights = WORLD_WEIGHTS[world][lens ? 1 : 0];
     const tier = weightedTier(weights, available, seed);
-    const selected = shuffle(grouped[tier] || [], seed == null ? null : `${seed}:shuffle`).slice(0, count);
+    const tickets = [];
+    (grouped[tier] || []).forEach((def) => {
+      for (let n = 0; n < (FAVOURED[norm(getName(def))] || 1); n += 1) tickets.push(def);
+    });
+    const selected = [...new Set(shuffle(tickets, seed == null ? null : `${seed}:shuffle`))].slice(0, count);
     selected.forEach((def) => { def.__cuddleV8OfferTier = tier; });
     return selected;
   }

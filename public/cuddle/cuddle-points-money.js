@@ -149,9 +149,11 @@
     // The board's own squares need a square badge; without one a stage
     // has none (Treasure Map and the rest below still add theirs).
     var owned = TILE_KINDS.some(function has(entry) { return bonusLevel(state, entry.bonus) > 0; });
-    var bonusExtra = [0, 0, 1, 2][Math.min(3, Math.floor(bonusLevel(state, "bonusSquares")))];
+    // Bonus Squares (Treasure Map folded in): 1, 2, then 4 more squares.
+    var bonusExtra = LEVEL_STEP[Math.min(3, Math.floor(bonusLevel(state, "bonusSquares")))];
     var count = (owned ? rows.filter(function roll() { return random() < TILE_CHANCE_PER_GUESS; }).length : 0)
       + bonusExtra
+      // (Treasure Map, no longer offered: kept for runs that hold it.)
       + LEVEL_STEP[Math.min(3, Math.floor(bonusLevel(state, "treasureMap")))]
       // Treasure Trove from the shop: +2 tiles while its stages last
       // (counted down by cuddle-shop.js once the stage has begun).

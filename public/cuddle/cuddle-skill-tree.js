@@ -155,7 +155,7 @@
           level: g => ledgerCount(g, "treasureMap") },
         // Every kind of board square needs its unlock.
         { id: "bonusSquares", icon: "💰", title: "Bonus Squares", tier: "common", type: "tiles", maxLevel: 3,
-          levels: ["Money and points squares appear on the board. Get a green or yellow on one: money or points.", "1 more square every stage.", "2 more squares every stage."],
+          levels: ["Money and points squares appear on the board, +1 square every stage. Get a green or yellow on one: money or points.", "+2 squares every stage.", "+4 squares every stage."],
           level: g => ledgerCount(g, "bonusSquares") },
         { id: "mulliganTiles", icon: "🔄", title: "Mulligan Squares", tier: "common", type: "tiles", maxLevel: 3,
           levels: ["Some squares on the board become mulligan squares. Get a green or yellow on one: +1 mulligan.", "Mulligan squares show up 2 times as often.", "Mulligan squares show up 4 times as often."],
@@ -444,7 +444,7 @@
     greyscale: ["Greys pay 0.75", "Greys pay 1.5", "Greys pay 2.25"],
     "surprise-assignment": ["+1 quest a stage", "+2 quests a stage", "+4 quests a stage"],
     treasureMap: ["+1 special square", "+2 special squares", "+4 special squares"],
-    bonusSquares: ["Money & points squares", "+1 square a stage", "+2 squares a stage"],
+    bonusSquares: ["Money & points squares, +1 a stage", "+2 squares a stage", "+4 squares a stage"],
     mulliganTiles: ["Mulligan squares", "Mulligan squares x2", "Mulligan squares x4"],
     jokerTiles: ["Joker squares", "Joker squares x2", "Joker squares x4"],
     oracleTiles: ["Oracle squares", "Oracle squares x2", "Oracle squares x4"],
