@@ -1895,18 +1895,10 @@
     if (!custom || !state || activeChallenge(game)) return null;
     const id = TRIAL_CHALLENGES[hash32(`${mapSeed(game)}:trial:${roundToken(game)}`) % TRIAL_CHALLENGES.length];
     const challenge = challengeById(id);
-    const engine = window.CuddleEngine;
-    let at = (state.history || []).length + freeOpeners(game);
-    for (let guard = 0; guard < 8; guard += 1) {
-      let curse = null;
-      try {
-        curse = engine && typeof engine.ratchetForGuess === "function" ? engine.ratchetForGuess(game, at + 1) : null;
-      } catch (_error) {
-        curse = null;
-      }
-      if (!curse) break;
-      at += 1;
-    }
+    // Always the first guess (after a Fast Lane's free ones): a beaten
+    // boss's curse on that guess slides to a later one (the engine's
+    // ratchetRowPlan makes way for the stage's own challenge).
+    const at = (state.history || []).length + freeOpeners(game);
     const plan = Array.from({ length: at }, () => null).concat([id]);
     custom.activeChallenge = {
       ...challenge,
