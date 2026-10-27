@@ -1208,3 +1208,7 @@ button.umt-duel-option:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .umt-header-pop { animation: none; }
 }
+
+/* The rival (the Secretkeeper's dark hood): a faint light edge keeps it
+   readable on the dark duel panels. */
+svg.umt-rival { filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, .45)); }
