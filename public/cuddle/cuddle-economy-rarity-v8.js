@@ -11,17 +11,15 @@
   const TIERS = Object.freeze({ COMMON: "common", RARE: "rare", EPIC: "epic", LEGENDARY: "legendary" });
   const TIER_ORDER = Object.freeze([TIERS.COMMON, TIERS.RARE, TIERS.EPIC, TIERS.LEGENDARY]);
   // Odds of each tier for a between-round offer (all cards in one offer
-  // share a tier). Rarity Lens shifts them up; the shop leans a bit rarer.
-  // Legendary rewards are never rolled here: they come only from the pick
-  // of three after each boss (legendaryChoices below).
-  const DEFAULT_WEIGHTS = Object.freeze({ common: 55, rare: 35, epic: 10, legendary: 0 });
-  const BOOSTED_WEIGHTS = Object.freeze({ common: 35, rare: 40, epic: 25, legendary: 0 });
-  // Later worlds lean rarer: world 2, then world 3 (by bosses beaten), each
-  // with its Rarity Lens version.
+  // share a tier), the same in every world: 58 / 30 / 10 / 2. Rarity Lens
+  // shifts them up; the shop has its own. A boss's pick of three is all
+  // Legendary (legendaryChoices below); a Trial pays Rare, a Duel Epic.
+  const DEFAULT_WEIGHTS = Object.freeze({ common: 58, rare: 30, epic: 10, legendary: 2 });
+  const BOOSTED_WEIGHTS = Object.freeze({ common: 38, rare: 37, epic: 20, legendary: 5 });
   const WORLD_WEIGHTS = Object.freeze([
     [DEFAULT_WEIGHTS, BOOSTED_WEIGHTS],
-    [Object.freeze({ common: 38, rare: 40, epic: 22, legendary: 0 }), Object.freeze({ common: 22, rare: 42, epic: 36, legendary: 0 })],
-    [Object.freeze({ common: 22, rare: 43, epic: 35, legendary: 0 }), Object.freeze({ common: 12, rare: 40, epic: 48, legendary: 0 })]
+    [DEFAULT_WEIGHTS, BOOSTED_WEIGHTS],
+    [DEFAULT_WEIGHTS, BOOSTED_WEIGHTS]
   ]);
   const SHOP_WEIGHTS = Object.freeze({ common: 45, rare: 35, epic: 20, legendary: 0 });
   const PRICE_RANGES = Object.freeze({
