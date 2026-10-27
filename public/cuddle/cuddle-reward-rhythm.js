@@ -276,7 +276,8 @@
       // isn't left behind yet (no _advanceRound, so no stage-clear money
       // twice and no step on the road).
       var done = stop.done.concat(picked ? [nameOf(picked)] : []);
-      var next = stop.pick < stop.of ? levelChoices(this, 3, done) : [];
+      // The Level-Up stop's picker keeps every badge on offer.
+      var next = stop.pick < stop.of ? levelChoices(this, stop.picker ? 999 : 3, done) : [];
       var result;
       if (next.length) {
         this._advanceRound = function holdLevelStop() { return undefined; };

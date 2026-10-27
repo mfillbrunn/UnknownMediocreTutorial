@@ -4998,3 +4998,71 @@
   .umt-theme-bonus-pop { animation: none; opacity: 1; }
   .cuddle-category-readout.is-bonus-new { animation: none; }
 }
+
+/* The Level-Up stop's picker (cuddle-ui.js renderLevelPicker): every badge
+   that can level, a square per level (filled up to its level now, the next
+   one lit once picked); pick two, then Level up. */
+.cuddle-level-picker { display: flex; flex-direction: column; gap: 10px; max-height: min(88vh, 760px); }
+.cuddle-level-picker h2 { margin: 0; text-wrap: balance; }
+.cuddle-level-picker-lead { margin: -4px 0 0; color: var(--cuddle-muted); font-size: 0.84rem; }
+.cuddle-level-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  overflow-y: auto;
+  padding: 2px;
+}
+.cuddle-level-tile {
+  --tier: #9aa3b5;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px 6px 8px;
+  border: 1.5px solid color-mix(in srgb, var(--tier) 55%, transparent);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--cuddle-text);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+.cuddle-level-tile.is-rare { --tier: #7fb8ff; }
+.cuddle-level-tile.is-epic { --tier: #c08bff; }
+.cuddle-level-tile.is-legendary { --tier: #f6c956; }
+.cuddle-level-tile:focus-visible { outline: 2px solid var(--cuddle-accent); outline-offset: 2px; }
+.cuddle-level-tile.is-picked {
+  border-color: #57d69a;
+  background: rgba(87, 214, 154, 0.14);
+  box-shadow: 0 0 0 2px rgba(87, 214, 154, 0.35);
+  transform: translateY(-2px);
+}
+.cuddle-level-tile-icon { display: grid; place-items: center; width: 40px; height: 40px; font-size: 1.5rem; }
+.cuddle-level-tile-icon img { width: 40px; height: 40px; }
+.cuddle-level-tile strong {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.78rem;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.cuddle-level-tile small { color: var(--cuddle-muted); font-size: 0.66rem; line-height: 1.25; }
+.cuddle-level-tile.is-picked small { color: #a8f0c9; }
+.cuddle-level-squares { display: flex; gap: 4px; }
+.cuddle-level-squares i {
+  display: block;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid color-mix(in srgb, var(--tier) 80%, white 20%);
+  border-radius: 3px;
+}
+.cuddle-level-squares i.is-on { background: var(--tier); }
+.cuddle-level-squares i.is-next { background: #57d69a; border-color: #57d69a; animation: cuddle-level-next 900ms ease-in-out infinite alternate; }
+@keyframes cuddle-level-next { from { opacity: 0.55; } to { opacity: 1; } }
+.cuddle-level-go { align-self: stretch; }
+@media (prefers-reduced-motion: reduce) {
+  .cuddle-level-tile { transition: none; }
+  .cuddle-level-squares i.is-next { animation: none; }
+}
