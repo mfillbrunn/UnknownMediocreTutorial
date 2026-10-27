@@ -294,16 +294,6 @@
       ]
     },
     {
-      id: "e-stage3",
-      when: function when(game, state) {
-        return playing(state) && !state.boss && eduStage(game) > 2 && !(window.CuddleEasyMode && window.CuddleEasyMode.isMulliganStage(game));
-      },
-      at: "top",
-      cards: [
-        { title: "Mulligans are back", text: "From here on, one consonant of the answer waits in your <b>deck</b> each stage, the boss too. Work out which letters you don't need and <b>mulligan</b> one: the missing letter comes in. (Miss it, and it turns up by itself after your third guess.)", focus: ".cuddle-mulligan" }
-      ]
-    },
-    {
       id: "e-badge",
       when: function when(game, state) {
         // Once the choices are really up: the solve animation and the
