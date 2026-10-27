@@ -150,8 +150,8 @@
           levels: ["+1 extra quest pops up in every stage.", "+2 extra quests pop up in every stage.", "+4 extra quests pop up in every stage."],
           level: g => ledgerCount(g, "surprise-assignment") },
         // More special board tiles (cuddle-points-money.js).
-        { id: "treasureMap", icon: "🗺️", title: "Treasure Map", tier: "rare", type: "tiles", maxLevel: 3,
-          levels: ["Squares of every kind turn up more often: x1.5 every stage.", "x2 squares every stage.", "x3 squares every stage."],
+        { id: "treasureMap", icon: "🗺️", title: "More Squares", tier: "rare", type: "tiles", maxLevel: 3,
+          levels: ["+1 square on the board every stage, of any kind you've unlocked.", "+2 squares every stage.", "+4 squares every stage."],
           level: g => ledgerCount(g, "treasureMap") },
         // Every kind of board square needs its unlock.
         { id: "bonusSquares", icon: "💰", title: "Money & Point Squares", tier: "common", type: "tiles", maxLevel: 3,
@@ -443,7 +443,7 @@
     colourTrade: ["Greens +0.75", "Greens +1.5", "Greens +2.25"],
     greyscale: ["Greys pay 0.75", "Greys pay 1.5", "Greys pay 2.25"],
     "surprise-assignment": ["+1 quest a stage", "+2 quests a stage", "+4 quests a stage"],
-    treasureMap: ["x1.5 squares", "x2 squares", "x3 squares"],
+    treasureMap: ["+1 square a stage", "+2 squares a stage", "+4 squares a stage"],
     bonusSquares: ["Money & point squares", "+1 square a stage", "+2 squares a stage"],
     mulliganTiles: ["Mulligan squares", "Mulligan squares x2", "Mulligan squares x4"],
     jokerTiles: ["Joker squares", "Joker squares x2", "Joker squares x4"],

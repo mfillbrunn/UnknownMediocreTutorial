@@ -90,6 +90,7 @@
     ["secrets counter", TIERS.RARE],
     ["bigger cuddle", TIERS.RARE],
     ["treasure map", TIERS.RARE],
+    ["more squares", TIERS.RARE],
     ["surprise assignment", TIERS.RARE],
     ["encore", TIERS.COMMON],
     ["rainy day fund", TIERS.RARE],

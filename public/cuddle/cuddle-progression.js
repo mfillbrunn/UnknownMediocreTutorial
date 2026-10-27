@@ -119,7 +119,7 @@
     rewardEcho: "Next badge at top level",
     greenCount: "Greens show count",
     "surprise-assignment": "+1 surprise quest",
-    treasureMap: "More squares of every kind",
+    treasureMap: "+1 square a stage",
     bonusSquares: "Unlocks money and point squares",
     mulliganTiles: "Unlocks mulligan squares",
     jokerTiles: "Unlocks Joker squares",

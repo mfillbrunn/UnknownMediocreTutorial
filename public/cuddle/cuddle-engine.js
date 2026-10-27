@@ -2845,9 +2845,9 @@
     {
       id: "treasureMap",
       icon: "🗺️",
-      title: "Treasure Map",
+      title: "More Squares",
       tier: "rare",
-      description: "Squares of every kind turn up more often: x1.5 on the board every stage. Level 2: x2. Level 3: x3.",
+      description: "One more square on the board every stage, of any kind you've unlocked. Level 2: two more. Level 3: four more.",
       max: 3
     },
     {

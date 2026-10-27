@@ -81,16 +81,13 @@
   var POINTS_TILE_GREEN = POINTS_TILE_YELLOW * 2;
   var TILE_COLUMNS = 5;
 
-  // How many a stage gets: one or two (1.5 on average), multiplied by
-  // Treasure Map.
+  // How many a stage gets: one or two (1.5 on average), plus More Squares'.
   // Each guess in the bonus window has about a one-in-four chance of a
   // special square (one per row at most); Treasure Map and Treasure Trove add
   // tiles on top of that.
   var TILE_CHANCE_PER_GUESS = 0.25;
   // A three-level power's steps (cuddle-skill-tree.js): 1, 2, then 4.
   var LEVEL_STEP = [0, 1, 2, 4];
-  // Treasure Map: how many times as many squares, by level.
-  var MAP_FACTOR = [1, 1.5, 2, 3];
 
   // Relative odds of each kind for one tile. Every kind needs its badge
   // (money and points: Bonus Squares); level 1 unlocks it, 2 and 3 make it
@@ -160,15 +157,9 @@
       + (state.cuddleShopV2 && Number(state.cuddleShopV2.tileStages) > 0 ? 2 : 0)
       // The Sunlit Meadow's In Bloom trait (cuddle-world-identity.js).
       + (window.CuddleWorldIdentity ? window.CuddleWorldIdentity.extraSpecialTiles(game) : 0);
-    // Treasure Map multiplies every square (x1.5, x2, x3), a fraction
-    // rounding up by chance; and at least one more per level, so it does
-    // something on a board that had none.
-    var mapLevel = Math.min(3, Math.floor(bonusLevel(state, "treasureMap")));
-    var count = base;
-    if (mapLevel > 0) {
-      var scaled = base * MAP_FACTOR[mapLevel];
-      count = Math.max(Math.floor(scaled) + (random() < scaled - Math.floor(scaled) ? 1 : 0), base + mapLevel);
-    }
+    // More Squares (id treasureMap): +1, +2, then +4 squares of the kinds
+    // unlocked (money or points with none).
+    var count = base + LEVEL_STEP[Math.min(3, Math.floor(bonusLevel(state, "treasureMap")))];
     // One tile per row at most, so they spread across the window instead
     // of stacking into a single lucky guess.
     var placed = rows
