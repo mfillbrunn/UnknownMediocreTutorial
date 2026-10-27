@@ -174,8 +174,6 @@
       (state) => Number(state.upgrades?.freeVowelSweep || 0) < 2),
     legendaryPick("biggerMulligans", "✋", "Full Hand Mulligan", "Every mulligan can now replace up to five letters.",
       (state) => Number(state.upgrades?.mulliganSize || 0) < 2),
-    legendaryPick("questCadence", "❗", "Quest Cadence", "One more quest a stage: guess 3 gets one too (quests on 2, 3, 5). Level 2 adds guess 1, level 3 guess 4. One quest at a time.",
-      (state) => Number(state.upgrades?.questCadence || 0) < 3),
     legendaryPick("revealGreen", "📍", "Position Peek", "Your next stage opens with one letter of the answer already in its exact place. One time.",
       (state) => !state.pendingPositionPeek),
     legendaryPick("questDoublePick", "✌️", "Double Pick", "Quest reward screens let you choose two options instead of one, for the rest of the run.",
@@ -1458,6 +1456,14 @@
       case "random-quest":
         addUpgradeStack(state, "random-quest", 1);
         return true;
+      case "quest-cadence": {
+        if (!state.upgrades || typeof state.upgrades !== "object") state.upgrades = {};
+        const before = Number(state.upgrades.questCadence || 0);
+        const value = callOriginal();
+        if (Number(state.upgrades.questCadence || 0) <= before) state.upgrades.questCadence = before + 1;
+        state.upgrades.questCadence = Math.min(3, Number(state.upgrades.questCadence || 0));
+        return value === undefined ? true : value;
+      }
       case "alphabet-compass":
         addUpgradeStack(state, "alphabet-compass", 1);
         return true;
@@ -1608,14 +1614,19 @@
     return def;
   }
 
-  function makeRandomQuestReward(template) {
+  // Quest Cadence: a regular Rare badge (Surprise Assignment folded in).
+  // Each level adds a quest guess: 3, then 1, then 4 (the engine's
+  // upgrades.questCadence, read by its quest timing).
+  function makeQuestCadenceReward(template) {
     const def = cloneDefinition(template || {});
-    setName(def, "Surprise Assignment");
-    setId(def, "surprise-assignment");
-    setDescription(def, "Add one extra quest at a random turn in every stage. Stackable; each copy schedules another quest.");
+    setName(def, "Quest Cadence");
+    setId(def, "questCadence");
+    setDescription(def, "One more quest a stage: guess 3 gets one too (quests on 2, 3, 5). Level 2 adds guess 1, level 3 guess 4. One quest at a time.");
     setTier(def, TIERS.RARE);
-    setMaxStack(def, 99);
-    replaceHandlers(def, "random-quest");
+    setMaxStack(def, 3);
+    def.icon = "\u2757";
+    def.available = (state) => Number(state?.upgrades?.questCadence || 0) < 3;
+    replaceHandlers(def, "quest-cadence");
     return def;
   }
 
@@ -1632,8 +1643,8 @@
         out.push(def);
       }
     }
-    if (!out.some((def) => norm(getName(def)) === "surprise assignment")) {
-      out.push(makeRandomQuestReward(template));
+    if (!out.some((def) => norm(getName(def)) === "quest cadence")) {
+      out.push(makeQuestCadenceReward(template));
     }
     if (!out.some((def) => norm(getName(def)) === "alphabet compass")) {
       out.push(makeAlphabetCompassReward(template));
