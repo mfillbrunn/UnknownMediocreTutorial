@@ -303,9 +303,11 @@
   // Joker Cache's Jokers, now dealt as deck tiles: 1, 2, then 4 for
   // Small, two more for Large. The engine's stage-start grant leaves these out
   // (see _deckJokerCount, read in cuddle-engine.js).
-  // Small Joker Cache's Joker cards in the deck: 1, 2, then 4. (Large
-  // Joker Cache hands a free Joker card out at stage start instead.)
-  var JOKER_CACHE_TILES = [0, 2, 3, 5];
+  // Small Joker Cache's Joker cards in the deck: 1, 2, then still 2 (level
+  // 3 upgrades them instead: a Joker letter that comes back yellow is
+  // placed in its spot, below). (Large Joker Cache hands a free Joker card
+  // out at stage start instead.)
+  var JOKER_CACHE_TILES = [0, 1, 2, 2];
   function deckJokers(game) {
     return JOKER_CACHE_TILES[Math.min(3, powerLevel(game, "jokerCache"))];
   }
@@ -1381,6 +1383,52 @@
     schedule();
   }
   attach();
+
+  // Small Joker Cache level 3: a Joker card played as a letter that comes
+  // back yellow (it's in the answer, elsewhere) has that letter placed in
+  // its spot, like a green hint. Only colours the player was shown count.
+  var jokerUpgradeSubmit = proto.submitDraft;
+  proto.submitDraft = function submitDraftWithGoldenJokers() {
+    var before = this.state && Array.isArray(this.state.history) ? this.state.history.length : 0;
+    var result = jokerUpgradeSubmit.apply(this, arguments);
+    var state = this.state;
+    if (!result || result.ok === false || !state || inDuel(state) || state.status !== "playing") return result;
+    var history = Array.isArray(state.history) ? state.history : [];
+    if (history.length <= before || powerLevel(this, "jokerCache") < 3) return result;
+    try {
+      var entry = history[history.length - 1];
+      // The Joker's column (one Joker per word): the engine records it, as
+      // the card itself takes its resolved letter before the guess is kept.
+      var jokerAt = Number(entry.jokerIndex);
+      var used = Number.isInteger(jokerAt) && jokerAt >= 0 && jokerAt < 5
+        ? [0, 1, 2, 3, 4].map(function mark(at) { return at === jokerAt ? Engine.CUDDLE_JOKER_GLYPH : ""; })
+        : [];
+      var shown = Array.isArray(entry.shownFeedback) && entry.shownFeedback.length ? entry.shownFeedback : (entry.feedback || []);
+      var masked = Array.isArray(entry.maskedIndices) ? entry.maskedIndices : [];
+      var word = String(entry.word || "").toUpperCase();
+      var secret = String(state.secret || "").toUpperCase();
+      var placed = [];
+      used.forEach(function joker(glyph, index) {
+        if (glyph !== Engine.CUDDLE_JOKER_GLYPH || shown[index] !== "yellow" || masked.indexOf(index) !== -1) return;
+        var letter = word[index];
+        var hidden = typeof this._hiddenPositions === "function" ? this._hiddenPositions() : [];
+        var spot = hidden.filter(function same(at) { return secret[at] === letter; })[0];
+        if (spot === undefined) return;
+        state.revealedPositions[spot] = letter;
+        state.knownPresent = Array.from(new Set((state.knownPresent || []).concat([letter]))).sort();
+        placed.push(letter);
+      }, this);
+      if (placed.length) {
+        if (typeof this._syncInfiniteCards === "function") this._syncInfiniteCards();
+        placed.forEach(function fx(letter) { if (window.CuddleHintFx) window.CuddleHintFx.note(this, letter, "Golden Joker"); }, this);
+        state.lastMessage = ((state.lastMessage || "") + " Golden Joker: " + placed.join(", ") + " placed in " + (placed.length === 1 ? "its spot." : "their spots.")).trim();
+        if (typeof this.save === "function") this.save();
+      }
+    } catch (error) {
+      console.warn("Cuddle burdens: Golden Joker failed.", error);
+    }
+    return result;
+  };
 
   window.CuddleBurdens = Object.freeze({
     DEAD_GLYPH: DEAD_GLYPH,
