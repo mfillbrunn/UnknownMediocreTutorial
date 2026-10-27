@@ -28,9 +28,14 @@
     return String((state && state.runId) || "").indexOf(":duel:") !== -1;
   }
 
-  // The Tutorial run keeps to the basics: no washing out.
+  // The Tutorial run keeps to the basics at first: washing out opens after
+  // its mulligan stage (stage 2), where the tour explains it.
+  var TUTORIAL_WASH_FROM = 3;
   function easyRun(game) {
-    return Boolean(window.CuddleEasyMode && typeof window.CuddleEasyMode.isEasy === "function" && window.CuddleEasyMode.isEasy(game));
+    var easy = window.CuddleEasyMode;
+    if (!easy || typeof easy.isEasy !== "function" || !easy.isEasy(game)) return false;
+    var stage = typeof easy.stageNumber === "function" ? Number(easy.stageNumber(game)) || 0 : 0;
+    return stage < TUTORIAL_WASH_FROM;
   }
 
   // The consonant letter cards a wash sends back.
@@ -55,7 +60,7 @@
     var state = this.state;
     if (!state || state.status !== "playing") return "You can only wash out your hand during a stage.";
     if (inDuel(state)) return "Duels keep their own deck.";
-    if (easyRun(this)) return "The Tutorial run has no wash-outs.";
+    if (easyRun(this)) return "Washing out opens later in the Tutorial run.";
     if (typeof this.presetPick === "function" && this.presetPick()) return "Pick the answer first.";
     if (!washable(this).length) return "There are no consonants in your hand to wash out.";
     if (guessesLeft(this) < 2) return "It costs a guess, and this is your last one.";

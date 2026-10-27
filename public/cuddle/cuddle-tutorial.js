@@ -268,6 +268,15 @@
       ]
     },
     {
+      // Once a card shows where it goes.
+      id: "e-position",
+      when: function when(game, state) { return playing(state) && present(".cuddle-hand .cuddle-card-position"); },
+      at: "top",
+      cards: [
+        { title: "Where it goes", text: "A <span class=\"umt-tut-g\">green</span> card shows a number in its corner: the spot it takes in the answer. <b>#1</b> is the first letter, <b>#5</b> the last.", focus: ".cuddle-hand .cuddle-card-position" }
+      ]
+    },
+    {
       id: "e-points",
       when: function when() {
         var collect = document.querySelector("#cuddleMoneyPayoutOverlay [data-cuddle-money-action=\"collect-payout\"]");
@@ -313,6 +322,15 @@
       at: "bottom",
       cards: [
         { title: "Your badges", text: "Every badge you pick waits behind the <b>badges button</b> at the top, the one with a number (how many you have). Tap it any time to see your badges and what each one does.", focus: ".umt-pt-mini" }
+      ]
+    },
+    {
+      // A later stage, once washing out opens (cuddle-washout.js).
+      id: "e-washout",
+      when: function when(game, state) { return playing(state) && !state.boss && present(".umt-washout-btn"); },
+      at: "top",
+      cards: [
+        { title: "Wash out", text: "Stuck with letters you can't use? Tap the <b>✕</b> on your deck to <b>wash out</b>: all your consonants are swapped for new ones and you get 2 more mulligans. It costs a guess.", focus: ".umt-washout-btn" }
       ]
     },
     {
