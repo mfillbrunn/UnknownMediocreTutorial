@@ -303,10 +303,12 @@
     if (stages.duelPlayerTurn(game) !== true) return false;
     return Boolean(stages.withDuel(game, function check(g) { return duelAutopilotDue(g); }));
   }
-  function duelAutopilotGuess(game) {
+  // Autopilot's Duel word, its cards ready in the Duel hand (the draft is
+  // left empty: duelTick types them in one by one), or null.
+  function duelAutopilotPlan(game) {
     var stages = window.CuddleExpandedStages;
-    if (!duelTurn(game) || typeof stages.submitDuel !== "function") return { ok: false };
-    var plan = stages.withDuel(game, function build(g) {
+    if (!duelTurn(game) || typeof stages.submitDuel !== "function") return null;
+    return stages.withDuel(game, function build(g) {
       var state = g.state;
       var word = autopilotWord(g);
       if (!/^[A-Z]{5}$/.test(word)) {
@@ -327,10 +329,15 @@
         });
         if (ids.length !== 5) { state.umtAutopilotSkip = duelMine(state); return null; }
       }
-      state.draft = ids;
+      state.draft = [];
       return { word: word, loose: anyLetters(g), ids: ids };
-    }, true);
+    }, true) || null;
+  }
+
+  function duelAutopilotSubmit(game, plan) {
+    var stages = window.CuddleExpandedStages;
     if (!plan) return { ok: false };
+    stages.withDuel(game, function fill(g) { g.state.draft = plan.ids.slice(); }, true);
     game._autopilotPlaying = true;
     game._copilotWord = plan.loose ? plan.word : null;
     var result;
@@ -363,6 +370,24 @@
     var state = game && game.state;
     var board = document.querySelector("#cuddleScreen .cuddle-board");
     if (!board || !state || !Array.isArray(state.history)) return;
+    if (board.classList.contains("umt-duel-board")) {
+      board.querySelectorAll(".umt-copilot-badge").forEach(function stray(el) { if (!el.classList.contains("is-duel-auto")) el.remove(); });
+      board.querySelectorAll(".is-copilot-row, .is-copilot-turn").forEach(function clear(row) { row.classList.remove("is-copilot-row", "is-copilot-turn"); });
+      var mine = board.querySelector(".umt-duel-row.is-your-turn");
+      var autoBadge = board.querySelector(".umt-copilot-badge.is-duel-auto");
+      var autoTurn = Boolean(mine) && (duelAutopilotTyping() || duelTurn(game));
+      if (autoTurn && !(mine && mine.contains(autoBadge))) {
+        if (autoBadge) autoBadge.remove();
+        autoBadge = document.createElement("span");
+        autoBadge.className = "umt-copilot-badge is-duel-auto";
+        autoBadge.setAttribute("aria-hidden", "true");
+        autoBadge.textContent = "Autopilot…";
+        mine.appendChild(autoBadge);
+      } else if (!autoTurn && autoBadge) {
+        autoBadge.remove();
+      }
+      return;
+    }
     var rows = board.querySelectorAll(".cuddle-board-row");
     var turn = aiTurn(game);
     rows.forEach(function mark(row, index) {
@@ -388,17 +413,50 @@
     });
   }
 
+  // In a Duel, Autopilot types its word into your row a letter at a time
+  // (as fast as the rival types), shows it a moment, then submits.
+  var TYPE_STEP_MS = 170;
+  var TYPED_HOLD_MS = 450;
   var duelThinking = false;
+  function redraw() {
+    try { window.dispatchEvent(new Event("cuddle:campaign-update")); } catch (_error) { /* next render */ }
+  }
   function duelTick(game) {
     if (duelThinking || !duelTurn(game)) return;
     duelThinking = true;
-    setTimeout(function play() {
-      duelThinking = false;
+    setTimeout(function start() {
       var live = activeGame();
-      if (!live || !duelTurn(live)) return;
-      duelAutopilotGuess(live);
-      try { window.dispatchEvent(new Event("cuddle:campaign-update")); } catch (_error) { /* next render */ }
+      var plan = live ? duelAutopilotPlan(live) : null;
+      if (!plan) {
+        duelThinking = false;
+        redraw();
+        return;
+      }
+      var stages = window.CuddleExpandedStages;
+      var typed = 0;
+      (function typeNext() {
+        var now = activeGame();
+        if (!now || !duelTurn(now)) { duelThinking = false; return; }
+        typed += 1;
+        stages.withDuel(now, function show(g) { g.state.draft = plan.ids.slice(0, typed); }, true);
+        redraw();
+        if (typed < plan.ids.length) {
+          setTimeout(typeNext, TYPE_STEP_MS);
+          return;
+        }
+        setTimeout(function submit() {
+          var last = activeGame();
+          duelThinking = false;
+          if (!last || !duelTurn(last)) return;
+          duelAutopilotSubmit(last, plan);
+          redraw();
+        }, TYPED_HOLD_MS);
+      }());
     }, THINK_MS);
+  }
+
+  function duelAutopilotTyping() {
+    return duelThinking;
   }
 
   function tick() {
