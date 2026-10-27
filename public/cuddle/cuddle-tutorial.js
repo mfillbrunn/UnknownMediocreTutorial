@@ -150,8 +150,8 @@
       at: "top",
       cards: [
         { title: "Find the secret word", text: "Each stage hides a five-letter word. Build a guess from your letter cards and submit it. <span class=\"umt-tut-g\">Green</span>: right letter, right spot. <span class=\"umt-tut-y\">Yellow</span>: in the word, wrong spot. <span class=\"umt-tut-x\">Grey</span>: not in the word.", focus: ".cuddle-board", at: "bottom" },
-        { title: "Your cards", skip: onlyEasy, text: "<b>Vowels</b> are always in your hand, and turn <span class=\"umt-tut-r\">red</span> once they're ruled out. Every consonant of the answer is in your hand too, mixed in with a few others: work out which ones." },
-        { title: "Your cards", skip: easyRun, text: "<b>Vowels</b> are reusable: they stay in your hand all stage, and turn <span class=\"umt-tut-r\">red</span> once they're ruled out. <b>Consonants</b> are used up when you guess with them, and new ones are drawn from your deck. The little pile shows how many are left.", focus: ".cuddle-hand" },
+        { title: "Your cards", skip: onlyEasy, text: "Any card in your hand can be used <b>as many times as you like</b> in a word. <b>Vowels</b> always stay in your hand, and turn <span class=\"umt-tut-r\">red</span> once they're ruled out. Every consonant of the answer is in your hand too, mixed in with a few others: work out which ones." },
+        { title: "Your cards", skip: easyRun, text: "Any card in your hand can be used <b>as many times as you like</b> in a word. After a guess, <b>vowels</b> stay in your hand (they turn <span class=\"umt-tut-r\">red</span> once ruled out), and so do letters found in the answer. Other <b>consonants</b> you guessed with are used up, and new ones are drawn from your deck. The little pile shows how many are left.", focus: ".cuddle-hand" },
         { title: "Cards, squares and tiles", skip: easyRun, text: "Three words, three places. <b>Cards</b> are in your hand and deck (letters, and special ones like lucky or Joker cards). <b>Squares</b> are spots on the board (some are special, like money squares). <b>Tiles</b> are the colours a guess shows: green, yellow or grey.", focus: ".cuddle-hand" },
         { title: "Mulligans", skip: easyRun, text: "Stuck with letters you can't use? A <b>mulligan</b> swaps some consonants for fresh ones from the deck. You get a few each stage, and any you don't use pay points at the end.", focus: ".cuddle-mulligan" },
         // Easy and Medium runs start with Fish Hook (cuddle-new-badges.js).
@@ -252,8 +252,8 @@
       at: "top",
       cards: [
         { title: "Find the secret word", text: "Each stage hides a five-letter word. Build a guess from your letter cards and tap <b>Submit word</b>. <span class=\"umt-tut-g\">Green</span>: right letter, right spot. <span class=\"umt-tut-y\">Yellow</span>: in the word, wrong spot. Grey: not in the word." },
-        { title: "Building a word", text: "Tap a card to put its letter in the next empty spot. Changed your mind? Tap a letter in your word to send it back, or tap <b>⌫</b> to take off the last one. Vowels can be used as often as you like.", focus: ".cuddle-hand" },
-        { title: "Your cards", text: "<b>Vowels</b> are always in your hand. <b>Consonants</b> are cards: this time every consonant of the answer is already in your hand, so you only need to find the order.", focus: ".cuddle-hand" },
+        { title: "Building a word", text: "Tap a card to put its letter in the next empty spot. Changed your mind? Tap a letter in your word to send it back, or tap <b>⌫</b> to take off the last one. Any card can be used as often as you like in a word.", focus: ".cuddle-hand" },
+        { title: "Your cards", text: "<b>Vowels</b> always stay in your hand. Wrong <b>consonants</b> leave it after a guess, and new ones are drawn. This time every consonant of the answer is already in your hand, so you only need to find the order.", focus: ".cuddle-hand" },
         { title: "Themes", text: "The tags at the top are the answer's <b>themes</b>, a hint about what kind of word it is.", focus: ".cuddle-category-chips" },
         { title: "A hint for this one", text: "The answer uses all three of your consonants, <b>S</b>, <b>C</b> and <b>B</b>, in that order, with two vowels in between. And it's a fun activity!", focus: ".cuddle-hand" }
       ]
