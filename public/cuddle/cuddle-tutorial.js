@@ -338,7 +338,7 @@
       when: function when() { return present(".umt-event-page") && present(".umt-event-choice"); },
       at: "bottom",
       cards: [
-        { title: "A choice", text: "Pick the help you like for the rest of the way. <b>A hint</b> marks one letter of every answer yellow from the start. <b>Themes</b> shows every theme of every answer." }
+        { title: "A choice", text: "Pick the help you like for the rest of the way. <b>A hint</b> marks one letter of every answer yellow from the start. <b>A free opener</b> lets your first guess in every stage be any five letters, so you can test the letters you like." }
       ]
     },
     {

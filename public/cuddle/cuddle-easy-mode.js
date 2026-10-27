@@ -12,8 +12,9 @@
  *     deck only on the Mulligan stage and from the Crossroads on, where one
  *     letter of the answer waits on top of the deck;
  *   - a Crossroads stop after the second stage asks: a hint (every stage
- *     from then on starts with a letter of the answer marked yellow) or
- *     themes (every theme shown from then on);
+ *     from then on starts with a letter of the answer marked yellow) or a
+ *     free opener (every stage's first guess can be any five letters: the
+ *     Bold Opener badge);
  *   - no quests, special squares or badge packs;
  *   - a reward screen offers three simple badges (EASY_HELPERS).
  * The run is marked when it starts (state.umtEasyMode). It reuses the
@@ -114,10 +115,18 @@
     var state = game && game.state;
     if (!state) return "";
     var edu = eduState(state);
-    edu.choice = choice === "hint" ? "hint" : "themes";
+    edu.choice = choice === "hint" ? "hint" : choice === "themes" ? "themes" : "opener";
     if (edu.choice === "themes") {
       showThemes(state, MAX_THEMES);
       return "From here on, every answer shows all of its themes.";
+    }
+    if (edu.choice === "opener") {
+      // Bold Opener, level 1 (cuddle-powers.js): the first guess of every
+      // stage can be any five letters.
+      if (!state.umtPowers || typeof state.umtPowers !== "object") state.umtPowers = {};
+      if (!state.umtPowers.levels || typeof state.umtPowers.levels !== "object") state.umtPowers.levels = {};
+      state.umtPowers.levels.boldOpener = Math.max(1, Number(state.umtPowers.levels.boldOpener) || 0);
+      return "From here on, your first guess in every stage can be any five letters.";
     }
     return "From here on, every stage starts with a letter of the answer marked yellow.";
   }
