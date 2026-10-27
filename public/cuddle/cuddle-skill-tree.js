@@ -213,8 +213,8 @@
         // One Joker per level, straight up to three (by request, an even step
         // rather than a bigger third pick).
         { id: "jokerCache", icon: "🃏", title: "Small Joker Cache", tier: "rare", type: "letters", maxLevel: 3,
-          levels: ["2 Joker cards go in your deck each stage. A Joker card can be any letter.", "3 Joker cards go in your deck each stage.", "5 Joker cards go in your deck each stage."],
-          description: "1 Joker card per level in your deck every stage", level: g => v5Level(g, "umtJokerCache") },
+          levels: ["1 Joker card goes in your deck each stage. A Joker card can be any letter.", "2 Joker cards go in your deck each stage.", "Still 2, now golden: a Joker letter that comes back yellow is placed in its spot."],
+          description: "Joker cards in your deck every stage", level: g => v5Level(g, "umtJokerCache") },
         { id: "jokerLens", icon: "🔎", title: "Joker Lens", tier: "rare", type: "letters", maxLevel: 2,
           levels: ["A Joker in a finished word shows the letter it will become.",
             "When more than one letter works, the Joker slowly cycles through them: submit while the one you want is showing."],
@@ -459,7 +459,7 @@
     pickpocket: ["+$2 per yellow", "+$3 per yellow", "+$6 per yellow"],
     gracePeriod: ["1st late guess free", "2 late guesses free", "2 free, then half"],
     ideaTiles: ["1 idea card", "1 super idea (green)", "2 super ideas"],
-    jokerCache: ["2 Joker cards", "3 Joker cards", "5 Joker cards"],
+    jokerCache: ["1 Joker card", "2 Joker cards", "2 golden Jokers"],
     jokerLens: ["Joker shows its letter", "Joker cycles its letters"],
     strikeThrough: ["+1 per letter ruled out", "+2 per letter ruled out", "+3 per letter ruled out"],
     highRoller: ["Bet 10, win 20", "Bet 20, win 40", "Bet 40, win 80"],
