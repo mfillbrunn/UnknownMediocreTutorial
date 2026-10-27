@@ -212,6 +212,9 @@
 
   // Powers only offered once they'd do something.
   var OFFER_WHEN = {
+    // Quest Chain (legendary) is retired: never offered. A run that holds
+    // it keeps it (cuddle-new-badges.js still plays it).
+    questChain: function retired() { return false; },
     // A way to get Jokers.
     jokerLens: function hasJokers(game) {
       var mega = game.state && game.state.megaState;
