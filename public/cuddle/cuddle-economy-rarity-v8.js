@@ -11,17 +11,15 @@
   const TIERS = Object.freeze({ COMMON: "common", RARE: "rare", EPIC: "epic", LEGENDARY: "legendary" });
   const TIER_ORDER = Object.freeze([TIERS.COMMON, TIERS.RARE, TIERS.EPIC, TIERS.LEGENDARY]);
   // Odds of each tier for a between-round offer (all cards in one offer
-  // share a tier). Rarity Lens shifts them up; the shop leans a bit rarer.
-  // Legendary rewards are never rolled here: they come only from the pick
-  // of three after each boss (legendaryChoices below).
-  const DEFAULT_WEIGHTS = Object.freeze({ common: 55, rare: 35, epic: 10, legendary: 0 });
-  const BOOSTED_WEIGHTS = Object.freeze({ common: 35, rare: 40, epic: 25, legendary: 0 });
-  // Later worlds lean rarer: world 2, then world 3 (by bosses beaten), each
-  // with its Rarity Lens version.
+  // share a tier), the same in every world: 58 / 30 / 10 / 2. Rarity Lens
+  // shifts them up; the shop has its own. A boss's pick of three is all
+  // Legendary (legendaryChoices below); a Trial pays Rare, a Duel Epic.
+  const DEFAULT_WEIGHTS = Object.freeze({ common: 58, rare: 30, epic: 10, legendary: 2 });
+  const BOOSTED_WEIGHTS = Object.freeze({ common: 38, rare: 37, epic: 20, legendary: 5 });
   const WORLD_WEIGHTS = Object.freeze([
     [DEFAULT_WEIGHTS, BOOSTED_WEIGHTS],
-    [Object.freeze({ common: 38, rare: 40, epic: 22, legendary: 0 }), Object.freeze({ common: 22, rare: 42, epic: 36, legendary: 0 })],
-    [Object.freeze({ common: 22, rare: 43, epic: 35, legendary: 0 }), Object.freeze({ common: 12, rare: 40, epic: 48, legendary: 0 })]
+    [DEFAULT_WEIGHTS, BOOSTED_WEIGHTS],
+    [DEFAULT_WEIGHTS, BOOSTED_WEIGHTS]
   ]);
   const SHOP_WEIGHTS = Object.freeze({ common: 45, rare: 35, epic: 20, legendary: 0 });
   const PRICE_RANGES = Object.freeze({
@@ -77,6 +75,7 @@
     // A one-time letter, so Common.
     ["position peek", TIERS.COMMON],
     ["bonus squares", TIERS.COMMON],
+    ["money point squares", TIERS.COMMON],
     ["mulligan squares", TIERS.COMMON],
 
     ["vowel lamp", TIERS.RARE],
@@ -89,6 +88,7 @@
     ["secrets counter", TIERS.RARE],
     ["bigger cuddle", TIERS.RARE],
     ["treasure map", TIERS.RARE],
+    ["more squares", TIERS.RARE],
     ["surprise assignment", TIERS.RARE],
     ["encore", TIERS.COMMON],
     ["rainy day fund", TIERS.RARE],
@@ -104,7 +104,7 @@
     ["process of elimination", TIERS.EPIC],
     ["cull letters", TIERS.EPIC],
     ["full hand mulligan", TIERS.EPIC],
-    ["quest cadence", TIERS.EPIC],
+    ["quest cadence", TIERS.RARE],
     ["lasting quests", TIERS.EPIC],
     ["oracle squares", TIERS.EPIC],
 
@@ -172,8 +172,6 @@
       (state) => Number(state.upgrades?.freeVowelSweep || 0) < 2),
     legendaryPick("biggerMulligans", "✋", "Full Hand Mulligan", "Every mulligan can now replace up to five letters.",
       (state) => Number(state.upgrades?.mulliganSize || 0) < 2),
-    legendaryPick("questCadence", "❗", "Quest Cadence", "One more quest a stage: guess 3 gets one too (quests on 2, 3, 5). Level 2 adds guess 1 (1, 2, 3, 5). One quest at a time.",
-      (state) => Number(state.upgrades?.questCadence || 0) < 2),
     legendaryPick("revealGreen", "📍", "Position Peek", "Your next stage opens with one letter of the answer already in its exact place. One time.",
       (state) => !state.pendingPositionPeek),
     legendaryPick("questDoublePick", "✌️", "Double Pick", "Quest reward screens let you choose two options instead of one, for the rest of the run.",
@@ -188,7 +186,7 @@
 
   const KNOWN_ORDINARY_NAMES = new Set([
     "second thoughts", "reward refresh", "quest value", "second guess quest",
-    "bigger mulligan", "cull x & y", "pruning shears", "cull letters", "bonus squares",
+    "bigger mulligan", "cull x & y", "pruning shears", "cull letters", "bonus squares", "money point squares",
     "opening verse", "quest ink", "wide margins", "grey matters", "gray matters",
     "bigger hand", "mulligan dividend", "early finish", "colour surge", "color surge",
     "greyscale", "grayscale", "reward echo", "precise green", "wild card",
@@ -1456,6 +1454,14 @@
       case "random-quest":
         addUpgradeStack(state, "random-quest", 1);
         return true;
+      case "quest-cadence": {
+        if (!state.upgrades || typeof state.upgrades !== "object") state.upgrades = {};
+        const before = Number(state.upgrades.questCadence || 0);
+        const value = callOriginal();
+        if (Number(state.upgrades.questCadence || 0) <= before) state.upgrades.questCadence = before + 1;
+        state.upgrades.questCadence = Math.min(3, Number(state.upgrades.questCadence || 0));
+        return value === undefined ? true : value;
+      }
       case "alphabet-compass":
         addUpgradeStack(state, "alphabet-compass", 1);
         return true;
@@ -1606,14 +1612,19 @@
     return def;
   }
 
-  function makeRandomQuestReward(template) {
+  // Quest Cadence: a regular Rare badge (Surprise Assignment folded in).
+  // Each level adds a quest guess: 3, then 1, then 4 (the engine's
+  // upgrades.questCadence, read by its quest timing).
+  function makeQuestCadenceReward(template) {
     const def = cloneDefinition(template || {});
-    setName(def, "Surprise Assignment");
-    setId(def, "surprise-assignment");
-    setDescription(def, "Add one extra quest at a random turn in every stage. Stackable; each copy schedules another quest.");
+    setName(def, "Quest Cadence");
+    setId(def, "questCadence");
+    setDescription(def, "One more quest a stage: guess 3 gets one too (quests on 2, 3, 5). Level 2 adds guess 1, level 3 guess 4. One quest at a time.");
     setTier(def, TIERS.RARE);
-    setMaxStack(def, 99);
-    replaceHandlers(def, "random-quest");
+    setMaxStack(def, 3);
+    def.icon = "\u2757";
+    def.available = (state) => Number(state?.upgrades?.questCadence || 0) < 3;
+    replaceHandlers(def, "quest-cadence");
     return def;
   }
 
@@ -1630,8 +1641,8 @@
         out.push(def);
       }
     }
-    if (!out.some((def) => norm(getName(def)) === "surprise assignment")) {
-      out.push(makeRandomQuestReward(template));
+    if (!out.some((def) => norm(getName(def)) === "quest cadence")) {
+      out.push(makeQuestCadenceReward(template));
     }
     if (!out.some((def) => norm(getName(def)) === "alphabet compass")) {
       out.push(makeAlphabetCompassReward(template));
@@ -1806,11 +1817,18 @@
     ordinary.push(...LEGENDARY_PICKS);
     const unique = new Map();
     for (const def of ordinary) {
-      if (!rewardAvailable(def, context, state)) continue;
+      if (RETIRED_NAMES.has(norm(getName(def))) || !rewardAvailable(def, context, state)) continue;
       unique.set(norm(getName(def)), atNextLevelTier(def, state));
     }
     return [...unique.values()];
   }
+
+  // Surprise Assignment was folded into Quest Cadence: not offered any more
+  // (a run that holds it has its copies turned into Quest Cadence levels).
+  const RETIRED_NAMES = new Set(["surprise assignment"]);
+  // Badges that turn up more often within their rarity: each extra weight
+  // is one more ticket in the draw.
+  const FAVOURED = Object.freeze({ "money point squares": 2, "bonus squares": 2 });
 
   function chooseSameTier(count, context, state, seed = null) {
     const pool = allOrdinaryCandidates(context, state);
@@ -1826,7 +1844,11 @@
     const world = Math.max(0, Math.min(2, Array.isArray(state && state.bossGatesDone) ? state.bossGatesDone.length : 0));
     const weights = WORLD_WEIGHTS[world][lens ? 1 : 0];
     const tier = weightedTier(weights, available, seed);
-    const selected = shuffle(grouped[tier] || [], seed == null ? null : `${seed}:shuffle`).slice(0, count);
+    const tickets = [];
+    (grouped[tier] || []).forEach((def) => {
+      for (let n = 0; n < (FAVOURED[norm(getName(def))] || 1); n += 1) tickets.push(def);
+    });
+    const selected = [...new Set(shuffle(tickets, seed == null ? null : `${seed}:shuffle`))].slice(0, count);
     selected.forEach((def) => { def.__cuddleV8OfferTier = tier; });
     return selected;
   }
@@ -2480,9 +2502,12 @@
       greenHints: []
     };
 
+    // Surprise Assignment copies (from before it was folded into Quest
+    // Cadence) become Quest Cadence levels.
     const randomQuestStacks = upgradeStack(state, "random-quest");
-    for (let index = 0; index < randomQuestStacks; index += 1) {
-      data.stage.randomQuestTurns.push(randomInt(1, Math.max(1, maxRows(state) - 1), `${id}:random-quest:${index}`));
+    if (randomQuestStacks > 0 && state.upgrades && typeof state.upgrades === "object") {
+      state.upgrades.questCadence = Math.min(3, Number(state.upgrades.questCadence || 0) + randomQuestStacks);
+      addUpgradeStack(state, "random-quest", -randomQuestStacks);
     }
 
     setQuestRerollsForStage(state);

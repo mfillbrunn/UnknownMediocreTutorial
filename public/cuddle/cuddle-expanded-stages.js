@@ -327,17 +327,11 @@
     return RIVALS[duel && duel.difficulty] || RIVALS.medium;
   }
 
-  // A hooded rival holding a letter tile, eyes glowing out of the hood.
+  // The rival is the Secretkeeper from multiplayer (index.html's
+  // #icon-role-secretkeeper): its eyes glow in the rival's colour.
   function rivalSvg(rival) {
-    return `<svg class="umt-rival" viewBox="0 0 24 24" aria-hidden="true">`
-      + `<path d="M12 2.3c-4.7 0-7.6 3.7-7.6 8.4V22h15.2V10.7c0-4.7-2.9-8.4-7.6-8.4z" fill="${rival.robe}"/>`
-      + `<path d="M12 2.3c-4.7 0-7.6 3.7-7.6 8.4V22h2.2V11c0-3.8 2.1-6.9 5.4-7.6z" fill="#000" opacity=".18"/>`
-      + `<path d="M12 5.6c-3.1 0-5 2.5-5 5.5 0 3.1 2.1 5.4 5 5.4s5-2.3 5-5.4c0-3-1.9-5.5-5-5.5z" fill="#140f1f"/>`
-      + `<circle class="umt-rival-eye" cx="9.9" cy="11.2" r="1.15" fill="${rival.eyes}"/>`
-      + `<circle class="umt-rival-eye" cx="14.1" cy="11.2" r="1.15" fill="${rival.eyes}"/>`
-      + `<rect x="8.4" y="16.6" width="7.2" height="5.4" rx="1.3" fill="#f6c956" stroke="#140f1f" stroke-width=".7"/>`
-      + `<text x="12" y="20.7" text-anchor="middle" font-family="system-ui,sans-serif" font-size="4.4" font-weight="900" fill="#140f1f">?</text>`
-      + `</svg>`;
+    return `<svg class="umt-rival" viewBox="0 0 120 120" style="color:${rival.robe}" aria-hidden="true">`
+      + `<use href="#icon-role-secretkeeper"></use></svg>`;
   }
   let challengeObserver = null;
 
@@ -3190,7 +3184,7 @@
         [heart, "Easier", "A theme of the answer, or one of its letters, is given at the start.", 5],
         ["", "Regular", "A plain Wordle. Sometimes a word is played for you as your first guess.", 12],
         [skull, "Harder", "One challenge against you.", 25],
-        [skull + skull, "Hard", "Two challenges, or a Rare Word: an unusual answer.", 50],
+        [skull + skull, "Hard", "Two challenges, or a Rare Word: the answer may be unusual.", 50],
         [skull + skull + skull, "Hardest", "A Rare Word with a challenge on top.", 80]
       ];
       const markRows = marks.map(([mark, title, text, pay]) => (

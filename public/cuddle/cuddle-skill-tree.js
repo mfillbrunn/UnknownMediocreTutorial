@@ -146,16 +146,14 @@
         { id: "rewardEcho", icon: "🔁", title: "Reward Echo", tier: "rare", type: "money", maxLevel: 1, description: "The next badge you pick on a reward screen comes at its top level.", level: g => ledgerCount(g, "rewardEcho") },
         { id: "greenCount", icon: "🔢", title: "Precise Green", tier: "rare", type: "clues", maxLevel: 1, description: "A green tile also shows how many times its letter is in the answer.",
           level: g => Math.max(Number(g?.state?.megaState?.greenCountLevel) || 0, g?.state?.megaState?.greenCountUnlocked ? 1 : 0) },
-        { id: "surprise-assignment", icon: "📜", title: "Surprise Assignment", tier: "rare", type: "quests", maxLevel: 3,
-          levels: ["+1 extra quest pops up in every stage.", "+2 extra quests pop up in every stage.", "+4 extra quests pop up in every stage."],
-          level: g => ledgerCount(g, "surprise-assignment") },
+        // (Surprise Assignment was folded into Quest Cadence.)
         // More special board tiles (cuddle-points-money.js).
-        { id: "treasureMap", icon: "🗺️", title: "Treasure Map", tier: "rare", type: "tiles", maxLevel: 3,
-          levels: ["+1 special square on the board every stage.", "+2 special squares on the board every stage.", "+4 special squares on the board every stage."],
+        { id: "treasureMap", icon: "🗺️", title: "More Squares", tier: "rare", type: "tiles", maxLevel: 3,
+          levels: ["+1 square on the board every stage, of any kind you've unlocked.", "+2 squares every stage.", "+4 squares every stage."],
           level: g => ledgerCount(g, "treasureMap") },
         // Every kind of board square needs its unlock.
-        { id: "bonusSquares", icon: "💰", title: "Bonus Squares", tier: "common", type: "tiles", maxLevel: 3,
-          levels: ["Money and points squares appear on the board. Get a green or yellow on one: money or points.", "1 more square every stage.", "2 more squares every stage."],
+        { id: "bonusSquares", icon: "💰", title: "Money & Point Squares", tier: "common", type: "tiles", maxLevel: 3,
+          levels: ["Money and point squares appear on the board. Get a green or yellow on one: money or points.", "1 more square every stage.", "2 more squares every stage."],
           level: g => ledgerCount(g, "bonusSquares") },
         { id: "mulliganTiles", icon: "🔄", title: "Mulligan Squares", tier: "common", type: "tiles", maxLevel: 3,
           levels: ["Some squares on the board become mulligan squares. Get a green or yellow on one: +1 mulligan.", "Mulligan squares show up 2 times as often.", "Mulligan squares show up 4 times as often."],
@@ -368,8 +366,8 @@
         { id: "freeVowelSweep", icon: "🅰️", title: "Free Vowel Sweep", tier: "legendary", type: "clues", maxLevel: 1, description: "Each stage, 2 vowels are tested for free: you learn if they're in the answer.", level: g => upgradeCount(g, "freeVowelSweep") },
         { id: "revealGreen", icon: "📍", title: "Position Peek", tier: "common", type: "clues", maxLevel: 1, description: "Your next stage starts with 1 letter already in its spot (one time only)." },
         { id: "questDoublePick", icon: "✌️", title: "Double Pick", tier: "legendary", type: "quests", maxLevel: 1, description: "When a quest pays out, pick 2 rewards instead of 1.", level: g => upgradeCount(g, "questDoublePick") },
-        { id: "questCadence", icon: "❗", title: "Quest Cadence", tier: "epic", type: "quests", maxLevel: 2,
-          levels: ["You also get a quest on guess 3 (quests on guesses 2, 3 and 5).", "You also get a quest on guess 1 (quests on guesses 1, 2, 3 and 5)."],
+        { id: "questCadence", icon: "❗", title: "Quest Cadence", tier: "rare", type: "quests", maxLevel: 3,
+          levels: ["You also get a quest on guess 3 (quests on guesses 2, 3 and 5).", "You also get a quest on guess 1 (quests on guesses 1, 2, 3 and 5).", "You also get a quest on guess 4 (quests on guesses 1 to 5)."],
           level: g => upgradeCount(g, "questCadence") },
         { id: "questPersistReward", icon: "⏳", title: "Lasting Quests", tier: "epic", type: "quests", maxLevel: 1, description: "A quest you don't finish stays open for the rest of the stage, beside the next quest: up to two at once (tap 1 or 2 to see each).", level: g => (g?.state?.megaState?.questPersistsForRound ? 1 : 0) },
         { id: "allThemesBoss", icon: "🔮", title: "All-Seeing Atlas", tier: "legendary", type: "clues", maxLevel: 1, description: "Every stage starts by showing all of the answer's themes.", level: g => (bossRewardOwned(g, "umtAllThemes") ? 1 : 0) },
@@ -420,7 +418,7 @@
       "coachPossibleAnswers", "coachMeterThreshold", "coachMeterReward"],
     gold: ["pickpocket", "haggler", "wideChoice", "treasureHunter", "rainyDay", "doubleDown", "highRoller", "lastStand",
       "blackMarket", "treasureChest", "insertCoin", "goldenLedger"],
-    brass: ["questPoints", "questRefreshes", "questReroll", "surprise-assignment", "questCadence", "questPersistReward", "questDoublePick",
+    brass: ["questPoints", "questRefreshes", "questReroll", "questCadence", "questPersistReward", "questDoublePick",
       "questMastery", "overtime", "questChain", "questScout", "questClue", "questSatchel"],
     pearl: ["hardMode", "mulliganValueBoost", "monksVow", "leanBuild", "gracePeriod", "mistakeShield", "cleanSlate", "ascetic"]
   };
@@ -442,9 +440,9 @@
     earlySolveBoost: ["+5 per spare guess", "+10 per spare guess", "+20 per spare guess"],
     colourTrade: ["Greens +0.75", "Greens +1.5", "Greens +2.25"],
     greyscale: ["Greys pay 0.75", "Greys pay 1.5", "Greys pay 2.25"],
-    "surprise-assignment": ["+1 quest a stage", "+2 quests a stage", "+4 quests a stage"],
-    treasureMap: ["+1 special square", "+2 special squares", "+4 special squares"],
-    bonusSquares: ["Money & points squares", "+1 square a stage", "+2 squares a stage"],
+    "surprise-assignment": ["+1 quest a stage", "+2 quests a stage", "+3 quests a stage"],
+    treasureMap: ["+1 square a stage", "+2 squares a stage", "+4 squares a stage"],
+    bonusSquares: ["Money & point squares", "+1 square a stage", "+2 squares a stage"],
     mulliganTiles: ["Mulligan squares", "Mulligan squares x2", "Mulligan squares x4"],
     jokerTiles: ["Joker squares", "Joker squares x2", "Joker squares x4"],
     oracleTiles: ["Oracle squares", "Oracle squares x2", "Oracle squares x4"],
@@ -469,7 +467,7 @@
     waveTiles: ["1 wave card", "2 wave cards", "4 wave cards"],
     luckyClover: ["1 lucky card, +10", "2 lucky cards, +14 each", "4 lucky cards, +20 +1 a badge each"],
     fishHook: ["Fish 1 discard a stage", "Fished letter tested", "Auto-hooks a right letter"],
-    questCadence: ["Quests on 2, 3, 5", "Quests on 1, 2, 3, 5"],
+    questCadence: ["Quests on 2, 3, 5", "Quests on 1, 2, 3, 5", "Quests on 1 to 5"],
     questScout: ["1 quest letter placed", "2 quest letters placed"],
     questClue: ["Clue reward: yellow hint", "Clue reward: green hint"],
     autopilot: ["AI every 3rd guess, your cards", "AI every 3rd guess, any letters", "AI every 2nd guess, any letters"],
@@ -609,8 +607,21 @@
     if (NODES_BY_ID.has(id)) NODES_BY_NAME.set(alias, NODES_BY_ID.get(id));
   }
 
+  // A badge put to sleep for the stage in play (Storm Spire's Lightning,
+  // cuddle-world-identity.js): it reads as level 0 until the stage ends.
+  function sleeping(game, id) {
+    const state = game?.state;
+    const sleep = state?.umtStormSleep;
+    if (!sleep || !id || sleep.id !== id) return false;
+    // Struck while the stage is being dealt: asleep for the deal as well.
+    if (sleep.pending) return true;
+    if (state.status !== "playing") return false;
+    return sleep.key === [state.runId || "", state.round || 0, state.secret || ""].join(":");
+  }
+
   function nodeLevel(game, node) {
     if (!game || typeof node?.level !== "function") return 0;
+    if (sleeping(game, node.id)) return 0;
     try {
       const value = Number(node.level(game));
       return Number.isFinite(value) && value > 0 ? value : 0;
@@ -717,6 +728,7 @@
     TYPES,
     TYPE_ORDER,
     isOwned,
+    sleeping,
     level: nodeLevel,
     findNode,
     findNodeByName,

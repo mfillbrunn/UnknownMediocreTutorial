@@ -168,7 +168,9 @@
   // long stage). Each Quest Cadence level adds one more guess that had
   // none -- level 1 adds guess 3, level 2 guess 1 -- so quests come more
   // often but there is only ever one at a time.
-  const QUEST_CADENCE_EXTRA_GUESSES = Object.freeze([3, 1]);
+  // Quest Cadence (Surprise Assignment folded in): level 1 adds guess 3,
+  // level 2 guess 1, level 3 guess 4.
+  const QUEST_CADENCE_EXTRA_GUESSES = Object.freeze([3, 1, 4]);
   function isQuestGuess(guess, cadenceLevel) {
     const n = Math.floor(Number(guess) || 0);
     if (n < 1) return false;
@@ -2187,7 +2189,7 @@
           // formula in _ensureQuestForNextGuess) the regular Quest Cadence
           // round reward used to grant -- retired from that pool since
           // Quest Trial is now the only source of it.
-          const next = Math.min(2, Number(this.state.upgrades.questCadence || 0) + 1);
+          const next = Math.min(QUEST_CADENCE_EXTRA_GUESSES.length, Number(this.state.upgrades.questCadence || 0) + 1);
           this.state.upgrades.questCadence = next;
           return `Quest Cadence: quests now come on guesses ${questGuessList(next).join(", ")}.`;
         }
@@ -2837,17 +2839,17 @@
     {
       id: "bonusSquares",
       icon: "💰",
-      title: "Bonus Squares",
+      title: "Money & Point Squares",
       tier: "common",
-      description: "Money and points squares on the board: a green or yellow on one pays money or points. Level 2: one more square a stage. Level 3: two more.",
+      description: "Money and point squares on the board: a green or yellow on one pays money or points. Level 2: one more square a stage. Level 3: two more.",
       max: 3
     },
     {
       id: "treasureMap",
       icon: "🗺️",
-      title: "Treasure Map",
-      tier: "common",
-      description: "One more special square on the board every stage. Level 2: two more. Level 3: four more.",
+      title: "More Squares",
+      tier: "rare",
+      description: "One more square on the board every stage, of any kind you've unlocked. Level 2: two more. Level 3: four more.",
       max: 3
     },
     {
@@ -5156,7 +5158,13 @@
     // start after them (a challenge's plan already starts with them).
     const delay = freeOpeners(game);
     const own = ownNegativeRowCount(game) + (game.isBossRound() ? delay : 0);
-    const key = [state.runId || "run", state.round || 0, state.secret || "", own, delay].join(":");
+    // A Trial stop ends on a pick from its word list: no tiles on that
+    // guess, so no curse lands on it or after it (one with no earlier free
+    // guess skips the stage). cuddle-curses.js trialPickGuess.
+    const trialPick = window.CuddlePresetTrial && typeof window.CuddlePresetTrial.trialPickGuess === "function"
+      ? Number(window.CuddlePresetTrial.trialPickGuess(game)) || 0
+      : 0;
+    const key = [state.runId || "run", state.round || 0, state.secret || "", own, delay, trialPick].join(":");
     if (mega.ratchetRowPlanKey === key && mega.ratchetRowPlan) return mega.ratchetRowPlan;
 
     const debuffs = (mega.ratchetDebuffs || []).filter(Boolean);
@@ -5165,9 +5173,10 @@
 
     // An ordinary stage has no guess limit (see submitDraft), so a
     // displaced ratchet always has somewhere to go.
-    const lastRow = game.isBossRound()
+    let lastRow = game.isBossRound()
       ? Math.max(0, Number(state.maxGuesses) || MAX_GUESSES)
       : Number.MAX_SAFE_INTEGER;
+    if (trialPick > 0) lastRow = Math.min(lastRow, trialPick - 1);
 
     const plan = {};
     shuffle(debuffs.slice(), game.random || Math.random).forEach(debuff => {

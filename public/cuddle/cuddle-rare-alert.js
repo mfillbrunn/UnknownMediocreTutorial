@@ -3,7 +3,7 @@
  * A Rare Word stage (cuddle-rebalance-v5.js, alone or stacked with other
  * challenges) is easy to miss now that a stage starts without a briefing.
  * So when one begins, a light red wash pulls over the screen, its edges
- * glow red once, and a "RARE WORD" banner with a small alarm light says
+ * glow red once, and a "MAY BE A RARE WORD" banner with a small alarm light says
  * so. It lasts about 2 seconds; a tap closes it sooner. Shown once per stage (a reload doesn't replay it).
  */
 (function () {
@@ -52,8 +52,9 @@
       + '<div class="umt-rare-edges" aria-hidden="true"></div>'
       + '<div class="umt-rare-banner">'
       + '<span class="umt-rare-siren" aria-hidden="true"><i></i></span>'
-      + '<strong>Rare word</strong>'
-      + '<small>The answer is an uncommon word this stage.</small>'
+      // "May be": one Rare Word stage in five draws an ordinary answer.
+      + '<strong><em>May be a</em>Rare word</strong>'
+      + '<small>The answer may be an uncommon word this stage.</small>'
       + '</div>';
     var close = function closeAlert() {
       if (!el.parentNode) return;

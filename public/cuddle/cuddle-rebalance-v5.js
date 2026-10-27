@@ -1895,18 +1895,10 @@
     if (!custom || !state || activeChallenge(game)) return null;
     const id = TRIAL_CHALLENGES[hash32(`${mapSeed(game)}:trial:${roundToken(game)}`) % TRIAL_CHALLENGES.length];
     const challenge = challengeById(id);
-    const engine = window.CuddleEngine;
-    let at = (state.history || []).length + freeOpeners(game);
-    for (let guard = 0; guard < 8; guard += 1) {
-      let curse = null;
-      try {
-        curse = engine && typeof engine.ratchetForGuess === "function" ? engine.ratchetForGuess(game, at + 1) : null;
-      } catch (_error) {
-        curse = null;
-      }
-      if (!curse) break;
-      at += 1;
-    }
+    // Always the first guess (after a Fast Lane's free ones): a beaten
+    // boss's curse on that guess slides to a later one (the engine's
+    // ratchetRowPlan makes way for the stage's own challenge).
+    const at = (state.history || []).length + freeOpeners(game);
     const plan = Array.from({ length: at }, () => null).concat([id]);
     custom.activeChallenge = {
       ...challenge,
@@ -4077,7 +4069,7 @@
     hideFeedback: { title: "Hide Feedback", description: "One marked tile hides its colour on this guess.", shape: "blind" },
     hiddenMargins: { title: "Hidden Tiles", description: "Two marked tiles hide their colour on this guess.", shape: "hiddenTiles" },
     chimera: { title: "Chimera", description: "A mixed boss: each guess of its window carries a different constraint.", shape: "storm" },
-    rareWord: { title: "Rare Word", description: "The answer is a rare, unusual word.", shape: "gem" },
+    rareWord: { title: "Rare Word", description: "The answer may be a rare, unusual word.", shape: "gem" },
     blueMode: { title: "Blue Mode", description: "On the marked tiles green and yellow both show as blue, so you learn the letter is in the secret but not whether it is placed right. Every other tile in the row shows its real colour.", shape: "blueTile" },
     arrowMode: { title: "Arrow Signs", description: "The marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.", shape: "arrows" },
     arrowSigns: { title: "Arrow Signs", description: "The marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.", shape: "arrows" },

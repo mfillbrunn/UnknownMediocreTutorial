@@ -57,7 +57,7 @@
     greenCount: ["A green tile normally just says \"right letter, right spot\". With this badge it also tells you how many times that letter is in the answer, so you know if it's used twice.", ["board"]],
     "surprise-assignment": ["Quests normally show up on set guesses. This badge adds extra quests at random guesses in every stage, so there are more rewards to win.", ["quest", "questReward"]],
     bonusSquares: ["The board has no special squares until a badge adds them. This one adds money ($) and points (●) squares: get a green or yellow on one and it pays out. Higher levels add more of them.", ["squares"]],
-    treasureMap: ["Special squares appear on the board in some spots. Get a green or yellow on one and it pays out: money, points, a mulligan, a Joker card or a placed letter, depending on the square. This badge adds more of them.", ["squares"]],
+    treasureMap: ["Special squares appear on the board in some spots. Get a green or yellow on one and it pays out: money, points, a mulligan, a Joker card or a placed letter, depending on the square. This badge adds more of them every stage, of the kinds you've unlocked: +1, then +2, then +4.", ["squares"]],
     mulliganTiles: ["Special squares appear on the board in some spots. A mulligan square (↻) pays out when your guess puts a green or yellow on it: you get one more mulligan for this stage.", ["squares", "mulligan"]],
     jokerTiles: ["Special squares appear on the board in some spots. A Joker square (★) pays out when your guess puts a green or yellow on it: you get a Joker card, which can be any letter.", ["squares", "jokerCard"]],
     oracleTiles: ["Special squares appear on the board in some spots. An oracle square (?) pays out when your guess puts a green or yellow on it: one letter of the answer is placed in its spot for you.", ["squares", "board"]],
@@ -119,7 +119,7 @@
     freeVowelSweep: ["At the start of every stage, 2 vowels are tested for you: each one turns yellow if it's in the answer, or red if it isn't.", ["hand"]],
     revealGreen: ["One time only: your next stage starts with one letter of the answer already in its spot.", ["board"]],
     questDoublePick: ["When you finish a quest, you take 2 of its rewards instead of 1.", ["questReward"]],
-    questCadence: ["Quests normally come on guesses 2 and 5. This badge adds guess 3, then guess 1, so you get more quests every stage.", ["quest"]],
+    questCadence: ["Quests normally come on guesses 2 and 5. This badge adds guess 3, then guess 1, then guess 4, so you get more quests every stage.", ["quest"]],
     questPersistReward: ["Normally a quest you miss is gone. With this badge it stays open for the rest of the stage, and new quests still come on their guesses, so you can have two at once. The quest bar then shows tabs 1 and 2: tap one to see that quest. Your guesses count for both.", ["quest"]],
     allThemesBoss: ["Every stage starts with all of the answer's themes shown in the theme line.", ["themes"]],
     secondCup: ["Once in the whole run: when a boss or strict stage is about to end because you're out of guesses, you get one more guess.", ["board", "map"]]

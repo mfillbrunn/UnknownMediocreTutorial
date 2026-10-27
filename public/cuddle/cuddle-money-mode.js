@@ -1162,7 +1162,10 @@
     var label = row.bonusRow ? "the unused guesses" : row.washout ? "washed-out guess" : row.timedOut ? "timed-out guess" : "guess " + (asNumber(row.index, 0) + 1);
     // The row's main line is a button so the breakdown is reachable by
     // keyboard and reads as tappable; the delegated handler does the toggle.
-    return "<div class=\"cuddle-money-payout-row" + (row.late ? " is-late" : "") + "\" data-payout-row=\"" + row.index + "\">"
+    // Its total is red only when the row lost points overall: a late guess
+    // whose quest or tiles paid more than the penalty totals green.
+    var lost = asNumber(row.amount, 0) < 0;
+    return "<div class=\"cuddle-money-payout-row" + (row.late ? " is-late" : "") + (lost ? " is-loss" : "") + "\" data-payout-row=\"" + row.index + "\">"
       + "<button type=\"button\" class=\"cuddle-money-payout-row-main\""
       + " data-cuddle-money-action=\"toggle-payout-row\""
       + " aria-expanded=\"false\" aria-label=\"Show what " + escapeHtml(label) + " paid\">"

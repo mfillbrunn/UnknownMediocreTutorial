@@ -426,7 +426,10 @@
         if (parchment >= 1 && greys) stageBonus(this, greys * PARCHMENT_GREY, "umtSchoolParchment", "Elimination rank");
         var brass = num(now.brass);
         if (entry.questComplete && brass >= 1) {
-          stageBonus(this, BRASS_POINTS, "umtSchoolBrass", "Quests rank");
+          // Paid on the spot, popping into the header's points like a
+          // quest reward (not saved for the cash-out).
+          if (typeof window.CuddleInstantPoints === "function") window.CuddleInstantPoints(this, BRASS_POINTS);
+          else stageBonus(this, BRASS_POINTS, "umtSchoolBrass", "Quests rank");
           if (brass >= 3) {
             note(this, "Quests rank: +" + addMulligans(this, 1) + " mulligan.");
             if (!mine.quests || mine.quests.key !== key) mine.quests = { key: key, count: 0, joker: false };
