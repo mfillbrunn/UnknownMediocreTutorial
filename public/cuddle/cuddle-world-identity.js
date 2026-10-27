@@ -54,7 +54,7 @@
     citadel: { icon: "👁️", name: "Watchtower", stage: "Hall",
       text: "Guesses past the guess window cost 7 points more, but solving within it pays +15." },
     storm: { icon: "⚡", name: "Lightning", stage: "Ledge",
-      text: "Your third guess in every stage pays double tile points." },
+      text: "Lightning knocks out one of your badges at the start of every stage: it does nothing until the stage ends." },
     forge: { icon: "🔥", name: "Forge Heat", stage: "Anvil",
       text: "Every green tile pays 2 more points, but every grey tile costs 1." },
     glacier: { icon: "🧊", name: "Frozen Hand", stage: "Crevasse",
@@ -183,8 +183,21 @@
   // -- stage start ------------------------------------------------------------
   var baseBegin = proto._beginRound;
   proto._beginRound = function beginRoundWithWorldTrait() {
-    var result = baseBegin.apply(this, arguments);
+    // Lightning strikes before the stage is dealt, so a badge that acts on
+    // the deal (lucky cards, idea cards...) sleeps through it too.
+    var struck = this.state && traitOf(this) === "storm" ? strikeBadge(this) : null;
+    var result;
+    try {
+      result = baseBegin.apply(this, arguments);
+    } finally {
+      var sleep = this.state && this.state.umtStormSleep;
+      if (sleep && sleep.pending) {
+        sleep.pending = false;
+        sleep.key = [this.state.runId || "", this.state.round || 0, this.state.secret || ""].join(":");
+      }
+    }
     var state = this.state;
+    if (struck) note(this, "Lightning: " + struck + " is knocked out this stage.");
     var theme = traitOf(this);
     if (!state || !theme) return result;
     try {
@@ -225,6 +238,26 @@
     }
     return result;
   };
+
+  // Lightning (storm): one of the playstyle badges you hold, picked at
+  // random, sleeps for the stage (cuddle-skill-tree.js reads it as level 0).
+  function strikeBadge(game) {
+    var state = game.state;
+    var registry = window.CuddleSkillTree;
+    var powers = window.CuddlePowers && Array.isArray(window.CuddlePowers.NEW_POWERS) ? window.CuddlePowers.NEW_POWERS : [];
+    if (!registry || !powers.length) return null;
+    state.umtStormSleep = null;
+    var held = powers.filter(function owned(id) {
+      var node = registry.findNode(id);
+      return node && registry.level(game, node) > 0;
+    });
+    var id = pickOne(game, held);
+    if (!id) return null;
+    var title = (registry.findNode(id) || {}).title || id;
+    // Its key is set once the stage is dealt (_beginRound below).
+    state.umtStormSleep = { pending: true, id: id, title: title };
+    return title;
+  }
 
   // -- each guess ---------------------------------------------------------------
   function feedbackOf(entry) {
@@ -286,9 +319,6 @@
           entry.umtEcho = echo;
           note(this, "Echo: the answer has " + heard.join(", ") + ".");
         }
-      }
-      if (theme === "storm" && history.length === 3 && num(entry.scoreDelta) > 0) {
-        stageBonus(this, num(entry.scoreDelta), "umtWorldLightning", "Lightning");
       }
       if (theme === "farm") {
         var crop = count(feedback, "green") + count(feedback, "yellow");

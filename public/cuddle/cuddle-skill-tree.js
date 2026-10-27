@@ -607,8 +607,21 @@
     if (NODES_BY_ID.has(id)) NODES_BY_NAME.set(alias, NODES_BY_ID.get(id));
   }
 
+  // A badge put to sleep for the stage in play (Storm Spire's Lightning,
+  // cuddle-world-identity.js): it reads as level 0 until the stage ends.
+  function sleeping(game, id) {
+    const state = game?.state;
+    const sleep = state?.umtStormSleep;
+    if (!sleep || !id || sleep.id !== id) return false;
+    // Struck while the stage is being dealt: asleep for the deal as well.
+    if (sleep.pending) return true;
+    if (state.status !== "playing") return false;
+    return sleep.key === [state.runId || "", state.round || 0, state.secret || ""].join(":");
+  }
+
   function nodeLevel(game, node) {
     if (!game || typeof node?.level !== "function") return 0;
+    if (sleeping(game, node.id)) return 0;
     try {
       const value = Number(node.level(game));
       return Number.isFinite(value) && value > 0 ? value : 0;
@@ -715,6 +728,7 @@
     TYPES,
     TYPE_ORDER,
     isOwned,
+    sleeping,
     level: nodeLevel,
     findNode,
     findNodeByName,
