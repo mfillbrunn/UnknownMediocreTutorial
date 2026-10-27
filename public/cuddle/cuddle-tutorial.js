@@ -441,6 +441,9 @@
       // Another overlay came up (a badge reveal, the world popup...): step
       // aside; the scene plays again from its start once it's gone.
       if (!still || busy(view.scene.except)) {
+        // Its moment passed (Collect tapped mid-lesson, say): it counts as
+        // seen, so it isn't told again at the next cash-out.
+        if (!still) markSeen(view.scene);
         close();
         if (still) return;
       } else {
@@ -481,23 +484,25 @@
     }
   }
 
-  function finishScene() {
-    var scene = view.scene;
-    if (scene && scene.edu) {
+  function markSeen(scene) {
+    if (!scene) return;
+    if (scene.edu) {
       var game = activeGame();
       if (game && game.state) {
         var own = eduRecord(game.state);
         if (own.seen.indexOf(scene.id) === -1) own.seen.push(scene.id);
         try { game.save(); } catch (_error) { /* next save */ }
       }
-      close();
-      schedule();
       return;
     }
     var record = load() || { status: "active", seen: [] };
-    if (scene && record.seen.indexOf(scene.id) === -1) record.seen.push(scene.id);
-    if (scene && scene.done) record.status = "done";
+    if (record.seen.indexOf(scene.id) === -1) record.seen.push(scene.id);
+    if (scene.done) record.status = "done";
     store(record);
+  }
+
+  function finishScene() {
+    markSeen(view.scene);
     close();
     schedule();
   }
