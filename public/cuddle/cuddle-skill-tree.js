@@ -440,7 +440,7 @@
     earlySolveBoost: ["+5 per spare guess", "+10 per spare guess", "+20 per spare guess"],
     colourTrade: ["Greens +0.75", "Greens +1.5", "Greens +2.25"],
     greyscale: ["Greys pay 0.75", "Greys pay 1.5", "Greys pay 2.25"],
-    "surprise-assignment": ["+1 quest a stage", "+2 quests a stage", "+4 quests a stage"],
+    "surprise-assignment": ["+1 quest a stage", "+2 quests a stage", "+3 quests a stage"],
     treasureMap: ["+1 square a stage", "+2 squares a stage", "+4 squares a stage"],
     bonusSquares: ["Money & point squares", "+1 square a stage", "+2 squares a stage"],
     mulliganTiles: ["Mulligan squares", "Mulligan squares x2", "Mulligan squares x4"],

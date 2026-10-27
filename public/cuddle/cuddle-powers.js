@@ -153,10 +153,7 @@
     mulliganSize: function (state) { bump(state.upgrades, "mulliganSize", 3); }, // 4, 5, whole hand
     mulliganValueBoost: function (state) { bump(state.upgrades, "mulliganPointBonus", 0); }, // 3, 6, 9
     earlySolveBoost: function (state) { bump(state.upgrades, "earlyRoundPoint", 5); }, // 5, 10, 20
-    "surprise-assignment": function (_state, game) { // 1, 2, 4 quests
-      var economy = window.CuddleEconomyRarityV8;
-      if (economy && typeof economy.applyEffect === "function") economy.applyEffect("random-quest", game);
-    }
+    // (Surprise Assignment, folded into Quest Cadence, steps evenly: +1, +2, +3.)
   };
 
   function grantThirdLevels(game) {
