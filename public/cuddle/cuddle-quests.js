@@ -396,7 +396,7 @@
     { id: "presetWordsTrial", icon: "🎴", title: "Preset Trial", kind: "round", boss: false, challenge: false, mix: false, curse: false, reward: 0,
       text: "the answer is one of 10 words shown; only 3 guesses." },
     { id: "rareWord", icon: "💎", title: "Rare Word", kind: "round", boss: false, challenge: true, mix: false, curse: false, reward: 40,
-      text: "the answer is a rare word." },
+      text: "the answer may be a rare word." },
     // A stage of its own (never stacked with another challenge): the AI
     // plays every second guess (cuddle-copilot.js). One skull: in testing
     // the hard AI guessed about as well as a careful player.

@@ -4077,7 +4077,7 @@
     hideFeedback: { title: "Hide Feedback", description: "One marked tile hides its colour on this guess.", shape: "blind" },
     hiddenMargins: { title: "Hidden Tiles", description: "Two marked tiles hide their colour on this guess.", shape: "hiddenTiles" },
     chimera: { title: "Chimera", description: "A mixed boss: each guess of its window carries a different constraint.", shape: "storm" },
-    rareWord: { title: "Rare Word", description: "The answer is a rare, unusual word.", shape: "gem" },
+    rareWord: { title: "Rare Word", description: "The answer may be a rare, unusual word.", shape: "gem" },
     blueMode: { title: "Blue Mode", description: "On the marked tiles green and yellow both show as blue, so you learn the letter is in the secret but not whether it is placed right. Every other tile in the row shows its real colour.", shape: "blueTile" },
     arrowMode: { title: "Arrow Signs", description: "The marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.", shape: "arrows" },
     arrowSigns: { title: "Arrow Signs", description: "The marked tiles show no colour, only an arrow: whether the answer's letter there comes earlier or later in the alphabet. A dash means it's green.", shape: "arrows" },

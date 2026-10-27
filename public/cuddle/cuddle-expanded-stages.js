@@ -3190,7 +3190,7 @@
         [heart, "Easier", "A theme of the answer, or one of its letters, is given at the start.", 5],
         ["", "Regular", "A plain Wordle. Sometimes a word is played for you as your first guess.", 12],
         [skull, "Harder", "One challenge against you.", 25],
-        [skull + skull, "Hard", "Two challenges, or a Rare Word: an unusual answer.", 50],
+        [skull + skull, "Hard", "Two challenges, or a Rare Word: the answer may be unusual.", 50],
         [skull + skull + skull, "Hardest", "A Rare Word with a challenge on top.", 80]
       ];
       const markRows = marks.map(([mark, title, text, pay]) => (

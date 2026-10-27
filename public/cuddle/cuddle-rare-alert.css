@@ -47,6 +47,16 @@
   text-transform: uppercase;
   text-shadow: 0 0 10px rgba(255, 60, 80, 0.45);
 }
+.umt-rare-banner strong em {
+  display: block;
+  margin-bottom: 4px;
+  color: rgba(255, 200, 208, 0.9);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-shadow: none;
+}
 .umt-rare-banner small { color: rgba(255, 230, 234, 0.85); font-size: 0.85rem; }
 /* The alarm light: a dome whose glow swings left and right. */
 .umt-rare-siren {
