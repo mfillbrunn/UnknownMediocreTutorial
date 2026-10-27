@@ -2951,7 +2951,11 @@
     if (game.state.status === "shop") {
       return window.CuddleCampaign.renderShop(game);
     }
-    if (game.state.status === "branchMap" && window.CuddleBranchMap) {
+    // A stage that leads straight back to the map (no reward screen, as in
+    // the Tutorial run) keeps its board up while its solve plays and its
+    // cash-out is showing; the map comes once it's collected.
+    if (game.state.status === "branchMap" && window.CuddleBranchMap
+        && !(finalPayoutShowing() && Array.isArray(game.state.history) && game.state.history.length)) {
       return window.CuddleBranchMap.renderMapScreen(game);
     }
     if (game.state.status === "playing" && game.state.roundIntroPending
