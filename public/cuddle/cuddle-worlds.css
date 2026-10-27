@@ -1074,3 +1074,10 @@
 .umt-legend-mark.is-heart { color: #e0457b; width: 20px; height: 20px; }
 .umt-legend-mark.is-skull { color: #e04848; }
 .umt-legend-nomark { color: #7a7488; font-size: 0.66rem; font-style: normal; text-align: center; line-height: 1.1; }
+
+/* The boss stop's preview (cuddle-branch-map.js renderBossPreview): its
+   name and one button. */
+.umt-boss-preview { position: relative; display: grid; justify-items: center; gap: 14px; padding-top: 22px; text-align: center; }
+.umt-boss-preview h2 { margin: 0; }
+.umt-boss-preview .umt-boss-enter { justify-self: stretch; font-size: 1.05rem; padding-block: 13px; }
+.umt-boss-preview .umt-boss-enter:disabled { opacity: 0.6; }
