@@ -401,8 +401,10 @@
     var secret = String(state.secret || "").toUpperCase();
     if (!/^[A-Z]{5}$/.test(secret) || !Array.isArray(state.hand) || !Array.isArray(state.deck)) return;
     var vowel = function vowel(letter) { return typeof game.isVowelGlyph === "function" ? game.isVowelGlyph(letter) : "AEIOU".indexOf(letter) !== -1; };
+    // One card of each consonant of the answer: a card can be used as many
+    // times as you like in a word, so a doubled letter needs no second one.
     var need = {};
-    secret.split("").forEach(function count(letter) { if (!vowel(letter)) need[letter] = (need[letter] || 0) + 1; });
+    secret.split("").forEach(function count(letter) { if (!vowel(letter)) need[letter] = 1; });
     var hold = heldBack(game);
     if (hold) {
       // Out of the hand, onto the top of the deck (drawn first).
@@ -428,14 +430,22 @@
       return false;
     });
     Object.keys(kept).forEach(function covered(letter) { delete need[letter]; });
+    // Never two cards of one letter in the hand: a second copy goes back
+    // to the bottom of the deck.
+    var once = {};
+    state.hand = state.hand.filter(function first(card) {
+      if (!plain(game, card)) return true;
+      if (!once[card.glyph]) { once[card.glyph] = true; return true; }
+      state.deck.unshift(card);
+      return false;
+    });
     var held = {};
     state.hand.forEach(function count(card) { if (plain(game, card)) held[card.glyph] = (held[card.glyph] || 0) + 1; });
     Object.keys(need).forEach(function bring(letter) {
       while ((held[letter] || 0) < need[letter]) {
         var from = state.deck.findIndex(function match(card) { return plain(game, card) && card.glyph === letter; });
         if (from < 0) {
-          // A doubled letter: the deck holds one of each, so the second
-          // copy is made for this stage.
+          // Not in the deck (discarded, say): made for this stage.
           if (typeof game._newCard !== "function") break;
           state.deck.push(game._newCard(letter, "deck"));
           from = state.deck.length - 1;
