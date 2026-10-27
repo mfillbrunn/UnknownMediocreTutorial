@@ -23,7 +23,7 @@
  *   - Hard Mode (common, 3 levels): a stage solved in Wordle hard mode --
  *     every guess keeps each green in place and uses each yellow you were
  *     shown -- pays +35 / +60 / +100 points (it's hard with a hand of
- *     cards).
+ *     cards). Level 2 lets one guess break hard mode, level 3 two.
  *
  * Improve (rare; id "combine"): taking it turns one of your badges into a random badge
  * one rarity higher (common -> rare -> epic -> legendary). It can only
@@ -256,12 +256,19 @@
     });
   }
 
-  function solvedInHardMode(history) {
+  // Every guess after the first in hard mode, but for up to `allowed` of
+  // them (level 2 lets one guess off, level 3 two). A row with no word (a
+  // washout, a timed-out guess) isn't a guess to check.
+  function solvedInHardMode(history, allowed) {
+    var misses = 0;
     for (var i = 1; i < history.length; i += 1) {
-      if (!followsHardMode(history[i] && history[i].word, history.slice(0, i))) return false;
+      if (!history[i] || !history[i].word) continue;
+      if (!followsHardMode(history[i].word, history.slice(0, i))) misses += 1;
     }
-    return true;
+    return misses <= (allowed || 0);
   }
+  // Guesses a level may play outside hard mode.
+  var HARD_MODE_SLACK = [0, 0, 1, 2];
 
   // -- Improve (id "combine") --------------------------------------------------
   function tierOf(item) {
@@ -455,7 +462,7 @@
         note(this, won ? "High Roller: bet " + bet + ", won +" + prize + "." : "High Roller: not solved by guess " + HIGH_ROLLER_BY[worldIndex(this)] + ", the " + bet + "-point bet is lost.");
       }
       var hard = Math.min(3, levelOf(this, "hardMode"));
-      if (solved && hard > 0 && solvedInHardMode(history)) {
+      if (solved && hard > 0 && solvedInHardMode(history, HARD_MODE_SLACK[hard])) {
         if (stageBonus(this, HARD_MODE_POINTS[hard], "umtHardMode", "Hard Mode") > 0) {
           note(this, "Hard Mode: +" + HARD_MODE_POINTS[hard] + " points.");
         }
