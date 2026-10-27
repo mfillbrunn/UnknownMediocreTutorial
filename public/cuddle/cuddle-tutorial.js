@@ -311,7 +311,21 @@
       },
       at: "top",
       cards: [
-        { title: "Pick a badge", text: "After a stage you pick one of these. Each is a <b>badge</b>: it stays with you for the rest of the run and makes you better, usually with a hint about the answer. Tap a badge's <b>?</b> to see how it works. Pick the one that sounds most useful.", focus: ".cuddle-choice-grid", at: "bottom" }
+        { title: "Pick a badge", text: "After a stage you pick one of these. Each is a <b>badge</b>: it stays with you for the rest of the run and makes you better, usually with a hint about the answer. Pick the one that sounds most useful.", focus: ".cuddle-choice-grid", at: "bottom" },
+        { title: "Not sure what it does?", text: "Tap the <b>?</b> on a badge any time, here or in your badges, to see what it does, with an example from the game.", focus: ".cuddle-choice-grid .umt-help-q", at: "bottom" }
+      ]
+    },
+    {
+      // The second reward screen offers the badge you hold, a level up.
+      id: "e-levelup",
+      when: function when(game, state) {
+        return state.status === "upgrade" && onTop(".cuddle-choice-grid") && !moneyOverlayUp()
+          && Boolean(window.CuddleEasyMode && window.CuddleEasyMode.levelUpOffer(game));
+      },
+      needs: ["e-badge"],
+      at: "top",
+      cards: [
+        { title: "Level up a badge", text: "Badges you already have can be <b>levelled up</b>: each level makes the badge stronger. This time, instead of a new badge, take the next level of yours. Its <b>?</b> shows what each level does.", focus: ".cuddle-choice-grid", at: "bottom" }
       ]
     },
     {

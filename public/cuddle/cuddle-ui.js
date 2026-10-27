@@ -2162,10 +2162,12 @@
     const score = Number(state.score) || 0;
     const shownScore = playing && elapsed < WIN_TIMING.countFrom ? 0 : score;
     const difficultyName = DIFFICULTY_NAMES[standing.difficulty];
-    const best = standing.isBest
+    // The Tutorial run keeps its end card plain: no best score, no records, no seed.
+    const tutorial = Boolean(window.CuddleEasyMode && window.CuddleEasyMode.isEasy(game));
+    const best = tutorial ? "" : standing.isBest
       ? `<p class="cuddle-win-best is-new">New best on ${difficultyName}${standing.previousBest ? ` · was ${standing.previousBest.toLocaleString()}` : ""}</p>`
       : `<p class="cuddle-win-best">Best on ${difficultyName}: ${standing.previousBest.toLocaleString()}</p>`;
-    const top = standing.top.length > 1
+    const top = !tutorial && standing.top.length > 1
       ? `<ol class="cuddle-win-records" aria-label="Best ${difficultyName} wins">${standing.top.map(item => `
           <li class="${item.runId === standing.entry.runId ? "is-this-run" : ""}">
             <b>${Number(item.score).toLocaleString()}</b>
@@ -2188,7 +2190,7 @@
           ${best}
           ${window.CuddleAscension ? window.CuddleAscension.winHtml(state) : ""}
           ${top}
-          ${seedChip(state)}
+          ${tutorial ? "" : seedChip(state)}
           ${renderRunStats(state)}
           ${renderEndBadges()}
           <p id="cuddleShareStatus" class="cuddle-share-status" role="status" aria-live="polite"></p>
@@ -2243,7 +2245,7 @@
           <p>${won
             ? `You won the campaign with ${state.score} points.`
             : escapeHtml(state.failureReason || "The run could not continue.")}</p>
-          ${seedChip(state)}
+          ${window.CuddleEasyMode && window.CuddleEasyMode.isEasy(game) ? "" : seedChip(state)}
           ${renderRunStats(state)}
           ${renderEndBadges()}
           <p class="cuddle-share-help">Share the final round grid without revealing the secret word.</p>

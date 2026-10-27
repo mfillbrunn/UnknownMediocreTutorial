@@ -649,12 +649,30 @@
       seen[id] = true;
       return true;
     });
+    // The second reward screen shows levelling up: the helper you picked
+    // first, offered again for its next level.
+    var heldHelpers = pool.filter(function held(card) { return helperLevel(game, card) > 0; });
+    var levels = pool.reduce(function sum(total, card) { return total + helperLevel(game, card); }, 0);
+    if (levels === 1 && heldHelpers.length === 1) return heldHelpers;
     var random = typeof game.random === "function" ? game.random : Math.random;
     for (var i = pool.length - 1; i > 0; i -= 1) {
       var j = Math.floor(random() * (i + 1));
       var held = pool[i]; pool[i] = pool[j]; pool[j] = held;
     }
     return pool.slice(0, 3);
+  }
+
+  function helperLevel(game, card) {
+    var tree = window.CuddleSkillTree;
+    var node = tree && typeof tree.resolve === "function" ? tree.resolve(card.key || card.id) || tree.resolve(card.title) : null;
+    try { return node ? Number(tree.level(game, node)) || 0 : 0; } catch (_error) { return 0; }
+  }
+
+  // A reward screen offering only badges already held: a level-up.
+  function levelUpOffer(game) {
+    var state = game && game.state;
+    return Boolean(state && isEasy(game) && state.status === "upgrade" && Array.isArray(state.upgradeChoices)
+      && state.upgradeChoices.length && state.upgradeChoices.every(function held(card) { return helperLevel(game, card) > 0; }));
   }
 
   function isHelper(choice) {
@@ -755,5 +773,6 @@
 
   window.CuddleEasyMode = Object.freeze({ isEasy: isEasy, choose: choose,
     isMulliganStage: function mulliganStage(game) { return isEasy(game) && isMulliganStage(game && game.state); },
-    stageNumber: function stage(game) { return game && game.state ? stageNumber(game.state) : 0; }, HELPERS: EASY_HELPERS.slice(), DECOYS: DECOYS.slice() });
+    stageNumber: function stage(game) { return game && game.state ? stageNumber(game.state) : 0; },
+    levelUpOffer: levelUpOffer, HELPERS: EASY_HELPERS.slice(), DECOYS: DECOYS.slice() });
 }());
