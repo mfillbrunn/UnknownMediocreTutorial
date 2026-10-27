@@ -119,7 +119,7 @@
     freeVowelSweep: ["At the start of every stage, 2 vowels are tested for you: each one turns yellow if it's in the answer, or red if it isn't.", ["hand"]],
     revealGreen: ["One time only: your next stage starts with one letter of the answer already in its spot.", ["board"]],
     questDoublePick: ["When you finish a quest, you take 2 of its rewards instead of 1.", ["questReward"]],
-    questCadence: ["Quests normally come on guesses 2 and 5. This badge adds guess 3, then guess 1, so you get more quests every stage.", ["quest"]],
+    questCadence: ["Quests normally come on guesses 2 and 5. This badge adds guess 3, then guess 1, then guess 4, so you get more quests every stage.", ["quest"]],
     questPersistReward: ["Normally a quest you miss is gone. With this badge it stays open for the rest of the stage, and new quests still come on their guesses, so you can have two at once. The quest bar then shows tabs 1 and 2: tap one to see that quest. Your guesses count for both.", ["quest"]],
     allThemesBoss: ["Every stage starts with all of the answer's themes shown in the theme line.", ["themes"]],
     secondCup: ["Once in the whole run: when a boss or strict stage is about to end because you're out of guesses, you get one more guess.", ["board", "map"]]

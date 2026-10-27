@@ -106,7 +106,7 @@
     ["process of elimination", TIERS.EPIC],
     ["cull letters", TIERS.EPIC],
     ["full hand mulligan", TIERS.EPIC],
-    ["quest cadence", TIERS.EPIC],
+    ["quest cadence", TIERS.RARE],
     ["lasting quests", TIERS.EPIC],
     ["oracle squares", TIERS.EPIC],
 
@@ -174,8 +174,8 @@
       (state) => Number(state.upgrades?.freeVowelSweep || 0) < 2),
     legendaryPick("biggerMulligans", "✋", "Full Hand Mulligan", "Every mulligan can now replace up to five letters.",
       (state) => Number(state.upgrades?.mulliganSize || 0) < 2),
-    legendaryPick("questCadence", "❗", "Quest Cadence", "One more quest a stage: guess 3 gets one too (quests on 2, 3, 5). Level 2 adds guess 1 (1, 2, 3, 5). One quest at a time.",
-      (state) => Number(state.upgrades?.questCadence || 0) < 2),
+    legendaryPick("questCadence", "❗", "Quest Cadence", "One more quest a stage: guess 3 gets one too (quests on 2, 3, 5). Level 2 adds guess 1, level 3 guess 4. One quest at a time.",
+      (state) => Number(state.upgrades?.questCadence || 0) < 3),
     legendaryPick("revealGreen", "📍", "Position Peek", "Your next stage opens with one letter of the answer already in its exact place. One time.",
       (state) => !state.pendingPositionPeek),
     legendaryPick("questDoublePick", "✌️", "Double Pick", "Quest reward screens let you choose two options instead of one, for the rest of the run.",
@@ -1808,12 +1808,15 @@
     ordinary.push(...LEGENDARY_PICKS);
     const unique = new Map();
     for (const def of ordinary) {
-      if (!rewardAvailable(def, context, state)) continue;
+      if (RETIRED_NAMES.has(norm(getName(def))) || !rewardAvailable(def, context, state)) continue;
       unique.set(norm(getName(def)), atNextLevelTier(def, state));
     }
     return [...unique.values()];
   }
 
+  // Surprise Assignment was folded into Quest Cadence: not offered any more
+  // (a run that holds it has its copies turned into Quest Cadence levels).
+  const RETIRED_NAMES = new Set(["surprise assignment"]);
   // Badges that turn up more often within their rarity: each extra weight
   // is one more ticket in the draw.
   const FAVOURED = Object.freeze({ "money point squares": 2, "bonus squares": 2 });
@@ -2490,9 +2493,12 @@
       greenHints: []
     };
 
+    // Surprise Assignment copies (from before it was folded into Quest
+    // Cadence) become Quest Cadence levels.
     const randomQuestStacks = upgradeStack(state, "random-quest");
-    for (let index = 0; index < randomQuestStacks; index += 1) {
-      data.stage.randomQuestTurns.push(randomInt(1, Math.max(1, maxRows(state) - 1), `${id}:random-quest:${index}`));
+    if (randomQuestStacks > 0 && state.upgrades && typeof state.upgrades === "object") {
+      state.upgrades.questCadence = Math.min(3, Number(state.upgrades.questCadence || 0) + randomQuestStacks);
+      addUpgradeStack(state, "random-quest", -randomQuestStacks);
     }
 
     setQuestRerollsForStage(state);

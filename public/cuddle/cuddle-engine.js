@@ -168,7 +168,9 @@
   // long stage). Each Quest Cadence level adds one more guess that had
   // none -- level 1 adds guess 3, level 2 guess 1 -- so quests come more
   // often but there is only ever one at a time.
-  const QUEST_CADENCE_EXTRA_GUESSES = Object.freeze([3, 1]);
+  // Quest Cadence (Surprise Assignment folded in): level 1 adds guess 3,
+  // level 2 guess 1, level 3 guess 4.
+  const QUEST_CADENCE_EXTRA_GUESSES = Object.freeze([3, 1, 4]);
   function isQuestGuess(guess, cadenceLevel) {
     const n = Math.floor(Number(guess) || 0);
     if (n < 1) return false;
@@ -2187,7 +2189,7 @@
           // formula in _ensureQuestForNextGuess) the regular Quest Cadence
           // round reward used to grant -- retired from that pool since
           // Quest Trial is now the only source of it.
-          const next = Math.min(2, Number(this.state.upgrades.questCadence || 0) + 1);
+          const next = Math.min(QUEST_CADENCE_EXTRA_GUESSES.length, Number(this.state.upgrades.questCadence || 0) + 1);
           this.state.upgrades.questCadence = next;
           return `Quest Cadence: quests now come on guesses ${questGuessList(next).join(", ")}.`;
         }

@@ -948,7 +948,7 @@
     switch (id) {
       case "doubleMulligans": return integer(upgrades.doubleMulligans, 0) > 0;
       case "biggerMulligans": return integer(upgrades.mulliganSize, 0) >= 2;
-      case "questCadence": return integer(upgrades.questCadence, 0) >= 2;
+      case "questCadence": return integer(upgrades.questCadence, 0) >= 3;
       case "freeVowelSweep": return integer(upgrades.freeVowelSweep, 0) > 0;
       case "questDoublePick": return Boolean(upgrades.questDoublePick);
       case "questPersistReward": return Boolean(state.megaState && state.megaState.questPersistsForRound);
