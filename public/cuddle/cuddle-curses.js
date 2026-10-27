@@ -604,5 +604,17 @@
     else document.addEventListener("DOMContentLoaded", watchRedraws, { once: true });
   }());
 
-  window.CuddlePresetTrial = Object.freeze({ LEVELS: TRIAL_LEVELS, PAIR_PAY: PAIR_PAY, PAIR_PICK_GUESS: PAIR_PICK_GUESS });
+  window.CuddlePresetTrial = Object.freeze({
+    LEVELS: TRIAL_LEVELS,
+    PAIR_PAY: PAIR_PAY,
+    PAIR_PICK_GUESS: PAIR_PICK_GUESS,
+    // The guess a Trial stop's answer is picked on, or 0 off a Trial (read
+    // by the engine's curse plan, so it never consults that plan itself).
+    trialPickGuess: function trialPickGuessFor(game) {
+      var state = game && game.state;
+      if (!state || inDuel(state)) return 0;
+      var node = trialNode(state);
+      return node ? trialPickGuess(node) : 0;
+    }
+  });
 }());

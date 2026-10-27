@@ -5158,7 +5158,13 @@
     // start after them (a challenge's plan already starts with them).
     const delay = freeOpeners(game);
     const own = ownNegativeRowCount(game) + (game.isBossRound() ? delay : 0);
-    const key = [state.runId || "run", state.round || 0, state.secret || "", own, delay].join(":");
+    // A Trial stop ends on a pick from its word list: no tiles on that
+    // guess, so no curse lands on it or after it (one with no earlier free
+    // guess skips the stage). cuddle-curses.js trialPickGuess.
+    const trialPick = window.CuddlePresetTrial && typeof window.CuddlePresetTrial.trialPickGuess === "function"
+      ? Number(window.CuddlePresetTrial.trialPickGuess(game)) || 0
+      : 0;
+    const key = [state.runId || "run", state.round || 0, state.secret || "", own, delay, trialPick].join(":");
     if (mega.ratchetRowPlanKey === key && mega.ratchetRowPlan) return mega.ratchetRowPlan;
 
     const debuffs = (mega.ratchetDebuffs || []).filter(Boolean);
@@ -5167,9 +5173,10 @@
 
     // An ordinary stage has no guess limit (see submitDraft), so a
     // displaced ratchet always has somewhere to go.
-    const lastRow = game.isBossRound()
+    let lastRow = game.isBossRound()
       ? Math.max(0, Number(state.maxGuesses) || MAX_GUESSES)
       : Number.MAX_SAFE_INTEGER;
+    if (trialPick > 0) lastRow = Math.min(lastRow, trialPick - 1);
 
     const plan = {};
     shuffle(debuffs.slice(), game.random || Math.random).forEach(debuff => {
