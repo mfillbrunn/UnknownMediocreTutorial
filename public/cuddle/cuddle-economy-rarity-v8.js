@@ -77,6 +77,7 @@
     // A one-time letter, so Common.
     ["position peek", TIERS.COMMON],
     ["bonus squares", TIERS.COMMON],
+    ["money point squares", TIERS.COMMON],
     ["mulligan squares", TIERS.COMMON],
 
     ["vowel lamp", TIERS.RARE],
@@ -188,7 +189,7 @@
 
   const KNOWN_ORDINARY_NAMES = new Set([
     "second thoughts", "reward refresh", "quest value", "second guess quest",
-    "bigger mulligan", "cull x & y", "pruning shears", "cull letters", "bonus squares",
+    "bigger mulligan", "cull x & y", "pruning shears", "cull letters", "bonus squares", "money point squares",
     "opening verse", "quest ink", "wide margins", "grey matters", "gray matters",
     "bigger hand", "mulligan dividend", "early finish", "colour surge", "color surge",
     "greyscale", "grayscale", "reward echo", "precise green", "wild card",
@@ -1806,18 +1807,15 @@
     ordinary.push(...LEGENDARY_PICKS);
     const unique = new Map();
     for (const def of ordinary) {
-      if (RETIRED_NAMES.has(norm(getName(def))) || !rewardAvailable(def, context, state)) continue;
+      if (!rewardAvailable(def, context, state)) continue;
       unique.set(norm(getName(def)), atNextLevelTier(def, state));
     }
     return [...unique.values()];
   }
 
-  // Treasure Map was folded into Bonus Squares (cuddle-points-money.js): a
-  // run that holds it keeps it, but it isn't offered any more.
-  const RETIRED_NAMES = new Set(["treasure map"]);
   // Badges that turn up more often within their rarity: each extra weight
   // is one more ticket in the draw.
-  const FAVOURED = Object.freeze({ "bonus squares": 2 });
+  const FAVOURED = Object.freeze({ "money point squares": 2, "bonus squares": 2 });
 
   function chooseSameTier(count, context, state, seed = null) {
     const pool = allOrdinaryCandidates(context, state);

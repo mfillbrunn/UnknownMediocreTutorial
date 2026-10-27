@@ -2837,17 +2837,17 @@
     {
       id: "bonusSquares",
       icon: "💰",
-      title: "Bonus Squares",
+      title: "Money & Point Squares",
       tier: "common",
-      description: "Money and points squares on the board, plus one more square every stage: a green or yellow on one pays money or points. Level 2: two more squares a stage. Level 3: four more.",
+      description: "Money and point squares on the board: a green or yellow on one pays money or points. Level 2: one more square a stage. Level 3: two more.",
       max: 3
     },
     {
       id: "treasureMap",
       icon: "🗺️",
       title: "Treasure Map",
-      tier: "common",
-      description: "One more special square on the board every stage. Level 2: two more. Level 3: four more.",
+      tier: "rare",
+      description: "Squares of every kind turn up more often: x1.5 on the board every stage. Level 2: x2. Level 3: x3.",
       max: 3
     },
     {
@@ -3870,8 +3870,7 @@
 
   const prototype = CuddleGame.prototype;
   const baseHandSize = Number(Engine.BASE_HAND_SIZE) || 5;
-  // Treasure Map was folded into Bonus Squares.
-  const retiredUpgradeIds = new Set(["yellowPoints", "earlyRoundPoint", "questCadence", "treasureMap"]);
+  const retiredUpgradeIds = new Set(["yellowPoints", "earlyRoundPoint", "questCadence"]);
   const customUpgradeDefinitions = Object.freeze([
     {
       id: "greyPointBoost",
