@@ -629,27 +629,28 @@
     game.state.lastMessage = "A waystone: take one permanent upgrade.";
   }
 
-  // The Level-Up stop: two picks in a row, each a level for a badge you
-  // hold, the second never the badge the first raised. With nothing to
-  // level yet, it hands out a new badge instead.
+  // The Level-Up stop: every badge you hold that can still level, shown at
+  // once (cuddle-ui.js renderLevelPicker); pick two different ones and each
+  // gains a level. With nothing to level yet, it hands out a new badge
+  // instead; with only one, that one levels.
   var LEVEL_UP_PICKS = 2;
 
   function openLevelUpStop(game) {
     var rhythm = window.CuddleRewardRhythm;
-    var choices = rhythm && typeof rhythm.levelChoices === "function" ? rhythm.levelChoices(game, 3, []) : [];
+    var choices = rhythm && typeof rhythm.levelChoices === "function" ? rhythm.levelChoices(game, 999, []) : [];
     if (!choices.length) {
       game.state.umtLevelStop = null;
       openUpgradeStop(game);
       game.state.lastMessage = "No badge to level up yet: take a new one instead.";
       return;
     }
-    game.state.umtLevelStop = { pick: 1, of: LEVEL_UP_PICKS, done: [], waystone: true };
+    game.state.umtLevelStop = { pick: 1, of: Math.min(LEVEL_UP_PICKS, choices.length), done: [], waystone: true, picker: true };
     game.state.status = "upgrade";
     game.state.upgradePhase = "round";
     game.state.upgradeMilestone = null;
     game.state.upgradeChoices = choices;
     game.state.waystoneOffer = true;
-    game.state.lastMessage = "Level up two of your badges.";
+    game.state.lastMessage = choices.length > 1 ? "Level up two of your badges." : "Level up your badge.";
   }
 
   // Bosses go through the real _openBossGate/chooseBoss chain (which retimes
