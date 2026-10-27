@@ -919,7 +919,7 @@
   background: #c2414f;
   color: #fff1f2;
 }
-#cuddleScreen .cuddle-money-payout-row.is-late .cuddle-money-row-increment {
+#cuddleScreen .cuddle-money-payout-row.is-loss .cuddle-money-row-increment {
   color: #ff8a95;
 }
 
