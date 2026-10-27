@@ -452,6 +452,35 @@
     return changed;
   }
 
+  // A route drawn before the Level-Up stop existed has only Shop and New
+  // Badge before each boss: add the Level-Ups lane to the forks not reached
+  // yet, so every boss is preceded by Shop / New Badge / Level-Ups.
+  function addMissingLevelUps(game) {
+    const map = game?.state?.branchMap;
+    if (!map || !Array.isArray(map.rows)) return false;
+    const here = map.position && Number.isFinite(Number(map.position.row)) ? Number(map.position.row) : -1;
+    let changed = false;
+    map.rows.forEach((row, rowIndex) => {
+      if (!row || !Array.isArray(row.nodes) || rowIndex <= here) return;
+      const rest = row.restFork || (row.nodes.length && row.nodes.every(node => node && node.restChoice));
+      if (!rest || row.nodes.length >= 3 || row.nodes.some(node => node && node.type === "levelup")) return;
+      const lanes = row.nodes.map(node => Number(node && node.lane)).filter(Number.isFinite);
+      const lane = REST_LANES.find(candidate => !lanes.includes(candidate));
+      if (lane === undefined) return;
+      const col = row.nodes.length;
+      row.nodes.push(routeNode(rowIndex, col, "levelup", { lane, restChoice: true }));
+      // Lanes left to right, as the map draws them.
+      row.nodes.sort((x, y) => Number(x.lane) - Number(y.lane));
+      row.nodes.forEach((node, index) => { node.col = index; });
+      row.restFork = true;
+      const before = map.rows[rowIndex - 1];
+      if (before && Array.isArray(before.nodes)) before.nodes.forEach(node => { node.next = row.nodes.map((_node, index) => index); });
+      changed = true;
+    });
+    if (changed) safeSave(game);
+    return changed;
+  }
+
   function mapHasProgress(map) {
     return Boolean(map && (map.position || (Array.isArray(map.visited) && map.visited.length)));
   }
@@ -704,6 +733,7 @@
       return afterResult(result, value => {
         installRoute(this, false);
         repairDuplicatePathOptions(this);
+        addMissingLevelUps(this);
         migrateJokerCache(this);
         repairSavedUpgradeChoices(this);
         return value;
@@ -1160,6 +1190,7 @@
     if (game) {
       installRoute(game, false);
       repairDuplicatePathOptions(game);
+      addMissingLevelUps(game);
       migrateJokerCache(game);
       repairSavedUpgradeChoices(game);
       const root = document.getElementById("cuddleRoot");
