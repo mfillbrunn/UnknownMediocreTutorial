@@ -264,7 +264,7 @@
       when: function when(game, state) { return playing(state) && present(".cuddle-hand .cuddle-card.is-card-red"); },
       at: "top",
       cards: [
-        { title: "Red means not in the word", text: "Your cards keep score too. A card that turns <span class=\"umt-tut-r\">red</span> is <b>not in the word</b>: leave it out of your next guesses. <span class=\"umt-tut-y\">Yellow</span> and <span class=\"umt-tut-g\">green</span> cards are in the word, and they now stay in your hand.", focus: ".cuddle-hand" }
+        { title: "Red means not in the word", text: "Your cards keep score too. A card that turns <span class=\"umt-tut-r\">red</span> is <b>not in the word</b>: leave it out of your next guesses. <span class=\"umt-tut-y\">Yellow</span> and <span class=\"umt-tut-g\">green</span> cards are in the word, and they now stay in your hand. You don't have to use them again, though: every guess can use any letters you like.", focus: ".cuddle-hand" }
       ]
     },
     {
