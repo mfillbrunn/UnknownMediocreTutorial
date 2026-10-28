@@ -5,6 +5,7 @@
 // rules out, then pick again, until the secret is picked. The puzzle comes
 // from the UTC date alone (no server state), and the result is kept in
 // localStorage under that date, so it resets daily and can't be replayed.
+// It needs no server API, account or Supabase: the word list is a static file.
 
 (function () {
   const WORD_COUNT = 16;
@@ -158,7 +159,8 @@
     if (!words) {
       root.textContent = "Loading today's puzzle…";
       try {
-        const pool = await (await fetch("/api/allowed-secrets")).json();
+        const text = await (await fetch("wordlists/daily-pick-words.txt")).text();
+        const pool = text.split(/\s+/).map(w => w.toLowerCase()).filter(Boolean);
         state = load();
         const puzzle = buildPuzzle(pool, state.date);
         secret = puzzle.answer;
