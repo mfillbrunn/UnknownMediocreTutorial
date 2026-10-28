@@ -327,10 +327,44 @@
     return RIVALS[duel && duel.difficulty] || RIVALS.medium;
   }
 
-  // The rival is the Secretkeeper from multiplayer (index.html's
-  // #icon-role-secretkeeper): its eyes glow in the rival's colour.
+  // Each rival has its own figure:
+  //   Pip (easy): a little round sprout with big friendly eyes, holding an
+  //     A tile -- nothing to be scared of;
+  //   Vex (medium): a hooded figure holding a ? tile, eyes glowing out of
+  //     the hood;
+  //   Grimm (hard): the Secretkeeper from multiplayer (index.html's
+  //     #icon-role-secretkeeper), its eyes in his colour.
   function rivalSvg(rival) {
-    return `<svg class="umt-rival" viewBox="0 0 120 120" style="color:${rival.robe}" aria-hidden="true">`
+    if (rival === RIVALS.easy) {
+      const eye = (cx) => `<circle cx="${cx}" cy="12.7" r="1.75" fill="#fff"/>`
+        + `<circle class="umt-rival-eye" cx="${cx + 0.15}" cy="12.9" r="1" fill="#1d1530"/>`
+        + `<circle cx="${cx + 0.5}" cy="12.45" r=".38" fill="#fff"/>`;
+      return `<svg class="umt-rival is-pip" viewBox="0 0 24 24" aria-hidden="true">`
+        + `<path d="M12.1 6.4c-.1-1.2.2-2.2.8-3" fill="none" stroke="#2f7d52" stroke-width=".8" stroke-linecap="round"/>`
+        + `<path d="M12.7 3.9c.6-1.5 2.2-2.1 3.5-1.7-.3 1.4-1.8 2.3-3.5 1.7z" fill="#8ee6ae"/>`
+        + `<path d="M12.3 4.3c-.9-1.2-2.4-1.4-3.4-.8.6 1.1 2.1 1.6 3.4.8z" fill="#8ee6ae"/>`
+        + `<path d="M12 6.2c-4.6 0-7.4 3.4-7.4 7.8 0 4.6 3 7.6 7.4 7.6s7.4-3 7.4-7.6c0-4.4-2.8-7.8-7.4-7.8z" fill="${rival.robe}"/>`
+        + `<ellipse cx="12" cy="17.2" rx="4.3" ry="3.4" fill="#fff" opacity=".2"/>`
+        + eye(9.5) + eye(14.3)
+        + `<ellipse cx="7.9" cy="15.2" rx="1" ry=".6" fill="#ff9fb3" opacity=".85"/>`
+        + `<ellipse cx="16.1" cy="15.2" rx="1" ry=".6" fill="#ff9fb3" opacity=".85"/>`
+        + `<path d="M10.7 15.4q1.3 1.2 2.6 0" fill="none" stroke="#1d1530" stroke-width=".7" stroke-linecap="round"/>`
+        + `<rect x="14.4" y="17.4" width="5" height="4.6" rx="1.1" fill="#fffbe8" stroke="#1d1530" stroke-width=".6"/>`
+        + `<text x="16.9" y="21" text-anchor="middle" font-family="system-ui,sans-serif" font-size="3.6" font-weight="900" fill="#1d1530">A</text>`
+        + `</svg>`;
+    }
+    if (rival === RIVALS.medium) {
+      return `<svg class="umt-rival is-vex" viewBox="0 0 24 24" aria-hidden="true">`
+        + `<path d="M12 2.3c-4.7 0-7.6 3.7-7.6 8.4V22h15.2V10.7c0-4.7-2.9-8.4-7.6-8.4z" fill="${rival.robe}"/>`
+        + `<path d="M12 2.3c-4.7 0-7.6 3.7-7.6 8.4V22h2.2V11c0-3.8 2.1-6.9 5.4-7.6z" fill="#000" opacity=".18"/>`
+        + `<path d="M12 5.6c-3.1 0-5 2.5-5 5.5 0 3.1 2.1 5.4 5 5.4s5-2.3 5-5.4c0-3-1.9-5.5-5-5.5z" fill="#140f1f"/>`
+        + `<circle class="umt-rival-eye" cx="9.9" cy="11.2" r="1.15" fill="${rival.eyes}"/>`
+        + `<circle class="umt-rival-eye" cx="14.1" cy="11.2" r="1.15" fill="${rival.eyes}"/>`
+        + `<rect x="8.4" y="16.6" width="7.2" height="5.4" rx="1.3" fill="#f6c956" stroke="#140f1f" stroke-width=".7"/>`
+        + `<text x="12" y="20.7" text-anchor="middle" font-family="system-ui,sans-serif" font-size="4.4" font-weight="900" fill="#140f1f">?</text>`
+        + `</svg>`;
+    }
+    return `<svg class="umt-rival is-grimm" viewBox="0 0 120 120" style="color:${rival.robe}" aria-hidden="true">`
       + `<use href="#icon-role-secretkeeper"></use></svg>`;
   }
   let challengeObserver = null;
