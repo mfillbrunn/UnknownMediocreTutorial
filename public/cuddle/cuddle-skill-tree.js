@@ -300,7 +300,7 @@
           level: g => powerLevel(g, "luckyClover") },
         // cuddle-fish-hook.js
         { id: "fishHook", icon: "🪝", title: "Fish Hook", tier: "rare", type: "letters", maxLevel: 3,
-          levels: ["Once a stage, fish a card you've discarded back into your hand. (If your hand is full, you throw one back.)",
+          levels: ["Once a stage, fish a card you've discarded back into your hand.",
             "The letter you fish is tested: if it's in the answer, it turns yellow.",
             "Also, once a stage, the hook catches a discarded answer letter on its own: it turns yellow."],
           description: "Fish back a card you discarded this stage, once a stage.",
