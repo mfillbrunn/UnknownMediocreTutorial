@@ -13,7 +13,7 @@
   const WORD_COUNT = 16;
   const PUZZLE_COUNT = 3;
   const ADVANCE_MS = 1600;
-  const STORE_KEY = "umt.dailyPick.v4";
+  const STORE_KEY = "umt.dailyPick.v5";
 
   let puzzles = null; // [{ answer, words }]
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
