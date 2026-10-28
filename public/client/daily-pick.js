@@ -1,4 +1,4 @@
-// client/daily-pick.js — Daily Pick: three shared puzzles a day, played once.
+// client/daily-pick.js — Griddle: three shared puzzles a day, played once.
 //
 // Each puzzle is sixteen five-letter words in a 4x4 grid, one of them the
 // secret. Select a word and confirm it, and the panel below shows Wordle
@@ -79,7 +79,7 @@
   }
 
   // Puzzle 1 keeps the original one-puzzle seed, so today's first puzzle is
-  // the same one Daily Pick showed before it had three.
+  // the same one Griddle showed before it had three.
   function buildDay(pool, date) {
     const list = pool.filter(w => /^[a-z]{5}$/.test(w)).sort();
     const taken = new Set();
@@ -154,6 +154,7 @@
     if (done && allSolved()) {
       const parts = state.rounds.map(r => r.guesses.length).join(" + ");
       hint = `<strong class="dp-result">All ${PUZZLE_COUNT} solved! Score: ${totalGuesses()}</strong> (${parts})`;
+      action = `<button type="button" class="dp-next dp-share" id="dpShare">Share on WhatsApp</button>`;
     } else if (done) {
       hint = `<strong class="dp-result">Solved in ${r.guesses.length}!</strong> Next puzzle…`;
     } else if (phase === "strike") {
@@ -202,6 +203,18 @@
     render();
   }
 
+  // One row per puzzle: a white square per wrong guess, then the green one.
+  function shareText() {
+    const date = new Date(`${state.date}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+    const rows = state.rounds.map((r, i) =>
+      `${i + 1}. ${"⬜".repeat(r.guesses.length - 1)}🟩 ${r.guesses.length}`);
+    return [`Griddle ${date}`, `Score: ${totalGuesses()}`, ...rows, location.origin].join("\n");
+  }
+
+  function share() {
+    window.open(`https://wa.me/?text=${encodeURIComponent(shareText())}`, "_blank", "noopener");
+  }
+
   function nextPuzzle() {
     advanceTimer = null;
     current = firstUnsolved();
@@ -242,6 +255,7 @@
       if (word) return onWordClick(word.dataset.word);
       if (event.target.closest?.("#dpNext")) { phase = "pick"; render(); }
       if (event.target.closest?.("#dpGuess")) guessSelected();
+      if (event.target.closest?.("#dpShare")) share();
     });
   });
 }());

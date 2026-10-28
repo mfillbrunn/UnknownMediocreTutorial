@@ -1,4 +1,4 @@
-/* Daily Pick (client/daily-pick.js) */
+/* Griddle (client/daily-pick.js) */
 .dp-card { width: min(100%, 520px); position: relative; padding: 14px 10px !important; }
 .dp-card .menu-title { margin: 0 0 10px !important; font-size: 20px; }
 #dailyPickRoot { width: 100%; align-self: stretch; }
@@ -50,5 +50,6 @@
 .dp-hint { font-size: 13px; opacity: .85; min-height: 1.4em; display: flex; align-items: center; gap: 6px; }
 .dp-result { font-size: inherit; font-weight: 800; opacity: 1; }
 .dp-next { padding: 8px 14px; border-radius: 8px; border: 0; font-weight: 700; cursor: pointer; }
+.dp-share { background: #25d366; color: #fff; }
 .dp-next:disabled { opacity: .5; cursor: default; }
 .dp-count { margin-top: 10px; text-align: center; font-size: 13px; opacity: .85; }

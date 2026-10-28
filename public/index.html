@@ -11,7 +11,7 @@
   <!-- 1. Themes & variables -->
   <link rel="stylesheet" href="css/themes.css?v=tutorial-motion-sim-2">
   <!-- 2. Global defaults -->
-  <link rel="stylesheet" href="css/daily-pick.css?v=3">
+  <link rel="stylesheet" href="css/daily-pick.css?v=4">
   <link rel="stylesheet" href="css/base.css?v=cuddle-draft-gaps-1">
   <!-- 3. Structural layout -->
   <link rel="stylesheet" href="css/layout.css?v=history-scroll-quest-note-1">
@@ -374,8 +374,8 @@
           <svg viewBox="0 0 24 24" focusable="false"><rect x="3" y="3" width="18" height="18" rx="3"/><rect x="8.5" y="8.5" width="7" height="7" rx="1.5"/></svg>
         </span>
         <span class="menu-action-copy">
-          <span class="menu-action-title">Daily Pick</span>
-          <span class="menu-action-subtitle">One word puzzle a day</span>
+          <span class="menu-action-title">Griddle</span>
+          <span class="menu-action-subtitle">Three word puzzles a day</span>
         </span>
         <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
       </button>
@@ -575,11 +575,11 @@
 </section>
 <!-- UMT_CHALLENGES_V2: CHALLENGE SCREEN END -->
 
-<!-- ========== DAILY PICK ========== -->
-        <section id="dailyPickScreen" class="screen game-menu" aria-label="Daily Pick">
+<!-- ========== GRIDDLE (client/daily-pick.js) ========== -->
+        <section id="dailyPickScreen" class="screen game-menu" aria-label="Griddle">
           <div class="menu-center dp-card">
             <button id="dpBackBtn" class="dp-close" type="button" aria-label="Close">&times;</button>
-            <h2 class="menu-title">DAILY PICK</h2>
+            <h2 class="menu-title">GRIDDLE</h2>
             <div id="dailyPickRoot"></div>
           </div>
         </section>
@@ -1838,7 +1838,7 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="client/helpers.js?v=screen-scroll-reset-1"></script>
   <script src="client/game-hub.js?v=5"></script>
-  <script src="client/daily-pick.js?v=4"></script>
+  <script src="client/daily-pick.js?v=5"></script>
   <script src="client/statistics.js?menu-account-spacing=1&guest-play=1"></script>
   <script src="network/socketClient.js?power-popup-icon=1"></script>
 
