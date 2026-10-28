@@ -124,12 +124,10 @@
     } else {
       center = `${tiles(lastGuess)}<div class="dp-hint">Choose your next word.</div>`;
     }
-    const history = state.guesses.slice(0, -1).map(g => tiles(g)).join("");
 
     root.innerHTML = `<div class="dp-board">${buttons}</div>
       <div class="dp-center">${center}</div>
-      ${!done && state.guesses.length ? `<div class="dp-count">Guesses: ${state.guesses.length}</div>` : ""}
-      ${history ? `<div class="dp-history">${history}</div>` : ""}`;
+      ${!done && state.guesses.length ? `<div class="dp-count">Guesses: ${state.guesses.length}</div>` : ""}`;
   }
 
   function onWordClick(word) {

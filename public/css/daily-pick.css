@@ -48,5 +48,3 @@
 .dp-result { font-size: 22px; font-weight: 800; }
 .dp-next { padding: 8px 14px; border-radius: 8px; border: 0; font-weight: 700; cursor: pointer; }
 .dp-count { margin-top: 10px; text-align: center; font-size: 13px; opacity: .85; }
-.dp-history { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 8px; }
-.dp-history .dp-tile { width: 24px; height: 24px; font-size: 12px; }
