@@ -866,3 +866,80 @@
   line-height: 16px;
   text-align: center;
 }
+
+/* The quest's own row, between the board and the Submit row
+   (cuddle-campaign.js), and its arrival animation (cuddle-progression.js
+   CuddleQuestFx: qa-1 Glow, qa-2 Rise, qa-3 Shine, qa-4 Ping). The
+   animations start at --qa-at (negative) so a redraw mid-way carries on. */
+#cuddleScreen .cuddle-quest-dock { position: relative; margin: 8px 0; }
+#cuddleScreen .cuddle-quest-dock > .cuddle-quest-inline { position: relative; overflow: hidden; cursor: pointer; }
+#cuddleScreen .cuddle-quest-dock > .cuddle-quest-inline:focus-visible { outline: 2px solid rgba(246, 201, 86, 0.8); outline-offset: 2px; }
+
+/* 1 Glow */
+.cuddle-quest-dock.qa-1 > .cuddle-quest-inline { animation: umt-qa-glow 1800ms ease-in-out var(--qa-at, 0ms) 1 both; }
+@keyframes umt-qa-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(246, 201, 86, 0); }
+  20%, 60% { box-shadow: 0 0 0 2px rgba(246, 201, 86, 0.75), 0 0 16px rgba(246, 201, 86, 0.45); border-color: #f6c956; }
+  40%, 80% { box-shadow: 0 0 0 1px rgba(246, 201, 86, 0.25), 0 0 4px rgba(246, 201, 86, 0.15); }
+}
+
+/* 2 Rise */
+.cuddle-quest-dock.qa-2 > .cuddle-quest-inline { animation: umt-qa-rise 1800ms cubic-bezier(.2, 1.2, .4, 1) var(--qa-at, 0ms) 1 both; }
+@keyframes umt-qa-rise {
+  0% { opacity: 0; transform: translateY(16px) scale(0.97); }
+  22% { opacity: 1; transform: translateY(-2px) scale(1); }
+  30% { transform: translateY(0); box-shadow: 0 0 0 0 rgba(246, 201, 86, 0); }
+  55% { box-shadow: 0 0 0 2px rgba(246, 201, 86, 0.6), 0 0 14px rgba(246, 201, 86, 0.35); border-color: #f6c956; }
+  100% { box-shadow: 0 0 0 0 rgba(246, 201, 86, 0); }
+}
+
+/* 3 Shine */
+.cuddle-quest-dock.qa-3 > .cuddle-quest-inline::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 244, 205, 0.45) 50%, transparent 65%);
+  transform: translateX(-110%);
+  pointer-events: none;
+  animation: umt-qa-sheen 1800ms ease-in-out var(--qa-at, 0ms) 1 both;
+}
+.cuddle-quest-dock.qa-3 .cuddle-quest-tag { animation: umt-qa-tag 1800ms ease-out var(--qa-at, 0ms) 1 both; }
+@keyframes umt-qa-sheen {
+  0% { transform: translateX(-110%); }
+  40% { transform: translateX(110%); }
+  41% { transform: translateX(-110%); }
+  85%, 100% { transform: translateX(110%); }
+}
+
+/* 4 Ping */
+.cuddle-quest-dock.qa-4 .cuddle-quest-tag { position: relative; animation: umt-qa-tag 1800ms ease-out var(--qa-at, 0ms) 1 both; }
+.cuddle-quest-dock.qa-4 .cuddle-quest-tag::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 2px solid #f6c956;
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  animation: umt-qa-ring 1800ms ease-out var(--qa-at, 0ms) 1 both;
+}
+@keyframes umt-qa-tag {
+  0%, 100% { transform: scale(1); }
+  12% { transform: scale(1.22); background: rgba(246, 201, 86, 0.45); }
+  24% { transform: scale(0.96); }
+  34% { transform: scale(1.06); }
+  46% { transform: scale(1); }
+}
+@keyframes umt-qa-ring {
+  0% { opacity: 0.9; transform: scale(0.9); }
+  45% { opacity: 0; transform: scale(1.6); }
+  46% { opacity: 0.7; transform: scale(0.9); }
+  90%, 100% { opacity: 0; transform: scale(1.6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cuddle-quest-dock > .cuddle-quest-inline,
+  .cuddle-quest-dock > .cuddle-quest-inline::after,
+  .cuddle-quest-dock .cuddle-quest-tag,
+  .cuddle-quest-dock .cuddle-quest-tag::after { animation: none !important; }
+}
