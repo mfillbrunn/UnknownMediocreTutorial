@@ -12,6 +12,9 @@
  * Level 2: the caught letter is tested as it comes up. In the answer, it
  *   turns yellow (and, like every yellow letter, stays in your hand for
  *   good without taking a slot); not in it, it turns grey.
+ * Any letter discarded this stage can be caught: from the discard pile,
+ * or from the deck after a reshuffle has put it back there.
+ *
  * Level 3: also, once a stage, the hook bites on its own: as soon as a
  *   letter of the answer lands in the discard pile, it's hooked out and
  *   turns yellow.
@@ -49,13 +52,64 @@
     return Boolean(card && /^[A-Z]$/.test(String(card.glyph || "")));
   }
 
-  // Letters in the discard pile, one entry per letter, with how many.
+  // Every letter discarded this stage can be fished: what's in the discard
+  // pile, plus cards that don't go there (a reward's extra cards would
+  // otherwise vanish) and ones a reshuffle has put back into the deck.
+  function fishLog(state) {
+    var key = stageKey(state);
+    if (!state.umtFishLog || state.umtFishLog.key !== key) state.umtFishLog = { key: key, ids: [], extra: [] };
+    return state.umtFishLog;
+  }
+
+  var baseDiscard = proto._discardCards;
+  if (typeof baseDiscard === "function") {
+    proto._discardCards = function discardCardsLogged() {
+      var removed = baseDiscard.apply(this, arguments);
+      var state = this.state;
+      if (state && Array.isArray(removed) && removed.length) {
+        var log = fishLog(state);
+        removed.forEach(function note(card) {
+          if (!isLetter(card) || card.source === "joker") return;
+          if (log.ids.indexOf(card.id) === -1) log.ids.push(card.id);
+          if (card.source !== "deck") log.extra.push(Object.assign({}, card));
+        });
+      }
+      return removed;
+    };
+  }
+
+  // Where each catchable card is now: { card, from: "discard" | "extra" | "deck" }.
+  function catchable(game) {
+    var state = game.state;
+    var log = fishLog(state);
+    var out = [];
+    (state.discard || []).forEach(function pile(card) { if (isLetter(card)) out.push({ card: card, from: "discard" }); });
+    log.extra.forEach(function lost(card) { if (isLetter(card)) out.push({ card: card, from: "extra" }); });
+    (state.deck || []).forEach(function back(card) {
+      if (isLetter(card) && log.ids.indexOf(card.id) !== -1) out.push({ card: card, from: "deck" });
+    });
+    return out;
+  }
+
+  // The letters that can be fished, one entry per letter, with how many.
   function pond(game) {
     var counts = {};
-    (game.state.discard || []).forEach(function add(card) {
-      if (isLetter(card)) counts[card.glyph] = (counts[card.glyph] || 0) + 1;
+    catchable(game).forEach(function add(item) {
+      counts[item.card.glyph] = (counts[item.card.glyph] || 0) + 1;
     });
     return Object.keys(counts).sort().map(function entry(glyph) { return { glyph: glyph, count: counts[glyph] }; });
+  }
+
+  // Takes one `letter` out of wherever it is (discard pile first).
+  function takeCatch(game, letter) {
+    var state = game.state;
+    var order = { discard: 0, extra: 1, deck: 2 };
+    var found = catchable(game).filter(function match(item) { return item.card.glyph === letter; })
+      .sort(function first(a, b) { return order[a.from] - order[b.from]; })[0];
+    if (!found) return null;
+    var list = found.from === "discard" ? state.discard : found.from === "extra" ? fishLog(state).extra : state.deck;
+    var at = list.indexOf(found.card);
+    return at === -1 ? null : list.splice(at, 1)[0];
   }
 
   function handFull(game) {
@@ -164,14 +218,14 @@
     var state = this.state;
     if (!ready(this)) return { ok: false, error: "Fish Hook isn't ready right now." };
     var letter = String(glyph || "").toUpperCase();
-    var index = (state.discard || []).findIndex(function match(card) { return isLetter(card) && card.glyph === letter; });
-    if (index < 0) return { ok: false, error: "There's no " + letter + " in the discard pile." };
+    if (!pond(this).some(function has(entry) { return entry.glyph === letter; })) return { ok: false, error: "There's no discarded " + letter + " to catch." };
     var thrown = null;
     if (handFull(this)) {
       thrown = throwable(this).find(function match(card) { return card.id === throwBackId; }) || null;
       if (!thrown) return { ok: false, error: "Your hand is full: pick a card to throw back." };
     }
-    var caught = state.discard.splice(index, 1)[0];
+    var caught = takeCatch(this, letter);
+    if (!caught) return { ok: false, error: "There's no discarded " + letter + " to catch." };
     state.umtFishHook = { key: stageKey(state), used: usedThisStage(state) + 1 };
     // Level 2: the catch is tested. In the answer, it turns yellow and
     // needs no slot, so nothing is thrown back.
@@ -255,7 +309,7 @@
       return;
     }
     if (existing) existing.remove();
-    row.insertAdjacentHTML("beforeend", '<button type="button" class="umt-fish-btn' + (empty ? " is-empty" : "") + '" data-umt-fish-open aria-label="Fish Hook: take a card back from the discard pile" title="Fish Hook: take a card back from the discard pile">' + hookSvg() + "</button>");
+    row.insertAdjacentHTML("beforeend", '<button type="button" class="umt-fish-btn' + (empty ? " is-empty" : "") + '" data-umt-fish-open aria-label="Fish Hook: take back a discarded card" title="Fish Hook: take back a discarded card">' + hookSvg() + "</button>");
   }
 
   var view = { open: false, glyph: "", throwId: "" };
@@ -275,11 +329,11 @@
     return '<div class="umt-fish-overlay" role="dialog" aria-modal="true" aria-labelledby="umtFishTitle">'
       + '<section class="umt-fish-sheet">'
       + '<header><span class="umt-fish-icon" aria-hidden="true">' + hookSvg() + '</span><div><h2 id="umtFishTitle">Fish Hook</h2>'
-      + "<p>Take one card back from your discard pile." + (level(game) > 0 ? " Once a stage." : "")
+      + "<p>Take back any card you've discarded this stage, even one reshuffled into your deck." + (level(game) > 0 ? " Once a stage." : "")
       + (level(game) >= 2 ? " The letter you catch is tested: if it's in the answer, it turns yellow and needs no space." : "") + "</p></div>"
       + '<button type="button" class="umt-fish-close" data-umt-fish-close aria-label="Close">×</button></header>'
-      + '<h3>Discard pile</h3>' + (fish ? '<div class="umt-fish-pond">' + fish + "</div>"
-        : '<p class="umt-fish-empty">Empty right now: cards you play or mulligan land here. Your catch waits until then.</p>')
+      + '<h3>Discarded this stage</h3>' + (fish ? '<div class="umt-fish-pond">' + fish + "</div>"
+        : '<p class="umt-fish-empty">Nothing yet: cards you play or mulligan this stage show up here. Your catch waits until then.</p>')
       + (full ? '<h3>Your hand is full: throw one back</h3><div class="umt-fish-pond">' + back + "</div>" : "")
       + '<button type="button" class="cuddle-btn cuddle-btn-primary umt-fish-go" data-umt-fish-go' + (canGo ? "" : " disabled") + ">" + esc(label) + "</button>"
       + "</section></div>";

@@ -303,7 +303,7 @@
           levels: ["Once a stage, fish a card you've discarded back into your hand. (If your hand is full, you throw one back.)",
             "The letter you fish is tested: if it's in the answer, it turns yellow.",
             "Also, once a stage, the hook catches a discarded answer letter on its own: it turns yellow."],
-          description: "Fish a card back from your discard pile, once a stage.",
+          description: "Fish back a card you discarded this stage, once a stage.",
           level: g => powerLevel(g, "fishHook") },
         // cuddle-new-badges.js
         { id: "cleanSlate", icon: "🧼", title: "Clean Slate", tier: "legendary", type: "letters", maxLevel: 1,
