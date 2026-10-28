@@ -13,7 +13,7 @@
   const WORD_COUNT = 16;
   const PUZZLE_COUNT = 3;
   const ADVANCE_MS = 1600;
-  const STORE_KEY = "umt.dailyPick.v7";
+  const STORE_KEY = "umt.dailyPick.v8";
 
   let puzzles = null; // [{ answer, words }]
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
@@ -102,7 +102,7 @@
     const taken = new Set();
     return Array.from({ length: PUZZLE_COUNT }, (_, i) => {
       const level = Math.min(i, LEVELS.length - 1);
-      const puzzle = buildPuzzle(list, `griddle:${date}:${i + 1}`, taken, level);
+      const puzzle = buildPuzzle(list, `griddle-2:${date}:${i + 1}`, taken, level);
       puzzle.words.forEach(w => taken.add(w));
       return { ...puzzle, ...LEVELS[level] };
     });
