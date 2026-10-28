@@ -1,19 +1,24 @@
-// client/daily-pick.js — Daily Pick: one shared puzzle a day, played once.
+// client/daily-pick.js — Daily Pick: three shared puzzles a day, played once.
 //
-// Sixteen five-letter words sit in a 4x4 grid. One is the secret. Select a word
-// and confirm it, and the panel below shows Wordle feedback for it; exclude the
-// words that feedback rules out, then pick again, until the secret is picked. The puzzle comes
-// from the UTC date alone (no server state), and the result is kept in
-// localStorage under that date, so it resets daily and can't be replayed.
+// Each puzzle is sixteen five-letter words in a 4x4 grid, one of them the
+// secret. Select a word and confirm it, and the panel below shows Wordle
+// feedback for it; exclude the words that feedback rules out, then pick again,
+// until the secret is picked. Solving one moves on to the next; the score is
+// the total number of guesses across all three. The puzzles come from the UTC
+// date alone (no server state), and progress is kept in localStorage under
+// that date, so it resets daily and can't be replayed.
 // It needs no server API, account or Supabase: the word list is a static file.
 
 (function () {
   const WORD_COUNT = 16;
-  const STORE_KEY = "umt.dailyPick.v2";
+  const PUZZLE_COUNT = 3;
+  const ADVANCE_MS = 1600;
+  const STORE_KEY = "umt.dailyPick.v3";
 
-  let words = null; // [{ word, struck }]
-  let secret = "";
-  let state = null; // { date, guesses: [], struck: [], solved }
+  let puzzles = null; // [{ answer, words }]
+  let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
+  let current = 0; // index of the puzzle on screen
+  let advanceTimer = null;
   // "pick": tap a word to select it (tap another to change your mind), then
   // confirm it with the button. "strike": after the feedback, tap words to
   // exclude them, then "Pick next word" goes back to "pick".
@@ -51,10 +56,10 @@
     return a;
   };
 
-  function buildPuzzle(pool, date) {
-    const rand = mulberry32(hash(`daily-pick:${date}`));
-    const list = pool.filter(w => /^[a-z]{5}$/.test(w)).sort();
-    const answer = list[Math.floor(rand() * list.length)];
+  function buildPuzzle(list, seed, taken) {
+    const rand = mulberry32(hash(seed));
+    let answer = list[Math.floor(rand() * list.length)];
+    while (taken.has(answer)) answer = list[Math.floor(rand() * list.length)];
     const letters = new Set(answer);
     const shared = w => [...new Set(w)].filter(c => letters.has(c)).length;
     const key = w => [...w].sort().join("");
@@ -71,6 +76,18 @@
       picked.push(w);
     }
     return { answer, words: shuffle([answer, ...picked], rand) };
+  }
+
+  // Puzzle 1 keeps the original one-puzzle seed, so today's first puzzle is
+  // the same one Daily Pick showed before it had three.
+  function buildDay(pool, date) {
+    const list = pool.filter(w => /^[a-z]{5}$/.test(w)).sort();
+    const taken = new Set();
+    return Array.from({ length: PUZZLE_COUNT }, (_, i) => {
+      const puzzle = buildPuzzle(list, i ? `daily-pick:${date}:${i + 1}` : `daily-pick:${date}`, taken);
+      taken.add(puzzle.answer);
+      return puzzle;
+    });
   }
 
   function feedback(guess, answer) {
@@ -93,23 +110,34 @@
       const saved = JSON.parse(localStorage.getItem(STORE_KEY));
       if (saved && saved.date === date) return saved;
     } catch (e) { /* fall through */ }
-    return { date, guesses: [], struck: [], solved: false };
+    const rounds = Array.from({ length: PUZZLE_COUNT }, () => ({ guesses: [], struck: [], solved: false }));
+    return { date, rounds };
   }
 
   function save() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* private mode */ }
   }
 
+  const round = () => state.rounds[current];
+  const firstUnsolved = () => {
+    const i = state.rounds.findIndex(r => !r.solved);
+    return i < 0 ? PUZZLE_COUNT - 1 : i;
+  };
+  const allSolved = () => state.rounds.every(r => r.solved);
+  const totalGuesses = () => state.rounds.reduce((sum, r) => sum + r.guesses.length, 0);
+
   function render() {
     const root = $("dailyPickRoot");
     if (!root) return;
-    const lastGuess = state.guesses[state.guesses.length - 1];
+    const { answer: secret, words } = puzzles[current];
+    const r = round();
+    const lastGuess = r.guesses[r.guesses.length - 1];
     const ring = words.map((word, i) => {
-      const struck = state.struck.includes(word);
-      const guessed = state.guesses.includes(word);
+      const struck = r.struck.includes(word);
+      const guessed = r.guesses.includes(word);
       return { word, struck, guessed };
     });
-    const done = state.solved;
+    const done = r.solved;
     const buttons = ring.map(({ word, struck, guessed }) => {
       const disabled = done || (phase === "pick" && (struck || guessed));
       return `<button type="button" class="dp-word${struck ? " is-struck" : ""}${guessed ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}" data-word="${word}"${disabled ? " disabled" : ""}>${word}</button>`;
@@ -123,8 +151,11 @@
     const blank = `<div class="dp-row">${"<span class=\"dp-tile is-empty\"></span>".repeat(5)}</div>`;
     let hint;
     let action = "";
-    if (done) {
-      hint = `<strong class="dp-result">Solved in ${state.guesses.length}!</strong> Come back tomorrow.`;
+    if (done && allSolved()) {
+      const parts = state.rounds.map(r => r.guesses.length).join(" + ");
+      hint = `<strong class="dp-result">All ${PUZZLE_COUNT} solved! Score: ${totalGuesses()}</strong> (${parts})`;
+    } else if (done) {
+      hint = `<strong class="dp-result">Solved in ${r.guesses.length}!</strong> Next puzzle…`;
     } else if (phase === "strike") {
       hint = "Now exclude words: tap the ones this rules out.";
       action = `<button type="button" class="dp-next" id="dpNext">Pick next word</button>`;
@@ -137,28 +168,33 @@
 
     root.innerHTML = `<div class="dp-board">${buttons}</div>
       <div class="dp-center">${lastGuess ? tiles(lastGuess) : blank}<div class="dp-hint">${hint}</div>${action}</div>
-      <div class="dp-count">Guesses: ${state.guesses.length}</div>`;
+      <div class="dp-count">Puzzle ${current + 1} of ${PUZZLE_COUNT} · Guesses: ${r.guesses.length} · Total: ${totalGuesses()}</div>`;
   }
 
   function onWordClick(word) {
-    if (state.solved) return;
+    const r = round();
+    if (r.solved) return;
     if (phase === "strike") {
-      const i = state.struck.indexOf(word);
-      if (i >= 0) state.struck.splice(i, 1);
-      else if (!state.guesses.includes(word)) state.struck.push(word);
+      const i = r.struck.indexOf(word);
+      if (i >= 0) r.struck.splice(i, 1);
+      else if (!r.guesses.includes(word)) r.struck.push(word);
       save();
-    } else if (!state.struck.includes(word) && !state.guesses.includes(word)) {
+    } else if (!r.struck.includes(word) && !r.guesses.includes(word)) {
       selected = selected === word ? "" : word;
     }
     render();
   }
 
   function guessSelected() {
-    if (!selected || state.solved) return;
-    state.guesses.push(selected);
-    if (selected === secret) state.solved = true;
-    else {
-      state.struck.push(selected);
+    const r = round();
+    if (!selected || r.solved) return;
+    r.guesses.push(selected);
+    if (selected === puzzles[current].answer) {
+      r.solved = true;
+      phase = "pick";
+      if (current < PUZZLE_COUNT - 1) advanceTimer = setTimeout(nextPuzzle, ADVANCE_MS);
+    } else {
+      r.struck.push(selected);
       phase = "strike";
     }
     selected = "";
@@ -166,28 +202,34 @@
     render();
   }
 
+  function nextPuzzle() {
+    advanceTimer = null;
+    current = firstUnsolved();
+    phase = "pick";
+    selected = "";
+    render();
+  }
+
   async function open() {
     window.showScreen("dailyPickScreen");
     document.body.classList.add("menu-mode");
     const root = $("dailyPickRoot");
-    if (!words) {
-      root.textContent = "Loading today's puzzle…";
+    if (!puzzles || state.date !== today()) {
+      root.textContent = "Loading today's puzzles…";
       try {
         const text = await (await fetch("wordlists/daily-pick-words.txt")).text();
         const pool = text.split(/\s+/).map(w => w.toLowerCase()).filter(Boolean);
         state = load();
-        const puzzle = buildPuzzle(pool, state.date);
-        secret = puzzle.answer;
-        words = puzzle.words;
+        puzzles = buildDay(pool, state.date);
       } catch (e) {
-        root.textContent = "Couldn't load today's puzzle. Please try again.";
+        root.textContent = "Couldn't load today's puzzles. Please try again.";
         return;
       }
-    } else if (state.date !== today()) {
-      words = null;
-      return open();
     }
-    phase = state.guesses.length && !state.solved ? "strike" : "pick";
+    clearTimeout(advanceTimer);
+    current = firstUnsolved();
+    const r = round();
+    phase = r.guesses.length && !r.solved ? "strike" : "pick";
     selected = "";
     render();
   }
