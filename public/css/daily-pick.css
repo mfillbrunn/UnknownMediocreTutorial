@@ -46,6 +46,9 @@
 .dp-tile.is-correct { background: #3f9d4f; }
 .dp-tile.is-present { background: #c9a227; }
 .dp-tile.is-absent { background: #555b63; }
+.dp-tile.is-in { background: #3b7dd8; }
+.dp-tile.is-plain { background: #3a4049; }
+.dp-count-tile { margin-left: 4px; border-radius: 50%; }
 .dp-tile.is-empty { border: 2px solid rgba(255,255,255,.2); }
 .dp-hint { font-size: 13px; opacity: .85; min-height: 1.4em; display: flex; align-items: center; gap: 6px; }
 .dp-result { font-size: inherit; font-weight: 800; opacity: 1; }

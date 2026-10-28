@@ -13,7 +13,7 @@
   const WORD_COUNT = 16;
   const PUZZLE_COUNT = 3;
   const ADVANCE_MS = 1600;
-  const STORE_KEY = "umt.dailyPick.v5";
+  const STORE_KEY = "umt.dailyPick.v6";
 
   let puzzles = null; // [{ answer, words }]
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
@@ -61,13 +61,15 @@
   const likeness = (word, answer) =>
     feedback(word, answer).reduce((sum, f) => sum + (f === "correct" ? 2 : f === "present" ? 1 : 0), 0);
 
-  // Each puzzle of the day is harder than the last: the words around the
-  // answer go from random, to related (sharing a few letters), to near
-  // misses (mostly the same letters, mostly in the same places).
+  // Each grid sets how alike its words are to the answer and how much the
+  // feedback gives away:
+  //   "full"   - Wordle tiles: green right spot, yellow wrong spot, grey not in it
+  //   "blue"   - blue if the letter is in the word at all, grey if not
+  //   "counts" - only how many greens and how many yellows, no positions
   const LEVELS = [
-    { min: 0, max: 10 }, // puzzle 1: any words
-    { min: 3, max: 5 }, //  puzzle 2: related
-    { min: 6, max: 10 } //  puzzle 3: very similar
+    { min: 6, max: 10, mode: "full", intro: "Near misses. Tap a word to pick your first guess." },
+    { min: 3, max: 5, mode: "blue", intro: "Blue means the letter is in the word, spot not shown. Tap a word to start." },
+    { min: 3, max: 5, mode: "counts", intro: "Only counts: how many greens and yellows, not which. Tap a word to start." }
   ];
 
   function buildPuzzle(list, seed, taken, level) {
@@ -98,9 +100,10 @@
     const list = [...new Set(pool.filter(w => /^[a-z]{5}$/.test(w)))].sort();
     const taken = new Set();
     return Array.from({ length: PUZZLE_COUNT }, (_, i) => {
-      const puzzle = buildPuzzle(list, `griddle:${date}:${i + 1}`, taken, Math.min(i, LEVELS.length - 1));
+      const level = Math.min(i, LEVELS.length - 1);
+      const puzzle = buildPuzzle(list, `griddle:${date}:${i + 1}`, taken, level);
       taken.add(puzzle.answer);
-      return puzzle;
+      return { ...puzzle, ...LEVELS[level] };
     });
   }
 
@@ -155,7 +158,7 @@
     const root = $("dailyPickRoot");
     if (!root) return;
     if (allSolved() && !advanceTimer) return renderSummary(root);
-    const { answer: secret, words } = puzzles[current];
+    const { answer: secret, words, mode, intro } = puzzles[current];
     const r = round();
     const lastGuess = r.guesses[r.guesses.length - 1];
     const ring = words.map((word, i) => {
@@ -169,8 +172,18 @@
       return `<button type="button" class="dp-word${struck ? " is-struck" : ""}${guessed ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}" data-word="${word}"${disabled ? " disabled" : ""}>${word}</button>`;
     }).join("");
 
-    const tiles = guess => `<div class="dp-row">${[...guess].map((ch, i) =>
-      `<span class="dp-tile is-${feedback(guess, secret)[i]}">${ch}</span>`).join("")}</div>`;
+    const tiles = guess => {
+      const result = feedback(guess, secret);
+      if (mode === "counts" && guess !== secret) {
+        const count = kind => result.filter(f => f === kind).length;
+        return `<div class="dp-row">${[...guess].map(ch => `<span class="dp-tile is-plain">${ch}</span>`).join("")}
+          <span class="dp-tile is-correct dp-count-tile">${count("correct")}</span>
+          <span class="dp-tile is-present dp-count-tile">${count("present")}</span></div>`;
+      }
+      const shown = f => (mode === "blue" && guess !== secret && f !== "absent" ? "in" : f);
+      return `<div class="dp-row">${[...guess].map((ch, i) =>
+        `<span class="dp-tile is-${shown(result[i])}">${ch}</span>`).join("")}</div>`;
+    };
 
     // The panel always holds the same three rows (tiles, hint, action) so
     // the screen doesn't shift as the game moves along.
@@ -183,7 +196,7 @@
       hint = "Now exclude words: tap the ones this rules out.";
       action = `<button type="button" class="dp-next" id="dpNext">Pick next word</button>`;
     } else {
-      hint = lastGuess ? "Tap the word you want to guess next." : "Tap a word to pick it as your first guess.";
+      hint = lastGuess ? "Tap the word you want to guess next." : intro;
       action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${selected.toUpperCase()}` : "Select a word"}</button>`;
     }
     // Keeps the panel the same height once the button is gone.
@@ -191,7 +204,7 @@
 
     root.innerHTML = `<div class="dp-board">${buttons}</div>
       <div class="dp-center">${lastGuess ? tiles(lastGuess) : blank}<div class="dp-hint">${hint}</div>${action}</div>
-      <div class="dp-count">Puzzle ${current + 1} of ${PUZZLE_COUNT} · Guesses: ${r.guesses.length} · Total: ${totalGuesses()}</div>`;
+      <div class="dp-count">Grid ${current + 1} of ${PUZZLE_COUNT} · Guesses: ${r.guesses.length} · Total: ${totalGuesses()}</div>`;
   }
 
   function onWordClick(word) {
