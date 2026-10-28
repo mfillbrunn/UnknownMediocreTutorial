@@ -91,7 +91,7 @@
     ideaTiles: ["Idea cards go into your deck. An idea card has no letter; mulligan it away and it shows you a letter of the answer (it turns yellow). At level 2 it becomes a super idea card, which places a letter in its spot (green); at level 3 you get two super idea cards.", ["ideaCard", "mulligan"]],
     waveTiles: ["Wave cards go into your deck. When you draw one, it washes away every consonant card in your hand (and any dead cards), deals you new ones and gives you a mulligan. Idea cards it washes away still give their hint.", ["wave", "deadCard"]],
     fullCircle: ["Your deck is reshuffled when it runs out. Once a stage, when that happens, a letter of the answer is placed in its spot for you.", ["hand", "board"]],
-    leanBuild: ["A Restraint badge: it rewards keeping few badges. Each solve pays this bonus, minus 5 points for every badge you have outside the Restraint school (Legendaries don't count).", ["cashout", "reward"]],
+    leanBuild: ["A Restraint badge: it rewards keeping few badges. Each solve pays +20 / +35 / +60 (world 1 / 2 / 3), minus 5 points for every badge you have outside the Restraint school (Legendaries don't count). Level 2: Common badges don't count either. Level 3: Rare ones don't count either.", ["cashout", "reward"]],
     monksVow: ["You can always skip a reward. With this badge a skip pays both points and money, instead of one or the other.", ["reward"]],
     strikeThrough: ["Consonants that are shown not to be in the answer get crossed out. Each one crossed out pays these points.", ["clues", "cashout"]],
     highRoller: ["A bet every stage: solve within the target guess and you win the bet; solve later and you lose it.", ["board", "cashout"]],

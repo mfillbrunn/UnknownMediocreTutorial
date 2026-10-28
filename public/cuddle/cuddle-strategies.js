@@ -4,9 +4,10 @@
  *   - Skipping: an ordinary "round cleared" reward screen can be skipped
  *     for +40 points or +$15 (the player picks). Boss/legendary picks,
  *     starting rewards and Free Upgrade / event picks can't be skipped.
- *   - Lean Build (epic, one-time): every solved stage pays a flat 20 / 40
- *     / 100 points (world 1 / 2 / 3), minus 5 for every non-Restraint badge you
- *     own.
+ *   - Lean Build (epic, 3 levels): every solved stage pays a flat 20 / 35
+ *     / 60 points (world 1 / 2 / 3), minus 5 for every badge you own outside
+ *     Restraint. Level 2: Common badges don't count; level 3: Rare ones
+ *     don't either.
  *   - Monk's Vow (rare, one-time): a skip pays both, +40 points and +$15.
  *
  * Eliminator -- score by ruling letters out:
@@ -70,10 +71,12 @@
     }
     return { points: points, money: money, vow: false };
   }
-  // Lean Build's cost per other badge, by its level.
-  var LEAN_COST_BY_LEVEL = [5, 4, 3];
-  var LEAN_BY_WORLD = [20, 40, 100];
+  // Lean Build: its pay by world, and what each badge outside Restraint
+  // takes off. Its levels let cheaper badges off: level 2 Commons, level 3
+  // Rares too (LEAN_FREE_TIERS).
+  var LEAN_BY_WORLD = [20, 35, 60];
   var LEAN_PER_BADGE = 5;
+  var LEAN_FREE_TIERS = [[], ["common"], ["common", "rare"]];
   var STRIKE_POINTS = [0, 1, 2, 3];
   var HIGH_ROLLER_BET = [0, 10, 20, 40];
   // A won bet pays more than it risks: twice the stake.
@@ -201,16 +204,23 @@
     return Math.max(0, Math.min(2, gates));
   }
 
-  // Every badge (registry power) you own outside Restraint: Restraint's
-  // own badges (Lean Build itself among them) and Legendaries (which can't
-  // be skipped) don't count against it.
+  function leanFreeTiers(game) {
+    return LEAN_FREE_TIERS[Math.max(1, Math.min(3, levelOf(game, "leanBuild"))) - 1];
+  }
+
+  // Every badge (registry power) you own outside Restraint that counts
+  // against Lean Build: Restraint's own badges (Lean Build itself among
+  // them) and Legendaries (which can't be skipped) never do, and its
+  // levels let Commons, then Rares, off too.
   function otherBadges(game) {
     var tree = registry();
     if (!tree || !Array.isArray(tree.BRANCHES)) return 0;
+    var free = leanFreeTiers(game);
     var count = 0;
     tree.BRANCHES.forEach(function branch(group) {
       (group.nodes || []).forEach(function node(item) {
         if (!item || item.id === "leanBuild" || item.school === "pearl" || item.tier === "legendary") return;
+        if (free.indexOf(String(item.tier || "common").toLowerCase()) !== -1) return;
         try {
           if (num(tree.level(game, item)) > 0) count += 1;
         } catch (_error) {
@@ -226,8 +236,7 @@
     // Pearl II: 3 badges don't count against it.
     var schools = window.CuddleSchools;
     var ignored = schools && typeof schools.perk === "function" ? num(schools.perk(game, "leanIgnore")) : 0;
-    var perBadge = LEAN_COST_BY_LEVEL[Math.max(1, Math.min(3, levelOf(game, "leanBuild"))) - 1];
-    return Math.max(0, base - perBadge * Math.max(0, otherBadges(game) - ignored));
+    return Math.max(0, base - LEAN_PER_BADGE * Math.max(0, otherBadges(game) - ignored));
   }
 
   // -- Strike-Through -------------------------------------------------------
@@ -526,6 +535,7 @@
     hasMonksVow: function hasMonksVow(game) { return levelOf(game, "monksVow") > 0; },
     // What a skip on the screen now open pays: { points, money, vow }.
     skipPay: skipPay,
-    leanPerBadge: function leanPerBadge(game) { return LEAN_COST_BY_LEVEL[Math.max(1, Math.min(3, levelOf(game, "leanBuild"))) - 1]; }
+    leanPerBadge: function leanPerBadge() { return LEAN_PER_BADGE; },
+    leanFreeTiers: leanFreeTiers
   });
 }());
