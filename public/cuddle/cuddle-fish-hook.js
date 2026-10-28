@@ -78,14 +78,18 @@
   }
 
   // Where each catchable card is now: { card, from: "discard" | "extra" | "deck" }.
+  // Letters already known to be out of the answer (grey) can't be caught:
+  // only ones still unknown, or in it.
   function catchable(game) {
     var state = game.state;
     var log = fishLog(state);
     var out = [];
-    (state.discard || []).forEach(function pile(card) { if (isLetter(card)) out.push({ card: card, from: "discard" }); });
-    log.extra.forEach(function lost(card) { if (isLetter(card)) out.push({ card: card, from: "extra" }); });
+    var absent = new Set((state.knownAbsent || []).map(function up(letter) { return String(letter).toUpperCase(); }));
+    var open = function open(card) { return isLetter(card) && !absent.has(String(card.glyph).toUpperCase()); };
+    (state.discard || []).forEach(function pile(card) { if (open(card)) out.push({ card: card, from: "discard" }); });
+    log.extra.forEach(function lost(card) { if (open(card)) out.push({ card: card, from: "extra" }); });
     (state.deck || []).forEach(function back(card) {
-      if (isLetter(card) && log.ids.indexOf(card.id) !== -1) out.push({ card: card, from: "deck" });
+      if (open(card) && log.ids.indexOf(card.id) !== -1) out.push({ card: card, from: "deck" });
     });
     return out;
   }
@@ -295,11 +299,11 @@
     return '<div class="umt-fish-overlay" role="dialog" aria-modal="true" aria-labelledby="umtFishTitle">'
       + '<section class="umt-fish-sheet">'
       + '<header><span class="umt-fish-icon" aria-hidden="true">' + hookSvg() + '</span><div><h2 id="umtFishTitle">Fish Hook</h2>'
-      + "<p>Take back any card you've discarded this stage, even one reshuffled into your deck." + (level(game) > 0 ? " Once a stage." : "")
+      + "<p>Take back a card you've discarded this stage, even one reshuffled into your deck. Letters known to be out of the word can't be caught." + (level(game) > 0 ? " Once a stage." : "")
       + (level(game) >= 2 ? " The letter you catch is tested: if it's in the answer, it turns yellow and needs no space." : "") + "</p></div>"
       + '<button type="button" class="umt-fish-close" data-umt-fish-close aria-label="Close">×</button></header>'
       + '<h3>Discarded this stage</h3>' + (fish ? '<div class="umt-fish-pond">' + fish + "</div>"
-        : '<p class="umt-fish-empty">Nothing yet: cards you play or mulligan this stage show up here. Your catch waits until then.</p>')
+        : '<p class="umt-fish-empty">Nothing to catch yet: cards you play or mulligan this stage show up here (not ones known to be out of the word). Your catch waits until then.</p>')
       + '<button type="button" class="cuddle-btn cuddle-btn-primary umt-fish-go" data-umt-fish-go' + (canGo ? "" : " disabled") + ">" + esc(label) + "</button>"
       + "</section></div>";
   }
