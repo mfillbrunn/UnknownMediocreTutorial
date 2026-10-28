@@ -2484,7 +2484,7 @@
         game.state.upgradeChoices = choices;
         if (epic.length) {
           game.state.waystoneOffer = true;
-          game.state.umtEventPick = { title: "Word Duel", kicker: "WORD DUEL WON", tier: "epic" };
+          game.state.umtEventPick = { title: "Word Duel", kicker: "WORD DUEL WON", tier: "epic", skippable: true };
           // Hard: level-ups after the badge (cuddle-reward-rhythm.js).
           if (duel.difficulty === "hard" && rhythm && typeof rhythm.levelsAfterBadge === "function") rhythm.levelsAfterBadge(game);
         }

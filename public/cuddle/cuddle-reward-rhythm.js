@@ -209,7 +209,7 @@
     if (!choices.length) return false;
     state.upgradeChoices = choices;
     state.waystoneOffer = true;
-    state.umtEventPick = { title: "Trial", kicker: "TRIAL PASSED", tier: "rare" };
+    state.umtEventPick = { title: "Trial", kicker: "TRIAL PASSED", tier: "rare", skippable: true };
     // A Hard trial: level-ups after the badge.
     if (node.trialDifficulty === "hard") levelsAfterBadge(game);
     return true;
