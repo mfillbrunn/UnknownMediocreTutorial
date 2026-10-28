@@ -30,6 +30,7 @@
 .dp-word:disabled { cursor: default; }
 .dp-word.is-struck { text-decoration: line-through; opacity: .4; }
 .dp-word.is-guessed { border-color: #f2c14e; }
+.dp-word.is-selected { border-color: #6fb1ff; background: rgba(111,177,255,.25); }
 .dp-center {
   margin-top: 10px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -47,6 +48,7 @@
 .dp-tile.is-absent { background: #555b63; }
 .dp-tile.is-empty { border: 2px solid rgba(255,255,255,.2); }
 .dp-hint { font-size: 13px; opacity: .85; min-height: 1.4em; display: flex; align-items: center; gap: 6px; }
-.dp-result { font-size: 16px; font-weight: 800; opacity: 1; }
+.dp-result { font-size: inherit; font-weight: 800; opacity: 1; }
 .dp-next { padding: 8px 14px; border-radius: 8px; border: 0; font-weight: 700; cursor: pointer; }
+.dp-next:disabled { opacity: .5; cursor: default; }
 .dp-count { margin-top: 10px; text-align: center; font-size: 13px; opacity: .85; }
