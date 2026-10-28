@@ -203,9 +203,14 @@
     // Keeps the panel the same height once the button is gone.
     if (!action) action = `<button type="button" class="dp-next" tabindex="-1" aria-hidden="true" style="visibility:hidden">&nbsp;</button>`;
 
+    // The latest guess sits in the panel; the ones before it, newest first,
+    // go in a smaller list underneath so the panel itself never grows.
+    const history = r.guesses.slice(0, -1).reverse().map(tiles).join("");
+
     root.innerHTML = `<div class="dp-board">${buttons}</div>
       <div class="dp-center">${lastGuess ? tiles(lastGuess) : blank}<div class="dp-hint">${hint}</div>${action}</div>
-      <div class="dp-count">Grid ${current + 1} of ${PUZZLE_COUNT} · Guesses: ${r.guesses.length} · Total: ${totalGuesses()}</div>`;
+      <div class="dp-count">Grid ${current + 1} of ${PUZZLE_COUNT} · Guesses: ${r.guesses.length} · Total: ${totalGuesses()}</div>
+      ${history ? `<div class="dp-history"><div class="dp-history-title">Earlier guesses</div>${history}</div>` : ""}`;
   }
 
   function onWordClick(word) {
