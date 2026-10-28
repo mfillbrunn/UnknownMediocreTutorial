@@ -1,17 +1,25 @@
 /* Daily Pick (client/daily-pick.js) */
-.dp-card { width: min(100%, 520px); }
+.dp-card { width: min(100%, 520px); position: relative; padding: 14px 10px !important; }
+.dp-card .menu-title { margin: 0 0 10px !important; font-size: 20px; }
+.dp-close {
+  position: absolute; top: 8px; right: 8px;
+  width: 34px; height: 34px; padding: 0;
+  border: 0; border-radius: 50%;
+  background: #d64545; color: #fff;
+  font-size: 24px; line-height: 1; cursor: pointer;
+}
 .dp-board {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  gap: 5px;
   width: 100%;
 }
 .dp-word {
-  font: 700 clamp(10px, 3.4vw, 15px)/1 inherit;
+  font: 700 clamp(14px, 4.6vw, 20px)/1 inherit;
   font-family: inherit;
   letter-spacing: .04em;
   text-transform: uppercase;
-  padding: 14px 0;
+  padding: 18px 0;
   border: 2px solid rgba(255,255,255,.25);
   border-radius: 8px;
   background: rgba(255,255,255,.08);
@@ -22,7 +30,7 @@
 .dp-word.is-struck { text-decoration: line-through; opacity: .4; }
 .dp-word.is-guessed { border-color: #f2c14e; }
 .dp-center {
-  margin-top: 14px; min-height: 120px;
+  margin-top: 10px; min-height: 100px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 8px; padding: 12px; text-align: center;
   border-radius: 10px; background: rgba(0,0,0,.25);
