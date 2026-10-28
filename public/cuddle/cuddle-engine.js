@@ -5575,6 +5575,7 @@
 
     let jokerLetter = null;
     let jokerIndex = -1;
+    let jokerCardResolved = null;
     if (rawWord.length === 5 && rawWord.includes(JOKER_GLYPH)) {
       const resolution = resolveJokerWord(this, rawWord);
       if (!resolution) return { ok: false, error: "No letter completes that into a real word." };
@@ -5584,7 +5585,10 @@
       jokerIndex = rawWord.indexOf(JOKER_GLYPH);
       const jokerDraftCard = this.getDraftCards().find(card => card.glyph === JOKER_GLYPH);
       const jokerHandCard = jokerDraftCard && this.state.hand.find(card => card.id === jokerDraftCard.id);
-      if (jokerHandCard) jokerHandCard.glyph = resolution.letter;
+      if (jokerHandCard) {
+        jokerHandCard.glyph = resolution.letter;
+        jokerCardResolved = jokerHandCard;
+      }
       jokerLetter = resolution.letter;
     }
 
@@ -5630,6 +5634,12 @@
     try {
       result = composedSubmitDraft.call(this);
     } finally {
+      // A guess that didn't go through (a rule, a check further in) leaves
+      // the Joker a Joker: otherwise it stayed the letter it was about to
+      // be, a second copy of that letter in the hand.
+      if (jokerCardResolved && !result?.ok && jokerCardResolved.source === "joker") {
+        jokerCardResolved.glyph = JOKER_GLYPH;
+      }
       if (sawMaskRatchet) {
         // Only if the stand-in is still there: a guess that wins a boss
         // fight clears state.boss, and restoring then revived the beaten
