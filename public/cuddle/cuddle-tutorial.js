@@ -150,12 +150,12 @@
       at: "top",
       cards: [
         { title: "Find the secret word", text: "Each stage hides a five-letter word. Build a guess from your letter cards and submit it. <span class=\"umt-tut-g\">Green</span>: right letter, right spot. <span class=\"umt-tut-y\">Yellow</span>: in the word, wrong spot. <span class=\"umt-tut-x\">Grey</span>: not in the word.", focus: ".cuddle-board", at: "bottom" },
-        { title: "Your cards", skip: onlyEasy, text: "<b>Vowels</b> are always in your hand, and turn <span class=\"umt-tut-r\">red</span> once they're ruled out. Every consonant of the answer is in your hand too, mixed in with a few others: work out which ones." },
-        { title: "Your cards", skip: easyRun, text: "<b>Vowels</b> are reusable: they stay in your hand all stage, and turn <span class=\"umt-tut-r\">red</span> once they're ruled out. <b>Consonants</b> are used up when you guess with them, and new ones are drawn from your deck. The little pile shows how many are left.", focus: ".cuddle-hand" },
+        { title: "Your cards", skip: onlyEasy, text: "Any card in your hand can be used <b>as many times as you like</b> in a word. <b>Vowels</b> always stay in your hand, and turn <span class=\"umt-tut-r\">red</span> once they're ruled out. Every consonant of the answer is in your hand too, mixed in with a few others: work out which ones." },
+        { title: "Your cards", skip: easyRun, text: "Any card in your hand can be used <b>as many times as you like</b> in a word. After a guess, <b>vowels</b> stay in your hand (they turn <span class=\"umt-tut-r\">red</span> once ruled out), and so do letters found in the answer. Other <b>consonants</b> you guessed with are used up, and new ones are drawn from your deck. The little pile shows how many are left.", focus: ".cuddle-hand" },
         { title: "Cards, squares and tiles", skip: easyRun, text: "Three words, three places. <b>Cards</b> are in your hand and deck (letters, and special ones like lucky or Joker cards). <b>Squares</b> are spots on the board (some are special, like money squares). <b>Tiles</b> are the colours a guess shows: green, yellow or grey.", focus: ".cuddle-hand" },
         { title: "Mulligans", skip: easyRun, text: "Stuck with letters you can't use? A <b>mulligan</b> swaps some consonants for fresh ones from the deck. You get a few each stage, and any you don't use pay points at the end.", focus: ".cuddle-mulligan" },
         // Easy and Medium runs start with Fish Hook (cuddle-new-badges.js).
-        { title: "Fish Hook", skip: function noHook(game) { return !(window.CuddleFishHook && game && window.CuddleSkillTree && window.CuddleSkillTree.level(game, window.CuddleSkillTree.findNode("fishHook")) > 0); }, text: "You start with the <b>Fish Hook</b>. Threw away a letter you need after all? Once you've used or mulliganed cards, a <b>hook</b> appears by your deck: tap it, once a stage, to fish a card back from your discard pile.", focus: ".umt-fish-btn" },
+        { title: "Fish Hook", skip: function noHook(game) { return !(window.CuddleFishHook && game && window.CuddleSkillTree && window.CuddleSkillTree.level(game, window.CuddleSkillTree.findNode("fishHook")) > 0); }, text: "You start with the <b>Fish Hook</b>. Threw away a letter you need after all? Once you've used or mulliganed cards, a <b>hook</b> appears by your deck: tap it, once a stage, to fish back a card you discarded.", focus: ".umt-fish-btn" },
         { title: "Quests", skip: function noQuests(game) { return Boolean(window.CuddleFirstRun && window.CuddleFirstRun.noQuests(game)); }, text: "Every few guesses a <b>quest</b> appears, like \"use two yellow letters\". Meet it with your next guess to pick a bonus. Tap a quest to read it in full.", focus: ".cuddle-quest-inline" }
       ]
     },
@@ -252,8 +252,8 @@
       at: "top",
       cards: [
         { title: "Find the secret word", text: "Each stage hides a five-letter word. Build a guess from your letter cards and tap <b>Submit word</b>. <span class=\"umt-tut-g\">Green</span>: right letter, right spot. <span class=\"umt-tut-y\">Yellow</span>: in the word, wrong spot. Grey: not in the word." },
-        { title: "Building a word", text: "Tap a card to put its letter in the next empty spot. Changed your mind? Tap a letter in your word to send it back, or tap <b>⌫</b> to take off the last one. Vowels can be used as often as you like.", focus: ".cuddle-hand" },
-        { title: "Your cards", text: "<b>Vowels</b> are always in your hand. <b>Consonants</b> are cards: this time every consonant of the answer is already in your hand, so you only need to find the order.", focus: ".cuddle-hand" },
+        { title: "Building a word", text: "Tap a card to put its letter in the next empty spot. Changed your mind? Tap a letter in your word to send it back, or tap <b>⌫</b> to take off the last one. Any card can be used as often as you like in a word.", focus: ".cuddle-hand" },
+        { title: "Your cards", text: "<b>Vowels</b> always stay in your hand. Wrong <b>consonants</b> leave it after a guess, and new ones are drawn. This time every consonant of the answer is already in your hand, so you only need to find the order.", focus: ".cuddle-hand" },
         { title: "Themes", text: "The tags at the top are the answer's <b>themes</b>, a hint about what kind of word it is.", focus: ".cuddle-category-chips" },
         { title: "A hint for this one", text: "The answer uses all three of your consonants, <b>S</b>, <b>C</b> and <b>B</b>, in that order, with two vowels in between. And it's a fun activity!", focus: ".cuddle-hand" }
       ]
@@ -264,7 +264,16 @@
       when: function when(game, state) { return playing(state) && present(".cuddle-hand .cuddle-card.is-card-red"); },
       at: "top",
       cards: [
-        { title: "Red means not in the word", text: "Your cards keep score too. A card that turns <span class=\"umt-tut-r\">red</span> is <b>not in the word</b>: leave it out of your next guesses. <span class=\"umt-tut-y\">Yellow</span> and <span class=\"umt-tut-g\">green</span> cards are in the word, and they now stay in your hand.", focus: ".cuddle-hand" }
+        { title: "Red means not in the word", text: "Your cards keep score too. A card that turns <span class=\"umt-tut-r\">red</span> is <b>not in the word</b>: leave it out of your next guesses. <span class=\"umt-tut-y\">Yellow</span> and <span class=\"umt-tut-g\">green</span> cards are in the word, and they now stay in your hand. You don't have to use them again, though: every guess can use any letters you like.", focus: ".cuddle-hand" }
+      ]
+    },
+    {
+      // Once a card shows where it goes.
+      id: "e-position",
+      when: function when(game, state) { return playing(state) && present(".cuddle-hand .cuddle-card-position"); },
+      at: "top",
+      cards: [
+        { title: "Where it goes", text: "A <span class=\"umt-tut-g\">green</span> card shows a number in its corner: the spot it takes in the answer. <b>#1</b> is the first letter, <b>#5</b> the last.", focus: ".cuddle-hand .cuddle-card-position" }
       ]
     },
     {
@@ -294,16 +303,6 @@
       ]
     },
     {
-      id: "e-stage3",
-      when: function when(game, state) {
-        return playing(state) && !state.boss && eduStage(game) > 2 && !(window.CuddleEasyMode && window.CuddleEasyMode.isMulliganStage(game));
-      },
-      at: "top",
-      cards: [
-        { title: "Mulligans are back", text: "From here on, one consonant of the answer waits in your <b>deck</b> each stage, the boss too. Work out which letters you don't need and <b>mulligan</b> one: the missing letter comes in. (Miss it, and it turns up by itself after your third guess.)", focus: ".cuddle-mulligan" }
-      ]
-    },
-    {
       id: "e-badge",
       when: function when(game, state) {
         // Once the choices are really up: the solve animation and the
@@ -312,7 +311,21 @@
       },
       at: "top",
       cards: [
-        { title: "Pick a badge", text: "After a stage you pick one of these. Each is a <b>badge</b>: it stays with you for the rest of the run and makes you better, usually with a hint about the answer. Tap a badge's <b>?</b> to see how it works. Pick the one that sounds most useful.", focus: ".cuddle-choice-grid", at: "bottom" }
+        { title: "Pick a badge", text: "After a stage you pick one of these. Each is a <b>badge</b>: it stays with you for the rest of the run and makes you better, usually with a hint about the answer. Pick the one that sounds most useful.", focus: ".cuddle-choice-grid", at: "bottom" },
+        { title: "Not sure what it does?", text: "Tap the <b>?</b> on a badge any time, here or in your badges, to see what it does, with an example from the game.", focus: ".cuddle-choice-grid .umt-help-q", at: "bottom" }
+      ]
+    },
+    {
+      // The second reward screen offers the badge you hold, a level up.
+      id: "e-levelup",
+      when: function when(game, state) {
+        return state.status === "upgrade" && onTop(".cuddle-choice-grid") && !moneyOverlayUp()
+          && Boolean(window.CuddleEasyMode && window.CuddleEasyMode.levelUpOffer(game));
+      },
+      needs: ["e-badge"],
+      at: "top",
+      cards: [
+        { title: "Level up a badge", text: "Badges you already have can be <b>levelled up</b>: each level makes the badge stronger. This time, instead of a new badge, take the next level of yours. Its <b>?</b> shows what each level does.", focus: ".cuddle-choice-grid", at: "bottom" }
       ]
     },
     {
@@ -326,11 +339,20 @@
       ]
     },
     {
+      // A later stage, once washing out opens (cuddle-washout.js).
+      id: "e-washout",
+      when: function when(game, state) { return playing(state) && !state.boss && present(".umt-washout-btn"); },
+      at: "top",
+      cards: [
+        { title: "Wash out", text: "Stuck with letters you can't use? Tap the <b>✕</b> on your deck to <b>wash out</b>: all your consonants are swapped for new ones and you get 2 more mulligans. It costs a guess.", focus: ".umt-washout-btn" }
+      ]
+    },
+    {
       id: "e-crossroads",
       when: function when() { return present(".umt-event-page") && present(".umt-event-choice"); },
       at: "bottom",
       cards: [
-        { title: "A choice", text: "Pick the help you like for the rest of the way. <b>A hint</b> marks one letter of every answer yellow from the start. <b>Themes</b> shows every theme of every answer." }
+        { title: "A choice", text: "Pick the help you like for the rest of the way. <b>A hint</b> marks one letter of every answer yellow from the start. <b>A free opener</b> lets your first guess in every stage be any five letters, so you can test the letters you like." }
       ]
     },
     {
@@ -441,6 +463,9 @@
       // Another overlay came up (a badge reveal, the world popup...): step
       // aside; the scene plays again from its start once it's gone.
       if (!still || busy(view.scene.except)) {
+        // Its moment passed (Collect tapped mid-lesson, say): it counts as
+        // seen, so it isn't told again at the next cash-out.
+        if (!still) markSeen(view.scene);
         close();
         if (still) return;
       } else {
@@ -481,23 +506,25 @@
     }
   }
 
-  function finishScene() {
-    var scene = view.scene;
-    if (scene && scene.edu) {
+  function markSeen(scene) {
+    if (!scene) return;
+    if (scene.edu) {
       var game = activeGame();
       if (game && game.state) {
         var own = eduRecord(game.state);
         if (own.seen.indexOf(scene.id) === -1) own.seen.push(scene.id);
         try { game.save(); } catch (_error) { /* next save */ }
       }
-      close();
-      schedule();
       return;
     }
     var record = load() || { status: "active", seen: [] };
-    if (scene && record.seen.indexOf(scene.id) === -1) record.seen.push(scene.id);
-    if (scene && scene.done) record.status = "done";
+    if (record.seen.indexOf(scene.id) === -1) record.seen.push(scene.id);
+    if (scene.done) record.status = "done";
     store(record);
+  }
+
+  function finishScene() {
+    markSeen(view.scene);
     close();
     schedule();
   }

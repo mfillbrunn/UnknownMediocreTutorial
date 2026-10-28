@@ -359,12 +359,18 @@
 
   // "World 1 bonus: new theme" rising from the theme line, with a soft
   // boop, once the line has redrawn with the new theme.
-  function floatWorldBonus() {
+  // (If the theme line isn't on screen yet -- a quest reward is open,
+  // say -- it waits for it, for a while.)
+  function floatWorldBonus(tries = 0) {
     window.setTimeout(() => {
       const chips = document.querySelectorAll("#cuddleRoot .cuddle-category-readout");
       const target = chips[chips.length - 1];
       const box = target ? target.getBoundingClientRect() : null;
-      if (!box || !box.width) return;
+      const covered = Boolean(document.querySelector("#cuddleRoot .cuddle-overlay"));
+      if (!box || !box.width || covered) {
+        if (tries < 60) floatWorldBonus(tries + 1);
+        return;
+      }
       const el = document.createElement("span");
       el.className = "umt-theme-bonus-pop";
       el.innerHTML = "<b>World 1 bonus</b> New theme revealed";
@@ -372,12 +378,16 @@
       el.style.left = `${Math.round(box.left + box.width / 2)}px`;
       el.style.top = `${Math.round(box.top)}px`;
       document.body.appendChild(el);
+      // Centred on the theme line, but never past the screen's edge.
+      const half = el.offsetWidth / 2;
+      const centre = Math.max(half + 8, Math.min(window.innerWidth - half - 8, box.left + box.width / 2));
+      el.style.left = `${Math.round(centre)}px`;
       target.classList.remove("is-bonus-new");
       void target.offsetWidth;
       target.classList.add("is-bonus-new");
       window.setTimeout(() => el.remove(), 2400);
       if (window.CuddleAudio) window.CuddleAudio.play("hint");
-    }, 120);
+    }, tries ? 500 : 120);
   }
 
   function ensureGuaranteedCategoryReveal(game) {
@@ -1150,16 +1160,9 @@
         html = html.replace(headerMarker, `${headerMarker}${hintBadge}${heartBadge}`);
       }
     }
-    // The between-round upgrade screen stays on the choices alone; the
-    // theme only matters mid-stage (quest rewards).
-    if (state.status === "questReward") {
-      const badge = renderCategoryBadge(ensureCampaign(game));
-      if (!badge) return html;
-      const modalMatch = html.match(/<section class="cuddle-modal[^"]*">/);
-      if (!modalMatch) return html;
-      const insertAt = modalMatch.index + modalMatch[0].length;
-      return html.slice(0, insertAt) + `<div class="cuddle-map-badge-standalone">${badge}</div>` + html.slice(insertAt);
-    }
+    // Reward screens (between rounds and quest rewards) stay on the
+    // choices alone: the theme line is on the board behind them.
+    if (state.status === "questReward") return html;
     // Live guessing screen (status "playing", already past roundIntroPending
     // -- that phase is its own full-screen map, dispatched before this ever
     // runs). Two things get stitched onto the top of .cuddle-left-column

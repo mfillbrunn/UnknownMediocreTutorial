@@ -474,7 +474,7 @@
     { id: "umtSpotlight", icon: "👁️", title: "Spotlight", description: "A yellow letter moves to its exact spot and turns green (or the next yellow you find does)." },
     { id: "umtPocketMoney", icon: "💰", title: "Pocket Money", description: "Get +$8 right now." },
     { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "Get +10 points right now." },
-    { id: "umtFishingLine", icon: "🪝", title: "Fishing Line", description: "Twice this stage, take a card back from your discard pile (tap the hook on your deck)." },
+    { id: "umtFishingLine", icon: "🪝", title: "Fishing Line", description: "Twice this stage, take back a card you discarded (tap the hook on your deck)." },
     // Only with the badge that adds them (needs), and then always offered.
     { id: "umtOvertime", icon: "⏱️", title: "One More Guess", needs: "overtime", noDuel: true,
       description: "One more guess this stage: a boss gives you one more try; elsewhere the late-guess cost starts a guess later." },
@@ -652,7 +652,7 @@
         hook.addCatch(game);
         if (questBoost(game)) hook.addCatch(game);
       }
-      return "Fishing Line: " + (questBoost(game) ? 3 : 2) + " catches. Tap the hook on your deck to take cards back from the discard pile.";
+      return "Fishing Line: " + (questBoost(game) ? 3 : 2) + " catches. Tap the hook on your deck to take back cards you discarded.";
     }
   };
 

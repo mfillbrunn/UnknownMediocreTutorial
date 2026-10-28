@@ -28,6 +28,16 @@
     return String((state && state.runId) || "").indexOf(":duel:") !== -1;
   }
 
+  // The Tutorial run keeps to the basics at first: washing out opens after
+  // its mulligan stage (stage 2), where the tour explains it.
+  var TUTORIAL_WASH_FROM = 3;
+  function easyRun(game) {
+    var easy = window.CuddleEasyMode;
+    if (!easy || typeof easy.isEasy !== "function" || !easy.isEasy(game)) return false;
+    var stage = typeof easy.stageNumber === "function" ? Number(easy.stageNumber(game)) || 0 : 0;
+    return stage < TUTORIAL_WASH_FROM;
+  }
+
   // The consonant letter cards a wash sends back.
   function washable(game) {
     var hand = (game.state && game.state.hand) || [];
@@ -50,6 +60,7 @@
     var state = this.state;
     if (!state || state.status !== "playing") return "You can only wash out your hand during a stage.";
     if (inDuel(state)) return "Duels keep their own deck.";
+    if (easyRun(this)) return "Washing out opens later in the Tutorial run.";
     if (typeof this.presetPick === "function" && this.presetPick()) return "Pick the answer first.";
     if (!washable(this).length) return "There are no consonants in your hand to wash out.";
     if (guessesLeft(this) < 2) return "It costs a guess, and this is your last one.";
@@ -155,7 +166,7 @@
     var deck = target.closest("#cuddleScreen .cuddle-hand-panel .cuddle-deck");
     if (!deck || deck.closest(".umt-duel-board, .umt-duel-hand")) return;
     var current = activeGame();
-    if (!current || !current.state || current.state.status !== "playing") return;
+    if (!current || !current.state || current.state.status !== "playing" || easyRun(current)) return;
     event.preventDefault();
     ask(current);
   });
@@ -171,7 +182,7 @@
     var row = document.querySelector("#cuddleScreen .cuddle-hand-panel .cuddle-submit-row.has-deck");
     if (row && row.closest("[class*='umt-duel']")) row = null;
     var existing = document.querySelector("#cuddleScreen .umt-washout-btn");
-    var show = Boolean(row && game && game.state && game.state.status === "playing" && !inDuel(game.state))
+    var show = Boolean(row && game && game.state && game.state.status === "playing" && !inDuel(game.state) && !easyRun(game))
       && !row.classList.contains("is-mulligan-mode");
     if (!show) {
       if (existing) existing.remove();

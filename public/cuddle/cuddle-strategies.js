@@ -134,9 +134,16 @@
   }
 
   // -- skipping a reward ----------------------------------------------------
+  // A Trial's or Duel's badge can be skipped too (its pick is marked
+  // skippable); other events, legendaries and waystones can't.
+  function skippableEvent(state) {
+    return Boolean(state && state.umtEventPick && state.umtEventPick.skippable);
+  }
+
   proto.canSkipUpgrade = function canSkipUpgrade() {
     var state = this.state;
     if (!state || state.status !== "upgrade" || state.upgradePhase !== "round") return false;
+    if (skippableEvent(state) && !state.legendaryOffer) return Array.isArray(state.upgradeChoices) && state.upgradeChoices.length > 0;
     if (state.legendaryOffer || state.umtEventPick) return false;
     if (typeof this.isWaystoneUpgrade === "function" && this.isWaystoneUpgrade()) return false;
     return Array.isArray(state.upgradeChoices) && state.upgradeChoices.length > 0;
@@ -154,6 +161,23 @@
     state.umtSkips = num(state.umtSkips) + 1;
     var paid = [points ? "+" + points + " points" : "", money ? "+$" + money : ""].filter(Boolean).join(" and ");
     state.lastMessage = "Reward skipped: " + paid + (vow ? " (Monk's Vow)." : ".");
+    if (skippableEvent(state)) {
+      state.umtEventPick = null;
+      state.waystoneOffer = false;
+      // A Hard Trial or Duel still pays its level-ups after the badge.
+      var stop = state.umtLevelStop;
+      var rhythm = window.CuddleRewardRhythm;
+      var next = stop && stop.badgeFirst && stop.pick < stop.of && rhythm && typeof rhythm.levelChoices === "function"
+        ? rhythm.levelChoices(this, 3, stop.done || []) : [];
+      if (next.length) {
+        stop.pick += 1;
+        state.upgradeChoices = next;
+        state.waystoneOffer = true;
+        save(this);
+        return { ok: true, points: points, money: money };
+      }
+      state.umtLevelStop = null;
+    }
     state.upgradeChoices = [];
     state.upgradePhase = null;
     state.upgradeMilestone = null;

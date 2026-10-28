@@ -123,6 +123,13 @@
       && typeof game._solveGuessThreshold === "function" && typeof game._lateGuessPenalty === "function"
       && String(state.runId || "").indexOf(":duel:") === -1);
     var index = ready ? worldIndex(state) : -1;
+    // The Tutorial run has no world rules or guess window to explain: its
+    // own tour teaches the game (cuddle-tutorial.js).
+    if (ready && window.CuddleEasyMode && typeof window.CuddleEasyMode.isEasy === "function" && window.CuddleEasyMode.isEasy(game)) {
+      if (seenList(state).indexOf(index) === -1) seenList(state).push(index);
+      if (existing) existing.remove();
+      return;
+    }
     var show = ready && seenList(state).indexOf(index) === -1 && !busy(state);
     if (!show) {
       if (existing && !(ready && seenList(state).indexOf(index) === -1)) existing.remove();

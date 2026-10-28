@@ -82,7 +82,6 @@
 .umt-fish-card small { margin-left: 2px; color: #b8c6e0; font-size: 0.65rem; font-weight: 700; }
 .umt-fish-card.is-red { opacity: 0.45; text-decoration: line-through; }
 .umt-fish-card.is-picked { border-color: #9cc4ff; background: rgba(106, 168, 255, 0.28); box-shadow: 0 0 0 2px rgba(106, 168, 255, 0.4); }
-.umt-fish-card.is-hand.is-picked { border-color: #ff9fae; background: rgba(239, 90, 103, 0.25); box-shadow: 0 0 0 2px rgba(239, 90, 103, 0.35); }
 .umt-fish-card:focus-visible, .umt-fish-close:focus-visible { outline: 2px solid #9cc4ff; outline-offset: 2px; }
 .umt-fish-go { margin-top: 4px; }
 
@@ -135,3 +134,7 @@
 }
 .umt-catch-card.is-yellow { border-color: #ffe08a; background: #e9c046; color: #3a2a00; box-shadow: 0 0 16px rgba(246, 201, 86, 0.7); }
 .umt-catch-card.is-grey { background: #5b5f69; color: #d7d9de; }
+
+/* Catches left, but nothing in the discard pile yet (just reshuffled). */
+.umt-fish-btn.is-empty { opacity: 0.55; filter: grayscale(0.4); }
+.umt-fish-empty { margin: 0 0 10px; color: rgba(247, 244, 255, 0.72); font-size: 0.86rem; line-height: 1.4; }

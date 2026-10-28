@@ -66,7 +66,9 @@
   // in its spot (green) instead of a yellow.
   var SUPER_IDEA_GLYPH = "◆";
   var WAVE_GLYPH = "≈";
-  var JOKER_TILE_GLYPH = "◆";
+  // Its own mark: it once shared the super idea's, so a super idea card
+  // was taken for a Joker tile and turned into a Joker when drawn.
+  var JOKER_TILE_GLYPH = "⬖";
   // An angel card: a dead card redeemed (Cards rank III, cuddle-schools.js).
   // A dead card drawn turns into one in the hand (it flips over); tapped,
   // it flies off to heaven for ANGEL_POINTS and a new card is drawn.

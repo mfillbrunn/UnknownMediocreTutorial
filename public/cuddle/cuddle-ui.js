@@ -59,11 +59,23 @@
   // text in a gold span, so a reward's payoff reads at a glance instead of
   // blending into the surrounding description. Call AFTER escapeHtml (the
   // "$" it looks for survives escaping unchanged).
+  // Money in gold, and points won ("+20 points") in green.
   function goldenMoney(escapedHtml) {
     return String(escapedHtml ?? "").replace(
       /[+-]?\$\d[\d,]*/g,
       match => `<span class="cuddle-money-figure">${match}</span>`
+    ).replace(
+      /\+\d[\d,]* points?/g,
+      match => `<span class="cuddle-points-figure">${match}</span>`
     );
+  }
+
+  // A button on reward screens that opens your badges (cuddle-progression.js).
+  function badgesButton() {
+    const progression = window.CuddleProgression;
+    if (!progression || typeof progression.openTree !== "function") return "";
+    const count = typeof progression.badgeList === "function" ? progression.badgeList(game).length : 0;
+    return `<button type="button" class="cuddle-btn cuddle-btn-ghost cuddle-upgrade-badges" data-action="open-badges">Your badges${count ? ` (${count})` : ""}</button>`;
   }
 
   // Small star badge on a reward/upgrade card still in the picker, shown
@@ -1405,8 +1417,24 @@
   function renderPairPanel(panel) {
     const pay = item => `+${item.points} points, +$${item.money}`;
     if (panel.phase === "pair") {
+      // The tiles a challenge or curse marks on this guess (outlined on the
+      // board too), shown on each word so you see which letters it touches.
+      let marked = null;
+      try {
+        marked = typeof game.maskSpanPreview === "function" ? game.maskSpanPreview() : null;
+      } catch {
+        marked = null;
+      }
+      const cols = marked && Array.isArray(marked.indices) ? marked.indices : [];
+      const hides = marked && (marked.effectId === "hiddenMargins" || marked.effectId === "hideFeedback");
+      const letters = word => cols.length
+        ? word.split("").map((letter, index) => cols.includes(index) ? `<i class="is-marked">${escapeHtml(letter)}</i>` : escapeHtml(letter)).join("")
+        : escapeHtml(word);
       const words = panel.pair.map(item => `<button type="button" class="cuddle-pair-word" data-action="pair-word" data-word="${escapeHtml(item.word)}"`
-        + ` aria-label="Play ${escapeHtml(item.word)}">${escapeHtml(item.word)}${item.listed ? `<small>on the list</small>` : ""}</button>`).join("");
+        + ` aria-label="Play ${escapeHtml(item.word)}"><span class="cuddle-pair-letters">${letters(item.word)}</span>${item.listed ? `<small>on the list</small>` : ""}</button>`).join("");
+      const markNote = cols.length
+        ? `<p class="cuddle-pair-mark-note"><i class="is-marked">A</i> ${hides ? "Outlined letters will be hidden on this guess." : "Outlined letters are under this guess's challenge."}</p>`
+        : "";
       return `
       <section class="cuddle-hand-panel cuddle-pair-panel" aria-labelledby="cuddlePairTitle">
         <div class="cuddle-pair-head">
@@ -1414,6 +1442,7 @@
           <p>If it's the answer, you pass: ${pay(panel.payNow)}.</p>
         </div>
         <div class="cuddle-pair-words">${words}</div>
+        ${markNote}
         <button type="button" class="cuddle-btn cuddle-btn-ghost cuddle-pair-redraw" data-action="pair-redraw"${panel.mulligans > 0 ? "" : " disabled"}>Mulligan: 2 new words <span>${panel.mulligans} left</span></button>
       </section>`;
     }
@@ -1765,6 +1794,7 @@
           <span class="cuddle-modal-kicker">LEVEL-UPS</span>
           <h2 id="cuddleUpgradeTitle">${remaining > 1 ? `Pick ${remaining} badges to level up` : "Pick a badge to level up"}</h2>
           <p class="cuddle-level-picker-lead">Each one you pick gains one level.</p>
+          ${badgesButton()}
           <div class="cuddle-level-grid">${tiles}</div>
           <button type="button" class="cuddle-btn cuddle-btn-primary cuddle-level-go" data-action="level-pick-go"${ready ? "" : " disabled"}>
             ${ready ? `Level up ${remaining > 1 ? "both" : "it"}` : `Pick ${remaining - picks.length} more`}
@@ -1864,6 +1894,7 @@
           ${kicker ? `<span class="cuddle-modal-kicker">${kicker}</span>` : ""}
           <h2 id="cuddleUpgradeTitle">${heading}</h2>
           ${body ? `<p>${body}</p>` : ""}
+          ${badgesButton()}
           <div class="cuddle-choice-grid">
             ${state.upgradeChoices.map((choice, index) => `
               <button class="cuddle-choice${index >= wideFrom ? " is-wide-extra" : ""}" data-upgrade-key="${escapeHtml(choice.key)}">
@@ -2162,10 +2193,12 @@
     const score = Number(state.score) || 0;
     const shownScore = playing && elapsed < WIN_TIMING.countFrom ? 0 : score;
     const difficultyName = DIFFICULTY_NAMES[standing.difficulty];
-    const best = standing.isBest
+    // The Tutorial run keeps its end card plain: no best score, no records, no seed.
+    const tutorial = Boolean(window.CuddleEasyMode && window.CuddleEasyMode.isEasy(game));
+    const best = tutorial ? "" : standing.isBest
       ? `<p class="cuddle-win-best is-new">New best on ${difficultyName}${standing.previousBest ? ` · was ${standing.previousBest.toLocaleString()}` : ""}</p>`
       : `<p class="cuddle-win-best">Best on ${difficultyName}: ${standing.previousBest.toLocaleString()}</p>`;
-    const top = standing.top.length > 1
+    const top = !tutorial && standing.top.length > 1
       ? `<ol class="cuddle-win-records" aria-label="Best ${difficultyName} wins">${standing.top.map(item => `
           <li class="${item.runId === standing.entry.runId ? "is-this-run" : ""}">
             <b>${Number(item.score).toLocaleString()}</b>
@@ -2188,7 +2221,7 @@
           ${best}
           ${window.CuddleAscension ? window.CuddleAscension.winHtml(state) : ""}
           ${top}
-          ${seedChip(state)}
+          ${tutorial ? "" : seedChip(state)}
           ${renderRunStats(state)}
           ${renderEndBadges()}
           <p id="cuddleShareStatus" class="cuddle-share-status" role="status" aria-live="polite"></p>
@@ -2243,7 +2276,7 @@
           <p>${won
             ? `You won the campaign with ${state.score} points.`
             : escapeHtml(state.failureReason || "The run could not continue.")}</p>
-          ${seedChip(state)}
+          ${window.CuddleEasyMode && window.CuddleEasyMode.isEasy(game) ? "" : seedChip(state)}
           ${renderRunStats(state)}
           ${renderEndBadges()}
           <p class="cuddle-share-help">Share the final round grid without revealing the secret word.</p>
@@ -2281,7 +2314,7 @@
           <h2 id="cuddleRulesTitle">Cuddle rules</h2>
           <div class="cuddle-rules-grid">
             <article><strong>Guess the word</strong><p>Each stage hides a five-letter word. Build guesses from your tiles. ${tile("green", "Green")} right spot, ${tile("yellow", "Yellow")} wrong spot, ${tile("grey", "Grey")} not in the word.</p></article>
-            <article><strong>Your tiles</strong><p>Vowels stay in your hand and turn ${tile("red", "red")} once ruled out. Consonants are used up when you guess with them and redrawn from your deck. A mulligan (${rules.mulligans} per stage) swaps consonants you can't use. Out of luck? Tap your deck to wash out: new consonants and +2 mulligans, for a guess.</p></article>
+            <article><strong>Your tiles</strong><p>Any card in your hand can be used as many times as you like in a word. After a guess, vowels stay in your hand (they turn ${tile("red", "red")} once ruled out), and so do letters found in the answer; other consonants you guessed with are used up and redrawn from your deck. A mulligan (${rules.mulligans} per stage) swaps consonants you can't use. Out of luck? Tap your deck to wash out: new consonants and +2 mulligans, for a guess.</p></article>
             <article><strong>Points</strong><p>Every tile pays: grey ${rules.greyPoints}, yellow ${rules.yellowPoints}, green ${rules.greenPoints}. Unused rows and mulligans pay a bonus. Solve within the world's guess window (6, then 5, then 4) or each extra guess costs points.</p></article>
             <article><strong>Money</strong><p>Clearing a stage pays $10, and challenges pay more. Spend it in shops, on packs, at events and on reward refreshes.</p></article>
             <article><strong>The map</strong><p>Pick a stop on each row: Wordle stages (some with a challenge, skulls show how hard), events, trials and duels. Before each boss: a shop, a new badge, or level-ups.</p></article>
@@ -2508,6 +2541,9 @@
         resetActionMode();
         return true;
       }
+      case "open-badges":
+        if (window.CuddleProgression) window.CuddleProgression.openTree(game);
+        return false;
       case "level-pick": {
         const state = game.state;
         const picks = levelPickerSelection(state);
@@ -2951,7 +2987,11 @@
     if (game.state.status === "shop") {
       return window.CuddleCampaign.renderShop(game);
     }
-    if (game.state.status === "branchMap" && window.CuddleBranchMap) {
+    // A stage that leads straight back to the map (no reward screen, as in
+    // the Tutorial run) keeps its board up while its solve plays and its
+    // cash-out is showing; the map comes once it's collected.
+    if (game.state.status === "branchMap" && window.CuddleBranchMap
+        && !(finalPayoutShowing() && Array.isArray(game.state.history) && game.state.history.length)) {
       return window.CuddleBranchMap.renderMapScreen(game);
     }
     if (game.state.status === "playing" && game.state.roundIntroPending

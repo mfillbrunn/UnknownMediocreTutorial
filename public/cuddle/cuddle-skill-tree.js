@@ -287,7 +287,7 @@
           levels: ["Each consonant that gets crossed out gives +1 point.", "Each crossed-out consonant gives +2 points.", "Each crossed-out consonant gives +3 points."],
           level: g => powerLevel(g, "strikeThrough") },
         { id: "highRoller", icon: "🎲", title: "High Roller", tier: "common", type: "points", maxLevel: 3,
-          levels: ["Bet 10 points each stage: solve by guess 5 (guess 4 in later worlds) to win +20.", "Each stage, you bet 20 points: win +40.", "Each stage, you bet 40 points: win +80."],
+          levels: ["Bet 10 points each stage: solve by guess 5 (guess 4 in later worlds) to win +20 points.", "Each stage, you bet 20 points: win +40 points.", "Each stage, you bet 40 points: win +80 points."],
           level: g => powerLevel(g, "highRoller") },
         { id: "hardMode", icon: "🎯", title: "Hard Mode", tier: "common", type: "points", maxLevel: 3,
           levels: ["Solve in hard mode: +35 points. (Every guess keeps your greens in place and uses your yellows.)", "Solve in hard mode: +60 points.", "Solve in hard mode: +100 points."],
@@ -300,10 +300,10 @@
           level: g => powerLevel(g, "luckyClover") },
         // cuddle-fish-hook.js
         { id: "fishHook", icon: "🪝", title: "Fish Hook", tier: "rare", type: "letters", maxLevel: 3,
-          levels: ["Once a stage, fish a card you've discarded back into your hand. (If your hand is full, you throw one back.)",
+          levels: ["Once a stage, fish a card you've discarded back into your hand.",
             "The letter you fish is tested: if it's in the answer, it turns yellow.",
             "Also, once a stage, the hook catches a discarded answer letter on its own: it turns yellow."],
-          description: "Fish a card back from your discard pile, once a stage.",
+          description: "Fish back a card you discarded this stage, once a stage.",
           level: g => powerLevel(g, "fishHook") },
         // cuddle-new-badges.js
         { id: "cleanSlate", icon: "🧼", title: "Clean Slate", tier: "legendary", type: "letters", maxLevel: 1,

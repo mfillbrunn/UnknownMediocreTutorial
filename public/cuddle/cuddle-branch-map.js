@@ -1718,10 +1718,28 @@
     return html;
   }
 
+  // A boss stop: just its name and one button. Enter once the points are
+  // there; until then the button says how many are needed. The ✕ goes back.
+  function renderBossPreview(game, node, required, current, locked) {
+    var brief = window.CuddleWorlds ? stopBriefing(game, node) : null;
+    return (
+      "<div class=\"cuddle-overlay cuddle-branch-preview-overlay\">"
+      + "<section class=\"cuddle-modal umt-stop-preview umt-boss-preview\"" + previewKindStyle(node) + ">"
+      + "<button type=\"button\" class=\"cuddle-modal-close\" data-cuddle-campaign-action=\"cancel-branch-node-preview\" aria-label=\"Back to the map\">×</button>"
+      + previewIcon(node)
+      + "<h2>" + escapeHtml(brief ? brief.title : nodeTitle(node)) + "</h2>"
+      + "<button type=\"button\" class=\"cuddle-btn cuddle-btn-primary umt-boss-enter\"" + (locked ? " disabled" : "")
+      + " data-cuddle-campaign-action=\"confirm-branch-node\" data-shop-item-id=\"" + node.row + ":" + node.col + "\">"
+      + (locked ? "Need " + required + " points (you have " + current + ")" : "Enter")
+      + "</button></section></div>"
+    );
+  }
+
   function renderPreviewOverlay(game, node) {
     var required = node.type === "boss" ? bossPointRequirement(game, node.gate) : 0;
     var current = Number((game && game.state && game.state.score) || 0) + ledgerCredit(game);
     var locked = Boolean(required) && current < required;
+    if (node.type === "boss") return renderBossPreview(game, node, required, current, locked);
     var brief = window.CuddleWorlds ? stopBriefing(game, node) : null;
     return (
       "<div class=\"cuddle-overlay cuddle-branch-preview-overlay\">"
