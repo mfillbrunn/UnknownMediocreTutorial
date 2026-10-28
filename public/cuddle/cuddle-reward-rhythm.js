@@ -277,7 +277,8 @@
       // twice and no step on the road).
       var done = stop.done.concat(picked ? [nameOf(picked)] : []);
       // The Level-Up stop's picker keeps every badge on offer.
-      var next = stop.pick < stop.of ? levelChoices(this, stop.picker ? 999 : 3, done) : [];
+      // Level-ups handed out together (applyLevelUps) keep the same offer.
+      var next = stop.pick < stop.of ? (this.__umtLevelOffer || levelChoices(this, stop.picker ? 999 : 3, done)) : [];
       var result;
       if (next.length) {
         this._advanceRound = function holdLevelStop() { return undefined; };
@@ -311,6 +312,30 @@
       return result;
     };
   }
+
+  // Several level-ups at once, from one offer (cuddle-ui.js's level-up
+  // list): `keys` names a badge per level-up, the same one twice for two
+  // levels. Each goes through chooseUpgrade, with the offer kept as it was.
+  proto.applyLevelUps = function applyLevelUps(keys) {
+    var state = this.state;
+    if (!state || state.status !== "upgrade" || !Array.isArray(keys) || !keys.length) return { ok: false, error: "Pick a badge to level up." };
+    var offer = (state.upgradeChoices || []).slice();
+    var result = { ok: false, error: "Pick a badge to level up." };
+    this.__umtLevelOffer = offer;
+    try {
+      for (var i = 0; i < keys.length; i += 1) {
+        if (this.state.status !== "upgrade") break;
+        var key = String(keys[i]);
+        if (!offer.some(function (card) { return String(card.key) === key; })) return { ok: false, error: "That badge isn't on offer." };
+        this.state.upgradeChoices = offer.slice();
+        result = this.chooseUpgrade(key);
+        if (!result || result.ok === false) return result;
+      }
+    } finally {
+      delete this.__umtLevelOffer;
+    }
+    return result;
+  };
 
   window.CuddleRewardRhythm = Object.freeze({
     newOfTier: newOfTier,

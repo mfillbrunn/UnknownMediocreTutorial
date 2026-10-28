@@ -1744,14 +1744,49 @@
           </div>`;
   }
 
-  // The Level-Up stop (cuddle-branch-map.js openLevelUpStop): every badge
-  // that can still level, each with a square per level (filled up to its
-  // level now); tap two, then Level up. Each gains one level.
-  function levelStopKey(state) {
-    const stop = state.umtLevelStop || {};
-    return [state.runId || "", state.round || 0, (stop.done || []).join(",")].join(":");
+  // Level-ups (an after-stage level turn, the Level-Up stop, a Hard Trial's
+  // or Duel's level-ups): a list, not badge cards, so it never looks like
+  // picking a new badge. Each row is a badge you hold: its level now, an
+  // arrow, the level it would reach and what that level does. You have
+  // one or more level-ups to hand out, all at once from the same list:
+  // tap a row to give it one, tap it again for a second (when it can take
+  // it). No new offer is drawn between them.
+  function levelUpNode(choice) {
+    const tree = window.CuddleSkillTree;
+    if (!tree) return null;
+    return (typeof tree.findNode === "function" && (tree.findNode(choice.key || choice.id) || tree.findNode(choice.id)))
+      || (typeof tree.findNodeByName === "function" ? tree.findNodeByName(choice.title) : null)
+      || null;
   }
 
+  function levelUpLevel(node) {
+    try { return node ? Number(window.CuddleSkillTree.level(game, node)) || 0 : 0; } catch (_error) { return 0; }
+  }
+
+  // Whether this offer is level-ups only: every choice a badge you hold
+  // that can still go up.
+  function isLevelUpScreen(state) {
+    if (!state || state.status !== "upgrade" || state.upgradePhase !== "round") return false;
+    if (state.legendaryOffer || state.umtEventPick) return false;
+    const stop = state.umtLevelStop;
+    if (stop && stop.picker) return true;
+    if (stop && stop.badgeFirst && Number(stop.pick) <= 1) return false;
+    const choices = Array.isArray(state.upgradeChoices) ? state.upgradeChoices : [];
+    return choices.length > 0 && choices.every(choice => {
+      const node = levelUpNode(choice);
+      const level = levelUpLevel(node);
+      return Boolean(node) && level > 0 && level < Math.max(1, Number(node.maxLevel) || 1);
+    });
+  }
+
+  function levelStopKey(state) {
+    const stop = state.umtLevelStop || {};
+    return [state.runId || "", state.round || 0, state.secret || "", (stop.done || []).join(","),
+      (state.upgradeChoices || []).map(choice => choice.key).join(",")].join(":");
+  }
+
+  // The level-ups handed out so far on this screen (a key per level-up, so
+  // a badge given two shows up twice).
   function levelPickerSelection(state) {
     const key = levelStopKey(state);
     if (levelPickSelection.key !== key) levelPickSelection = { key, picks: [] };
@@ -1761,50 +1796,90 @@
   }
 
   function levelPickerRemaining(state) {
-    const stop = state.umtLevelStop || {};
+    const stop = state.umtLevelStop;
+    if (!stop) return 1;
     return Math.max(1, (Number(stop.of) || 1) - (Number(stop.pick) || 1) + 1);
   }
 
-  function renderLevelPicker(state) {
+  // How many more levels this badge can take on this screen.
+  function levelRoom(choice) {
+    const node = levelUpNode(choice);
+    return Math.max(0, Math.max(1, Number(node && node.maxLevel) || 1) - levelUpLevel(node));
+  }
+
+  function renderLevelUpgrade(state) {
     const tree = window.CuddleSkillTree;
     const art = window.CuddleBadgeArt;
     const picks = levelPickerSelection(state);
-    const remaining = levelPickerRemaining(state);
-    const tiles = (state.upgradeChoices || []).map(choice => {
-      const node = tree && (tree.findNode(choice.key || choice.id) || tree.findNode(choice.id) || (tree.findNodeByName && tree.findNodeByName(choice.title)));
-      let level = 0;
-      try { level = node ? Number(tree.level(game, node)) || 0 : 0; } catch (_error) { level = 0; }
+    const total = levelPickerRemaining(state);
+    const stop = state.umtLevelStop || null;
+    const rows = (state.upgradeChoices || []).map(choice => {
+      const node = levelUpNode(choice);
+      const title = (node && node.title) || choice.title || "";
+      const level = levelUpLevel(node);
       const max = Math.max(1, Number(node && node.maxLevel) || 1);
-      const picked = picks.includes(String(choice.key));
-      const next = node && typeof tree.levelText === "function" ? tree.levelText(node, Math.min(max, level + 1)) : (choice.description || "");
-      const squares = Array.from({ length: max }, (_v, index) => `<i class="${index < level ? "is-on" : index === level && picked ? "is-next" : ""}"></i>`).join("");
+      const given = picks.filter(pick => pick === String(choice.key)).length;
+      const target = Math.min(max, level + Math.max(1, given));
+      const text = node && tree && typeof tree.levelText === "function" ? tree.levelText(node, target) : (choice.description || "");
       const icon = node && art && art.has(node.id) ? art.img(node.id) : `<span>${escapeHtml(choice.icon || "⬆️")}</span>`;
+      const tier = String((node && node.tier) || choice.tier || "common").toLowerCase();
+      const pips = given ? `<span class="cuddle-lvl-given" aria-hidden="true">${"<i></i>".repeat(given)}</span>` : "";
       return `
-        <button type="button" class="cuddle-level-tile${picked ? " is-picked" : ""} is-${escapeHtml(String((node && node.tier) || "common"))}" data-action="level-pick" data-key="${escapeHtml(choice.key)}" aria-pressed="${picked}" aria-label="${escapeHtml((node && node.title) || choice.title)}, level ${level} of ${max}">
-          <span class="cuddle-level-tile-icon">${icon}</span>
-          <strong>${escapeHtml((node && node.title) || choice.title)}</strong>
-          <span class="cuddle-level-squares" aria-hidden="true">${squares}</span>
-          <small>${picked ? `Next: ${escapeHtml(String(next || "").replace(/\.$/, ""))}` : `Level ${level} of ${max}`}</small>
+        <button type="button" class="cuddle-lvl-row is-${escapeHtml(tier)}${given ? " is-picked" : ""}" data-action="level-pick" data-key="${escapeHtml(choice.key)}"
+          aria-pressed="${given > 0}" aria-label="${escapeHtml(title)}: level ${level} to level ${target}${given ? `, ${given} level-up${given === 1 ? "" : "s"} given` : ""}">
+          <span class="cuddle-lvl-badge">
+            <span class="cuddle-lvl-icon">${icon}</span>
+            <strong>${escapeHtml(title)}</strong>
+          </span>
+          <span class="cuddle-lvl-step" aria-hidden="true">
+            <span class="cuddle-lvl-from">Lv ${level}</span>
+            <span class="cuddle-lvl-arrow">→</span>
+            <span class="cuddle-lvl-to">Lv ${target}${target >= max ? " <em>max</em>" : ""}</span>
+          </span>
+          <small class="cuddle-lvl-text">${goldenMoney(escapeHtml(String(text || "")))}</small>
+          ${pips}
         </button>`;
     }).join("");
-    const ready = picks.length === remaining;
+    const left = total - picks.length;
+    const ready = left === 0;
+    const kicker = stop && stop.picker ? "LEVEL-UP STOP" : stop && stop.badgeFirst ? "LEVEL-UPS" : "UPGRADE";
+    const heading = total > 1 ? `Hand out ${total} level-ups` : "Level up a badge";
+    const lead = total > 1
+      ? "Tap a badge to give it a level, tap it again for a second one."
+      : "Tap the badge to level up.";
+    const refreshCost = typeof game.getUpgradeRefreshCost === "function" ? game.getUpgradeRefreshCost() : null;
+    const canRefresh = refreshCost !== null && (refreshCost === 0 || Number(state.cuddleMoney) >= refreshCost);
+    const refresh = refreshCost === null ? ""
+      : `<button class="cuddle-btn cuddle-btn-ghost cuddle-lvl-refresh" data-action="refresh-upgrades" ${canRefresh && !picks.length ? "" : "disabled"}>${refreshCost === 0 ? "Other badges (free)" : `Other badges ($${refreshCost})`}</button>`;
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleUpgradeTitle">
-        <section class="cuddle-modal cuddle-modal-wide cuddle-upgrade-modal cuddle-level-picker">
-          <span class="cuddle-modal-kicker">LEVEL-UPS</span>
-          <h2 id="cuddleUpgradeTitle">${remaining > 1 ? `Pick ${remaining} badges to level up` : "Pick a badge to level up"}</h2>
-          <p class="cuddle-level-picker-lead">Each one you pick gains one level.</p>
-          ${badgesButton()}
-          <div class="cuddle-level-grid">${tiles}</div>
+        <section class="cuddle-modal cuddle-modal-wide cuddle-upgrade-modal cuddle-lvl-modal">
+          <div class="cuddle-lvl-head">
+            <div>
+              <span class="cuddle-modal-kicker">${kicker}</span>
+              <h2 id="cuddleUpgradeTitle">${heading}</h2>
+            </div>
+            <span class="cuddle-upgrade-wallet" data-upgrade-wallet aria-label="Money: $${Number(state.cuddleMoney || 0)}">
+              <span>Money</span><b>$${Number(state.cuddleMoney || 0).toLocaleString()}</b>
+            </span>
+          </div>
+          <p class="cuddle-lvl-lead">${lead}</p>
+          <div class="cuddle-lvl-bar">
+            <div class="cuddle-lvl-count" aria-live="polite">${Array.from({ length: total }, (_v, index) => `<i class="${index < picks.length ? "is-on" : ""}"></i>`).join("")}<span>${ready ? "All handed out" : `${left} left`}</span></div>
+            ${badgesButton()}
+          </div>
+          <div class="cuddle-lvl-list">${rows}</div>
           <button type="button" class="cuddle-btn cuddle-btn-primary cuddle-level-go" data-action="level-pick-go"${ready ? "" : " disabled"}>
-            ${ready ? `Level up ${remaining > 1 ? "both" : "it"}` : `Pick ${remaining - picks.length} more`}
+            ${ready ? "Level up" : `Pick ${left} more`}
           </button>
+          ${skipRow()}
+          ${refresh}
         </section>
       </div>`;
   }
 
   function renderUpgradeOverlay(state) {
-    if (state.umtLevelStop && state.umtLevelStop.picker) return renderLevelPicker(state);
+    if (isLevelUpScreen(state)) return renderLevelUpgrade(state);
     const milestone = state.upgradePhase === "milestone";
     const startingRewards = state.upgradePhase === "difficultyStart";
     const refreshCost = typeof game.getUpgradeRefreshCost === "function"
@@ -2548,10 +2623,18 @@
         const state = game.state;
         const picks = levelPickerSelection(state);
         const key = String(dataset.key || "");
-        const at = picks.indexOf(key);
-        if (at !== -1) picks.splice(at, 1);
-        else {
-          if (picks.length >= levelPickerRemaining(state)) picks.shift();
+        const total = levelPickerRemaining(state);
+        const choice = (state.upgradeChoices || []).find(item => String(item.key) === key);
+        const given = picks.filter(pick => pick === key).length;
+        const room = choice ? levelRoom(choice) : 0;
+        // Room left on the screen and on the badge: one more level for it.
+        // Otherwise a tap takes this badge's levels back (or, on a full
+        // screen, moves the oldest level-up over to it).
+        if (given < room && picks.length < total) picks.push(key);
+        else if (given > 0) {
+          for (let index = picks.length - 1; index >= 0; index -= 1) if (picks[index] === key) picks.splice(index, 1);
+        } else if (room > 0) {
+          picks.shift();
           picks.push(key);
         }
         return true;
@@ -2561,13 +2644,8 @@
         const picks = levelPickerSelection(state).slice();
         if (picks.length !== levelPickerRemaining(state)) return false;
         levelPickSelection = { key: "", picks: [] };
-        for (const key of picks) {
-          const result = game.chooseUpgrade(key);
-          if (!result || result.ok === false) {
-            setUiMessage((result && result.error) || "That badge couldn't be levelled.");
-            break;
-          }
-        }
+        const result = typeof game.applyLevelUps === "function" ? game.applyLevelUps(picks) : game.chooseUpgrade(picks[0]);
+        if (!result || result.ok === false) setUiMessage((result && result.error) || "That badge couldn't be levelled.");
         resetActionMode();
         return true;
       }

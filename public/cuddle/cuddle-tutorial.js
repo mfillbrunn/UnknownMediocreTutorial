@@ -319,13 +319,13 @@
       // The second reward screen offers the badge you hold, a level up.
       id: "e-levelup",
       when: function when(game, state) {
-        return state.status === "upgrade" && onTop(".cuddle-choice-grid") && !moneyOverlayUp()
+        return state.status === "upgrade" && onTop(".cuddle-lvl-list") && !moneyOverlayUp()
           && Boolean(window.CuddleEasyMode && window.CuddleEasyMode.levelUpOffer(game));
       },
       needs: ["e-badge"],
       at: "top",
       cards: [
-        { title: "Level up a badge", text: "Badges you already have can be <b>levelled up</b>: each level makes the badge stronger. This time, instead of a new badge, take the next level of yours. Its <b>?</b> shows what each level does.", focus: ".cuddle-choice-grid", at: "bottom" }
+        { title: "Level up a badge", text: "Badges you already have can be <b>levelled up</b>: each level makes the badge stronger. This time, instead of a new badge, take the next level of yours: the row shows its level now, and what the next one does.", focus: ".cuddle-lvl-list", at: "bottom" }
       ]
     },
     {
