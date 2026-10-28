@@ -53,3 +53,12 @@
 .dp-share { background: #25d366; color: #fff; }
 .dp-next:disabled { opacity: .5; cursor: default; }
 .dp-count { margin-top: 10px; text-align: center; font-size: 13px; opacity: .85; }
+.dp-summary { display: flex; flex-direction: column; gap: 10px; padding: 8px 4px; }
+.dp-sum-row {
+  display: flex; justify-content: space-between;
+  padding: 12px 16px; border-radius: 10px;
+  background: rgba(255,255,255,.08); font-size: 18px; font-weight: 700;
+}
+.dp-sum-total { background: rgba(63,157,79,.35); font-size: 22px; }
+.dp-summary .dp-share { align-self: center; margin-top: 6px; padding: 12px 22px; font-size: 16px; }
+.dp-summary .dp-hint { justify-content: center; }

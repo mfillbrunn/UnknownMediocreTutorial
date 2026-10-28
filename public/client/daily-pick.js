@@ -140,9 +140,21 @@
   const allSolved = () => state.rounds.every(r => r.solved);
   const totalGuesses = () => state.rounds.reduce((sum, r) => sum + r.guesses.length, 0);
 
+  // Once all three are solved (and the last one's feedback has had its
+  // moment), the grid gives way to the day's scorecard.
+  function renderSummary(root) {
+    const rows = state.rounds.map((r, i) =>
+      `<div class="dp-sum-row"><span>Grid ${i + 1}</span><span>${r.guesses.length}</span></div>`).join("");
+    root.innerHTML = `<div class="dp-summary">${rows}
+      <div class="dp-sum-row dp-sum-total"><span>Total</span><span>${totalGuesses()}</span></div>
+      <button type="button" class="dp-next dp-share" id="dpShare">Share on WhatsApp</button>
+      <div class="dp-hint">Come back tomorrow for three new grids.</div></div>`;
+  }
+
   function render() {
     const root = $("dailyPickRoot");
     if (!root) return;
+    if (allSolved() && !advanceTimer) return renderSummary(root);
     const { answer: secret, words } = puzzles[current];
     const r = round();
     const lastGuess = r.guesses[r.guesses.length - 1];
@@ -165,12 +177,8 @@
     const blank = `<div class="dp-row">${"<span class=\"dp-tile is-empty\"></span>".repeat(5)}</div>`;
     let hint;
     let action = "";
-    if (done && allSolved()) {
-      const parts = state.rounds.map(r => r.guesses.length).join(" + ");
-      hint = `<strong class="dp-result">All ${PUZZLE_COUNT} solved! Score: ${totalGuesses()}</strong> (${parts})`;
-      action = `<button type="button" class="dp-next dp-share" id="dpShare">Share on WhatsApp</button>`;
-    } else if (done) {
-      hint = `<strong class="dp-result">Solved in ${r.guesses.length}!</strong> Next puzzle…`;
+    if (done) {
+      hint = `<strong class="dp-result">Solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next puzzle…"}`;
     } else if (phase === "strike") {
       hint = "Now exclude words: tap the ones this rules out.";
       action = `<button type="button" class="dp-next" id="dpNext">Pick next word</button>`;
@@ -207,7 +215,7 @@
     if (selected === puzzles[current].answer) {
       r.solved = true;
       phase = "pick";
-      if (current < PUZZLE_COUNT - 1) advanceTimer = setTimeout(nextPuzzle, ADVANCE_MS);
+      advanceTimer = setTimeout(nextPuzzle, ADVANCE_MS);
     } else {
       r.struck.push(selected);
       phase = "strike";
@@ -221,8 +229,8 @@
   function shareText() {
     const date = new Date(`${state.date}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
     const rows = state.rounds.map((r, i) =>
-      `${i + 1}. ${"⬜".repeat(r.guesses.length - 1)}🟩 ${r.guesses.length}`);
-    return [`Griddle ${date}`, `Score: ${totalGuesses()}`, ...rows, location.origin].join("\n");
+      `Grid ${i + 1}: ${"⬜".repeat(r.guesses.length - 1)}🟩 ${r.guesses.length}`);
+    return [`Griddle ${date}`, ...rows, `Total: ${totalGuesses()}`, location.origin].join("\n");
   }
 
   function share() {
@@ -254,6 +262,7 @@
       }
     }
     clearTimeout(advanceTimer);
+    advanceTimer = null;
     current = firstUnsolved();
     const r = round();
     phase = r.guesses.length && !r.solved ? "strike" : "pick";
