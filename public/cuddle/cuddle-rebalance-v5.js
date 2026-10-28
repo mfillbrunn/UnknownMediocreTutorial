@@ -2083,17 +2083,28 @@
     return pool[hash32(`${roundToken(game)}:demand:${used}`) % pool.length];
   }
 
-  // The letter Banned Letter forbids on guess `used`: fixed by the stage
-  // and the guess, a new one each guess, never one you already know is in
-  // the answer (that would only block the solve) or a culled one.
+  // The letter Banned Letter forbids on guess `used`: a new one each
+  // guess, never one you already know is in the answer (that would only
+  // block the solve) or a culled one -- and one you're holding, or the ban
+  // would cost nothing. The guess being played keeps the letter it was
+  // given (a mulligan doesn't move it); later ones follow the hand.
   function banLetter(game, used) {
     const state = stateOf(game) || {};
+    const custom = customState(game);
+    const key = `${roundToken(game)}:${used}`;
+    const current = used === Number(state.guessesUsed || 0);
+    if (current && custom && custom.banPick && custom.banPick.key === key) return custom.banPick.letter;
     const removed = new Set(state.removedLetters || []);
     const present = new Set(state.knownPresent || []);
     (state.revealedPositions || []).forEach((letter) => { if (letter) present.add(letter); });
     const pool = BAN_LETTERS.filter((letter) => !removed.has(letter) && !present.has(letter));
     if (!pool.length) return null;
-    return pool[hash32(`${roundToken(game)}:ban:${used}`) % pool.length];
+    const held = new Set((Array.isArray(state.hand) ? state.hand : []).map((card) => String((card && card.glyph) || "").toUpperCase()));
+    const inHand = pool.filter((letter) => held.has(letter));
+    const from = inHand.length ? inHand : pool;
+    const letter = from[hash32(`${roundToken(game)}:ban:${used}`) % from.length];
+    if (current && custom && state.status === "playing" && held.size) custom.banPick = { key, letter };
+    return letter;
   }
 
   // The letter Word Chain asks a word to start with: the last consonant of
@@ -5664,6 +5675,7 @@
         grantGreenHint,
         reconcileMysteryKnowledge,
         powerIdsForGuess,
+        banLetter,
         powerSvg
       })
     });
