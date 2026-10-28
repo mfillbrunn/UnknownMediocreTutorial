@@ -90,6 +90,34 @@
 }
 .umt-sf-spark.is-light { background: #fffbe8; }
 
+/* A lost boss fight (cuddle-solve-fx.js fail): red tiles, a shudder, then
+   they drop (the fall itself is animated from script). */
+.umt-sf.is-fail { background: rgba(14, 5, 8, 0.5); }
+.umt-sf-failing .cuddle-overlay { visibility: hidden; }
+.umt-sf.is-fail .umt-sf-tile.is-turning { animation: umt-sf-turn-red 560ms ease-out backwards; }
+.umt-sf.is-fail.is-still .umt-sf-tile,
+.umt-sf.is-fail .umt-sf-tile.is-turning {
+  border-color: #ff8a8a;
+  background: #c4454f;
+  box-shadow: 0 0 0 2px rgba(255, 110, 120, 0.25), 0 0 20px rgba(220, 60, 75, 0.45);
+}
+@keyframes umt-sf-turn-red {
+  0% { scale: 1 1; border-color: rgba(213, 166, 255, 0.55); background: #2a2438; }
+  23% { scale: 1 0.02; border-color: rgba(213, 166, 255, 0.55); background: #2a2438; }
+  23.1% { scale: 1 0.02; }
+  52% { scale: 1.08 1.08; }
+  76% { scale: 0.97 0.97; }
+  100% { scale: 1 1; }
+}
+.umt-sf.is-fail .umt-sf-row.is-shaking { animation: umt-sf-shake 420ms ease-in-out; }
+@keyframes umt-sf-shake {
+  0%, 100% { translate: 0 0; }
+  20% { translate: -9px 0; }
+  40% { translate: 8px 0; }
+  60% { translate: -6px 0; }
+  80% { translate: 4px 0; }
+}
+
 @keyframes umt-sf-in { from { opacity: 0; } }
 @keyframes umt-sf-out { to { opacity: 0; } }
 
