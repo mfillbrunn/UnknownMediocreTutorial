@@ -1417,8 +1417,24 @@
   function renderPairPanel(panel) {
     const pay = item => `+${item.points} points, +$${item.money}`;
     if (panel.phase === "pair") {
+      // The tiles a challenge or curse marks on this guess (outlined on the
+      // board too), shown on each word so you see which letters it touches.
+      let marked = null;
+      try {
+        marked = typeof game.maskSpanPreview === "function" ? game.maskSpanPreview() : null;
+      } catch {
+        marked = null;
+      }
+      const cols = marked && Array.isArray(marked.indices) ? marked.indices : [];
+      const hides = marked && (marked.effectId === "hiddenMargins" || marked.effectId === "hideFeedback");
+      const letters = word => cols.length
+        ? word.split("").map((letter, index) => cols.includes(index) ? `<i class="is-marked">${escapeHtml(letter)}</i>` : escapeHtml(letter)).join("")
+        : escapeHtml(word);
       const words = panel.pair.map(item => `<button type="button" class="cuddle-pair-word" data-action="pair-word" data-word="${escapeHtml(item.word)}"`
-        + ` aria-label="Play ${escapeHtml(item.word)}">${escapeHtml(item.word)}${item.listed ? `<small>on the list</small>` : ""}</button>`).join("");
+        + ` aria-label="Play ${escapeHtml(item.word)}"><span class="cuddle-pair-letters">${letters(item.word)}</span>${item.listed ? `<small>on the list</small>` : ""}</button>`).join("");
+      const markNote = cols.length
+        ? `<p class="cuddle-pair-mark-note"><i class="is-marked">A</i> ${hides ? "Outlined letters will be hidden on this guess." : "Outlined letters are under this guess's challenge."}</p>`
+        : "";
       return `
       <section class="cuddle-hand-panel cuddle-pair-panel" aria-labelledby="cuddlePairTitle">
         <div class="cuddle-pair-head">
@@ -1426,6 +1442,7 @@
           <p>If it's the answer, you pass: ${pay(panel.payNow)}.</p>
         </div>
         <div class="cuddle-pair-words">${words}</div>
+        ${markNote}
         <button type="button" class="cuddle-btn cuddle-btn-ghost cuddle-pair-redraw" data-action="pair-redraw"${panel.mulligans > 0 ? "" : " disabled"}>Mulligan: 2 new words <span>${panel.mulligans} left</span></button>
       </section>`;
     }
