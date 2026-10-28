@@ -5026,13 +5026,13 @@
   --tier: #9aa3b5;
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 6px 10px;
+  gap: 10px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 10px 10px 10px 12px;
   border: 1.5px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.035);
   color: var(--cuddle-text);
   font: inherit;
@@ -5045,29 +5045,31 @@
 .cuddle-lvl-row.is-legendary { --tier: #f6c956; }
 .cuddle-lvl-row:focus-visible { outline: 2px solid var(--cuddle-accent); outline-offset: 2px; }
 .cuddle-lvl-row.is-picked { border-color: #57d69a; background: rgba(87, 214, 154, 0.12); }
-.cuddle-lvl-badge { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .cuddle-lvl-icon {
   display: grid;
   flex: none;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 46px;
+  height: 46px;
   border: 2px solid var(--tier);
-  border-radius: 10px;
+  border-radius: 12px;
   background: rgba(0, 0, 0, 0.18);
-  font-size: 1.3rem;
+  font-size: 1.5rem;
 }
-.cuddle-lvl-icon img { width: 30px; height: 30px; }
-.cuddle-lvl-badge strong { min-width: 0; font-size: 0.92rem; line-height: 1.15; text-wrap: balance; }
-.cuddle-lvl-step { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.cuddle-lvl-from { padding: 3px 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); color: var(--cuddle-muted); }
-.cuddle-lvl-arrow { color: var(--cuddle-muted); font-size: 1rem; }
-.cuddle-lvl-to { padding: 3px 8px; border-radius: 999px; background: color-mix(in srgb, var(--tier) 22%, transparent); color: var(--cuddle-text); }
-.cuddle-lvl-row.is-picked .cuddle-lvl-to { background: #57d69a; color: #0c2a1b; }
-.cuddle-lvl-to em { font-style: normal; font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.8; }
-.cuddle-lvl-text { grid-column: 1 / -1; color: var(--cuddle-muted); font-size: 0.76rem; line-height: 1.35; }
+.cuddle-lvl-icon img { width: 36px; height: 36px; }
+.cuddle-lvl-main { display: grid; gap: 3px; min-width: 0; }
+.cuddle-lvl-main strong { font-size: 0.95rem; line-height: 1.15; text-wrap: balance; }
+.cuddle-lvl-text { color: var(--cuddle-muted); font-size: 0.72rem; line-height: 1.3; }
 .cuddle-lvl-row.is-picked .cuddle-lvl-text { color: #c9f5dd; }
-.cuddle-lvl-given { position: absolute; top: -7px; right: 10px; display: flex; gap: 3px; }
+/* The level change, big: 1 -> 2. */
+.cuddle-lvl-step { display: grid; justify-items: center; gap: 1px; min-width: 78px; padding: 4px 6px; border-radius: 12px; background: rgba(0, 0, 0, 0.2); }
+.cuddle-lvl-cap { color: var(--cuddle-muted); font-size: 0.56rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+.cuddle-lvl-nums { display: flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.cuddle-lvl-from { color: var(--cuddle-muted); font-size: 1.7rem; font-weight: 900; line-height: 1; }
+.cuddle-lvl-arrow { color: #57d69a; font-size: 1.05rem; }
+.cuddle-lvl-to { color: var(--cuddle-text); font-size: 2.1rem; font-weight: 900; line-height: 1; }
+.cuddle-lvl-row.is-picked .cuddle-lvl-to { color: #57d69a; }
+.cuddle-lvl-given { position: absolute; top: -7px; right: 12px; display: flex; gap: 3px; }
 .cuddle-lvl-given i { display: block; width: 12px; height: 12px; border: 2px solid var(--cuddle-surface, #1d1a28); border-radius: 50%; background: #57d69a; }
 .cuddle-lvl-refresh { align-self: center; }
 .cuddle-level-go { align-self: stretch; }

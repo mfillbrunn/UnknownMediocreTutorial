@@ -74,8 +74,9 @@
   // one of its two pieces, at random.
   var TRACKS = {
     theme: { list: ["cuddle/audio/cuddle-theme.mp3", "cuddle/audio/cuddle-theme-2.mp3"], resume: true },
-    // Echo Mountains' own song, in place of the theme there.
-    mountains: { src: "cuddle/audio/cuddle-theme-3.mp3", resume: true },
+    // Echo Mountains: its own song first, then the two theme pieces, in
+    // turn (one song all through a world got old).
+    mountains: { list: ["cuddle/audio/cuddle-theme-3.mp3", "cuddle/audio/cuddle-theme.mp3", "cuddle/audio/cuddle-theme-2.mp3"], first: 0, resume: true },
     boss: { list: ["cuddle/audio/cuddle-boss.mp3", "cuddle/audio/cuddle-boss-2.mp3"], restart: true },
     shop: { src: "cuddle/audio/cuddle-shop.mp3", restart: true },
     victory: { list: ["cuddle/audio/cuddle-victory.mp3", "cuddle/audio/cuddle-victory-2.mp3"], once: true },
@@ -120,7 +121,7 @@
   function ensureTrack(name) {
     var track = TRACKS[name];
     if (track.el) return track;
-    if (track.list) track.piece = randomPiece(track);
+    if (track.list) track.piece = typeof track.first === "number" ? track.list[track.first] : randomPiece(track);
     track.el = new Audio(track.list ? track.piece : track.src);
     track.el.loop = !track.list && !track.once;
     if (track.once) track.el.addEventListener("ended", function () { endMoment(track); });

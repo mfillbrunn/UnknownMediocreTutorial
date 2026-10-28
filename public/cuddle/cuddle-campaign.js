@@ -1231,14 +1231,26 @@
       const luckyGuess = typeof window.CuddleRebalanceV5?.luckyGuessBadge === "function"
         ? window.CuddleRebalanceV5.luckyGuessBadge(game)
         : "";
-      const strip = themeArea || questText || luckyGuess
-        ? `<div class="cuddle-play-strip">${questText}${themeArea}${luckyGuess}</div>`
+      // The quest sits between the board and the Submit row, where the eye
+      // already is (up top it was easy to miss), and plays a short arrival
+      // animation when it turns up (window.CuddleQuestFx, cuddle-progression.js).
+      const handMarker = '<section class="cuddle-hand-panel';
+      const dockable = Boolean(questText) && html.includes(handMarker);
+      const fx = window.CuddleQuestFx && typeof window.CuddleQuestFx.live === "function" ? window.CuddleQuestFx.live() : null;
+      const dock = dockable
+        ? `<div class="cuddle-quest-dock${fx ? ` is-arriving qa-${fx.variant}` : ""}"${fx ? ` style="--qa-at:-${fx.elapsed}ms"` : ""}>${questText}</div>`
+        : "";
+      const stripQuest = dockable ? "" : questText;
+      const strip = themeArea || stripQuest || luckyGuess
+        ? `<div class="cuddle-play-strip">${stripQuest}${themeArea}${luckyGuess}</div>`
         : "";
       const extra = challengeBanner + strip;
-      if (!extra) return html;
+      let out = html;
+      if (dock) out = out.replace(handMarker, `${dock}${handMarker}`);
+      if (!extra) return out;
       const marker = '<section class="cuddle-left-column">';
-      if (!html.includes(marker)) return html;
-      return html.replace(marker, `${marker}${extra}`);
+      if (!out.includes(marker)) return out;
+      return out.replace(marker, `${marker}${extra}`);
     }
     return html;
   }

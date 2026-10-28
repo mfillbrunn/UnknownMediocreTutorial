@@ -4381,9 +4381,8 @@
   function moveQuestReroll() {
     const button = document.querySelector("[data-action='reroll-quest']");
     if (!button) return;
-    const strip = document.querySelector(".cuddle-play-strip");
-    const quest = strip && strip.querySelector(".cuddle-quest-inline");
-    if (!strip || !quest) return;
+    const quest = document.querySelector(".cuddle-quest-dock .cuddle-quest-inline, .cuddle-play-strip .cuddle-quest-inline");
+    if (!quest) return;
     button.classList.add("umt-quest-reroll");
     // Inside the quest's own chip: nothing else shares a quest's line.
     if (button.parentElement !== quest) quest.appendChild(button);

@@ -91,7 +91,8 @@
 }
 
 /* The native reroll action remains the same button, just relocated beside the quest. */
-.cuddle-play-strip .umt-quest-reroll {
+.cuddle-play-strip .umt-quest-reroll,
+.cuddle-quest-dock .umt-quest-reroll {
   display: inline-flex;
   align-items: center;
   align-self: center;
@@ -496,7 +497,8 @@ html.umt-mandatory-challenge .cuddle-challenge-decline {
     margin-top: 0.2rem;
   }
 
-  .cuddle-play-strip .umt-quest-reroll {
+  .cuddle-play-strip .umt-quest-reroll,
+.cuddle-quest-dock .umt-quest-reroll {
     font-size: 0.66rem;
   }
 }
