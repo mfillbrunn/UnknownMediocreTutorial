@@ -253,6 +253,7 @@
       cards: [
         { title: "Find the secret word", text: "Each stage hides a five-letter word. Build a guess from your letter cards and tap <b>Submit word</b>. <span class=\"umt-tut-g\">Green</span>: right letter, right spot. <span class=\"umt-tut-y\">Yellow</span>: in the word, wrong spot. Grey: not in the word." },
         { title: "Building a word", text: "Tap a card to put its letter in the next empty spot. Changed your mind? Tap a letter in your word to send it back, or tap <b>⌫</b> to take off the last one. Any card can be used as often as you like in a word.", focus: ".cuddle-hand" },
+        { title: "Drag and drop", text: "You can also <b>drag</b> a card straight onto any spot in your word. Drag a letter from one spot to another to move it, and <b>tap</b> a letter in your word (or drag it off) to take it out.", focus: ".cuddle-board", at: "bottom" },
         { title: "Your cards", text: "<b>Vowels</b> always stay in your hand. Wrong <b>consonants</b> leave it after a guess, and new ones are drawn. This time every consonant of the answer is already in your hand, so you only need to find the order.", focus: ".cuddle-hand" },
         { title: "Themes", text: "The tags at the top are the answer's <b>themes</b>, a hint about what kind of word it is.", focus: ".cuddle-category-chips" },
         { title: "A hint for this one", text: "The answer uses all three of your consonants, <b>S</b>, <b>C</b> and <b>B</b>, in that order, with two vowels in between. And it's a fun activity!", focus: ".cuddle-hand" }
