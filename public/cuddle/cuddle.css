@@ -5066,3 +5066,14 @@
   .cuddle-level-tile { transition: none; }
   .cuddle-level-squares i.is-next { animation: none; }
 }
+
+/* Points won in a reward's text (cuddle-ui.js goldenMoney), green as the
+   points counter is. */
+#cuddleScreen .cuddle-points-figure,
+#cuddleRoot .cuddle-points-figure {
+  color: #57d69a;
+  font-weight: 900;
+}
+
+/* "Your badges" on a reward screen. */
+.cuddle-upgrade-badges { justify-self: start; align-self: flex-start; padding: 6px 12px; font-size: 0.8rem; }

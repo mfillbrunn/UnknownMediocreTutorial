@@ -59,11 +59,23 @@
   // text in a gold span, so a reward's payoff reads at a glance instead of
   // blending into the surrounding description. Call AFTER escapeHtml (the
   // "$" it looks for survives escaping unchanged).
+  // Money in gold, and points won ("+20 points") in green.
   function goldenMoney(escapedHtml) {
     return String(escapedHtml ?? "").replace(
       /[+-]?\$\d[\d,]*/g,
       match => `<span class="cuddle-money-figure">${match}</span>`
+    ).replace(
+      /\+\d[\d,]* points?/g,
+      match => `<span class="cuddle-points-figure">${match}</span>`
     );
+  }
+
+  // A button on reward screens that opens your badges (cuddle-progression.js).
+  function badgesButton() {
+    const progression = window.CuddleProgression;
+    if (!progression || typeof progression.openTree !== "function") return "";
+    const count = typeof progression.badgeList === "function" ? progression.badgeList(game).length : 0;
+    return `<button type="button" class="cuddle-btn cuddle-btn-ghost cuddle-upgrade-badges" data-action="open-badges">Your badges${count ? ` (${count})` : ""}</button>`;
   }
 
   // Small star badge on a reward/upgrade card still in the picker, shown
@@ -1765,6 +1777,7 @@
           <span class="cuddle-modal-kicker">LEVEL-UPS</span>
           <h2 id="cuddleUpgradeTitle">${remaining > 1 ? `Pick ${remaining} badges to level up` : "Pick a badge to level up"}</h2>
           <p class="cuddle-level-picker-lead">Each one you pick gains one level.</p>
+          ${badgesButton()}
           <div class="cuddle-level-grid">${tiles}</div>
           <button type="button" class="cuddle-btn cuddle-btn-primary cuddle-level-go" data-action="level-pick-go"${ready ? "" : " disabled"}>
             ${ready ? `Level up ${remaining > 1 ? "both" : "it"}` : `Pick ${remaining - picks.length} more`}
@@ -1864,6 +1877,7 @@
           ${kicker ? `<span class="cuddle-modal-kicker">${kicker}</span>` : ""}
           <h2 id="cuddleUpgradeTitle">${heading}</h2>
           ${body ? `<p>${body}</p>` : ""}
+          ${badgesButton()}
           <div class="cuddle-choice-grid">
             ${state.upgradeChoices.map((choice, index) => `
               <button class="cuddle-choice${index >= wideFrom ? " is-wide-extra" : ""}" data-upgrade-key="${escapeHtml(choice.key)}">
@@ -2510,6 +2524,9 @@
         resetActionMode();
         return true;
       }
+      case "open-badges":
+        if (window.CuddleProgression) window.CuddleProgression.openTree(game);
+        return false;
       case "level-pick": {
         const state = game.state;
         const picks = levelPickerSelection(state);

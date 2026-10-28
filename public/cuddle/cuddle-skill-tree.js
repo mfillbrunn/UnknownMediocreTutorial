@@ -287,7 +287,7 @@
           levels: ["Each consonant that gets crossed out gives +1 point.", "Each crossed-out consonant gives +2 points.", "Each crossed-out consonant gives +3 points."],
           level: g => powerLevel(g, "strikeThrough") },
         { id: "highRoller", icon: "🎲", title: "High Roller", tier: "common", type: "points", maxLevel: 3,
-          levels: ["Bet 10 points each stage: solve by guess 5 (guess 4 in later worlds) to win +20.", "Each stage, you bet 20 points: win +40.", "Each stage, you bet 40 points: win +80."],
+          levels: ["Bet 10 points each stage: solve by guess 5 (guess 4 in later worlds) to win +20 points.", "Each stage, you bet 20 points: win +40 points.", "Each stage, you bet 40 points: win +80 points."],
           level: g => powerLevel(g, "highRoller") },
         { id: "hardMode", icon: "🎯", title: "Hard Mode", tier: "common", type: "points", maxLevel: 3,
           levels: ["Solve in hard mode: +35 points. (Every guess keeps your greens in place and uses your yellows.)", "Solve in hard mode: +60 points.", "Solve in hard mode: +100 points."],
