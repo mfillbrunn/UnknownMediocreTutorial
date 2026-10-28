@@ -1,7 +1,7 @@
 // client/daily-pick.js — Daily Pick: one shared puzzle a day, played once.
 //
-// Sixteen five-letter words ring a square. One is the secret. Pick a word and
-// the middle shows Wordle feedback for it; strike out the words that feedback
+// Sixteen five-letter words sit in a 4x4 grid. One is the secret. Pick a word and
+// the panel below shows Wordle feedback for it; strike out the words that feedback
 // rules out, then pick again, until the secret is picked. The puzzle comes
 // from the UTC date alone (no server state), and the result is kept in
 // localStorage under that date, so it resets daily and can't be replayed.
@@ -104,18 +104,10 @@
       const guessed = state.guesses.includes(word);
       return { word, struck, guessed };
     });
-    // Perimeter of a 5x5 grid, clockwise from the top-left corner.
-    const cells = [];
-    for (let c = 1; c <= 5; c++) cells.push([1, c]);
-    for (let r = 2; r <= 5; r++) cells.push([r, 5]);
-    for (let c = 4; c >= 1; c--) cells.push([5, c]);
-    for (let r = 4; r >= 2; r--) cells.push([r, 1]);
-
     const done = state.solved;
-    const buttons = ring.map(({ word, struck, guessed }, i) => {
-      const [row, col] = cells[i];
+    const buttons = ring.map(({ word, struck, guessed }) => {
       const disabled = done || (phase === "pick" && (struck || guessed));
-      return `<button type="button" class="dp-word${struck ? " is-struck" : ""}${guessed ? " is-guessed" : ""}" data-word="${word}" style="grid-row:${row};grid-column:${col}"${disabled ? " disabled" : ""}>${word}</button>`;
+      return `<button type="button" class="dp-word${struck ? " is-struck" : ""}${guessed ? " is-guessed" : ""}" data-word="${word}"${disabled ? " disabled" : ""}>${word}</button>`;
     }).join("");
 
     const tiles = guess => `<div class="dp-row">${[...guess].map((ch, i) =>
@@ -134,7 +126,8 @@
     }
     const history = state.guesses.slice(0, -1).map(g => tiles(g)).join("");
 
-    root.innerHTML = `<div class="dp-board">${buttons}<div class="dp-center">${center}</div></div>
+    root.innerHTML = `<div class="dp-board">${buttons}</div>
+      <div class="dp-center">${center}</div>
       ${!done && state.guesses.length ? `<div class="dp-count">Guesses: ${state.guesses.length}</div>` : ""}
       ${history ? `<div class="dp-history">${history}</div>` : ""}`;
   }

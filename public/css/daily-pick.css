@@ -2,10 +2,8 @@
 .dp-card { width: min(100%, 520px); }
 .dp-board {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: repeat(5, 1fr);
-  gap: 5px;
-  aspect-ratio: 1;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
   width: 100%;
 }
 .dp-word {
@@ -13,7 +11,7 @@
   font-family: inherit;
   letter-spacing: .04em;
   text-transform: uppercase;
-  padding: 0;
+  padding: 14px 0;
   border: 2px solid rgba(255,255,255,.25);
   border-radius: 8px;
   background: rgba(255,255,255,.08);
@@ -24,9 +22,9 @@
 .dp-word.is-struck { text-decoration: line-through; opacity: .4; }
 .dp-word.is-guessed { border-color: #f2c14e; }
 .dp-center {
-  grid-area: 2 / 2 / 5 / 5;
+  margin-top: 14px; min-height: 120px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 8px; padding: 6px; text-align: center;
+  gap: 8px; padding: 12px; text-align: center;
   border-radius: 10px; background: rgba(0,0,0,.25);
 }
 .dp-row { display: flex; gap: 4px; }
