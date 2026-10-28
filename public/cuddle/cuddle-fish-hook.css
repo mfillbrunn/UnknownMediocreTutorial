@@ -135,3 +135,7 @@
 }
 .umt-catch-card.is-yellow { border-color: #ffe08a; background: #e9c046; color: #3a2a00; box-shadow: 0 0 16px rgba(246, 201, 86, 0.7); }
 .umt-catch-card.is-grey { background: #5b5f69; color: #d7d9de; }
+
+/* Catches left, but nothing in the discard pile yet (just reshuffled). */
+.umt-fish-btn.is-empty { opacity: 0.55; filter: grayscale(0.4); }
+.umt-fish-empty { margin: 0 0 10px; color: rgba(247, 244, 255, 0.72); font-size: 0.86rem; line-height: 1.4; }

@@ -140,12 +140,22 @@
     return Boolean(game) && !duelWaiting(game) && onScreen(game, ready);
   }
 
-  function ready(game) {
+  // Catches left this stage (the hook stays on the deck while there are,
+  // even with nothing in the discard pile yet -- right after a reshuffle).
+  function hasCatches(game) {
     var state = game && game.state;
     if (!state || state.status !== "playing" || state.pendingRoundEnd) return false;
     var copilot = window.CuddleCopilot;
     if (copilot && typeof copilot.aiTurn === "function" && copilot.aiTurn(game)) return false;
-    return usedThisStage(state) < allowance(game) && pond(game).length > 0;
+    return usedThisStage(state) < allowance(game);
+  }
+
+  function ready(game) {
+    return hasCatches(game) && pond(game).length > 0;
+  }
+
+  function catchesOnScreen(game) {
+    return Boolean(game) && !duelWaiting(game) && onScreen(game, hasCatches);
   }
 
   // Fishes one `glyph` out of the discard pile into the hand; `throwBackId`
@@ -233,14 +243,19 @@
   function placeButton(game) {
     var row = document.querySelector("#cuddleScreen .cuddle-submit-row.has-deck");
     var existing = document.querySelector("#cuddleScreen .umt-fish-btn");
-    var show = Boolean(row) && readyOnScreen(game) && !row.classList.contains("is-mulligan-mode");
+    var show = Boolean(row) && catchesOnScreen(game) && !row.classList.contains("is-mulligan-mode");
     if (!show) {
       if (existing) existing.remove();
       return;
     }
-    if (existing && existing.parentNode === row) return;
+    // Dimmed while the discard pile is empty: nothing to fish yet.
+    var empty = !readyOnScreen(game);
+    if (existing && existing.parentNode === row) {
+      if (existing.classList.contains("is-empty") !== empty) existing.classList.toggle("is-empty", empty);
+      return;
+    }
     if (existing) existing.remove();
-    row.insertAdjacentHTML("beforeend", '<button type="button" class="umt-fish-btn" data-umt-fish-open aria-label="Fish Hook: take a card back from the discard pile" title="Fish Hook: take a card back from the discard pile">' + hookSvg() + "</button>");
+    row.insertAdjacentHTML("beforeend", '<button type="button" class="umt-fish-btn' + (empty ? " is-empty" : "") + '" data-umt-fish-open aria-label="Fish Hook: take a card back from the discard pile" title="Fish Hook: take a card back from the discard pile">' + hookSvg() + "</button>");
   }
 
   var view = { open: false, glyph: "", throwId: "" };
@@ -263,7 +278,8 @@
       + "<p>Take one card back from your discard pile." + (level(game) > 0 ? " Once a stage." : "")
       + (level(game) >= 2 ? " The letter you catch is tested: if it's in the answer, it turns yellow and needs no space." : "") + "</p></div>"
       + '<button type="button" class="umt-fish-close" data-umt-fish-close aria-label="Close">×</button></header>'
-      + '<h3>Discard pile</h3><div class="umt-fish-pond">' + fish + "</div>"
+      + '<h3>Discard pile</h3>' + (fish ? '<div class="umt-fish-pond">' + fish + "</div>"
+        : '<p class="umt-fish-empty">Empty right now: cards you play or mulligan land here. Your catch waits until then.</p>')
       + (full ? '<h3>Your hand is full: throw one back</h3><div class="umt-fish-pond">' + back + "</div>" : "")
       + '<button type="button" class="cuddle-btn cuddle-btn-primary umt-fish-go" data-umt-fish-go' + (canGo ? "" : " disabled") + ">" + esc(label) + "</button>"
       + "</section></div>";
@@ -272,7 +288,7 @@
   function renderSheet() {
     var game = activeGame();
     var existing = document.querySelector(".umt-fish-overlay");
-    if (!view.open || !game || !readyOnScreen(game)) {
+    if (!view.open || !game || !catchesOnScreen(game)) {
       view.open = false;
       if (existing) existing.remove();
       return;
@@ -463,7 +479,7 @@
       }
     }
     placeButton(game);
-    if (view.open && !readyOnScreen(game)) close();
+    if (view.open && !catchesOnScreen(game)) close();
   }
 
   function attach() {
