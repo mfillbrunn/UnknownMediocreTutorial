@@ -5,6 +5,7 @@
 body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .umt-skip-row,
 body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .umt-market-row,
 body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .cuddle-upgrade-refresh,
+body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .cuddle-lvl-refresh,
 body.umt-easy-mode #cuddleScreen .cuddle-upgrade-modal .cuddle-upgrade-wallet {
   display: none !important;
 }

@@ -376,23 +376,6 @@ button.umt-clue-word.is-out {
   transition: border-color 120ms ease, transform 120ms ease;
 }
 .cuddle-pair-word + .cuddle-pair-word { animation-delay: 90ms; }
-/* Letters a challenge or curse marks on this guess, styled like the dashed
-   outline on the board's tiles. */
-.cuddle-pair-letters { display: inline-flex; gap: 0.22em; letter-spacing: 0; }
-.cuddle-pair-word .is-marked,
-.cuddle-pair-mark-note .is-marked {
-  display: inline-grid;
-  place-items: center;
-  min-width: 1.3em;
-  padding: 1px 2px;
-  border: 2px dashed #d5a6ff;
-  border-radius: 6px;
-  color: #ead5ff;
-  font-style: normal;
-  line-height: 1.2;
-}
-.cuddle-pair-mark-note { display: flex; align-items: center; gap: 8px; margin: 8px 2px 0; color: var(--cuddle-muted, #b9b2cc); font-size: 0.8rem; font-weight: 700; }
-.cuddle-pair-mark-note .is-marked { font-size: 0.7rem; font-weight: 900; min-width: 1.6em; }
 .cuddle-pair-word:hover { border-color: rgba(213, 166, 255, 0.55); transform: translateY(-2px); }
 .cuddle-pair-word:focus-visible { outline: 2px solid var(--cuddle-accent, #d5a6ff); outline-offset: 2px; }
 .cuddle-pair-word small { color: var(--cuddle-muted, #b9b2cc); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; }

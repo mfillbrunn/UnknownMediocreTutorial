@@ -39,14 +39,17 @@
     { points: 200, badges: ["ideaTiles", "waveTiles"] },
     { points: 300, badges: ["greenCount"], quest: ["revealCategory"] },
     { points: 400, themes: ["swamp"] },
+    { points: 460, rules: ["consonantCrunch"], added: 2 },
     { points: 520, rules: ["countOnly", "wordChain"] },
     { points: 640, badges: ["doubleDown", "highRoller"] },
+    { points: 700, rules: ["blueMode"], added: 2 },
     { points: 760, quest: ["umtVowelCheck"] },
     { points: 880, rules: ["questEndurance"] },
     { points: 1000, themes: ["frost"] },
     { points: 1150, badges: ["hardMode", "strikeThrough"] },
     { points: 1300, rules: ["copilot"] },
     { points: 1450, themes: ["tides"] },
+    { points: 1525, rules: ["quickMode"], added: 2 },
     { points: 1600, badges: ["rewardEcho", "alphabet-compass"] },
     { points: 1750, rules: ["delayedFeedback", "lockedIn"] },
     { points: 1900, quest: ["sillyWord", "umtSpotlight"] },
@@ -66,6 +69,7 @@
     { points: 3850, badges: ["goldenOpener"] }
   ].map(function complete(step) {
     return Object.freeze({
+      added: step.added || 1,
       points: step.points,
       rules: step.rules || [],
       bosses: step.bosses || [],
@@ -103,7 +107,30 @@
     var got = ach && ach.unlocked && typeof ach.unlocked === "object" ? ach.unlocked : {};
     var wins = ["winEasy", "winMedium", "winHard"].filter(function has(id) { return got[id]; }).length;
     var points = wins * RUN_CAP + (got.firstBoss ? 150 : 0);
-    return { points: points, runs: {}, hard: Boolean(got.winMedium || got.winHard), opened: earnedSteps(points), runOpened: {} };
+    return { points: points, runs: {}, hard: Boolean(got.winMedium || got.winHard), opened: earnedSteps(points), runOpened: {}, stepsVersion: STEPS_VERSION };
+  }
+
+  // Steps were added in the middle of the line later (`added: 2`): a save
+  // from before counts only the original steps, so its count is moved to
+  // just past the last original step it had open: new steps before that
+  // open with it, and nothing it had open closes again.
+  var STEPS_VERSION = 2;
+  function migrateSteps(data) {
+    var from = Math.floor(Number(data.stepsVersion) || 1);
+    if (from >= STEPS_VERSION) return;
+    var oldOpened = Math.max(0, Math.floor(Number(data.opened) || 0));
+    // Just past the last original step it had open.
+    var seen = 0;
+    var opened = 0;
+    for (var index = 0; index < STEPS.length && seen < oldOpened; index += 1) {
+      if (STEPS[index].added > from) continue;
+      seen += 1;
+      opened = index + 1;
+    }
+    if (seen < oldOpened) opened = STEPS.length;
+    data.opened = opened;
+    data.stepsVersion = STEPS_VERSION;
+    write(data);
   }
 
   var cache = null;
@@ -120,6 +147,7 @@
     // Saved before unlocks came in small steps: what its points paid for
     // stays open.
     if (!Number.isFinite(Number(data.opened))) data.opened = earnedSteps(data.points);
+    migrateSteps(data);
     data.opened = Math.max(0, Math.min(STEPS.length, Math.floor(Number(data.opened) || 0)));
     data.runOpened = data.runOpened && typeof data.runOpened === "object" ? data.runOpened : {};
     delete data.shown;

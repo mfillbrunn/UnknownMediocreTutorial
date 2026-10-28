@@ -4999,72 +4999,80 @@
   .cuddle-category-readout.is-bonus-new { animation: none; }
 }
 
-/* The Level-Up stop's picker (cuddle-ui.js renderLevelPicker): every badge
-   that can level, a square per level (filled up to its level now, the next
-   one lit once picked); pick two, then Level up. */
-.cuddle-level-picker { display: flex; flex-direction: column; gap: 10px; max-height: min(88vh, 760px); }
-.cuddle-level-picker h2 { margin: 0; text-wrap: balance; }
-.cuddle-level-picker-lead { margin: -4px 0 0; color: var(--cuddle-muted); font-size: 0.84rem; }
-.cuddle-level-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  overflow-y: auto;
-  padding: 2px;
+/* Level-ups (cuddle-ui.js renderLevelUpgrade): a list of rows, not badge
+   cards. Each row: the badge, its level now -> the level it would reach,
+   and what that level does. Green once given a level-up; a pip per level
+   given (two on one badge = two pips). */
+.cuddle-lvl-modal { display: flex; flex-direction: column; gap: 10px; max-height: min(90vh, 780px); }
+.cuddle-lvl-modal h2 { margin: 0; text-wrap: balance; }
+.cuddle-lvl-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.cuddle-lvl-head .cuddle-modal-kicker { display: block; margin-bottom: 4px; }
+#cuddleScreen .cuddle-lvl-head .cuddle-upgrade-wallet { position: static; float: none; flex: none; min-height: 34px; margin: 0; padding: 4px 12px; }
+.cuddle-lvl-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.cuddle-lvl-bar .cuddle-upgrade-badges { margin: 0; }
+.cuddle-lvl-lead { margin: -4px 0 0; color: var(--cuddle-muted); font-size: 0.84rem; line-height: 1.35; }
+.cuddle-lvl-count { display: flex; align-items: center; gap: 6px; color: var(--cuddle-muted); font-size: 0.78rem; font-weight: 800; }
+.cuddle-lvl-count i {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(87, 214, 154, 0.6);
+  border-radius: 50%;
 }
-.cuddle-level-tile {
+.cuddle-lvl-count i.is-on { background: #57d69a; border-color: #57d69a; }
+.cuddle-lvl-count span { margin-left: 4px; }
+.cuddle-lvl-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding: 2px; min-height: 0; }
+.cuddle-lvl-row {
   --tier: #9aa3b5;
+  position: relative;
   display: grid;
-  justify-items: center;
-  align-content: start;
-  gap: 5px;
-  min-width: 0;
-  padding: 10px 6px 8px;
-  border: 1.5px solid color-mix(in srgb, var(--tier) 55%, transparent);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
   color: var(--cuddle-text);
   font: inherit;
-  text-align: center;
+  text-align: left;
   cursor: pointer;
-  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+  transition: border-color 120ms ease, background 120ms ease;
 }
-.cuddle-level-tile.is-rare { --tier: #7fb8ff; }
-.cuddle-level-tile.is-epic { --tier: #c08bff; }
-.cuddle-level-tile.is-legendary { --tier: #f6c956; }
-.cuddle-level-tile:focus-visible { outline: 2px solid var(--cuddle-accent); outline-offset: 2px; }
-.cuddle-level-tile.is-picked {
-  border-color: #57d69a;
-  background: rgba(87, 214, 154, 0.14);
-  box-shadow: 0 0 0 2px rgba(87, 214, 154, 0.35);
-  transform: translateY(-2px);
+.cuddle-lvl-row.is-rare { --tier: #7fb8ff; }
+.cuddle-lvl-row.is-epic { --tier: #c08bff; }
+.cuddle-lvl-row.is-legendary { --tier: #f6c956; }
+.cuddle-lvl-row:focus-visible { outline: 2px solid var(--cuddle-accent); outline-offset: 2px; }
+.cuddle-lvl-row.is-picked { border-color: #57d69a; background: rgba(87, 214, 154, 0.12); }
+.cuddle-lvl-badge { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cuddle-lvl-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--tier);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 1.3rem;
 }
-.cuddle-level-tile-icon { display: grid; place-items: center; width: 40px; height: 40px; font-size: 1.5rem; }
-.cuddle-level-tile-icon img { width: 40px; height: 40px; }
-.cuddle-level-tile strong {
-  max-width: 100%;
-  overflow: hidden;
-  font-size: 0.78rem;
-  line-height: 1.15;
-  text-wrap: balance;
-}
-.cuddle-level-tile small { color: var(--cuddle-muted); font-size: 0.66rem; line-height: 1.25; }
-.cuddle-level-tile.is-picked small { color: #a8f0c9; }
-.cuddle-level-squares { display: flex; gap: 4px; }
-.cuddle-level-squares i {
-  display: block;
-  width: 11px;
-  height: 11px;
-  border: 1.5px solid color-mix(in srgb, var(--tier) 80%, white 20%);
-  border-radius: 3px;
-}
-.cuddle-level-squares i.is-on { background: var(--tier); }
-.cuddle-level-squares i.is-next { background: #57d69a; border-color: #57d69a; animation: cuddle-level-next 900ms ease-in-out infinite alternate; }
-@keyframes cuddle-level-next { from { opacity: 0.55; } to { opacity: 1; } }
+.cuddle-lvl-icon img { width: 30px; height: 30px; }
+.cuddle-lvl-badge strong { min-width: 0; font-size: 0.92rem; line-height: 1.15; text-wrap: balance; }
+.cuddle-lvl-step { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cuddle-lvl-from { padding: 3px 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); color: var(--cuddle-muted); }
+.cuddle-lvl-arrow { color: var(--cuddle-muted); font-size: 1rem; }
+.cuddle-lvl-to { padding: 3px 8px; border-radius: 999px; background: color-mix(in srgb, var(--tier) 22%, transparent); color: var(--cuddle-text); }
+.cuddle-lvl-row.is-picked .cuddle-lvl-to { background: #57d69a; color: #0c2a1b; }
+.cuddle-lvl-to em { font-style: normal; font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.8; }
+.cuddle-lvl-text { grid-column: 1 / -1; color: var(--cuddle-muted); font-size: 0.76rem; line-height: 1.35; }
+.cuddle-lvl-row.is-picked .cuddle-lvl-text { color: #c9f5dd; }
+.cuddle-lvl-given { position: absolute; top: -7px; right: 10px; display: flex; gap: 3px; }
+.cuddle-lvl-given i { display: block; width: 12px; height: 12px; border: 2px solid var(--cuddle-surface, #1d1a28); border-radius: 50%; background: #57d69a; }
+.cuddle-lvl-refresh { align-self: center; }
 .cuddle-level-go { align-self: stretch; }
 @media (prefers-reduced-motion: reduce) {
-  .cuddle-level-tile { transition: none; }
-  .cuddle-level-squares i.is-next { animation: none; }
+  .cuddle-lvl-row { transition: none; }
 }
 
 /* Points won in a reward's text (cuddle-ui.js goldenMoney), green as the
