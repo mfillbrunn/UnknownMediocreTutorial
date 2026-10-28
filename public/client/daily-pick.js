@@ -114,21 +114,25 @@
     const tiles = guess => `<div class="dp-row">${[...guess].map((ch, i) =>
       `<span class="dp-tile is-${feedback(guess, secret)[i]}">${ch}</span>`).join("")}</div>`;
 
-    let center;
+    // The panel always holds the same three rows (tiles, hint, action) so
+    // the screen doesn't shift as the game moves along.
+    const blank = `<div class="dp-row">${"<span class=\"dp-tile is-empty\"></span>".repeat(5)}</div>`;
+    let hint;
+    let action = `<button type="button" class="dp-next" tabindex="-1" aria-hidden="true" style="visibility:hidden">Pick another word</button>`;
     if (done) {
-      const n = state.guesses.length;
-      center = `${tiles(lastGuess)}<div class="dp-result">Solved in ${n}!</div><div class="dp-hint">Come back tomorrow for a new puzzle.</div>`;
+      hint = `<strong class="dp-result">Solved in ${state.guesses.length}!</strong> Come back tomorrow.`;
     } else if (!lastGuess) {
-      center = `<div class="dp-hint">Pick a word. The middle shows how close it is to the secret.</div>`;
+      hint = "Pick a word to see how close it is to the secret.";
     } else if (phase === "strike") {
-      center = `${tiles(lastGuess)}<div class="dp-hint">Tap the words this rules out.</div><button type="button" class="dp-next" id="dpNext">Pick another word</button>`;
+      hint = "Tap the words this rules out.";
+      action = `<button type="button" class="dp-next" id="dpNext">Pick another word</button>`;
     } else {
-      center = `${tiles(lastGuess)}<div class="dp-hint">Choose your next word.</div>`;
+      hint = "Choose your next word.";
     }
 
     root.innerHTML = `<div class="dp-board">${buttons}</div>
-      <div class="dp-center">${center}</div>
-      ${!done && state.guesses.length ? `<div class="dp-count">Guesses: ${state.guesses.length}</div>` : ""}`;
+      <div class="dp-center">${lastGuess ? tiles(lastGuess) : blank}<div class="dp-hint">${hint}</div>${action}</div>
+      <div class="dp-count">Guesses: ${state.guesses.length}</div>`;
   }
 
   function onWordClick(word) {
