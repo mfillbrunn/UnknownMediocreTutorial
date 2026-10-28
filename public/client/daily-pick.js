@@ -13,7 +13,7 @@
   const WORD_COUNT = 16;
   const PUZZLE_COUNT = 3;
   const ADVANCE_MS = 1600;
-  const STORE_KEY = "umt.dailyPick.v3";
+  const STORE_KEY = "umt.dailyPick.v4";
 
   let puzzles = null; // [{ answer, words }]
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
@@ -56,35 +56,49 @@
     return a;
   };
 
-  function buildPuzzle(list, seed, taken) {
+  // How alike a word is to the answer: what its Wordle feedback against the
+  // answer would show, a green counting 2 and a yellow 1 (0 to 10).
+  const likeness = (word, answer) =>
+    feedback(word, answer).reduce((sum, f) => sum + (f === "correct" ? 2 : f === "present" ? 1 : 0), 0);
+
+  // Each puzzle of the day is harder than the last: the words around the
+  // answer go from random, to related (sharing a few letters), to near
+  // misses (mostly the same letters, mostly in the same places).
+  const LEVELS = [
+    { min: 0, max: 10 }, // puzzle 1: any words
+    { min: 3, max: 5 }, //  puzzle 2: related
+    { min: 6, max: 10 } //  puzzle 3: very similar
+  ];
+
+  function buildPuzzle(list, seed, taken, level) {
     const rand = mulberry32(hash(seed));
     let answer = list[Math.floor(rand() * list.length)];
     while (taken.has(answer)) answer = list[Math.floor(rand() * list.length)];
-    const letters = new Set(answer);
-    const shared = w => [...new Set(w)].filter(c => letters.has(c)).length;
     const key = w => [...w].sort().join("");
     const used = new Set([key(answer)]);
     const picked = [];
-    // Prefer words that share letters with the answer, so the feedback
-    // actually separates them; top up from the rest if too few exist.
-    const ordered = shuffle(list.filter(w => w !== answer), rand);
-    const related = ordered.filter(w => shared(w) >= 2);
-    for (const w of related.concat(ordered)) {
+    // Words in the level's likeness range come first, in random order; if
+    // there aren't enough, the rest follow closest-to-the-range first.
+    const { min, max } = LEVELS[level];
+    const distance = score => (score < min ? min - score : score > max ? score - max : 0);
+    const ordered = shuffle(list.filter(w => w !== answer), rand)
+      .map(word => ({ word, off: distance(likeness(word, answer)) }))
+      .sort((x, y) => x.off - y.off)
+      .map(entry => entry.word);
+    for (const w of ordered) {
       if (picked.length === WORD_COUNT - 1) break;
-      if (picked.includes(w) || used.has(key(w))) continue;
+      if (used.has(key(w))) continue;
       used.add(key(w));
       picked.push(w);
     }
     return { answer, words: shuffle([answer, ...picked], rand) };
   }
 
-  // Puzzle 1 keeps the original one-puzzle seed, so today's first puzzle is
-  // the same one Griddle showed before it had three.
   function buildDay(pool, date) {
-    const list = pool.filter(w => /^[a-z]{5}$/.test(w)).sort();
+    const list = [...new Set(pool.filter(w => /^[a-z]{5}$/.test(w)))].sort();
     const taken = new Set();
     return Array.from({ length: PUZZLE_COUNT }, (_, i) => {
-      const puzzle = buildPuzzle(list, i ? `daily-pick:${date}:${i + 1}` : `daily-pick:${date}`, taken);
+      const puzzle = buildPuzzle(list, `griddle:${date}:${i + 1}`, taken, Math.min(i, LEVELS.length - 1));
       taken.add(puzzle.answer);
       return puzzle;
     });
