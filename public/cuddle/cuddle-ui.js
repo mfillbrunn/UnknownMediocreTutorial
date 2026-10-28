@@ -1763,10 +1763,17 @@
     if (!state || state.status !== "upgrade" || state.upgradePhase !== "round") return false;
     if (state.legendaryOffer || state.umtEventPick) return false;
     const stop = state.umtLevelStop;
+    const choices = Array.isArray(state.upgradeChoices) ? state.upgradeChoices : [];
+    if (!choices.length) return false;
     if (stop && stop.picker) return true;
     if (stop && stop.badgeFirst && Number(stop.pick) <= 1) return false;
-    const choices = Array.isArray(state.upgradeChoices) ? state.upgradeChoices : [];
-    return choices.length > 0 && choices.every(choice => {
+    // A level-up turn says so itself: a Trial's or Duel's level-ups after
+    // its badge, or the after-stage turn (cuddle-reward-rhythm.js).
+    if (stop && stop.badgeFirst) return true;
+    const rhythm = window.CuddleRewardRhythm && typeof window.CuddleRewardRhythm.shown === "function"
+      ? window.CuddleRewardRhythm.shown(state) : null;
+    if (rhythm === "level") return true;
+    return choices.every(choice => {
       const node = levelUpNode(choice);
       const level = levelUpLevel(node);
       return Boolean(node) && level > 0 && level < Math.max(1, Number(node.maxLevel) || 1);
@@ -1821,16 +1828,16 @@
       return `
         <button type="button" class="cuddle-lvl-row is-${escapeHtml(tier)}${given ? " is-picked" : ""}" data-action="level-pick" data-key="${escapeHtml(choice.key)}"
           aria-pressed="${given > 0}" aria-label="${escapeHtml(title)}: level ${level} to level ${target}${given ? `, ${given} level-up${given === 1 ? "" : "s"} given` : ""}">
-          <span class="cuddle-lvl-badge">
-            <span class="cuddle-lvl-icon">${icon}</span>
+          <span class="cuddle-lvl-icon">${icon}</span>
+          <span class="cuddle-lvl-main">
             <strong>${escapeHtml(title)}</strong>
+            <small class="cuddle-lvl-text">${goldenMoney(escapeHtml(String(text || "")))}</small>
           </span>
           <span class="cuddle-lvl-step" aria-hidden="true">
-            <span class="cuddle-lvl-from">Lv ${level}</span>
-            <span class="cuddle-lvl-arrow">→</span>
-            <span class="cuddle-lvl-to">Lv ${target}${target >= max ? " <em>max</em>" : ""}</span>
+            <span class="cuddle-lvl-cap">Level</span>
+            <span class="cuddle-lvl-nums"><b class="cuddle-lvl-from">${level}</b><span class="cuddle-lvl-arrow">➜</span><b class="cuddle-lvl-to">${target}</b></span>
+            <span class="cuddle-lvl-cap">${target >= max ? "max" : `of ${max}`}</span>
           </span>
-          <small class="cuddle-lvl-text">${goldenMoney(escapeHtml(String(text || "")))}</small>
           ${pips}
         </button>`;
     }).join("");
