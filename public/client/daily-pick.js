@@ -13,7 +13,7 @@
   const WORD_COUNT = 16;
   const PUZZLE_COUNT = 3;
   const ADVANCE_MS = 1600;
-  const STORE_KEY = "umt.dailyPick.v6";
+  const STORE_KEY = "umt.dailyPick.v7";
 
   let puzzles = null; // [{ answer, words }]
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
@@ -83,7 +83,7 @@
     // there aren't enough, the rest follow closest-to-the-range first.
     const { min, max } = LEVELS[level];
     const distance = score => (score < min ? min - score : score > max ? score - max : 0);
-    const ordered = shuffle(list.filter(w => w !== answer), rand)
+    const ordered = shuffle(list.filter(w => w !== answer && !taken.has(w)), rand)
       .map(word => ({ word, off: distance(likeness(word, answer)) }))
       .sort((x, y) => x.off - y.off)
       .map(entry => entry.word);
@@ -98,11 +98,12 @@
 
   function buildDay(pool, date) {
     const list = [...new Set(pool.filter(w => /^[a-z]{5}$/.test(w)))].sort();
+    // Every word on the day's three grids is different, not just the answers.
     const taken = new Set();
     return Array.from({ length: PUZZLE_COUNT }, (_, i) => {
       const level = Math.min(i, LEVELS.length - 1);
       const puzzle = buildPuzzle(list, `griddle:${date}:${i + 1}`, taken, level);
-      taken.add(puzzle.answer);
+      puzzle.words.forEach(w => taken.add(w));
       return { ...puzzle, ...LEVELS[level] };
     });
   }
