@@ -357,12 +357,14 @@ button.umt-clue-word.is-out {
 .cuddle-pair-head { display: grid; gap: 3px; }
 .cuddle-pair-head h3 { margin: 0; font-size: 1.02rem; line-height: 1.25; text-wrap: balance; }
 .cuddle-pair-head p { margin: 0; color: var(--cuddle-muted, #b9b2cc); font-size: 0.8rem; }
-.cuddle-pair-words { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cuddle-pair-words { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .cuddle-pair-word {
   display: grid;
   justify-items: center;
   gap: 2px;
-  padding: 16px 8px;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 8px;
   border: 1px solid var(--cuddle-border, rgba(255, 255, 255, 0.16));
   border-radius: 14px;
   background: var(--cuddle-surface-2, rgba(255, 255, 255, 0.06));
@@ -376,6 +378,25 @@ button.umt-clue-word.is-out {
   transition: border-color 120ms ease, transform 120ms ease;
 }
 .cuddle-pair-word + .cuddle-pair-word { animation-delay: 90ms; }
+/* The word as five small tiles: an outline each, and a purple tile under
+   the letters this guess's challenge marks (as on the board). */
+.cuddle-pair-tiles { display: flex; justify-content: center; gap: 3px; width: 100%; letter-spacing: 0; }
+.cuddle-pair-tile {
+  display: grid;
+  flex: 1 1 0;
+  place-items: center;
+  min-width: 0;
+  max-width: 32px;
+  aspect-ratio: 1;
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  border-radius: 7px;
+  color: #fff;
+  font-size: clamp(1rem, 4.4vw, 1.3rem);
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1;
+}
+.cuddle-pair-tile.is-marked { border-color: rgba(196, 150, 255, 0.85); background: rgba(150, 96, 230, 0.55); }
 .cuddle-pair-word:hover { border-color: rgba(213, 166, 255, 0.55); transform: translateY(-2px); }
 .cuddle-pair-word:focus-visible { outline: 2px solid var(--cuddle-accent, #d5a6ff); outline-offset: 2px; }
 .cuddle-pair-word small { color: var(--cuddle-muted, #b9b2cc); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; }

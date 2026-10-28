@@ -1417,8 +1417,19 @@
   function renderPairPanel(panel) {
     const pay = item => `+${item.points} points, +$${item.money}`;
     if (panel.phase === "pair") {
+      // Each word as five small tiles. The ones a challenge or curse marks
+      // on this guess (outlined on the board too) sit on a purple tile.
+      let marked = null;
+      try {
+        marked = typeof game.maskSpanPreview === "function" ? game.maskSpanPreview() : null;
+      } catch {
+        marked = null;
+      }
+      const cols = marked && Array.isArray(marked.indices) ? marked.indices : [];
+      const tiles = word => word.split("").map((letter, index) =>
+        `<i class="cuddle-pair-tile${cols.includes(index) ? " is-marked" : ""}">${escapeHtml(letter)}</i>`).join("");
       const words = panel.pair.map(item => `<button type="button" class="cuddle-pair-word" data-action="pair-word" data-word="${escapeHtml(item.word)}"`
-        + ` aria-label="Play ${escapeHtml(item.word)}">${escapeHtml(item.word)}${item.listed ? `<small>on the list</small>` : ""}</button>`).join("");
+        + ` aria-label="Play ${escapeHtml(item.word)}"><span class="cuddle-pair-tiles" aria-hidden="true">${tiles(item.word)}</span>${item.listed ? `<small>on the list</small>` : ""}</button>`).join("");
       return `
       <section class="cuddle-hand-panel cuddle-pair-panel" aria-labelledby="cuddlePairTitle">
         <div class="cuddle-pair-head">
