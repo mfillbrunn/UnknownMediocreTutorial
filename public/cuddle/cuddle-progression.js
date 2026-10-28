@@ -809,7 +809,59 @@
     setTimeout(() => el.remove(), 340);
   }
 
+  // The quest's own row above the Submit row (cuddle-campaign.js) plays a
+  // short arrival animation instead of the pill over the board. Four
+  // styles to choose from, for now: ?questfx=1..4 in the address (kept in
+  // this browser), or CuddleQuestFx.setVariant(n).
+  //   1 Glow  -- the quest's border glows gold twice;
+  //   2 Rise  -- it slides up into place, then glows once;
+  //   3 Shine -- a light sweeps across it and the QUEST tag pops;
+  //   4 Ping  -- only the QUEST tag pops, with a gold ring.
+  const QUEST_FX_MS = 1800;
+  const QUEST_FX_KEY = "umt-cuddle-quest-fx";
+  const questFx = { at: 0 };
+
+  function questVariant() {
+    try {
+      const fromUrl = Number(new URLSearchParams(window.location.search).get("questfx"));
+      if (fromUrl >= 1 && fromUrl <= 4) localStorage.setItem(QUEST_FX_KEY, String(fromUrl));
+      const kept = Number(localStorage.getItem(QUEST_FX_KEY));
+      return kept >= 1 && kept <= 4 ? kept : 1;
+    } catch (_error) {
+      return 1;
+    }
+  }
+
+  function liveQuestFx() {
+    if (!questFx.at || reducedMotion()) return null;
+    const elapsed = Date.now() - questFx.at;
+    return elapsed < QUEST_FX_MS ? { variant: questVariant(), elapsed } : null;
+  }
+
+  function playQuestFx() {
+    const dock = document.querySelector("#cuddleScreen .cuddle-quest-dock");
+    if (!dock) return false;
+    questFx.at = Date.now();
+    if (reducedMotion()) return true;
+    const variant = questVariant();
+    dock.classList.remove("is-arriving", "qa-1", "qa-2", "qa-3", "qa-4");
+    void dock.offsetWidth;
+    dock.style.setProperty("--qa-at", "0ms");
+    dock.classList.add("is-arriving", `qa-${variant}`);
+    return true;
+  }
+
+  window.CuddleQuestFx = Object.freeze({
+    live: liveQuestFx,
+    play: playQuestFx,
+    variant: questVariant,
+    setVariant(n) {
+      try { localStorage.setItem(QUEST_FX_KEY, String(Math.max(1, Math.min(4, Number(n) || 1)))); } catch (_error) { /* default */ }
+    }
+  });
+
   function showQuestBanner() {
+    if (playQuestFx()) return;
     const el = host();
     if (!el) return;
     dismissQuestBanner(true);

@@ -332,7 +332,7 @@
     umtSpotlight: "2 yellow letters move to their exact spots and turn green (or the next ones you find do).",
     umtPocketMoney: "Get +$16 right now.",
     umtQuickPoints: "Get +20 points right now.",
-    umtFishingLine: "3 times this stage, take back a card you discarded (tap the hook on your deck).",
+    umtFishingLine: "Twice this stage, take back a card you discarded (tap the hook on your deck).",
     umtOvertime: "Two more guesses this stage: a boss gives you two more tries; elsewhere the late-guess cost starts two guesses later.",
     // Clue: yellow hints, or green ones with Quest Clue at level 2.
     umtClue: function clueText(game) {
