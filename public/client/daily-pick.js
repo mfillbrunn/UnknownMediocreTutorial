@@ -86,7 +86,7 @@
   //   "counts" - only how many greens and how many yellows, no positions
   const LEVELS = [
     { mode: "full", intro: "Tap a word to start." },
-    { mode: "blue", intro: "Blue tiles don't say where the letter goes. Tap a word to start." },
+    { mode: "blue", intro: "Tap a word to start." },
     { mode: "counts", intro: "Only counts, not which letters. Tap a word to start." }
   ];
 
