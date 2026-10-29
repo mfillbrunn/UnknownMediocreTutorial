@@ -866,8 +866,13 @@
       this.dismissRoundIntro();
     }
     var penalty = branchMap.pendingPenalty;
+    // "The next Wordle must be solved within the guess limit" waits for a
+    // Wordle: a Trial keeps its own guesses (cuddle-curses.js), so on one
+    // the strict limit passes on to the next stage instead.
+    var here = currentNode(branchMap);
+    var keepGuess = Boolean(penalty && penalty.guess && here && here.type === "trial");
     if (penalty) {
-      if (penalty.guess && typeof this._applyStrictGuessLimit === "function") {
+      if (penalty.guess && !keepGuess && typeof this._applyStrictGuessLimit === "function") {
         // Must be solved inside the world's guess window (6/5/4) or the run
         // is lost -- this used to hide a row, which on a normal stage (no
         // guess cap) limited nothing.
@@ -878,7 +883,7 @@
       }
       if (penalty.rewards) branchMap.rewardsDisabledRound = this.state.round;
       if (penalty.noMoney) branchMap.noMoneyRound = this.state.round;
-      branchMap.pendingPenalty = null;
+      branchMap.pendingPenalty = keepGuess ? { guess: penalty.guess } : null;
     }
     return result;
   };
