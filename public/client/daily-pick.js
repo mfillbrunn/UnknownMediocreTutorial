@@ -85,9 +85,9 @@
   //   "blue"   - blue if the letter is in the word at all, grey if not
   //   "counts" - only how many greens and how many yellows, no positions
   const LEVELS = [
-    { mode: "full", intro: "Green: right spot. Yellow: wrong spot. Tap a word to start." },
-    { mode: "blue", intro: "Blue means the letter is in the word, spot not shown. Tap a word to start." },
-    { mode: "counts", intro: "Only counts: how many greens and yellows, not which. Tap a word to start." }
+    { mode: "full", intro: "Tap a word to start." },
+    { mode: "blue", intro: "Blue tiles don't say where the letter goes. Tap a word to start." },
+    { mode: "counts", intro: "Only counts, not which letters. Tap a word to start." }
   ];
 
   // A grid is a chain of words rather than a cluster around the answer: start
@@ -203,6 +203,14 @@
       return `<button type="button" class="dp-word${struck ? " is-struck" : ""}${guessed ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}" data-word="${word}"${disabled ? " disabled" : ""}>${word}</button>`;
     }).join("");
 
+    const swatch = (color, label, round) =>
+      `<span><i class="${round ? "is-round" : ""}" style="background:${color}"></i>${label}</span>`;
+    const key = {
+      full: swatch("#3f9d4f", "Right spot") + swatch("#c9a227", "Wrong spot") + swatch("#555b63", "Not in word"),
+      blue: swatch("#3b7dd8", "In the word (right or wrong spot)") + swatch("#555b63", "Not in word"),
+      counts: swatch("#3f9d4f", "How many in the right spot", true) + swatch("#c9a227", "How many in the wrong spot", true)
+    }[mode];
+
     const tiles = guess => {
       const result = feedback(guess, secret);
       if (mode === "counts" && guess !== secret) {
@@ -224,7 +232,7 @@
     if (done) {
       hint = `<strong class="dp-result">Solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next puzzle…"}`;
     } else if (phase === "strike") {
-      hint = "Now exclude words: tap the ones this rules out.";
+      hint = "Now tap the words this rules out.";
       action = `<button type="button" class="dp-next" id="dpNext">Pick next word</button>`;
     } else {
       hint = lastGuess ? "Tap the word you want to guess next." : intro;
@@ -238,7 +246,7 @@
     const history = r.guesses.slice(0, -1).reverse().map(tiles).join("");
 
     root.innerHTML = `<div class="dp-board">${buttons}</div>
-      <div class="dp-center">${lastGuess ? tiles(lastGuess) : blank}<div class="dp-hint">${hint}</div>${action}</div>
+      <div class="dp-center">${lastGuess ? tiles(lastGuess) : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>
       <div class="dp-count">Grid ${current + 1} of ${PUZZLE_COUNT} · Guesses: ${r.guesses.length} · Total: ${totalGuesses()}</div>
       ${history ? `<div class="dp-history"><div class="dp-history-title">Earlier guesses</div>${history}</div>` : ""}`;
   }
