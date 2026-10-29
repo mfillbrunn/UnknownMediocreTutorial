@@ -332,6 +332,10 @@
       mega.presetStage = { key: key, baseMax: Number(state.maxGuesses) || 0 };
     }
     var rescued = Math.max(0, (Number(state.maxGuesses) || 0) - mega.presetStage.baseMax);
+    // A Trial stop keeps its own count, whatever else would cap the stage
+    // (a strict penalty, a short world window): capped below its pick
+    // guess, a Blind trial ended before its list ever showed.
+    if (trialNode(state)) return guess + rescued;
     return Math.min(limit, guess + rescued);
   };
 
