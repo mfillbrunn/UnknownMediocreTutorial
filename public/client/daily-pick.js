@@ -85,9 +85,9 @@
   //   "blue"   - blue if the letter is in the word at all, grey if not
   //   "counts" - only how many greens and how many yellows, no positions
   const LEVELS = [
-    { mode: "full", intro: "Tap a word to start." },
-    { mode: "blue", intro: "Tap a word to start." },
-    { mode: "counts", intro: "Only counts, not which letters. Tap a word to start." }
+    { mode: "full" },
+    { mode: "blue" },
+    { mode: "counts" }
   ];
 
   // A grid is a chain of words rather than a cluster around the answer: start
@@ -189,7 +189,7 @@
     const root = $("dailyPickRoot");
     if (!root) return;
     if (allSolved() && !advanceTimer) return renderSummary(root);
-    const { answer: secret, words, mode, intro } = puzzles[current];
+    const { answer: secret, words, mode } = puzzles[current];
     const r = round();
     const lastGuess = r.guesses[r.guesses.length - 1];
     const ring = words.map((word, i) => {
@@ -235,7 +235,7 @@
       hint = "Now tap the words this rules out.";
       action = `<button type="button" class="dp-next" id="dpNext">Pick next word</button>`;
     } else {
-      hint = lastGuess ? "Tap the word you want to guess next." : intro;
+      hint = lastGuess ? "Tap the word you want to guess next." : "Tap a word to start.";
       action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${selected.toUpperCase()}` : "Select a word"}</button>`;
     }
     // Keeps the panel the same height once the button is gone.
