@@ -175,7 +175,7 @@
           levels: ["After each stage, you earn 5% of your money as interest (up to +$10).", "You earn 8% interest (up to +$16).", "You earn 15% interest (up to +$30)."],
           level: g => v5Level(g, "umtRainyDay") },
         { id: "encore", icon: "🎬", title: "Encore", tier: "common", type: "points", maxLevel: 1, description: "Every 3rd stage you solve gives +30 points.", level: g => v5Level(g, "umtEncore") },
-        { id: "vowelBounty", icon: "🅰️", title: "Vowel Bounty", tier: "rare", type: "points", maxLevel: 3,
+        { id: "vowelBounty", icon: "🅰️", title: "Vowel Bounty", tier: "common", type: "points", maxLevel: 3,
           levels: ["When you solve, each vowel in the answer gives +4 points.", "Each vowel in the answer gives +6 points.", "Each vowel in the answer gives +10 points."],
           level: g => v5Level(g, "umtVowelBounty") },
         { id: "haggler", icon: "🪙", title: "Haggler", tier: "rare", type: "money", maxLevel: 1, description: "Refreshing reward cards costs less: $0, then $1, then $3 (instead of $3, $5, $7).", level: g => v5Level(g, "umtHaggler") },
