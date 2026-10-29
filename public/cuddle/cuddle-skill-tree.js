@@ -264,7 +264,7 @@
         { id: "gracePeriod", icon: "⌛", title: "Grace Period", tier: "rare", type: "safety", maxLevel: 3,
           levels: ["Your 1st late guess doesn't cost any points.", "Your first 2 late guesses don't cost any points.", "Your first 2 late guesses are free, and later ones cost half."],
           level: g => powerLevel(g, "gracePeriod") },
-        { id: "boldOpener", icon: "🪄", title: "Bold Opener", tier: "epic", type: "clues", maxLevel: 1,
+        { id: "boldOpener", icon: "🪄", title: "Bold Opener", tier: "legendary", type: "clues", maxLevel: 1,
           description: "Your 1st guess can be any 5 letters, even if it isn't a real word.",
           level: g => powerLevel(g, "boldOpener") },
         { id: "ideaTiles", icon: "💡", title: "Idea Cards", tier: "legendary", type: "clues", maxLevel: 3,
