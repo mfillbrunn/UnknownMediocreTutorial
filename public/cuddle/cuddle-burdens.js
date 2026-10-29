@@ -622,8 +622,8 @@
         var spent = new Set(ideas.map(function id(card) { return card.id; }));
         state.hand = state.hand.filter(function keep(card) { return !spent.has(card.id); });
         ideas.forEach(function hint(card) {
-          var letter = isSuperIdea(card) ? greenHint(game) || yellowHint(game) : yellowHint(game);
-          if (letter) ideaLetters.push(letter);
+          var got = ideaHint(game, card);
+          if (got) ideaLetters.push(got.letter);
         });
       }
       // Losing the hand to a wave is made up for with a mulligan.
@@ -715,15 +715,62 @@
     return letter;
   }
 
-  // Idea Cards: level 1 deals an idea card; level 2 makes it a super idea
-  // (a green); level 3 makes two super ideas -- the Cards school's own idea
-  // card is the second when there is one, else the badge adds it.
+  // Idea Cards: one idea card a stage. What mulliganing it does goes with
+  // the badge's level (ideaEffect): level 1 turns a yellow you've found
+  // green, level 2 gives a new yellow, level 3 a new green (then it's
+  // dealt as a super idea card, green, so you can tell).
   function ideaCounts(game) {
     var level = powerLevel(game, "ideaTiles");
-    var school = schoolPerk(game, "ideaTiles");
-    if (level >= 3) return { idea: 0, superIdea: 2 };
-    if (level === 2) return { idea: school, superIdea: 1 };
-    return { idea: (level >= 1 ? 1 : 0) + school, superIdea: 0 };
+    if (level >= 3) return { idea: 0, superIdea: 1 };
+    return { idea: level >= 1 ? 1 : 0, superIdea: 0 };
+  }
+
+  function ideaEffect(game, card) {
+    if (card && isSuperIdea(card)) return "green";
+    var level = Math.max(1, Math.min(3, powerLevel(game, "ideaTiles")));
+    return level >= 3 ? "green" : level === 2 ? "yellow" : "promote";
+  }
+
+  // Idea Cards level 1: a yellow letter you've found goes to its spot and
+  // turns green. "" when no yellow is waiting for its spot.
+  function promoteYellow(game) {
+    var state = game.state;
+    var secret = String(state.secret || "").toUpperCase();
+    if (secret.length !== 5) return "";
+    if (!Array.isArray(state.revealedPositions)) state.revealedPositions = [null, null, null, null, null];
+    var greenAt = new Set();
+    (state.history || []).forEach(function each(entry) {
+      var shown = entry && (Array.isArray(entry.shownFeedback) ? entry.shownFeedback : entry.feedback);
+      (shown || []).forEach(function mark(value, index) { if (value === "green") greenAt.add(index); });
+    });
+    var yellow = new Set((state.knownPresent || []).map(function up(letter) { return String(letter).toUpperCase(); }));
+    var spots = [];
+    for (var index = 0; index < 5; index += 1) {
+      if (!state.revealedPositions[index] && !greenAt.has(index) && yellow.has(secret[index])) spots.push(index);
+    }
+    // Only letters still yellow: one already in place everywhere it goes
+    // has nothing left to place.
+    if (!spots.length) return "";
+    var spot = spots[Math.floor(randomOf(game)() * spots.length)];
+    state.revealedPositions[spot] = secret[spot];
+    if (window.CuddleHintFx) window.CuddleHintFx.note(game, secret[spot], "Idea card");
+    if (typeof game._syncInfiniteCards === "function") game._syncInfiniteCards();
+    return secret[spot];
+  }
+
+  // What an idea card gives as it goes: { letter, green } or null.
+  function ideaHint(game, card) {
+    var effect = ideaEffect(game, card);
+    var letter = "";
+    if (effect === "promote") {
+      letter = promoteYellow(game);
+      if (letter) return { letter: letter, green: true };
+    } else if (effect === "green") {
+      letter = greenHint(game);
+      if (letter) return { letter: letter, green: true };
+    }
+    letter = yellowHint(game);
+    return letter ? { letter: letter, green: false } : null;
   }
 
   // A super idea's hint: a letter of the answer placed in its spot. Falls
@@ -803,13 +850,12 @@
         var letters = [];
         var greens = [];
         ideas.forEach(function hint(card) {
-          var green = isSuperIdea(card) ? greenHint(game) : "";
-          if (green) greens.push(green);
-          var letter = green ? "" : yellowHint(game);
-          if (letter) letters.push(letter);
+          var got = ideaHint(game, card);
+          if (got && got.green) greens.push(got.letter);
+          else if (got) letters.push(got.letter);
         });
         if (greens.length) {
-          note(this, "Super idea! " + greens.join(", ") + (greens.length === 1 ? " is" : " are") + " in place.");
+          note(this, "Idea! " + greens.join(", ") + (greens.length === 1 ? " is" : " are") + " in place.");
         }
         if (letters.length) {
           this.drawToHandLimit();
@@ -1458,6 +1504,9 @@
     LUCKY_MULLIGAN_POINTS: LUCKY_MULLIGAN_POINTS,
     isIdeaCard: isIdeaCard,
     isIdeaGlyph: isIdeaGlyph,
+    // What mulliganing an idea card does now: "promote" (a yellow you found
+    // turns green), "yellow" (a new yellow) or "green" (a new green).
+    ideaEffect: ideaEffect,
     SUPER_IDEA_GLYPH: SUPER_IDEA_GLYPH,
     isWaveCard: isWaveCard,
     isJokerTile: isJokerTile,

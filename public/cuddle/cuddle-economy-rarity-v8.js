@@ -53,9 +53,9 @@
     ["bigger mulligan", TIERS.COMMON],
     // Pruning Shears took over Cull Letters (once Epic) and is Rare.
     ["pruning shears", TIERS.RARE],
-    // Rarity follows points per stage (Opening Verse, Early Finish and
-    // Vowel Bounty pay a common-plus amount every stage, so they are Rare;
-    // Encore and Double Down pay rarely, so they step down).
+    // Rarity follows points per stage (Opening Verse and Early Finish pay a
+    // common-plus amount every stage, so they are Rare; Encore and Double
+    // Down pay rarely, so they step down). Vowel Bounty is Common.
     ["opening verse", TIERS.RARE],
     ["wide margins", TIERS.COMMON],
     ["mulligan dividend", TIERS.COMMON],
@@ -71,7 +71,7 @@
     ["echo finder", TIERS.RARE],
     ["treasure hunter", TIERS.COMMON],
     ["haggler", TIERS.RARE],
-    ["vowel bounty", TIERS.RARE],
+    ["vowel bounty", TIERS.COMMON],
     // A one-time letter, so Common.
     ["position peek", TIERS.COMMON],
     ["bonus squares", TIERS.COMMON],

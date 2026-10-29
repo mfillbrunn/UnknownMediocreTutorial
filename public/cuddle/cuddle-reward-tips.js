@@ -138,7 +138,9 @@
       var pays = strategies.leanPayout(game);
       var full = typeof strategies.leanBase === "function" ? strategies.leanBase(game) : null;
       var each = typeof strategies.leanPerBadge === "function" ? strategies.leanPerBadge(game) : 5;
-      return "You have " + plural(others) + " outside Restraint (−" + each + " points each): right now it pays +" + pays + " a solve"
+      var free = typeof strategies.leanFreeTiers === "function" ? strategies.leanFreeTiers(game) : [];
+      var counted = free.length > 1 ? " that count (not Common or Rare)" : free.length ? " that count (not Common)" : " outside Restraint";
+      return "You have " + plural(others) + counted + " (−" + each + " points each): right now it pays +" + pays + " a solve"
         + (full != null && full !== pays ? ", out of +" + full + "." : ".");
     }
     if (node.id === "ascetic" && fresh && typeof fresh.badgeCount === "function") {

@@ -333,7 +333,9 @@
   //   Vex (medium): a hooded figure holding a ? tile, eyes glowing out of
   //     the hood;
   //   Grimm (hard): the Secretkeeper from multiplayer (index.html's
-  //     #icon-role-secretkeeper), its eyes in his colour.
+  //     #icon-role-secretkeeper), drawn here in his own colours: a red
+  //     hood with a light rim and glowing eyes, so he stands out on the
+  //     dark duel panels (the shared one is near-black).
   function rivalSvg(rival) {
     if (rival === RIVALS.easy) {
       const eye = (cx) => `<circle cx="${cx}" cy="12.7" r="1.75" fill="#fff"/>`
@@ -364,8 +366,15 @@
         + `<text x="12" y="20.7" text-anchor="middle" font-family="system-ui,sans-serif" font-size="4.4" font-weight="900" fill="#140f1f">?</text>`
         + `</svg>`;
     }
-    return `<svg class="umt-rival is-grimm" viewBox="0 0 120 120" style="color:${rival.robe}" aria-hidden="true">`
-      + `<use href="#icon-role-secretkeeper"></use></svg>`;
+    return `<svg class="umt-rival is-grimm" viewBox="0 0 120 120" aria-hidden="true">`
+      + `<path d="M60 10c-28 0-46 22-46 55v35a6 6 0 0 0 6 6h80a6 6 0 0 0 6-6V65c0-33-18-55-46-55z" fill="${rival.robe}" stroke="#ff9aa1" stroke-width="3"/>`
+      + `<path d="M60 16c-22 0-38 18-40 46h6c2-24 15-40 34-40z" fill="#fff" opacity=".18"/>`
+      + `<path d="M60 30c-21 0-33 17-33 38v26h66V68c0-21-12-38-33-38z" fill="#170d18"/>`
+      + `<ellipse class="umt-rival-eye" fill="${rival.eyes}" cx="45" cy="57" rx="10" ry="4.5" transform="rotate(-20 45 57)"/>`
+      + `<ellipse class="umt-rival-eye" fill="${rival.eyes}" cx="75" cy="57" rx="10" ry="4.5" transform="rotate(20 75 57)"/>`
+      + `<path fill="#f4ede0" d="M30 74Q60 108 90 74Q60 90 30 74Z"/>`
+      + `<g fill="#170d18"><rect x="38" y="78" width="4" height="11" rx="2"/><rect x="47" y="82" width="4" height="14" rx="2"/><rect x="56" y="84" width="4" height="15" rx="2"/><rect x="65" y="84" width="4" height="15" rx="2"/><rect x="74" y="82" width="4" height="14" rx="2"/><rect x="83" y="78" width="4" height="11" rx="2"/></g>`
+      + `</svg>`;
   }
   let challengeObserver = null;
 
