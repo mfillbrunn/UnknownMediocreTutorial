@@ -13,7 +13,7 @@
   const WORD_COUNT = 16;
   const PUZZLE_COUNT = 3;
   const ADVANCE_MS = 1600;
-  const STORE_KEY = "umt.dailyPick.v8";
+  const STORE_KEY = "umt.dailyPick.v9";
 
   let puzzles = null; // [{ answer, words }]
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
@@ -56,44 +56,74 @@
     return a;
   };
 
-  // How alike a word is to the answer: what its Wordle feedback against the
-  // answer would show, a green counting 2 and a yellow 1 (0 to 10).
-  const likeness = (word, answer) =>
-    feedback(word, answer).reduce((sum, f) => sum + (f === "correct" ? 2 : f === "present" ? 1 : 0), 0);
+  // How many tiles two words have in common, green or yellow: that's always
+  // the number of letters they share, counting repeats (no feedback needed).
+  // Letter counts are cached per word: a day's grids compare each word
+  // against the whole list dozens of times.
+  const letterCounts = new Map();
+  function countsOf(word) {
+    let counts = letterCounts.get(word);
+    if (!counts) {
+      counts = new Uint8Array(26);
+      for (let i = 0; i < word.length; i++) counts[word.charCodeAt(i) - 97]++;
+      letterCounts.set(word, counts);
+    }
+    return counts;
+  }
 
-  // Each grid sets how alike its words are to the answer and how much the
-  // feedback gives away:
+  function sharedTiles(a, b) {
+    const x = countsOf(a);
+    const y = countsOf(b);
+    let shared = 0;
+    for (let i = 0; i < 26; i++) shared += Math.min(x[i], y[i]);
+    return shared;
+  }
+  const CHAIN_LINK = 3;
+
+  // Each grid sets how much the feedback gives away:
   //   "full"   - Wordle tiles: green right spot, yellow wrong spot, grey not in it
   //   "blue"   - blue if the letter is in the word at all, grey if not
   //   "counts" - only how many greens and how many yellows, no positions
   const LEVELS = [
-    { min: 6, max: 10, mode: "full", intro: "Near misses. Tap a word to pick your first guess." },
-    { min: 3, max: 5, mode: "blue", intro: "Blue means the letter is in the word, spot not shown. Tap a word to start." },
-    { min: 3, max: 5, mode: "counts", intro: "Only counts: how many greens and yellows, not which. Tap a word to start." }
+    { mode: "full", intro: "Green: right spot. Yellow: wrong spot. Tap a word to start." },
+    { mode: "blue", intro: "Blue means the letter is in the word, spot not shown. Tap a word to start." },
+    { mode: "counts", intro: "Only counts: how many greens and yellows, not which. Tap a word to start." }
   ];
 
-  function buildPuzzle(list, seed, taken, level) {
+  // A grid is a chain of words rather than a cluster around the answer: start
+  // anywhere, then each new word shares at least CHAIN_LINK tiles with the one
+  // before it. Words a few links apart can have little in common, so there's
+  // no obvious hub word that splits the grid, and the answer is any link.
+  // At a dead end the chain branches off an earlier word instead.
+  function buildPuzzle(list, seed, taken) {
     const rand = mulberry32(hash(seed));
-    let answer = list[Math.floor(rand() * list.length)];
-    while (taken.has(answer)) answer = list[Math.floor(rand() * list.length)];
-    const key = w => [...w].sort().join("");
-    const used = new Set([key(answer)]);
-    const picked = [];
-    // Words in the level's likeness range come first, in random order; if
-    // there aren't enough, the rest follow closest-to-the-range first.
-    const { min, max } = LEVELS[level];
-    const distance = score => (score < min ? min - score : score > max ? score - max : 0);
-    const ordered = shuffle(list.filter(w => w !== answer && !taken.has(w)), rand)
-      .map(word => ({ word, off: distance(likeness(word, answer)) }))
-      .sort((x, y) => x.off - y.off)
-      .map(entry => entry.word);
-    for (const w of ordered) {
-      if (picked.length === WORD_COUNT - 1) break;
-      if (used.has(key(w))) continue;
-      used.add(key(w));
-      picked.push(w);
+    const key = w => countsOf(w).join("");
+    const free = list.filter(w => !taken.has(w));
+    for (let attempt = 0; attempt < 50; attempt++) {
+      const start = free[Math.floor(rand() * free.length)];
+      const chain = [start];
+      const used = new Set([key(start)]);
+      let tip = start;
+      let stuck = 0;
+      while (chain.length < WORD_COUNT && stuck < WORD_COUNT) {
+        const options = free.filter(w => !used.has(key(w)) && sharedTiles(w, tip) >= CHAIN_LINK);
+        const next = options[Math.floor(rand() * options.length)];
+        if (next) {
+          chain.push(next);
+          used.add(key(next));
+          tip = next;
+          stuck = 0;
+        } else {
+          tip = chain[Math.floor(rand() * chain.length)];
+          stuck++;
+        }
+      }
+      if (chain.length === WORD_COUNT) {
+        const answer = chain[Math.floor(rand() * chain.length)];
+        return { answer, words: shuffle(chain, rand) };
+      }
     }
-    return { answer, words: shuffle([answer, ...picked], rand) };
+    throw new Error("Griddle: couldn't build a word chain");
   }
 
   function buildDay(pool, date) {
@@ -102,7 +132,7 @@
     const taken = new Set();
     return Array.from({ length: PUZZLE_COUNT }, (_, i) => {
       const level = Math.min(i, LEVELS.length - 1);
-      const puzzle = buildPuzzle(list, `griddle-2:${date}:${i + 1}`, taken, level);
+      const puzzle = buildPuzzle(list, `griddle-3:${date}:${i + 1}`, taken);
       puzzle.words.forEach(w => taken.add(w));
       return { ...puzzle, ...LEVELS[level] };
     });
