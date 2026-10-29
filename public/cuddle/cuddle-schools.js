@@ -18,7 +18,7 @@
  *                III once a stage, test a consonant: drag it to the Test pad
  *                    above the hand (or tap the pad, then the card)
  *   Cards        I   +1 lucky card every stage
- *                II  +1 idea card and +1 mulligan every stage
+ *                II  +1 mulligan every stage
  *                III +2 dead cards every stage, and every dead card you
  *                    draw turns angel; tap an angel and it flies to heaven
  *                    for +10 points, and a new card is drawn
@@ -108,7 +108,6 @@
   function perk(game, name) {
     switch (name) {
       case "luckyTiles": return rankOf(game, "flora") >= 1 ? 1 : 0;
-      case "ideaTiles": return rankOf(game, "flora") >= 2 ? 1 : 0;
       // Cards III: 2 more dead cards a stage, and dead cards turn angel
       // when drawn (cuddle-burdens.js).
       case "angelCards": return rankOf(game, "flora") >= 3 ? 2 : 0;
