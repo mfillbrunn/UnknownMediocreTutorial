@@ -254,7 +254,7 @@
 
     root.innerHTML = `<div class="dp-board">${buttons}</div>
       <div class="dp-center">${lastGuess ? tiles(lastGuess) : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>
-      ${history ? `<div class="dp-history"><div class="dp-history-title">Earlier guesses</div>${history}</div>` : ""}`;
+      ${history ? `<div class="dp-history">${history}</div>` : ""}`;
   }
 
   function onWordClick(word) {

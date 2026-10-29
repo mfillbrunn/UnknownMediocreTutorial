@@ -74,7 +74,6 @@
 .dp-summary .dp-share { align-self: center; margin-top: 6px; padding: 12px 22px; font-size: 16px; }
 .dp-summary .dp-hint { justify-content: center; }
 .dp-history { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: 12px; }
-.dp-history-title { font-size: 14px; opacity: .7; }
 .dp-history .dp-tile { width: 30px; height: 30px; font-size: 15px; border-radius: 5px; }
 .dp-history .dp-count-tile { border-radius: 50%; }
 .dp-key { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 13px; opacity: .9; }
