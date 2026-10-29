@@ -176,7 +176,13 @@
 
   // Once all three are solved (and the last one's feedback has had its
   // moment), the grid gives way to the day's scorecard.
+  function setTitle(grid) {
+    const title = $("dpTitle");
+    if (title) title.innerHTML = grid ? `Griddle <span class="dp-title-grid">Grid ${grid}/${PUZZLE_COUNT}</span>` : "Griddle";
+  }
+
   function renderSummary(root) {
+    setTitle(0);
     const rows = state.rounds.map((r, i) =>
       `<div class="dp-sum-row"><span>Grid ${i + 1}</span><span>${r.guesses.length}</span></div>`).join("");
     root.innerHTML = `<div class="dp-summary">${rows}
@@ -189,6 +195,7 @@
     const root = $("dailyPickRoot");
     if (!root) return;
     if (allSolved() && !advanceTimer) return renderSummary(root);
+    setTitle(current + 1);
     const { answer: secret, words, mode } = puzzles[current];
     const r = round();
     const lastGuess = r.guesses[r.guesses.length - 1];
@@ -247,7 +254,6 @@
 
     root.innerHTML = `<div class="dp-board">${buttons}</div>
       <div class="dp-center">${lastGuess ? tiles(lastGuess) : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>
-      <div class="dp-count">Grid ${current + 1} of ${PUZZLE_COUNT} · Guesses: ${r.guesses.length} · Total: ${totalGuesses()}</div>
       ${history ? `<div class="dp-history"><div class="dp-history-title">Earlier guesses</div>${history}</div>` : ""}`;
   }
 

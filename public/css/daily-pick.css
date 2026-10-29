@@ -7,6 +7,7 @@
   position: relative; gap: 10px; padding: 14px 10px !important;
 }
 .dp-card .menu-title { margin: 0 !important; font-size: 24px; }
+.dp-title-grid { margin-left: 8px; font-size: .75em; opacity: .75; }
 #dailyPickRoot { width: 100%; align-self: stretch; }
 .dp-close {
   position: absolute; top: 8px; right: 8px;
@@ -63,7 +64,6 @@
 .dp-next { padding: 11px 20px; border-radius: 10px; border: 0; font-size: 16px; font-weight: 700; cursor: pointer; }
 .dp-share { background: #25d366; color: #fff; }
 .dp-next:disabled { opacity: .5; cursor: default; }
-.dp-count { margin-top: 12px; text-align: center; font-size: 15px; opacity: .85; }
 .dp-summary { display: flex; flex-direction: column; gap: 10px; padding: 8px 4px; }
 .dp-sum-row {
   display: flex; justify-content: space-between;
@@ -73,7 +73,7 @@
 .dp-sum-total { background: rgba(63,157,79,.35); font-size: 22px; }
 .dp-summary .dp-share { align-self: center; margin-top: 6px; padding: 12px 22px; font-size: 16px; }
 .dp-summary .dp-hint { justify-content: center; }
-.dp-history { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: 10px; }
+.dp-history { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: 12px; }
 .dp-history-title { font-size: 14px; opacity: .7; }
 .dp-history .dp-tile { width: 30px; height: 30px; font-size: 15px; border-radius: 5px; }
 .dp-history .dp-count-tile { border-radius: 50%; }
