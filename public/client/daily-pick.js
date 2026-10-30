@@ -12,6 +12,8 @@
 (function () {
   const WORD_COUNT = 16;
   const PUZZLE_COUNT = 3;
+  // Par for the whole day's three grids, for the golf verdict at the end.
+  const DAY_PAR = 7;
   const ADVANCE_MS = 1600;
   const STORE_KEY = "umt.dailyPick.v9";
 
@@ -134,51 +136,8 @@
       const level = Math.min(i, LEVELS.length - 1);
       const puzzle = buildPuzzle(list, `griddle-3:${date}:${i + 1}`, taken);
       puzzle.words.forEach(w => taken.add(w));
-      const grid = { ...puzzle, ...LEVELS[level] };
-      grid.par = parFor(grid.words, grid.mode);
-      return grid;
+      return { ...puzzle, ...LEVELS[level] };
     });
-  }
-
-  // What a guess reveals under each grid's feedback rule, as a comparable key.
-  function signature(mode, guess, answer) {
-    const result = feedback(guess, answer);
-    if (mode === "blue") return result.map(f => (f === "absent" ? 0 : 1)).join("");
-    if (mode === "counts") return `${result.filter(f => f === "correct").length}/${result.filter(f => f === "present").length}`;
-    return result.join();
-  }
-
-  // Par: how many guesses a strong player needs on this grid, averaged over
-  // every word being the secret (so it never depends on, or hints at, the
-  // real one), rounded. The strong player always picks the word that leaves
-  // the fewest possibilities on average, preferring words that could still
-  // win, and reads the feedback perfectly.
-  function parFor(words, mode) {
-    const guessesFor = secret => {
-      let possible = words.slice();
-      const tried = new Set();
-      for (let n = 1; ; n++) {
-        let best = null;
-        let bestScore = Infinity;
-        for (const guess of words) {
-          if (tried.has(guess)) continue;
-          const groups = {};
-          for (const w of possible) {
-            if (w === guess) continue;
-            const k = signature(mode, guess, w);
-            groups[k] = (groups[k] || 0) + 1;
-          }
-          const score = Object.values(groups).reduce((sum, size) => sum + size * size, 0) - (possible.includes(guess) ? 0.5 : 0);
-          if (score < bestScore) { bestScore = score; best = guess; }
-        }
-        if (best === secret) return n;
-        tried.add(best);
-        const seen = signature(mode, best, secret);
-        possible = possible.filter(w => w !== best && signature(mode, best, w) === seen);
-      }
-    };
-    const total = words.reduce((sum, secret) => sum + guessesFor(secret), 0);
-    return Math.max(1, Math.round(total / words.length));
   }
 
   // Golf names for a score relative to par.
@@ -187,7 +146,6 @@
     return names[diff] || (diff < 0 ? "Albatross" : "Over par");
   }
   const relToPar = diff => (diff === 0 ? "even" : `${diff > 0 ? "+" : "−"}${Math.abs(diff)}`);
-  const gridLabel = (guesses, par) => (guesses === 1 ? "Hole in one" : golfTerm(guesses - par));
 
   function feedback(guess, answer) {
     const result = Array(5).fill("absent");
@@ -223,7 +181,6 @@
     return i < 0 ? PUZZLE_COUNT - 1 : i;
   };
   const allSolved = () => state.rounds.every(r => r.solved);
-  const dayPar = () => puzzles.reduce((sum, p) => sum + p.par, 0);
   const totalGuesses = () => state.rounds.reduce((sum, r) => sum + r.guesses.length, 0);
 
   // Once all three are solved (and the last one's feedback has had its
@@ -237,13 +194,11 @@
     setTitle(0);
     const rows = state.rounds.map((r, i) => {
       const n = r.guesses.length;
-      const par = puzzles[i].par;
-      return `<div class="dp-sum-row"><span>Grid ${i + 1}<small>par ${par} · ${gridLabel(n, par)}</small></span><span>${n}</span></div>`;
+      return `<div class="dp-sum-row"><span>Grid ${i + 1}${n === 1 ? "<small>Hole in one</small>" : ""}</span><span>${n}</span></div>`;
     }).join("");
-    const par = dayPar();
-    const diff = totalGuesses() - par;
+    const diff = totalGuesses() - DAY_PAR;
     root.innerHTML = `<div class="dp-summary">${rows}
-      <div class="dp-sum-row dp-sum-total"><span>Total<small>par ${par}</small></span><span>${totalGuesses()}</span></div>
+      <div class="dp-sum-row dp-sum-total"><span>Total<small>par ${DAY_PAR}</small></span><span>${totalGuesses()}</span></div>
       <div class="dp-verdict">${golfTerm(diff)} <span>(${relToPar(diff)})</span></div>
       <button type="button" class="dp-next dp-share" id="dpShare">Share on WhatsApp</button>
       <div class="dp-hint">Come back tomorrow for three new grids.</div></div>`;
@@ -350,8 +305,8 @@
   function shareText() {
     const date = new Date(`${state.date}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
     const rows = state.rounds.map((r, i) =>
-      `Grid ${i + 1}: ${"⬜".repeat(r.guesses.length - 1)}🟩 ${r.guesses.length} (par ${puzzles[i].par})`);
-    const diff = totalGuesses() - dayPar();
+      `Grid ${i + 1}: ${"⬜".repeat(r.guesses.length - 1)}🟩 ${r.guesses.length}`);
+    const diff = totalGuesses() - DAY_PAR;
     const verdict = `${golfTerm(diff)} (${totalGuesses()}; ${diff === 0 ? "even" : `${diff > 0 ? "+" : "-"}${Math.abs(diff)}`} par)`;
     return [`Griddle ${date}`, ...rows, `Total: ${verdict}`, location.origin].join("\n");
   }
