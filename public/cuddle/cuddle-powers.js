@@ -425,7 +425,10 @@
   proto.submitDraft = function submitDraftWithBoldOpener() {
     var state = this.state;
     var allowance = Math.min(2, levelOf(this, "boldOpener"));
-    if (!state || allowance <= 0 || inDuel(state)) return baseSubmitBold.apply(this, arguments);
+    // In a Duel too: only your own words reach here (the AI's rows are
+    // added by the Duel itself), so it's your first 1 or 2 guesses that
+    // are free, however many the AI has played in between.
+    if (!state || allowance <= 0) return baseSubmitBold.apply(this, arguments);
     var auto = autoGuess(this);
     var record = boldRecord(this);
     var sillyBefore = num(state.buffs && state.buffs.sillyWord);
