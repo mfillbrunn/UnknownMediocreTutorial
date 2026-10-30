@@ -453,7 +453,7 @@ button.umt-clue-word.is-out {
 #cuddleScreen .cuddle-play-area > .cuddle-right-column:has(> .cuddle-preset-pick:not(.is-folded)) {
   flex: 0 1 auto;
   min-height: 0;
-  max-height: 56%;
+  max-height: 64%;
   display: flex;
   flex-direction: column;
 }
@@ -462,6 +462,12 @@ button.umt-clue-word.is-out {
   max-height: 100%;
   min-height: 0;
 }
-/* Roomier word buttons for the space the list now has. */
-#cuddleScreen .cuddle-preset-pick .cuddle-preset-row .cuddle-preset-word { padding: 9px 4px; }
-#cuddleScreen .cuddle-preset-pick .cuddle-preset-row .cuddle-preset-word span { width: 24px; height: 30px; font-size: 0.95rem; }
+/* Compact rows, so the whole list fits on screen at once: a Hard trial's
+   14 words are 7 rows of two, every one visible without scrolling (the
+   list still scrolls inside if a screen is very short). */
+#cuddleScreen .cuddle-preset-pick:not(.is-folded) { gap: 8px; padding-top: 10px; padding-bottom: 10px; }
+#cuddleScreen .cuddle-preset-pick .cuddle-preset-words { gap: 5px 8px; }
+#cuddleScreen .cuddle-preset-pick .cuddle-preset-row { grid-template-columns: 30px minmax(0, 1fr); }
+#cuddleScreen .cuddle-preset-pick .cuddle-preset-row .cuddle-preset-word { min-height: 38px; padding: 4px; }
+#cuddleScreen .cuddle-preset-pick .cuddle-preset-row .cuddle-preset-word span { width: 22px; height: 26px; font-size: 0.92rem; }
+#cuddleScreen .cuddle-preset-pick .cuddle-preset-strike { min-height: 38px; }
