@@ -1255,7 +1255,9 @@
         || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
       // A super idea (Idea Cards level 3) gives a green instead.
       const superIdea = group.glyph === window.CuddleBurdens.SUPER_IDEA_GLYPH;
-      const ideaLabel = `${superIdea ? "Super idea card" : "Idea card"}${ideaCount > 1 ? ` ×${ideaCount}` : ""}: no letter, can't be played. Mulligan it away for a ${superIdea ? "green hint: a letter in its spot" : "yellow hint"}.`;
+      const ideaDoes = { promote: "a yellow letter you've found turns green", yellow: "a new yellow hint", green: "a green hint: a letter in its spot" };
+      const ideaKind = typeof window.CuddleBurdens.ideaEffect === "function" ? window.CuddleBurdens.ideaEffect(game, superIdea ? { superIdea: true } : null) : (superIdea ? "green" : "yellow");
+      const ideaLabel = `${superIdea ? "Super idea card" : "Idea card"}${ideaCount > 1 ? ` ×${ideaCount}` : ""}: no letter, can't be played. Mulligan it away: ${ideaDoes[ideaKind] || ideaDoes.yellow}.`;
       return `
       <button class="cuddle-card is-idea${superIdea ? " is-super-idea" : ""}${selectedCount ? " is-selected" : ""}" data-card-glyph="${escapeHtml(group.glyph)}" data-fx-glyph="${escapeHtml(group.glyph)}" data-fx-count="${ideaCount}" ${ideaDisabled ? "disabled" : ""}
         aria-pressed="${selectedCount > 0 ? "true" : "false"}" aria-label="${escapeHtml(ideaLabel)}" title="${escapeHtml(ideaLabel)}">
@@ -1808,6 +1810,64 @@
     return Math.max(0, Math.max(1, Number(node && node.maxLevel) || 1) - levelUpLevel(node));
   }
 
+  // What a level-up changes, in the badge's own words: the text of the
+  // level it has now against the one it would reach, word by word. Words
+  // that go are crossed out, words that come in are green, the rest is
+  // plain ("Hold [1] 2 more consonants"). When the two say too little in
+  // common for that to read well, it's "Now: ..." and "Next: ..." instead.
+  function levelChangeHtml(from, to) {
+    const plain = text => goldenMoney(escapeHtml(String(text || "")));
+    const a = String(from || "").trim();
+    const b = String(to || "").trim();
+    if (!a) return plain(b);
+    if (a === b) return plain(b);
+    // Words, with a closing full stop or comma as a token of its own.
+    const words = text => text.match(/[^\s.,;:!?]+(?:[.,;:!?](?=\S))*[^\s.,;:!?]*|[.,;:!?]/g) || [];
+    const x = words(a);
+    const y = words(b);
+    // "consonant" and "consonants" are the same word here.
+    const alike = (p, q) => p === q || p.replace(/s$/i, "") === q.replace(/s$/i, "");
+    // Longest common run of words (LCS), then walk it.
+    const dp = Array.from({ length: x.length + 1 }, () => new Array(y.length + 1).fill(0));
+    for (let i = x.length - 1; i >= 0; i -= 1) {
+      for (let j = y.length - 1; j >= 0; j -= 1) {
+        dp[i][j] = alike(x[i], y[j]) ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+      }
+    }
+    const same = dp[0][0];
+    if (same < Math.max(2, Math.ceil(Math.max(x.length, y.length) * 0.45))) {
+      return `<span class="cuddle-lvl-now"><b>Now:</b> ${plain(a)}</span><span class="cuddle-lvl-next"><b>Next:</b> ${plain(b)}</span>`;
+    }
+    const parts = [];
+    let gone = [];
+    let added = [];
+    const flush = () => {
+      if (gone.length) parts.push(`<del class="cuddle-lvl-old">${escapeHtml(gone.join(" "))}</del>`);
+      if (added.length) parts.push(`<ins class="cuddle-lvl-new">${escapeHtml(added.join(" "))}</ins>`);
+      gone = [];
+      added = [];
+    };
+    let i = 0;
+    let j = 0;
+    while (i < x.length || j < y.length) {
+      if (i < x.length && j < y.length && alike(x[i], y[j])) {
+        flush();
+        parts.push(escapeHtml(y[j]));
+        i += 1;
+        j += 1;
+      } else if (j < y.length && (i >= x.length || dp[i][j + 1] >= dp[i + 1][j])) {
+        added.push(y[j]);
+        j += 1;
+      } else {
+        gone.push(x[i]);
+        i += 1;
+      }
+    }
+    flush();
+    // Spaces between words, none before a full stop or comma.
+    return parts.reduce((out, part) => out + (out && !/^[.,;:!?]$/.test(part) ? " " : "") + part, "");
+  }
+
   function renderLevelUpgrade(state) {
     const tree = window.CuddleSkillTree;
     const art = window.CuddleBadgeArt;
@@ -1822,6 +1882,7 @@
       const given = picks.filter(pick => pick === String(choice.key)).length;
       const target = Math.min(max, level + Math.max(1, given));
       const text = node && tree && typeof tree.levelText === "function" ? tree.levelText(node, target) : (choice.description || "");
+      const was = node && tree && typeof tree.levelText === "function" && level > 0 ? tree.levelText(node, level) : "";
       const icon = node && art && art.has(node.id) ? art.img(node.id) : `<span>${escapeHtml(choice.icon || "⬆️")}</span>`;
       const tier = String((node && node.tier) || choice.tier || "common").toLowerCase();
       const pips = given ? `<span class="cuddle-lvl-given" aria-hidden="true">${"<i></i>".repeat(given)}</span>` : "";
@@ -1831,7 +1892,7 @@
           <span class="cuddle-lvl-icon">${icon}</span>
           <span class="cuddle-lvl-main">
             <strong>${escapeHtml(title)}</strong>
-            <small class="cuddle-lvl-text">${goldenMoney(escapeHtml(String(text || "")))}</small>
+            <small class="cuddle-lvl-text">${levelChangeHtml(was, text)}</small>
           </span>
           <span class="cuddle-lvl-step" aria-hidden="true">
             <span class="cuddle-lvl-cap">Level</span>
@@ -2845,7 +2906,12 @@
       return { tone: "idea", title: "Super idea card", lines: ["It has no letter, so it can't be played.", "Mulligan it away: one letter of the answer turns green, in its spot."] };
     }
     if (cardButton.classList.contains("is-idea")) {
-      return { tone: "idea", title: "Idea card", lines: ["It has no letter, so it can't be played.", "Mulligan it away: one letter of the answer turns yellow."] };
+      const kind = typeof burdens.ideaEffect === "function" ? burdens.ideaEffect(game, null) : "yellow";
+      const does = kind === "promote"
+        ? "Mulligan it away: a yellow letter you've found goes to its spot and turns green (with no yellow yet, a new letter turns yellow)."
+        : kind === "green" ? "Mulligan it away: one letter of the answer turns green, in its spot."
+        : "Mulligan it away: one letter of the answer turns yellow.";
+      return { tone: "idea", title: "Idea card", lines: ["It has no letter, so it can't be played.", does] };
     }
     if (cardButton.classList.contains("is-lucky")) {
       const per = burdens.luckyPoints(game) || 0;

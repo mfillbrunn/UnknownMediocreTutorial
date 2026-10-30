@@ -35,7 +35,7 @@
       { t: "hand", before: "RSTLNC", after: "RSTLN★" }],
     jokerCacheLarge: ["Stages start with just your normal hand.", "Every stage starts with a Joker card on top of your hand.",
       { t: "hand", before: "RSTLNC", after: "RSTLNC★" }],
-    ideaTiles: ["Your deck holds only letters (and whatever else you've picked up).", "Idea cards come into your deck: mulligan one away and a letter of the answer turns yellow.",
+    ideaTiles: ["Your deck holds only letters (and whatever else you've picked up).", "An idea card comes into your deck: mulligan it away and a yellow letter you've found turns green.",
       { t: "hand", before: "RSTLNC", after: "RSTLN◇" }],
     luckyClover: ["Nothing pays for luck.", "Lucky cards come into your deck: still in your hand when you solve, each pays points.",
       { t: "pay", before: [["Solved", "+18"]], after: [["Solved", "+18"], ["Lucky card", "+5"]] }],

@@ -4,9 +4,10 @@
  * goes back, new ones are drawn, and you get 2 more mulligans. It costs a
  * guess: the board fills a row marked "Washed out", like a guess with no
  * word (the same as a Quick Mode guess that ran out of time). It's refused
- * when it would leave no guess to play. Vowels, Jokers and
- * special cards (lucky, idea, dead, angel) stay in the hand. Duels keep
- * their own deck and aren't washed.
+ * when it would leave no guess to play. Dead cards in the hand go too, for
+ * the rest of the stage (as a mulligan sends them). Vowels, Jokers and
+ * the other special cards (lucky, idea, angel) stay in the hand. Duels
+ * keep their own deck and aren't washed.
  */
 (function () {
   "use strict";
@@ -49,6 +50,13 @@
     });
   }
 
+  // Dead cards in the hand (cuddle-burdens.js): a wash clears them out.
+  function deadInHand(game) {
+    var burdens = window.CuddleBurdens;
+    if (!burdens || typeof burdens.isDeadCard !== "function") return [];
+    return ((game.state && game.state.hand) || []).filter(function dead(card) { return burdens.isDeadCard(card); });
+  }
+
   // Guesses left to play, or Infinity on an ordinary stage.
   function guessesLeft(game) {
     var limit = typeof game._hardGuessLimit === "function" ? game._hardGuessLimit() : Infinity;
@@ -62,13 +70,13 @@
     if (inDuel(state)) return "Duels keep their own deck.";
     if (easyRun(this)) return "Washing out opens later in the Tutorial run.";
     if (typeof this.presetPick === "function" && this.presetPick()) return "Pick the answer first.";
-    if (!washable(this).length) return "There are no consonants in your hand to wash out.";
+    if (!washable(this).length && !deadInHand(this).length) return "There are no consonants in your hand to wash out.";
     if (guessesLeft(this) < 2) return "It costs a guess, and this is your last one.";
     return "";
   };
 
   proto.washoutCount = function washoutCount() {
-    return washable(this).length;
+    return washable(this).length + deadInHand(this).length;
   };
 
   proto.washOutHand = function washOutHand() {
@@ -76,8 +84,14 @@
     if (blocked) return { ok: false, error: blocked };
     var state = this.state;
     var cards = washable(this);
+    var dead = deadInHand(this);
     state.draft = [];
-    this._discardCards(cards.map(function id(card) { return card.id; }));
+    if (cards.length) this._discardCards(cards.map(function id(card) { return card.id; }));
+    // Dead cards leave for the rest of the stage, not to the discard pile.
+    if (dead.length) {
+      var gone = new Set(dead.map(function id(card) { return card.id; }));
+      state.hand = state.hand.filter(function keep(card) { return !gone.has(card.id); });
+    }
     // The guess it costs: a row with no word. It pays nothing, but past the
     // quick-solve window it costs the late-guess penalty like any guess.
     var late = num(state.guessesUsed) + 1 > this._solveGuessThreshold();
@@ -108,7 +122,7 @@
     var gained = typeof this.mulliganGain === "function" ? this.mulliganGain(WASH_MULLIGANS) : WASH_MULLIGANS;
     state.mulligansLeft = num(state.mulligansLeft) + gained;
     var drawn = this.drawToHandLimit();
-    state.lastMessage = "Washed out: new consonants, +" + gained + " mulligans." + (penalty ? " Late guess: -" + penalty + " points." : "");
+    state.lastMessage = "Washed out: new consonants, +" + gained + " mulligans." + (dead.length ? " Dead cards cleared." : "") + (penalty ? " Late guess: -" + penalty + " points." : "");
     if (typeof this._ensureQuestForNextGuess === "function") this._ensureQuestForNextGuess();
     if (window.CuddleDeckFx && typeof window.CuddleDeckFx.shuffle === "function") window.CuddleDeckFx.shuffle();
     if (typeof this.save === "function") this.save();
@@ -140,7 +154,7 @@
       + (blocked
         ? '<p class="umt-washout-text">' + blocked + "</p>"
           + '<div class="umt-washout-actions is-single"><button type="button" class="cuddle-btn" data-umt-washout="cancel">OK</button></div>'
-        : '<p class="umt-washout-text">New consonants and +' + WASH_MULLIGANS + " mulligans.</p>"
+        : '<p class="umt-washout-text">New consonants and +' + WASH_MULLIGANS + " mulligans." + (deadInHand(game).length ? " Your dead cards go too." : "") + "</p>"
           + '<p class="umt-washout-cost">Costs a guess.</p>'
           + '<div class="umt-washout-actions"><button type="button" class="cuddle-btn" data-umt-washout="cancel">Keep my hand</button>'
           + '<button type="button" class="cuddle-btn cuddle-btn-primary" data-umt-washout="go">Wash out</button></div>')
