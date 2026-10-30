@@ -86,3 +86,7 @@
 #dailyPickScreen .dp-word { font-size: clamp(15px, 4.5vw, 24px) !important; letter-spacing: .02em; }
 #dailyPickScreen .dp-next { font-size: 16px !important; }
 #dailyPickScreen .dp-summary .dp-share { font-size: 17px !important; }
+.dp-sum-row > span:first-child { display: flex; flex-direction: column; gap: 3px; }
+.dp-sum-row small { font-size: 13px; font-weight: 600; opacity: .7; }
+.dp-verdict { text-align: center; font-size: 26px; font-weight: 800; }
+.dp-verdict span { font-size: 18px; opacity: .75; }
