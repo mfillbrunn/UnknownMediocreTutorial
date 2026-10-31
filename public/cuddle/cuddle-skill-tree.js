@@ -300,10 +300,10 @@
           level: g => powerLevel(g, "luckyClover") },
         // cuddle-fish-hook.js
         { id: "fishHook", icon: "🪝", title: "Fish Hook", tier: "rare", type: "letters", maxLevel: 3,
-          levels: ["Once a stage, fish a card you've discarded back into your hand.",
+          levels: ["Once a stage, fish any letter that isn't greyed out into your hand, from your deck or your discards.",
             "The letter you fish is tested: if it's in the answer, it turns yellow.",
             "Also, once a stage, the hook catches a discarded answer letter on its own: it turns yellow."],
-          description: "Fish back a card you discarded this stage, once a stage.",
+          description: "Once a stage, fish any letter that isn't greyed out into your hand, from your deck or your discards.",
           level: g => powerLevel(g, "fishHook") },
         // cuddle-new-badges.js
         { id: "cleanSlate", icon: "🧼", title: "Clean Slate", tier: "legendary", type: "letters", maxLevel: 1,
