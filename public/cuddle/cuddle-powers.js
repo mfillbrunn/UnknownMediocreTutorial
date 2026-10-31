@@ -478,7 +478,8 @@
     { id: "umtPocketMoney", icon: "💰", title: "Pocket Money", description: "Get +$8 right now." },
     { id: "umtQuickPoints", icon: "⭐", title: "Quick Points", description: "Get +10 points right now." },
     { id: "umtFishingLine", icon: "🪝", title: "Fishing Line", description: "Once this stage, catch any letter from your deck or discards (tap the hook on your deck)." },
-    // Only with the badge that adds them (needs), and then always offered.
+    // Only with the badge that adds them (needs); then they're in the draw
+    // like any other reward, not always on offer.
     { id: "umtOvertime", icon: "⏱️", title: "One More Guess", needs: "overtime", noDuel: true,
       description: "One more guess this stage: a boss gives you one more try; elsewhere the late-guess cost starts a guess later." },
     { id: "umtClue", icon: "🔍", title: "Clue", needs: "questClue",
@@ -728,17 +729,18 @@
       var draw = typeof random === "function" ? random : Math.random;
       var game = activeGame();
       var base = typeof previousChoices === "function" ? previousChoices(99, draw) : [];
-      var pool = base.concat(extra.filter(function plain(item) { return !item.needs; }).map(function copy(item) { return Object.assign({}, item); }));
+      // The rewards a badge adds (Overtime's One More Guess, Quest Clue's
+      // Clue) join the draw like the rest: they may or may not come up.
+      var added = extra.filter(function owned(item) { return item.needs && available(item, game); })
+        .map(function copy(item) { return present(item, game); });
+      var pool = base.concat(extra.filter(function plain(item) { return !item.needs; }).map(function copy(item) { return Object.assign({}, item); }), added);
       for (var index = pool.length - 1; index > 0; index -= 1) {
         var swap = Math.floor(draw() * (index + 1));
         var held = pool[index];
         pool[index] = pool[swap];
         pool[swap] = held;
       }
-      // The rewards a badge adds are always among the choices.
-      var added = extra.filter(function owned(item) { return item.needs && available(item, game); })
-        .map(function copy(item) { return present(item, game); });
-      return added.concat(pool).slice(0, wanted);
+      return pool.slice(0, wanted);
     }
     window.CuddleQuestBook = Object.freeze(Object.assign({}, book, {
       REWARDS: Object.freeze((Array.isArray(book.REWARDS) ? book.REWARDS : []).concat(extra)),
