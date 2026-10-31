@@ -3050,8 +3050,12 @@
       );
     }
 
-    // The live quest and the run's clue chips, read from the Duel's state.
-    function renderDuelStrip(game, duel) {
+    // The Duel's open quests, in the same place as on a normal stage: their
+    // own row between the board and the Submit row (cuddle-campaign.js),
+    // with the same arrival animation when a new one turns up.
+    let duelQuestArrival = { key: "", at: 0 };
+    const QUEST_ARRIVAL_MS = 1800;
+    function renderDuelQuestDock(game, duel) {
       const tile = duel.tileState;
       if (!tile) return "";
       const parts = [];
@@ -3072,6 +3076,22 @@
           + `<span class="cuddle-quest-tag">${ready ? '<span aria-hidden="true">✓</span> Ready' : `<span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> Quest`}</span>`
           + `<span class="cuddle-quest-body"><b>${escapeHtml(quest.title || "Quest")}:</b> <span>${escapeHtml(duelQuestDescription(quest))}</span></span></span>`);
       });
+      if (!parts.length) return "";
+      const key = `${duel.id || "duel"}:${(tile.history || []).length}:${quests.map(quest => quest.id).join("|")}`;
+      if (duelQuestArrival.key !== key) duelQuestArrival = { key, at: Date.now() };
+      const fx = window.CuddleQuestFx;
+      const reduce = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const elapsed = Date.now() - duelQuestArrival.at;
+      const arriving = !reduce && elapsed < QUEST_ARRIVAL_MS;
+      const variant = fx && typeof fx.variant === "function" ? fx.variant() : 1;
+      return `<div class="cuddle-quest-dock${arriving ? ` is-arriving qa-${variant}` : ""}"${arriving ? ` style="--qa-at:-${elapsed}ms"` : ""}>${parts.join("")}</div>`;
+    }
+
+    // The run's clue chips and the Duel's earnings, read from its state.
+    function renderDuelStrip(game, duel) {
+      const tile = duel.tileState;
+      if (!tile) return "";
+      const parts = [];
       let chips = [];
       try {
         chips = window.CuddleClues && typeof window.CuddleClues.clueChips === "function"
@@ -3201,7 +3221,7 @@
             + renderDuelStrip(game, duel)
             + renderDuelBoard(game, duel)
             + `</section>`
-            + `<section class="cuddle-right-column">${renderDuelTileHand(game, duel)}</section>`
+            + `<section class="cuddle-right-column">${renderDuelQuestDock(game, duel)}${renderDuelTileHand(game, duel)}</section>`
             + `</main>`
             + renderDuelQuestReward(duel))
         + `</div>`
