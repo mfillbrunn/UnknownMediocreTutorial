@@ -1312,6 +1312,19 @@
       return this.drawCards(Math.max(0, this.getHandLimit() - this.getCountedHandSize()));
     }
 
+    // Exactly `count` cards (while the deck lasts), whatever the hand
+    // size: a mulligan of 3 draws 3. Only the refill after a guess
+    // (drawToHandLimit) goes by the hand size.
+    drawExactly(count) {
+      const drawn = [];
+      for (let i = 0; i < count; i += 1) {
+        const card = this._drawOne(true);
+        if (!card) break;
+        drawn.push(card);
+      }
+      return drawn;
+    }
+
     // A hand is never cut down to its limit: a card given on top of a full
     // hand just stays until it's played, and the next refill draws nothing
     // until the hand is back under the limit. (Only an effect that shrinks
@@ -1768,7 +1781,8 @@
         return { ok: false, error: "Unlimited cards cannot be mulliganed." };
       }
       this._discardCards(ids);
-      const replacements = this.drawCards(ids.length);
+      // As many back as went out, whatever the hand size.
+      const replacements = this.drawExactly(ids.length);
       this.state.mulligansLeft -= 1;
       if (steadyHand) this._markSteadyHandSpent();
       this.state.lastMessage = `Mulligan: replaced ${replacements.length} card${replacements.length === 1 ? "" : "s"}.`;

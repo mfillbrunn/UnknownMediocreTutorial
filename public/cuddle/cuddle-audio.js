@@ -574,16 +574,18 @@
   }
 
   // The deck running out and shuffling its discards back in.
-  if (proto && typeof proto.drawCards === "function") {
-    var baseDraw = proto.drawCards;
-    proto.drawCards = function drawCardsWithSound() {
+  // (A mulligan draws with drawExactly, the refill after a guess with drawCards.)
+  ["drawCards", "drawExactly"].forEach(function (name) {
+    if (!proto || typeof proto[name] !== "function") return;
+    var baseDraw = proto[name];
+    proto[name] = function drawCardsWithSound() {
       var state = this.state;
       var empty = state && Array.isArray(state.deck) && !state.deck.length && Array.isArray(state.discard) && state.discard.length;
       var result = baseDraw.apply(this, arguments);
       if (empty && state.deck.length + state.hand.length > 0 && !(state.discard || []).length) play("shuffle");
       return result;
     };
-  }
+  });
 
   // -- hooks into the screen -------------------------------------------------------
   // Taps that make a sound of their own.
