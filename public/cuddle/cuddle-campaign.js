@@ -539,7 +539,7 @@
     if (choice?.id !== CATEGORY_SENSE_UPGRADE.id) {
       return originalChooseUpgrade.call(this, choiceKey);
     }
-    if (this.state.status !== "upgrade") return { ok: false, error: "No upgrade choice is open." };
+    if (this.state.status !== "upgrade") return { ok: false, error: "No reward choice is open." };
     if (this.state.upgradePhase === "difficultyStart" || this.state.upgradePhase === "milestone") {
       return { ok: false, error: "Theme Sense is available only between completed rounds." };
     }

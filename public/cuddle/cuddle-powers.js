@@ -271,7 +271,7 @@
     var state = game.state;
     var registry = tree();
     var node = registry && registry.findNode(choice.id);
-    if (!node) return { ok: false, error: "Unknown upgrade." };
+    if (!node) return { ok: false, error: "Unknown badge." };
     var powers = powersState(state);
     var level = levelOf(game, choice.id);
     if (level >= node.maxLevel) return { ok: false, error: "That power is already at its top level." };

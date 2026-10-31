@@ -2047,7 +2047,7 @@
           ${marketRow()}
           <div class="cuddle-upgrade-refresh${refreshCost === null ? " is-no-refresh" : ""}">
             ${refreshCost === null
-              ? `<small>${legendary ? "Legendary picks can't be refreshed." : waystone ? "A free upgrade's offer is fixed: no refreshes." : "These choices can't be refreshed."}</small>`
+              ? `<small>${legendary ? "Legendary picks can't be refreshed." : waystone ? "A free badge's offer is fixed: no refreshes." : "These choices can't be refreshed."}</small>`
               : `<button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
               ${escapeHtml(refreshLabel)}
             </button>

@@ -357,7 +357,7 @@
     {
       id: "bossRewards",
       title: "Boss Rewards",
-      blurb: "Permanent rewards for clearing a boss round. No ordinary upgrade is offered afterward.",
+      blurb: "Permanent rewards for clearing a boss round. No ordinary badge is offered afterward.",
       nodes: [
         { id: "cullRare", icon: "✂️", title: "Deep Cull", tier: "legendary", type: "letters", maxLevel: 1, description: "3 rare letters are gone for good: out of your deck and out of every answer.",
           level: g => Math.max(Number(g?.state?.megaState?.deepCulls) || 0, ledgerCount(g, "cullRare"), ledgerCount(g, "legendary:cullRare")) },

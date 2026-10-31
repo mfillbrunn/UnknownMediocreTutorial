@@ -2086,7 +2086,7 @@
         template,
         `permanent-${getId(def)}`,
         getName(def),
-        `${def.description ?? def.desc ?? "Permanent Cuddle upgrade."} [${tier.toUpperCase()}]`,
+        `${def.description ?? def.desc ?? "A badge for the rest of the run."} [${tier.toUpperCase()}]`,
         price,
         { type: "permanent", definition: def }
       );
@@ -2273,9 +2273,9 @@
     if (title !== "quiet forge") return;
     const choices = value.choices ?? value.options ?? value.actions;
     if (!Array.isArray(choices)) return;
-    const strong = choices.find((choice) => /upgrade/.test(norm(`${getName(choice)} ${choice.description ?? choice.desc ?? ""}`)));
+    const strong = choices.find((choice) => /upgrade|badge/.test(norm(`${getName(choice)} ${choice.description ?? choice.desc ?? ""}`)));
     if (!strong || strong.__cuddleV8QuietForge) return;
-    setDescription(strong, String(strong.description ?? strong.desc ?? "Receive upgrades.").replace(/(?:one|a)\s+random\s+(?:permanent\s+)?upgrade/i, "two random permanent upgrades"));
+    setDescription(strong, String(strong.description ?? strong.desc ?? "Receive badges.").replace(/(?:one|a)\s+random\s+(?:permanent\s+)?(?:upgrade|badge)/i, "two random badges"));
     for (const key of ["apply", "activate", "onSelect", "onChoose", "effect"]) {
       if (typeof strong[key] !== "function") continue;
       const original = strong[key];
