@@ -64,7 +64,7 @@
 .dp-hint { font-size: 15px; opacity: .85; min-height: 1.4em; display: flex; align-items: center; gap: 6px; }
 .dp-result { font-size: inherit; font-weight: 800; opacity: 1; }
 .dp-next { padding: 11px 20px; border-radius: 10px; border: 0; font-size: 16px; font-weight: 700; cursor: pointer; }
-.dp-share { background: #25d366; color: #fff; }
+.dp-share { background: #3b7dd8; color: #fff; }
 .dp-next:disabled { opacity: .5; cursor: default; }
 .dp-summary { display: flex; flex-direction: column; gap: 10px; padding: 8px 4px; }
 .dp-sum-row {

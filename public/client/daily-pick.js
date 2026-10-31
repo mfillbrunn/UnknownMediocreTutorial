@@ -200,7 +200,7 @@
     root.innerHTML = `<div class="dp-summary">${rows}
       <div class="dp-sum-row dp-sum-total"><span>Total<small>par ${DAY_PAR}</small></span><span>${totalGuesses()}</span></div>
       <div class="dp-verdict">${golfTerm(diff)} <span>(${relToPar(diff)})</span></div>
-      <button type="button" class="dp-next dp-share" id="dpShare">Share on WhatsApp</button>
+      <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
       <div class="dp-hint">Come back tomorrow for three new grids.</div></div>`;
   }
 
@@ -311,8 +311,40 @@
     return [`Griddle ${date}`, ...rows, `Total: ${verdict}`, location.origin].join("\n");
   }
 
-  function share() {
-    window.open(`https://wa.me/?text=${encodeURIComponent(shareText())}`, "_blank", "noopener");
+  // The phone's own share sheet (WhatsApp, Messages, Instagram, ...) where
+  // there is one; otherwise the result is copied for pasting anywhere.
+  async function share(button) {
+    const text = shareText();
+    if (navigator.share) {
+      try {
+        await navigator.share({ text });
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return; // closed the share sheet
+      }
+    }
+    const copied = await copyText(text);
+    button.textContent = copied ? "Copied! Paste it anywhere" : "Couldn't copy";
+    setTimeout(() => { button.textContent = "Share"; }, 2500);
+  }
+
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (e) {
+      // Older browsers, or no clipboard permission: copy from a hidden field.
+      const field = document.createElement("textarea");
+      field.value = text;
+      field.setAttribute("readonly", "");
+      field.style.cssText = "position:fixed;opacity:0;top:0;left:0";
+      document.body.appendChild(field);
+      field.select();
+      let ok = false;
+      try { ok = document.execCommand("copy"); } catch (err) { ok = false; }
+      field.remove();
+      return ok;
+    }
   }
 
   function nextPuzzle() {
@@ -356,7 +388,8 @@
       if (word) return onWordClick(word.dataset.word);
       if (event.target.closest?.("#dpNext")) { phase = "pick"; render(); }
       if (event.target.closest?.("#dpGuess")) guessSelected();
-      if (event.target.closest?.("#dpShare")) share();
+      const shareButton = event.target.closest?.("#dpShare");
+      if (shareButton) share(shareButton);
     });
   });
 }());
