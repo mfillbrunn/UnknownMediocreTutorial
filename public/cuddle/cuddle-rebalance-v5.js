@@ -1598,6 +1598,39 @@
     return true;
   }
 
+  // A hint given this stage stays given. Something at the start of a
+  // stage can wipe the board's knowledge after a hint landed (it's kept in
+  // hintMarks, per stage): the card then showed the hint's little badge but
+  // wasn't green or yellow and the letter wasn't placed. Put it back.
+  // True when anything was restored.
+  function restoreHintKnowledge(game) {
+    const state = stateOf(game);
+    const secret = secretWord(game);
+    if (!state || state.status !== "playing" || !/^[A-Z]{5}$/.test(secret)) return false;
+    const custom = customState(game);
+    const marks = custom && custom.hintMarks;
+    if (!marks || marks.roundToken !== roundToken(game)) return false;
+    normalizeKnowledgeArrays(state);
+    let changed = false;
+    Object.keys(marks.greenPositions || {}).forEach((letter) => {
+      (marks.greenPositions[letter] || []).forEach((position) => {
+        const index = Number(position) - 1;
+        if (index < 0 || index > 4 || secret[index] !== letter || state.revealedPositions[index] === letter) return;
+        state.revealedPositions[index] = letter;
+        changed = true;
+      });
+      if (!state.knownPresent.includes(letter)) changed = true;
+    });
+    (marks.yellowLetters || []).forEach((letter) => {
+      if (secret.includes(letter) && !state.knownPresent.includes(letter)) changed = true;
+    });
+    if (!changed) return false;
+    Object.keys(marks.greenPositions || {}).concat(marks.yellowLetters || []).forEach((letter) => {
+      if (secret.includes(letter)) finishHintKnowledge(game, letter);
+    });
+    return true;
+  }
+
   function grantExactHint(game, source) {
     return grantGreenHint(game, source || "Hint");
   }
@@ -5014,6 +5047,11 @@
       removeNativeHintUi();
       if (!game) return;
       reconcileMysteryKnowledge(game);
+      if (restoreHintKnowledge(game)) {
+        safeSave(game);
+        // Draw the hand again with the restored green/yellow.
+        requestAnimationFrame(() => window.dispatchEvent(new CustomEvent("cuddle:campaign-update", { detail: {} })));
+      }
       ensureLiveHintSchedule(game);
       renderHintIndicator(game);
       renderTrainingBadge(game);
