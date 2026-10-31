@@ -23,7 +23,8 @@
  * Money
  *   Black Market (legendary) every reward screen sells a random badge for
  *                            $50, on top of the pick.
- *   Treasure Chest (legendary) opens a free Large Pack; no other power.
+ *   Treasure Chest (legendary) opens a free pack: Small, then Medium and
+ *                             Large as it levels; no other power.
  *   Insert Coin (epic, 2)    out of guesses in a boss or strict stage: pay
  *                            $100 ($75) for 1 more guess.
  *   Golden Ledger (epic, 2)  money counts toward a boss's points gate,
@@ -664,7 +665,10 @@
   // Treasure Chest
   // ---------------------------------------------------------------------------
 
+  // Treasure Chest: each level opens a free pack, a bigger one each time --
+  // level 1 a Small Pack, level 2 a Medium, level 3 a Large.
   // The free pack waits for the map, and for any other pack to close.
+  var CHEST_SIZES = ["small", "medium", "large"];
   function maybeGiftChest(game) {
     var state = game && game.state;
     if (!state || inDuel(state) || !has(game, "treasureChest")) return;
@@ -676,7 +680,7 @@
     var world = Array.isArray(state.bossGatesDone) ? state.bossGatesDone.length : 0;
     state.umtPackOffer = {
       id: (state.runId || "run") + ":treasure-chest" + (given ? ":" + (given + 1) : ""),
-      size: "large",
+      size: CHEST_SIZES[Math.min(CHEST_SIZES.length - 1, given)],
       price: 0,
       world: Math.min(3, world + 1),
       cards: null,

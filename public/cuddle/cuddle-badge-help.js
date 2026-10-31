@@ -108,7 +108,7 @@
     questChain: ["When you finish a quest, a new one appears on your next guess (if that guess doesn't have one). Keep finishing them and the chain goes on.", ["quest", "questReward"]],
     questScout: ["When a quest appears, a word you could play from your hand that would finish it is found, and some of its letters are placed in your word for you.", ["quest"]],
     blackMarket: ["On every reward screen you can also buy a random badge for $50, on top of the one you pick.", ["reward", "header"]],
-    treasureChest: ["Opens a free Large Pack of badges straight away. It has no other effect, but it counts toward the Money school's ranks.", ["reward"]],
+    treasureChest: ["Opens a free Small Pack of badges straight away. Level 2 opens a free Medium Pack, level 3 a free Large Pack. It has no other effect, but it counts toward the Money school's ranks.", ["reward"]],
     insertCoin: ["Bosses and strict stages end the run when you run out of guesses. With this badge you can pay money for one more guess instead.", ["header", "map"]],
     goldenLedger: ["A boss needs a number of points before you can challenge it. With this badge your money counts toward that target too (it isn't spent).", ["map", "header"]],
     fastLane: ["Bosses, challenges and curses change the rules on some guesses. This badge pushes all of that back: your first guesses are normal, and the tricky ones come later.", ["map", "board"]],

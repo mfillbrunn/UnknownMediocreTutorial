@@ -199,7 +199,7 @@
       { t: "text", before: "Skip: +40 points or +$15", after: "Skip: +40 points and +$15" }],
     blackMarket: ["A reward screen gives you one pick.", "You can also buy a random badge there for $50.",
       { t: "stat", label: "Badges from one reward screen", before: "1", after: "2" }],
-    treasureChest: ["No pack.", "Opens a free Large Pack of badges straight away.",
+    treasureChest: ["No pack.", "Opens a free pack of badges straight away: Small at level 1, Medium at 2, Large at 3.",
       { t: "stat", label: "Badges right away", before: "0", after: "Large Pack" }],
     goldenLedger: ["Only points count toward a boss's points target.", "Your money counts toward it too (it isn't spent).",
       { t: "stat", label: "Toward a 200-point boss, with 150 points and $40", before: "150", after: "170" }]

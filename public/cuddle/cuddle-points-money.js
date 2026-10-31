@@ -48,10 +48,10 @@
     writable: false
   });
 
-  // Flat Money reward for clearing a stage. A later reward can grant more
-  // on top of this (see the module comment above) -- this is just the
-  // baseline every stage pays regardless of what else is unlocked.
-  var STAGE_CLEAR_MONEY = 10;
+  // Flat Money reward for clearing a stage, on top of the stage's own pay
+  // (cuddle-rebalance-v5.js stagePay). It was $10; now none: a stage's
+  // money is its own pay.
+  var STAGE_CLEAR_MONEY = 0;
   // Read by the cash-out, which shows this money before it's paid (it lands
   // when the stage is left, after the reward pick).
   window.CuddleStageClearMoney = STAGE_CLEAR_MONEY;
@@ -421,7 +421,7 @@
     var roundBefore = state ? state.round : null;
     var statusBefore = state ? state.status : null;
     var result = originalAdvanceRound.apply(this, arguments);
-    if (state && (state.round !== roundBefore || state.status !== statusBefore)) {
+    if (STAGE_CLEAR_MONEY > 0 && state && (state.round !== roundBefore || state.status !== statusBefore)) {
       addMoney(state, STAGE_CLEAR_MONEY);
       state.lastMessage = ((state.lastMessage || "") + ` Stage cleared: +$${STAGE_CLEAR_MONEY}.`).trim();
     }
@@ -441,7 +441,7 @@
     proto._clearBoss = function clearBossCuddlePointsMoney() {
       var isFinal = this.state?.boss?.gate === "final";
       var result = originalClearBoss.apply(this, arguments);
-      if (isFinal && this.state) {
+      if (STAGE_CLEAR_MONEY > 0 && isFinal && this.state) {
         addMoney(this.state, STAGE_CLEAR_MONEY);
         this.state.lastMessage = ((this.state.lastMessage || "") + ` Stage cleared: +$${STAGE_CLEAR_MONEY}.`).trim();
       }
