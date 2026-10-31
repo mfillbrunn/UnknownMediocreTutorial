@@ -277,7 +277,7 @@
           description: "Once a stage, when your deck runs out and starts over, a letter is placed in its spot.",
           level: g => powerLevel(g, "fullCircle") },
         // Minimalist and Eliminator (cuddle-strategies.js).
-        { id: "leanBuild", icon: "🧹", title: "Lean Build", tier: "epic", type: "points", maxLevel: 3,
+        { id: "leanBuild", icon: "🧹", title: "Lean Build", tier: "rare", type: "points", maxLevel: 3,
           description: "Each solve gives +20 points (world 1), +35 points (world 2) or +60 points (world 3), minus 5 points for every badge you have outside Restraint (Legendaries don't count).",
           level: g => powerLevel(g, "leanBuild") },
         { id: "monksVow", icon: "🕯️", title: "Monk's Vow", tier: "rare", type: "money", maxLevel: 1,

@@ -4,7 +4,7 @@
  *   - Skipping: an ordinary "round cleared" reward screen can be skipped
  *     for +40 points or +$15 (the player picks). Boss/legendary picks,
  *     starting rewards and Free Upgrade / event picks can't be skipped.
- *   - Lean Build (epic, 3 levels): every solved stage pays a flat 20 / 35
+ *   - Lean Build (rare, 3 levels): every solved stage pays a flat 20 / 35
  *     / 60 points (world 1 / 2 / 3), minus 5 for every badge you own outside
  *     Restraint. Level 2: Common badges don't count; level 3: Rare ones
  *     don't either.
