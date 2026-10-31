@@ -96,7 +96,7 @@
   const BASE_STAGE_META = Object.freeze({
     normal: Object.freeze({ title: "Wordle", label: "Wordle", icon: "stage-normal.svg", description: "A standard Cuddle Wordle round." }),
     theme: Object.freeze({ title: "Themed Wordle", label: "Theme", icon: "stage-theme.svg", description: "Theme reveals scale by act: all, all but one, then one." }),
-    upgrade: Object.freeze({ title: "New Badge", label: "Upgrade", icon: "stage-upgrade.svg", description: "Choose a new badge." }),
+    upgrade: Object.freeze({ title: "New Badge", label: "Badge", icon: "stage-upgrade.svg", description: "Choose a new badge." }),
     levelup: Object.freeze({ title: "Level-Ups", label: "Level-Up", icon: "stage-upgrade.svg", description: "Level up two different badges you hold." }),
     shop: Object.freeze({ title: "Wandering Paw", label: "Shop", icon: "stage-shop.svg", description: "Spend money on run supplies." }),
     event: Object.freeze({ title: "Mystery Event", label: "Event", icon: "stage-event-choice.svg", description: "Something happens on the road here. You only find out what when you arrive." }),
@@ -124,7 +124,7 @@
       flavor: "A warm tin box sits beneath a quilted bench.",
       options: Object.freeze([
         opt("safe", "Take the loose coins", "Gain $[35] and [40] points.", [{ type: "money", amount: 35 }, { type: "points", amount: 40 }]),
-        opt("bold", "Open the sealed compartment", "Gain $[60] and choose one of three **Epic** upgrades, but the next Wordle must be solved within the world's guess limit (6, 5 or 4) or the run ends.", [{ type: "money", amount: 60 }, { type: "nextPenalty", key: "guess", amount: 1 }, { type: "pickTier", tier: "epic" }])
+        opt("bold", "Open the sealed compartment", "Gain $[60] and choose one of three **Epic** badges, but the next Wordle must be solved within the world's guess limit (6, 5 or 4) or the run ends.", [{ type: "money", amount: 60 }, { type: "nextPenalty", key: "guess", amount: 1 }, { type: "pickTier", tier: "epic" }])
       ])
     }),
     Object.freeze({
@@ -133,7 +133,7 @@
       flavor: "A soft path promises speed now and a bill later.",
       options: Object.freeze([
         opt("safe", "Follow the marked trail", "Gain $[25], [30] points and two opening clues in the next Wordle.", [{ type: "money", amount: 25 }, { type: "points", amount: 30 }, { type: "nextBonus", key: "clue", amount: 2 }]),
-        opt("bold", "Cut through the velvet gate", "Choose one of three **Epic** upgrades, but the next Wordle pays $0.", [{ type: "nextPenalty", key: "noMoney", amount: 1 }, { type: "pickTier", tier: "epic" }])
+        opt("bold", "Cut through the velvet gate", "Choose one of three **Epic** badges, but the next Wordle pays $0.", [{ type: "nextPenalty", key: "noMoney", amount: 1 }, { type: "pickTier", tier: "epic" }])
       ])
     }),
     Object.freeze({
@@ -141,7 +141,7 @@
       title: "Lantern Loan",
       flavor: "A lantern keeper offers light against future pressure.",
       options: Object.freeze([
-        opt("safe", "Borrow a small lantern", "Gain a random **Rare** upgrade and two extra mulligans in the next Wordle.", [{ type: "upgradeTier", tier: "rare" }, { type: "nextBonus", key: "mulligan", amount: 2 }]),
+        opt("safe", "Borrow a small lantern", "Gain a random **Rare** badge and two extra mulligans in the next Wordle.", [{ type: "upgradeTier", tier: "rare" }, { type: "nextBonus", key: "mulligan", amount: 2 }]),
         opt("bold", "Take the keeper's purse", "Gain $[120], but the next boss is one guess tougher.", [{ type: "money", amount: 120 }, { type: "bossPenalty", amount: 1 }])
       ])
     }),
@@ -150,8 +150,8 @@
       title: "Quiet Forge",
       flavor: "A tiny forge can shape one permanent advantage.",
       options: Object.freeze([
-        opt("safe", "Sell the spare metal", "Gain $[20] and a random **Rare** upgrade.", [{ type: "money", amount: 20 }, { type: "upgradeTier", tier: "rare" }]),
-        opt("bold", "Work the forge all night", "Choose one of three **Epic** upgrades, but the next Wordle gives no upgrade reward.", [{ type: "nextPenalty", key: "rewards", amount: 1 }, { type: "pickTier", tier: "epic" }])
+        opt("safe", "Sell the spare metal", "Gain $[20] and a random **Rare** badge.", [{ type: "money", amount: 20 }, { type: "upgradeTier", tier: "rare" }]),
+        opt("bold", "Work the forge all night", "Choose one of three **Epic** badges, but the next Wordle gives no badge reward.", [{ type: "nextPenalty", key: "rewards", amount: 1 }, { type: "pickTier", tier: "epic" }])
       ])
     }),
     Object.freeze({
@@ -160,7 +160,7 @@
       flavor: "A tailor has letter cards tucked into every pocket.",
       options: Object.freeze([
         opt("safe", "Accept a sample", "Gain $[25], [30] points and three reward cards at the start of the next Wordle.", [{ type: "money", amount: 25 }, { type: "points", amount: 30 }, { type: "nextBonus", key: "cards", amount: 3 }]),
-        opt("bold", "Commission a suit", "Pay $[60] and choose one of three **Legendary** upgrades.", [{ type: "money", amount: -60 }, { type: "pickTier", tier: "legendary" }], { money: 60 })
+        opt("bold", "Commission a suit", "Pay $[60] and choose one of three **Legendary** badges.", [{ type: "money", amount: -60 }, { type: "pickTier", tier: "legendary" }], { money: 60 })
       ])
     }),
     Object.freeze({
@@ -168,8 +168,8 @@
       title: "Patchwork Bargain",
       flavor: "The seamstress can unpick one old trick to sew in a new one.",
       options: Object.freeze([
-        opt("safe", "Take a spare patch", "Gain $[25] and a random **Rare** upgrade.", [{ type: "money", amount: 25 }, { type: "upgradeTier", tier: "rare" }]),
-        opt("bold", "Trade an upgrade", "Give up one upgrade (see below) and choose one of three **Epic** upgrades.", [{ type: "surrenderUpgrade" }, { type: "pickTier", tier: "epic" }], { upgrade: true })
+        opt("safe", "Take a spare patch", "Gain $[25] and a random **Rare** badge.", [{ type: "money", amount: 25 }, { type: "upgradeTier", tier: "rare" }]),
+        opt("bold", "Trade a badge level", "Give up one badge level (see below) and choose one of three **Epic** badges.", [{ type: "surrenderUpgrade" }, { type: "pickTier", tier: "epic" }], { upgrade: true })
       ])
     }),
     Object.freeze({
@@ -178,7 +178,7 @@
       flavor: "The keeper values a sure fee, but values old magic more.",
       options: Object.freeze([
         opt("safe", "Take the travel stipend", "Gain $[40] and [30] points.", [{ type: "money", amount: 40 }, { type: "points", amount: 30 }]),
-        opt("bold", "Sell an old technique", "Give up one upgrade (see below) and gain $[150].", [{ type: "surrenderUpgrade" }, { type: "money", amount: 150 }], { upgrade: true })
+        opt("bold", "Sell an old technique", "Give up one badge level (see below) and gain $[150].", [{ type: "surrenderUpgrade" }, { type: "money", amount: 150 }], { upgrade: true })
       ])
     }),
     Object.freeze({
@@ -187,7 +187,7 @@
       flavor: "The compass can reveal a direction, or every direction at a price.",
       options: Object.freeze([
         opt("safe", "Ask for a bearing", "Three opening clues in the next Wordle and [40] points.", [{ type: "nextBonus", key: "clue", amount: 3 }, { type: "points", amount: 40 }]),
-        opt("bold", "Demand the full route", "Five opening clues in the next Wordle and a random **Epic** upgrade, but the next boss is one guess tougher.", [{ type: "nextBonus", key: "clue", amount: 5 }, { type: "upgradeTier", tier: "epic" }, { type: "bossPenalty", amount: 1 }])
+        opt("bold", "Demand the full route", "Five opening clues in the next Wordle and a random **Epic** badge, but the next boss is one guess tougher.", [{ type: "nextBonus", key: "clue", amount: 5 }, { type: "upgradeTier", tier: "epic" }, { type: "bossPenalty", amount: 1 }])
       ])
     }),
     Object.freeze({
@@ -205,7 +205,7 @@
       flavor: "The small drawer is free; the locked drawer asks for coin.",
       options: Object.freeze([
         opt("safe", "Take the visible coins", "Gain $[30] and [30] points.", [{ type: "money", amount: 30 }, { type: "points", amount: 30 }]),
-        opt("bold", "Pay for the locked drawer", "Pay $[25] for a major prize: an **Epic** upgrade, a **Rare** upgrade and $[40], $[120], or (1 in 6) a **Legendary** upgrade.", [{ type: "money", amount: -25 }, { type: "randomMajor" }], { money: 25 })
+        opt("bold", "Pay for the locked drawer", "Pay $[25] for a major prize: an **Epic** badge, a **Rare** badge and $[40], $[120], or (1 in 6) a **Legendary** badge.", [{ type: "money", amount: -25 }, { type: "randomMajor" }], { money: 25 })
       ])
     }),
     Object.freeze({
@@ -214,7 +214,7 @@
       flavor: "A quiet stall sells certainty and gives samples away.",
       options: Object.freeze([
         opt("safe", "Take the free samples", "[30] points, three reward cards at the start of the next Wordle and two extra mulligans.", [{ type: "points", amount: 30 }, { type: "nextBonus", key: "cards", amount: 3 }, { type: "nextBonus", key: "mulligan", amount: 2 }]),
-        opt("bold", "Buy from the back room", "Pay $[20] and choose one of three **Epic** upgrades.", [{ type: "money", amount: -20 }, { type: "pickTier", tier: "epic" }], { money: 20 })
+        opt("bold", "Buy from the back room", "Pay $[20] and choose one of three **Epic** badges.", [{ type: "money", amount: -20 }, { type: "pickTier", tier: "epic" }], { money: 20 })
       ])
     }),
     Object.freeze({
@@ -223,7 +223,7 @@
       flavor: "A golden idol hums on a mossy plinth. It wants to come with you.",
       options: Object.freeze([
         opt("safe", "Pry off a gem", "Gain $[45] and [30] points.", [{ type: "money", amount: 45 }, { type: "points", amount: 30 }]),
-        opt("bold", "Take the idol", "Choose one of three **Legendary** upgrades, but a curse hides feedback on one guess of every stage for the rest of the run.", [{ type: "curse" }, { type: "pickTier", tier: "legendary" }])
+        opt("bold", "Take the idol", "Choose one of three **Legendary** badges, but a curse hides feedback on one guess of every stage for the rest of the run.", [{ type: "curse" }, { type: "pickTier", tier: "legendary" }])
       ])
     }),
     Object.freeze({
@@ -232,7 +232,7 @@
       flavor: "Dice clatter behind a curtain. The house always smiles.",
       options: Object.freeze([
         opt("gamble", "A friendly bet", "Stake $[15]. 60%: win $[60] back.", [{ type: "money", amount: -15 }, { type: "gamble", chance: 0.6, win: [{ type: "money", amount: 60 }], lose: [] }], { money: 15 }),
-        opt("risk", "Bet it all on red", "Stake $[35]. 50%: an **Epic** upgrade and $[100] back. Lose, and the next Wordle must be solved within the guess limit.", [{ type: "money", amount: -35 }, { type: "gamble", chance: 0.5, win: [{ type: "upgradeTier", tier: "epic" }, { type: "money", amount: 100 }], lose: [{ type: "nextPenalty", key: "guess", amount: 1 }] }], { money: 35 })
+        opt("risk", "Bet it all on red", "Stake $[35]. 50%: an **Epic** badge and $[100] back. Lose, and the next Wordle must be solved within the guess limit.", [{ type: "money", amount: -35 }, { type: "gamble", chance: 0.5, win: [{ type: "upgradeTier", tier: "epic" }, { type: "money", amount: 100 }], lose: [{ type: "nextPenalty", key: "guess", amount: 1 }] }], { money: 35 })
       ])
     }),
     Object.freeze({
@@ -240,8 +240,8 @@
       title: "Blood Moon Altar",
       flavor: "The altar takes what you've earned and gives back something stranger.",
       options: Object.freeze([
-        opt("safe", "Leave an offering of coins", "Pay $[10] for a random **Rare** upgrade, two extra mulligans and two opening clues in the next Wordle.", [{ type: "money", amount: -10 }, { type: "upgradeTier", tier: "rare" }, { type: "nextBonus", key: "mulligan", amount: 2 }, { type: "nextBonus", key: "clue", amount: 2 }], { money: 10 }),
-        opt("bold", "Offer your points", "Lose [100] points and choose one of three **Legendary** upgrades.", [{ type: "points", amount: -100 }, { type: "pickTier", tier: "legendary" }])
+        opt("safe", "Leave an offering of coins", "Pay $[10] for a random **Rare** badge, two extra mulligans and two opening clues in the next Wordle.", [{ type: "money", amount: -10 }, { type: "upgradeTier", tier: "rare" }, { type: "nextBonus", key: "mulligan", amount: 2 }, { type: "nextBonus", key: "clue", amount: 2 }], { money: 10 }),
+        opt("bold", "Offer your points", "Lose [100] points and choose one of three **Legendary** badges.", [{ type: "points", amount: -100 }, { type: "pickTier", tier: "legendary" }])
       ])
     }),
     Object.freeze({
@@ -250,7 +250,7 @@
       flavor: "A scholar offers to cross a few letters off the list for good.",
       options: Object.freeze([
         opt("safe", "Listen to a lecture", "Three opening clues in the next Wordle and [40] points.", [{ type: "nextBonus", key: "clue", amount: 3 }, { type: "points", amount: 40 }]),
-        opt("bold", "Study through the night", "A rare letter leaves the deck and every future answer for good (Pruning Shears), and you gain a random **Rare** upgrade, but the next Wordle must be solved within the guess limit.", [{ type: "upgradeId", id: "umtCullOne" }, { type: "upgradeTier", tier: "rare" }, { type: "nextPenalty", key: "guess", amount: 1 }])
+        opt("bold", "Study through the night", "A rare letter leaves the deck and every future answer for good (Pruning Shears), and you gain a random **Rare** badge, but the next Wordle must be solved within the guess limit.", [{ type: "upgradeId", id: "umtCullOne" }, { type: "upgradeTier", tier: "rare" }, { type: "nextPenalty", key: "guess", amount: 1 }])
       ])
     }),
     // Deck burdens (cuddle-burdens.js): a dead card has no letter and only
@@ -262,7 +262,7 @@
       flavor: "A mason offers a fine carving, if you'll carry one of her blank slabs.",
       options: Object.freeze([
         opt("safe", "Buy a pebble charm", "Gain $[30] and [30] points.", [{ type: "money", amount: 30 }, { type: "points", amount: 30 }]),
-        opt("bold", "Carry the blank slab", "Choose one of three **Legendary** upgrades, but 1 dead card joins your deck for the rest of the run.", [{ type: "deadTile", amount: 1 }, { type: "pickTier", tier: "legendary" }])
+        opt("bold", "Carry the blank slab", "Choose one of three **Legendary** badges, but 1 dead card joins your deck for the rest of the run.", [{ type: "deadTile", amount: 1 }, { type: "pickTier", tier: "legendary" }])
       ])
     }),
     Object.freeze({
@@ -279,7 +279,7 @@
       title: "Rusty Press",
       flavor: "The old letter press still works. Mostly.",
       options: Object.freeze([
-        opt("safe", "Oil the gears", "A random **Rare** upgrade and three extra mulligans in the next Wordle.", [{ type: "upgradeTier", tier: "rare" }, { type: "nextBonus", key: "mulligan", amount: 3 }]),
+        opt("safe", "Oil the gears", "A random **Rare** badge and three extra mulligans in the next Wordle.", [{ type: "upgradeTier", tier: "rare" }, { type: "nextBonus", key: "mulligan", amount: 3 }]),
         opt("gamble", "Pull the lever", "70%: a random **Epic** upgrade. 30%: it jams, and 1 dead card joins your deck for the rest of the run.", [{ type: "gamble", chance: 0.7, win: [{ type: "upgradeTier", tier: "epic" }], lose: [{ type: "deadTile", amount: 1 }] }])
       ])
     })
@@ -1148,16 +1148,16 @@
 
     function grantRandomUpgrade(game) {
       if (typeof game._upgradeCatalog !== "function" || typeof game._grantUpgradeChoice !== "function") {
-        return { ok: false, message: "No permanent upgrade was available." };
+        return { ok: false, message: "No badge was available." };
       }
       const catalog = shuffled((game._upgradeCatalog() || []).filter(Boolean), () => randomFor(game));
       for (const choice of catalog) {
         try {
           const result = game._grantUpgradeChoice(choice);
-          if (result && result.ok) return { ok: true, message: `${choice.title || "A permanent upgrade"} acquired.` };
+          if (result && result.ok) return { ok: true, message: `${choice.title || "A badge"} acquired.` };
         } catch (_error) {}
       }
-      return { ok: false, message: "Every permanent upgrade in the pool was already capped." };
+      return { ok: false, message: "Every badge in the pool was already at its top level." };
     }
 
     function addNextBonus(map, key, amount) {
@@ -1209,7 +1209,7 @@
       const { price, tier: cardTier, ...choice } = card;
       try {
         const result = game._grantUpgradeChoice(choice);
-        if (result && result.ok) return { ok: true, message: `${tierLabel(cardTier)} upgrade: ${card.title}.` };
+        if (result && result.ok) return { ok: true, message: `${tierLabel(cardTier)} badge: ${card.title}.` };
       } catch (_error) {}
       return grantRandomUpgrade(game);
     }
@@ -1299,7 +1299,7 @@
             const choices = tierChoices(game, effect.tier);
             if (choices.length) {
               context.pendingPick = { tier: effect.tier, choices };
-              messages.push(`Choose one of ${choices.length} ${tierLabel(effect.tier)} upgrades.`);
+              messages.push(`Choose one of ${choices.length} ${tierLabel(effect.tier)} badges.`);
             } else {
               messages.push(grantTierUpgrade(game, effect.tier).message);
             }
@@ -1501,7 +1501,7 @@
         { id: "nextGuess", title: "Borrow a guess", description: "Start Easy, but the next normal Wordle begins one guess short.", enabled: true, upgrade: null },
         { id: "boss", title: "Strengthen the boss", description: "Start Easy, but the next boss is one guess tougher.", enabled: true, upgrade: null },
         { id: "deadTile", title: "Take a dead card", description: "Start Easy, but a dead card joins your deck for the rest of the run. It has no letter; mulligan it away.", enabled: Boolean(window.CuddleBurdens), upgrade: null },
-        { id: "upgrade", title: upgrade ? `Give up ${upgrade.title}` : "Give up an upgrade", description: upgrade ? `Surrender one level of ${upgrade.title}.` : "No reversible upgrade is available.", enabled: Boolean(upgrade), upgrade }
+        { id: "upgrade", title: upgrade ? `Give up ${upgrade.title}` : "Give up a badge level", description: upgrade ? `Surrender one level of ${upgrade.title}.` : "No badge can give up a level.", enabled: Boolean(upgrade), upgrade }
       ];
     }
 
@@ -3050,8 +3050,12 @@
       );
     }
 
-    // The live quest and the run's clue chips, read from the Duel's state.
-    function renderDuelStrip(game, duel) {
+    // The Duel's open quests, in the same place as on a normal stage: their
+    // own row between the board and the Submit row (cuddle-campaign.js),
+    // with the same arrival animation when a new one turns up.
+    let duelQuestArrival = { key: "", at: 0 };
+    const QUEST_ARRIVAL_MS = 1800;
+    function renderDuelQuestDock(game, duel) {
       const tile = duel.tileState;
       if (!tile) return "";
       const parts = [];
@@ -3072,6 +3076,22 @@
           + `<span class="cuddle-quest-tag">${ready ? '<span aria-hidden="true">✓</span> Ready' : `<span aria-hidden="true">${escapeHtml(quest.icon || "✦")}</span> Quest`}</span>`
           + `<span class="cuddle-quest-body"><b>${escapeHtml(quest.title || "Quest")}:</b> <span>${escapeHtml(duelQuestDescription(quest))}</span></span></span>`);
       });
+      if (!parts.length) return "";
+      const key = `${duel.id || "duel"}:${(tile.history || []).length}:${quests.map(quest => quest.id).join("|")}`;
+      if (duelQuestArrival.key !== key) duelQuestArrival = { key, at: Date.now() };
+      const fx = window.CuddleQuestFx;
+      const reduce = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const elapsed = Date.now() - duelQuestArrival.at;
+      const arriving = !reduce && elapsed < QUEST_ARRIVAL_MS;
+      const variant = fx && typeof fx.variant === "function" ? fx.variant() : 1;
+      return `<div class="cuddle-quest-dock${arriving ? ` is-arriving qa-${variant}` : ""}"${arriving ? ` style="--qa-at:-${elapsed}ms"` : ""}>${parts.join("")}</div>`;
+    }
+
+    // The run's clue chips and the Duel's earnings, read from its state.
+    function renderDuelStrip(game, duel) {
+      const tile = duel.tileState;
+      if (!tile) return "";
+      const parts = [];
       let chips = [];
       try {
         chips = window.CuddleClues && typeof window.CuddleClues.clueChips === "function"
@@ -3201,7 +3221,7 @@
             + renderDuelStrip(game, duel)
             + renderDuelBoard(game, duel)
             + `</section>`
-            + `<section class="cuddle-right-column">${renderDuelTileHand(game, duel)}</section>`
+            + `<section class="cuddle-right-column">${renderDuelQuestDock(game, duel)}${renderDuelTileHand(game, duel)}</section>`
             + `</main>`
             + renderDuelQuestReward(duel))
         + `</div>`

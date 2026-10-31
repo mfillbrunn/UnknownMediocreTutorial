@@ -1,6 +1,6 @@
 /* Cuddle: music and sound effects.
  *
- * Music: the run's theme (two pieces, back and forth), the boss fights',
+ * Music: the run's theme (three pieces, in turn), the boss fights',
  * the Word Duels' and the shop's, plus a victory piece when a boss is beaten or the run won and
  * a loss piece when it's lost; only once a run is on screen (the road, a
  * stage, the shop...), not on Cuddle's start screen.
@@ -69,14 +69,14 @@
   // once over a moment: a victory (a boss beaten, the run won) and a loss.
   // The one that fits the screen plays; switching crossfades, and the
   // others start from the top each time (the theme picks up where it was).
-  // The theme and the boss have two pieces each: either one first, at
-  // random, and when it ends the other plays, back and forth. A victory is
+  // The theme has three pieces and the boss two: any one first, at
+  // random, and when it ends the next plays, round and round. A victory is
   // one of its two pieces, at random.
   var TRACKS = {
-    theme: { list: ["cuddle/audio/cuddle-theme.mp3", "cuddle/audio/cuddle-theme-2.mp3"], resume: true },
-    // Echo Mountains: its own song first, then the two theme pieces, in
+    theme: { list: ["cuddle/audio/cuddle-theme.mp3", "cuddle/audio/cuddle-theme-2.mp3", "cuddle/audio/cuddle-theme-4.mp3"], resume: true },
+    // Echo Mountains: its own song first, then the three theme pieces, in
     // turn (one song all through a world got old).
-    mountains: { list: ["cuddle/audio/cuddle-theme-3.mp3", "cuddle/audio/cuddle-theme.mp3", "cuddle/audio/cuddle-theme-2.mp3"], first: 0, resume: true },
+    mountains: { list: ["cuddle/audio/cuddle-theme-3.mp3", "cuddle/audio/cuddle-theme.mp3", "cuddle/audio/cuddle-theme-2.mp3", "cuddle/audio/cuddle-theme-4.mp3"], first: 0, resume: true },
     boss: { list: ["cuddle/audio/cuddle-boss.mp3", "cuddle/audio/cuddle-boss-2.mp3"], restart: true },
     shop: { src: "cuddle/audio/cuddle-shop.mp3", restart: true },
     victory: { list: ["cuddle/audio/cuddle-victory.mp3", "cuddle/audio/cuddle-victory-2.mp3"], once: true },
@@ -574,16 +574,18 @@
   }
 
   // The deck running out and shuffling its discards back in.
-  if (proto && typeof proto.drawCards === "function") {
-    var baseDraw = proto.drawCards;
-    proto.drawCards = function drawCardsWithSound() {
+  // (A mulligan draws with drawExactly, the refill after a guess with drawCards.)
+  ["drawCards", "drawExactly"].forEach(function (name) {
+    if (!proto || typeof proto[name] !== "function") return;
+    var baseDraw = proto[name];
+    proto[name] = function drawCardsWithSound() {
       var state = this.state;
       var empty = state && Array.isArray(state.deck) && !state.deck.length && Array.isArray(state.discard) && state.discard.length;
       var result = baseDraw.apply(this, arguments);
       if (empty && state.deck.length + state.hand.length > 0 && !(state.discard || []).length) play("shuffle");
       return result;
     };
-  }
+  });
 
   // -- hooks into the screen -------------------------------------------------------
   // Taps that make a sound of their own.

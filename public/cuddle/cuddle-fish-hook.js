@@ -1,19 +1,15 @@
 /* Cuddle: Fish Hook (a Rare Cards badge, cuddle-skill-tree.js).
  *
- * A mulliganed or played card goes to the discard pile and only comes back
- * once the deck runs out and is reshuffled. Fish Hook lets the player,
- * once a stage, pick one card out of the discard pile straight into the
- * hand, even when the hand is full.
+ * Fish Hook lets the player, once a stage, pick any letter that isn't
+ * greyed out yet straight into the hand, even when the hand is full:
+ * from the deck (still to be drawn) or from what's been discarded.
  *
  * A small hook sits on the deck while it's ready; tapping it opens the
- * discard pile.
+ * letters it can catch.
  *
  * Level 2: the caught letter is tested as it comes up. In the answer, it
  *   turns yellow (and, like every yellow letter, stays in your hand for
  *   good without taking a slot); not in it, it turns grey.
- * Any letter discarded this stage can be caught: from the discard pile,
- * or from the deck after a reshuffle has put it back there.
- *
  * Level 3: also, once a stage, the hook bites on its own: as soon as a
  *   letter of the answer lands in the discard pile, it's hooked out and
  *   turns yellow.
@@ -78,8 +74,8 @@
   }
 
   // Where each catchable card is now: { card, from: "discard" | "extra" | "deck" }.
-  // Letters already known to be out of the answer (grey) can't be caught:
-  // only ones still unknown, or in it.
+  // Any letter in the deck or discarded, but not one already known to be
+  // out of the answer (grey): only ones still unknown, or in it.
   function catchable(game) {
     var state = game.state;
     var log = fishLog(state);
@@ -89,7 +85,7 @@
     (state.discard || []).forEach(function pile(card) { if (open(card)) out.push({ card: card, from: "discard" }); });
     log.extra.forEach(function lost(card) { if (open(card)) out.push({ card: card, from: "extra" }); });
     (state.deck || []).forEach(function back(card) {
-      if (open(card) && log.ids.indexOf(card.id) !== -1) out.push({ card: card, from: "deck" });
+      if (open(card)) out.push({ card: card, from: "deck" });
     });
     return out;
   }
@@ -283,7 +279,7 @@
       return;
     }
     if (existing) existing.remove();
-    row.insertAdjacentHTML("beforeend", '<button type="button" class="umt-fish-btn' + (empty ? " is-empty" : "") + '" data-umt-fish-open aria-label="Fish Hook: take back a discarded card" title="Fish Hook: take back a discarded card">' + hookSvg() + "</button>");
+    row.insertAdjacentHTML("beforeend", '<button type="button" class="umt-fish-btn' + (empty ? " is-empty" : "") + '" data-umt-fish-open aria-label="Fish Hook: catch a letter from your deck or discards" title="Fish Hook: catch a letter from your deck or discards">' + hookSvg() + "</button>");
   }
 
   var view = { open: false, glyph: "" };
@@ -299,11 +295,11 @@
     return '<div class="umt-fish-overlay" role="dialog" aria-modal="true" aria-labelledby="umtFishTitle">'
       + '<section class="umt-fish-sheet">'
       + '<header><span class="umt-fish-icon" aria-hidden="true">' + hookSvg() + '</span><div><h2 id="umtFishTitle">Fish Hook</h2>'
-      + "<p>Take back a card you've discarded this stage, even one reshuffled into your deck. Letters known to be out of the word can't be caught." + (level(game) > 0 ? " Once a stage." : "")
+      + "<p>Catch any letter that isn't greyed out yet, from your deck or from what you've discarded." + (level(game) > 0 ? " Once a stage." : "")
       + (level(game) >= 2 ? " The letter you catch is tested: if it's in the answer, it turns yellow and needs no space." : "") + "</p></div>"
       + '<button type="button" class="umt-fish-close" data-umt-fish-close aria-label="Close">×</button></header>'
-      + '<h3>Discarded this stage</h3>' + (fish ? '<div class="umt-fish-pond">' + fish + "</div>"
-        : '<p class="umt-fish-empty">Nothing to catch yet: cards you play or mulligan this stage show up here (not ones known to be out of the word). Your catch waits until then.</p>')
+      + '<h3>Letters you can catch</h3>' + (fish ? '<div class="umt-fish-pond">' + fish + "</div>"
+        : '<p class="umt-fish-empty">Nothing to catch right now: every letter left in your deck and discards is greyed out.</p>')
       + '<button type="button" class="cuddle-btn cuddle-btn-primary umt-fish-go" data-umt-fish-go' + (canGo ? "" : " disabled") + ">" + esc(label) + "</button>"
       + "</section></div>";
   }

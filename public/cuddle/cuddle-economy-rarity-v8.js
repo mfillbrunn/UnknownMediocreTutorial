@@ -11,15 +11,19 @@
   const TIERS = Object.freeze({ COMMON: "common", RARE: "rare", EPIC: "epic", LEGENDARY: "legendary" });
   const TIER_ORDER = Object.freeze([TIERS.COMMON, TIERS.RARE, TIERS.EPIC, TIERS.LEGENDARY]);
   // Odds of each tier for a between-round offer (all cards in one offer
-  // share a tier), the same in every world: 58 / 30 / 10 / 2. Rarity Lens
-  // shifts them up; the shop has its own. A boss's pick of three is all
-  // Legendary (legendaryChoices below); a Trial pays Rare, a Duel Epic.
-  const DEFAULT_WEIGHTS = Object.freeze({ common: 58, rare: 30, epic: 10, legendary: 2 });
-  const BOOSTED_WEIGHTS = Object.freeze({ common: 38, rare: 37, epic: 20, legendary: 5 });
+  // share a tier), by world (common / rare / epic / legendary):
+  //   world 1  70 / 25 /  5 / 0
+  //   world 2  55 / 29 / 15 / 1
+  //   world 3  45 / 34 / 20 / 1
+  // Rarity Lens shifts each up (never a Legendary in world 1); the shop has
+  // its own. A boss's pick of three is all Legendary (legendaryChoices
+  // below); a Trial pays Rare, a Duel Epic.
+  const DEFAULT_WEIGHTS = Object.freeze({ common: 55, rare: 29, epic: 15, legendary: 1 });
+  const BOOSTED_WEIGHTS = Object.freeze({ common: 38, rare: 37, epic: 22.5, legendary: 2.5 });
   const WORLD_WEIGHTS = Object.freeze([
+    [Object.freeze({ common: 70, rare: 25, epic: 5, legendary: 0 }), Object.freeze({ common: 52, rare: 36, epic: 12, legendary: 0 })],
     [DEFAULT_WEIGHTS, BOOSTED_WEIGHTS],
-    [DEFAULT_WEIGHTS, BOOSTED_WEIGHTS],
-    [DEFAULT_WEIGHTS, BOOSTED_WEIGHTS]
+    [Object.freeze({ common: 45, rare: 34, epic: 20, legendary: 1 }), Object.freeze({ common: 30, rare: 39, epic: 28.5, legendary: 2.5 })]
   ]);
   const SHOP_WEIGHTS = Object.freeze({ common: 45, rare: 35, epic: 20, legendary: 0 });
   const PRICE_RANGES = Object.freeze({
@@ -2086,7 +2090,7 @@
         template,
         `permanent-${getId(def)}`,
         getName(def),
-        `${def.description ?? def.desc ?? "Permanent Cuddle upgrade."} [${tier.toUpperCase()}]`,
+        `${def.description ?? def.desc ?? "A badge for the rest of the run."} [${tier.toUpperCase()}]`,
         price,
         { type: "permanent", definition: def }
       );
@@ -2273,9 +2277,9 @@
     if (title !== "quiet forge") return;
     const choices = value.choices ?? value.options ?? value.actions;
     if (!Array.isArray(choices)) return;
-    const strong = choices.find((choice) => /upgrade/.test(norm(`${getName(choice)} ${choice.description ?? choice.desc ?? ""}`)));
+    const strong = choices.find((choice) => /upgrade|badge/.test(norm(`${getName(choice)} ${choice.description ?? choice.desc ?? ""}`)));
     if (!strong || strong.__cuddleV8QuietForge) return;
-    setDescription(strong, String(strong.description ?? strong.desc ?? "Receive upgrades.").replace(/(?:one|a)\s+random\s+(?:permanent\s+)?upgrade/i, "two random permanent upgrades"));
+    setDescription(strong, String(strong.description ?? strong.desc ?? "Receive badges.").replace(/(?:one|a)\s+random\s+(?:permanent\s+)?(?:upgrade|badge)/i, "two random badges"));
     for (const key of ["apply", "activate", "onSelect", "onChoose", "effect"]) {
       if (typeof strong[key] !== "function") continue;
       const original = strong[key];

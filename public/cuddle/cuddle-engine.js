@@ -1312,6 +1312,19 @@
       return this.drawCards(Math.max(0, this.getHandLimit() - this.getCountedHandSize()));
     }
 
+    // Exactly `count` cards (while the deck lasts), whatever the hand
+    // size: a mulligan of 3 draws 3. Only the refill after a guess
+    // (drawToHandLimit) goes by the hand size.
+    drawExactly(count) {
+      const drawn = [];
+      for (let i = 0; i < count; i += 1) {
+        const card = this._drawOne(true);
+        if (!card) break;
+        drawn.push(card);
+      }
+      return drawn;
+    }
+
     // A hand is never cut down to its limit: a card given on top of a full
     // hand just stays until it's played, and the next refill draws nothing
     // until the hand is back under the limit. (Only an effect that shrinks
@@ -1768,7 +1781,8 @@
         return { ok: false, error: "Unlimited cards cannot be mulliganed." };
       }
       this._discardCards(ids);
-      const replacements = this.drawCards(ids.length);
+      // As many back as went out, whatever the hand size.
+      const replacements = this.drawExactly(ids.length);
       this.state.mulligansLeft -= 1;
       if (steadyHand) this._markSteadyHandSpent();
       this.state.lastMessage = `Mulligan: replaced ${replacements.length} card${replacements.length === 1 ? "" : "s"}.`;
@@ -2402,9 +2416,9 @@
     }
 
     chooseUpgrade(choiceKey) {
-      if (this.state.status !== "upgrade") return { ok: false, error: "No upgrade choice is open." };
+      if (this.state.status !== "upgrade") return { ok: false, error: "No reward choice is open." };
       const choice = this.state.upgradeChoices.find(item => item.key === choiceKey);
-      if (!choice) return { ok: false, error: "That upgrade is not available." };
+      if (!choice) return { ok: false, error: "That badge isn't available." };
 
       switch (choice.id) {
         case "removeLetter":
@@ -2428,7 +2442,7 @@
           this.state.upgrades.questPoints += QUEST_POINTS_PER_PICK;
           break;
         default:
-          return { ok: false, error: "Unknown upgrade." };
+          return { ok: false, error: "Unknown badge." };
       }
       this.state.lastMessage = `${choice.title} acquired.`;
 
@@ -3513,7 +3527,7 @@
         this._applyRewardEffect("questReroll");
         return { ok: true };
       default:
-        return { ok: false, error: "Unknown upgrade." };
+        return { ok: false, error: "Unknown badge." };
     }
   };
 
@@ -3562,14 +3576,14 @@
     state.upgradeChoices = savedChoices;
     state.upgradePhase = savedPhase;
     state.upgradeMilestone = savedMilestone;
-    return result || { ok: false, error: "Unknown upgrade." };
+    return result || { ok: false, error: "Unknown badge." };
   };
 
   CuddleGame.prototype.chooseUpgrade = function chooseCuddleV3Upgrade(choiceKey) {
     const state = cuddleV3EnsureState(this);
-    if (state.status !== "upgrade") return { ok: false, error: "No upgrade choice is open." };
+    if (state.status !== "upgrade") return { ok: false, error: "No reward choice is open." };
     const choice = (state.upgradeChoices || []).find(item => item.key === choiceKey);
-    if (!choice) return { ok: false, error: "That upgrade is not available." };
+    if (!choice) return { ok: false, error: "That badge isn't available." };
 
     const applied = this._applyUpgradeChoice(choice);
     if (!applied.ok) return applied;
@@ -4089,7 +4103,7 @@
     if (this.state?.status !== "upgrade") {
       return typeof originalChooseUpgrade === "function"
         ? originalChooseUpgrade.call(this, choiceKey)
-        : { ok: false, error: "No upgrade choice is open." };
+        : { ok: false, error: "No reward choice is open." };
     }
     const state = ensureBalanceState(this);
     const choice = Array.isArray(state.upgradeChoices)
@@ -4098,7 +4112,7 @@
     if (!choice || !customUpgradeIds.has(choice.id)) {
       return typeof originalChooseUpgrade === "function"
         ? originalChooseUpgrade.call(this, choiceKey)
-        : { ok: false, error: "That upgrade is not available." };
+        : { ok: false, error: "That badge isn't available." };
     }
     if (onceOnlyTaken(state, choice.id)) {
       return { ok: false, error: `${choice.title || "That reward"} is already at its top level.` };
@@ -4135,7 +4149,7 @@
         upgrades.earlyRoundPoint += 5;
         break;
       default:
-        return { ok: false, error: "Unknown upgrade." };
+        return { ok: false, error: "Unknown badge." };
     }
 
     state.balanceRewardCounts[choice.id] += 1;
@@ -4435,7 +4449,7 @@
     const callOriginal = () => (
       typeof originalChooseUpgrade === "function"
         ? originalChooseUpgrade.call(this, choiceKey)
-        : { ok: false, error: "No upgrade choice is open." }
+        : { ok: false, error: "No reward choice is open." }
     );
 
     if (state?.status !== "upgrade") return callOriginal();

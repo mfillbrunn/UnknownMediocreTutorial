@@ -163,7 +163,7 @@
     jokerLens: "Joker shows its letter",
     questChain: "Quests chain on",
     blackMarket: "$50 for a random badge",
-    treasureChest: "A free Large Pack",
+    treasureChest: "A free pack, bigger each level",
     goldenOpener: "Opener yellows turn green",
   };
 
