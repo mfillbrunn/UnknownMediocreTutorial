@@ -121,8 +121,8 @@
       },
       at: "bottom",
       cards: [
-        { title: "Welcome to Cuddle", text: "Cuddle is Wordle as a road trip: solve word after word, collect upgrades along the way, and beat three bosses. This quick tour shows you around. You can skip it any time." },
-        { title: "A free pack to start", text: "Packs hold <b>upgrades</b>: boosts that last the whole run. No need to read them yet. Open the pack and they're yours.", focus: ".umt-pack-sealed" }
+        { title: "Welcome to Cuddle", text: "Cuddle is Wordle as a road trip: solve word after word, collect badges along the way, and beat three bosses. This quick tour shows you around. You can skip it any time." },
+        { title: "A free pack to start", text: "Packs hold <b>badges</b>: boosts that last the whole run. No need to read them yet. Open the pack and they're yours.", focus: ".umt-pack-sealed" }
       ]
     },
     {
@@ -155,7 +155,7 @@
         { title: "Cards, squares and tiles", skip: easyRun, text: "Three words, three places. <b>Cards</b> are in your hand and deck (letters, and special ones like lucky or Joker cards). <b>Squares</b> are spots on the board (some are special, like money squares). <b>Tiles</b> are the colours a guess shows: green, yellow or grey.", focus: ".cuddle-hand" },
         { title: "Mulligans", skip: easyRun, text: "Stuck with letters you can't use? A <b>mulligan</b> swaps some consonants for fresh ones from the deck. You get a few each stage, and any you don't use pay points at the end.", focus: ".cuddle-mulligan" },
         // Easy and Medium runs start with Fish Hook (cuddle-new-badges.js).
-        { title: "Fish Hook", skip: function noHook(game) { return !(window.CuddleFishHook && game && window.CuddleSkillTree && window.CuddleSkillTree.level(game, window.CuddleSkillTree.findNode("fishHook")) > 0); }, text: "You start with the <b>Fish Hook</b>. Threw away a letter you need after all? Once you've used or mulliganed cards, a <b>hook</b> appears by your deck: tap it, once a stage, to fish back a card you discarded.", focus: ".umt-fish-btn" },
+        { title: "Fish Hook", skip: function noHook(game) { return !(window.CuddleFishHook && game && window.CuddleSkillTree && window.CuddleSkillTree.level(game, window.CuddleSkillTree.findNode("fishHook")) > 0); }, text: "You start with the <b>Fish Hook</b>. Want a letter you don't have? The <b>hook</b> by your deck catches one, once a stage: any letter that isn't greyed out, from your deck or from what you've discarded.", focus: ".umt-fish-btn" },
         { title: "Quests", skip: function noQuests(game) { return Boolean(window.CuddleFirstRun && window.CuddleFirstRun.noQuests(game)); }, text: "Every few guesses a <b>quest</b> appears, like \"use two yellow letters\". Meet it with your next guess to pick a bonus. Tap a quest to read it in full.", focus: ".cuddle-quest-inline" }
       ]
     },
@@ -168,7 +168,7 @@
       except: [".umt-pt-overlay"],
       at: "top",
       cards: [
-        { title: "Cash-out", text: "Solved! Every tile you revealed pays points: grey 0, yellow 1, green 2. Each guess you didn't need pays a BONUS row of greens plus 5 points for finishing early, and unused mulligans, Jokers and many upgrades add more. Tap a row to see what it paid.", focus: ".cuddle-money-payout-rows" },
+        { title: "Cash-out", text: "Solved! Every tile you revealed pays points: grey 0, yellow 1, green 2. Each guess you didn't need pays a BONUS row of greens plus 5 points for finishing early, and unused mulligans, Jokers and many badges add more. Tap a row to see what it paid.", focus: ".cuddle-money-payout-rows" },
         { title: "Points and money", text: "<b>Points</b> are your score, and they're what lets you challenge a boss. <b class=\"umt-tut-gold\">Money</b> comes from clearing stages and challenges. You spend it in shops, on packs and on refreshes. Tap <b>Collect</b> to bank it.", focus: ".cuddle-money-collect" }
       ]
     },
@@ -180,7 +180,7 @@
       at: "top",
       cards: [
         { title: "Pick a helper", skip: onlyEasy, text: "After each stage, pick one helper. It stays with you to the end of the run.", focus: ".cuddle-choice-grid", at: "bottom" },
-        { title: "Pick an upgrade", skip: easyRun, text: "After each stage you choose one of these, and it helps for the rest of the run. Every card on a screen shares one rarity: <span class=\"umt-tut-common\">Common</span>, <span class=\"umt-tut-rare\">Rare</span> or <span class=\"umt-tut-epic\">Epic</span>. <span class=\"umt-tut-legendary\">Legendary</span> ones only come after a boss. Don't like them? Refresh for a few dollars.", focus: ".cuddle-choice-grid", at: "bottom" }
+        { title: "Pick a badge", skip: easyRun, text: "After each stage you choose one of these, and it helps for the rest of the run. Every card on a screen shares one rarity: <span class=\"umt-tut-common\">Common</span>, <span class=\"umt-tut-rare\">Rare</span> or <span class=\"umt-tut-epic\">Epic</span>. <span class=\"umt-tut-legendary\">Legendary</span> ones only come after a boss. Don't like them? Refresh for a few dollars.", focus: ".cuddle-choice-grid", at: "bottom" }
       ]
     },
     {
@@ -191,7 +191,7 @@
       },
       at: "bottom",
       cards: [
-        { title: "Choose your path", skip: easyRun, text: "Every Wordle stop shows only how hard it is: a <b>heart</b> is an easier one, no mark a regular one, and one to three red <b>skulls</b> a harder one with a twist you find out by playing it. Harder stops pay more points and money. Shops, events and free upgrades sit between them." },
+        { title: "Choose your path", skip: easyRun, text: "Every Wordle stop shows only how hard it is: a <b>heart</b> is an easier one, no mark a regular one, and one to three red <b>skulls</b> a harder one with a twist you find out by playing it. Harder stops pay more points and money. Shops, events and free badges sit between them." },
         { title: "The boss", skip: onlyEasy, text: "The road ends at a <b>boss</b>. It bends the rules a little: beat it and you win the run." },
         { title: "Bosses and winning", skip: easyRun, text: "Each world ends in a <b>boss</b>. You need enough points to challenge it, shown on the boss. Bosses bend the rules, and beating one gives you a <span class=\"umt-tut-legendary\">Legendary</span> pick. Beat the final boss to win the run.", focus: ".cuddle-header-points" }
       ]
@@ -217,7 +217,7 @@
       done: true,
       cards: [
         { title: "You've got it", skip: onlyEasy, text: "That's it: solve the stages, pick helpers, and beat the boss at the end. Good luck!" },
-        { title: "You've got it", skip: easyRun, text: "That's the loop: solve stages, cash out, pick upgrades, and build up the points to take on the bosses. Good luck!" }
+        { title: "You've got it", skip: easyRun, text: "That's the loop: solve stages, cash out, pick badges, and build up the points to take on the bosses. Good luck!" }
       ]
     }
   ];

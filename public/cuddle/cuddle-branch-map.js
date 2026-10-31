@@ -626,7 +626,7 @@
     // A waystone's offer can't be refreshed (see isWaystoneUpgrade in
     // cuddle-engine.js). Cleared once the pick is made or a round begins.
     game.state.waystoneOffer = true;
-    game.state.lastMessage = "A waystone: take one permanent upgrade.";
+    game.state.lastMessage = "A free badge: choose one.";
   }
 
   // The Level-Up stop: every badge you hold that can still level, shown at

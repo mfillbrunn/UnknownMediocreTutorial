@@ -190,7 +190,7 @@
       commons = mix.commons;
     }
     var cards = api.packRewards(this, specials, offer.id + ":" + specials.join("-"), commons) || [];
-    if (!cards.length) return { ok: false, error: "There are no upgrades left to put in a pack." };
+    if (!cards.length) return { ok: false, error: "There are no badges left to put in a pack." };
     var game = this;
     var kept = [];
     cards.forEach(function grant(card) {
@@ -210,7 +210,7 @@
       }
       if (applied && applied.ok !== false) kept.push(card);
     });
-    if (!kept.length) return { ok: false, error: "None of the pack's upgrades could be taken." };
+    if (!kept.length) return { ok: false, error: "None of the pack's badges could be taken." };
     state.cuddleMoney = wallet - offer.price;
     // Each card in the registry's plain wording, for the level just taken.
     var tree = window.CuddleSkillTree;
@@ -282,7 +282,7 @@
       + '<span class="umt-pack-foil" aria-hidden="true"></span>'
       + '<span class="umt-pack-name">' + (sizeName ? sizeName + "<br>" : "") + "Pack</span>"
       // The Starting Pack doesn't count its badges.
-      + (offer.starter ? "" : '<span class="umt-pack-count">' + total + " upgrades</span>") + "</button></div>"
+      + (offer.starter ? "" : '<span class="umt-pack-count">' + total + " badge" + (total === 1 ? "" : "s") + "</span>") + "</button></div>"
       + '<div class="umt-pack-actions">'
       + (free
         ? '<button type="button" class="cuddle-btn cuddle-btn-primary" data-umt-pack="buy">Open the pack</button>'

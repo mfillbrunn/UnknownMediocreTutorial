@@ -913,8 +913,8 @@
     if (finite(game.state.cuddleMoney, 0) < item.cost) return { ok: false, error: "You need $" + item.cost + "." };
     if (item.kind === "permanent") {
       var upgrade = UPGRADE_DEFINITIONS.find(function match(definition) { return definition.id === item.upgradeId; });
-      if (!upgrade) return { ok: false, error: "That permanent upgrade is unavailable." };
-      if (upgradeIsMaxed(coach, upgrade)) return { ok: false, error: "That permanent upgrade is already maxed." };
+      if (!upgrade) return { ok: false, error: "That badge isn't available." };
+      if (upgradeIsMaxed(coach, upgrade)) return { ok: false, error: "That badge is already at its top level." };
       if (upgrade.requiresHint && coach.hintsPerRound <= 0) return { ok: false, error: "Unlock a Guesser Hint first." };
     }
     game.state.cuddleMoney = finite(game.state.cuddleMoney, 0) - item.cost;
