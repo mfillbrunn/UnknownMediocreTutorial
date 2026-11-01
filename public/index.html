@@ -11,7 +11,7 @@
   <!-- 1. Themes & variables -->
   <link rel="stylesheet" href="css/themes.css?v=tutorial-motion-sim-2">
   <!-- 2. Global defaults -->
-  <link rel="stylesheet" href="css/daily-pick.css?v=14">
+  <link rel="stylesheet" href="css/daily-pick.css?v=15">
   <link rel="stylesheet" href="css/base.css?v=cuddle-draft-gaps-1">
   <!-- 3. Structural layout -->
   <link rel="stylesheet" href="css/layout.css?v=history-scroll-quest-note-1">
@@ -579,6 +579,7 @@
         <section id="dailyPickScreen" class="screen game-menu" aria-label="Griddle">
           <div class="menu-center dp-card">
             <button id="dpBackBtn" class="dp-close" type="button" aria-label="Close"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+            <div id="dpClock" class="dp-clock" aria-label="Time" hidden>0:00</div>
             <h2 id="dpTitle" class="menu-title">GRIDDLE</h2>
             <div id="dailyPickRoot"></div>
           </div>
@@ -1838,7 +1839,7 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="client/helpers.js?v=screen-scroll-reset-1"></script>
   <script src="client/game-hub.js?v=5"></script>
-  <script src="client/daily-pick.js?v=22"></script>
+  <script src="client/daily-pick.js?v=23"></script>
   <script src="client/statistics.js?menu-account-spacing=1&guest-play=1"></script>
   <script src="network/socketClient.js?power-popup-icon=1"></script>
 

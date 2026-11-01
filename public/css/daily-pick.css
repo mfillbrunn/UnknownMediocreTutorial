@@ -90,3 +90,8 @@
 .dp-sum-row small { font-size: 13px; font-weight: 600; opacity: .7; }
 .dp-verdict { text-align: center; font-size: 26px; font-weight: 800; }
 .dp-verdict span { font-size: 18px; opacity: .75; }
+.dp-clock {
+  position: absolute; top: 14px; left: 14px;
+  font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums;
+  opacity: .85;
+}

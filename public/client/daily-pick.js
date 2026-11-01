@@ -21,6 +21,11 @@
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
   let current = 0; // index of the puzzle on screen
   let advanceTimer = null;
+  // The clock runs from the first tap of the day until the last grid is
+  // solved, only while Griddle is on screen. state.elapsed holds the time
+  // banked so far; runningSince is when the current stretch began.
+  let runningSince = null;
+  let ticker = null;
   // "pick": tap a word to select it (tap another to change your mind), then
   // confirm it with the button. "strike": after the feedback, tap words to
   // exclude them, then "Pick next word" goes back to "pick".
@@ -183,6 +188,37 @@
   const allSolved = () => state.rounds.every(r => r.solved);
   const totalGuesses = () => state.rounds.reduce((sum, r) => sum + r.guesses.length, 0);
 
+  const elapsed = () => (state.elapsed || 0) + (runningSince ? Date.now() - runningSince : 0);
+  function formatTime(ms) {
+    const secs = Math.floor(ms / 1000);
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor(secs / 60) % 60;
+    const ss = String(secs % 60).padStart(2, "0");
+    return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
+  }
+
+  function showClock() {
+    const clock = $("dpClock");
+    if (!clock) return;
+    clock.hidden = allSolved() && !advanceTimer;
+    clock.textContent = formatTime(elapsed());
+  }
+
+  function startClock() {
+    if (runningSince || allSolved() || !$("dailyPickScreen")?.classList.contains("active")) return;
+    runningSince = Date.now();
+    ticker = setInterval(showClock, 250);
+  }
+
+  function stopClock() {
+    clearInterval(ticker);
+    ticker = null;
+    if (!runningSince) return;
+    state.elapsed = elapsed();
+    runningSince = null;
+    save();
+  }
+
   // Once all three are solved (and the last one's feedback has had its
   // moment), the grid gives way to the day's scorecard.
   function setTitle(grid) {
@@ -199,6 +235,7 @@
     const diff = totalGuesses() - DAY_PAR;
     root.innerHTML = `<div class="dp-summary">${rows}
       <div class="dp-sum-row dp-sum-total"><span>Total<small>par ${DAY_PAR}</small></span><span>${totalGuesses()}</span></div>
+      <div class="dp-sum-row"><span>Time</span><span>${formatTime(elapsed())}</span></div>
       <div class="dp-verdict">${golfTerm(diff)} <span>(${relToPar(diff)})</span></div>
       <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
       <div class="dp-hint">Come back tomorrow for three new grids.</div></div>`;
@@ -207,6 +244,7 @@
   function render() {
     const root = $("dailyPickRoot");
     if (!root) return;
+    showClock();
     if (allSolved() && !advanceTimer) return renderSummary(root);
     setTitle(current + 1);
     const { answer: secret, words, mode } = puzzles[current];
@@ -273,6 +311,7 @@
   function onWordClick(word) {
     const r = round();
     if (r.solved) return;
+    startClock();
     if (phase === "strike") {
       const i = r.struck.indexOf(word);
       if (i >= 0) r.struck.splice(i, 1);
@@ -291,6 +330,7 @@
     if (selected === puzzles[current].answer) {
       r.solved = true;
       phase = "pick";
+      if (allSolved()) stopClock();
       advanceTimer = setTimeout(nextPuzzle, ADVANCE_MS);
     } else {
       r.struck.push(selected);
@@ -308,7 +348,7 @@
       `Grid ${i + 1}: ${"⬜".repeat(r.guesses.length - 1)}🟩 ${r.guesses.length}`);
     const diff = totalGuesses() - DAY_PAR;
     const verdict = `${golfTerm(diff)} (${totalGuesses()}; ${diff === 0 ? "even" : `${diff > 0 ? "+" : "-"}${Math.abs(diff)}`} par)`;
-    return [`Griddle ${date}`, ...rows, `Total: ${verdict}`, location.origin].join("\n");
+    return [`Griddle ${date}`, ...rows, `Total: ${verdict}`, `Time: ${formatTime(elapsed())}`, location.origin].join("\n");
   }
 
   // The phone's own share sheet (WhatsApp, Messages, Instagram, ...) where
@@ -378,11 +418,26 @@
     phase = r.guesses.length && !r.solved ? "strike" : "pick";
     selected = "";
     render();
+    // Coming back to a day already under way picks the clock back up.
+    if (state.elapsed) startClock();
   }
+
+  function close() {
+    stopClock();
+    window.UmtGameHub?.showHub();
+  }
+
+  // Switching apps or tabs pauses the clock; coming back resumes it.
+  document.addEventListener("visibilitychange", () => {
+    if (!state) return;
+    if (document.hidden) stopClock();
+    else if (state.elapsed) startClock();
+  });
+  window.addEventListener("pagehide", () => { if (state) stopClock(); });
 
   document.addEventListener("DOMContentLoaded", () => {
     $("hubDailyPickBtn")?.addEventListener("click", open);
-    $("dpBackBtn")?.addEventListener("click", () => window.UmtGameHub?.showHub());
+    $("dpBackBtn")?.addEventListener("click", close);
     $("dailyPickRoot")?.addEventListener("click", event => {
       const word = event.target.closest?.(".dp-word");
       if (word) return onWordClick(word.dataset.word);
