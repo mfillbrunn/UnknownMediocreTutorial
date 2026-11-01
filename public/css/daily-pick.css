@@ -74,7 +74,21 @@
 .dp-word:not(:disabled):active { transform: scale(.96); }
 .dp-word:disabled { cursor: default; }
 .dp-word.is-guessed { border-color: rgba(242,193,78,.7); }
-.dp-word.is-selected { border-color: #6fb1ff; background: rgba(111,177,255,.22); }
+/* The word lined up to guess: solid blue, lifted, with a soft glow. */
+.dp-word.is-selected,
+.dp-word.is-selected:not(:disabled):hover {
+  background: #3b7dd8;
+  border-color: #9cc8ff;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 2px rgba(111,177,255,.35), 0 6px 16px rgba(59,125,216,.45);
+}
+.dp-word.just-selected { animation: dp-lift .2s ease-out; }
+@keyframes dp-lift {
+  0% { transform: translateY(0) scale(.95); }
+  60% { transform: translateY(-3px) scale(1.03); }
+  100% { transform: translateY(-2px) scale(1); }
+}
 
 /* Struck words: dimmed, with a line drawn through rather than text-decoration,
    so the line can sweep across when a word is struck. */

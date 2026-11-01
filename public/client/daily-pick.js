@@ -32,7 +32,7 @@
   let phase = "pick"; // "pick" | "strike"
   let selected = "";
   // The word just struck or un-struck, so only it plays the little snap.
-  let toggled = null; // { word, struck }
+  let toggled = null; // { word, kind: "struck" | "freed" | "selected" }
 
   const $ = id => document.getElementById(id);
   const today = () => new Date().toISOString().slice(0, 10);
@@ -260,7 +260,7 @@
     const done = r.solved;
     const buttons = ring.map(({ word, struck, guessed }) => {
       const disabled = done || (phase === "pick" && (struck || guessed));
-      const snap = toggled && toggled.word === word ? (toggled.struck ? " just-struck" : " just-freed") : "";
+      const snap = toggled && toggled.word === word ? ` just-${toggled.kind}` : "";
       return `<button type="button" class="dp-word${struck ? " is-struck" : ""}${guessed ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}${snap}" data-word="${word}"${disabled ? " disabled" : ""}>${word}</button>`;
     }).join("");
 
@@ -319,15 +319,16 @@
       const i = r.struck.indexOf(word);
       if (i >= 0) {
         r.struck.splice(i, 1);
-        toggled = { word, struck: false };
+        toggled = { word, kind: "freed" };
       } else if (!r.guesses.includes(word)) {
         r.struck.push(word);
-        toggled = { word, struck: true };
+        toggled = { word, kind: "struck" };
         navigator.vibrate?.(8); // the faintest tick, on phones that support it
       }
       save();
     } else if (!r.struck.includes(word) && !r.guesses.includes(word)) {
       selected = selected === word ? "" : word;
+      if (selected) toggled = { word, kind: "selected" };
     }
     render();
     toggled = null;
