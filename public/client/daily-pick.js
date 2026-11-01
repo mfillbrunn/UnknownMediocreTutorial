@@ -28,7 +28,7 @@
   let ticker = null;
   // "pick": tap a word to select it (tap another to change your mind), then
   // confirm it with the button. "strike": after the feedback, tap words to
-  // exclude them, then "Pick next word" goes back to "pick".
+  // exclude them, then "Done, next guess" goes back to "pick".
   let phase = "pick"; // "pick" | "strike"
   let selected = "";
   // The word just struck or un-struck, so only it plays the little snap.
@@ -293,11 +293,11 @@
     if (done) {
       hint = `<strong class="dp-result">Solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next puzzle…"}`;
     } else if (phase === "strike") {
-      hint = "Now tap the words this rules out.";
-      action = `<button type="button" class="dp-next" id="dpNext">Pick next word</button>`;
+      hint = "Tap the words this rules out, then Done.";
+      action = `<button type="button" class="dp-next" id="dpNext">Done, next guess →</button>`;
     } else {
       hint = lastGuess ? "Tap the word you want to guess next." : "Tap a word to start.";
-      action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${selected.toUpperCase()}` : "Select a word"}</button>`;
+      action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${selected.toUpperCase()}` : "Guess"}</button>`;
     }
     // Keeps the panel the same height once the button is gone.
     if (!action) action = `<button type="button" class="dp-next" tabindex="-1" aria-hidden="true" style="visibility:hidden">&nbsp;</button>`;
