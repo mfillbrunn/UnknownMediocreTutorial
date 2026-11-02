@@ -175,8 +175,8 @@
     icon: "🔮",
     title: "All-Seeing Atlas",
     name: "All-Seeing Atlas",
-    description: "Reveal every available theme at the start of every Wordle.",
-    detail: "All themes are revealed automatically for every future Wordle.",
+    description: "Reveal every available theme at the start of every Cuddle.",
+    detail: "All themes are revealed automatically for every future Cuddle.",
     maxLevel: 1,
     maxCount: 1,
     kind: "bossReward",
@@ -840,7 +840,7 @@
     return pool[hash32(seed) % pool.length];
   }
 
-  const CLASSIC_DESCRIPTION = `A standard Wordle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${CONFIG.classicClearBonus}.`;
+  const CLASSIC_DESCRIPTION = `A standard Cuddle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${CONFIG.classicClearBonus}.`;
 
   // -- Stage difficulty (worlds 2 and 3) --------------------------------
   // A Wordle stop's difficulty is the sum of its parts: +1 per challenge,
@@ -1056,7 +1056,7 @@
       case "doubleOrNothing":
         return { version: VERSION, kind, icon: "\u2696\uFE0F", title: "Double or Nothing", description: "Solve fast and the stage's earnings double (by guess 5 in world 1, 4 in world 2, 3 in world 3). Take longer and you lose half of them." };
       default:
-        return { version: VERSION, kind: "plain", icon: "🟩", title: "Classic Wordle", description: CLASSIC_DESCRIPTION };
+        return { version: VERSION, kind: "plain", icon: "🟩", title: "Classic Cuddle", description: CLASSIC_DESCRIPTION };
     }
   }
 
@@ -1072,7 +1072,7 @@
           version: VERSION,
           kind: "themedWordle",
           icon: "\uD83E\uDDED",
-          title: "Themed Wordle",
+          title: "Themed Cuddle",
           description: "A round that opens with one of the solution's categories already revealed."
         };
       }
@@ -1108,7 +1108,7 @@
         version: VERSION,
         kind: "plain",
         icon: "🟩",
-        title: "Classic Wordle",
+        title: "Classic Cuddle",
         description: CLASSIC_DESCRIPTION
       };
     } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent) {
@@ -1116,7 +1116,7 @@
         version: VERSION,
         kind: "themedWordle",
         icon: "🧭",
-        title: "Themed Wordle",
+        title: "Themed Cuddle",
         description: "A round that opens with one of the solution's categories already revealed."
       };
     } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent + CONFIG.randomOpenerPercent) {
@@ -4088,11 +4088,11 @@
 
 
   const POWER_INFO = Object.freeze({
-    plain: { title: "Classic Wordle", description: `A standard Wordle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${CONFIG.classicClearBonus}.`, shape: "grid" },
+    plain: { title: "Classic Cuddle", description: `A standard Cuddle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${CONFIG.classicClearBonus}.`, shape: "grid" },
     luckyStart: { title: "Lucky Start", description: "One exact position is revealed before the first guess.", shape: "clover" },
     jackpot: { title: "Jackpot Run", description: "Greens pay double, but the stage must be solved within the world's guess limit (6, 5 or 4) or the run is lost.", shape: "coins" },
     doubleOrNothing: { title: "Double or Nothing", description: "Solve by guess 5 (world 1), 4 (world 2) or 3 (world 3) to double the stage, or lose half of it.", shape: "scales" },
-    themedWordle: { title: "Themed Wordle", description: "A round that opens with one of the solution's categories already revealed.", shape: "tag" },
+    themedWordle: { title: "Themed Cuddle", description: "A round that opens with one of the solution's categories already revealed.", shape: "tag" },
     randomOpener: { title: "Head Start", description: "A random legal word automatically consumes the first guess.", shape: "die" },
     deepFog: { title: "Deep Fog", description: "The marked tiles are hidden on each affected guess.", shape: "fog" },
     countedSteps: { title: "Counted Steps", description: "The marked tiles show only a green and yellow count, not which tile was which. The rest of the row reports normally.", shape: "count", multiplayerId: "countOnly" },
@@ -4100,13 +4100,13 @@
     littleLie: { title: "Little Lies", description: "The marked tiles show a deliberately false colour. The rest of the row reports normally.", shape: "mask" },
     doubleBlind: { title: "Double Blind", description: "The first guesses combine count-only and hidden-position feedback on their marked tiles.", shape: "blind" },
     signalStorm: { title: "Signal Storm", description: "Affected guesses cycle through several feedback disruptions on their marked tiles.", shape: "storm" },
-    noSafetyNet: { title: "No Safety Net", description: "Mulligans and skipped guesses are disabled for this Wordle.", shape: "noMulligan" },
+    noSafetyNet: { title: "No Safety Net", description: "Mulligans and skipped guesses are disabled for this Cuddle.", shape: "noMulligan" },
     perfectOpener: { title: "Perfect Opener", description: "This word must use five different letters.", shape: "distinct" },
     consonantCrunch: { title: "Consonant Crunch", description: "This word may contain at most one vowel.", shape: "oneVowel" },
     letterDemand: { title: "Letter Demand", description: "This word must use the letter shown above the board. If you hold no card of it, you're handed one.", shape: "demand" },
     letterBan: { title: "Banned Letter", description: "This word may not use the letter shown above the board. A new letter is banned every guess.", shape: "ban" },
     wordChain: { title: "Word Chain", description: "This word must start with the last consonant of your guess before. If you hold no card of it, you're handed one.", shape: "chain" },
-    lockedIn: { title: "Locked In", description: "Wordle's Hard Mode: this word must keep every green letter in its place and use every yellow one.", shape: "lock" },
+    lockedIn: { title: "Locked In", description: "Hard Mode: this word must keep every green letter in its place and use every yellow one.", shape: "lock" },
     shroudedEdges: { title: "Shrouded Edges", description: "The same marked positions remain hidden on every affected guess.", shape: "hiddenTiles" },
     countOnly: { title: "Count Only", description: "The marked tiles report only how many of them are green and how many yellow, never which is which. Every other tile in the row shows its real colour.", shape: "count", multiplayerId: "countOnly" },
     delayedFeedback: { title: "Delayed Feedback", description: "The marked tiles hold back their colours for one guess: each row's hidden tiles are revealed when you submit the next guess. Every other tile in the row shows its real colour immediately.", shape: "clock" },
@@ -4129,8 +4129,8 @@
     coachHint: { title: "Guesser Hint", description: "Alternates yellow presence hints and green position hints during a round.", shape: "hint" },
     revealLocation: { title: "Position Hint", description: "Reveal one correct letter and its exact position.", shape: "greenHint" },
     jokerToken: { title: "Joker", description: "Gain a wildcard letter card.", shape: "joker" },
-    umtAllThemes: { title: "All-Seeing Atlas", description: "Reveal every available theme at the start of every Wordle.", shape: "tags" },
-    umtOpeningInsight: { title: "Opening Insight", description: "Begin each Wordle with an extra green position hint.", shape: "greenHint" },
+    umtAllThemes: { title: "All-Seeing Atlas", description: "Reveal every available theme at the start of every Cuddle.", shape: "tags" },
+    umtOpeningInsight: { title: "Opening Insight", description: "Begin each Cuddle with an extra green position hint.", shape: "greenHint" },
     umtQuickStudy: { title: "Quick Study", description: "Guesser Hints arrive sooner.", shape: "hourglass" },
     umtJokerCache: { title: "Joker Cache", description: "Joker cards in your deck every stage: 1, then 2; at level 3 a yellow Joker letter is placed in its spot.", shape: "joker" },
     umtReserveDividend: { title: "Reserve Dividend", description: "Unused Jokers and mulligans pay an additional end-of-round bonus.", shape: "coins" },
@@ -4173,7 +4173,7 @@
     if (known) return { id: key, ...known };
     const metadata = window.POWER_METADATA && window.POWER_METADATA[key];
     const title = metadata && (metadata.name || metadata.title) || key.replace(/([a-z])([A-Z])/g, "$1 $2");
-    const description = metadata && (metadata.desc || metadata.short || metadata.description) || "This power changes how the affected Wordle or guess behaves.";
+    const description = metadata && (metadata.desc || metadata.short || metadata.description) || "This power changes how the affected Cuddle or guess behaves.";
     return { id: key, title, description, shape: "bolt", multiplayerId: key };
   }
 

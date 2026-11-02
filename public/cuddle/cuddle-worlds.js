@@ -177,7 +177,7 @@
   });
 
   const KIND_NAMES = Object.freeze({
-    wordle: "Wordle",
+    wordle: "Cuddle",
     challenge: "Challenge",
     event: "Event",
     shop: "Shop",

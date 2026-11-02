@@ -1233,7 +1233,7 @@
     Object.freeze({ id: "joker", icon: "🃏", title: "Pocket Joker", cost: 18, kind: "one-time", description: "Gain one Joker charge for this run." }),
     Object.freeze({ id: "yellowDetector", icon: "🟨", title: "Amber Lens", cost: 12, kind: "one-time", description: "Reveal one solution letter at the start of the next eligible round." }),
     Object.freeze({ id: "coachBossTenLetterCull", icon: "✂️", title: "Five-Letter Cull", cost: 24, kind: "boss", description: "Save a five-letter cull for the next boss." }),
-    Object.freeze({ id: "coachBossUnlimitedMulligans", icon: "♾️", title: "Regular Wordle Hands", cost: 28, kind: "boss", description: "Save unlimited mulligans for the next boss." }),
+    Object.freeze({ id: "coachBossUnlimitedMulligans", icon: "♾️", title: "Regular Cuddle Hands", cost: 28, kind: "boss", description: "Save unlimited mulligans for the next boss." }),
     Object.freeze({ id: "coachShopPossibleAnswers", icon: "🎧", title: "Secrets Counter", cost: 44, kind: "upgrade", rarity: "bronze", description: "Unlock the exact Secrets Remaining counter for this run." }),
     Object.freeze({ id: "coachShopMeterThreshold", icon: "🩶", title: "Softer Cuddle Meter", cost: 56, kind: "upgrade", rarity: "gold", description: "The Cuddle Meter fills up 2 tiles sooner. Level 2: 4 tiles sooner. Level 3: 6 tiles sooner." })
   ]);

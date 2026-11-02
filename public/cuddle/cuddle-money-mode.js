@@ -108,7 +108,7 @@
       effect: "guessCap",
       turns: 0,
       baseReward: 18,
-      description: "Solve this Wordle within the world's guess limit -- 6 guesses in world one, 5 in world two, 4 in world three -- or the run is lost."
+      description: "Solve this Cuddle within the world's guess limit -- 6 guesses in world one, 5 in world two, 4 in world three -- or the run is lost."
     },
     {
       id: "vowelBudget",
@@ -427,7 +427,7 @@
       // (no guess cap) didn't actually limit anything.
       game._applyStrictGuessLimit();
     }
-    game.state.lastMessage = challenge.title + " accepted. Solve the Wordle to collect " + formatMoney(challenge.reward) + ".";
+    game.state.lastMessage = challenge.title + " accepted. Solve the Cuddle to collect " + formatMoney(challenge.reward) + ".";
     saveGame(game);
     requestRender(game);
     return { ok: true };
@@ -1077,7 +1077,7 @@
       "<div id=\"cuddleMoneyStarterOverlay\" class=\"cuddle-money-overlay\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"cuddleMoneyStarterTitle\">"
       + "<section class=\"cuddle-money-modal\"><span class=\"cuddle-money-kicker\">STARTING BONUS</span>"
       + "<h2 id=\"cuddleMoneyStarterTitle\">Choose your Starting Bonus!</h2>"
-      + "<p>Choose one permanent bonus before your first Wordle.</p>"
+      + "<p>Choose one permanent bonus before your first Cuddle.</p>"
       + "<div class=\"cuddle-money-choice-grid\">" + cards + "</div></section></div>"
     );
   }
