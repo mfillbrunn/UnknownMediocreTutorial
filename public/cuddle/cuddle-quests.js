@@ -129,9 +129,9 @@
       id: "wordChain",
       icon: "🔗",
       title: "Word Chain",
-      description: quest => `Start with ${quest.chainLetter} (from your last word).`,
-      detail: quest => `Your word must start with ${quest.chainLetter}, the last consonant of your previous guess (Y, Q, X and Z are skipped). No ${quest.chainLetter} in your hand? You're given one for this guess.`,
-      test: ({ word, quest }) => word.startsWith(quest.chainLetter)
+      description: quest => `Start with ${String(quest.chainLetter).split("").join(" or ")} (from your last word).`,
+      detail: quest => `Your word must start with ${String(quest.chainLetter).split("").join(" or ")}: one of the last two consonants of your previous guess (Y doesn't count). Hold neither? You're given one for this guess.`,
+      test: ({ word, quest }) => String(quest.chainLetter || "").includes(word[0])
     },
     {
       id: "fieldReport",
@@ -387,7 +387,7 @@
     { id: "letterBan", icon: "🚫", title: "Banned Letter", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 20,
       text: "don't use the letter shown (it changes every guess)." },
     { id: "wordChain", icon: "🔗", title: "Word Chain", kind: "rule", boss: true, challenge: true, mix: false, curse: false, reward: 24,
-      text: "start your word with the last consonant of your guess before (Y, Q, X and Z are skipped)." },
+      text: "start your word with one of the last two consonants of your guess before (Y doesn't count)." },
     { id: "lockedIn", icon: "🔒", title: "Locked In", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 22,
       text: "keep every green letter in its place and use every yellow one (Hard Mode)." },
     { id: "shortHand", icon: "✂️", title: "Short Hand", kind: "round", boss: true, challenge: false, mix: false, curse: true, reward: 0,
@@ -536,7 +536,7 @@
       id: "wordChain",
       icon: "🔗",
       title: "Word Chain",
-      description: "On the boss's marked guesses after the first, each word must start with the letter shown beside it: the last consonant of the word before (Y, Q, X and Z are skipped).",
+      description: "On the boss's marked guesses after the first, each word must start with one of the letters shown beside it: the last two consonants of the word before (Y doesn't count).",
       turns: 3,
       rewardId: "revealGreen"
     },
@@ -775,10 +775,13 @@
         const previous = history[history.length - 1];
         if (!previous) return;
         // As the Word Chain challenge does (cuddle-rebalance-v5.js
-        // chainLetter): the last consonant, Y counted as a vowel and
-        // Q/X/Z skipped, since so few words start with those.
-        extra.chainLetter = String(previous.word || "").toUpperCase().split("").reverse()
-          .find(letter => !"AEIOUY".includes(letter) && !"QXZ".includes(letter));
+        // chainLetters): either of the last two different consonants, Y
+        // counted as a vowel, kept as one string in word order ("RV").
+        const picked = [];
+        String(previous.word || "").toUpperCase().split("").reverse().forEach(letter => {
+          if (picked.length < 2 && /[A-Z]/.test(letter) && !"AEIOUY".includes(letter) && !picked.includes(letter)) picked.push(letter);
+        });
+        extra.chainLetter = picked.reverse().join("");
         if (!extra.chainLetter) return;
       }
       if (definition.needsHistory && !(history || []).some(entry => entry?.word)) return;

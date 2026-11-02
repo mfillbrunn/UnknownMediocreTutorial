@@ -280,7 +280,7 @@
     questEndurance: ["Endurance Trial", "A quest; miss it and lose 1 hand size for the stage."],
     letterDemand: ["Letter Demand", "Your word must use the letter shown (you're handed a card of it)."],
     letterBan: ["Banned Letter", "Your word may not use the letter shown."],
-    wordChain: ["Word Chain", "Your word must start with the last consonant of your guess before (Y, Q, X and Z are skipped)."],
+    wordChain: ["Word Chain", "Your word must start with one of the last two consonants of your guess before (Y doesn't count)."],
     lockedIn: ["Locked In", "Keep every green in place and use every yellow."]
   });
 
@@ -2143,21 +2143,29 @@
   // The letter Word Chain asks a word to start with: the last consonant of
   // the guess before (so many words end in E that "the last letter" mostly
   // meant starting with E -- next to impossible from a hand).
-  const CHAIN_SKIP = "QXZ";
+  // Either of the last two different consonants will do (LARVA: R or V;
+  // LATEX: T or X), returned as one string in word order ("RV"). Y counts
+  // as a vowel here: so many words end in Y, and so few start with it,
+  // that chaining on it stranded the hand. A word with one consonant asks
+  // for that one; a word with none lets the chain off for that guess.
+  function chainLetters(word) {
+    const picked = [];
+    String(word || "").toUpperCase().split("").reverse().forEach((letter) => {
+      if (picked.length < 2 && /[A-Z]/.test(letter) && !"AEIOUY".includes(letter) && !picked.includes(letter)) picked.push(letter);
+    });
+    return picked.reverse().join("") || null;
+  }
   function chainLetter(game, used) {
     const state = stateOf(game) || {};
     const history = Array.isArray(state.history) ? state.history : [];
     const previous = used > 0 ? history[used - 1] : null;
     const word = previous ? String(previous.word || "").toUpperCase() : "";
     if (word.length !== 5) return null;
-    // Y counts as a vowel here: so many words end in Y, and so few start
-    // with it, that chaining on it stranded the hand. Hardly any word
-    // starts with Q, X or Z either, so the chain skips back past those to
-    // the consonant before (LATEX chains on T). V and J are kept: plenty of
-    // words start with them (LARVA chains on V, not R). Only a word with no
-    // other consonant lets the chain off for that guess.
-    return word.split("").reverse().find((letter) => !"AEIOUY".includes(letter) && !CHAIN_SKIP.includes(letter)) || null;
+    return chainLetters(word);
   }
+  // "RV" -> "R/V", "R or V" for the row disc and the texts.
+  const chainShown = (letters) => String(letters || "").split("").join("/");
+  const chainSaid = (letters) => String(letters || "").split("").join(" or ");
 
   // What Locked In holds you to: the greens and yellows the board showed
   // (a masked tile proves nothing, so it isn't counted).
@@ -2188,7 +2196,7 @@
     const letter = effect === "letterDemand" ? demandLetter(game, used)
       : effect === "letterBan" ? banLetter(game, used)
         : effect === "wordChain" ? chainLetter(game, used) : null;
-    return letter ? { id: effect, letter } : null;
+    return letter ? { id: effect, letter: effect === "wordChain" ? chainShown(letter) : letter } : null;
   }
 
   // What the current guess's word rule asks, for the clue strip.
@@ -2207,7 +2215,7 @@
     }
     if (effect === "wordChain") {
       const letter = chainLetter(game, used);
-      return letter ? { id: effect, icon: "🔗", label: "Word Chain", text: "Start with", letters: [letter] } : null;
+      return letter ? { id: effect, icon: "🔗", label: "Word Chain", text: letter.length > 1 ? "Start with one of" : "Start with", letters: letter.split("") } : null;
     }
     if (effect === "lockedIn" && used > 0) {
       const known = lockedKnowledge(game);
@@ -2232,12 +2240,16 @@
     const used = guessesUsed(game);
     const effect = planEffect(game, used);
     const quest = state.activeQuest && state.activeQuest.id === "wordChain" ? state.activeQuest.chainLetter : null;
-    const wanted = effect === "letterDemand" ? demandLetter(game, used)
+    const asked = effect === "letterDemand" ? demandLetter(game, used)
       : effect === "wordChain" ? chainLetter(game, used) : quest || null;
+    // Word Chain may ask for either of two letters: a card of one is enough,
+    // and the one handed over is the easier start (not Q, X or Z).
+    const options = asked ? String(asked).split("") : [];
     const draft = new Set(state.draft || []);
-    state.hand = state.hand.filter((card) => !(card && card.umtRuleGift && card.glyph !== wanted && !draft.has(card.id)));
-    if (!wanted || typeof game._newCard !== "function") return;
-    if (state.hand.some((card) => card && card.glyph === wanted)) return;
+    state.hand = state.hand.filter((card) => !(card && card.umtRuleGift && !options.includes(card.glyph) && !draft.has(card.id)));
+    if (!options.length || typeof game._newCard !== "function") return;
+    if (state.hand.some((card) => card && options.includes(card.glyph))) return;
+    const wanted = options.slice().reverse().find((letter) => !"QXZ".includes(letter)) || options[options.length - 1];
     const card = game._newCard(wanted, "extra");
     card.umtRuleGift = true;
     state.hand.push(card);
@@ -2368,7 +2380,7 @@
     }
     if (effect === "wordChain") {
       const letter = chainLetter(game, used);
-      if (letter && word[0] !== letter) return `Word Chain: this word must start with ${letter}.`;
+      if (letter && !letter.includes(word[0])) return `Word Chain: this word must start with ${chainSaid(letter)}.`;
     }
     if (effect === "lockedIn" && used > 0) {
       const known = lockedKnowledge(game);
@@ -4107,7 +4119,7 @@
     consonantCrunch: { title: "Consonant Crunch", description: "This word may contain at most one vowel.", shape: "oneVowel" },
     letterDemand: { title: "Letter Demand", description: "This word must use the letter shown above the board. If you hold no card of it, you're handed one.", shape: "demand" },
     letterBan: { title: "Banned Letter", description: "This word may not use the letter shown above the board. A new letter is banned every guess.", shape: "ban" },
-    wordChain: { title: "Word Chain", description: "This word must start with the last consonant of your guess before (Y, Q, X and Z are skipped). If you hold no card of it, you're handed one.", shape: "chain" },
+    wordChain: { title: "Word Chain", description: "This word must start with one of the last two consonants of your guess before (Y doesn't count). If you hold no card of either, you're handed one.", shape: "chain" },
     lockedIn: { title: "Locked In", description: "Hard Mode: this word must keep every green letter in its place and use every yellow one.", shape: "lock" },
     shroudedEdges: { title: "Shrouded Edges", description: "The same marked positions remain hidden on every affected guess.", shape: "hiddenTiles" },
     countOnly: { title: "Count Only", description: "The marked tiles report only how many of them are green and how many yellow, never which is which. Every other tile in the row shows its real colour.", shape: "count", multiplayerId: "countOnly" },
@@ -4652,6 +4664,7 @@
         if (ruleLetter) {
           const verb = RULE_LETTER_IDS.get(id);
           button.classList.add("umt-rule-letter-button", `is-${id}`);
+          if (String(ruleLetter).length > 1) button.classList.add("is-pair");
           button.innerHTML = `<span class="umt-rule-letter" aria-hidden="true">${ruleLetter}</span>`;
           button.title = `${info.title}: ${verb} ${ruleLetter} on guess ${index + 1}. Click for details`;
           button.setAttribute("aria-label", `${info.title}: ${verb} ${ruleLetter} on guess ${index + 1}. Open explanation.`);

@@ -648,6 +648,15 @@ html.umt-mandatory-challenge .cuddle-challenge-decline {
   letter-spacing: 0;
 }
 
+/* Word Chain's two choices ("R/V") in one disc, a pill as wide as needed. */
+#cuddleScreen .umt-rule-letter-button.is-pair .umt-rule-letter {
+  width: auto;
+  min-width: 26px;
+  padding: 0 6px;
+  border-radius: 13px;
+  font-size: 12px;
+}
+
 #cuddleScreen .umt-rule-letter-button.is-letterBan .umt-rule-letter {
   background: #d8434f;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85), 0 3px 10px rgba(216, 67, 79, 0.45);
