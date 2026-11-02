@@ -5042,7 +5042,9 @@
     // Card) is paid into jokerCharges on every _beginRound, bosses too, and
     // skipping bosses here left those charges stranded -- the player owned
     // "two Jokers every round" and got none at the boss.
-    const hasJoker = (game.state.hand || []).some(card => card.source === "joker" && card.glyph === JOKER_GLYPH);
+    // Quest Satchel's Joker is only for the quest's guess (it goes after),
+    // so it doesn't stand in for one the player has earned.
+    const hasJoker = (game.state.hand || []).some(card => card.source === "joker" && card.glyph === JOKER_GLYPH && !card.questJoker);
     if (hasJoker) return;
     if (Number(mega.jokerCharges || 0) <= 0) return;
     mega.jokerCharges -= 1;

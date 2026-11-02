@@ -1026,7 +1026,7 @@
         const burstStyle = bursting ? ` style="--burst-shift:-${burstShift}ms"` : "";
         const masked = maskCols.includes(column);
         const tileClass = (result ? ` is-${result}` : letter ? " is-filled" : "")
-          + (isJokerTile ? " is-joker" : "") + moneyClass
+          + (isJokerTile ? " is-joker" : "") + (isJokerTile && draftCard && draftCard.questJoker ? " is-quest-joker" : "") + moneyClass
           + (masked ? ` umt-masked-tile${isDraft ? " is-mask-pending" : ""}` : "");
         const maskStyle = masked ? maskPulse : "";
         // Joker Lens: the draft's Joker shows the letter it will become.
@@ -1219,6 +1219,8 @@
       || (actionMode !== "play" && selectable.length === 0)
       || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
     const isJoker = group.glyph === window.CuddleEngine.CUDDLE_JOKER_GLYPH;
+    // Quest Satchel's Joker: only for the quest's guess, then it's gone.
+    const questJokerOnly = isJoker && group.cards.length > 0 && group.cards.every(card => card && card.questJoker);
     // A dead card (cuddle-burdens.js): no letter, only good for a mulligan.
     if (window.CuddleBurdens?.isDeadGlyph(group.glyph)) {
       const deadCount = group.cards.length;
@@ -1290,6 +1292,7 @@
       draftedCount ? "has-drafted" : "",
       selectedCount ? "is-selected" : "",
       isJoker ? "is-joker" : "",
+      questJokerOnly ? "is-quest-joker" : "",
       frozen ? "is-frozen" : ""
     ].filter(Boolean).join(" ");
     // A green card's position isn't otherwise visible from the hand -- the
@@ -1318,10 +1321,11 @@
     // charge this very card already represents.
     const jokerUsesLeft = isJoker ? Number(state.megaState?.jokerCharges || 0) + 1 : 0;
     const badgeValue = isJoker ? jokerUsesLeft : count;
-    const showBadge = isJoker ? jokerUsesLeft > 0 : count > 1;
+    const showBadge = questJokerOnly ? false : isJoker ? jokerUsesLeft > 0 : count > 1;
     const details = [
-      "reusable while in hand",
-      isJoker ? `${jokerUsesLeft} use${jokerUsesLeft === 1 ? "" : "s"} left this run`
+      questJokerOnly ? "quest Joker: any letter, for this quest's guess only" : "reusable while in hand",
+      questJokerOnly ? "gone after this guess"
+        : isJoker ? `${jokerUsesLeft} use${jokerUsesLeft === 1 ? "" : "s"} left this run`
         : persistentCard ? "stays in hand after a guess" : `${count} ${count === 1 ? "copy" : "copies"}`,
       statusLabel,
       frozen ? "frozen: can't be mulliganed this guess" : "",

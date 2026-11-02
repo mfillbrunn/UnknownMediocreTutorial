@@ -2933,13 +2933,16 @@
         draftedCount ? "has-drafted" : "",
         selectedCount ? "is-selected" : "",
         group.glyph === Engine.CUDDLE_JOKER_GLYPH ? "is-joker" : "",
+        group.glyph === Engine.CUDDLE_JOKER_GLYPH && group.cards.length && group.cards.every(card => card && card.questJoker) ? "is-quest-joker" : "",
         "umt-duel-hand-card"
       ].filter(Boolean).join(" ");
       // The Joker's badge counts uses left, as on a normal stage: the banked
       // charges plus the one this card already is.
       const isJoker = group.glyph === Engine.CUDDLE_JOKER_GLYPH;
+      const questJokerOnly = isJoker && group.cards.length > 0 && group.cards.every(card => card && card.questJoker);
       const jokerUses = isJoker ? Math.max(0, Number(state.megaState && state.megaState.jokerCharges) || 0) + 1 : 0;
-      const badge = isJoker
+      const badge = questJokerOnly ? ""
+        : isJoker
         ? `<span class="cuddle-card-count" aria-hidden="true">×${jokerUses}</span>`
         : infinite
         ? `<span class="cuddle-card-count is-infinite" aria-hidden="true">&infin;</span>`
