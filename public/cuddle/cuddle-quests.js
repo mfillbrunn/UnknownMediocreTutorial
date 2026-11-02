@@ -130,7 +130,7 @@
       icon: "🔗",
       title: "Word Chain",
       description: quest => `Start with ${quest.chainLetter} (from your last word).`,
-      detail: quest => `Your word must start with ${quest.chainLetter}, the last consonant of your previous guess. No ${quest.chainLetter} in your hand? You're given one for this guess.`,
+      detail: quest => `Your word must start with ${quest.chainLetter}, the last consonant of your previous guess (Y, Q, X and Z are skipped). No ${quest.chainLetter} in your hand? You're given one for this guess.`,
       test: ({ word, quest }) => word.startsWith(quest.chainLetter)
     },
     {
@@ -387,7 +387,7 @@
     { id: "letterBan", icon: "🚫", title: "Banned Letter", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 20,
       text: "don't use the letter shown (it changes every guess)." },
     { id: "wordChain", icon: "🔗", title: "Word Chain", kind: "rule", boss: true, challenge: true, mix: false, curse: false, reward: 24,
-      text: "start your word with the last consonant of your guess before." },
+      text: "start your word with the last consonant of your guess before (Y, Q, X and Z are skipped)." },
     { id: "lockedIn", icon: "🔒", title: "Locked In", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 22,
       text: "keep every green letter in its place and use every yellow one (Hard Mode)." },
     { id: "shortHand", icon: "✂️", title: "Short Hand", kind: "round", boss: true, challenge: false, mix: false, curse: true, reward: 0,
@@ -536,7 +536,7 @@
       id: "wordChain",
       icon: "🔗",
       title: "Word Chain",
-      description: "On the boss's marked guesses after the first, each word must start with the letter shown beside it: the last consonant of the word before.",
+      description: "On the boss's marked guesses after the first, each word must start with the letter shown beside it: the last consonant of the word before (Y, Q, X and Z are skipped).",
       turns: 3,
       rewardId: "revealGreen"
     },
@@ -776,9 +776,9 @@
         if (!previous) return;
         // As the Word Chain challenge does (cuddle-rebalance-v5.js
         // chainLetter): the last consonant, Y counted as a vowel and
-        // J/Q/V/X/Z skipped, since so few words start with those.
+        // Q/X/Z skipped, since so few words start with those.
         extra.chainLetter = String(previous.word || "").toUpperCase().split("").reverse()
-          .find(letter => !"AEIOUY".includes(letter) && !"JQVXZ".includes(letter));
+          .find(letter => !"AEIOUY".includes(letter) && !"QXZ".includes(letter));
         if (!extra.chainLetter) return;
       }
       if (definition.needsHistory && !(history || []).some(entry => entry?.word)) return;

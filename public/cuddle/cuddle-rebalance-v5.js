@@ -280,7 +280,7 @@
     questEndurance: ["Endurance Trial", "A quest; miss it and lose 1 hand size for the stage."],
     letterDemand: ["Letter Demand", "Your word must use the letter shown (you're handed a card of it)."],
     letterBan: ["Banned Letter", "Your word may not use the letter shown."],
-    wordChain: ["Word Chain", "Your word must start with the last consonant of your guess before."],
+    wordChain: ["Word Chain", "Your word must start with the last consonant of your guess before (Y, Q, X and Z are skipped)."],
     lockedIn: ["Locked In", "Keep every green in place and use every yellow."]
   });
 
@@ -2143,6 +2143,7 @@
   // The letter Word Chain asks a word to start with: the last consonant of
   // the guess before (so many words end in E that "the last letter" mostly
   // meant starting with E -- next to impossible from a hand).
+  const CHAIN_SKIP = "QXZ";
   function chainLetter(game, used) {
     const state = stateOf(game) || {};
     const history = Array.isArray(state.history) ? state.history : [];
@@ -2151,10 +2152,11 @@
     if (word.length !== 5) return null;
     // Y counts as a vowel here: so many words end in Y, and so few start
     // with it, that chaining on it stranded the hand. Hardly any word
-    // starts with J, Q, V, X or Z either, so the chain skips back past
-    // those to the consonant before (KMSVY chains on S). Only a word with
-    // no other consonant lets the chain off for that guess.
-    return word.split("").reverse().find((letter) => !"AEIOUY".includes(letter) && !"JQVXZ".includes(letter)) || null;
+    // starts with Q, X or Z either, so the chain skips back past those to
+    // the consonant before (LATEX chains on T). V and J are kept: plenty of
+    // words start with them (LARVA chains on V, not R). Only a word with no
+    // other consonant lets the chain off for that guess.
+    return word.split("").reverse().find((letter) => !"AEIOUY".includes(letter) && !CHAIN_SKIP.includes(letter)) || null;
   }
 
   // What Locked In holds you to: the greens and yellows the board showed
@@ -4105,7 +4107,7 @@
     consonantCrunch: { title: "Consonant Crunch", description: "This word may contain at most one vowel.", shape: "oneVowel" },
     letterDemand: { title: "Letter Demand", description: "This word must use the letter shown above the board. If you hold no card of it, you're handed one.", shape: "demand" },
     letterBan: { title: "Banned Letter", description: "This word may not use the letter shown above the board. A new letter is banned every guess.", shape: "ban" },
-    wordChain: { title: "Word Chain", description: "This word must start with the last consonant of your guess before. If you hold no card of it, you're handed one.", shape: "chain" },
+    wordChain: { title: "Word Chain", description: "This word must start with the last consonant of your guess before (Y, Q, X and Z are skipped). If you hold no card of it, you're handed one.", shape: "chain" },
     lockedIn: { title: "Locked In", description: "Hard Mode: this word must keep every green letter in its place and use every yellow one.", shape: "lock" },
     shroudedEdges: { title: "Shrouded Edges", description: "The same marked positions remain hidden on every affected guess.", shape: "hiddenTiles" },
     countOnly: { title: "Count Only", description: "The marked tiles report only how many of them are green and how many yellow, never which is which. Every other tile in the row shows its real colour.", shape: "count", multiplayerId: "countOnly" },
