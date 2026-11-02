@@ -22,7 +22,7 @@
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
   let current = 0; // index of the puzzle on screen
   let advanceTimer = null;
-  // The clock runs from the first tap of the day until the last grid is
+  // The clock runs from the moment Griddle opens until the last grid is
   // solved, only while Griddle is on screen. state.elapsed holds the time
   // banked so far; runningSince is when the current stretch began.
   let runningSince = null;
@@ -318,7 +318,6 @@
   function onWordClick(word) {
     const r = round();
     if (r.solved) return;
-    startClock();
     if (phase === "strike") {
       const i = r.struck.indexOf(word);
       if (i >= 0) {
@@ -433,8 +432,7 @@
     phase = r.guesses.length && !r.solved ? "strike" : "pick";
     selected = "";
     render();
-    // Coming back to a day already under way picks the clock back up.
-    if (state.elapsed) startClock();
+    startClock();
   }
 
   function close() {
@@ -448,7 +446,7 @@
     if (document.hidden) stopClock();
     // Back after midnight Eastern with Griddle still open: load the new day.
     else if (state.date !== today() && $("dailyPickScreen")?.classList.contains("active")) open();
-    else if (state.elapsed) startClock();
+    else startClock();
   });
   window.addEventListener("pagehide", () => { if (state) stopClock(); });
 
