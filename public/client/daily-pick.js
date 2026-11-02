@@ -4,9 +4,10 @@
 // secret. Select a word and confirm it, and the panel below shows Wordle
 // feedback for it; exclude the words that feedback rules out, then pick again,
 // until the secret is picked. Solving one moves on to the next; the score is
-// the total number of guesses across all three. The puzzles come from the UTC
-// date alone (no server state), and progress is kept in localStorage under
-// that date, so it resets daily and can't be replayed.
+// the total number of guesses across all three. The puzzles come from the
+// date in US Eastern time alone (no server state), and progress is kept in
+// localStorage under that date, so it resets daily at midnight Eastern and
+// can't be replayed.
 // It needs no server API, account or Supabase: the word list is a static file.
 
 (function () {
@@ -35,7 +36,10 @@
   let toggled = null; // { word, kind: "struck" | "freed" | "selected" }
 
   const $ = id => document.getElementById(id);
-  const today = () => new Date().toISOString().slice(0, 10);
+  // The day turns over at midnight US Eastern time (daylight saving
+  // included), for everyone wherever they are. "en-CA" formats as YYYY-MM-DD.
+  const dayFormat = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" });
+  const today = () => dayFormat.format(new Date());
 
   function hash(text) {
     let h = 1779033703 ^ text.length;
@@ -442,6 +446,8 @@
   document.addEventListener("visibilitychange", () => {
     if (!state) return;
     if (document.hidden) stopClock();
+    // Back after midnight Eastern with Griddle still open: load the new day.
+    else if (state.date !== today() && $("dailyPickScreen")?.classList.contains("active")) open();
     else if (state.elapsed) startClock();
   });
   window.addEventListener("pagehide", () => { if (state) stopClock(); });
