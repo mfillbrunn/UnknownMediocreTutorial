@@ -23,7 +23,7 @@
       color: "#e6c27a",
       steps: [
         ["Choose how hard", "The answer is one of a short list of words. Harder means more words to choose from, and a bigger prize. On Hard, your first guess also has a challenge (you see which when you play it).", "trial-levels"],
-        ["Three guesses, as usual", "Play three guesses like any Wordle. Every colour you see rules words out. The list stays hidden until your last guess.", "trial-board"],
+        ["Three guesses, as usual", "Play three guesses like any Cuddle. Every colour you see rules words out. The list stays hidden until your last guess.", "trial-board"],
         ["Pick the answer", "On guess 4 you don't type: the answer is one of the listed words. Check each one against your colours, tap × to cross out a word that can't be it, then pick. Hide list shows your guesses again. A wrong pick ends the run.", "trial-pick"],
         ["Pass, and take a Rare badge", "A right pick pays the Trial's points and money, and you choose one of three Rare badges.", "trial-reward"]
       ],

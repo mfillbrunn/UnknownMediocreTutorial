@@ -94,13 +94,13 @@
   const CHALLENGE_BY_ID = Object.freeze(Object.fromEntries(CHALLENGES.map(item => [item.id, item])));
 
   const BASE_STAGE_META = Object.freeze({
-    normal: Object.freeze({ title: "Wordle", label: "Wordle", icon: "stage-normal.svg", description: "A standard Cuddle Wordle round." }),
-    theme: Object.freeze({ title: "Themed Wordle", label: "Theme", icon: "stage-theme.svg", description: "Theme reveals scale by act: all, all but one, then one." }),
+    normal: Object.freeze({ title: "Cuddle", label: "Cuddle", icon: "stage-normal.svg", description: "A standard Cuddle round." }),
+    theme: Object.freeze({ title: "Themed Cuddle", label: "Theme", icon: "stage-theme.svg", description: "Theme reveals scale by act: all, all but one, then one." }),
     upgrade: Object.freeze({ title: "New Badge", label: "Badge", icon: "stage-upgrade.svg", description: "Choose a new badge." }),
     levelup: Object.freeze({ title: "Level-Ups", label: "Level-Up", icon: "stage-upgrade.svg", description: "Level up two different badges you hold." }),
     shop: Object.freeze({ title: "Wandering Paw", label: "Shop", icon: "stage-shop.svg", description: "Spend money on run supplies." }),
     event: Object.freeze({ title: "Mystery Event", label: "Event", icon: "stage-event-choice.svg", description: "Something happens on the road here. You only find out what when you arrive." }),
-    boss: Object.freeze({ title: "Boss", label: "Boss", icon: "stage-boss.svg", description: "A boss Wordle with permanent stakes." }),
+    boss: Object.freeze({ title: "Boss", label: "Boss", icon: "stage-boss.svg", description: "A boss Cuddle with permanent stakes." }),
     duel: Object.freeze({ title: "Word Duel", label: "Duel", icon: "stage-duel.svg", description: "Alternate guesses with an AI that also builds its words from a hand of letters. The first side to solve the word wins; if the AI does, you get nothing (on Hard, the run ends)." }),
     mystery: Object.freeze({ title: "Unknown Stop", label: "?", icon: "stage-mystery.svg", description: "This stop stays hidden until you enter it. It could even be a Duel or a Preset Trial. Stepping onto it pays +20 points." }),
     trial: Object.freeze({ title: "Preset Trial", label: "Trial", icon: "stage-trial.svg", description: "Three guesses, then the answer is one of a list. Pick it to pass. A wrong pick ends the run. Choose how many words when you arrive." })
@@ -124,7 +124,7 @@
       flavor: "A warm tin box sits beneath a quilted bench.",
       options: Object.freeze([
         opt("safe", "Take the loose coins", "Gain $[35] and [40] points.", [{ type: "money", amount: 35 }, { type: "points", amount: 40 }]),
-        opt("bold", "Open the sealed compartment", "Gain $[60] and choose one of three **Epic** badges, but the next Wordle must be solved within the world's guess limit (6, 5 or 4) or the run ends.", [{ type: "money", amount: 60 }, { type: "nextPenalty", key: "guess", amount: 1 }, { type: "pickTier", tier: "epic" }])
+        opt("bold", "Open the sealed compartment", "Gain $[60] and choose one of three **Epic** badges, but the next Cuddle must be solved within the world's guess limit (6, 5 or 4) or the run ends.", [{ type: "money", amount: 60 }, { type: "nextPenalty", key: "guess", amount: 1 }, { type: "pickTier", tier: "epic" }])
       ])
     }),
     Object.freeze({
@@ -132,8 +132,8 @@
       title: "Velvet Shortcut",
       flavor: "A soft path promises speed now and a bill later.",
       options: Object.freeze([
-        opt("safe", "Follow the marked trail", "Gain $[25], [30] points and two opening clues in the next Wordle.", [{ type: "money", amount: 25 }, { type: "points", amount: 30 }, { type: "nextBonus", key: "clue", amount: 2 }]),
-        opt("bold", "Cut through the velvet gate", "Choose one of three **Epic** badges, but the next Wordle pays $0.", [{ type: "nextPenalty", key: "noMoney", amount: 1 }, { type: "pickTier", tier: "epic" }])
+        opt("safe", "Follow the marked trail", "Gain $[25], [30] points and two opening clues in the next Cuddle.", [{ type: "money", amount: 25 }, { type: "points", amount: 30 }, { type: "nextBonus", key: "clue", amount: 2 }]),
+        opt("bold", "Cut through the velvet gate", "Choose one of three **Epic** badges, but the next Cuddle pays $0.", [{ type: "nextPenalty", key: "noMoney", amount: 1 }, { type: "pickTier", tier: "epic" }])
       ])
     }),
     Object.freeze({
@@ -141,7 +141,7 @@
       title: "Lantern Loan",
       flavor: "A lantern keeper offers light against future pressure.",
       options: Object.freeze([
-        opt("safe", "Borrow a small lantern", "Gain a random **Rare** badge and two extra mulligans in the next Wordle.", [{ type: "upgradeTier", tier: "rare" }, { type: "nextBonus", key: "mulligan", amount: 2 }]),
+        opt("safe", "Borrow a small lantern", "Gain a random **Rare** badge and two extra mulligans in the next Cuddle.", [{ type: "upgradeTier", tier: "rare" }, { type: "nextBonus", key: "mulligan", amount: 2 }]),
         opt("bold", "Take the keeper's purse", "Gain $[120], but the next boss is one guess tougher.", [{ type: "money", amount: 120 }, { type: "bossPenalty", amount: 1 }])
       ])
     }),
@@ -151,7 +151,7 @@
       flavor: "A tiny forge can shape one permanent advantage.",
       options: Object.freeze([
         opt("safe", "Sell the spare metal", "Gain $[20] and a random **Rare** badge.", [{ type: "money", amount: 20 }, { type: "upgradeTier", tier: "rare" }]),
-        opt("bold", "Work the forge all night", "Choose one of three **Epic** badges, but the next Wordle gives no badge reward.", [{ type: "nextPenalty", key: "rewards", amount: 1 }, { type: "pickTier", tier: "epic" }])
+        opt("bold", "Work the forge all night", "Choose one of three **Epic** badges, but the next Cuddle gives no badge reward.", [{ type: "nextPenalty", key: "rewards", amount: 1 }, { type: "pickTier", tier: "epic" }])
       ])
     }),
     Object.freeze({
@@ -159,7 +159,7 @@
       title: "Travelling Tailor",
       flavor: "A tailor has letter cards tucked into every pocket.",
       options: Object.freeze([
-        opt("safe", "Accept a sample", "Gain $[25], [30] points and three reward cards at the start of the next Wordle.", [{ type: "money", amount: 25 }, { type: "points", amount: 30 }, { type: "nextBonus", key: "cards", amount: 3 }]),
+        opt("safe", "Accept a sample", "Gain $[25], [30] points and three reward cards at the start of the next Cuddle.", [{ type: "money", amount: 25 }, { type: "points", amount: 30 }, { type: "nextBonus", key: "cards", amount: 3 }]),
         opt("bold", "Commission a suit", "Pay $[60] and choose one of three **Legendary** badges.", [{ type: "money", amount: -60 }, { type: "pickTier", tier: "legendary" }], { money: 60 })
       ])
     }),
@@ -186,8 +186,8 @@
       title: "Honeyed Compass",
       flavor: "The compass can reveal a direction, or every direction at a price.",
       options: Object.freeze([
-        opt("safe", "Ask for a bearing", "Three opening clues in the next Wordle and [40] points.", [{ type: "nextBonus", key: "clue", amount: 3 }, { type: "points", amount: 40 }]),
-        opt("bold", "Demand the full route", "Five opening clues in the next Wordle and a random **Epic** badge, but the next boss is one guess tougher.", [{ type: "nextBonus", key: "clue", amount: 5 }, { type: "upgradeTier", tier: "epic" }, { type: "bossPenalty", amount: 1 }])
+        opt("safe", "Ask for a bearing", "Three opening clues in the next Cuddle and [40] points.", [{ type: "nextBonus", key: "clue", amount: 3 }, { type: "points", amount: 40 }]),
+        opt("bold", "Demand the full route", "Five opening clues in the next Cuddle and a random **Epic** badge, but the next boss is one guess tougher.", [{ type: "nextBonus", key: "clue", amount: 5 }, { type: "upgradeTier", tier: "epic" }, { type: "bossPenalty", amount: 1 }])
       ])
     }),
     Object.freeze({
@@ -213,7 +213,7 @@
       title: "Moonlit Market",
       flavor: "A quiet stall sells certainty and gives samples away.",
       options: Object.freeze([
-        opt("safe", "Take the free samples", "[30] points, three reward cards at the start of the next Wordle and two extra mulligans.", [{ type: "points", amount: 30 }, { type: "nextBonus", key: "cards", amount: 3 }, { type: "nextBonus", key: "mulligan", amount: 2 }]),
+        opt("safe", "Take the free samples", "[30] points, three reward cards at the start of the next Cuddle and two extra mulligans.", [{ type: "points", amount: 30 }, { type: "nextBonus", key: "cards", amount: 3 }, { type: "nextBonus", key: "mulligan", amount: 2 }]),
         opt("bold", "Buy from the back room", "Pay $[20] and choose one of three **Epic** badges.", [{ type: "money", amount: -20 }, { type: "pickTier", tier: "epic" }], { money: 20 })
       ])
     }),
@@ -232,7 +232,7 @@
       flavor: "Dice clatter behind a curtain. The house always smiles.",
       options: Object.freeze([
         opt("gamble", "A friendly bet", "Stake $[15]. 60%: win $[60] back.", [{ type: "money", amount: -15 }, { type: "gamble", chance: 0.6, win: [{ type: "money", amount: 60 }], lose: [] }], { money: 15 }),
-        opt("risk", "Bet it all on red", "Stake $[35]. 50%: an **Epic** badge and $[100] back. Lose, and the next Wordle must be solved within the guess limit.", [{ type: "money", amount: -35 }, { type: "gamble", chance: 0.5, win: [{ type: "upgradeTier", tier: "epic" }, { type: "money", amount: 100 }], lose: [{ type: "nextPenalty", key: "guess", amount: 1 }] }], { money: 35 })
+        opt("risk", "Bet it all on red", "Stake $[35]. 50%: an **Epic** badge and $[100] back. Lose, and the next Cuddle must be solved within the guess limit.", [{ type: "money", amount: -35 }, { type: "gamble", chance: 0.5, win: [{ type: "upgradeTier", tier: "epic" }, { type: "money", amount: 100 }], lose: [{ type: "nextPenalty", key: "guess", amount: 1 }] }], { money: 35 })
       ])
     }),
     Object.freeze({
@@ -240,7 +240,7 @@
       title: "Blood Moon Altar",
       flavor: "The altar takes what you've earned and gives back something stranger.",
       options: Object.freeze([
-        opt("safe", "Leave an offering of coins", "Pay $[10] for a random **Rare** badge, two extra mulligans and two opening clues in the next Wordle.", [{ type: "money", amount: -10 }, { type: "upgradeTier", tier: "rare" }, { type: "nextBonus", key: "mulligan", amount: 2 }, { type: "nextBonus", key: "clue", amount: 2 }], { money: 10 }),
+        opt("safe", "Leave an offering of coins", "Pay $[10] for a random **Rare** badge, two extra mulligans and two opening clues in the next Cuddle.", [{ type: "money", amount: -10 }, { type: "upgradeTier", tier: "rare" }, { type: "nextBonus", key: "mulligan", amount: 2 }, { type: "nextBonus", key: "clue", amount: 2 }], { money: 10 }),
         opt("bold", "Offer your points", "Lose [100] points and choose one of three **Legendary** badges.", [{ type: "points", amount: -100 }, { type: "pickTier", tier: "legendary" }])
       ])
     }),
@@ -249,8 +249,8 @@
       title: "Wandering Scholar",
       flavor: "A scholar offers to cross a few letters off the list for good.",
       options: Object.freeze([
-        opt("safe", "Listen to a lecture", "Three opening clues in the next Wordle and [40] points.", [{ type: "nextBonus", key: "clue", amount: 3 }, { type: "points", amount: 40 }]),
-        opt("bold", "Study through the night", "A rare letter leaves the deck and every future answer for good (Pruning Shears), and you gain a random **Rare** badge, but the next Wordle must be solved within the guess limit.", [{ type: "upgradeId", id: "umtCullOne" }, { type: "upgradeTier", tier: "rare" }, { type: "nextPenalty", key: "guess", amount: 1 }])
+        opt("safe", "Listen to a lecture", "Three opening clues in the next Cuddle and [40] points.", [{ type: "nextBonus", key: "clue", amount: 3 }, { type: "points", amount: 40 }]),
+        opt("bold", "Study through the night", "A rare letter leaves the deck and every future answer for good (Pruning Shears), and you gain a random **Rare** badge, but the next Cuddle must be solved within the guess limit.", [{ type: "upgradeId", id: "umtCullOne" }, { type: "upgradeTier", tier: "rare" }, { type: "nextPenalty", key: "guess", amount: 1 }])
       ])
     }),
     // Deck burdens (cuddle-burdens.js): a dead card has no letter and only
@@ -270,7 +270,7 @@
       title: "Echoing Well",
       flavor: "Shout a coin into the well and it shouts back twice as loud.",
       options: Object.freeze([
-        opt("safe", "Listen to the echo", "Two opening clues in the next Wordle and [40] points.", [{ type: "nextBonus", key: "clue", amount: 2 }, { type: "points", amount: 40 }]),
+        opt("safe", "Listen to the echo", "Two opening clues in the next Cuddle and [40] points.", [{ type: "nextBonus", key: "clue", amount: 2 }, { type: "points", amount: 40 }]),
         opt("bold", "Shout into the well", "Gain $[120], but 3 doubled consonants join your deck for the rest of the run.", [{ type: "money", amount: 120 }, { type: "doubleConsonants", amount: 3 }])
       ])
     }),
@@ -279,7 +279,7 @@
       title: "Rusty Press",
       flavor: "The old letter press still works. Mostly.",
       options: Object.freeze([
-        opt("safe", "Oil the gears", "A random **Rare** badge and three extra mulligans in the next Wordle.", [{ type: "upgradeTier", tier: "rare" }, { type: "nextBonus", key: "mulligan", amount: 3 }]),
+        opt("safe", "Oil the gears", "A random **Rare** badge and three extra mulligans in the next Cuddle.", [{ type: "upgradeTier", tier: "rare" }, { type: "nextBonus", key: "mulligan", amount: 3 }]),
         opt("gamble", "Pull the lever", "70%: a random **Epic** upgrade. 30%: it jams, and 1 dead card joins your deck for the rest of the run.", [{ type: "gamble", chance: 0.7, win: [{ type: "upgradeTier", tier: "epic" }], lose: [{ type: "deadTile", amount: 1 }] }])
       ])
     })
@@ -590,7 +590,7 @@
         blueHaze: `For the first ${count} ${guessWord}, a green or yellow on the marked tiles appears blue instead.`,
         singleLie: `The marked tiles in each of the first ${count} feedback ${count === 1 ? "row lie" : "rows lie"} about their colour.`,
         lockedOpener: `At most one mulligan per guess until ${count === 1 ? "the first guess is" : `the first ${count} guesses are`} submitted.`,
-        fiveGuessSprint: "Solve this Wordle within the world's guess limit -- 6 guesses in world one, 5 in world two, 4 in world three -- or the run is lost.",
+        fiveGuessSprint: "Solve this Cuddle within the world's guess limit -- 6 guesses in world one, 5 in world two, 4 in world three -- or the run is lost.",
         vowelBudget: `Each of the first ${count} ${guessWord} may contain at most two vowels.`,
         cleanLetters: `Each of the first ${count} ${guessWord} must use five different letters.`,
         quickStart: `Each of the first ${count} ${guessWord} has a 50-second clock.`
@@ -1329,22 +1329,22 @@
           case "nextBonus":
             addNextBonus(map, effect.key, effect.amount || 1);
             messages.push(effect.key === "guess"
-              ? `The next Wordle gains ${effect.amount || 1} guess.`
+              ? `The next Cuddle gains ${effect.amount || 1} guess.`
               : effect.key === "mulligan"
-                ? `The next Wordle gains ${effect.amount || 1} mulligan${Number(effect.amount || 1) === 1 ? "" : "s"}.`
+                ? `The next Cuddle gains ${effect.amount || 1} mulligan${Number(effect.amount || 1) === 1 ? "" : "s"}.`
                 : effect.key === "cards"
-                  ? `${effect.amount || 1} reward card${Number(effect.amount || 1) === 1 ? "" : "s"} will arrive next Wordle.`
+                  ? `${effect.amount || 1} reward card${Number(effect.amount || 1) === 1 ? "" : "s"} will arrive next Cuddle.`
                   : `${effect.amount || 1} opening clue${Number(effect.amount || 1) === 1 ? "" : "s"} banked.`);
             break;
           case "nextPenalty":
             addNextPenalty(map, effect.key, effect.amount || 1);
             messages.push(effect.key === "guess"
-              ? "The next Wordle must be solved within the world's guess limit, or the run ends."
+              ? "The next Cuddle must be solved within the world's guess limit, or the run ends."
               : effect.key === "mulligan"
-                ? "The next Wordle starts one mulligan short."
+                ? "The next Cuddle starts one mulligan short."
                 : effect.key === "rewards"
-                  ? "The next Wordle gives no normal upgrade reward."
-                  : "The next solved Wordle pays $0.");
+                  ? "The next Cuddle gives no normal upgrade reward."
+                  : "The next solved Cuddle pays $0.");
             break;
           case "bossPenalty":
             map.bossPenalty = Number(map.bossPenalty || 0) + Number(effect.amount || 1);
@@ -1498,7 +1498,7 @@
       const upgrade = reversibleUpgrade(game);
       return [
         { id: "pay", title: "Pay $10", description: "Start Easy after paying $10.", enabled: Number(game.state.cuddleMoney || 0) >= 10, upgrade: null },
-        { id: "nextGuess", title: "Borrow a guess", description: "Start Easy, but the next normal Wordle begins one guess short.", enabled: true, upgrade: null },
+        { id: "nextGuess", title: "Borrow a guess", description: "Start Easy, but the next normal Cuddle begins one guess short.", enabled: true, upgrade: null },
         { id: "boss", title: "Strengthen the boss", description: "Start Easy, but the next boss is one guess tougher.", enabled: true, upgrade: null },
         { id: "deadTile", title: "Take a dead card", description: "Start Easy, but a dead card joins your deck for the rest of the run. It has no letter; mulligan it away.", enabled: Boolean(window.CuddleBurdens), upgrade: null },
         { id: "upgrade", title: upgrade ? `Give up ${upgrade.title}` : "Give up a badge level", description: upgrade ? `Surrender one level of ${upgrade.title}.` : "No badge can give up a level.", enabled: Boolean(upgrade), upgrade }
@@ -1817,7 +1817,7 @@
           return { ok: true, message: "Paid $10." };
         case "nextGuess":
           addNextPenalty(map, "guess", 1);
-          return { ok: true, message: "The next normal Wordle will start one guess short." };
+          return { ok: true, message: "The next normal Cuddle will start one guess short." };
         case "boss":
           map.bossPenalty = Number(map.bossPenalty || 0) + 1;
           return { ok: true, message: "The next boss will be one guess tougher." };
@@ -2933,13 +2933,16 @@
         draftedCount ? "has-drafted" : "",
         selectedCount ? "is-selected" : "",
         group.glyph === Engine.CUDDLE_JOKER_GLYPH ? "is-joker" : "",
+        group.glyph === Engine.CUDDLE_JOKER_GLYPH && group.cards.length && group.cards.every(card => card && card.questJoker) ? "is-quest-joker" : "",
         "umt-duel-hand-card"
       ].filter(Boolean).join(" ");
       // The Joker's badge counts uses left, as on a normal stage: the banked
       // charges plus the one this card already is.
       const isJoker = group.glyph === Engine.CUDDLE_JOKER_GLYPH;
+      const questJokerOnly = isJoker && group.cards.length > 0 && group.cards.every(card => card && card.questJoker);
       const jokerUses = isJoker ? Math.max(0, Number(state.megaState && state.megaState.jokerCharges) || 0) + 1 : 0;
-      const badge = isJoker
+      const badge = questJokerOnly ? ""
+        : isJoker
         ? `<span class="cuddle-card-count" aria-hidden="true">×${jokerUses}</span>`
         : infinite
         ? `<span class="cuddle-card-count is-infinite" aria-hidden="true">&infin;</span>`
@@ -3024,7 +3027,7 @@
     }
 
     // Short labels for the Easy costs; the full wording is the tooltip.
-    const EASY_COST_LABELS = { pay: "Pay $10", nextGuess: "Next Wordle −1 guess", boss: "Next boss −1 guess", deadTile: "+1 dead card" };
+    const EASY_COST_LABELS = { pay: "Pay $10", nextGuess: "Next Cuddle −1 guess", boss: "Next boss −1 guess", deadTile: "+1 dead card" };
 
     // Three tiers, easiest first, each with its own colour and pips. Easy
     // costs something up front; Medium and Hard pay more on a win.
@@ -3245,7 +3248,7 @@
       const skull = '<svg class="umt-legend-mark is-skull" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C7 2 3.5 5.6 3.5 10.2c0 2.8 1.3 4.9 3.3 6.2V20c0 .6.4 1 1 1h1.5v-2h1.4v2h2.6v-2h1.4v2h1.5c.6 0 1-.4 1-1v-3.6c2-1.3 3.3-3.4 3.3-6.2C20.5 5.6 17 2 12 2zM8.7 13.2a2 2 0 110-4 2 2 0 010 4zm6.6 0a2 2 0 110-4 2 2 0 010 4z"/></svg>';
       const marks = [
         [heart, "Easier", "A theme of the answer, or one of its letters, is given at the start.", 5],
-        ["", "Regular", "A plain Wordle. Sometimes a word is played for you as your first guess.", 12],
+        ["", "Regular", "A plain Cuddle. Sometimes a word is played for you as your first guess.", 12],
         [skull, "Harder", "One challenge against you.", 25],
         [skull + skull, "Hard", "Two challenges, or a Rare Word: the answer may be unusual.", 50],
         [skull + skull + skull, "Hardest", "A Rare Word with a challenge on top.", 80]
@@ -3258,14 +3261,14 @@
         ? window.CuddleRebalanceV5.mapChallenges(game)
         : CHALLENGES.map(meta => ({ title: meta.title, description: meta.description }));
       const stops = [
-        row("wordle", "Wordle", "Solve the word. Its mark says how hard it is (below); what it hides you only find out by playing."),
+        row("wordle", "Cuddle", "Solve the word. Its mark says how hard it is (below); what it hides you only find out by playing."),
         row("trial", "Trial", "Find the answer among a list of words. Open Trial: the list shows from the start, and you pick after two guesses. Preset Trial: three guesses, then the list. Pair Trial: no typing, each guess is one of two words. A right pick passes, a wrong one ends the run."),
         row("event", "Event", "A choice: a safe reward, or a bigger one with a cost."),
         row("shop", "Shop", "Spend money on supplies for the next stages or the next boss, and sell a badge."),
         row("upgrade", "New Badge", "Choose a new badge."),
         row("levelup", "Level-Ups", "Level up two different badges you hold."),
         row("duel", "Duel", "Take turns guessing with an AI: the first to solve wins money. Losing costs nothing on Easy, 50 points on Medium, and ends the run on Hard. Never in world 1."),
-        row("mystery", "Unknown", "Stays hidden until you step onto it. Usually a Wordle, sometimes a Duel or a Trial. Pays +20 points."),
+        row("mystery", "Unknown", "Stays hidden until you step onto it. Usually a Cuddle, sometimes a Duel or a Trial. Pays +20 points."),
         row("boss", "Boss", "Guards the end of each world. The number on it is the points you need before you can challenge it. Beat it for a permanent reward."),
         row("final", "Final Boss", "The last guardian, at the top of the Eclipse Citadel.")
       ].join("");
@@ -3277,7 +3280,7 @@
         `<div class="cuddle-overlay umt-stage-legend-overlay" role="dialog" aria-modal="true" aria-labelledby="umtStageLegendTitle">`
         + `<section class="cuddle-modal umt-stage-legend"><header><div><span class="cuddle-eyebrow">MAP KEY</span><h2 id="umtStageLegendTitle">What every stop means</h2></div><button type="button" class="umt-legend-close" data-cuddle-campaign-action="expanded-help-close" aria-label="Close map key">&times;</button></header>`
         + `<h3>Stops</h3><ul>${stops}</ul>`
-        + `<h3>How hard a Wordle is</h3><ul class="umt-legend-tiers">${markRows}</ul>`
+        + `<h3>How hard a Cuddle is</h3><ul class="umt-legend-tiers">${markRows}</ul>`
         + `<h3>Challenges a skull can hide</h3><ul>${challengeRows}</ul>`
         + `</section></div>`
       );

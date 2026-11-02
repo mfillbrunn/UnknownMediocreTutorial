@@ -389,7 +389,7 @@
     { id: "wordChain", icon: "🔗", title: "Word Chain", kind: "rule", boss: true, challenge: true, mix: false, curse: false, reward: 24,
       text: "start your word with the last consonant of your guess before." },
     { id: "lockedIn", icon: "🔒", title: "Locked In", kind: "rule", boss: true, challenge: true, mix: true, curse: false, reward: 22,
-      text: "keep every green letter in its place and use every yellow one (Wordle's Hard Mode)." },
+      text: "keep every green letter in its place and use every yellow one (Hard Mode)." },
     { id: "shortHand", icon: "✂️", title: "Short Hand", kind: "round", boss: true, challenge: false, mix: false, curse: true, reward: 0,
       text: "one consonant fewer in your hand (two on Hard); only 5 guesses." },
     // Preset Trial is a stage of its own now (cuddle-curses.js), not a boss.

@@ -132,12 +132,12 @@
   }
 
   var NODE_TYPES = {
-    normal: { icon: "🟩", title: "Wordle", label: "Wordle", description: "A plain round: solve the Wordle, nothing else in play.", playsRound: true },
-    theme: { icon: "🧭", title: "Themed Wordle", label: "Theme", description: "A round that opens with one of the solution's categories already revealed.", playsRound: true },
+    normal: { icon: "🟩", title: "Cuddle", label: "Cuddle", description: "A plain round: solve the Cuddle, nothing else in play.", playsRound: true },
+    theme: { icon: "🧭", title: "Themed Cuddle", label: "Theme", description: "A round that opens with one of the solution's categories already revealed.", playsRound: true },
     challenge: { icon: "⚡", title: "Mini Challenge", label: "Challenge", description: "A round that always offers a challenge: take it for extra money, or wave it off.", playsRound: true },
-    shop: { icon: "🛒", title: "The Wandering Paw", label: "Shop", description: "Spend money on one-use supplies. No Wordle here.", playsRound: false },
-    upgrade: { icon: "✨", title: "Free Upgrade", label: "Upgrade", description: "Take a free permanent upgrade. No Wordle here.", playsRound: false },
-    levelup: { icon: "⏫", title: "Level-Ups", label: "Level-Up", description: "Level up two different badges you hold. No Wordle here.", playsRound: false },
+    shop: { icon: "🛒", title: "The Wandering Paw", label: "Shop", description: "Spend money on one-use supplies. No Cuddle here.", playsRound: false },
+    upgrade: { icon: "✨", title: "Free Upgrade", label: "Upgrade", description: "Take a free permanent upgrade. No Cuddle here.", playsRound: false },
+    levelup: { icon: "⏫", title: "Level-Ups", label: "Level-Up", description: "Level up two different badges you hold. No Cuddle here.", playsRound: false },
     event: { icon: "❔", title: "Event", label: "Event", description: "A trade: something gained now for something given up.", playsRound: false },
     boss: { icon: "💀", title: "Boss", label: "Boss", description: "A boss round: pass or fail, and its reward is permanent.", playsRound: true },
     trial: { icon: "📜", title: "Preset Trial", label: "Trial", description: "On guess 3, the answer is one of a few listed words. Pick it to pass. A wrong pick ends the run.", playsRound: true }
@@ -1105,7 +1105,7 @@
     if (kind === "boss") return node.gate === "before-7" ? "Boss II" : "Boss I";
     if (kind === "mystery") return "Unknown";
     // Every Wordle stop has the same name; its tier is the only difference.
-    if (isStageStop(kind)) return "Wordle";
+    if (isStageStop(kind)) return "Cuddle";
     var variant = node.cuddleVariant;
     if (variant && (kind === "wordle" || kind === "challenge")) {
       if (variant.kind === "mandatoryChallenge") {
@@ -1120,7 +1120,7 @@
     if (node.type === "theme") return "Themed";
     if (kind === "upgrade") return "New Badge";
     if (kind === "levelup") return "Level-Ups";
-    return window.CuddleWorlds.KIND_NAMES[kind] || "Wordle";
+    return window.CuddleWorlds.KIND_NAMES[kind] || "Cuddle";
   }
 
   function laneX(row, node, col) {
@@ -1581,7 +1581,7 @@
   }
 
   var VARIANT_SUMMARIES = {
-    plain: "A standard Wordle, nothing added.",
+    plain: "A standard Cuddle, nothing added.",
     themedWordle: "Starts with a theme of the answer revealed.",
     randomOpener: "A random word is played for you as your first guess.",
     luckyStart: "Starts with one letter already in its place.",
@@ -1605,7 +1605,7 @@
       var pay = stopPay(game, node);
       brief.tier = stopTier(game, node);
       // The title names how hard it is (the chip above already says Wordle).
-      brief.title = ["Easy Wordle", "Regular Wordle", "Tricky Wordle", "Hard Wordle", "Brutal Wordle"][brief.tier + 1] || "Wordle";
+      brief.title = ["Easy Cuddle", "Regular Cuddle", "Tricky Cuddle", "Hard Cuddle", "Brutal Cuddle"][brief.tier + 1] || "Cuddle";
       brief.pay = pay;
       return brief;
     }
@@ -1635,7 +1635,7 @@
         brief.gets.unshift({ type: "perk", text: tier === 1 ? "Every theme revealed" : tier === 2 ? "All themes but one revealed" : "One theme revealed" });
       }
       if (kind === "challenge" && meta) {
-        brief.summary = "A Wordle with a rule against you.";
+        brief.summary = "A Cuddle with a rule against you.";
         brief.risks.push(meta.description);
       }
     } else if (kind === "challenge") {
@@ -1643,7 +1643,7 @@
       var partCount = Array.isArray(variant.parts) ? variant.parts.length : 1;
       brief.summary = partCount > 1
         ? partCount + " challenges at once, one after the other. Beat it for all their bonuses."
-        : "A Wordle with a rule against you. Beat it for a bonus.";
+        : "A Cuddle with a rule against you. Beat it for a bonus.";
       brief.difficulty = Number(variant.skulls) || 0;
       if (variant.ease === "luckyStart") brief.gets.push({ type: "perk", text: "One letter placed for you" });
       if (variant.ease === "themedWordle") brief.gets.push({ type: "perk", text: "One theme revealed" });
@@ -1661,10 +1661,10 @@
       brief.summary = "Something happens on the road here. You only find out what when you arrive.";
       brief.options = null;
     } else if (kind === "upgrade") {
-      brief.summary = "A quiet waystone. No Wordle here.";
+      brief.summary = "A quiet waystone. No Cuddle here.";
       brief.gets.push({ type: "perk", text: "Pick 1 of 3 new badges" });
     } else if (kind === "levelup") {
-      brief.summary = "A training ground. No Wordle here.";
+      brief.summary = "A training ground. No Cuddle here.";
       brief.gets.push({ type: "perk", text: "Level up 2 different badges you hold" });
     } else if (kind === "duel") {
       brief.summary = meta ? meta.description : "Race an AI to the answer.";
@@ -1811,7 +1811,7 @@
           + " data-shop-item-id=\"" + node.row + ":" + node.col + "\">"
           + (stageCard
             ? "<span class=\"cuddle-choice-icon\">" + escapeHtml(NODE_TYPES.normal.icon) + "</span>"
-              + "<strong>" + escapeHtml("Wordle" + direction) + "</strong>"
+              + "<strong>" + escapeHtml("Cuddle" + direction) + "</strong>"
               + "<small>" + goldenMoney(escapeHtml("On a win: +" + stopPay(game, node) + " points and +$" + stopPay(game, node) + ".")) + "</small>"
             : "<span class=\"cuddle-choice-icon\">" + escapeHtml(nodeIcon(node)) + "</span>"
               + "<strong>" + escapeHtml(nodeTitle(node) + direction) + "</strong>"

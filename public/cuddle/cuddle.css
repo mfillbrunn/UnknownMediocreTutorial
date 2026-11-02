@@ -2018,6 +2018,17 @@
   box-shadow: 0 0 0 1px rgba(242, 211, 111, 0.5), 0 6px 13px rgba(0, 0, 0, 0.15);
 }
 
+/* Quest Satchel's Joker is only for the quest's guess: a dashed outline
+   and a paler purple say it won't stay. */
+.cuddle-card.is-joker.is-quest-joker,
+.cuddle-tile.is-draft-tile.is-joker.is-quest-joker {
+  border-style: dashed;
+  border-color: rgba(233, 216, 255, 0.85);
+  background: linear-gradient(160deg, rgba(178, 150, 236, 0.62), rgba(132, 104, 206, 0.5));
+  box-shadow: none;
+  color: #fff;
+}
+
 .cuddle-preset-words {
   display: flex;
   flex-wrap: wrap;

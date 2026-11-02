@@ -868,8 +868,9 @@
   // (level 1), a Joker (level 2) or both (level 3). The letter is drawn
   // at once, and the hand holds one more for that guess; cards left
   // unplayed stay, as a hand is never cut down to its limit
-  // (cuddle-engine.js _trimHandToLimit). The Joker sits on top of the
-  // hand, outside the limit, until it's played.
+  // (cuddle-engine.js _trimHandToLimit). The Joker is only for the quest's
+  // guess: it sits on top of the hand, outside the limit, shown dashed and
+  // paler (questJoker), and is taken back once that guess is played.
   // ---------------------------------------------------------------------------
 
   function satchelGuessKey(state) {
@@ -886,8 +887,8 @@
     state.umtQuestSatchel = { key: key, guess: satchelGuessKey(state), letter: letter };
     var notes = [];
     if (level >= 2) {
-      state.hand.push({ id: game._nextId("joker"), glyph: Engine.CUDDLE_JOKER_GLYPH || "\u2605", source: "joker", freeJoker: true });
-      notes.push("a Joker");
+      state.hand.push({ id: game._nextId("joker"), glyph: Engine.CUDDLE_JOKER_GLYPH || "\u2605", source: "joker", freeJoker: true, questJoker: true });
+      notes.push("a Joker for this guess only");
     }
     if (letter) {
       // Drawn on top of the hand, even one already over its limit; the
@@ -897,6 +898,37 @@
       notes.push(drawn ? "an extra letter (" + drawn.glyph + ")" : "an extra letter");
     }
     note(game, "Quest Satchel: " + notes.join(" and ") + " for this quest.");
+  }
+
+  // The quest's Joker goes once its guess is over (played, the stage ended
+  // or a new stage began), whether or not it was used.
+  function dropQuestJoker(game) {
+    var state = game && game.state;
+    if (!state || !Array.isArray(state.hand)) return;
+    var satchel = state.umtQuestSatchel;
+    var live = state.status === "playing" && satchel && satchel.guess === satchelGuessKey(state);
+    if (live) return;
+    var gone = state.hand.filter(function temp(card) { return card && card.questJoker; }).map(function id(card) { return card.id; });
+    if (!gone.length) return;
+    state.hand = state.hand.filter(function keep(card) { return !(card && card.questJoker); });
+    if (Array.isArray(state.draft)) state.draft = state.draft.filter(function keep(id) { return gone.indexOf(id) === -1; });
+  }
+
+  var baseSubmitSatchel = proto.submitDraft;
+  if (typeof baseSubmitSatchel === "function") {
+    proto.submitDraft = function submitDraftDropQuestJoker() {
+      var result = baseSubmitSatchel.apply(this, arguments);
+      try { if (result && result.ok) dropQuestJoker(this); } catch (error) { console.warn("Cuddle new badges: quest Joker cleanup failed.", error); }
+      return result;
+    };
+  }
+  var baseBeginRoundSatchel = proto._beginRound;
+  if (typeof baseBeginRoundSatchel === "function") {
+    proto._beginRound = function beginRoundDropQuestJoker() {
+      var result = baseBeginRoundSatchel.apply(this, arguments);
+      try { dropQuestJoker(this); } catch (error) { console.warn("Cuddle new badges: quest Joker cleanup failed.", error); }
+      return result;
+    };
   }
 
   var baseHandLimit = proto.getHandLimit;
@@ -912,6 +944,7 @@
   var baseEnsureQuest = proto._ensureQuestForNextGuess;
   if (typeof baseEnsureQuest === "function") {
     proto._ensureQuestForNextGuess = function ensureQuestWithScout() {
+      try { dropQuestJoker(this); } catch (error) { console.warn("Cuddle new badges: quest Joker cleanup failed.", error); }
       var result = baseEnsureQuest.apply(this, arguments);
       try {
         placeChainedQuest(this);

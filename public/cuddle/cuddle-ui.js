@@ -1026,7 +1026,7 @@
         const burstStyle = bursting ? ` style="--burst-shift:-${burstShift}ms"` : "";
         const masked = maskCols.includes(column);
         const tileClass = (result ? ` is-${result}` : letter ? " is-filled" : "")
-          + (isJokerTile ? " is-joker" : "") + moneyClass
+          + (isJokerTile ? " is-joker" : "") + (isJokerTile && draftCard && draftCard.questJoker ? " is-quest-joker" : "") + moneyClass
           + (masked ? ` umt-masked-tile${isDraft ? " is-mask-pending" : ""}` : "");
         const maskStyle = masked ? maskPulse : "";
         // Joker Lens: the draft's Joker shows the letter it will become.
@@ -1219,6 +1219,8 @@
       || (actionMode !== "play" && selectable.length === 0)
       || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
     const isJoker = group.glyph === window.CuddleEngine.CUDDLE_JOKER_GLYPH;
+    // Quest Satchel's Joker: only for the quest's guess, then it's gone.
+    const questJokerOnly = isJoker && group.cards.length > 0 && group.cards.every(card => card && card.questJoker);
     // A dead card (cuddle-burdens.js): no letter, only good for a mulligan.
     if (window.CuddleBurdens?.isDeadGlyph(group.glyph)) {
       const deadCount = group.cards.length;
@@ -1290,6 +1292,7 @@
       draftedCount ? "has-drafted" : "",
       selectedCount ? "is-selected" : "",
       isJoker ? "is-joker" : "",
+      questJokerOnly ? "is-quest-joker" : "",
       frozen ? "is-frozen" : ""
     ].filter(Boolean).join(" ");
     // A green card's position isn't otherwise visible from the hand -- the
@@ -1318,10 +1321,11 @@
     // charge this very card already represents.
     const jokerUsesLeft = isJoker ? Number(state.megaState?.jokerCharges || 0) + 1 : 0;
     const badgeValue = isJoker ? jokerUsesLeft : count;
-    const showBadge = isJoker ? jokerUsesLeft > 0 : count > 1;
+    const showBadge = questJokerOnly ? false : isJoker ? jokerUsesLeft > 0 : count > 1;
     const details = [
-      "reusable while in hand",
-      isJoker ? `${jokerUsesLeft} use${jokerUsesLeft === 1 ? "" : "s"} left this run`
+      questJokerOnly ? "quest Joker: any letter, for this quest's guess only" : "reusable while in hand",
+      questJokerOnly ? "gone after this guess"
+        : isJoker ? `${jokerUsesLeft} use${jokerUsesLeft === 1 ? "" : "s"} left this run`
         : persistentCard ? "stays in hand after a guess" : `${count} ${count === 1 ? "copy" : "copies"}`,
       statusLabel,
       frozen ? "frozen: can't be mulliganed this guess" : "",
@@ -2454,7 +2458,7 @@
             <article><strong>Your tiles</strong><p>Any card in your hand can be used as many times as you like in a word. After a guess, vowels stay in your hand (they turn ${tile("red", "red")} once ruled out), and so do letters found in the answer; other consonants you guessed with are used up and redrawn from your deck. A mulligan (${rules.mulligans} per stage) swaps consonants you can't use. Out of luck? Tap your deck to wash out: new consonants and +2 mulligans, for a guess.</p></article>
             <article><strong>Points</strong><p>Every tile pays: grey ${rules.greyPoints}, yellow ${rules.yellowPoints}, green ${rules.greenPoints}. Unused rows and mulligans pay a bonus. Solve within the world's guess window (6, then 5, then 4) or each extra guess costs points.</p></article>
             <article><strong>Money</strong><p>Clearing a stage pays $10, and challenges pay more. Spend it in shops, on packs, at events and on reward refreshes.</p></article>
-            <article><strong>The map</strong><p>Pick a stop on each row: Wordle stages (some with a challenge, skulls show how hard), events, trials and duels. Before each boss: a shop, a new badge, or level-ups.</p></article>
+            <article><strong>The map</strong><p>Pick a stop on each row: Cuddle stages (some with a challenge, skulls show how hard), events, trials and duels. Before each boss: a shop, a new badge, or level-ups.</p></article>
             <article><strong>Badges</strong><p>After each stage, take a new badge or level up ones you hold; they last the whole run. Common, Rare or Epic; Legendary only after a boss. Quests pop up every few guesses and pay a bonus pick.</p></article>
             <article><strong>Bosses</strong><p>Each world ends in a boss you can only face with enough points. Bosses bend the rules and leave a curse, but give a Legendary pick. Beat the final boss to win.</p></article>
           </div>

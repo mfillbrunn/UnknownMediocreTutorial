@@ -21,10 +21,11 @@
  *     points. Solve by guess 5 (world 1) or guess 4 (worlds 2 and 3) and
  *     it pays twice the bet (+20 / +40 / +80); later than that and the
  *     bet is lost.
- *   - Hard Mode (common, 3 levels): a stage solved in Wordle hard mode --
- *     every guess keeps each green in place and uses each yellow you were
- *     shown -- pays +35 / +60 / +100 points (it's hard with a hand of
- *     cards).
+ *   - Hard Mode: a stage solved in Wordle hard mode -- every guess keeps
+ *     each green in place and uses each yellow you were shown -- pays +15
+ *     points to everyone (from the second guess on: a first-guess solve had
+ *     no clues to follow). The Hard Mode badge (common, 3 levels) adds
+ *     +35 / +60 / +100 on top (it's hard with a hand of cards).
  *
  * Improve (rare; id "combine"): taking it turns one of your badges into a random badge
  * one rarity higher (common -> rare -> epic -> legendary). It can only
@@ -84,6 +85,8 @@
   // The guess a High Roller bet must be won by, per world.
   var HIGH_ROLLER_BY = [5, 4, 4];
   var HARD_MODE_POINTS = [0, 35, 60, 100];
+  // What a hard-mode solve pays without the badge.
+  var HARD_MODE_BASE = 15;
   var TIER_UP = { common: "rare", rare: "epic", epic: "legendary" };
   var VOWELS = "AEIOU";
 
@@ -488,9 +491,12 @@
         note(this, won ? "High Roller: bet " + bet + ", won +" + prize + "." : "High Roller: not solved by guess " + HIGH_ROLLER_BY[worldIndex(this)] + ", the " + bet + "-point bet is lost.");
       }
       var hard = Math.min(3, levelOf(this, "hardMode"));
-      if (solved && hard > 0 && solvedInHardMode(history)) {
-        if (stageBonus(this, HARD_MODE_POINTS[hard], "umtHardMode", "Hard Mode") > 0) {
-          note(this, "Hard Mode: +" + HARD_MODE_POINTS[hard] + " points.");
+      if (solved && solvedInHardMode(history)) {
+        // Everyone gets the base from the second guess on; the badge adds
+        // its level's points on top (and pays on a first-guess solve too).
+        var hardPay = (history.length >= 2 ? HARD_MODE_BASE : 0) + (hard > 0 ? HARD_MODE_POINTS[hard] : 0);
+        if (hardPay > 0 && stageBonus(this, hardPay, "umtHardMode", "Hard mode") > 0) {
+          note(this, "Hard mode: +" + hardPay + " points.");
         }
       }
       if (solved && levelOf(this, "leanBuild") > 0) {
@@ -527,6 +533,7 @@
     HIGH_ROLLER_BET: HIGH_ROLLER_BET,
     HIGH_ROLLER_WIN: HIGH_ROLLER_WIN,
     HARD_MODE_POINTS: HARD_MODE_POINTS,
+    HARD_MODE_BASE: HARD_MODE_BASE,
     followsHardMode: followsHardMode,
     combinable: function combinableIds(game) { return combinable(game); },
     leanPayout: leanPayout,
