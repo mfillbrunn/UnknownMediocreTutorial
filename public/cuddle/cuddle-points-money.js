@@ -95,7 +95,7 @@
   var TILE_KINDS = [
     { kind: "money", bonus: "bonusSquares", weight: function (level) { return level; } },
     { kind: "points", bonus: "bonusSquares", weight: function (level) { return level; } },
-    { kind: "mulligan", bonus: "mulliganTiles", weight: function (level) { return 0.9 * level; } },
+    { kind: "mulligan", bonus: "mulliganTiles", weight: function (level) { return 1.3 * level; } },
     { kind: "joker", bonus: "jokerTiles", weight: function (level) { return 0.6 * level; } },
     { kind: "hint", bonus: "oracleTiles", weight: function (level) { return 0.4 * level; } }
   ];
@@ -148,8 +148,8 @@
     // The board's own squares need a square badge; without one a stage
     // has none (Treasure Map and the rest below still add theirs).
     var owned = TILE_KINDS.some(function has(entry) { return bonusLevel(state, entry.bonus) > 0; });
-    // Money & Point Squares: levels 2 and 3 add one, then two more.
-    var bonusExtra = [0, 0, 1, 2][Math.min(3, Math.floor(bonusLevel(state, "bonusSquares")))];
+    // Money & Point Squares: one extra square at level 1, two at 2, three at 3.
+    var bonusExtra = [0, 1, 2, 3][Math.min(3, Math.floor(bonusLevel(state, "bonusSquares")))];
     var base = (owned ? rows.filter(function roll() { return random() < TILE_CHANCE_PER_GUESS; }).length : 0)
       + bonusExtra
       // Treasure Trove from the shop: +2 tiles while its stages last

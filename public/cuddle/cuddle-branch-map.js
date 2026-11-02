@@ -1607,6 +1607,8 @@
       // The title names how hard it is (the chip above already says Wordle).
       brief.title = ["Easy Cuddle", "Regular Cuddle", "Tricky Cuddle", "Hard Cuddle", "Brutal Cuddle"][brief.tier + 1] || "Cuddle";
       brief.pay = pay;
+      var rebalanceMoney = window.CuddleRebalanceV5;
+      brief.money = rebalanceMoney && typeof rebalanceMoney.stageMoney === "function" ? Number(rebalanceMoney.stageMoney(brief.tier)) || 0 : pay;
       return brief;
     }
     // Only what's special about this stop is listed -- the usual per-tile
@@ -1695,7 +1697,8 @@
         : tier < 0 ? "<span class=\"umt-stop-heart\"><svg viewBox=\"-6 -6 12 11\" aria-hidden=\"true\"><path d=\"" + HEART_PATH + "\"/></svg></span>" : "";
       return "<div class=\"umt-stop-pay\">" + mark
         + "<span class=\"umt-stop-pay-label\">On a win</span>"
-        + "<b class=\"umt-points\">+" + brief.pay + " pts</b><b class=\"umt-money\">+$" + brief.pay + "</b></div>";
+        + "<b class=\"umt-points\">+" + brief.pay + " pts</b>"
+        + (brief.money > 0 ? "<b class=\"umt-money\">+$" + brief.money + "</b>" : "") + "</div>";
     }
     var html = brief.summary ? "<p class=\"umt-stop-summary\">" + rewardText(brief.summary) + "</p>" : "";
     if (brief.difficulty) {

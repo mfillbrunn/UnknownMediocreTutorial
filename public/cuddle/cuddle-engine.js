@@ -154,7 +154,7 @@
   const EARLY_SOLVE_BONUS = 0;
   // Quests start at zero and are only worth anything once the Quest Value
   // reward (+5 a pick, stacking) or the Quest Head Start boss reward is taken.
-  const QUEST_POINTS_PER_PICK = 10;
+  const QUEST_POINTS_PER_PICK = 15;
   // Quest Trial boss: missing the forced quest on a guess costs this many
   // points from the running total (never below zero).
   const QUEST_TRIAL_PENALTY = 5;
@@ -1701,7 +1701,8 @@
       if (questComplete) {
         this.state.status = "questReward";
         this.state.questRewardChoices = window.CuddleQuestBook?.rewardChoices(3, this.random) || [];
-        this.state.questRewardRefreshesLeft = this.state.upgrades.questRefreshes;
+        // Reward Refresh: 2, 3, then 4 free swaps (one more than its level).
+        this.state.questRewardRefreshesLeft = this.state.upgrades.questRefreshes > 0 ? this.state.upgrades.questRefreshes + 1 : 0;
         // Double Pick (boss reward): pick two of the three options instead
         // of just one.
         this.state.questRewardPicksRemaining = this.state.upgrades.questDoublePick ? 2 : 1;
@@ -2428,8 +2429,8 @@
           ]).sort();
           break;
         case "extraMulligans":
-          // Second Thoughts: +2 mulligans, then +1 a level (3, then 4).
-          this.state.upgrades.extraMulligans += this.state.upgrades.extraMulligans > 0 ? 1 : 2;
+          // Second Thoughts: +3 mulligans, then +1 a level (4, then 5).
+          this.state.upgrades.extraMulligans += this.state.upgrades.extraMulligans > 0 ? 1 : 3;
           break;
         case "mulliganSize":
         case "yellowPoints":
@@ -4135,15 +4136,14 @@
         break;
       }
       case "greyscale": {
-        // Greys only: 0.75, 1.5, then 2.25 a grey -- the Eliminator's
-        // engine (a whole point a grey out-earned every other common badge).
-        upgrades.greyPoints += 0.75;
+        // Greys only: 1, 2, then 3 a grey -- the Eliminator's engine.
+        upgrades.greyPoints += 1;
         break;
       }
       case "mulliganValueBoost":
-        // 1, 2, then 3 more for each unused mulligan (3 a level made it
+        // 2, 3, then 4 more for each unused mulligan (3 a level made it
         // the strongest common badge by far).
-        upgrades.mulliganPointBonus += 1;
+        upgrades.mulliganPointBonus += finiteNumber(state.balanceRewardCounts[choice.id]) > 0 ? 1 : 2;
         break;
       case "earlySolveBoost":
         upgrades.earlyRoundPoint += 5;

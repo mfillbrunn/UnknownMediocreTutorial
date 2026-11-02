@@ -840,7 +840,7 @@
     return pool[hash32(seed) % pool.length];
   }
 
-  const CLASSIC_DESCRIPTION = `A standard Cuddle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${CONFIG.classicClearBonus}.`;
+  const CLASSIC_DESCRIPTION = `A standard Cuddle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${Math.max(0, CONFIG.classicClearBonus - 10)}.`;
 
   // -- Stage difficulty (worlds 2 and 3) --------------------------------
   // A Wordle stop's difficulty is the sum of its parts: +1 per challenge,
@@ -895,6 +895,13 @@
   }
   function stagePay(tier) {
     return STAGE_PAY[String(Math.max(-1, Math.min(3, Math.round(asNumber(tier, 0)))))] || 0;
+  }
+  // The money a cleared stage pays: its points less $10 (a run had far
+  // too much money), never below $0 -- Easy $0, Regular $2, then $15 / $40
+  // / $70 for one to three skulls. The points stay as they are.
+  const STAGE_MONEY_CUT = 10;
+  function stageMoney(tier) {
+    return Math.max(0, stagePay(tier) - STAGE_MONEY_CUT);
   }
 
   function variantChallengeIds(variant) {
@@ -2841,17 +2848,18 @@
       // A broken challenge (Medium, breakRule) pays as a plain stage.
       const tier = variant.umtRuleBroken ? Math.min(0, stageTier(variant)) : stageTier(variant);
       const pay = stagePay(tier);
+      const money = stageMoney(tier);
       const label = variant.umtRuleBroken ? "Stage cleared (challenge broken)" : tier < 0 ? "Easy stage cleared" : tier === 0 ? "Stage cleared"
         : `${tier}-skull stage cleared`;
       const paidPoints = pay > 0 ? addScoreBonus(game, pay, "umtStagePay", label, entry) : 0;
       const paidState = paidPoints > 0 ? stateOf(game) : null;
       if (paidState) {
-        paidState.cuddleMoney = Math.max(0, asNumber(paidState.cuddleMoney, 0) + pay);
-        if (entry) entry.challengeBonusMoney = asNumber(entry.challengeBonusMoney, 0) + pay;
+        paidState.cuddleMoney = Math.max(0, asNumber(paidState.cuddleMoney, 0) + money);
+        if (entry) entry.challengeBonusMoney = asNumber(entry.challengeBonusMoney, 0) + money;
         // The cash-out shows the money beside the points on the same line.
         const line = (customState(game) && customState(game).lastPayoutLines || [])
           .find((item) => item && item.field === "umtStagePay" && item.roundToken === roundToken(game));
-        if (line) line.money = asNumber(line.money, 0) + pay;
+        if (line && money > 0) line.money = asNumber(line.money, 0) + money;
       }
       variant.stagePaid = true;
       variant.classicPaid = true;
@@ -3442,8 +3450,8 @@
     if (vowelLevel > 0) {
       const vowels = secretVowelCount(game);
       if (vowels > 0) {
-        // 4, 6, then 10 a vowel at level 3.
-        const perVowel = [0, 4, 6, 10][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
+        // 6, 9, then 14 a vowel at level 3.
+        const perVowel = [0, 6, 9, 14][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
         addScoreBonus(game, vowels * perVowel, "umtVowelBounty",
           `${vowels} vowel${vowels === 1 ? "" : "s"} in the secret`);
       }
@@ -3451,7 +3459,7 @@
 
     const encoreLevel = upgradeLevel(game, IDS.encore);
     if (encoreLevel > 0) {
-      const ENCORE_POINTS = [25, 40, 55][Math.min(3, encoreLevel) - 1];
+      const ENCORE_POINTS = [35, 50, 70][Math.min(3, encoreLevel) - 1];
       custom.encoreSolves = asInteger(custom.encoreSolves, 0) + 1;
       if (custom.encoreSolves % 3 === 0) {
         addScoreBonus(game, ENCORE_POINTS, "umtEncore", "Every third stage solved");
@@ -4102,7 +4110,7 @@
 
 
   const POWER_INFO = Object.freeze({
-    plain: { title: "Classic Cuddle", description: `A standard Cuddle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${CONFIG.classicClearBonus}.`, shape: "grid" },
+    plain: { title: "Classic Cuddle", description: `A standard Cuddle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${Math.max(0, CONFIG.classicClearBonus - 10)}.`, shape: "grid" },
     luckyStart: { title: "Lucky Start", description: "One exact position is revealed before the first guess.", shape: "clover" },
     jackpot: { title: "Jackpot Run", description: "Greens pay double, but the stage must be solved within the world's guess limit (6, 5 or 4) or the run is lost.", shape: "coins" },
     doubleOrNothing: { title: "Double or Nothing", description: "Solve by guess 5 (world 1), 4 (world 2) or 3 (world 3) to double the stage, or lose half of it.", shape: "scales" },
@@ -5642,12 +5650,13 @@
             difficulty,
             skulls: difficultySkulls(difficulty),
             tier: stageTier(variant),
-            pay: stagePay(stageTier(variant))
+            pay: stagePay(stageTier(variant)),
+            money: stageMoney(stageTier(variant))
           };
         }
         const difficulty = stagePartDifficulty(variant);
         return { kind: variant.kind, title: variant.title, description: variant.description, difficulty, skulls: difficultySkulls(difficulty),
-          tier: stageTier(variant), pay: stagePay(stageTier(variant)) };
+          tier: stageTier(variant), pay: stagePay(stageTier(variant)), money: stageMoney(stageTier(variant)) };
       },
       // The challenge stops the map can roll, described at the run's
       // current guess cap -- listed by the map key.
@@ -5691,6 +5700,7 @@
         return info.title || "";
       },
       stagePay: (tier) => stagePay(tier),
+      stageMoney: (tier) => stageMoney(tier),
       // Double Down's chip on the live play strip (cuddle-campaign.js's
       // insertMap): the stage's lucky guess, shown until it has been played.
       luckyGuessBadge: (game) => {

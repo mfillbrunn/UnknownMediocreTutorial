@@ -3255,7 +3255,7 @@
       ];
       const markRows = marks.map(([mark, title, text, pay]) => (
         `<li><span class="umt-legend-marks">${mark || '<i class="umt-legend-nomark">no mark</i>'}</span>`
-        + `<span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(text)} Pays ${pay} points and $${pay}.</small></span></li>`
+        + `<span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(text)} Pays ${pay} points${pay - 10 > 0 ? ` and $${pay - 10}` : ""}.</small></span></li>`
       )).join("");
       const catalogue = window.CuddleRebalanceV5 && typeof window.CuddleRebalanceV5.mapChallenges === "function"
         ? window.CuddleRebalanceV5.mapChallenges(game)
