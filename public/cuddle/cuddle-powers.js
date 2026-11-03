@@ -382,6 +382,13 @@
         note(this, "Pickpocket: +$" + cash + ".");
       }
 
+      // Greyscale level 3: every grey tile also pays $1.
+      var greys = countOf(feedback, "gray") + countOf(feedback, "grey");
+      if (levelOf(this, "greyscale") >= 3 && greys > 0) {
+        state.cuddleMoney = Math.max(0, num(state.cuddleMoney) + greys);
+        note(this, "Greyscale: +$" + greys + ".");
+      }
+
       var stand = Math.min(3, levelOf(this, "lastStand"));
       var solved = Boolean(entry && state.secret && entry.word === state.secret);
       if (stand > 0 && solved && typeof this._solveGuessThreshold === "function"

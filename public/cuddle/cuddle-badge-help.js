@@ -52,7 +52,7 @@
     mulliganValueBoost: ["When you solve, every mulligan you didn't use pays 1 point. This badge makes each unused mulligan worth more, so saving your mulligans pays off.", ["mulligan", "cashout"]],
     earlySolveBoost: ["When you solve, each guess you still had left pays a bonus row. This badge adds these points for every guess left, so solving early pays much more.", ["cashout"]],
     colourTrade: ["Every green tile you reveal pays points. This badge makes each green worth more.", ["board", "cashout"]],
-    greyscale: ["Grey tiles (letters that aren't in the word) normally pay nothing. With this badge each one pays points, so even a guess that misses still earns something.", ["board", "cashout"]],
+    greyscale: ["Grey tiles (letters that aren't in the word) normally pay nothing. With this badge each one pays points (and at level 3 also $1), so even a guess that misses still earns something.", ["board", "cashout"]],
     rewardEcho: ["The very next badge you pick on a reward screen comes straight at its top level (a badge with 3 levels arrives at level 3). It's used up after that. Badges from packs, the shop or events don't use it.", ["reward"]],
     greenCount: ["A green tile normally just says \"right letter, right spot\". With this badge it also tells you how many times that letter is in the answer, so you know if it's used twice.", ["board"]],
     "surprise-assignment": ["Quests normally show up on set guesses. This badge adds extra quests at random guesses in every stage, so there are more rewards to win.", ["quest", "questReward"]],
