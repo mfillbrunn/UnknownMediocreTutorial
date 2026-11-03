@@ -252,7 +252,7 @@
         { id: "momentum", icon: "📈", title: "Momentum", tier: "common", type: "points", maxLevel: 3,
           levels: ["A guess with more greens than your last one gives +5 points.", "A guess with more greens than your last one gives +8 points.", "A guess with more greens than your last one gives +12 points."],
           level: g => powerLevel(g, "momentum") },
-        { id: "bigOpener", icon: "🎯", title: "Big Opener", tier: "rare", type: "points", maxLevel: 3,
+        { id: "bigOpener", icon: "🎯", title: "Big Opener", tier: "common", type: "points", maxLevel: 3,
           levels: ["Your 1st guess gives +5 points for each green or yellow.", "Your 1st guess gives +8 points for each green or yellow.", "Your 1st guess gives +15 points for each green or yellow."],
           level: g => powerLevel(g, "bigOpener") },
         { id: "lastStand", icon: "⚔️", title: "Last Stand", tier: "rare", type: "points", maxLevel: 3,
