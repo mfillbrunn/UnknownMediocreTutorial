@@ -1492,7 +1492,7 @@
             ${deck}
             ${isMulliganMode ? `
               <button class="cuddle-btn cuddle-btn-primary cuddle-mulligan cuddle-mulligan-confirm" data-action="confirm-mulligan" ${mulliganValid ? "" : "disabled"}>
-                Confirm mulligan <span>${selectedCount}/${limit} selected</span>
+                Confirm mulligan <span class="cuddle-mulligan-count"><b>${selectedCount}</b>/${limit} selected</span>
               </button>
               <button class="cuddle-btn cuddle-backspace" data-action="cancel-mode" aria-label="Cancel mulligan" title="Cancel mulligan">✕</button>
             ` : `

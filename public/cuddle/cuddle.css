@@ -886,12 +886,24 @@
   color: #ff6b6b;
 }
 
-/* The confirm button's span is a whole phrase ("2/3 selected"), not a bare
-   count, so it keeps the smaller muted sub-label treatment. */
-.cuddle-mulligan-confirm span {
-  color: var(--cuddle-muted);
-  font-size: 0.72rem;
-  font-weight: 700;
+/* The confirm button's count ("2/3 selected") sits on the light primary
+   gradient, so it's dark ink in a soft pill, with the picked number bold. */
+.cuddle-mulligan-confirm .cuddle-mulligan-count {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: rgba(36, 24, 66, 0.14);
+  color: #241842;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+
+.cuddle-mulligan-confirm .cuddle-mulligan-count b {
+  font-size: 1.05rem;
+  font-weight: 900;
 }
 
 .cuddle-backspace {

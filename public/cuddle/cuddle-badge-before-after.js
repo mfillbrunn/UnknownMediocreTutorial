@@ -25,7 +25,7 @@
     // ---- Cards: mulligans, hand, special cards -----------------------------
     extraMulligans: ["Each stage gives you a few mulligans.", "Each stage gives you more of them, to swap away letters you can't use.",
       { t: "stat", label: "Mulligans each stage", before: "4", after: "7" }],
-    mulliganSize: ["A mulligan swaps up to 3 cards at once.", "One mulligan swaps more cards at once, up to your whole hand.",
+    mulliganSize: ["A mulligan swaps up to 3 cards at once.", "One mulligan swaps more cards at once (up to 5), and at level 3 draws 1 extra letter.",
       { t: "stat", label: "Cards one mulligan can swap", before: "3", after: "4" }],
     handSizeBoost: ["Your hand holds a set number of consonant cards.", "Your hand holds more consonants, so more words are possible.",
       { t: "hand", before: "RSTLNC", after: "RSTLNCM" }],
