@@ -72,9 +72,11 @@
     }
     return { points: points, money: money, vow: false };
   }
-  // Lean Build: its pay by world, and what each badge outside Restraint
-  // takes off. Its levels let cheaper badges off: level 2 Commons, level 3
-  // Rares too (LEAN_FREE_TIERS).
+  // Lean Build: a percentage ON TOP of the stage's whole points (what the
+  // guesses, the solve, the skulls and every other bonus came to), by
+  // world, and what each badge outside Restraint takes off it, in percent.
+  // Its levels let cheaper badges off: level 2 Commons, level 3 Rares too
+  // (LEAN_FREE_TIERS).
   var LEAN_BY_WORLD = [20, 35, 60];
   var LEAN_PER_BADGE = 5;
   var LEAN_FREE_TIERS = [[], ["common"], ["common", "rare"]];
@@ -241,6 +243,45 @@
     var ignored = schools && typeof schools.perk === "function" ? num(schools.perk(game, "leanIgnore")) : 0;
     return Math.max(0, base - LEAN_PER_BADGE * Math.max(0, otherBadges(game) - ignored));
   }
+
+  // Lean Build pays last: once every other bonus of the solve is in, the
+  // stage's points (state.roundScore) go up by its percentage. Money isn't
+  // touched. It wraps submitDraft from a load handler so it sits outside
+  // every layer that adds points on a solve, whichever script loaded last.
+  function applyLeanBuild(game, entry) {
+    var state = game && game.state;
+    if (!state || !entry || levelOf(game, "leanBuild") <= 0) return;
+    if (entry.umtLeanBuild) return;
+    var percent = leanPayout(game);
+    var total = num(state.roundScore);
+    if (percent <= 0 || total <= 0) return;
+    var bonus = Math.round(total * percent / 100);
+    if (bonus > 0 && stageBonus(game, bonus, "umtLeanBuild", "Lean Build +" + percent + "%") > 0) {
+      note(game, "Lean Build: +" + percent + "% of the stage's points (+" + bonus + ").");
+      save(game);
+    }
+  }
+
+  function installLeanBuildLast() {
+    var inner = proto.submitDraft;
+    if (!inner || inner.umtLeanLast) return;
+    var outer = function submitDraftLeanBuildLast() {
+      var result = inner.apply(this, arguments);
+      try {
+        var state = this.state;
+        var rows = playerRows(state && state.history);
+        var entry = rows[rows.length - 1];
+        if (result && result.ok && entry && state.secret && entry.word === state.secret) applyLeanBuild(this, entry);
+      } catch (error) {
+        console.warn("Cuddle strategies: Lean Build failed after a solve.", error);
+      }
+      return result;
+    };
+    outer.umtLeanLast = true;
+    proto.submitDraft = outer;
+  }
+  if (document.readyState === "complete") installLeanBuildLast();
+  else window.addEventListener("load", installLeanBuildLast);
 
   // -- Strike-Through -------------------------------------------------------
   function stageKey(state) {
@@ -499,10 +540,6 @@
           note(this, "Hard mode: +" + hardPay + " points.");
         }
       }
-      if (solved && levelOf(this, "leanBuild") > 0) {
-        var pay = leanPayout(this);
-        if (pay > 0 && stageBonus(this, pay, "umtLeanBuild", "Lean Build") > 0) note(this, "Lean Build: +" + pay + " points.");
-      }
       save(this);
     } catch (error) {
       console.warn("Cuddle strategies: a payout failed after a guess.", error);
@@ -538,6 +575,7 @@
     combinable: function combinableIds(game) { return combinable(game); },
     leanPayout: leanPayout,
     leanBase: function leanBase(game) { return LEAN_BY_WORLD[worldIndex(game)]; },
+    applyLeanBuild: applyLeanBuild,
     otherBadges: otherBadges,
     hasMonksVow: function hasMonksVow(game) { return levelOf(game, "monksVow") > 0; },
     // What a skip on the screen now open pays: { points, money, vow }.

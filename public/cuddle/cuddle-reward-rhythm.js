@@ -269,18 +269,21 @@
   if (typeof pickedBefore === "function") {
     proto.chooseUpgrade = function chooseUpgradeLevelStop(choiceKey) {
       var state = this.state;
-      var stop = state && state.status === "upgrade" ? state.umtLevelStop : null;
+      // Only a real pick on the reward screen (phase "round") counts as one
+      // of the stop's picks. A badge handed out on its own (Clean Slate's
+      // level-up after a skip, _grantUpgradeChoice) comes through here too,
+      // with the phase cleared, and must leave the stop alone.
+      var stop = state && state.status === "upgrade" && state.upgradePhase === "round" ? state.umtLevelStop : null;
       var picked = stop && (state.upgradeChoices || []).find(function (item) { return item.key === choiceKey; });
       if (!stop) return pickedBefore.apply(this, arguments);
-      // Whether a second pick follows is known up front: if so, the stop
+      // Whether more picks are owed is known up front: if so, the stop
       // isn't left behind yet (no _advanceRound, so no stage-clear money
       // twice and no step on the road).
       var done = stop.done.concat(picked ? [nameOf(picked)] : []);
-      // The Level-Up stop's picker keeps every badge on offer.
-      // Level-ups handed out together (applyLevelUps) keep the same offer.
-      var next = stop.pick < stop.of ? (this.__umtLevelOffer || levelChoices(this, stop.picker ? 999 : 3, done)) : [];
+      var offer = this.__umtLevelOffer || null;
+      var owedMore = stop.pick < stop.of;
       var result;
-      if (next.length) {
+      if (owedMore) {
         this._advanceRound = function holdLevelStop() { return undefined; };
         try {
           result = pickedBefore.apply(this, arguments);
@@ -293,8 +296,16 @@
       if (!result || result.ok === false) return result;
       state = this.state;
       stop.done = done;
-      if (!next.length) {
+      if (!owedMore) {
         state.umtLevelStop = null;
+        return result;
+      }
+      // What can still go up now that this pick is in. A stop can owe more
+      // picks than there are levels left to give; then it simply ends.
+      var next = offer ? offer.filter(function (card) { return canLevel(this, card); }, this) : [];
+      if (!next.length) next = levelChoices(this, stop.picker ? 999 : 3, done);
+      if (!next.length) {
+        endLevelStop(this);
         return result;
       }
       stop.pick += 1;
@@ -312,6 +323,63 @@
       return result;
     };
   }
+
+  // A level-up step with nothing left to raise ends where it stands: back
+  // on the road, as if its last pick had been made.
+  function endLevelStop(game) {
+    var state = game.state;
+    state.umtLevelStop = null;
+    state.waystoneOffer = false;
+    state.legendaryOffer = false;
+    state.umtEventPick = null;
+    state.upgradeChoices = [];
+    state.upgradePhase = null;
+    state.upgradeMilestone = null;
+    if (typeof game._advanceRound === "function") game._advanceRound();
+    try { game.save(); } catch (_error) { /* next save */ }
+  }
+
+  // A badge already at its top level can't be picked, so it never stays on
+  // an offer (Clean Slate can raise one while the offer is open).
+  function maxedCard(game, card) {
+    var node = nodeFor(card);
+    if (!node || node.type === "combo") return false;
+    var level = Number(tree().level(game, node)) || 0;
+    return level > 0 && level >= (Number(node.maxLevel) || 1);
+  }
+
+  // Takes maxed badges off the offer on screen; if none are left, deals
+  // the level-ups again, and if there are none either, ends the step.
+  function settleOffer(game) {
+    var state = game && game.state;
+    if (!state || !tree() || state.status !== "upgrade" || state.upgradePhase !== "round") return false;
+    if (state.legendaryOffer || state.umtEventPick) return false;
+    var choices = Array.isArray(state.upgradeChoices) ? state.upgradeChoices : [];
+    if (!choices.length) return false;
+    var live = choices.filter(function (card) { return !maxedCard(game, card); });
+    if (live.length === choices.length) return false;
+    var stop = state.umtLevelStop || null;
+    var fresh = live.length ? live : levelChoices(game, stop && stop.picker ? 999 : 3, stop && stop.done ? stop.done : []);
+    if (fresh.length) {
+      state.upgradeChoices = fresh;
+      try { game.save(); } catch (_error) { /* next save */ }
+      return true;
+    }
+    endLevelStop(game);
+    return true;
+  }
+
+  ["skipUpgrade", "_hydrateState"].forEach(function (name) {
+    var original = proto[name];
+    if (typeof original !== "function") return;
+    proto[name] = function withSettledOffer() {
+      var result = original.apply(this, arguments);
+      try {
+        if (name === "skipUpgrade" ? (result && result.ok !== false) : true) settleOffer(this);
+      } catch (error) { console.warn("Cuddle reward rhythm: settling the offer failed.", error); }
+      return result;
+    };
+  });
 
   // Several level-ups at once, from one offer (cuddle-ui.js's level-up
   // list): `keys` names a badge per level-up, the same one twice for two

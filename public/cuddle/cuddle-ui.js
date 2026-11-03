@@ -1805,7 +1805,11 @@
   function levelPickerRemaining(state) {
     const stop = state.umtLevelStop;
     if (!stop) return 1;
-    return Math.max(1, (Number(stop.of) || 1) - (Number(stop.pick) || 1) + 1);
+    const owed = Math.max(1, (Number(stop.of) || 1) - (Number(stop.pick) || 1) + 1);
+    // Never more than the offered badges can take (a badge with one level
+    // left takes one), or the screen could never be completed.
+    const room = (state.upgradeChoices || []).reduce((sum, choice) => sum + levelRoom(choice), 0);
+    return room > 0 ? Math.min(owed, room) : owed;
   }
 
   // How many more levels this badge can take on this screen.
