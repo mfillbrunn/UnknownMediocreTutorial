@@ -95,11 +95,12 @@
 
   // Each grid sets how much the feedback gives away:
   //   "full"   - Wordle tiles: green right spot, yellow wrong spot, grey not in it
-  //   "blue"   - blue if the letter is in the word at all, grey if not
+  //   "split"  - half green, half yellow if the letter is in the word at all
+  //              (right or wrong spot, not saying which), grey if not
   //   "counts" - only how many greens and how many yellows, no positions
   const LEVELS = [
     { mode: "full" },
-    { mode: "blue" },
+    { mode: "split" },
     { mode: "counts" }
   ];
 
@@ -268,11 +269,12 @@
       return `<button type="button" class="dp-word${struck ? " is-struck" : ""}${guessed ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}${snap}" data-word="${word}"${disabled ? " disabled" : ""}>${word}</button>`;
     }).join("");
 
+    const SPLIT_TILE = "linear-gradient(135deg, #3f9d4f 0 49%, rgba(0,0,0,.2) 49% 51%, #c9a227 51% 100%)";
     const swatch = (color, label, round) =>
       `<span><i class="${round ? "is-round" : ""}" style="background:${color}"></i>${label}</span>`;
     const key = {
       full: swatch("#3f9d4f", "Right spot") + swatch("#c9a227", "Wrong spot") + swatch("#555b63", "Not in word"),
-      blue: swatch("#3b7dd8", "In the word (right or wrong spot)") + swatch("#555b63", "Not in word"),
+      split: swatch(SPLIT_TILE, "In the word (any spot)") + swatch("#555b63", "Not in word"),
       counts: swatch("#3f9d4f", "How many in the right spot", true) + swatch("#c9a227", "How many in the wrong spot", true)
     }[mode];
 
@@ -284,7 +286,7 @@
           <span class="dp-tile is-correct dp-count-tile">${count("correct")}</span>
           <span class="dp-tile is-present dp-count-tile">${count("present")}</span></div>`;
       }
-      const shown = f => (mode === "blue" && guess !== secret && f !== "absent" ? "in" : f);
+      const shown = f => (mode === "split" && guess !== secret && f !== "absent" ? "in" : f);
       return `<div class="dp-row">${[...guess].map((ch, i) =>
         `<span class="dp-tile is-${shown(result[i])}">${ch}</span>`).join("")}</div>`;
     };

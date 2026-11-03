@@ -130,7 +130,12 @@
 .dp-tile.is-correct { background: #3f9d4f; }
 .dp-tile.is-present { background: #c9a227; }
 .dp-tile.is-absent { background: #555b63; }
-.dp-tile.is-in { background: #3b7dd8; }
+/* "In the word, spot not shown": green and yellow split corner to corner,
+   with a thin dark seam so it reads as two halves even on small tiles. */
+.dp-tile.is-in {
+  background: linear-gradient(135deg, #3f9d4f 0 49%, rgba(0,0,0,.2) 49% 51%, #c9a227 51% 100%);
+  text-shadow: 0 1px 2px rgba(0,0,0,.45);
+}
 .dp-tile.is-plain { background: #3a4049; }
 .dp-tile.is-empty { border: 2px solid rgba(255,255,255,.16); }
 .dp-count-tile { margin-left: 4px; border-radius: 50%; }
