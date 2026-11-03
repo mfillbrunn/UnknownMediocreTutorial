@@ -3450,10 +3450,19 @@
     if (vowelLevel > 0) {
       const vowels = secretVowelCount(game);
       if (vowels > 0) {
-        // 6, 9, then 14 a vowel at level 3.
-        const perVowel = [0, 6, 9, 14][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
+        // 6, 9, then 10 a vowel at level 3, which also pays $1 a vowel.
+        const perVowel = [0, 6, 9, 10][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
         addScoreBonus(game, vowels * perVowel, "umtVowelBounty",
           `${vowels} vowel${vowels === 1 ? "" : "s"} in the secret`);
+        if (vowelLevel >= 3) {
+          const vowelState = stateOf(game);
+          if (vowelState) {
+            vowelState.cuddleMoney = Math.max(0, asNumber(vowelState.cuddleMoney, 0) + vowels);
+            const line = (customState(game) && customState(game).lastPayoutLines || [])
+              .find((item) => item && item.field === "umtVowelBounty" && item.roundToken === roundToken(game));
+            if (line) line.money = asNumber(line.money, 0) + vowels;
+          }
+        }
       }
     }
 
