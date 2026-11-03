@@ -81,10 +81,10 @@
   var STRIKE_POINTS = [0, 1, 2, 3];
   var HIGH_ROLLER_BET = [0, 10, 20, 40];
   // A won bet pays more than it risks: twice the stake.
-  var HIGH_ROLLER_WIN = [0, 20, 40, 80];
+  var HIGH_ROLLER_WIN = [0, 25, 50, 100];
   // The guess a High Roller bet must be won by, per world.
   var HIGH_ROLLER_BY = [5, 4, 4];
-  var HARD_MODE_POINTS = [0, 35, 60, 100];
+  var HARD_MODE_POINTS = [0, 45, 75, 120];
   // What a hard-mode solve pays without the badge.
   var HARD_MODE_BASE = 15;
   var TIER_UP = { common: "rare", rare: "epic", epic: "legendary" };

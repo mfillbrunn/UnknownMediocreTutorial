@@ -64,8 +64,9 @@
     ["wide margins", TIERS.COMMON],
     ["mulligan dividend", TIERS.COMMON],
     ["early finish", TIERS.RARE],
-    ["colour surge", TIERS.COMMON],
-    ["color surge", TIERS.COMMON],
+    // Colour Surge (points for greens) pays on nearly every guess: Rare.
+    ["colour surge", TIERS.RARE],
+    ["color surge", TIERS.RARE],
     ["greyscale", TIERS.COMMON],
     ["grayscale", TIERS.COMMON],
     ["softer cuddle meter", TIERS.COMMON],
