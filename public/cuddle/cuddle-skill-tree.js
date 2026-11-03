@@ -112,7 +112,7 @@
         { id: "questReroll", icon: "🔄", title: "Second Guess Quest", tier: "common", type: "quests", maxLevel: 1,
           description: "Once per stage, swap your quest for a new one for free.", level: g => upgradeCount(g, "questReroll") },
         { id: "mulliganSize", icon: "🃏", title: "Bigger Mulligan", tier: "common", type: "letters", maxLevel: 3,
-          levels: ["A mulligan can swap up to 4 letters.", "A mulligan can swap up to 5 letters.", "A mulligan can swap your whole hand."],
+          levels: ["A mulligan can swap up to 4 letters.", "A mulligan can swap up to 5 letters.", "A mulligan can swap up to 5 letters, and draws 1 extra letter."],
           level: g => ledgerCount(g, "mulliganSize") },
         // Cull Letters (umtCullTwo) was a copy of this badge; the two are one
         // now, and a save that holds Cull Letters counts it here.
@@ -430,7 +430,7 @@
     extraMulligans: ["+3 mulligans a stage", "+4 mulligans a stage", "+5 mulligans a stage"],
     questRefreshes: ["+2 quest refreshes", "+3 quest refreshes", "+4 quest refreshes"],
     questPoints: ["+15 per quest", "+30 per quest", "+45 per quest"],
-    mulliganSize: ["Mulligans swap 4", "Mulligans swap 5", "Mulligans swap all"],
+    mulliganSize: ["Mulligans swap 4", "Mulligans swap 5", "Swap 5, draw 1 extra"],
     cullOne: ["1 letter culled", "2 letters culled", "4 letters culled"],
     categorySense: ["1 theme shown", "2 themes shown", "All themes shown"],
     storybookStart: ["+10 a stage", "+16 a stage", "+30 a stage"],

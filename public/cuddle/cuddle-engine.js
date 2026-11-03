@@ -1783,10 +1783,14 @@
       }
       this._discardCards(ids);
       // As many back as went out, whatever the hand size.
-      const replacements = this.drawExactly(ids.length);
+      // Bigger Mulligan level 3: every mulligan draws one extra letter.
+      const bigMulligan = (Array.isArray(this.state.rewardBookHistory) ? this.state.rewardBookHistory : [])
+        .filter(entry => entry && entry.id === "mulliganSize").length;
+      const extraDraw = bigMulligan >= 3 ? 1 : 0;
+      const replacements = this.drawExactly(ids.length + extraDraw);
       this.state.mulligansLeft -= 1;
       if (steadyHand) this._markSteadyHandSpent();
-      this.state.lastMessage = `Mulligan: replaced ${replacements.length} card${replacements.length === 1 ? "" : "s"}.`;
+      this.state.lastMessage = `Mulligan: replaced ${Math.min(ids.length, replacements.length)} card${Math.min(ids.length, replacements.length) === 1 ? "" : "s"}${extraDraw && replacements.length > ids.length ? ", +1 extra letter (Bigger Mulligan)" : ""}.`;
       this.save();
       return { ok: true, replacements: replacements.length };
     }
@@ -2391,7 +2395,7 @@
           id: "mulliganSize",
           icon: "🃏",
           title: "Bigger Mulligan",
-          description: "Each mulligan swaps up to 4 letters. Level 2: 5. Level 3: your whole hand."
+          description: "Each mulligan swaps up to 4 letters. Level 2: 5. Level 3: 5, and each mulligan draws 1 extra letter."
         });
       }
       // Quest Cadence moved to the Quest Trial boss reward -- it is no

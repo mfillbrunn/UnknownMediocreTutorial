@@ -150,7 +150,10 @@
   var THIRD_LEVEL = {
     // (Extra mulligans, reward refreshes and hand size now step evenly: 1, 2, 3.)
     questPoints: function (state) { bump(state.upgrades, "questPoints", 0); }, // 10, 20, 30 points
-    mulliganSize: function (state) { bump(state.upgrades, "mulliganSize", 3); }, // 4, 5, whole hand
+    // Bigger Mulligan swaps 4, then 5, then still 5 -- level 3's gain is that
+    // every mulligan draws one extra letter (cuddle-engine.js mulligan), so
+    // its third pick's +1 swap is taken back here.
+    mulliganSize: function (state) { bump(state.upgrades, "mulliganSize", -1); },
     mulliganValueBoost: function (state) { bump(state.upgrades, "mulliganPointBonus", 0); }, // 3, 6, 9
     earlySolveBoost: function (state) { bump(state.upgrades, "earlyRoundPoint", 5); }, // 5, 10, 20
     // (Surprise Assignment, folded into Quest Cadence, steps evenly: +1, +2, +3.)
