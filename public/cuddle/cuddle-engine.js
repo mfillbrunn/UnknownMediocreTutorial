@@ -154,7 +154,7 @@
   const EARLY_SOLVE_BONUS = 0;
   // Quests start at zero and are only worth anything once the Quest Value
   // reward (+5 a pick, stacking) or the Quest Head Start boss reward is taken.
-  const QUEST_POINTS_PER_PICK = 10;
+  const QUEST_POINTS_PER_PICK = 15;
   // Quest Trial boss: missing the forced quest on a guess costs this many
   // points from the running total (never below zero).
   const QUEST_TRIAL_PENALTY = 5;
@@ -1439,6 +1439,9 @@
       this.state.hand = this.state.hand.filter(card => (
         card && card.glyph && card.source !== "infinite" && !unlocked.has(card.glyph)
       ));
+      // A letter culled from the run (Pruning Shears can take a vowel) has
+      // no card at all: no word may use it.
+      (this.state.removedLetters || []).forEach(letter => unlocked.delete(glyphForLetter(letter)));
       this.state.infiniteGlyphs = [...unlocked].sort();
       this.state.infiniteGlyphs.forEach(glyph => {
         this.state.hand.push({ id: `infinite-${glyph}`, glyph, source: "infinite" });
@@ -1609,7 +1612,14 @@
         // Quests are worth nothing on their own -- the points only exist once
         // Quest Value / Quest Head Start have been taken.
         if (questComplete) {
-          const questBonus = Number(this.state.upgrades.questPoints) || 0;
+          // Reward Refresh level 3: every finished quest also pays +10.
+          const questBonus = (Number(this.state.upgrades.questPoints) || 0)
+            + (this._ledgerLevel("questRefreshes") >= 3 ? 10 : 0);
+          // Quest Value level 3: and +$2.
+          if (this._ledgerLevel("questPoints") >= 3) {
+            this.state.cuddleMoney = Math.max(0, (Number(this.state.cuddleMoney) || 0) + 2);
+            entry.questMoney = 2;
+          }
           if (questBonus > 0) {
             entry.questBonus = questBonus;
             this.state.score += questBonus;
@@ -1650,6 +1660,12 @@
         entry.earlyBonus = earlyBonus;
         entry.earlySolveBonus = earlySolveBonus;
         entry.mulliganBonus = mulliganBonus;
+        // Mulligan Dividend level 3: each unused mulligan also pays $1.
+        if (mulliganBonus > 0 && (Number(this.state.balanceRewardCounts?.mulliganValueBoost) || 0) >= 3) {
+          const mulliganMoney = Math.max(0, Number(this.state.mulligansLeft) || 0);
+          this.state.cuddleMoney = Math.max(0, (Number(this.state.cuddleMoney) || 0) + mulliganMoney);
+          entry.mulliganMoney = mulliganMoney;
+        }
         this.state.score += earlyBonus + earlySolveBonus + mulliganBonus;
         this.state.roundScore += earlyBonus + earlySolveBonus + mulliganBonus;
         this.state.pendingRoundEnd = {
@@ -1695,13 +1711,16 @@
       }
       if (entry.infiniteUnlocked.length) scoreParts.push(`${entry.infiniteUnlocked.join(", ")} now stays in hand`);
       if (entry.earlyBonus) scoreParts.push(`+${entry.earlyBonus} early bonus`);
-      if (entry.mulliganBonus) scoreParts.push(`+${entry.mulliganBonus} unused mulligans`);
+      if (entry.mulliganBonus) scoreParts.push(`+${entry.mulliganBonus} unused mulligans${entry.mulliganMoney ? ` and +$${entry.mulliganMoney}` : ""}`);
+      if (entry.questMoney) scoreParts.push(`Quest Value +$${entry.questMoney}`);
       this.state.lastMessage = `${word}: ${scoreDelta >= 0 ? "+" : ""}${scoreDelta} points${scoreParts.length ? ` (${scoreParts.join(", ")})` : ""}.`;
 
       if (questComplete) {
         this.state.status = "questReward";
         this.state.questRewardChoices = window.CuddleQuestBook?.rewardChoices(3, this.random) || [];
-        this.state.questRewardRefreshesLeft = this.state.upgrades.questRefreshes;
+        // Reward Refresh: 2, 3, then 3 free swaps (level 3 pays +10 a quest
+        // instead, above).
+        this.state.questRewardRefreshesLeft = this.state.upgrades.questRefreshes > 0 ? Math.min(3, this.state.upgrades.questRefreshes + 1) : 0;
         // Double Pick (boss reward): pick two of the three options instead
         // of just one.
         this.state.questRewardPicksRemaining = this.state.upgrades.questDoublePick ? 2 : 1;
@@ -1727,6 +1746,12 @@
         solved,
         questComplete
       };
+    }
+
+    // A badge's level as the reward book counts it (one entry per pick).
+    _ledgerLevel(id) {
+      const history = Array.isArray(this.state?.rewardBookHistory) ? this.state.rewardBookHistory : [];
+      return history.filter(entry => entry && entry.id === id).length;
     }
 
     getMulliganLimit() {
@@ -1782,10 +1807,14 @@
       }
       this._discardCards(ids);
       // As many back as went out, whatever the hand size.
-      const replacements = this.drawExactly(ids.length);
+      // Bigger Mulligan level 3: every mulligan draws one extra letter.
+      const bigMulligan = (Array.isArray(this.state.rewardBookHistory) ? this.state.rewardBookHistory : [])
+        .filter(entry => entry && entry.id === "mulliganSize").length;
+      const extraDraw = bigMulligan >= 3 ? 1 : 0;
+      const replacements = this.drawExactly(ids.length + extraDraw);
       this.state.mulligansLeft -= 1;
       if (steadyHand) this._markSteadyHandSpent();
-      this.state.lastMessage = `Mulligan: replaced ${replacements.length} card${replacements.length === 1 ? "" : "s"}.`;
+      this.state.lastMessage = `Mulligan: replaced ${Math.min(ids.length, replacements.length)} card${Math.min(ids.length, replacements.length) === 1 ? "" : "s"}${extraDraw && replacements.length > ids.length ? ", +1 extra letter (Bigger Mulligan)" : ""}.`;
       this.save();
       return { ok: true, replacements: replacements.length };
     }
@@ -2390,7 +2419,7 @@
           id: "mulliganSize",
           icon: "🃏",
           title: "Bigger Mulligan",
-          description: "Each mulligan swaps up to 4 letters. Level 2: 5. Level 3: your whole hand."
+          description: "Each mulligan swaps up to 4 letters. Level 2: 5. Level 3: 5, and each mulligan draws 1 extra letter."
         });
       }
       // Quest Cadence moved to the Quest Trial boss reward -- it is no
@@ -2428,8 +2457,8 @@
           ]).sort();
           break;
         case "extraMulligans":
-          // Second Thoughts: +2 mulligans, then +1 a level (3, then 4).
-          this.state.upgrades.extraMulligans += this.state.upgrades.extraMulligans > 0 ? 1 : 2;
+          // Second Thoughts: +3 mulligans, then +1 a level (4, then 5).
+          this.state.upgrades.extraMulligans += this.state.upgrades.extraMulligans > 0 ? 1 : 3;
           break;
         case "mulliganSize":
         case "yellowPoints":
@@ -3060,7 +3089,7 @@
       case "letterBan":
         return `${range(count)}: your word may not use the letter shown beside it (a new one each guess).`;
       case "wordChain":
-        return `Guesses 2–${count}: start with the letter shown beside the guess (the last consonant of the word before).`;
+        return `Guesses 2–${count}: start with one of the letters shown beside the guess (the last two consonants of the word before; Y doesn't count).`;
       case "lockedIn":
         return `${range(count)}: keep every green in place and use every yellow.`;
       default:
@@ -3507,8 +3536,9 @@
         return { ok: true };
       }
       case "extraMulligans":
-        // Second Thoughts: +2 mulligans, then +1 a level, however it's taken.
-        state.upgrades.extraMulligans = Number(state.upgrades.extraMulligans || 0) + (Number(state.upgrades.extraMulligans || 0) > 0 ? 1 : 2);
+        // Second Thoughts: +3, then +1 a level (level 3's +1 is taken back
+        // by cuddle-powers.js: 3, 4, 4).
+        state.upgrades.extraMulligans = Number(state.upgrades.extraMulligans || 0) + (Number(state.upgrades.extraMulligans || 0) > 0 ? 1 : 3);
         return { ok: true };
       case "mulliganSize":
       case "yellowPoints":
@@ -4135,15 +4165,14 @@
         break;
       }
       case "greyscale": {
-        // Greys only: 0.75, 1.5, then 2.25 a grey -- the Eliminator's
-        // engine (a whole point a grey out-earned every other common badge).
-        upgrades.greyPoints += 0.75;
+        // Greys only: 1, 2, then 3 a grey -- the Eliminator's engine.
+        upgrades.greyPoints += 1;
         break;
       }
       case "mulliganValueBoost":
-        // 1, 2, then 3 more for each unused mulligan (3 a level made it
+        // 2, 3, then 4 more for each unused mulligan (3 a level made it
         // the strongest common badge by far).
-        upgrades.mulliganPointBonus += 1;
+        upgrades.mulliganPointBonus += finiteNumber(state.balanceRewardCounts[choice.id]) > 0 ? 1 : 2;
         break;
       case "earlySolveBoost":
         upgrades.earlyRoundPoint += 5;
@@ -5042,7 +5071,9 @@
     // Card) is paid into jokerCharges on every _beginRound, bosses too, and
     // skipping bosses here left those charges stranded -- the player owned
     // "two Jokers every round" and got none at the boss.
-    const hasJoker = (game.state.hand || []).some(card => card.source === "joker" && card.glyph === JOKER_GLYPH);
+    // Quest Satchel's Joker is only for the quest's guess (it goes after),
+    // so it doesn't stand in for one the player has earned.
+    const hasJoker = (game.state.hand || []).some(card => card.source === "joker" && card.glyph === JOKER_GLYPH && !card.questJoker);
     if (hasJoker) return;
     if (Number(mega.jokerCharges || 0) <= 0) return;
     mega.jokerCharges -= 1;

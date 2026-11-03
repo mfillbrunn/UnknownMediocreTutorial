@@ -21,10 +21,11 @@
  *     points. Solve by guess 5 (world 1) or guess 4 (worlds 2 and 3) and
  *     it pays twice the bet (+20 / +40 / +80); later than that and the
  *     bet is lost.
- *   - Hard Mode (common, 3 levels): a stage solved in Wordle hard mode --
- *     every guess keeps each green in place and uses each yellow you were
- *     shown -- pays +35 / +60 / +100 points (it's hard with a hand of
- *     cards).
+ *   - Hard Mode: a stage solved in Wordle hard mode -- every guess keeps
+ *     each green in place and uses each yellow you were shown -- pays +15
+ *     points to everyone (from the second guess on: a first-guess solve had
+ *     no clues to follow). The Hard Mode badge (common, 3 levels) adds
+ *     +35 / +60 / +100 on top (it's hard with a hand of cards).
  *
  * Improve (rare; id "combine"): taking it turns one of your badges into a random badge
  * one rarity higher (common -> rare -> epic -> legendary). It can only
@@ -71,19 +72,23 @@
     }
     return { points: points, money: money, vow: false };
   }
-  // Lean Build: its pay by world, and what each badge outside Restraint
-  // takes off. Its levels let cheaper badges off: level 2 Commons, level 3
-  // Rares too (LEAN_FREE_TIERS).
+  // Lean Build: a percentage ON TOP of the stage's whole points (what the
+  // guesses, the solve, the skulls and every other bonus came to), by
+  // world, and what each badge outside Restraint takes off it, in percent.
+  // Its levels let cheaper badges off: level 2 Commons, level 3 Rares too
+  // (LEAN_FREE_TIERS).
   var LEAN_BY_WORLD = [20, 35, 60];
   var LEAN_PER_BADGE = 5;
   var LEAN_FREE_TIERS = [[], ["common"], ["common", "rare"]];
   var STRIKE_POINTS = [0, 1, 2, 3];
   var HIGH_ROLLER_BET = [0, 10, 20, 40];
   // A won bet pays more than it risks: twice the stake.
-  var HIGH_ROLLER_WIN = [0, 20, 40, 80];
+  var HIGH_ROLLER_WIN = [0, 25, 50, 100];
   // The guess a High Roller bet must be won by, per world.
   var HIGH_ROLLER_BY = [5, 4, 4];
-  var HARD_MODE_POINTS = [0, 35, 60, 100];
+  var HARD_MODE_POINTS = [0, 45, 75, 120];
+  // What a hard-mode solve pays without the badge.
+  var HARD_MODE_BASE = 15;
   var TIER_UP = { common: "rare", rare: "epic", epic: "legendary" };
   var VOWELS = "AEIOU";
 
@@ -238,6 +243,45 @@
     var ignored = schools && typeof schools.perk === "function" ? num(schools.perk(game, "leanIgnore")) : 0;
     return Math.max(0, base - LEAN_PER_BADGE * Math.max(0, otherBadges(game) - ignored));
   }
+
+  // Lean Build pays last: once every other bonus of the solve is in, the
+  // stage's points (state.roundScore) go up by its percentage. Money isn't
+  // touched. It wraps submitDraft from a load handler so it sits outside
+  // every layer that adds points on a solve, whichever script loaded last.
+  function applyLeanBuild(game, entry) {
+    var state = game && game.state;
+    if (!state || !entry || levelOf(game, "leanBuild") <= 0) return;
+    if (entry.umtLeanBuild) return;
+    var percent = leanPayout(game);
+    var total = num(state.roundScore);
+    if (percent <= 0 || total <= 0) return;
+    var bonus = Math.round(total * percent / 100);
+    if (bonus > 0 && stageBonus(game, bonus, "umtLeanBuild", "Lean Build +" + percent + "%") > 0) {
+      note(game, "Lean Build: +" + percent + "% of the stage's points (+" + bonus + ").");
+      save(game);
+    }
+  }
+
+  function installLeanBuildLast() {
+    var inner = proto.submitDraft;
+    if (!inner || inner.umtLeanLast) return;
+    var outer = function submitDraftLeanBuildLast() {
+      var result = inner.apply(this, arguments);
+      try {
+        var state = this.state;
+        var rows = playerRows(state && state.history);
+        var entry = rows[rows.length - 1];
+        if (result && result.ok && entry && state.secret && entry.word === state.secret) applyLeanBuild(this, entry);
+      } catch (error) {
+        console.warn("Cuddle strategies: Lean Build failed after a solve.", error);
+      }
+      return result;
+    };
+    outer.umtLeanLast = true;
+    proto.submitDraft = outer;
+  }
+  if (document.readyState === "complete") installLeanBuildLast();
+  else window.addEventListener("load", installLeanBuildLast);
 
   // -- Strike-Through -------------------------------------------------------
   function stageKey(state) {
@@ -488,14 +532,13 @@
         note(this, won ? "High Roller: bet " + bet + ", won +" + prize + "." : "High Roller: not solved by guess " + HIGH_ROLLER_BY[worldIndex(this)] + ", the " + bet + "-point bet is lost.");
       }
       var hard = Math.min(3, levelOf(this, "hardMode"));
-      if (solved && hard > 0 && solvedInHardMode(history)) {
-        if (stageBonus(this, HARD_MODE_POINTS[hard], "umtHardMode", "Hard Mode") > 0) {
-          note(this, "Hard Mode: +" + HARD_MODE_POINTS[hard] + " points.");
+      if (solved && solvedInHardMode(history)) {
+        // Everyone gets the base from the second guess on; the badge adds
+        // its level's points on top (and pays on a first-guess solve too).
+        var hardPay = (history.length >= 2 ? HARD_MODE_BASE : 0) + (hard > 0 ? HARD_MODE_POINTS[hard] : 0);
+        if (hardPay > 0 && stageBonus(this, hardPay, "umtHardMode", "Hard mode") > 0) {
+          note(this, "Hard mode: +" + hardPay + " points.");
         }
-      }
-      if (solved && levelOf(this, "leanBuild") > 0) {
-        var pay = leanPayout(this);
-        if (pay > 0 && stageBonus(this, pay, "umtLeanBuild", "Lean Build") > 0) note(this, "Lean Build: +" + pay + " points.");
       }
       save(this);
     } catch (error) {
@@ -527,10 +570,12 @@
     HIGH_ROLLER_BET: HIGH_ROLLER_BET,
     HIGH_ROLLER_WIN: HIGH_ROLLER_WIN,
     HARD_MODE_POINTS: HARD_MODE_POINTS,
+    HARD_MODE_BASE: HARD_MODE_BASE,
     followsHardMode: followsHardMode,
     combinable: function combinableIds(game) { return combinable(game); },
     leanPayout: leanPayout,
     leanBase: function leanBase(game) { return LEAN_BY_WORLD[worldIndex(game)]; },
+    applyLeanBuild: applyLeanBuild,
     otherBadges: otherBadges,
     hasMonksVow: function hasMonksVow(game) { return levelOf(game, "monksVow") > 0; },
     // What a skip on the screen now open pays: { points, money, vow }.

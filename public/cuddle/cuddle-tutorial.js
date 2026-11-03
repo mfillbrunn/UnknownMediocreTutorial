@@ -121,7 +121,7 @@
       },
       at: "bottom",
       cards: [
-        { title: "Welcome to Cuddle", text: "Cuddle is Wordle as a road trip: solve word after word, collect badges along the way, and beat three bosses. This quick tour shows you around. You can skip it any time." },
+        { title: "Welcome to Cuddle", text: "Cuddle is a word-guessing road trip: solve word after word, collect badges along the way, and beat three bosses. This quick tour shows you around. You can skip it any time." },
         { title: "A free pack to start", text: "Packs hold <b>badges</b>: boosts that last the whole run. No need to read them yet. Open the pack and they're yours.", focus: ".umt-pack-sealed" }
       ]
     },
@@ -133,9 +133,9 @@
       },
       at: "bottom",
       cards: [
-        { title: "Welcome to Cuddle", skip: onlyEasy, text: "Cuddle is Wordle as a short walk: solve a few words in a row, then beat the boss at the end of the road. Every letter of the answer is already in your hand, and the answer's themes are shown at the top." },
+        { title: "Welcome to Cuddle", skip: onlyEasy, text: "Cuddle is a short word-guessing walk: solve a few words in a row, then beat the boss at the end of the road. Every letter of the answer is already in your hand, and the answer's themes are shown at the top." },
         { title: "The road", skip: onlyEasy, text: "The road is a straight line. Tap the next stop to play it." },
-        { title: "The map", skip: easyRun, text: "Each row of the map is a choice of stops, and you move up one row at a time. Tap a <b>Wordle</b> stop on the first row to play your first stage." }
+        { title: "The map", skip: easyRun, text: "Each row of the map is a choice of stops, and you move up one row at a time. Tap a <b>Cuddle</b> stop on the first row to play your first stage." }
       ]
     },
     {
@@ -191,7 +191,7 @@
       },
       at: "bottom",
       cards: [
-        { title: "Choose your path", skip: easyRun, text: "Every Wordle stop shows only how hard it is: a <b>heart</b> is an easier one, no mark a regular one, and one to three red <b>skulls</b> a harder one with a twist you find out by playing it. Harder stops pay more points and money. Shops, events and free badges sit between them." },
+        { title: "Choose your path", skip: easyRun, text: "Every Cuddle stop shows only how hard it is: a <b>heart</b> is an easier one, no mark a regular one, and one to three red <b>skulls</b> a harder one with a twist you find out by playing it. Harder stops pay more points and money. Shops, events and free badges sit between them." },
         { title: "The boss", skip: onlyEasy, text: "The road ends at a <b>boss</b>. It bends the rules a little: beat it and you win the run." },
         { title: "Bosses and winning", skip: easyRun, text: "Each world ends in a <b>boss</b>. You need enough points to challenge it, shown on the boss. Bosses bend the rules, and beating one gives you a <span class=\"umt-tut-legendary\">Legendary</span> pick. Beat the final boss to win the run.", focus: ".cuddle-header-points" }
       ]
@@ -242,7 +242,7 @@
       },
       at: "bottom",
       cards: [
-        { title: "Welcome to Cuddle", text: "Cuddle is Wordle with letter cards. This run teaches you how it works, one stage at a time: a few words, then a boss at the end." },
+        { title: "Welcome to Cuddle", text: "Cuddle is word guessing with letter cards. This run teaches you how it works, one stage at a time: a few words, then a boss at the end." },
         { title: "The road", text: "Your road is a straight line of stops. Tap the first one to play your first stage." }
       ]
     },
@@ -363,7 +363,7 @@
       },
       at: "top",
       cards: [
-        { title: "The boss", text: "The last stop is a <b>boss</b>. A boss bends one rule of Wordle for a guess or two. Pick the boss you'd rather face: each says what it bends. In the fight, tap its icon beside a row to read it again." },
+        { title: "The boss", text: "The last stop is a <b>boss</b>. A boss bends one rule of the game for a guess or two. Pick the boss you'd rather face: each says what it bends. In the fight, tap its icon beside a row to read it again." },
         { title: "How you win", text: "Solve the boss's word within its guesses and you <b>win the run</b>. Run out of guesses and the run is over. Good luck!" }
       ]
     },

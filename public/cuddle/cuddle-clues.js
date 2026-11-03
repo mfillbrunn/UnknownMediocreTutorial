@@ -37,7 +37,7 @@
   const VOWELS = new Set(["A", "E", "I", "O", "U"]);
   const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   // $20, $30, then $50 at level 3 (in every other stage).
-  const TREASURE_PRIZES = [0, 30, 40, 60];
+  const TREASURE_PRIZES = [0, 35, 50, 70];
   // The treasure pays only for a quick solve: before guess 5 in world one,
   // 4 in world two, 3 in world three (by bosses cleared).
   const TREASURE_BEFORE = [5, 4, 3];

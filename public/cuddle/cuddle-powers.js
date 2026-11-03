@@ -150,7 +150,12 @@
   var THIRD_LEVEL = {
     // (Extra mulligans, reward refreshes and hand size now step evenly: 1, 2, 3.)
     questPoints: function (state) { bump(state.upgrades, "questPoints", 0); }, // 10, 20, 30 points
-    mulliganSize: function (state) { bump(state.upgrades, "mulliganSize", 3); }, // 4, 5, whole hand
+    // Bigger Mulligan swaps 4, then 5, then still 5 -- level 3's gain is that
+    // every mulligan draws one extra letter (cuddle-engine.js mulligan), so
+    // its third pick's +1 swap is taken back here.
+    mulliganSize: function (state) { bump(state.upgrades, "mulliganSize", -1); },
+    // Second Thoughts: +3, +4, then still +4 mulligans a stage.
+    extraMulligans: function (state) { bump(state.upgrades, "extraMulligans", -1); },
     mulliganValueBoost: function (state) { bump(state.upgrades, "mulliganPointBonus", 0); }, // 3, 6, 9
     earlySolveBoost: function (state) { bump(state.upgrades, "earlyRoundPoint", 5); }, // 5, 10, 20
     // (Surprise Assignment, folded into Quest Cadence, steps evenly: +1, +2, +3.)
@@ -324,10 +329,10 @@
     return feedback.filter(function is(value) { return value === colour; }).length;
   }
 
-  var MOMENTUM = [0, 3, 5, 9];
+  var MOMENTUM = [0, 5, 8, 12];
   var BIG_OPENER = [0, 5, 8, 15];
   var LAST_STAND = [0, 25, 40, 75];
-  var PICKPOCKET = [0, 2, 3, 6];
+  var PICKPOCKET = [0, 3, 4, 7];
 
   var baseSubmit = proto.submitDraft;
   proto.submitDraft = function submitDraftWithPowers() {
@@ -362,7 +367,14 @@
       var momentum = Math.min(3, levelOf(this, "momentum"));
       if (momentum > 0 && history.length >= 2) {
         var previous = countOf(shownFeedback(history[history.length - 2]), "green");
-        if (greens > previous) stageBonus(this, MOMENTUM[momentum], "umtPowerMomentum", "Momentum");
+        if (greens > previous) {
+          stageBonus(this, MOMENTUM[momentum], "umtPowerMomentum", "Momentum");
+          // Level 3: a better guess also gives a mulligan.
+          if (momentum >= 3 && state.status !== "lost" && state.status !== "won") {
+            state.mulligansLeft = num(state.mulligansLeft) + 1;
+            note(this, "Momentum: +1 mulligan.");
+          }
+        }
       }
 
       var opener = Math.min(3, levelOf(this, "bigOpener"));
@@ -377,6 +389,24 @@
         var cash = yellows * PICKPOCKET[pickpocket];
         state.cuddleMoney = Math.max(0, num(state.cuddleMoney) + cash);
         note(this, "Pickpocket: +$" + cash + ".");
+      }
+      // Pickpocket level 3: greens pay $0.25 each too, banked until they
+      // make a whole dollar.
+      if (pickpocket >= 3 && greens > 0) {
+        state.umtPickpocketCents = num(state.umtPickpocketCents) + greens * 25;
+        var dollars = Math.floor(state.umtPickpocketCents / 100);
+        if (dollars > 0) {
+          state.umtPickpocketCents -= dollars * 100;
+          state.cuddleMoney = Math.max(0, num(state.cuddleMoney) + dollars);
+          note(this, "Pickpocket (greens): +$" + dollars + ".");
+        }
+      }
+
+      // Greyscale level 3: every grey tile also pays $1.
+      var greys = countOf(feedback, "gray") + countOf(feedback, "grey");
+      if (levelOf(this, "greyscale") >= 3 && greys > 0) {
+        state.cuddleMoney = Math.max(0, num(state.cuddleMoney) + greys);
+        note(this, "Greyscale: +$" + greys + ".");
       }
 
       var stand = Math.min(3, levelOf(this, "lastStand"));

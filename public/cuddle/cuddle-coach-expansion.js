@@ -28,7 +28,7 @@
   var MIN_METER_THRESHOLD = 3;
   // Softer Cuddle Meter, by level: how many tiles sooner the meter fills
   // (Hard's 12 goes 10, 8, then 5).
-  var METER_REDUCTION = [0, 2, 4, 6];
+  var METER_REDUCTION = [0, 3, 5, 7];
   // What a full meter gives at each Bigger Cuddle level. They add up: each
   // level keeps everything before it and adds one more thing.
   var METER_REWARD_NAMES = ["Free mulligan", "Mulligan + consonant test", "Mulligan + consonant test + Joker", "Mulligan + consonant test + Joker + yellow hint"];
@@ -89,7 +89,7 @@
     {
       id: "coachBossUnlimitedMulligans",
       icon: "♾️",
-      title: "Regular Wordle Hands",
+      title: "Regular Cuddle Hands",
       description: "NEXT BOSS: use unlimited mulligans, including against no-mulligan effects.",
       cost: 28,
       kind: "consumable",
@@ -1667,7 +1667,7 @@
     var paragraph = overlay.querySelector("p");
     if (kicker && kicker.textContent !== "STARTING BONUS") kicker.textContent = "STARTING BONUS";
     if (heading && heading.textContent !== "Choose your Starting Bonus!") heading.textContent = "Choose your Starting Bonus!";
-    if (paragraph && paragraph.textContent !== "Choose one permanent bonus before your first Wordle.") paragraph.textContent = "Choose one permanent bonus before your first Wordle.";
+    if (paragraph && paragraph.textContent !== "Choose one permanent bonus before your first Cuddle.") paragraph.textContent = "Choose one permanent bonus before your first Cuddle.";
   }
 
   function enhanceUpgradeCopy(game) {

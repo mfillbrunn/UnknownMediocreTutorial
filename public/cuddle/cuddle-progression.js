@@ -107,7 +107,7 @@
     questPoints: "+10 points per quest",
     questReroll: "Free quest reroll",
     mulliganSize: "Mulligans swap +1",
-    cullOne: "Cuts rare letters (1, 2, then 4)",
+    cullOne: "Cuts rare letters (1, 2, then a vowel too)",
     categorySense: "+1 theme shown (all at level 3)",
     storybookStart: "+10 points per stage",
     wideChoice: "+1 reward choice",

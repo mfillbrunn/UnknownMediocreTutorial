@@ -64,8 +64,9 @@
     ["wide margins", TIERS.COMMON],
     ["mulligan dividend", TIERS.COMMON],
     ["early finish", TIERS.RARE],
-    ["colour surge", TIERS.COMMON],
-    ["color surge", TIERS.COMMON],
+    // Colour Surge (points for greens) pays on nearly every guess: Rare.
+    ["colour surge", TIERS.RARE],
+    ["color surge", TIERS.RARE],
     ["greyscale", TIERS.COMMON],
     ["grayscale", TIERS.COMMON],
     ["softer cuddle meter", TIERS.COMMON],
@@ -184,7 +185,7 @@
       (state) => !state.megaState?.questPersistsForRound),
     legendaryPick("secondCup", "☕", "Second Cup", "Once per run, when you would run out of guesses in a boss or strict stage, you get one extra guess.",
       (state) => Number(state.cuddleCoachExpansion?.secondCupLevel || (coachOwns(state, "secondCup") ? 1 : 0)) < 2),
-    legendaryPick("umtAllThemes", "🔮", "All-Seeing Atlas", "Reveal every available theme at the start of every Wordle.",
+    legendaryPick("umtAllThemes", "🔮", "All-Seeing Atlas", "Reveal every available theme at the start of every Cuddle.",
       (state) => !state.cuddleRebalanceV5?.allThemesUnlocked && !coachOwns(state, "umtAllThemes"))
   ]);
 
@@ -972,9 +973,9 @@
   function setNodeType(node, type) {
     if (!isObject(node)) return;
     const labels = {
-      normal: { name: "Wordle", description: "Solve one standard stage.", icon: "stage-classic-v6.svg" },
-      themed: { name: "Themed Wordle", description: "Solve one stage with world-based theme information.", icon: "stage-theme.svg" },
-      challenge: { name: "Challenge Wordle", description: "Solve one stage with a challenge modifier.", icon: "challenge-pocket-tally.svg" }
+      normal: { name: "Cuddle", description: "Solve one standard stage.", icon: "stage-classic-v6.svg" },
+      themed: { name: "Themed Cuddle", description: "Solve one stage with world-based theme information.", icon: "stage-theme.svg" },
+      challenge: { name: "Challenge Cuddle", description: "Solve one stage with a challenge modifier.", icon: "challenge-pocket-tally.svg" }
     };
     const aliases = {
       normal: "normal",

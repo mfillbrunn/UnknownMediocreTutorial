@@ -159,7 +159,7 @@
     Object.freeze({
       id: IDS.cullOne, key: IDS.cullOne, icon: "\u2702\uFE0F",
       title: "Pruning Shears", name: "Pruning Shears",
-      description: "Permanently remove one rare consonant from your deck and every future answer. Level 2: two gone. Level 3: four gone. (No run culls more than 8 letters.)",
+      description: "Permanently remove one rare consonant from your deck and every future answer. Level 2: two consonants gone. Level 3: a vowel goes too, 3 letters in all. (No run culls more than 8 letters.)",
       maxLevel: 3, maxCount: 3, kind: "upgrade", cull: 1
     })
   ]);
@@ -175,8 +175,8 @@
     icon: "🔮",
     title: "All-Seeing Atlas",
     name: "All-Seeing Atlas",
-    description: "Reveal every available theme at the start of every Wordle.",
-    detail: "All themes are revealed automatically for every future Wordle.",
+    description: "Reveal every available theme at the start of every Cuddle.",
+    detail: "All themes are revealed automatically for every future Cuddle.",
     maxLevel: 1,
     maxCount: 1,
     kind: "bossReward",
@@ -280,7 +280,7 @@
     questEndurance: ["Endurance Trial", "A quest; miss it and lose 1 hand size for the stage."],
     letterDemand: ["Letter Demand", "Your word must use the letter shown (you're handed a card of it)."],
     letterBan: ["Banned Letter", "Your word may not use the letter shown."],
-    wordChain: ["Word Chain", "Your word must start with the last consonant of your guess before."],
+    wordChain: ["Word Chain", "Your word must start with one of the last two consonants of your guess before (Y doesn't count)."],
     lockedIn: ["Locked In", "Keep every green in place and use every yellow."]
   });
 
@@ -840,7 +840,7 @@
     return pool[hash32(seed) % pool.length];
   }
 
-  const CLASSIC_DESCRIPTION = `A standard Wordle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${CONFIG.classicClearBonus}.`;
+  const CLASSIC_DESCRIPTION = `A standard Cuddle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${Math.max(0, CONFIG.classicClearBonus - 10)}.`;
 
   // -- Stage difficulty (worlds 2 and 3) --------------------------------
   // A Wordle stop's difficulty is the sum of its parts: +1 per challenge,
@@ -895,6 +895,13 @@
   }
   function stagePay(tier) {
     return STAGE_PAY[String(Math.max(-1, Math.min(3, Math.round(asNumber(tier, 0)))))] || 0;
+  }
+  // The money a cleared stage pays: its points less $10 (a run had far
+  // too much money), never below $0 -- Easy $0, Regular $2, then $15 / $40
+  // / $70 for one to three skulls. The points stay as they are.
+  const STAGE_MONEY_CUT = 10;
+  function stageMoney(tier) {
+    return Math.max(0, stagePay(tier) - STAGE_MONEY_CUT);
   }
 
   function variantChallengeIds(variant) {
@@ -1056,7 +1063,7 @@
       case "doubleOrNothing":
         return { version: VERSION, kind, icon: "\u2696\uFE0F", title: "Double or Nothing", description: "Solve fast and the stage's earnings double (by guess 5 in world 1, 4 in world 2, 3 in world 3). Take longer and you lose half of them." };
       default:
-        return { version: VERSION, kind: "plain", icon: "🟩", title: "Classic Wordle", description: CLASSIC_DESCRIPTION };
+        return { version: VERSION, kind: "plain", icon: "🟩", title: "Classic Cuddle", description: CLASSIC_DESCRIPTION };
     }
   }
 
@@ -1072,7 +1079,7 @@
           version: VERSION,
           kind: "themedWordle",
           icon: "\uD83E\uDDED",
-          title: "Themed Wordle",
+          title: "Themed Cuddle",
           description: "A round that opens with one of the solution's categories already revealed."
         };
       }
@@ -1108,7 +1115,7 @@
         version: VERSION,
         kind: "plain",
         icon: "🟩",
-        title: "Classic Wordle",
+        title: "Classic Cuddle",
         description: CLASSIC_DESCRIPTION
       };
     } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent) {
@@ -1116,7 +1123,7 @@
         version: VERSION,
         kind: "themedWordle",
         icon: "🧭",
-        title: "Themed Wordle",
+        title: "Themed Cuddle",
         description: "A round that opens with one of the solution's categories already revealed."
       };
     } else if (roll < CONFIG.regularWordlePercent + CONFIG.themedWordlePercent + CONFIG.randomOpenerPercent) {
@@ -2143,19 +2150,29 @@
   // The letter Word Chain asks a word to start with: the last consonant of
   // the guess before (so many words end in E that "the last letter" mostly
   // meant starting with E -- next to impossible from a hand).
+  // Either of the last two different consonants will do (LARVA: R or V;
+  // LATEX: T or X), returned as one string in word order ("RV"). Y counts
+  // as a vowel here: so many words end in Y, and so few start with it,
+  // that chaining on it stranded the hand. A word with one consonant asks
+  // for that one; a word with none lets the chain off for that guess.
+  function chainLetters(word) {
+    const picked = [];
+    String(word || "").toUpperCase().split("").reverse().forEach((letter) => {
+      if (picked.length < 2 && /[A-Z]/.test(letter) && !"AEIOUY".includes(letter) && !picked.includes(letter)) picked.push(letter);
+    });
+    return picked.reverse().join("") || null;
+  }
   function chainLetter(game, used) {
     const state = stateOf(game) || {};
     const history = Array.isArray(state.history) ? state.history : [];
     const previous = used > 0 ? history[used - 1] : null;
     const word = previous ? String(previous.word || "").toUpperCase() : "";
     if (word.length !== 5) return null;
-    // Y counts as a vowel here: so many words end in Y, and so few start
-    // with it, that chaining on it stranded the hand. Hardly any word
-    // starts with J, Q, V, X or Z either, so the chain skips back past
-    // those to the consonant before (KMSVY chains on S). Only a word with
-    // no other consonant lets the chain off for that guess.
-    return word.split("").reverse().find((letter) => !"AEIOUY".includes(letter) && !"JQVXZ".includes(letter)) || null;
+    return chainLetters(word);
   }
+  // "RV" -> "R/V", "R or V" for the row disc and the texts.
+  const chainShown = (letters) => String(letters || "").split("").join("/");
+  const chainSaid = (letters) => String(letters || "").split("").join(" or ");
 
   // What Locked In holds you to: the greens and yellows the board showed
   // (a masked tile proves nothing, so it isn't counted).
@@ -2186,7 +2203,7 @@
     const letter = effect === "letterDemand" ? demandLetter(game, used)
       : effect === "letterBan" ? banLetter(game, used)
         : effect === "wordChain" ? chainLetter(game, used) : null;
-    return letter ? { id: effect, letter } : null;
+    return letter ? { id: effect, letter: effect === "wordChain" ? chainShown(letter) : letter } : null;
   }
 
   // What the current guess's word rule asks, for the clue strip.
@@ -2205,7 +2222,7 @@
     }
     if (effect === "wordChain") {
       const letter = chainLetter(game, used);
-      return letter ? { id: effect, icon: "🔗", label: "Word Chain", text: "Start with", letters: [letter] } : null;
+      return letter ? { id: effect, icon: "🔗", label: "Word Chain", text: letter.length > 1 ? "Start with one of" : "Start with", letters: letter.split("") } : null;
     }
     if (effect === "lockedIn" && used > 0) {
       const known = lockedKnowledge(game);
@@ -2230,12 +2247,16 @@
     const used = guessesUsed(game);
     const effect = planEffect(game, used);
     const quest = state.activeQuest && state.activeQuest.id === "wordChain" ? state.activeQuest.chainLetter : null;
-    const wanted = effect === "letterDemand" ? demandLetter(game, used)
+    const asked = effect === "letterDemand" ? demandLetter(game, used)
       : effect === "wordChain" ? chainLetter(game, used) : quest || null;
+    // Word Chain may ask for either of two letters: a card of one is enough,
+    // and the one handed over is the easier start (not Q, X or Z).
+    const options = asked ? String(asked).split("") : [];
     const draft = new Set(state.draft || []);
-    state.hand = state.hand.filter((card) => !(card && card.umtRuleGift && card.glyph !== wanted && !draft.has(card.id)));
-    if (!wanted || typeof game._newCard !== "function") return;
-    if (state.hand.some((card) => card && card.glyph === wanted)) return;
+    state.hand = state.hand.filter((card) => !(card && card.umtRuleGift && !options.includes(card.glyph) && !draft.has(card.id)));
+    if (!options.length || typeof game._newCard !== "function") return;
+    if (state.hand.some((card) => card && options.includes(card.glyph))) return;
+    const wanted = options.slice().reverse().find((letter) => !"QXZ".includes(letter)) || options[options.length - 1];
     const card = game._newCard(wanted, "extra");
     card.umtRuleGift = true;
     state.hand.push(card);
@@ -2366,7 +2387,7 @@
     }
     if (effect === "wordChain") {
       const letter = chainLetter(game, used);
-      if (letter && word[0] !== letter) return `Word Chain: this word must start with ${letter}.`;
+      if (letter && !letter.includes(word[0])) return `Word Chain: this word must start with ${chainSaid(letter)}.`;
     }
     if (effect === "lockedIn" && used > 0) {
       const known = lockedKnowledge(game);
@@ -2827,17 +2848,18 @@
       // A broken challenge (Medium, breakRule) pays as a plain stage.
       const tier = variant.umtRuleBroken ? Math.min(0, stageTier(variant)) : stageTier(variant);
       const pay = stagePay(tier);
+      const money = stageMoney(tier);
       const label = variant.umtRuleBroken ? "Stage cleared (challenge broken)" : tier < 0 ? "Easy stage cleared" : tier === 0 ? "Stage cleared"
         : `${tier}-skull stage cleared`;
       const paidPoints = pay > 0 ? addScoreBonus(game, pay, "umtStagePay", label, entry) : 0;
       const paidState = paidPoints > 0 ? stateOf(game) : null;
       if (paidState) {
-        paidState.cuddleMoney = Math.max(0, asNumber(paidState.cuddleMoney, 0) + pay);
-        if (entry) entry.challengeBonusMoney = asNumber(entry.challengeBonusMoney, 0) + pay;
+        paidState.cuddleMoney = Math.max(0, asNumber(paidState.cuddleMoney, 0) + money);
+        if (entry) entry.challengeBonusMoney = asNumber(entry.challengeBonusMoney, 0) + money;
         // The cash-out shows the money beside the points on the same line.
         const line = (customState(game) && customState(game).lastPayoutLines || [])
           .find((item) => item && item.field === "umtStagePay" && item.roundToken === roundToken(game));
-        if (line) line.money = asNumber(line.money, 0) + pay;
+        if (line && money > 0) line.money = asNumber(line.money, 0) + money;
       }
       variant.stagePaid = true;
       variant.classicPaid = true;
@@ -3428,16 +3450,25 @@
     if (vowelLevel > 0) {
       const vowels = secretVowelCount(game);
       if (vowels > 0) {
-        // 4, 6, then 10 a vowel at level 3.
-        const perVowel = [0, 4, 6, 10][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
+        // 6, 9, then 10 a vowel at level 3, which also pays $1 a vowel.
+        const perVowel = [0, 6, 9, 10][Math.max(0, Math.min(3, Math.floor(vowelLevel)))];
         addScoreBonus(game, vowels * perVowel, "umtVowelBounty",
           `${vowels} vowel${vowels === 1 ? "" : "s"} in the secret`);
+        if (vowelLevel >= 3) {
+          const vowelState = stateOf(game);
+          if (vowelState) {
+            vowelState.cuddleMoney = Math.max(0, asNumber(vowelState.cuddleMoney, 0) + vowels);
+            const line = (customState(game) && customState(game).lastPayoutLines || [])
+              .find((item) => item && item.field === "umtVowelBounty" && item.roundToken === roundToken(game));
+            if (line) line.money = asNumber(line.money, 0) + vowels;
+          }
+        }
       }
     }
 
     const encoreLevel = upgradeLevel(game, IDS.encore);
     if (encoreLevel > 0) {
-      const ENCORE_POINTS = [25, 40, 55][Math.min(3, encoreLevel) - 1];
+      const ENCORE_POINTS = [35, 50, 70][Math.min(3, encoreLevel) - 1];
       custom.encoreSolves = asInteger(custom.encoreSolves, 0) + 1;
       if (custom.encoreSolves % 3 === 0) {
         addScoreBonus(game, ENCORE_POINTS, "umtEncore", "Every third stage solved");
@@ -3660,20 +3691,68 @@
     const cullReward = customRewardById(id);
     if (cullReward && cullReward.cull && typeof game._removalCandidates === "function") {
       const state = stateOf(game);
-      // Letters each level takes: 1, 1, 2 (1/2/4 in all), for Pruning Shears
-      // and Cull Letters alike. The run's cull cap (8) applies on top.
-      const steps = [1, 1, 2];
-      let wanted = 0;
-      for (let step = alreadyApplied + 1; step <= Math.min(3, current); step += 1) wanted += steps[step - 1] || 0;
-      const letters = game._removalCandidates(wanted);
+      // One letter a level (1/2/3 in all), for Pruning Shears and Cull
+      // Letters alike: rare consonants at levels 1 and 2, and a vowel at
+      // level 3 (the least used one the answers can do without). The run's
+      // cull cap (8) applies on top.
+      let consonants = 0;
+      let vowel = false;
+      for (let step = alreadyApplied + 1; step <= Math.min(3, current); step += 1) {
+        if (step === 3) vowel = true;
+        else consonants += 1;
+      }
+      const letters = consonants > 0 ? game._removalCandidates(consonants) : [];
+      if (vowel) {
+        const picked = cullVowel(game, letters);
+        if (picked) letters.push(picked);
+      }
       if (state && letters.length) {
         state.removedLetters = Array.from(new Set([...(state.removedLetters || []), ...letters])).sort();
+        // A culled vowel's card leaves the hand at once (cuddle-engine.js
+        // _syncInfiniteCards drops removed letters), and leaves any draft.
+        if (Array.isArray(state.hand)) {
+          const gone = new Set(state.hand.filter((card) => card && letters.includes(String(card.glyph || "").toUpperCase())).map((card) => card.id));
+          if (gone.size && Array.isArray(state.draft)) state.draft = state.draft.filter((id) => !gone.has(id));
+        }
+        if (typeof game._syncInfiniteCards === "function") {
+          try { game._syncInfiniteCards(); } catch (_error) { /* the next stage's hand drops it */ }
+        }
         appendNotice(game, `${cullReward.title}: ${letters.join(", ")} ${letters.length === 1 ? "is" : "are"} gone for good.`);
       }
     }
     custom.appliedUpgradeEffects[id] = current;
     safeSave(game);
     scheduleUi();
+  }
+
+  // Pruning Shears level 3: the vowel that leaves the game -- the one the
+  // fewest answers use, as long as plenty of unplayed answers are left
+  // without it (and without the letters culled alongside it).
+  function cullVowel(game, alsoRemoved) {
+    const state = stateOf(game);
+    if (!state || typeof game.getActiveWords !== "function") return null;
+    const cap = 8;
+    const culled = typeof game._culledLetterCount === "function" ? game._culledLetterCount() : (state.removedLetters || []).length;
+    if (culled + (alsoRemoved || []).length >= cap) return null;
+    const original = state.removedLetters;
+    try {
+      state.removedLetters = [...(original || []), ...(alsoRemoved || [])];
+      const removed = new Set(state.removedLetters);
+      const active = game.getActiveWords();
+      const used = new Set(state.usedSecrets || []);
+      const options = ["A", "E", "I", "O", "U"]
+        .filter((letter) => !removed.has(letter))
+        .map((letter) => ({
+          letter,
+          uses: active.filter((word) => word.toUpperCase().includes(letter)).length,
+          left: active.filter((word) => !word.toUpperCase().includes(letter) && !used.has(word)).length
+        }))
+        .filter((item) => item.left >= 40)
+        .sort((a, b) => a.uses - b.uses);
+      return options.length ? options[0].letter : null;
+    } finally {
+      state.removedLetters = original;
+    }
   }
 
   function installQuestBookReward() {
@@ -4088,11 +4167,11 @@
 
 
   const POWER_INFO = Object.freeze({
-    plain: { title: "Classic Wordle", description: `A standard Wordle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${CONFIG.classicClearBonus}.`, shape: "grid" },
+    plain: { title: "Classic Cuddle", description: `A standard Cuddle with no help. Clear it for +${CONFIG.classicClearBonus} points and +$${Math.max(0, CONFIG.classicClearBonus - 10)}.`, shape: "grid" },
     luckyStart: { title: "Lucky Start", description: "One exact position is revealed before the first guess.", shape: "clover" },
     jackpot: { title: "Jackpot Run", description: "Greens pay double, but the stage must be solved within the world's guess limit (6, 5 or 4) or the run is lost.", shape: "coins" },
     doubleOrNothing: { title: "Double or Nothing", description: "Solve by guess 5 (world 1), 4 (world 2) or 3 (world 3) to double the stage, or lose half of it.", shape: "scales" },
-    themedWordle: { title: "Themed Wordle", description: "A round that opens with one of the solution's categories already revealed.", shape: "tag" },
+    themedWordle: { title: "Themed Cuddle", description: "A round that opens with one of the solution's categories already revealed.", shape: "tag" },
     randomOpener: { title: "Head Start", description: "A random legal word automatically consumes the first guess.", shape: "die" },
     deepFog: { title: "Deep Fog", description: "The marked tiles are hidden on each affected guess.", shape: "fog" },
     countedSteps: { title: "Counted Steps", description: "The marked tiles show only a green and yellow count, not which tile was which. The rest of the row reports normally.", shape: "count", multiplayerId: "countOnly" },
@@ -4100,13 +4179,13 @@
     littleLie: { title: "Little Lies", description: "The marked tiles show a deliberately false colour. The rest of the row reports normally.", shape: "mask" },
     doubleBlind: { title: "Double Blind", description: "The first guesses combine count-only and hidden-position feedback on their marked tiles.", shape: "blind" },
     signalStorm: { title: "Signal Storm", description: "Affected guesses cycle through several feedback disruptions on their marked tiles.", shape: "storm" },
-    noSafetyNet: { title: "No Safety Net", description: "Mulligans and skipped guesses are disabled for this Wordle.", shape: "noMulligan" },
+    noSafetyNet: { title: "No Safety Net", description: "Mulligans and skipped guesses are disabled for this Cuddle.", shape: "noMulligan" },
     perfectOpener: { title: "Perfect Opener", description: "This word must use five different letters.", shape: "distinct" },
     consonantCrunch: { title: "Consonant Crunch", description: "This word may contain at most one vowel.", shape: "oneVowel" },
     letterDemand: { title: "Letter Demand", description: "This word must use the letter shown above the board. If you hold no card of it, you're handed one.", shape: "demand" },
     letterBan: { title: "Banned Letter", description: "This word may not use the letter shown above the board. A new letter is banned every guess.", shape: "ban" },
-    wordChain: { title: "Word Chain", description: "This word must start with the last consonant of your guess before. If you hold no card of it, you're handed one.", shape: "chain" },
-    lockedIn: { title: "Locked In", description: "Wordle's Hard Mode: this word must keep every green letter in its place and use every yellow one.", shape: "lock" },
+    wordChain: { title: "Word Chain", description: "This word must start with one of the last two consonants of your guess before (Y doesn't count). If you hold no card of either, you're handed one.", shape: "chain" },
+    lockedIn: { title: "Locked In", description: "Hard Mode: this word must keep every green letter in its place and use every yellow one.", shape: "lock" },
     shroudedEdges: { title: "Shrouded Edges", description: "The same marked positions remain hidden on every affected guess.", shape: "hiddenTiles" },
     countOnly: { title: "Count Only", description: "The marked tiles report only how many of them are green and how many yellow, never which is which. Every other tile in the row shows its real colour.", shape: "count", multiplayerId: "countOnly" },
     delayedFeedback: { title: "Delayed Feedback", description: "The marked tiles hold back their colours for one guess: each row's hidden tiles are revealed when you submit the next guess. Every other tile in the row shows its real colour immediately.", shape: "clock" },
@@ -4129,8 +4208,8 @@
     coachHint: { title: "Guesser Hint", description: "Alternates yellow presence hints and green position hints during a round.", shape: "hint" },
     revealLocation: { title: "Position Hint", description: "Reveal one correct letter and its exact position.", shape: "greenHint" },
     jokerToken: { title: "Joker", description: "Gain a wildcard letter card.", shape: "joker" },
-    umtAllThemes: { title: "All-Seeing Atlas", description: "Reveal every available theme at the start of every Wordle.", shape: "tags" },
-    umtOpeningInsight: { title: "Opening Insight", description: "Begin each Wordle with an extra green position hint.", shape: "greenHint" },
+    umtAllThemes: { title: "All-Seeing Atlas", description: "Reveal every available theme at the start of every Cuddle.", shape: "tags" },
+    umtOpeningInsight: { title: "Opening Insight", description: "Begin each Cuddle with an extra green position hint.", shape: "greenHint" },
     umtQuickStudy: { title: "Quick Study", description: "Guesser Hints arrive sooner.", shape: "hourglass" },
     umtJokerCache: { title: "Joker Cache", description: "Joker cards in your deck every stage: 1, then 2; at level 3 a yellow Joker letter is placed in its spot.", shape: "joker" },
     umtReserveDividend: { title: "Reserve Dividend", description: "Unused Jokers and mulligans pay an additional end-of-round bonus.", shape: "coins" },
@@ -4173,7 +4252,7 @@
     if (known) return { id: key, ...known };
     const metadata = window.POWER_METADATA && window.POWER_METADATA[key];
     const title = metadata && (metadata.name || metadata.title) || key.replace(/([a-z])([A-Z])/g, "$1 $2");
-    const description = metadata && (metadata.desc || metadata.short || metadata.description) || "This power changes how the affected Wordle or guess behaves.";
+    const description = metadata && (metadata.desc || metadata.short || metadata.description) || "This power changes how the affected Cuddle or guess behaves.";
     return { id: key, title, description, shape: "bolt", multiplayerId: key };
   }
 
@@ -4650,6 +4729,7 @@
         if (ruleLetter) {
           const verb = RULE_LETTER_IDS.get(id);
           button.classList.add("umt-rule-letter-button", `is-${id}`);
+          if (String(ruleLetter).length > 1) button.classList.add("is-pair");
           button.innerHTML = `<span class="umt-rule-letter" aria-hidden="true">${ruleLetter}</span>`;
           button.title = `${info.title}: ${verb} ${ruleLetter} on guess ${index + 1}. Click for details`;
           button.setAttribute("aria-label", `${info.title}: ${verb} ${ruleLetter} on guess ${index + 1}. Open explanation.`);
@@ -5627,12 +5707,13 @@
             difficulty,
             skulls: difficultySkulls(difficulty),
             tier: stageTier(variant),
-            pay: stagePay(stageTier(variant))
+            pay: stagePay(stageTier(variant)),
+            money: stageMoney(stageTier(variant))
           };
         }
         const difficulty = stagePartDifficulty(variant);
         return { kind: variant.kind, title: variant.title, description: variant.description, difficulty, skulls: difficultySkulls(difficulty),
-          tier: stageTier(variant), pay: stagePay(stageTier(variant)) };
+          tier: stageTier(variant), pay: stagePay(stageTier(variant)), money: stageMoney(stageTier(variant)) };
       },
       // The challenge stops the map can roll, described at the run's
       // current guess cap -- listed by the map key.
@@ -5676,6 +5757,7 @@
         return info.title || "";
       },
       stagePay: (tier) => stagePay(tier),
+      stageMoney: (tier) => stageMoney(tier),
       // Double Down's chip on the live play strip (cuddle-campaign.js's
       // insertMap): the stage's lucky guess, shown until it has been played.
       luckyGuessBadge: (game) => {

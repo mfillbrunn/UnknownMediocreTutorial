@@ -42,7 +42,7 @@
     Object.freeze({ level: 3, id: "deadWeight", name: "Dead Weight", text: "A dead card sits in your deck all run. Mulligan it away." }),
     Object.freeze({ level: 4, id: "heavyToll", name: "Heavy Toll", text: "Each late guess costs 7 more points." }),
     Object.freeze({ level: 5, id: "tightWindow", name: "Tight Window", text: "The solve window is one guess shorter." }),
-    Object.freeze({ level: 6, id: "gauntlet", name: "Gauntlet", text: "No plain Wordles: every Wordle stop has a challenge." }),
+    Object.freeze({ level: 6, id: "gauntlet", name: "Gauntlet", text: "No plain Cuddles: every Cuddle stop has a challenge." }),
     Object.freeze({ level: 7, id: "steepGates", name: "Steep Gates", text: "Boss point targets are 20% higher." }),
     Object.freeze({ level: 8, id: "thinHand", name: "Thin Hand", text: "One fewer consonant in your hand." }),
     Object.freeze({ level: 9, id: "hexed", name: "Hexed", text: "You start cursed: one early guess of every stage is masked." })
