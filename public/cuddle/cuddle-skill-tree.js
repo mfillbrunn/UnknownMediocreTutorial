@@ -117,7 +117,7 @@
         // Cull Letters (umtCullTwo) was a copy of this badge; the two are one
         // now, and a save that holds Cull Letters counts it here.
         { id: "cullOne", icon: "✂️", title: "Pruning Shears", tier: "rare", type: "letters", maxLevel: 3,
-          levels: ["1 rare letter is gone for good: out of your deck and out of every answer.", "2 rare letters are gone for good.", "4 rare letters are gone for good."],
+          levels: ["1 rare letter is gone for good: out of your deck and out of every answer.", "2 rare letters are gone for good.", "A vowel goes too: 3 letters gone for good (2 rare consonants and 1 vowel)."],
           level: g => Math.min(3, v5Level(g, "umtCullOne") + v5Level(g, "umtCullTwo")) },
         { id: "categorySense", icon: "🔮", title: "Theme Sense", tier: "rare", type: "clues", maxLevel: 3,
           levels: ["Each stage starts by telling you 1 theme of the answer (like \"animals\").", "Each stage starts by telling you 2 themes.", "Each stage starts by telling you every theme."],
@@ -431,7 +431,7 @@
     questRefreshes: ["+2 quest refreshes", "+3 quest refreshes", "+4 quest refreshes"],
     questPoints: ["+15 per quest", "+30 per quest", "+45 per quest"],
     mulliganSize: ["Mulligans swap 4", "Mulligans swap 5", "Swap 5, draw 1 extra"],
-    cullOne: ["1 letter culled", "2 letters culled", "4 letters culled"],
+    cullOne: ["1 letter culled", "2 letters culled", "3 culled, 1 a vowel"],
     categorySense: ["1 theme shown", "2 themes shown", "All themes shown"],
     storybookStart: ["+10 a stage", "+16 a stage", "+30 a stage"],
     wideChoice: ["+1 choice to see", "+2 choices to see", "+2 choices, free refresh"],

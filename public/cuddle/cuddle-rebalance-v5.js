@@ -159,7 +159,7 @@
     Object.freeze({
       id: IDS.cullOne, key: IDS.cullOne, icon: "\u2702\uFE0F",
       title: "Pruning Shears", name: "Pruning Shears",
-      description: "Permanently remove one rare consonant from your deck and every future answer. Level 2: two gone. Level 3: four gone. (No run culls more than 8 letters.)",
+      description: "Permanently remove one rare consonant from your deck and every future answer. Level 2: two consonants gone. Level 3: a vowel goes too, 3 letters in all. (No run culls more than 8 letters.)",
       maxLevel: 3, maxCount: 3, kind: "upgrade", cull: 1
     })
   ]);
@@ -3682,20 +3682,68 @@
     const cullReward = customRewardById(id);
     if (cullReward && cullReward.cull && typeof game._removalCandidates === "function") {
       const state = stateOf(game);
-      // Letters each level takes: 1, 1, 2 (1/2/4 in all), for Pruning Shears
-      // and Cull Letters alike. The run's cull cap (8) applies on top.
-      const steps = [1, 1, 2];
-      let wanted = 0;
-      for (let step = alreadyApplied + 1; step <= Math.min(3, current); step += 1) wanted += steps[step - 1] || 0;
-      const letters = game._removalCandidates(wanted);
+      // One letter a level (1/2/3 in all), for Pruning Shears and Cull
+      // Letters alike: rare consonants at levels 1 and 2, and a vowel at
+      // level 3 (the least used one the answers can do without). The run's
+      // cull cap (8) applies on top.
+      let consonants = 0;
+      let vowel = false;
+      for (let step = alreadyApplied + 1; step <= Math.min(3, current); step += 1) {
+        if (step === 3) vowel = true;
+        else consonants += 1;
+      }
+      const letters = consonants > 0 ? game._removalCandidates(consonants) : [];
+      if (vowel) {
+        const picked = cullVowel(game, letters);
+        if (picked) letters.push(picked);
+      }
       if (state && letters.length) {
         state.removedLetters = Array.from(new Set([...(state.removedLetters || []), ...letters])).sort();
+        // A culled vowel's card leaves the hand at once (cuddle-engine.js
+        // _syncInfiniteCards drops removed letters), and leaves any draft.
+        if (Array.isArray(state.hand)) {
+          const gone = new Set(state.hand.filter((card) => card && letters.includes(String(card.glyph || "").toUpperCase())).map((card) => card.id));
+          if (gone.size && Array.isArray(state.draft)) state.draft = state.draft.filter((id) => !gone.has(id));
+        }
+        if (typeof game._syncInfiniteCards === "function") {
+          try { game._syncInfiniteCards(); } catch (_error) { /* the next stage's hand drops it */ }
+        }
         appendNotice(game, `${cullReward.title}: ${letters.join(", ")} ${letters.length === 1 ? "is" : "are"} gone for good.`);
       }
     }
     custom.appliedUpgradeEffects[id] = current;
     safeSave(game);
     scheduleUi();
+  }
+
+  // Pruning Shears level 3: the vowel that leaves the game -- the one the
+  // fewest answers use, as long as plenty of unplayed answers are left
+  // without it (and without the letters culled alongside it).
+  function cullVowel(game, alsoRemoved) {
+    const state = stateOf(game);
+    if (!state || typeof game.getActiveWords !== "function") return null;
+    const cap = 8;
+    const culled = typeof game._culledLetterCount === "function" ? game._culledLetterCount() : (state.removedLetters || []).length;
+    if (culled + (alsoRemoved || []).length >= cap) return null;
+    const original = state.removedLetters;
+    try {
+      state.removedLetters = [...(original || []), ...(alsoRemoved || [])];
+      const removed = new Set(state.removedLetters);
+      const active = game.getActiveWords();
+      const used = new Set(state.usedSecrets || []);
+      const options = ["A", "E", "I", "O", "U"]
+        .filter((letter) => !removed.has(letter))
+        .map((letter) => ({
+          letter,
+          uses: active.filter((word) => word.toUpperCase().includes(letter)).length,
+          left: active.filter((word) => !word.toUpperCase().includes(letter) && !used.has(word)).length
+        }))
+        .filter((item) => item.left >= 40)
+        .sort((a, b) => a.uses - b.uses);
+      return options.length ? options[0].letter : null;
+    } finally {
+      state.removedLetters = original;
+    }
   }
 
   function installQuestBookReward() {

@@ -1439,6 +1439,9 @@
       this.state.hand = this.state.hand.filter(card => (
         card && card.glyph && card.source !== "infinite" && !unlocked.has(card.glyph)
       ));
+      // A letter culled from the run (Pruning Shears can take a vowel) has
+      // no card at all: no word may use it.
+      (this.state.removedLetters || []).forEach(letter => unlocked.delete(glyphForLetter(letter)));
       this.state.infiniteGlyphs = [...unlocked].sort();
       this.state.infiniteGlyphs.forEach(glyph => {
         this.state.hand.push({ id: `infinite-${glyph}`, glyph, source: "infinite" });
