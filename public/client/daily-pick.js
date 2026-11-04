@@ -212,7 +212,7 @@
   }
 
   function startClock() {
-    if (runningSince || allSolved() || !$("dailyPickScreen")?.classList.contains("active")) return;
+    if (runningSince || allSolved() || !$("dailyPickScreen")?.classList.contains("active") || helpOpen()) return;
     runningSince = Date.now();
     ticker = setInterval(showClock, 250);
   }
@@ -439,12 +439,42 @@
     phase = r.guesses.length && !r.solved ? "strike" : "pick";
     selected = "";
     render();
-    startClock();
+    if (!helpSeen()) openHelp();
+    else startClock();
   }
 
   function close() {
+    closeHelp();
     stopClock();
     window.UmtGameHub?.showHub();
+  }
+
+  // How to play: shown by itself the first time, then from the "?" button.
+  // The clock waits while it's open.
+  const HELP_SEEN_KEY = "umt.griddle.helpSeen";
+  const helpOpen = () => !!$("dpHelp") && !$("dpHelp").hidden;
+
+  function openHelp() {
+    const help = $("dpHelp");
+    if (!help) return;
+    stopClock();
+    // It takes the grid's place, so the card grows to fit and nothing scrolls.
+    $("dailyPickRoot").hidden = true;
+    help.hidden = false;
+    $("dpHelpClose")?.focus({ preventScroll: true });
+    try { localStorage.setItem(HELP_SEEN_KEY, "1"); } catch (e) { /* private mode */ }
+  }
+
+  function closeHelp() {
+    const help = $("dpHelp");
+    if (!help || help.hidden) return;
+    help.hidden = true;
+    $("dailyPickRoot").hidden = false;
+    startClock();
+  }
+
+  function helpSeen() {
+    try { return localStorage.getItem(HELP_SEEN_KEY) === "1"; } catch (e) { return true; }
   }
 
   // Switching apps or tabs pauses the clock; coming back resumes it.
@@ -460,6 +490,9 @@
   document.addEventListener("DOMContentLoaded", () => {
     $("hubDailyPickBtn")?.addEventListener("click", open);
     $("dpBackBtn")?.addEventListener("click", close);
+    $("dpHelpBtn")?.addEventListener("click", openHelp);
+    $("dpHelpClose")?.addEventListener("click", closeHelp);
+    document.addEventListener("keydown", event => { if (event.key === "Escape") closeHelp(); });
     $("dailyPickRoot")?.addEventListener("click", event => {
       const word = event.target.closest?.(".dp-word");
       if (word) return onWordClick(word.dataset.word);

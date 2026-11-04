@@ -18,22 +18,31 @@
   padding: 12px 12px 16px !important;
 }
 
-/* ---------- Header: clock, title, close ---------- */
+/* ---------- Header: clock | title | help, close ---------- */
+.dp-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.dp-head-buttons { display: flex; gap: 6px; justify-content: flex-end; }
 .dp-card .menu-title {
   margin: 0 !important;
-  font-size: 24px;
+  font-size: clamp(19px, 5.6vw, 24px);
   line-height: 38px;
   letter-spacing: .06em;
+  white-space: nowrap;
 }
 .dp-title-grid { margin-left: 8px; font-size: .7em; opacity: .65; letter-spacing: .04em; }
 .dp-clock {
-  position: absolute; top: 12px; left: 16px;
+  justify-self: start;
+  padding-left: 4px;
   line-height: 38px;
   font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums;
   opacity: .75;
 }
 .dp-close {
-  position: absolute; top: 12px; right: 12px;
   width: 38px; height: 38px; padding: 0;
   border: 0; border-radius: 50%;
   background: #d64545; color: #fff;
@@ -44,6 +53,32 @@
 .dp-close:hover { background: #e05252; }
 .dp-close:active { transform: scale(.92); }
 .dp-close svg { display: block; }
+/* The clock is hidden on the scorecard; keep its column so the title stays centred. */
+.dp-clock[hidden] { display: block !important; visibility: hidden; }
+.dp-help-btn {
+  width: 32px; height: 32px; padding: 0;
+  border: 1.5px solid rgba(255,255,255,.3); border-radius: 50%;
+  background: transparent; color: inherit;
+  font-weight: 800; cursor: pointer;
+  transition: transform .12s ease, background .12s ease;
+}
+.dp-help-btn:hover { background: rgba(255,255,255,.08); }
+.dp-help-btn:active { transform: scale(.92); }
+
+/* ---------- How to play ---------- */
+.dp-help {
+  width: 100%; box-sizing: border-box;
+  padding: 6px 8px 4px;
+  text-align: left;
+  font-size: 15px; line-height: 1.5;
+}
+.dp-help[hidden], #dailyPickRoot[hidden] { display: none; }
+.dp-help h3 { margin: 0 0 10px; font-size: 21px; text-align: center; }
+.dp-help p { margin: 0 0 10px; }
+.dp-help ul { margin: 0 0 10px; padding-left: 18px; }
+.dp-help li { margin-bottom: 8px; }
+.dp-help-chip { display: inline-block; width: 13px; height: 13px; border-radius: 3px; vertical-align: -1px; }
+.dp-help .dp-next { display: block; margin: 14px auto 0; }
 
 #dailyPickRoot { width: 100%; align-self: stretch; }
 
@@ -189,6 +224,7 @@
 /* .game-menu button pins every menu button to 14px with !important. */
 #dailyPickScreen .dp-word { font-size: clamp(15px, 4.5vw, 24px) !important; }
 #dailyPickScreen .dp-next { font-size: 16px !important; }
+#dailyPickScreen .dp-help-btn { font-size: 16px !important; }
 #dailyPickScreen .dp-summary .dp-share { font-size: 17px !important; }
 
 /* ---------- Desktop ---------- */
