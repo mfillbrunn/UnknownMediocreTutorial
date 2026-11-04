@@ -212,7 +212,7 @@
   }
 
   function startClock() {
-    if (runningSince || allSolved() || !$("dailyPickScreen")?.classList.contains("active") || helpOpen()) return;
+    if (runningSince || allSolved() || !$("dailyPickScreen")?.classList.contains("active") || helpOpen() || introOpen()) return;
     runningSince = Date.now();
     ticker = setInterval(showClock, 250);
   }
@@ -439,30 +439,51 @@
     phase = r.guesses.length && !r.solved ? "strike" : "pick";
     selected = "";
     render();
-    if (!helpSeen()) openHelp();
+    if (!introSeen()) openIntro();
     else startClock();
   }
 
   function close() {
+    closeIntro();
     closeHelp();
     stopClock();
     window.UmtGameHub?.showHub();
   }
 
-  // How to play: shown by itself the first time, then from the "?" button.
-  // The clock waits while it's open.
-  const HELP_SEEN_KEY = "umt.griddle.helpSeen";
+  // First visit: a short pop-up over the grid. The full rules live behind
+  // the "?" button. The clock waits while either is open.
+  const INTRO_SEEN_KEY = "umt.griddle.introSeen";
+  const OLD_HELP_SEEN_KEY = "umt.griddle.helpSeen"; // saw the full rules first, before the pop-up existed
+  const introOpen = () => !!$("dpIntro") && !$("dpIntro").hidden;
   const helpOpen = () => !!$("dpHelp") && !$("dpHelp").hidden;
+
+  function introSeen() {
+    try { return !!(localStorage.getItem(INTRO_SEEN_KEY) || localStorage.getItem(OLD_HELP_SEEN_KEY)); } catch (e) { return true; }
+  }
+
+  function openIntro() {
+    stopClock();
+    $("dpIntro").hidden = false;
+    $("dpIntroClose")?.focus({ preventScroll: true });
+    try { localStorage.setItem(INTRO_SEEN_KEY, "1"); } catch (e) { /* private mode */ }
+  }
+
+  function closeIntro() {
+    const intro = $("dpIntro");
+    if (!intro || intro.hidden) return;
+    intro.hidden = true;
+    startClock();
+  }
 
   function openHelp() {
     const help = $("dpHelp");
     if (!help) return;
+    closeIntro();
     stopClock();
     // It takes the grid's place, so the card grows to fit and nothing scrolls.
     $("dailyPickRoot").hidden = true;
     help.hidden = false;
     $("dpHelpClose")?.focus({ preventScroll: true });
-    try { localStorage.setItem(HELP_SEEN_KEY, "1"); } catch (e) { /* private mode */ }
   }
 
   function closeHelp() {
@@ -471,10 +492,6 @@
     help.hidden = true;
     $("dailyPickRoot").hidden = false;
     startClock();
-  }
-
-  function helpSeen() {
-    try { return localStorage.getItem(HELP_SEEN_KEY) === "1"; } catch (e) { return true; }
   }
 
   // Switching apps or tabs pauses the clock; coming back resumes it.
@@ -492,7 +509,10 @@
     $("dpBackBtn")?.addEventListener("click", close);
     $("dpHelpBtn")?.addEventListener("click", openHelp);
     $("dpHelpClose")?.addEventListener("click", closeHelp);
-    document.addEventListener("keydown", event => { if (event.key === "Escape") closeHelp(); });
+    $("dpIntroClose")?.addEventListener("click", closeIntro);
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") { closeIntro(); closeHelp(); }
+    });
     $("dailyPickRoot")?.addEventListener("click", event => {
       const word = event.target.closest?.(".dp-word");
       if (word) return onWordClick(word.dataset.word);

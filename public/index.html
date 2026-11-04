@@ -11,7 +11,7 @@
   <!-- 1. Themes & variables -->
   <link rel="stylesheet" href="css/themes.css?v=tutorial-motion-sim-2">
   <!-- 2. Global defaults -->
-  <link rel="stylesheet" href="css/daily-pick.css?v=21">
+  <link rel="stylesheet" href="css/daily-pick.css?v=22">
   <link rel="stylesheet" href="css/base.css?v=cuddle-draft-gaps-1">
   <!-- 3. Structural layout -->
   <link rel="stylesheet" href="css/layout.css?v=history-scroll-quest-note-1">
@@ -587,22 +587,29 @@
               </div>
             </div>
             <div id="dailyPickRoot"></div>
+            <div id="dpIntro" class="dp-intro" role="dialog" aria-modal="true" aria-label="Welcome to Griddle" hidden>
+              <div class="dp-intro-card">
+                <p>Find the secret word out of these 16. Use the feedback to narrow it down.</p>
+                <p>Do it 3 times and you're done!</p>
+                <button id="dpIntroClose" class="dp-next" type="button">Play</button>
+                <div class="dp-intro-more">Full rules anytime under <b>?</b></div>
+              </div>
+            </div>
             <div id="dpHelp" class="dp-help" role="dialog" aria-modal="true" aria-labelledby="dpHelpTitle" hidden>
               <h3 id="dpHelpTitle">How to play</h3>
-              <p>You get a grid of 16 five-letter words. One of them is the secret word you have to find.</p>
-              <p>Start by picking a word. If it's already the secret word, lucky you &ndash; you win! If not, you get feedback on how the word you picked compares with the secret word.</p>
-              <p>Use that to strike out the words that don't match and narrow down the possible answers, then pick your next word. Rinse and repeat.</p>
-              <p>You play three grids, and each gives different feedback:</p>
+              <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
+              <p>You then use that info to eliminate words that don't match and narrow down the possible solutions before picking your next word; rinse and repeat.</p>
+              <p>There are three new grids every day, and they differ in what feedback you get:</p>
               <ul>
-                <li><b>Grid 1</b> works like Wordle. Each letter is
-                  <span class="dp-help-chip" style="background:#3f9d4f"></span> green (right letter, right spot),
-                  <span class="dp-help-chip" style="background:#c9a227"></span> yellow (in the word, wrong spot) or
-                  <span class="dp-help-chip" style="background:#555b63"></span> grey (not in the word at all).</li>
-                <li><b>Grid 2</b> doesn't say which: a letter is
-                  <span class="dp-help-chip" style="background:linear-gradient(135deg,#3f9d4f 0 49%,rgba(0,0,0,.2) 49% 51%,#c9a227 51% 100%)"></span> green-and-yellow if it's in the word (right or wrong spot), grey if not.</li>
-                <li><b>Grid 3</b> only tells you how many letters are green and how many are yellow, not which ones.</li>
+                <li>In the first grid, each letter is
+                  <span class="dp-help-chip" style="background:#3f9d4f"></span> green (correct letter and position),
+                  <span class="dp-help-chip" style="background:#c9a227"></span> yellow (letter is in the word but not in that position), or
+                  <span class="dp-help-chip" style="background:#555b63"></span> grey (letter not in the word at all).</li>
+                <li>In the second grid, a letter that's in the word is
+                  <span class="dp-help-chip" style="background:linear-gradient(135deg,#3f9d4f 0 49%,rgba(0,0,0,.2) 49% 51%,#c9a227 51% 100%)"></span> half green, half yellow &ndash; so you don't find out whether it's in the right position. Letters not in the word are grey.</li>
+                <li>In the third grid, you only see how many letters are green and how many are yellow (say, 1 green and 2 yellow), but not which ones.</li>
               </ul>
-              <p>Your score is the total number of guesses across all three grids, plus the time you took. The fewer guesses and the faster, the better!</p>
+              <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
               <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
             </div>
           </div>
@@ -1862,7 +1869,7 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="client/helpers.js?v=screen-scroll-reset-1"></script>
   <script src="client/game-hub.js?v=5"></script>
-  <script src="client/daily-pick.js?v=32"></script>
+  <script src="client/daily-pick.js?v=33"></script>
   <script src="client/statistics.js?menu-account-spacing=1&guest-play=1"></script>
   <script src="network/socketClient.js?power-popup-icon=1"></script>
 
