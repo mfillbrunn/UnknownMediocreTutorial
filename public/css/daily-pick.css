@@ -160,6 +160,10 @@
   border-color: rgba(255,255,255,.22);
 }
 .dp-share { background: #3b7dd8; color: #fff; }
+.dp-actions { display: flex; gap: 10px; justify-content: center; }
+.dp-cancel { background: transparent; color: inherit; border-color: rgba(255,255,255,.3); }
+/* A struck word picked anyway: fully visible again, line kept as a reminder. */
+.dp-word.is-struck.is-selected { opacity: 1; background: #3b7dd8; }
 
 /* ---------- Earlier guesses ---------- */
 .dp-history { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: 14px; }

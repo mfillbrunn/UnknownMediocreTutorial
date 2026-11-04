@@ -264,7 +264,8 @@
     });
     const done = r.solved;
     const buttons = ring.map(({ word, struck, guessed }) => {
-      const disabled = done || (phase === "pick" && (struck || guessed));
+      // Struck words stay tappable while picking: guessing one asks first.
+      const disabled = done || (phase === "pick" && guessed);
       const snap = toggled && toggled.word === word ? ` just-${toggled.kind}` : "";
       return `<button type="button" class="dp-word${struck ? " is-struck" : ""}${guessed ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}${snap}" data-word="${word}"${disabled ? " disabled" : ""}>${word}</button>`;
     }).join("");
@@ -301,6 +302,10 @@
     } else if (phase === "strike") {
       hint = "Tap the words this rules out, then Done.";
       action = `<button type="button" class="dp-next" id="dpNext">Done, next guess →</button>`;
+    } else if (selected && r.struck.includes(selected)) {
+      hint = `You struck out ${selected.toUpperCase()}. Guess it anyway?`;
+      action = `<div class="dp-actions"><button type="button" class="dp-next dp-cancel" id="dpCancel">Cancel</button>
+        <button type="button" class="dp-next" id="dpGuess">Guess anyway</button></div>`;
     } else {
       hint = lastGuess ? "Tap the word you want to guess next." : "Tap a word to start.";
       action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${selected.toUpperCase()}` : "Guess"}</button>`;
@@ -331,7 +336,7 @@
         navigator.vibrate?.(8); // the faintest tick, on phones that support it
       }
       save();
-    } else if (!r.struck.includes(word) && !r.guesses.includes(word)) {
+    } else if (!r.guesses.includes(word)) {
       selected = selected === word ? "" : word;
       if (selected) toggled = { word, kind: "selected" };
     }
@@ -349,7 +354,7 @@
       if (allSolved()) stopClock();
       advanceTimer = setTimeout(nextPuzzle, ADVANCE_MS);
     } else {
-      r.struck.push(selected);
+      if (!r.struck.includes(selected)) r.struck.push(selected);
       phase = "strike";
     }
     selected = "";
@@ -460,6 +465,7 @@
       if (word) return onWordClick(word.dataset.word);
       if (event.target.closest?.("#dpNext")) { phase = "pick"; render(); }
       if (event.target.closest?.("#dpGuess")) guessSelected();
+      if (event.target.closest?.("#dpCancel")) { selected = ""; render(); }
       const shareButton = event.target.closest?.("#dpShare");
       if (shareButton) share(shareButton);
     });
