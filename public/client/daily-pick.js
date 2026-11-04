@@ -283,7 +283,7 @@
       const result = feedback(guess, secret);
       if (mode === "counts" && guess !== secret) {
         const count = kind => result.filter(f => f === kind).length;
-        return `<div class="dp-row">${[...guess].map(ch => `<span class="dp-tile is-plain">${ch}</span>`).join("")}
+        return `<div class="dp-row"><span class="dp-plain-word">${guess}</span>
           <span class="dp-tile is-correct dp-count-tile">${count("correct")}</span>
           <span class="dp-tile is-present dp-count-tile">${count("present")}</span></div>`;
       }
