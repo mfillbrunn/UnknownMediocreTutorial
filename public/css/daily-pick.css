@@ -18,6 +18,20 @@
   padding: 12px 12px 16px !important;
 }
 
+/* ---------- Taps ----------
+   No double-tap-zoom wait before a tap registers, no grey flash, and hover
+   highlights only on devices with a real pointer (on phones they'd stick
+   to the last tile tapped). */
+#dailyPickScreen button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) {
+  .dp-close:hover { background: #e05252; }
+  .dp-help-btn:hover { background: rgba(255,255,255,.08); }
+  .dp-word:not(:disabled):not(.is-selected):hover { background: rgba(255,255,255,.11); border-color: rgba(255,255,255,.28); }
+}
+
 /* ---------- Header: clock | title | help, close ---------- */
 .dp-head {
   display: grid;
@@ -50,19 +64,17 @@
   cursor: pointer;
   transition: transform .12s ease, background .12s ease;
 }
-.dp-close:hover { background: #e05252; }
 .dp-close:active { transform: scale(.92); }
 .dp-close svg { display: block; }
 /* The clock is hidden on the scorecard; keep its column so the title stays centred. */
 .dp-clock[hidden] { display: block !important; visibility: hidden; }
 .dp-help-btn {
-  width: 32px; height: 32px; padding: 0;
+  width: 36px; height: 36px; padding: 0;
   border: 1.5px solid rgba(255,255,255,.3); border-radius: 50%;
   background: transparent; color: inherit;
   font-weight: 800; cursor: pointer;
   transition: transform .12s ease, background .12s ease;
 }
-.dp-help-btn:hover { background: rgba(255,255,255,.08); }
 .dp-help-btn:active { transform: scale(.92); }
 
 /* ---------- How to play ---------- */
@@ -126,15 +138,14 @@
   color: inherit;
   cursor: pointer;
   transition: transform .1s ease, background .15s ease, border-color .15s ease, opacity .15s ease;
-  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
 }
-.dp-word:not(:disabled):hover { background: rgba(255,255,255,.11); border-color: rgba(255,255,255,.28); }
 .dp-word:not(:disabled):active { transform: scale(.96); }
 .dp-word:disabled { cursor: default; }
 .dp-word.is-guessed { border-color: rgba(242,193,78,.7); }
 /* The word lined up to guess: solid blue, lifted, with a soft glow. */
-.dp-word.is-selected,
-.dp-word.is-selected:not(:disabled):hover {
+.dp-word.is-selected {
   background: #3b7dd8;
   border-color: #9cc8ff;
   color: #fff;
@@ -153,6 +164,7 @@
 .dp-word.is-struck { opacity: .38; background: rgba(255,255,255,.03); }
 .dp-word.is-struck::after {
   content: "";
+  pointer-events: none;
   position: absolute; left: 14%; right: 14%; top: 50%;
   height: 2px; margin-top: -1px; border-radius: 2px;
   background: currentColor;
