@@ -16,7 +16,7 @@
   // Par for the whole day's three grids, for the golf verdict at the end.
   const DAY_PAR = 7;
   const ADVANCE_MS = 1600;
-  const STORE_KEY = "umt.dailyPick.v9";
+  const STORE_KEY = "umt.dailyPick.v10";
 
   let puzzles = null; // [{ answer, words }]
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
@@ -91,7 +91,36 @@
     for (let i = 0; i < 26; i++) shared += Math.min(x[i], y[i]);
     return shared;
   }
-  const CHAIN_LINK = 3;
+
+  // How many letters two words have in the same spot (greens).
+  function sameSpots(a, b) {
+    let greens = 0;
+    for (let i = 0; i < 5; i++) if (a[i] === b[i]) greens++;
+    return greens;
+  }
+
+  // How a grid's words link up: each new word must share `shared` letters
+  // (green or yellow, a [min, max] range) and `greens` letters in the same
+  // spot with the word before it; null means anything goes. Each grid draws
+  // one recipe at random, by weight.
+  const RECIPES = [
+    { name: "related", weight: 30, shared: [3, 4], greens: null }, // 3-4 letters in common
+    { name: "aligned", weight: 25, shared: null, greens: [1, 2] }, // 1-2 letters in the same spot
+    { name: "family", weight: 20, shared: null, greens: [3, 3] }, //  exactly 3 in the same spot (-ATCH, -ILLY...)
+    { name: "random", weight: 25, shared: null, greens: null } //    any words at all
+  ];
+  const within = (value, range) => !range || (value >= range[0] && value <= range[1]);
+  const linked = (a, b, recipe) => within(sharedTiles(a, b), recipe.shared) && within(sameSpots(a, b), recipe.greens);
+
+  function pickRecipe(rand) {
+    const total = RECIPES.reduce((sum, r) => sum + r.weight, 0);
+    let roll = rand() * total;
+    for (const recipe of RECIPES) {
+      roll -= recipe.weight;
+      if (roll < 0) return recipe;
+    }
+    return RECIPES[RECIPES.length - 1];
+  }
 
   // Each grid sets how much the feedback gives away:
   //   "full"   - Wordle tiles: green right spot, yellow wrong spot, grey not in it
@@ -105,11 +134,11 @@
   ];
 
   // A grid is a chain of words rather than a cluster around the answer: start
-  // anywhere, then each new word shares at least CHAIN_LINK tiles with the one
-  // before it. Words a few links apart can have little in common, so there's
-  // no obvious hub word that splits the grid, and the answer is any link.
-  // At a dead end the chain branches off an earlier word instead.
-  function buildPuzzle(list, seed, taken) {
+  // anywhere, then each new word is linked to the one before it by the grid's
+  // recipe. Words a few links apart can have little in common, so there's no
+  // obvious hub word that splits the grid, and the answer is any link. At a
+  // dead end the chain branches off an earlier word instead.
+  function buildPuzzle(list, seed, taken, recipe) {
     const rand = mulberry32(hash(seed));
     const key = w => countsOf(w).join("");
     const free = list.filter(w => !taken.has(w));
@@ -120,7 +149,7 @@
       let tip = start;
       let stuck = 0;
       while (chain.length < WORD_COUNT && stuck < WORD_COUNT) {
-        const options = free.filter(w => !used.has(key(w)) && sharedTiles(w, tip) >= CHAIN_LINK);
+        const options = free.filter(w => !used.has(key(w)) && linked(w, tip, recipe));
         const next = options[Math.floor(rand() * options.length)];
         if (next) {
           chain.push(next);
@@ -134,10 +163,13 @@
       }
       if (chain.length === WORD_COUNT) {
         const answer = chain[Math.floor(rand() * chain.length)];
-        return { answer, words: shuffle(chain, rand) };
+        return { answer, words: shuffle(chain, rand), recipe: recipe.name };
       }
     }
-    throw new Error("Griddle: couldn't build a word chain");
+    // Never seen in testing, but a recipe that can't fill a grid falls back
+    // to random words rather than leaving the day unplayable.
+    if (recipe !== RECIPES[RECIPES.length - 1]) return buildPuzzle(list, `${seed}:fallback`, taken, RECIPES[RECIPES.length - 1]);
+    throw new Error("Griddle: couldn't build a grid");
   }
 
   function buildDay(pool, date) {
@@ -146,7 +178,9 @@
     const taken = new Set();
     return Array.from({ length: PUZZLE_COUNT }, (_, i) => {
       const level = Math.min(i, LEVELS.length - 1);
-      const puzzle = buildPuzzle(list, `griddle-3:${date}:${i + 1}`, taken);
+      const seed = `griddle-4:${date}:${i + 1}`;
+      const recipe = pickRecipe(mulberry32(hash(`${seed}:recipe`)));
+      const puzzle = buildPuzzle(list, seed, taken, recipe);
       puzzle.words.forEach(w => taken.add(w));
       return { ...puzzle, ...LEVELS[level] };
     });
