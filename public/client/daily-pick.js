@@ -245,7 +245,8 @@
       <div class="dp-sum-row"><span>Time</span><span>${formatTime(elapsed())}</span></div>
       <div class="dp-verdict">${golfTerm(diff)} <span>(${relToPar(diff)})</span></div>
       <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
-      <div class="dp-hint">Come back tomorrow for three new grids.</div></div>`;
+      <div class="dp-hint">Come back tomorrow for three new grids.</div>
+      <div class="dp-copyright">&copy; 2026 Griddle. All rights reserved.</div></div>`;
   }
 
   function render() {
