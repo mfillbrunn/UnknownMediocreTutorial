@@ -264,8 +264,10 @@
     });
     const done = r.solved;
     const buttons = ring.map(({ word, struck, guessed }) => {
-      // Struck words stay tappable while picking: guessing one asks first.
-      const disabled = done || (phase === "pick" && guessed);
+      // Words already guessed stay struck for good, so they can't be tapped
+      // at all. Words only struck by the player stay tappable: un-striking
+      // them, or guessing one anyway after a check.
+      const disabled = done || guessed;
       const snap = toggled && toggled.word === word ? ` just-${toggled.kind}` : "";
       return `<button type="button" class="dp-word${struck ? " is-struck" : ""}${guessed ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}${snap}" data-word="${word}"${disabled ? " disabled" : ""}>${word}</button>`;
     }).join("");
@@ -324,7 +326,7 @@
 
   function onWordClick(word) {
     const r = round();
-    if (r.solved) return;
+    if (r.solved || r.guesses.includes(word)) return;
     if (phase === "strike") {
       const i = r.struck.indexOf(word);
       if (i >= 0) {
