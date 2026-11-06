@@ -200,7 +200,10 @@
 
   wrap("chooseUpgrade", original => function chooseUpgradeWithCombos(choiceKey) {
     let result = original.apply(this, arguments);
-    if (result && result.ok === false && /unknown upgrade/i.test(String(result.error || ""))) {
+    // The engine's refusal of an id it doesn't know ("Unknown badge.", once
+    // "Unknown upgrade."): matched on both wordings, so a rewording of the
+    // message can't silently break pool-only badges (Alphabet Compass).
+    if (result && result.ok === false && /unknown (upgrade|badge)/i.test(String(result.error || ""))) {
       result = applyPoolOnlyChoice(this, choiceKey) || result;
     }
     if (!result || result.ok !== false) refresh(this, true);
