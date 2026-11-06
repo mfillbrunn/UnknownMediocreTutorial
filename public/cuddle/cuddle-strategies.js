@@ -314,8 +314,13 @@
   }
 
   // -- Hard Mode --------------------------------------------------------------
-  // Does `word` keep every green and use every yellow the earlier guesses
-  // showed? Only colours the player really saw count (masked tiles don't).
+  // Does `word` keep every green, use every yellow, and stay off every spot
+  // an earlier guess showed a letter doesn't belong in? Only colours the
+  // player really saw count (masked tiles don't).
+  // A tile that wasn't green at a spot says the answer has another letter
+  // there, so that letter can't go back to that spot -- a yellow E, and a
+  // grey E too, even when the answer has an E elsewhere (the second E of
+  // JEEPS turning grey says E isn't third).
   function followsHardMode(word, earlier) {
     var guess = String(word || "").toUpperCase();
     return (earlier || []).every(function check(entry) {
@@ -328,6 +333,7 @@
         if (masked.indexOf(i) !== -1) continue;
         if (shown[i] === "green" && guess[i] !== played[i]) return false;
         if (shown[i] === "yellow" && guess.indexOf(played[i]) === -1) return false;
+        if ((shown[i] === "yellow" || shown[i] === "grey" || shown[i] === "gray") && guess[i] === played[i]) return false;
       }
       return true;
     });
