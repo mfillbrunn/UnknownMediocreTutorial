@@ -27,13 +27,11 @@
   // banked so far; runningSince is when the current stretch began.
   let runningSince = null;
   let ticker = null;
-  // "pick": tap a word to select it (tap another to change your mind), then
-  // confirm it with the button. "strike": after the feedback, tap words to
-  // exclude them, then "Done, next guess" goes back to "pick".
-  let phase = "pick"; // "pick" | "strike"
+  // Each tap moves a word one step round: normal -> struck out -> selected
+  // -> normal. One word at a time can be selected; the Guess button submits it.
   let selected = "";
-  // The word just struck or un-struck, so only it plays the little snap.
-  let toggled = null; // { word, kind: "struck" | "freed" | "selected" }
+  // The word just tapped, so only it plays its little animation.
+  let toggled = null; // { word, kind: "struck" | "selected" | "freed" }
 
   const $ = id => document.getElementById(id);
   // The day turns over at midnight US Eastern time (daylight saving
@@ -299,9 +297,7 @@
     });
     const done = r.solved;
     const buttons = ring.map(({ word, struck, guessed }) => {
-      // Words already guessed stay struck for good, so they can't be tapped
-      // at all. Words only struck by the player stay tappable: un-striking
-      // them, or guessing one anyway after a check.
+      // Words already guessed stay struck for good, so they can't be tapped.
       const disabled = done || guessed;
       const snap = toggled && toggled.word === word ? ` just-${toggled.kind}` : "";
       return `<button type="button" class="dp-word${struck ? " is-struck" : ""}${guessed ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}${snap}" data-word="${word}"${disabled ? " disabled" : ""}>${word}</button>`;
@@ -336,15 +332,8 @@
     let action = "";
     if (done) {
       hint = `<strong class="dp-result">Solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next puzzle…"}`;
-    } else if (phase === "strike") {
-      hint = "Tap the words this rules out, then Done.";
-      action = `<button type="button" class="dp-next" id="dpNext">Done, next guess →</button>`;
-    } else if (selected && r.struck.includes(selected)) {
-      hint = `You struck out ${selected.toUpperCase()}. Guess it anyway?`;
-      action = `<div class="dp-actions"><button type="button" class="dp-next dp-cancel" id="dpCancel">Cancel</button>
-        <button type="button" class="dp-next" id="dpGuess">Guess anyway</button></div>`;
     } else {
-      hint = lastGuess ? "Tap the word you want to guess next." : "Tap a word to start.";
+      hint = "Tap a word: strike out → pick → clear";
       action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${selected.toUpperCase()}` : "Guess"}</button>`;
     }
     // Keeps the panel the same height once the button is gone.
@@ -362,21 +351,23 @@
   function onWordClick(word) {
     const r = round();
     if (r.solved || r.guesses.includes(word)) return;
-    if (phase === "strike") {
-      const i = r.struck.indexOf(word);
-      if (i >= 0) {
-        r.struck.splice(i, 1);
-        toggled = { word, kind: "freed" };
-      } else if (!r.guesses.includes(word)) {
-        r.struck.push(word);
-        toggled = { word, kind: "struck" };
-        navigator.vibrate?.(8); // the faintest tick, on phones that support it
-      }
-      save();
-    } else if (!r.guesses.includes(word)) {
-      selected = selected === word ? "" : word;
-      if (selected) toggled = { word, kind: "selected" };
+    const struckAt = r.struck.indexOf(word);
+    if (word === selected) {
+      // third tap: back to normal
+      selected = "";
+      toggled = { word, kind: "freed" };
+    } else if (struckAt >= 0) {
+      // second tap: from struck out to picked (any earlier pick goes back to normal)
+      r.struck.splice(struckAt, 1);
+      selected = word;
+      toggled = { word, kind: "selected" };
+    } else {
+      // first tap: strike it out
+      r.struck.push(word);
+      toggled = { word, kind: "struck" };
+      navigator.vibrate?.(8); // the faintest tick, on phones that support it
     }
+    save();
     render();
     toggled = null;
   }
@@ -387,12 +378,10 @@
     r.guesses.push(selected);
     if (selected === puzzles[current].answer) {
       r.solved = true;
-      phase = "pick";
       if (allSolved()) stopClock();
       advanceTimer = setTimeout(nextPuzzle, ADVANCE_MS);
-    } else {
-      if (!r.struck.includes(selected)) r.struck.push(selected);
-      phase = "strike";
+    } else if (!r.struck.includes(selected)) {
+      r.struck.push(selected);
     }
     selected = "";
     save();
@@ -448,7 +437,6 @@
   function nextPuzzle() {
     advanceTimer = null;
     current = firstUnsolved();
-    phase = "pick";
     selected = "";
     render();
   }
@@ -472,8 +460,6 @@
     clearTimeout(advanceTimer);
     advanceTimer = null;
     current = firstUnsolved();
-    const r = round();
-    phase = r.guesses.length && !r.solved ? "strike" : "pick";
     selected = "";
     render();
     if (!introSeen()) openIntro();
@@ -553,9 +539,7 @@
     $("dailyPickRoot")?.addEventListener("click", event => {
       const word = event.target.closest?.(".dp-word");
       if (word) return onWordClick(word.dataset.word);
-      if (event.target.closest?.("#dpNext")) { phase = "pick"; render(); }
       if (event.target.closest?.("#dpGuess")) guessSelected();
-      if (event.target.closest?.("#dpCancel")) { selected = ""; render(); }
       const shareButton = event.target.closest?.("#dpShare");
       if (shareButton) share(shareButton);
     });
