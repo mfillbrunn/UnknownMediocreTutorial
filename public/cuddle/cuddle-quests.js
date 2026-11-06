@@ -146,7 +146,7 @@
       icon: "🔥",
       title: "Hold the Clues",
       description: "Keep greens, move yellows, skip greys.",
-      detail: "Play by hard-mode rules: every letter you have seen green stays in its spot, every letter you have seen yellow is used again but not where it was yellow, and no letter you have seen grey is played again.",
+      detail: "Play by hard-mode rules: every letter you have seen green stays in its spot, every letter you have seen yellow is used again but not where it was yellow, no letter you have seen grey is played again, and a letter never goes back to a spot where it already showed yellow or grey.",
       test: ({
         word,
         history = [],
@@ -211,6 +211,10 @@
               requireAtLeast(letter);
             } else if (status === "grey") {
               greySeen.add(letter);
+              // Not green here, so the answer has another letter at this
+              // spot: even a letter that is in the word (a grey second E)
+              // can't go back to it.
+              forbiddenAt[index].add(letter);
             }
           }
 
