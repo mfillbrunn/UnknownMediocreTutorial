@@ -318,7 +318,7 @@
         { id: "overtime", icon: "⏱️", title: "Overtime", tier: "epic", type: "quests", maxLevel: 1,
           description: "Adds One More Guess to the quest rewards that can come up: 1 more guess this stage.",
           level: g => powerLevel(g, "overtime") },
-        { id: "questClue", icon: "🔍", title: "Quest Clue", tier: "epic", type: "quests", maxLevel: 2,
+        { id: "questClue", icon: "🔍", title: "Quest Clue", tier: "legendary", type: "quests", maxLevel: 2,
           levels: ["Adds Clue to the quest rewards that can come up: pick it for a yellow hint (a letter in the answer).", "Clue gives a green hint instead: a letter in its exact spot."],
           level: g => powerLevel(g, "questClue") },
         { id: "questChain", icon: "⛓️", title: "Quest Chain", tier: "legendary", type: "quests", maxLevel: 1,
