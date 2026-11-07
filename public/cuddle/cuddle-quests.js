@@ -100,7 +100,7 @@
       icon: "💎",
       title: "Rare Find",
       description: quest => `Use a rare letter: ${quest.rareLetters.join(", ")}.`,
-      detail: quest => `Include at least one of these rare letters anywhere in your word: ${quest.rareLetters.join(", ")}. They are the least common letters still in your deck.`,
+      detail: quest => `Include at least one of these rare letters anywhere in your word: ${quest.rareLetters.join(", ")}. They are the least common letters still in your deck, and any you don't hold are handed to you as cards for this guess.`,
       test: ({ word, quest }) => quest.rareLetters.some(letter => word.includes(letter))
     },
     {
@@ -130,7 +130,7 @@
       icon: "🔗",
       title: "Word Chain",
       description: quest => `Start with ${String(quest.chainLetter).split("").join(" or ")} (from your last word).`,
-      detail: quest => `Your word must start with ${String(quest.chainLetter).split("").join(" or ")}: one of the last two consonants of your previous guess (Y doesn't count). Hold neither? You're given one for this guess.`,
+      detail: quest => `Your word must start with ${String(quest.chainLetter).split("").join(" or ")}: one of the last two consonants of your previous guess (Y doesn't count). Any of them you don't hold are handed to you as cards for this guess.`,
       test: ({ word, quest }) => String(quest.chainLetter || "").includes(word[0])
     },
     {

@@ -2237,29 +2237,49 @@
     return null;
   }
 
-  // Letter Demand and Word Chain (the challenge, or the Word Chain quest)
-  // hand you a card of the letter they ask for when your hand has none, so
-  // the rule can always be met. The card is taken back when the guess no
-  // longer asks for it.
+  // The letters a quest on this guess names: a Word Chain quest's one or
+  // two, a Rare Letters quest's list. Each is a card in your hand while the
+  // quest is open.
+  function questNamedLetters(state) {
+    const quest = state && state.activeQuest;
+    if (!quest) return [];
+    const letters = quest.id === "wordChain" ? String(quest.chainLetter || "").split("")
+      : quest.id === "rareLetters" && Array.isArray(quest.rareLetters) ? quest.rareLetters : [];
+    return Array.from(new Set(letters.map((letter) => String(letter || "").toUpperCase()).filter((letter) => /^[A-Z]$/.test(letter))));
+  }
+
+  // Letter Demand and Word Chain (the challenge) hand you a card of the
+  // letter they ask for when your hand has none, so the rule can always be
+  // met. A quest that names letters (Word Chain, Rare Letters) hands you a
+  // card of EACH of its letters you don't hold. The cards are taken back
+  // when the guess no longer asks for them.
   function syncRuleCards(game) {
     const state = stateOf(game);
     if (!state || !Array.isArray(state.hand) || state.status !== "playing") return;
     const used = guessesUsed(game);
     const effect = planEffect(game, used);
-    const quest = state.activeQuest && state.activeQuest.id === "wordChain" ? state.activeQuest.chainLetter : null;
     const asked = effect === "letterDemand" ? demandLetter(game, used)
-      : effect === "wordChain" ? chainLetter(game, used) : quest || null;
-    // Word Chain may ask for either of two letters: a card of one is enough,
-    // and the one handed over is the easier start (not Q, X or Z).
+      : effect === "wordChain" ? chainLetter(game, used) : null;
+    // A Word Chain rule may ask for either of two letters: a card of one is
+    // enough, and the one handed over is the easier start (not Q, X or Z).
     const options = asked ? String(asked).split("") : [];
+    const named = questNamedLetters(state);
     const draft = new Set(state.draft || []);
-    state.hand = state.hand.filter((card) => !(card && card.umtRuleGift && !options.includes(card.glyph) && !draft.has(card.id)));
-    if (!options.length || typeof game._newCard !== "function") return;
-    if (state.hand.some((card) => card && options.includes(card.glyph))) return;
-    const wanted = options.slice().reverse().find((letter) => !"QXZ".includes(letter)) || options[options.length - 1];
-    const card = game._newCard(wanted, "extra");
-    card.umtRuleGift = true;
-    state.hand.push(card);
+    state.hand = state.hand.filter((card) => !(card && card.umtRuleGift
+      && !options.includes(card.glyph) && !named.includes(card.glyph) && !draft.has(card.id)));
+    if (typeof game._newCard !== "function") return;
+    if (options.length && !state.hand.some((card) => card && options.includes(card.glyph))) {
+      const wanted = options.slice().reverse().find((letter) => !"QXZ".includes(letter)) || options[options.length - 1];
+      const card = game._newCard(wanted, "extra");
+      card.umtRuleGift = true;
+      state.hand.push(card);
+    }
+    named.forEach((letter) => {
+      if (state.hand.some((card) => card && card.glyph === letter)) return;
+      const card = game._newCard(letter, "extra");
+      card.umtRuleGift = true;
+      state.hand.push(card);
+    });
   }
 
   function ruleWaiverKey(state) {
