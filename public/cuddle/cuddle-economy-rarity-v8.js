@@ -121,7 +121,6 @@
     ["clear sight", TIERS.LEGENDARY],
     ["deep cull", TIERS.LEGENDARY],
     ["double pick", TIERS.LEGENDARY],
-    ["lasting quests", TIERS.LEGENDARY],
     ["all seeing atlas", TIERS.LEGENDARY],
     ["golden thread", TIERS.LEGENDARY]
   ]);
@@ -129,7 +128,6 @@
   const LEGENDARY_BOSS_NAMES = new Set([
     "deep cull",
     "double pick",
-    "lasting quests",
     "all seeing atlas",
     "golden thread"
   ]);

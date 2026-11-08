@@ -95,7 +95,7 @@
     monksVow: ["You can always skip a reward. With this badge a skip pays both points and money, instead of one or the other.", ["reward"]],
     strikeThrough: ["Consonants that are shown not to be in the answer get crossed out. Each one crossed out pays these points.", ["clues", "cashout"]],
     highRoller: ["A bet every stage: solve within the target guess and you win the bet; solve later and you lose it.", ["board", "cashout"]],
-    hardMode: ["Hard mode means every guess keeps the greens you've found in their spots and uses every yellow you've found. Any hard-mode solve pays +15 points (from the second guess on); this badge adds its points on top.", ["board", "cashout"]],
+    hardMode: ["Hard mode means every guess keeps the greens you've found in their spots, uses every yellow you've found, and never puts a letter back in a spot where it already showed yellow or grey. Any hard-mode solve pays +15 points (from the second guess on); this badge adds its points on top.", ["board", "cashout"]],
     combine: ["Takes one of your badges from a playstyle school and turns it into a random badge one rarity higher (common to rare, rare to epic, and so on).", ["reward"]],
     luckyClover: ["Lucky cards go into your deck. A lucky card has no letter. If it's still in your hand when you solve, it pays points; mulligan it away and it pays a little.", ["luckyCard", "cashout"]],
     fishHook: ["The hook sits on your deck. Once a stage, tap it to catch any letter that isn't greyed out yet, from your deck or from your discards, straight into your hand. Higher levels test the letter you fish, and can hook a letter of the answer on their own.", ["fishhook", "hand"]],

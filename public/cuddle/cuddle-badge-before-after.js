@@ -175,7 +175,7 @@
       { t: "pay", before: [["Solved on guess 4", "+15"]], after: [["Solved on guess 4", "+15"], ["Double Down", "+50"]] }],
     highRoller: ["No bet: a stage pays what it pays.", "Each stage bets points: solve early to win them, late to lose them.",
       { t: "pay", before: [["Solved on guess 4", "+15"]], after: [["Solved on guess 4", "+15"], ["Bet won", "+25"]] }],
-    hardMode: ["A hard-mode solve (greens kept, yellows used) pays +15.", "The same solve pays a bigger bonus on top.",
+    hardMode: ["A hard-mode solve (greens kept, yellows used, no letter back in a spot it already failed in) pays +15.", "The same solve pays a bigger bonus on top.",
       { t: "pay", before: [["Solved", "+18"], ["Hard mode", "+15"]], after: [["Solved", "+18"], ["Hard mode", "+60"]] }],
     leanBuild: ["A solve pays its usual cash-out.", "The stage's points get a last bonus of 20-60%, smaller for every badge you hold outside Restraint.",
       { t: "pay", before: [["Stage points", "100"]], after: [["Stage points", "100"], ["Lean Build +35%", "+35"]] }],
