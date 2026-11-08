@@ -21,7 +21,9 @@
   const PUZZLE_COUNT = 3;
   // Par for the whole day's three grids, for the golf verdict at the end.
   const DAY_PAR = 7;
-  const ADVANCE_MS = 1600;
+  // How long a solved grid stays up (the feedback flip and the little
+  // celebration) before the next grid or the scorecard.
+  const ADVANCE_MS = 2600;
   const STORE_KEY = "umt.dailyPick.v10";
   // Finished days, kept for good (not reset with STORE_KEY): streaks and stats.
   const HISTORY_KEY = "umt.winnow.history";
@@ -43,6 +45,9 @@
   let selected = "";
   // The word just tapped, so only it plays its little animation.
   let toggled = null; // { word, kind: "struck" | "selected" | "freed" }
+  // Set for the one render right after a guess, so only then the feedback
+  // tiles flip in (and celebrate, when it was the secret).
+  let revealing = false;
 
   const $ = id => document.getElementById(id);
   // The day turns over at midnight US Eastern time (daylight saving
@@ -315,7 +320,7 @@
   }
 
   function startClock() {
-    if (runningSince || allSolved() || !$("dailyPickScreen")?.classList.contains("active") || helpOpen() || introOpen()) return;
+    if (runningSince || allSolved() || !$("dailyPickScreen")?.classList.contains("active") || helpOpen() || introOpen() || ruleOpen()) return;
     runningSince = Date.now();
     ticker = setInterval(showClock, 250);
   }
@@ -340,21 +345,45 @@
 
   let countdownTimer = null;
 
+  // Past results by how they went against par, for the scorecard's chart.
+  const BUCKETS = [
+    { label: "Eagle or better", test: d => d <= -2 },
+    { label: "Birdie", test: d => d === -1 },
+    { label: "Par", test: d => d === 0 },
+    { label: "Bogey", test: d => d === 1 },
+    { label: "Double bogey", test: d => d === 2 },
+    { label: "Triple bogey +", test: d => d >= 3 }
+  ];
+
+  function distributionChart(todayDiff) {
+    const history = loadHistory();
+    const counts = BUCKETS.map(bucket => Object.values(history).filter(day => bucket.test(day.score - DAY_PAR)).length);
+    const most = Math.max(1, ...counts);
+    const rows = BUCKETS.map((bucket, i) => {
+      const mine = bucket.test(todayDiff);
+      const width = Math.max(8, Math.round(100 * counts[i] / most));
+      return `<div class="dp-dist-row${mine ? " is-today" : ""}"><span class="dp-dist-label">${bucket.label}</span>
+        <span class="dp-dist-track"><span class="dp-dist-bar" style="width:${counts[i] ? width : 0}%"></span><b>${counts[i]}</b></span></div>`;
+    }).join("");
+    return `<div class="dp-dist"><div class="dp-dist-title">Your scores</div>${rows}</div>`;
+  }
+
   function renderSummary(root) {
     recordDay();
     setTitle(0);
     const stats = computeStats();
     const stat = (value, label) => `<div class="dp-stat"><b>${value}</b><span>${label}</span></div>`;
-    const rows = state.rounds.map((r, i) => {
-      const n = r.guesses.length;
-      return `<div class="dp-sum-row"><span>Grid ${i + 1}${n === 1 ? "<small>Hole in one</small>" : ""}</span><span>${n}</span></div>`;
-    }).join("");
     const diff = totalGuesses() - DAY_PAR;
-    root.innerHTML = `<div class="dp-summary">${rows}
-      <div class="dp-sum-row dp-sum-total"><span>Total<small>par ${DAY_PAR}</small></span><span>${totalGuesses()}</span></div>
-      <div class="dp-sum-row"><span>Time</span><span>${formatTime(elapsed())}</span></div>
+    const grids = state.rounds.map((r, i) => {
+      const n = r.guesses.length;
+      return `<div class="dp-stat"><b>${n}</b><span>Grid ${i + 1}${n === 1 ? "<br>Hole in one!" : ""}</span></div>`;
+    }).join("");
+    // The verdict and Share come first, so sharing never needs a scroll.
+    root.innerHTML = `<div class="dp-summary">
       <div class="dp-verdict">${golfTerm(diff)} <span>(${relToPar(diff)})</span></div>
+      <div class="dp-verdict-sub">${totalGuesses()} guesses · par ${DAY_PAR}</div>
       <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
+      <div class="dp-stats dp-stats-4">${grids}${stat(formatTime(elapsed()), "Time")}</div>
       <div class="dp-stats">
         ${stat(stats.played, "Played")}
         ${stat(stats.current, "Streak")}
@@ -362,6 +391,7 @@
         ${stat(stats.average ? stats.average.toFixed(1) : "–", "Average")}
         ${stat(stats.bestScore || "–", "Best score")}
       </div>
+      ${distributionChart(diff)}
       <div class="dp-countdown">Next Winnow in <b id="dpCountdown">${formatTime(msUntilNextDay())}</b></div>
       <div class="dp-copyright">&copy; 2026 Winnow. All rights reserved.</div></div>`;
     clearInterval(countdownTimer);
@@ -399,11 +429,30 @@
       return { word, struck, guessed };
     });
     const done = r.solved;
+    // What a guess reveals under this grid's rule, letter by letter.
+    const shownResult = guess => feedback(guess, secret).map(f => (mode === "split" && guess !== secret && f !== "absent" ? "in" : f));
+    const counts = guess => {
+      const result = feedback(guess, secret);
+      return [result.filter(f => f === "correct").length, result.filter(f => f === "present").length];
+    };
+    // A guessed word carries its own feedback in miniature, so all the
+    // evidence stays on the board.
+    const mini = guess => {
+      if (mode === "counts") {
+        const [g, y] = counts(guess);
+        return `<span class="dp-mini"><i class="is-correct is-count">${g}</i><i class="is-present is-count">${y}</i></span>`;
+      }
+      return `<span class="dp-mini">${shownResult(guess).map(f => `<i class="is-${f}"></i>`).join("")}</span>`;
+    };
+
     const buttons = ring.map(({ word, struck, guessed }) => {
       // Words already guessed stay struck for good, so they can't be tapped.
       const disabled = done || guessed;
+      const won = done && word === secret;
       const snap = toggled && toggled.word === word ? ` just-${toggled.kind}` : "";
-      return `<button type="button" class="dp-word${struck ? " is-struck" : ""}${guessed ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}${snap}" data-word="${word}"${disabled ? " disabled" : ""}>${word}</button>`;
+      const fresh = revealing && word === lastGuess ? " just-guessed" : "";
+      const classes = `dp-word${won ? " is-solved" : struck ? " is-struck" : ""}${guessed && !won ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}${snap}${fresh}`;
+      return `<button type="button" class="${classes}" data-word="${word}"${disabled ? " disabled" : ""}>${word}${guessed && !won ? mini(word) : ""}</button>`;
     }).join("");
 
     const SPLIT_TILE = "linear-gradient(135deg, #3f9d4f 0 49%, rgba(0,0,0,.2) 49% 51%, #c9a227 51% 100%)";
@@ -415,17 +464,18 @@
       counts: swatch("#3f9d4f", "How many in the right spot", true) + swatch("#c9a227", "How many in the wrong spot", true)
     }[mode];
 
+    // The latest guess, large. Right after a guess its tiles flip in one by
+    // one (--i staggers them), and hop if it was the secret.
     const tiles = guess => {
-      const result = feedback(guess, secret);
+      const rowClass = `dp-row${revealing ? " is-revealing" : ""}${revealing && guess === secret ? " is-win" : ""}`;
       if (mode === "counts" && guess !== secret) {
-        const count = kind => result.filter(f => f === kind).length;
-        return `<div class="dp-row"><span class="dp-plain-word">${guess}</span>
-          <span class="dp-tile is-correct dp-count-tile">${count("correct")}</span>
-          <span class="dp-tile is-present dp-count-tile">${count("present")}</span></div>`;
+        const [g, y] = counts(guess);
+        return `<div class="${rowClass}"><span class="dp-plain-word" style="--i:0">${guess}</span>
+          <span class="dp-tile is-correct dp-count-tile" style="--i:3">${g}</span>
+          <span class="dp-tile is-present dp-count-tile" style="--i:4">${y}</span></div>`;
       }
-      const shown = f => (mode === "split" && guess !== secret && f !== "absent" ? "in" : f);
-      return `<div class="dp-row">${[...guess].map((ch, i) =>
-        `<span class="dp-tile is-${shown(result[i])}">${ch}</span>`).join("")}</div>`;
+      return `<div class="${rowClass}">${shownResult(guess).map((f, i) =>
+        `<span class="dp-tile is-${f}" style="--i:${i}">${guess[i]}</span>`).join("")}</div>`;
     };
 
     // The panel always holds the same three rows (tiles, hint, action) so
@@ -434,7 +484,7 @@
     let hint;
     let action = "";
     if (done) {
-      hint = `<strong class="dp-result">Solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next puzzle…"}`;
+      hint = `<strong class="dp-result${revealing ? " is-new" : ""}">Solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next grid…"}`;
     } else {
       hint = "Tap a word: strike out → pick → clear";
       action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${selected.toUpperCase()}` : "Guess"}</button>`;
@@ -442,13 +492,8 @@
     // Keeps the panel the same height once the button is gone.
     if (!action) action = `<button type="button" class="dp-next" tabindex="-1" aria-hidden="true" style="visibility:hidden">&nbsp;</button>`;
 
-    // The latest guess sits in the panel; the ones before it, newest first,
-    // go in a smaller list underneath so the panel itself never grows.
-    const history = r.guesses.slice(0, -1).reverse().map(tiles).join("");
-
     root.innerHTML = `<div class="dp-board">${buttons}</div>
-      <div class="dp-center">${lastGuess ? tiles(lastGuess) : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>
-      ${history ? `<div class="dp-history">${history}</div>` : ""}`;
+      <div class="dp-center">${lastGuess ? tiles(lastGuess) : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>`;
   }
 
   function onWordClick(word) {
@@ -488,7 +533,9 @@
     }
     selected = "";
     save();
+    revealing = true;
     render();
+    revealing = false;
   }
 
   // One row per puzzle: a white square per wrong guess, then the green one.
@@ -550,6 +597,37 @@
     current = firstUnsolved();
     selected = "";
     render();
+    maybeAnnounceRule();
+  }
+
+  // ---- A new grid's rule ---------------------------------------------------
+  // Grids 2 and 3 change what the feedback shows, so as each starts a short
+  // card says how, once per day. The clock waits while it's up.
+  const RULES = {
+    split: `Letters in the word show <span class="dp-help-chip" style="background:${"linear-gradient(135deg,#3f9d4f 0 49%,rgba(0,0,0,.2) 49% 51%,#c9a227 51% 100%)"}"></span> half green, half yellow &ndash; you won't know if they're in the right spot. Grey means not in the word.`,
+    counts: `You only see <i class="dp-rule-count is-correct">2</i> how many letters are in the right spot and <i class="dp-rule-count is-present">1</i> how many are in the wrong spot &ndash; not which ones.`
+  };
+  const ruleOpen = () => !!$("dpRule") && !$("dpRule").hidden;
+
+  function maybeAnnounceRule() {
+    const r = round();
+    const rule = RULES[puzzles[current].mode];
+    state.announced = state.announced || [];
+    if (!rule || r.guesses.length || state.announced[current] || allSolved()) return;
+    state.announced[current] = true;
+    save();
+    stopClock();
+    $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">Grid ${current + 1} of ${PUZZLE_COUNT}</div>
+      <p>${rule}</p>
+      <button id="dpRuleClose" class="dp-next" type="button">Got it</button>`;
+    $("dpRule").hidden = false;
+    $("dpRuleClose").focus({ preventScroll: true });
+  }
+
+  function closeRule() {
+    if (!ruleOpen()) return;
+    $("dpRule").hidden = true;
+    startClock();
   }
 
   async function open() {
@@ -576,9 +654,11 @@
     render();
     if (!introSeen()) openIntro();
     else startClock();
+    maybeAnnounceRule();
   }
 
   function close() {
+    closeRule();
     closeIntro();
     closeHelp();
     stopClock();
@@ -659,6 +739,9 @@
           <div class="dp-intro-more">Full rules anytime under <b>?</b></div>
         </div>
       </div>
+      <div id="dpRule" class="dp-intro" role="dialog" aria-modal="true" aria-label="This grid's rule" hidden>
+        <div id="dpRuleCard" class="dp-intro-card"></div>
+      </div>
       <div id="dpHelp" class="dp-help" role="dialog" aria-modal="true" aria-labelledby="dpHelpTitle" hidden>
         <h3 id="dpHelpTitle">How to play</h3>
         <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
@@ -690,8 +773,9 @@
     $("dpHelpBtn")?.addEventListener("click", openHelp);
     $("dpHelpClose")?.addEventListener("click", closeHelp);
     $("dpIntroClose")?.addEventListener("click", closeIntro);
+    $("dpRule")?.addEventListener("click", event => { if (event.target.closest("#dpRuleClose")) closeRule(); });
     document.addEventListener("keydown", event => {
-      if (event.key === "Escape") { closeIntro(); closeHelp(); }
+      if (event.key === "Escape") { closeRule(); closeIntro(); closeHelp(); }
     });
     $("dailyPickRoot")?.addEventListener("click", event => {
       const word = event.target.closest?.(".dp-word");
