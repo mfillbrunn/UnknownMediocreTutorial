@@ -1,4 +1,4 @@
-// client/daily-pick.js — Winnow: three shared puzzles a day, played once.
+// client/daily-pick.js — Whittle: three shared puzzles a day, played once.
 //
 // Each puzzle is sixteen five-letter words in a 4x4 grid, one of them the
 // secret. Select a word and confirm it, and the panel below shows Wordle
@@ -11,8 +11,8 @@
 // It needs no server API, account or Supabase: the word list is a static file.
 //
 // The same script runs inside the main site (opened from the game choice
-// screen) and on its own page, winnow/index.html, which marks its <body> with
-// data-winnow-standalone and starts the game straight away. The game's markup
+// screen) and on its own page, whittle/index.html, which marks its <body> with
+// data-whittle-standalone and starts the game straight away. The game's markup
 // is built here so both pages share it; a <script data-words="..."> attribute
 // says where the word list lives relative to the page.
 
@@ -26,8 +26,8 @@
   const ADVANCE_MS = 2600;
   const STORE_KEY = "umt.dailyPick.v10";
   // Finished days, kept for good (not reset with STORE_KEY): streaks and stats.
-  const HISTORY_KEY = "umt.winnow.history";
-  // Puzzle #1 is the first Winnow day; the number counts days from there.
+  const HISTORY_KEY = "umt.winnow.history"; // named from when the game was Winnow; kept so stats carry over
+  // Puzzle #1 is the first Whittle day; the number counts days from there.
   const LAUNCH_DATE = "2026-11-07";
   const WORDS_URL = document.currentScript?.dataset.words || "wordlists/daily-pick-words.txt";
 
@@ -35,8 +35,8 @@
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
   let current = 0; // index of the puzzle on screen
   let advanceTimer = null;
-  // The clock runs from the moment Winnow opens until the last grid is
-  // solved, only while Winnow is on screen. state.elapsed holds the time
+  // The clock runs from the moment Whittle opens until the last grid is
+  // solved, only while Whittle is on screen. state.elapsed holds the time
   // banked so far; runningSince is when the current stretch began.
   let runningSince = null;
   let ticker = null;
@@ -205,7 +205,7 @@
     // Never seen in testing, but a recipe that can't fill a grid falls back
     // to random words rather than leaving the day unplayable.
     if (recipe !== RECIPES[RECIPES.length - 1]) return buildPuzzle(list, `${seed}:fallback`, taken, RECIPES[RECIPES.length - 1]);
-    throw new Error("Winnow: couldn't build a grid");
+    throw new Error("Whittle: couldn't build a grid");
   }
 
   function buildDay(pool, date) {
@@ -340,7 +340,7 @@
     const title = $("dpTitle");
     if (!title) return;
     const number = state ? ` <span class="dp-title-grid">#${puzzleNumber(state.date)}</span>` : "";
-    title.innerHTML = grid ? `Winnow <span class="dp-title-grid">Grid ${grid}/${PUZZLE_COUNT}</span>` : `Winnow${number}`;
+    title.innerHTML = grid ? `Whittle <span class="dp-title-grid">Grid ${grid}/${PUZZLE_COUNT}</span>` : `Whittle${number}`;
   }
 
   let countdownTimer = null;
@@ -392,8 +392,8 @@
         ${stat(stats.bestScore || "–", "Best score")}
       </div>
       ${distributionChart(diff)}
-      <div class="dp-countdown">Next Winnow in <b id="dpCountdown">${formatTime(msUntilNextDay())}</b></div>
-      <div class="dp-copyright">&copy; 2026 Winnow. All rights reserved.</div></div>`;
+      <div class="dp-countdown">Next Whittle in <b id="dpCountdown">${formatTime(msUntilNextDay())}</b></div>
+      <div class="dp-copyright">&copy; 2026 Whittle. All rights reserved.</div></div>`;
     clearInterval(countdownTimer);
     countdownTimer = setInterval(tickCountdown, 1000);
   }
@@ -547,7 +547,7 @@
     const streak = computeStats().current;
     const link = location.origin + location.pathname.replace(/index\.html$/, "");
     return [
-      `Winnow #${puzzleNumber(state.date)}`,
+      `Whittle #${puzzleNumber(state.date)}`,
       ...rows,
       `Total: ${verdict}`,
       `Time: ${formatTime(elapsed())}`,
@@ -713,7 +713,7 @@
   document.addEventListener("visibilitychange", () => {
     if (!state) return;
     if (document.hidden) stopClock();
-    // Back after midnight Eastern with Winnow still open: load the new day.
+    // Back after midnight Eastern with Whittle still open: load the new day.
     else if (state.date !== today() && $("dailyPickScreen")?.classList.contains("active")) open();
     else startClock();
   });
@@ -724,14 +724,14 @@
     <div class="menu-center dp-card">
       <div class="dp-head">
         <div id="dpClock" class="dp-clock" aria-label="Time" hidden>0:00</div>
-        <h2 id="dpTitle" class="menu-title">WINNOW</h2>
+        <h2 id="dpTitle" class="menu-title">WHITTLE</h2>
         <div class="dp-head-buttons">
           <button id="dpHelpBtn" class="dp-help-btn" type="button" aria-label="How to play">?</button>
           <button id="dpBackBtn" class="dp-close" type="button" aria-label="Close"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
         </div>
       </div>
       <div id="dailyPickRoot"></div>
-      <div id="dpIntro" class="dp-intro" role="dialog" aria-modal="true" aria-label="Welcome to Winnow" hidden>
+      <div id="dpIntro" class="dp-intro" role="dialog" aria-modal="true" aria-label="Welcome to Whittle" hidden>
         <div class="dp-intro-card">
           <p>Find the secret word out of these 16. Use the feedback to narrow it down.</p>
           <p>Do it 3 times and you're done!</p>
@@ -759,7 +759,7 @@
         </ul>
         <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
-        <div class="dp-copyright">&copy; 2026 Winnow. All rights reserved.</div>
+        <div class="dp-copyright">&copy; 2026 Whittle. All rights reserved.</div>
       </div>
     </div>`;
 
@@ -767,7 +767,7 @@
     const screen = $("dailyPickScreen");
     if (!screen) return;
     screen.innerHTML = MARKUP;
-    const standalone = "winnowStandalone" in document.body.dataset;
+    const standalone = "whittleStandalone" in document.body.dataset;
     $("hubDailyPickBtn")?.addEventListener("click", open);
     $("dpBackBtn")?.addEventListener("click", close);
     $("dpHelpBtn")?.addEventListener("click", openHelp);

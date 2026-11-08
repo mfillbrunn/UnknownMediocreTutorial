@@ -1,4 +1,4 @@
-/* Winnow on its own page (winnow/index.html). The game's own styles live in
+/* Whittle on its own page (whittle/index.html). The game's own styles live in
    ../css/daily-pick.css; this supplies what the main site's stylesheets
    otherwise give it: the page, the card, fonts and the light buttons. */
 
@@ -21,7 +21,7 @@ body {
 
 button { font: inherit; color: inherit; }
 
-.winnow-page {
+.whittle-page {
   display: flex;
   justify-content: center;
   padding: 16px 12px 32px;
@@ -48,5 +48,5 @@ button { font: inherit; color: inherit; }
 .dp-share { background: #3b7dd8; color: #fff; }
 
 @media (min-width: 760px) {
-  .winnow-page { padding-top: 4vh; }
+  .whittle-page { padding-top: 4vh; }
 }
