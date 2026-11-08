@@ -1,4 +1,4 @@
-/* Griddle (client/daily-pick.js) */
+/* Winnow (client/daily-pick.js) */
 
 /* The screen wrapper's own tinted panel showed as a ghost around the card. */
 #dailyPickScreen {
@@ -286,3 +286,19 @@
   .dp-word { padding: 30px 0; }
 }
 .dp-copyright { margin-top: 14px; text-align: center; font-size: 12px; opacity: .45; }
+
+/* ---------- Stats and countdown (scorecard) ---------- */
+.dp-stats {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+  margin-top: 6px;
+}
+.dp-stat {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 10px 2px; border-radius: 10px;
+  background: rgba(255,255,255,.05);
+  text-align: center;
+}
+.dp-stat b { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.dp-stat span { font-size: 11px; line-height: 1.2; opacity: .65; }
+.dp-countdown { text-align: center; font-size: 15px; opacity: .8; }
+.dp-countdown b { font-variant-numeric: tabular-nums; }

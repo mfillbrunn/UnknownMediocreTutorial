@@ -1,4 +1,4 @@
-// client/daily-pick.js — Griddle: three shared puzzles a day, played once.
+// client/daily-pick.js — Winnow: three shared puzzles a day, played once.
 //
 // Each puzzle is sixteen five-letter words in a 4x4 grid, one of them the
 // secret. Select a word and confirm it, and the panel below shows Wordle
@@ -9,6 +9,12 @@
 // localStorage under that date, so it resets daily at midnight Eastern and
 // can't be replayed.
 // It needs no server API, account or Supabase: the word list is a static file.
+//
+// The same script runs inside the main site (opened from the game choice
+// screen) and on its own page, winnow/index.html, which marks its <body> with
+// data-winnow-standalone and starts the game straight away. The game's markup
+// is built here so both pages share it; a <script data-words="..."> attribute
+// says where the word list lives relative to the page.
 
 (function () {
   const WORD_COUNT = 16;
@@ -17,13 +23,18 @@
   const DAY_PAR = 7;
   const ADVANCE_MS = 1600;
   const STORE_KEY = "umt.dailyPick.v10";
+  // Finished days, kept for good (not reset with STORE_KEY): streaks and stats.
+  const HISTORY_KEY = "umt.winnow.history";
+  // Puzzle #1 is the first Winnow day; the number counts days from there.
+  const LAUNCH_DATE = "2026-11-07";
+  const WORDS_URL = document.currentScript?.dataset.words || "wordlists/daily-pick-words.txt";
 
   let puzzles = null; // [{ answer, words }]
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
   let current = 0; // index of the puzzle on screen
   let advanceTimer = null;
-  // The clock runs from the moment Griddle opens until the last grid is
-  // solved, only while Griddle is on screen. state.elapsed holds the time
+  // The clock runs from the moment Winnow opens until the last grid is
+  // solved, only while Winnow is on screen. state.elapsed holds the time
   // banked so far; runningSince is when the current stretch began.
   let runningSince = null;
   let ticker = null;
@@ -38,6 +49,28 @@
   // included), for everyone wherever they are. "en-CA" formats as YYYY-MM-DD.
   const dayFormat = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" });
   const today = () => dayFormat.format(new Date());
+
+  // Whole days between two YYYY-MM-DD dates.
+  const dayIndex = date => Math.round(Date.UTC(+date.slice(0, 4), +date.slice(5, 7) - 1, +date.slice(8, 10)) / 86400000);
+  const addDays = (date, n) => new Date((dayIndex(date) + n) * 86400000).toISOString().slice(0, 10);
+  const puzzleNumber = date => dayIndex(date) - dayIndex(LAUNCH_DATE) + 1;
+
+  // Milliseconds until the next midnight in New York. Most days that's 24h
+  // after the last one; on a daylight-saving change day it's an hour off, so
+  // the guess is nudged until the date flips exactly there.
+  function msUntilNextDay() {
+    const now = Date.now();
+    const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York", hour: "numeric", minute: "numeric", second: "numeric", hourCycle: "h23"
+    }).formatToParts(new Date(now)).map(part => [part.type, part.value]));
+    const intoDay = (+parts.hour * 3600 + +parts.minute * 60 + +parts.second) * 1000;
+    let next = now + 86400000 - intoDay;
+    const dateAt = t => dayFormat.format(new Date(t));
+    const todayNow = dateAt(now);
+    if (dateAt(next) === todayNow) next += 3600000;
+    else if (dateAt(next - 3600000) !== todayNow) next -= 3600000;
+    return Math.max(0, next - now);
+  }
 
   function hash(text) {
     let h = 1779033703 ^ text.length;
@@ -167,7 +200,7 @@
     // Never seen in testing, but a recipe that can't fill a grid falls back
     // to random words rather than leaving the day unplayable.
     if (recipe !== RECIPES[RECIPES.length - 1]) return buildPuzzle(list, `${seed}:fallback`, taken, RECIPES[RECIPES.length - 1]);
-    throw new Error("Griddle: couldn't build a grid");
+    throw new Error("Winnow: couldn't build a grid");
   }
 
   function buildDay(pool, date) {
@@ -219,6 +252,44 @@
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* private mode */ }
   }
 
+  // ---- Streaks and stats -------------------------------------------------
+  // HISTORY_KEY holds { "YYYY-MM-DD": { score, time, grids: [n, n, n] } } for
+  // every finished day on this device.
+  function loadHistory() {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || {}; } catch (e) { return {}; }
+  }
+
+  function recordDay() {
+    const history = loadHistory();
+    if (history[state.date]) return;
+    history[state.date] = { score: totalGuesses(), time: Math.round(elapsed()), grids: state.rounds.map(r => r.guesses.length) };
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch (e) { /* private mode */ }
+  }
+
+  function computeStats() {
+    const history = loadHistory();
+    const dates = Object.keys(history).sort();
+    const scores = dates.map(d => history[d].score);
+    // Current streak: days in a row up to today (or up to yesterday, if
+    // today isn't finished yet, so a streak doesn't look broken all morning).
+    let current = 0;
+    let day = history[today()] ? today() : addDays(today(), -1);
+    while (history[day]) { current++; day = addDays(day, -1); }
+    let best = 0;
+    let run = 0;
+    dates.forEach((d, i) => {
+      run = i && dayIndex(d) - dayIndex(dates[i - 1]) === 1 ? run + 1 : 1;
+      best = Math.max(best, run);
+    });
+    return {
+      played: dates.length,
+      current,
+      best,
+      average: scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0,
+      bestScore: scores.length ? Math.min(...scores) : 0
+    };
+  }
+
   const round = () => state.rounds[current];
   const firstUnsolved = () => {
     const i = state.rounds.findIndex(r => !r.solved);
@@ -262,11 +333,18 @@
   // moment), the grid gives way to the day's scorecard.
   function setTitle(grid) {
     const title = $("dpTitle");
-    if (title) title.innerHTML = grid ? `Griddle <span class="dp-title-grid">Grid ${grid}/${PUZZLE_COUNT}</span>` : "Griddle";
+    if (!title) return;
+    const number = state ? ` <span class="dp-title-grid">#${puzzleNumber(state.date)}</span>` : "";
+    title.innerHTML = grid ? `Winnow <span class="dp-title-grid">Grid ${grid}/${PUZZLE_COUNT}</span>` : `Winnow${number}`;
   }
 
+  let countdownTimer = null;
+
   function renderSummary(root) {
+    recordDay();
     setTitle(0);
+    const stats = computeStats();
+    const stat = (value, label) => `<div class="dp-stat"><b>${value}</b><span>${label}</span></div>`;
     const rows = state.rounds.map((r, i) => {
       const n = r.guesses.length;
       return `<div class="dp-sum-row"><span>Grid ${i + 1}${n === 1 ? "<small>Hole in one</small>" : ""}</span><span>${n}</span></div>`;
@@ -277,8 +355,32 @@
       <div class="dp-sum-row"><span>Time</span><span>${formatTime(elapsed())}</span></div>
       <div class="dp-verdict">${golfTerm(diff)} <span>(${relToPar(diff)})</span></div>
       <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
-      <div class="dp-hint">Come back tomorrow for three new grids.</div>
-      <div class="dp-copyright">&copy; 2026 Griddle. All rights reserved.</div></div>`;
+      <div class="dp-stats">
+        ${stat(stats.played, "Played")}
+        ${stat(stats.current, "Streak")}
+        ${stat(stats.best, "Best streak")}
+        ${stat(stats.average ? stats.average.toFixed(1) : "–", "Average")}
+        ${stat(stats.bestScore || "–", "Best score")}
+      </div>
+      <div class="dp-countdown">Next Winnow in <b id="dpCountdown">${formatTime(msUntilNextDay())}</b></div>
+      <div class="dp-copyright">&copy; 2026 Winnow. All rights reserved.</div></div>`;
+    clearInterval(countdownTimer);
+    countdownTimer = setInterval(tickCountdown, 1000);
+  }
+
+  // Counts down on the scorecard; at midnight Eastern the new day loads.
+  function tickCountdown() {
+    const label = $("dpCountdown");
+    if (!label || !$("dailyPickScreen")?.classList.contains("active")) {
+      clearInterval(countdownTimer);
+      return;
+    }
+    if (state.date !== today()) {
+      clearInterval(countdownTimer);
+      open();
+      return;
+    }
+    label.textContent = formatTime(msUntilNextDay());
   }
 
   function render() {
@@ -286,6 +388,7 @@
     if (!root) return;
     showClock();
     if (allSolved() && !advanceTimer) return renderSummary(root);
+    clearInterval(countdownTimer);
     setTitle(current + 1);
     const { answer: secret, words, mode } = puzzles[current];
     const r = round();
@@ -390,12 +493,20 @@
 
   // One row per puzzle: a white square per wrong guess, then the green one.
   function shareText() {
-    const date = new Date(`${state.date}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
     const rows = state.rounds.map((r, i) =>
       `Grid ${i + 1}: ${"⬜".repeat(r.guesses.length - 1)}🟩 ${r.guesses.length}`);
     const diff = totalGuesses() - DAY_PAR;
     const verdict = `${golfTerm(diff)} (${totalGuesses()}; ${diff === 0 ? "even" : `${diff > 0 ? "+" : "-"}${Math.abs(diff)}`} par)`;
-    return [`Griddle ${date}`, ...rows, `Total: ${verdict}`, `Time: ${formatTime(elapsed())}`, location.origin].join("\n");
+    const streak = computeStats().current;
+    const link = location.origin + location.pathname.replace(/index\.html$/, "");
+    return [
+      `Winnow #${puzzleNumber(state.date)}`,
+      ...rows,
+      `Total: ${verdict}`,
+      `Time: ${formatTime(elapsed())}`,
+      ...(streak > 1 ? [`🔥 ${streak}-day streak`] : []),
+      link
+    ].join("\n");
   }
 
   // The phone's own share sheet (WhatsApp, Messages, Instagram, ...) where
@@ -442,13 +553,14 @@
   }
 
   async function open() {
-    window.showScreen("dailyPickScreen");
+    if (window.showScreen) window.showScreen("dailyPickScreen");
+    else $("dailyPickScreen").classList.add("active");
     document.body.classList.add("menu-mode");
     const root = $("dailyPickRoot");
     if (!puzzles || state.date !== today()) {
       root.textContent = "Loading today's puzzles…";
       try {
-        const text = await (await fetch("wordlists/daily-pick-words.txt")).text();
+        const text = await (await fetch(WORDS_URL)).text();
         const pool = text.split(/\s+/).map(w => w.toLowerCase()).filter(Boolean);
         state = load();
         puzzles = buildDay(pool, state.date);
@@ -521,13 +633,58 @@
   document.addEventListener("visibilitychange", () => {
     if (!state) return;
     if (document.hidden) stopClock();
-    // Back after midnight Eastern with Griddle still open: load the new day.
+    // Back after midnight Eastern with Winnow still open: load the new day.
     else if (state.date !== today() && $("dailyPickScreen")?.classList.contains("active")) open();
     else startClock();
   });
   window.addEventListener("pagehide", () => { if (state) stopClock(); });
 
+  const SPLIT_CHIP = "linear-gradient(135deg,#3f9d4f 0 49%,rgba(0,0,0,.2) 49% 51%,#c9a227 51% 100%)";
+  const MARKUP = `
+    <div class="menu-center dp-card">
+      <div class="dp-head">
+        <div id="dpClock" class="dp-clock" aria-label="Time" hidden>0:00</div>
+        <h2 id="dpTitle" class="menu-title">WINNOW</h2>
+        <div class="dp-head-buttons">
+          <button id="dpHelpBtn" class="dp-help-btn" type="button" aria-label="How to play">?</button>
+          <button id="dpBackBtn" class="dp-close" type="button" aria-label="Close"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+        </div>
+      </div>
+      <div id="dailyPickRoot"></div>
+      <div id="dpIntro" class="dp-intro" role="dialog" aria-modal="true" aria-label="Welcome to Winnow" hidden>
+        <div class="dp-intro-card">
+          <p>Find the secret word out of these 16. Use the feedback to narrow it down.</p>
+          <p>Do it 3 times and you're done!</p>
+          <button id="dpIntroClose" class="dp-next" type="button">Play</button>
+          <div class="dp-intro-more">Full rules anytime under <b>?</b></div>
+        </div>
+      </div>
+      <div id="dpHelp" class="dp-help" role="dialog" aria-modal="true" aria-labelledby="dpHelpTitle" hidden>
+        <h3 id="dpHelpTitle">How to play</h3>
+        <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
+        <p>You then use that info to eliminate words that don't match and narrow down the possible solutions before picking your next word; rinse and repeat.</p>
+        <p>Tapping a word once strikes it out, twice picks it as your next guess, and a third time clears it. Press <b>Guess</b> to submit your pick.</p>
+        <p>There are three new grids every day, and they differ in what feedback you get:</p>
+        <ul>
+          <li>In the first grid, each letter is
+            <span class="dp-help-chip" style="background:#3f9d4f"></span> green (correct letter and position),
+            <span class="dp-help-chip" style="background:#c9a227"></span> yellow (letter is in the word but not in that position), or
+            <span class="dp-help-chip" style="background:#555b63"></span> grey (letter not in the word at all).</li>
+          <li>In the second grid, a letter that's in the word is
+            <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> half green, half yellow &ndash; so you don't find out whether it's in the right position. Letters not in the word are grey.</li>
+          <li>In the third grid, you only see how many letters are green and how many are yellow (say, 1 green and 2 yellow), but not which ones.</li>
+        </ul>
+        <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
+        <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
+        <div class="dp-copyright">&copy; 2026 Winnow. All rights reserved.</div>
+      </div>
+    </div>`;
+
   document.addEventListener("DOMContentLoaded", () => {
+    const screen = $("dailyPickScreen");
+    if (!screen) return;
+    screen.innerHTML = MARKUP;
+    const standalone = "winnowStandalone" in document.body.dataset;
     $("hubDailyPickBtn")?.addEventListener("click", open);
     $("dpBackBtn")?.addEventListener("click", close);
     $("dpHelpBtn")?.addEventListener("click", openHelp);
@@ -543,5 +700,10 @@
       const shareButton = event.target.closest?.("#dpShare");
       if (shareButton) share(shareButton);
     });
+    // On its own page there's nothing to close back to, so it just starts.
+    if (standalone) {
+      $("dpBackBtn").remove();
+      open();
+    }
   });
 }());

@@ -11,7 +11,7 @@
   <!-- 1. Themes & variables -->
   <link rel="stylesheet" href="css/themes.css?v=tutorial-motion-sim-2">
   <!-- 2. Global defaults -->
-  <link rel="stylesheet" href="css/daily-pick.css?v=28">
+  <link rel="stylesheet" href="css/daily-pick.css?v=29">
   <link rel="stylesheet" href="css/base.css?v=cuddle-draft-gaps-1">
   <!-- 3. Structural layout -->
   <link rel="stylesheet" href="css/layout.css?v=history-scroll-quest-note-1">
@@ -371,10 +371,10 @@
 
       <button id="hubDailyPickBtn" class="menu-btn menu-action-btn game-hub-btn" type="button">
         <span class="menu-action-icon" aria-hidden="true">
-          <img src="assets/griddle/griddle-logo.svg" alt="" width="26" height="26" style="display:block;width:26px;height:26px">
+          <img src="assets/winnow/winnow-logo.svg" alt="" width="26" height="26" style="display:block;width:26px;height:26px">
         </span>
         <span class="menu-action-copy">
-          <span class="menu-action-title">Griddle</span>
+          <span class="menu-action-title">Winnow</span>
           <span class="menu-action-subtitle">Three word puzzles a day</span>
         </span>
         <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
@@ -575,47 +575,9 @@
 </section>
 <!-- UMT_CHALLENGES_V2: CHALLENGE SCREEN END -->
 
-<!-- ========== GRIDDLE (client/daily-pick.js) ========== -->
-        <section id="dailyPickScreen" class="screen game-menu" aria-label="Griddle">
-          <div class="menu-center dp-card">
-            <div class="dp-head">
-              <div id="dpClock" class="dp-clock" aria-label="Time" hidden>0:00</div>
-              <h2 id="dpTitle" class="menu-title">GRIDDLE</h2>
-              <div class="dp-head-buttons">
-                <button id="dpHelpBtn" class="dp-help-btn" type="button" aria-label="How to play">?</button>
-                <button id="dpBackBtn" class="dp-close" type="button" aria-label="Close"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
-              </div>
-            </div>
-            <div id="dailyPickRoot"></div>
-            <div id="dpIntro" class="dp-intro" role="dialog" aria-modal="true" aria-label="Welcome to Griddle" hidden>
-              <div class="dp-intro-card">
-                <p>Find the secret word out of these 16. Use the feedback to narrow it down.</p>
-                <p>Do it 3 times and you're done!</p>
-                <button id="dpIntroClose" class="dp-next" type="button">Play</button>
-                <div class="dp-intro-more">Full rules anytime under <b>?</b></div>
-              </div>
-            </div>
-            <div id="dpHelp" class="dp-help" role="dialog" aria-modal="true" aria-labelledby="dpHelpTitle" hidden>
-              <h3 id="dpHelpTitle">How to play</h3>
-              <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
-              <p>You then use that info to eliminate words that don't match and narrow down the possible solutions before picking your next word; rinse and repeat.</p>
-              <p>Tapping a word once strikes it out, twice picks it as your next guess, and a third time clears it. Press <b>Guess</b> to submit your pick.</p>
-              <p>There are three new grids every day, and they differ in what feedback you get:</p>
-              <ul>
-                <li>In the first grid, each letter is
-                  <span class="dp-help-chip" style="background:#3f9d4f"></span> green (correct letter and position),
-                  <span class="dp-help-chip" style="background:#c9a227"></span> yellow (letter is in the word but not in that position), or
-                  <span class="dp-help-chip" style="background:#555b63"></span> grey (letter not in the word at all).</li>
-                <li>In the second grid, a letter that's in the word is
-                  <span class="dp-help-chip" style="background:linear-gradient(135deg,#3f9d4f 0 49%,rgba(0,0,0,.2) 49% 51%,#c9a227 51% 100%)"></span> half green, half yellow &ndash; so you don't find out whether it's in the right position. Letters not in the word are grey.</li>
-                <li>In the third grid, you only see how many letters are green and how many are yellow (say, 1 green and 2 yellow), but not which ones.</li>
-              </ul>
-              <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
-              <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
-              <div class="dp-copyright">&copy; 2026 Griddle. All rights reserved.</div>
-            </div>
-          </div>
-        </section>
+<!-- ========== WINNOW (client/daily-pick.js) ========== -->
+        <!-- Filled in by client/daily-pick.js, which the standalone page winnow/index.html shares. -->
+        <section id="dailyPickScreen" class="screen game-menu" aria-label="Winnow"></section>
 <!-- CUDDLE_MODE:SCREEN START -->
         <section id="cuddleScreen" class="screen game-menu cuddle-screen" aria-label="Cuddle single-player campaign">
           <div id="cuddleRoot" class="cuddle-root"></div>
@@ -1871,7 +1833,7 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="client/helpers.js?v=screen-scroll-reset-1"></script>
   <script src="client/game-hub.js?v=5"></script>
-  <script src="client/daily-pick.js?v=38"></script>
+  <script src="client/daily-pick.js?v=40"></script>
   <script src="client/statistics.js?menu-account-spacing=1&guest-play=1"></script>
   <script src="network/socketClient.js?power-popup-icon=1"></script>
 
