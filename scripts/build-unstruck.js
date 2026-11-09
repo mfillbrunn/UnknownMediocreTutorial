@@ -16,7 +16,7 @@ const crypto = require("crypto");
 const root = path.join(__dirname, "..");
 const pub = path.join(root, "public");
 const out = path.join(root, "dist", "unstruck");
-const SITE_URL = "https://playunstruck.playunstruck.workers.dev"; // the live address (workers.dev, or an own domain later)
+const SITE_URL = "https://play.unstruck.workers.dev"; // the live address (workers.dev, or an own domain later)
 const site = (process.env.SITE_URL || SITE_URL).replace(/\/+$/, "");
 
 // Files copied as they are: [from (in public/), to (in the site)].
