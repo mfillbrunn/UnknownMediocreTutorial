@@ -446,7 +446,6 @@
 .dp-score-label { font-size: 15px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; opacity: .75; margin-top: 2px; }
 .dp-score-verdict { margin-top: 8px; font-size: 20px; font-weight: 800; }
 .dp-score-verdict span { font-size: 14px; font-weight: 600; opacity: .65; }
-.dp-score-hard { margin-top: 4px; font-size: 13px; font-weight: 700; color: #f2c14e; }
 .dp-grid-scores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .dp-grid-score {
   display: flex; flex-direction: column; align-items: center; gap: 2px;

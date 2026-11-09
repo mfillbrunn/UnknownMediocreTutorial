@@ -262,35 +262,6 @@
     return result;
   }
 
-  // What a guess shows under a grid's feedback rule, as a comparable key.
-  function signature(feedbackMode, guess, answer) {
-    const result = feedback(guess, answer);
-    if (feedbackMode === "counts") return `${result.filter(f => f === "correct").length}/${result.filter(f => f === "present").length}`;
-    if (feedbackMode === "split") return result.map(f => (f === "absent" ? 0 : 1)).join("");
-    return result.join();
-  }
-
-  // Whether a word could still be the secret, given everything the grid's
-  // feedback has shown so far.
-  function stillPossible(word) {
-    const { answer, mode: feedbackMode } = puzzles[current];
-    return round().guesses.every(g => signature(feedbackMode, g, word) === signature(feedbackMode, g, answer));
-  }
-
-  // ---- Hard mode (earned, not switched on) ------------------------------------
-  // A day earns its * when every grid was played clean. That's judged each
-  // time Guess is pressed: every word struck out at that moment must already
-  // be impossible given the feedback so far, and every word that was struck
-  // at an earlier guess must still be struck (never brought back). Strikes on
-  // the way to picking a word, or undone before pressing Guess, don't count.
-  function checkCleanPlay(r) {
-    const broughtBack = (r.committed || []).some(w => !r.struck.includes(w));
-    const struckTooSoon = r.struck.some(w => !r.guesses.includes(w) && stillPossible(w));
-    if (broughtBack || struckTooSoon) r.clean = false;
-    r.committed = r.struck.slice();
-  }
-  const dayIsHard = () => state.rounds.every(r => r.solved && r.clean !== false);
-
   // ---- Analytics -----------------------------------------------------------------
   // A handful of anonymous moments (no personal data), sent to GoatCounter when
   // its script is on the page (see unstruck/index.html); otherwise nothing.
@@ -323,8 +294,8 @@
   function recordDay() {
     const history = loadHistory();
     if (history[state.date]) return;
-    history[state.date] = { score: totalGuesses(), time: Math.round(elapsed()), grids: state.rounds.map(r => r.guesses.length), hard: dayIsHard() };
-    track("finished", `${golfTerm(totalGuesses() - DAY_PAR)}${dayIsHard() ? "*" : ""}`);
+    history[state.date] = { score: totalGuesses(), time: Math.round(elapsed()), grids: state.rounds.map(r => r.guesses.length) };
+    track("finished", golfTerm(totalGuesses() - DAY_PAR));
     try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch (e) { /* private mode */ }
   }
 
@@ -453,10 +424,9 @@
     // The score and Share come first, so sharing never needs a scroll.
     root.innerHTML = `<div class="dp-summary">
       <div class="dp-score">
-        <div class="dp-score-num">${totalGuesses()}${dayIsHard() ? "<sup>*</sup>" : ""}</div>
+        <div class="dp-score-num">${totalGuesses()}</div>
         <div class="dp-score-label">guesses today</div>
         <div class="dp-score-verdict">${golfTerm(diff)} <span>(${relToPar(diff)}) · par ${DAY_PAR} · ${formatTime(elapsed())}</span></div>
-        ${dayIsHard() ? `<div class="dp-score-hard">*Hard mode: played clean</div>` : ""}
       </div>
       <div class="dp-grid-scores">${grids}</div>
       <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
@@ -608,7 +578,6 @@
     const r = round();
     if (!selected || r.solved) return;
     if (playMode === "daily" && totalGuesses() === 0) track("started");
-    checkCleanPlay(r);
     r.guesses.push(selected);
     if (selected === puzzles[current].answer) {
       r.solved = true;
@@ -629,7 +598,7 @@
     const rows = state.rounds.map((r, i) =>
       `Grid ${i + 1}: ${"⬜".repeat(r.guesses.length - 1)}${settings.colorblind ? "🟧" : "🟩"} ${r.guesses.length}`);
     const diff = totalGuesses() - DAY_PAR;
-    const verdict = `${golfTerm(diff)} (${totalGuesses()}${dayIsHard() ? "*" : ""}; ${diff === 0 ? "even" : `${diff > 0 ? "+" : "-"}${Math.abs(diff)}`} par)`;
+    const verdict = `${golfTerm(diff)} (${totalGuesses()}; ${diff === 0 ? "even" : `${diff > 0 ? "+" : "-"}${Math.abs(diff)}`} par)`;
     const streak = computeStats().current;
     const link = location.origin + location.pathname.replace(/index\.html$/, "");
     return [
@@ -637,7 +606,6 @@
       ...rows,
       `Total: ${verdict}`,
       `Time: ${formatTime(elapsed())}`,
-      ...(dayIsHard() ? ["*Hard mode"] : []),
       ...(streak > 1 ? [`🔥 ${streak}-day streak`] : []),
       link
     ].join("\n");
@@ -867,7 +835,7 @@
     }),
     () => ({
       title: "Ready?",
-      body: `<p><b>Hard mode*:</b> only ever strike out words the feedback has ruled out, and never bring one back. Do that and your score earns an asterisk.</p>
+      body: `<p>Fewer guesses and a faster time make a better score. Share it with friends when you're done!</p>
         <p>The full rules are always under <b>?</b>.</p>`,
       last: true
     })
@@ -985,7 +953,6 @@
           <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
         <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
-        <p><b>Hard mode*:</b> play it clean and your score earns an asterisk. Only ever strike out words the feedback has already ruled out, and never bring back a word you struck. It's judged each time you press Guess.</p>
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
         <button id="dpTutorialBtn" class="dp-link" type="button">Replay the tutorial</button>
