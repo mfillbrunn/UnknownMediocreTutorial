@@ -48,8 +48,6 @@
   // Set for the one render right after a guess, so only then the feedback
   // tiles flip in (and celebrate, when it was the secret).
   let revealing = false;
-  // A one-off message shown in place of the hint (e.g. a hard-mode refusal).
-  let notice = "";
 
   // Daily play or the practice grid. Practice swaps its own one-grid puzzle
   // and state in; the day's are parked in dailyPuzzles / dailyState meanwhile.
@@ -62,7 +60,7 @@
 
   // Player settings, kept on the device.
   const SETTINGS_KEY = "umt.whittle.settings";
-  let settings = { colorblind: false, hard: false };
+  let settings = { colorblind: false };
   try { settings = { ...settings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) }; } catch (e) { /* defaults */ }
   const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* private mode */ } };
   // Colour-blind mode swaps green/yellow for orange/blue (as Wordle's high
@@ -272,11 +270,32 @@
     return result.join();
   }
 
-  // Hard mode: a word can only be guessed if it could still be the secret,
-  // given everything the grid's feedback has shown so far.
+  // Whether a word could still be the secret, given everything the grid's
+  // feedback has shown so far.
   function stillPossible(word) {
     const { answer, mode: feedbackMode } = puzzles[current];
     return round().guesses.every(g => signature(feedbackMode, g, word) === signature(feedbackMode, g, answer));
+  }
+
+  // ---- Hard mode (earned, not switched on) ------------------------------------
+  // A day earns its * when every grid was played clean. That's judged each
+  // time Guess is pressed: every word struck out at that moment must already
+  // be impossible given the feedback so far, and every word that was struck
+  // at an earlier guess must still be struck (never brought back). Strikes on
+  // the way to picking a word, or undone before pressing Guess, don't count.
+  function checkCleanPlay(r) {
+    const broughtBack = (r.committed || []).some(w => !r.struck.includes(w));
+    const struckTooSoon = r.struck.some(w => !r.guesses.includes(w) && stillPossible(w));
+    if (broughtBack || struckTooSoon) r.clean = false;
+    r.committed = r.struck.slice();
+  }
+  const dayIsHard = () => state.rounds.every(r => r.solved && r.clean !== false);
+
+  // ---- Analytics -----------------------------------------------------------------
+  // A handful of anonymous moments (no personal data), sent to GoatCounter when
+  // its script is on the page (see whittle/index.html); otherwise nothing.
+  function track(name, title) {
+    try { window.goatcounter?.count?.({ path: `whittle-${name}`, title: title || name, event: true }); } catch (e) { /* never break the game */ }
   }
 
   function load() {
@@ -304,7 +323,8 @@
   function recordDay() {
     const history = loadHistory();
     if (history[state.date]) return;
-    history[state.date] = { score: totalGuesses(), time: Math.round(elapsed()), grids: state.rounds.map(r => r.guesses.length), hard: !!state.hard };
+    history[state.date] = { score: totalGuesses(), time: Math.round(elapsed()), grids: state.rounds.map(r => r.guesses.length), hard: dayIsHard() };
+    track("finished", `${golfTerm(totalGuesses() - DAY_PAR)}${dayIsHard() ? "*" : ""}`);
     try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch (e) { /* private mode */ }
   }
 
@@ -431,7 +451,7 @@
     // The verdict and Share come first, so sharing never needs a scroll.
     root.innerHTML = `<div class="dp-summary">
       <div class="dp-verdict">${golfTerm(diff)} <span>(${relToPar(diff)})</span></div>
-      <div class="dp-verdict-sub">${totalGuesses()}${state.hard ? "*" : ""} guesses · par ${DAY_PAR}${state.hard ? " · <b>*Hard mode</b>" : ""}</div>
+      <div class="dp-verdict-sub">${totalGuesses()}${dayIsHard() ? "*" : ""} guesses · par ${DAY_PAR}${dayIsHard() ? " · <b>*Hard mode</b>" : ""}</div>
       <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
       <div class="dp-stats dp-stats-4">${grids}${stat(formatTime(elapsed()), "Time")}</div>
       <div class="dp-stats">
@@ -537,10 +557,9 @@
     if (done) {
       hint = `<strong class="dp-result${revealing ? " is-new" : ""}">Solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next grid…"}`;
     } else {
-      hint = notice ? `<span class="dp-notice">${notice}</span>` : "Tap a word: strike out → pick → clear";
+      hint = "Tap a word: strike out → pick → clear";
       action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${selected.toUpperCase()}` : "Guess"}</button>`;
     }
-    notice = "";
     // Keeps the panel the same height once the button is gone.
     if (!action) action = `<button type="button" class="dp-next" tabindex="-1" aria-hidden="true" style="visibility:hidden">&nbsp;</button>`;
 
@@ -576,13 +595,8 @@
   function guessSelected() {
     const r = round();
     if (!selected || r.solved) return;
-    if (settings.hard && !stillPossible(selected)) {
-      notice = `Hard mode: ${selected.toUpperCase()} doesn't fit the feedback so far.`;
-      render();
-      return;
-    }
-    // The day counts as hard mode only if it's on from the very first guess.
-    if (playMode === "daily" && totalGuesses() === 0) state.hard = settings.hard;
+    if (playMode === "daily" && totalGuesses() === 0) track("started");
+    checkCleanPlay(r);
     r.guesses.push(selected);
     if (selected === puzzles[current].answer) {
       r.solved = true;
@@ -603,7 +617,7 @@
     const rows = state.rounds.map((r, i) =>
       `Grid ${i + 1}: ${"⬜".repeat(r.guesses.length - 1)}${settings.colorblind ? "🟧" : "🟩"} ${r.guesses.length}`);
     const diff = totalGuesses() - DAY_PAR;
-    const verdict = `${golfTerm(diff)} (${totalGuesses()}${state.hard ? "*" : ""}; ${diff === 0 ? "even" : `${diff > 0 ? "+" : "-"}${Math.abs(diff)}`} par)`;
+    const verdict = `${golfTerm(diff)} (${totalGuesses()}${dayIsHard() ? "*" : ""}; ${diff === 0 ? "even" : `${diff > 0 ? "+" : "-"}${Math.abs(diff)}`} par)`;
     const streak = computeStats().current;
     const link = location.origin + location.pathname.replace(/index\.html$/, "");
     return [
@@ -611,7 +625,7 @@
       ...rows,
       `Total: ${verdict}`,
       `Time: ${formatTime(elapsed())}`,
-      ...(state.hard ? ["*Hard mode"] : []),
+      ...(dayIsHard() ? ["*Hard mode"] : []),
       ...(streak > 1 ? [`🔥 ${streak}-day streak`] : []),
       link
     ].join("\n");
@@ -620,6 +634,7 @@
   // The phone's own share sheet (WhatsApp, Messages, Instagram, ...) where
   // there is one; otherwise the result is copied for pasting anywhere.
   async function share(button) {
+    track("shared");
     const text = shareText();
     if (navigator.share) {
       try {
@@ -730,6 +745,7 @@
     advanceTimer = null;
     if (playMode === "daily") { dailyPuzzles = puzzles; dailyState = state; }
     playMode = "practice";
+    track("practice");
     puzzles = [{ ...buildPuzzle(wordList, PRACTICE_SEED, new Set(), RECIPES[0]), ...LEVELS[0] }];
     state = { date: "practice", rounds: [{ guesses: [], struck: [], solved: false }] };
     current = 0;
@@ -763,10 +779,8 @@
     document.querySelectorAll("#dailyPickScreen [data-c]").forEach(el => { el.textContent = colorName(el.dataset.c); });
   }
 
-  function syncSettingsUi(message) {
+  function syncSettingsUi() {
     if ($("dpSetCb")) $("dpSetCb").checked = !!settings.colorblind;
-    if ($("dpSetHard")) $("dpSetHard").checked = !!settings.hard;
-    if ($("dpHardNote")) $("dpHardNote").textContent = message || "Every guess must still fit the feedback. Your score gets a *.";
   }
 
   function onSettingChange(event) {
@@ -775,19 +789,6 @@
       saveSettings();
       applyColors();
       if (state && $("dailyPickRoot") && !$("dailyPickRoot").hidden) render();
-    }
-    if (event.target.id === "dpSetHard") {
-      const day = playMode === "daily" ? state : dailyState;
-      const started = day && day.rounds.some(r => r.guesses.length);
-      if (event.target.checked && started && !day.hard) {
-        syncSettingsUi("Hard mode can only be switched on before your first guess of the day.");
-        return;
-      }
-      settings.hard = event.target.checked;
-      saveSettings();
-      // Switching it off mid-day means the day no longer counts as hard.
-      if (!settings.hard && day && day.hard) { day.hard = false; if (playMode === "daily") save(); else { try { localStorage.setItem(STORE_KEY, JSON.stringify(day)); } catch (e) { /* private mode */ } } }
-      syncSettingsUi();
     }
   }
 
@@ -880,7 +881,6 @@
       <div id="dpHelp" class="dp-help" role="dialog" aria-modal="true" aria-labelledby="dpHelpTitle" hidden>
         <div class="dp-settings">
           <label class="dp-switch"><input type="checkbox" id="dpSetCb"><span class="dp-switch-ui"></span><span>Colour-blind colours</span></label>
-          <label class="dp-switch"><input type="checkbox" id="dpSetHard"><span class="dp-switch-ui"></span><span>Hard mode<small id="dpHardNote"></small></span></label>
         </div>
         <h3 id="dpHelpTitle">How to play</h3>
         <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
@@ -897,6 +897,7 @@
           <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
         <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
+        <p><b>Hard mode*:</b> play it clean and your score earns an asterisk. Only ever strike out words the feedback has already ruled out, and never bring back a word you struck. It's judged each time you press Guess.</p>
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
         <button class="dp-link" type="button" data-practice="start">Play the practice grid</button>

@@ -393,8 +393,7 @@
 .dp-switch input:checked + .dp-switch-ui::after { transform: translateX(18px); }
 .dp-switch input:focus-visible + .dp-switch-ui { outline: 2px solid #9cc8ff; outline-offset: 2px; }
 
-/* ---------- Hard-mode refusal, text links ---------- */
-.dp-notice { color: #ff9b9b; font-weight: 700; }
+/* ---------- Text links ---------- */
 .dp-link {
   display: block; margin: 10px auto 0; padding: 6px 10px;
   border: 0; background: none; color: #9cc8ff;
