@@ -3,7 +3,7 @@
 // assembles it in dist/unstruck, and `npx wrangler deploy` publishes that
 // folder as-is. No server code runs.
 {
-  "name": "playnow",
+  "name": "play",
   "compatibility_date": "2026-11-01",
   // Serve it at the account's workers.dev address
   "workers_dev": true,
