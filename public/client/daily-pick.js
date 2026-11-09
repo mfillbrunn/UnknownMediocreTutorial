@@ -444,16 +444,23 @@
     const stats = computeStats();
     const stat = (value, label) => `<div class="dp-stat"><b>${value}</b><span>${label}</span></div>`;
     const diff = totalGuesses() - DAY_PAR;
+    // Today's guesses lead: the total, big, then each grid as its own card.
     const grids = state.rounds.map((r, i) => {
       const n = r.guesses.length;
-      return `<div class="dp-stat"><b>${n}</b><span>Grid ${i + 1}${n === 1 ? "<br>Hole in one!" : ""}</span></div>`;
+      return `<div class="dp-grid-score"><span class="dp-grid-name">Grid ${i + 1}</span>
+        <b>${n}</b><span class="dp-grid-unit">${n === 1 ? "Hole in one!" : "guesses"}</span></div>`;
     }).join("");
-    // The verdict and Share come first, so sharing never needs a scroll.
+    // The score and Share come first, so sharing never needs a scroll.
     root.innerHTML = `<div class="dp-summary">
-      <div class="dp-verdict">${golfTerm(diff)} <span>(${relToPar(diff)})</span></div>
-      <div class="dp-verdict-sub">${totalGuesses()}${dayIsHard() ? "*" : ""} guesses · par ${DAY_PAR}${dayIsHard() ? " · <b>*Hard mode</b>" : ""}</div>
+      <div class="dp-score">
+        <div class="dp-score-num">${totalGuesses()}${dayIsHard() ? "<sup>*</sup>" : ""}</div>
+        <div class="dp-score-label">guesses today</div>
+        <div class="dp-score-verdict">${golfTerm(diff)} <span>(${relToPar(diff)}) · par ${DAY_PAR} · ${formatTime(elapsed())}</span></div>
+        ${dayIsHard() ? `<div class="dp-score-hard">*Hard mode: played clean</div>` : ""}
+      </div>
+      <div class="dp-grid-scores">${grids}</div>
       <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
-      <div class="dp-stats dp-stats-4">${grids}${stat(formatTime(elapsed()), "Time")}</div>
+      <div class="dp-stats-title">Your stats</div>
       <div class="dp-stats">
         ${stat(stats.played, "Played")}
         ${stat(stats.current, "Streak")}
@@ -557,7 +564,7 @@
     if (done) {
       hint = `<strong class="dp-result${revealing ? " is-new" : ""}">Solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next grid…"}`;
     } else {
-      hint = "Tap a word: strike out → pick → clear";
+      hint = r.guesses.length ? "Tap a word: strike out → pick → clear" : "Tap a word to pick your first guess";
       action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${selected.toUpperCase()}` : "Guess"}</button>`;
     }
     // Keeps the panel the same height once the button is gone.
@@ -572,7 +579,12 @@
     const r = round();
     if (r.solved || r.guesses.includes(word)) return;
     const struckAt = r.struck.indexOf(word);
-    if (word === selected) {
+    if (!r.guesses.length) {
+      // Nothing to rule out yet, so the first guess of a grid is a plain pick:
+      // one tap picks a word (dropping any other pick), a second tap clears it.
+      selected = selected === word ? "" : word;
+      toggled = { word, kind: selected ? "selected" : "freed" };
+    } else if (word === selected) {
       // third tap: back to normal
       selected = "";
       toggled = { word, kind: "freed" };
@@ -800,21 +812,103 @@
     window.UmtGameHub?.showHub();
   }
 
-  // First visit: a short pop-up over the grid. The full rules live behind
-  // the "?" button. The clock waits while either is open.
-  const INTRO_SEEN_KEY = "umt.griddle.introSeen";
-  const OLD_HELP_SEEN_KEY = "umt.griddle.helpSeen"; // saw the full rules first, before the pop-up existed
+  // First visit: a step-by-step tutorial over the grid (also from the "?"
+  // page). The full rules live behind "?". The clock waits while either is open.
+  const INTRO_SEEN_KEY = "umt.unstruck.tutorialSeen";
   const introOpen = () => !!$("dpIntro") && !$("dpIntro").hidden;
+  let tutorialStep = 0;
+
+  // Little tiles for the tutorial's pictures.
+  const demoWord = (word, cls = "") => `<span class="dp-demo-word ${cls}">${word}</span>`;
+  const demoTiles = (word, kinds) => `<span class="dp-demo-row">${[...word].map((ch, i) => `<span class="dp-tile is-${kinds[i]}">${ch}</span>`).join("")}</span>`;
+  const TUTORIAL = [
+    () => ({
+      title: "Welcome to Unstruck",
+      body: `<p>Each grid has <b>16 words</b>. One of them is the <b>secret word</b>.</p>
+        <p>Find it in as few guesses as you can. There are <b>3 grids</b> a day, and your score is the total number of guesses (par is 7).</p>`
+    }),
+    () => ({
+      title: "Your first guess",
+      body: `<p>You start with nothing to go on, so just <b>tap a word</b> to pick it, then press <b>Guess</b>.</p>
+        <div class="dp-demo">${demoWord("CRANE", "is-selected")} <span class="dp-demo-arrow">→</span> <span class="dp-demo-btn">Guess CRANE</span></div>
+        <p>Lucky? It was the secret and you're done in one. If not, you get feedback.</p>`
+    }),
+    () => ({
+      title: "Reading the feedback",
+      body: `<p>Feedback compares your guess with the secret word:</p>
+        <div class="dp-demo">${demoTiles("CRANE", ["absent", "correct", "present", "absent", "absent"])}</div>
+        <p><b>${colorName("hit")}</b>: right letter, right spot. <b>${colorName("near")}</b>: in the word, wrong spot. <b>Grey</b>: not in the word.</p>
+        <p>Use it to work out which words <b>can't</b> be the secret.</p>`
+    }),
+    () => ({
+      title: "Tapping words",
+      body: `<p>After your first guess, each tap moves a word along:</p>
+        <div class="dp-demo dp-demo-steps">
+          <span>${demoWord("SLATE")}<small>start</small></span>
+          <span>${demoWord("SLATE", "is-struck")}<small>1 tap: strike out</small></span>
+          <span>${demoWord("SLATE", "is-selected")}<small>2 taps: pick</small></span>
+          <span>${demoWord("SLATE")}<small>3 taps: clear</small></span>
+        </div>
+        <p>Strike out the words the feedback rules out. When you've <b>picked</b> a word, press <b>Guess</b> to submit it.</p>
+        <p>Only one word can be picked: picking a second word resets the first.</p>`
+    }),
+    () => ({
+      title: "Grid 2: less to go on",
+      body: `<p>Letters in the word show <b>half ${colorName("hit")}, half ${colorName("near")}</b>, so you don't learn whether they're in the right spot.</p>
+        <div class="dp-demo">${demoTiles("CRANE", ["absent", "in", "in", "absent", "absent"])}</div>
+        <p>Grey still means not in the word.</p>`
+    }),
+    () => ({
+      title: "Grid 3: just counts",
+      body: `<p>You only see <b>how many</b> letters are in the right spot and how many are in the wrong spot, not which ones.</p>
+        <div class="dp-demo"><span class="dp-demo-row"><span class="dp-plain-word">CRANE</span>
+          <span class="dp-tile is-correct dp-count-tile">1</span><span class="dp-tile is-present dp-count-tile">1</span></span></div>
+        <p>Here 1 letter is right where it should be and 1 is in the word but elsewhere.</p>`
+    }),
+    () => ({
+      title: "Ready?",
+      body: `<p><b>Hard mode*:</b> only ever strike out words the feedback has ruled out, and never bring one back. Do that and your score earns an asterisk.</p>
+        <p>The full rules are always under <b>?</b>.</p>`,
+      last: true
+    })
+  ];
+
+  function renderTutorial() {
+    const step = TUTORIAL[tutorialStep]();
+    const dots = TUTORIAL.map((_, i) => `<i class="${i === tutorialStep ? "is-on" : ""}"></i>`).join("");
+    $("dpIntroCard").innerHTML = `
+      <div class="dp-tut-step">Step ${tutorialStep + 1} of ${TUTORIAL.length}</div>
+      <h3>${step.title}</h3>
+      <div class="dp-tut-body">${step.body}</div>
+      <div class="dp-tut-dots">${dots}</div>
+      <div class="dp-tut-nav">
+        ${tutorialStep ? `<button type="button" class="dp-link" data-tut="back">← Back</button>` : `<button type="button" class="dp-link" data-tut="skip">Skip</button>`}
+        <button type="button" class="dp-next" data-tut="${step.last ? "done" : "next"}">${step.last ? "Play" : "Next →"}</button>
+      </div>
+      ${step.last ? `<button class="dp-link" type="button" data-practice="start">or try a practice grid first</button>` : ""}`;
+  }
+
+  function onTutorialClick(event) {
+    const action = event.target.closest?.("[data-tut]")?.dataset.tut;
+    if (!action) return;
+    if (action === "next") tutorialStep = Math.min(tutorialStep + 1, TUTORIAL.length - 1);
+    if (action === "back") tutorialStep = Math.max(tutorialStep - 1, 0);
+    if (action === "skip" || action === "done") return closeIntro();
+    renderTutorial();
+  }
   const helpOpen = () => !!$("dpHelp") && !$("dpHelp").hidden;
 
   function introSeen() {
-    try { return !!(localStorage.getItem(INTRO_SEEN_KEY) || localStorage.getItem(OLD_HELP_SEEN_KEY)); } catch (e) { return true; }
+    try { return !!localStorage.getItem(INTRO_SEEN_KEY); } catch (e) { return true; }
   }
 
   function openIntro() {
     stopClock();
+    closeHelp();
+    tutorialStep = 0;
+    renderTutorial();
     $("dpIntro").hidden = false;
-    $("dpIntroClose")?.focus({ preventScroll: true });
+    $("dpIntro").querySelector("[data-tut]")?.focus({ preventScroll: true });
     try { localStorage.setItem(INTRO_SEEN_KEY, "1"); } catch (e) { /* private mode */ }
   }
 
@@ -867,13 +961,7 @@
       </div>
       <div id="dailyPickRoot"></div>
       <div id="dpIntro" class="dp-intro" role="dialog" aria-modal="true" aria-label="Welcome to Unstruck" hidden>
-        <div class="dp-intro-card">
-          <p>Find the secret word out of these 16. Use the feedback to narrow it down.</p>
-          <p>Do it 3 times and you're done!</p>
-          <button id="dpIntroClose" class="dp-next" type="button">Play</button>
-          <button class="dp-link" type="button" data-practice="start">or try a practice grid first</button>
-          <div class="dp-intro-more">Full rules anytime under <b>?</b></div>
-        </div>
+        <div id="dpIntroCard" class="dp-intro-card dp-tutorial"></div>
       </div>
       <div id="dpRule" class="dp-intro" role="dialog" aria-modal="true" aria-label="This grid's rule" hidden>
         <div id="dpRuleCard" class="dp-intro-card"></div>
@@ -885,7 +973,7 @@
         <h3 id="dpHelpTitle">How to play</h3>
         <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
         <p>You then use that info to eliminate words that don't match and narrow down the possible solutions before picking your next word; rinse and repeat.</p>
-        <p>Tapping a word once strikes it out, twice picks it as your next guess, and a third time clears it. Press <b>Guess</b> to submit your pick.</p>
+        <p>For your first guess in each grid, a single tap picks a word. After that, tapping a word once strikes it out, twice picks it as your next guess, and a third time clears it. Picking another word resets the first one. Press <b>Guess</b> to submit your pick.</p>
         <p>There are three new grids every day, and they differ in what feedback you get:</p>
         <ul>
           <li>In the first grid, each letter is
@@ -900,6 +988,7 @@
         <p><b>Hard mode*:</b> play it clean and your score earns an asterisk. Only ever strike out words the feedback has already ruled out, and never bring back a word you struck. It's judged each time you press Guess.</p>
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
+        <button id="dpTutorialBtn" class="dp-link" type="button">Replay the tutorial</button>
         <button class="dp-link" type="button" data-practice="start">Play the practice grid</button>
         <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div>
       </div>
@@ -924,7 +1013,8 @@
     $("dpBackBtn")?.addEventListener("click", close);
     $("dpHelpBtn")?.addEventListener("click", openHelp);
     $("dpHelpClose")?.addEventListener("click", closeHelp);
-    $("dpIntroClose")?.addEventListener("click", closeIntro);
+    $("dpIntro")?.addEventListener("click", onTutorialClick);
+    $("dpTutorialBtn")?.addEventListener("click", openIntro);
     $("dpRule")?.addEventListener("click", event => { if (event.target.closest("#dpRuleClose")) closeRule(); });
     document.addEventListener("keydown", event => {
       if (event.key === "Escape") { closeRule(); closeIntro(); closeHelp(); }
