@@ -6,8 +6,8 @@
 // The game itself lives in public/ (client/daily-pick.js, css/daily-pick.css,
 // unstruck/) and is shared with the main site; this only copies it into one
 // folder with local paths, and points the link-preview tags at the site's
-// address (SITE_URL, default https://playunstruck.mkfillbrunn.workers.dev) because most apps
-// only show a preview image from a full https:// address.
+// address because most apps only show a preview image from a full https://
+// address. The address is SITE_URL below (or the SITE_URL build variable).
 
 const fs = require("fs");
 const path = require("path");
@@ -16,7 +16,8 @@ const crypto = require("crypto");
 const root = path.join(__dirname, "..");
 const pub = path.join(root, "public");
 const out = path.join(root, "dist", "unstruck");
-const site = (process.env.SITE_URL || "https://playunstruck.mkfillbrunn.workers.dev").replace(/\/+$/, "");
+const SITE_URL = "https://unstruck.example"; // set to the live address (workers.dev or own domain)
+const site = (process.env.SITE_URL || SITE_URL).replace(/\/+$/, "");
 
 // Files copied as they are: [from (in public/), to (in the site)].
 const files = [
