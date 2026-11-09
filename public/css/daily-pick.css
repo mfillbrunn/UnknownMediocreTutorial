@@ -1,5 +1,10 @@
 /* Whittle (client/daily-pick.js) */
 
+/* Feedback colours. Colour-blind mode (.dp-cb) swaps green/yellow for
+   orange/blue, as Wordle's high-contrast mode does. */
+#dailyPickScreen { --dp-hit: #3f9d4f; --dp-near: #c9a227; --dp-hit-light: #8fe0a3; }
+#dailyPickScreen.dp-cb { --dp-hit: #f5793a; --dp-near: #3d8fd9; --dp-hit-light: #ffb48a; }
+
 /* The screen wrapper's own tinted panel showed as a ghost around the card. */
 #dailyPickScreen {
   background: none !important;
@@ -210,13 +215,13 @@
   display: grid; place-items: center;
   font-weight: 800; text-transform: uppercase; color: #fff; border-radius: 7px;
 }
-.dp-tile.is-correct { background: #3f9d4f; }
-.dp-tile.is-present { background: #c9a227; }
+.dp-tile.is-correct { background: var(--dp-hit); }
+.dp-tile.is-present { background: var(--dp-near); }
 .dp-tile.is-absent { background: #555b63; }
 /* "In the word, spot not shown": green and yellow split corner to corner,
    with a thin dark seam so it reads as two halves even on small tiles. */
 .dp-tile.is-in {
-  background: linear-gradient(135deg, #3f9d4f 0 49%, rgba(0,0,0,.2) 49% 51%, #c9a227 51% 100%);
+  background: linear-gradient(135deg, var(--dp-hit) 0 49%, rgba(0,0,0,.2) 49% 51%, var(--dp-near) 51% 100%);
   text-shadow: 0 1px 2px rgba(0,0,0,.45);
 }
 /* Grid 3 writes the guess out as plain text: grey tiles would read as
@@ -259,10 +264,10 @@
   pointer-events: none;
 }
 .dp-mini i { width: 9px; height: 9px; border-radius: 2px; }
-.dp-mini i.is-correct { background: #3f9d4f; }
-.dp-mini i.is-present { background: #c9a227; }
+.dp-mini i.is-correct { background: var(--dp-hit); }
+.dp-mini i.is-present { background: var(--dp-near); }
 .dp-mini i.is-absent { background: #6b727c; }
-.dp-mini i.is-in { background: linear-gradient(135deg, #3f9d4f 0 50%, #c9a227 50% 100%); }
+.dp-mini i.is-in { background: linear-gradient(135deg, var(--dp-hit) 0 50%, var(--dp-near) 50% 100%); }
 .dp-mini i.is-count {
   width: 17px; height: 17px; border-radius: 50%;
   display: grid; place-items: center;
@@ -297,7 +302,7 @@
 
 /* The secret's tile on the board: green, glowing. */
 .dp-word.is-solved {
-  background: #3f9d4f; border-color: #8fe0a3; color: #fff;
+  background: var(--dp-hit); border-color: var(--dp-hit-light); color: #fff;
   box-shadow: 0 0 0 2px rgba(143,224,163,.35), 0 0 22px rgba(63,157,79,.55);
   animation: dp-glow 1.2s ease-out .5s both;
 }
@@ -313,8 +318,8 @@
   display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
   font-size: 12px; font-style: normal; font-weight: 800; color: #fff; vertical-align: 1px;
 }
-.dp-rule-count.is-correct { background: #3f9d4f; }
-.dp-rule-count.is-present { background: #c9a227; }
+.dp-rule-count.is-correct { background: var(--dp-hit); }
+.dp-rule-count.is-present { background: var(--dp-near); }
 
 /* ---------- Scorecard ---------- */
 .dp-summary { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
@@ -332,7 +337,7 @@
 .dp-dist-track { display: flex; align-items: center; gap: 6px; min-height: 20px; }
 .dp-dist-bar { display: block; height: 20px; border-radius: 4px; background: #555b63; }
 .dp-dist-track b { font-variant-numeric: tabular-nums; font-size: 13px; }
-.dp-dist-row.is-today .dp-dist-bar { background: #3f9d4f; }
+.dp-dist-row.is-today .dp-dist-bar { background: var(--dp-hit); }
 .dp-dist-row.is-today .dp-dist-label { opacity: 1; font-weight: 800; }
 .dp-summary .dp-hint { font-size: 14px; opacity: .65; }
 
@@ -365,3 +370,35 @@
 .dp-stat span { font-size: 11px; line-height: 1.2; opacity: .65; }
 .dp-countdown { text-align: center; font-size: 15px; opacity: .8; }
 .dp-countdown b { font-variant-numeric: tabular-nums; }
+
+/* ---------- Settings (top of How to play) ---------- */
+.dp-settings {
+  display: flex; flex-direction: column; gap: 10px;
+  margin-bottom: 16px; padding: 12px 14px;
+  border-radius: 12px; background: rgba(255,255,255,.05);
+}
+.dp-switch { display: flex; align-items: center; gap: 12px; cursor: pointer; font-weight: 700; }
+.dp-switch > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+.dp-switch small { font-size: 12px; font-weight: 500; opacity: .65; }
+.dp-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.dp-switch-ui {
+  position: relative; flex: none; width: 42px; height: 24px; border-radius: 999px;
+  background: rgba(255,255,255,.18); transition: background .15s ease;
+}
+.dp-switch-ui::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; transition: transform .15s ease;
+}
+.dp-switch input:checked + .dp-switch-ui { background: #3b7dd8; }
+.dp-switch input:checked + .dp-switch-ui::after { transform: translateX(18px); }
+.dp-switch input:focus-visible + .dp-switch-ui { outline: 2px solid #9cc8ff; outline-offset: 2px; }
+
+/* ---------- Hard-mode refusal, text links ---------- */
+.dp-notice { color: #ff9b9b; font-weight: 700; }
+.dp-link {
+  display: block; margin: 10px auto 0; padding: 6px 10px;
+  border: 0; background: none; color: #9cc8ff;
+  font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+}
+#dailyPickScreen .dp-link { font-size: 14px !important; }
+.dp-summary .dp-next + .dp-next { align-self: center; padding: 11px 26px; }

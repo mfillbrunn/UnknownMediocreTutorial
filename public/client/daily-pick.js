@@ -48,6 +48,27 @@
   // Set for the one render right after a guess, so only then the feedback
   // tiles flip in (and celebrate, when it was the secret).
   let revealing = false;
+  // A one-off message shown in place of the hint (e.g. a hard-mode refusal).
+  let notice = "";
+
+  // Daily play or the practice grid. Practice swaps its own one-grid puzzle
+  // and state in; the day's are parked in dailyPuzzles / dailyState meanwhile.
+  let playMode = "daily";
+  let wordList = null;
+  let dailyPuzzles = null;
+  let dailyState = null;
+  // The practice grid is the same for everyone, always: a fixed seed.
+  const PRACTICE_SEED = "whittle-practice-1";
+
+  // Player settings, kept on the device.
+  const SETTINGS_KEY = "umt.whittle.settings";
+  let settings = { colorblind: false, hard: false };
+  try { settings = { ...settings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) }; } catch (e) { /* defaults */ }
+  const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* private mode */ } };
+  // Colour-blind mode swaps green/yellow for orange/blue (as Wordle's high
+  // contrast mode does); the words for the colours follow.
+  const colorName = which => (settings.colorblind ? { hit: "orange", near: "blue" } : { hit: "green", near: "yellow" })[which];
+  const SPLIT_FILL = "linear-gradient(135deg, var(--dp-hit) 0 49%, rgba(0,0,0,.2) 49% 51%, var(--dp-near) 51% 100%)";
 
   const $ = id => document.getElementById(id);
   // The day turns over at midnight US Eastern time (daylight saving
@@ -243,6 +264,21 @@
     return result;
   }
 
+  // What a guess shows under a grid's feedback rule, as a comparable key.
+  function signature(feedbackMode, guess, answer) {
+    const result = feedback(guess, answer);
+    if (feedbackMode === "counts") return `${result.filter(f => f === "correct").length}/${result.filter(f => f === "present").length}`;
+    if (feedbackMode === "split") return result.map(f => (f === "absent" ? 0 : 1)).join("");
+    return result.join();
+  }
+
+  // Hard mode: a word can only be guessed if it could still be the secret,
+  // given everything the grid's feedback has shown so far.
+  function stillPossible(word) {
+    const { answer, mode: feedbackMode } = puzzles[current];
+    return round().guesses.every(g => signature(feedbackMode, g, word) === signature(feedbackMode, g, answer));
+  }
+
   function load() {
     const date = today();
     try {
@@ -254,6 +290,7 @@
   }
 
   function save() {
+    if (playMode === "practice") return;
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* private mode */ }
   }
 
@@ -267,7 +304,7 @@
   function recordDay() {
     const history = loadHistory();
     if (history[state.date]) return;
-    history[state.date] = { score: totalGuesses(), time: Math.round(elapsed()), grids: state.rounds.map(r => r.guesses.length) };
+    history[state.date] = { score: totalGuesses(), time: Math.round(elapsed()), grids: state.rounds.map(r => r.guesses.length), hard: !!state.hard };
     try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch (e) { /* private mode */ }
   }
 
@@ -298,7 +335,7 @@
   const round = () => state.rounds[current];
   const firstUnsolved = () => {
     const i = state.rounds.findIndex(r => !r.solved);
-    return i < 0 ? PUZZLE_COUNT - 1 : i;
+    return i < 0 ? state.rounds.length - 1 : i;
   };
   const allSolved = () => state.rounds.every(r => r.solved);
   const totalGuesses = () => state.rounds.reduce((sum, r) => sum + r.guesses.length, 0);
@@ -340,7 +377,8 @@
     const title = $("dpTitle");
     if (!title) return;
     const number = state ? ` <span class="dp-title-grid">#${puzzleNumber(state.date)}</span>` : "";
-    title.innerHTML = grid ? `Whittle <span class="dp-title-grid">Grid ${grid}/${PUZZLE_COUNT}</span>` : `Whittle${number}`;
+    if (playMode === "practice") title.innerHTML = `Whittle <span class="dp-title-grid">Practice</span>`;
+    else title.innerHTML = grid ? `Whittle <span class="dp-title-grid">Grid ${grid}/${PUZZLE_COUNT}</span>` : `Whittle${number}`;
   }
 
   let countdownTimer = null;
@@ -368,7 +406,19 @@
     return `<div class="dp-dist"><div class="dp-dist-title">Your scores</div>${rows}</div>`;
   }
 
+  function renderPracticeSummary(root) {
+    setTitle(0);
+    const n = state.rounds[0].guesses.length;
+    root.innerHTML = `<div class="dp-summary">
+      <div class="dp-verdict">Practice solved!</div>
+      <div class="dp-verdict-sub">${n} ${n === 1 ? "guess" : "guesses"} · ${formatTime(elapsed())} · doesn't count toward your stats</div>
+      <button type="button" class="dp-next dp-share" data-practice="start">Play it again</button>
+      <button type="button" class="dp-next" data-practice="end">Today's Whittle →</button>
+    </div>`;
+  }
+
   function renderSummary(root) {
+    if (playMode === "practice") return renderPracticeSummary(root);
     recordDay();
     setTitle(0);
     const stats = computeStats();
@@ -381,7 +431,7 @@
     // The verdict and Share come first, so sharing never needs a scroll.
     root.innerHTML = `<div class="dp-summary">
       <div class="dp-verdict">${golfTerm(diff)} <span>(${relToPar(diff)})</span></div>
-      <div class="dp-verdict-sub">${totalGuesses()} guesses · par ${DAY_PAR}</div>
+      <div class="dp-verdict-sub">${totalGuesses()}${state.hard ? "*" : ""} guesses · par ${DAY_PAR}${state.hard ? " · <b>*Hard mode</b>" : ""}</div>
       <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
       <div class="dp-stats dp-stats-4">${grids}${stat(formatTime(elapsed()), "Time")}</div>
       <div class="dp-stats">
@@ -393,6 +443,7 @@
       </div>
       ${distributionChart(diff)}
       <div class="dp-countdown">Next Whittle in <b id="dpCountdown">${formatTime(msUntilNextDay())}</b></div>
+      <button type="button" class="dp-link" data-practice="start">Play the practice grid</button>
       <div class="dp-copyright">&copy; 2026 Whittle. All rights reserved.</div></div>`;
     clearInterval(countdownTimer);
     countdownTimer = setInterval(tickCountdown, 1000);
@@ -405,7 +456,7 @@
       clearInterval(countdownTimer);
       return;
     }
-    if (state.date !== today()) {
+    if (playMode === "daily" && state.date !== today()) {
       clearInterval(countdownTimer);
       open();
       return;
@@ -455,13 +506,13 @@
       return `<button type="button" class="${classes}" data-word="${word}"${disabled ? " disabled" : ""}>${word}${guessed && !won ? mini(word) : ""}</button>`;
     }).join("");
 
-    const SPLIT_TILE = "linear-gradient(135deg, #3f9d4f 0 49%, rgba(0,0,0,.2) 49% 51%, #c9a227 51% 100%)";
+    const SPLIT_TILE = SPLIT_FILL;
     const swatch = (color, label, round) =>
       `<span><i class="${round ? "is-round" : ""}" style="background:${color}"></i>${label}</span>`;
     const key = {
-      full: swatch("#3f9d4f", "Right spot") + swatch("#c9a227", "Wrong spot") + swatch("#555b63", "Not in word"),
+      full: swatch("var(--dp-hit)", "Right spot") + swatch("var(--dp-near)", "Wrong spot") + swatch("#555b63", "Not in word"),
       split: swatch(SPLIT_TILE, "In the word (any spot)") + swatch("#555b63", "Not in word"),
-      counts: swatch("#3f9d4f", "How many in the right spot", true) + swatch("#c9a227", "How many in the wrong spot", true)
+      counts: swatch("var(--dp-hit)", "How many in the right spot", true) + swatch("var(--dp-near)", "How many in the wrong spot", true)
     }[mode];
 
     // The latest guess, large. Right after a guess its tiles flip in one by
@@ -486,14 +537,16 @@
     if (done) {
       hint = `<strong class="dp-result${revealing ? " is-new" : ""}">Solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next grid…"}`;
     } else {
-      hint = "Tap a word: strike out → pick → clear";
+      hint = notice ? `<span class="dp-notice">${notice}</span>` : "Tap a word: strike out → pick → clear";
       action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${selected.toUpperCase()}` : "Guess"}</button>`;
     }
+    notice = "";
     // Keeps the panel the same height once the button is gone.
     if (!action) action = `<button type="button" class="dp-next" tabindex="-1" aria-hidden="true" style="visibility:hidden">&nbsp;</button>`;
 
+    const exit = playMode === "practice" ? `<button type="button" class="dp-link" data-practice="end">← Back to today's Whittle</button>` : "";
     root.innerHTML = `<div class="dp-board">${buttons}</div>
-      <div class="dp-center">${lastGuess ? tiles(lastGuess) : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>`;
+      <div class="dp-center">${lastGuess ? tiles(lastGuess) : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>${exit}`;
   }
 
   function onWordClick(word) {
@@ -523,6 +576,13 @@
   function guessSelected() {
     const r = round();
     if (!selected || r.solved) return;
+    if (settings.hard && !stillPossible(selected)) {
+      notice = `Hard mode: ${selected.toUpperCase()} doesn't fit the feedback so far.`;
+      render();
+      return;
+    }
+    // The day counts as hard mode only if it's on from the very first guess.
+    if (playMode === "daily" && totalGuesses() === 0) state.hard = settings.hard;
     r.guesses.push(selected);
     if (selected === puzzles[current].answer) {
       r.solved = true;
@@ -541,9 +601,9 @@
   // One row per puzzle: a white square per wrong guess, then the green one.
   function shareText() {
     const rows = state.rounds.map((r, i) =>
-      `Grid ${i + 1}: ${"⬜".repeat(r.guesses.length - 1)}🟩 ${r.guesses.length}`);
+      `Grid ${i + 1}: ${"⬜".repeat(r.guesses.length - 1)}${settings.colorblind ? "🟧" : "🟩"} ${r.guesses.length}`);
     const diff = totalGuesses() - DAY_PAR;
-    const verdict = `${golfTerm(diff)} (${totalGuesses()}; ${diff === 0 ? "even" : `${diff > 0 ? "+" : "-"}${Math.abs(diff)}`} par)`;
+    const verdict = `${golfTerm(diff)} (${totalGuesses()}${state.hard ? "*" : ""}; ${diff === 0 ? "even" : `${diff > 0 ? "+" : "-"}${Math.abs(diff)}`} par)`;
     const streak = computeStats().current;
     const link = location.origin + location.pathname.replace(/index\.html$/, "");
     return [
@@ -551,6 +611,7 @@
       ...rows,
       `Total: ${verdict}`,
       `Time: ${formatTime(elapsed())}`,
+      ...(state.hard ? ["*Hard mode"] : []),
       ...(streak > 1 ? [`🔥 ${streak}-day streak`] : []),
       link
     ].join("\n");
@@ -604,16 +665,16 @@
   // Grids 2 and 3 change what the feedback shows, so as each starts a short
   // card says how, once per day. The clock waits while it's up.
   const RULES = {
-    split: `Letters in the word show <span class="dp-help-chip" style="background:${"linear-gradient(135deg,#3f9d4f 0 49%,rgba(0,0,0,.2) 49% 51%,#c9a227 51% 100%)"}"></span> half green, half yellow &ndash; you won't know if they're in the right spot. Grey means not in the word.`,
-    counts: `You only see <i class="dp-rule-count is-correct">2</i> how many letters are in the right spot and <i class="dp-rule-count is-present">1</i> how many are in the wrong spot &ndash; not which ones.`
+    split: () => `Letters in the word show <span class="dp-help-chip" style="background:${SPLIT_FILL}"></span> half ${colorName("hit")}, half ${colorName("near")} &ndash; you won't know if they're in the right spot. Grey means not in the word.`,
+    counts: () => `You only see <i class="dp-rule-count is-correct">2</i> how many letters are in the right spot and <i class="dp-rule-count is-present">1</i> how many are in the wrong spot &ndash; not which ones.`
   };
   const ruleOpen = () => !!$("dpRule") && !$("dpRule").hidden;
 
   function maybeAnnounceRule() {
     const r = round();
-    const rule = RULES[puzzles[current].mode];
+    const rule = RULES[puzzles[current].mode]?.();
     state.announced = state.announced || [];
-    if (!rule || r.guesses.length || state.announced[current] || allSolved()) return;
+    if (playMode !== "daily" || !rule || r.guesses.length || state.announced[current] || allSolved()) return;
     state.announced[current] = true;
     save();
     stopClock();
@@ -631,6 +692,7 @@
   }
 
   async function open() {
+    if (playMode === "practice") leavePractice();
     if (window.showScreen) window.showScreen("dailyPickScreen");
     else $("dailyPickScreen").classList.add("active");
     document.body.classList.add("menu-mode");
@@ -639,9 +701,9 @@
       root.textContent = "Loading today's puzzles…";
       try {
         const text = await (await fetch(WORDS_URL)).text();
-        const pool = text.split(/\s+/).map(w => w.toLowerCase()).filter(Boolean);
+        wordList = [...new Set(text.split(/\s+/).map(w => w.toLowerCase()).filter(w => /^[a-z]{5}$/.test(w)))].sort();
         state = load();
-        puzzles = buildDay(pool, state.date);
+        puzzles = buildDay(wordList, state.date);
       } catch (e) {
         root.textContent = "Couldn't load today's puzzles. Please try again.";
         return;
@@ -655,6 +717,78 @@
     if (!introSeen()) openIntro();
     else startClock();
     maybeAnnounceRule();
+  }
+
+  // ---- Practice grid ----------------------------------------------------------
+  function startPractice() {
+    if (!wordList) return;
+    closeIntro();
+    closeHelp();
+    closeRule();
+    stopClock();
+    clearTimeout(advanceTimer);
+    advanceTimer = null;
+    if (playMode === "daily") { dailyPuzzles = puzzles; dailyState = state; }
+    playMode = "practice";
+    puzzles = [{ ...buildPuzzle(wordList, PRACTICE_SEED, new Set(), RECIPES[0]), ...LEVELS[0] }];
+    state = { date: "practice", rounds: [{ guesses: [], struck: [], solved: false }] };
+    current = 0;
+    selected = "";
+    render();
+    startClock();
+  }
+
+  // Back to the day's puzzles exactly where they were left.
+  function leavePractice() {
+    stopClock();
+    clearTimeout(advanceTimer);
+    advanceTimer = null;
+    playMode = "daily";
+    puzzles = dailyPuzzles;
+    state = dailyState;
+  }
+
+  function endPractice() {
+    leavePractice();
+    current = firstUnsolved();
+    selected = "";
+    render();
+    startClock();
+    maybeAnnounceRule();
+  }
+
+  // ---- Settings (top of the How to play page) ---------------------------------
+  function applyColors() {
+    $("dailyPickScreen")?.classList.toggle("dp-cb", !!settings.colorblind);
+    document.querySelectorAll("#dailyPickScreen [data-c]").forEach(el => { el.textContent = colorName(el.dataset.c); });
+  }
+
+  function syncSettingsUi(message) {
+    if ($("dpSetCb")) $("dpSetCb").checked = !!settings.colorblind;
+    if ($("dpSetHard")) $("dpSetHard").checked = !!settings.hard;
+    if ($("dpHardNote")) $("dpHardNote").textContent = message || "Every guess must still fit the feedback. Your score gets a *.";
+  }
+
+  function onSettingChange(event) {
+    if (event.target.id === "dpSetCb") {
+      settings.colorblind = event.target.checked;
+      saveSettings();
+      applyColors();
+      if (state && $("dailyPickRoot") && !$("dailyPickRoot").hidden) render();
+    }
+    if (event.target.id === "dpSetHard") {
+      const day = playMode === "daily" ? state : dailyState;
+      const started = day && day.rounds.some(r => r.guesses.length);
+      if (event.target.checked && started && !day.hard) {
+        syncSettingsUi("Hard mode can only be switched on before your first guess of the day.");
+        return;
+      }
+      settings.hard = event.target.checked;
+      saveSettings();
+      // Switching it off mid-day means the day no longer counts as hard.
+      if (!settings.hard && day && day.hard) { day.hard = false; if (playMode === "daily") save(); else { try { localStorage.setItem(STORE_KEY, JSON.stringify(day)); } catch (e) { /* private mode */ } } }
+      syncSettingsUi();
+    }
   }
 
   function close() {
@@ -714,12 +848,12 @@
     if (!state) return;
     if (document.hidden) stopClock();
     // Back after midnight Eastern with Whittle still open: load the new day.
-    else if (state.date !== today() && $("dailyPickScreen")?.classList.contains("active")) open();
+    else if (playMode === "daily" && state.date !== today() && $("dailyPickScreen")?.classList.contains("active")) open();
     else startClock();
   });
   window.addEventListener("pagehide", () => { if (state) stopClock(); });
 
-  const SPLIT_CHIP = "linear-gradient(135deg,#3f9d4f 0 49%,rgba(0,0,0,.2) 49% 51%,#c9a227 51% 100%)";
+  const SPLIT_CHIP = SPLIT_FILL;
   const MARKUP = `
     <div class="menu-center dp-card">
       <div class="dp-head">
@@ -736,6 +870,7 @@
           <p>Find the secret word out of these 16. Use the feedback to narrow it down.</p>
           <p>Do it 3 times and you're done!</p>
           <button id="dpIntroClose" class="dp-next" type="button">Play</button>
+          <button class="dp-link" type="button" data-practice="start">or try a practice grid first</button>
           <div class="dp-intro-more">Full rules anytime under <b>?</b></div>
         </div>
       </div>
@@ -743,6 +878,10 @@
         <div id="dpRuleCard" class="dp-intro-card"></div>
       </div>
       <div id="dpHelp" class="dp-help" role="dialog" aria-modal="true" aria-labelledby="dpHelpTitle" hidden>
+        <div class="dp-settings">
+          <label class="dp-switch"><input type="checkbox" id="dpSetCb"><span class="dp-switch-ui"></span><span>Colour-blind colours</span></label>
+          <label class="dp-switch"><input type="checkbox" id="dpSetHard"><span class="dp-switch-ui"></span><span>Hard mode<small id="dpHardNote"></small></span></label>
+        </div>
         <h3 id="dpHelpTitle">How to play</h3>
         <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
         <p>You then use that info to eliminate words that don't match and narrow down the possible solutions before picking your next word; rinse and repeat.</p>
@@ -750,15 +889,17 @@
         <p>There are three new grids every day, and they differ in what feedback you get:</p>
         <ul>
           <li>In the first grid, each letter is
-            <span class="dp-help-chip" style="background:#3f9d4f"></span> green (correct letter and position),
-            <span class="dp-help-chip" style="background:#c9a227"></span> yellow (letter is in the word but not in that position), or
+            <span class="dp-help-chip" style="background:var(--dp-hit)"></span> <span data-c="hit">green</span> (correct letter and position),
+            <span class="dp-help-chip" style="background:var(--dp-near)"></span> <span data-c="near">yellow</span> (letter is in the word but not in that position), or
             <span class="dp-help-chip" style="background:#555b63"></span> grey (letter not in the word at all).</li>
           <li>In the second grid, a letter that's in the word is
-            <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> half green, half yellow &ndash; so you don't find out whether it's in the right position. Letters not in the word are grey.</li>
-          <li>In the third grid, you only see how many letters are green and how many are yellow (say, 1 green and 2 yellow), but not which ones.</li>
+            <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> half <span data-c="hit">green</span>, half <span data-c="near">yellow</span> &ndash; so you don't find out whether it's in the right position. Letters not in the word are grey.</li>
+          <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
         <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
+        <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
+        <button class="dp-link" type="button" data-practice="start">Play the practice grid</button>
         <div class="dp-copyright">&copy; 2026 Whittle. All rights reserved.</div>
       </div>
     </div>`;
@@ -767,6 +908,16 @@
     const screen = $("dailyPickScreen");
     if (!screen) return;
     screen.innerHTML = MARKUP;
+    applyColors();
+    syncSettingsUi();
+    screen.addEventListener("change", onSettingChange);
+    // Practice buttons live in the pop-up, the rules page and the scorecards.
+    screen.addEventListener("click", event => {
+      const button = event.target.closest?.("[data-practice]");
+      if (!button) return;
+      if (button.dataset.practice === "start") startPractice();
+      else endPractice();
+    });
     const standalone = "whittleStandalone" in document.body.dataset;
     $("hubDailyPickBtn")?.addEventListener("click", open);
     $("dpBackBtn")?.addEventListener("click", close);
