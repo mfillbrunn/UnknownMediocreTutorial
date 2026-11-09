@@ -5,6 +5,8 @@
 {
   "name": "playunstruck",
   "compatibility_date": "2026-11-01",
+  // Serve it at https://playunstruck.mkfillbrunn.workers.dev
+  "workers_dev": true,
   "assets": {
     "directory": "./dist/unstruck"
   }
