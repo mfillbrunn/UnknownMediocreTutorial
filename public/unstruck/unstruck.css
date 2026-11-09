@@ -1,4 +1,4 @@
-/* Whittle on its own page (whittle/index.html). The game's own styles live in
+/* Unstruck on its own page (unstruck/index.html). The game's own styles live in
    ../css/daily-pick.css; this supplies what the main site's stylesheets
    otherwise give it: the page, the card, fonts and the light buttons. */
 
@@ -21,7 +21,7 @@ body {
 
 button { font: inherit; color: inherit; }
 
-.whittle-page {
+.unstruck-page {
   display: flex;
   justify-content: center;
   padding: 16px 12px 32px;
@@ -48,5 +48,5 @@ button { font: inherit; color: inherit; }
 .dp-share { background: #3b7dd8; color: #fff; }
 
 @media (min-width: 760px) {
-  .whittle-page { padding-top: 4vh; }
+  .unstruck-page { padding-top: 4vh; }
 }

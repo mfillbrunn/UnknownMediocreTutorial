@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 64" role="img" aria-label="Unstruck">
+  <!-- Icon tiles (no background) beside the name. Four colours: slate, red, green, white. -->
+  <g fill="#3a4454">
+    <rect x="2" y="5" width="25" height="25" rx="6"/>
+    <rect x="32" y="5" width="25" height="25" rx="6"/>
+    <rect x="2" y="35" width="25" height="25" rx="6"/>
+  </g>
+  <rect x="32" y="35" width="25" height="25" rx="6" fill="#46b35d"/>
+  <g stroke="#ff6b6b" stroke-width="4" stroke-linecap="round">
+    <path d="M7 17.5h15M37 17.5h15M7 47.5h15"/>
+  </g>
+  <text x="72" y="44" fill="#f5f8fc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="2">UNSTRUCK</text>
+</svg>

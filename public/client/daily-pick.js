@@ -1,4 +1,4 @@
-// client/daily-pick.js — Whittle: three shared puzzles a day, played once.
+// client/daily-pick.js — Unstruck: three shared puzzles a day, played once.
 //
 // Each puzzle is sixteen five-letter words in a 4x4 grid, one of them the
 // secret. Select a word and confirm it, and the panel below shows Wordle
@@ -11,8 +11,8 @@
 // It needs no server API, account or Supabase: the word list is a static file.
 //
 // The same script runs inside the main site (opened from the game choice
-// screen) and on its own page, whittle/index.html, which marks its <body> with
-// data-whittle-standalone and starts the game straight away. The game's markup
+// screen) and on its own page, unstruck/index.html, which marks its <body> with
+// data-unstruck-standalone and starts the game straight away. The game's markup
 // is built here so both pages share it; a <script data-words="..."> attribute
 // says where the word list lives relative to the page.
 
@@ -26,8 +26,8 @@
   const ADVANCE_MS = 2600;
   const STORE_KEY = "umt.dailyPick.v10";
   // Finished days, kept for good (not reset with STORE_KEY): streaks and stats.
-  const HISTORY_KEY = "umt.winnow.history"; // named from when the game was Winnow; kept so stats carry over
-  // Puzzle #1 is the first Whittle day; the number counts days from there.
+  const HISTORY_KEY = "umt.winnow.history"; // named from an earlier name of the game; kept so stats carry over
+  // Puzzle #1 is the first Unstruck day; the number counts days from there.
   const LAUNCH_DATE = "2026-11-07";
   const WORDS_URL = document.currentScript?.dataset.words || "wordlists/daily-pick-words.txt";
 
@@ -35,8 +35,8 @@
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
   let current = 0; // index of the puzzle on screen
   let advanceTimer = null;
-  // The clock runs from the moment Whittle opens until the last grid is
-  // solved, only while Whittle is on screen. state.elapsed holds the time
+  // The clock runs from the moment Unstruck opens until the last grid is
+  // solved, only while Unstruck is on screen. state.elapsed holds the time
   // banked so far; runningSince is when the current stretch began.
   let runningSince = null;
   let ticker = null;
@@ -56,10 +56,10 @@
   let dailyPuzzles = null;
   let dailyState = null;
   // The practice grid is the same for everyone, always: a fixed seed.
-  const PRACTICE_SEED = "whittle-practice-1";
+  const PRACTICE_SEED = "whittle-practice-1"; // keep: changing it changes the practice grid
 
   // Player settings, kept on the device.
-  const SETTINGS_KEY = "umt.whittle.settings";
+  const SETTINGS_KEY = "umt.whittle.settings"; // named from when the game was Whittle; kept so settings carry over
   let settings = { colorblind: false };
   try { settings = { ...settings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) }; } catch (e) { /* defaults */ }
   const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* private mode */ } };
@@ -224,7 +224,7 @@
     // Never seen in testing, but a recipe that can't fill a grid falls back
     // to random words rather than leaving the day unplayable.
     if (recipe !== RECIPES[RECIPES.length - 1]) return buildPuzzle(list, `${seed}:fallback`, taken, RECIPES[RECIPES.length - 1]);
-    throw new Error("Whittle: couldn't build a grid");
+    throw new Error("Unstruck: couldn't build a grid");
   }
 
   function buildDay(pool, date) {
@@ -293,9 +293,9 @@
 
   // ---- Analytics -----------------------------------------------------------------
   // A handful of anonymous moments (no personal data), sent to GoatCounter when
-  // its script is on the page (see whittle/index.html); otherwise nothing.
+  // its script is on the page (see unstruck/index.html); otherwise nothing.
   function track(name, title) {
-    try { window.goatcounter?.count?.({ path: `whittle-${name}`, title: title || name, event: true }); } catch (e) { /* never break the game */ }
+    try { window.goatcounter?.count?.({ path: `unstruck-${name}`, title: title || name, event: true }); } catch (e) { /* never break the game */ }
   }
 
   function load() {
@@ -397,8 +397,8 @@
     const title = $("dpTitle");
     if (!title) return;
     const number = state ? ` <span class="dp-title-grid">#${puzzleNumber(state.date)}</span>` : "";
-    if (playMode === "practice") title.innerHTML = `Whittle <span class="dp-title-grid">Practice</span>`;
-    else title.innerHTML = grid ? `Whittle <span class="dp-title-grid">Grid ${grid}/${PUZZLE_COUNT}</span>` : `Whittle${number}`;
+    if (playMode === "practice") title.innerHTML = `Unstruck <span class="dp-title-grid">Practice</span>`;
+    else title.innerHTML = grid ? `Unstruck <span class="dp-title-grid">Grid ${grid}/${PUZZLE_COUNT}</span>` : `Unstruck${number}`;
   }
 
   let countdownTimer = null;
@@ -433,7 +433,7 @@
       <div class="dp-verdict">Practice solved!</div>
       <div class="dp-verdict-sub">${n} ${n === 1 ? "guess" : "guesses"} · ${formatTime(elapsed())} · doesn't count toward your stats</div>
       <button type="button" class="dp-next dp-share" data-practice="start">Play it again</button>
-      <button type="button" class="dp-next" data-practice="end">Today's Whittle →</button>
+      <button type="button" class="dp-next" data-practice="end">Today's Unstruck →</button>
     </div>`;
   }
 
@@ -462,9 +462,9 @@
         ${stat(stats.bestScore || "–", "Best score")}
       </div>
       ${distributionChart(diff)}
-      <div class="dp-countdown">Next Whittle in <b id="dpCountdown">${formatTime(msUntilNextDay())}</b></div>
+      <div class="dp-countdown">Next Unstruck in <b id="dpCountdown">${formatTime(msUntilNextDay())}</b></div>
       <button type="button" class="dp-link" data-practice="start">Play the practice grid</button>
-      <div class="dp-copyright">&copy; 2026 Whittle. All rights reserved.</div></div>`;
+      <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div></div>`;
     clearInterval(countdownTimer);
     countdownTimer = setInterval(tickCountdown, 1000);
   }
@@ -563,7 +563,7 @@
     // Keeps the panel the same height once the button is gone.
     if (!action) action = `<button type="button" class="dp-next" tabindex="-1" aria-hidden="true" style="visibility:hidden">&nbsp;</button>`;
 
-    const exit = playMode === "practice" ? `<button type="button" class="dp-link" data-practice="end">← Back to today's Whittle</button>` : "";
+    const exit = playMode === "practice" ? `<button type="button" class="dp-link" data-practice="end">← Back to today's Unstruck</button>` : "";
     root.innerHTML = `<div class="dp-board">${buttons}</div>
       <div class="dp-center">${lastGuess ? tiles(lastGuess) : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>${exit}`;
   }
@@ -621,7 +621,7 @@
     const streak = computeStats().current;
     const link = location.origin + location.pathname.replace(/index\.html$/, "");
     return [
-      `Whittle #${puzzleNumber(state.date)}`,
+      `Unstruck #${puzzleNumber(state.date)}`,
       ...rows,
       `Total: ${verdict}`,
       `Time: ${formatTime(elapsed())}`,
@@ -848,7 +848,7 @@
   document.addEventListener("visibilitychange", () => {
     if (!state) return;
     if (document.hidden) stopClock();
-    // Back after midnight Eastern with Whittle still open: load the new day.
+    // Back after midnight Eastern with Unstruck still open: load the new day.
     else if (playMode === "daily" && state.date !== today() && $("dailyPickScreen")?.classList.contains("active")) open();
     else startClock();
   });
@@ -859,14 +859,14 @@
     <div class="menu-center dp-card">
       <div class="dp-head">
         <div id="dpClock" class="dp-clock" aria-label="Time" hidden>0:00</div>
-        <h2 id="dpTitle" class="menu-title">WHITTLE</h2>
+        <h2 id="dpTitle" class="menu-title">UNSTRUCK</h2>
         <div class="dp-head-buttons">
           <button id="dpHelpBtn" class="dp-help-btn" type="button" aria-label="How to play">?</button>
           <button id="dpBackBtn" class="dp-close" type="button" aria-label="Close"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
         </div>
       </div>
       <div id="dailyPickRoot"></div>
-      <div id="dpIntro" class="dp-intro" role="dialog" aria-modal="true" aria-label="Welcome to Whittle" hidden>
+      <div id="dpIntro" class="dp-intro" role="dialog" aria-modal="true" aria-label="Welcome to Unstruck" hidden>
         <div class="dp-intro-card">
           <p>Find the secret word out of these 16. Use the feedback to narrow it down.</p>
           <p>Do it 3 times and you're done!</p>
@@ -901,7 +901,7 @@
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
         <button class="dp-link" type="button" data-practice="start">Play the practice grid</button>
-        <div class="dp-copyright">&copy; 2026 Whittle. All rights reserved.</div>
+        <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div>
       </div>
     </div>`;
 
@@ -919,7 +919,7 @@
       if (button.dataset.practice === "start") startPractice();
       else endPractice();
     });
-    const standalone = "whittleStandalone" in document.body.dataset;
+    const standalone = "unstruckStandalone" in document.body.dataset;
     $("hubDailyPickBtn")?.addEventListener("click", open);
     $("dpBackBtn")?.addEventListener("click", close);
     $("dpHelpBtn")?.addEventListener("click", openHelp);
