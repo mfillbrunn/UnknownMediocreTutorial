@@ -3,7 +3,7 @@
 // assembles it in dist/unstruck, and `npx wrangler deploy` publishes that
 // folder as-is. No server code runs.
 {
-  "name": "unstruck",
+  "name": "playunstruck",
   "compatibility_date": "2026-11-01",
   "assets": {
     "directory": "./dist/unstruck"
