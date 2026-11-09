@@ -811,11 +811,14 @@
     () => ({
       title: "Tapping words",
       body: `<p>After your first guess, each tap moves a word along:</p>
-        <div class="dp-demo dp-demo-steps">
-          <span>${demoWord("SLATE")}<small>start</small></span>
-          <span>${demoWord("SLATE", "is-struck")}<small>1 tap: strike out</small></span>
-          <span>${demoWord("SLATE", "is-selected")}<small>2 taps: pick</small></span>
-          <span>${demoWord("SLATE")}<small>3 taps: clear</small></span>
+        <div class="dp-demo dp-demo-flow">
+          <span class="dp-flow-tile">${demoWord("SLATE")}<small>start</small></span>
+          <span class="dp-flow-arrow"><b>→</b><small>tap</small></span>
+          <span class="dp-flow-tile">${demoWord("SLATE", "is-struck")}<small>struck out</small></span>
+          <span class="dp-flow-arrow"><b>→</b><small>tap</small></span>
+          <span class="dp-flow-tile">${demoWord("SLATE", "is-selected")}<small>picked</small></span>
+          <span class="dp-flow-arrow"><b>→</b><small>tap</small></span>
+          <span class="dp-flow-tile">${demoWord("SLATE")}<small>cleared</small></span>
         </div>
         <p>Strike out the words the feedback rules out. When you've <b>picked</b> a word, press <b>Guess</b> to submit it.</p>
         <p>Only one word can be picked: picking a second word resets the first.</p>`

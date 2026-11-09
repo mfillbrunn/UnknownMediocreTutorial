@@ -458,3 +458,9 @@
 .dp-stats-title { margin-top: 10px; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .55; }
 .dp-summary .dp-stats { margin-top: 0; }
 .dp-summary .dp-stat b { font-size: 18px; }
+.dp-demo-flow { flex-wrap: nowrap; gap: 3px; justify-content: space-between; }
+.dp-flow-tile { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.dp-flow-tile .dp-demo-word { min-width: 0; width: 54px; padding: 9px 0; font-size: 11px; }
+.dp-flow-tile small, .dp-flow-arrow small { font-size: 10px; opacity: .7; white-space: nowrap; }
+.dp-flow-arrow { display: flex; flex-direction: column; align-items: center; margin-bottom: 16px; color: #9cc8ff; }
+.dp-flow-arrow b { font-size: 18px; line-height: 1; }
