@@ -4,7 +4,8 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "test": "node server/tests/run.js"
+    "test": "node server/tests/run.js",
+    "build:unstruck": "node scripts/build-unstruck.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",
