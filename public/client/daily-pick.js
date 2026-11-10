@@ -639,7 +639,8 @@
     if (done) {
       hint = `<strong class="dp-result${revealing ? " is-new" : ""}">Solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next grid…"}`;
     } else {
-      hint = r.guesses.length ? `Tap a ${noun}: strike out → pick → clear` : `Tap a ${noun} to pick your first guess`;
+      const aNoun = /^[aeiou]/.test(noun) ? `an ${noun}` : `a ${noun}`;
+      hint = r.guesses.length ? `Tap ${aNoun}: strike out → pick → clear` : `Tap ${aNoun} to pick your first guess`;
       action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${pics ? name(selected) : selected.toUpperCase()}` : "Guess"}</button>`;
     }
     // Keeps the panel the same height once the button is gone.
