@@ -42,8 +42,8 @@ for (const [from, to] of files) {
 }
 
 // The Weekly's pictures and their color data, as they are.
-// (Off while the Weekly is switched off in client/daily-pick.js.)
-const WEEKLY = false;
+// (Only while the Weekly is switched on in client/daily-pick.js.)
+const WEEKLY = true;
 if (WEEKLY) fs.cpSync(path.join(pub, "unstruck-media"), path.join(out, "media"), { recursive: true });
 
 // The page: same as public/unstruck/index.html, with every path local.

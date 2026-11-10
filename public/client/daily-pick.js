@@ -42,10 +42,9 @@
   // Weekly puzzle #1 is the week starting Monday 9 November 2026.
   const WEEKLY_LAUNCH = "2026-11-09";
   const WEEKLY_KINDS = ["flags", "animals", "food"];
-  // The Weekly is switched off for now: no Daily/Weekly tabs, no Weekly
-  // rules or credits. Set to true to bring it back (and copy the media in
-  // scripts/build-unstruck.js again).
-  const WEEKLY_ENABLED = false;
+  // Switches the Weekly (Daily/Weekly tabs, Weekly rules and credits) on or
+  // off; keep it in step with WEEKLY in scripts/build-unstruck.js.
+  const WEEKLY_ENABLED = true;
 
   let puzzles = null; // [{ answer, words }]
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
