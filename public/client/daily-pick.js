@@ -132,10 +132,7 @@
       next: () => msUntilNextDay(), nextLabel: "Next Unstruck in"
     },
     weekly: {
-      // Picture grids average about 2 guesses for a strong player, so par is
-      // 2 a grid (6 with all three kinds).
-      storeKey: "umt.unstruck.weekly.v1", historyKey: "umt.unstruck.weeklyHistory", step: 7,
-      get par() { return 2 * (slots.weekly.puzzles?.length || WEEKLY_KINDS.length); },
+      storeKey: "umt.unstruck.weekly.v1", historyKey: "umt.unstruck.weeklyHistory", par: DAY_PAR, step: 7,
       period: () => weekStart(today()), number: weekNumber, title: "Unstruck Weekly", unit: "week", scoreLabel: "guesses this week",
       next: () => msUntilNextWeek(), nextLabel: "Next Weekly in"
     }
