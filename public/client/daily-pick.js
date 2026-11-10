@@ -640,7 +640,8 @@
       hint = `<strong class="dp-result${revealing ? " is-new" : ""}">Solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next grid…"}`;
     } else {
       const aNoun = /^[aeiou]/.test(noun) ? `an ${noun}` : `a ${noun}`;
-      hint = r.guesses.length ? `Tap ${aNoun}: strike out → pick → clear` : `Tap ${aNoun} to pick your first guess`;
+      // The tutorial covers tapping, so after the first guess there's no hint.
+      hint = r.guesses.length ? "" : `Tap ${aNoun} to pick your first guess`;
       action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${pics ? name(selected) : selected.toUpperCase()}` : "Guess"}</button>`;
     }
     // Keeps the panel the same height once the button is gone.
