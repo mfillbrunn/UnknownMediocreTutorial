@@ -42,6 +42,10 @@
   // Weekly puzzle #1 is the week starting Monday 9 November 2026.
   const WEEKLY_LAUNCH = "2026-11-09";
   const WEEKLY_KINDS = ["flags", "animals", "food"];
+  // The Weekly is switched off for now: no Daily/Weekly tabs, no Weekly
+  // rules or credits. Set to true to bring it back (and copy the media in
+  // scripts/build-unstruck.js again).
+  const WEEKLY_ENABLED = false;
 
   let puzzles = null; // [{ answer, words }]
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
@@ -851,6 +855,7 @@
   }
 
   async function open(which = game) {
+    if (!WEEKLY_ENABLED) which = "daily";
     if (playMode === "practice") leavePractice();
     if (window.showScreen) window.showScreen("dailyPickScreen");
     else $("dailyPickScreen").classList.add("active");
@@ -1096,10 +1101,10 @@
           <button id="dpBackBtn" class="dp-close" type="button" aria-label="Close"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
         </div>
       </div>
-      <div class="dp-tabs" role="tablist">
+      ${WEEKLY_ENABLED ? `      <div class="dp-tabs" role="tablist">
         <button type="button" class="dp-tab is-on" data-game="daily" role="tab">Daily</button>
         <button type="button" class="dp-tab" data-game="weekly" role="tab">Weekly</button>
-      </div>
+      </div>` : ""}
       <div id="dailyPickRoot"></div>
       <div id="dpIntro" class="dp-intro" role="dialog" aria-modal="true" aria-label="Welcome to Unstruck" hidden>
         <div id="dpIntroCard" class="dp-intro-card dp-tutorial"></div>
@@ -1125,14 +1130,14 @@
             <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> half <span data-c="hit">green</span>, half <span data-c="near">yellow</span> &ndash; so you don't find out whether it's in the right position. Letters not in the word are gray.</li>
           <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
-        <p><b>The Weekly</b> (new every Monday) works the same way with pictures: flags, animal emoji and food emoji. Each picture is split into a grid of colors. A cell is <span data-c="hit">green</span> if the secret has the same color in the same spot, <span data-c="near">yellow</span> if that color is somewhere else in it, and gray if the secret doesn't have that color at all.</p>
+        ${WEEKLY_ENABLED ? `<p><b>The Weekly</b> (new every Monday) works the same way with pictures: flags, animal emoji and food emoji. Each picture is split into a grid of colors. A cell is <span data-c="hit">green</span> if the secret has the same color in the same spot, <span data-c="near">yellow</span> if that color is somewhere else in it, and gray if the secret doesn't have that color at all.</p>` : ""}
         <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
         <button id="dpTutorialBtn" class="dp-link" type="button">Replay the tutorial</button>
         <button class="dp-link" type="button" data-practice="start">Play the practice grid</button>
         <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div>
-        <div class="dp-copyright">Emoji graphics: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a>, CC-BY 4.0. Flags: <a href="https://github.com/lipis/flag-icons" target="_blank" rel="noopener">flag-icons</a>, MIT.</div>
+        ${WEEKLY_ENABLED ? `<div class="dp-copyright">Emoji graphics: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a>, CC-BY 4.0. Flags: <a href="https://github.com/lipis/flag-icons" target="_blank" rel="noopener">flag-icons</a>, MIT.</div>` : ""}
       </div>
     </div>`;
 
