@@ -14,7 +14,15 @@
 // screen) and on its own page, unstruck/index.html, which marks its <body> with
 // data-unstruck-standalone and starts the game straight away. The game's markup
 // is built here so both pages share it; a <script data-words="..."> attribute
-// says where the word list lives relative to the page.
+// says where the word list lives relative to the page, and data-media where
+// the weekly game's pictures live (unstruck-media/, built by
+// scripts/build-unstruck-media.js).
+//
+// Two games share all of this: the Daily (three word grids, new every day)
+// and the Weekly (three picture grids: flags, paintings, animals, new every
+// Monday). In the Weekly each picture is reduced to a small grid of colours,
+// and those colour cells play the part of letters: same colour in the same
+// cell is green, a colour found elsewhere in the secret picture is yellow.
 
 (function () {
   const WORD_COUNT = 16;
@@ -30,6 +38,10 @@
   // Puzzle #1 is the first Unstruck day; the number counts days from there.
   const LAUNCH_DATE = "2026-11-07";
   const WORDS_URL = document.currentScript?.dataset.words || "wordlists/daily-pick-words.txt";
+  const MEDIA_URL = document.currentScript?.dataset.media || "unstruck-media/";
+  // Weekly puzzle #1 is the week starting Monday 9 November 2026.
+  const WEEKLY_LAUNCH = "2026-11-09";
+  const WEEKLY_KINDS = ["flags", "paintings", "animals"];
 
   let puzzles = null; // [{ answer, words }]
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
@@ -48,6 +60,11 @@
   // Set for the one render right after a guess, so only then the feedback
   // tiles flip in (and celebrate, when it was the secret).
   let revealing = false;
+
+  // Which game is on screen; the other one's puzzles and state wait in slots.
+  let game = "daily";
+  const slots = { daily: { puzzles: null, state: null }, weekly: { puzzles: null, state: null } };
+  let catalog = null; // the Weekly's pictures, loaded the first time it's opened
 
   // Daily play or the practice grid. Practice swaps its own one-grid puzzle
   // and state in; the day's are parked in dailyPuzzles / dailyState meanwhile.
@@ -78,6 +95,9 @@
   const dayIndex = date => Math.round(Date.UTC(+date.slice(0, 4), +date.slice(5, 7) - 1, +date.slice(8, 10)) / 86400000);
   const addDays = (date, n) => new Date((dayIndex(date) + n) * 86400000).toISOString().slice(0, 10);
   const puzzleNumber = date => dayIndex(date) - dayIndex(LAUNCH_DATE) + 1;
+  // The Monday that starts the week a date is in (Eastern time, like the day).
+  const weekStart = date => addDays(date, -((new Date(dayIndex(date) * 86400000).getUTCDay() + 6) % 7));
+  const weekNumber = date => Math.round((dayIndex(date) - dayIndex(WEEKLY_LAUNCH)) / 7) + 1;
 
   // Milliseconds until the next midnight in New York. Most days that's 24h
   // after the last one; on a daylight-saving change day it's an hour off, so
@@ -95,6 +115,32 @@
     else if (dateAt(next - 3600000) !== todayNow) next -= 3600000;
     return Math.max(0, next - now);
   }
+
+  // Until next Monday's midnight in New York.
+  function msUntilNextWeek() {
+    const daysLeft = (7 - (new Date(dayIndex(today()) * 86400000).getUTCDay() + 6) % 7) % 7 || 7;
+    return msUntilNextDay() + (daysLeft - 1) * 86400000;
+  }
+
+  // What changes between the two games. period() is the key the saved
+  // progress belongs to (today, or this week's Monday); step is how far
+  // apart two periods in a streak are.
+  const GAMES = {
+    daily: {
+      storeKey: STORE_KEY, historyKey: HISTORY_KEY, par: DAY_PAR, step: 1,
+      period: () => today(), number: puzzleNumber, title: "Unstruck", unit: "day", scoreLabel: "guesses today",
+      next: () => msUntilNextDay(), nextLabel: "Next Unstruck in"
+    },
+    weekly: {
+      // Picture grids average about 2 guesses for a strong player, so par is
+      // 2 a grid (6 with all three kinds).
+      storeKey: "umt.unstruck.weekly.v1", historyKey: "umt.unstruck.weeklyHistory", step: 7,
+      get par() { return 2 * (slots.weekly.puzzles?.length || WEEKLY_KINDS.length); },
+      period: () => weekStart(today()), number: weekNumber, title: "Unstruck Weekly", unit: "week", scoreLabel: "guesses this week",
+      next: () => msUntilNextWeek(), nextLabel: "Next Weekly in"
+    }
+  };
+  const G = () => GAMES[game];
 
   function hash(text) {
     let h = 1779033703 ^ text.length;
@@ -241,6 +287,36 @@
     });
   }
 
+  // The Weekly: one grid per kind of picture. Sixteen pictures whose colour
+  // grids all differ (some flags look the same once reduced), and a secret.
+  const KIND_INFO = {
+    flags: { label: "Flags", noun: "flag" },
+    paintings: { label: "Paintings", noun: "painting" },
+    animals: { label: "Animals", noun: "animal" }
+  };
+
+  function buildWeek(cat, date) {
+    // A kind only plays once it has enough distinct pictures for a grid.
+    const ready = WEEKLY_KINDS.filter(kind => new Set((cat[kind]?.items || []).map(item => item.cells)).size >= WORD_COUNT);
+    return ready.map((kind, i) => {
+      const rand = mulberry32(hash(`unstruck-weekly-1:${date}:${kind}`));
+      const seen = new Set();
+      const picks = [];
+      for (const item of shuffle(cat[kind].items, rand)) {
+        if (picks.length === WORD_COUNT) break;
+        if (seen.has(item.cells)) continue;
+        seen.add(item.cells);
+        picks.push(item.id);
+      }
+      const answer = picks[Math.floor(rand() * picks.length)];
+      return { kind, answer, words: picks, mode: "full", number: i + 1 };
+    });
+  }
+
+  const itemOf = (kind, id) => catalog[kind].byId[id];
+  // The thing a puzzle's tile shows by name: the word, or the picture's name.
+  const labelOf = (puzzle, id) => (puzzle.kind ? itemOf(puzzle.kind, id).name : id.toUpperCase());
+
   // Golf names for a score relative to par.
   function golfTerm(diff) {
     const names = { "-3": "Albatross", "-2": "Eagle", "-1": "Birdie", 0: "Par", 1: "Bogey", 2: "Double bogey", 3: "Triple bogey", 4: "Quadruple bogey" };
@@ -248,14 +324,17 @@
   }
   const relToPar = diff => (diff === 0 ? "even" : `${diff > 0 ? "+" : "−"}${Math.abs(diff)}`);
 
+  // Wordle feedback for two equal-length strings: letters, or a picture's
+  // colour cells (one character per cell).
   function feedback(guess, answer) {
-    const result = Array(5).fill("absent");
+    const n = guess.length;
+    const result = Array(n).fill("absent");
     const left = {};
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < n; i++) {
       if (guess[i] === answer[i]) result[i] = "correct";
       else left[answer[i]] = (left[answer[i]] || 0) + 1;
     }
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < n; i++) {
       if (result[i] === "correct") continue;
       if (left[guess[i]] > 0) { result[i] = "present"; left[guess[i]]--; }
     }
@@ -266,37 +345,37 @@
   // A handful of anonymous moments (no personal data), sent to GoatCounter when
   // its script is on the page (see unstruck/index.html); otherwise nothing.
   function track(name, title) {
-    try { window.goatcounter?.count?.({ path: `unstruck-${name}`, title: title || name, event: true }); } catch (e) { /* never break the game */ }
+    try { window.goatcounter?.count?.({ path: `unstruck-${game === "weekly" ? "weekly-" : ""}${name}`, title: title || name, event: true }); } catch (e) { /* never break the game */ }
   }
 
-  function load() {
-    const date = today();
+  function load(count = PUZZLE_COUNT) {
+    const date = G().period();
     try {
-      const saved = JSON.parse(localStorage.getItem(STORE_KEY));
-      if (saved && saved.date === date) return saved;
+      const saved = JSON.parse(localStorage.getItem(G().storeKey));
+      if (saved && saved.date === date && saved.rounds.length === count) return saved;
     } catch (e) { /* fall through */ }
-    const rounds = Array.from({ length: PUZZLE_COUNT }, () => ({ guesses: [], struck: [], solved: false }));
+    const rounds = Array.from({ length: count }, () => ({ guesses: [], struck: [], solved: false }));
     return { date, rounds };
   }
 
   function save() {
     if (playMode === "practice") return;
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* private mode */ }
+    try { localStorage.setItem(G().storeKey, JSON.stringify(state)); } catch (e) { /* private mode */ }
   }
 
   // ---- Streaks and stats -------------------------------------------------
   // HISTORY_KEY holds { "YYYY-MM-DD": { score, time, grids: [n, n, n] } } for
   // every finished day on this device.
   function loadHistory() {
-    try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || {}; } catch (e) { return {}; }
+    try { return JSON.parse(localStorage.getItem(G().historyKey)) || {}; } catch (e) { return {}; }
   }
 
   function recordDay() {
     const history = loadHistory();
     if (history[state.date]) return;
     history[state.date] = { score: totalGuesses(), time: Math.round(elapsed()), grids: state.rounds.map(r => r.guesses.length) };
-    track("finished", golfTerm(totalGuesses() - DAY_PAR));
-    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch (e) { /* private mode */ }
+    track("finished", golfTerm(totalGuesses() - G().par));
+    try { localStorage.setItem(G().historyKey, JSON.stringify(history)); } catch (e) { /* private mode */ }
   }
 
   function computeStats() {
@@ -306,12 +385,14 @@
     // Current streak: days in a row up to today (or up to yesterday, if
     // today isn't finished yet, so a streak doesn't look broken all morning).
     let current = 0;
-    let day = history[today()] ? today() : addDays(today(), -1);
-    while (history[day]) { current++; day = addDays(day, -1); }
+    const { step } = G();
+    const now = G().period();
+    let day = history[now] ? now : addDays(now, -step);
+    while (history[day]) { current++; day = addDays(day, -step); }
     let best = 0;
     let run = 0;
     dates.forEach((d, i) => {
-      run = i && dayIndex(d) - dayIndex(dates[i - 1]) === 1 ? run + 1 : 1;
+      run = i && dayIndex(d) - dayIndex(dates[i - 1]) === step ? run + 1 : 1;
       best = Math.max(best, run);
     });
     return {
@@ -340,6 +421,9 @@
     return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
   }
 
+  // Days too, once it's more than a day away (the Weekly).
+  const formatCountdown = ms => (ms >= 86400000 ? `${Math.floor(ms / 86400000)}d ${formatTime(ms % 86400000)}` : formatTime(ms));
+
   function showClock() {
     const clock = $("dpClock");
     if (!clock) return;
@@ -367,9 +451,11 @@
   function setTitle(grid) {
     const title = $("dpTitle");
     if (!title) return;
-    const number = state ? ` <span class="dp-title-grid">#${puzzleNumber(state.date)}</span>` : "";
+    const number = state ? ` <span class="dp-title-grid">#${G().number(state.date)}</span>` : "";
+    const kind = game === "weekly" && grid ? KIND_INFO[puzzles[grid - 1].kind].label : "Grid";
     if (playMode === "practice") title.innerHTML = `Unstruck <span class="dp-title-grid">Practice</span>`;
-    else title.innerHTML = grid ? `Unstruck <span class="dp-title-grid">Grid ${grid}/${PUZZLE_COUNT}</span>` : `Unstruck${number}`;
+    else title.innerHTML = grid ? `Unstruck <span class="dp-title-grid">${kind} ${grid}/${puzzles.length}</span>` : `Unstruck${number}`;
+    document.querySelectorAll("#dailyPickScreen .dp-tab").forEach(tab => tab.classList.toggle("is-on", tab.dataset.game === game));
   }
 
   let countdownTimer = null;
@@ -386,7 +472,7 @@
 
   function distributionChart(todayDiff) {
     const history = loadHistory();
-    const counts = BUCKETS.map(bucket => Object.values(history).filter(day => bucket.test(day.score - DAY_PAR)).length);
+    const counts = BUCKETS.map(bucket => Object.values(history).filter(day => bucket.test(day.score - G().par)).length);
     const most = Math.max(1, ...counts);
     const rows = BUCKETS.map((bucket, i) => {
       const mine = bucket.test(todayDiff);
@@ -414,19 +500,20 @@
     setTitle(0);
     const stats = computeStats();
     const stat = (value, label) => `<div class="dp-stat"><b>${value}</b><span>${label}</span></div>`;
-    const diff = totalGuesses() - DAY_PAR;
+    const diff = totalGuesses() - G().par;
+    const gridName = i => (game === "weekly" ? KIND_INFO[puzzles[i].kind].label : `Grid ${i + 1}`);
     // Today's guesses lead: the total, big, then each grid as its own card.
     const grids = state.rounds.map((r, i) => {
       const n = r.guesses.length;
-      return `<div class="dp-grid-score"><span class="dp-grid-name">Grid ${i + 1}</span>
+      return `<div class="dp-grid-score"><span class="dp-grid-name">${gridName(i)}</span>
         <b>${n}</b><span class="dp-grid-unit">${n === 1 ? "Hole in one!" : "guesses"}</span></div>`;
     }).join("");
     // The score and Share come first, so sharing never needs a scroll.
     root.innerHTML = `<div class="dp-summary">
       <div class="dp-score">
         <div class="dp-score-num">${totalGuesses()}</div>
-        <div class="dp-score-label">guesses today</div>
-        <div class="dp-score-verdict">${golfTerm(diff)} <span>(${relToPar(diff)}) · par ${DAY_PAR} · ${formatTime(elapsed())}</span></div>
+        <div class="dp-score-label">${G().scoreLabel}</div>
+        <div class="dp-score-verdict">${golfTerm(diff)} <span>(${relToPar(diff)}) · par ${G().par} · ${formatTime(elapsed())}</span></div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
       <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
@@ -439,8 +526,8 @@
         ${stat(stats.bestScore || "–", "Best score")}
       </div>
       ${distributionChart(diff)}
-      <div class="dp-countdown">Next Unstruck in <b id="dpCountdown">${formatTime(msUntilNextDay())}</b></div>
-      <button type="button" class="dp-link" data-practice="start">Play the practice grid</button>
+      <div class="dp-countdown">${G().nextLabel} <b id="dpCountdown">${formatCountdown(G().next())}</b></div>
+      ${game === "daily" ? `<button type="button" class="dp-link" data-practice="start">Play the practice grid</button>` : `<button type="button" class="dp-link" data-game="daily">Play today's Daily →</button>`}
       <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div></div>`;
     clearInterval(countdownTimer);
     countdownTimer = setInterval(tickCountdown, 1000);
@@ -453,12 +540,12 @@
       clearInterval(countdownTimer);
       return;
     }
-    if (playMode === "daily" && state.date !== today()) {
+    if (playMode === "daily" && state.date !== G().period()) {
       clearInterval(countdownTimer);
       open();
       return;
     }
-    label.textContent = formatTime(msUntilNextDay());
+    label.textContent = formatCountdown(G().next());
   }
 
   function render() {
@@ -468,54 +555,72 @@
     if (allSolved() && !advanceTimer) return renderSummary(root);
     clearInterval(countdownTimer);
     setTitle(current + 1);
-    const { answer: secret, words, mode } = puzzles[current];
+    const puzzle = puzzles[current];
+    const { answer: secret, words, mode, kind } = puzzle;
+    const pics = !!kind;
+    const info = pics ? catalog[kind] : null;
     const r = round();
     const lastGuess = r.guesses[r.guesses.length - 1];
-    const ring = words.map((word, i) => {
-      const struck = r.struck.includes(word);
-      const guessed = r.guesses.includes(word);
-      return { word, struck, guessed };
-    });
     const done = r.solved;
-    // What a guess reveals under this grid's rule, letter by letter.
-    const shownResult = guess => feedback(guess, secret).map(f => (mode === "split" && guess !== secret && f !== "absent" ? "in" : f));
+    // What's compared: a word's letters, or a picture's colour cells.
+    const code = id => (pics ? itemOf(kind, id).cells : id);
+    const name = id => labelOf(puzzle, id);
+    // What a guess reveals under this grid's rule, letter (or cell) by letter.
+    const shownResult = guess => feedback(code(guess), code(secret)).map(f => (mode === "split" && guess !== secret && f !== "absent" ? "in" : f));
     const counts = guess => {
-      const result = feedback(guess, secret);
+      const result = feedback(code(guess), code(secret));
       return [result.filter(f => f === "correct").length, result.filter(f => f === "present").length];
     };
     // A guessed word carries its own feedback in miniature, so all the
     // evidence stays on the board.
     const mini = guess => {
+      if (pics) return `<span class="dp-mini dp-mini-grid" style="--cols:${info.cols}">${shownResult(guess).map(f => `<i class="is-${f}"></i>`).join("")}</span>`;
       if (mode === "counts") {
         const [g, y] = counts(guess);
         return `<span class="dp-mini"><i class="is-correct is-count">${g}</i><i class="is-present is-count">${y}</i></span>`;
       }
       return `<span class="dp-mini">${shownResult(guess).map(f => `<i class="is-${f}"></i>`).join("")}</span>`;
     };
+    const face = id => (pics
+      ? `<img class="dp-pic" src="${MEDIA_URL}${itemOf(kind, id).img}" alt="" draggable="false"><span class="dp-pic-name">${name(id)}</span>`
+      : id);
 
-    const buttons = ring.map(({ word, struck, guessed }) => {
+    const buttons = words.map(word => {
+      const struck = r.struck.includes(word);
+      const guessed = r.guesses.includes(word);
       // Words already guessed stay struck for good, so they can't be tapped.
       const disabled = done || guessed;
       const won = done && word === secret;
       const snap = toggled && toggled.word === word ? ` just-${toggled.kind}` : "";
       const fresh = revealing && word === lastGuess ? " just-guessed" : "";
       const classes = `dp-word${won ? " is-solved" : struck ? " is-struck" : ""}${guessed && !won ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}${snap}${fresh}`;
-      return `<button type="button" class="${classes}" data-word="${word}"${disabled ? " disabled" : ""}>${word}${guessed && !won ? mini(word) : ""}</button>`;
+      return `<button type="button" class="${classes}" data-word="${word}"${disabled ? " disabled" : ""} aria-label="${name(word)}">${face(word)}${guessed && !won ? mini(word) : ""}</button>`;
     }).join("");
 
     const SPLIT_TILE = SPLIT_FILL;
     const swatch = (color, label, round) =>
       `<span><i class="${round ? "is-round" : ""}" style="background:${color}"></i>${label}</span>`;
-    const key = {
-      full: swatch("var(--dp-hit)", "Right spot") + swatch("var(--dp-near)", "Wrong spot") + swatch("#555b63", "Not in word"),
-      split: swatch(SPLIT_TILE, "In the word (any spot)") + swatch("#555b63", "Not in word"),
-      counts: swatch("var(--dp-hit)", "How many in the right spot", true) + swatch("var(--dp-near)", "How many in the wrong spot", true)
-    }[mode];
+    const key = pics
+      ? swatch("var(--dp-hit)", "Same colour, same spot") + swatch("var(--dp-near)", "Colour is elsewhere") + swatch("#555b63", "Colour not in it")
+      : {
+        full: swatch("var(--dp-hit)", "Right spot") + swatch("var(--dp-near)", "Wrong spot") + swatch("#555b63", "Not in word"),
+        split: swatch(SPLIT_TILE, "In the word (any spot)") + swatch("#555b63", "Not in word"),
+        counts: swatch("var(--dp-hit)", "How many in the right spot", true) + swatch("var(--dp-near)", "How many in the wrong spot", true)
+      }[mode];
 
     // The latest guess, large. Right after a guess its tiles flip in one by
     // one (--i staggers them), and hop if it was the secret.
     const tiles = guess => {
       const rowClass = `dp-row${revealing ? " is-revealing" : ""}${revealing && guess === secret ? " is-win" : ""}`;
+      if (pics) {
+        // The picture beside its colour feedback, cell by cell. Cells flip
+        // in diagonally, so the reveal stays quick on a bigger grid.
+        const cells = shownResult(guess).map((f, i) => `<span class="dp-cell is-${f}" style="--i:${(i % info.cols) + Math.floor(i / info.cols)}"></span>`).join("");
+        return `<div class="${rowClass} dp-pic-row">
+          <span class="dp-pic-guess"><img src="${MEDIA_URL}${itemOf(kind, guess).img}" alt="" style="aspect-ratio:${info.ratio}"><small>${name(guess)}</small></span>
+          <span class="dp-arrow">→</span>
+          <span class="dp-fb-grid" style="--cols:${info.cols};aspect-ratio:${info.ratio}">${cells}</span></div>`;
+      }
       if (mode === "counts" && guess !== secret) {
         const [g, y] = counts(guess);
         return `<div class="${rowClass}"><span class="dp-plain-word" style="--i:0">${guess}</span>
@@ -528,20 +633,23 @@
 
     // The panel always holds the same three rows (tiles, hint, action) so
     // the screen doesn't shift as the game moves along.
-    const blank = `<div class="dp-row">${"<span class=\"dp-tile is-empty\"></span>".repeat(5)}</div>`;
+    const blank = pics
+      ? `<div class="dp-row dp-pic-row"><span class="dp-fb-grid is-blank" style="--cols:${info.cols};aspect-ratio:${info.ratio}">${"<span class=\"dp-cell is-empty\"></span>".repeat(info.cols * info.rows)}</span></div>`
+      : `<div class="dp-row">${"<span class=\"dp-tile is-empty\"></span>".repeat(5)}</div>`;
+    const noun = pics ? KIND_INFO[kind].noun : "word";
     let hint;
     let action = "";
     if (done) {
       hint = `<strong class="dp-result${revealing ? " is-new" : ""}">Solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next grid…"}`;
     } else {
-      hint = r.guesses.length ? "Tap a word: strike out → pick → clear" : "Tap a word to pick your first guess";
-      action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${selected.toUpperCase()}` : "Guess"}</button>`;
+      hint = r.guesses.length ? `Tap a ${noun}: strike out → pick → clear` : `Tap a ${noun} to pick your first guess`;
+      action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${pics ? name(selected) : selected.toUpperCase()}` : "Guess"}</button>`;
     }
     // Keeps the panel the same height once the button is gone.
     if (!action) action = `<button type="button" class="dp-next" tabindex="-1" aria-hidden="true" style="visibility:hidden">&nbsp;</button>`;
 
     const exit = playMode === "practice" ? `<button type="button" class="dp-link" data-practice="end">← Back to today's Unstruck</button>` : "";
-    root.innerHTML = `<div class="dp-board">${buttons}</div>
+    root.innerHTML = `<div class="dp-board${pics ? ` is-pics is-${kind}` : ""}" style="${pics ? `--ratio:${info.ratio}` : ""}">${buttons}</div>
       <div class="dp-center">${lastGuess ? tiles(lastGuess) : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>${exit}`;
   }
 
@@ -596,17 +704,18 @@
   // One row per puzzle: a white square per wrong guess, then the green one.
   function shareText() {
     const rows = state.rounds.map((r, i) =>
-      `Grid ${i + 1}: ${"⬜".repeat(r.guesses.length - 1)}${settings.colorblind ? "🟧" : "🟩"} ${r.guesses.length}`);
-    const diff = totalGuesses() - DAY_PAR;
+      `${game === "weekly" ? KIND_INFO[puzzles[i].kind].label : `Grid ${i + 1}`}: ${"⬜".repeat(r.guesses.length - 1)}${settings.colorblind ? "🟧" : "🟩"} ${r.guesses.length}`);
+    const diff = totalGuesses() - G().par;
     const verdict = `${golfTerm(diff)} (${totalGuesses()}; ${diff === 0 ? "even" : `${diff > 0 ? "+" : "-"}${Math.abs(diff)}`} par)`;
     const streak = computeStats().current;
+    const unit = G().unit;
     const link = location.origin + location.pathname.replace(/index\.html$/, "");
     return [
-      `Unstruck #${puzzleNumber(state.date)}`,
+      `${G().title} #${G().number(state.date)}`,
       ...rows,
       `Total: ${verdict}`,
       `Time: ${formatTime(elapsed())}`,
-      ...(streak > 1 ? [`🔥 ${streak}-day streak`] : []),
+      ...(streak > 1 ? [`🔥 ${streak}-${unit} streak`] : []),
       link
     ].join("\n");
   }
@@ -665,7 +774,24 @@
   };
   const ruleOpen = () => !!$("dpRule") && !$("dpRule").hidden;
 
+  // The first time anyone opens the Weekly: how picture feedback works.
+  const WEEKLY_INTRO_KEY = "umt.unstruck.weeklyIntroSeen";
+  function maybeAnnounceWeekly() {
+    try { if (localStorage.getItem(WEEKLY_INTRO_KEY)) return; localStorage.setItem(WEEKLY_INTRO_KEY, "1"); } catch (e) { return; }
+    stopClock();
+    const demo = ["absent", "correct", "correct", "present", "absent", "correct"].map(f => `<span class="dp-cell is-${f}"></span>`).join("");
+    $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">The Weekly</div>
+      <p>Three grids of pictures, new every Monday: <b>flags</b>, <b>paintings</b> and <b>animals</b>.</p>
+      <p>Each picture is split into a grid of colours. Guess one, and each cell of the feedback shows how that colour compares with the secret picture:</p>
+      <div class="dp-demo"><span class="dp-fb-grid is-demo" style="--cols:3">${demo}</span></div>
+      <p><b data-c="hit">${colorName("hit")}</b>: same colour in the same spot. <b data-c="near">${colorName("near")}</b>: that colour is somewhere else in it. <b>Grey</b>: the secret has none of that colour.</p>
+      <button id="dpRuleClose" class="dp-next" type="button">Got it</button>`;
+    $("dpRule").hidden = false;
+    $("dpRuleClose").focus({ preventScroll: true });
+  }
+
   function maybeAnnounceRule() {
+    if (game === "weekly") return maybeAnnounceWeekly();
     const r = round();
     const rule = RULES[puzzles[current].mode]?.();
     state.announced = state.announced || [];
@@ -686,36 +812,67 @@
     startClock();
   }
 
-  async function open() {
+  // Loads (or reloads, when the day or week has turned over) a game's
+  // puzzles and saved progress into its slot.
+  async function prepare(which) {
+    const slot = slots[which];
+    const period = GAMES[which].period();
+    if (slot.puzzles && slot.state.date === period) return;
+    const previous = game;
+    game = which; // load() reads the game's own keys
+    try {
+      if (which === "daily") {
+        if (!wordList) {
+          const text = await (await fetch(WORDS_URL)).text();
+          wordList = [...new Set(text.split(/\s+/).map(w => w.toLowerCase()).filter(w => /^[a-z]{5}$/.test(w)))].sort();
+        }
+        slot.state = load();
+        slot.puzzles = buildDay(wordList, period);
+      } else {
+        if (!catalog) {
+          catalog = await (await fetch(`${MEDIA_URL}weekly.json`)).json();
+          for (const kind of WEEKLY_KINDS) catalog[kind].byId = Object.fromEntries(catalog[kind].items.map(item => [item.id, item]));
+        }
+        slot.puzzles = buildWeek(catalog, period);
+        slot.state = load(slot.puzzles.length);
+      }
+    } finally {
+      game = previous;
+    }
+  }
+
+  async function open(which = game) {
     if (playMode === "practice") leavePractice();
     if (window.showScreen) window.showScreen("dailyPickScreen");
     else $("dailyPickScreen").classList.add("active");
     document.body.classList.add("menu-mode");
     const root = $("dailyPickRoot");
-    if (!puzzles || state.date !== today()) {
-      root.textContent = "Loading today's puzzles…";
-      try {
-        const text = await (await fetch(WORDS_URL)).text();
-        wordList = [...new Set(text.split(/\s+/).map(w => w.toLowerCase()).filter(w => /^[a-z]{5}$/.test(w)))].sort();
-        state = load();
-        puzzles = buildDay(wordList, state.date);
-      } catch (e) {
-        root.textContent = "Couldn't load today's puzzles. Please try again.";
-        return;
-      }
-    }
+    stopClock();
     clearTimeout(advanceTimer);
     advanceTimer = null;
+    if (state) slots[game] = { puzzles, state };
+    if (!slots[which].puzzles || slots[which].state.date !== GAMES[which].period()) {
+      root.textContent = which === "weekly" ? "Loading this week's puzzles…" : "Loading today's puzzles…";
+    }
+    try {
+      await prepare(which);
+    } catch (e) {
+      root.textContent = "Couldn't load the puzzles. Please try again.";
+      return;
+    }
+    game = which;
+    ({ puzzles, state } = slots[which]);
     current = firstUnsolved();
     selected = "";
     render();
-    if (!introSeen()) openIntro();
+    if (game === "daily" && !introSeen()) openIntro();
     else startClock();
     maybeAnnounceRule();
   }
 
   // ---- Practice grid ----------------------------------------------------------
-  function startPractice() {
+  async function startPractice() {
+    if (game !== "daily" || !wordList) await open("daily");
     if (!wordList) return;
     closeIntro();
     closeHelp();
@@ -914,7 +1071,7 @@
     if (!state) return;
     if (document.hidden) stopClock();
     // Back after midnight Eastern with Unstruck still open: load the new day.
-    else if (playMode === "daily" && state.date !== today() && $("dailyPickScreen")?.classList.contains("active")) open();
+    else if (playMode === "daily" && state.date !== G().period() && $("dailyPickScreen")?.classList.contains("active")) open();
     else startClock();
   });
   window.addEventListener("pagehide", () => { if (state) stopClock(); });
@@ -929,6 +1086,10 @@
           <button id="dpHelpBtn" class="dp-help-btn" type="button" aria-label="How to play">?</button>
           <button id="dpBackBtn" class="dp-close" type="button" aria-label="Close"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
         </div>
+      </div>
+      <div class="dp-tabs" role="tablist">
+        <button type="button" class="dp-tab is-on" data-game="daily" role="tab">Daily</button>
+        <button type="button" class="dp-tab" data-game="weekly" role="tab">Weekly</button>
       </div>
       <div id="dailyPickRoot"></div>
       <div id="dpIntro" class="dp-intro" role="dialog" aria-modal="true" aria-label="Welcome to Unstruck" hidden>
@@ -955,6 +1116,7 @@
             <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> half <span data-c="hit">green</span>, half <span data-c="near">yellow</span> &ndash; so you don't find out whether it's in the right position. Letters not in the word are grey.</li>
           <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
+        <p><b>The Weekly</b> (new every Monday) works the same way with pictures: flags, paintings and animals. Each picture is split into a grid of colours. A cell is <span data-c="hit">green</span> if the secret has the same colour in the same spot, <span data-c="near">yellow</span> if that colour is somewhere else in it, and grey if the secret doesn't have that colour at all.</p>
         <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
@@ -973,6 +1135,11 @@
     screen.addEventListener("change", onSettingChange);
     // Practice buttons live in the pop-up, the rules page and the scorecards.
     screen.addEventListener("click", event => {
+      const tab = event.target.closest?.("[data-game]");
+      if (tab) {
+        if (tab.dataset.game !== game || playMode === "practice") open(tab.dataset.game);
+        return;
+      }
       const button = event.target.closest?.("[data-practice]");
       if (!button) return;
       if (button.dataset.practice === "start") startPractice();

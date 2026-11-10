@@ -41,13 +41,16 @@ for (const [from, to] of files) {
   version[to] = crypto.createHash("sha1").update(data).digest("hex").slice(0, 8);
 }
 
+// The Weekly's pictures and their colour data, as they are.
+fs.cpSync(path.join(pub, "unstruck-media"), path.join(out, "media"), { recursive: true });
+
 // The page: same as public/unstruck/index.html, with every path local.
 let html = fs.readFileSync(path.join(pub, "unstruck/index.html"), "utf8");
 const swaps = [
   [/href="\.\.\/assets\/unstruck\/unstruck-logo\.svg"/, `href="logo.svg?v=${version["logo.svg"]}"`],
   [/href="unstruck\.css\?v=[^"]*"/, `href="unstruck.css?v=${version["unstruck.css"]}"`],
   [/href="\.\.\/css\/daily-pick\.css\?v=[^"]*"/, `href="game.css?v=${version["game.css"]}"`],
-  [/src="\.\.\/client\/daily-pick\.js\?v=[^"]*" data-words="[^"]*"/, `src="game.js?v=${version["game.js"]}" data-words="words.txt?v=${version["words.txt"]}"`],
+  [/src="\.\.\/client\/daily-pick\.js\?v=[^"]*" data-words="[^"]*" data-media="[^"]*"/, `src="game.js?v=${version["game.js"]}" data-words="words.txt?v=${version["words.txt"]}" data-media="media/"`],
   [/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${site}/og-image.png">\n  <meta property="og:url" content="${site}/">`],
   [/<meta name="twitter:image" content="[^"]*">/, `<meta name="twitter:image" content="${site}/og-image.png">`]
 ];
