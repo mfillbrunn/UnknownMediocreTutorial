@@ -19,7 +19,7 @@
 // scripts/build-unstruck-media.js).
 //
 // Two games share all of this: the Daily (three word grids, new every day)
-// and the Weekly (three picture grids: flags, paintings, animals, new every
+// and the Weekly (three picture grids: flags, animals, food, new every
 // Monday). In the Weekly each picture is reduced to a small grid of colors,
 // and those color cells play the part of letters: same color in the same
 // cell is green, a color found elsewhere in the secret picture is yellow.
@@ -41,7 +41,7 @@
   const MEDIA_URL = document.currentScript?.dataset.media || "unstruck-media/";
   // Weekly puzzle #1 is the week starting Monday 9 November 2026.
   const WEEKLY_LAUNCH = "2026-11-09";
-  const WEEKLY_KINDS = ["flags", "paintings", "animals"];
+  const WEEKLY_KINDS = ["flags", "animals", "food"];
 
   let puzzles = null; // [{ answer, words }]
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
@@ -132,7 +132,7 @@
       next: () => msUntilNextDay(), nextLabel: "Next Unstruck in"
     },
     weekly: {
-      storeKey: "umt.unstruck.weekly.v1", historyKey: "umt.unstruck.weeklyHistory", par: DAY_PAR, step: 7,
+      storeKey: "umt.unstruck.weekly.v2", historyKey: "umt.unstruck.weeklyHistory", par: DAY_PAR, step: 7,
       period: () => weekStart(today()), number: weekNumber, title: "Unstruck Weekly", unit: "week", scoreLabel: "guesses this week",
       next: () => msUntilNextWeek(), nextLabel: "Next Weekly in"
     }
@@ -288,8 +288,8 @@
   // grids all differ (some flags look the same once reduced), and a secret.
   const KIND_INFO = {
     flags: { label: "Flags", noun: "flag" },
-    paintings: { label: "Paintings", noun: "painting" },
-    animals: { label: "Animals", noun: "animal" }
+    animals: { label: "Animals", noun: "animal" },
+    food: { label: "Food", noun: "food" }
   };
 
   function buildWeek(cat, date) {
@@ -341,9 +341,10 @@
   // Feedback for a picture's color cells (one character per cell): green
   // where the secret has the same color in the same cell; yellow wherever the
   // secret has that color anywhere else, however many cells that is; gray
-  // where the secret has none of that color.
+  // where the secret has none of that color. An emoji's empty background
+  // (".") isn't a color: those cells stay blank.
   function colorFeedback(guess, answer) {
-    return [...guess].map((color, i) => (color === answer[i] ? "correct" : answer.includes(color) ? "present" : "absent"));
+    return [...guess].map((color, i) => (color === "." ? "none" : color === answer[i] ? "correct" : answer.includes(color) ? "present" : "absent"));
   }
 
   // ---- Analytics -----------------------------------------------------------------
@@ -650,7 +651,7 @@
     } else {
       const aNoun = /^[aeiou]/.test(noun) ? `an ${noun}` : `a ${noun}`;
       // The tutorial covers tapping, so after the first guess there's no hint.
-      hint = r.guesses.length ? "" : `Tap ${aNoun} to pick your first guess`;
+      hint = r.guesses.length ? "" : `Tap ${noun === "food" ? "one" : aNoun} to pick your first guess`;
       action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${pics ? name(selected) : selected.toUpperCase()}` : "Guess"}</button>`;
     }
     // Keeps the panel the same height once the button is gone.
@@ -789,7 +790,7 @@
     stopClock();
     const demo = ["absent", "correct", "correct", "present", "absent", "correct"].map(f => `<span class="dp-cell is-${f}"></span>`).join("");
     $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">The Weekly</div>
-      <p>Three grids of pictures, new every Monday: <b>flags</b>, <b>paintings</b> and <b>animals</b>.</p>
+      <p>Three grids of pictures, new every Monday: <b>flags</b>, <b>animals</b> and <b>food</b>.</p>
       <p>Each picture is split into a grid of colors. Guess one, and each cell of the feedback shows how that color compares with the secret picture:</p>
       <div class="dp-demo"><span class="dp-fb-grid is-demo" style="--cols:3">${demo}</span></div>
       <p><b data-c="hit">${colorName("hit")}</b>: same color in the same spot. <b data-c="near">${colorName("near")}</b>: that color is somewhere else in it. <b>Gray</b>: the secret has none of that color.</p>
@@ -1124,13 +1125,14 @@
             <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> half <span data-c="hit">green</span>, half <span data-c="near">yellow</span> &ndash; so you don't find out whether it's in the right position. Letters not in the word are gray.</li>
           <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
-        <p><b>The Weekly</b> (new every Monday) works the same way with pictures: flags, paintings and animals. Each picture is split into a grid of colors. A cell is <span data-c="hit">green</span> if the secret has the same color in the same spot, <span data-c="near">yellow</span> if that color is somewhere else in it, and gray if the secret doesn't have that color at all.</p>
+        <p><b>The Weekly</b> (new every Monday) works the same way with pictures: flags, animal emoji and food emoji. Each picture is split into a grid of colors. A cell is <span data-c="hit">green</span> if the secret has the same color in the same spot, <span data-c="near">yellow</span> if that color is somewhere else in it, and gray if the secret doesn't have that color at all.</p>
         <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
         <button id="dpTutorialBtn" class="dp-link" type="button">Replay the tutorial</button>
         <button class="dp-link" type="button" data-practice="start">Play the practice grid</button>
         <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div>
+        <div class="dp-copyright">Emoji graphics: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a>, CC-BY 4.0. Flags: <a href="https://github.com/lipis/flag-icons" target="_blank" rel="noopener">flag-icons</a>, MIT.</div>
       </div>
     </div>`;
 

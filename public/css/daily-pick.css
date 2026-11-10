@@ -522,3 +522,10 @@
 .dp-row.is-revealing .dp-cell { animation: dp-flip .32s ease-out both; animation-delay: calc(var(--i) * 45ms); }
 .dp-row.is-win .dp-fb-grid { animation: dp-hop .5s ease-in-out .8s both; }
 @media (prefers-reduced-motion: reduce) { .dp-row .dp-cell, .dp-row .dp-fb-grid { animation: none !important; } }
+
+/* Emoji: the whole drawing on the tile, and their empty background cells
+   left blank in the feedback. */
+.dp-board.is-animals .dp-pic, .dp-board.is-food .dp-pic { object-fit: contain; padding: 6px; box-sizing: border-box; }
+.dp-cell.is-none { background: transparent; }
+.dp-mini i.is-none { background: transparent; }
+.dp-copyright a { color: inherit; }

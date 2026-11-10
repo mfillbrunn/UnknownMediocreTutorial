@@ -4,7 +4,7 @@
 //
 //   node scripts/unstruck-media/flags.js <flag-icons package dir> public/unstruck-media/flags <out.json>
 //
-// Needs Playwright (to draw the SVGs). pictures.py then folds <out.json> into
+// Needs Playwright (to draw the SVGs). catalog.py then folds <out.json> into
 // public/unstruck-media/weekly.json.
 const { chromium } = require('playwright');
 const fs = require('fs');
