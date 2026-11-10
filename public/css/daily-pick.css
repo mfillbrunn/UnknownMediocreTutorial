@@ -1,6 +1,6 @@
 /* Unstruck (client/daily-pick.js) */
 
-/* Feedback colours. Colour-blind mode (.dp-cb) swaps green/yellow for
+/* Feedback colors. Color-blind mode (.dp-cb) swaps green/yellow for
    orange/blue, as Wordle's high-contrast mode does. */
 #dailyPickScreen { --dp-hit: #3f9d4f; --dp-near: #c9a227; --dp-hit-light: #8fe0a3; }
 #dailyPickScreen.dp-cb { --dp-hit: #f5793a; --dp-near: #3d8fd9; --dp-hit-light: #ffb48a; }
@@ -24,7 +24,7 @@
 }
 
 /* ---------- Taps ----------
-   No double-tap-zoom wait before a tap registers, no grey flash, and hover
+   No double-tap-zoom wait before a tap registers, no gray flash, and hover
    highlights only on devices with a real pointer (on phones they'd stick
    to the last tile tapped). */
 #dailyPickScreen button {
@@ -71,7 +71,7 @@
 }
 .dp-close:active { transform: scale(.92); }
 .dp-close svg { display: block; }
-/* The clock is hidden on the scorecard; keep its column so the title stays centred. */
+/* The clock is hidden on the scorecard; keep its column so the title stays centered. */
 .dp-clock[hidden] { display: block !important; visibility: hidden; }
 .dp-help-btn {
   width: 36px; height: 36px; padding: 0;
@@ -224,7 +224,7 @@
   background: linear-gradient(135deg, var(--dp-hit) 0 49%, rgba(0,0,0,.2) 49% 51%, var(--dp-near) 51% 100%);
   text-shadow: 0 1px 2px rgba(0,0,0,.45);
 }
-/* Grid 3 writes the guess out as plain text: grey tiles would read as
+/* Grid 3 writes the guess out as plain text: gray tiles would read as
    "none of these letters are in the word", when the counts say otherwise. */
 .dp-plain-word {
   margin-right: 8px;
@@ -513,7 +513,6 @@
   display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 2px;
   width: 140px; padding: 3px; border-radius: 6px; background: rgba(0,0,0,.35);
 }
-.dp-fb-grid.is-blank { width: 140px; }
 .dp-fb-grid.is-demo { width: 96px; aspect-ratio: 3 / 2; }
 .dp-cell { border-radius: 2px; min-height: 0; }
 .dp-cell.is-correct { background: var(--dp-hit); }

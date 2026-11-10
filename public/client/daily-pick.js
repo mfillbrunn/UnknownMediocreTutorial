@@ -20,9 +20,9 @@
 //
 // Two games share all of this: the Daily (three word grids, new every day)
 // and the Weekly (three picture grids: flags, paintings, animals, new every
-// Monday). In the Weekly each picture is reduced to a small grid of colours,
-// and those colour cells play the part of letters: same colour in the same
-// cell is green, a colour found elsewhere in the secret picture is yellow.
+// Monday). In the Weekly each picture is reduced to a small grid of colors,
+// and those color cells play the part of letters: same color in the same
+// cell is green, a color found elsewhere in the secret picture is yellow.
 
 (function () {
   const WORD_COUNT = 16;
@@ -80,8 +80,8 @@
   let settings = { colorblind: false };
   try { settings = { ...settings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) }; } catch (e) { /* defaults */ }
   const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* private mode */ } };
-  // Colour-blind mode swaps green/yellow for orange/blue (as Wordle's high
-  // contrast mode does); the words for the colours follow.
+  // Color-blind mode swaps green/yellow for orange/blue (as Wordle's high
+  // contrast mode does); the words for the colors follow.
   const colorName = which => (settings.colorblind ? { hit: "orange", near: "blue" } : { hit: "green", near: "yellow" })[which];
   const SPLIT_FILL = "linear-gradient(135deg, var(--dp-hit) 0 49%, rgba(0,0,0,.2) 49% 51%, var(--dp-near) 51% 100%)";
 
@@ -221,9 +221,9 @@
   }
 
   // Each grid sets how much the feedback gives away:
-  //   "full"   - Wordle tiles: green right spot, yellow wrong spot, grey not in it
+  //   "full"   - Wordle tiles: green right spot, yellow wrong spot, gray not in it
   //   "split"  - half green, half yellow if the letter is in the word at all
-  //              (right or wrong spot, not saying which), grey if not
+  //              (right or wrong spot, not saying which), gray if not
   //   "counts" - only how many greens and how many yellows, no positions
   const LEVELS = [
     { mode: "full" },
@@ -284,7 +284,7 @@
     });
   }
 
-  // The Weekly: one grid per kind of picture. Sixteen pictures whose colour
+  // The Weekly: one grid per kind of picture. Sixteen pictures whose color
   // grids all differ (some flags look the same once reduced), and a secret.
   const KIND_INFO = {
     flags: { label: "Flags", noun: "flag" },
@@ -322,7 +322,7 @@
   const relToPar = diff => (diff === 0 ? "even" : `${diff > 0 ? "+" : "−"}${Math.abs(diff)}`);
 
   // Wordle feedback for two equal-length strings: letters, or a picture's
-  // colour cells (one character per cell).
+  // color cells (one character per cell).
   function feedback(guess, answer) {
     const n = guess.length;
     const result = Array(n).fill("absent");
@@ -559,7 +559,7 @@
     const r = round();
     const lastGuess = r.guesses[r.guesses.length - 1];
     const done = r.solved;
-    // What's compared: a word's letters, or a picture's colour cells.
+    // What's compared: a word's letters, or a picture's color cells.
     const code = id => (pics ? itemOf(kind, id).cells : id);
     const name = id => labelOf(puzzle, id);
     // What a guess reveals under this grid's rule, letter (or cell) by letter.
@@ -598,7 +598,7 @@
     const swatch = (color, label, round) =>
       `<span><i class="${round ? "is-round" : ""}" style="background:${color}"></i>${label}</span>`;
     const key = pics
-      ? swatch("var(--dp-hit)", "Same colour, same spot") + swatch("var(--dp-near)", "Colour is elsewhere") + swatch("#555b63", "Colour not in it")
+      ? swatch("var(--dp-hit)", "Same color, same spot") + swatch("var(--dp-near)", "Color is elsewhere") + swatch("#555b63", "Color not in it")
       : {
         full: swatch("var(--dp-hit)", "Right spot") + swatch("var(--dp-near)", "Wrong spot") + swatch("#555b63", "Not in word"),
         split: swatch(SPLIT_TILE, "In the word (any spot)") + swatch("#555b63", "Not in word"),
@@ -610,7 +610,7 @@
     const tiles = guess => {
       const rowClass = `dp-row${revealing ? " is-revealing" : ""}${revealing && guess === secret ? " is-win" : ""}`;
       if (pics) {
-        // The picture beside its colour feedback, cell by cell. Cells flip
+        // The picture beside its color feedback, cell by cell. Cells flip
         // in diagonally, so the reveal stays quick on a bigger grid.
         const cells = shownResult(guess).map((f, i) => `<span class="dp-cell is-${f}" style="--i:${(i % info.cols) + Math.floor(i / info.cols)}"></span>`).join("");
         return `<div class="${rowClass} dp-pic-row">
@@ -628,11 +628,11 @@
         `<span class="dp-tile is-${f}" style="--i:${i}">${guess[i]}</span>`).join("")}</div>`;
     };
 
-    // The panel always holds the same three rows (tiles, hint, action) so
-    // the screen doesn't shift as the game moves along.
-    const blank = pics
-      ? `<div class="dp-row dp-pic-row"><span class="dp-fb-grid is-blank" style="--cols:${info.cols};aspect-ratio:${info.ratio}">${"<span class=\"dp-cell is-empty\"></span>".repeat(info.cols * info.rows)}</span></div>`
-      : `<div class="dp-row">${"<span class=\"dp-tile is-empty\"></span>".repeat(5)}</div>`;
+    // The panel holds the same rows (tiles, hint, action) so the screen
+    // doesn't shift as the game moves along.
+    // Pictures show nothing until the first guess (an empty color grid
+    // just looks like a broken image).
+    const blank = pics ? "" : `<div class="dp-row">${"<span class=\"dp-tile is-empty\"></span>".repeat(5)}</div>`;
     const noun = pics ? KIND_INFO[kind].noun : "word";
     let hint;
     let action = "";
@@ -767,7 +767,7 @@
   // Grids 2 and 3 change what the feedback shows, so as each starts a short
   // card says how, once per day. The clock waits while it's up.
   const RULES = {
-    split: () => `Letters in the word show <span class="dp-help-chip" style="background:${SPLIT_FILL}"></span> half ${colorName("hit")}, half ${colorName("near")} &ndash; you won't know if they're in the right spot. Grey means not in the word.`,
+    split: () => `Letters in the word show <span class="dp-help-chip" style="background:${SPLIT_FILL}"></span> half ${colorName("hit")}, half ${colorName("near")} &ndash; you won't know if they're in the right spot. Gray means not in the word.`,
     counts: () => `You only see <i class="dp-rule-count is-correct">2</i> how many letters are in the right spot and <i class="dp-rule-count is-present">1</i> how many are in the wrong spot &ndash; not which ones.`
   };
   const ruleOpen = () => !!$("dpRule") && !$("dpRule").hidden;
@@ -780,9 +780,9 @@
     const demo = ["absent", "correct", "correct", "present", "absent", "correct"].map(f => `<span class="dp-cell is-${f}"></span>`).join("");
     $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">The Weekly</div>
       <p>Three grids of pictures, new every Monday: <b>flags</b>, <b>paintings</b> and <b>animals</b>.</p>
-      <p>Each picture is split into a grid of colours. Guess one, and each cell of the feedback shows how that colour compares with the secret picture:</p>
+      <p>Each picture is split into a grid of colors. Guess one, and each cell of the feedback shows how that color compares with the secret picture:</p>
       <div class="dp-demo"><span class="dp-fb-grid is-demo" style="--cols:3">${demo}</span></div>
-      <p><b data-c="hit">${colorName("hit")}</b>: same colour in the same spot. <b data-c="near">${colorName("near")}</b>: that colour is somewhere else in it. <b>Grey</b>: the secret has none of that colour.</p>
+      <p><b data-c="hit">${colorName("hit")}</b>: same color in the same spot. <b data-c="near">${colorName("near")}</b>: that color is somewhere else in it. <b>Gray</b>: the secret has none of that color.</p>
       <button id="dpRuleClose" class="dp-next" type="button">Got it</button>`;
     $("dpRule").hidden = false;
     $("dpRuleClose").focus({ preventScroll: true });
@@ -960,7 +960,7 @@
       title: "Reading the feedback",
       body: `<p>Feedback compares your guess with the secret word:</p>
         <div class="dp-demo">${demoTiles("CRANE", ["absent", "correct", "present", "absent", "absent"])}</div>
-        <p><b>${colorName("hit")}</b>: right letter, right spot. <b>${colorName("near")}</b>: in the word, wrong spot. <b>Grey</b>: not in the word.</p>
+        <p><b>${colorName("hit")}</b>: right letter, right spot. <b>${colorName("near")}</b>: in the word, wrong spot. <b>Gray</b>: not in the word.</p>
         <p>Use it to work out which words <b>can't</b> be the secret.</p>`
     }),
     () => ({
@@ -982,7 +982,7 @@
       title: "Grid 2: less to go on",
       body: `<p>Letters in the word show <b>half ${colorName("hit")}, half ${colorName("near")}</b>, so you don't learn whether they're in the right spot.</p>
         <div class="dp-demo">${demoTiles("CRANE", ["absent", "in", "in", "absent", "absent"])}</div>
-        <p>Grey still means not in the word.</p>`
+        <p>Gray still means not in the word.</p>`
     }),
     () => ({
       title: "Grid 3: just counts",
@@ -1098,7 +1098,7 @@
       </div>
       <div id="dpHelp" class="dp-help" role="dialog" aria-modal="true" aria-labelledby="dpHelpTitle" hidden>
         <div class="dp-settings">
-          <label class="dp-switch"><input type="checkbox" id="dpSetCb"><span class="dp-switch-ui"></span><span>Colour-blind colours</span></label>
+          <label class="dp-switch"><input type="checkbox" id="dpSetCb"><span class="dp-switch-ui"></span><span>Color-blind colors</span></label>
         </div>
         <h3 id="dpHelpTitle">How to play</h3>
         <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
@@ -1109,12 +1109,12 @@
           <li>In the first grid, each letter is
             <span class="dp-help-chip" style="background:var(--dp-hit)"></span> <span data-c="hit">green</span> (correct letter and position),
             <span class="dp-help-chip" style="background:var(--dp-near)"></span> <span data-c="near">yellow</span> (letter is in the word but not in that position), or
-            <span class="dp-help-chip" style="background:#555b63"></span> grey (letter not in the word at all).</li>
+            <span class="dp-help-chip" style="background:#555b63"></span> gray (letter not in the word at all).</li>
           <li>In the second grid, a letter that's in the word is
-            <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> half <span data-c="hit">green</span>, half <span data-c="near">yellow</span> &ndash; so you don't find out whether it's in the right position. Letters not in the word are grey.</li>
+            <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> half <span data-c="hit">green</span>, half <span data-c="near">yellow</span> &ndash; so you don't find out whether it's in the right position. Letters not in the word are gray.</li>
           <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
-        <p><b>The Weekly</b> (new every Monday) works the same way with pictures: flags, paintings and animals. Each picture is split into a grid of colours. A cell is <span data-c="hit">green</span> if the secret has the same colour in the same spot, <span data-c="near">yellow</span> if that colour is somewhere else in it, and grey if the secret doesn't have that colour at all.</p>
+        <p><b>The Weekly</b> (new every Monday) works the same way with pictures: flags, paintings and animals. Each picture is split into a grid of colors. A cell is <span data-c="hit">green</span> if the secret has the same color in the same spot, <span data-c="near">yellow</span> if that color is somewhere else in it, and gray if the secret doesn't have that color at all.</p>
         <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>

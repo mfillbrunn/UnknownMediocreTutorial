@@ -41,7 +41,7 @@ for (const [from, to] of files) {
   version[to] = crypto.createHash("sha1").update(data).digest("hex").slice(0, 8);
 }
 
-// The Weekly's pictures and their colour data, as they are.
+// The Weekly's pictures and their color data, as they are.
 fs.cpSync(path.join(pub, "unstruck-media"), path.join(out, "media"), { recursive: true });
 
 // The page: same as public/unstruck/index.html, with every path local.

@@ -1,14 +1,14 @@
 # scripts/unstruck-media/pictures.py — builds public/unstruck-media/weekly.json,
-# the Weekly's pictures and their colour grids.
+# the Weekly's pictures and their color grids.
 #
 #   python3 scripts/unstruck-media/pictures.py <flags.json> <source dir>
 #
 # <flags.json> comes from flags.js. <source dir> holds downloaded public-domain
 # images (painting-*.jpg, animal-*.jpg) and paintings.json / animals.json
 # describing them (id, name, file, source, artist). Each picture is cropped to
-# a centred square, saved small for its tile, and reduced to a 6x6 grid of
-# colours from a fixed palette, so two pictures' cells can be compared colour
-# for colour. Each cell takes the colour most of its pixels are nearest to.
+# a centered square, saved small for its tile, and reduced to a 6x6 grid of
+# colors from a fixed palette, so two pictures' cells can be compared color
+# for color. Each cell takes the color most of its pixels are nearest to.
 import json, os, sys
 from PIL import Image
 
@@ -16,9 +16,9 @@ ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 OUT = os.path.join(ROOT, "public", "unstruck-media")
 FLAGS, SRC = sys.argv[1], sys.argv[2]
 
-# One character per colour, in the order of the palette.
+# One character per color, in the order of the palette.
 PICTURE_PALETTE = [
-    ("black", (22, 22, 24)), ("white", (238, 236, 228)), ("grey", (128, 128, 128)), ("red", (186, 40, 36)),
+    ("black", (22, 22, 24)), ("white", (238, 236, 228)), ("gray", (128, 128, 128)), ("red", (186, 40, 36)),
     ("orange", (222, 122, 44)), ("yellow", (226, 196, 64)), ("green", (72, 140, 64)), ("darkgreen", (36, 70, 42)),
     ("blue", (40, 76, 160)), ("lightblue", (128, 172, 214)), ("brown", (108, 70, 40)), ("beige", (200, 168, 122)),
     ("purple", (108, 60, 128)), ("pink", (220, 146, 160)),

@@ -1,6 +1,6 @@
 // scripts/unstruck-media/flags.js — renders each country flag (flag-icons,
-// MIT licence) to a small PNG for the Weekly's tiles and reduces it to a 6x4
-// grid of flag-palette colours (one digit per cell) for the feedback.
+// MIT license) to a small PNG for the Weekly's tiles and reduces it to a 6x4
+// grid of flag-palette colors (one digit per cell) for the feedback.
 //
 //   node scripts/unstruck-media/flags.js <flag-icons package dir> public/unstruck-media/flags <out.json>
 //
