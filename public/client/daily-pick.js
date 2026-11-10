@@ -321,8 +321,8 @@
   }
   const relToPar = diff => (diff === 0 ? "even" : `${diff > 0 ? "+" : "−"}${Math.abs(diff)}`);
 
-  // Wordle feedback for two equal-length strings: letters, or a picture's
-  // color cells (one character per cell).
+  // Wordle feedback for two words: a letter is only yellow as many times as
+  // the answer still has it.
   function feedback(guess, answer) {
     const n = guess.length;
     const result = Array(n).fill("absent");
@@ -336,6 +336,14 @@
       if (left[guess[i]] > 0) { result[i] = "present"; left[guess[i]]--; }
     }
     return result;
+  }
+
+  // Feedback for a picture's color cells (one character per cell): green
+  // where the secret has the same color in the same cell; yellow wherever the
+  // secret has that color anywhere else, however many cells that is; gray
+  // where the secret has none of that color.
+  function colorFeedback(guess, answer) {
+    return [...guess].map((color, i) => (color === answer[i] ? "correct" : answer.includes(color) ? "present" : "absent"));
   }
 
   // ---- Analytics -----------------------------------------------------------------
@@ -563,9 +571,10 @@
     const code = id => (pics ? itemOf(kind, id).cells : id);
     const name = id => labelOf(puzzle, id);
     // What a guess reveals under this grid's rule, letter (or cell) by letter.
-    const shownResult = guess => feedback(code(guess), code(secret)).map(f => (mode === "split" && guess !== secret && f !== "absent" ? "in" : f));
+    const compare = (g, a) => (pics ? colorFeedback(g, a) : feedback(g, a));
+    const shownResult = guess => compare(code(guess), code(secret)).map(f => (mode === "split" && guess !== secret && f !== "absent" ? "in" : f));
     const counts = guess => {
-      const result = feedback(code(guess), code(secret));
+      const result = compare(code(guess), code(secret));
       return [result.filter(f => f === "correct").length, result.filter(f => f === "present").length];
     };
     // A guessed word carries its own feedback in miniature, so all the
