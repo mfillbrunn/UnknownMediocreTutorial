@@ -8,7 +8,10 @@ html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
+  /* The visible height: on phones 100vh also counts the space behind the
+     browser's toolbar, which left an empty strip to scroll into. */
   min-height: 100vh;
+  min-height: 100dvh;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Arial, sans-serif;
   color: #e5e5e5;
   background-color: #202328;
