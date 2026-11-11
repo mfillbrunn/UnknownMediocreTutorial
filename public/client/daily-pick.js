@@ -727,7 +727,8 @@
       ...rows,
       `Total: ${verdict}`,
       `Time: ${formatTime(elapsed())}`,
-      ...(streak > 1 ? [`🔥 ${streak}-${unit} streak`] : []),
+      // The streak only once it's worth bragging about.
+      ...(streak >= 5 ? [`🔥 ${streak}-${unit} streak`] : []),
       link
     ].join("\n");
   }
