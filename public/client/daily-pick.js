@@ -1143,6 +1143,7 @@
         <div id="dpRuleCard" class="dp-intro-card"></div>
       </div>
       <div id="dpHelp" class="dp-help" role="dialog" aria-modal="true" aria-labelledby="dpHelpTitle" hidden>
+        <button id="dpHelpX" class="dp-help-x" type="button" aria-label="Close how to play">✕</button>
         <div class="dp-settings">
           <label class="dp-switch"><input type="checkbox" id="dpSetCb"><span class="dp-switch-ui"></span><span>Color-blind colors</span></label>
           <label class="dp-switch"><input type="checkbox" id="dpSetLight"><span class="dp-switch-ui"></span><span>Light mode</span></label>
@@ -1196,6 +1197,7 @@
     $("dpBackBtn")?.addEventListener("click", close);
     $("dpHelpBtn")?.addEventListener("click", () => (helpOpen() ? closeHelp() : openHelp()));
     $("dpHelpClose")?.addEventListener("click", closeHelp);
+    $("dpHelpX")?.addEventListener("click", closeHelp);
     $("dpIntro")?.addEventListener("click", onTutorialClick);
     $("dpTutorialBtn")?.addEventListener("click", openIntro);
     $("dpRule")?.addEventListener("click", event => { if (event.target.closest("#dpRuleClose")) closeRule(); });
