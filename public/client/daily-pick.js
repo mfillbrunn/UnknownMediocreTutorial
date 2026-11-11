@@ -471,12 +471,12 @@
 
   // Past results by how they went against par, for the scorecard's chart.
   const BUCKETS = [
-    { label: "Eagle or better", test: d => d <= -2 },
-    { label: "Birdie", test: d => d === -1 },
-    { label: "Par", test: d => d === 0 },
-    { label: "Bogey", test: d => d === 1 },
-    { label: "Double bogey", test: d => d === 2 },
-    { label: "Triple bogey +", test: d => d >= 3 }
+    { label: "Eagle or better (−2)", test: d => d <= -2 },
+    { label: "Birdie (−1)", test: d => d === -1 },
+    { label: "Par (0)", test: d => d === 0 },
+    { label: "Bogey (+1)", test: d => d === 1 },
+    { label: "Double bogey (+2)", test: d => d === 2 },
+    { label: "Triple bogey+ (+3)", test: d => d >= 3 }
   ];
 
   function distributionChart(todayDiff) {
@@ -526,10 +526,10 @@
     root.innerHTML = `<div class="dp-summary">
       <div class="dp-score">
         <div class="dp-score-main">
-          <div><div class="dp-score-num">${totalGuesses()}</div><div class="dp-score-label">${G().scoreLabel}</div></div>
+          <div><div class="dp-score-num">${totalGuesses()}</div><div class="dp-score-label">${G().scoreLabel}</div><div class="dp-score-par">${diff === 0 ? "even with par" : `${relToPar(diff)} vs par`}</div></div>
           <div><div class="dp-score-num dp-score-time">${formatTime(elapsed())}</div><div class="dp-score-label">time</div></div>
         </div>
-        <div class="dp-score-verdict">${golfTerm(diff)} <span>(${relToPar(diff)}) · par ${G().par}</span></div>
+        <div class="dp-score-verdict">${golfTerm(diff)} <span>· par ${G().par}</span></div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
       <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
