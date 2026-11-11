@@ -44,7 +44,7 @@
   const WEEKLY_KINDS = ["flags", "animals", "food"];
   // Switches the Weekly (Daily/Weekly tabs, Weekly rules and credits) on or
   // off; keep it in step with WEEKLY in scripts/build-unstruck.js.
-  const WEEKLY_ENABLED = true;
+  const WEEKLY_ENABLED = false;
 
   let puzzles = null; // [{ answer, words }]
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
