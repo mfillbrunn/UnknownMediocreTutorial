@@ -504,6 +504,7 @@
   }
 
   function renderSummary(root) {
+    $("dailyPickScreen")?.classList.add("is-results");
     if (playMode === "practice") return renderPracticeSummary(root);
     recordDay();
     setTitle(0);
@@ -520,9 +521,11 @@
     // The score and Share come first, so sharing never needs a scroll.
     root.innerHTML = `<div class="dp-summary">
       <div class="dp-score">
-        <div class="dp-score-num">${totalGuesses()}</div>
-        <div class="dp-score-label">${G().scoreLabel}</div>
-        <div class="dp-score-verdict">${golfTerm(diff)} <span>(${relToPar(diff)}) · par ${G().par} · ${formatTime(elapsed())}</span></div>
+        <div class="dp-score-main">
+          <div><div class="dp-score-num">${totalGuesses()}</div><div class="dp-score-label">${G().scoreLabel}</div></div>
+          <div><div class="dp-score-num dp-score-time">${formatTime(elapsed())}</div><div class="dp-score-label">time</div></div>
+        </div>
+        <div class="dp-score-verdict">${golfTerm(diff)} <span>(${relToPar(diff)}) · par ${G().par}</span></div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
       <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
@@ -562,6 +565,7 @@
     if (!root) return;
     showClock();
     if (allSolved() && !advanceTimer) return renderSummary(root);
+    $("dailyPickScreen")?.classList.remove("is-results");
     clearInterval(countdownTimer);
     setTitle(current + 1);
     const puzzle = puzzles[current];

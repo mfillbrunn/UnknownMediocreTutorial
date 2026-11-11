@@ -529,3 +529,27 @@
 .dp-cell.is-none { background: transparent; }
 .dp-mini i.is-none { background: transparent; }
 .dp-copyright a { color: inherit; }
+
+/* ---------- Results screen: tighter, guesses and time side by side ---------- */
+#dailyPickScreen.is-results .dp-help-btn { visibility: hidden; }
+#dailyPickScreen.is-results .dp-card { gap: 6px; }
+.dp-summary { gap: 8px; padding: 0; }
+.dp-score { padding: 0; }
+.dp-score-main { display: grid; grid-template-columns: 1fr 1fr; align-items: end; }
+.dp-score-main > div + div { border-left: 1px solid rgba(255,255,255,.12); }
+.dp-score-num { font-size: 58px; }
+.dp-score-num.dp-score-time { color: #f5f8fc; font-size: 46px; line-height: 58px; }
+.dp-score-label { font-size: 13px; margin-top: 2px; }
+.dp-score-verdict { margin-top: 6px; font-size: 18px; }
+.dp-grid-score { padding: 6px 4px 8px; gap: 0; }
+.dp-grid-score b { font-size: 28px; }
+.dp-summary .dp-share { margin: 2px 0; padding: 10px 40px; }
+.dp-stats-title { margin-top: 4px; }
+.dp-summary .dp-stat { padding: 7px 2px; }
+.dp-dist { margin-top: 0; padding: 10px 12px; }
+.dp-dist-title { margin-bottom: 4px; }
+.dp-dist-row { margin: 3px 0; }
+.dp-dist-track { min-height: 16px; }
+.dp-dist-bar { height: 16px; }
+.dp-summary .dp-link { margin-top: 0; padding: 4px 10px; }
+.dp-summary .dp-copyright { margin-top: 2px; }
