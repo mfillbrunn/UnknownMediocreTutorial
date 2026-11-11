@@ -559,3 +559,5 @@
 .dp-score-par { font-size: 15px; font-weight: 800; margin-top: 2px; color: var(--dp-hit); font-variant-numeric: tabular-nums; }
 .dp-dist-row { grid-template-columns: 138px 1fr; }
 .dp-score-main { align-items: start; }
+/* Guesses and time: same size, same color. */
+.dp-score-num, .dp-score-num.dp-score-time { font-size: 52px; line-height: 1.05; color: var(--dp-hit); }
