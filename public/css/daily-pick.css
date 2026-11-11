@@ -693,3 +693,14 @@ body.dp-light-page { background: #eef1f6; }
 }
 #dailyPickScreen .dp-help-x { font-size: 18px !important; }
 .dp-help-x:active { transform: scale(.92); }
+
+/* Results: the numbers stay neutral; the result line carries the color
+   (green at par or better, amber over par). */
+.dp-score-num, .dp-score-num.dp-score-time { color: #f5f8fc; }
+#dailyPickScreen.dp-light .dp-score-num { color: #141c28; }
+.dp-score-verdict.is-good { color: var(--dp-hit); }
+.dp-score-verdict.is-over { color: #e8a33d; }
+#dailyPickScreen.dp-light .dp-score-verdict.is-over { color: #c47a12; }
+.dp-score-verdict span { color: inherit; }
+.dp-dist-row.is-today.is-over .dp-dist-bar, #dailyPickScreen.dp-light .dp-dist-row.is-today.is-over .dp-dist-bar { background: #e8a33d; }
+.dp-summary .dp-stat span { font-size: 10.5px; white-space: nowrap; }

@@ -486,7 +486,7 @@
     const rows = BUCKETS.map((bucket, i) => {
       const mine = bucket.test(todayDiff);
       const width = Math.max(8, Math.round(100 * counts[i] / most));
-      return `<div class="dp-dist-row${mine ? " is-today" : ""}"><span class="dp-dist-label">${bucket.label}</span>
+      return `<div class="dp-dist-row${mine ? ` is-today ${todayDiff <= 0 ? "is-good" : "is-over"}` : ""}"><span class="dp-dist-label">${bucket.label}</span>
         <span class="dp-dist-track"><span class="dp-dist-bar" style="width:${counts[i] ? width : 0}%"></span><b>${counts[i]}</b></span></div>`;
     }).join("");
     return `<div class="dp-dist"><div class="dp-dist-title">Your scores</div>${rows}</div>`;
@@ -529,7 +529,7 @@
           <div><div class="dp-score-num">${totalGuesses()}</div><div class="dp-score-label">${G().scoreLabel}</div></div>
           <div><div class="dp-score-num dp-score-time">${formatTime(elapsed())}</div><div class="dp-score-label">time</div></div>
         </div>
-        <div class="dp-score-verdict">${golfTerm(diff)} <span>${diff === 0 ? `(even with par ${G().par})` : `(${relToPar(diff)} vs par ${G().par})`}</span></div>
+        <div class="dp-score-verdict ${diff <= 0 ? "is-good" : "is-over"}">${golfTerm(diff)} <span>${diff === 0 ? `(even with par ${G().par})` : `(${relToPar(diff)} vs par ${G().par})`}</span></div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
       <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
