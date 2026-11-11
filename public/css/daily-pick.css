@@ -681,18 +681,8 @@ body.dp-light-page { background: #eef1f6; }
 #dailyPickScreen.dp-light .dp-dist-bar { background: #c6ccd6; }
 #dailyPickScreen.dp-light .dp-grid-name, #dailyPickScreen.dp-light .dp-score-label, #dailyPickScreen.dp-light .dp-dist-title { color: #6d7685; opacity: 1; }
 
-/* A close button that stays pinned at the top of the rules while scrolling. */
-.dp-help { position: relative; }
-.dp-help-x {
-  position: sticky; top: 8px; z-index: 2;
-  float: right; margin: -2px -2px 0 8px;
-  width: 40px; height: 40px; padding: 0; border-radius: 50%;
-  border: 0; background: #d64545; color: #fff;
-  font-weight: 800; cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,.25);
-}
-#dailyPickScreen .dp-help-x { font-size: 18px !important; }
-.dp-help-x:active { transform: scale(.92); }
+/* While the rules are open, the "?" is a red close button. */
+.dp-help-btn.is-open, #dailyPickScreen.dp-light .dp-help-btn.is-open { background: #d64545; border-color: #d64545; color: #fff; }
 
 /* Results: the numbers stay neutral; the result line carries the color
    (green at par or better, amber over par). */
