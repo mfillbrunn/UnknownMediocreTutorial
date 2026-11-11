@@ -555,3 +555,4 @@
 .dp-summary .dp-copyright { margin-top: 2px; }
 /* Share fills its row, so there's no empty space on either side. */
 .dp-summary .dp-share { align-self: stretch; margin: 0; padding: 9px 0; }
+.dp-grid-time { margin-top: 2px; font-size: 12px; font-weight: 700; opacity: .75; font-variant-numeric: tabular-nums; }

@@ -515,8 +515,12 @@
     // Today's guesses lead: the total, big, then each grid as its own card.
     const grids = state.rounds.map((r, i) => {
       const n = r.guesses.length;
+      const before = i ? state.rounds[i - 1].solvedAt : 0;
+      // Whole seconds on the running clock, so the grids add up to the total.
+      const secs = t => Math.floor(t / 1000) * 1000;
+      const time = r.solvedAt != null && before != null ? `<span class="dp-grid-time">⏱ ${formatTime(secs(r.solvedAt) - secs(before))}</span>` : "";
       return `<div class="dp-grid-score"><span class="dp-grid-name">${gridName(i)}</span>
-        <b>${n}</b><span class="dp-grid-unit">${n === 1 ? "Hole in one!" : "guesses"}</span></div>`;
+        <b>${n}</b><span class="dp-grid-unit">${n === 1 ? "Hole in one!" : "guesses"}</span>${time}</div>`;
     }).join("");
     // The score and Share come first, so sharing never needs a scroll.
     root.innerHTML = `<div class="dp-summary">
@@ -529,7 +533,6 @@
       </div>
       <div class="dp-grid-scores">${grids}</div>
       <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
-      <div class="dp-stats-title">Your stats</div>
       <div class="dp-stats">
         ${stat(stats.played, "Played")}
         ${stat(stats.current, "Streak")}
@@ -705,6 +708,9 @@
     r.guesses.push(selected);
     if (selected === puzzles[current].answer) {
       r.solved = true;
+      // The clock when this grid was solved: its own time is the gap since
+      // the grid before.
+      r.solvedAt = Math.round(elapsed());
       if (allSolved()) stopClock();
       advanceTimer = setTimeout(nextPuzzle, ADVANCE_MS);
     } else if (!r.struck.includes(selected)) {
