@@ -713,30 +713,19 @@
     revealing = false;
   }
 
-  // Short and one line per grid: the result, each grid's guesses (a gray
-  // square per miss, then the hit; long runs shortened), time and streak,
-  // then the link (without https://, which apps add back anyway).
+  // Three short lines: the result, each grid's guesses with time and
+  // streak, and the link (without https://, which apps add back anyway).
   //   Unstruck #5: Birdie, 6 guesses (−1)
-  //   1: ⬜🟩 2
-  //   2: ⬜⬜🟩 3
-  //   3: 🟩 1
-  //   ⏱ 2:41  🔥 3
+  //   🟩 2 · 3 · 1  ⏱ 2:41  🔥 3
   //   play.unstruck.workers.dev
   function shareText() {
     const diff = totalGuesses() - G().par;
     const streak = computeStats().current;
-    const hit = settings.colorblind ? "🟧" : "🟩";
-    const misses = n => (n <= 5 ? "⬜".repeat(n) : `⬜×${n}`);
-    const rows = state.rounds.map((r, i) => {
-      const n = r.guesses.length;
-      const label = game === "weekly" ? KIND_INFO[puzzles[i].kind].label : i + 1;
-      return `${label}: ${misses(n - 1)}${hit} ${n}`;
-    });
+    const grids = state.rounds.map(r => r.guesses.length).join(" · ");
     const link = (location.host + location.pathname).replace(/index\.html$/, "").replace(/\/$/, "");
     return [
       `${G().title} #${G().number(state.date)}: ${golfTerm(diff)}, ${totalGuesses()} guesses (${relToPar(diff)})`,
-      ...rows,
-      `⏱ ${formatTime(elapsed())}${streak > 1 ? `  🔥 ${streak}` : ""}`,
+      `${settings.colorblind ? "🟧" : "🟩"} ${grids}  ⏱ ${formatTime(elapsed())}${streak > 1 ? `  🔥 ${streak}` : ""}`,
       link
     ].join("\n");
   }

@@ -9,22 +9,24 @@
   <link rel="icon" href="../assets/unstruck/unstruck-logo.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-  <!-- Link previews (WhatsApp, iMessage, Reddit, X...). Most apps only show
-       the image from a full https:// address: scripts/build-unstruck.js fills
+  <!-- Link previews (WhatsApp, iMessage, Reddit, X...). A small square
+       image keeps the preview compact (a thumbnail beside the text, not a
+       big banner under the shared result). Most apps only show the image
+       from a full https:// address: scripts/build-unstruck.js fills
        in og:image, og:url and twitter:image with the site's address (SITE_URL,
        set in that script) when it builds the standalone site. -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Unstruck">
   <meta property="og:title" content="Unstruck – a daily word puzzle">
   <meta property="og:description" content="Find the secret word among 16. Three new grids every day.">
-  <meta property="og:image" content="og-image.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Unstruck: a 4×4 grid of words, some struck out in red">
-  <meta name="twitter:card" content="summary_large_image">
+  <meta property="og:image" content="og-icon.png">
+  <meta property="og:image:width" content="256">
+  <meta property="og:image:height" content="256">
+  <meta property="og:image:alt" content="Unstruck logo: three struck-out tiles and one green tile">
+  <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Unstruck – a daily word puzzle">
   <meta name="twitter:description" content="Find the secret word among 16. Three new grids every day.">
-  <meta name="twitter:image" content="og-image.png">
+  <meta name="twitter:image" content="og-icon.png">
 
   <link rel="stylesheet" href="unstruck.css?v=1">
   <link rel="stylesheet" href="../css/daily-pick.css?v=38">
@@ -40,6 +42,6 @@
        No cookies, no personal data.
   <script data-goatcounter="https://YOURCODE.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
   -->
-  <script src="../client/daily-pick.js?v=64" data-words="../wordlists/daily-pick-words.txt" data-media="../unstruck-media/"></script>
+  <script src="../client/daily-pick.js?v=65" data-words="../wordlists/daily-pick-words.txt" data-media="../unstruck-media/"></script>
 </body>
 </html>
