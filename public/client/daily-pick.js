@@ -382,9 +382,39 @@
   function recordDay() {
     const history = loadHistory();
     if (history[state.date]) return;
-    history[state.date] = { score: totalGuesses(), time: Math.round(elapsed()), grids: state.rounds.map(r => r.guesses.length) };
+    history[state.date] = {
+      score: totalGuesses(), time: Math.round(elapsed()), grids: state.rounds.map(r => r.guesses.length),
+      gridTimes: gridTimes()
+    };
     track("finished", golfTerm(totalGuesses() - G().par));
     try { localStorage.setItem(G().historyKey, JSON.stringify(history)); } catch (e) { /* private mode */ }
+  }
+
+  // Each grid's time (ms): from the grid before being solved to this one;
+  // null where it wasn't recorded (days played before grid times existed).
+  function gridTimes() {
+    return state.rounds.map((r, i) => {
+      const before = i ? state.rounds[i - 1].solvedAt : 0;
+      return r.solvedAt != null && before != null ? Math.max(0, r.solvedAt - before) : null;
+    });
+  }
+
+  // Averages and bests per grid and overall, for the results' Details view.
+  function computeDetails() {
+    const days = Object.values(loadHistory());
+    const avg = list => (list.length ? list.reduce((a, b) => a + b, 0) / list.length : null);
+    const count = state.rounds.length;
+    const grids = Array.from({ length: count }, (_, i) => {
+      const guesses = days.map(d => d.grids?.[i]).filter(n => n != null);
+      const times = days.map(d => d.gridTimes?.[i]).filter(t => t != null);
+      return { avg: avg(guesses), best: guesses.length ? Math.min(...guesses) : null, time: avg(times), fastest: times.length ? Math.min(...times) : null };
+    });
+    const totals = days.map(d => d.score).filter(n => n != null);
+    const times = days.map(d => d.time).filter(t => t != null);
+    return {
+      grids,
+      total: { avg: avg(totals), best: totals.length ? Math.min(...totals) : null, time: avg(times), fastest: times.length ? Math.min(...times) : null }
+    };
   }
 
   function computeStats() {
@@ -503,6 +533,24 @@
     </div>`;
   }
 
+  // Overall (stats and score chart) or Details (averages by grid).
+  let summaryView = "overall";
+
+  function detailsTable() {
+    const d = computeDetails();
+    const num = v => (v == null ? "–" : Number.isInteger(v) ? v : v.toFixed(1));
+    const time = v => (v == null ? "–" : formatTime(v));
+    const name = i => (game === "weekly" ? KIND_INFO[puzzles[i].kind].label : `Grid ${i + 1}`);
+    const row = (label, x, cls = "") => `<tr class="${cls}"><th>${label}</th><td>${num(x.avg)}</td><td>${num(x.best)}</td><td>${time(x.time)}</td><td>${time(x.fastest)}</td></tr>`;
+    return `<div class="dp-details">
+      <table>
+        <thead><tr><th></th><th>Avg guesses</th><th>Best</th><th>Avg time</th><th>Fastest</th></tr></thead>
+        <tbody>${d.grids.map((g, i) => row(name(i), g)).join("")}${row("Total", d.total, "is-total")}</tbody>
+      </table>
+      <div class="dp-details-note">Over all the days you've played on this device.</div>
+    </div>`;
+  }
+
   function renderSummary(root) {
     $("dailyPickScreen")?.classList.add("is-results");
     if (playMode === "practice") return renderPracticeSummary(root);
@@ -533,14 +581,18 @@
       </div>
       <div class="dp-grid-scores">${grids}</div>
       <button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button>
-      <div class="dp-stats">
+      <div class="dp-views" role="tablist">
+        <button type="button" class="dp-view${summaryView === "overall" ? " is-on" : ""}" data-view="overall" role="tab">Overall</button>
+        <button type="button" class="dp-view${summaryView === "details" ? " is-on" : ""}" data-view="details" role="tab">Details</button>
+      </div>
+      ${summaryView === "details" ? detailsTable() : `<div class="dp-stats">
         ${stat(stats.played, "Played")}
         ${stat(stats.current, "Streak")}
         ${stat(stats.best, "Best streak")}
         ${stat(stats.average ? stats.average.toFixed(1) : "–", "Average")}
         ${stat(stats.bestScore || "–", "Best score")}
       </div>
-      ${distributionChart(diff)}
+      ${distributionChart(diff)}`}
       <div class="dp-countdown">${G().nextLabel} <b id="dpCountdown">${formatCountdown(G().next())}</b></div>
       ${game === "daily" ? `<button type="button" class="dp-link" data-practice="start">Play the practice grid</button>` : `<button type="button" class="dp-link" data-game="daily">Play today's Daily →</button>`}
       <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div></div>`;
@@ -1211,6 +1263,8 @@
       if (event.target.closest?.("#dpGuess")) guessSelected();
       const shareButton = event.target.closest?.("#dpShare");
       if (shareButton) share(shareButton);
+      const view = event.target.closest?.("[data-view]");
+      if (view && view.dataset.view !== summaryView) { summaryView = view.dataset.view; render(); }
     });
     // On its own page there's nothing to close back to, so it just starts.
     if (standalone) {
