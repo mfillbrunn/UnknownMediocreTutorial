@@ -602,7 +602,6 @@
 #dailyPickScreen.dp-light .dp-word.is-selected { background: #3b7dd8; border-color: #2f6fc6; color: #fff; }
 #dailyPickScreen.dp-light .dp-word.is-struck { color: rgba(27,31,39,.35); background: #f7f8fa; border-color: #e1e5ec; }
 #dailyPickScreen.dp-light .dp-word.is-guessed { border-color: #d9b44a; background: #f7f8fa; }
-#dailyPickScreen.dp-light .dp-word.is-solved { color: #fff; }
 #dailyPickScreen.dp-light .dp-center { background: #f0f2f6; }
 #dailyPickScreen.dp-light .dp-tile.is-empty { border-color: #cbd2dc; }
 #dailyPickScreen.dp-light .dp-tile.is-absent,
@@ -642,3 +641,42 @@
 }
 .dp-demo-btn { background: #3b7dd8; color: #fff; }
 .dp-hint:empty { display: none; }
+
+/* ---------- Larger switches ---------- */
+.dp-switch { gap: 14px; font-size: 17px; min-height: 44px; }
+.dp-switch-ui { width: 56px; height: 32px; }
+.dp-switch-ui::after { top: 4px; left: 4px; width: 24px; height: 24px; }
+.dp-switch input:checked + .dp-switch-ui::after { transform: translateX(24px); }
+#dailyPickScreen .dp-help-btn.is-open { font-size: 18px !important; }
+
+/* ---------- Light mode, refined ---------- */
+#dailyPickScreen.dp-light { --dp-hit: #2f9449; --dp-near: #d3a21f; --dp-hit-light: #7fd096; }
+#dailyPickScreen.dp-light.dp-cb { --dp-hit: #ef6c2b; --dp-near: #2f80d0; --dp-hit-light: #ffb48a; }
+body.dp-light-page { background: #eef1f6; }
+#dailyPickScreen.dp-light .dp-card { border-color: #e1e6ee !important; box-shadow: 0 10px 36px rgba(20,28,40,.08) !important; }
+#dailyPickScreen.dp-light .dp-title-grid, #dailyPickScreen.dp-light .dp-clock { color: #6d7685; opacity: 1; }
+/* Word tiles: white on white, lifted by a soft shadow. */
+#dailyPickScreen.dp-light .dp-word {
+  background: #ffffff; border-color: #dfe4ec; color: #141c28;
+  box-shadow: 0 1px 2px rgba(20,28,40,.06), 0 2px 6px rgba(20,28,40,.04);
+}
+#dailyPickScreen.dp-light .dp-word.is-selected { background: #3b7dd8; border-color: #2f6fc6; color: #fff; box-shadow: 0 0 0 2px rgba(59,125,216,.25), 0 6px 14px rgba(59,125,216,.3); }
+#dailyPickScreen.dp-light .dp-word.is-struck { background: #f5f6f9; border-color: #e7eaf0; color: rgba(20,28,40,.3); box-shadow: none; }
+#dailyPickScreen.dp-light .dp-word.is-struck::after { background: #e5484d; box-shadow: none; }
+#dailyPickScreen.dp-light .dp-word.is-guessed { background: #fbf8ee; border-color: #e6c766; }
+#dailyPickScreen.dp-light .dp-word.is-guessed::after { background: rgba(229,72,77,.6); }
+/* The secret, once found: solid green like the dark theme. */
+#dailyPickScreen.dp-light .dp-word.is-solved { background: var(--dp-hit); border-color: var(--dp-hit); color: #fff; }
+/* Panel and feedback */
+#dailyPickScreen.dp-light .dp-center { background: #f5f7fa; border: 1px solid #e6eaf0; }
+#dailyPickScreen.dp-light .dp-tile.is-absent, #dailyPickScreen.dp-light .dp-cell.is-absent { background: #8a929e; }
+#dailyPickScreen.dp-light .dp-mini i.is-absent { background: #b3b9c3; }
+#dailyPickScreen.dp-light .dp-key, #dailyPickScreen.dp-light .dp-hint { color: #4a5261; opacity: 1; }
+#dailyPickScreen.dp-light .dp-last { color: #6d7685; opacity: 1; }
+#dailyPickScreen.dp-light .dp-help-btn { border-color: #cfd6e0; color: #141c28; }
+/* Results */
+#dailyPickScreen.dp-light .dp-grid-score, #dailyPickScreen.dp-light .dp-stat, #dailyPickScreen.dp-light .dp-dist, #dailyPickScreen.dp-light .dp-settings {
+  background: #f5f7fa; border: 1px solid #e6eaf0;
+}
+#dailyPickScreen.dp-light .dp-dist-bar { background: #c6ccd6; }
+#dailyPickScreen.dp-light .dp-grid-name, #dailyPickScreen.dp-light .dp-score-label, #dailyPickScreen.dp-light .dp-dist-title { color: #6d7685; opacity: 1; }

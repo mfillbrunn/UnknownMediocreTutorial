@@ -1088,7 +1088,17 @@
     // It takes the grid's place, so the card grows to fit and nothing scrolls.
     $("dailyPickRoot").hidden = true;
     help.hidden = false;
+    setHelpButton(true);
     $("dpHelpClose")?.focus({ preventScroll: true });
+  }
+
+  // The "?" becomes an ✕ while the rules are open, and closes them.
+  function setHelpButton(open) {
+    const button = $("dpHelpBtn");
+    if (!button) return;
+    button.textContent = open ? "✕" : "?";
+    button.setAttribute("aria-label", open ? "Close how to play" : "How to play");
+    button.classList.toggle("is-open", open);
   }
 
   function closeHelp() {
@@ -1096,6 +1106,7 @@
     if (!help || help.hidden) return;
     help.hidden = true;
     $("dailyPickRoot").hidden = false;
+    setHelpButton(false);
     startClock();
   }
 
@@ -1183,7 +1194,7 @@
     const standalone = "unstruckStandalone" in document.body.dataset;
     $("hubDailyPickBtn")?.addEventListener("click", open);
     $("dpBackBtn")?.addEventListener("click", close);
-    $("dpHelpBtn")?.addEventListener("click", openHelp);
+    $("dpHelpBtn")?.addEventListener("click", () => (helpOpen() ? closeHelp() : openHelp()));
     $("dpHelpClose")?.addEventListener("click", closeHelp);
     $("dpIntro")?.addEventListener("click", onTutorialClick);
     $("dpTutorialBtn")?.addEventListener("click", openIntro);
