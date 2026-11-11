@@ -26,7 +26,7 @@ const files = [
   ["unstruck/unstruck.css", "unstruck.css"],
   ["wordlists/daily-pick-words.txt", "words.txt"],
   ["assets/unstruck/unstruck-logo.svg", "logo.svg"],
-  ["unstruck/og-icon.png", "og-icon.png"],
+  ["unstruck/og-image.png", "og-image.png"],
   ["unstruck/apple-touch-icon.png", "apple-touch-icon.png"]
 ];
 
@@ -53,8 +53,8 @@ const swaps = [
   [/href="unstruck\.css\?v=[^"]*"/, `href="unstruck.css?v=${version["unstruck.css"]}"`],
   [/href="\.\.\/css\/daily-pick\.css\?v=[^"]*"/, `href="game.css?v=${version["game.css"]}"`],
   [/src="\.\.\/client\/daily-pick\.js\?v=[^"]*" data-words="[^"]*" data-media="[^"]*"/, `src="game.js?v=${version["game.js"]}" data-words="words.txt?v=${version["words.txt"]}" data-media="media/"`],
-  [/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${site}/og-icon.png">\n  <meta property="og:url" content="${site}/">`],
-  [/<meta name="twitter:image" content="[^"]*">/, `<meta name="twitter:image" content="${site}/og-icon.png">`]
+  [/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${site}/og-image.png">\n  <meta property="og:url" content="${site}/">`],
+  [/<meta name="twitter:image" content="[^"]*">/, `<meta name="twitter:image" content="${site}/og-image.png">`]
 ];
 for (const [pattern, replacement] of swaps) {
   if (!pattern.test(html)) throw new Error(`build-unstruck: couldn't find ${pattern} in public/unstruck/index.html`);
