@@ -704,3 +704,14 @@ body.dp-light-page { background: #eef1f6; }
 .dp-score-verdict span { color: inherit; }
 .dp-dist-row.is-today.is-over .dp-dist-bar, #dailyPickScreen.dp-light .dp-dist-row.is-today.is-over .dp-dist-bar { background: #e8a33d; }
 .dp-summary .dp-stat span { font-size: 10.5px; white-space: nowrap; }
+
+/* Share: a centered pill with an icon, so it stands apart from the
+   full-width cards around it. */
+.dp-summary .dp-share {
+  align-self: center; width: 62%; min-width: 200px; margin: 4px 0;
+  padding: 13px 0; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 6px 18px rgba(59,125,216,.4);
+}
+#dailyPickScreen .dp-summary .dp-share { font-size: 18px !important; }
+.dp-share svg { display: block; }

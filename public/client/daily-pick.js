@@ -532,7 +532,7 @@
         <div class="dp-score-verdict ${diff <= 0 ? "is-good" : "is-over"}">${golfTerm(diff)} <span>${diff === 0 ? `(even with par ${G().par})` : `(${relToPar(diff)} vs par ${G().par})`}</span></div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
-      <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
+      <button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button>
       <div class="dp-stats">
         ${stat(stats.played, "Played")}
         ${stat(stats.current, "Streak")}
@@ -743,6 +743,9 @@
     ].join("\n");
   }
 
+  // The Share button's label: a share icon (box with an arrow) and the word.
+  const SHARE_LABEL = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share`;
+
   // The phone's own share sheet (WhatsApp, Messages, Instagram, ...) where
   // there is one; otherwise the result is copied for pasting anywhere.
   async function share(button) {
@@ -758,7 +761,7 @@
     }
     const copied = await copyText(text);
     button.textContent = copied ? "Copied! Paste it anywhere" : "Couldn't copy";
-    setTimeout(() => { button.textContent = "Share"; }, 2500);
+    setTimeout(() => { button.innerHTML = SHARE_LABEL; }, 2500);
   }
 
   async function copyText(text) {
