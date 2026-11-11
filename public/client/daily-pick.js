@@ -541,10 +541,10 @@
     const num = v => (v == null ? "–" : Number.isInteger(v) ? v : v.toFixed(1));
     const time = v => (v == null ? "–" : formatTime(v));
     const name = i => (game === "weekly" ? KIND_INFO[puzzles[i].kind].label : `Grid ${i + 1}`);
-    const row = (label, x, cls = "") => `<tr class="${cls}"><th>${label}</th><td>${num(x.avg)}</td><td>${num(x.best)}</td><td>${time(x.time)}</td><td>${time(x.fastest)}</td></tr>`;
+    const row = (label, x, cls = "") => `<tr class="${cls}"><th>${label}</th><td>${num(x.avg)}</td><td>${time(x.time)}</td><td>${time(x.fastest)}</td></tr>`;
     return `<div class="dp-details">
       <table>
-        <thead><tr><th></th><th>Avg guesses</th><th>Best</th><th>Avg time</th><th>Fastest</th></tr></thead>
+        <thead><tr><th></th><th>Avg guesses</th><th>Avg time</th><th>Fastest</th></tr></thead>
         <tbody>${d.grids.map((g, i) => row(name(i), g)).join("")}${row("Total", d.total, "is-total")}</tbody>
       </table>
       <div class="dp-details-note">Over all the days you've played on this device.</div>
