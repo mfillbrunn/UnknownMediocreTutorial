@@ -553,3 +553,5 @@
 .dp-dist-bar { height: 16px; }
 .dp-summary .dp-link { margin-top: 0; padding: 4px 10px; }
 .dp-summary .dp-copyright { margin-top: 2px; }
+/* Share fills its row, so there's no empty space on either side. */
+.dp-summary .dp-share { align-self: stretch; margin: 0; padding: 9px 0; }
