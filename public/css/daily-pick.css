@@ -561,3 +561,84 @@
 .dp-score-main { align-items: start; }
 /* Guesses and time: same size, same color. */
 .dp-score-num, .dp-score-num.dp-score-time { font-size: 52px; line-height: 1.05; color: var(--dp-hit); }
+
+/* ---------- Game screen refinements ---------- */
+/* A shorter header; the grid counter stays secondary to the title. */
+.dp-card .menu-title { line-height: 34px; }
+.dp-clock { line-height: 34px; }
+.dp-title-grid { font-size: .62em; opacity: .55; }
+/* Small buttons keep a 44px tap area. */
+.dp-close, .dp-help-btn { position: relative; }
+.dp-close::after, .dp-help-btn::after { content: ""; position: absolute; inset: -5px; }
+/* About 12% tighter grid. */
+#dailyPickScreen .dp-card { gap: 10px; padding: 10px 10px 14px !important; }
+.dp-board { gap: 7px; }
+.dp-word { padding: 23px 0; }
+@media (min-width: 760px) { .dp-word { padding: 26px 0; } }
+/* Struck words: muted text and the red line, no red frame. */
+.dp-word.is-struck { border-color: rgba(255,255,255,.1); background: rgba(255,255,255,.03); }
+/* A shorter feedback panel. */
+.dp-center { margin-top: 8px; gap: 8px; padding: 10px 10px 12px; }
+.dp-last { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .55; margin-bottom: -2px; }
+/* Guess: full width, blue like the picked word. */
+#dailyPickScreen .dp-center #dpGuess {
+  align-self: stretch; padding: 13px 0; border: 0;
+  background: #3b7dd8 !important; color: #fff !important;
+  font-size: 18px !important;
+}
+#dailyPickScreen .dp-center #dpGuess:disabled {
+  background: transparent !important; color: inherit !important;
+  border: 1.5px solid rgba(255,255,255,.22); opacity: .5;
+}
+
+/* ---------- Light mode ---------- */
+#dailyPickScreen.dp-light { color: #1b1f27; }
+#dailyPickScreen.dp-light .dp-card {
+  background: #ffffff !important; border-color: #d6dce6 !important;
+  box-shadow: 0 16px 48px rgba(20,28,40,.12) !important; color: #1b1f27;
+}
+#dailyPickScreen.dp-light .menu-title { color: #141c28 !important; }
+#dailyPickScreen.dp-light .dp-word { background: #f2f4f8; border-color: #d3d9e3; color: #1b1f27; }
+#dailyPickScreen.dp-light .dp-word.is-selected { background: #3b7dd8; border-color: #2f6fc6; color: #fff; }
+#dailyPickScreen.dp-light .dp-word.is-struck { color: rgba(27,31,39,.35); background: #f7f8fa; border-color: #e1e5ec; }
+#dailyPickScreen.dp-light .dp-word.is-guessed { border-color: #d9b44a; background: #f7f8fa; }
+#dailyPickScreen.dp-light .dp-word.is-solved { color: #fff; }
+#dailyPickScreen.dp-light .dp-center { background: #f0f2f6; }
+#dailyPickScreen.dp-light .dp-tile.is-empty { border-color: #cbd2dc; }
+#dailyPickScreen.dp-light .dp-tile.is-absent,
+#dailyPickScreen.dp-light .dp-cell.is-absent { background: #7d8592; }
+#dailyPickScreen.dp-light .dp-tile.is-plain { color: #1b1f27; }
+#dailyPickScreen.dp-light .dp-mini i.is-absent { background: #9aa1ab; }
+#dailyPickScreen.dp-light .dp-mini.dp-mini-grid { background: rgba(255,255,255,.92); }
+#dailyPickScreen.dp-light .dp-fb-grid { background: rgba(20,28,40,.08); }
+#dailyPickScreen.dp-light .dp-help-btn { border-color: #b9c1cd; }
+#dailyPickScreen.dp-light .dp-center #dpGuess:disabled { border-color: rgba(20,28,40,.25); }
+#dailyPickScreen.dp-light .dp-next:not(.dp-share):not(#dpGuess) { background: #1b1f27; color: #fff; }
+#dailyPickScreen.dp-light .dp-next:disabled:not(#dpGuess) { background: transparent; color: inherit; }
+#dailyPickScreen.dp-light .dp-link { color: #2f6fc6; }
+#dailyPickScreen.dp-light .dp-intro { background: rgba(238,241,245,.7); }
+#dailyPickScreen.dp-light .dp-intro-card { background: #ffffff; border-color: #d6dce6; box-shadow: 0 12px 32px rgba(20,28,40,.18); }
+#dailyPickScreen.dp-light .dp-settings,
+#dailyPickScreen.dp-light .dp-stat,
+#dailyPickScreen.dp-light .dp-dist,
+#dailyPickScreen.dp-light .dp-tabs { background: #f0f2f6; }
+#dailyPickScreen.dp-light .dp-grid-score { background: #f0f2f6; border-color: #dde2ea; }
+#dailyPickScreen.dp-light .dp-dist-bar { background: #b8bfca; }
+#dailyPickScreen.dp-light .dp-dist-row.is-today .dp-dist-bar { background: var(--dp-hit); }
+#dailyPickScreen.dp-light .dp-score-main > div + div { border-left-color: rgba(20,28,40,.12); }
+#dailyPickScreen.dp-light .dp-switch-ui { background: #cdd3dc; }
+#dailyPickScreen.dp-light .dp-switch input:checked + .dp-switch-ui { background: #3b7dd8; }
+#dailyPickScreen.dp-light .dp-tut-dots i { background: #cdd3dc; }
+#dailyPickScreen.dp-light .dp-tut-dots i.is-on { background: #3b7dd8; }
+#dailyPickScreen.dp-light .dp-demo-word { background: #f2f4f8; border-color: #d3d9e3; }
+#dailyPickScreen.dp-light .dp-demo-word.is-selected { background: #3b7dd8; color: #fff; }
+#dailyPickScreen.dp-light .dp-demo-word.is-struck { color: rgba(27,31,39,.35); }
+#dailyPickScreen.dp-light .dp-demo-btn { background: #3b7dd8; color: #fff; }
+#dailyPickScreen.dp-light .dp-tab.is-on { background: #ffffff; }
+#dailyPickScreen.dp-light .dp-cell.is-empty { background: rgba(20,28,40,.06); }
+@media (hover: hover) {
+  #dailyPickScreen.dp-light .dp-word:not(:disabled):not(.is-selected):hover { background: #e8ecf2; border-color: #c3cad5; }
+  #dailyPickScreen.dp-light .dp-help-btn:hover { background: #f0f2f6; }
+}
+.dp-demo-btn { background: #3b7dd8; color: #fff; }
+.dp-hint:empty { display: none; }

@@ -50,3 +50,13 @@ button { font: inherit; color: inherit; }
 @media (min-width: 760px) {
   .unstruck-page { padding-top: 4vh; }
 }
+
+/* Notches and home bars: keep the game clear of them. */
+.unstruck-page {
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
+}
+/* Light mode: the page behind the card. */
+body.dp-light-page { color: #1b1f27; background: #eef1f5; }

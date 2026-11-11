@@ -80,7 +80,7 @@
 
   // Player settings, kept on the device.
   const SETTINGS_KEY = "umt.whittle.settings"; // named from when the game was Whittle; kept so settings carry over
-  let settings = { colorblind: false };
+  let settings = { colorblind: false, light: false };
   try { settings = { ...settings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) }; } catch (e) { /* defaults */ }
   const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* private mode */ } };
   // Color-blind mode swaps green/yellow for orange/blue (as Wordle's high
@@ -669,7 +669,7 @@
 
     const exit = playMode === "practice" ? `<button type="button" class="dp-link" data-practice="end">← Back to today's Unstruck</button>` : "";
     root.innerHTML = `<div class="dp-board${pics ? ` is-pics is-${kind}` : ""}" style="${pics ? `--ratio:${info.ratio}` : ""}">${buttons}</div>
-      <div class="dp-center">${lastGuess ? tiles(lastGuess) : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>${exit}`;
+      <div class="dp-center">${lastGuess ? `<div class="dp-last">Last guess</div>${tiles(lastGuess)}` : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>${exit}`;
   }
 
   function onWordClick(word) {
@@ -937,11 +937,15 @@
   // ---- Settings (top of the How to play page) ---------------------------------
   function applyColors() {
     $("dailyPickScreen")?.classList.toggle("dp-cb", !!settings.colorblind);
+    $("dailyPickScreen")?.classList.toggle("dp-light", !!settings.light);
+    // On its own page the whole page goes light too.
+    if ("unstruckStandalone" in document.body.dataset) document.body.classList.toggle("dp-light-page", !!settings.light);
     document.querySelectorAll("#dailyPickScreen [data-c]").forEach(el => { el.textContent = colorName(el.dataset.c); });
   }
 
   function syncSettingsUi() {
     if ($("dpSetCb")) $("dpSetCb").checked = !!settings.colorblind;
+    if ($("dpSetLight")) $("dpSetLight").checked = !!settings.light;
   }
 
   function onSettingChange(event) {
@@ -950,6 +954,11 @@
       saveSettings();
       applyColors();
       if (state && $("dailyPickRoot") && !$("dailyPickRoot").hidden) render();
+    }
+    if (event.target.id === "dpSetLight") {
+      settings.light = event.target.checked;
+      saveSettings();
+      applyColors();
     }
   }
 
@@ -1125,6 +1134,7 @@
       <div id="dpHelp" class="dp-help" role="dialog" aria-modal="true" aria-labelledby="dpHelpTitle" hidden>
         <div class="dp-settings">
           <label class="dp-switch"><input type="checkbox" id="dpSetCb"><span class="dp-switch-ui"></span><span>Color-blind colors</span></label>
+          <label class="dp-switch"><input type="checkbox" id="dpSetLight"><span class="dp-switch-ui"></span><span>Light mode</span></label>
         </div>
         <h3 id="dpHelpTitle">How to play</h3>
         <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
