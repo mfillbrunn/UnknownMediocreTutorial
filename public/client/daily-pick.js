@@ -526,10 +526,10 @@
     root.innerHTML = `<div class="dp-summary">
       <div class="dp-score">
         <div class="dp-score-main">
-          <div><div class="dp-score-num">${totalGuesses()}</div><div class="dp-score-label">${G().scoreLabel}</div><div class="dp-score-par">${diff === 0 ? "even with par" : `${relToPar(diff)} vs par`}</div></div>
+          <div><div class="dp-score-num">${totalGuesses()}</div><div class="dp-score-label">${G().scoreLabel}</div><div class="dp-score-par">${diff === 0 ? `even with par ${G().par}` : `${relToPar(diff)} vs par ${G().par}`}</div></div>
           <div><div class="dp-score-num dp-score-time">${formatTime(elapsed())}</div><div class="dp-score-label">time</div></div>
         </div>
-        <div class="dp-score-verdict">${golfTerm(diff)} <span>· par ${G().par}</span></div>
+        <div class="dp-score-verdict">${golfTerm(diff)}</div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
       <button type="button" class="dp-next dp-share" id="dpShare">Share</button>
