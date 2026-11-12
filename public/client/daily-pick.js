@@ -392,10 +392,13 @@
 
   // Each grid's time (ms): from the grid before being solved to this one;
   // null where it wasn't recorded (days played before grid times existed).
+  // Whole seconds on the running clock, the same way the results cards count
+  // them, so the cards, the Details table and the total all agree.
   function gridTimes() {
+    const secs = t => Math.floor(t / 1000) * 1000;
     return state.rounds.map((r, i) => {
       const before = i ? state.rounds[i - 1].solvedAt : 0;
-      return r.solvedAt != null && before != null ? Math.max(0, r.solvedAt - before) : null;
+      return r.solvedAt != null && before != null ? Math.max(0, secs(r.solvedAt) - secs(before)) : null;
     });
   }
 
@@ -539,7 +542,8 @@
   function detailsTable() {
     const d = computeDetails();
     const num = v => (v == null ? "–" : Number.isInteger(v) ? v : v.toFixed(1));
-    const time = v => (v == null ? "–" : formatTime(v));
+    // Averages rounded to the nearest second (formatTime alone would cut them down).
+    const time = v => (v == null ? "–" : formatTime(Math.round(v / 1000) * 1000));
     const name = i => (game === "weekly" ? KIND_INFO[puzzles[i].kind].label : `Grid ${i + 1}`);
     const row = (label, x, cls = "") => `<tr class="${cls}"><th>${label}</th><td>${num(x.avg)}</td><td>${time(x.time)}</td><td>${time(x.fastest)}</td></tr>`;
     return `<div class="dp-details">
@@ -563,10 +567,8 @@
     // Today's guesses lead: the total, big, then each grid as its own card.
     const grids = state.rounds.map((r, i) => {
       const n = r.guesses.length;
-      const before = i ? state.rounds[i - 1].solvedAt : 0;
-      // Whole seconds on the running clock, so the grids add up to the total.
-      const secs = t => Math.floor(t / 1000) * 1000;
-      const time = r.solvedAt != null && before != null ? `<span class="dp-grid-time">⏱ ${formatTime(secs(r.solvedAt) - secs(before))}</span>` : "";
+      const t = gridTimes()[i];
+      const time = t != null ? `<span class="dp-grid-time">⏱ ${formatTime(t)}</span>` : "";
       return `<div class="dp-grid-score"><span class="dp-grid-name">${gridName(i)}</span>
         <b>${n}</b><span class="dp-grid-unit">${n === 1 ? "Hole in one!" : "guesses"}</span>${time}</div>`;
     }).join("");
