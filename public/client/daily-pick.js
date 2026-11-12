@@ -708,7 +708,7 @@
         <div class="dp-score-verdict ${diff <= 0 ? "is-good" : "is-over"}">${golfTerm(diff)} <span>${diff === 0 ? `(even with par ${G().par})` : `(${relToPar(diff)} vs par ${G().par})`}</span></div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
-      <div class="dp-share-row">${game === "daily" && SPEED_ENABLED ? `<button type="button" class="dp-next dp-side-btn" data-game="speed">Speed</button>` : ""}<button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button>${game === "daily" && WEEKLY_ENABLED ? `<button type="button" class="dp-next dp-side-btn" data-game="weekly">Experimental</button>` : ""}</div>
+      <div class="dp-share-row"><button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button>${game === "daily" && (WEEKLY_ENABLED || SPEED_ENABLED) ? `<button type="button" class="dp-next dp-side-btn" id="dpExperimental">Experimental</button>` : ""}</div>
       <div class="dp-views" role="tablist">
         <button type="button" class="dp-view${summaryView === "overall" ? " is-on" : ""}" data-view="overall" role="tab">Overall</button>
         <button type="button" class="dp-view${summaryView === "details" ? " is-on" : ""}" data-view="details" role="tab">Details</button>
@@ -1221,6 +1221,7 @@
   async function open(which = game) {
     if ((!WEEKLY_ENABLED && which === "weekly") || (!SPEED_ENABLED && which === "speed")) which = "daily";
     if (playMode === "practice") leavePractice();
+    closeChooser();
     if (window.showScreen) window.showScreen("dailyPickScreen");
     else $("dailyPickScreen").classList.add("active");
     document.body.classList.add("menu-mode");
@@ -1258,6 +1259,30 @@
     if (game === "daily" && !introSeen()) return openIntro();
     startClock();
     maybeAnnounceRule();
+  }
+
+  // ---- Experimental: pick Speed or the Flags / Colors / Arrows grids ----------
+  // Each choice says whether it's already been played this day (or week).
+  function playedNote(which) {
+    const g = GAMES[which];
+    let done = null;
+    try { done = (JSON.parse(localStorage.getItem(g.historyKey)) || {})[g.period()]; } catch (e) { /* none */ }
+    if (!done) return "";
+    return which === "speed" ? `Today: ${done.score} of ${SPEED_GRIDS} grids ✓` : `This week: ${done.score} guesses ✓`;
+  }
+
+  function openChooser() {
+    const option = (which, title, text) => `<button type="button" class="dp-choice" data-game="${which}">
+      <b>${title}</b><span>${text}</span>${playedNote(which) ? `<em>${playedNote(which)}</em>` : ""}</button>`;
+    $("dpChooseCard").innerHTML = `<div class="dp-rule-grid">Experimental</div>
+      ${SPEED_ENABLED ? option("speed", "Speed", `3 minutes to solve as many of today's ${SPEED_GRIDS} grids as you can`) : ""}
+      ${WEEKLY_ENABLED ? option("weekly", "Flags · Colors · Arrows", "Three new kinds of grid, new every Monday") : ""}
+      <button type="button" class="dp-link" id="dpChooseClose">Not now</button>`;
+    $("dpChoose").hidden = false;
+  }
+
+  function closeChooser() {
+    if ($("dpChoose")) $("dpChoose").hidden = true;
   }
 
   // ---- Start screen --------------------------------------------------------
@@ -1533,6 +1558,9 @@
         <div id="dpIntroCard" class="dp-intro-card dp-tutorial"></div>
       </div>
       <div id="dpBanner" class="dp-banner" role="status" hidden></div>
+      <div id="dpChoose" class="dp-intro" role="dialog" aria-modal="true" aria-label="Experimental" hidden>
+        <div id="dpChooseCard" class="dp-intro-card dp-choose-card"></div>
+      </div>
       <div id="dpStart" class="dp-intro dp-start" role="dialog" aria-modal="true" aria-label="Start Unstruck" hidden>
         <div id="dpStartCard" class="dp-intro-card dp-start-card"></div>
       </div>
@@ -1558,8 +1586,8 @@
             <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> half <span data-c="hit">green</span>, half <span data-c="near">yellow</span> &ndash; so you don't find out whether it's in the right position. Letters not in the word are gray.</li>
           <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
-        ${WEEKLY_ENABLED ? `<p><b>Experimental</b> (new every Monday, from the button next to Share once you've finished the Daily) has three different grids: <b>Flags</b>, where each flag is split into a grid of colors; <b>Colors</b>, rows of five paints where a color counts as in a tile when it's part of the mix there (white and red are in pink); and <b>Arrows</b>, words where each letter's arrow points to the secret's letter in the alphabet. Each grid explains itself when it starts.</p>` : ""}
-        ${SPEED_ENABLED ? `<p><b>Speed</b> (from the button next to Share once you've finished the Daily): 3 minutes to solve as many of the day's ${SPEED_GRIDS} grids as you can, all with full feedback. Every guess costs 2 seconds, right or wrong.</p>` : ""}
+        ${WEEKLY_ENABLED ? `<p><b>Experimental</b> (the button next to Share once you've finished the Daily) has two extras. <b>Flags · Colors · Arrows</b>, new every Monday, is three different grids: <b>Flags</b>, where each flag is split into a grid of colors; <b>Colors</b>, rows of five paints where a color counts as in a tile when it's part of the mix there (white and red are in pink); and <b>Arrows</b>, words where each letter's arrow points to the secret's letter in the alphabet. Each grid explains itself when it starts.</p>` : ""}
+        ${SPEED_ENABLED ? `<p><b>Speed</b> (also under Experimental): 3 minutes to solve as many of the day's ${SPEED_GRIDS} grids as you can, all with full feedback. Every guess costs 2 seconds, right or wrong.</p>` : ""}
         <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
@@ -1597,12 +1625,15 @@
     $("dpIntro")?.addEventListener("click", onTutorialClick);
     $("dpTutorialBtn")?.addEventListener("click", openIntro);
     $("dpRule")?.addEventListener("click", event => { if (event.target.closest("#dpRuleClose")) closeRule(); });
+    $("dpChoose")?.addEventListener("click", event => {
+      if (event.target.closest("#dpChooseClose") || event.target === $("dpChoose")) closeChooser();
+    });
     $("dpStart")?.addEventListener("click", event => {
       if (event.target.closest("#dpStartPlay")) closeSplash();
       else if (event.target.closest("#dpStartHelp")) openHelp();
     });
     document.addEventListener("keydown", event => {
-      if (event.key === "Escape") { closeRule(); closeIntro(); closeHelp(); }
+      if (event.key === "Escape") { closeRule(); closeIntro(); closeHelp(); closeChooser(); }
     });
     $("dailyPickRoot")?.addEventListener("click", event => {
       const word = event.target.closest?.(".dp-word");
@@ -1610,6 +1641,7 @@
       if (event.target.closest?.("#dpGuess")) guessSelected();
       const shareButton = event.target.closest?.("#dpShare");
       if (shareButton) share(shareButton);
+      if (event.target.closest?.("#dpExperimental")) openChooser();
       const view = event.target.closest?.("[data-view]");
       if (view && view.dataset.view !== summaryView) {
         // Both views are always on the page, stacked in the same space, so

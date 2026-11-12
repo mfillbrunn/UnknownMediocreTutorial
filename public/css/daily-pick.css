@@ -873,3 +873,20 @@ body.dp-light-page { background: #eef1f6; }
   100% { opacity: 0; transform: translate(-50%, -14px) scale(.97); }
 }
 #dailyPickScreen.dp-light .dp-banner { background: #fff; border-color: #d3d9e3; color: #1b1f27; }
+
+/* ---------- Experimental picker ---------- */
+.dp-choose-card { width: 100%; max-width: 330px; display: flex; flex-direction: column; gap: 10px; }
+.dp-choice {
+  display: flex; flex-direction: column; gap: 3px; align-items: flex-start; text-align: left;
+  padding: 14px 16px; border-radius: 12px; cursor: pointer;
+  background: rgba(255,255,255,.06); border: 1.5px solid rgba(255,255,255,.18); color: inherit;
+  font-family: inherit; transition: transform .1s ease, border-color .15s ease;
+}
+.dp-choice:active { transform: scale(.98); }
+.dp-choice b { font-size: 18px; font-weight: 800; }
+.dp-choice span { font-size: 14px; opacity: .75; line-height: 1.35; }
+.dp-choice em { font-style: normal; font-size: 13px; font-weight: 700; color: var(--dp-hit-light); }
+.dp-choose-card .dp-link { margin-top: 2px; align-self: center; }
+#dailyPickScreen.dp-light .dp-choose-card { background: #fff; border-color: #d3d9e3; color: #1b1f27; }
+#dailyPickScreen.dp-light .dp-choice { background: #f2f4f8; border-color: #d3d9e3; }
+#dailyPickScreen.dp-light .dp-choice em { color: #2e7d3c; }
