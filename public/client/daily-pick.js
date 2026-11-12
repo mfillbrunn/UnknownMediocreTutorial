@@ -49,6 +49,12 @@
   // Switches the Weekly (its button on the Daily's results, its rules and
   // credits) on or off; keep it in step with WEEKLY in scripts/build-unstruck.js.
   const WEEKLY_ENABLED = true;
+  // Speed: as many of the day's ten grids (all with full feedback) as you can
+  // solve in three minutes; every guess, right or wrong, costs two seconds.
+  const SPEED_GRIDS = 10;
+  const SPEED_MS = 180000;
+  const SPEED_PENALTY_MS = 2000;
+  const SPEED_ADVANCE_MS = 1100;
 
   let puzzles = null; // [{ answer, words }]
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
@@ -70,7 +76,7 @@
 
   // Which game is on screen; the other one's puzzles and state wait in slots.
   let game = "daily";
-  const slots = { daily: { puzzles: null, state: null }, weekly: { puzzles: null, state: null } };
+  const slots = { daily: { puzzles: null, state: null }, weekly: { puzzles: null, state: null }, speed: { puzzles: null, state: null } };
   let catalog = null; // the Weekly's pictures, loaded the first time it's opened
 
   // Daily play or the practice grid. Practice swaps its own one-grid puzzle
@@ -142,6 +148,11 @@
       storeKey: "umt.unstruck.weekly.v3", historyKey: "umt.unstruck.weeklyHistory", par: DAY_PAR, step: 7,
       period: () => weekStart(today()), number: weekNumber, title: "Unstruck Experimental", unit: "week", scoreLabel: "guesses this week",
       next: () => msUntilNextWeek(), nextLabel: "Next Experimental in"
+    },
+    speed: {
+      storeKey: "umt.unstruck.speed.v1", historyKey: "umt.unstruck.speedHistory", par: 0, step: 1,
+      period: () => today(), number: puzzleNumber, title: "Unstruck Speed", unit: "day", scoreLabel: "grids solved",
+      next: () => msUntilNextDay(), nextLabel: "Next Speed in"
     }
   };
   const G = () => GAMES[game];
@@ -291,6 +302,18 @@
     });
   }
 
+  // Speed's ten grids: the same for everyone on a day, in the same order, all
+  // with full feedback, and no word twice.
+  function buildSpeed(pool, date) {
+    const taken = new Set();
+    return Array.from({ length: SPEED_GRIDS }, (_, i) => {
+      const seed = `unstruck-speed-1:${date}:${i + 1}`;
+      const puzzle = buildPuzzle(pool, seed, taken, pickRecipe(mulberry32(hash(`${seed}:recipe`))));
+      puzzle.words.forEach(w => taken.add(w));
+      return { ...puzzle, ...LEVELS[0] };
+    });
+  }
+
   // The Weekly: flags, colors and arrows, one grid each.
   const KIND_INFO = {
     flags: { label: "Flags", noun: "flag" },
@@ -423,7 +446,7 @@
   // A handful of anonymous moments (no personal data), sent to GoatCounter when
   // its script is on the page (see unstruck/index.html); otherwise nothing.
   function track(name, title) {
-    try { window.goatcounter?.count?.({ path: `unstruck-${game === "weekly" ? "weekly-" : ""}${name}`, title: title || name, event: true }); } catch (e) { /* never break the game */ }
+    try { window.goatcounter?.count?.({ path: `unstruck-${game === "daily" ? "" : `${game}-`}${name}`, title: title || name, event: true }); } catch (e) { /* never break the game */ }
   }
 
   function load(count = PUZZLE_COUNT) {
@@ -521,9 +544,14 @@
     return i < 0 ? state.rounds.length - 1 : i;
   };
   const allSolved = () => state.rounds.every(r => r.solved);
+  // Finished: every grid solved, or (Speed) the time ran out.
+  const over = () => allSolved() || (game === "speed" && !!state.timeUp);
+  const solvedCount = () => state.rounds.filter(r => r.solved).length;
   const totalGuesses = () => state.rounds.reduce((sum, r) => sum + r.guesses.length, 0);
 
   const elapsed = () => (state.elapsed || 0) + (runningSince ? Date.now() - runningSince : 0);
+  // Speed's time left: three minutes, less the time played and two seconds a guess.
+  const speedLeft = () => Math.max(0, SPEED_MS - elapsed() - SPEED_PENALTY_MS * totalGuesses());
   function formatTime(ms) {
     const secs = Math.floor(ms / 1000);
     const h = Math.floor(secs / 3600);
@@ -538,12 +566,30 @@
   function showClock() {
     const clock = $("dpClock");
     if (!clock) return;
-    clock.hidden = allSolved() && !advanceTimer;
-    clock.textContent = formatTime(elapsed());
+    clock.hidden = over() && !advanceTimer;
+    if (game !== "speed") {
+      clock.textContent = formatTime(elapsed());
+      clock.classList.remove("is-low");
+      return;
+    }
+    const left = speedLeft();
+    clock.textContent = formatTime(left + 999); // counts down, so round up
+    clock.classList.toggle("is-low", left < 30000);
+    if (left <= 0 && !state.timeUp && runningSince) timeUp();
+  }
+
+  // Speed's clock has run out: the grid on screen stays unsolved.
+  function timeUp() {
+    state.timeUp = true;
+    stopClock();
+    clearTimeout(advanceTimer);
+    advanceTimer = null;
+    selected = "";
+    render();
   }
 
   function startClock() {
-    if (runningSince || allSolved() || !$("dailyPickScreen")?.classList.contains("active") || helpOpen() || introOpen() || ruleOpen()) return;
+    if (runningSince || over() || !$("dailyPickScreen")?.classList.contains("active") || helpOpen() || introOpen() || ruleOpen()) return;
     runningSince = Date.now();
     ticker = setInterval(showClock, 250);
   }
@@ -562,8 +608,8 @@
   function setTitle(grid) {
     const title = $("dpTitle");
     if (!title) return;
-    const number = state ? ` <span class="dp-title-grid">#${G().number(state.date)}</span>` : "";
-    const kind = game === "weekly" && grid ? KIND_INFO[puzzles[grid - 1].kind].label : "Grid";
+    const number = state ? ` <span class="dp-title-grid">${G().title.replace(/^Unstruck ?/, "")} #${G().number(state.date)}</span>` : "";
+    const kind = game === "weekly" && grid ? KIND_INFO[puzzles[grid - 1].kind].label : game === "speed" ? "Speed" : "Grid";
     if (playMode === "practice") title.innerHTML = `Unstruck <span class="dp-title-grid">Practice</span>`;
     else title.innerHTML = grid ? `Unstruck <span class="dp-title-grid">${kind} ${grid}/${puzzles.length}</span>` : `Unstruck${number}`;
     document.querySelectorAll("#dailyPickScreen .dp-tab").forEach(tab => tab.classList.toggle("is-on", tab.dataset.game === game));
@@ -627,6 +673,7 @@
   function renderSummary(root) {
     $("dailyPickScreen")?.classList.add("is-results");
     if (playMode === "practice") return renderPracticeSummary(root);
+    if (game === "speed") return renderSpeedSummary(root);
     recordDay();
     setTitle(0);
     const stats = computeStats();
@@ -651,7 +698,7 @@
         <div class="dp-score-verdict ${diff <= 0 ? "is-good" : "is-over"}">${golfTerm(diff)} <span>${diff === 0 ? `(even with par ${G().par})` : `(${relToPar(diff)} vs par ${G().par})`}</span></div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
-      <div class="dp-share-row"><button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button>${game === "daily" && WEEKLY_ENABLED ? `<button type="button" class="dp-next dp-weekly-btn" data-game="weekly">Experimental →</button>` : ""}</div>
+      <div class="dp-share-row">${game === "daily" ? `<button type="button" class="dp-next dp-side-btn" data-game="speed">⚡ Speed</button>` : ""}<button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button>${game === "daily" && WEEKLY_ENABLED ? `<button type="button" class="dp-next dp-side-btn" data-game="weekly">Experimental</button>` : ""}</div>
       <div class="dp-views" role="tablist">
         <button type="button" class="dp-view${summaryView === "overall" ? " is-on" : ""}" data-view="overall" role="tab">Overall</button>
         <button type="button" class="dp-view${summaryView === "details" ? " is-on" : ""}" data-view="details" role="tab">Details</button>
@@ -669,6 +716,49 @@
       </div>
       <div class="dp-countdown">${G().nextLabel} <b id="dpCountdown">${formatCountdown(G().next())}</b></div>
       ${game === "daily" ? `<button type="button" class="dp-link" data-practice="start">Play the practice grid</button>` : `<button type="button" class="dp-link" data-game="daily">Play today's Daily →</button>`}
+      <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div></div>`;
+    clearInterval(countdownTimer);
+    countdownTimer = setInterval(tickCountdown, 1000);
+  }
+
+  // Speed's results: how many grids, then each grid as a square.
+  function recordSpeed() {
+    const history = loadHistory();
+    if (history[state.date]) return;
+    history[state.date] = { score: solvedCount(), guesses: totalGuesses(), left: Math.round(speedLeft()), grids: state.rounds.map(r => (r.solved ? r.guesses.length : null)) };
+    track("finished", `${solvedCount()} grids`);
+    try { localStorage.setItem(G().historyKey, JSON.stringify(history)); } catch (e) { /* private mode */ }
+  }
+
+  function renderSpeedSummary(root) {
+    recordSpeed();
+    setTitle(0);
+    const solved = solvedCount();
+    const stats = computeStats();
+    const days = Object.values(loadHistory());
+    const best = days.length ? Math.max(...days.map(d => d.score)) : 0;
+    const stat = (value, label) => `<div class="dp-stat"><b>${value}</b><span>${label}</span></div>`;
+    const verdict = solved === SPEED_GRIDS ? `All ${SPEED_GRIDS}! <span>(${formatTime(speedLeft())} to spare)</span>` : `Time's up! <span>(${solved} of ${SPEED_GRIDS} grids)</span>`;
+    const cells = state.rounds.map((r, i) => `<span class="dp-speed-cell${r.solved ? " is-solved" : ""}">${r.solved ? r.guesses.length : ""}<small>${i + 1}</small></span>`).join("");
+    root.innerHTML = `<div class="dp-summary">
+      <div class="dp-score">
+        <div class="dp-score-main">
+          <div><div class="dp-score-num">${solved}</div><div class="dp-score-label">grids solved</div></div>
+          <div><div class="dp-score-num dp-score-time">${totalGuesses()}</div><div class="dp-score-label">guesses</div></div>
+        </div>
+        <div class="dp-score-verdict ${solved === SPEED_GRIDS ? "is-good" : "is-over"}">${verdict}</div>
+      </div>
+      <div class="dp-speed-cells">${cells}</div>
+      <div class="dp-speed-note">The number in each solved grid is how many guesses it took.</div>
+      <div class="dp-share-row"><button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button></div>
+      <div class="dp-stats is-four">
+        ${stat(stats.played, "Played")}
+        ${stat(stats.current, "Streak")}
+        ${stat(best, "Best")}
+        ${stat(stats.average ? stats.average.toFixed(1) : "–", "Average")}
+      </div>
+      <div class="dp-countdown">${G().nextLabel} <b id="dpCountdown">${formatCountdown(G().next())}</b></div>
+      <button type="button" class="dp-link" data-game="daily">Back to today's Daily →</button>
       <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div></div>`;
     clearInterval(countdownTimer);
     countdownTimer = setInterval(tickCountdown, 1000);
@@ -693,7 +783,7 @@
     const root = $("dailyPickRoot");
     if (!root) return;
     showClock();
-    if (allSolved() && !advanceTimer) return renderSummary(root);
+    if (over() && !advanceTimer) return renderSummary(root);
     $("dailyPickScreen")?.classList.remove("is-results");
     clearInterval(countdownTimer);
     setTitle(current + 1);
@@ -810,7 +900,7 @@
     if (!action) action = `<button type="button" class="dp-next" tabindex="-1" aria-hidden="true" style="visibility:hidden">&nbsp;</button>`;
 
     const exit = playMode === "practice" ? `<button type="button" class="dp-link" data-practice="end">← Back to today's Unstruck</button>`
-      : game === "weekly" ? `<button type="button" class="dp-link" data-game="daily">← Back to the Daily</button>` : "";
+      : game !== "daily" ? `<button type="button" class="dp-link" data-game="daily">← Back to the Daily</button>` : "";
     root.innerHTML = `<div class="dp-board${pics ? ` is-pics is-${kind}` : kind ? ` is-${kind}` : ""}" style="${pics ? `--ratio:${info.ratio}` : ""}">${buttons}</div>
       <div class="dp-center">${lastGuess ? `<div class="dp-last">Last guess</div>${tiles(lastGuess)}` : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>${exit}`;
   }
@@ -855,12 +945,21 @@
       // the grid before.
       r.solvedAt = Math.round(elapsed());
       if (allSolved()) stopClock();
-      advanceTimer = setTimeout(nextPuzzle, ADVANCE_MS);
+      advanceTimer = setTimeout(nextPuzzle, game === "speed" ? SPEED_ADVANCE_MS : ADVANCE_MS);
     } else if (!r.struck.includes(selected)) {
       r.struck.push(selected);
     }
     selected = "";
     save();
+    if (game === "speed") {
+      // Two seconds off, shown on the clock.
+      const clock = $("dpClock");
+      clock?.classList.remove("is-penalty");
+      void clock?.offsetWidth;
+      clock?.classList.add("is-penalty");
+      showClock();
+      if (state.timeUp) return;
+    }
     revealing = true;
     render();
     revealing = false;
@@ -868,13 +967,25 @@
 
   // One row per puzzle: a white square per wrong guess, then the green one.
   function shareText() {
+    const link = location.origin + location.pathname.replace(/index\.html$/, "");
+    if (game === "speed") {
+      const solved = solvedCount();
+      const streak = computeStats().current;
+      return [
+        `${G().title} #${G().number(state.date)}`,
+        solved === SPEED_GRIDS ? `⚡ ${solved}/${SPEED_GRIDS} grids, ${formatTime(speedLeft())} to spare` : `⚡ ${solved}/${SPEED_GRIDS} grids in 3:00`,
+        state.rounds.map(r => (r.solved ? (settings.colorblind ? "🟧" : "🟩") : "⬜")).join(""),
+        `Guesses: ${totalGuesses()}`,
+        ...(streak >= 5 ? [`🔥 ${streak}-day streak`] : []),
+        link
+      ].join("\n");
+    }
     const rows = state.rounds.map((r, i) =>
       `${game === "weekly" ? KIND_INFO[puzzles[i].kind].label : `Grid ${i + 1}`}: ${"⬜".repeat(r.guesses.length - 1)}${settings.colorblind ? "🟧" : "🟩"} ${r.guesses.length}`);
     const diff = totalGuesses() - G().par;
     const verdict = `${golfTerm(diff)} (${totalGuesses()}; ${diff === 0 ? "even" : `${diff > 0 ? "+" : "-"}${Math.abs(diff)}`} par)`;
     const streak = computeStats().current;
     const unit = G().unit;
-    const link = location.origin + location.pathname.replace(/index\.html$/, "");
     return [
       `${G().title} #${G().number(state.date)}`,
       ...rows,
@@ -931,7 +1042,34 @@
     current = firstUnsolved();
     selected = "";
     render();
+    if (game === "speed" && !over()) flapIn();
     maybeAnnounceRule();
+  }
+
+  // A new grid comes up like a split-flap departures board: each tile flips
+  // down and its letters spin through the alphabet before settling, left to
+  // right, row by row.
+  function flapIn() {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const letters = "abcdefghijklmnopqrstuvwxyz";
+    document.querySelectorAll("#dailyPickRoot .dp-word").forEach((button, i) => {
+      const word = button.dataset.word;
+      const delay = (i % 4) * 45 + Math.floor(i / 4) * 90;
+      button.style.setProperty("--flap-delay", `${delay}ms`);
+      button.classList.add("is-flap");
+      button.addEventListener("animationend", () => button.classList.remove("is-flap"), { once: true });
+      let frame = 0;
+      const frames = 8;
+      const spin = () => {
+        if (!button.isConnected || button.dataset.word !== word) return;
+        frame++;
+        button.textContent = frame >= frames ? word
+          : [...word].map((c, k) => (k < frame - 2 ? c : letters[Math.floor(Math.random() * 26)])).join("");
+        if (frame < frames) setTimeout(spin, 50);
+      };
+      button.textContent = [...word].map(() => letters[Math.floor(Math.random() * 26)]).join("");
+      setTimeout(spin, delay);
+    });
   }
 
   // ---- A new grid's rule ---------------------------------------------------
@@ -941,6 +1079,8 @@
     split: () => `Letters in the word show <span class="dp-help-chip" style="background:${SPLIT_FILL}"></span> half ${colorName("hit")}, half ${colorName("near")} &ndash; you won't know if they're in the right spot. Gray means not in the word.`,
     counts: () => `You only see <i class="dp-rule-count is-correct">2</i> how many letters are in the right spot and <i class="dp-rule-count is-present">1</i> how many are in the wrong spot &ndash; not which ones.`
   };
+  const SPEED_RULE = `You have <b>3 minutes</b> to solve as many of today's ${SPEED_GRIDS} grids as you can. Every grid has full feedback, like grid 1.</p>
+      <p>Every guess costs <b>2 seconds</b>, right or wrong. The clock starts when you press Start.`;
   const ruleOpen = () => !!$("dpRule") && !$("dpRule").hidden;
 
   // The Weekly's grids each get their own card, once a week, as they start.
@@ -964,15 +1104,16 @@
 
   function maybeAnnounceRule() {
     const r = round();
-    const rule = game === "weekly" ? WEEKLY_RULES[puzzles[current].kind]?.() : RULES[puzzles[current].mode]?.();
+    const rule = game === "weekly" ? WEEKLY_RULES[puzzles[current].kind]?.()
+      : game === "speed" ? (current === 0 ? SPEED_RULE : null) : RULES[puzzles[current].mode]?.();
     state.announced = state.announced || [];
-    if (playMode !== "daily" || !rule || r.guesses.length || state.announced[current] || allSolved()) return;
+    if (playMode !== "daily" || !rule || r.guesses.length || state.announced[current] || over()) return;
     state.announced[current] = true;
     save();
     stopClock();
-    $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">${game === "weekly" ? `Experimental · ${KIND_INFO[puzzles[current].kind].label} · ` : ""}Grid ${current + 1} of ${puzzles.length}</div>
+    $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">${game === "speed" ? `Speed · ${SPEED_GRIDS} grids` : `${game === "weekly" ? `Experimental · ${KIND_INFO[puzzles[current].kind].label} · ` : ""}Grid ${current + 1} of ${puzzles.length}`}</div>
       <p>${rule}</p>
-      <button id="dpRuleClose" class="dp-next" type="button">Got it</button>`;
+      <button id="dpRuleClose" class="dp-next" type="button">${game === "speed" ? "Start" : "Got it"}</button>`;
     $("dpRule").hidden = false;
     $("dpRuleClose").focus({ preventScroll: true });
   }
@@ -999,6 +1140,9 @@
       if (which === "daily") {
         slot.state = load();
         slot.puzzles = buildDay(wordList, period);
+      } else if (which === "speed") {
+        slot.puzzles = buildSpeed(wordList, period);
+        slot.state = load(SPEED_GRIDS);
       } else {
         if (!catalog) {
           catalog = await (await fetch(`${MEDIA_URL}weekly.json`)).json();
@@ -1013,7 +1157,7 @@
   }
 
   async function open(which = game) {
-    if (!WEEKLY_ENABLED) which = "daily";
+    if (!WEEKLY_ENABLED && which === "weekly") which = "daily";
     if (playMode === "practice") leavePractice();
     if (window.showScreen) window.showScreen("dailyPickScreen");
     else $("dailyPickScreen").classList.add("active");
@@ -1306,6 +1450,7 @@
           <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
         ${WEEKLY_ENABLED ? `<p><b>Experimental</b> (new every Monday, from the button next to Share once you've finished the Daily) has three different grids: <b>Flags</b>, where each flag is split into a grid of colors; <b>Colors</b>, rows of five paints where a mixed paint (like pink = red + white) counts as both its colors; and <b>Arrows</b>, words where each letter's arrow points to the secret's letter in the alphabet. Each grid explains itself when it starts.</p>` : ""}
+        <p><b>Speed</b> (from the button next to Share once you've finished the Daily): 3 minutes to solve as many of the day's ${SPEED_GRIDS} grids as you can, all with full feedback. Every guess costs 2 seconds, right or wrong.</p>
         <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>

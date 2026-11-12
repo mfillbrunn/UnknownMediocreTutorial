@@ -704,7 +704,7 @@ body.dp-light-page { background: #eef1f6; }
   box-shadow: 0 6px 18px rgba(59,125,216,.4);
 }
 #dailyPickScreen .dp-summary .dp-share { font-size: 18px !important; }
-.dp-share svg { display: block; }
+.dp-share svg { display: block; flex-shrink: 0; }
 
 /* ---------- Results: Overall / Details ---------- */
 .dp-views {
@@ -738,17 +738,59 @@ body.dp-light-page { background: #eef1f6; }
 .dp-pane[aria-hidden="true"] { visibility: hidden; }
 .dp-pane > .dp-details, .dp-pane > .dp-dist { flex: 1; }
 
-/* ---------- Results: Share and Weekly side by side ---------- */
-.dp-share-row { display: flex; justify-content: center; align-items: stretch; gap: 10px; margin: 4px 0; }
-.dp-summary .dp-share-row > .dp-next { height: 52px; padding-top: 0; padding-bottom: 0; box-sizing: border-box; }
-.dp-summary .dp-share-row .dp-share { margin: 0; }
-.dp-share-row:has(.dp-weekly-btn) .dp-share { width: auto; min-width: 0; flex: 1 1 0; }
-.dp-weekly-btn {
-  flex: 1 1 0; border-radius: 999px; padding: 13px 0;
-  background: rgba(255,255,255,.1); color: inherit; border-color: rgba(255,255,255,.28);
+/* ---------- Results: Speed | Share | Experimental ---------- */
+.dp-share-row { display: flex; justify-content: center; margin: 4px 0; }
+.dp-share-row:has(.dp-side-btn) {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; gap: 8px;
 }
-#dailyPickScreen .dp-summary .dp-weekly-btn { font-size: 18px !important; }
-#dailyPickScreen.dp-light .dp-summary .dp-weekly-btn { background: #fff; color: #1b1f27; border-color: #c3cad5; }
+.dp-summary .dp-share-row .dp-share { margin: 0; }
+.dp-share-row:has(.dp-side-btn) .dp-share { width: 100%; min-width: 0; }
+.dp-summary .dp-share-row .dp-side-btn {
+  height: 40px; padding: 0 2px; border-radius: 999px; white-space: nowrap;
+  background: rgba(255,255,255,.08); color: inherit; border-color: rgba(255,255,255,.24);
+}
+#dailyPickScreen .dp-summary .dp-side-btn { font-size: 12.5px !important; overflow: hidden; text-overflow: ellipsis; }
+.dp-stats.is-four { grid-template-columns: repeat(4, 1fr); }
+#dailyPickScreen.dp-light .dp-summary .dp-side-btn { background: #fff; color: #1b1f27; border-color: #c3cad5; }
+
+/* ---------- Speed ---------- */
+.dp-clock { position: relative; }
+.dp-clock.is-low { color: #ff6b6b; opacity: 1; }
+.dp-clock.is-penalty { animation: dp-penalty .5s ease-out; }
+.dp-clock.is-penalty::after {
+  content: "−2s"; position: absolute; left: 4px; top: 100%;
+  font-size: 13px; font-weight: 800; color: #ff6b6b;
+  animation: dp-penalty-float .9s ease-out both; pointer-events: none;
+}
+@keyframes dp-penalty { 0%, 40% { color: #ff6b6b; opacity: 1; transform: scale(1.15); } 100% { transform: none; } }
+@keyframes dp-penalty-float { from { opacity: 1; transform: translateY(-4px); } to { opacity: 0; transform: translateY(10px); } }
+
+/* A new grid flips in like a split-flap board: each tile drops from the top
+   with a hinge line across its middle while its letters spin (game JS). */
+.dp-word.is-flap {
+  animation: dp-flap .5s cubic-bezier(.2,.8,.3,1.15) var(--flap-delay, 0ms) both;
+  transform-origin: center center;
+}
+.dp-word.is-flap::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px;
+  background: rgba(0,0,0,.5); pointer-events: none;
+}
+@keyframes dp-flap {
+  0% { transform: perspective(500px) rotateX(-100deg); opacity: .2; }
+  65% { transform: perspective(500px) rotateX(14deg); opacity: 1; }
+  100% { transform: perspective(500px) rotateX(0); }
+}
+
+.dp-speed-cells { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.dp-speed-cell {
+  position: relative; height: 46px; border-radius: 9px;
+  display: grid; place-items: center; font-size: 20px; font-weight: 800;
+  background: rgba(255,255,255,.05); border: 1.5px dashed rgba(255,255,255,.18);
+}
+.dp-speed-cell.is-solved { background: var(--dp-hit); border: 0; color: #fff; }
+.dp-speed-cell small { position: absolute; top: 3px; left: 6px; font-size: 10px; font-weight: 700; opacity: .6; }
+.dp-speed-note { font-size: 12px; opacity: .6; text-align: center; margin-top: -4px; }
+#dailyPickScreen.dp-light .dp-speed-cell:not(.is-solved) { background: #f2f4f8; border-color: #c3cad5; }
 
 /* ---------- Weekly: Colors ---------- */
 .dp-paints { display: inline-flex; gap: 3px; }
