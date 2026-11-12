@@ -1101,22 +1101,54 @@
   const ruleOpen = () => !!$("dpRule") && !$("dpRule").hidden;
 
   // The Weekly's grids each get their own card, once a week, as they start.
+  // Each comes with a worked example in a red box: a secret, a guess, and
+  // why each tile came out the way it did.
+  const fbName = f => ({ correct: `<b data-c="hit">${colorName("hit")}</b>`, present: `<b data-c="near">${colorName("near")}</b>`, absent: "<b>gray</b>" })[f];
   const WEEKLY_RULES = {
     flags: () => {
       const demo = ["absent", "correct", "correct", "present", "absent", "correct"].map(f => `<span class="dp-cell is-${f}"></span>`).join("");
-      return `<p>Find the secret <b>flag</b>. Each flag is split into a grid of colors; guess one, and each cell shows how that color compares with the secret flag:</p>
-        <div class="dp-demo"><span class="dp-fb-grid is-demo" style="--cols:3">${demo}</span></div>
-        <p><b data-c="hit">${colorName("hit")}</b>: same color in the same spot. <b data-c="near">${colorName("near")}</b>: that color is somewhere else in it. <b>Gray</b>: the secret has none of that color.</p>`;
+      return `<p>Find the secret <b>flag</b>. Each flag is cut into a grid of colors. Guess one, and each cell shows how that color compares with the secret flag:</p>
+        <p>${fbName("correct")}: the secret has the same color in that cell.<br>${fbName("present")}: the secret has that color, in another cell.<br><b>Gray</b>: the secret has none of that color.</p>
+        <div class="dp-example"><div class="dp-example-title">Example</div>
+          <div class="dp-demo"><span class="dp-fb-grid is-demo" style="--cols:3">${demo}</span></div>
+          <p>The two ${colorName("hit")} cells in the top row: the secret flag has those exact colors there. The ${colorName("near")} cell: that color is in the secret flag, just somewhere else. The gray cells: colors the secret flag doesn't have at all.</p>
+        </div>`;
     },
     colors: () => {
       const mix = (c, a, b) => `<span class="dp-mix">${paintRow(c, "dp-paints dp-paints-inline")} ${PAINTS[c].name} = ${PAINTS[a].name} + ${PAINTS[b].name}</span>`;
-      return `<p>Each row is five paints: <b>red</b>, <b>yellow</b>, <b>blue</b>, <b>white</b>, <b>black</b>, or a mix of two (black doesn't mix):</p>
+      // Worked example; the feedback is computed by the game's own rule.
+      const secret = "NKBNW";
+      const guess = "RWPYO";
+      const fb = paintFeedback(guess, secret);
+      const why = [
+        "red is part of the pink there",
+        "no white there, but there's white in other spots",
+        "purple shares blue with the blue there",
+        "no yellow anywhere in the secret",
+        "orange shares red with a pink in another spot"
+      ];
+      const row = (code, marks) => `<span class="dp-ex-row">${[...code].map((c, i) => `<span class="dp-ex-cell"><i style="background:${PAINTS[c].hex}"></i>${marks ? `<b class="is-${marks[i]}"></b>` : ""}<small>${i + 1}</small></span>`).join("")}</span>`;
+      return `<p>Each row is five paints: <b>red</b>, <b>yellow</b>, <b>blue</b>, <b>white</b>, <b>black</b>, or a mix of two (black never mixes):</p>
         <div class="dp-mixes">${mix("O", "R", "Y")}${mix("P", "R", "B")}${mix("G", "Y", "B")}${mix("N", "R", "W")}${mix("C", "Y", "W")}${mix("L", "B", "W")}</div>
-        <p>A paint is <b data-c="hit">${colorName("hit")}</b> if it has a color in common with the secret's paint in that spot: white or red against pink, or pink against pink, red, white, purple or light blue. It's <b data-c="near">${colorName("near")}</b> if it has one in common with a paint in another spot, and <b>gray</b> if it has nothing in common with the secret.</p>`;
+        <p>For each paint you guess:<br>${fbName("correct")}: it has a color in common with the secret's paint <b>in that spot</b> (it's that color, part of its mix, or a mix sharing one of its colors).<br>${fbName("present")}: it has a color in common with a paint <b>in another spot</b>.<br><b>Gray</b>: nothing in common with the secret.</p>
+        <div class="dp-example"><div class="dp-example-title">Example</div>
+          <div class="dp-ex-line"><span>Secret</span>${row(secret)}</div>
+          <div class="dp-ex-line"><span>Guess</span>${row(guess, fb)}</div>
+          <ol class="dp-ex-why">${[...guess].map((c, i) => `<li><b>${PAINTS[c].name[0].toUpperCase() + PAINTS[c].name.slice(1)}</b> is ${fbName(fb[i])}: ${why[i]}.</li>`).join("")}</ol>
+        </div>`;
     },
-    arrows: () => `<p>Words again, but no colors. Each letter gets an arrow pointing to where the secret's letter is in the alphabet:</p>
-      <div class="dp-demo"><div class="dp-row">${[["c", "right"], ["r", "left"], ["a", "same"], ["n", "left"], ["e", "right"]].map(([l, f]) => `<span class="dp-tile dp-arrow-tile is-${f}">${l}<small>${ARROWS[f]}</small></span>`).join("")}</div></div>
-      <p><b>←</b> the secret's letter comes earlier (A side), <b>→</b> it comes later (Z side), <b>–</b> it's the right letter.</p>`
+    arrows: () => {
+      const secret = "blade";
+      const guess = "crane";
+      const fb = arrowFeedback(guess, secret);
+      const say = (g, a, f) => (f === "same" ? `${g.toUpperCase()} is right` : `the secret's ${a.toUpperCase()} comes ${f === "left" ? "before" : "after"} ${g.toUpperCase()}`);
+      return `<p>Words again, but no colors. Under each letter of your guess, an arrow points to where the secret's letter in that spot is in the alphabet:</p>
+        <p><b>←</b> it comes earlier (towards A).<br><b>→</b> it comes later (towards Z).<br><b>–</b> it's the right letter.</p>
+        <div class="dp-example"><div class="dp-example-title">Example: the secret is BLADE</div>
+          <div class="dp-demo"><div class="dp-row">${fb.map((f, i) => `<span class="dp-tile dp-arrow-tile is-${f}">${guess[i]}<small>${ARROWS[f]}</small></span>`).join("")}</div></div>
+          <ol class="dp-ex-why">${fb.map((f, i) => `<li><b>${guess[i].toUpperCase()} ${ARROWS[f]}</b> ${say(guess[i], secret[i], f)}.</li>`).join("")}</ol>
+        </div>`;
+    }
   };
 
   // Each Daily rule's full card shows once per device; days after that just
@@ -1174,6 +1206,24 @@
       <button id="dpRuleClose" class="dp-next" type="button">${game === "speed" ? "Start" : "Got it"}</button>`;
     $("dpRule").hidden = false;
     $("dpRuleClose").focus({ preventScroll: true });
+    $("dpRuleCard").scrollTop = 0; // long cards start at the top
+  }
+
+  // "Got it" asks once more before the rules go away.
+  function askSure() {
+    $("dpRuleClose").hidden = true;
+    $("dpRuleClose").insertAdjacentHTML("afterend", `<div class="dp-sure" id="dpSure">
+      <p>Are you sure you understand the rules?</p>
+      <button id="dpRuleYes" class="dp-next" type="button">Yes, let's play</button>
+      <button id="dpRuleBack" class="dp-link" type="button">Read them again</button></div>`);
+    $("dpRuleYes").focus({ preventScroll: true });
+    $("dpSure").scrollIntoView({ block: "nearest" });
+  }
+
+  function unaskSure() {
+    $("dpSure")?.remove();
+    $("dpRuleClose").hidden = false;
+    $("dpRuleCard").scrollTop = 0;
   }
 
   function closeRule() {
@@ -1621,7 +1671,11 @@
     $("dpHelpClose")?.addEventListener("click", closeHelp);
     $("dpIntro")?.addEventListener("click", onTutorialClick);
     $("dpTutorialBtn")?.addEventListener("click", openIntro);
-    $("dpRule")?.addEventListener("click", event => { if (event.target.closest("#dpRuleClose")) closeRule(); });
+    $("dpRule")?.addEventListener("click", event => {
+      if (event.target.closest("#dpRuleClose")) return game === "speed" ? closeRule() : askSure();
+      if (event.target.closest("#dpRuleYes")) return closeRule();
+      if (event.target.closest("#dpRuleBack")) return unaskSure();
+    });
     $("dpChoose")?.addEventListener("click", event => {
       if (event.target.closest("#dpChooseClose") || event.target === $("dpChoose")) closeChooser();
     });
