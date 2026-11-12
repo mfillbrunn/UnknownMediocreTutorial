@@ -147,7 +147,7 @@
       next: () => msUntilNextDay(), nextLabel: "Next Unstruck in"
     },
     weekly: {
-      storeKey: "umt.unstruck.weekly.v3", historyKey: "umt.unstruck.weeklyHistory", par: DAY_PAR, step: 7,
+      storeKey: "umt.unstruck.weekly.v4", historyKey: "umt.unstruck.weeklyHistory", par: DAY_PAR, step: 7,
       period: () => weekStart(today()), number: weekNumber, title: "Unstruck Experimental", unit: "week", scoreLabel: "guesses this week",
       next: () => msUntilNextWeek(), nextLabel: "Next Experimental in"
     },
@@ -380,9 +380,12 @@
     throw new Error("Unstruck: couldn't build the Colors grid");
   }
 
+  // Raising a kind's number deals it a fresh grid (same for everyone).
+  const SEED_VERSIONS = { flags: 2 };
+
   function buildWeek(cat, date, list) {
     return WEEKLY_KINDS.map(kind => {
-      const seed = `unstruck-weekly-1:${date}:${kind}`;
+      const seed = `unstruck-weekly-${SEED_VERSIONS[kind] || 1}:${date}:${kind}`;
       if (kind === "colors") return { kind, ...buildColors(seed), mode: "full" };
       if (kind === "arrows") {
         const { answer, words } = buildPuzzle(list, seed, new Set(), pickRecipe(mulberry32(hash(`${seed}:recipe`))));
