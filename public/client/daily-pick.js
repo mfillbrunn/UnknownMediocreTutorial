@@ -140,8 +140,8 @@
     },
     weekly: {
       storeKey: "umt.unstruck.weekly.v3", historyKey: "umt.unstruck.weeklyHistory", par: DAY_PAR, step: 7,
-      period: () => weekStart(today()), number: weekNumber, title: "Unstruck Weekly", unit: "week", scoreLabel: "guesses this week",
-      next: () => msUntilNextWeek(), nextLabel: "Next Weekly in"
+      period: () => weekStart(today()), number: weekNumber, title: "Unstruck Experimental", unit: "week", scoreLabel: "guesses this week",
+      next: () => msUntilNextWeek(), nextLabel: "Next Experimental in"
     }
   };
   const G = () => GAMES[game];
@@ -651,7 +651,7 @@
         <div class="dp-score-verdict ${diff <= 0 ? "is-good" : "is-over"}">${golfTerm(diff)} <span>${diff === 0 ? `(even with par ${G().par})` : `(${relToPar(diff)} vs par ${G().par})`}</span></div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
-      <div class="dp-share-row"><button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button>${game === "daily" && WEEKLY_ENABLED ? `<button type="button" class="dp-next dp-weekly-btn" data-game="weekly">Weekly →</button>` : ""}</div>
+      <div class="dp-share-row"><button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button>${game === "daily" && WEEKLY_ENABLED ? `<button type="button" class="dp-next dp-weekly-btn" data-game="weekly">Experimental →</button>` : ""}</div>
       <div class="dp-views" role="tablist">
         <button type="button" class="dp-view${summaryView === "overall" ? " is-on" : ""}" data-view="overall" role="tab">Overall</button>
         <button type="button" class="dp-view${summaryView === "details" ? " is-on" : ""}" data-view="details" role="tab">Details</button>
@@ -970,7 +970,7 @@
     state.announced[current] = true;
     save();
     stopClock();
-    $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">${game === "weekly" ? `Weekly · ${KIND_INFO[puzzles[current].kind].label} · ` : ""}Grid ${current + 1} of ${puzzles.length}</div>
+    $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">${game === "weekly" ? `Experimental · ${KIND_INFO[puzzles[current].kind].label} · ` : ""}Grid ${current + 1} of ${puzzles.length}</div>
       <p>${rule}</p>
       <button id="dpRuleClose" class="dp-next" type="button">Got it</button>`;
     $("dpRule").hidden = false;
@@ -1305,7 +1305,7 @@
             <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> half <span data-c="hit">green</span>, half <span data-c="near">yellow</span> &ndash; so you don't find out whether it's in the right position. Letters not in the word are gray.</li>
           <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
-        ${WEEKLY_ENABLED ? `<p><b>The Weekly</b> (new every Monday, from the button next to Share once you've finished the Daily) has three different grids: <b>Flags</b>, where each flag is split into a grid of colors; <b>Colors</b>, rows of five paints where a mixed paint (like pink = red + white) counts as both its colors; and <b>Arrows</b>, words where each letter's arrow points to the secret's letter in the alphabet. Each grid explains itself when it starts.</p>` : ""}
+        ${WEEKLY_ENABLED ? `<p><b>Experimental</b> (new every Monday, from the button next to Share once you've finished the Daily) has three different grids: <b>Flags</b>, where each flag is split into a grid of colors; <b>Colors</b>, rows of five paints where a mixed paint (like pink = red + white) counts as both its colors; and <b>Arrows</b>, words where each letter's arrow points to the secret's letter in the alphabet. Each grid explains itself when it starts.</p>` : ""}
         <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
