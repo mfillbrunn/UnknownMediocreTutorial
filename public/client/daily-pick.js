@@ -585,14 +585,17 @@
         <button type="button" class="dp-view${summaryView === "overall" ? " is-on" : ""}" data-view="overall" role="tab">Overall</button>
         <button type="button" class="dp-view${summaryView === "details" ? " is-on" : ""}" data-view="details" role="tab">Details</button>
       </div>
-      ${summaryView === "details" ? detailsTable() : `<div class="dp-stats">
+      <div class="dp-panes">
+      <div class="dp-pane" data-pane="details"${summaryView === "details" ? "" : " aria-hidden=\"true\""}>${detailsTable()}</div>
+      <div class="dp-pane" data-pane="overall"${summaryView === "overall" ? "" : " aria-hidden=\"true\""}><div class="dp-stats">
         ${stat(stats.played, "Played")}
         ${stat(stats.current, "Streak")}
         ${stat(stats.best, "Best streak")}
         ${stat(stats.average ? stats.average.toFixed(1) : "–", "Average")}
         ${stat(stats.bestScore || "–", "Best score")}
       </div>
-      ${distributionChart(diff)}`}
+      ${distributionChart(diff)}</div>
+      </div>
       <div class="dp-countdown">${G().nextLabel} <b id="dpCountdown">${formatCountdown(G().next())}</b></div>
       ${game === "daily" ? `<button type="button" class="dp-link" data-practice="start">Play the practice grid</button>` : `<button type="button" class="dp-link" data-game="daily">Play today's Daily →</button>`}
       <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div></div>`;
@@ -1264,7 +1267,13 @@
       const shareButton = event.target.closest?.("#dpShare");
       if (shareButton) share(shareButton);
       const view = event.target.closest?.("[data-view]");
-      if (view && view.dataset.view !== summaryView) { summaryView = view.dataset.view; render(); }
+      if (view && view.dataset.view !== summaryView) {
+        // Both views are always on the page, stacked in the same space, so
+        // switching just swaps which one shows and nothing below moves.
+        summaryView = view.dataset.view;
+        document.querySelectorAll("#dailyPickScreen [data-view]").forEach(b => b.classList.toggle("is-on", b.dataset.view === summaryView));
+        document.querySelectorAll("#dailyPickScreen [data-pane]").forEach(pane => pane.dataset.pane === summaryView ? pane.removeAttribute("aria-hidden") : pane.setAttribute("aria-hidden", "true"));
+      }
     });
     // On its own page there's nothing to close back to, so it just starts.
     if (standalone) {

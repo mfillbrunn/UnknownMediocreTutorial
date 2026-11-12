@@ -731,3 +731,9 @@ body.dp-light-page { background: #eef1f6; }
 #dailyPickScreen.dp-light .dp-view.is-on { background: #ffffff; box-shadow: 0 1px 3px rgba(20,28,40,.1); }
 #dailyPickScreen.dp-light .dp-details tbody tr + tr { border-top-color: #e3e7ee; }
 #dailyPickScreen.dp-light .dp-details tr.is-total { border-top-color: #cfd6e0 !important; }
+
+/* Overall and Details share one space, sized to the taller of the two. */
+.dp-panes { display: grid; }
+.dp-pane { grid-area: 1 / 1; display: flex; flex-direction: column; gap: 8px; }
+.dp-pane[aria-hidden="true"] { visibility: hidden; }
+.dp-pane > .dp-details, .dp-pane > .dp-dist { flex: 1; }
