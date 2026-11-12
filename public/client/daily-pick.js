@@ -1672,7 +1672,7 @@
     $("dpIntro")?.addEventListener("click", onTutorialClick);
     $("dpTutorialBtn")?.addEventListener("click", openIntro);
     $("dpRule")?.addEventListener("click", event => {
-      if (event.target.closest("#dpRuleClose")) return game === "speed" ? closeRule() : askSure();
+      if (event.target.closest("#dpRuleClose")) return game === "weekly" ? askSure() : closeRule(); // only Experimental asks again
       if (event.target.closest("#dpRuleYes")) return closeRule();
       if (event.target.closest("#dpRuleBack")) return unaskSure();
     });
