@@ -1353,6 +1353,23 @@
     setTitle(0);
   }
 
+  // Help or the tutorial opened from the start screen: it steps aside while
+  // they're up, and comes back when they close.
+  let splashAside = false;
+  function setSplashAside() {
+    if (!splashOpen()) return;
+    splashAside = true;
+    $("dpStart").hidden = true; // the grid stays hidden (is-splash) meanwhile
+  }
+  function bringSplashBack() {
+    if (!splashAside) return false;
+    splashAside = false;
+    $("dpStart").hidden = false;
+    $("dailyPickScreen").classList.add("is-splash");
+    setTitle(0);
+    return true;
+  }
+
   function closeSplash() {
     if (!splashOpen()) return;
     $("dpStart").hidden = true;
@@ -1366,6 +1383,10 @@
   async function startPractice() {
     if (game !== "daily" || !wordList) await open("daily");
     if (!wordList) return;
+    // Practice from the start screen's help: the start screen doesn't come back.
+    setSplashAside();
+    splashAside = false;
+    $("dailyPickScreen").classList.remove("is-splash");
     closeIntro();
     closeHelp();
     closeRule();
@@ -1533,7 +1554,13 @@
 
   function openIntro() {
     stopClock();
+    // From the start screen (or the help opened over it): back there afterwards.
+    const back = splashAside || splashOpen();
+    splashAside = false;
     closeHelp();
+    stopClock(); // closing the help may have started it
+    setSplashAside();
+    splashAside = back;
     tutorialStep = 0;
     renderTutorial();
     $("dpIntro").hidden = false;
@@ -1545,6 +1572,7 @@
     const intro = $("dpIntro");
     if (!intro || intro.hidden) return;
     intro.hidden = true;
+    if (bringSplashBack()) return;
     startClock();
     maybeAnnounceRule();
   }
@@ -1552,6 +1580,7 @@
   function openHelp() {
     const help = $("dpHelp");
     if (!help) return;
+    setSplashAside();
     closeIntro();
     stopClock();
     // It takes the grid's place, so the card grows to fit and nothing scrolls.
@@ -1576,6 +1605,7 @@
     help.hidden = true;
     $("dailyPickRoot").hidden = false;
     setHelpButton(false);
+    if (bringSplashBack()) return;
     startClock();
   }
 

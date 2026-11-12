@@ -922,3 +922,6 @@ body.dp-light-page { background: #eef1f6; }
 #dpRuleCard:has(.dp-example) p { text-align: left; font-size: 15px; line-height: 1.45; }
 #dpRuleCard:has(.dp-example) .dp-mixes { font-size: 13px; gap: 3px; margin-bottom: 8px; }
 #dpRuleCard .dp-sure p { text-align: center; }
+/* The start screen only catches taps on its card: the header's ? and ✕ stay usable. */
+.dp-start { pointer-events: none; }
+.dp-start-card { pointer-events: auto; }
