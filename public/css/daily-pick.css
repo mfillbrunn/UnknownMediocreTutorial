@@ -832,3 +832,5 @@ body.dp-light-page { background: #eef1f6; }
 .dp-mini-arrows i { width: auto; height: auto; font-style: normal; font-weight: 800; font-size: 12px; line-height: 1; }
 .dp-key b { font-weight: 900; }
 #dailyPickScreen.dp-light .dp-arrow-tile { background: #eef1f5; color: #1b1f27; border-color: #cbd2dc; }
+/* Just Share and one other button: two equal halves. */
+.dp-share-row:has(> :nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
