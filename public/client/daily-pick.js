@@ -973,7 +973,7 @@
       const streak = computeStats().current;
       return [
         `${G().title} #${G().number(state.date)}`,
-        solved === SPEED_GRIDS ? `⚡ ${solved}/${SPEED_GRIDS} grids, ${formatTime(speedLeft())} to spare` : `⚡ ${solved}/${SPEED_GRIDS} grids in 3:00`,
+        solved === SPEED_GRIDS ? `${solved}/${SPEED_GRIDS} grids, ${formatTime(speedLeft())} to spare` : `${solved}/${SPEED_GRIDS} grids in 3:00`,
         state.rounds.map(r => (r.solved ? (settings.colorblind ? "🟧" : "🟩") : "⬜")).join(""),
         `Guesses: ${totalGuesses()}`,
         ...(streak >= 5 ? [`🔥 ${streak}-day streak`] : []),
