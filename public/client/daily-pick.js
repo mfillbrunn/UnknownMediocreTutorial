@@ -342,17 +342,14 @@
   };
   const PAINT_CODES = Object.keys(PAINTS);
   const shareAPaint = (x, y) => [...PAINTS[x].parts].some(part => PAINTS[y].parts.includes(part));
-  // The guessed paint is in the secret's paint: all of it (white is in pink,
-  // pink is in pink, but pink isn't in white).
-  const paintIn = (guess, secret) => [...PAINTS[guess].parts].every(part => PAINTS[secret].parts.includes(part));
 
-  // Colors feedback, paint by paint: green when it has a base color in common
-  // with the secret's paint in the same spot (red or white against pink),
-  // yellow when it has one in common with a paint elsewhere in the secret,
-  // gray when it has none.
+  // Colors feedback, paint by paint. Green: it has a color in common with
+  // the secret's paint in that spot (a base color that is that paint or part
+  // of its mix; a mix that is the same or shares one of its two colors).
+  // Yellow: it has one in common with a paint in another spot. Gray: none.
   function paintFeedback(guess, answer) {
-    return [...guess].map((c, i) => (paintIn(c, answer[i]) ? "correct"
-      : [...answer].some((d, j) => j !== i && paintIn(c, d)) ? "present" : "absent"));
+    return [...guess].map((c, i) => (shareAPaint(c, answer[i]) ? "correct"
+      : [...answer].some((d, j) => j !== i && shareAPaint(c, d)) ? "present" : "absent"));
   }
 
   // Arrows feedback, letter by letter: where the secret's letter sits in the
@@ -847,7 +844,7 @@
     const swatch = (color, label, round) =>
       `<span><i class="${round ? "is-round" : ""}" style="background:${color}"></i>${label}</span>`;
     const key = paints
-      ? swatch("var(--dp-hit)", "In this spot") + swatch("var(--dp-near)", "In another spot") + swatch("#555b63", "Not in it")
+      ? swatch("var(--dp-hit)", "Shares a color, this spot") + swatch("var(--dp-near)", "Another spot") + swatch("#555b63", "Not in it")
       : arrows
       ? `<span><b>←</b> secret's letter is earlier</span><span><b>→</b> later</span><span><b>–</b> right letter</span>`
       : pics
@@ -1115,7 +1112,7 @@
       const mix = (c, a, b) => `<span class="dp-mix">${paintRow(c, "dp-paints dp-paints-inline")} ${PAINTS[c].name} = ${PAINTS[a].name} + ${PAINTS[b].name}</span>`;
       return `<p>Each row is five paints: <b>red</b>, <b>yellow</b>, <b>blue</b>, <b>white</b>, <b>black</b>, or a mix of two (black doesn't mix):</p>
         <div class="dp-mixes">${mix("O", "R", "Y")}${mix("P", "R", "B")}${mix("G", "Y", "B")}${mix("N", "R", "W")}${mix("C", "Y", "W")}${mix("L", "B", "W")}</div>
-        <p>A paint is <b data-c="hit">${colorName("hit")}</b> if it's in the secret's paint in that spot, alone or as part of a mix (white or red against pink), <b data-c="near">${colorName("near")}</b> if it's in a paint in another spot, and <b>gray</b> if it's not in the secret. A mix like pink is only <b data-c="hit">${colorName("hit")}</b> where the secret has pink.</p>`;
+        <p>A paint is <b data-c="hit">${colorName("hit")}</b> if it has a color in common with the secret's paint in that spot: white or red against pink, or pink against pink, red, white, purple or light blue. It's <b data-c="near">${colorName("near")}</b> if it has one in common with a paint in another spot, and <b>gray</b> if it has nothing in common with the secret.</p>`;
     },
     arrows: () => `<p>Words again, but no colors. Each letter gets an arrow pointing to where the secret's letter is in the alphabet:</p>
       <div class="dp-demo"><div class="dp-row">${[["c", "right"], ["r", "left"], ["a", "same"], ["n", "left"], ["e", "right"]].map(([l, f]) => `<span class="dp-tile dp-arrow-tile is-${f}">${l}<small>${ARROWS[f]}</small></span>`).join("")}</div></div>
@@ -1586,7 +1583,7 @@
             <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> half <span data-c="hit">green</span>, half <span data-c="near">yellow</span> &ndash; so you don't find out whether it's in the right position. Letters not in the word are gray.</li>
           <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
-        ${WEEKLY_ENABLED ? `<p><b>Experimental</b> (the button next to Share once you've finished the Daily) has two extras. <b>Flags · Colors · Arrows</b>, new every Monday, is three different grids: <b>Flags</b>, where each flag is split into a grid of colors; <b>Colors</b>, rows of five paints where a color counts as in a tile when it's part of the mix there (white and red are in pink); and <b>Arrows</b>, words where each letter's arrow points to the secret's letter in the alphabet. Each grid explains itself when it starts.</p>` : ""}
+        ${WEEKLY_ENABLED ? `<p><b>Experimental</b> (the button next to Share once you've finished the Daily) has two extras. <b>Flags · Colors · Arrows</b>, new every Monday, is three different grids: <b>Flags</b>, where each flag is split into a grid of colors; <b>Colors</b>, rows of five paints where a paint matches a tile when they have a color in common (white, red and pink all match pink); and <b>Arrows</b>, words where each letter's arrow points to the secret's letter in the alphabet. Each grid explains itself when it starts.</p>` : ""}
         ${SPEED_ENABLED ? `<p><b>Speed</b> (also under Experimental): 3 minutes to solve as many of the day's ${SPEED_GRIDS} grids as you can, all with full feedback. Every guess costs 2 seconds, right or wrong.</p>` : ""}
         <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
