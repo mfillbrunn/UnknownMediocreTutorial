@@ -41,10 +41,14 @@
   const MEDIA_URL = document.currentScript?.dataset.media || "unstruck-media/";
   // Weekly puzzle #1 is the week starting Monday 9 November 2026.
   const WEEKLY_LAUNCH = "2026-11-09";
-  const WEEKLY_KINDS = ["flags", "animals", "food"];
-  // Switches the Weekly (Daily/Weekly tabs, Weekly rules and credits) on or
-  // off; keep it in step with WEEKLY in scripts/build-unstruck.js.
-  const WEEKLY_ENABLED = false;
+  // The Weekly's three grids: flag pictures, rows of five paint colors, and
+  // words with alphabet arrows.
+  const WEEKLY_KINDS = ["flags", "colors", "arrows"];
+  // The kinds drawn from the picture catalog (unstruck-media/weekly.json).
+  const PIC_KINDS = ["flags", "animals", "food"];
+  // Switches the Weekly (its button on the Daily's results, its rules and
+  // credits) on or off; keep it in step with WEEKLY in scripts/build-unstruck.js.
+  const WEEKLY_ENABLED = true;
 
   let puzzles = null; // [{ answer, words }]
   let state = null; // { date, rounds: [{ guesses: [], struck: [], solved }] }
@@ -135,7 +139,7 @@
       next: () => msUntilNextDay(), nextLabel: "Next Unstruck in"
     },
     weekly: {
-      storeKey: "umt.unstruck.weekly.v2", historyKey: "umt.unstruck.weeklyHistory", par: DAY_PAR, step: 7,
+      storeKey: "umt.unstruck.weekly.v3", historyKey: "umt.unstruck.weeklyHistory", par: DAY_PAR, step: 7,
       period: () => weekStart(today()), number: weekNumber, title: "Unstruck Weekly", unit: "week", scoreLabel: "guesses this week",
       next: () => msUntilNextWeek(), nextLabel: "Next Weekly in"
     }
@@ -287,19 +291,81 @@
     });
   }
 
-  // The Weekly: one grid per kind of picture. Sixteen pictures whose color
-  // grids all differ (some flags look the same once reduced), and a secret.
+  // The Weekly: flags, colors and arrows, one grid each.
   const KIND_INFO = {
     flags: { label: "Flags", noun: "flag" },
     animals: { label: "Animals", noun: "animal" },
-    food: { label: "Food", noun: "food" }
+    food: { label: "Food", noun: "food" },
+    colors: { label: "Colors", noun: "row" },
+    arrows: { label: "Arrows", noun: "word" }
   };
 
-  function buildWeek(cat, date) {
-    // A kind only plays once it has enough distinct pictures for a grid.
-    const ready = WEEKLY_KINDS.filter(kind => new Set((cat[kind]?.items || []).map(item => item.cells)).size >= WORD_COUNT);
-    return ready.map((kind, i) => {
-      const rand = mulberry32(hash(`unstruck-weekly-1:${date}:${kind}`));
+  // The Colors grid's paints: the three primaries, white and black, and every
+  // mix of two of them except with black. A paint is its parts.
+  const PAINTS = {
+    R: { name: "red", hex: "#e03b3b", parts: "R" },
+    Y: { name: "yellow", hex: "#f7d038", parts: "Y" },
+    B: { name: "blue", hex: "#2f66d6", parts: "B" },
+    W: { name: "white", hex: "#f5f5f2", parts: "W" },
+    K: { name: "black", hex: "#16171a", parts: "K" },
+    O: { name: "orange", hex: "#f18a22", parts: "RY" },
+    P: { name: "purple", hex: "#8b45b5", parts: "RB" },
+    G: { name: "green", hex: "#169e86", parts: "YB" },
+    N: { name: "pink", hex: "#f59bbd", parts: "RW" },
+    C: { name: "light yellow", hex: "#fbf0a4", parts: "YW" },
+    L: { name: "light blue", hex: "#92c8f5", parts: "BW" }
+  };
+  const PAINT_CODES = Object.keys(PAINTS);
+  const shareAPaint = (x, y) => [...PAINTS[x].parts].some(part => PAINTS[y].parts.includes(part));
+
+  // Colors feedback, paint by paint: green when it has a base color in common
+  // with the secret's paint in the same spot (red or white against pink),
+  // yellow when it has one in common with a paint elsewhere in the secret,
+  // gray when it has none.
+  function paintFeedback(guess, answer) {
+    return [...guess].map((c, i) => (shareAPaint(c, answer[i]) ? "correct"
+      : [...answer].some((d, j) => j !== i && shareAPaint(c, d)) ? "present" : "absent"));
+  }
+
+  // Arrows feedback, letter by letter: where the secret's letter sits in the
+  // alphabet compared with the guess's ("left" = earlier), or "same".
+  function arrowFeedback(guess, answer) {
+    return [...guess].map((c, i) => (c === answer[i] ? "same" : answer[i] < c ? "left" : "right"));
+  }
+  const ARROWS = { left: "←", right: "→", same: "–" };
+
+  // Sixteen rows of five paints, built like the word grids: each new row
+  // changes one to three paints of an earlier one, so rows share a lot. No
+  // row may come out all green against another (it would look solved).
+  function buildColors(seed) {
+    const rand = mulberry32(hash(seed));
+    const paint = () => PAINT_CODES[Math.floor(rand() * PAINT_CODES.length)];
+    const allGreen = (a, b) => paintFeedback(a, b).every(f => f === "correct");
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const rows = [Array.from({ length: 5 }, paint).join("")];
+      for (let tries = 0; rows.length < WORD_COUNT && tries < 3000; tries++) {
+        const row = [...rows[Math.floor(rand() * rows.length)]];
+        const changes = 1 + Math.floor(rand() * 3);
+        for (let k = 0; k < changes; k++) row[Math.floor(rand() * 5)] = paint();
+        const next = row.join("");
+        if (!rows.some(other => allGreen(other, next))) rows.push(next);
+      }
+      if (rows.length === WORD_COUNT) return { answer: rows[Math.floor(rand() * rows.length)], words: shuffle(rows, rand) };
+    }
+    throw new Error("Unstruck: couldn't build the Colors grid");
+  }
+
+  function buildWeek(cat, date, list) {
+    return WEEKLY_KINDS.map(kind => {
+      const seed = `unstruck-weekly-1:${date}:${kind}`;
+      if (kind === "colors") return { kind, ...buildColors(seed), mode: "full" };
+      if (kind === "arrows") {
+        const { answer, words } = buildPuzzle(list, seed, new Set(), pickRecipe(mulberry32(hash(`${seed}:recipe`))));
+        return { kind, answer, words, mode: "full" };
+      }
+      // A picture kind only plays once it has enough distinct pictures.
+      if (new Set((cat[kind]?.items || []).map(item => item.cells)).size < WORD_COUNT) return null;
+      const rand = mulberry32(hash(seed));
       const seen = new Set();
       const picks = [];
       for (const item of shuffle(cat[kind].items, rand)) {
@@ -309,13 +375,16 @@
         picks.push(item.id);
       }
       const answer = picks[Math.floor(rand() * picks.length)];
-      return { kind, answer, words: picks, mode: "full", number: i + 1 };
-    });
+      return { kind, answer, words: picks, mode: "full" };
+    }).filter(Boolean);
   }
 
   const itemOf = (kind, id) => catalog[kind].byId[id];
   // The thing a puzzle's tile shows by name: the word, or the picture's name.
-  const labelOf = (puzzle, id) => (puzzle.kind ? itemOf(puzzle.kind, id).name : id.toUpperCase());
+  const labelOf = (puzzle, id) => (PIC_KINDS.includes(puzzle.kind) ? itemOf(puzzle.kind, id).name
+    : puzzle.kind === "colors" ? [...id].map(c => PAINTS[c].name).join(", ") : id.toUpperCase());
+  // A row of paints as little swatches.
+  const paintRow = (id, cls = "dp-paints") => `<span class="${cls}">${[...id].map(c => `<i style="background:${PAINTS[c].hex}"></i>`).join("")}</span>`;
 
   // Golf names for a score relative to par.
   function golfTerm(diff) {
@@ -582,7 +651,7 @@
         <div class="dp-score-verdict ${diff <= 0 ? "is-good" : "is-over"}">${golfTerm(diff)} <span>${diff === 0 ? `(even with par ${G().par})` : `(${relToPar(diff)} vs par ${G().par})`}</span></div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
-      <button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button>
+      <div class="dp-share-row"><button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button>${game === "daily" && WEEKLY_ENABLED ? `<button type="button" class="dp-next dp-weekly-btn" data-game="weekly">Weekly →</button>` : ""}</div>
       <div class="dp-views" role="tablist">
         <button type="button" class="dp-view${summaryView === "overall" ? " is-on" : ""}" data-view="overall" role="tab">Overall</button>
         <button type="button" class="dp-view${summaryView === "details" ? " is-on" : ""}" data-view="details" role="tab">Details</button>
@@ -630,7 +699,9 @@
     setTitle(current + 1);
     const puzzle = puzzles[current];
     const { answer: secret, words, mode, kind } = puzzle;
-    const pics = !!kind;
+    const pics = PIC_KINDS.includes(kind);
+    const paints = kind === "colors";
+    const arrows = kind === "arrows";
     const info = pics ? catalog[kind] : null;
     const r = round();
     const lastGuess = r.guesses[r.guesses.length - 1];
@@ -639,7 +710,7 @@
     const code = id => (pics ? itemOf(kind, id).cells : id);
     const name = id => labelOf(puzzle, id);
     // What a guess reveals under this grid's rule, letter (or cell) by letter.
-    const compare = (g, a) => (pics ? colorFeedback(g, a) : feedback(g, a));
+    const compare = (g, a) => (pics ? colorFeedback(g, a) : paints ? paintFeedback(g, a) : arrows ? arrowFeedback(g, a) : feedback(g, a));
     const shownResult = guess => compare(code(guess), code(secret)).map(f => (mode === "split" && guess !== secret && f !== "absent" ? "in" : f));
     const counts = guess => {
       const result = compare(code(guess), code(secret));
@@ -649,6 +720,7 @@
     // evidence stays on the board.
     const mini = guess => {
       if (pics) return `<span class="dp-mini dp-mini-grid" style="--cols:${info.cols}">${shownResult(guess).map(f => `<i class="is-${f}"></i>`).join("")}</span>`;
+      if (arrows) return `<span class="dp-mini dp-mini-arrows">${shownResult(guess).map(f => `<i class="is-${f}">${ARROWS[f]}</i>`).join("")}</span>`;
       if (mode === "counts") {
         const [g, y] = counts(guess);
         return `<span class="dp-mini"><i class="is-correct is-count">${g}</i><i class="is-present is-count">${y}</i></span>`;
@@ -657,7 +729,7 @@
     };
     const face = id => (pics
       ? `<img class="dp-pic" src="${MEDIA_URL}${itemOf(kind, id).img}" alt="" draggable="false"><span class="dp-pic-name">${name(id)}</span>`
-      : id);
+      : paints ? paintRow(id) : id);
 
     const buttons = words.map(word => {
       const struck = r.struck.includes(word);
@@ -674,7 +746,11 @@
     const SPLIT_TILE = SPLIT_FILL;
     const swatch = (color, label, round) =>
       `<span><i class="${round ? "is-round" : ""}" style="background:${color}"></i>${label}</span>`;
-    const key = pics
+    const key = paints
+      ? swatch("var(--dp-hit)", "Shares a color, same spot") + swatch("var(--dp-near)", "Shares a color elsewhere") + swatch("#555b63", "Nothing shared")
+      : arrows
+      ? `<span><b>←</b> secret's letter is earlier</span><span><b>→</b> later</span><span><b>–</b> right letter</span>`
+      : pics
       ? swatch("var(--dp-hit)", "Same color, same spot") + swatch("var(--dp-near)", "Color is elsewhere") + swatch("#555b63", "Color not in it")
       : {
         full: swatch("var(--dp-hit)", "Right spot") + swatch("var(--dp-near)", "Wrong spot") + swatch("#555b63", "Not in word"),
@@ -694,6 +770,14 @@
           <span class="dp-pic-guess"><img src="${MEDIA_URL}${itemOf(kind, guess).img}" alt="" style="aspect-ratio:${info.ratio}"><small>${name(guess)}</small></span>
           <span class="dp-arrow">→</span>
           <span class="dp-fb-grid" style="--cols:${info.cols};aspect-ratio:${info.ratio}">${cells}</span></div>`;
+      }
+      if (paints) {
+        return `<div class="${rowClass}">${shownResult(guess).map((f, i) =>
+          `<span class="dp-tile dp-paint-tile" style="--i:${i}"><i style="background:${PAINTS[guess[i]].hex}"></i><b class="is-${f}"></b></span>`).join("")}</div>`;
+      }
+      if (arrows) {
+        return `<div class="${rowClass}">${shownResult(guess).map((f, i) =>
+          `<span class="dp-tile dp-arrow-tile is-${f}" style="--i:${i}">${guess[i]}<small>${ARROWS[f]}</small></span>`).join("")}</div>`;
       }
       if (mode === "counts" && guess !== secret) {
         const [g, y] = counts(guess);
@@ -719,13 +803,15 @@
       const aNoun = /^[aeiou]/.test(noun) ? `an ${noun}` : `a ${noun}`;
       // The tutorial covers tapping, so after the first guess there's no hint.
       hint = r.guesses.length ? "" : `Tap ${noun === "food" ? "one" : aNoun} to pick your first guess`;
-      action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess ${pics ? name(selected) : selected.toUpperCase()}` : "Guess"}</button>`;
+      const pick = !selected ? "" : pics ? ` ${name(selected)}` : paints ? ` ${paintRow(selected, "dp-paints dp-paints-inline")}` : ` ${selected.toUpperCase()}`;
+      action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>Guess${pick}</button>`;
     }
     // Keeps the panel the same height once the button is gone.
     if (!action) action = `<button type="button" class="dp-next" tabindex="-1" aria-hidden="true" style="visibility:hidden">&nbsp;</button>`;
 
-    const exit = playMode === "practice" ? `<button type="button" class="dp-link" data-practice="end">← Back to today's Unstruck</button>` : "";
-    root.innerHTML = `<div class="dp-board${pics ? ` is-pics is-${kind}` : ""}" style="${pics ? `--ratio:${info.ratio}` : ""}">${buttons}</div>
+    const exit = playMode === "practice" ? `<button type="button" class="dp-link" data-practice="end">← Back to today's Unstruck</button>`
+      : game === "weekly" ? `<button type="button" class="dp-link" data-game="daily">← Back to the Daily</button>` : "";
+    root.innerHTML = `<div class="dp-board${pics ? ` is-pics is-${kind}` : kind ? ` is-${kind}` : ""}" style="${pics ? `--ratio:${info.ratio}` : ""}">${buttons}</div>
       <div class="dp-center">${lastGuess ? `<div class="dp-last">Last guess</div>${tiles(lastGuess)}` : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>${exit}`;
   }
 
@@ -857,32 +943,34 @@
   };
   const ruleOpen = () => !!$("dpRule") && !$("dpRule").hidden;
 
-  // The first time anyone opens the Weekly: how picture feedback works.
-  const WEEKLY_INTRO_KEY = "umt.unstruck.weeklyIntroSeen";
-  function maybeAnnounceWeekly() {
-    try { if (localStorage.getItem(WEEKLY_INTRO_KEY)) return; localStorage.setItem(WEEKLY_INTRO_KEY, "1"); } catch (e) { return; }
-    stopClock();
-    const demo = ["absent", "correct", "correct", "present", "absent", "correct"].map(f => `<span class="dp-cell is-${f}"></span>`).join("");
-    $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">The Weekly</div>
-      <p>Three grids of pictures, new every Monday: <b>flags</b>, <b>animals</b> and <b>food</b>.</p>
-      <p>Each picture is split into a grid of colors. Guess one, and each cell of the feedback shows how that color compares with the secret picture:</p>
-      <div class="dp-demo"><span class="dp-fb-grid is-demo" style="--cols:3">${demo}</span></div>
-      <p><b data-c="hit">${colorName("hit")}</b>: same color in the same spot. <b data-c="near">${colorName("near")}</b>: that color is somewhere else in it. <b>Gray</b>: the secret has none of that color.</p>
-      <button id="dpRuleClose" class="dp-next" type="button">Got it</button>`;
-    $("dpRule").hidden = false;
-    $("dpRuleClose").focus({ preventScroll: true });
-  }
+  // The Weekly's grids each get their own card, once a week, as they start.
+  const WEEKLY_RULES = {
+    flags: () => {
+      const demo = ["absent", "correct", "correct", "present", "absent", "correct"].map(f => `<span class="dp-cell is-${f}"></span>`).join("");
+      return `<p>Find the secret <b>flag</b>. Each flag is split into a grid of colors; guess one, and each cell shows how that color compares with the secret flag:</p>
+        <div class="dp-demo"><span class="dp-fb-grid is-demo" style="--cols:3">${demo}</span></div>
+        <p><b data-c="hit">${colorName("hit")}</b>: same color in the same spot. <b data-c="near">${colorName("near")}</b>: that color is somewhere else in it. <b>Gray</b>: the secret has none of that color.</p>`;
+    },
+    colors: () => {
+      const mix = (c, a, b) => `<span class="dp-mix">${paintRow(c, "dp-paints dp-paints-inline")} ${PAINTS[c].name} = ${PAINTS[a].name} + ${PAINTS[b].name}</span>`;
+      return `<p>Each row is five paints: <b>red</b>, <b>yellow</b>, <b>blue</b>, <b>white</b>, <b>black</b>, or a mix of two (black doesn't mix):</p>
+        <div class="dp-mixes">${mix("O", "R", "Y")}${mix("P", "R", "B")}${mix("G", "Y", "B")}${mix("N", "R", "W")}${mix("C", "Y", "W")}${mix("L", "B", "W")}</div>
+        <p>A paint is <b data-c="hit">${colorName("hit")}</b> if it shares a color with the secret's paint in that spot (red or white against pink), <b data-c="near">${colorName("near")}</b> if it shares one with a paint elsewhere in the secret, and <b>gray</b> if it shares none.</p>`;
+    },
+    arrows: () => `<p>Words again, but no colors. Each letter gets an arrow pointing to where the secret's letter is in the alphabet:</p>
+      <div class="dp-demo"><div class="dp-row">${[["c", "right"], ["r", "left"], ["a", "same"], ["n", "left"], ["e", "right"]].map(([l, f]) => `<span class="dp-tile dp-arrow-tile is-${f}">${l}<small>${ARROWS[f]}</small></span>`).join("")}</div></div>
+      <p><b>←</b> the secret's letter comes earlier (A side), <b>→</b> it comes later (Z side), <b>–</b> it's the right letter.</p>`
+  };
 
   function maybeAnnounceRule() {
-    if (game === "weekly") return maybeAnnounceWeekly();
     const r = round();
-    const rule = RULES[puzzles[current].mode]?.();
+    const rule = game === "weekly" ? WEEKLY_RULES[puzzles[current].kind]?.() : RULES[puzzles[current].mode]?.();
     state.announced = state.announced || [];
     if (playMode !== "daily" || !rule || r.guesses.length || state.announced[current] || allSolved()) return;
     state.announced[current] = true;
     save();
     stopClock();
-    $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">Grid ${current + 1} of ${PUZZLE_COUNT}</div>
+    $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">${game === "weekly" ? `Weekly · ${KIND_INFO[puzzles[current].kind].label} · ` : ""}Grid ${current + 1} of ${puzzles.length}</div>
       <p>${rule}</p>
       <button id="dpRuleClose" class="dp-next" type="button">Got it</button>`;
     $("dpRule").hidden = false;
@@ -904,19 +992,19 @@
     const previous = game;
     game = which; // load() reads the game's own keys
     try {
+      if (!wordList) {
+        const text = await (await fetch(WORDS_URL)).text();
+        wordList = [...new Set(text.split(/\s+/).map(w => w.toLowerCase()).filter(w => /^[a-z]{5}$/.test(w)))].sort();
+      }
       if (which === "daily") {
-        if (!wordList) {
-          const text = await (await fetch(WORDS_URL)).text();
-          wordList = [...new Set(text.split(/\s+/).map(w => w.toLowerCase()).filter(w => /^[a-z]{5}$/.test(w)))].sort();
-        }
         slot.state = load();
         slot.puzzles = buildDay(wordList, period);
       } else {
         if (!catalog) {
           catalog = await (await fetch(`${MEDIA_URL}weekly.json`)).json();
-          for (const kind of WEEKLY_KINDS) catalog[kind].byId = Object.fromEntries(catalog[kind].items.map(item => [item.id, item]));
+          for (const kind of PIC_KINDS) if (catalog[kind]) catalog[kind].byId = Object.fromEntries(catalog[kind].items.map(item => [item.id, item]));
         }
-        slot.puzzles = buildWeek(catalog, period);
+        slot.puzzles = buildWeek(catalog, period, wordList);
         slot.state = load(slot.puzzles.length);
       }
     } finally {
@@ -1191,10 +1279,6 @@
           <button id="dpBackBtn" class="dp-close" type="button" aria-label="Close"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
         </div>
       </div>
-      ${WEEKLY_ENABLED ? `      <div class="dp-tabs" role="tablist">
-        <button type="button" class="dp-tab is-on" data-game="daily" role="tab">Daily</button>
-        <button type="button" class="dp-tab" data-game="weekly" role="tab">Weekly</button>
-      </div>` : ""}
       <div id="dailyPickRoot"></div>
       <div id="dpIntro" class="dp-intro" role="dialog" aria-modal="true" aria-label="Welcome to Unstruck" hidden>
         <div id="dpIntroCard" class="dp-intro-card dp-tutorial"></div>
@@ -1221,14 +1305,14 @@
             <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> half <span data-c="hit">green</span>, half <span data-c="near">yellow</span> &ndash; so you don't find out whether it's in the right position. Letters not in the word are gray.</li>
           <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
-        ${WEEKLY_ENABLED ? `<p><b>The Weekly</b> (new every Monday) works the same way with pictures: flags, animal emoji and food emoji. Each picture is split into a grid of colors. A cell is <span data-c="hit">green</span> if the secret has the same color in the same spot, <span data-c="near">yellow</span> if that color is somewhere else in it, and gray if the secret doesn't have that color at all.</p>` : ""}
+        ${WEEKLY_ENABLED ? `<p><b>The Weekly</b> (new every Monday, from the button next to Share once you've finished the Daily) has three different grids: <b>Flags</b>, where each flag is split into a grid of colors; <b>Colors</b>, rows of five paints where a mixed paint (like pink = red + white) counts as both its colors; and <b>Arrows</b>, words where each letter's arrow points to the secret's letter in the alphabet. Each grid explains itself when it starts.</p>` : ""}
         <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
         <button id="dpTutorialBtn" class="dp-link" type="button">Replay the tutorial</button>
         <button class="dp-link" type="button" data-practice="start">Play the practice grid</button>
         <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div>
-        ${WEEKLY_ENABLED ? `<div class="dp-copyright">Emoji graphics: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a>, CC-BY 4.0. Flags: <a href="https://github.com/lipis/flag-icons" target="_blank" rel="noopener">flag-icons</a>, MIT.</div>` : ""}
+        ${WEEKLY_ENABLED ? `<div class="dp-copyright">Flags: <a href="https://github.com/lipis/flag-icons" target="_blank" rel="noopener">flag-icons</a>, MIT.</div>` : ""}
       </div>
     </div>`;
 

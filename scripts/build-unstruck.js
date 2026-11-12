@@ -41,10 +41,14 @@ for (const [from, to] of files) {
   version[to] = crypto.createHash("sha1").update(data).digest("hex").slice(0, 8);
 }
 
-// The Weekly's pictures and their color data, as they are.
+// The Weekly's pictures (only the flags are played) and their color data.
 // (Only while the Weekly is switched on in client/daily-pick.js.)
-const WEEKLY = false;
-if (WEEKLY) fs.cpSync(path.join(pub, "unstruck-media"), path.join(out, "media"), { recursive: true });
+const WEEKLY = true;
+if (WEEKLY) {
+  fs.mkdirSync(path.join(out, "media"), { recursive: true });
+  fs.copyFileSync(path.join(pub, "unstruck-media/weekly.json"), path.join(out, "media/weekly.json"));
+  fs.cpSync(path.join(pub, "unstruck-media/flags"), path.join(out, "media/flags"), { recursive: true });
+}
 
 // The page: same as public/unstruck/index.html, with every path local.
 let html = fs.readFileSync(path.join(pub, "unstruck/index.html"), "utf8");

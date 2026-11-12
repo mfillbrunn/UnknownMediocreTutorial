@@ -737,3 +737,54 @@ body.dp-light-page { background: #eef1f6; }
 .dp-pane { grid-area: 1 / 1; display: flex; flex-direction: column; gap: 8px; }
 .dp-pane[aria-hidden="true"] { visibility: hidden; }
 .dp-pane > .dp-details, .dp-pane > .dp-dist { flex: 1; }
+
+/* ---------- Results: Share and Weekly side by side ---------- */
+.dp-share-row { display: flex; justify-content: center; align-items: stretch; gap: 10px; margin: 4px 0; }
+.dp-summary .dp-share-row > .dp-next { height: 52px; padding-top: 0; padding-bottom: 0; box-sizing: border-box; }
+.dp-summary .dp-share-row .dp-share { margin: 0; }
+.dp-share-row:has(.dp-weekly-btn) .dp-share { width: auto; min-width: 0; flex: 1 1 0; }
+.dp-weekly-btn {
+  flex: 1 1 0; border-radius: 999px; padding: 13px 0;
+  background: rgba(255,255,255,.1); color: inherit; border-color: rgba(255,255,255,.28);
+}
+#dailyPickScreen .dp-summary .dp-weekly-btn { font-size: 18px !important; }
+#dailyPickScreen.dp-light .dp-summary .dp-weekly-btn { background: #fff; color: #1b1f27; border-color: #c3cad5; }
+
+/* ---------- Weekly: Colors ---------- */
+.dp-paints { display: inline-flex; gap: 3px; }
+.dp-paints i {
+  width: clamp(10px, 3vw, 14px); height: clamp(18px, 5.4vw, 26px); border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.18);
+}
+.dp-board.is-colors .dp-word { padding: 22px 0 26px; display: grid; place-items: center; }
+.dp-board.is-colors .dp-word.is-struck .dp-paints { opacity: .32; filter: grayscale(.5); }
+.dp-board.is-colors .dp-word.is-struck::after { top: 42%; }
+.dp-board.is-colors .dp-word.is-guessed .dp-paints { opacity: .45; }
+.dp-board.is-colors .dp-word.is-selected .dp-paints i { box-shadow: inset 0 0 0 1px rgba(0,0,0,.35), 0 0 0 1px #fff; }
+.dp-paints-inline { vertical-align: middle; margin-left: 4px; }
+.dp-paints-inline i { width: 10px; height: 16px; }
+/* A paint guessed: the paint itself, its feedback as a bar underneath. */
+.dp-paint-tile { flex-direction: column; gap: 5px; height: auto; background: none; }
+.dp-paint-tile i {
+  display: block; width: 100%; aspect-ratio: 1; border-radius: 7px;
+  box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.2);
+}
+.dp-paint-tile b { display: block; width: 100%; height: 7px; border-radius: 4px; }
+.dp-paint-tile b.is-correct { background: var(--dp-hit); }
+.dp-paint-tile b.is-present { background: var(--dp-near); }
+.dp-paint-tile b.is-absent { background: #555b63; }
+.dp-mixes { display: grid; gap: 5px; width: max-content; margin: 2px auto 10px; font-size: 14px; text-align: left; }
+.dp-mix { display: flex; align-items: center; gap: 6px; }
+.dp-mix .dp-paints-inline { margin: 0; }
+.dp-mix .dp-paints-inline i:not(:first-child) { display: none; }
+
+/* ---------- Weekly: Arrows (no colors at all) ---------- */
+.dp-arrow-tile {
+  flex-direction: column; gap: 1px; line-height: 1;
+  background: #3a3f47; border: 1.5px solid rgba(255,255,255,.18);
+}
+.dp-arrow-tile small { font-size: .8em; font-weight: 800; opacity: .9; }
+.dp-mini-arrows { gap: 4px; bottom: 5px; }
+.dp-mini-arrows i { width: auto; height: auto; font-style: normal; font-weight: 800; font-size: 12px; line-height: 1; }
+.dp-key b { font-weight: 900; }
+#dailyPickScreen.dp-light .dp-arrow-tile { background: #eef1f5; color: #1b1f27; border-color: #cbd2dc; }
