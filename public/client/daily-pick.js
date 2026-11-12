@@ -684,7 +684,7 @@
     const grids = state.rounds.map((r, i) => {
       const n = r.guesses.length;
       const t = gridTimes()[i];
-      const time = t != null ? `<span class="dp-grid-time">⏱ ${formatTime(t)}</span>` : "";
+      const time = t != null ? `<span class="dp-grid-time">${CLOCK_ICON}${formatTime(t)}</span>` : "";
       return `<div class="dp-grid-score"><span class="dp-grid-name">${gridName(i)}</span>
         <b>${n}</b><span class="dp-grid-unit">${n === 1 ? "Hole in one!" : "guesses"}</span>${time}</div>`;
     }).join("");
@@ -698,7 +698,7 @@
         <div class="dp-score-verdict ${diff <= 0 ? "is-good" : "is-over"}">${golfTerm(diff)} <span>${diff === 0 ? `(even with par ${G().par})` : `(${relToPar(diff)} vs par ${G().par})`}</span></div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
-      <div class="dp-share-row">${game === "daily" ? `<button type="button" class="dp-next dp-side-btn" data-game="speed">⚡ Speed</button>` : ""}<button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button>${game === "daily" && WEEKLY_ENABLED ? `<button type="button" class="dp-next dp-side-btn" data-game="weekly">Experimental</button>` : ""}</div>
+      <div class="dp-share-row">${game === "daily" ? `<button type="button" class="dp-next dp-side-btn" data-game="speed">Speed</button>` : ""}<button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button>${game === "daily" && WEEKLY_ENABLED ? `<button type="button" class="dp-next dp-side-btn" data-game="weekly">Experimental</button>` : ""}</div>
       <div class="dp-views" role="tablist">
         <button type="button" class="dp-view${summaryView === "overall" ? " is-on" : ""}" data-view="overall" role="tab">Overall</button>
         <button type="button" class="dp-view${summaryView === "details" ? " is-on" : ""}" data-view="details" role="tab">Details</button>
@@ -996,6 +996,9 @@
       link
     ].join("\n");
   }
+
+  // A small stylized clock (face, hands, a crown on top), drawn in the text color.
+  const CLOCK_ICON = `<svg class="dp-clock-icon" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false"><circle cx="8" cy="9" r="5.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 6.2V9l1.9 1.3M6.6 1.6h2.8M8 1.6v1.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
   // The Share button's label: a share icon (box with an arrow) and the word.
   const SHARE_LABEL = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share`;
