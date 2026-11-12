@@ -51,8 +51,8 @@
   const WEEKLY_ENABLED = true;
   // Speed: as many of the day's ten grids (all with full feedback) as you can
   // solve in three minutes; every guess, right or wrong, costs two seconds.
-  // Switched off: Speed's button and rules are hidden, and it can't be opened.
-  const SPEED_ENABLED = false;
+  // Switches Speed (its button on the Daily's results and its rules) on or off.
+  const SPEED_ENABLED = true;
   const SPEED_GRIDS = 10;
   const SPEED_MS = 180000;
   const SPEED_PENALTY_MS = 2000;
