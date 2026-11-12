@@ -594,7 +594,7 @@
   }
 
   function startClock() {
-    if (runningSince || over() || !$("dailyPickScreen")?.classList.contains("active") || helpOpen() || introOpen() || ruleOpen()) return;
+    if (runningSince || over() || !$("dailyPickScreen")?.classList.contains("active") || helpOpen() || introOpen() || ruleOpen() || splashOpen()) return;
     runningSince = Date.now();
     ticker = setInterval(showClock, 250);
   }
@@ -1117,12 +1117,53 @@
       <p><b>←</b> the secret's letter comes earlier (A side), <b>→</b> it comes later (Z side), <b>–</b> it's the right letter.</p>`
   };
 
+  // Each Daily rule's full card shows once per device; days after that just
+  // get the banner. Anyone who has finished a day before has seen them.
+  const RULES_SEEN_KEY = "umt.unstruck.rulesSeen";
+  function ruleSeen(mode) {
+    try {
+      const seen = JSON.parse(localStorage.getItem(RULES_SEEN_KEY)) || {};
+      if (seen[mode]) return true;
+      if (Object.keys(JSON.parse(localStorage.getItem(HISTORY_KEY)) || {}).length) return true;
+      seen[mode] = 1;
+      localStorage.setItem(RULES_SEEN_KEY, JSON.stringify(seen));
+    } catch (e) { /* private mode: show it */ }
+    return false;
+  }
+
+  // A new Daily grid's banner: "Grid 2" and one line on its feedback. It
+  // drops in over the board and leaves by itself; play goes on underneath.
+  const BANNER_LINES = {
+    full: () => `<span class="dp-help-chip" style="background:var(--dp-hit)"></span> right spot <span class="dp-help-chip" style="background:var(--dp-near)"></span> wrong spot`,
+    split: () => `<span class="dp-help-chip" style="background:${SPLIT_FILL}"></span> in the word, spot not shown`,
+    counts: () => `Only counts: <i class="dp-rule-count is-correct">2</i> right spot <i class="dp-rule-count is-present">1</i> wrong spot`
+  };
+  let bannerTimer = null;
+  function showBanner() {
+    const banner = $("dpBanner");
+    if (!banner) return;
+    banner.innerHTML = `<b>Grid ${current + 1}</b><span>${BANNER_LINES[puzzles[current].mode]()}</span>`;
+    banner.hidden = false;
+    banner.classList.remove("is-showing");
+    void banner.offsetWidth;
+    banner.classList.add("is-showing");
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(() => { banner.hidden = true; banner.classList.remove("is-showing"); }, 2200);
+  }
+
   function maybeAnnounceRule() {
     const r = round();
     const rule = game === "weekly" ? WEEKLY_RULES[puzzles[current].kind]?.()
       : game === "speed" ? (current === 0 ? SPEED_RULE : null) : RULES[puzzles[current].mode]?.();
     state.announced = state.announced || [];
-    if (playMode !== "daily" || !rule || r.guesses.length || state.announced[current] || over()) return;
+    if (playMode !== "daily" || r.guesses.length || state.announced[current] || over()) return;
+    // The Daily: a banner, or the full rule the first time it comes up.
+    if (game === "daily" && (!rule || ruleSeen(puzzles[current].mode))) {
+      state.announced[current] = true;
+      save();
+      return showBanner();
+    }
+    if (!rule) return;
     state.announced[current] = true;
     save();
     stopClock();
@@ -1197,9 +1238,51 @@
     current = firstUnsolved();
     selected = "";
     render();
-    if (game === "daily" && !introSeen()) openIntro();
-    else startClock();
+    // Opening Unstruck shows the start screen first (not once the day is done).
+    if (game === "daily" && playMode === "daily" && !splashDone && !over()) {
+      splashDone = true;
+      openSplash();
+      return;
+    }
+    beginPlay();
+  }
+
+  // Off the start screen: the tutorial for newcomers, else the clock and the
+  // grid's banner (or its rule, the first time).
+  function beginPlay() {
+    if (game === "daily" && !introSeen()) return openIntro();
+    startClock();
     maybeAnnounceRule();
+  }
+
+  // ---- Start screen --------------------------------------------------------
+  let splashDone = false;
+  const splashOpen = () => !!$("dpStart") && !$("dpStart").hidden;
+
+  function openSplash() {
+    const n = G().number(state.date);
+    const streak = computeStats().current;
+    const started = totalGuesses() > 0 || (state.elapsed || 0) > 0;
+    const day = new Date(`${state.date}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
+    const label = started ? `Continue Unstruck #${n}` : streak ? `Continue your ${streak}-day streak` : `Play Unstruck #${n}`;
+    const sub = started ? `Grid ${current + 1} of ${puzzles.length} · ${formatTime(elapsed())}` : streak ? `Play Unstruck #${n}` : "";
+    $("dpStartCard").innerHTML = `<div class="dp-start-title">Unstruck</div>
+      <div class="dp-start-date">#${n} · ${day}</div>
+      <button type="button" class="dp-next dp-share dp-start-play" id="dpStartPlay">${label}</button>
+      ${sub ? `<div class="dp-start-sub">${sub}</div>` : ""}
+      <button type="button" class="dp-link" id="dpStartHelp">How to play</button>`;
+    $("dailyPickScreen").classList.add("is-splash");
+    $("dpStart").hidden = false;
+    setTitle(0);
+  }
+
+  function closeSplash() {
+    if (!splashOpen()) return;
+    $("dpStart").hidden = true;
+    $("dailyPickScreen").classList.remove("is-splash");
+    setTitle(current + 1);
+    flapIn();
+    beginPlay();
   }
 
   // ---- Practice grid ----------------------------------------------------------
@@ -1386,6 +1469,7 @@
     if (!intro || intro.hidden) return;
     intro.hidden = true;
     startClock();
+    maybeAnnounceRule();
   }
 
   function openHelp() {
@@ -1442,6 +1526,10 @@
       <div id="dailyPickRoot"></div>
       <div id="dpIntro" class="dp-intro" role="dialog" aria-modal="true" aria-label="Welcome to Unstruck" hidden>
         <div id="dpIntroCard" class="dp-intro-card dp-tutorial"></div>
+      </div>
+      <div id="dpBanner" class="dp-banner" role="status" hidden></div>
+      <div id="dpStart" class="dp-intro dp-start" role="dialog" aria-modal="true" aria-label="Start Unstruck" hidden>
+        <div id="dpStartCard" class="dp-intro-card dp-start-card"></div>
       </div>
       <div id="dpRule" class="dp-intro" role="dialog" aria-modal="true" aria-label="This grid's rule" hidden>
         <div id="dpRuleCard" class="dp-intro-card"></div>
@@ -1504,6 +1592,10 @@
     $("dpIntro")?.addEventListener("click", onTutorialClick);
     $("dpTutorialBtn")?.addEventListener("click", openIntro);
     $("dpRule")?.addEventListener("click", event => { if (event.target.closest("#dpRuleClose")) closeRule(); });
+    $("dpStart")?.addEventListener("click", event => {
+      if (event.target.closest("#dpStartPlay")) closeSplash();
+      else if (event.target.closest("#dpStartHelp")) openHelp();
+    });
     document.addEventListener("keydown", event => {
       if (event.key === "Escape") { closeRule(); closeIntro(); closeHelp(); }
     });
