@@ -9,6 +9,9 @@
   // Serve it at the account's workers.dev address
   "workers_dev": true,
   "main": "worker/archive-gate.js",
+  // Keep variables set in the Cloudflare dashboard (like ARCHIVE_PASSWORD
+  // added as plain text) when a new version is deployed.
+  "keep_vars": true,
   "assets": {
     "directory": "./dist/unstruck"
   }
