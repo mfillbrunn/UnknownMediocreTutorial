@@ -843,10 +843,9 @@ body.dp-light-page { background: #eef1f6; }
 .dp-start-card { text-align: center; width: 100%; max-width: 320px; padding: 28px 22px 18px; }
 .dp-start-title { font-size: 34px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
 .dp-start-date { margin: 4px 0 18px; font-size: 14px; opacity: .65; }
-.dp-intro-card .dp-start-play {
-  width: 100%; margin-top: 0; padding: 14px 0; border-radius: 999px; font-size: 18px !important;
-  box-shadow: 0 6px 18px rgba(59,125,216,.4);
-}
+/* Play: the same plain button as the game's others (like "Got it"), just full width. */
+.dp-intro-card .dp-start-play { width: 100%; margin-top: 0; padding: 13px 0; }
+#dailyPickScreen .dp-intro-card .dp-start-play { font-size: 17px !important; }
 .dp-start-sub { margin-top: 8px; font-size: 14px; opacity: .7; }
 .dp-start-card .dp-link { margin-top: 14px; }
 #dailyPickScreen.dp-light .dp-start-card { background: #fff; border-color: #d3d9e3; color: #1b1f27; }
