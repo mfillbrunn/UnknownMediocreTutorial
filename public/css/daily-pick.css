@@ -954,3 +954,30 @@ body.dp-light-page { background: #eef1f6; }
 .dp-word.is-lost-secret { border-color: #e5484d; box-shadow: 0 0 0 2px rgba(229,72,77,.45); }
 .dp-result.is-lost { color: #ff7a7e; }
 .dp-grid-score.is-lost b { color: #ff7a7e; }
+
+/* ---------- Rating the grids ---------- */
+#dpChooseCard { max-height: calc(100% - 8px); overflow-y: auto; }
+.dp-rate-open {
+  align-self: center; padding: 8px 18px; border-radius: 999px; cursor: pointer;
+  background: transparent; color: #f2c14e; border: 1.5px solid rgba(242,193,78,.55);
+  font-family: inherit; font-weight: 800;
+}
+#dailyPickScreen .dp-rate-open { font-size: 14px !important; }
+.dp-rate-note { text-align: center; font-size: 13px; opacity: .65; margin-top: -4px; }
+.dp-rate-group { display: flex; flex-direction: column; gap: 2px; }
+.dp-rate-head { font-size: 12px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; opacity: .55; margin: 4px 0 2px; }
+.dp-rate-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; }
+.dp-stars { display: inline-flex; flex-shrink: 0; }
+.dp-star {
+  width: 30px; height: 32px; padding: 0; border: 0; background: none; cursor: pointer;
+  color: rgba(255,255,255,.22); line-height: 1;
+}
+#dailyPickScreen .dp-star { font-size: 24px !important; }
+.dp-star.is-on { color: #f2c14e; }
+.dp-star:active { transform: scale(.88); }
+.dp-choose-card .dp-share { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; padding: 12px 0; margin-top: 4px; }
+#dailyPickScreen.dp-light .dp-star { color: #cfd5de; }
+#dailyPickScreen.dp-light .dp-star.is-on { color: #e0a800; }
+#dailyPickScreen.dp-light .dp-rate-open { color: #b07f00; border-color: #e0b84a; }
+.dp-rate-row > span:first-child { text-align: left; }
+.dp-star { width: 26px; } .dp-rate-row > span:first-child { white-space: nowrap; }

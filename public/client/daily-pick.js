@@ -1156,7 +1156,11 @@
   // there is one; otherwise the result is copied for pasting anywhere.
   async function share(button) {
     track("shared");
-    const text = shareText();
+    shareOut(shareText(), button, SHARE_LABEL);
+  }
+
+  // The phone's share sheet, else the clipboard; the button says which.
+  async function shareOut(text, button, label) {
     if (navigator.share) {
       try {
         await navigator.share({ text });
@@ -1167,7 +1171,7 @@
     }
     const copied = await copyText(text);
     button.textContent = copied ? "Copied! Paste it anywhere" : "Couldn't copy";
-    setTimeout(() => { button.innerHTML = SHARE_LABEL; }, 2500);
+    setTimeout(() => { button.innerHTML = label; }, 2500);
   }
 
   async function copyText(text) {
@@ -1503,8 +1507,51 @@
       ${SPEED_ENABLED ? option("speed", "Speed", `3 minutes to solve as many of today's ${SPEED_GRIDS} grids as you can`) : ""}
       ${WEEKLY_ENABLED ? option("weekly", "Flags · Colors · Arrows", "Three new kinds of grid, new every Monday") : ""}
       ${TWISTS_ENABLED ? option("twists", "One letter · Autopilot · Pick two", "Word grids with a twist: one letter of feedback at a time, guesses made for you, or a choice of two. New every Monday") : ""}
+      <button type="button" class="dp-rate-open" id="dpRateOpen">★ Rate the grids</button>
       <button type="button" class="dp-link" id="dpChooseClose">Not now</button>`;
     $("dpChoose").hidden = false;
+  }
+
+  // ---- Rating the grids ------------------------------------------------------
+  // 1 to 5 stars for each kind of grid, kept on this device, and shared as
+  // text so the ratings can be sent back (WhatsApp, Messages, ...).
+  const RATINGS_KEY = "umt.unstruck.ratings";
+  const RATE_GROUPS = [
+    ["Daily", [["grid1", "Grid 1 · full colors"], ["grid2", "Grid 2 · half colors"], ["grid3", "Grid 3 · counts"]]],
+    ["Speed", [["speed", "Speed"]]],
+    ["Experimental 1", [["flags", "Flags"], ["colors", "Colors"], ["arrows", "Arrows"]]],
+    ["Experimental 2", [["oneletter", "One letter"], ["auto", "Autopilot"], ["choice", "Pick two"]]]
+  ];
+  function loadRatings() {
+    try { return JSON.parse(localStorage.getItem(RATINGS_KEY)) || {}; } catch (e) { return {}; }
+  }
+
+  function openRatings() {
+    const ratings = loadRatings();
+    const stars = key => [1, 2, 3, 4, 5].map(n => `<button type="button" class="dp-star${ratings[key] >= n ? " is-on" : ""}" data-rate="${key}" data-stars="${n}" aria-label="${n} star${n > 1 ? "s" : ""}">★</button>`).join("");
+    $("dpChooseCard").innerHTML = `<div class="dp-rule-grid">Rate the grids</div>
+      <div class="dp-rate-note">1 star = okay, 5 stars = great</div>
+      ${RATE_GROUPS.map(([group, items]) => `<div class="dp-rate-group"><div class="dp-rate-head">${group}</div>
+        ${items.map(([key, label]) => `<div class="dp-rate-row"><span>${label}</span><span class="dp-stars">${stars(key)}</span></div>`).join("")}</div>`).join("")}
+      <button type="button" class="dp-next dp-share" id="dpRateShare">${SHARE_LABEL}</button>
+      <button type="button" class="dp-link" id="dpRateBack">← Back</button>`;
+    $("dpChooseCard").scrollTop = 0;
+  }
+
+  function rate(key, n) {
+    const ratings = loadRatings();
+    ratings[key] = ratings[key] === n ? 0 : n; // tapping the same star again clears it
+    if (!ratings[key]) delete ratings[key];
+    try { localStorage.setItem(RATINGS_KEY, JSON.stringify(ratings)); } catch (e) { /* private mode */ }
+    if (ratings[key]) track(`rated-${key}-${n}`, `${key}: ${n} stars`);
+    document.querySelectorAll(`.dp-star[data-rate="${key}"]`).forEach(star => star.classList.toggle("is-on", (ratings[key] || 0) >= +star.dataset.stars));
+  }
+
+  function ratingsText() {
+    const ratings = loadRatings();
+    const line = ([key, label]) => `${label}: ${ratings[key] ? `${"⭐".repeat(ratings[key])} ${ratings[key]}/5` : "not rated"}`;
+    return ["Unstruck grid ratings (1 = okay, 5 = great)",
+      ...RATE_GROUPS.flatMap(([group, items]) => ["", `${group}:`, ...items.map(line)])].join("\n");
   }
 
   function closeChooser() {
@@ -1888,6 +1935,13 @@
     });
     $("dpChoose")?.addEventListener("click", event => {
       if (event.target.closest("#dpChooseClose") || event.target === $("dpChoose")) closeChooser();
+      else if (event.target.closest("#dpRateOpen")) openRatings();
+      else if (event.target.closest("#dpRateBack")) openChooser();
+      else if (event.target.closest("#dpRateShare")) { track("ratings-shared"); shareOut(ratingsText(), event.target.closest("#dpRateShare"), SHARE_LABEL); }
+      else {
+        const star = event.target.closest("[data-rate]");
+        if (star) rate(star.dataset.rate, +star.dataset.stars);
+      }
     });
     $("dpStart")?.addEventListener("click", event => {
       if (event.target.closest("#dpStartPlay")) closeSplash();
