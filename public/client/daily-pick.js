@@ -55,7 +55,7 @@
   const SPEED_ENABLED = true;
   // Shows the Experimental button (Speed, Flags / Colors / Arrows) on the
   // Daily's results, and its paragraphs in How to play. Hidden for now.
-  const EXPERIMENTAL_BUTTON = true;
+  const EXPERIMENTAL_BUTTON = false;
   // Experimental's second set: One letter, Autopilot, Pick two.
   const TWISTS_ENABLED = true;
   const TWIST_KINDS = ["oneletter", "auto", "choice"];
@@ -1365,7 +1365,17 @@
     void banner.offsetWidth;
     banner.classList.add("is-showing");
     clearTimeout(bannerTimer);
-    bannerTimer = setTimeout(() => { banner.hidden = true; banner.classList.remove("is-showing"); }, 2200);
+    bannerTimer = setTimeout(hideBanner, 2200);
+  }
+
+  // A tap on the banner sends it off early.
+  function hideBanner(quick) {
+    const banner = $("dpBanner");
+    clearTimeout(bannerTimer);
+    if (!banner || banner.hidden) return;
+    if (!quick) { banner.hidden = true; banner.classList.remove("is-showing", "is-leaving"); return; }
+    banner.classList.add("is-leaving");
+    bannerTimer = setTimeout(hideBanner, 180);
   }
 
   function maybeAnnounceRule() {
@@ -1937,6 +1947,7 @@
       if (event.target.closest("#dpRuleYes")) return closeRule();
       if (event.target.closest("#dpRuleBack")) return unaskSure();
     });
+    $("dpBanner")?.addEventListener("click", () => hideBanner(true));
     $("dpChoose")?.addEventListener("click", event => {
       if (event.target.closest("#dpChooseClose") || event.target === $("dpChoose")) closeChooser();
       else if (event.target.closest("#dpRateOpen")) openRatings();
