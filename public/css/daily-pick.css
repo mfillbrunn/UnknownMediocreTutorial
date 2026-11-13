@@ -924,3 +924,33 @@ body.dp-light-page { background: #eef1f6; }
 /* The start screen only catches taps on its card: the header's ? and ✕ stay usable. */
 .dp-start { pointer-events: none; }
 .dp-start-card { pointer-events: auto; }
+
+/* ---------- Twists ---------- */
+/* One letter: letters without feedback this time. */
+.dp-tile.is-hidden { background: transparent; border: 2px solid rgba(255,255,255,.18); color: rgba(255,255,255,.45); }
+.dp-mini i.is-hidden { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.28); }
+#dailyPickScreen.dp-light .dp-tile.is-hidden { border-color: #cbd2dc; color: #9aa1ab; }
+#dailyPickScreen.dp-light .dp-mini i.is-hidden { box-shadow: inset 0 0 0 1.5px #b8bfc9; }
+.dp-ex-rows { display: flex; flex-direction: column; align-items: center; gap: 5px; margin: 2px 0 6px; }
+.dp-ex-rows .dp-tile { width: 32px; height: 32px; font-size: 16px; }
+
+/* Autopilot: the countdown to its next guess, big and see-through over the board. */
+.dp-board { position: relative; }
+.dp-auto-count {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  display: grid; place-items: center;
+  font-size: min(62vw, 300px); font-weight: 900; line-height: 1;
+  color: rgba(229,72,77,.22); font-variant-numeric: tabular-nums;
+}
+.dp-auto-count.is-tick { animation: dp-count-tick .45s ease-out; }
+@keyframes dp-count-tick { from { transform: scale(1.18); color: rgba(229,72,77,.4); } to { transform: none; } }
+
+/* Pick two: the two words offered, as buttons, and marked on the board. */
+.dp-pick-two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+.dp-pick { padding: 13px 0; letter-spacing: .06em; }
+.dp-word.is-offered { border-color: #6fb1ff; box-shadow: 0 0 0 2px rgba(111,177,255,.35); }
+
+/* Elimination grids: the secret, struck out, when the grid is lost. */
+.dp-word.is-lost-secret { border-color: #e5484d; box-shadow: 0 0 0 2px rgba(229,72,77,.45); }
+.dp-result.is-lost { color: #ff7a7e; }
+.dp-grid-score.is-lost b { color: #ff7a7e; }

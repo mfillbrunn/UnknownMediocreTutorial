@@ -55,7 +55,19 @@
   const SPEED_ENABLED = true;
   // Shows the Experimental button (Speed, Flags / Colors / Arrows) on the
   // Daily's results, and its paragraphs in How to play. Hidden for now.
-  const EXPERIMENTAL_BUTTON = false;
+  const EXPERIMENTAL_BUTTON = true;
+  // Experimental's second set: One letter, Autopilot, Pick two.
+  const TWISTS_ENABLED = true;
+  const TWIST_KINDS = ["oneletter", "auto", "choice"];
+  // Grids won by striking out everything but the secret (the game, not the
+  // player, chooses which words get guessed, and never the secret).
+  const ELIM_KINDS = ["auto", "choice"];
+  // Autopilot's gaps between its guesses: 3 s, 3 s, then 2 s each.
+  const autoGap = n => (n <= 2 ? 3000 : 2000);
+  // A grid lost (the secret struck out, nothing left to guess) counts as this many guesses.
+  const LOST_SCORE = 16;
+  // The Experimental sets (each grid has a kind, and its own rule card).
+  const SET_GAMES = ["weekly", "twists"];
   const SPEED_GRIDS = 10;
   const SPEED_MS = 180000;
   const SPEED_PENALTY_MS = 2000;
@@ -81,7 +93,7 @@
 
   // Which game is on screen; the other one's puzzles and state wait in slots.
   let game = "daily";
-  const slots = { daily: { puzzles: null, state: null }, weekly: { puzzles: null, state: null }, speed: { puzzles: null, state: null } };
+  const slots = { daily: { puzzles: null, state: null }, weekly: { puzzles: null, state: null }, speed: { puzzles: null, state: null }, twists: { puzzles: null, state: null } };
   let catalog = null; // the Weekly's pictures, loaded the first time it's opened
 
   // Daily play or the practice grid. Practice swaps its own one-grid puzzle
@@ -153,6 +165,11 @@
       storeKey: "umt.unstruck.weekly.v4", historyKey: "umt.unstruck.weeklyHistory", par: DAY_PAR, step: 7,
       period: () => weekStart(today()), number: weekNumber, title: "Unstruck Experimental", unit: "week", scoreLabel: "guesses this week",
       next: () => msUntilNextWeek(), nextLabel: "Next Experimental in"
+    },
+    twists: {
+      storeKey: "umt.unstruck.twists.v1", historyKey: "umt.unstruck.twistsHistory", par: 12, step: 7,
+      period: () => weekStart(today()), number: weekNumber, title: "Unstruck Twists", unit: "week", scoreLabel: "guesses this week",
+      next: () => msUntilNextWeek(), nextLabel: "Next Twists in"
     },
     speed: {
       storeKey: "umt.unstruck.speed.v1", historyKey: "umt.unstruck.speedHistory", par: 0, step: 1,
@@ -307,6 +324,17 @@
     });
   }
 
+  // Twists: three word grids, each with its own twist.
+  function buildTwists(pool, date) {
+    const taken = new Set();
+    return TWIST_KINDS.map(kind => {
+      const seed = `unstruck-twists-1:${date}:${kind}`;
+      const puzzle = buildPuzzle(pool, seed, taken, pickRecipe(mulberry32(hash(`${seed}:recipe`))));
+      puzzle.words.forEach(w => taken.add(w));
+      return { kind, answer: puzzle.answer, words: puzzle.words, mode: "full" };
+    });
+  }
+
   // Speed's ten grids: the same for everyone on a day, in the same order, all
   // with full feedback, and no word twice.
   function buildSpeed(pool, date) {
@@ -325,7 +353,10 @@
     animals: { label: "Animals", noun: "animal" },
     food: { label: "Food", noun: "food" },
     colors: { label: "Colors", noun: "row" },
-    arrows: { label: "Arrows", noun: "word" }
+    arrows: { label: "Arrows", noun: "word" },
+    oneletter: { label: "One letter", noun: "word" },
+    auto: { label: "Autopilot", noun: "word" },
+    choice: { label: "Pick two", noun: "word" }
   };
 
   // The Colors grid's paints: the three primaries, white and black, and every
@@ -557,7 +588,11 @@
   // Finished: every grid solved, or (Speed) the time ran out.
   const over = () => allSolved() || (game === "speed" && !!state.timeUp);
   const solvedCount = () => state.rounds.filter(r => r.solved).length;
-  const totalGuesses = () => state.rounds.reduce((sum, r) => sum + r.guesses.length, 0);
+  // A grid's score: its guesses, or LOST_SCORE when it was lost.
+  const gridScore = r => (r.lost ? LOST_SCORE : r.guesses.length);
+  const totalGuesses = () => state.rounds.reduce((sum, r) => sum + gridScore(r), 0);
+  // A grid's name: Grid 2, or its kind (Flags, Autopilot, ...).
+  const gridLabel = i => (puzzles[i]?.kind && KIND_INFO[puzzles[i].kind] ? KIND_INFO[puzzles[i].kind].label : `Grid ${i + 1}`);
 
   const elapsed = () => (state.elapsed || 0) + (runningSince ? Date.now() - runningSince : 0);
   // Speed's time left: three minutes, less the time played and two seconds a guess.
@@ -601,7 +636,7 @@
   function startClock() {
     if (runningSince || over() || !$("dailyPickScreen")?.classList.contains("active") || helpOpen() || introOpen() || ruleOpen() || splashOpen()) return;
     runningSince = Date.now();
-    ticker = setInterval(showClock, 250);
+    ticker = setInterval(() => { showClock(); autoTick(); }, 250);
   }
 
   function stopClock() {
@@ -619,7 +654,7 @@
     const title = $("dpTitle");
     if (!title) return;
     const number = state ? ` <span class="dp-title-grid">${G().title.replace(/^Unstruck ?/, "")} #${G().number(state.date)}</span>` : "";
-    const kind = game === "weekly" && grid ? KIND_INFO[puzzles[grid - 1].kind].label : game === "speed" ? "Speed" : "Grid";
+    const kind = SET_GAMES.includes(game) && grid ? gridLabel(grid - 1) : game === "speed" ? "Speed" : "Grid";
     if (playMode === "practice") title.innerHTML = `Unstruck <span class="dp-title-grid">Practice</span>`;
     else title.innerHTML = grid ? `Unstruck <span class="dp-title-grid">${kind} ${grid}/${puzzles.length}</span>` : `Unstruck${number}`;
     document.querySelectorAll("#dailyPickScreen .dp-tab").forEach(tab => tab.classList.toggle("is-on", tab.dataset.game === game));
@@ -669,7 +704,7 @@
     const num = v => (v == null ? "–" : Number.isInteger(v) ? v : v.toFixed(1));
     // Averages rounded to the nearest second (formatTime alone would cut them down).
     const time = v => (v == null ? "–" : formatTime(Math.round(v / 1000) * 1000));
-    const name = i => (game === "weekly" ? KIND_INFO[puzzles[i].kind].label : `Grid ${i + 1}`);
+    const name = gridLabel;
     const row = (label, x, cls = "") => `<tr class="${cls}"><th>${label}</th><td>${num(x.avg)}</td><td>${time(x.time)}</td><td>${time(x.fastest)}</td></tr>`;
     return `<div class="dp-details">
       <table>
@@ -689,14 +724,16 @@
     const stats = computeStats();
     const stat = (value, label) => `<div class="dp-stat"><b>${value}</b><span>${label}</span></div>`;
     const diff = totalGuesses() - G().par;
-    const gridName = i => (game === "weekly" ? KIND_INFO[puzzles[i].kind].label : `Grid ${i + 1}`);
+    const gridName = gridLabel;
     // Today's guesses lead: the total, big, then each grid as its own card.
     const grids = state.rounds.map((r, i) => {
       const n = r.guesses.length;
       const t = gridTimes()[i];
       const time = t != null ? `<span class="dp-grid-time">${CLOCK_ICON}${formatTime(t)}</span>` : "";
+      if (r.lost) return `<div class="dp-grid-score is-lost"><span class="dp-grid-name">${gridName(i)}</span>
+        <b>✗</b><span class="dp-grid-unit">lost (+${LOST_SCORE})</span>${time}</div>`;
       return `<div class="dp-grid-score"><span class="dp-grid-name">${gridName(i)}</span>
-        <b>${n}</b><span class="dp-grid-unit">${n === 1 ? "Hole in one!" : "guesses"}</span>${time}</div>`;
+        <b>${n}</b><span class="dp-grid-unit">${n === 1 && !ELIM_KINDS.includes(puzzles[i].kind) ? "Hole in one!" : n === 1 ? "guess" : "guesses"}</span>${time}</div>`;
     }).join("");
     // The score and Share come first, so sharing never needs a scroll.
     root.innerHTML = `<div class="dp-summary">
@@ -802,6 +839,8 @@
     const pics = PIC_KINDS.includes(kind);
     const paints = kind === "colors";
     const arrows = kind === "arrows";
+    const oneLetter = kind === "oneletter";
+    const elim = ELIM_KINDS.includes(kind);
     const info = pics ? catalog[kind] : null;
     const r = round();
     const lastGuess = r.guesses[r.guesses.length - 1];
@@ -811,7 +850,12 @@
     const name = id => labelOf(puzzle, id);
     // What a guess reveals under this grid's rule, letter (or cell) by letter.
     const compare = (g, a) => (pics ? colorFeedback(g, a) : paints ? paintFeedback(g, a) : arrows ? arrowFeedback(g, a) : feedback(g, a));
-    const shownResult = guess => compare(code(guess), code(secret)).map(f => (mode === "split" && guess !== secret && f !== "absent" ? "in" : f));
+    // One letter: each guess only shows the letter in turn (1st guess letter
+    // 1, 2nd letter 2, ... 6th letter 1 again); the rest stay hidden.
+    const shownResult = guess => compare(code(guess), code(secret)).map((f, i) => (
+      oneLetter && guess !== secret && i !== r.guesses.indexOf(guess) % 5 ? "hidden"
+        : mode === "split" && guess !== secret && f !== "absent" ? "in" : f));
+    if (elim && !done) ensureOffer();
     const counts = guess => {
       const result = compare(code(guess), code(secret));
       return [result.filter(f => f === "correct").length, result.filter(f => f === "present").length];
@@ -836,17 +880,20 @@
       const guessed = r.guesses.includes(word);
       // Words already guessed stay struck for good, so they can't be tapped.
       const disabled = done || guessed;
-      const won = done && word === secret;
+      const won = done && word === secret && !r.lost;
+      const offered = kind === "choice" && !done && (r.offer || []).includes(word);
       const snap = toggled && toggled.word === word ? ` just-${toggled.kind}` : "";
       const fresh = revealing && word === lastGuess ? " just-guessed" : "";
-      const classes = `dp-word${won ? " is-solved" : struck ? " is-struck" : ""}${guessed && !won ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}${snap}${fresh}`;
+      const classes = `dp-word${won ? " is-solved" : struck ? " is-struck" : ""}${guessed && !won ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}${offered ? " is-offered" : ""}${done && r.lost && word === secret ? " is-lost-secret" : ""}${snap}${fresh}`;
       return `<button type="button" class="${classes}" data-word="${word}"${disabled ? " disabled" : ""} aria-label="${name(word)}">${face(word)}${guessed && !won ? mini(word) : ""}</button>`;
     }).join("");
 
     const SPLIT_TILE = SPLIT_FILL;
     const swatch = (color, label, round) =>
       `<span><i class="${round ? "is-round" : ""}" style="background:${color}"></i>${label}</span>`;
-    const key = paints
+    const key = kind === "oneletter"
+      ? swatch("var(--dp-hit)", "Right spot") + swatch("var(--dp-near)", "Wrong spot") + swatch("#555b63", "Not in word")
+      : paints
       ? swatch("var(--dp-hit)", "Shares a color, this spot") + swatch("var(--dp-near)", "Another spot") + swatch("#555b63", "Not in it")
       : arrows
       ? `<span><b>←</b> secret's letter is earlier</span><span><b>→</b> later</span><span><b>–</b> right letter</span>`
@@ -897,12 +944,20 @@
     const noun = pics ? KIND_INFO[kind].noun : "word";
     let hint;
     let action = "";
-    if (done) {
+    if (done && r.lost) {
+      hint = `<strong class="dp-result is-lost${revealing ? " is-new" : ""}">You struck out the secret, ${secret.toUpperCase()}.</strong> ${allSolved() ? "" : "Next grid…"}`;
+    } else if (done && elim) {
+      hint = `<strong class="dp-result${revealing ? " is-new" : ""}">Only the secret was left: solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next grid…"}`;
+    } else if (done) {
       hint = `<strong class="dp-result${revealing ? " is-new" : ""}">Solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next grid…"}`;
+    } else if (elim) {
+      hint = kind === "auto" ? "Strike out the words you've ruled out" : "Pick one to guess, strike out the rest you've ruled out";
+      if (kind === "choice") action = `<div class="dp-pick-two">${(r.offer || []).map(w => `<button type="button" class="dp-next dp-pick" data-pick="${w}">${w.toUpperCase()}</button>`).join("")}</div>`;
     } else {
       const aNoun = /^[aeiou]/.test(noun) ? `an ${noun}` : `a ${noun}`;
       // The tutorial covers tapping, so after the first guess there's no hint.
       hint = r.guesses.length ? "" : `Tap ${noun === "food" ? "one" : aNoun} to pick your first guess`;
+      if (oneLetter) hint = `Your next guess shows letter <b>${(r.guesses.length % 5) + 1}</b>`;
       const pick = !selected ? "" : pics ? ` ${name(selected)}` : paints ? ` ${paintRow(selected, "dp-paints dp-paints-inline")}` : ` ${selected.toUpperCase()}`;
       action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>Guess${pick}</button>`;
     }
@@ -911,13 +966,28 @@
 
     const exit = playMode === "practice" ? `<button type="button" class="dp-link" data-practice="end">← Back to today's Unstruck</button>`
       : game !== "daily" ? `<button type="button" class="dp-link" data-game="daily">← Back to the Daily</button>` : "";
-    root.innerHTML = `<div class="dp-board${pics ? ` is-pics is-${kind}` : kind ? ` is-${kind}` : ""}" style="${pics ? `--ratio:${info.ratio}` : ""}">${buttons}</div>
+    // Autopilot's countdown to its next guess: big, red, see-through, behind play.
+    const autoCount = kind === "auto" && !done ? `<div class="dp-auto-count" id="dpAutoCount" aria-hidden="true">${Math.max(1, Math.ceil(((r.autoDue ?? elapsed()) - elapsed()) / 1000)) || ""}</div>` : "";
+    root.innerHTML = `<div class="dp-board${pics ? ` is-pics is-${kind}` : kind ? ` is-${kind}` : ""}" style="${pics ? `--ratio:${info.ratio}` : ""}">${buttons}${autoCount}</div>
       <div class="dp-center">${lastGuess ? `<div class="dp-last">Last guess</div>${tiles(lastGuess)}` : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>${exit}`;
   }
 
   function onWordClick(word) {
     const r = round();
     if (r.solved || r.guesses.includes(word)) return;
+    if (ELIM_KINDS.includes(puzzles[current].kind)) {
+      // No picking here: a tap strikes a word out, or brings it back.
+      const at = r.struck.indexOf(word);
+      if (at >= 0) { r.struck.splice(at, 1); toggled = { word, kind: "freed" }; }
+      else { r.struck.push(word); toggled = { word, kind: "struck" }; navigator.vibrate?.(8); }
+      const finished = elimCheck();
+      save();
+      revealing = finished;
+      render();
+      revealing = false;
+      toggled = null;
+      return;
+    }
     const struckAt = r.struck.indexOf(word);
     if (!r.guesses.length) {
       // Nothing to rule out yet, so the first guess of a grid is a plain pick:
@@ -960,6 +1030,7 @@
       r.struck.push(selected);
     }
     selected = "";
+    elimCheck();
     save();
     if (game === "speed") {
       // Two seconds off, shown on the clock.
@@ -990,8 +1061,11 @@
         link
       ].join("\n");
     }
-    const rows = state.rounds.map((r, i) =>
-      `${game === "weekly" ? KIND_INFO[puzzles[i].kind].label : `Grid ${i + 1}`}: ${"⬜".repeat(r.guesses.length - 1)}${settings.colorblind ? "🟧" : "🟩"} ${r.guesses.length}`);
+    const green = settings.colorblind ? "🟧" : "🟩";
+    const rows = state.rounds.map((r, i) => `${gridLabel(i)}: ${r.lost ? `🟥 lost`
+      // Won by elimination: every guess was a miss, then the secret was left.
+      : ELIM_KINDS.includes(puzzles[i].kind) ? `${"⬜".repeat(r.guesses.length)}${green} ${r.guesses.length}`
+      : `${"⬜".repeat(r.guesses.length - 1)}${green} ${r.guesses.length}`}`);
     const diff = totalGuesses() - G().par;
     const verdict = `${golfTerm(diff)} (${totalGuesses()}; ${diff === 0 ? "even" : `${diff > 0 ? "+" : "-"}${Math.abs(diff)}`} par)`;
     const streak = computeStats().current;
@@ -1005,6 +1079,71 @@
       ...(streak >= 5 ? [`🔥 ${streak}-${unit} streak`] : []),
       link
     ].join("\n");
+  }
+
+  // ---- Autopilot and Pick two -----------------------------------------------
+  // The words the game may still guess: not struck out, not guessed, not the secret.
+  const elimCandidates = () => {
+    const { words, answer } = puzzles[current];
+    const r = round();
+    return words.filter(w => w !== answer && !r.struck.includes(w) && !r.guesses.includes(w));
+  };
+
+  // Nothing left to guess: solved if the secret is still in, lost if it was
+  // struck out. Returns true when that just finished the grid.
+  function elimCheck() {
+    const r = round();
+    if (r.solved || !ELIM_KINDS.includes(puzzles[current].kind) || elimCandidates().length) return false;
+    r.solved = true;
+    r.lost = r.struck.includes(puzzles[current].answer);
+    r.solvedAt = Math.round(elapsed());
+    selected = "";
+    if (allSolved()) stopClock();
+    advanceTimer = setTimeout(nextPuzzle, ADVANCE_MS);
+    return true;
+  }
+
+  // Pick two's offer: two words the game may guess (one, near the end). It
+  // stays put until one of them is guessed or struck out.
+  function ensureOffer() {
+    const r = round();
+    if (puzzles[current].kind !== "choice") return;
+    const left = elimCandidates();
+    const want = Math.min(2, left.length);
+    const keep = (r.offer || []).filter(w => left.includes(w));
+    if (keep.length === want && (r.offer || []).length === want) return;
+    const pool = left.filter(w => !keep.includes(w));
+    while (keep.length < want) keep.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+    r.offer = keep;
+    save();
+  }
+
+  // Autopilot, on every clock tick: counts down, and guesses when it's time.
+  // The countdown follows the game clock, so it pauses whenever the clock does.
+  function autoTick() {
+    if (!SET_GAMES.includes(game) || playMode !== "daily" || !runningSince) return;
+    const r = round();
+    if (puzzles[current]?.kind !== "auto" || r.solved || advanceTimer) return;
+    if (r.autoDue == null) r.autoDue = elapsed(); // the first guess comes straight away
+    const left = r.autoDue - elapsed();
+    if (left <= 0) return autoGuess();
+    const count = $("dpAutoCount");
+    const n = String(Math.ceil(left / 1000));
+    if (count && count.textContent !== n) {
+      count.textContent = n;
+      count.classList.remove("is-tick");
+      void count.offsetWidth;
+      count.classList.add("is-tick");
+    }
+  }
+
+  function autoGuess() {
+    const r = round();
+    const left = elimCandidates();
+    if (!left.length) { if (elimCheck()) { save(); render(); } return; }
+    r.autoDue = elapsed() + autoGap(r.guesses.length + 1);
+    selected = left[Math.floor(Math.random() * left.length)];
+    guessSelected();
   }
 
   // A small stylized clock (face, hands, a crown on top), drawn in the text color.
@@ -1151,7 +1290,40 @@
           <div class="dp-demo"><div class="dp-row">${fb.map((f, i) => `<span class="dp-tile dp-arrow-tile is-${f}">${guess[i]}<small>${ARROWS[f]}</small></span>`).join("")}</div></div>
           <ol class="dp-ex-why">${fb.map((f, i) => `<li><b>${guess[i].toUpperCase()} ${ARROWS[f]}</b> ${say(guess[i], secret[i], f)}.</li>`).join("")}</ol>
         </div>`;
-    }
+    },
+    oneletter: () => {
+      const secret = "blade";
+      const guesses = ["crane", "slate", "flame"];
+      const row = (g, k) => `<div class="dp-row">${feedback(g, secret).map((f, i) => `<span class="dp-tile is-${i === k ? f : "hidden"}">${g[i]}</span>`).join("")}</div>`;
+      const said = (g, k) => {
+        const f = feedback(g, secret)[k];
+        return `${g[k].toUpperCase()} is ${fbName(f)}: ${f === "correct" ? "right letter, right spot" : f === "present" ? "in the word, another spot" : "not in the word"}`;
+      };
+      return `<p>Find the secret word, but each guess shows feedback for <b>just one letter</b>, in turn: your 1st guess shows letter 1, the 2nd shows letter 2, and so on. The 6th guess goes back to letter 1.</p>
+        <p>${fbName("correct")}: right letter, right spot.<br>${fbName("present")}: in the word, another spot.<br><b>Gray</b>: not in the word.</p>
+        <div class="dp-example"><div class="dp-example-title">Example: the secret is BLADE</div>
+          <div class="dp-ex-rows">${guesses.map((g, k) => row(g, k)).join("")}</div>
+          <ol class="dp-ex-why">${guesses.map((g, k) => `<li><b>${g.toUpperCase()}</b> shows letter ${k + 1}: ${said(g, k)}.</li>`).join("")}</ol>
+        </div>`;
+    },
+    auto: () => `<p>You don't pick words here. <b>The game guesses for you</b>: straight away, then every few seconds (3, 3, then 2 seconds each), it guesses a random word that <b>isn't struck out</b> and <b>isn't the secret</b>, and shows its feedback. A big red number counts down to the next one.</p>
+      <p>Tap words to <b>strike them out</b> as you rule them out, so they're never guessed. Tap again to bring one back.</p>
+      <div class="dp-example"><div class="dp-example-title">How it ends</div>
+        <ol class="dp-ex-why">
+          <li><b>Solved</b> when the secret is the only word left that's neither struck out nor guessed.</li>
+          <li>Your <b>score</b> is how many words the game guessed, so strike fast.</li>
+          <li><b>Lost</b> if you've struck out the secret and there's nothing left to guess (counts as ${LOST_SCORE}).</li>
+        </ol>
+      </div>`,
+    choice: () => `<p>You don't pick from the whole grid here. Under it, the game <b>offers two words</b>, never the secret and never ones you've struck out. Pick one, and you get its feedback; then you're offered the next two.</p>
+      <p>Tap words to <b>strike them out</b> as you rule them out, so they're never offered. Tap again to bring one back.</p>
+      <div class="dp-example"><div class="dp-example-title">How it ends</div>
+        <ol class="dp-ex-why">
+          <li><b>Solved</b> when the secret is the only word left that's neither struck out nor guessed.</li>
+          <li>Your <b>score</b> is how many words you guessed.</li>
+          <li><b>Lost</b> if you've struck out the secret and there's nothing left to offer (counts as ${LOST_SCORE}).</li>
+        </ol>
+      </div>`
   };
 
   // Each Daily rule's full card shows once per device; days after that just
@@ -1190,7 +1362,7 @@
 
   function maybeAnnounceRule() {
     const r = round();
-    const rule = game === "weekly" ? WEEKLY_RULES[puzzles[current].kind]?.()
+    const rule = SET_GAMES.includes(game) ? WEEKLY_RULES[puzzles[current].kind]?.()
       : game === "speed" ? (current === 0 ? SPEED_RULE : null) : RULES[puzzles[current].mode]?.();
     state.announced = state.announced || [];
     if (playMode !== "daily" || r.guesses.length || state.announced[current] || over()) return;
@@ -1204,7 +1376,7 @@
     state.announced[current] = true;
     save();
     stopClock();
-    $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">${game === "speed" ? `Speed · ${SPEED_GRIDS} grids` : `${game === "weekly" ? `Experimental · ${KIND_INFO[puzzles[current].kind].label} · ` : ""}Grid ${current + 1} of ${puzzles.length}`}</div>
+    $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">${game === "speed" ? `Speed · ${SPEED_GRIDS} grids` : `${SET_GAMES.includes(game) ? `Experimental · ${gridLabel(current)} · ` : ""}Grid ${current + 1} of ${puzzles.length}`}</div>
       <p>${rule}</p>
       <button id="dpRuleClose" class="dp-next" type="button">${game === "speed" ? "Start" : "Got it"}</button>`;
     $("dpRule").hidden = false;
@@ -1252,6 +1424,9 @@
       if (which === "daily") {
         slot.state = load();
         slot.puzzles = buildDay(wordList, period);
+      } else if (which === "twists") {
+        slot.puzzles = buildTwists(wordList, period);
+        slot.state = load(TWIST_KINDS.length);
       } else if (which === "speed") {
         slot.puzzles = buildSpeed(wordList, period);
         slot.state = load(SPEED_GRIDS);
@@ -1269,7 +1444,7 @@
   }
 
   async function open(which = game) {
-    if ((!WEEKLY_ENABLED && which === "weekly") || (!SPEED_ENABLED && which === "speed")) which = "daily";
+    if ((!WEEKLY_ENABLED && which === "weekly") || (!SPEED_ENABLED && which === "speed") || (!TWISTS_ENABLED && which === "twists")) which = "daily";
     if (playMode === "practice") leavePractice();
     closeChooser();
     if (window.showScreen) window.showScreen("dailyPickScreen");
@@ -1327,6 +1502,7 @@
     $("dpChooseCard").innerHTML = `<div class="dp-rule-grid">Experimental</div>
       ${SPEED_ENABLED ? option("speed", "Speed", `3 minutes to solve as many of today's ${SPEED_GRIDS} grids as you can`) : ""}
       ${WEEKLY_ENABLED ? option("weekly", "Flags · Colors · Arrows", "Three new kinds of grid, new every Monday") : ""}
+      ${TWISTS_ENABLED ? option("twists", "One letter · Autopilot · Pick two", "Word grids with a twist: one letter of feedback at a time, guesses made for you, or a choice of two. New every Monday") : ""}
       <button type="button" class="dp-link" id="dpChooseClose">Not now</button>`;
     $("dpChoose").hidden = false;
   }
@@ -1667,6 +1843,7 @@
           <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
         ${EXPERIMENTAL_BUTTON && WEEKLY_ENABLED ? `<p><b>Experimental</b> (the button next to Share once you've finished the Daily) has two extras. <b>Flags · Colors · Arrows</b>, new every Monday, is three different grids: <b>Flags</b>, where each flag is split into a grid of colors; <b>Colors</b>, rows of five paints where a paint matches a tile when they have a color in common (white, red and pink all match pink); and <b>Arrows</b>, words where each letter's arrow points to the secret's letter in the alphabet. Each grid explains itself when it starts.</p>` : ""}
+        ${EXPERIMENTAL_BUTTON && TWISTS_ENABLED ? `<p><b>One letter · Autopilot · Pick two</b> (also under Experimental, new every Monday): word grids with a twist. <b>One letter</b> shows feedback for just one letter per guess, in turn. In <b>Autopilot</b> the game guesses for you every few seconds while you strike words out, and in <b>Pick two</b> you choose between two words it offers. In both, you solve it when only the secret is left, and lose if you strike the secret out. Each grid explains itself when it starts.</p>` : ""}
         ${EXPERIMENTAL_BUTTON && SPEED_ENABLED ? `<p><b>Speed</b> (also under Experimental): 3 minutes to solve as many of the day's ${SPEED_GRIDS} grids as you can, all with full feedback. Every guess costs 2 seconds, right or wrong.</p>` : ""}
         <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
@@ -1705,7 +1882,7 @@
     $("dpIntro")?.addEventListener("click", onTutorialClick);
     $("dpTutorialBtn")?.addEventListener("click", openIntro);
     $("dpRule")?.addEventListener("click", event => {
-      if (event.target.closest("#dpRuleClose")) return game === "weekly" ? askSure() : closeRule(); // only Experimental asks again
+      if (event.target.closest("#dpRuleClose")) return SET_GAMES.includes(game) ? askSure() : closeRule(); // only Experimental asks again
       if (event.target.closest("#dpRuleYes")) return closeRule();
       if (event.target.closest("#dpRuleBack")) return unaskSure();
     });
@@ -1726,6 +1903,8 @@
       const shareButton = event.target.closest?.("#dpShare");
       if (shareButton) share(shareButton);
       if (event.target.closest?.("#dpExperimental")) openChooser();
+      const pick = event.target.closest?.("[data-pick]");
+      if (pick && !round().solved) { selected = pick.dataset.pick; guessSelected(); }
       const view = event.target.closest?.("[data-view]");
       if (view && view.dataset.view !== summaryView) {
         // Both views are always on the page, stacked in the same space, so
