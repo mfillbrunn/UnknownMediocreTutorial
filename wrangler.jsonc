@@ -1,12 +1,14 @@
 // Cloudflare Workers settings for Unstruck, the standalone daily word game.
-// The site is static: `npm run build:unstruck` (scripts/build-unstruck.js)
-// assembles it in dist/unstruck, and `npx wrangler deploy` publishes that
-// folder as-is. No server code runs.
+// `npm run build:unstruck` (scripts/build-unstruck.js) assembles the site in
+// dist/unstruck, and `npx wrangler deploy` publishes it. The site's files are
+// served as they are; the small Worker below only runs for addresses that
+// aren't one of them, and guards the password-protected archive (/archive).
 {
   "name": "play",
   "compatibility_date": "2026-11-01",
   // Serve it at the account's workers.dev address
   "workers_dev": true,
+  "main": "worker/archive-gate.js",
   "assets": {
     "directory": "./dist/unstruck"
   }

@@ -1,2 +1,6 @@
 # Built output (scripts/build-unstruck.js); Cloudflare Pages builds it fresh.
 /dist/
+
+# Local secrets for `wrangler dev` (never commit)
+.dev.vars
+/.wrangler/

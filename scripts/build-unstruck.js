@@ -66,6 +66,20 @@ for (const [pattern, replacement] of swaps) {
 }
 fs.writeFileSync(path.join(out, "index.html"), html);
 
+// The archive page: the same page in archive mode, at /archive/, so its
+// paths point at the site's root. It's written OUTSIDE the site folder on
+// purpose: worker/archive-gate.js bundles it and only hands it out after the
+// password, so it can never be fetched as a plain file.
+let archive = html
+  .replace(/(href|src)="(?!https?:|\/|#|data:)([^"]+)"/g, '$1="/$2"')
+  .replace(/data-media="\/?media\/"/, 'data-media="/media/"')
+  .replace(/data-words="(?!\/)([^"]+)"/, 'data-words="/$1"')
+  .replace(/<script src="(\/game\.js[^"]*)"/, '<script src="$1" data-archive')
+  .replace(/<title>[^<]*<\/title>/, "<title>Unstruck – archive</title>")
+  .replace("<head>", '<head>\n  <meta name="robots" content="noindex">');
+if (!archive.includes("data-archive")) throw new Error("build-unstruck: couldn't make the archive page");
+fs.writeFileSync(path.join(root, "dist", "archive.html"), archive);
+
 // Cache: the page itself always fresh, everything else (versioned) for a year.
 fs.writeFileSync(path.join(out, "_headers"), [
   "/",

@@ -997,3 +997,21 @@ body.dp-light-page { background: #eef1f6; }
 .dp-banner { pointer-events: auto; cursor: pointer; }
 .dp-banner.is-showing.is-leaving { animation: dp-banner-out .18s ease-in both; }
 @keyframes dp-banner-out { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, -12px) scale(.97); } }
+
+/* ---------- Archive ---------- */
+.dp-archive { display: flex; flex-direction: column; gap: 8px; }
+.dp-archive-note { text-align: center; font-size: 13px; opacity: .65; margin: 0 0 4px; }
+.dp-archive-day {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px;
+  padding: 13px 16px; border-radius: 12px; cursor: pointer; text-align: left;
+  background: rgba(255,255,255,.06); border: 1.5px solid rgba(255,255,255,.16); color: inherit; font-family: inherit;
+}
+.dp-archive-day:active { transform: scale(.98); }
+.dp-archive-day b { font-size: 17px; font-weight: 900; }
+.dp-archive-day span { font-size: 15px; opacity: .85; }
+.dp-archive-day em { font-style: normal; font-size: 12.5px; font-weight: 700; opacity: .65; }
+.dp-archive-day em.is-done { color: var(--dp-hit-light); opacity: 1; }
+.dp-archive .dp-link { align-self: center; margin-top: 6px; }
+.dp-archive-tag { text-align: center; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .6; }
+#dailyPickScreen.dp-light .dp-archive-day { background: #f2f4f8; border-color: #d3d9e3; }
+#dailyPickScreen.dp-light .dp-archive-day em.is-done { color: #2e7d3c; }

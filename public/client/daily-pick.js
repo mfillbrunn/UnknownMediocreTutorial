@@ -53,6 +53,10 @@
   // solve in three minutes; every guess, right or wrong, costs two seconds.
   // Switches Speed (its button on the Daily's results and its rules) on or off.
   const SPEED_ENABLED = true;
+  // The archive page (/archive, behind a password on the server) sets
+  // data-archive on this script: past days' Dailies, played from a list.
+  const ARCHIVE = "archive" in (document.currentScript?.dataset || {});
+  let archiveDate = null; // the past day being played
   // Shows the Experimental button (Speed, Flags / Colors / Arrows) on the
   // Daily's results, and its paragraphs in How to play. Hidden for now.
   const EXPERIMENTAL_BUTTON = false;
@@ -93,7 +97,7 @@
 
   // Which game is on screen; the other one's puzzles and state wait in slots.
   let game = "daily";
-  const slots = { daily: { puzzles: null, state: null }, weekly: { puzzles: null, state: null }, speed: { puzzles: null, state: null }, twists: { puzzles: null, state: null } };
+  const slots = { daily: { puzzles: null, state: null }, weekly: { puzzles: null, state: null }, speed: { puzzles: null, state: null }, twists: { puzzles: null, state: null }, archive: { puzzles: null, state: null } };
   let catalog = null; // the Weekly's pictures, loaded the first time it's opened
 
   // Daily play or the practice grid. Practice swaps its own one-grid puzzle
@@ -171,6 +175,14 @@
       period: () => weekStart(today()), number: weekNumber, title: "Unstruck Twists", unit: "week", scoreLabel: "guesses this week",
       next: () => msUntilNextWeek(), nextLabel: "Next Twists in"
     },
+    // A past day's Daily, from the archive: its own progress per day and its
+    // own history, so the real Daily's streak and stats aren't touched.
+    archive: {
+      get storeKey() { return `umt.unstruck.archive.${archiveDate}`; },
+      historyKey: "umt.unstruck.archiveHistory", par: DAY_PAR, step: 1,
+      period: () => archiveDate, number: puzzleNumber, title: "Unstruck", unit: "day", scoreLabel: "guesses",
+      next: () => 0, nextLabel: ""
+    },
     speed: {
       storeKey: "umt.unstruck.speed.v1", historyKey: "umt.unstruck.speedHistory", par: 0, step: 1,
       period: () => today(), number: puzzleNumber, title: "Unstruck Speed", unit: "day", scoreLabel: "grids solved",
@@ -178,6 +190,7 @@
     }
   };
   const G = () => GAMES[game];
+  const dailyLike = () => game === "daily" || game === "archive";
 
   function hash(text) {
     let h = 1779033703 ^ text.length;
@@ -719,6 +732,7 @@
     $("dailyPickScreen")?.classList.add("is-results");
     if (playMode === "practice") return renderPracticeSummary(root);
     if (game === "speed") return renderSpeedSummary(root);
+    if (game === "archive") return renderArchiveSummary(root);
     recordDay();
     setTitle(0);
     const stats = computeStats();
@@ -965,6 +979,7 @@
     if (!action) action = `<button type="button" class="dp-next" tabindex="-1" aria-hidden="true" style="visibility:hidden">&nbsp;</button>`;
 
     const exit = playMode === "practice" ? `<button type="button" class="dp-link" data-practice="end">← Back to today's Unstruck</button>`
+      : game === "archive" ? `<button type="button" class="dp-link" data-archive-list>← Back to the archive</button>`
       : game !== "daily" ? `<button type="button" class="dp-link" data-game="daily">← Back to the Daily</button>` : "";
     // Autopilot's countdown to its next guess: big, red, see-through, behind play.
     const autoCount = kind === "auto" && !done ? `<div class="dp-auto-count" id="dpAutoCount" aria-hidden="true">${Math.max(1, Math.ceil(((r.autoDue ?? elapsed()) - elapsed()) / 1000)) || ""}</div>` : "";
@@ -1048,7 +1063,7 @@
 
   // One row per puzzle: a white square per wrong guess, then the green one.
   function shareText() {
-    const link = location.origin + location.pathname.replace(/index\.html$/, "");
+    const link = ARCHIVE ? `${location.origin}/` : location.origin + location.pathname.replace(/index\.html$/, "");
     if (game === "speed") {
       const solved = solvedCount();
       const streak = computeStats().current;
@@ -1072,12 +1087,12 @@
     const streak = computeStats().current;
     const unit = G().unit;
     return [
-      `${G().title} #${G().number(state.date)}`,
+      `${G().title} #${G().number(state.date)}${game === "archive" ? " (from the archive)" : ""}`,
       ...rows,
       `Total: ${verdict}`,
       `Time: ${formatTime(elapsed())}`,
       // The streak only once it's worth bragging about.
-      ...(streak >= 5 ? [`🔥 ${streak}-${unit} streak`] : []),
+      ...(streak >= 5 && game !== "archive" ? [`🔥 ${streak}-${unit} streak`] : []),
       link
     ].join("\n");
   }
@@ -1385,7 +1400,7 @@
     state.announced = state.announced || [];
     if (playMode !== "daily" || r.guesses.length || state.announced[current] || over()) return;
     // The Daily: a banner, or the full rule the first time it comes up.
-    if (game === "daily" && (!rule || ruleSeen(puzzles[current].mode))) {
+    if (dailyLike() && (!rule || ruleSeen(puzzles[current].mode))) {
       state.announced[current] = true;
       save();
       return showBanner();
@@ -1439,7 +1454,7 @@
         const text = await (await fetch(WORDS_URL)).text();
         wordList = [...new Set(text.split(/\s+/).map(w => w.toLowerCase()).filter(w => /^[a-z]{5}$/.test(w)))].sort();
       }
-      if (which === "daily") {
+      if (which === "daily" || which === "archive") {
         slot.state = load();
         slot.puzzles = buildDay(wordList, period);
       } else if (which === "twists") {
@@ -1499,7 +1514,7 @@
   // Off the start screen: the tutorial for newcomers, else the clock and the
   // grid's banner (or its rule, the first time).
   function beginPlay() {
-    if (game === "daily" && !introSeen()) return openIntro();
+    if (dailyLike() && !introSeen()) return openIntro();
     startClock();
     maybeAnnounceRule();
   }
@@ -1570,6 +1585,73 @@
 
   function closeChooser() {
     if ($("dpChoose")) $("dpChoose").hidden = true;
+  }
+
+  // ---- Archive ---------------------------------------------------------------
+  // Every past day, newest first; tap one to play its three grids.
+  const prettyDay = date => new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+
+  function showArchive() {
+    const root = $("dailyPickRoot");
+    if (!root) return;
+    stopClock();
+    clearTimeout(advanceTimer);
+    advanceTimer = null;
+    if (state) slots[game] = { puzzles, state };
+    $("dailyPickScreen").classList.remove("is-results");
+    $("dpClock").hidden = true;
+    $("dpTitle").innerHTML = `Unstruck <span class="dp-title-grid">Archive</span>`;
+    const read = key => { try { return JSON.parse(localStorage.getItem(key)) || {}; } catch (e) { return {}; } };
+    const played = read("umt.unstruck.archiveHistory");
+    const onTheDay = read(HISTORY_KEY);
+    const days = [];
+    for (let d = addDays(today(), -1); d >= LAUNCH_DATE; d = addDays(d, -1)) days.push(d);
+    const status = date => {
+      const done = played[date];
+      if (done) return `<em class="is-done">${done.score} guesses · ${golfTerm(done.score - DAY_PAR)}</em>`;
+      const saved = read(`umt.unstruck.archive.${date}`);
+      if (saved.rounds?.some(r => r.guesses.length)) return `<em>In progress</em>`;
+      if (onTheDay[date]) return `<em>Played on the day: ${onTheDay[date].score}</em>`;
+      return "";
+    };
+    root.innerHTML = `<div class="dp-archive">
+      <p class="dp-archive-note">Past Dailies. Results here don't count toward your streak or stats.</p>
+      ${days.length ? days.map(date => `<button type="button" class="dp-archive-day" data-archive-day="${date}">
+        <b>#${puzzleNumber(date)}</b><span>${prettyDay(date)}</span>${status(date)}</button>`).join("")
+        : `<p class="dp-archive-note">Nothing here yet: the first past day shows up tomorrow.</p>`}
+      <a class="dp-link" href="/">Today's Unstruck →</a>
+    </div>`;
+    window.scrollTo(0, 0);
+  }
+
+  function playArchive(date) {
+    archiveDate = date;
+    open("archive");
+  }
+
+  function renderArchiveSummary(root) {
+    recordDay();
+    setTitle(0);
+    const diff = totalGuesses() - G().par;
+    const grids = state.rounds.map((r, i) => {
+      const t = gridTimes()[i];
+      const time = t != null ? `<span class="dp-grid-time">${CLOCK_ICON}${formatTime(t)}</span>` : "";
+      return `<div class="dp-grid-score"><span class="dp-grid-name">${gridLabel(i)}</span>
+        <b>${r.guesses.length}</b><span class="dp-grid-unit">${r.guesses.length === 1 ? "Hole in one!" : "guesses"}</span>${time}</div>`;
+    }).join("");
+    root.innerHTML = `<div class="dp-summary">
+      <div class="dp-archive-tag">From the archive · ${prettyDay(state.date)}</div>
+      <div class="dp-score">
+        <div class="dp-score-main">
+          <div><div class="dp-score-num">${totalGuesses()}</div><div class="dp-score-label">guesses</div></div>
+          <div><div class="dp-score-num dp-score-time">${formatTime(elapsed())}</div><div class="dp-score-label">time</div></div>
+        </div>
+        <div class="dp-score-verdict ${diff <= 0 ? "is-good" : "is-over"}">${golfTerm(diff)} <span>${diff === 0 ? `(even with par ${G().par})` : `(${relToPar(diff)} vs par ${G().par})`}</span></div>
+      </div>
+      <div class="dp-grid-scores">${grids}</div>
+      <div class="dp-share-row"><button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button></div>
+      <button type="button" class="dp-link" data-archive-list>← Back to the archive</button>
+      <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div></div>`;
   }
 
   // ---- Start screen --------------------------------------------------------
@@ -1972,6 +2054,9 @@
       const shareButton = event.target.closest?.("#dpShare");
       if (shareButton) share(shareButton);
       if (event.target.closest?.("#dpExperimental")) openChooser();
+      const day = event.target.closest?.("[data-archive-day]");
+      if (day) return playArchive(day.dataset.archiveDay);
+      if (event.target.closest?.("[data-archive-list]")) return showArchive();
       const pick = event.target.closest?.("[data-pick]");
       if (pick && !round().solved) { selected = pick.dataset.pick; guessSelected(); }
       const view = event.target.closest?.("[data-view]");
@@ -1986,7 +2071,8 @@
     // On its own page there's nothing to close back to, so it just starts.
     if (standalone) {
       $("dpBackBtn").remove();
-      open();
+      if (ARCHIVE) showArchive();
+      else open();
     }
   });
 }());
