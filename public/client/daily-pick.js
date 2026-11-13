@@ -1382,7 +1382,7 @@
     stopClock();
     $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">${game === "speed" ? `Speed · ${SPEED_GRIDS} grids` : `${SET_GAMES.includes(game) ? `Experimental · ${gridLabel(current)} · ` : ""}Grid ${current + 1} of ${puzzles.length}`}</div>
       <p>${rule}</p>
-      <button id="dpRuleClose" class="dp-next" type="button">${game === "speed" ? "Start" : "Got it"}</button>`;
+      <div class="dp-rule-foot"><button id="dpRuleClose" class="dp-next" type="button">${game === "speed" ? "Start" : "Got it"}</button></div>`;
     $("dpRule").hidden = false;
     $("dpRuleClose").focus({ preventScroll: true });
     $("dpRuleCard").scrollTop = 0; // long cards start at the top
