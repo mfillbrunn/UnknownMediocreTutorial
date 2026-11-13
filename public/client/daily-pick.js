@@ -946,7 +946,7 @@
     let action = "";
     if (done && r.lost) {
       hint = `<strong class="dp-result is-lost${revealing ? " is-new" : ""}">You struck out the secret, ${secret.toUpperCase()}.</strong> ${allSolved() ? "" : "Next grid…"}`;
-    } else if (done && elim) {
+    } else if (done && elim && !r.guesses.includes(secret)) {
       hint = `<strong class="dp-result${revealing ? " is-new" : ""}">Only the secret was left: solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next grid…"}`;
     } else if (done) {
       hint = `<strong class="dp-result${revealing ? " is-new" : ""}">Solved in ${r.guesses.length}!</strong> ${allSolved() ? "" : "Next grid…"}`;
@@ -1064,7 +1064,8 @@
     const green = settings.colorblind ? "🟧" : "🟩";
     const rows = state.rounds.map((r, i) => `${gridLabel(i)}: ${r.lost ? `🟥 lost`
       // Won by elimination: every guess was a miss, then the secret was left.
-      : ELIM_KINDS.includes(puzzles[i].kind) ? `${"⬜".repeat(r.guesses.length)}${green} ${r.guesses.length}`
+      // (Unless the secret itself was picked, in Pick two's last two.)
+      : ELIM_KINDS.includes(puzzles[i].kind) && !r.guesses.includes(puzzles[i].answer) ? `${"⬜".repeat(r.guesses.length)}${green} ${r.guesses.length}`
       : `${"⬜".repeat(r.guesses.length - 1)}${green} ${r.guesses.length}`}`);
     const diff = totalGuesses() - G().par;
     const verdict = `${golfTerm(diff)} (${totalGuesses()}; ${diff === 0 ? "even" : `${diff > 0 ? "+" : "-"}${Math.abs(diff)}`} par)`;
@@ -1103,12 +1104,15 @@
     return true;
   }
 
-  // Pick two's offer: two words the game may guess (one, near the end). It
-  // stays put until one of them is guessed or struck out.
+  // Pick two's offer: two words the game may guess. It stays put until one
+  // of them is guessed or struck out. Down to the last two words (the secret
+  // and one other, neither struck out), the secret is offered too.
   function ensureOffer() {
     const r = round();
-    if (puzzles[current].kind !== "choice") return;
+    const { kind, answer } = puzzles[current];
+    if (kind !== "choice") return;
     const left = elimCandidates();
+    if (left.length === 1 && !r.struck.includes(answer)) left.push(answer);
     const want = Math.min(2, left.length);
     const keep = (r.offer || []).filter(w => left.includes(w));
     if (keep.length === want && (r.offer || []).length === want) return;
@@ -1319,11 +1323,11 @@
           <li><b>Lost</b> if you've struck out the secret and there's nothing left to guess (counts as ${LOST_SCORE}).</li>
         </ol>
       </div>`,
-    choice: () => `<p>You don't pick from the whole grid here. Under it, the game <b>offers two words</b>, never the secret and never ones you've struck out. Pick one, and you get its feedback; then you're offered the next two.</p>
+    choice: () => `<p>You don't pick from the whole grid here. Under it, the game <b>offers two words</b>, never ones you've struck out, and not the secret, until only two words are left: then the secret is one of them. Pick one, and you get its feedback; then you're offered the next two.</p>
       <p>Tap words to <b>strike them out</b> as you rule them out, so they're never offered. Tap again to bring one back.</p>
       <div class="dp-example"><div class="dp-example-title">How it ends</div>
         <ol class="dp-ex-why">
-          <li><b>Solved</b> when the secret is the only word left that's neither struck out nor guessed.</li>
+          <li><b>Solved</b> when you pick the secret, or when it's the only word left that's neither struck out nor guessed.</li>
           <li>Your <b>score</b> is how many words you guessed.</li>
           <li><b>Lost</b> if you've struck out the secret and there's nothing left to offer (counts as ${LOST_SCORE}).</li>
         </ol>
