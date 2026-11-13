@@ -62,8 +62,8 @@
   // Grids won by striking out everything but the secret (the game, not the
   // player, chooses which words get guessed, and never the secret).
   const ELIM_KINDS = ["auto", "choice"];
-  // Autopilot's gaps between its guesses: 3 s, 3 s, then 2 s each.
-  const autoGap = n => (n <= 2 ? 3000 : 2000);
+  // Autopilot's gaps between its guesses: 5 s, 4 s, 3 s, then 2 s each.
+  const autoGap = n => [5000, 4000, 3000][n - 1] || 2000;
   // A grid lost (the secret struck out, nothing left to guess) counts as this many guesses.
   const LOST_SCORE = 16;
   // The Experimental sets (each grid has a kind, and its own rule card).
@@ -167,7 +167,7 @@
       next: () => msUntilNextWeek(), nextLabel: "Next Experimental in"
     },
     twists: {
-      storeKey: "umt.unstruck.twists.v1", historyKey: "umt.unstruck.twistsHistory", par: 12, step: 7,
+      storeKey: "umt.unstruck.twists.v2", historyKey: "umt.unstruck.twistsHistory2", par: 12, step: 7,
       period: () => weekStart(today()), number: weekNumber, title: "Unstruck Twists", unit: "week", scoreLabel: "guesses this week",
       next: () => msUntilNextWeek(), nextLabel: "Next Twists in"
     },
@@ -328,7 +328,7 @@
   function buildTwists(pool, date) {
     const taken = new Set();
     return TWIST_KINDS.map(kind => {
-      const seed = `unstruck-twists-1:${date}:${kind}`;
+      const seed = `unstruck-twists-2:${date}:${kind}`;
       const puzzle = buildPuzzle(pool, seed, taken, pickRecipe(mulberry32(hash(`${seed}:recipe`))));
       puzzle.words.forEach(w => taken.add(w));
       return { kind, answer: puzzle.answer, words: puzzle.words, mode: "full" };
@@ -1310,7 +1310,7 @@
           <ol class="dp-ex-why">${guesses.map((g, k) => `<li><b>${g.toUpperCase()}</b> shows letter ${k + 1}: ${said(g, k)}.</li>`).join("")}</ol>
         </div>`;
     },
-    auto: () => `<p>You don't pick words here. <b>The game guesses for you</b>: straight away, then every few seconds (3, 3, then 2 seconds each), it guesses a random word that <b>isn't struck out</b> and <b>isn't the secret</b>, and shows its feedback. A big red number counts down to the next one.</p>
+    auto: () => `<p>You don't pick words here. <b>The game guesses for you</b>: straight away, then every few seconds (5, 4, 3, then 2 seconds each), it guesses a random word that <b>isn't struck out</b> and <b>isn't the secret</b>, and shows its feedback. A big red number counts down to the next one.</p>
       <p>Tap words to <b>strike them out</b> as you rule them out, so they're never guessed. Tap again to bring one back.</p>
       <div class="dp-example"><div class="dp-example-title">How it ends</div>
         <ol class="dp-ex-why">
