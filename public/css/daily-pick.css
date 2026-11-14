@@ -1244,3 +1244,57 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 #dailyPickScreen.dp-light .dp-pick-dot.is-out { background: #fff; color: #e5484d; border-color: #e8b4b4; box-shadow: 0 3px 0 #e8b4b4, 0 4px 10px rgba(120,30,30,.15); }
 #dailyPickScreen:not(.dp-light) .dp-word .dp-pick-dot.is-out { background: #3a2a2e; border-color: #6b3a40; color: #ff7a7e; box-shadow: 0 3px 0 #1d1214, 0 4px 10px rgba(0,0,0,.35); }
 #dailyPickScreen:not(.dp-light) .dp-word .dp-pick-dot.is-picked { border-color: #fff; }
+
+/* ======================================================================
+   Polish: bigger clues on guessed cards, quieter corner buttons, roomier
+   cards, a divided title, the key as a strip, a fuller Guess button.
+   ====================================================================== */
+/* 1. A guessed card's letters fill the card. */
+.dp-word.is-guessed .dp-card-face { width: 100%; padding: 6px; box-sizing: border-box; }
+.dp-card-fb { width: 100%; gap: 3px; }
+.dp-card-fb i {
+  flex: 1; min-width: 0; width: auto;
+  height: clamp(26px, 7.4vw, 36px); border-radius: 6px;
+}
+#dailyPickScreen .dp-card-fb i { font-size: clamp(13px, 4vw, 19px) !important; }
+.dp-card-counts i { width: 26px; height: 26px; font-size: 14px; }
+
+/* 2. Corner buttons: a dark (or paper) circle with a thin colored ring. */
+#dailyPickScreen .dp-word .dp-pick-dot {
+  top: -6px; right: -6px; width: 28px; height: 28px;
+  background: #1c2430; color: #8ec5ff; border: 2px solid #3b7dd8;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35); transform: none;
+}
+#dailyPickScreen .dp-word .dp-pick-dot.is-out { background: #2a1d21; color: #ff7a7e; border-color: #c4474c; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+#dailyPickScreen .dp-word .dp-pick-dot.is-picked { background: #3b7dd8; color: #fff; border-color: #fff; }
+#dailyPickScreen.dp-light .dp-word .dp-pick-dot { background: #fffdf8; color: #2f6fc6; border-color: #3b7dd8; box-shadow: 0 1px 4px rgba(80,60,20,.18); }
+#dailyPickScreen.dp-light .dp-word .dp-pick-dot.is-out { background: #fffdf8; color: #d83a3f; border-color: #e5484d; box-shadow: 0 1px 4px rgba(80,60,20,.15); }
+#dailyPickScreen.dp-light .dp-word .dp-pick-dot.is-picked { background: #3b7dd8; color: #fff; border-color: #fffdf8; }
+#dailyPickScreen .dp-word .dp-pick-dot:active { transform: scale(.9); }
+
+/* 3. Roomier cards. */
+.dp-board { gap: 10px; }
+.dp-word { min-height: clamp(76px, 10.5vh, 96px); }
+.dp-board.is-pics .dp-word, .dp-board.is-colors .dp-word { min-height: 0; }
+/* One glow at a time: the picked card gets an outline, not a halo. */
+#dailyPickScreen:not(.dp-light) .dp-word.is-selected { box-shadow: 0 0 0 2px rgba(142,197,255,.35); }
+
+/* 4. Title with a divider, the key as an outlined strip, a fuller Guess. */
+.dp-title-grid { margin-left: 12px; padding-left: 12px; border-left: 2px solid rgba(255,255,255,.18); }
+#dailyPickScreen.dp-light .dp-title-grid { border-left-color: rgba(43,41,37,.15); }
+.dp-center .dp-key { padding: 8px 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); opacity: 1; }
+#dailyPickScreen.dp-light .dp-center .dp-key { border-color: #e2d9c6; background: #fffdf8; }
+.dp-center #dpGuess:not(:disabled) {
+  padding-top: 15px; padding-bottom: 15px; border-radius: 14px;
+  background: linear-gradient(180deg, #4a8be6, #3170cc); color: #fff; border-color: transparent;
+}
+#dailyPickScreen .dp-center #dpGuess { font-size: 18px !important; }
+#dailyPickScreen .dp-word.is-guessed .dp-card-face { display: flex; justify-content: center; align-items: center; }
+#dailyPickScreen .dp-word .dp-card-fb { display: flex; width: 100%; gap: 3px; }
+#dailyPickScreen .dp-word .dp-card-fb i { flex: 1 1 0; width: auto; min-width: 0; height: clamp(30px, 8.6vw, 40px); border-radius: 6px; }
+#dailyPickScreen .dp-word.is-guessed .dp-card-face { padding: 4px 3px; }
+#dailyPickScreen .dp-word .dp-card-fb { gap: 2px; }
+#dailyPickScreen .dp-word .dp-card-fb i { height: auto; aspect-ratio: 4 / 5; border-radius: 4px; }
+#dailyPickScreen .dp-card-fb i { font-size: clamp(12px, 3.7vw, 17px) !important; }
+/* Grid 3: the word above its two counts. */
+#dailyPickScreen .dp-word.is-guessed .dp-card-face:has(.dp-card-counts) { flex-direction: column; gap: 5px; }
