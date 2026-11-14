@@ -913,7 +913,10 @@
       const shown = guessed && !won ? (wordCards ? cardFeedback(word) : face(word) + mini(word)) : face(word);
       // Tapping the card crosses the word out (or brings it back): the most
       // common move. Picking is the small round ✓ on the top-right corner.
-      const dot = disabled || elim ? "" : `<button type="button" class="dp-pick-dot" aria-label="Pick ${name(word)}">✓</button>`;
+      // Picked, it turns into ✕ to unpick.
+      const dot = disabled || elim ? "" : word === selected
+        ? `<button type="button" class="dp-pick-dot is-unpick" aria-label="Unpick ${name(word)}">✕</button>`
+        : `<button type="button" class="dp-pick-dot" aria-label="Pick ${name(word)}">✓</button>`;
       return `<div class="${classes}${disabled ? "" : " is-tappable"}" data-word="${word}"${disabled ? " disabled" : ""} role="button" tabindex="${disabled ? -1 : 0}" aria-label="${name(word)}: ${struck ? "bring it back" : "cross it out"}"><span class="dp-card-face">${shown}</span>${dot}</div>`;
     }).join("");
 
@@ -1969,7 +1972,7 @@
         <h3 id="dpHelpTitle">How to play</h3>
         <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
         <p>You then use that info to eliminate words that don't match and narrow down the possible solutions before picking your next word; rinse and repeat.</p>
-        <p>Tap a word to <b>cross it out</b> when it can't be the secret; tap it again to bring it back. To pick a word to guess, tap the round <b>✓</b> on its top-right corner, then press <b>Guess</b>. A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
+        <p>Tap a word to <b>cross it out</b> when it can't be the secret; tap it again to bring it back. To pick a word to guess, tap the round blue <b>✓</b> on its top-right corner (it turns into <b>✕</b> to unpick), then press <b>Guess</b>. A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
         <p>There are three new grids every day, and they differ in what feedback you get:</p>
         <ul>
           <li>In the first grid, each letter is

@@ -1197,3 +1197,34 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 .dp-demo-card .dp-pick-dot { top: -7px; right: -7px; }
 #dailyPickScreen.dp-light .dp-pick-dot { background: #fffdf8; color: #2f8a45; border-color: #2f9449; box-shadow: 0 2px 6px rgba(80,60,20,.18); }
 #dailyPickScreen.dp-light .dp-word.is-selected .dp-pick-dot { background: #2f9449; color: #fff; border-color: #fffdf8; }
+/* The ✓ is a button, not a status: solid blue (the Guess button's color),
+   raised. Once picked it becomes a plain ✕ to unpick. */
+.dp-pick-dot, #dailyPickScreen.dp-light .dp-pick-dot {
+  background: #3b7dd8; color: #fff; border: 2px solid #fff;
+  box-shadow: 0 2px 0 #2a5ea8, 0 3px 8px rgba(30,60,120,.35);
+}
+.dp-pick-dot:active { transform: translateY(1px) scale(.92); box-shadow: 0 1px 0 #2a5ea8; }
+.dp-pick-dot.is-unpick, #dailyPickScreen.dp-light .dp-pick-dot.is-unpick,
+.dp-word.is-selected .dp-pick-dot, #dailyPickScreen.dp-light .dp-word.is-selected .dp-pick-dot {
+  background: #5b5f66; color: #fff; border-color: #fff; transform: none;
+  box-shadow: 0 2px 0 #3d4046, 0 3px 8px rgba(0,0,0,.3);
+}
+#dailyPickScreen.dp-light .dp-pick-dot.is-unpick { background: #6d665a; box-shadow: 0 2px 0 #4f4a41, 0 3px 8px rgba(80,60,20,.25); }
+#dailyPickScreen .dp-pick-dot { font-size: 14px !important; }
+.dp-word.is-struck .dp-pick-dot { opacity: .55; }
+/* The picked card: outlined in the same blue as the Guess button. */
+.dp-word.is-selected, #dailyPickScreen.dp-light .dp-word.is-selected {
+  border-color: #3b7dd8; box-shadow: 0 0 0 2px rgba(59,125,216,.35), 0 6px 14px rgba(59,125,216,.2);
+}
+#dailyPickScreen.dp-light .dp-word.is-selected { background: #fffdf8; color: #2b2925; }
+.dp-hint-check, .dp-tut-check { background: #3b7dd8; color: #fff; }
+/* A raised key, not a badge: white with a border and a shadow under it,
+   the check in the Guess blue. Pressing pushes it down. */
+.dp-pick-dot, #dailyPickScreen.dp-light .dp-pick-dot {
+  width: 30px; height: 30px; top: -8px; right: -8px;
+  background: #fff; color: #3b7dd8; border: 1.5px solid #c9c2b4;
+  box-shadow: 0 3px 0 #c9c2b4, 0 4px 10px rgba(60,45,20,.18);
+}
+.dp-pick-dot { background: #2a3442; color: #8ec5ff; border-color: #4a5566; box-shadow: 0 3px 0 #10161f, 0 4px 10px rgba(0,0,0,.35); }
+.dp-pick-dot:active, #dailyPickScreen.dp-light .dp-pick-dot:active { transform: translateY(2px); box-shadow: 0 1px 0 #c9c2b4; }
+#dailyPickScreen .dp-pick-dot { font-size: 15px !important; }
