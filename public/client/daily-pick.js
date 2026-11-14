@@ -111,7 +111,8 @@
 
   // Player settings, kept on the device.
   const SETTINGS_KEY = "umt.whittle.settings"; // named from when the game was Whittle; kept so settings carry over
-  let settings = { colorblind: false, light: false };
+  // The paper (light) look is the default; the switch in ? goes dark.
+  let settings = { colorblind: false, light: true };
   try { settings = { ...settings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) }; } catch (e) { /* defaults */ }
   const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* private mode */ } };
   // Color-blind mode swaps green/yellow for orange/blue (as Wordle's high
@@ -624,7 +625,7 @@
   function showClock() {
     const clock = $("dpClock");
     if (!clock) return;
-    clock.hidden = over() && !advanceTimer;
+    clock.hidden = (over() && !advanceTimer) || game !== "speed";
     if (game !== "speed") {
       clock.textContent = formatTime(elapsed());
       clock.classList.remove("is-low");
@@ -887,7 +888,17 @@
     };
     const face = id => (pics
       ? `<img class="dp-pic" src="${MEDIA_URL}${itemOf(kind, id).img}" alt="" draggable="false"><span class="dp-pic-name">${name(id)}</span>`
-      : paints ? paintRow(id) : id);
+      : paints ? paintRow(id) : `<span class="dp-card-word">${id}</span>`);
+    // A guessed word shows its feedback right on its card: the letters in
+    // their colors (or, on grid 3, the word and its two counts).
+    const wordCards = !pics && !paints;
+    const cardFeedback = guess => {
+      if (mode === "counts") {
+        const [g, y] = counts(guess);
+        return `<span class="dp-card-word">${guess}</span><span class="dp-card-counts"><i class="is-correct">${g}</i><i class="is-present">${y}</i></span>`;
+      }
+      return `<span class="dp-card-fb">${shownResult(guess).map((f, i) => `<i class="is-${f}">${guess[i]}${arrows ? `<small>${ARROWS[f]}</small>` : ""}</i>`).join("")}</span>`;
+    };
 
     const buttons = words.map(word => {
       const struck = r.struck.includes(word);
@@ -899,7 +910,12 @@
       const snap = toggled && toggled.word === word ? ` just-${toggled.kind}` : "";
       const fresh = revealing && word === lastGuess ? " just-guessed" : "";
       const classes = `dp-word${won ? " is-solved" : struck ? " is-struck" : ""}${guessed && !won ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}${offered ? " is-offered" : ""}${done && r.lost && word === secret ? " is-lost-secret" : ""}${snap}${fresh}`;
-      return `<button type="button" class="${classes}" data-word="${word}"${disabled ? " disabled" : ""} aria-label="${name(word)}">${face(word)}${guessed && !won ? mini(word) : ""}</button>`;
+      const shown = guessed && !won ? (wordCards ? cardFeedback(word) : face(word) + mini(word)) : face(word);
+      // ✕ crosses a word out (↺ brings it back), ✓ picks it to guess.
+      const acts = disabled ? "" : `<span class="dp-card-acts">
+        <button type="button" class="dp-x" data-act="strike" aria-label="${struck ? "Bring back" : "Cross out"} ${name(word)}">${struck ? "↺" : "✕"}</button>
+        ${elim ? "" : `<button type="button" class="dp-check" data-act="pick" aria-label="Pick ${name(word)}">✓</button>`}</span>`;
+      return `<div class="${classes}" data-word="${word}"${disabled ? " disabled" : ""} role="group" aria-label="${name(word)}"><span class="dp-card-face">${shown}</span>${acts}</div>`;
     }).join("");
 
     const SPLIT_TILE = SPLIT_FILL;
@@ -970,9 +986,9 @@
     } else {
       const aNoun = /^[aeiou]/.test(noun) ? `an ${noun}` : `a ${noun}`;
       // The tutorial covers tapping, so after the first guess there's no hint.
-      hint = r.guesses.length ? "" : `Tap ${noun === "food" ? "one" : aNoun} to pick your first guess`;
+      hint = r.guesses.length ? "" : `Tap <b class="dp-hint-check">✓</b> on ${noun === "food" ? "one" : aNoun} to guess it`;
       if (oneLetter) hint = `Your next guess shows letter <b>${(r.guesses.length % 5) + 1}</b>`;
-      const pick = !selected ? "" : pics ? ` ${name(selected)}` : paints ? ` ${paintRow(selected, "dp-paints dp-paints-inline")}` : ` ${selected.toUpperCase()}`;
+      const pick = !selected ? "" : pics ? ` ${name(selected)}` : paints ? ` ${paintRow(selected, "dp-paints dp-paints-inline")}` : ` ${selected[0].toUpperCase()}${selected.slice(1)}`;
       action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>Guess${pick}</button>`;
     }
     // Keeps the panel the same height once the button is gone.
@@ -984,10 +1000,10 @@
     // Autopilot's countdown to its next guess: big, red, see-through, behind play.
     const autoCount = kind === "auto" && !done ? `<div class="dp-auto-count" id="dpAutoCount" aria-hidden="true">${Math.max(1, Math.ceil(((r.autoDue ?? elapsed()) - elapsed()) / 1000)) || ""}</div>` : "";
     root.innerHTML = `<div class="dp-board${pics ? ` is-pics is-${kind}` : kind ? ` is-${kind}` : ""}" style="${pics ? `--ratio:${info.ratio}` : ""}">${buttons}${autoCount}</div>
-      <div class="dp-center">${lastGuess ? `<div class="dp-last">Last guess</div>${tiles(lastGuess)}` : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>${exit}`;
+      <div class="dp-center">${wordCards ? "" : lastGuess ? `<div class="dp-last">Last guess</div>${tiles(lastGuess)}` : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>${exit}`;
   }
 
-  function onWordClick(word) {
+  function onWordClick(word, act = "pick") {
     const r = round();
     if (r.solved || r.guesses.includes(word)) return;
     if (ELIM_KINDS.includes(puzzles[current].kind)) {
@@ -1004,25 +1020,24 @@
       return;
     }
     const struckAt = r.struck.indexOf(word);
-    if (!r.guesses.length) {
-      // Nothing to rule out yet, so the first guess of a grid is a plain pick:
-      // one tap picks a word (dropping any other pick), a second tap clears it.
-      selected = selected === word ? "" : word;
-      toggled = { word, kind: selected ? "selected" : "freed" };
+    if (act === "strike") {
+      // ✕: cross it out, or bring it back (↺).
+      if (struckAt >= 0) { r.struck.splice(struckAt, 1); toggled = { word, kind: "freed" }; }
+      else {
+        r.struck.push(word);
+        if (selected === word) selected = "";
+        toggled = { word, kind: "struck" };
+        navigator.vibrate?.(8);
+      }
     } else if (word === selected) {
-      // third tap: back to normal
+      // ✓ again: unpick
       selected = "";
       toggled = { word, kind: "freed" };
-    } else if (struckAt >= 0) {
-      // second tap: from struck out to picked (any earlier pick goes back to normal)
-      r.struck.splice(struckAt, 1);
+    } else {
+      // ✓: pick it (bringing it back if it was crossed out)
+      if (struckAt >= 0) r.struck.splice(struckAt, 1);
       selected = word;
       toggled = { word, kind: "selected" };
-    } else {
-      // first tap: strike it out
-      r.struck.push(word);
-      toggled = { word, kind: "struck" };
-      navigator.vibrate?.(8); // the faintest tick, on phones that support it
     }
     save();
     render();
@@ -1239,17 +1254,18 @@
       button.style.setProperty("--flap-delay", `${delay}ms`);
       button.classList.add("is-flap");
       button.addEventListener("animationend", () => button.classList.remove("is-flap"), { once: true });
-      if (!spinning) return;
+      const text = button.querySelector(".dp-card-word");
+      if (!spinning || !text) return;
       let frame = 0;
       const frames = 8;
       const spin = () => {
-        if (!button.isConnected || button.dataset.word !== word) return;
+        if (!text.isConnected || button.dataset.word !== word) return;
         frame++;
-        button.textContent = frame >= frames ? word
+        text.textContent = frame >= frames ? word
           : [...word].map((c, k) => (k < frame - 2 ? c : letters[Math.floor(Math.random() * 26)])).join("");
         if (frame < frames) setTimeout(spin, 50);
       };
-      button.textContent = [...word].map(() => letters[Math.floor(Math.random() * 26)]).join("");
+      text.textContent = [...word].map(() => letters[Math.floor(Math.random() * 26)]).join("");
       setTimeout(spin, delay);
     });
   }
@@ -1790,57 +1806,22 @@
   // Little tiles for the tutorial's pictures.
   const demoWord = (word, cls = "") => `<span class="dp-demo-word ${cls}">${word}</span>`;
   const demoTiles = (word, kinds) => `<span class="dp-demo-row">${[...word].map((ch, i) => `<span class="dp-tile is-${kinds[i]}">${ch}</span>`).join("")}</span>`;
+  // First time: one short card. The full rules live under ?.
   const TUTORIAL = [
     () => ({
-      title: "Welcome to Unstruck",
-      body: `<p>Each grid has <b>16 words</b>. One of them is the <b>secret word</b>.</p>
-        <p>Find it in as few guesses as you can. There are <b>3 grids</b> a day, and your score is the total number of guesses (par is 7).</p>`
-    }),
-    () => ({
-      title: "Your first guess",
-      body: `<p>You start with nothing to go on, so just <b>tap a word</b> to pick it, then press <b>Guess</b>.</p>
-        <div class="dp-demo">${demoWord("CRANE", "is-selected")} <span class="dp-demo-arrow">→</span> <span class="dp-demo-btn">Guess CRANE</span></div>
-        <p>Lucky? It was the secret and you're done in one. If not, you get feedback.</p>`
-    }),
-    () => ({
-      title: "Reading the feedback",
-      body: `<p>Feedback compares your guess with the secret word:</p>
-        <div class="dp-demo">${demoTiles("CRANE", ["absent", "correct", "present", "absent", "absent"])}</div>
-        <p><b>${colorName("hit")}</b>: right letter, right spot. <b>${colorName("near")}</b>: in the word, wrong spot. <b>Gray</b>: not in the word.</p>
-        <p>Use it to work out which words <b>can't</b> be the secret.</p>`
-    }),
-    () => ({
-      title: "Tapping words",
-      body: `<p>After your first guess, each tap moves a word along:</p>
-        <div class="dp-demo dp-demo-flow">
-          <span class="dp-flow-tile">${demoWord("SLATE")}<small>start</small></span>
-          <span class="dp-flow-arrow"><b>→</b><small>tap</small></span>
-          <span class="dp-flow-tile">${demoWord("SLATE", "is-struck")}<small>struck out</small></span>
-          <span class="dp-flow-arrow"><b>→</b><small>tap</small></span>
-          <span class="dp-flow-tile">${demoWord("SLATE", "is-selected")}<small>picked</small></span>
-          <span class="dp-flow-arrow"><b>→</b><small>tap</small></span>
-          <span class="dp-flow-tile">${demoWord("SLATE")}<small>cleared</small></span>
+      title: "How to play",
+      body: `<p class="dp-tut-lead">Find the <b>secret word</b> among the 16.</p>
+        <div class="dp-demo dp-demo-cards">
+          <span class="dp-word dp-demo-card"><span class="dp-card-face"><span class="dp-card-word">slate</span></span>
+            <span class="dp-card-acts"><span class="dp-x">✕</span><span class="dp-check">✓</span></span></span>
+          <span class="dp-word dp-demo-card is-guessed"><span class="dp-card-face"><span class="dp-card-fb">${["c", "r", "a", "n", "e"].map((c, i) => `<i class="is-${["absent", "correct", "present", "absent", "absent"][i]}">${c}</i>`).join("")}</span></span></span>
         </div>
-        <p>Strike out the words the feedback rules out. When you've <b>picked</b> a word, press <b>Guess</b> to submit it.</p>
-        <p>Only one word can be picked: picking a second word resets the first.</p>`
-    }),
-    () => ({
-      title: "Grid 2: less to go on",
-      body: `<p>Letters in the word show <b>half ${colorName("hit")}, half ${colorName("near")}</b>, so you don't learn whether they're in the right spot.</p>
-        <div class="dp-demo">${demoTiles("CRANE", ["absent", "in", "in", "absent", "absent"])}</div>
-        <p>Gray still means not in the word.</p>`
-    }),
-    () => ({
-      title: "Grid 3: just counts",
-      body: `<p>You only see <b>how many</b> letters are in the right spot and how many are in the wrong spot, not which ones.</p>
-        <div class="dp-demo"><span class="dp-demo-row"><span class="dp-plain-word">CRANE</span>
-          <span class="dp-tile is-correct dp-count-tile">1</span><span class="dp-tile is-present dp-count-tile">1</span></span></div>
-        <p>Here 1 letter is right where it should be and 1 is in the word but elsewhere.</p>`
-    }),
-    () => ({
-      title: "Ready?",
-      body: `<p>Fewer guesses and a faster time make a better score. Share it with friends when you're done!</p>
-        <p>The full rules are always under <b>?</b>.</p>`,
+        <ol class="dp-tut-steps">
+          <li>Tap <b class="dp-tut-check">✓</b> on a word, then <b>Guess</b>.</li>
+          <li>Its letters light up: <b data-c="hit">${colorName("hit")}</b> = right spot, <b data-c="near">${colorName("near")}</b> = wrong spot, <b>gray</b> = not in the word.</li>
+          <li>Tap <b class="dp-tut-x">✕</b> on words that can't be it, and guess again.</li>
+        </ol>
+        <p class="dp-tut-small">Three grids a day. Fewer guesses is better. The full rules are under <b>?</b></p>`,
       last: true
     })
   ];
@@ -1848,14 +1829,15 @@
   function renderTutorial() {
     const step = TUTORIAL[tutorialStep]();
     const dots = TUTORIAL.map((_, i) => `<i class="${i === tutorialStep ? "is-on" : ""}"></i>`).join("");
+    const many = TUTORIAL.length > 1;
     $("dpIntroCard").innerHTML = `
-      <div class="dp-tut-step">Step ${tutorialStep + 1} of ${TUTORIAL.length}</div>
+      ${many ? `<div class="dp-tut-step">Step ${tutorialStep + 1} of ${TUTORIAL.length}</div>` : ""}
       <h3>${step.title}</h3>
       <div class="dp-tut-body">${step.body}</div>
-      <div class="dp-tut-dots">${dots}</div>
+      ${many ? `<div class="dp-tut-dots">${dots}</div>` : ""}
       <div class="dp-tut-nav">
-        ${tutorialStep ? `<button type="button" class="dp-link" data-tut="back">← Back</button>` : `<button type="button" class="dp-link" data-tut="skip">Skip</button>`}
-        <button type="button" class="dp-next" data-tut="${step.last ? "done" : "next"}">${step.last ? "Play" : "Next →"}</button>
+        ${!many ? "" : tutorialStep ? `<button type="button" class="dp-link" data-tut="back">← Back</button>` : `<button type="button" class="dp-link" data-tut="skip">Skip</button>`}
+        <button type="button" class="dp-next" data-tut="${step.last ? "done" : "next"}">${step.last ? "Let's play" : "Next →"}</button>
       </div>
       ${step.last ? `<button class="dp-link" type="button" data-practice="start">or try a practice grid first</button>` : ""}`;
   }
@@ -1974,7 +1956,7 @@
         <h3 id="dpHelpTitle">How to play</h3>
         <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
         <p>You then use that info to eliminate words that don't match and narrow down the possible solutions before picking your next word; rinse and repeat.</p>
-        <p>For your first guess in each grid, a single tap picks a word. After that, tapping a word once strikes it out, twice picks it as your next guess, and a third time clears it. Picking another word resets the first one. Press <b>Guess</b> to submit your pick.</p>
+        <p>Every word card has a red <b>✕</b> and a green <b>✓</b>. Tap <b>✓</b> (or the word itself) to pick a word, then press <b>Guess</b>. Tap <b>✕</b> to cross out a word that can't be the secret; a crossed-out word gets <b>↺</b> to bring it back. A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
         <p>There are three new grids every day, and they differ in what feedback you get:</p>
         <ul>
           <li>In the first grid, each letter is
@@ -2049,7 +2031,10 @@
     });
     $("dailyPickRoot")?.addEventListener("click", event => {
       const word = event.target.closest?.(".dp-word");
-      if (word) return onWordClick(word.dataset.word);
+      if (word && !word.hasAttribute("disabled")) {
+        const act = event.target.closest?.("[data-act]")?.dataset.act || (ELIM_KINDS.includes(puzzles[current]?.kind) ? "strike" : "pick");
+        return onWordClick(word.dataset.word, act);
+      }
       if (event.target.closest?.("#dpGuess")) guessSelected();
       const shareButton = event.target.closest?.("#dpShare");
       if (shareButton) share(shareButton);

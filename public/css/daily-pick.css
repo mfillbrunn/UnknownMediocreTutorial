@@ -34,7 +34,7 @@
 @media (hover: hover) {
   .dp-close:hover { background: #e05252; }
   .dp-help-btn:hover { background: rgba(255,255,255,.08); }
-  .dp-word:not(:disabled):not(.is-selected):hover { background: rgba(255,255,255,.11); border-color: rgba(255,255,255,.28); }
+  .dp-word:not([disabled]):not(.is-selected):hover { background: rgba(255,255,255,.11); border-color: rgba(255,255,255,.28); }
 }
 
 /* ---------- Header: clock | title | help, close ---------- */
@@ -146,8 +146,8 @@
   -webkit-user-select: none; user-select: none;
   -webkit-touch-callout: none;
 }
-.dp-word:not(:disabled):active { transform: scale(.96); }
-.dp-word:disabled { cursor: default; }
+.dp-word:not([disabled]):active { transform: scale(.96); }
+.dp-word[disabled] { cursor: default; }
 /* The word lined up to guess: solid blue, lifted, with a soft glow. */
 .dp-word.is-selected {
   background: #3b7dd8;
@@ -638,7 +638,7 @@
 #dailyPickScreen.dp-light .dp-tab.is-on { background: #ffffff; }
 #dailyPickScreen.dp-light .dp-cell.is-empty { background: rgba(20,28,40,.06); }
 @media (hover: hover) {
-  #dailyPickScreen.dp-light .dp-word:not(:disabled):not(.is-selected):hover { background: #e8ecf2; border-color: #c3cad5; }
+  #dailyPickScreen.dp-light .dp-word:not([disabled]):not(.is-selected):hover { background: #e8ecf2; border-color: #c3cad5; }
   #dailyPickScreen.dp-light .dp-help-btn:hover { background: #f0f2f6; }
 }
 .dp-demo-btn { background: #3b7dd8; color: #fff; }
@@ -1015,3 +1015,120 @@ body.dp-light-page { background: #eef1f6; }
 .dp-archive-tag { text-align: center; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .6; }
 #dailyPickScreen.dp-light .dp-archive-day { background: #f2f4f8; border-color: #d3d9e3; }
 #dailyPickScreen.dp-light .dp-archive-day em.is-done { color: #2e7d3c; }
+
+/* ======================================================================
+   Word cards: ✕ (cross out) on the left, ✓ (pick) on the right, and a
+   guessed word's feedback shown on the card itself.
+   ====================================================================== */
+.dp-word {
+  display: flex; flex-direction: column; justify-content: space-between;
+  min-height: 86px; padding: 0; text-transform: none;
+}
+.dp-board.is-pics .dp-word, .dp-board.is-colors .dp-word { min-height: 0; }
+.dp-card-face { flex: 1; display: grid; place-items: center; align-content: center; gap: 4px; padding: 12px 4px 2px; }
+.dp-card-word { text-transform: capitalize; font-weight: 800; letter-spacing: .01em; }
+.dp-card-acts { display: flex; justify-content: space-between; padding: 0 6px 6px; }
+.dp-x, .dp-check {
+  width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%;
+  display: grid; place-items: center; cursor: pointer; font-family: inherit; font-weight: 900; line-height: 1;
+  transition: transform .1s ease, background .15s ease;
+}
+#dailyPickScreen .dp-x, #dailyPickScreen .dp-check { font-size: 15px !important; }
+.dp-x { background: rgba(229,72,77,.16); color: #ff6b70; }
+.dp-check { background: rgba(63,157,79,.18); color: #59c46c; }
+.dp-x:active, .dp-check:active { transform: scale(.88); }
+.dp-word.is-selected .dp-check { background: #3f9d4f; color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.7); }
+.dp-word.is-struck .dp-x { background: rgba(255,255,255,.1); color: inherit; }
+/* The strike line crosses the word, not the buttons below it. */
+.dp-word.is-struck::after { top: calc((100% - 36px) / 2 + 6px); }
+/* A guessed word: its letters in their feedback colors, no strike line. */
+.dp-word.is-guessed:has(.dp-card-fb)::after, .dp-word.is-guessed:has(.dp-card-counts)::after { display: none; }
+.dp-word.is-guessed:has(.dp-card-fb), .dp-word.is-guessed:has(.dp-card-counts) { justify-content: center; }
+.dp-word.is-guessed .dp-card-face { padding: 4px 2px; }
+.dp-card-fb { display: flex; gap: 2px; }
+.dp-card-fb i {
+  width: clamp(13px, 3.6vw, 17px); height: clamp(20px, 5.4vw, 24px); border-radius: 4px;
+  display: grid; place-items: center; font-style: normal; font-weight: 800; color: #fff;
+  text-transform: uppercase; line-height: 1;
+}
+#dailyPickScreen .dp-card-fb i { font-size: clamp(11px, 3.2vw, 14px) !important; }
+.dp-card-fb i.is-correct { background: var(--dp-hit); }
+.dp-card-fb i.is-present { background: var(--dp-near); }
+.dp-card-fb i.is-absent { background: #6b727c; }
+.dp-card-fb i.is-in { background: linear-gradient(135deg, var(--dp-hit) 0 50%, var(--dp-near) 50% 100%); }
+.dp-card-fb i.is-hidden { background: transparent; color: inherit; opacity: .45; box-shadow: inset 0 0 0 1.5px currentColor; }
+.dp-card-fb i.is-left, .dp-card-fb i.is-right, .dp-card-fb i.is-same { background: #555b63; height: auto; padding: 3px 0; gap: 1px; }
+.dp-card-fb small { font-size: 10px; }
+.dp-card-counts { display: flex; gap: 5px; }
+.dp-card-counts i { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 800; font-size: 12px; color: #fff; }
+.dp-card-counts i.is-correct { background: var(--dp-hit); }
+.dp-card-counts i.is-present { background: var(--dp-near); }
+/* Just guessed: the card turns over to show its feedback; the secret pops. */
+.dp-word.just-guessed { animation: dp-card-turn .5s ease-out; }
+.dp-word.is-solved.just-guessed { animation: dp-card-win .7s cubic-bezier(.3,1.6,.5,1); }
+@keyframes dp-card-turn { 0% { transform: perspective(500px) rotateY(90deg); } 100% { transform: none; } }
+@keyframes dp-card-win { 0% { transform: scale(.85); } 60% { transform: scale(1.08); } 100% { transform: none; } }
+.dp-hint-check { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(63,157,79,.18); color: #3f9d4f; font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .dp-word.just-guessed { animation: none !important; } }
+
+/* First-time rules: the two demo cards and three steps. */
+.dp-demo-cards { display: flex; justify-content: center; gap: 10px; margin: 6px 0 10px; }
+.dp-demo-card { width: 104px; min-height: 84px; cursor: default; }
+.dp-tut-lead { text-align: center; font-size: 17px; }
+.dp-tut-steps { margin: 0 0 8px; padding-left: 22px; line-height: 1.5; }
+.dp-tut-steps li { margin-bottom: 6px; }
+.dp-tut-check, .dp-tut-x { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; }
+.dp-tut-check { background: rgba(63,157,79,.18); color: #3f9d4f; }
+.dp-tut-x { background: rgba(229,72,77,.16); color: #e5484d; }
+.dp-tut-small { font-size: 13px; opacity: .7; text-align: center; }
+.dp-intro-card.dp-tutorial .dp-tut-body { min-height: 0; }
+
+/* ======================================================================
+   Paper theme (the light look, now the default): warm cream, cards that
+   look like cards.
+   ====================================================================== */
+body.dp-light-page { background: #f3eee3; color: #2b2925; }
+#dailyPickScreen.dp-light { color: #2b2925; }
+#dailyPickScreen.dp-light .dp-card { background: #faf7f0 !important; border-color: #e6dfd0 !important; box-shadow: 0 10px 36px rgba(80,60,20,.08) !important; }
+#dailyPickScreen.dp-light .menu-title { color: #2b2925 !important; }
+#dailyPickScreen.dp-light .dp-word {
+  background: #fffdf8; border-color: #e2d9c6; color: #2b2925;
+  box-shadow: 0 1px 0 #e2d9c6, 0 4px 10px rgba(80,60,20,.07);
+}
+#dailyPickScreen.dp-light .dp-word.is-selected { background: #fffdf8; border-color: #2f9449; color: #2b2925; box-shadow: 0 0 0 2px rgba(47,148,73,.35), 0 6px 14px rgba(47,148,73,.18); }
+#dailyPickScreen.dp-light .dp-word.is-selected .dp-check { box-shadow: none; }
+#dailyPickScreen.dp-light .dp-word.is-struck { background: #f4efe4; border-color: #e8e1d2; color: rgba(43,41,37,.35); box-shadow: none; }
+#dailyPickScreen.dp-light .dp-word.is-struck .dp-x { background: #ebe4d5; color: #6d665a; }
+#dailyPickScreen.dp-light .dp-word.is-guessed { background: #f7f2e7; border-color: #e2d9c6; box-shadow: none; }
+#dailyPickScreen.dp-light .dp-word.is-solved { background: var(--dp-hit); border-color: var(--dp-hit); color: #fff; }
+#dailyPickScreen.dp-light .dp-x { background: #fbe4e3; color: #d83a3f; }
+#dailyPickScreen.dp-light .dp-check { background: #e2f1e3; color: #2f8a45; }
+#dailyPickScreen.dp-light .dp-word.is-selected .dp-check { background: #2f9449; color: #fff; }
+#dailyPickScreen.dp-light .dp-card-fb i.is-absent { background: #8b867c; }
+#dailyPickScreen.dp-light .dp-card-fb i.is-left, #dailyPickScreen.dp-light .dp-card-fb i.is-right, #dailyPickScreen.dp-light .dp-card-fb i.is-same { background: #8b867c; }
+#dailyPickScreen.dp-light .dp-center { background: #f4efe4; border: 1px solid #e6dfd0; }
+#dailyPickScreen.dp-light .dp-key, #dailyPickScreen.dp-light .dp-hint { color: #5b5549; }
+#dailyPickScreen.dp-light .dp-intro { background: rgba(243,238,227,.72); }
+#dailyPickScreen.dp-light .dp-intro-card,
+#dailyPickScreen.dp-light .dp-start-card,
+#dailyPickScreen.dp-light .dp-banner,
+#dailyPickScreen.dp-light .dp-choose-card { background: #fffdf8; border-color: #e2d9c6; color: #2b2925; }
+#dailyPickScreen.dp-light .dp-rule-foot { background: #fffdf8; box-shadow: 0 -18px 16px -2px #fffdf8; }
+#dailyPickScreen.dp-light .dp-grid-score, #dailyPickScreen.dp-light .dp-stat, #dailyPickScreen.dp-light .dp-dist,
+#dailyPickScreen.dp-light .dp-settings, #dailyPickScreen.dp-light .dp-views, #dailyPickScreen.dp-light .dp-details,
+#dailyPickScreen.dp-light .dp-archive-day { background: #f4efe4; border-color: #e6dfd0; }
+#dailyPickScreen.dp-light .dp-view.is-on { background: #fffdf8; }
+#dailyPickScreen.dp-light .dp-help-btn { border-color: #d8cfbd; color: #2b2925; }
+#dailyPickScreen.dp-light .dp-next:not(.dp-share):not(#dpGuess) { background: #2b2925; color: #fffdf8; }
+#dailyPickScreen.dp-light .dp-title-grid, #dailyPickScreen.dp-light .dp-grid-name,
+#dailyPickScreen.dp-light .dp-score-label, #dailyPickScreen.dp-light .dp-dist-title { color: #8a8276; }
+#dailyPickScreen.dp-light .dp-score-num { color: #2b2925; }
+#dailyPickScreen.dp-light .dp-switch-ui { background: #ddd5c4; }
+@media (hover: hover) {
+  #dailyPickScreen.dp-light .dp-word:not([disabled]):not(.is-selected):hover { background: #fffaf0; border-color: #d6cbb4; }
+}
+/* A guessed card stays readable (it's out of play, but its clue matters). */
+.dp-word.is-guessed.is-struck { color: rgba(255,255,255,.85); }
+#dailyPickScreen.dp-light .dp-word.is-guessed.is-struck { color: #2b2925; }
+/* One-card rules: the button centered. */
+.dp-tut-nav:not(:has(.dp-link)) { justify-content: center; }
