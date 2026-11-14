@@ -1318,3 +1318,54 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 #dailyPickScreen.dp-light .dp-word .dp-pick-dot.is-out { color: #c9484c; border-color: #e3a5a7; }
 #dailyPickScreen .dp-word:not(.is-guessed) .dp-card-face { padding-top: 30px; padding-bottom: 8px; }
 #dailyPickScreen .dp-board:not(.is-pics):not(.is-colors) .dp-word.is-struck:not(.is-guessed)::after { top: calc(50% + 11px); }
+
+/* ======================================================================
+   The board: a 4 x 5 block of word cards around the middle spot (row 3,
+   columns 2-3). Tap a card to cross it out; drag it to the middle to guess.
+   ====================================================================== */
+.dp-board.is-diamond {
+  --card-h: clamp(68px, 9.4vh, 88px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(5, var(--card-h));
+  gap: 10px; padding-top: 0;
+}
+.dp-board.is-diamond .dp-word { height: var(--card-h); min-height: 0; touch-action: none; }
+.dp-board.is-diamond.is-pics, .dp-board.is-diamond.is-colors { grid-template-rows: none; grid-auto-rows: auto; }
+.dp-board.is-diamond.is-pics .dp-word, .dp-board.is-diamond.is-colors .dp-word { height: auto; }
+#dailyPickScreen .dp-board.is-diamond .dp-word:not(.is-guessed) .dp-card-face { padding: 6px 2px; }
+#dailyPickScreen .dp-board.is-diamond:not(.is-pics):not(.is-colors) .dp-word.is-struck:not(.is-guessed)::after { top: 50%; }
+/* 16 words: the outer columns slide half a card toward the middle. */
+.dp-board.is-diamond .dp-word.is-slid-down { translate: 0 calc((var(--card-h) + 10px) / 2); }
+.dp-board.is-diamond .dp-word.is-slid-up { translate: 0 calc((var(--card-h) + 10px) / -2); }
+
+/* The middle spot. */
+.dp-drop {
+  display: grid; place-items: center; min-width: 0; padding: 6px;
+  border: 2.5px dashed rgba(255,255,255,.22); border-radius: 14px;
+  text-align: center; transition: border-color .15s ease, background .15s ease;
+}
+.dp-drop-text { font-size: 13px; line-height: 1.35; font-weight: 600; opacity: .7; }
+.dp-drop-text b { font-weight: 900; }
+.dp-drop.has-guess { border-style: solid; border-color: rgba(255,255,255,.1); }
+.dp-drop.is-over { border-style: dashed; border-color: #3b7dd8; background: rgba(59,125,216,.12); }
+.dp-drop.is-over .dp-drop-text { visibility: hidden; }
+.dp-drop.is-over .dp-drop-row { opacity: .3; }
+.dp-drop .dp-row { gap: 3px; }
+.dp-drop .dp-tile { width: clamp(24px, 6.8vw, 32px); height: clamp(28px, 7.8vw, 36px); border-radius: 6px; }
+#dailyPickScreen .dp-drop .dp-tile { font-size: clamp(14px, 4.2vw, 18px) !important; }
+.dp-drop .dp-plain-word { font-size: clamp(14px, 4.2vw, 18px); margin-right: 4px; }
+.dp-drop .dp-count-tile { width: 24px; height: 24px; }
+#dailyPickScreen.dp-light .dp-drop { border-color: #cfc4ae; }
+#dailyPickScreen.dp-light .dp-drop.has-guess { border-color: #e6dfd0; background: #fffdf8; }
+#dailyPickScreen.dp-light .dp-drop.is-over { border-color: #3b7dd8; background: rgba(59,125,216,.08); }
+#dailyPickScreen.dp-light .dp-drop-text { color: #6d665a; opacity: 1; }
+
+/* Dragging: the card lifts and follows the finger; its spot fades. */
+.dp-word.is-dragging { opacity: .3; }
+.dp-ghost {
+  position: fixed; z-index: 50; pointer-events: none; margin: 0;
+  transform: translate(-50%, -50%) scale(1.08) rotate(-3deg);
+  box-shadow: 0 14px 30px rgba(0,0,0,.3) !important;
+}
+body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbing; }
+.dp-center:not(:has(.dp-hint)) { padding-top: 10px; padding-bottom: 10px; }

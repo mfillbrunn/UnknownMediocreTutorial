@@ -26,6 +26,13 @@
 
 (function () {
   const WORD_COUNT = 16;
+  // From this day on, a Daily grid has 18 words: the board is a full 4 x 5
+  // block around the middle spot where words are dragged to be guessed.
+  // Earlier days (and the archive's copies of them) keep their 16.
+  const BIG_GRID_FROM = "2026-11-15";
+  const BIG_GRID = 18;
+  // The practice grid, the same for everyone.
+  const PRACTICE_WORDS = 18;
   const PUZZLE_COUNT = 3;
   // Par for the whole day's three grids, for the golf verdict at the end.
   const DAY_PAR = 7;
@@ -290,7 +297,7 @@
   // recipe. Words a few links apart can have little in common, so there's no
   // obvious hub word that splits the grid, and the answer is any link. At a
   // dead end the chain branches off an earlier word instead.
-  function buildPuzzle(list, seed, taken, recipe) {
+  function buildPuzzle(list, seed, taken, recipe, count = WORD_COUNT) {
     const rand = mulberry32(hash(seed));
     const key = w => countsOf(w).join("");
     const free = list.filter(w => !taken.has(w));
@@ -300,7 +307,7 @@
       const used = new Set([key(start)]);
       let tip = start;
       let stuck = 0;
-      while (chain.length < WORD_COUNT && stuck < WORD_COUNT) {
+      while (chain.length < count && stuck < count) {
         const options = free.filter(w => !used.has(key(w)) && linked(w, tip, recipe));
         const next = options[Math.floor(rand() * options.length)];
         if (next) {
@@ -313,14 +320,14 @@
           stuck++;
         }
       }
-      if (chain.length === WORD_COUNT) {
+      if (chain.length === count) {
         const answer = chain[Math.floor(rand() * chain.length)];
         return { answer, words: shuffle(chain, rand), recipe: recipe.name };
       }
     }
     // Never seen in testing, but a recipe that can't fill a grid falls back
     // to random words rather than leaving the day unplayable.
-    if (recipe !== RECIPES[RECIPES.length - 1]) return buildPuzzle(list, `${seed}:fallback`, taken, RECIPES[RECIPES.length - 1]);
+    if (recipe !== RECIPES[RECIPES.length - 1]) return buildPuzzle(list, `${seed}:fallback`, taken, RECIPES[RECIPES.length - 1], count);
     throw new Error("Unstruck: couldn't build a grid");
   }
 
@@ -332,7 +339,7 @@
       const level = Math.min(i, LEVELS.length - 1);
       const seed = `griddle-4:${date}:${i + 1}`;
       const recipe = pickRecipe(mulberry32(hash(`${seed}:recipe`)));
-      const puzzle = buildPuzzle(list, seed, taken, recipe);
+      const puzzle = buildPuzzle(list, seed, taken, recipe, date >= BIG_GRID_FROM ? BIG_GRID : WORD_COUNT);
       puzzle.words.forEach(w => taken.add(w));
       return { ...puzzle, ...LEVELS[level] };
     });
@@ -900,7 +907,20 @@
       return `<span class="dp-card-fb">${shownResult(guess).map((f, i) => `<i class="is-${f}">${guess[i]}${arrows ? `<small>${ARROWS[f]}</small>` : ""}</i>`).join("")}</span>`;
     };
 
-    const buttons = words.map(word => {
+    // Where each card goes: a 4 x 5 board with the middle two spots of the
+    // third row kept for guessing. 18 words fill every other spot; 16 words
+    // leave the third row's ends empty and slide the outer columns half a
+    // card toward the middle (a diamond).
+    const full = words.length >= 18;
+    const spots = [];
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 4; c++) {
+      if (r === 2 && (c === 1 || c === 2)) continue;
+      if (r === 2 && !full) continue;
+      spots.push([r, c]);
+    }
+    const buttons = words.map((word, wi) => {
+      const [gr, gc] = spots[wi] || [0, 0];
+      const slide = !full && (gc === 0 || gc === 3) ? (gr < 2 ? 1 : -1) : 0;
       const struck = r.struck.includes(word);
       const guessed = r.guesses.includes(word);
       // Words already guessed stay struck for good, so they can't be tapped.
@@ -911,16 +931,9 @@
       const fresh = revealing && word === lastGuess ? " just-guessed" : "";
       const classes = `dp-word${won ? " is-solved" : struck ? " is-struck" : ""}${guessed && !won ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}${offered ? " is-offered" : ""}${done && r.lost && word === secret ? " is-lost-secret" : ""}${snap}${fresh}`;
       const shown = guessed && !won ? (wordCards ? cardFeedback(word) : face(word) + mini(word)) : face(word);
-      // Tapping the card crosses the word out (or brings it back): the most
-      // common move. Picking is the small round ✓ on the top-right corner.
-      // It shows the card's state: ✓ in play (tap to pick), pressed in when
-      // picked (tap to unpick), ✕ when crossed out (tap to bring it back).
-      const dot = disabled || elim ? "" : struck
-        ? `<button type="button" class="dp-pick-dot is-out" aria-label="Bring back ${name(word)}">✕</button>`
-        : word === selected
-          ? `<button type="button" class="dp-pick-dot is-picked" aria-label="Unpick ${name(word)}">✓</button>`
-          : `<button type="button" class="dp-pick-dot" aria-label="Pick ${name(word)}">✓</button>`;
-      return `<div class="${classes}${disabled ? "" : " is-tappable"}" data-word="${word}"${disabled ? " disabled" : ""} role="button" tabindex="${disabled ? -1 : 0}" aria-label="${name(word)}: ${struck ? "bring it back" : "cross it out"}"><span class="dp-card-face">${shown}</span>${dot}</div>`;
+      // Tapping a card crosses the word out (or brings it back); dragging it
+      // into the middle spot guesses it.
+      return `<div class="${classes}${disabled ? "" : " is-tappable"}${slide > 0 ? " is-slid-down" : slide < 0 ? " is-slid-up" : ""}" data-word="${word}" data-slide="${slide}" style="grid-row:${gr + 1};grid-column:${gc + 1}"${disabled ? " disabled" : ""} role="button" tabindex="${disabled ? -1 : 0}" aria-label="${name(word)}: tap to ${struck ? "bring it back" : "cross it out"}${elim ? "" : ", or drag to the middle to guess it"}"><span class="dp-card-face">${shown}</span></div>`;
     }).join("");
 
     const SPLIT_TILE = SPLIT_FILL;
@@ -975,8 +988,6 @@
     // doesn't shift as the game moves along.
     // Pictures show nothing until the first guess (an empty color grid
     // just looks like a broken image).
-    const blank = pics ? "" : `<div class="dp-row">${"<span class=\"dp-tile is-empty\"></span>".repeat(5)}</div>`;
-    const noun = pics ? KIND_INFO[kind].noun : "word";
     let hint;
     let action = "";
     if (done && r.lost) {
@@ -989,24 +1000,105 @@
       hint = kind === "auto" ? "Strike out the words you've ruled out" : "Pick one to guess, strike out the rest you've ruled out";
       if (kind === "choice") action = `<div class="dp-pick-two">${(r.offer || []).map(w => `<button type="button" class="dp-next dp-pick" data-pick="${w}">${w.toUpperCase()}</button>`).join("")}</div>`;
     } else {
-      const aNoun = /^[aeiou]/.test(noun) ? `an ${noun}` : `a ${noun}`;
-      // The tutorial covers tapping, so after the first guess there's no hint.
-      hint = r.guesses.length ? "" : `Tap the <b class="dp-hint-check">✓</b> on ${noun === "food" ? "one" : aNoun} to pick your guess`;
-      if (oneLetter) hint = `Your next guess shows letter <b>${(r.guesses.length % 5) + 1}</b>`;
-      const pick = !selected ? "" : pics ? ` ${name(selected)}` : paints ? ` ${paintRow(selected, "dp-paints dp-paints-inline")}` : ` ${selected[0].toUpperCase()}${selected.slice(1)}`;
-      action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>Guess${pick}</button>`;
+      hint = oneLetter ? `Your next guess shows letter <b>${(r.guesses.length % 5) + 1}</b>` : "";
     }
-    // Keeps the panel the same height once the button is gone.
-    if (!action) action = `<button type="button" class="dp-next" tabindex="-1" aria-hidden="true" style="visibility:hidden">&nbsp;</button>`;
 
     const exit = playMode === "practice" ? `<button type="button" class="dp-link" data-practice="end">← Back to today's Unstruck</button>`
       : game === "archive" ? `<button type="button" class="dp-link" data-archive-list>← Back to the archive</button>`
       : game !== "daily" ? `<button type="button" class="dp-link" data-game="daily">← Back to the Daily</button>` : "";
+    // The middle spot. Word grids show the latest guess there, big; before
+    // the first guess it says what to do, and that goes as a word is dragged in.
+    const dropText = elim ? "<b>Tap</b> to cross out" : "<b>Tap</b> to cross out<br><b>Drag</b> here to guess";
+    const inMiddle = lastGuess && wordCards ? tiles(lastGuess).replace('class="dp-row', 'class="dp-row dp-drop-row') : `<span class="dp-drop-text">${dropText}</span>`;
+    const middle = `<div class="dp-drop${lastGuess && wordCards ? " has-guess" : ""}" id="dpDrop" style="grid-row:3;grid-column:2 / 4">${inMiddle}</div>`;
     // Autopilot's countdown to its next guess: big, red, see-through, behind play.
     const autoCount = kind === "auto" && !done ? `<div class="dp-auto-count" id="dpAutoCount" aria-hidden="true">${Math.max(1, Math.ceil(((r.autoDue ?? elapsed()) - elapsed()) / 1000)) || ""}</div>` : "";
     requestAnimationFrame(fitWords);
-    root.innerHTML = `<div class="dp-board${pics ? ` is-pics is-${kind}` : kind ? ` is-${kind}` : ""}" style="${pics ? `--ratio:${info.ratio}` : ""}">${buttons}${autoCount}</div>
-      <div class="dp-center">${lastGuess ? `<div class="dp-last">Last guess</div>${tiles(lastGuess)}` : wordCards ? "" : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>${exit}`;
+    root.innerHTML = `<div class="dp-board is-diamond${full ? " is-full" : ""}${pics ? ` is-pics is-${kind}` : kind ? ` is-${kind}` : ""}" style="${pics ? `--ratio:${info.ratio}` : ""}">${buttons}${middle}${autoCount}</div>
+      <div class="dp-center">${lastGuess && !wordCards ? `<div class="dp-last">Last guess</div>${tiles(lastGuess)}` : ""}<div class="dp-key">${key}</div>${hint || action ? `<div class="dp-hint">${hint}</div>${action}` : ""}</div>${exit}`;
+  }
+
+  // ---- Tap to cross out, drag to the middle to guess ------------------------
+  // A card's resting spot on screen: offsets ignore the flip and bounce
+  // animations, and a slid card (16-word diamond) moves half a card plus
+  // half the gap.
+  function cardSpot(el) {
+    const board = el.offsetParent.getBoundingClientRect();
+    const gap = parseFloat(getComputedStyle(el.offsetParent).rowGap) || 0;
+    const slide = +el.dataset.slide || 0;
+    return {
+      left: board.left + el.offsetParent.clientLeft + el.offsetLeft,
+      top: board.top + el.offsetParent.clientTop + el.offsetTop + slide * (el.offsetHeight + gap) / 2,
+      w: el.offsetWidth, h: el.offsetHeight
+    };
+  }
+  // The card under a point, found by position rather than by what's drawn
+  // there (a card mid-flip doesn't cover its spot exactly).
+  function cardAt(x, y) {
+    return [...document.querySelectorAll("#dailyPickRoot .dp-word:not([disabled])")].find(el => {
+      const b = cardSpot(el);
+      return x >= b.left && x <= b.left + b.w && y >= b.top && y <= b.top + b.h;
+    }) || null;
+  }
+  const overDrop = (x, y) => {
+    const b = $("dpDrop")?.getBoundingClientRect();
+    return !!b && x >= b.left - 6 && x <= b.right + 6 && y >= b.top - 6 && y <= b.bottom + 6;
+  };
+
+  function initDrag() {
+    const root = $("dailyPickRoot");
+    let drag = null;
+    const end = () => {
+      if (!drag) return;
+      drag.ghost?.remove();
+      drag.card.classList.remove("is-dragging");
+      $("dpDrop")?.classList.remove("is-over");
+      document.body.classList.remove("dp-dragging");
+      drag = null;
+    };
+    root.addEventListener("pointerdown", event => {
+      if (event.button > 0 || !event.target.closest?.(".dp-board")) return;
+      const card = cardAt(event.clientX, event.clientY);
+      if (!card || round().solved) return;
+      drag = { card, word: card.dataset.word, x: event.clientX, y: event.clientY, moved: false, ghost: null, id: event.pointerId };
+      root.setPointerCapture?.(event.pointerId);
+    });
+    root.addEventListener("pointermove", event => {
+      if (!drag || event.pointerId !== drag.id) return;
+      if (!drag.moved) {
+        if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 9) return;
+        // Words in an elimination grid can't be guessed by hand.
+        if (ELIM_KINDS.includes(puzzles[current]?.kind)) return;
+        drag.moved = true;
+        const b = drag.card.getBoundingClientRect();
+        const ghost = drag.card.cloneNode(true);
+        ghost.classList.add("dp-ghost");
+        ghost.classList.remove("is-struck", "just-struck", "just-freed", "is-flap", "is-slid-down", "is-slid-up");
+        ghost.removeAttribute("style");
+        ghost.style.width = `${b.width}px`;
+        ghost.style.height = `${b.height}px`;
+        $("dailyPickScreen").appendChild(ghost);
+        drag.ghost = ghost;
+        drag.card.classList.add("is-dragging");
+        document.body.classList.add("dp-dragging");
+      }
+      drag.ghost.style.left = `${event.clientX}px`;
+      drag.ghost.style.top = `${event.clientY}px`;
+      $("dpDrop")?.classList.toggle("is-over", overDrop(event.clientX, event.clientY));
+    });
+    const finish = event => {
+      if (!drag || event.pointerId !== drag.id) return;
+      const { word, moved } = drag;
+      const dropped = moved && overDrop(event.clientX, event.clientY);
+      end();
+      if (!moved) return onWordClick(word, "strike");
+      if (dropped && !round().solved && !round().guesses.includes(word)) {
+        selected = word;
+        guessSelected();
+      }
+    };
+    root.addEventListener("pointerup", finish);
+    root.addEventListener("pointercancel", end);
   }
 
   // Words are as big as their card allows: a wide one (MOMMY, on a small
@@ -1753,7 +1845,7 @@
     if (playMode === "daily") { dailyPuzzles = puzzles; dailyState = state; }
     playMode = "practice";
     track("practice");
-    puzzles = [{ ...buildPuzzle(wordList, PRACTICE_SEED, new Set(), RECIPES[0]), ...LEVELS[0] }];
+    puzzles = [{ ...buildPuzzle(wordList, PRACTICE_SEED, new Set(), RECIPES[0], PRACTICE_WORDS), ...LEVELS[0] }];
     state = { date: "practice", rounds: [{ guesses: [], struck: [], solved: false }] };
     current = 0;
     selected = "";
@@ -1831,14 +1923,13 @@
       title: "How to play",
       body: `<p class="dp-tut-lead">Find the <b>secret word</b> among the 16.</p>
         <div class="dp-demo dp-demo-cards">
-          <span class="dp-word dp-demo-card is-tappable"><span class="dp-card-face"><span class="dp-card-word">slate</span></span>
-            <span class="dp-pick-dot">✓</span></span>
+          <span class="dp-word dp-demo-card is-struck"><span class="dp-card-face"><span class="dp-card-word">slate</span></span></span>
           <span class="dp-word dp-demo-card is-guessed"><span class="dp-card-face"><span class="dp-card-fb">${["c", "r", "a", "n", "e"].map((c, i) => `<i class="is-${["absent", "correct", "present", "absent", "absent"][i]}">${c}</i>`).join("")}</span></span></span>
         </div>
         <ol class="dp-tut-steps">
-          <li>Tap a word's <b class="dp-tut-check">✓</b> to pick it, then <b>Guess</b>.</li>
+          <li><b>Drag</b> a word into the middle to guess it.</li>
           <li>Its letters light up: <b data-c="hit">${colorName("hit")}</b> = right spot, <b data-c="near">${colorName("near")}</b> = wrong spot, <b>gray</b> = not in the word.</li>
-          <li>Tap the words that can't be it to <b>cross them out</b> (tap again to bring one back), and guess again.</li>
+          <li><b>Tap</b> the words that can't be it to cross them out (tap again to bring one back), and guess again.</li>
         </ol>
         <p class="dp-tut-small">Three grids a day. Fewer guesses is better. The full rules are under <b>?</b></p>`,
       last: true
@@ -1975,7 +2066,7 @@
         <h3 id="dpHelpTitle">How to play</h3>
         <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
         <p>You then use that info to eliminate words that don't match and narrow down the possible solutions before picking your next word; rinse and repeat.</p>
-        <p>Tap a word to <b>cross it out</b> when it can't be the secret; tap it again to bring it back. To pick a word to guess, tap the round <b>✓</b> on its top-right corner (tap it again to unpick), then press <b>Guess</b>. A crossed-out word shows <b>✕</b> there instead. A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
+        <p><b>Tap</b> a word to cross it out when it can't be the secret; tap it again to bring it back. To guess a word, <b>drag it into the middle</b> of the board. A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
         <p>There are three new grids every day, and they differ in what feedback you get:</p>
         <ul>
           <li>In the first grid, each letter is
@@ -2045,41 +2136,21 @@
       if (event.target.closest("#dpStartPlay")) closeSplash();
       else if (event.target.closest("#dpStartHelp")) openHelp();
     });
+    // Keyboard: Enter or Space crosses a word out (or brings it back); G guesses it.
     $("dailyPickRoot")?.addEventListener("keydown", event => {
       const word = event.target.closest?.(".dp-word.is-tappable");
-      if (!word || !["Enter", " "].includes(event.key)) return;
-      event.preventDefault();
-      onWordClick(word.dataset.word, event.target.closest(".dp-pick-dot") && !word.classList.contains("is-struck") ? "pick" : "strike");
+      if (!word) return;
+      if (["Enter", " "].includes(event.key)) { event.preventDefault(); onWordClick(word.dataset.word, "strike"); }
+      else if ((event.key === "g" || event.key === "G") && !ELIM_KINDS.includes(puzzles[current]?.kind)) { selected = word.dataset.word; guessSelected(); }
     });
+    initDrag();
     window.addEventListener("resize", () => requestAnimationFrame(fitWords));
     document.addEventListener("keydown", event => {
       if (event.key === "Escape") { closeRule(); closeIntro(); closeHelp(); closeChooser(); }
     });
     $("dailyPickRoot")?.addEventListener("click", event => {
-      // A card's resting spot: offsets ignore the flip and bounce animations.
-      const spot = el => {
-        const board = el.offsetParent.getBoundingClientRect();
-        return { left: board.left + el.offsetParent.clientLeft + el.offsetLeft, top: board.top + el.offsetParent.clientTop + el.offsetTop, w: el.offsetWidth, h: el.offsetHeight };
-      };
-      // Found by position, not by what's drawn there: a card mid-flip (or a
-      // neighbor's flip) doesn't cover its spot exactly.
-      if (event.target.closest?.(".dp-board")) {
-        const x = event.clientX, y = event.clientY;
-        const cards = [...document.querySelectorAll("#dailyPickRoot .dp-word:not([disabled])")];
-        // The ✓ circle first: its corner of the card, plus the bit poking out.
-        const picked = cards.find(el => {
-          if (!el.querySelector(".dp-pick-dot")) return false;
-          const b = spot(el);
-          return x >= b.left + b.w - 46 && x <= b.left + b.w + 4 && y >= b.top - 4 && y <= b.top + 36;
-        });
-        // On a crossed-out card the corner shows ✕ and brings the word back.
-        if (picked) return onWordClick(picked.dataset.word, picked.classList.contains("is-struck") ? "strike" : "pick");
-        // Anywhere else on a card crosses it out (or brings it back).
-        const word = cards.find(el => { const b = spot(el); return x >= b.left && x <= b.left + b.w && y >= b.top && y <= b.top + b.h; });
-        if (word) return onWordClick(word.dataset.word, "strike");
-        return;
-      }
-      if (event.target.closest?.("#dpGuess")) guessSelected();
+      // Taps on the board are handled with dragging (initDrag).
+      if (event.target.closest?.(".dp-board")) return;
       const shareButton = event.target.closest?.("#dpShare");
       if (shareButton) share(shareButton);
       if (event.target.closest?.("#dpExperimental")) openChooser();
