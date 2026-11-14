@@ -913,10 +913,13 @@
       const shown = guessed && !won ? (wordCards ? cardFeedback(word) : face(word) + mini(word)) : face(word);
       // Tapping the card crosses the word out (or brings it back): the most
       // common move. Picking is the small round ✓ on the top-right corner.
-      // Picked, it turns into ✕ to unpick.
-      const dot = disabled || elim ? "" : word === selected
-        ? `<button type="button" class="dp-pick-dot is-unpick" aria-label="Unpick ${name(word)}">✕</button>`
-        : `<button type="button" class="dp-pick-dot" aria-label="Pick ${name(word)}">✓</button>`;
+      // It shows the card's state: ✓ in play (tap to pick), pressed in when
+      // picked (tap to unpick), ✕ when crossed out (tap to bring it back).
+      const dot = disabled || elim ? "" : struck
+        ? `<button type="button" class="dp-pick-dot is-out" aria-label="Bring back ${name(word)}">✕</button>`
+        : word === selected
+          ? `<button type="button" class="dp-pick-dot is-picked" aria-label="Unpick ${name(word)}">✓</button>`
+          : `<button type="button" class="dp-pick-dot" aria-label="Pick ${name(word)}">✓</button>`;
       return `<div class="${classes}${disabled ? "" : " is-tappable"}" data-word="${word}"${disabled ? " disabled" : ""} role="button" tabindex="${disabled ? -1 : 0}" aria-label="${name(word)}: ${struck ? "bring it back" : "cross it out"}"><span class="dp-card-face">${shown}</span>${dot}</div>`;
     }).join("");
 
@@ -1972,7 +1975,7 @@
         <h3 id="dpHelpTitle">How to play</h3>
         <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
         <p>You then use that info to eliminate words that don't match and narrow down the possible solutions before picking your next word; rinse and repeat.</p>
-        <p>Tap a word to <b>cross it out</b> when it can't be the secret; tap it again to bring it back. To pick a word to guess, tap the round blue <b>✓</b> on its top-right corner (it turns into <b>✕</b> to unpick), then press <b>Guess</b>. A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
+        <p>Tap a word to <b>cross it out</b> when it can't be the secret; tap it again to bring it back. To pick a word to guess, tap the round <b>✓</b> on its top-right corner (tap it again to unpick), then press <b>Guess</b>. A crossed-out word shows <b>✕</b> there instead. A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
         <p>There are three new grids every day, and they differ in what feedback you get:</p>
         <ul>
           <li>In the first grid, each letter is
@@ -2046,7 +2049,7 @@
       const word = event.target.closest?.(".dp-word.is-tappable");
       if (!word || !["Enter", " "].includes(event.key)) return;
       event.preventDefault();
-      onWordClick(word.dataset.word, event.target.closest(".dp-pick-dot") ? "pick" : "strike");
+      onWordClick(word.dataset.word, event.target.closest(".dp-pick-dot") && !word.classList.contains("is-struck") ? "pick" : "strike");
     });
     window.addEventListener("resize", () => requestAnimationFrame(fitWords));
     document.addEventListener("keydown", event => {
@@ -2069,7 +2072,8 @@
           const b = spot(el);
           return x >= b.left + b.w - 34 && x <= b.left + b.w + 10 && y >= b.top - 10 && y <= b.top + 34;
         });
-        if (picked) return onWordClick(picked.dataset.word, "pick");
+        // On a crossed-out card the corner shows ✕ and brings the word back.
+        if (picked) return onWordClick(picked.dataset.word, picked.classList.contains("is-struck") ? "strike" : "pick");
         // Anywhere else on a card crosses it out (or brings it back).
         const word = cards.find(el => { const b = spot(el); return x >= b.left && x <= b.left + b.w && y >= b.top && y <= b.top + b.h; });
         if (word) return onWordClick(word.dataset.word, "strike");

@@ -1228,3 +1228,19 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 .dp-pick-dot { background: #2a3442; color: #8ec5ff; border-color: #4a5566; box-shadow: 0 3px 0 #10161f, 0 4px 10px rgba(0,0,0,.35); }
 .dp-pick-dot:active, #dailyPickScreen.dp-light .dp-pick-dot:active { transform: translateY(2px); box-shadow: 0 1px 0 #c9c2b4; }
 #dailyPickScreen .dp-pick-dot { font-size: 15px !important; }
+/* The corner key shows the card's state. Picked: pressed in, solid blue. */
+.dp-pick-dot.is-picked, #dailyPickScreen.dp-light .dp-pick-dot.is-picked,
+.dp-word.is-selected .dp-pick-dot, #dailyPickScreen.dp-light .dp-word.is-selected .dp-pick-dot {
+  background: #3b7dd8; color: #fff; border-color: #2f6fc6;
+  transform: translateY(2px); box-shadow: 0 1px 0 #2a5ea8, inset 0 1px 2px rgba(0,0,0,.2);
+}
+/* Crossed out: a red ✕, still a key (tap it, or the card, to bring the word back). */
+.dp-pick-dot.is-out, #dailyPickScreen.dp-light .dp-pick-dot.is-out,
+.dp-word.is-struck .dp-pick-dot, #dailyPickScreen.dp-light .dp-word.is-struck .dp-pick-dot {
+  opacity: 1; background: #fff; color: #e5484d; border-color: #e8b4b4;
+  box-shadow: 0 3px 0 #e8b4b4, 0 4px 10px rgba(120,30,30,.15);
+}
+.dp-pick-dot.is-out { background: #3a2a2e; border-color: #6b3a40; color: #ff7a7e; box-shadow: 0 3px 0 #1d1214, 0 4px 10px rgba(0,0,0,.35); }
+#dailyPickScreen.dp-light .dp-pick-dot.is-out { background: #fff; color: #e5484d; border-color: #e8b4b4; box-shadow: 0 3px 0 #e8b4b4, 0 4px 10px rgba(120,30,30,.15); }
+#dailyPickScreen:not(.dp-light) .dp-word .dp-pick-dot.is-out { background: #3a2a2e; border-color: #6b3a40; color: #ff7a7e; box-shadow: 0 3px 0 #1d1214, 0 4px 10px rgba(0,0,0,.35); }
+#dailyPickScreen:not(.dp-light) .dp-word .dp-pick-dot.is-picked { border-color: #fff; }
