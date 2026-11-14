@@ -1103,6 +1103,17 @@
   // Words are as big as their card allows: a wide one (MOMMY, on a small
   // phone) steps down a size or two until it fits.
   function fitWords() {
+    // Grid 3's middle: a wide word steps down until it and its counts fit.
+    const row = document.querySelector("#dpDrop .dp-drop-row");
+    const word = row?.querySelector(".dp-plain-word");
+    if (word) {
+      word.style.removeProperty("font-size");
+      let size = parseFloat(getComputedStyle(word).fontSize);
+      while (row.scrollWidth > row.clientWidth + 1 && size > 12) {
+        size -= 1;
+        word.style.setProperty("font-size", `${size}px`);
+      }
+    }
     document.querySelectorAll("#dailyPickRoot .dp-card-word").forEach(el => {
       el.style.removeProperty("font-size");
       let size = parseFloat(getComputedStyle(el).fontSize);

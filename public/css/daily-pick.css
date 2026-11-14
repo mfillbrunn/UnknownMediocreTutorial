@@ -1386,16 +1386,4 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-drop .dp-drop-row:has(.dp-count-tile) { gap: 5px; flex-wrap: nowrap; }
 .dp-drop .dp-drop-row .dp-plain-word { font-size: clamp(17px, 5.3vw, 25px); letter-spacing: .03em; margin-right: 3px; }
 .dp-drop .dp-drop-row .dp-count-tile { width: clamp(26px, 7.6vw, 34px); height: clamp(26px, 7.6vw, 34px); margin-left: 0; }
-/* Grid 3 in the middle: the word on top, its two counts underneath, both as
-   big as the spot's height allows. */
-.dp-drop .dp-drop-row:has(.dp-count-tile) {
-  display: grid; grid-template-columns: auto auto; justify-content: center; align-content: center;
-  column-gap: 6px; row-gap: 3px;
-}
-.dp-drop .dp-drop-row:has(.dp-count-tile) .dp-plain-word {
-  grid-column: 1 / -1; margin: 0; text-align: center; line-height: 1;
-  font-size: clamp(17px, calc(var(--card-h) * .3), 27px); letter-spacing: .05em;
-}
-.dp-drop .dp-drop-row .dp-count-tile {
-  width: clamp(22px, calc(var(--card-h) - 46px), 34px); height: clamp(22px, calc(var(--card-h) - 46px), 34px);
-}
+.dp-drop .dp-drop-row:has(.dp-count-tile) { width: 100%; overflow: hidden; }
