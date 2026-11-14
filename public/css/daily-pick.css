@@ -1298,3 +1298,23 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 #dailyPickScreen .dp-card-fb i { font-size: clamp(12px, 3.7vw, 17px) !important; }
 /* Grid 3: the word above its two counts. */
 #dailyPickScreen .dp-word.is-guessed .dp-card-face:has(.dp-card-counts) { flex-direction: column; gap: 5px; }
+
+/* The pick button: a rounded rectangle tucked inside the card's corner. */
+#dailyPickScreen .dp-word .dp-pick-dot, #dailyPickScreen .dp-demo-card .dp-pick-dot {
+  top: 5px; right: 5px; width: 36px; height: 26px; border-radius: 8px;
+  border-width: 1.5px; box-shadow: none;
+}
+#dailyPickScreen .dp-pick-dot { font-size: 14px !important; }
+#dailyPickScreen:not(.dp-light) .dp-word .dp-pick-dot { background: rgba(59,125,216,.14); border-color: rgba(110,165,235,.55); color: #8ec5ff; }
+#dailyPickScreen.dp-light .dp-word .dp-pick-dot { background: #eef4fc; border-color: #b9d0ef; color: #2f6fc6; }
+#dailyPickScreen .dp-word .dp-pick-dot.is-picked, #dailyPickScreen.dp-light .dp-word .dp-pick-dot.is-picked { background: #3b7dd8; border-color: #3b7dd8; color: #fff; }
+.dp-board { padding-top: 0; }
+.dp-word .dp-card-face { padding-top: 14px; }
+/* Crossed out: the ✕ stays, dimmed with the card. */
+#dailyPickScreen .dp-word .dp-pick-dot.is-out, #dailyPickScreen.dp-light .dp-word .dp-pick-dot.is-out {
+  opacity: .45; background: transparent; box-shadow: none;
+}
+#dailyPickScreen:not(.dp-light) .dp-word .dp-pick-dot.is-out { color: #ff8a8e; border-color: rgba(255,122,126,.5); }
+#dailyPickScreen.dp-light .dp-word .dp-pick-dot.is-out { color: #c9484c; border-color: #e3a5a7; }
+#dailyPickScreen .dp-word:not(.is-guessed) .dp-card-face { padding-top: 30px; padding-bottom: 8px; }
+#dailyPickScreen .dp-board:not(.is-pics):not(.is-colors) .dp-word.is-struck:not(.is-guessed)::after { top: calc(50% + 11px); }

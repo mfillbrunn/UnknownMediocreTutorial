@@ -1006,7 +1006,7 @@
     const autoCount = kind === "auto" && !done ? `<div class="dp-auto-count" id="dpAutoCount" aria-hidden="true">${Math.max(1, Math.ceil(((r.autoDue ?? elapsed()) - elapsed()) / 1000)) || ""}</div>` : "";
     requestAnimationFrame(fitWords);
     root.innerHTML = `<div class="dp-board${pics ? ` is-pics is-${kind}` : kind ? ` is-${kind}` : ""}" style="${pics ? `--ratio:${info.ratio}` : ""}">${buttons}${autoCount}</div>
-      <div class="dp-center">${wordCards ? "" : lastGuess ? `<div class="dp-last">Last guess</div>${tiles(lastGuess)}` : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>${exit}`;
+      <div class="dp-center">${lastGuess ? `<div class="dp-last">Last guess</div>${tiles(lastGuess)}` : wordCards ? "" : blank}<div class="dp-key">${key}</div><div class="dp-hint">${hint}</div>${action}</div>${exit}`;
   }
 
   // Words are as big as their card allows: a wide one (MOMMY, on a small
@@ -2070,7 +2070,7 @@
         const picked = cards.find(el => {
           if (!el.querySelector(".dp-pick-dot")) return false;
           const b = spot(el);
-          return x >= b.left + b.w - 34 && x <= b.left + b.w + 10 && y >= b.top - 10 && y <= b.top + 34;
+          return x >= b.left + b.w - 46 && x <= b.left + b.w + 4 && y >= b.top - 4 && y <= b.top + 36;
         });
         // On a crossed-out card the corner shows ✕ and brings the word back.
         if (picked) return onWordClick(picked.dataset.word, picked.classList.contains("is-struck") ? "strike" : "pick");
