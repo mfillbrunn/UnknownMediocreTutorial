@@ -29,13 +29,13 @@
   // From this day on, a Daily grid has 18 words: the board is a full 4 x 5
   // block around the middle spot where words are dragged to be guessed.
   // Earlier days (and the archive's copies of them) keep their 16.
-  const BIG_GRID_FROM = "2026-11-15";
+  const BIG_GRID_FROM = "2026-11-14";
   const BIG_GRID = 18;
   // The practice grid, the same for everyone.
   const PRACTICE_WORDS = 18;
   const PUZZLE_COUNT = 3;
   // Par for the whole day's three grids, for the golf verdict at the end.
-  const DAY_PAR = 7;
+  const DAY_PAR = 8;
   // How long a solved grid stays up (the feedback flip and the little
   // celebration) before the next grid or the scorecard.
   const ADVANCE_MS = 2600;
@@ -1584,6 +1584,10 @@
       if (which === "daily" || which === "archive") {
         slot.state = load();
         slot.puzzles = buildDay(wordList, period);
+        // Progress saved on an older version of a day's grids (words no
+        // longer in them) starts the day over.
+        const fits = slot.state.rounds.every((r, i) => [...r.guesses, ...r.struck].every(w => slot.puzzles[i]?.words.includes(w)));
+        if (!fits) slot.state = { date: period, rounds: slot.puzzles.map(() => ({ guesses: [], struck: [], solved: false })) };
       } else if (which === "twists") {
         slot.puzzles = buildTwists(wordList, period);
         slot.state = load(TWIST_KINDS.length);
@@ -2080,7 +2084,7 @@
         ${EXPERIMENTAL_BUTTON && WEEKLY_ENABLED ? `<p><b>Experimental</b> (the button next to Share once you've finished the Daily) has two extras. <b>Flags · Colors · Arrows</b>, new every Monday, is three different grids: <b>Flags</b>, where each flag is split into a grid of colors; <b>Colors</b>, rows of five paints where a paint matches a tile when they have a color in common (white, red and pink all match pink); and <b>Arrows</b>, words where each letter's arrow points to the secret's letter in the alphabet. Each grid explains itself when it starts.</p>` : ""}
         ${EXPERIMENTAL_BUTTON && TWISTS_ENABLED ? `<p><b>One letter · Autopilot · Pick two</b> (also under Experimental, new every Monday): word grids with a twist. <b>One letter</b> shows feedback for just one letter per guess, in turn. In <b>Autopilot</b> the game guesses for you every few seconds while you strike words out, and in <b>Pick two</b> you choose between two words it offers. In both, you solve it when only the secret is left, and lose if you strike the secret out. Each grid explains itself when it starts.</p>` : ""}
         ${EXPERIMENTAL_BUTTON && SPEED_ENABLED ? `<p><b>Speed</b> (also under Experimental): 3 minutes to solve as many of the day's ${SPEED_GRIDS} grids as you can, all with full feedback. Every guess costs 2 seconds, right or wrong.</p>` : ""}
-        <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
+        <p>The total number of guesses across all three grids is your score (par is 8), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
         <button id="dpTutorialBtn" class="dp-link" type="button">Replay the tutorial</button>
