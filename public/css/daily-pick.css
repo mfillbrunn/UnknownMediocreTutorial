@@ -1132,3 +1132,44 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 #dailyPickScreen.dp-light .dp-word.is-guessed.is-struck { color: #2b2925; }
 /* One-card rules: the button centered. */
 .dp-tut-nav:not(:has(.dp-link)) { justify-content: center; }
+
+/* ======================================================================
+   One big card per word, split corner to corner: top-left half crosses
+   out, bottom-right half picks. A faint diagonal and two corner marks.
+   ====================================================================== */
+.dp-word { min-height: 78px; justify-content: center; }
+.dp-card-face { padding: 10px 4px; }
+#dailyPickScreen .dp-board:not(.is-pics):not(.is-colors) .dp-card-word { font-size: clamp(19px, 5.6vw, 27px) !important; }
+.dp-word.is-split::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(to bottom right, transparent calc(50% - .75px), rgba(255,255,255,.1) 50%, transparent calc(50% + .75px));
+}
+.dp-corner {
+  position: absolute; width: 20px; height: 20px; border-radius: 50%;
+  display: grid; place-items: center; font-style: normal; font-weight: 900; line-height: 1;
+  pointer-events: none; opacity: .75;
+}
+#dailyPickScreen .dp-corner { font-size: 11px !important; }
+.dp-corner-x { top: 5px; left: 5px; background: rgba(229,72,77,.16); color: #ff6b70; }
+.dp-corner-check { bottom: 5px; right: 5px; background: rgba(63,157,79,.18); color: #59c46c; }
+.dp-word.is-selected .dp-corner-check { background: #3f9d4f; color: #fff; opacity: 1; }
+.dp-word.is-struck .dp-corner-x { background: rgba(255,255,255,.12); color: inherit; opacity: 1; }
+/* Back to a line straight through the middle of the word. */
+.dp-word.is-struck::after { top: 50%; }
+.dp-demo-card { min-height: 78px; }
+.dp-demo-card .dp-card-word { font-size: 22px; }
+.dp-word:focus-visible { outline: 2px solid #3b7dd8; outline-offset: 2px; }
+#dailyPickScreen.dp-light .dp-word.is-split::before { background: linear-gradient(to bottom right, transparent calc(50% - .75px), rgba(80,60,20,.12) 50%, transparent calc(50% + .75px)); }
+#dailyPickScreen.dp-light .dp-corner-x { background: #fbe4e3; color: #d83a3f; }
+#dailyPickScreen.dp-light .dp-corner-check { background: #e2f1e3; color: #2f8a45; }
+#dailyPickScreen.dp-light .dp-word.is-selected .dp-corner-check { background: #2f9449; color: #fff; }
+#dailyPickScreen.dp-light .dp-word.is-struck .dp-corner-x { background: #ebe4d5; color: #6d665a; }
+.dp-word.is-split.is-flap::before { inset: 50% 0 auto; height: 2px; margin-top: -1px; background: rgba(0,0,0,.5); }
+/* Columns that the words (or spinning letters) can't widen, so the grid never shifts under a finger. */
+.dp-board { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.dp-card-face { min-width: 0; }
+.dp-card-word { max-width: 100%; overflow: hidden; white-space: nowrap; }
+/* Big, but the widest five-letter words (WAXED, MOMMY) still clear the edges. */
+#dailyPickScreen .dp-board:not(.is-pics):not(.is-colors) .dp-card-word { font-size: clamp(17px, 5vw, 26px) !important; letter-spacing: 0; }
+.dp-word .dp-card-face { padding-left: 2px; padding-right: 2px; }
+#dailyPickScreen .dp-board:not(.is-pics):not(.is-colors) .dp-card-word { font-size: clamp(18px, 5.7vw, 28px) !important; }
