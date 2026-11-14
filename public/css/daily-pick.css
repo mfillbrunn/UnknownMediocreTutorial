@@ -1369,3 +1369,33 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 }
 body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbing; }
 .dp-center:not(:has(.dp-hint)) { padding-top: 10px; padding-bottom: 10px; }
+
+/* The middle spot's feedback, as big as the spot allows (the spot itself
+   keeps its size). Grids 1-2: five tiles across its width. Grid 3: the
+   word and its two counts, bigger. */
+.dp-drop .dp-drop-row { width: 100%; gap: 4px; justify-content: center; }
+.dp-drop .dp-drop-row .dp-tile:not(.dp-count-tile) {
+  flex: 1 1 0; width: auto; min-width: 0; max-width: 48px;
+  height: min(52px, calc(var(--card-h) - 22px)); border-radius: 8px;
+}
+#dailyPickScreen .dp-drop .dp-drop-row .dp-tile { font-size: clamp(19px, 6vw, 28px) !important; }
+.dp-drop .dp-drop-row .dp-plain-word { font-size: clamp(20px, 6.2vw, 30px); letter-spacing: .06em; margin-right: 6px; }
+.dp-drop .dp-drop-row .dp-count-tile { flex: none; width: clamp(30px, 8.6vw, 38px); height: clamp(30px, 8.6vw, 38px); margin-left: 2px; }
+#dailyPickScreen .dp-drop .dp-drop-row .dp-count-tile { font-size: clamp(16px, 4.8vw, 20px) !important; }
+/* Grid 3 in the middle: the word and both counts fit inside the spot. */
+.dp-drop .dp-drop-row:has(.dp-count-tile) { gap: 5px; flex-wrap: nowrap; }
+.dp-drop .dp-drop-row .dp-plain-word { font-size: clamp(17px, 5.3vw, 25px); letter-spacing: .03em; margin-right: 3px; }
+.dp-drop .dp-drop-row .dp-count-tile { width: clamp(26px, 7.6vw, 34px); height: clamp(26px, 7.6vw, 34px); margin-left: 0; }
+/* Grid 3 in the middle: the word on top, its two counts underneath, both as
+   big as the spot's height allows. */
+.dp-drop .dp-drop-row:has(.dp-count-tile) {
+  display: grid; grid-template-columns: auto auto; justify-content: center; align-content: center;
+  column-gap: 6px; row-gap: 3px;
+}
+.dp-drop .dp-drop-row:has(.dp-count-tile) .dp-plain-word {
+  grid-column: 1 / -1; margin: 0; text-align: center; line-height: 1;
+  font-size: clamp(17px, calc(var(--card-h) * .3), 27px); letter-spacing: .05em;
+}
+.dp-drop .dp-drop-row .dp-count-tile {
+  width: clamp(22px, calc(var(--card-h) - 46px), 34px); height: clamp(22px, calc(var(--card-h) - 46px), 34px);
+}
