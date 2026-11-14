@@ -911,11 +911,10 @@
       const fresh = revealing && word === lastGuess ? " just-guessed" : "";
       const classes = `dp-word${won ? " is-solved" : struck ? " is-struck" : ""}${guessed && !won ? " is-guessed" : ""}${word === selected ? " is-selected" : ""}${offered ? " is-offered" : ""}${done && r.lost && word === secret ? " is-lost-secret" : ""}${snap}${fresh}`;
       const shown = guessed && !won ? (wordCards ? cardFeedback(word) : face(word) + mini(word)) : face(word);
-      // The whole card is the button, split corner to corner: the top-left
-      // half crosses the word out (or brings it back), the bottom-right half
-      // picks it. Two faint corner marks say which is which.
-      const marks = disabled ? "" : `<i class="dp-corner dp-corner-x" aria-hidden="true">${struck ? "↺" : "✕"}</i>${elim ? "" : `<i class="dp-corner dp-corner-check" aria-hidden="true">✓</i>`}`;
-      return `<div class="${classes}${disabled ? "" : elim ? " is-strike-only" : " is-split"}" data-word="${word}"${disabled ? " disabled" : ""} role="button" tabindex="${disabled ? -1 : 0}" aria-label="${name(word)}: tap the top left to ${struck ? "bring it back" : "cross it out"}${elim ? "" : ", the bottom right to pick it"}"><span class="dp-card-face">${shown}</span>${marks}</div>`;
+      // Tapping the card crosses the word out (or brings it back): the most
+      // common move. Picking is the small round ✓ on the top-right corner.
+      const dot = disabled || elim ? "" : `<button type="button" class="dp-pick-dot" aria-label="Pick ${name(word)}">✓</button>`;
+      return `<div class="${classes}${disabled ? "" : " is-tappable"}" data-word="${word}"${disabled ? " disabled" : ""} role="button" tabindex="${disabled ? -1 : 0}" aria-label="${name(word)}: ${struck ? "bring it back" : "cross it out"}"><span class="dp-card-face">${shown}</span>${dot}</div>`;
     }).join("");
 
     const SPLIT_TILE = SPLIT_FILL;
@@ -986,7 +985,7 @@
     } else {
       const aNoun = /^[aeiou]/.test(noun) ? `an ${noun}` : `a ${noun}`;
       // The tutorial covers tapping, so after the first guess there's no hint.
-      hint = r.guesses.length ? "" : `Tap the <b class="dp-hint-check">✓</b> half of ${noun === "food" ? "one" : aNoun} to pick it`;
+      hint = r.guesses.length ? "" : `Tap the <b class="dp-hint-check">✓</b> on ${noun === "food" ? "one" : aNoun} to pick your guess`;
       if (oneLetter) hint = `Your next guess shows letter <b>${(r.guesses.length % 5) + 1}</b>`;
       const pick = !selected ? "" : pics ? ` ${name(selected)}` : paints ? ` ${paintRow(selected, "dp-paints dp-paints-inline")}` : ` ${selected[0].toUpperCase()}${selected.slice(1)}`;
       action = `<button type="button" class="dp-next" id="dpGuess"${selected ? "" : " disabled"}>Guess${pick}</button>`;
@@ -1826,14 +1825,14 @@
       title: "How to play",
       body: `<p class="dp-tut-lead">Find the <b>secret word</b> among the 16.</p>
         <div class="dp-demo dp-demo-cards">
-          <span class="dp-word dp-demo-card is-split"><span class="dp-card-face"><span class="dp-card-word">slate</span></span>
-            <i class="dp-corner dp-corner-x">✕</i><i class="dp-corner dp-corner-check">✓</i></span>
+          <span class="dp-word dp-demo-card is-tappable"><span class="dp-card-face"><span class="dp-card-word">slate</span></span>
+            <span class="dp-pick-dot">✓</span></span>
           <span class="dp-word dp-demo-card is-guessed"><span class="dp-card-face"><span class="dp-card-fb">${["c", "r", "a", "n", "e"].map((c, i) => `<i class="is-${["absent", "correct", "present", "absent", "absent"][i]}">${c}</i>`).join("")}</span></span></span>
         </div>
         <ol class="dp-tut-steps">
-          <li>Tap a word's <b class="dp-tut-check">✓</b> half (bottom right) to pick it, then <b>Guess</b>.</li>
+          <li>Tap a word's <b class="dp-tut-check">✓</b> to pick it, then <b>Guess</b>.</li>
           <li>Its letters light up: <b data-c="hit">${colorName("hit")}</b> = right spot, <b data-c="near">${colorName("near")}</b> = wrong spot, <b>gray</b> = not in the word.</li>
-          <li>Tap the <b class="dp-tut-x">✕</b> half (top left) of words that can't be it, and guess again.</li>
+          <li>Tap the words that can't be it to <b>cross them out</b> (tap again to bring one back), and guess again.</li>
         </ol>
         <p class="dp-tut-small">Three grids a day. Fewer guesses is better. The full rules are under <b>?</b></p>`,
       last: true
@@ -1970,7 +1969,7 @@
         <h3 id="dpHelpTitle">How to play</h3>
         <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
         <p>You then use that info to eliminate words that don't match and narrow down the possible solutions before picking your next word; rinse and repeat.</p>
-        <p>Each word card is split corner to corner. Tap its <b>bottom-right half (✓)</b> to pick the word, then press <b>Guess</b>. Tap its <b>top-left half (✕)</b> to cross out a word that can't be the secret; tap there again (<b>↺</b>) to bring it back. A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
+        <p>Tap a word to <b>cross it out</b> when it can't be the secret; tap it again to bring it back. To pick a word to guess, tap the round <b>✓</b> on its top-right corner, then press <b>Guess</b>. A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
         <p>There are three new grids every day, and they differ in what feedback you get:</p>
         <ul>
           <li>In the first grid, each letter is
@@ -2041,40 +2040,37 @@
       else if (event.target.closest("#dpStartHelp")) openHelp();
     });
     $("dailyPickRoot")?.addEventListener("keydown", event => {
-      const word = event.target.closest?.(".dp-word.is-split, .dp-word.is-strike-only");
-      if (!word) return;
-      const strike = ["Delete", "Backspace", "x", "X"].includes(event.key) || word.classList.contains("is-strike-only") && event.key === "Enter";
-      if (strike || event.key === "Enter" || event.key === " ") { event.preventDefault(); onWordClick(word.dataset.word, strike ? "strike" : "pick"); }
+      const word = event.target.closest?.(".dp-word.is-tappable");
+      if (!word || !["Enter", " "].includes(event.key)) return;
+      event.preventDefault();
+      onWordClick(word.dataset.word, event.target.closest(".dp-pick-dot") ? "pick" : "strike");
     });
     window.addEventListener("resize", () => requestAnimationFrame(fitWords));
     document.addEventListener("keydown", event => {
       if (event.key === "Escape") { closeRule(); closeIntro(); closeHelp(); closeChooser(); }
     });
     $("dailyPickRoot")?.addEventListener("click", event => {
-      // A tap anywhere in a card's spot counts for that card, even while
-      // the card is mid-flip (and so not covering its whole spot).
+      // A card's resting spot: offsets ignore the flip and bounce animations.
       const spot = el => {
         const board = el.offsetParent.getBoundingClientRect();
         return { left: board.left + el.offsetParent.clientLeft + el.offsetLeft, top: board.top + el.offsetParent.clientTop + el.offsetTop, w: el.offsetWidth, h: el.offsetHeight };
       };
-      let word = null;
+      // Found by position, not by what's drawn there: a card mid-flip (or a
+      // neighbor's flip) doesn't cover its spot exactly.
       if (event.target.closest?.(".dp-board")) {
-        // By position, not by what's drawn there: a neighbor's flip can
-        // briefly overlap this card's spot.
-        word = [...document.querySelectorAll("#dailyPickRoot .dp-word")].find(el => {
+        const x = event.clientX, y = event.clientY;
+        const cards = [...document.querySelectorAll("#dailyPickRoot .dp-word:not([disabled])")];
+        // The ✓ circle first: its corner of the card, plus the bit poking out.
+        const picked = cards.find(el => {
+          if (!el.querySelector(".dp-pick-dot")) return false;
           const b = spot(el);
-          return event.clientX >= b.left && event.clientX <= b.left + b.w && event.clientY >= b.top && event.clientY <= b.top + b.h;
-        }) || null;
-      }
-      if (word && !word.hasAttribute("disabled")) {
-        // Which half was tapped: above the line from top-right to bottom-left
-        // is the cross-out half.
-        // Measured on the card's resting place (offsets ignore the flip and
-        // bounce animations), so a tap during an animation lands right.
-        const b = spot(word);
-        const topLeft = (event.clientX - b.left) / b.w + (event.clientY - b.top) / b.h < 1;
-        const act = ELIM_KINDS.includes(puzzles[current]?.kind) || topLeft ? "strike" : "pick";
-        return onWordClick(word.dataset.word, act);
+          return x >= b.left + b.w - 34 && x <= b.left + b.w + 10 && y >= b.top - 10 && y <= b.top + 34;
+        });
+        if (picked) return onWordClick(picked.dataset.word, "pick");
+        // Anywhere else on a card crosses it out (or brings it back).
+        const word = cards.find(el => { const b = spot(el); return x >= b.left && x <= b.left + b.w && y >= b.top && y <= b.top + b.h; });
+        if (word) return onWordClick(word.dataset.word, "strike");
+        return;
       }
       if (event.target.closest?.("#dpGuess")) guessSelected();
       const shareButton = event.target.closest?.("#dpShare");

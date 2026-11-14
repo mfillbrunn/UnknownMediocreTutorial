@@ -1173,3 +1173,27 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 #dailyPickScreen .dp-board:not(.is-pics):not(.is-colors) .dp-card-word { font-size: clamp(17px, 5vw, 26px) !important; letter-spacing: 0; }
 .dp-word .dp-card-face { padding-left: 2px; padding-right: 2px; }
 #dailyPickScreen .dp-board:not(.is-pics):not(.is-colors) .dp-card-word { font-size: clamp(18px, 5.7vw, 28px) !important; }
+
+/* ======================================================================
+   Tap a card to cross it out; the round ✓ on its top-right corner,
+   poking out a little past the edge, picks it.
+   ====================================================================== */
+.dp-word.is-split::before { display: none; }
+.dp-corner { display: none; }
+.dp-word { overflow: visible; }
+.dp-board { padding-top: 6px; }
+.dp-pick-dot {
+  position: absolute; top: -7px; right: -7px; z-index: 2;
+  width: 28px; height: 28px; padding: 0; border-radius: 50%;
+  display: grid; place-items: center; cursor: pointer; font-family: inherit; font-weight: 900; line-height: 1;
+  background: #1f2a38; color: #59c46c; border: 2px solid #3f9d4f;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  transition: transform .1s ease, background .15s ease;
+}
+#dailyPickScreen .dp-pick-dot { font-size: 14px !important; }
+.dp-pick-dot:active { transform: scale(.88); }
+.dp-word.is-selected .dp-pick-dot { background: #3f9d4f; color: #fff; border-color: #fff; transform: scale(1.1); }
+.dp-word.is-struck .dp-pick-dot { opacity: .5; }
+.dp-demo-card .dp-pick-dot { top: -7px; right: -7px; }
+#dailyPickScreen.dp-light .dp-pick-dot { background: #fffdf8; color: #2f8a45; border-color: #2f9449; box-shadow: 0 2px 6px rgba(80,60,20,.18); }
+#dailyPickScreen.dp-light .dp-word.is-selected .dp-pick-dot { background: #2f9449; color: #fff; border-color: #fffdf8; }
