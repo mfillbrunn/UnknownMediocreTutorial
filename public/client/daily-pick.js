@@ -1650,12 +1650,17 @@
 
   function maybeAnnounceRule() {
     const r = round();
+    // A Daily grid with an unusual rule (a day's swap, like one-letter
+    // feedback) always gets the full card with its worked example, like the
+    // Experimental grids, and the clock waits until it's closed.
+    const special = dailyLike() && !["full", "split", "counts"].includes(puzzles[current].mode) && !!WEEKLY_RULES[puzzles[current].mode];
     const rule = SET_GAMES.includes(game) ? WEEKLY_RULES[puzzles[current].kind]?.()
+      : special ? WEEKLY_RULES[puzzles[current].mode]()
       : game === "speed" ? (current === 0 ? SPEED_RULE : null) : RULES[puzzles[current].mode]?.();
     state.announced = state.announced || [];
     if (playMode !== "daily" || r.guesses.length || state.announced[current] || over()) return;
     // The Daily: a banner, or the full rule the first time it comes up.
-    if (dailyLike() && (!rule || ruleSeen(puzzles[current].mode))) {
+    if (dailyLike() && !special && (!rule || ruleSeen(puzzles[current].mode))) {
       state.announced[current] = true;
       save();
       return showBanner();
@@ -1664,7 +1669,8 @@
     state.announced[current] = true;
     save();
     stopClock();
-    $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">${game === "speed" ? `Speed · ${SPEED_GRIDS} grids` : `${SET_GAMES.includes(game) ? `Experimental · ${gridLabel(current)} · ` : ""}Grid ${current + 1} of ${puzzles.length}`}</div>
+    $("dpRuleCard").dataset.sure = SET_GAMES.includes(game) || special ? "1" : "";
+    $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">${game === "speed" ? `Speed · ${SPEED_GRIDS} grids` : `${SET_GAMES.includes(game) ? `Experimental · ${gridLabel(current)} · ` : ""}Grid ${current + 1} of ${puzzles.length}${special ? ` · ${KIND_INFO[puzzles[current].mode]?.label || ""} · new today` : ""}`}</div>
       <p>${rule}</p>
       <div class="dp-rule-foot"><button id="dpRuleClose" class="dp-next" type="button">${game === "speed" ? "Start" : "Got it"}</button></div>`;
     $("dpRule").hidden = false;
@@ -2335,7 +2341,7 @@
     $("dpIntro")?.addEventListener("click", onTutorialClick);
     $("dpTutorialBtn")?.addEventListener("click", openIntro);
     $("dpRule")?.addEventListener("click", event => {
-      if (event.target.closest("#dpRuleClose")) return SET_GAMES.includes(game) ? askSure() : closeRule(); // only Experimental asks again
+      if (event.target.closest("#dpRuleClose")) return $("dpRuleCard").dataset.sure ? askSure() : closeRule(); // Experimental and unusual grids ask again
       if (event.target.closest("#dpRuleYes")) return closeRule();
       if (event.target.closest("#dpRuleBack")) return unaskSure();
     });
