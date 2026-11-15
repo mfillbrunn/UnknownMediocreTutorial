@@ -73,8 +73,8 @@
   // Grids won by striking out everything but the secret (the game, not the
   // player, chooses which words get guessed, and never the secret).
   const ELIM_KINDS = ["auto", "choice"];
-  // Autopilot's gaps between its guesses: 7 s, 5 s, 4 s, then 3 s each.
-  const autoGap = n => [7000, 5000, 4000][n - 1] || 3000;
+  // Autopilot's gap between its guesses: 10 seconds each.
+  const autoGap = () => 10000;
   // A grid lost (the secret struck out, nothing left to guess) counts as this many guesses.
   const LOST_SCORE = 16;
   // The Experimental sets (each grid has a kind, and its own rule card).
@@ -1525,7 +1525,7 @@
           <ol class="dp-ex-why">${guesses.map((g, k) => `<li><b>${g.toUpperCase()}</b> shows letter ${k + 1}: ${said(g, k)}.</li>`).join("")}</ol>
         </div>`;
     },
-    auto: () => `<p>You don't pick words here. <b>The game guesses for you</b>: straight away, then every few seconds (7, 5, 4, then 3 seconds each), it guesses a random word that <b>isn't struck out</b> and <b>isn't the secret</b>, and shows its feedback. A big red number counts down to the next one.</p>
+    auto: () => `<p>You don't pick words here. <b>The game guesses for you</b>: straight away, then every 10 seconds, it guesses a random word that <b>isn't struck out</b> and <b>isn't the secret</b>, and shows its feedback. A big red number counts down to the next one.</p>
       <p>Tap words to <b>strike them out</b> as you rule them out, so they're never guessed. Tap again to bring one back.</p>
       <div class="dp-example"><div class="dp-example-title">How it ends</div>
         <ol class="dp-ex-why">
@@ -2234,7 +2234,7 @@
           <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
         ${EXPERIMENTAL_BUTTON && WEEKLY_ENABLED ? `<p><b>Experimental</b> (the button next to Share once you've finished the Daily) has two extras. <b>Flags · Colors · Arrows</b>, new every Monday, is three different grids: <b>Flags</b>, where each flag is split into a grid of colors; <b>Colors</b>, rows of five paints where a paint matches a tile when they have a color in common (white, red and pink all match pink); and <b>Arrows</b>, words where each letter's arrow points to the secret's letter in the alphabet. Each grid explains itself when it starts.</p>` : ""}
-        ${EXPERIMENTAL_BUTTON && TWISTS_ENABLED ? `<p><b>One letter · Autopilot · Pick two</b> (also under Experimental, new every Monday): word grids with a twist. <b>One letter</b> shows feedback for just one letter per guess, in turn. In <b>Autopilot</b> the game guesses for you every few seconds while you strike words out, and in <b>Pick two</b> you choose between two words it offers. In both, you solve it when only the secret is left, and lose if you strike the secret out. Each grid explains itself when it starts.</p>` : ""}
+        ${EXPERIMENTAL_BUTTON && TWISTS_ENABLED ? `<p><b>One letter · Autopilot · Pick two</b> (also under Experimental, new every Monday): word grids with a twist. <b>One letter</b> shows feedback for just one letter per guess, in turn. In <b>Autopilot</b> the game guesses for you every 10 seconds while you strike words out, and in <b>Pick two</b> you choose between two words it offers. In both, you solve it when only the secret is left, and lose if you strike the secret out. Each grid explains itself when it starts.</p>` : ""}
         ${EXPERIMENTAL_BUTTON && SPEED_ENABLED ? `<p><b>Speed</b> (also under Experimental): 3 minutes to solve as many of the day's ${SPEED_GRIDS} grids as you can, all with full feedback. Every guess costs 2 seconds, right or wrong.</p>` : ""}
         <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
         <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
