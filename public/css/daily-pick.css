@@ -1401,3 +1401,31 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-drop.is-wide .dp-drop-row .dp-count-tile { width: min(42px, calc(var(--card-h) - 26px)); height: min(42px, calc(var(--card-h) - 26px)); border-radius: 50%; margin-left: 2px; }
 #dailyPickScreen .dp-drop.is-wide .dp-drop-row .dp-count-tile { font-size: min(22px, calc(var(--card-h) * .3)) !important; }
 .dp-drop.is-wide .dp-drop-text { font-size: 15px; }
+
+/* ---------- Settings ---------- */
+.dp-gear-btn { display: grid; place-items: center; }
+.dp-gear-btn svg { display: block; }
+.dp-gear-btn.is-open { background: rgba(255,255,255,.12); }
+#dailyPickScreen.dp-light .dp-gear-btn.is-open { background: #ebe4d5; }
+.dp-settings-panel h3 { margin: 4px 0 12px; text-align: center; }
+.dp-setting-group { margin-top: 16px; }
+.dp-setting-label { font-size: 12px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; opacity: .6; margin-bottom: 8px; }
+.dp-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: rgba(255,255,255,.06); }
+.dp-seg label { position: relative; cursor: pointer; }
+.dp-seg input { position: absolute; opacity: 0; pointer-events: none; }
+.dp-seg span { display: block; padding: 10px 6px; border-radius: 9px; text-align: center; font-weight: 800; opacity: .6; transition: background .15s ease, opacity .15s ease; }
+.dp-seg input:checked + span { background: #3b7dd8; color: #fff; opacity: 1; }
+.dp-seg input:focus-visible + span { outline: 2px solid #8ec5ff; outline-offset: 1px; }
+.dp-setting-note { font-size: 13px; line-height: 1.45; opacity: .7; margin: 8px 2px 0; }
+.dp-settings-panel > .dp-next { display: block; width: 100%; margin-top: 20px; }
+#dailyPickScreen.dp-light .dp-seg { background: #ebe4d5; }
+
+/* ---------- The guessing spot: at the bottom, and the Guess button (tap mode) ---------- */
+.dp-drop.is-bottom { margin-top: 6px; }
+.dp-drop.has-button { border-style: solid; padding: 8px; }
+.dp-drop .dp-drop-guess {
+  width: 100%; height: 100%; margin: 0; padding: 0 10px; border-radius: 10px;
+  background: linear-gradient(180deg, #4a8be6, #3170cc); color: #fff; border: 0;
+  display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: .04em;
+}
+#dailyPickScreen .dp-drop .dp-drop-guess { font-size: clamp(17px, 5vw, 22px) !important; }

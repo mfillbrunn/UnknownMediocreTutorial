@@ -119,7 +119,11 @@
   // Player settings, kept on the device.
   const SETTINGS_KEY = "umt.whittle.settings"; // named from when the game was Whittle; kept so settings carry over
   // Dark is the default look; the switch in ? turns on the paper (light) look.
-  let settings = { colorblind: false, light: false };
+  // layout: where the feedback / guessing spot is ("middle" of the board or
+  // "bottom", under it). input: how a guess is picked ("drag" a word to that
+  // spot, or "tap": once crosses out, twice picks, three times clears, then
+  // the Guess button in that spot).
+  let settings = { colorblind: false, light: false, layout: "middle", input: "drag" };
   try { settings = { ...settings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) }; } catch (e) { /* defaults */ }
   const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* private mode */ } };
   // Color-blind mode swaps green/yellow for orange/blue (as Wordle's high
@@ -911,10 +915,13 @@
     // third row kept for guessing. 18 words fill every other spot; 16 words
     // leave the third row's ends empty.
     const full = words.length >= 18;
+    // "bottom": the 4 x 4 grid, with the spot as a fifth row underneath.
+    const bottom = settings.layout === "bottom" && !full;
+    const spotRow = bottom ? 4 : 2;
     const spots = [];
     for (let r = 0; r < 5; r++) for (let c = 0; c < 4; c++) {
-      if (r === 2 && (c === 1 || c === 2)) continue;
-      if (r === 2 && !full) continue;
+      if (r === spotRow && (c === 1 || c === 2)) continue;
+      if (r === spotRow && !full) continue;
       spots.push([r, c]);
     }
     const buttons = words.map((word, wi) => {
@@ -933,7 +940,7 @@
       const shown = guessed && !won ? (wordCards ? cardFeedback(word) : face(word) + mini(word)) : face(word);
       // Tapping a card crosses the word out (or brings it back); dragging it
       // into the middle spot guesses it.
-      return `<div class="${classes}${disabled ? "" : " is-tappable"}${slide > 0 ? " is-slid-down" : slide < 0 ? " is-slid-up" : ""}" data-word="${word}" data-slide="${slide}" style="grid-row:${gr + 1};grid-column:${gc + 1}"${disabled ? " disabled" : ""} role="button" tabindex="${disabled ? -1 : 0}" aria-label="${name(word)}: tap to ${struck ? "bring it back" : "cross it out"}${elim ? "" : ", or drag to the middle to guess it"}"><span class="dp-card-face">${shown}</span></div>`;
+      return `<div class="${classes}${disabled ? "" : " is-tappable"}${slide > 0 ? " is-slid-down" : slide < 0 ? " is-slid-up" : ""}" data-word="${word}" data-slide="${slide}" style="grid-row:${gr + 1};grid-column:${gc + 1}"${disabled ? " disabled" : ""} role="button" tabindex="${disabled ? -1 : 0}" aria-label="${name(word)}: ${settings.input === "tap" && !elim ? (word === selected ? "picked, tap to clear" : struck ? "crossed out, tap to pick" : "tap to cross out") : `tap to ${struck ? "bring it back" : "cross it out"}${elim ? "" : ", or drag it to the guessing spot"}`}"><span class="dp-card-face">${shown}</span></div>`;
     }).join("");
 
     const SPLIT_TILE = SPLIT_FILL;
@@ -1008,10 +1015,16 @@
       : game !== "daily" ? `<button type="button" class="dp-link" data-game="daily">← Back to the Daily</button>` : "";
     // The middle spot. Word grids show the latest guess there, big; before
     // the first guess it says what to do, and that goes as a word is dragged in.
-    const dropText = elim ? "<b>Tap</b> to cross out" : "<b>Tap</b> to cross out<br><b>Drag</b> here to guess";
-    const inMiddle = lastGuess && wordCards ? tiles(lastGuess).replace('class="dp-row', 'class="dp-row dp-drop-row') : `<span class="dp-drop-text">${dropText}</span>`;
+    const tapping = settings.input === "tap" && !elim;
+    const dropText = elim ? "<b>Tap</b> to cross out"
+      : tapping ? (r.guesses.length ? "<b>Tap</b> once to cross out, <b>twice</b> to pick<br>then <b>Guess</b> here" : "<b>Tap</b> a word to pick your first guess")
+        : "<b>Tap</b> to cross out<br><b>Drag</b> here to guess";
+    // Tapping: a picked word's Guess button takes the spot until it's used.
+    const guessButton = tapping && selected && !done
+      ? `<button type="button" class="dp-next dp-drop-guess" id="dpGuess">Guess ${pics ? name(selected) : paints ? paintRow(selected, "dp-paints dp-paints-inline") : selected.toUpperCase()}</button>` : "";
+    const inMiddle = guessButton || (lastGuess && wordCards ? tiles(lastGuess).replace('class="dp-row', 'class="dp-row dp-drop-row') : `<span class="dp-drop-text">${dropText}</span>`);
     // With 16 words the third row is free, so the spot takes all of it.
-    const middle = `<div class="dp-drop${lastGuess && wordCards ? " has-guess" : ""}${full ? "" : " is-wide"}" id="dpDrop" style="grid-row:3;grid-column:${full ? "2 / 4" : "1 / 5"}">${inMiddle}</div>`;
+    const middle = `<div class="dp-drop${lastGuess && wordCards && !guessButton ? " has-guess" : ""}${guessButton ? " has-button" : ""}${full ? "" : " is-wide"}${bottom ? " is-bottom" : ""}" id="dpDrop" style="grid-row:${spotRow + 1};grid-column:${full ? "2 / 4" : "1 / 5"}">${inMiddle}</div>`;
     // Autopilot's countdown to its next guess: big, red, see-through, behind play.
     const autoCount = kind === "auto" && !done ? `<div class="dp-auto-count" id="dpAutoCount" aria-hidden="true">${Math.max(1, Math.ceil(((r.autoDue ?? elapsed()) - elapsed()) / 1000)) || ""}</div>` : "";
     requestAnimationFrame(fitWords);
@@ -1058,7 +1071,7 @@
       drag = null;
     };
     root.addEventListener("pointerdown", event => {
-      if (event.button > 0 || !event.target.closest?.(".dp-board")) return;
+      if (event.button > 0 || !event.target.closest?.(".dp-board") || event.target.closest?.("#dpGuess")) return;
       const card = cardAt(event.clientX, event.clientY);
       if (!card || round().solved) return;
       drag = { card, word: card.dataset.word, x: event.clientX, y: event.clientY, moved: false, ghost: null, id: event.pointerId };
@@ -1068,8 +1081,9 @@
       if (!drag || event.pointerId !== drag.id) return;
       if (!drag.moved) {
         if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 9) return;
-        // Words in an elimination grid can't be guessed by hand.
-        if (ELIM_KINDS.includes(puzzles[current]?.kind)) return;
+        // Words in an elimination grid can't be guessed by hand, and in
+        // tap mode nothing is dragged.
+        if (ELIM_KINDS.includes(puzzles[current]?.kind) || settings.input === "tap") return;
         drag.moved = true;
         const b = drag.card.getBoundingClientRect();
         const ghost = drag.card.cloneNode(true);
@@ -1092,7 +1106,7 @@
       const { word, moved } = drag;
       const dropped = moved && overDrop(event.clientX, event.clientY);
       end();
-      if (!moved) return onWordClick(word, "strike");
+      if (!moved) return onWordClick(word, settings.input === "tap" ? "cycle" : "strike");
       if (dropped && !round().solved && !round().guesses.includes(word)) {
         selected = word;
         guessSelected();
@@ -1143,7 +1157,25 @@
       return;
     }
     const struckAt = r.struck.indexOf(word);
-    if (act === "strike") {
+    if (act === "cycle") {
+      // Tap mode. Before a grid's first guess a tap just picks (or unpicks);
+      // after it, each tap moves a word along: crossed out, picked, cleared.
+      if (!r.guesses.length) {
+        selected = selected === word ? "" : word;
+        toggled = { word, kind: selected ? "selected" : "freed" };
+      } else if (word === selected) {
+        selected = "";
+        toggled = { word, kind: "freed" };
+      } else if (struckAt >= 0) {
+        r.struck.splice(struckAt, 1);
+        selected = word;
+        toggled = { word, kind: "selected" };
+      } else {
+        r.struck.push(word);
+        toggled = { word, kind: "struck" };
+        navigator.vibrate?.(8);
+      }
+    } else if (act === "strike") {
       // ✕: cross it out, or bring it back (↺).
       if (struckAt >= 0) { r.struck.splice(struckAt, 1); toggled = { word, kind: "freed" }; }
       else {
@@ -1898,11 +1930,19 @@
   }
 
   function syncSettingsUi() {
+    document.querySelectorAll('#dailyPickScreen input[name="dpLayout"]').forEach(el => { el.checked = el.value === settings.layout; });
+    document.querySelectorAll('#dailyPickScreen input[name="dpInput"]').forEach(el => { el.checked = el.value === settings.input; });
     if ($("dpSetCb")) $("dpSetCb").checked = !!settings.colorblind;
     if ($("dpSetLight")) $("dpSetLight").checked = !!settings.light;
   }
 
   function onSettingChange(event) {
+    if (event.target.name === "dpLayout" || event.target.name === "dpInput") {
+      settings[event.target.name === "dpLayout" ? "layout" : "input"] = event.target.value;
+      if (settings.input === "drag") selected = "";
+      saveSettings();
+      return;
+    }
     if (event.target.id === "dpSetCb") {
       settings.colorblind = event.target.checked;
       saveSettings();
@@ -1976,7 +2016,29 @@
     if (action === "skip" || action === "done") return closeIntro();
     renderTutorial();
   }
-  const helpOpen = () => !!$("dpHelp") && !$("dpHelp").hidden;
+  const helpOpen = () => (!!$("dpHelp") && !$("dpHelp").hidden) || settingsOpen();
+  const settingsOpen = () => !!$("dpSettings") && !$("dpSettings").hidden;
+
+  // Settings take the grid's place, like How to play.
+  function openSettings() {
+    closeHelp();
+    setSplashAside();
+    closeIntro();
+    stopClock();
+    syncSettingsUi();
+    $("dailyPickRoot").hidden = true;
+    $("dpSettings").hidden = false;
+    $("dpSettingsBtn")?.classList.add("is-open");
+  }
+  function closeSettings() {
+    if (!settingsOpen()) return;
+    $("dpSettings").hidden = true;
+    $("dailyPickRoot").hidden = false;
+    $("dpSettingsBtn")?.classList.remove("is-open");
+    if (state) render();
+    if (bringSplashBack()) return;
+    startClock();
+  }
 
   function introSeen() {
     try { return !!localStorage.getItem(INTRO_SEEN_KEY); } catch (e) { return true; }
@@ -2010,6 +2072,7 @@
   function openHelp() {
     const help = $("dpHelp");
     if (!help) return;
+    if (settingsOpen()) { $("dpSettings").hidden = true; $("dpSettingsBtn")?.classList.remove("is-open"); }
     setSplashAside();
     closeIntro();
     stopClock();
@@ -2056,6 +2119,7 @@
         <div id="dpClock" class="dp-clock" aria-label="Time" hidden>0:00</div>
         <h2 id="dpTitle" class="menu-title">UNSTRUCK</h2>
         <div class="dp-head-buttons">
+          <button id="dpSettingsBtn" class="dp-help-btn dp-gear-btn" type="button" aria-label="Settings"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
           <button id="dpHelpBtn" class="dp-help-btn" type="button" aria-label="How to play">?</button>
           <button id="dpBackBtn" class="dp-close" type="button" aria-label="Close"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
         </div>
@@ -2074,15 +2138,34 @@
       <div id="dpRule" class="dp-intro" role="dialog" aria-modal="true" aria-label="This grid's rule" hidden>
         <div id="dpRuleCard" class="dp-intro-card"></div>
       </div>
-      <div id="dpHelp" class="dp-help" role="dialog" aria-modal="true" aria-labelledby="dpHelpTitle" hidden>
+      <div id="dpSettings" class="dp-help dp-settings-panel" role="dialog" aria-modal="true" aria-labelledby="dpSettingsTitle" hidden>
+        <h3 id="dpSettingsTitle">Settings</h3>
         <div class="dp-settings">
-          <label class="dp-switch"><input type="checkbox" id="dpSetCb"><span class="dp-switch-ui"></span><span>Color-blind colors</span></label>
           <label class="dp-switch"><input type="checkbox" id="dpSetLight"><span class="dp-switch-ui"></span><span>Light mode</span></label>
+          <label class="dp-switch"><input type="checkbox" id="dpSetCb"><span class="dp-switch-ui"></span><span>Color-blind colors</span></label>
         </div>
+        <div class="dp-setting-group">
+          <div class="dp-setting-label">Feedback and guessing spot</div>
+          <div class="dp-seg" role="radiogroup" aria-label="Feedback and guessing spot">
+            <label><input type="radio" name="dpLayout" value="middle"><span>In the middle</span></label>
+            <label><input type="radio" name="dpLayout" value="bottom"><span>At the bottom</span></label>
+          </div>
+        </div>
+        <div class="dp-setting-group">
+          <div class="dp-setting-label">How to guess</div>
+          <div class="dp-seg" role="radiogroup" aria-label="How to guess">
+            <label><input type="radio" name="dpInput" value="drag"><span>Drag</span></label>
+            <label><input type="radio" name="dpInput" value="tap"><span>Tap</span></label>
+          </div>
+          <p class="dp-setting-note"><b>Drag:</b> tap a word to cross it out, drag it to the spot to guess.<br><b>Tap:</b> tap once to cross out, twice to pick, a third time to clear, then press <b>Guess</b>.</p>
+        </div>
+        <button id="dpSettingsClose" class="dp-next" type="button">Done</button>
+      </div>
+      <div id="dpHelp" class="dp-help" role="dialog" aria-modal="true" aria-labelledby="dpHelpTitle" hidden>
         <h3 id="dpHelpTitle">How to play</h3>
         <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
         <p>You then use that info to eliminate words that don't match and narrow down the possible solutions before picking your next word; rinse and repeat.</p>
-        <p><b>Tap</b> a word to cross it out when it can't be the secret; tap it again to bring it back. To guess a word, <b>drag it into the middle</b> of the board. A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
+        <p><b>Tap</b> a word to cross it out when it can't be the secret; tap it again to bring it back. To guess a word, <b>drag it into the middle</b> of the board. Prefer tapping, or the guessing spot under the grid? Both are in <b>Settings</b> (the gear, top right). A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
         <p>There are three new grids every day, and they differ in what feedback you get:</p>
         <ul>
           <li>In the first grid, each letter is
@@ -2128,7 +2211,9 @@
     const standalone = "unstruckStandalone" in document.body.dataset;
     $("hubDailyPickBtn")?.addEventListener("click", open);
     $("dpBackBtn")?.addEventListener("click", close);
-    $("dpHelpBtn")?.addEventListener("click", () => (helpOpen() ? closeHelp() : openHelp()));
+    $("dpHelpBtn")?.addEventListener("click", () => ($("dpHelp") && !$("dpHelp").hidden ? closeHelp() : openHelp()));
+    $("dpSettingsBtn")?.addEventListener("click", () => (settingsOpen() ? closeSettings() : openSettings()));
+    $("dpSettingsClose")?.addEventListener("click", closeSettings);
     $("dpHelpClose")?.addEventListener("click", closeHelp);
     $("dpIntro")?.addEventListener("click", onTutorialClick);
     $("dpTutorialBtn")?.addEventListener("click", openIntro);
@@ -2162,9 +2247,10 @@
     initDrag();
     window.addEventListener("resize", () => requestAnimationFrame(fitWords));
     document.addEventListener("keydown", event => {
-      if (event.key === "Escape") { closeRule(); closeIntro(); closeHelp(); closeChooser(); }
+      if (event.key === "Escape") { closeRule(); closeIntro(); closeHelp(); closeSettings(); closeChooser(); }
     });
     $("dailyPickRoot")?.addEventListener("click", event => {
+      if (event.target.closest?.("#dpGuess")) return guessSelected();
       // Taps on the board are handled with dragging (initDrag).
       if (event.target.closest?.(".dp-board")) return;
       const shareButton = event.target.closest?.("#dpShare");
