@@ -1443,3 +1443,8 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-head { grid-template-columns: auto minmax(0, 1fr) auto; }
 #dpTitle { min-width: 0; text-align: center; white-space: nowrap; }
 #dpTitle.is-long { font-size: clamp(14px, 4.1vw, 20px) !important; }
+/* The clock only takes room when it's shown (Speed); otherwise the title gets it. */
+.dp-clock[hidden] { display: none !important; }
+.dp-head { grid-template-columns: minmax(0, 1fr) auto; }
+.dp-head:has(.dp-clock:not([hidden])) { grid-template-columns: auto minmax(0, 1fr) auto; }
+#dpTitle { overflow: hidden; }

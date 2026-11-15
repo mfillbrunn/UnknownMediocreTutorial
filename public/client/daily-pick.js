@@ -686,6 +686,11 @@
     // A long label (SPEED 1/10, ONE LETTER 1/3) steps down so the buttons fit.
     const label = title.querySelector(".dp-title-grid")?.textContent || "";
     title.classList.toggle("is-long", label.length > 8);
+    requestAnimationFrame(() => {
+      title.style.removeProperty("font-size");
+      let size = parseFloat(getComputedStyle(title).fontSize);
+      while (title.scrollWidth > title.clientWidth + 1 && size > 12) { size -= 0.5; title.style.setProperty("font-size", `${size}px`, "important"); }
+    });
   }
 
   let countdownTimer = null;
@@ -1133,14 +1138,29 @@
         word.style.setProperty("font-size", `${size}px`);
       }
     }
-    document.querySelectorAll("#dailyPickRoot .dp-card-word").forEach(el => {
-      el.style.removeProperty("font-size");
-      let size = parseFloat(getComputedStyle(el).fontSize);
-      while (el.scrollWidth > el.clientWidth && size > 11) {
-        size -= 1;
-        el.style.setProperty("font-size", `${size}px`, "important");
-      }
+    // One size for every word on the board: the largest at which all of
+    // them fit their cards (a wide word sets it for the rest).
+    const words = [...document.querySelectorAll("#dailyPickRoot .dp-card-word")];
+    words.forEach(el => el.style.removeProperty("font-size"));
+    if (!words.length) return;
+    let size = Math.min(...words.map(el => parseFloat(getComputedStyle(el).fontSize)));
+    // Measured on each card's real word, not what's drawn (letters spin
+    // while a new grid flips in).
+    const ctx = (fitWords.canvas ||= document.createElement("canvas")).getContext("2d");
+    const tooWide = () => words.some(el => {
+      const cs = getComputedStyle(el);
+      ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      const text = (el.closest(".dp-word")?.dataset.word || el.textContent).toUpperCase();
+      const width = ctx.measureText(text).width + (parseFloat(cs.letterSpacing) || 0) * text.length;
+      // The room is the card face's width (less its padding), not the word's own box.
+      const face = el.parentElement, fs = getComputedStyle(face);
+      return width > face.clientWidth - parseFloat(fs.paddingLeft) - parseFloat(fs.paddingRight) - 2;
     });
+    words.forEach(el => el.style.setProperty("font-size", `${size}px`, "important"));
+    while (tooWide() && size > 11) {
+      size -= 0.5;
+      words.forEach(el => el.style.setProperty("font-size", `${size}px`, "important"));
+    }
   }
 
   function onWordClick(word, act = "pick") {
