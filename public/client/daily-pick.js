@@ -1074,7 +1074,7 @@
       if (!drag) return;
       drag.ghost?.remove();
       drag.card.classList.remove("is-dragging");
-      $("dpDrop")?.classList.remove("is-over");
+      $("dpDrop")?.classList.remove("is-over", "is-target");
       document.body.classList.remove("dp-dragging");
       drag = null;
     };
@@ -1104,6 +1104,8 @@
         drag.ghost = ghost;
         drag.card.classList.add("is-dragging");
         document.body.classList.add("dp-dragging");
+        // Light the spot up right away, so it's clear where the word goes.
+        $("dpDrop")?.classList.add("is-target");
       }
       drag.ghost.style.left = `${event.clientX}px`;
       drag.ghost.style.top = `${event.clientY}px`;

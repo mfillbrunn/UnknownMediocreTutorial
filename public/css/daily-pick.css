@@ -1448,3 +1448,17 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-head { grid-template-columns: minmax(0, 1fr) auto; }
 .dp-head:has(.dp-clock:not([hidden])) { grid-template-columns: auto minmax(0, 1fr) auto; }
 #dpTitle { overflow: hidden; }
+/* While a word is being dragged: the spot lights up blue (and its text or
+   last guess fades back); right over it, it gets stronger. */
+.dp-drop.is-target, #dailyPickScreen.dp-light .dp-drop.is-target {
+  border-style: dashed; border-color: #3b7dd8; background: rgba(59,125,216,.12);
+  animation: dp-target-pulse 1.2s ease-in-out infinite;
+}
+.dp-drop.is-target .dp-drop-text { visibility: hidden; }
+.dp-drop.is-target .dp-drop-row { opacity: .3; }
+.dp-drop.is-target.is-over, #dailyPickScreen.dp-light .dp-drop.is-target.is-over {
+  background: rgba(59,125,216,.26); border-color: #6fb1ff; animation: none;
+  box-shadow: 0 0 0 3px rgba(59,125,216,.25);
+}
+@keyframes dp-target-pulse { 50% { background: rgba(59,125,216,.2); } }
+@media (prefers-reduced-motion: reduce) { .dp-drop.is-target { animation: none; } }
