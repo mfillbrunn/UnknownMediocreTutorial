@@ -1486,3 +1486,19 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-word.is-holding { transform: scale(.96); border-color: #3b7dd8; transition: transform .7s ease, border-color .15s ease; }
 #dailyPickScreen.dp-light .dp-hold-ring { background: #fffdf8; box-shadow: 0 4px 14px rgba(80,60,20,.2); }
 #dailyPickScreen.dp-light .dp-hold-track { stroke: #e2d9c6; }
+
+/* One letter: on every card, the letter the next guess will show. */
+.dp-next-letter {
+  font-weight: inherit; color: #8ec5ff;
+  text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 4px;
+}
+#dailyPickScreen.dp-light .dp-next-letter { color: #2f6fc6; }
+.dp-word.is-struck .dp-next-letter { color: inherit; text-decoration: none; }
+/* ...and under the grid: which of the five it is. */
+.dp-pos-hint { display: inline-flex; align-items: center; gap: 10px; }
+.dp-pos { display: inline-flex; gap: 3px; }
+.dp-pos i { width: 14px; height: 18px; border-radius: 3px; border: 1.5px solid rgba(255,255,255,.3); }
+.dp-pos i.is-on { background: #3b7dd8; border-color: #3b7dd8; }
+#dailyPickScreen.dp-light .dp-pos i { border-color: #cfc4ae; }
+#dailyPickScreen.dp-light .dp-pos i.is-on { background: #3b7dd8; border-color: #3b7dd8; }
+.dp-pos-hint { white-space: nowrap; gap: 8px; } .dp-pos-hint b { margin-left: 4px; }

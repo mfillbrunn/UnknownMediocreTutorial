@@ -911,9 +911,11 @@
       }
       return `<span class="dp-mini">${shownResult(guess).map(f => `<i class="is-${f}"></i>`).join("")}</span>`;
     };
+    // One letter: the letter the next guess will show, marked on every card.
+    const nextPos = r.guesses.length % 5;
     const face = id => (pics
       ? `<img class="dp-pic" src="${MEDIA_URL}${itemOf(kind, id).img}" alt="" draggable="false"><span class="dp-pic-name">${name(id)}</span>`
-      : paints ? paintRow(id) : `<span class="dp-card-word">${id}</span>`);
+      : paints ? paintRow(id) : `<span class="dp-card-word">${oneLetter && !done ? [...id].map((ch, i) => (i === nextPos ? `<b class="dp-next-letter">${ch}</b>` : ch)).join("") : id}</span>`);
     // A guessed word shows its feedback right on its card: the letters in
     // their colors (or, on grid 3, the word and its two counts).
     const wordCards = !pics && !paints;
@@ -1021,7 +1023,8 @@
       hint = kind === "auto" ? "Strike out the words you've ruled out" : "Pick one to guess, strike out the rest you've ruled out";
       if (kind === "choice") action = `<div class="dp-pick-two">${(r.offer || []).map(w => `<button type="button" class="dp-next dp-pick" data-pick="${w}">${w.toUpperCase()}</button>`).join("")}</div>`;
     } else {
-      hint = oneLetter ? `Your next guess shows letter <b>${(r.guesses.length % 5) + 1}</b>` : "";
+      const ord = ["1st", "2nd", "3rd", "4th", "5th"][nextPos];
+      hint = oneLetter ? `<span class="dp-pos-hint">Next guess shows the <b>${ord} letter</b> <span class="dp-pos">${[0, 1, 2, 3, 4].map(i => `<i class="${i === nextPos ? "is-on" : ""}"></i>`).join("")}</span></span>` : "";
     }
 
     const exit = playMode === "practice" ? `<button type="button" class="dp-link" data-practice="end">← Back to today's Unstruck</button>`
@@ -1492,12 +1495,14 @@
       button.classList.add("is-flap");
       button.addEventListener("animationend", () => button.classList.remove("is-flap"), { once: true });
       const text = button.querySelector(".dp-card-word");
+      const finalHtml = text?.innerHTML;
       if (!spinning || !text) return;
       let frame = 0;
       const frames = 8;
       const spin = () => {
         if (!text.isConnected || button.dataset.word !== word) return;
         frame++;
+        if (frame >= frames) { text.innerHTML = finalHtml; return; }
         text.textContent = frame >= frames ? word
           : [...word].map((c, k) => (k < frame - 2 ? c : letters[Math.floor(Math.random() * 26)])).join("");
         if (frame < frames) setTimeout(spin, 50);
