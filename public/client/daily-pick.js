@@ -1093,6 +1093,7 @@
       clearTimeout(drag.holdStart);
       clearTimeout(drag.holdDone);
       drag.ring?.remove();
+      drag.dim?.remove();
       drag.card.classList.remove("is-holding");
       drag.ghost?.remove();
       drag.card.classList.remove("is-dragging");
@@ -1114,14 +1115,22 @@
         d.holdStart = setTimeout(() => {
           if (drag !== d) return;
           const b = cardSpot(d.card);
+          // A bubble above the finger: the word (the finger hides the card)
+          // and the ring filling beside it. The rest of the screen dims.
+          const dim = document.createElement("div");
+          dim.className = "dp-hold-dim";
+          $("dailyPickScreen").appendChild(dim);
           const ring = document.createElement("div");
           ring.className = "dp-hold-ring";
-          ring.style.left = `${b.left + b.w / 2}px`;
-          ring.style.top = `${b.top}px`;
           ring.style.setProperty("--fill", `${HOLD_FILL}ms`);
-          ring.innerHTML = `<svg viewBox="0 0 36 36" aria-hidden="true"><circle class="dp-hold-track" cx="18" cy="18" r="15"/><circle class="dp-hold-fill" cx="18" cy="18" r="15"/></svg>`;
+          ring.innerHTML = `<span class="dp-hold-word">${d.word.toUpperCase()}</span><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="dp-hold-track" cx="18" cy="18" r="15"/><circle class="dp-hold-fill" cx="18" cy="18" r="15"/></svg>`;
           $("dailyPickScreen").appendChild(ring);
+          // Centered over the card, kept on screen.
+          const half = ring.offsetWidth / 2;
+          ring.style.left = `${Math.min(Math.max(b.left + b.w / 2, half + 8), innerWidth - half - 8)}px`;
+          ring.style.top = `${b.top - 10}px`;
           d.ring = ring;
+          d.dim = dim;
           d.card.classList.add("is-holding");
           d.holdDone = setTimeout(() => {
             if (drag !== d) return;
@@ -1138,7 +1147,7 @@
       if (!drag || event.pointerId !== drag.id) return;
       if (drag.hold) {
         // Sliding off cancels the hold (nothing happens on release).
-        if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) > 14) { drag.cancelled = true; clearTimeout(drag.holdStart); clearTimeout(drag.holdDone); drag.ring?.remove(); drag.ring = null; drag.card.classList.remove("is-holding"); }
+        if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) > 14) { drag.cancelled = true; clearTimeout(drag.holdStart); clearTimeout(drag.holdDone); drag.ring?.remove(); drag.ring = null; drag.dim?.remove(); drag.dim = null; drag.card.classList.remove("is-holding"); }
         return;
       }
       if (!drag.moved) {
