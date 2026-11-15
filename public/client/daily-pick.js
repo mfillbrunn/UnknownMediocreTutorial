@@ -123,7 +123,7 @@
   // "bottom", under it). input: how a guess is picked ("drag" a word to that
   // spot, or "tap": once crosses out, twice picks, three times clears, then
   // the Guess button in that spot).
-  let settings = { colorblind: false, light: false, layout: "middle", input: "drag" };
+  let settings = { colorblind: false, light: false, layout: "bottom", input: "drag" };
   try { settings = { ...settings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) }; } catch (e) { /* defaults */ }
   const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* private mode */ } };
   // Color-blind mode swaps green/yellow for orange/blue (as Wordle's high
@@ -2025,7 +2025,7 @@
           <span class="dp-word dp-demo-card is-guessed"><span class="dp-card-face"><span class="dp-card-fb">${["c", "r", "a", "n", "e"].map((c, i) => `<i class="is-${["absent", "correct", "present", "absent", "absent"][i]}">${c}</i>`).join("")}</span></span></span>
         </div>
         <ol class="dp-tut-steps">
-          <li><b>Drag</b> a word into the middle to guess it.</li>
+          <li><b>Drag</b> a word into the box ${settings.layout === "bottom" ? "under the grid" : "in the middle"} to guess it.</li>
           <li>Its letters light up: <b data-c="hit">${colorName("hit")}</b> = right spot, <b data-c="near">${colorName("near")}</b> = wrong spot, <b>gray</b> = not in the word.</li>
           <li><b>Tap</b> the words that can't be it to cross them out (tap again to bring one back), and guess again.</li>
         </ol>
@@ -2230,7 +2230,7 @@
         <h3 id="dpHelpTitle">How to play</h3>
         <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
         <p>You then use that info to eliminate words that don't match and narrow down the possible solutions before picking your next word; rinse and repeat.</p>
-        <p><b>Tap</b> a word to cross it out when it can't be the secret; tap it again to bring it back. To guess a word, <b>drag it into the middle</b> of the board. Prefer tapping, or the guessing spot under the grid? Both are in <b>Settings</b> (the gear, top right). A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
+        <p><b>Tap</b> a word to cross it out when it can't be the secret; tap it again to bring it back. To guess a word, <b>drag it into the guessing box</b> (under the grid, or in its middle). Prefer tapping, or the box in the middle of the grid? Both are in <b>Settings</b> (the gear, top right). A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
         <p>There are three new grids every day, and they differ in what feedback you get:</p>
         <ul>
           <li>In the first grid, each letter is
