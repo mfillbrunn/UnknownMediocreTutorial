@@ -1388,3 +1388,16 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-drop .dp-drop-row .dp-count-tile { width: clamp(26px, 7.6vw, 34px); height: clamp(26px, 7.6vw, 34px); margin-left: 0; }
 .dp-drop .dp-drop-row:has(.dp-count-tile) { width: 100%; overflow: hidden; }
 .dp-card-word { text-transform: uppercase; letter-spacing: .02em; }
+
+/* The full-width middle spot (16 words): the guess as square letter tiles,
+   like the classic feedback row, sized to the spot's height. */
+.dp-drop.is-wide .dp-drop-row { width: auto; gap: 6px; }
+.dp-drop.is-wide .dp-drop-row .dp-tile:not(.dp-count-tile) {
+  flex: none; width: min(48px, calc(var(--card-h) - 20px)); height: min(48px, calc(var(--card-h) - 20px));
+  max-width: none; aspect-ratio: 1; border-radius: 6px;
+}
+#dailyPickScreen .dp-drop.is-wide .dp-drop-row .dp-tile { font-size: min(26px, calc(var(--card-h) * .34)) !important; }
+.dp-drop.is-wide .dp-drop-row .dp-plain-word { font-size: min(30px, calc(var(--card-h) * .4)); letter-spacing: .14em; margin-right: 12px; }
+.dp-drop.is-wide .dp-drop-row .dp-count-tile { width: min(42px, calc(var(--card-h) - 26px)); height: min(42px, calc(var(--card-h) - 26px)); border-radius: 50%; margin-left: 2px; }
+#dailyPickScreen .dp-drop.is-wide .dp-drop-row .dp-count-tile { font-size: min(22px, calc(var(--card-h) * .3)) !important; }
+.dp-drop.is-wide .dp-drop-text { font-size: 15px; }

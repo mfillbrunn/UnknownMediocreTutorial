@@ -1010,7 +1010,8 @@
     // the first guess it says what to do, and that goes as a word is dragged in.
     const dropText = elim ? "<b>Tap</b> to cross out" : "<b>Tap</b> to cross out<br><b>Drag</b> here to guess";
     const inMiddle = lastGuess && wordCards ? tiles(lastGuess).replace('class="dp-row', 'class="dp-row dp-drop-row') : `<span class="dp-drop-text">${dropText}</span>`;
-    const middle = `<div class="dp-drop${lastGuess && wordCards ? " has-guess" : ""}" id="dpDrop" style="grid-row:3;grid-column:2 / 4">${inMiddle}</div>`;
+    // With 16 words the third row is free, so the spot takes all of it.
+    const middle = `<div class="dp-drop${lastGuess && wordCards ? " has-guess" : ""}${full ? "" : " is-wide"}" id="dpDrop" style="grid-row:3;grid-column:${full ? "2 / 4" : "1 / 5"}">${inMiddle}</div>`;
     // Autopilot's countdown to its next guess: big, red, see-through, behind play.
     const autoCount = kind === "auto" && !done ? `<div class="dp-auto-count" id="dpAutoCount" aria-hidden="true">${Math.max(1, Math.ceil(((r.autoDue ?? elapsed()) - elapsed()) / 1000)) || ""}</div>` : "";
     requestAnimationFrame(fitWords);
