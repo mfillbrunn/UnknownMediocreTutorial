@@ -1523,3 +1523,12 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-key.is-stacked { min-width: 0; }
 .dp-key.is-stacked span { white-space: normal; align-items: flex-start; line-height: 1.25; }
 .dp-key.is-stacked i { flex: none; margin-top: 2px; }
+/* Tap mode's Guess button: a plain, smaller "Guess". */
+.dp-key-row { grid-template-columns: minmax(0, 1fr) auto; }
+.dp-side-guess { width: auto; min-width: 116px; height: 48px; padding: 0 26px; }
+#dailyPickScreen .dp-side-guess { font-size: 17px !important; }
+/* A picked word is solid blue in both looks. */
+#dailyPickScreen.dp-light .dp-word.is-selected {
+  background: #3b7dd8; border-color: #2f6fc6; color: #fff;
+  box-shadow: 0 0 0 2px rgba(59,125,216,.25), 0 6px 14px rgba(59,125,216,.25);
+}

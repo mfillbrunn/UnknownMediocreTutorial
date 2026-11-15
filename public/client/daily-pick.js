@@ -1042,7 +1042,7 @@
     const guessButton = "";
     const pickName = !selected ? "" : pics ? name(selected) : paints ? paintRow(selected, "dp-paints dp-paints-inline") : selected.toUpperCase();
     const sideGuess = tapping && !done
-      ? `<button type="button" class="dp-next dp-side-guess" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess <b>${pickName}</b>` : "Guess"}</button>` : "";
+      ? `<button type="button" class="dp-next dp-side-guess" id="dpGuess"${selected ? "" : " disabled"}>Guess</button>` : "";
     const inMiddle = guessButton || (lastGuess && wordCards ? tiles(lastGuess).replace('class="dp-row', 'class="dp-row dp-drop-row') : `<span class="dp-drop-text">${dropText}</span>`);
     // With 16 words the third row is free, so the spot takes all of it.
     const middle = `<div class="dp-drop${lastGuess && wordCards && !guessButton ? " has-guess" : ""}${guessButton ? " has-button" : ""}${full ? "" : " is-wide"}${bottom ? " is-bottom" : ""}" id="dpDrop" style="grid-row:${spotRow + 1};grid-column:${full ? "2 / 4" : "1 / 5"}">${inMiddle}</div>`;
