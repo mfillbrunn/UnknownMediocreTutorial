@@ -1032,6 +1032,7 @@
     const tapping = settings.input === "tap" && !elim;
     const dropText = elim ? "<b>Tap</b> to cross out"
       : tapping ? (r.guesses.length ? "<b>Tap</b> once to cross out, <b>twice</b> to pick<br>then <b>Guess</b> here" : "<b>Tap</b> a word to pick your first guess")
+        : settings.input === "hold" ? "<b>Tap</b> to cross out<br><b>Hold</b> a word to guess it"
         : "<b>Tap</b> to cross out<br><b>Drag</b> here to guess";
     // Tapping: a picked word's Guess button takes the spot until it's used.
     const guessButton = tapping && selected && !done
@@ -1073,11 +1074,20 @@
     return !!b && x >= b.left - 6 && x <= b.right + 6 && y >= b.top - 6 && y <= b.bottom + 6;
   };
 
+  // Hold mode: how long before the ring shows (a shorter press is a tap),
+  // and how long it takes to fill.
+  const HOLD_DELAY = 160;
+  const HOLD_FILL = 700;
+
   function initDrag() {
     const root = $("dailyPickRoot");
     let drag = null;
     const end = () => {
       if (!drag) return;
+      clearTimeout(drag.holdStart);
+      clearTimeout(drag.holdDone);
+      drag.ring?.remove();
+      drag.card.classList.remove("is-holding");
       drag.ghost?.remove();
       drag.card.classList.remove("is-dragging");
       $("dpDrop")?.classList.remove("is-over", "is-target");
@@ -1090,9 +1100,41 @@
       if (!card || round().solved) return;
       drag = { card, word: card.dataset.word, x: event.clientX, y: event.clientY, moved: false, ghost: null, id: event.pointerId };
       root.setPointerCapture?.(event.pointerId);
+      // Hold mode: after a moment a ring appears above the word and fills;
+      // when it's full, the word is guessed.
+      if (settings.input === "hold" && !ELIM_KINDS.includes(puzzles[current]?.kind)) {
+        const d = drag;
+        d.hold = true;
+        d.holdStart = setTimeout(() => {
+          if (drag !== d) return;
+          const b = cardSpot(d.card);
+          const ring = document.createElement("div");
+          ring.className = "dp-hold-ring";
+          ring.style.left = `${b.left + b.w / 2}px`;
+          ring.style.top = `${b.top}px`;
+          ring.style.setProperty("--fill", `${HOLD_FILL}ms`);
+          ring.innerHTML = `<svg viewBox="0 0 36 36" aria-hidden="true"><circle class="dp-hold-track" cx="18" cy="18" r="15"/><circle class="dp-hold-fill" cx="18" cy="18" r="15"/></svg>`;
+          $("dailyPickScreen").appendChild(ring);
+          d.ring = ring;
+          d.card.classList.add("is-holding");
+          d.holdDone = setTimeout(() => {
+            if (drag !== d) return;
+            d.completed = true;
+            const word = d.word;
+            end();
+            navigator.vibrate?.(15);
+            if (!round().solved && !round().guesses.includes(word)) { selected = word; guessSelected(); }
+          }, HOLD_FILL);
+        }, HOLD_DELAY);
+      }
     });
     root.addEventListener("pointermove", event => {
       if (!drag || event.pointerId !== drag.id) return;
+      if (drag.hold) {
+        // Sliding off cancels the hold (nothing happens on release).
+        if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) > 14) { drag.cancelled = true; clearTimeout(drag.holdStart); clearTimeout(drag.holdDone); drag.ring?.remove(); drag.ring = null; drag.card.classList.remove("is-holding"); }
+        return;
+      }
       if (!drag.moved) {
         if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 9) return;
         // Words in an elimination grid can't be guessed by hand, and in
@@ -1120,6 +1162,13 @@
     const finish = event => {
       if (!drag || event.pointerId !== drag.id) return;
       const { word, moved } = drag;
+      if (drag.hold) {
+        // A quick tap crosses out; a hold let go early (or slid off) does nothing.
+        const tapped = !drag.ring && !drag.cancelled && !drag.completed;
+        end();
+        if (tapped) onWordClick(word, "strike");
+        return;
+      }
       const dropped = moved && overDrop(event.clientX, event.clientY);
       end();
       if (!moved) return onWordClick(word, settings.input === "tap" ? "cycle" : "strike");
@@ -1130,6 +1179,8 @@
     };
     root.addEventListener("pointerup", finish);
     root.addEventListener("pointercancel", end);
+    // No long-press menu on the cards (hold mode).
+    root.addEventListener("contextmenu", event => { if (event.target.closest?.(".dp-board")) event.preventDefault(); });
   }
 
   // Words are as big as their card allows: a wide one (MOMMY, on a small
@@ -2025,7 +2076,7 @@
           <span class="dp-word dp-demo-card is-guessed"><span class="dp-card-face"><span class="dp-card-fb">${["c", "r", "a", "n", "e"].map((c, i) => `<i class="is-${["absent", "correct", "present", "absent", "absent"][i]}">${c}</i>`).join("")}</span></span></span>
         </div>
         <ol class="dp-tut-steps">
-          <li><b>Drag</b> a word into the box ${settings.layout === "bottom" ? "under the grid" : "in the middle"} to guess it.</li>
+          <li>${settings.input === "hold" ? "<b>Hold</b> a word until its circle fills to guess it." : settings.input === "tap" ? "<b>Tap</b> a word to pick it, then press <b>Guess</b>." : `<b>Drag</b> a word into the box ${settings.layout === "bottom" ? "under the grid" : "in the middle"} to guess it.`}</li>
           <li>Its letters light up: <b data-c="hit">${colorName("hit")}</b> = right spot, <b data-c="near">${colorName("near")}</b> = wrong spot, <b>gray</b> = not in the word.</li>
           <li><b>Tap</b> the words that can't be it to cross them out (tap again to bring one back), and guess again.</li>
         </ol>
@@ -2221,8 +2272,9 @@
           <div class="dp-seg" role="radiogroup" aria-label="How to guess">
             <label><input type="radio" name="dpInput" value="drag"><span>Drag</span></label>
             <label><input type="radio" name="dpInput" value="tap"><span>Tap</span></label>
+            <label><input type="radio" name="dpInput" value="hold"><span>Hold</span></label>
           </div>
-          <p class="dp-setting-note"><b>Drag:</b> tap a word to cross it out, drag it to the spot to guess.<br><b>Tap:</b> tap once to cross out, twice to pick, a third time to clear, then press <b>Guess</b>.</p>
+          <p class="dp-setting-note"><b>Drag:</b> tap a word to cross it out, drag it to the box to guess.<br><b>Tap:</b> tap once to cross out, twice to pick, a third time to clear, then press <b>Guess</b>.<br><b>Hold:</b> tap a word to cross it out, press and hold it until the circle fills to guess.</p>
         </div>
         <button id="dpSettingsClose" class="dp-next" type="button">Done</button>
       </div>
@@ -2230,7 +2282,7 @@
         <h3 id="dpHelpTitle">How to play</h3>
         <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
         <p>You then use that info to eliminate words that don't match and narrow down the possible solutions before picking your next word; rinse and repeat.</p>
-        <p><b>Tap</b> a word to cross it out when it can't be the secret; tap it again to bring it back. To guess a word, <b>drag it into the guessing box</b> (under the grid, or in its middle). Prefer tapping, or the box in the middle of the grid? Both are in <b>Settings</b> (the gear, top right). A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
+        <p><b>Tap</b> a word to cross it out when it can't be the secret; tap it again to bring it back. To guess a word, <b>drag it into the guessing box</b> (under the grid, or in its middle). Prefer tapping, holding a word to guess it, or the box in the middle of the grid? It's all in <b>Settings</b> (the gear, top right). A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
         <p>There are three new grids every day, and they differ in what feedback you get:</p>
         <ul>
           <li>In the first grid, each letter is

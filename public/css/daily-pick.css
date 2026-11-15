@@ -1462,3 +1462,27 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 }
 @keyframes dp-target-pulse { 50% { background: rgba(59,125,216,.2); } }
 @media (prefers-reduced-motion: reduce) { .dp-drop.is-target { animation: none; } }
+
+/* Three choices in a row (How to guess). */
+.dp-seg { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 1fr; }
+
+/* Hold mode: a ring above the word that fills; full = guessed. */
+.dp-hold-ring {
+  position: fixed; z-index: 50; width: 44px; height: 44px; pointer-events: none;
+  transform: translate(-50%, -62%); border-radius: 50%;
+  background: #16202e; box-shadow: 0 4px 14px rgba(0,0,0,.4);
+  animation: dp-ring-in .15s ease-out;
+}
+.dp-hold-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+.dp-hold-ring circle { fill: none; stroke-width: 4; }
+.dp-hold-track { stroke: rgba(255,255,255,.18); }
+.dp-hold-fill {
+  stroke: #3b7dd8; stroke-linecap: round;
+  stroke-dasharray: 94.25; stroke-dashoffset: 94.25;
+  animation: dp-ring-fill var(--fill, 700ms) linear forwards;
+}
+@keyframes dp-ring-fill { to { stroke-dashoffset: 0; } }
+@keyframes dp-ring-in { from { opacity: 0; transform: translate(-50%, -50%) scale(.6); } }
+.dp-word.is-holding { transform: scale(.96); border-color: #3b7dd8; transition: transform .7s ease, border-color .15s ease; }
+#dailyPickScreen.dp-light .dp-hold-ring { background: #fffdf8; box-shadow: 0 4px 14px rgba(80,60,20,.2); }
+#dailyPickScreen.dp-light .dp-hold-track { stroke: #e2d9c6; }
