@@ -26,12 +26,13 @@
 
 (function () {
   const WORD_COUNT = 16;
-  // From this day on, a Daily grid would have 18 words (a full 4 x 5 block
-  // around the middle spot). Switched off: every grid has 16, in the diamond.
-  const BIG_GRID_FROM = "9999-12-31";
+  // From this day on, a Daily grid has 18 words: a full 4 x 5 block around
+  // the middle spot. Earlier days (and the archive's copies) keep their 16,
+  // in the diamond.
+  const BIG_GRID_FROM = "2026-11-14";
   const BIG_GRID = 18;
   // The practice grid, the same for everyone.
-  const PRACTICE_WORDS = 16;
+  const PRACTICE_WORDS = 18;
   const PUZZLE_COUNT = 3;
   // Par for the whole day's three grids, for the golf verdict at the end.
   const DAY_PAR = 7;
@@ -117,8 +118,8 @@
 
   // Player settings, kept on the device.
   const SETTINGS_KEY = "umt.whittle.settings"; // named from when the game was Whittle; kept so settings carry over
-  // The paper (light) look is the default; the switch in ? goes dark.
-  let settings = { colorblind: false, light: true };
+  // Dark is the default look; the switch in ? turns on the paper (light) look.
+  let settings = { colorblind: false, light: false };
   try { settings = { ...settings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) }; } catch (e) { /* defaults */ }
   const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* private mode */ } };
   // Color-blind mode swaps green/yellow for orange/blue (as Wordle's high

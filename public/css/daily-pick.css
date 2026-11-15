@@ -1387,3 +1387,4 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-drop .dp-drop-row .dp-plain-word { font-size: clamp(17px, 5.3vw, 25px); letter-spacing: .03em; margin-right: 3px; }
 .dp-drop .dp-drop-row .dp-count-tile { width: clamp(26px, 7.6vw, 34px); height: clamp(26px, 7.6vw, 34px); margin-left: 0; }
 .dp-drop .dp-drop-row:has(.dp-count-tile) { width: 100%; overflow: hidden; }
+.dp-card-word { text-transform: uppercase; letter-spacing: .02em; }
