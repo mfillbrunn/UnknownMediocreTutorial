@@ -1532,3 +1532,11 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
   background: #3b7dd8; border-color: #2f6fc6; color: #fff;
   box-shadow: 0 0 0 2px rgba(59,125,216,.25), 0 6px 14px rgba(59,125,216,.25);
 }
+/* Guess button: aims for 200px wide; gives way to the legend on narrow
+   phones, but never below 110px. */
+.dp-key-row { grid-template-columns: fit-content(58%) minmax(110px, 1fr); }
+.dp-side-guess { width: 100%; max-width: 200px; min-width: 0; justify-self: end; padding: 0 12px; }
+/* One steady width per phone (same on every grid): up to 200px, half the
+   row at most, never under 110px. The legend wraps beside it. */
+.dp-key-row { grid-template-columns: minmax(0, 1fr) clamp(110px, 50%, 200px); }
+.dp-side-guess { width: 100%; max-width: none; }
