@@ -337,7 +337,7 @@
 
   // Days whose grids use a different feedback rule: { date: { gridIndex: mode } }.
   // "oneletter": full colors, but each guess shows just one letter, in turn.
-  const DAY_RULE_SWAPS = { "2026-11-15": { 2: "oneletter" } };
+  const DAY_RULE_SWAPS = {};
 
   function buildDay(pool, date) {
     const list = [...new Set(pool.filter(w => /^[a-z]{5}$/.test(w)))].sort();
