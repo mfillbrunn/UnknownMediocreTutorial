@@ -26,13 +26,13 @@
 
 (function () {
   const WORD_COUNT = 16;
-  // From this day on, a Daily grid has 18 words: a full 4 x 5 block around
-  // the middle spot. Earlier days (and the archive's copies) keep their 16,
-  // in the diamond.
-  const BIG_GRID_FROM = "2026-11-14";
+  // From this day on, a Daily grid would have 18 words (a full 4 x 5 block
+  // around the middle spot). Switched off: every grid has 16, in four
+  // straight columns with empty space either side of the middle spot.
+  const BIG_GRID_FROM = "9999-12-31";
   const BIG_GRID = 18;
   // The practice grid, the same for everyone.
-  const PRACTICE_WORDS = 18;
+  const PRACTICE_WORDS = 16;
   const PUZZLE_COUNT = 3;
   // Par for the whole day's three grids, for the golf verdict at the end.
   const DAY_PAR = 7;
@@ -909,8 +909,7 @@
 
     // Where each card goes: a 4 x 5 board with the middle two spots of the
     // third row kept for guessing. 18 words fill every other spot; 16 words
-    // leave the third row's ends empty and slide the outer columns half a
-    // card toward the middle (a diamond).
+    // leave the third row's ends empty.
     const full = words.length >= 18;
     const spots = [];
     for (let r = 0; r < 5; r++) for (let c = 0; c < 4; c++) {
@@ -920,7 +919,8 @@
     }
     const buttons = words.map((word, wi) => {
       const [gr, gc] = spots[wi] || [0, 0];
-      const slide = !full && (gc === 0 || gc === 3) ? (gr < 2 ? 1 : -1) : 0;
+      // (No sliding: straight rows and columns are easiest to scan.)
+      const slide = 0;
       const struck = r.struck.includes(word);
       const guessed = r.guesses.includes(word);
       // Words already guessed stay struck for good, so they can't be tapped.
