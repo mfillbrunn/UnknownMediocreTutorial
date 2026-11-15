@@ -338,6 +338,10 @@
   // Days whose grids use a different feedback rule: { date: { gridIndex: mode } }.
   // "oneletter": full colors, but each guess shows just one letter, in turn.
   const DAY_RULE_SWAPS = {};
+  // From this day on (until changed), grid 3 is the Arrows grid: each letter
+  // shows whether the secret's letter there comes earlier or later in the
+  // alphabet, or is right.
+  const GRID3_ARROWS_FROM = "2026-11-15";
 
   function buildDay(pool, date) {
     const list = [...new Set(pool.filter(w => /^[a-z]{5}$/.test(w)))].sort();
@@ -350,7 +354,7 @@
       const puzzle = buildPuzzle(list, seed, taken, recipe, date >= BIG_GRID_FROM ? BIG_GRID : WORD_COUNT);
       puzzle.words.forEach(w => taken.add(w));
       // Some days swap a grid's feedback rule for a different one.
-      const swap = DAY_RULE_SWAPS[date]?.[i];
+      const swap = DAY_RULE_SWAPS[date]?.[i] || (i === 2 && date >= GRID3_ARROWS_FROM ? "arrows" : null);
       return { ...puzzle, ...LEVELS[level], ...(swap ? { mode: swap } : {}) };
     });
   }
@@ -878,7 +882,7 @@
     const { answer: secret, words, mode, kind } = puzzle;
     const pics = PIC_KINDS.includes(kind);
     const paints = kind === "colors";
-    const arrows = kind === "arrows";
+    const arrows = kind === "arrows" || mode === "arrows";
     const oneLetter = kind === "oneletter" || mode === "oneletter";
     const elim = ELIM_KINDS.includes(kind);
     const info = pics ? catalog[kind] : null;
@@ -967,7 +971,7 @@
       : paints
       ? swatch("var(--dp-hit)", "Shares a color, this spot") + swatch("var(--dp-near)", "Another spot") + swatch("#555b63", "Not in it")
       : arrows
-      ? `<span><b>←</b> secret's letter is earlier</span><span><b>→</b> later</span><span><b>–</b> right letter</span>`
+      ? `<span><b>←</b> earlier in the alphabet</span><span><b>→</b> later</span><span><b>–</b> right letter</span>`
       : pics
       ? swatch("var(--dp-hit)", "Same color, same spot") + swatch("var(--dp-near)", "Color is elsewhere") + swatch("#555b63", "Color not in it")
       : {
@@ -1623,6 +1627,18 @@
   // Each Daily rule's full card shows once per device; days after that just
   // get the banner. Anyone who has finished a day before has seen them.
   const RULES_SEEN_KEY = "umt.unstruck.rulesSeen";
+  // A newly introduced rule (Arrows on grid 3): the full card once per
+  // device, whatever days were played before; the banner after that.
+  function newRuleSeen(mode) {
+    try {
+      const seen = JSON.parse(localStorage.getItem(RULES_SEEN_KEY)) || {};
+      if (seen[mode]) return true;
+      seen[mode] = 1;
+      localStorage.setItem(RULES_SEEN_KEY, JSON.stringify(seen));
+    } catch (e) { /* private mode: show it */ }
+    return false;
+  }
+
   function ruleSeen(mode) {
     try {
       const seen = JSON.parse(localStorage.getItem(RULES_SEEN_KEY)) || {};
@@ -1640,7 +1656,8 @@
     full: () => `<span class="dp-help-chip" style="background:var(--dp-hit)"></span> right spot <span class="dp-help-chip" style="background:var(--dp-near)"></span> wrong spot`,
     split: () => `<span class="dp-help-chip" style="background:${SPLIT_FILL}"></span> in the word, spot not shown`,
     counts: () => `Only counts: <i class="dp-rule-count is-correct">2</i> right spot <i class="dp-rule-count is-present">1</i> wrong spot`,
-    oneletter: () => `One letter per guess: 1st, 2nd, 3rd…`
+    oneletter: () => `One letter per guess: 1st, 2nd, 3rd…`,
+    arrows: () => `Arrows: <b>←</b> earlier <b>→</b> later <b>–</b> right letter`
   };
   let bannerTimer = null;
   function showBanner() {
@@ -1677,7 +1694,7 @@
     state.announced = state.announced || [];
     if (playMode !== "daily" || r.guesses.length || state.announced[current] || over()) return;
     // The Daily: a banner, or the full rule the first time it comes up.
-    if (dailyLike() && !special && (!rule || ruleSeen(puzzles[current].mode))) {
+    if (dailyLike() && (special ? newRuleSeen(puzzles[current].mode) : !rule || ruleSeen(puzzles[current].mode))) {
       state.announced[current] = true;
       save();
       return showBanner();
@@ -1687,7 +1704,7 @@
     save();
     stopClock();
     $("dpRuleCard").dataset.sure = SET_GAMES.includes(game) || special ? "1" : "";
-    $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">${game === "speed" ? `Speed · ${SPEED_GRIDS} grids` : `${SET_GAMES.includes(game) ? `Experimental · ${gridLabel(current)} · ` : ""}Grid ${current + 1} of ${puzzles.length}${special ? ` · ${KIND_INFO[puzzles[current].mode]?.label || ""} · new today` : ""}`}</div>
+    $("dpRuleCard").innerHTML = `<div class="dp-rule-grid">${game === "speed" ? `Speed · ${SPEED_GRIDS} grids` : `${SET_GAMES.includes(game) ? `Experimental · ${gridLabel(current)} · ` : ""}Grid ${current + 1} of ${puzzles.length}${special ? ` · ${KIND_INFO[puzzles[current].mode]?.label || ""} · new` : ""}`}</div>
       <p>${rule}</p>
       <div class="dp-rule-foot"><button id="dpRuleClose" class="dp-next" type="button">${game === "speed" ? "Start" : "Got it"}</button></div>`;
     $("dpRule").hidden = false;
@@ -2324,7 +2341,8 @@
             <span class="dp-help-chip" style="background:#555b63"></span> gray (letter not in the word at all).</li>
           <li>In the second grid, a letter that's in the word is
             <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> half <span data-c="hit">green</span>, half <span data-c="near">yellow</span> &ndash; so you don't find out whether it's in the right position. Letters not in the word are gray.</li>
-          <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
+          <li>In the third grid, each letter of your guess gets an arrow instead of a color: <b>←</b> if the secret's letter in that spot comes earlier in the alphabet, <b>→</b> if it comes later, <b>–</b> if it's the right letter.</li>
+          <li hidden>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
         ${EXPERIMENTAL_BUTTON && WEEKLY_ENABLED ? `<p><b>Experimental</b> (the button next to Share once you've finished the Daily) has two extras. <b>Flags · Colors · Arrows</b>, new every Monday, is three different grids: <b>Flags</b>, where each flag is split into a grid of colors; <b>Colors</b>, rows of five paints where a paint matches a tile when they have a color in common (white, red and pink all match pink); and <b>Arrows</b>, words where each letter's arrow points to the secret's letter in the alphabet. Each grid explains itself when it starts.</p>` : ""}
         ${EXPERIMENTAL_BUTTON && TWISTS_ENABLED ? `<p><b>One letter · Autopilot · Pick two</b> (also under Experimental, new every Monday): word grids with a twist. <b>One letter</b> shows feedback for just one letter per guess, in turn. In <b>Autopilot</b> the game guesses for you every 10 seconds while you strike words out, and in <b>Pick two</b> you choose between two words it offers. In both, you solve it when only the secret is left, and lose if you strike the secret out. Each grid explains itself when it starts.</p>` : ""}
