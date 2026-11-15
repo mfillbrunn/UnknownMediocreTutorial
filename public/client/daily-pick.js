@@ -66,7 +66,7 @@
   let archiveDate = null; // the past day being played
   // Shows the Experimental button (Speed, Flags / Colors / Arrows) on the
   // Daily's results, and its paragraphs in How to play. Hidden for now.
-  const EXPERIMENTAL_BUTTON = false;
+  const EXPERIMENTAL_BUTTON = true;
   // Experimental's second set: One letter, Autopilot, Pick two.
   const TWISTS_ENABLED = true;
   const TWIST_KINDS = ["oneletter", "auto", "choice"];
@@ -683,6 +683,9 @@
     if (playMode === "practice") title.innerHTML = `Unstruck <span class="dp-title-grid">Practice</span>`;
     else title.innerHTML = grid ? `Unstruck <span class="dp-title-grid">${kind} ${grid}/${puzzles.length}</span>` : `Unstruck${number}`;
     document.querySelectorAll("#dailyPickScreen .dp-tab").forEach(tab => tab.classList.toggle("is-on", tab.dataset.game === game));
+    // A long label (SPEED 1/10, ONE LETTER 1/3) steps down so the buttons fit.
+    const label = title.querySelector(".dp-title-grid")?.textContent || "";
+    title.classList.toggle("is-long", label.length > 8);
   }
 
   let countdownTimer = null;
