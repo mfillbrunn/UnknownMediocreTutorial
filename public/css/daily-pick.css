@@ -1502,3 +1502,16 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 #dailyPickScreen.dp-light .dp-pos i { border-color: #cfc4ae; }
 #dailyPickScreen.dp-light .dp-pos i.is-on { background: #3b7dd8; border-color: #3b7dd8; }
 .dp-pos-hint { white-space: nowrap; gap: 8px; } .dp-pos-hint b { margin-left: 4px; }
+
+/* Tap mode: the legend (stacked) on the left, the Guess button on the right,
+   always there, so nothing shifts when a word is picked. */
+.dp-key-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: center; gap: 12px; width: 100%; }
+.dp-key.is-stacked { flex-direction: column; align-items: flex-start; flex-wrap: nowrap; gap: 5px; padding: 6px 4px; border: 0 !important; background: none !important; text-align: left; }
+.dp-key.is-stacked span { white-space: nowrap; }
+.dp-side-guess {
+  height: 56px; margin: 0; padding: 0 10px; border-radius: 14px; width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; overflow: hidden;
+}
+.dp-side-guess:not(:disabled) { background: linear-gradient(180deg, #4a8be6, #3170cc); color: #fff; border-color: transparent; }
+#dailyPickScreen .dp-side-guess { font-size: 17px !important; }
+.dp-side-guess b { letter-spacing: .04em; }

@@ -123,7 +123,7 @@
   // "bottom", under it). input: how a guess is picked ("drag" a word to that
   // spot, or "tap": once crosses out, twice picks, three times clears, then
   // the Guess button in that spot).
-  let settings = { colorblind: false, light: false, layout: "bottom", input: "drag" };
+  let settings = { colorblind: false, light: false, layout: "bottom", input: "tap" };
   try { settings = { ...settings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) }; } catch (e) { /* defaults */ }
   const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* private mode */ } };
   // Color-blind mode swaps green/yellow for orange/blue (as Wordle's high
@@ -1034,12 +1034,15 @@
     // the first guess it says what to do, and that goes as a word is dragged in.
     const tapping = settings.input === "tap" && !elim;
     const dropText = elim ? "<b>Tap</b> to cross out"
-      : tapping ? (r.guesses.length ? "<b>Tap</b> once to cross out, <b>twice</b> to pick<br>then <b>Guess</b> here" : "<b>Tap</b> a word to pick your first guess")
+      : tapping ? (r.guesses.length ? "<b>Tap</b> once to cross out, <b>twice</b> to pick<br>then press <b>Guess</b>" : "<b>Tap</b> a word to pick your first guess,<br>then press <b>Guess</b>")
         : settings.input === "hold" ? "<b>Tap</b> to cross out<br><b>Hold</b> a word to guess it"
         : "<b>Tap</b> to cross out<br><b>Drag</b> here to guess";
-    // Tapping: a picked word's Guess button takes the spot until it's used.
-    const guessButton = tapping && selected && !done
-      ? `<button type="button" class="dp-next dp-drop-guess" id="dpGuess">Guess ${pics ? name(selected) : paints ? paintRow(selected, "dp-paints dp-paints-inline") : selected.toUpperCase()}</button>` : "";
+    // Tapping: the Guess button always sits beside the legend under the
+    // grid (greyed out until a word is picked), so nothing moves.
+    const guessButton = "";
+    const pickName = !selected ? "" : pics ? name(selected) : paints ? paintRow(selected, "dp-paints dp-paints-inline") : selected.toUpperCase();
+    const sideGuess = tapping && !done
+      ? `<button type="button" class="dp-next dp-side-guess" id="dpGuess"${selected ? "" : " disabled"}>${selected ? `Guess <b>${pickName}</b>` : "Guess"}</button>` : "";
     const inMiddle = guessButton || (lastGuess && wordCards ? tiles(lastGuess).replace('class="dp-row', 'class="dp-row dp-drop-row') : `<span class="dp-drop-text">${dropText}</span>`);
     // With 16 words the third row is free, so the spot takes all of it.
     const middle = `<div class="dp-drop${lastGuess && wordCards && !guessButton ? " has-guess" : ""}${guessButton ? " has-button" : ""}${full ? "" : " is-wide"}${bottom ? " is-bottom" : ""}" id="dpDrop" style="grid-row:${spotRow + 1};grid-column:${full ? "2 / 4" : "1 / 5"}">${inMiddle}</div>`;
@@ -1047,7 +1050,7 @@
     const autoCount = kind === "auto" && !done ? `<div class="dp-auto-count" id="dpAutoCount" aria-hidden="true">${Math.max(1, Math.ceil(((r.autoDue ?? elapsed()) - elapsed()) / 1000)) || ""}</div>` : "";
     requestAnimationFrame(fitWords);
     root.innerHTML = `<div class="dp-board is-diamond${full ? " is-full" : ""}${pics ? ` is-pics is-${kind}` : kind ? ` is-${kind}` : ""}" style="${pics ? `--ratio:${info.ratio}` : ""}">${buttons}${middle}${autoCount}</div>
-      <div class="dp-center">${lastGuess && !wordCards ? `<div class="dp-last">Last guess</div>${tiles(lastGuess)}` : ""}<div class="dp-key">${key}</div>${hint || action ? `<div class="dp-hint">${hint}</div>${action}` : ""}</div>${exit}`;
+      <div class="dp-center">${lastGuess && !wordCards ? `<div class="dp-last">Last guess</div>${tiles(lastGuess)}` : ""}${tapping ? `<div class="dp-key-row"><div class="dp-key is-stacked">${key}</div>${sideGuess || `<button type="button" class="dp-next dp-side-guess" disabled>Guess</button>`}</div>` : `<div class="dp-key">${key}</div>`}${hint || action ? `<div class="dp-hint">${hint}</div>${action}` : ""}</div>${exit}`;
   }
 
   // ---- Tap to cross out, drag to the middle to guess ------------------------
