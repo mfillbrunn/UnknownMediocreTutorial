@@ -1515,3 +1515,11 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-side-guess:not(:disabled) { background: linear-gradient(180deg, #4a8be6, #3170cc); color: #fff; border-color: transparent; }
 #dailyPickScreen .dp-side-guess { font-size: 17px !important; }
 .dp-side-guess b { letter-spacing: .04em; }
+/* The fade above the rule card's button: only while there's more to scroll. */
+.dp-rule-foot, #dailyPickScreen.dp-light .dp-rule-foot { box-shadow: none; transition: box-shadow .2s ease; }
+#dpRuleCard.has-more .dp-rule-foot { box-shadow: 0 -18px 16px -2px #16202e; }
+#dailyPickScreen.dp-light #dpRuleCard.has-more .dp-rule-foot { box-shadow: 0 -18px 16px -2px #fffdf8; }
+/* The stacked legend wraps inside its own column, never under the button. */
+.dp-key.is-stacked { min-width: 0; }
+.dp-key.is-stacked span { white-space: normal; align-items: flex-start; line-height: 1.25; }
+.dp-key.is-stacked i { flex: none; margin-top: 2px; }

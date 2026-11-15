@@ -973,7 +973,7 @@
       : {
         full: swatch("var(--dp-hit)", "Right spot") + swatch("var(--dp-near)", "Wrong spot") + swatch("#555b63", "Not in word"),
         split: swatch(SPLIT_TILE, "In the word (any spot)") + swatch("#555b63", "Not in word"),
-        counts: swatch("var(--dp-hit)", "How many in the right spot", true) + swatch("var(--dp-near)", "How many in the wrong spot", true)
+        counts: swatch("var(--dp-hit)", "Count in right spot", true) + swatch("var(--dp-near)", "Count in wrong spot", true)
       }[mode];
 
     // The latest guess, large. Right after a guess its tiles flip in one by
@@ -1684,6 +1684,15 @@
     $("dpRule").hidden = false;
     $("dpRuleClose").focus({ preventScroll: true });
     $("dpRuleCard").scrollTop = 0; // long cards start at the top
+    requestAnimationFrame(updateRuleFade);
+  }
+
+  // The fade above the rule card's button only shows while there's more
+  // text below to scroll to.
+  function updateRuleFade() {
+    const card = $("dpRuleCard");
+    if (!card) return;
+    card.classList.toggle("has-more", card.scrollHeight - card.scrollTop - card.clientHeight > 4);
   }
 
   // "Got it" asks once more before the rules go away.
@@ -1694,6 +1703,7 @@
       <button id="dpRuleYes" class="dp-next" type="button">Yes, let's play</button>
       <button id="dpRuleBack" class="dp-link" type="button">Read them again</button></div>`);
     $("dpRuleYes").focus({ preventScroll: true });
+    requestAnimationFrame(updateRuleFade);
     $("dpSure").scrollIntoView({ block: "nearest" });
   }
 
@@ -2348,6 +2358,8 @@
     $("dpHelpClose")?.addEventListener("click", closeHelp);
     $("dpIntro")?.addEventListener("click", onTutorialClick);
     $("dpTutorialBtn")?.addEventListener("click", openIntro);
+    $("dpRuleCard")?.addEventListener("scroll", updateRuleFade, { passive: true });
+    window.addEventListener("resize", updateRuleFade);
     $("dpRule")?.addEventListener("click", event => {
       if (event.target.closest("#dpRuleClose")) return $("dpRuleCard").dataset.sure ? askSure() : closeRule(); // Experimental and unusual grids ask again
       if (event.target.closest("#dpRuleYes")) return closeRule();
