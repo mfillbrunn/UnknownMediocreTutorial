@@ -66,7 +66,7 @@
   let archiveDate = null; // the past day being played
   // Shows the Experimental button (Speed, Flags / Colors / Arrows) on the
   // Daily's results, and its paragraphs in How to play. Hidden for now.
-  const EXPERIMENTAL_BUTTON = true;
+  const EXPERIMENTAL_BUTTON = false;
   // Experimental's second set: One letter, Autopilot, Pick two.
   const TWISTS_ENABLED = true;
   const TWIST_KINDS = ["oneletter", "auto", "choice"];
@@ -335,6 +335,10 @@
     throw new Error("Unstruck: couldn't build a grid");
   }
 
+  // Days whose grids use a different feedback rule: { date: { gridIndex: mode } }.
+  // "oneletter": full colors, but each guess shows just one letter, in turn.
+  const DAY_RULE_SWAPS = { "2026-11-15": { 2: "oneletter" } };
+
   function buildDay(pool, date) {
     const list = [...new Set(pool.filter(w => /^[a-z]{5}$/.test(w)))].sort();
     // Every word on the day's three grids is different, not just the answers.
@@ -345,7 +349,9 @@
       const recipe = pickRecipe(mulberry32(hash(`${seed}:recipe`)));
       const puzzle = buildPuzzle(list, seed, taken, recipe, date >= BIG_GRID_FROM ? BIG_GRID : WORD_COUNT);
       puzzle.words.forEach(w => taken.add(w));
-      return { ...puzzle, ...LEVELS[level] };
+      // Some days swap a grid's feedback rule for a different one.
+      const swap = DAY_RULE_SWAPS[date]?.[i];
+      return { ...puzzle, ...LEVELS[level], ...(swap ? { mode: swap } : {}) };
     });
   }
 
@@ -873,7 +879,7 @@
     const pics = PIC_KINDS.includes(kind);
     const paints = kind === "colors";
     const arrows = kind === "arrows";
-    const oneLetter = kind === "oneletter";
+    const oneLetter = kind === "oneletter" || mode === "oneletter";
     const elim = ELIM_KINDS.includes(kind);
     const info = pics ? catalog[kind] : null;
     const r = round();
@@ -954,7 +960,7 @@
     const SPLIT_TILE = SPLIT_FILL;
     const swatch = (color, label, round) =>
       `<span><i class="${round ? "is-round" : ""}" style="background:${color}"></i>${label}</span>`;
-    const key = kind === "oneletter"
+    const key = oneLetter
       ? swatch("var(--dp-hit)", "Right spot") + swatch("var(--dp-near)", "Wrong spot") + swatch("#555b63", "Not in word")
       : paints
       ? swatch("var(--dp-hit)", "Shares a color, this spot") + swatch("var(--dp-near)", "Another spot") + swatch("#555b63", "Not in it")
@@ -1454,6 +1460,7 @@
   // Grids 2 and 3 change what the feedback shows, so as each starts a short
   // card says how, once per day. The clock waits while it's up.
   const RULES = {
+    oneletter: () => `Today this grid shows feedback for <b>just one letter</b> per guess, in turn: your 1st guess shows letter 1, the 2nd shows letter 2, and so on (the 6th goes back to letter 1). Colors mean the same as on grid 1.`,
     split: () => `Letters in the word show <span class="dp-help-chip" style="background:${SPLIT_FILL}"></span> half ${colorName("hit")}, half ${colorName("near")} &ndash; you won't know if they're in the right spot. Gray means not in the word.`,
     counts: () => `You only see <i class="dp-rule-count is-correct">2</i> how many letters are in the right spot and <i class="dp-rule-count is-present">1</i> how many are in the wrong spot &ndash; not which ones.`
   };
@@ -1564,7 +1571,8 @@
   const BANNER_LINES = {
     full: () => `<span class="dp-help-chip" style="background:var(--dp-hit)"></span> right spot <span class="dp-help-chip" style="background:var(--dp-near)"></span> wrong spot`,
     split: () => `<span class="dp-help-chip" style="background:${SPLIT_FILL}"></span> in the word, spot not shown`,
-    counts: () => `Only counts: <i class="dp-rule-count is-correct">2</i> right spot <i class="dp-rule-count is-present">1</i> wrong spot`
+    counts: () => `Only counts: <i class="dp-rule-count is-correct">2</i> right spot <i class="dp-rule-count is-present">1</i> wrong spot`,
+    oneletter: () => `One letter per guess: 1st, 2nd, 3rd…`
   };
   let bannerTimer = null;
   function showBanner() {
