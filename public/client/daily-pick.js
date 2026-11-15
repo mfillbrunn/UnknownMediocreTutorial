@@ -971,7 +971,7 @@
       : paints
       ? swatch("var(--dp-hit)", "Shares a color, this spot") + swatch("var(--dp-near)", "Another spot") + swatch("#555b63", "Not in it")
       : arrows
-      ? `<span><b>←</b> earlier in the alphabet</span><span><b>→</b> later</span><span><b>–</b> right letter</span>`
+      ? `<span><b>←</b> earlier (A side)</span><span><b>→</b> later (Z side)</span><span><b>–</b> right letter</span>`
       : pics
       ? swatch("var(--dp-hit)", "Same color, same spot") + swatch("var(--dp-near)", "Color is elsewhere") + swatch("#555b63", "Color not in it")
       : {
