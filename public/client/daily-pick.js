@@ -1930,6 +1930,8 @@
   }
 
   function syncSettingsUi() {
+    document.querySelectorAll('#dailyPickScreen input[name="dpTheme"]').forEach(el => { el.checked = el.value === (settings.light ? "light" : "dark"); });
+    document.querySelectorAll('#dailyPickScreen input[name="dpColors"]').forEach(el => { el.checked = el.value === (settings.colorblind ? "colorblind" : "standard"); });
     document.querySelectorAll('#dailyPickScreen input[name="dpLayout"]').forEach(el => { el.checked = el.value === settings.layout; });
     document.querySelectorAll('#dailyPickScreen input[name="dpInput"]').forEach(el => { el.checked = el.value === settings.input; });
     if ($("dpSetCb")) $("dpSetCb").checked = !!settings.colorblind;
@@ -1937,6 +1939,13 @@
   }
 
   function onSettingChange(event) {
+    if (event.target.name === "dpTheme" || event.target.name === "dpColors") {
+      if (event.target.name === "dpTheme") settings.light = event.target.value === "light";
+      else settings.colorblind = event.target.value === "colorblind";
+      saveSettings();
+      applyColors();
+      return;
+    }
     if (event.target.name === "dpLayout" || event.target.name === "dpInput") {
       settings[event.target.name === "dpLayout" ? "layout" : "input"] = event.target.value;
       if (settings.input === "drag") selected = "";
@@ -2019,8 +2028,20 @@
   const helpOpen = () => (!!$("dpHelp") && !$("dpHelp").hidden) || settingsOpen();
   const settingsOpen = () => !!$("dpSettings") && !$("dpSettings").hidden;
 
+  // While Settings is open the gear becomes a red ✕, like the ? does.
+  let gearIcon = null;
+  function setGearButton(open) {
+    const button = $("dpSettingsBtn");
+    if (!button) return;
+    gearIcon = gearIcon || button.innerHTML;
+    button.innerHTML = open ? "✕" : gearIcon;
+    button.setAttribute("aria-label", open ? "Close settings" : "Settings");
+    button.classList.toggle("is-open", open);
+  }
+
   // Settings take the grid's place, like How to play.
   function openSettings() {
+    hideBanner();
     closeHelp();
     setSplashAside();
     closeIntro();
@@ -2028,13 +2049,13 @@
     syncSettingsUi();
     $("dailyPickRoot").hidden = true;
     $("dpSettings").hidden = false;
-    $("dpSettingsBtn")?.classList.add("is-open");
+    setGearButton(true);
   }
   function closeSettings() {
     if (!settingsOpen()) return;
     $("dpSettings").hidden = true;
     $("dailyPickRoot").hidden = false;
-    $("dpSettingsBtn")?.classList.remove("is-open");
+    setGearButton(false);
     if (state) render();
     if (bringSplashBack()) return;
     startClock();
@@ -2072,7 +2093,8 @@
   function openHelp() {
     const help = $("dpHelp");
     if (!help) return;
-    if (settingsOpen()) { $("dpSettings").hidden = true; $("dpSettingsBtn")?.classList.remove("is-open"); }
+    if (settingsOpen()) { $("dpSettings").hidden = true; setGearButton(false); }
+    hideBanner();
     setSplashAside();
     closeIntro();
     stopClock();
@@ -2140,9 +2162,19 @@
       </div>
       <div id="dpSettings" class="dp-help dp-settings-panel" role="dialog" aria-modal="true" aria-labelledby="dpSettingsTitle" hidden>
         <h3 id="dpSettingsTitle">Settings</h3>
-        <div class="dp-settings">
-          <label class="dp-switch"><input type="checkbox" id="dpSetLight"><span class="dp-switch-ui"></span><span>Light mode</span></label>
-          <label class="dp-switch"><input type="checkbox" id="dpSetCb"><span class="dp-switch-ui"></span><span>Color-blind colors</span></label>
+        <div class="dp-setting-group">
+          <div class="dp-setting-label">Look</div>
+          <div class="dp-seg" role="radiogroup" aria-label="Look">
+            <label><input type="radio" name="dpTheme" value="dark"><span>Dark</span></label>
+            <label><input type="radio" name="dpTheme" value="light"><span>Light</span></label>
+          </div>
+        </div>
+        <div class="dp-setting-group">
+          <div class="dp-setting-label">Colors</div>
+          <div class="dp-seg" role="radiogroup" aria-label="Colors">
+            <label><input type="radio" name="dpColors" value="standard"><span>Standard</span></label>
+            <label><input type="radio" name="dpColors" value="colorblind"><span>Color-blind</span></label>
+          </div>
         </div>
         <div class="dp-setting-group">
           <div class="dp-setting-label">Feedback and guessing spot</div>

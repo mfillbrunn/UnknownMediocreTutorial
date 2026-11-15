@@ -1405,8 +1405,6 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 /* ---------- Settings ---------- */
 .dp-gear-btn { display: grid; place-items: center; }
 .dp-gear-btn svg { display: block; }
-.dp-gear-btn.is-open { background: rgba(255,255,255,.12); }
-#dailyPickScreen.dp-light .dp-gear-btn.is-open { background: #ebe4d5; }
 .dp-settings-panel h3 { margin: 4px 0 12px; text-align: center; }
 .dp-setting-group { margin-top: 16px; }
 .dp-setting-label { font-size: 12px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; opacity: .6; margin-bottom: 8px; }
@@ -1429,3 +1427,13 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
   display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: .04em;
 }
 #dailyPickScreen .dp-drop .dp-drop-guess { font-size: clamp(17px, 5vw, 22px) !important; }
+
+/* The gear, while Settings is open: a red ✕ like the ? (the shared
+   .dp-help-btn.is-open style). */
+#dailyPickScreen .dp-gear-btn.is-open { font-size: 16px !important; font-weight: 800; }
+/* The tutorial's crossed-out demo card: the line through the middle of the word. */
+.dp-demo-card.is-struck::after { top: 50%; }
+.dp-settings-panel .dp-setting-group:first-of-type { margin-top: 4px; }
+#dailyPickScreen .dp-demo-card .dp-card-face { padding: 6px 2px; }
+#dailyPickScreen .dp-help-btn.is-open { background: #d64545; border-color: #d64545; color: #fff; }
+#dailyPickScreen .dp-word.dp-demo-card:not(.is-guessed) .dp-card-face { padding: 6px 2px; }
