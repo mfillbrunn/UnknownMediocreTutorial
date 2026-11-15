@@ -642,7 +642,7 @@
   function showClock() {
     const clock = $("dpClock");
     if (!clock) return;
-    clock.hidden = (over() && !advanceTimer) || game !== "speed";
+    clock.hidden = over() && !advanceTimer;
     if (game !== "speed") {
       clock.textContent = formatTime(elapsed());
       clock.classList.remove("is-low");
