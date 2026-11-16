@@ -66,7 +66,7 @@
   let archiveDate = null; // the past day being played
   // Shows the Experimental button (Speed, Flags / Colors / Arrows) on the
   // Daily's results, and its paragraphs in How to play. Hidden for now.
-  const EXPERIMENTAL_BUTTON = true;
+  const EXPERIMENTAL_BUTTON = false;
   // Experimental's second set: One letter, Autopilot, Pick two.
   const TWISTS_ENABLED = true;
   const TWIST_KINDS = ["oneletter", "auto", "choice"];
