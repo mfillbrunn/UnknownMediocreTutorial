@@ -2656,6 +2656,16 @@
         return;
       }
       event.stopPropagation(); event.preventDefault();
+      // Done (or the ✕) in Settings: close it and go to the goodbye.
+      // (Found by position: the dim sits over the Done button.)
+      const hit = el => { const b = el?.getBoundingClientRect(); return !!b && event.clientX >= b.left && event.clientX <= b.right && event.clientY >= b.top && event.clientY <= b.bottom; };
+      if (st.settings && (hit($("dpSettingsClose")) || hit($("dpSettingsBtn")))) {
+        document.querySelectorAll(".dp-coach-focus").forEach(el => el.classList.remove("dp-coach-focus"));
+        closeSettings();
+        tour.i = tour.steps.length - 1;
+        tourShow();
+        return;
+      }
       tourNext();
     }, true);
     $("dpRuleCard")?.addEventListener("scroll", updateRuleFade, { passive: true });
