@@ -769,6 +769,87 @@
     </div>`;
   }
 
+  // ---- Results tour (the first finished Daily) -----------------------------------
+  const TOUR_KEY = "umt.unstruck.resultsTour";
+  let tour = null; // { i, steps }
+  const HAND_SVG = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M26 6c3 0 5 2 5 5v18l3-1c2-.7 4.4.4 5 2.5l.2.8 2.3-.7c2.3-.6 4.6.8 5.2 3.1l.2.9 1.8-.4c2.3-.4 4.4 1 4.9 3.3L57 49c1.3 7-3.3 13-10.6 13H33.5c-4 0-7.6-2.2-9.5-5.8L12.2 34c-1.1-2.2-.2-4.9 2-6 2-1 4.4-.4 5.7 1.4L21 31V11c0-2.8 2.2-5 5-5z" fill="#fff" stroke="#1b1f27" stroke-width="3" stroke-linejoin="round"/></svg>`;
+
+  function maybeStartTour() {
+    if (game !== "daily" || playMode !== "daily" || tour) return;
+    try { if (localStorage.getItem(TOUR_KEY)) return; localStorage.setItem(TOUR_KEY, "1"); } catch (e) { return; }
+    const times = gridTimes();
+    const each = state.rounds.map((r, i) => `Grid ${i + 1}: <b>${r.guesses.length}</b> ${r.guesses.length === 1 ? "guess" : "guesses"}${times[i] != null ? ` in <b>${formatTime(times[i])}</b>` : ""}`).join("<br>");
+    tour = { i: 0, steps: [
+      { target: ".dp-score", text: `You solved all three grids! This is your <b>total number of guesses</b> across them, and <b>how long you took</b>.` },
+      { target: ".dp-grid-scores", text: `Here's each grid:<br>${each}` },
+      { target: ".dp-panes", text: "Down here are your stats over time: days played, your streak, averages, and more under <b>Details</b>." },
+      { target: "#dpShare", text: "Share your result with friends: it sends your score, not the words." },
+      { target: "#dpSumSettings", tap: true, text: "And this is <b>Settings</b>. Tap it" },
+      { target: "#dpSettings", settings: true, text: "Here you can switch between <b>dark and light</b>, turn on <b>color-blind colors</b>, move the <b>feedback box</b>, and change <b>how you guess</b>.<br>One tap always crosses a word out. Instead of tapping twice to pick a word, you can <b>drag it to the box</b> or <b>hold it</b>. Try it next time!" },
+      { text: "I hope you had fun. Come back tomorrow for the next Unstruck!" }
+    ] };
+    setTimeout(tourShow, 500);
+  }
+
+  function tourEl(id, cls) {
+    let el = $(id);
+    if (!el) { el = document.createElement("div"); el.id = id; el.className = cls; $("dailyPickScreen").appendChild(el); }
+    return el;
+  }
+
+  function tourShow() {
+    if (!tour) return;
+    const st = tour.steps[tour.i];
+    document.querySelectorAll(".dp-coach-focus").forEach(el => el.classList.remove("dp-coach-focus"));
+    const dim = tourEl("dpTourDim", "dp-coach-dim");
+    const say = tourEl("dpTourSay", "dp-coach-say");
+    const hand = tourEl("dpTourHand", "dp-coach-hand");
+    hand.innerHTML = HAND_SVG;
+    dim.hidden = false;
+    const last = tour.i === tour.steps.length - 1;
+    say.innerHTML = `${st.text}${st.tap ? "" : `<small>${last ? "Tap to finish" : "Tap anywhere to continue"}</small>`}${last ? "" : `<button type="button" class="dp-coach-skip" id="dpTourSkip">Skip</button>`}`;
+    const target = st.target ? document.querySelector(st.target) : null;
+    if (target) {
+      target.scrollIntoView({ block: "center", behavior: "instant" });
+      target.classList.add("dp-coach-focus");
+      const b = target.getBoundingClientRect();
+      say.classList.toggle("is-low", b.top + b.height / 2 < innerHeight * 0.45);
+      hand.hidden = !st.tap;
+      if (st.tap) { hand.style.left = `${b.left + b.width / 2}px`; hand.style.top = `${b.top + b.height * 0.65}px`; }
+    } else {
+      hand.hidden = true;
+      say.classList.add("is-low");
+    }
+    if (st.settings) say.classList.add("is-low");
+  }
+
+  function tourNext() {
+    if (!tour) return;
+    const st = tour.steps[tour.i];
+    if (st.tap) return; // waits for the tap on Settings
+    if (st.settings) {
+      // leave Settings, back to the results for the goodbye
+      document.querySelectorAll(".dp-coach-focus").forEach(el => el.classList.remove("dp-coach-focus"));
+      closeSettings();
+    }
+    tour.i++;
+    if (tour.i >= tour.steps.length) return tourEnd();
+    tourShow();
+  }
+  function tourAfterSettings() {
+    if (!tour || !tour.steps[tour.i].tap) { openSettings(); return; }
+    document.querySelectorAll(".dp-coach-focus").forEach(el => el.classList.remove("dp-coach-focus"));
+    openSettings();
+    tour.i++;
+    requestAnimationFrame(tourShow);
+  }
+  function tourEnd() {
+    tour = null;
+    ["dpTourDim", "dpTourSay", "dpTourHand"].forEach(id => $(id)?.remove());
+    document.querySelectorAll(".dp-coach-focus").forEach(el => el.classList.remove("dp-coach-focus"));
+    if (settingsOpen()) closeSettings();
+  }
+
   function renderSummary(root) {
     $("dailyPickScreen")?.classList.add("is-results");
     if (playMode === "practice") return renderPracticeSummary(root);
@@ -800,7 +881,7 @@
         <div class="dp-score-verdict ${diff <= 0 ? "is-good" : "is-over"}">${golfTerm(diff)} <span>${diff === 0 ? `(even with par ${G().par})` : `(${relToPar(diff)} vs par ${G().par})`}</span></div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
-      <div class="dp-share-row"><button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button>${game === "daily" && EXPERIMENTAL_BUTTON && (WEEKLY_ENABLED || SPEED_ENABLED) ? `<button type="button" class="dp-next dp-side-btn" id="dpExperimental">Experimental</button>` : ""}</div>
+      <div class="dp-share-row"><button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button><button type="button" class="dp-next dp-side-btn dp-sum-settings" id="dpSumSettings" aria-label="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></button>${game === "daily" && EXPERIMENTAL_BUTTON && (WEEKLY_ENABLED || SPEED_ENABLED) ? `<button type="button" class="dp-next dp-side-btn" id="dpExperimental">Experimental</button>` : ""}</div>
       <div class="dp-views" role="tablist">
         <button type="button" class="dp-view${summaryView === "overall" ? " is-on" : ""}" data-view="overall" role="tab">Overall</button>
         <button type="button" class="dp-view${summaryView === "details" ? " is-on" : ""}" data-view="details" role="tab">Details</button>
@@ -821,6 +902,7 @@
       <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div></div>`;
     clearInterval(countdownTimer);
     countdownTimer = setInterval(tickCountdown, 1000);
+    if (game === "daily") maybeStartTour();
   }
 
   // Speed's results: how many grids, then each grid as a square.
@@ -2548,6 +2630,18 @@
       if (st && (st.type === "note" || st.type === "splash") && event.target.closest?.("#dpCoachDim, #dpCoachSplash, #dpCoachSay")) { clearTimeout(coach.timer); coachNext(); }
     }, true);
     window.addEventListener("resize", () => coach && coachShow());
+    $("dailyPickScreen").addEventListener("click", event => {
+      if (!tour) return;
+      if (event.target.closest?.("#dpTourSkip")) { event.stopPropagation(); tourEnd(); return; }
+      const st = tour.steps[tour.i];
+      if (st.tap) {
+        // Only the Settings button goes on from here.
+        if (!event.target.closest?.("#dpSumSettings")) { event.stopPropagation(); event.preventDefault(); const h = $("dpTourHand"); h?.classList.remove("is-nudge"); void h?.offsetWidth; h?.classList.add("is-nudge"); }
+        return;
+      }
+      event.stopPropagation(); event.preventDefault();
+      tourNext();
+    }, true);
     $("dpRuleCard")?.addEventListener("scroll", updateRuleFade, { passive: true });
     window.addEventListener("resize", updateRuleFade);
     $("dpRule")?.addEventListener("click", event => {
@@ -2589,6 +2683,7 @@
       const shareButton = event.target.closest?.("#dpShare");
       if (shareButton) share(shareButton);
       if (event.target.closest?.("#dpExperimental")) openChooser();
+      if (event.target.closest?.("#dpSumSettings")) { if (tour) tourAfterSettings(); else openSettings(); return; }
       const day = event.target.closest?.("[data-archive-day]");
       if (day) return playArchive(day.dataset.archiveDay);
       if (event.target.closest?.("[data-archive-list]")) return showArchive();

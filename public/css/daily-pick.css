@@ -1602,3 +1602,36 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 #dailyPickScreen.dp-light .dp-coach-dim { background: rgba(40,32,20,.5); }
 @media (prefers-reduced-motion: reduce) { .dp-coach-hand svg, .dp-coach-splash { animation: none !important; } .dp-coach-hand { transition: none; } }
 .dp-coach-dim.is-dark { background: rgba(5,8,14,.86); } .dp-coach-done .dp-share { padding-left: 26px; padding-right: 26px; }
+
+/* ======================================================================
+   Main buttons (Share, Play, Guess) in the theme's own button colors:
+   light on dark, dark on light. Share stays the biggest.
+   ====================================================================== */
+#dailyPickScreen .dp-share,
+#dailyPickScreen .dp-side-guess:not(:disabled),
+#dailyPickScreen .dp-drop-guess,
+#dailyPickScreen .dp-start-play,
+#dailyPickScreen .dp-center #dpGuess:not(:disabled) {
+  background: #eef0f3; color: #141a24; border-color: transparent; box-shadow: none;
+}
+#dailyPickScreen.dp-light .dp-share,
+#dailyPickScreen.dp-light .dp-side-guess:not(:disabled),
+#dailyPickScreen.dp-light .dp-drop-guess,
+#dailyPickScreen.dp-light .dp-start-play,
+#dailyPickScreen.dp-light .dp-center #dpGuess:not(:disabled) {
+  background: #2b2925; color: #fffdf8;
+}
+#dailyPickScreen .dp-summary .dp-share { box-shadow: 0 4px 14px rgba(0,0,0,.25); font-weight: 800; }
+#dailyPickScreen.dp-light .dp-summary .dp-share { box-shadow: 0 4px 14px rgba(43,41,37,.2); }
+/* Share and Settings on one row: Share wide, Settings a compact button. */
+.dp-share-row:has(.dp-sum-settings):not(:has(#dpExperimental)) { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: stretch; }
+.dp-share-row:has(.dp-sum-settings) .dp-share { width: 100%; min-width: 0; }
+.dp-summary .dp-share-row .dp-sum-settings {
+  height: auto; padding: 0 16px; display: flex; align-items: center; gap: 6px;
+  border-radius: 999px; background: transparent; color: inherit; border: 1.5px solid rgba(255,255,255,.28);
+}
+#dailyPickScreen .dp-summary .dp-sum-settings { font-size: 15px !important; }
+.dp-sum-settings svg { display: block; flex: none; }
+#dailyPickScreen.dp-light .dp-summary .dp-sum-settings { border-color: #cfc4ae; color: #2b2925; background: transparent; }
+#dailyPickScreen .dp-summary #dpSumSettings { height: auto; min-height: 50px; align-self: stretch; background: transparent; color: inherit; border: 1.5px solid rgba(255,255,255,.28); }
+#dailyPickScreen.dp-light .dp-summary #dpSumSettings { background: transparent !important; color: #2b2925 !important; border-color: #cfc4ae; }
