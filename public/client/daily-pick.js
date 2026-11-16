@@ -734,9 +734,16 @@
       state.coached = true;
       coachEnd(true);
       root.innerHTML = `<div class="dp-summary dp-coach-done">
+        <div class="dp-done-badge" aria-hidden="true">✓</div>
         <div class="dp-verdict">You found it!</div>
-        <div class="dp-verdict-sub">That's all there is to it: guess, cross out what can't be the secret, guess again.<br>Each day has three grids, each with its own kind of feedback.</div>
-        <button type="button" class="dp-next dp-share" data-practice="end">Play today's Unstruck</button>
+        <p class="dp-done-lead">That's the whole game.</p>
+        <ol class="dp-done-steps">
+          <li><b>Guess</b> a word</li>
+          <li><b>Cross out</b> what can't be the secret</li>
+          <li><b>Guess again</b> until you find it</li>
+        </ol>
+        <p class="dp-done-note">Every day there are three new grids, each with its own kind of feedback. Fewer guesses is better.</p>
+        <button type="button" class="dp-next dp-share dp-done-play" data-practice="end">Play today's Unstruck</button>
         <button type="button" class="dp-link" data-coach="again">Replay the tutorial</button>
       </div>`;
       return;
@@ -772,7 +779,6 @@
   // ---- Results tour (the first finished Daily) -----------------------------------
   const TOUR_KEY = "umt.unstruck.resultsTour";
   let tour = null; // { i, steps }
-  const HAND_SVG = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M26 6c3 0 5 2 5 5v18l3-1c2-.7 4.4.4 5 2.5l.2.8 2.3-.7c2.3-.6 4.6.8 5.2 3.1l.2.9 1.8-.4c2.3-.4 4.4 1 4.9 3.3L57 49c1.3 7-3.3 13-10.6 13H33.5c-4 0-7.6-2.2-9.5-5.8L12.2 34c-1.1-2.2-.2-4.9 2-6 2-1 4.4-.4 5.7 1.4L21 31V11c0-2.8 2.2-5 5-5z" fill="#fff" stroke="#1b1f27" stroke-width="3" stroke-linejoin="round"/></svg>`;
 
   function maybeStartTour() {
     if (game !== "daily" || playMode !== "daily" || tour) return;
@@ -784,8 +790,11 @@
       { target: ".dp-grid-scores", text: `Here's each grid:<br>${each}` },
       { target: ".dp-panes", text: "Down here are your stats over time: days played, your streak, averages, and more under <b>Details</b>." },
       { target: "#dpShare", text: "Share your result with friends: it sends your score, not the words." },
-      { target: "#dpSumSettings", tap: true, text: "And this is <b>Settings</b>. Tap it" },
-      { target: "#dpSettings", settings: true, text: "Here you can switch between <b>dark and light</b>, turn on <b>color-blind colors</b>, move the <b>feedback box</b>, and change <b>how you guess</b>.<br>One tap always crosses a word out. Instead of tapping twice to pick a word, you can <b>drag it to the box</b> or <b>hold it</b>. Try it next time!" },
+      { target: "#dpSettingsBtn", tap: true, text: "And this gear up here is <b>Settings</b>. Tap it" },
+      { target: "#dpSettings .dp-setting-group:nth-of-type(1)", settings: true, text: "<b>Look</b>: dark or light." },
+      { target: "#dpSettings .dp-setting-group:nth-of-type(2)", settings: true, text: "<b>Colors</b>: switch on color-blind colors if green and yellow are hard to tell apart." },
+      { target: "#dpSettings .dp-setting-group:nth-of-type(3)", settings: true, text: "<b>Feedback box</b>: under the grid, or in the middle of it." },
+      { target: "#dpSettings .dp-setting-group:nth-of-type(4)", settings: true, leave: true, text: "<b>How to guess</b>: one tap always crosses a word out. Instead of tapping twice to pick, you can <b>drag</b> a word to the box, or <b>hold</b> it. Try it next time!" },
       { text: "I hope you had fun. Come back tomorrow for the next Unstruck!" }
     ] };
     setTimeout(tourShow, 500);
@@ -804,13 +813,13 @@
     const dim = tourEl("dpTourDim", "dp-coach-dim");
     const say = tourEl("dpTourSay", "dp-coach-say");
     const hand = tourEl("dpTourHand", "dp-coach-hand");
-    hand.innerHTML = HAND_SVG;
+    hand.innerHTML = HAND_HTML;
     dim.hidden = false;
     const last = tour.i === tour.steps.length - 1;
     say.innerHTML = `${st.text}${st.tap ? "" : `<small>${last ? "Tap to finish" : "Tap anywhere to continue"}</small>`}${last ? "" : `<button type="button" class="dp-coach-skip" id="dpTourSkip">Skip</button>`}`;
     const target = st.target ? document.querySelector(st.target) : null;
     if (target) {
-      target.scrollIntoView({ block: "center", behavior: "instant" });
+      if (!st.tap) target.scrollIntoView({ block: "center", behavior: "instant" });
       target.classList.add("dp-coach-focus");
       const b = target.getBoundingClientRect();
       say.classList.toggle("is-low", b.top + b.height / 2 < innerHeight * 0.45);
@@ -827,7 +836,7 @@
     if (!tour) return;
     const st = tour.steps[tour.i];
     if (st.tap) return; // waits for the tap on Settings
-    if (st.settings) {
+    if (st.leave) {
       // leave Settings, back to the results for the goodbye
       document.querySelectorAll(".dp-coach-focus").forEach(el => el.classList.remove("dp-coach-focus"));
       closeSettings();
@@ -881,7 +890,7 @@
         <div class="dp-score-verdict ${diff <= 0 ? "is-good" : "is-over"}">${golfTerm(diff)} <span>${diff === 0 ? `(even with par ${G().par})` : `(${relToPar(diff)} vs par ${G().par})`}</span></div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
-      <div class="dp-share-row"><button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button><button type="button" class="dp-next dp-side-btn dp-sum-settings" id="dpSumSettings" aria-label="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></button>${game === "daily" && EXPERIMENTAL_BUTTON && (WEEKLY_ENABLED || SPEED_ENABLED) ? `<button type="button" class="dp-next dp-side-btn" id="dpExperimental">Experimental</button>` : ""}</div>
+      <div class="dp-share-row"><button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button>${game === "daily" && EXPERIMENTAL_BUTTON && (WEEKLY_ENABLED || SPEED_ENABLED) ? `<button type="button" class="dp-next dp-side-btn" id="dpExperimental">Experimental</button>` : ""}</div>
       <div class="dp-views" role="tablist">
         <button type="button" class="dp-view${summaryView === "overall" ? " is-on" : ""}" data-view="overall" role="tab">Overall</button>
         <button type="button" class="dp-view${summaryView === "details" ? " is-on" : ""}" data-view="details" role="tab">Details</button>
@@ -2114,6 +2123,11 @@
   // New players learn by playing a hand-made practice grid with a hand that
   // shows each move. Only the word (or button) the hand points at responds,
   // so the explanations always match what's on screen.
+  // The pointing hand, with a ripple where the fingertip taps.
+  const HAND_HTML = `<span class="dp-hand-ripple"></span><svg viewBox="0 0 64 72" aria-hidden="true">
+    <path d="M24 4.5c3.3 0 6 2.7 6 6V29l2.7-.9c2.6-.9 5.4.5 6.3 3.1l.3.9 2.2-.6c2.8-.7 5.6 1 6.3 3.8l.2.8 1.6-.3c2.9-.5 5.6 1.4 6.1 4.3l2 12.6C59.4 62 53.4 69 44.8 69H32.2c-4.7 0-9-2.6-11.2-6.8L8.6 38.4c-1.4-2.7-.3-6 2.4-7.3 2.4-1.2 5.3-.5 6.9 1.6L18 33V10.5c0-3.3 2.7-6 6-6z" fill="#fff" stroke="#1b1f27" stroke-width="3.2" stroke-linejoin="round"/>
+    <path d="M30 29v13M41.3 32.2V43M50.1 36.3V45" fill="none" stroke="#1b1f27" stroke-width="2.6" stroke-linecap="round" opacity=".55"/>
+    <path d="M26 64h20" stroke="#cfd6e0" stroke-width="3" stroke-linecap="round"/></svg>`;
   const COACH_GRID = {
     answer: "plant",
     words: ["chair", "sloth", "blunt", "money", "flint", "stamp", "plant", "water",
@@ -2130,7 +2144,8 @@
     { type: "tap", word: "stamp", expect: "struck", text: `S is gray, so the secret has no S. ${up("stamp")} has one, so it's out: tap it` },
     { type: "tap", word: "chair", expect: "struck", text: `L is green, so the secret has an L in 2nd place. ${up("chair")} doesn't: tap it` },
     ...["bread", "money", "water", "cloud", "drink"].map(word => ({ type: "tap", word, expect: "struck", text: "Same for these: tap, tap, tap" })),
-    { type: "note", text: "The words left could all still be the secret.<br>Time for the next guess." },
+    { type: "note", target: '#dailyPickRoot .dp-word[data-word="flint"]', text: `Why is ${up("flint")} still in? It has the <b class='c-hit'>L</b> 2nd, a <b class='c-near'>T</b> but not 4th, and no S, O or H. So it could be the secret.` },
+    { type: "note", text: "Same for the other words left: any of them could be the secret.<br>Time for the next guess." },
     { type: "tap", word: "plait", expect: "picked", text: `Now <b>one tap crosses a word out</b>, <b>a second tap picks it</b>. Tap ${up("plait")} twice` },
     { type: "guess", text: "Press <b>Guess</b>" },
     { type: "note", target: "#dpDrop", text: "P, L, A and T are right!<br>Cross out the words that don't fit." },
@@ -2214,7 +2229,7 @@
     $("dpCoachSplash")?.remove();
     const say = coachEl("dpCoachSay", "dp-coach-say");
     const hand = coachEl("dpCoachHand", "dp-coach-hand");
-    hand.innerHTML = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M26 6c3 0 5 2 5 5v18l3-1c2-.7 4.4.4 5 2.5l.2.8 2.3-.7c2.3-.6 4.6.8 5.2 3.1l.2.9 1.8-.4c2.3-.4 4.4 1 4.9 3.3L57 49c1.3 7-3.3 13-10.6 13H33.5c-4 0-7.6-2.2-9.5-5.8L12.2 34c-1.1-2.2-.2-4.9 2-6 2-1 4.4-.4 5.7 1.4L21 31V11c0-2.8 2.2-5 5-5z" fill="#fff" stroke="#1b1f27" stroke-width="3" stroke-linejoin="round"/></svg>`;
+    hand.innerHTML = HAND_HTML;
     if (st.type === "splash") {
       hand.hidden = true;
       say.hidden = true;
@@ -2635,8 +2650,9 @@
       if (event.target.closest?.("#dpTourSkip")) { event.stopPropagation(); tourEnd(); return; }
       const st = tour.steps[tour.i];
       if (st.tap) {
-        // Only the Settings button goes on from here.
-        if (!event.target.closest?.("#dpSumSettings")) { event.stopPropagation(); event.preventDefault(); const h = $("dpTourHand"); h?.classList.remove("is-nudge"); void h?.offsetWidth; h?.classList.add("is-nudge"); }
+        // Only the gear goes on from here (its own handler opens Settings).
+        if (event.target.closest?.("#dpSettingsBtn")) { setTimeout(() => { if (!tour) return; tour.i++; tourShow(); }, 50); return; }
+        event.stopPropagation(); event.preventDefault(); const h = $("dpTourHand"); h?.classList.remove("is-nudge"); void h?.offsetWidth; h?.classList.add("is-nudge");
         return;
       }
       event.stopPropagation(); event.preventDefault();
@@ -2683,7 +2699,6 @@
       const shareButton = event.target.closest?.("#dpShare");
       if (shareButton) share(shareButton);
       if (event.target.closest?.("#dpExperimental")) openChooser();
-      if (event.target.closest?.("#dpSumSettings")) { if (tour) tourAfterSettings(); else openSettings(); return; }
       const day = event.target.closest?.("[data-archive-day]");
       if (day) return playArchive(day.dataset.archiveDay);
       if (event.target.closest?.("[data-archive-list]")) return showArchive();
