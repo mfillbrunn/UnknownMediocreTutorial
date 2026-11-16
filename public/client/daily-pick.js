@@ -1499,14 +1499,16 @@
   }
 
   // Pick two's offer: two words the game may guess. It stays put until one
-  // of them is guessed or struck out. Down to the last two words (the secret
-  // and one other, neither struck out), the secret is offered too.
+  // of them is guessed or struck out. Once four or fewer words are left (and
+  // the secret isn't struck out), the secret can be one of the two.
   function ensureOffer() {
     const r = round();
     const { kind, answer } = puzzles[current];
     if (kind !== "choice") return;
     const left = elimCandidates();
-    if (left.length === 1 && !r.struck.includes(answer)) left.push(answer);
+    // Down to 4 words or fewer (the secret among them, not struck out), the
+    // secret can be offered too.
+    if (left.length <= 3 && !r.struck.includes(answer)) left.push(answer);
     const want = Math.min(2, left.length);
     const keep = (r.offer || []).filter(w => left.includes(w));
     if (keep.length === want && (r.offer || []).length === want) return;
@@ -1721,7 +1723,7 @@
           <li><b>Lost</b> if you've struck out the secret and there's nothing left to guess (counts as ${LOST_SCORE}).</li>
         </ol>
       </div>`,
-    choice: () => `<p>You don't pick from the whole grid here. Under it, the game <b>offers two words</b>, never ones you've struck out, and not the secret, until only two words are left: then the secret is one of them. Pick one, and you get its feedback; then you're offered the next two.</p>
+    choice: () => `<p>You don't pick from the whole grid here. Under it, the game <b>offers two words</b>, never ones you've struck out, and not the secret, until only four or fewer words are left: then the secret can be one of them. Pick one, and you get its feedback; then you're offered the next two.</p>
       <p>Tap words to <b>strike them out</b> as you rule them out, so they're never offered. Tap again to bring one back.</p>
       <div class="dp-example"><div class="dp-example-title">How it ends</div>
         <ol class="dp-ex-why">
