@@ -730,6 +730,17 @@
 
   function renderPracticeSummary(root) {
     setTitle(0);
+    if (coach || state.coached) {
+      state.coached = true;
+      coachEnd(true);
+      root.innerHTML = `<div class="dp-summary dp-coach-done">
+        <div class="dp-verdict">You found it!</div>
+        <div class="dp-verdict-sub">That's all there is to it: guess, cross out what can't be the secret, guess again.<br>Each day has three grids, each with its own kind of feedback.</div>
+        <button type="button" class="dp-next dp-share" data-practice="end">Play today's Unstruck</button>
+        <button type="button" class="dp-link" data-coach="again">Replay the tutorial</button>
+      </div>`;
+      return;
+    }
     const n = state.rounds[0].guesses.length;
     root.innerHTML = `<div class="dp-summary">
       <div class="dp-verdict">Practice solved!</div>
@@ -1053,6 +1064,7 @@
     // Autopilot's countdown to its next guess: big, red, see-through, behind play.
     const autoCount = kind === "auto" && !done ? `<div class="dp-auto-count" id="dpAutoCount" aria-hidden="true">${Math.max(1, Math.ceil(((r.autoDue ?? elapsed()) - elapsed()) / 1000)) || ""}</div>` : "";
     requestAnimationFrame(fitWords);
+    if (coach) requestAnimationFrame(coachShow);
     root.innerHTML = `<div class="dp-board is-diamond${full ? " is-full" : ""}${pics ? ` is-pics is-${kind}` : kind ? ` is-${kind}` : ""}" style="${pics ? `--ratio:${info.ratio}` : ""}">${buttons}${middle}${autoCount}</div>
       <div class="dp-center">${lastGuess && !wordCards ? `<div class="dp-last">Last guess</div>${tiles(lastGuess)}` : ""}${tapping ? `<div class="dp-key-row"><div class="dp-key is-stacked">${key}</div>${sideGuess || `<button type="button" class="dp-next dp-side-guess" disabled>Guess</button>`}</div>` : `<div class="dp-key">${key}</div>`}${hint || action ? `<div class="dp-hint">${hint}</div>${action}` : ""}</div>${exit}`;
   }
@@ -1244,6 +1256,7 @@
   function onWordClick(word, act = "pick") {
     const r = round();
     if (r.solved || r.guesses.includes(word)) return;
+    if (coach && !coachAllows(word)) return;
     if (ELIM_KINDS.includes(puzzles[current].kind)) {
       // No picking here: a tap strikes a word out, or brings it back.
       const at = r.struck.indexOf(word);
@@ -1298,11 +1311,14 @@
     save();
     render();
     toggled = null;
+    if (coach) coachAfterTap(word);
   }
 
   function guessSelected() {
     const r = round();
     if (!selected || r.solved) return;
+    if (coach && coachStep()?.type !== "guess") return;
+    const coachGuess = !!coach;
     if (playMode === "daily" && totalGuesses() === 0) track("started");
     r.guesses.push(selected);
     if (selected === puzzles[current].answer) {
@@ -1330,6 +1346,7 @@
     revealing = true;
     render();
     revealing = false;
+    if (coachGuess && coach) setTimeout(coachNext, 700); // after the feedback flips in
   }
 
   // One row per puzzle: a white square per wrong guess, then the green one.
@@ -1823,7 +1840,7 @@
   // Off the start screen: the tutorial for newcomers, else the clock and the
   // grid's banner (or its rule, the first time).
   function beginPlay() {
-    if (dailyLike() && !introSeen()) return openIntro();
+    if (dailyLike() && !introSeen()) return startCoach();
     startClock();
     maybeAnnounceRule();
   }
@@ -2011,7 +2028,142 @@
   }
 
   // ---- Practice grid ----------------------------------------------------------
-  async function startPractice() {
+  // ---- Guided first game -------------------------------------------------------
+  // New players learn by playing a hand-made practice grid with a hand that
+  // shows each move. Only the word (or button) the hand points at responds,
+  // so the explanations always match what's on screen.
+  const COACH_GRID = {
+    answer: "plant",
+    words: ["chair", "sloth", "blunt", "money", "flint", "stamp", "plant", "water",
+      "cleft", "bread", "ultra", "plait", "drink", "glint", "cloud", "alter"]
+  };
+  const up = w => `<b>${w.toUpperCase()}</b>`;
+  // splash: big text over the dimmed screen. tap: the word to tap, and the
+  // state it should end in. guess: press Guess. note: read, tap to go on.
+  const COACH_STEPS = [
+    { type: "splash", text: "Find the secret word" },
+    { type: "tap", word: "sloth", expect: "picked", text: "Pick any word to start: tap it" },
+    { type: "guess", text: "Now press <b>Guess</b>" },
+    { type: "note", target: "#dpDrop", text: "This is the feedback.<br><b class='c-hit'>Green</b>: right letter, right spot. <b class='c-near'>Yellow</b>: in the word, wrong spot. Gray: not in the word.<br>Now cross out every word that can't be the secret." },
+    { type: "tap", word: "stamp", expect: "struck", text: `S is gray, so the secret has no S. ${up("stamp")} has one, so it's out: tap it` },
+    { type: "tap", word: "chair", expect: "struck", text: `L is green, so the secret has an L in 2nd place. ${up("chair")} doesn't: tap it` },
+    ...["bread", "money", "water", "cloud", "drink"].map(word => ({ type: "tap", word, expect: "struck", text: "Same for these: tap, tap, tap" })),
+    { type: "note", text: "The words left could all still be the secret.<br>Time for the next guess." },
+    { type: "tap", word: "plait", expect: "picked", text: `Now <b>one tap crosses a word out</b>, <b>a second tap picks it</b>. Tap ${up("plait")} twice` },
+    { type: "guess", text: "Press <b>Guess</b>" },
+    { type: "note", target: "#dpDrop", text: "P, L, A and T are right!<br>Cross out the words that don't fit." },
+    { type: "tap", word: "blunt", expect: "struck", text: `P is green 1st: ${up("blunt")} doesn't start with P` },
+    ...["flint", "glint", "cleft", "ultra", "alter"].map(word => ({ type: "tap", word, expect: "struck", text: "And these: tap, tap, tap" })),
+    { type: "tap", word: "plant", expect: "struck", text: `Only ${up("plant")} is left. Tap it once` },
+    { type: "tap", word: "plant", expect: "picked", text: "One tap crossed it out. <b>Tap again to pick it</b>" },
+    { type: "tap", word: "plant", expect: "normal", text: "Picked! A third tap clears it: try it" },
+    { type: "tap", word: "plant", expect: "picked", text: "Back to the start. <b>Tap it twice</b> to pick it again" },
+    { type: "guess", text: "Now <b>Guess</b> it!" }
+  ];
+  let coach = null; // { step, prevInput }
+
+  async function startCoach() {
+    await startPractice(COACH_GRID);
+    if (playMode !== "practice") return;
+    coach = { step: 0, prevInput: settings.input };
+    settings.input = "tap"; // the guided game is played with taps
+    selected = "";
+    $("dailyPickScreen").classList.add("is-coaching");
+    render();
+    coachShow();
+  }
+
+  function coachEnd(done) {
+    if (!coach) return;
+    settings.input = coach.prevInput;
+    coach = null;
+    $("dailyPickScreen")?.classList.remove("is-coaching");
+    ["dpCoachHand", "dpCoachSay", "dpCoachDim", "dpCoachSplash"].forEach(id => $(id)?.remove());
+    document.querySelectorAll(".dp-coach-focus").forEach(el => el.classList.remove("dp-coach-focus"));
+    try { localStorage.setItem(INTRO_SEEN_KEY, "1"); } catch (e) { /* private mode */ }
+    if (done) track("tutorial-done");
+  }
+
+  const coachStep = () => coach && COACH_STEPS[coach.step];
+  function coachNext() {
+    if (!coach) return;
+    coach.step++;
+    if (coach.step >= COACH_STEPS.length) {
+      // Solved: a moment to enjoy it before the summary.
+      if ($("dpCoachHand")) $("dpCoachHand").hidden = true;
+      const say = $("dpCoachSay");
+      if (say) { say.hidden = false; say.innerHTML = "<b>You found the secret word! 🎉</b>"; }
+      return;
+    }
+    coachShow();
+  }
+
+  // Does this tap fit the current step? (Taps on anything else are ignored.)
+  function coachAllows(word) {
+    const st = coachStep();
+    if (!st) return true;
+    if (st.type === "tap" && st.word === word) return true;
+    const hand = $("dpCoachHand");
+    hand?.classList.remove("is-nudge"); void hand?.offsetWidth; hand?.classList.add("is-nudge");
+    return false;
+  }
+  function coachAfterTap(word) {
+    const st = coachStep();
+    if (!st || st.type !== "tap" || st.word !== word) return;
+    const r = round();
+    const now = word === selected ? "picked" : r.struck.includes(word) ? "struck" : "normal";
+    if (now === st.expect) coachNext(); else coachShow();
+  }
+
+  function coachEl(id, cls, parent = $("dailyPickScreen")) {
+    let el = $(id);
+    if (!el) { el = document.createElement("div"); el.id = id; el.className = cls; parent.appendChild(el); }
+    return el;
+  }
+
+  // Draws the current step: the hand, the words, the dim.
+  function coachShow() {
+    const st = coachStep();
+    if (!st) return;
+    document.querySelectorAll(".dp-coach-focus").forEach(el => el.classList.remove("dp-coach-focus"));
+    const dim = coachEl("dpCoachDim", "dp-coach-dim");
+    dim.hidden = !(st.type === "splash" || st.type === "note");
+    dim.classList.toggle("is-dark", st.type === "splash");
+    $("dpCoachSplash")?.remove();
+    const say = coachEl("dpCoachSay", "dp-coach-say");
+    const hand = coachEl("dpCoachHand", "dp-coach-hand");
+    hand.innerHTML = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M26 6c3 0 5 2 5 5v18l3-1c2-.7 4.4.4 5 2.5l.2.8 2.3-.7c2.3-.6 4.6.8 5.2 3.1l.2.9 1.8-.4c2.3-.4 4.4 1 4.9 3.3L57 49c1.3 7-3.3 13-10.6 13H33.5c-4 0-7.6-2.2-9.5-5.8L12.2 34c-1.1-2.2-.2-4.9 2-6 2-1 4.4-.4 5.7 1.4L21 31V11c0-2.8 2.2-5 5-5z" fill="#fff" stroke="#1b1f27" stroke-width="3" stroke-linejoin="round"/></svg>`;
+    if (st.type === "splash") {
+      hand.hidden = true;
+      say.hidden = true;
+      const splash = coachEl("dpCoachSplash", "dp-coach-splash");
+      splash.innerHTML = `<b>${st.text}</b><small>Tap to start</small>`;
+      clearTimeout(coach.timer);
+      coach.timer = setTimeout(() => { if (coachStep() === st) coachNext(); }, 2600);
+      return;
+    }
+    say.hidden = false;
+    say.innerHTML = `${st.text}${st.type === "note" ? `<small>Tap anywhere to continue</small>` : ""}<button type="button" class="dp-coach-skip" id="dpCoachSkip">Skip tutorial</button>`;
+    const target = st.type === "tap" ? document.querySelector(`#dailyPickRoot .dp-word[data-word="${st.word}"]`)
+      : st.type === "guess" ? $("dpGuess") : st.target ? document.querySelector(st.target) : null;
+    if (st.type === "note") target?.classList.add("dp-coach-focus");
+    hand.hidden = !target || st.type === "note";
+    if (target) {
+      const b = target.getBoundingClientRect();
+      // The fingertip on the target's middle (lower for the Guess button).
+      hand.style.left = `${b.left + b.width / 2}px`;
+      hand.style.top = `${b.top + b.height * (st.type === "guess" ? .6 : .68)}px`;
+      hand.classList.toggle("is-double", st.type === "tap" && st.expect === "picked" && round().guesses.length > 0);
+      // The words go where they don't cover the target: above it, or below
+      // when the target is high on the screen.
+      const card = $("dailyPickScreen").querySelector(".dp-card").getBoundingClientRect();
+      say.classList.toggle("is-low", b.top < card.top + card.height * 0.42);
+    } else {
+      say.classList.remove("is-low");
+    }
+  }
+
+  async function startPractice(custom) {
     if (game !== "daily" || !wordList) await open("daily");
     if (!wordList) return;
     // Practice from the start screen's help: the start screen doesn't come back.
@@ -2027,8 +2179,9 @@
     if (playMode === "daily") { dailyPuzzles = puzzles; dailyState = state; }
     playMode = "practice";
     track("practice");
-    puzzles = [{ ...buildPuzzle(wordList, PRACTICE_SEED, new Set(), RECIPES[0], PRACTICE_WORDS), ...LEVELS[0] }];
-    state = { date: "practice", rounds: [{ guesses: [], struck: [], solved: false }] };
+    if (coach && !custom) coachEnd(false);
+    puzzles = [{ ...(custom ? { answer: custom.answer, words: custom.words.slice() } : buildPuzzle(wordList, PRACTICE_SEED, new Set(), RECIPES[0], PRACTICE_WORDS)), ...LEVELS[0] }];
+    state = { date: "practice", coached: !!custom, rounds: [{ guesses: [], struck: [], solved: false }] };
     current = 0;
     selected = "";
     render();
@@ -2037,6 +2190,7 @@
 
   // Back to the day's puzzles exactly where they were left.
   function leavePractice() {
+    coachEnd(false);
     stopClock();
     clearTimeout(advanceTimer);
     advanceTimer = null;
@@ -2371,6 +2525,7 @@
         if (tab.dataset.game !== game || playMode === "practice") open(tab.dataset.game);
         return;
       }
+      if (event.target.closest?.('[data-coach="again"]')) return startCoach();
       const button = event.target.closest?.("[data-practice]");
       if (!button) return;
       if (button.dataset.practice === "start") startPractice();
@@ -2384,7 +2539,15 @@
     $("dpSettingsClose")?.addEventListener("click", closeSettings);
     $("dpHelpClose")?.addEventListener("click", closeHelp);
     $("dpIntro")?.addEventListener("click", onTutorialClick);
-    $("dpTutorialBtn")?.addEventListener("click", openIntro);
+    $("dpTutorialBtn")?.addEventListener("click", () => { closeHelp(); startCoach(); });
+    // The coach: skip, tap-to-continue notes, the splash.
+    $("dailyPickScreen").addEventListener("click", event => {
+      if (!coach) return;
+      if (event.target.closest?.("#dpCoachSkip")) { event.stopPropagation(); coachEnd(false); render(); startClock(); return; }
+      const st = coachStep();
+      if (st && (st.type === "note" || st.type === "splash") && event.target.closest?.("#dpCoachDim, #dpCoachSplash, #dpCoachSay")) { clearTimeout(coach.timer); coachNext(); }
+    }, true);
+    window.addEventListener("resize", () => coach && coachShow());
     $("dpRuleCard")?.addEventListener("scroll", updateRuleFade, { passive: true });
     window.addEventListener("resize", updateRuleFade);
     $("dpRule")?.addEventListener("click", event => {
