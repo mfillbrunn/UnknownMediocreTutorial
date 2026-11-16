@@ -1669,3 +1669,10 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-coach-done .dp-done-play { width: min(100%, 300px); padding: 14px 0; }
 #dailyPickScreen.dp-light .dp-done-steps { background: #f4efe4; }
 .dp-setting-group.dp-coach-focus { padding: 10px; margin-left: -10px; margin-right: -10px; border-radius: 14px; background: #16202e; } #dailyPickScreen.dp-light .dp-setting-group.dp-coach-focus { background: #fffdf8; }
+/* Settings > Colors: each choice shows its two feedback colors. */
+.dp-seg span:has(.dp-sw) { display: flex; align-items: center; justify-content: center; gap: 3px; }
+.dp-sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; flex: none; box-shadow: 0 0 0 1.5px rgba(255,255,255,.35); }
+.dp-sw + .dp-sw { margin-right: 5px; }
+#dailyPickScreen.dp-light .dp-sw { box-shadow: 0 0 0 1.5px rgba(0,0,0,.12); }
+.dp-seg input:not(:checked) + span:has(.dp-sw) { opacity: 1; color: rgba(255,255,255,.6); }
+#dailyPickScreen.dp-light .dp-seg input:not(:checked) + span:has(.dp-sw) { color: rgba(43,41,37,.6); }

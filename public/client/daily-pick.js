@@ -2557,8 +2557,8 @@
         <div class="dp-setting-group">
           <div class="dp-setting-label">Colors</div>
           <div class="dp-seg" role="radiogroup" aria-label="Colors">
-            <label><input type="radio" name="dpColors" value="standard"><span>Standard</span></label>
-            <label><input type="radio" name="dpColors" value="colorblind"><span>Color-blind</span></label>
+            <label><input type="radio" name="dpColors" value="standard"><span><i class="dp-sw" style="background:#3f9d4f"></i><i class="dp-sw" style="background:#c9a227"></i>Standard</span></label>
+            <label><input type="radio" name="dpColors" value="colorblind"><span><i class="dp-sw" style="background:#f5793a"></i><i class="dp-sw" style="background:#3d8fd9"></i>Color-blind</span></label>
           </div>
         </div>
         <div class="dp-setting-group">
