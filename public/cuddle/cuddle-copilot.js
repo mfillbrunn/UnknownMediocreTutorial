@@ -16,7 +16,9 @@
  * included (there it takes your own turns, never the rival's):
  *   level 1  every 3rd guess, the best word your cards can make;
  *   level 2  every 3rd guess, the best word from any letters;
- *   level 3  every 2nd guess, from any letters.
+ *   level 3  the same, and the points its guess earns are doubled.
+ * (Never more often than every 3rd guess: a Co-pilot stage's every-2nd is
+ * its own thing.)
  * It reads the rows you can see and what your hints say. If no word fits,
  * or the stage's rules turn it down, that guess is yours after all. Its
  * rows say "Auto"; a Co-pilot stage's or a rival's say "AI".
@@ -62,9 +64,10 @@
     var node = tree && tree.findNode(BADGE);
     try { return node ? Number(tree.level(game, node)) || 0 : 0; } catch (_error) { return 0; }
   }
-  // Every how many of your guesses it plays, and whether from any letters.
-  function autopilotEvery(game) {
-    return autopilotLevel(game) >= 3 ? 2 : 3;
+  // Every how many of your guesses it plays (always the 3rd), and whether
+  // from any letters.
+  function autopilotEvery() {
+    return 3;
   }
   function anyLetters(game) {
     return autopilotLevel(game) >= 2;
@@ -82,7 +85,7 @@
   }
 
   // The AI's turn: on a Co-pilot stage every 2nd guess; with Autopilot
-  // every 3rd (every 2nd at level 3).
+  // every 3rd.
   function aiTurn(game) {
     var copilot = copilotStage(game);
     if (!copilot && !autopilotStage(game)) return false;
@@ -164,14 +167,37 @@
       state.draft = savedDraft;
       return result;
     }
-    markRow(state.history[before], kind);
+    markRow(state.history[before], kind, game);
     try { game.save(); } catch (_error) { /* next save */ }
     return result;
   }
-  function markRow(entry, kind) {
+  function markRow(entry, kind, game) {
     if (!entry) return;
     entry.umtCopilot = true;
-    if (kind === "auto") entry.umtAutopilot = true;
+    if (kind === "auto") {
+      entry.umtAutopilot = true;
+      if (game) doubleAutopilotPoints(game, entry);
+    }
+  }
+  // Autopilot level 3: the points its guess earned are paid a second time
+  // (the row's points: tiles, colours and squares; money isn't doubled).
+  function doubleAutopilotPoints(game, entry) {
+    if (autopilotLevel(game) < 3 || !entry || entry.umtAutopilotDouble) return;
+    var extra = Math.round(Number(entry.scoreDelta) || 0);
+    if (extra <= 0) return;
+    var rebalance = window.CuddleRebalanceV5;
+    var paid = 0;
+    if (rebalance && typeof rebalance.addStageBonus === "function") {
+      paid = Number(rebalance.addStageBonus(game, extra, "umtAutopilotDouble", "Autopilot ×2")) || 0;
+    } else {
+      game.state.score = (Number(game.state.score) || 0) + extra;
+      game.state.roundScore = (Number(game.state.roundScore) || 0) + extra;
+      paid = extra;
+    }
+    if (paid > 0) {
+      entry.umtAutopilotDouble = paid;
+      game.state.lastMessage = ((game.state.lastMessage || "") + " Autopilot doubles it: +" + paid + " points.").trim();
+    }
   }
 
   // Autopilot's guess, built from the hand's own cards and submitted like
@@ -278,13 +304,13 @@
       state.draft = savedDraft;
       return skipTurn(game, "its word " + word + " isn't allowed here.");
     }
-    markRow(state.history[before], "auto");
+    markRow(state.history[before], "auto", game);
     try { game.save(); } catch (_error) { /* next save */ }
     return result;
   }
 
   // -- Autopilot in a Duel -------------------------------------------------------
-  // It plays your own turns (every 3rd of yours, every 2nd at level 3),
+  // It plays your own turns (every 3rd of yours),
   // through the Duel's Submit; the rival AI keeps its turns. `game.state`
   // is the Duel's own state while inside withDuel.
   function duelMine(state) {
@@ -346,6 +372,13 @@
     } finally {
       game._autopilotPlaying = false;
       game._copilotWord = null;
+    }
+    if (result && result.ok !== false) {
+      // Level 3 doubles the points of the guess it just played.
+      stages.withDuel(game, function double(g) {
+        var mine = (g.state.history || []).filter(function own(entry) { return entry && entry.actor !== "ai"; });
+        doubleAutopilotPoints(g, mine[mine.length - 1]);
+      }, true);
     }
     if (!result || result.ok === false) {
       // Turned down: the cards go back, and this turn is the player's.

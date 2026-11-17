@@ -109,7 +109,7 @@
       { t: "clues", before: [], after: ["Repeats a letter"] }],
     patternLens: ["You don't know where the vowels go.", "From your 2nd guess, the clues show which spots are vowels and which consonants.",
       { t: "clues", before: [], after: ["C V V C C"] }],
-    autopilot: ["You choose every guess.", "Every 3rd guess is the AI's best word (every 2nd at level 3).",
+    autopilot: ["You choose every guess.", "Every 3rd guess is the AI's best word (and at level 3 it pays double).",
       { t: "text", before: "Guess 3: you pick", after: "Guess 3: Autopilot plays it" }],
     lastLight: ["Every letter is yours to find.", "After your 2nd guess, the answer's last letter is filled in.",
       { t: "row", before: [".....", "....."], after: ["....Y", "....g"] }],
