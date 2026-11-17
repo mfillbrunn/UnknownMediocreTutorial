@@ -3212,7 +3212,18 @@
         primeCatalog(game);
         const state = game && game.state;
         if (!state) return [];
-        const pool = allOrdinaryCandidates(game, state).filter((def) => def.__cuddleV8Tier === TIERS.LEGENDARY);
+        // A legendary pick is always a badge you don't hold yet, never a
+        // level-up of one you do (Clear Sight at "Level 2 of 2").
+        const tree = window.CuddleSkillTree;
+        const held = (def) => {
+          try {
+            const node = tree && (tree.findNode(getId(def)) || tree.findNodeByName(getName(def)));
+            return Boolean(node && Number(tree.level(game, node)) > 0);
+          } catch (_error) {
+            return false;
+          }
+        };
+        const pool = allOrdinaryCandidates(game, state).filter((def) => def.__cuddleV8Tier === TIERS.LEGENDARY && !held(def));
         return shuffle(pool, String(seedText || "legendary")).slice(0, count).map((def) => {
           const id = getId(def);
           return {
