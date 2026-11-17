@@ -257,14 +257,23 @@
   }
   // Autopilot's word for the state in play: from the hand (level 1) or any
   // letters (level 2+), never one already played.
-  function autopilotWord(game) {
+  // `any` forces the whole keyboard, whatever the badge's level.
+  function autopilotWord(game, any) {
     var stages = window.CuddleExpandedStages;
     var state = game.state;
     if (!stages || typeof stages.aiHandWord !== "function") return "";
     var played = (state.history || []).map(function word(entry) { return String(entry && entry.word || "").toUpperCase(); });
     var hints = fitsHints(state);
-    var fits = function fits(word) { return played.indexOf(word) === -1 && hints(word); };
-    var canBuild = anyLetters(game) ? function any() { return true; } : canBuildWith(game);
+    var rebalance = window.CuddleRebalanceV5;
+    // The stage's word rules (a challenge or boss: Letter Demand, Banned
+    // Letter, Word Chain, Locked In...) are part of what a word must fit.
+    var ruled = rebalance && typeof rebalance.wordRuleViolation === "function";
+    var fits = function fits(word) {
+      if (played.indexOf(word) !== -1 || !hints(word)) return false;
+      if (!ruled) return true;
+      try { return !rebalance.wordRuleViolation(game, word); } catch (_error) { return true; }
+    };
+    var canBuild = any || anyLetters(game) ? function all() { return true; } : canBuildWith(game);
     try {
       return String(stages.aiHandWord(game, visibleRows(state), canBuild, fits) || "").toUpperCase();
     } catch (error) {
@@ -276,8 +285,16 @@
   function autopilotGuess(game) {
     var state = game.state;
     var word = autopilotWord(game);
-    if (!/^[A-Z]{5}$/.test(word)) return skipTurn(game, anyLetters(game) ? "no word fits what you know." : "no word fits your cards.");
-    if (anyLetters(game)) {
+    // Nothing your cards can make fits (a challenge's rule, a boss, what the
+    // hints say): it reaches for the whole keyboard rather than giving the
+    // guess back.
+    var widened = false;
+    if (!/^[A-Z]{5}$/.test(word) && !anyLetters(game)) {
+      word = autopilotWord(game, true);
+      widened = true;
+    }
+    if (!/^[A-Z]{5}$/.test(word)) return skipTurn(game, anyLetters(game) || widened ? "no word fits what you know." : "no word fits your cards.");
+    if (anyLetters(game) || widened) {
       var loose = playLooseWord(game, word, "auto");
       return loose && loose.ok !== false ? loose : skipTurn(game, "its word " + word + " isn't allowed here.");
     }
@@ -337,13 +354,18 @@
     return stages.withDuel(game, function build(g) {
       var state = g.state;
       var word = autopilotWord(g);
+      var loose = anyLetters(g);
+      if (!/^[A-Z]{5}$/.test(word) && !loose) {
+        word = autopilotWord(g, true);
+        loose = true;
+      }
       if (!/^[A-Z]{5}$/.test(word)) {
         state.umtAutopilotSkip = duelMine(state);
         state.lastMessage = "Autopilot: no word fits. This guess is yours.";
         return null;
       }
       var ids = [];
-      if (anyLetters(g)) {
+      if (loose) {
         var cards = word.split("").map(function make(letter) { return g._newCard(letter, "extra"); });
         state.hand = state.hand.concat(cards);
         ids = cards.map(function id(card) { return card.id; });
@@ -356,7 +378,7 @@
         if (ids.length !== 5) { state.umtAutopilotSkip = duelMine(state); return null; }
       }
       state.draft = [];
-      return { word: word, loose: anyLetters(g), ids: ids };
+      return { word: word, loose: loose, ids: ids };
     }, true) || null;
   }
 

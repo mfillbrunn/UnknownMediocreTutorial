@@ -2389,8 +2389,8 @@
     variant.umtBreakNote = `${title} broken: this stage pays as a plain stage${what ? `, and ${what}` : ""}.`;
   }
 
-  function challengeValidation(game, _challenge, used) {
-    const word = draftWord(game);
+  function challengeValidation(game, _challenge, used, wordOverride) {
+    const word = wordOverride ? String(wordOverride).toUpperCase() : draftWord(game);
     if (!word) return null;
     // Lifted for this one guess because no word in the hand could meet it
     // (cuddle-stuck-guard.js).
@@ -5685,6 +5685,12 @@
       // The current guess's word rule (Letter Demand, Word Chain, Locked
       // In), for the clue strip; and the gift cards those rules hand out.
       wordRuleNote: (game) => wordRuleNote(game || publicActiveGame()),
+      // The rule (Letter Demand, Banned Letter, Word Chain, Locked In...) a
+      // word would break as the next guess, or null: for the AI's word.
+      wordRuleViolation: (game, word) => {
+        const live = game || publicActiveGame();
+        return challengeValidation(live, activeChallenge(live), guessesUsed(live), word);
+      },
       syncRuleCards: (game) => syncRuleCards(game || publicActiveGame()),
       // The challenge ids of the stage being played ([] when none).
       liveChallengeIds: (game) => {
