@@ -905,6 +905,43 @@
     devil: { glyph: "♆", title: "Devil square: a letter here that's not in the answer tests every consonant left in your hand; the ones not in the answer are thrown out" }
   });
 
+  // Tapping a special square (empty, or already played) says what it is in
+  // a small bubble above it; a tap anywhere else, or a scroll, puts it away.
+  // (A hover's `title` never shows on a phone.)
+  let squareTip = null;
+  function hideSquareTip() {
+    if (squareTip && squareTip.parentNode) squareTip.parentNode.removeChild(squareTip);
+    squareTip = null;
+  }
+  document.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const tile = target && target.closest ? target.closest(".cuddle-tile.is-special-tile") : null;
+    const wasShowing = squareTip && squareTip.__tile === tile;
+    hideSquareTip();
+    if (!tile || wasShowing || tile.closest("button")) return;
+    const match = /\bis-special-(money|points|mulligan|joker|hint|devil)\b/.exec(tile.className);
+    const kind = match && SPECIAL_TILE_KINDS[match[1]];
+    if (!kind) return;
+    const tip = document.createElement("div");
+    tip.className = "umt-square-tip";
+    tip.setAttribute("role", "status");
+    tip.textContent = kind.title;
+    tip.__tile = tile;
+    tip.style.cssText = "position:fixed;z-index:99999;max-width:min(260px,80vw);padding:8px 11px;border-radius:10px;"
+      + "background:#1c1730;color:#f3efff;border:1px solid #8b7bd8;font:600 13px/1.35 system-ui,sans-serif;"
+      + "box-shadow:0 6px 18px rgba(0,0,0,.45);pointer-events:none;visibility:hidden";
+    document.body.appendChild(tip);
+    const box = tile.getBoundingClientRect();
+    const width = tip.offsetWidth;
+    const left = Math.max(8, Math.min(window.innerWidth - width - 8, box.left + box.width / 2 - width / 2));
+    const above = box.top - tip.offsetHeight - 8;
+    tip.style.left = `${left}px`;
+    tip.style.top = `${above >= 8 ? above : box.bottom + 8}px`;
+    tip.style.visibility = "visible";
+    squareTip = tip;
+  }, true);
+  window.addEventListener("scroll", hideSquareTip, { passive: true, capture: true });
+
   // The last "new row" the board animated in, so a re-render of the same
   // row (every tap redraws the board) doesn't replay the slide.
   let lastArrivedRowKey = "";
