@@ -3091,7 +3091,7 @@
       case "wordChain":
         return `Guesses 2–${count}: start with one of the letters shown beside the guess (the last two consonants of the word before; Y doesn't count).`;
       case "lockedIn":
-        return `${range(count)}: keep every green in place and use every yellow.`;
+        return `${count <= 2 ? "Guess 2" : `Guesses 2–${count}`}: keep every green in place and use every yellow (guess 1 has nothing to hold to).`;
       default:
         return `${range(count)}: boss power active.`;
     }
@@ -3116,7 +3116,8 @@
     }
     // Word Chain's first guess has nothing to chain from, so one extra
     // guess keeps its real chained guesses at the gate's count.
-    const ownTurns = option?.id === "wordChain" ? turns + 1 : turns;
+    // Locked In is the same: the first guess shows nothing to hold to.
+    const ownTurns = option?.id === "wordChain" || option?.id === "lockedIn" ? turns + 1 : turns;
     return {
       ...option,
       turns: ownTurns,

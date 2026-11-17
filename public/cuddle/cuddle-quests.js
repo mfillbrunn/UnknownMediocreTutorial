@@ -418,6 +418,9 @@
   function mixedBoss(random = Math.random, turns = 2) {
     const pool = CONSTRAINTS.filter(item => item.mix);
     const plan = shuffle(pool, random).slice(0, Math.max(2, turns)).map(item => item.id);
+    // Locked In asks nothing of a first guess (nothing is known yet), so it
+    // never opens the fight: it swaps places with the next guess.
+    if (plan[0] === "lockedIn" && plan.length > 1) plan.push(plan.shift());
     const cursable = plan.filter(id => getConstraint(id).curse);
     const curseId = cursable[Math.floor(random() * cursable.length)] || "countOnly";
     return {
