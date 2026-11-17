@@ -357,14 +357,30 @@
     return state.umtPowers.levels;
   }
 
-  // Playstyle badges you own that have a rarity above them.
+  // The badges one of your badges could turn into: the next rarity up, not
+  // Improve itself, not the badge being raised.
+  function improveTargets(catalog, fromId, wanted) {
+    return (catalog || []).filter(function candidate(card) {
+      return card && card.id !== "combine" && card.id !== fromId && tierOf(card) === wanted;
+    });
+  }
+
+  // Playstyle badges (the ones that belong to a school) you own that have a
+  // rarity above them, and a badge of that rarity to turn into. General
+  // badges that belong to no school are left alone, as the card says.
   function combinable(game) {
     var tree = registry();
     var levels = powersLevels(game.state);
+    // The whole catalog (every layer's filters), read with Improve's own
+    // filter switched off so asking doesn't ask itself.
+    game._combineProbing = true;
+    var catalog;
+    try { catalog = game._upgradeCatalog() || []; } finally { game._combineProbing = false; }
     return Object.keys(levels).filter(function owned(id) {
       if (id === "combine" || num(levels[id]) <= 0) return false;
       var node = tree && tree.findNode(id);
-      return Boolean(node && TIER_UP[String(node.tier)]);
+      if (!node || !node.school || !TIER_UP[String(node.tier)]) return false;
+      return improveTargets(catalog, id, TIER_UP[String(node.tier)]).length > 0;
     });
   }
 
@@ -381,9 +397,10 @@
     var fromId = pool[Math.floor(random() * pool.length)];
     var from = tree.findNode(fromId);
     var wanted = TIER_UP[String(from.tier)];
-    var options = (game._upgradeCatalog() || []).filter(function candidate(card) {
-      return card && card.id !== "combine" && card.id !== fromId && tierOf(card) === wanted;
-    });
+    game._combineProbing = true;
+    var catalog;
+    try { catalog = game._upgradeCatalog() || []; } finally { game._combineProbing = false; }
+    var options = improveTargets(catalog, fromId, wanted);
     if (!options.length) return { ok: false, error: "No " + wanted + " badge is left to combine into." };
     var target = options[Math.floor(random() * options.length)];
     var kept = powersLevels(state)[fromId];
@@ -422,7 +439,7 @@
       list = list.filter(function keep(item) { return !item || CULL_IDS.indexOf(item.id) === -1; });
     }
     // Improve is offered only while it has something to raise.
-    if (!this.state || combinable(this).length) return list;
+    if (this._combineProbing || !this.state || combinable(this).length) return list;
     return list.filter(function keep(item) { return !item || item.id !== "combine"; });
   };
 
