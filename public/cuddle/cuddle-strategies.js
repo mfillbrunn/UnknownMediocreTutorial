@@ -195,6 +195,7 @@
   };
 
   // -- Lean Build -----------------------------------------------------------
+  var LEAN_FREE_BADGES = 3;
   function worldIndex(game) {
     var worlds = window.CuddleWorlds;
     try {
@@ -238,9 +239,10 @@
 
   function leanPayout(game) {
     var base = LEAN_BY_WORLD[worldIndex(game)];
-    // Pearl II: 3 badges don't count against it.
+    // The first 3 badges outside Restraint are free, and Pearl II lets 3
+    // more off.
     var schools = window.CuddleSchools;
-    var ignored = schools && typeof schools.perk === "function" ? num(schools.perk(game, "leanIgnore")) : 0;
+    var ignored = LEAN_FREE_BADGES + (schools && typeof schools.perk === "function" ? num(schools.perk(game, "leanIgnore")) : 0);
     return Math.max(0, base - LEAN_PER_BADGE * Math.max(0, otherBadges(game) - ignored));
   }
 
