@@ -369,6 +369,31 @@
     return true;
   }
 
+  // A reload (tabbing away and back on a phone) never adds cards to a reward
+  // screen that was already showing: the saved offer's size is deliberate
+  // (Slim Pickings, a thin pool), and a layer that rebuilt or topped it up
+  // handed out a free extra choice. Wraps the saved offer's size around the
+  // whole reload; the saved cards win over any that were added.
+  function offerKey(card) { return String(card && (card.key || card.id || card.title) || ""); }
+  var rehydrate = proto._hydrateState;
+  if (typeof rehydrate === "function") {
+    proto._hydrateState = function hydrateKeepingOfferSize() {
+      var state = this.state;
+      var saved = state && state.status === "upgrade" && Array.isArray(state.upgradeChoices)
+        ? state.upgradeChoices.map(offerKey).filter(Boolean) : [];
+      var result = rehydrate.apply(this, arguments);
+      try {
+        var now = this.state;
+        if (saved.length && now && now.status === "upgrade" && Array.isArray(now.upgradeChoices)
+            && now.upgradeChoices.length > saved.length) {
+          var kept = now.upgradeChoices.filter(function (card) { return saved.indexOf(offerKey(card)) !== -1; });
+          now.upgradeChoices = (kept.length ? kept : now.upgradeChoices).slice(0, saved.length);
+        }
+      } catch (error) { console.warn("Cuddle reward rhythm: keeping the offer size failed.", error); }
+      return result;
+    };
+  }
+
   ["skipUpgrade", "_hydrateState"].forEach(function (name) {
     var original = proto[name];
     if (typeof original !== "function") return;
