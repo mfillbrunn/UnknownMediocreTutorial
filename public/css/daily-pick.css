@@ -1676,3 +1676,4 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 #dailyPickScreen.dp-light .dp-sw { box-shadow: 0 0 0 1.5px rgba(0,0,0,.12); }
 .dp-seg input:not(:checked) + span:has(.dp-sw) { opacity: 1; color: rgba(255,255,255,.6); }
 #dailyPickScreen.dp-light .dp-seg input:not(:checked) + span:has(.dp-sw) { color: rgba(43,41,37,.6); }
+.dp-setting-group[hidden] { display: none; }

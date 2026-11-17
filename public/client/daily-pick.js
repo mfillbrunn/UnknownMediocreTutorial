@@ -123,7 +123,9 @@
   // "bottom", under it). input: how a guess is picked ("drag" a word to that
   // spot, or "tap": once crosses out, twice picks, three times clears, then
   // the Guess button in that spot).
-  let settings = { colorblind: false, light: false, layout: "bottom", input: "tap" };
+  // firstPick (Tap mode): a grid's first guess picked with "double" taps like
+  // every other pick (once crosses out, twice picks), or a "single" tap.
+  let settings = { colorblind: false, light: false, layout: "bottom", input: "tap", firstPick: "double" };
   try { settings = { ...settings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) }; } catch (e) { /* defaults */ }
   const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* private mode */ } };
   // Color-blind mode swaps green/yellow for orange/blue (as Wordle's high
@@ -1140,7 +1142,7 @@
     // the first guess it says what to do, and that goes as a word is dragged in.
     const tapping = settings.input === "tap" && !elim;
     const dropText = elim ? "<b>Tap</b> to cross out"
-      : tapping ? (r.guesses.length ? "<b>Tap</b> once to cross out, <b>twice</b> to pick<br>then press <b>Guess</b>" : "<b>Tap</b> a word to pick your first guess,<br>then press <b>Guess</b>")
+      : tapping ? (r.guesses.length || settings.firstPick !== "single" ? "<b>Tap</b> once to cross out, <b>twice</b> to pick<br>then press <b>Guess</b>" : "<b>Tap</b> a word to pick your first guess,<br>then press <b>Guess</b>")
         : settings.input === "hold" ? "<b>Tap</b> to cross out<br><b>Hold</b> a word to guess it"
         : "<b>Tap</b> to cross out<br><b>Drag</b> here to guess";
     // Tapping: the Guess button always sits beside the legend under the
@@ -1365,7 +1367,7 @@
     if (act === "cycle") {
       // Tap mode. Before a grid's first guess a tap just picks (or unpicks);
       // after it, each tap moves a word along: crossed out, picked, cleared.
-      if (!r.guesses.length) {
+      if (!r.guesses.length && settings.firstPick === "single") {
         selected = selected === word ? "" : word;
         toggled = { word, kind: selected ? "selected" : "freed" };
       } else if (word === selected) {
@@ -2140,7 +2142,7 @@
   // state it should end in. guess: press Guess. note: read, tap to go on.
   const COACH_STEPS = [
     { type: "splash", text: "Find the secret word" },
-    { type: "tap", word: "sloth", expect: "picked", text: "Pick any word to start: tap it" },
+    { type: "tap", word: "sloth", expect: "picked", first: true, text: () => (settings.firstPick === "single" ? "Pick any word to start: tap it" : "Pick any word to start: <b>tap it twice</b>.<br>(One tap crosses a word out, a second tap picks it.)") },
     { type: "guess", text: "Now press <b>Guess</b>" },
     { type: "note", target: "#dpDrop", text: "This is the feedback.<br><b class='c-hit'>Green</b>: right letter, right spot. <b class='c-near'>Yellow</b>: in the word, wrong spot. Gray: not in the word.<br>Now cross out every word that can't be the secret." },
     { type: "tap", word: "stamp", expect: "struck", text: `S is gray, so the secret has no S. ${up("stamp")} has one, so it's out: tap it` },
@@ -2242,7 +2244,7 @@
       return;
     }
     say.hidden = false;
-    say.innerHTML = `${st.text}${st.type === "note" ? `<small>Tap anywhere to continue</small>` : ""}<button type="button" class="dp-coach-skip" id="dpCoachSkip">Skip tutorial</button>`;
+    say.innerHTML = `${typeof st.text === "function" ? st.text() : st.text}${st.type === "note" ? `<small>Tap anywhere to continue</small>` : ""}<button type="button" class="dp-coach-skip" id="dpCoachSkip">Skip tutorial</button>`;
     const target = st.type === "tap" ? document.querySelector(`#dailyPickRoot .dp-word[data-word="${st.word}"]`)
       : st.type === "guess" ? $("dpGuess") : st.target ? document.querySelector(st.target) : null;
     if (st.type === "note") target?.classList.add("dp-coach-focus");
@@ -2252,7 +2254,7 @@
       // The fingertip on the target's middle (lower for the Guess button).
       hand.style.left = `${b.left + b.width / 2}px`;
       hand.style.top = `${b.top + b.height * (st.type === "guess" ? .6 : .68)}px`;
-      hand.classList.toggle("is-double", st.type === "tap" && st.expect === "picked" && round().guesses.length > 0);
+      hand.classList.toggle("is-double", st.type === "tap" && st.expect === "picked" && (round().guesses.length > 0 || settings.firstPick !== "single"));
       // The words go where they don't cover the target: above it, or below
       // when the target is high on the screen.
       const card = $("dailyPickScreen").querySelector(".dp-card").getBoundingClientRect();
@@ -2321,6 +2323,8 @@
     document.querySelectorAll('#dailyPickScreen input[name="dpColors"]').forEach(el => { el.checked = el.value === (settings.colorblind ? "colorblind" : "standard"); });
     document.querySelectorAll('#dailyPickScreen input[name="dpLayout"]').forEach(el => { el.checked = el.value === settings.layout; });
     document.querySelectorAll('#dailyPickScreen input[name="dpInput"]').forEach(el => { el.checked = el.value === settings.input; });
+    document.querySelectorAll('#dailyPickScreen input[name="dpFirstPick"]').forEach(el => { el.checked = el.value === settings.firstPick; });
+    $("dpFirstPickGroup")?.toggleAttribute("hidden", settings.input !== "tap");
     if ($("dpSetCb")) $("dpSetCb").checked = !!settings.colorblind;
     if ($("dpSetLight")) $("dpSetLight").checked = !!settings.light;
   }
@@ -2333,8 +2337,15 @@
       applyColors();
       return;
     }
+    if (event.target.name === "dpFirstPick") {
+      settings.firstPick = event.target.value;
+      if (state && !round().guesses.length) selected = "";
+      saveSettings();
+      return;
+    }
     if (event.target.name === "dpLayout" || event.target.name === "dpInput") {
       settings[event.target.name === "dpLayout" ? "layout" : "input"] = event.target.value;
+      $("dpFirstPickGroup")?.toggleAttribute("hidden", settings.input !== "tap");
       if (settings.input === "drag") selected = "";
       saveSettings();
       return;
@@ -2578,6 +2589,14 @@
             <label><input type="radio" name="dpInput" value="hold"><span>Hold</span></label>
           </div>
           <p class="dp-setting-note"><b>Drag:</b> tap a word to cross it out, drag it to the box to guess.<br><b>Tap:</b> tap once to cross out, twice to pick, a third time to clear, then press <b>Guess</b>.<br><b>Hold:</b> tap a word to cross it out, press and hold it until the circle fills to guess.</p>
+        </div>
+        <div class="dp-setting-group" id="dpFirstPickGroup">
+          <div class="dp-setting-label">First pick of a grid (Tap)</div>
+          <div class="dp-seg" role="radiogroup" aria-label="First pick of a grid">
+            <label><input type="radio" name="dpFirstPick" value="double"><span>Two taps</span></label>
+            <label><input type="radio" name="dpFirstPick" value="single"><span>One tap</span></label>
+          </div>
+          <p class="dp-setting-note"><b>Two taps:</b> the first word works like every other: once crosses out, twice picks.<br><b>One tap:</b> before your first guess, a single tap picks a word.</p>
         </div>
         <button id="dpSettingsClose" class="dp-next" type="button">Done</button>
       </div>
