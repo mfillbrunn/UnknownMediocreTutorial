@@ -694,7 +694,7 @@
     if (!title) return;
     const number = state ? ` <span class="dp-title-grid">${G().title.replace(/^Unstruck ?/, "")} #${G().number(state.date)}</span>` : "";
     const kind = SET_GAMES.includes(game) && grid ? gridLabel(grid - 1) : game === "speed" ? "Speed" : "Grid";
-    if (playMode === "practice") title.innerHTML = `Unstruck <span class="dp-title-grid">Practice</span>`;
+    if (playMode === "practice") title.innerHTML = `Unstruck <span class="dp-title-grid">Practice${puzzles.length > 1 && grid ? ` ${grid}/${puzzles.length}` : ""}</span>`;
     else title.innerHTML = grid ? `Unstruck <span class="dp-title-grid">${kind} ${grid}/${puzzles.length}</span>` : `Unstruck${number}`;
     document.querySelectorAll("#dailyPickScreen .dp-tab").forEach(tab => tab.classList.toggle("is-on", tab.dataset.game === game));
     // A long label (SPEED 1/10, ONE LETTER 1/3) steps down so the buttons fit.
@@ -739,7 +739,7 @@
       coachEnd(true);
       root.innerHTML = `<div class="dp-summary dp-coach-done">
         <div class="dp-done-badge" aria-hidden="true">✓</div>
-        <div class="dp-verdict">You found it!</div>
+        <div class="dp-verdict">You're ready!</div>
         <p class="dp-done-lead">That's the whole game.</p>
         <ol class="dp-done-steps">
           <li><b>Guess</b> a word</li>
@@ -980,7 +980,7 @@
     const root = $("dailyPickRoot");
     if (!root) return;
     showClock();
-    if (over() && !advanceTimer) return renderSummary(root);
+    if ((over() || (playMode === "practice" && state.coachDone)) && !advanceTimer) return renderSummary(root);
     $("dailyPickScreen")?.classList.remove("is-results");
     clearInterval(countdownTimer);
     setTitle(current + 1);
@@ -1412,7 +1412,7 @@
   function guessSelected() {
     const r = round();
     if (!selected || r.solved) return;
-    if (coach && coachStep()?.type !== "guess") return;
+    if (coach && !["guess", "free"].includes(coachStep()?.type)) return;
     const coachGuess = !!coach;
     if (playMode === "daily" && totalGuesses() === 0) track("started");
     r.guesses.push(selected);
@@ -1441,7 +1441,7 @@
     revealing = true;
     render();
     revealing = false;
-    if (coachGuess && coach) setTimeout(coachNext, 700); // after the feedback flips in
+    if (coachGuess && coach && coachStep()?.type === "guess") setTimeout(coachNext, 700); // after the feedback flips in
   }
 
   // One row per puzzle: a white square per wrong guess, then the green one.
@@ -1602,6 +1602,7 @@
     current = firstUnsolved();
     selected = "";
     render();
+    if (coach && coachStep()?.type === "free") { coachNext(); flapIn(); return; }
     if (over()) return;
     maybeAnnounceRule();
     // Behind a new grid's rule card the flip would go unseen: it waits for "Got it".
@@ -2134,39 +2135,53 @@
     <path d="M24 4.5c3.3 0 6 2.7 6 6V29l2.7-.9c2.6-.9 5.4.5 6.3 3.1l.3.9 2.2-.6c2.8-.7 5.6 1 6.3 3.8l.2.8 1.6-.3c2.9-.5 5.6 1.4 6.1 4.3l2 12.6C59.4 62 53.4 69 44.8 69H32.2c-4.7 0-9-2.6-11.2-6.8L8.6 38.4c-1.4-2.7-.3-6 2.4-7.3 2.4-1.2 5.3-.5 6.9 1.6L18 33V10.5c0-3.3 2.7-6 6-6z" fill="#fff" stroke="#1b1f27" stroke-width="3.2" stroke-linejoin="round"/>
     <path d="M30 29v13M41.3 32.2V43M50.1 36.3V45" fill="none" stroke="#1b1f27" stroke-width="2.6" stroke-linecap="round" opacity=".55"/>
     <path d="M26 64h20" stroke="#cfd6e0" stroke-width="3" stroke-linecap="round"/></svg>`;
-  const COACH_GRID = {
-    answer: "plant",
-    words: ["chair", "sloth", "blunt", "money", "flint", "stamp", "plant", "water",
-      "cleft", "bread", "ultra", "plait", "drink", "glint", "cloud", "alter"]
-  };
+  // Three hand-made grids, one per daily feedback rule.
+  const COACH_GRIDS = [
+    { mode: "full", answer: "plant", words: ["chair", "sloth", "blunt", "money", "flint", "stamp", "plant", "water",
+      "cleft", "bread", "ultra", "plait", "drink", "glint", "cloud", "alter"] },
+    { mode: "split", answer: "train", words: ["ghost", "crane", "plumb", "sword", "fixed", "rainy", "lucky", "hotel",
+      "spoke", "dumpy", "brawn", "witch", "goofy", "train", "mound", "bulky"] },
+    { mode: "counts", answer: "beach", words: ["ghost", "fudge", "limbo", "swirl", "nymph", "cheap", "pouty", "diver",
+      "knelt", "glory", "frump", "spicy", "wagon", "beach", "dwelt", "mirth"] }
+  ];
   const up = w => `<b>${w.toUpperCase()}</b>`;
+  const pickText = w => () => (settings.firstPick === "single" && !round().guesses.length ? `Tap ${up(w)} to pick it` : `Tap ${up(w)} twice to pick it`);
   // splash: big text over the dimmed screen. tap: the word to tap, and the
-  // state it should end in. guess: press Guess. note: read, tap to go on.
+  // state it should end in. guess: press Guess. note: read, tap to go on
+  // (next: then move to the next grid; finish: then the end).
+  // free: the player plays on alone until the grid is solved.
   const COACH_STEPS = [
     { type: "splash", text: "Find the secret word" },
-    { type: "tap", word: "sloth", expect: "picked", first: true, text: () => (settings.firstPick === "single" ? "Pick any word to start: tap it" : "Pick any word to start: <b>tap it twice</b>.<br>(One tap crosses a word out, a second tap picks it.)") },
+    { type: "tap", word: "sloth", expect: "picked", text: () => (settings.firstPick === "single" ? "Pick any word to start: tap it" : "Pick any word to start: <b>tap it twice</b>.<br>(One tap crosses a word out, a second tap picks it.)") },
     { type: "guess", text: "Now press <b>Guess</b>" },
-    { type: "note", target: "#dpDrop", text: "This is the feedback.<br><b class='c-hit'>Green</b>: right letter, right spot. <b class='c-near'>Yellow</b>: in the word, wrong spot. Gray: not in the word.<br>Now cross out every word that can't be the secret." },
+    { type: "note", target: "#dpDrop", text: "This is the feedback.<br><b class='c-hit'>Green</b>: right letter, right spot. <b class='c-near'>Yellow</b>: in the word, wrong spot. Gray: not in the word.<br>Now cross out words that can't be the secret." },
     { type: "tap", word: "stamp", expect: "struck", text: `S is gray, so the secret has no S. ${up("stamp")} has one, so it's out: tap it` },
     { type: "tap", word: "chair", expect: "struck", text: `L is green, so the secret has an L in 2nd place. ${up("chair")} doesn't: tap it` },
-    ...["bread", "money", "water", "cloud", "drink"].map(word => ({ type: "tap", word, expect: "struck", text: "Same for these: tap, tap, tap" })),
-    { type: "note", target: '#dailyPickRoot .dp-word[data-word="flint"]', text: `Why is ${up("flint")} still in? It has the <b class='c-hit'>L</b> 2nd, a <b class='c-near'>T</b> but not 4th, and no S, O or H. So it could be the secret.` },
-    { type: "note", text: "Same for the other words left: any of them could be the secret.<br>Time for the next guess." },
-    { type: "tap", word: "plait", expect: "picked", text: `Now <b>one tap crosses a word out</b>, <b>a second tap picks it</b>. Tap ${up("plait")} twice` },
+    { type: "tap", word: "bread", expect: "struck", text: `${up("bread")} has no L 2nd either: tap it` },
+    { type: "note", target: '#dailyPickRoot .dp-word[data-word="flint"]', text: `And why could ${up("flint")} still be it? It has the <b class='c-hit'>L</b> 2nd, a <b class='c-near'>T</b> but not 4th, and no S, O or H.<br>Time for the next guess.` },
+    { type: "tap", word: "plait", expect: "picked", text: `<b>One tap crosses a word out</b>, <b>a second tap picks it</b>. Tap ${up("plait")} twice` },
     { type: "guess", text: "Press <b>Guess</b>" },
-    { type: "note", target: "#dpDrop", text: "P, L, A and T are right!<br>Cross out the words that don't fit." },
+    { type: "note", target: "#dpDrop", text: "P, L, A and T are right!<br>Cross out a couple more that don't fit." },
     { type: "tap", word: "blunt", expect: "struck", text: `P is green 1st: ${up("blunt")} doesn't start with P` },
-    ...["flint", "glint", "cleft", "ultra", "alter"].map(word => ({ type: "tap", word, expect: "struck", text: "And these: tap, tap, tap" })),
-    { type: "tap", word: "plant", expect: "struck", text: `Only ${up("plant")} is left. Tap it once` },
-    { type: "tap", word: "plant", expect: "picked", text: "One tap crossed it out. <b>Tap again to pick it</b>" },
-    { type: "tap", word: "plant", expect: "normal", text: "Picked! A third tap clears it: try it" },
-    { type: "tap", word: "plant", expect: "picked", text: "Back to the start. <b>Tap it twice</b> to pick it again" },
-    { type: "guess", text: "Now <b>Guess</b> it!" }
+    { type: "tap", word: "flint", expect: "struck", text: `Neither does ${up("flint")}` },
+    { type: "free", text: "From here on, <b>you're on your own</b>: find the secret word!" },
+    // grid 2
+    { type: "note", text: "You found it! 🎉<br>Each day has three grids, and each gives a different kind of feedback. Here's grid 2." },
+    { type: "tap", word: "crane", expect: "picked", text: pickText("crane") },
+    { type: "guess", text: "Press <b>Guess</b>" },
+    { type: "note", target: "#dpDrop", text: "In grid 2, a letter in the word is <b>half green, half yellow</b>: you learn that it's in the secret, but <b>not whether it's in the right spot</b>.<br>So the secret has R, A and N somewhere, and no C or E." },
+    { type: "note", target: '#dailyPickRoot .dp-word[data-word="rainy"], #dailyPickRoot .dp-word[data-word="brawn"]', text: `So both ${up("rainy")} and ${up("brawn")} could still be the secret: each has R, A and N, and no C or E.` },
+    { type: "note", next: true, text: "That's enough for this grid. On to grid 3!" },
+    // grid 3
+    { type: "tap", word: "cheap", expect: "picked", text: pickText("cheap") },
+    { type: "guess", text: "Press <b>Guess</b>" },
+    { type: "note", target: "#dpDrop", text: "In grid 3 you only get <b>counts</b>: <b class='c-hit'>0</b> letters are in the right spot and <b class='c-near'>4</b> are in the word but somewhere else. You're not told which ones!<br>So the secret has 4 of C, H, E, A and P, none in the spot they're in here." },
+    { type: "note", finish: true, text: "Good, you finished! 🎉" }
   ];
   let coach = null; // { step, prevInput }
 
   async function startCoach() {
-    await startPractice(COACH_GRID);
+    await startPractice({ grids: COACH_GRIDS });
     if (playMode !== "practice") return;
     coach = { step: 0, prevInput: settings.input };
     settings.input = "tap"; // the guided game is played with taps
@@ -2190,6 +2205,22 @@
   const coachStep = () => coach && COACH_STEPS[coach.step];
   function coachNext() {
     if (!coach) return;
+    const was = COACH_STEPS[coach.step];
+    if (was?.next) {
+      current = Math.min(current + 1, puzzles.length - 1);
+      selected = "";
+      coach.step++;
+      render();
+      flapIn();
+      return;
+    }
+    if (was?.finish) {
+      state.coachDone = true;
+      coach.step = COACH_STEPS.length;
+      stopClock();
+      render();
+      return;
+    }
     coach.step++;
     if (coach.step >= COACH_STEPS.length) {
       // Solved: a moment to enjoy it before the summary.
@@ -2205,6 +2236,7 @@
   function coachAllows(word) {
     const st = coachStep();
     if (!st) return true;
+    if (st.type === "free") return true;
     if (st.type === "tap" && st.word === word) return true;
     const hand = $("dpCoachHand");
     hand?.classList.remove("is-nudge"); void hand?.offsetWidth; hand?.classList.add("is-nudge");
@@ -2249,7 +2281,7 @@
     say.innerHTML = `${typeof st.text === "function" ? st.text() : st.text}${st.type === "note" ? `<small>Tap anywhere to continue</small>` : ""}<button type="button" class="dp-coach-skip" id="dpCoachSkip">Skip tutorial</button>`;
     const target = st.type === "tap" ? document.querySelector(`#dailyPickRoot .dp-word[data-word="${st.word}"]`)
       : st.type === "guess" ? $("dpGuess") : st.target ? document.querySelector(st.target) : null;
-    if (st.type === "note") target?.classList.add("dp-coach-focus");
+    if (st.type === "note" && st.target) document.querySelectorAll(st.target).forEach(el => el.classList.add("dp-coach-focus"));
     hand.hidden = !target || st.type === "note";
     if (target) {
       const b = target.getBoundingClientRect();
@@ -2283,8 +2315,9 @@
     playMode = "practice";
     track("practice");
     if (coach && !custom) coachEnd(false);
-    puzzles = [{ ...(custom ? { answer: custom.answer, words: custom.words.slice() } : buildPuzzle(wordList, PRACTICE_SEED, new Set(), RECIPES[0], PRACTICE_WORDS)), ...LEVELS[0] }];
-    state = { date: "practice", coached: !!custom, rounds: [{ guesses: [], struck: [], solved: false }] };
+    puzzles = custom?.grids ? custom.grids.map(g => ({ answer: g.answer, words: g.words.slice(), mode: g.mode }))
+      : [{ ...buildPuzzle(wordList, PRACTICE_SEED, new Set(), RECIPES[0], PRACTICE_WORDS), ...LEVELS[0] }];
+    state = { date: "practice", coached: !!custom, rounds: puzzles.map(() => ({ guesses: [], struck: [], solved: false })) };
     current = 0;
     selected = "";
     render();
