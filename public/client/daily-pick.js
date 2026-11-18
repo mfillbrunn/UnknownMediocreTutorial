@@ -344,6 +344,8 @@
   // shows whether the secret's letter there comes earlier or later in the
   // alphabet, or is right.
   const GRID3_ARROWS_FROM = "2026-11-15";
+  // ...and back to the counts grid from today (Nov 17 on).
+  const GRID3_ARROWS_UNTIL = "2026-11-16";
 
   function buildDay(pool, date) {
     const list = [...new Set(pool.filter(w => /^[a-z]{5}$/.test(w)))].sort();
@@ -356,7 +358,7 @@
       const puzzle = buildPuzzle(list, seed, taken, recipe, date >= BIG_GRID_FROM ? BIG_GRID : WORD_COUNT);
       puzzle.words.forEach(w => taken.add(w));
       // Some days swap a grid's feedback rule for a different one.
-      const swap = DAY_RULE_SWAPS[date]?.[i] || (i === 2 && date >= GRID3_ARROWS_FROM ? "arrows" : null);
+      const swap = DAY_RULE_SWAPS[date]?.[i] || (i === 2 && date >= GRID3_ARROWS_FROM && date <= GRID3_ARROWS_UNTIL ? "arrows" : null);
       return { ...puzzle, ...LEVELS[level], ...(swap ? { mode: swap } : {}) };
     });
   }
@@ -2613,8 +2615,8 @@
             <span class="dp-help-chip" style="background:#555b63"></span> gray (letter not in the word at all).</li>
           <li>In the second grid, a letter that's in the word is
             <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> half <span data-c="hit">green</span>, half <span data-c="near">yellow</span> &ndash; so you don't find out whether it's in the right position. Letters not in the word are gray.</li>
-          <li>In the third grid, each letter of your guess gets an arrow instead of a color: <b>←</b> if the secret's letter in that spot comes earlier in the alphabet, <b>→</b> if it comes later, <b>–</b> if it's the right letter.</li>
-          <li hidden>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
+          <li hidden>In the third grid, each letter of your guess gets an arrow instead of a color: <b>←</b> if the secret's letter in that spot comes earlier in the alphabet, <b>→</b> if it comes later, <b>–</b> if it's the right letter.</li>
+          <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
         </ul>
         ${EXPERIMENTAL_BUTTON && WEEKLY_ENABLED ? `<p><b>Experimental</b> (the button next to Share once you've finished the Daily) has two extras. <b>Flags · Colors · Arrows</b>, new every Monday, is three different grids: <b>Flags</b>, where each flag is split into a grid of colors; <b>Colors</b>, rows of five paints where a paint matches a tile when they have a color in common (white, red and pink all match pink); and <b>Arrows</b>, words where each letter's arrow points to the secret's letter in the alphabet. Each grid explains itself when it starts.</p>` : ""}
         ${EXPERIMENTAL_BUTTON && TWISTS_ENABLED ? `<p><b>One letter · Autopilot · Pick two</b> (also under Experimental, new every Monday): word grids with a twist. <b>One letter</b> shows feedback for just one letter per guess, in turn. In <b>Autopilot</b> the game guesses for you every 10 seconds while you strike words out, and in <b>Pick two</b> you choose between two words it offers. In both, you solve it when only the secret is left, and lose if you strike the secret out. Each grid explains itself when it starts.</p>` : ""}
