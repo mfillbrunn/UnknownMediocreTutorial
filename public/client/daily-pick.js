@@ -1066,7 +1066,8 @@
       const shown = guessed && !won ? (wordCards ? cardFeedback(word) : face(word) + mini(word)) : face(word);
       // Tapping a card crosses the word out (or brings it back); dragging it
       // into the middle spot guesses it.
-      return `<div class="${classes}${disabled ? "" : " is-tappable"}${slide > 0 ? " is-slid-down" : slide < 0 ? " is-slid-up" : ""}" data-word="${word}" data-slide="${slide}" style="grid-row:${gr + 1};grid-column:${gc + 1}"${disabled ? " disabled" : ""} role="button" tabindex="${disabled ? -1 : 0}" aria-label="${name(word)}: ${settings.input === "tap" && !elim ? (word === selected ? "picked, tap to clear" : struck ? "crossed out, tap to pick" : "tap to cross out") : `tap to ${struck ? "bring it back" : "cross it out"}${elim ? "" : ", or drag it to the guessing spot"}`}"><span class="dp-card-face">${shown}</span></div>`;
+      const xStrip = settings.input === "xbtn" && !elim && !disabled ? `<span class="dp-xbtn" aria-hidden="true">${struck ? "↺" : "✕"}</span>` : "";
+      return `<div class="${classes}${disabled ? "" : " is-tappable"}${xStrip ? " has-xbtn" : ""}${slide > 0 ? " is-slid-down" : slide < 0 ? " is-slid-up" : ""}" data-word="${word}" data-slide="${slide}" style="grid-row:${gr + 1};grid-column:${gc + 1}"${disabled ? " disabled" : ""} role="button" tabindex="${disabled ? -1 : 0}" aria-label="${name(word)}: ${settings.input === "xbtn" && !elim ? (struck ? "crossed out: tap the left side to bring it back" : "tap the left side to cross it out, the word to pick it") : settings.input === "tap" && !elim ? (word === selected ? "picked, tap to clear" : struck ? "crossed out, tap to pick" : "tap to cross out") : `tap to ${struck ? "bring it back" : "cross it out"}${elim ? "" : ", or drag it to the guessing spot"}`}">${xStrip}<span class="dp-card-face">${shown}</span></div>`;
     }).join("");
 
     const SPLIT_TILE = SPLIT_FILL;
@@ -1142,8 +1143,11 @@
       : game !== "daily" ? `<button type="button" class="dp-link" data-game="daily">← Back to the Daily</button>` : "";
     // The middle spot. Word grids show the latest guess there, big; before
     // the first guess it says what to do, and that goes as a word is dragged in.
-    const tapping = settings.input === "tap" && !elim;
+    const xMode = settings.input === "xbtn" && !elim;
+    // Tap and ✕-button modes both pick a word, then press Guess.
+    const tapping = (settings.input === "tap" || xMode) && !elim;
     const dropText = elim ? "<b>Tap</b> to cross out"
+      : xMode ? "<b>Tap ✕</b> to cross a word out<br><b>Tap the word</b> to pick it, then press <b>Guess</b>"
       : tapping ? (r.guesses.length || settings.firstPick !== "single" ? "<b>Tap</b> once to cross out, <b>twice</b> to pick<br>then press <b>Guess</b>" : "<b>Tap</b> a word to pick your first guess,<br>then press <b>Guess</b>")
         : settings.input === "hold" ? "<b>Tap</b> to cross out<br><b>Hold</b> a word to guess it"
         : "<b>Tap</b> to cross out<br><b>Drag</b> here to guess";
@@ -1265,7 +1269,7 @@
         if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 9) return;
         // Words in an elimination grid can't be guessed by hand, and in
         // tap mode nothing is dragged.
-        if (ELIM_KINDS.includes(puzzles[current]?.kind) || settings.input === "tap") return;
+        if (ELIM_KINDS.includes(puzzles[current]?.kind) || settings.input === "tap" || settings.input === "xbtn") return;
         drag.moved = true;
         const b = drag.card.getBoundingClientRect();
         const ghost = drag.card.cloneNode(true);
@@ -1288,6 +1292,7 @@
     const finish = event => {
       if (!drag || event.pointerId !== drag.id) return;
       const { word, moved } = drag;
+      const drag0 = drag.card;
       if (drag.hold) {
         // A quick tap crosses out; a hold let go early (or slid off) does nothing.
         const tapped = !drag.ring && !drag.cancelled && !drag.completed;
@@ -1297,7 +1302,14 @@
       }
       const dropped = moved && overDrop(event.clientX, event.clientY);
       end();
-      if (!moved) return onWordClick(word, settings.input === "tap" ? "cycle" : "strike");
+      if (!moved) {
+        if (settings.input === "xbtn" && !ELIM_KINDS.includes(puzzles[current]?.kind)) {
+          // The ✕ strip's tap area is generous: the left 40% of the card.
+          const b = cardSpot(drag0);
+          return onWordClick(word, event.clientX - b.left < b.w * 0.4 ? "strike" : "pick");
+        }
+        return onWordClick(word, settings.input === "tap" ? "cycle" : "strike");
+      }
       if (dropped && !round().solved && !round().guesses.includes(word)) {
         selected = word;
         guessSelected();
@@ -2145,6 +2157,13 @@
       "knelt", "glory", "frump", "spicy", "wagon", "beach", "dwelt", "mirth"] }
   ];
   const up = w => `<b>${w.toUpperCase()}</b>`;
+  // A small burst of confetti (instead of an emoji).
+  const PARTY = `<svg class="dp-party" viewBox="0 0 32 32" width="22" height="22" aria-hidden="true">
+    <path d="M5 27 11.5 9.5 22.5 20.5Z" fill="#f2c14e" stroke="#b8860b" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M8.2 18.6 13.4 23.8M9.9 13.9 18.1 22.1" stroke="#e5484d" stroke-width="2" stroke-linecap="round"/>
+    <path d="M16 6.5c1.5-1.7 3.4-1.8 4.6-.6M24.5 11.5c1.7-1.5 3.6-1.4 4.6-.2M20 2.5v2.3M28.5 6.5l-1.8 1.4M26.5 17.5h2.4" fill="none" stroke="#3b7dd8" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="23.2" cy="5.8" r="1.4" fill="#e5484d"/><circle cx="29" cy="14" r="1.3" fill="#3f9d4f"/><circle cx="17.5" cy="10.5" r="1.2" fill="#3f9d4f"/>
+  </svg>`;
   const pickText = w => () => (settings.firstPick === "single" && !round().guesses.length ? `Tap ${up(w)} to pick it` : `Tap ${up(w)} twice to pick it`);
   // splash: big text over the dimmed screen. tap: the word to tap, and the
   // state it should end in. guess: press Guess. note: read, tap to go on
@@ -2166,7 +2185,7 @@
     { type: "tap", word: "flint", expect: "struck", text: `Neither does ${up("flint")}` },
     { type: "free", text: "From here on, <b>you're on your own</b>: find the secret word!" },
     // grid 2
-    { type: "note", text: "You found it! 🎉<br>Each day has three grids, and each gives a different kind of feedback. Here's grid 2." },
+    { type: "note", text: `You found it! ${PARTY}<br>Each day has three grids, and each gives a different kind of feedback. Here's grid 2.` },
     { type: "tap", word: "crane", expect: "picked", text: pickText("crane") },
     { type: "guess", text: "Press <b>Guess</b>" },
     { type: "note", target: "#dpDrop", text: "In grid 2, a letter in the word is <b>half green, half yellow</b>: you learn that it's in the secret, but <b>not whether it's in the right spot</b>.<br>So the secret has R, A and N somewhere, and no C or E." },
@@ -2176,7 +2195,7 @@
     { type: "tap", word: "cheap", expect: "picked", text: pickText("cheap") },
     { type: "guess", text: "Press <b>Guess</b>" },
     { type: "note", target: "#dpDrop", text: "In grid 3 you only get <b>counts</b>: <b class='c-hit'>0</b> letters are in the right spot and <b class='c-near'>4</b> are in the word but somewhere else. You're not told which ones!<br>So the secret has 4 of C, H, E, A and P, none in the spot they're in here." },
-    { type: "note", finish: true, text: "Good, you finished! 🎉" }
+    { type: "note", finish: true, text: `Good, you finished! ${PARTY}` }
   ];
   let coach = null; // { step, prevInput }
 
@@ -2226,7 +2245,7 @@
       // Solved: a moment to enjoy it before the summary.
       if ($("dpCoachHand")) $("dpCoachHand").hidden = true;
       const say = $("dpCoachSay");
-      if (say) { say.hidden = false; say.innerHTML = "<b>You found the secret word! 🎉</b>"; }
+      if (say) { say.hidden = false; say.innerHTML = `<b>You found the secret word! ${PARTY}</b>`; }
       return;
     }
     coachShow();
@@ -2425,7 +2444,7 @@
           <span class="dp-word dp-demo-card is-guessed"><span class="dp-card-face"><span class="dp-card-fb">${["c", "r", "a", "n", "e"].map((c, i) => `<i class="is-${["absent", "correct", "present", "absent", "absent"][i]}">${c}</i>`).join("")}</span></span></span>
         </div>
         <ol class="dp-tut-steps">
-          <li>${settings.input === "hold" ? "<b>Hold</b> a word until its circle fills to guess it." : settings.input === "tap" ? "<b>Tap</b> a word to pick it, then press <b>Guess</b>." : `<b>Drag</b> a word into the box ${settings.layout === "bottom" ? "under the grid" : "in the middle"} to guess it.`}</li>
+          <li>${settings.input === "xbtn" ? "<b>Tap</b> a word to pick it, then press <b>Guess</b>." : settings.input === "hold" ? "<b>Hold</b> a word until its circle fills to guess it." : settings.input === "tap" ? "<b>Tap</b> a word to pick it, then press <b>Guess</b>." : `<b>Drag</b> a word into the box ${settings.layout === "bottom" ? "under the grid" : "in the middle"} to guess it.`}</li>
           <li>Its letters light up: <b data-c="hit">${colorName("hit")}</b> = right spot, <b data-c="near">${colorName("near")}</b> = wrong spot, <b>gray</b> = not in the word.</li>
           <li><b>Tap</b> the words that can't be it to cross them out (tap again to bring one back), and guess again.</li>
         </ol>
@@ -2622,8 +2641,9 @@
             <label><input type="radio" name="dpInput" value="drag"><span>Drag</span></label>
             <label><input type="radio" name="dpInput" value="tap"><span>Tap</span></label>
             <label><input type="radio" name="dpInput" value="hold"><span>Hold</span></label>
+            <label><input type="radio" name="dpInput" value="xbtn"><span>✕ button</span></label>
           </div>
-          <p class="dp-setting-note"><b>Drag:</b> tap a word to cross it out, drag it to the box to guess.<br><b>Tap:</b> tap once to cross out, twice to pick, a third time to clear, then press <b>Guess</b>.<br><b>Hold:</b> tap a word to cross it out, press and hold it until the circle fills to guess.</p>
+          <p class="dp-setting-note"><b>Drag:</b> tap a word to cross it out, drag it to the box to guess.<br><b>Tap:</b> tap once to cross out, twice to pick, a third time to clear, then press <b>Guess</b>.<br><b>Hold:</b> tap a word to cross it out, press and hold it until the circle fills to guess.<br><b>✕ button:</b> tap a word's red ✕ to cross it out, tap the rest of it to pick it, then press <b>Guess</b>.</p>
         </div>
         <div class="dp-setting-group" id="dpFirstPickGroup">
           <div class="dp-setting-label">First pick of a grid (Tap)</div>
