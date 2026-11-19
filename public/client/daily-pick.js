@@ -66,9 +66,9 @@
   let archiveDate = null; // the past day being played
   // Shows the Experimental button (Speed, Flags / Colors / Arrows) on the
   // Daily's results, and its paragraphs in How to play. Hidden for now.
-  const EXPERIMENTAL_BUTTON = true;
+  const EXPERIMENTAL_BUTTON = false;
   // Experimental's third set: the Daily's three rules on smaller grids of 12 words.
-  const MINI_ENABLED = true;
+  const MINI_ENABLED = false;
   const MINI_WORDS = 12;
   // Experimental's second set: One letter, Autopilot, Pick two.
   const TWISTS_ENABLED = true;
@@ -2010,7 +2010,7 @@
     ["Speed", [["speed", "Speed"]]],
     ["Experimental 1", [["flags", "Flags"], ["colors", "Colors"], ["arrows", "Arrows"]]],
     ["Experimental 2", [["oneletter", "One letter"], ["auto", "Autopilot"], ["choice", "Pick two"]]],
-    ["Experimental 3", [["mini", "Unstruck 12"]]]
+    ...(MINI_ENABLED ? [["Experimental 3", [["mini", "Unstruck 12"]]]] : [])
   ];
   function loadRatings() {
     try { return JSON.parse(localStorage.getItem(RATINGS_KEY)) || {}; } catch (e) { return {}; }
