@@ -66,7 +66,10 @@
   let archiveDate = null; // the past day being played
   // Shows the Experimental button (Speed, Flags / Colors / Arrows) on the
   // Daily's results, and its paragraphs in How to play. Hidden for now.
-  const EXPERIMENTAL_BUTTON = false;
+  const EXPERIMENTAL_BUTTON = true;
+  // Experimental's third set: the Daily's three rules on smaller grids of 12 words.
+  const MINI_ENABLED = true;
+  const MINI_WORDS = 12;
   // Experimental's second set: One letter, Autopilot, Pick two.
   const TWISTS_ENABLED = true;
   const TWIST_KINDS = ["oneletter", "auto", "choice"];
@@ -104,7 +107,7 @@
 
   // Which game is on screen; the other one's puzzles and state wait in slots.
   let game = "daily";
-  const slots = { daily: { puzzles: null, state: null }, weekly: { puzzles: null, state: null }, speed: { puzzles: null, state: null }, twists: { puzzles: null, state: null }, archive: { puzzles: null, state: null } };
+  const slots = { daily: { puzzles: null, state: null }, weekly: { puzzles: null, state: null }, speed: { puzzles: null, state: null }, twists: { puzzles: null, state: null }, mini: { puzzles: null, state: null }, archive: { puzzles: null, state: null } };
   let catalog = null; // the Weekly's pictures, loaded the first time it's opened
 
   // Daily play or the practice grid. Practice swaps its own one-grid puzzle
@@ -189,6 +192,11 @@
       period: () => weekStart(today()), number: weekNumber, title: "Unstruck Twists", unit: "week", scoreLabel: "guesses this week",
       next: () => msUntilNextWeek(), nextLabel: "Next Twists in"
     },
+    mini: {
+      storeKey: "umt.unstruck.mini.v1", historyKey: "umt.unstruck.miniHistory", par: 6, step: 1,
+      period: () => today(), number: puzzleNumber, title: "Unstruck 12", unit: "day", scoreLabel: "guesses today",
+      next: () => msUntilNextDay(), nextLabel: "Next Unstruck 12 in"
+    },
     // A past day's Daily, from the archive: its own progress per day and its
     // own history, so the real Daily's streak and stats aren't touched.
     archive: {
@@ -204,7 +212,7 @@
     }
   };
   const G = () => GAMES[game];
-  const dailyLike = () => game === "daily" || game === "archive";
+  const dailyLike = () => game === "daily" || game === "archive" || game === "mini";
 
   function hash(text) {
     let h = 1779033703 ^ text.length;
@@ -360,6 +368,17 @@
       // Some days swap a grid's feedback rule for a different one.
       const swap = DAY_RULE_SWAPS[date]?.[i] || (i === 2 && date >= GRID3_ARROWS_FROM && date <= GRID3_ARROWS_UNTIL ? "arrows" : null);
       return { ...puzzle, ...LEVELS[level], ...(swap ? { mode: swap } : {}) };
+    });
+  }
+
+  // Unstruck 12: the Daily's three rules (full, split, counts), 12 words each.
+  function buildMini(pool, date) {
+    const taken = new Set();
+    return Array.from({ length: PUZZLE_COUNT }, (_, i) => {
+      const seed = `unstruck-mini-1:${date}:${i + 1}`;
+      const puzzle = buildPuzzle(pool, seed, taken, pickRecipe(mulberry32(hash(`${seed}:recipe`))), MINI_WORDS);
+      puzzle.words.forEach(w => taken.add(w));
+      return { ...puzzle, ...LEVELS[Math.min(i, LEVELS.length - 1)] };
     });
   }
 
@@ -693,7 +712,7 @@
     const title = $("dpTitle");
     if (!title) return;
     const number = state ? ` <span class="dp-title-grid">${G().title.replace(/^Unstruck ?/, "")} #${G().number(state.date)}</span>` : "";
-    const kind = SET_GAMES.includes(game) && grid ? gridLabel(grid - 1) : game === "speed" ? "Speed" : "Grid";
+    const kind = SET_GAMES.includes(game) && grid ? gridLabel(grid - 1) : game === "speed" ? "Speed" : game === "mini" ? "12 ·" : "Grid";
     if (playMode === "practice") title.innerHTML = `Unstruck <span class="dp-title-grid">Practice${puzzles.length > 1 && grid ? ` ${grid}/${puzzles.length}` : ""}</span>`;
     else title.innerHTML = grid ? `Unstruck <span class="dp-title-grid">${kind} ${grid}/${puzzles.length}</span>` : `Unstruck${number}`;
     document.querySelectorAll("#dailyPickScreen .dp-tab").forEach(tab => tab.classList.toggle("is-on", tab.dataset.game === game));
@@ -1043,9 +1062,10 @@
     const full = words.length >= 18;
     // "bottom": the 4 x 4 grid, with the spot as a fifth row underneath.
     const bottom = settings.layout === "bottom" && !full;
-    const spotRow = bottom ? 4 : 2;
+    const boardRows = full ? 5 : Math.ceil(words.length / 4) + 1;
+    const spotRow = bottom ? boardRows - 1 : Math.ceil((boardRows - 1) / 2);
     const spots = [];
-    for (let r = 0; r < 5; r++) for (let c = 0; c < 4; c++) {
+    for (let r = 0; r < boardRows; r++) for (let c = 0; c < 4; c++) {
       if (r === spotRow && (c === 1 || c === 2)) continue;
       if (r === spotRow && !full) continue;
       spots.push([r, c]);
@@ -1164,7 +1184,7 @@
     const autoCount = kind === "auto" && !done ? `<div class="dp-auto-count" id="dpAutoCount" aria-hidden="true">${Math.max(1, Math.ceil(((r.autoDue ?? elapsed()) - elapsed()) / 1000)) || ""}</div>` : "";
     requestAnimationFrame(fitWords);
     if (coach) requestAnimationFrame(coachShow);
-    root.innerHTML = `<div class="dp-board is-diamond${full ? " is-full" : ""}${pics ? ` is-pics is-${kind}` : kind ? ` is-${kind}` : ""}" style="${pics ? `--ratio:${info.ratio}` : ""}">${buttons}${middle}${autoCount}</div>
+    root.innerHTML = `<div class="dp-board is-diamond${full ? " is-full" : ""}${boardRows === 4 ? " is-rows4" : ""}${pics ? ` is-pics is-${kind}` : kind ? ` is-${kind}` : ""}" style="${pics ? `--ratio:${info.ratio}` : ""}">${buttons}${middle}${autoCount}</div>
       <div class="dp-center">${lastGuess && !wordCards ? `<div class="dp-last">Last guess</div>${tiles(lastGuess)}` : ""}${tapping ? `<div class="dp-key-row"><div class="dp-key is-stacked">${key}</div>${sideGuess || `<button type="button" class="dp-next dp-side-guess" disabled>Guess</button>`}</div>` : `<div class="dp-key">${key}</div>`}${hint || action ? `<div class="dp-hint">${hint}</div>${action}` : ""}</div>${exit}`;
   }
 
@@ -1893,6 +1913,9 @@
         // longer in them) starts the day over.
         const fits = slot.state.rounds.every((r, i) => [...r.guesses, ...r.struck].every(w => slot.puzzles[i]?.words.includes(w)));
         if (!fits) slot.state = { date: period, rounds: slot.puzzles.map(() => ({ guesses: [], struck: [], solved: false })) };
+      } else if (which === "mini") {
+        slot.puzzles = buildMini(wordList, period);
+        slot.state = load(PUZZLE_COUNT);
       } else if (which === "twists") {
         slot.puzzles = buildTwists(wordList, period);
         slot.state = load(TWIST_KINDS.length);
@@ -1913,7 +1936,7 @@
   }
 
   async function open(which = game) {
-    if ((!WEEKLY_ENABLED && which === "weekly") || (!SPEED_ENABLED && which === "speed") || (!TWISTS_ENABLED && which === "twists")) which = "daily";
+    if ((!WEEKLY_ENABLED && which === "weekly") || (!SPEED_ENABLED && which === "speed") || (!TWISTS_ENABLED && which === "twists") || (!MINI_ENABLED && which === "mini")) which = "daily";
     if (playMode === "practice") leavePractice();
     closeChooser();
     if (window.showScreen) window.showScreen("dailyPickScreen");
@@ -1972,6 +1995,7 @@
       ${SPEED_ENABLED ? option("speed", "Speed", `3 minutes to solve as many of today's ${SPEED_GRIDS} grids as you can`) : ""}
       ${WEEKLY_ENABLED ? option("weekly", "Flags · Colors · Arrows", "Three new kinds of grid, new every Monday") : ""}
       ${TWISTS_ENABLED ? option("twists", "One letter · Autopilot · Pick two", "Word grids with a twist: one letter of feedback at a time, guesses made for you, or a choice of two. New every Monday") : ""}
+      ${MINI_ENABLED ? option("mini", "Unstruck 12", "Today's three kinds of grid, with 12 words instead of 16") : ""}
       <button type="button" class="dp-rate-open" id="dpRateOpen">★ Rate the grids</button>
       <button type="button" class="dp-link" id="dpChooseClose">Not now</button>`;
     $("dpChoose").hidden = false;
@@ -1985,7 +2009,8 @@
     ["Daily", [["grid1", "Grid 1 · full colors"], ["grid2", "Grid 2 · half colors"], ["grid3", "Grid 3 · counts"]]],
     ["Speed", [["speed", "Speed"]]],
     ["Experimental 1", [["flags", "Flags"], ["colors", "Colors"], ["arrows", "Arrows"]]],
-    ["Experimental 2", [["oneletter", "One letter"], ["auto", "Autopilot"], ["choice", "Pick two"]]]
+    ["Experimental 2", [["oneletter", "One letter"], ["auto", "Autopilot"], ["choice", "Pick two"]]],
+    ["Experimental 3", [["mini", "Unstruck 12"]]]
   ];
   function loadRatings() {
     try { return JSON.parse(localStorage.getItem(RATINGS_KEY)) || {}; } catch (e) { return {}; }

@@ -1702,3 +1702,4 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 #dailyPickScreen .dp-xbtn { font-size: 10px !important; }
 #dailyPickScreen .dp-board .dp-word.has-xbtn .dp-card-face { padding-left: 21px !important; padding-right: 1px !important; }
 .dp-word.has-xbtn.is-struck::after { left: 24px; right: 6%; }
+.dp-board.is-diamond.is-rows4 { grid-template-rows: repeat(4, var(--card-h)); }
