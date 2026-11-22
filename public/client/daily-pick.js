@@ -2189,38 +2189,34 @@
     <path d="M16 6.5c1.5-1.7 3.4-1.8 4.6-.6M24.5 11.5c1.7-1.5 3.6-1.4 4.6-.2M20 2.5v2.3M28.5 6.5l-1.8 1.4M26.5 17.5h2.4" fill="none" stroke="#3b7dd8" stroke-width="2" stroke-linecap="round"/>
     <circle cx="23.2" cy="5.8" r="1.4" fill="#e5484d"/><circle cx="29" cy="14" r="1.3" fill="#3f9d4f"/><circle cx="17.5" cy="10.5" r="1.2" fill="#3f9d4f"/>
   </svg>`;
-  const pickText = w => () => (settings.firstPick === "single" && !round().guesses.length ? `Tap ${up(w)} to pick it` : `Tap ${up(w)} twice to pick it`);
+  const pickText = w => () => (settings.firstPick === "single" && !round().guesses.length ? `Tap ${up(w)}` : `Tap ${up(w)} twice`);
   // splash: big text over the dimmed screen. tap: the word to tap, and the
   // state it should end in. guess: press Guess. note: read, tap to go on
   // (next: then move to the next grid; finish: then the end).
   // free: the player plays on alone until the grid is solved.
   const COACH_STEPS = [
     { type: "splash", text: "Find the secret word" },
-    { type: "tap", word: "sloth", expect: "picked", text: () => (settings.firstPick === "single" ? "Pick any word to start: tap it" : "Pick any word to start: <b>tap it twice</b>.<br>(One tap crosses a word out, a second tap picks it.)") },
-    { type: "guess", text: "Now press <b>Guess</b>" },
-    { type: "note", target: "#dpDrop", text: "This is the feedback.<br><b class='c-hit'>Green</b>: right letter, right spot. <b class='c-near'>Yellow</b>: in the word, wrong spot. Gray: not in the word.<br>Now cross out words that can't be the secret." },
-    { type: "tap", word: "stamp", expect: "struck", text: `S is gray, so the secret has no S. ${up("stamp")} has one, so it's out: tap it` },
-    { type: "tap", word: "chair", expect: "struck", text: `L is green, so the secret has an L in 2nd place. ${up("chair")} doesn't: tap it` },
-    { type: "tap", word: "bread", expect: "struck", text: `${up("bread")} has no L 2nd either: tap it` },
-    { type: "note", target: '#dailyPickRoot .dp-word[data-word="flint"]', text: `And why could ${up("flint")} still be it? It has the <b class='c-hit'>L</b> 2nd, a <b class='c-near'>T</b> but not 4th, and no S, O or H.<br>Time for the next guess.` },
-    { type: "tap", word: "plait", expect: "picked", text: `<b>One tap crosses a word out</b>, <b>a second tap picks it</b>. Tap ${up("plait")} twice` },
+    { type: "tap", word: "sloth", expect: "picked", text: () => (settings.firstPick === "single" ? "Tap any word to pick it" : "Pick a word: <b>tap it twice</b>") },
     { type: "guess", text: "Press <b>Guess</b>" },
-    { type: "note", target: "#dpDrop", text: "P, L, A and T are right!<br>Cross out a couple more that don't fit." },
-    { type: "tap", word: "blunt", expect: "struck", text: `P is green 1st: ${up("blunt")} doesn't start with P` },
-    { type: "tap", word: "flint", expect: "struck", text: `Neither does ${up("flint")}` },
-    { type: "free", text: "From here on, <b>you're on your own</b>: find the secret word!" },
+    { type: "note", target: "#dpDrop", text: "<b class='c-hit'>Green</b>: right spot. <b class='c-near'>Yellow</b>: wrong spot. Gray: not in it.<br>Now cross out words that can't be it." },
+    { type: "tap", word: "stamp", expect: "struck", text: `No S. Tap ${up("stamp")} once to cross it out` },
+    { type: "tap", word: "chair", expect: "struck", text: `L is 2nd. ${up("chair")} is out` },
+    { type: "tap", word: "bread", expect: "struck", text: `So is ${up("bread")}` },
+    { type: "note", target: '#dailyPickRoot .dp-word[data-word="flint"]', text: `${up("flint")} still fits: L 2nd, a T (not 4th), no S, O or H.` },
+    { type: "tap", word: "plait", expect: "picked", text: `Tap ${up("plait")} twice to pick it` },
+    { type: "free", text: "<b>Your turn</b>: find the secret!" },
     // grid 2
-    { type: "note", text: `You found it! ${PARTY}<br>Each day has three grids, and each gives a different kind of feedback. Here's grid 2.` },
+    { type: "note", text: `Got it! ${PARTY}<br>Each grid gives a different kind of feedback. Grid 2:` },
     { type: "tap", word: "crane", expect: "picked", text: pickText("crane") },
     { type: "guess", text: "Press <b>Guess</b>" },
-    { type: "note", target: "#dpDrop", text: "In grid 2, a letter in the word is <b>half green, half yellow</b>: you learn that it's in the secret, but <b>not whether it's in the right spot</b>.<br>So the secret has R, A and N somewhere, and no C or E." },
-    { type: "note", target: '#dailyPickRoot .dp-word[data-word="rainy"], #dailyPickRoot .dp-word[data-word="brawn"]', text: `So both ${up("rainy")} and ${up("brawn")} could still be the secret: each has R, A and N, and no C or E.` },
-    { type: "note", next: true, text: "That's enough for this grid. On to grid 3!" },
+    { type: "note", target: "#dpDrop", text: "<b>Half green, half yellow</b>: in the secret, spot unknown.<br>So it has R, A, N and no C or E." },
+    { type: "note", target: '#dailyPickRoot .dp-word[data-word="rainy"], #dailyPickRoot .dp-word[data-word="brawn"]', text: `${up("rainy")} and ${up("brawn")} both fit.` },
+    { type: "note", next: true, text: "On to grid 3!" },
     // grid 3
     { type: "tap", word: "cheap", expect: "picked", text: pickText("cheap") },
     { type: "guess", text: "Press <b>Guess</b>" },
-    { type: "note", target: "#dpDrop", text: "In grid 3 you only get <b>counts</b>: <b class='c-hit'>0</b> letters are in the right spot and <b class='c-near'>4</b> are in the word but somewhere else. You're not told which ones!<br>So the secret has 4 of C, H, E, A and P, none in the spot they're in here." },
-    { type: "note", finish: true, text: `Good, you finished! ${PARTY}` }
+    { type: "note", target: "#dpDrop", text: "Grid 3 gives only <b>counts</b>: <b class='c-hit'>0</b> in the right spot, <b class='c-near'>4</b> in the wrong spot. Not which ones!" },
+    { type: "note", finish: true, text: `Done! ${PARTY}` }
   ];
   let coach = null; // { step, prevInput }
 
@@ -2270,7 +2266,7 @@
       // Solved: a moment to enjoy it before the summary.
       if ($("dpCoachHand")) $("dpCoachHand").hidden = true;
       const say = $("dpCoachSay");
-      if (say) { say.hidden = false; say.innerHTML = `<b>You found the secret word! ${PARTY}</b>`; }
+      if (say) { say.hidden = false; say.innerHTML = `<b>Found it! ${PARTY}</b>`; }
       return;
     }
     coachShow();
@@ -2322,7 +2318,7 @@
       return;
     }
     say.hidden = false;
-    say.innerHTML = `${typeof st.text === "function" ? st.text() : st.text}${st.type === "note" ? `<small>Tap anywhere to continue</small>` : ""}<button type="button" class="dp-coach-skip" id="dpCoachSkip">Skip tutorial</button>`;
+    say.innerHTML = `${typeof st.text === "function" ? st.text() : st.text}${st.type === "note" ? `<small>Tap to continue</small>` : ""}<button type="button" class="dp-coach-skip" id="dpCoachSkip">Skip</button>`;
     const target = st.type === "tap" ? document.querySelector(`#dailyPickRoot .dp-word[data-word="${st.word}"]`)
       : st.type === "guess" ? $("dpGuess") : st.target ? document.querySelector(st.target) : null;
     if (st.type === "note" && st.target) document.querySelectorAll(st.target).forEach(el => el.classList.add("dp-coach-focus"));
