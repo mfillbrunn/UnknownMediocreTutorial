@@ -2820,6 +2820,20 @@
         document.querySelectorAll("#dailyPickScreen [data-pane]").forEach(pane => pane.dataset.pane === summaryView ? pane.removeAttribute("aria-hidden") : pane.setAttribute("aria-hidden", "true"));
       }
     });
+    // ?reset in the address starts this device's current day (and week) over:
+    // saved progress and the current period's results, for every game.
+    if (new URLSearchParams(location.search).has("reset")) {
+      try {
+        for (const key of Object.keys(GAMES)) {
+          if (key === "archive") continue;
+          const g = GAMES[key];
+          localStorage.removeItem(g.storeKey);
+          const hist = JSON.parse(localStorage.getItem(g.historyKey) || "null");
+          if (hist && hist[g.period()]) { delete hist[g.period()]; localStorage.setItem(g.historyKey, JSON.stringify(hist)); }
+        }
+        window.history.replaceState(null, "", location.pathname + location.hash);
+      } catch (e) { /* storage blocked */ }
+    }
     // On its own page there's nothing to close back to, so it just starts.
     if (standalone) {
       $("dpBackBtn").remove();
