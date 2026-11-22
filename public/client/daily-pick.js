@@ -59,19 +59,19 @@
   // Speed: as many of the day's ten grids (all with full feedback) as you can
   // solve in three minutes; every guess, right or wrong, costs two seconds.
   // Switches Speed (its button on the Daily's results and its rules) on or off.
-  const SPEED_ENABLED = true;
+  const SPEED_ENABLED = false;
   // The archive page (/archive, behind a password on the server) sets
   // data-archive on this script: past days' Dailies, played from a list.
   const ARCHIVE = "archive" in (document.currentScript?.dataset || {});
   let archiveDate = null; // the past day being played
   // Shows the Experimental button (Speed, Flags / Colors / Arrows) on the
   // Daily's results, and its paragraphs in How to play. Hidden for now.
-  const EXPERIMENTAL_BUTTON = false;
+  const EXPERIMENTAL_BUTTON = true;
   // Experimental's third set: the Daily's three rules on smaller grids of 12 words.
   const MINI_ENABLED = false;
   const MINI_WORDS = 12;
   // Experimental's second set: One letter, Autopilot, Pick two.
-  const TWISTS_ENABLED = true;
+  const TWISTS_ENABLED = false;
   const TWIST_KINDS = ["oneletter", "auto", "choice"];
   // Grids won by striking out everything but the secret (the game, not the
   // player, chooses which words get guessed, and never the secret).
@@ -2007,9 +2007,9 @@
   const RATINGS_KEY = "umt.unstruck.ratings";
   const RATE_GROUPS = [
     ["Daily", [["grid1", "Grid 1 · full colors"], ["grid2", "Grid 2 · half colors"], ["grid3", "Grid 3 · counts"]]],
-    ["Speed", [["speed", "Speed"]]],
+    ...(SPEED_ENABLED ? [["Speed", [["speed", "Speed"]]]] : []),
     ["Experimental 1", [["flags", "Flags"], ["colors", "Colors"], ["arrows", "Arrows"]]],
-    ["Experimental 2", [["oneletter", "One letter"], ["auto", "Autopilot"], ["choice", "Pick two"]]],
+    ...(TWISTS_ENABLED ? [["Experimental 2", [["oneletter", "One letter"], ["auto", "Autopilot"], ["choice", "Pick two"]]]] : []),
     ...(MINI_ENABLED ? [["Experimental 3", [["mini", "Unstruck 12"]]]] : [])
   ];
   function loadRatings() {
