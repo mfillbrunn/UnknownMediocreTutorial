@@ -59,7 +59,7 @@
   // Speed: as many of the day's ten grids (all with full feedback) as you can
   // solve in three minutes; every guess, right or wrong, costs two seconds.
   // Switches Speed (its button on the Daily's results and its rules) on or off.
-  const SPEED_ENABLED = false;
+  const SPEED_ENABLED = true;
   // The archive page (/archive, behind a password on the server) sets
   // data-archive on this script: past days' Dailies, played from a list.
   const ARCHIVE = "archive" in (document.currentScript?.dataset || {});
@@ -71,7 +71,7 @@
   const MINI_ENABLED = false;
   const MINI_WORDS = 12;
   // Experimental's second set: One letter, Autopilot, Pick two.
-  const TWISTS_ENABLED = false;
+  const TWISTS_ENABLED = true;
   const TWIST_KINDS = ["oneletter", "auto", "choice"];
   // Grids won by striking out everything but the secret (the game, not the
   // player, chooses which words get guessed, and never the secret).
