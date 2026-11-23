@@ -69,7 +69,11 @@
   const EXPERIMENTAL_BUTTON = false;
   // "Past games" on the Daily's results: replay any of the last few days
   // (they count apart, like the archive: no streak, no stats).
-  const PAST_DAYS = 1; // just yesterday, so it's a treat, not a binge
+  // Just yesterday, so it's a treat, not a binge; a new player's first week
+  // (from the first Daily they played) gets the last three, to get hooked.
+  const PAST_DAYS = 1;
+  const PAST_DAYS_NEW = 3;
+  const NEW_PLAYER_DAYS = 7;
   // Experimental's third set: the Daily's three rules on smaller grids of 12 words.
   const MINI_ENABLED = false;
   const MINI_WORDS = 12;
@@ -2110,9 +2114,15 @@
   }
 
   // ---- Past games: the last few days, from the results --------------------
+  function pastCount() {
+    let first = null;
+    try { first = Object.keys(JSON.parse(localStorage.getItem(HISTORY_KEY)) || {}).sort()[0] || null; } catch (e) { /* none */ }
+    const isNew = !first || dayIndex(today()) - dayIndex(first) < NEW_PLAYER_DAYS;
+    return isNew ? PAST_DAYS_NEW : PAST_DAYS;
+  }
   function pastDays() {
     const days = [];
-    for (let d = addDays(today(), -1); d >= LAUNCH_DATE && days.length < PAST_DAYS; d = addDays(d, -1)) days.push(d);
+    for (let d = addDays(today(), -1); d >= LAUNCH_DATE && days.length < pastCount(); d = addDays(d, -1)) days.push(d);
     return days;
   }
   function openPast() {
@@ -2127,7 +2137,7 @@
       return "";
     };
     $("dpChooseCard").innerHTML = `<div class="dp-rule-grid">Past games</div>
-      <p class="dp-past-note">${PAST_DAYS === 1 ? "Missed yesterday? Play it here." : `Play one of the last ${PAST_DAYS} days.`} It doesn't count toward your streak or stats.</p>
+      <p class="dp-past-note">${pastDays().length === 1 ? "Missed yesterday? Play it here. It doesn't" : `New here? Catch up on the last ${pastDays().length} days. They don't`} count toward your streak or stats.</p>
       ${pastDays().map(date => `<button type="button" class="dp-choice" data-past-day="${date}">
         <b>Unstruck #${puzzleNumber(date)}</b><span>${prettyDay(date)}</span>${status(date)}</button>`).join("")}
       <button type="button" class="dp-link" id="dpChooseClose">Not now</button>`;
