@@ -2412,7 +2412,7 @@
   function coachScreenTap(event) {
     if (tip && $("dpTipSay") && !event.target.closest?.(".dp-word")) tipHide();
     if (!coach) return;
-    if (event.target.closest?.("#dpCoachSkip")) { event.stopPropagation(); coachEnd(false); render(); startClock(); return; }
+    if (event.target.closest?.("#dpCoachSkip")) { event.stopPropagation(); track(`tutorial-skip-${coach.phase}`, `skipped at: ${coach.phase}`); coachEnd(false); render(); startClock(); return; }
     if (event.target.closest?.(".dp-word, #dpGuess, button")) return;
     if (coach.phase === "intro") coachSet("pick");
     else if (coach.phase === "colors") coachSet("cross");
@@ -2614,7 +2614,8 @@
     if (playMode === "daily") { dailyPuzzles = puzzles; dailyState = state; }
     tipClear();
     playMode = "practice";
-    track("practice");
+    // The tutorial runs as practice; count it on its own (first time or a replay).
+    track(custom ? (introSeen() ? "tutorial-replay" : "tutorial-start") : "practice");
     if (coach && !custom) coachEnd(false);
     puzzles = custom?.grids ? custom.grids.map(g => ({ answer: g.answer, words: g.words.slice(), mode: g.mode }))
       : [{ ...buildPuzzle(wordList, PRACTICE_SEED, new Set(), RECIPES[0], PRACTICE_WORDS), ...LEVELS[0] }];
