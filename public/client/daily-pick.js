@@ -355,13 +355,17 @@
   // ...and back to the counts grid from today (Nov 17 on).
   const GRID3_ARROWS_UNTIL = "2026-11-16";
 
+  // Days given fresh grids after the fact: { date: n } (bump n to reroll again).
+  // Anyone who'd started that day's old grids starts the new ones over.
+  const DAY_RESEEDS = { "2026-11-23": 1 };
+
   function buildDay(pool, date) {
     const list = [...new Set(pool.filter(w => /^[a-z]{5}$/.test(w)))].sort();
     // Every word on the day's three grids is different, not just the answers.
     const taken = new Set();
     return Array.from({ length: PUZZLE_COUNT }, (_, i) => {
       const level = Math.min(i, LEVELS.length - 1);
-      const seed = `griddle-4:${date}:${i + 1}`;
+      const seed = `griddle-4:${date}${DAY_RESEEDS[date] ? `:r${DAY_RESEEDS[date]}` : ""}:${i + 1}`;
       const recipe = pickRecipe(mulberry32(hash(`${seed}:recipe`)));
       const puzzle = buildPuzzle(list, seed, taken, recipe, date >= BIG_GRID_FROM ? BIG_GRID : WORD_COUNT);
       puzzle.words.forEach(w => taken.add(w));
