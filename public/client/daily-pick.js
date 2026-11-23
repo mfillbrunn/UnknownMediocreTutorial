@@ -2178,23 +2178,15 @@
   // shows each move. Only the word (or button) the hand points at responds,
   // so the explanations always match what's on screen.
   // The pointing hand, with a ripple where the fingertip taps.
-  // A friendly cartoon glove pointing up: the index finger, three curled
-  // fingers (back ones a shade darker), the thumb in front, a red cuff.
-  // The fingertip is at (22, 1.5) of its 64 x 76 box.
+  // A simple cartoon hand pointing up: one finger, a rounded fist (one
+  // clean outline, drawn as a thicker ink copy under the white), a red cuff.
+  // The fingertip is at (22, 0) of its 64 x 76 box.
+  const HAND_PARTS = `<rect x="15" y="3" width="14" height="40" rx="7"/><rect x="11" y="28" width="44" height="34" rx="15"/>`;
   const HAND_HTML = `<span class="dp-hand-ripple"></span><svg viewBox="0 0 64 76" aria-hidden="true" stroke-linejoin="round" stroke-linecap="round">
-    <g stroke="#2b2925" stroke-width="3.2">
-      <rect x="15" y="3" width="14" height="44" rx="7" fill="#fffdf8"/>
-      <rect x="46" y="31" width="11" height="18" rx="5.5" fill="#f1eadf"/>
-      <rect x="37" y="27.5" width="12" height="20" rx="6" fill="#f6f1e7"/>
-      <rect x="27" y="25" width="12.5" height="22" rx="6.25" fill="#fffdf8"/>
-      <path d="M12 49c0-5 3.5-8 8-8h28c5.5 0 9.5 3.5 9.5 9v2c0 8-6.5 14-14.5 14H26c-8 0-14-6-14-14z" fill="#fffdf8"/>
-    </g>
-    <rect x="16.7" y="38" width="9.8" height="5.2" fill="#fffdf8"/>
-    <rect x="5.5" y="46" width="22" height="11.5" rx="5.75" transform="rotate(-28 16.5 51.75)" fill="#fffdf8" stroke="#2b2925" stroke-width="3.2"/>
-    <path d="M19.5 9.5v12" stroke="#fff" stroke-width="2.6" opacity=".9"/>
-    <path d="M18.6 8.4c2-1.7 4.8-1.7 6.8 0" fill="none" stroke="#2b2925" stroke-width="1.8" opacity=".3"/>
-    <rect x="17" y="61" width="32" height="12.5" rx="6" fill="#e5484d" stroke="#2b2925" stroke-width="3.2"/>
-    <path d="M22 67.2h22" stroke="#fff" stroke-width="2" opacity=".5"/></svg>`;
+    <g fill="#2b2925" stroke="#2b2925" stroke-width="6.4">${HAND_PARTS}</g>
+    <g fill="#fffdf8">${HAND_PARTS}</g>
+    <path d="M33 29v9M43 30v8" fill="none" stroke="#2b2925" stroke-width="2.6" opacity=".35"/>
+    <rect x="17" y="59" width="32" height="13" rx="6" fill="#e5484d" stroke="#2b2925" stroke-width="3.2"/></svg>`;
   // The tutorial grid: picked so that whatever word a newcomer guesses first,
   // some secret gives a green, a yellow and grays, and leaves 4 to 6 words
   // that still fit. The secret is chosen right after that first guess.
@@ -2475,7 +2467,7 @@
   function placeThink(say, target, extra = [], avoid = [], soft = []) {
     const tb = target?.getBoundingClientRect();
     const vw = window.innerWidth, vh = window.innerHeight;
-    const W = Math.min(340, vw - 24);
+    const W = Math.min(350, vw - 16);
     const left = Math.round((vw - W) / 2);
     say.style.width = `${W}px`;
     say.style.left = `${left}px`;

@@ -1716,7 +1716,7 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
   box-sizing: border-box; padding: 14px 18px 8px; border-radius: 28px;
   background: #fffdf8; color: #2b2925; border: 2.5px solid #2b2925;
   box-shadow: 0 10px 28px rgba(0,0,0,.35);
-  font-size: clamp(14.5px, 4.1vw, 16px); line-height: 1.4; text-align: center;
+  font-size: clamp(15px, 4.7vw, 18.5px); line-height: 1.38; text-align: center;
   transition: top .35s cubic-bezier(.3,.7,.2,1); animation: none;
 }
 .dp-think.is-pop { animation: dp-think-pop .32s cubic-bezier(.3,1.4,.5,1); }
@@ -1726,7 +1726,7 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-think .dp-say-line { display: block; text-align: left; margin: 4px auto 0; width: fit-content; }
 .dp-think .dp-say-lead { display: block; margin-bottom: 3px; color: #2f7d43; font-weight: 700; }
 .dp-think .dp-say-no { color: #c0392b; }
-.dp-think small { display: block; margin-top: 6px; font-size: 12.5px; color: #8a8276; }
+.dp-think small { display: block; margin-top: 6px; font-size: 13.5px; color: #8a8276; }
 .dp-think .dp-coach-skip { margin: 4px auto 0; font-size: 12px; color: #9a9184; }
 /* the thought dots */
 .dp-think-dot { position: absolute; display: none; border-radius: 50%; background: #fffdf8; border: 2.5px solid #2b2925; left: var(--tail-x, 50%); transform: translateX(-50%); }
@@ -1746,8 +1746,8 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-say-tile.is-present { background: var(--dp-near); }
 .dp-say-tile.is-absent { background: var(--dp-miss, #7a756c); }
 /* the hand: a bit smaller and bouncier */
-.dp-coach-hand { width: 58px; height: 69px; margin: -1px 0 0 -20px; filter: drop-shadow(0 5px 8px rgba(0,0,0,.35)); }
-.dp-hand-ripple { left: 20px; border-color: rgba(229,72,77,.85); }
+.dp-coach-hand { width: 56px; height: 66px; margin: 0 0 0 -19px; filter: drop-shadow(0 5px 8px rgba(0,0,0,.35)); }
+.dp-hand-ripple { left: 19px; top: 2px; border-color: rgba(229,72,77,.85); }
 @keyframes dp-hand-tap2 { 0%, 60%, 100% { transform: none; } 30% { transform: translateY(6px) scale(.9) rotate(-6deg); } }
 @keyframes dp-hand-double2 { 0%, 52%, 100% { transform: none; } 14%, 38% { transform: translateY(6px) scale(.9) rotate(-6deg); } 26% { transform: translateY(-1px); } }
 .dp-think.is-passive { pointer-events: none; }
@@ -1775,8 +1775,9 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 #dailyPickScreen .dp-board .dp-word.is-struck:not(.is-guessed):not(.is-solved) {
   background: rgba(0,0,0,.3) !important; border-color: rgba(255,255,255,.05) !important; box-shadow: inset 0 1px 3px rgba(0,0,0,.25) !important;
 }
-#dailyPickScreen .dp-board .dp-word.is-guessed:not(.is-solved) { background: rgba(255,255,255,.075) !important; border-color: rgba(255,255,255,.17) !important; }
+/* Guessed words sit down with the crossed-out ones, a shade lighter. */
+#dailyPickScreen .dp-board .dp-word.is-guessed:not(.is-solved) { background: rgba(0,0,0,.17) !important; border-color: rgba(255,255,255,.07) !important; box-shadow: inset 0 1px 3px rgba(0,0,0,.2) !important; }
 #dailyPickScreen.dp-light .dp-board .dp-word.is-struck:not(.is-guessed):not(.is-solved) {
   background: #e9e2d3 !important; border-color: #ddd4c3 !important; box-shadow: inset 0 1px 3px rgba(80,60,20,.1) !important;
 }
-#dailyPickScreen.dp-light .dp-board .dp-word.is-guessed:not(.is-solved) { background: #fffdf8 !important; border-color: #ddd3c0 !important; }
+#dailyPickScreen.dp-light .dp-board .dp-word.is-guessed:not(.is-solved) { background: #efe9dc !important; border-color: #e0d8c7 !important; box-shadow: inset 0 1px 3px rgba(80,60,20,.08) !important; }
