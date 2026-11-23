@@ -1703,3 +1703,25 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 #dailyPickScreen .dp-board .dp-word.has-xbtn .dp-card-face { padding-left: 21px !important; padding-right: 1px !important; }
 .dp-word.has-xbtn.is-struck::after { left: 24px; right: 6%; }
 .dp-board.is-diamond.is-rows4 { grid-template-rows: repeat(4, var(--card-h)); }
+
+/* ---------- Tutorial v4: the words sit in the header, in place of the
+   title, always in the same spot and never over the board ---------- */
+#dailyPickScreen.is-coaching .dp-head { display: block; }
+#dailyPickScreen.is-coaching .dp-head > :not(.dp-coach-say) { display: none !important; }
+#dailyPickScreen.is-coaching #dailyPickRoot > .dp-link[data-practice="end"] { visibility: hidden; }
+.dp-head .dp-coach-say {
+  position: relative; z-index: 63; left: auto; top: auto !important; bottom: auto; transform: none;
+  width: 100%; box-sizing: border-box; margin: 0 0 4px; padding: 10px 12px 6px;
+  border-radius: 14px; box-shadow: 0 6px 18px rgba(0,0,0,.3);
+  font-size: clamp(14px, 4.1vw, 15.5px); line-height: 1.35; animation: dp-say-swap .25s ease-out;
+}
+.dp-head .dp-coach-say .dp-say-text { display: flex; flex-direction: column; justify-content: center; min-height: 2.9em; }
+.dp-head .dp-coach-say .dp-coach-skip { margin-top: 2px; }
+@keyframes dp-say-swap { from { opacity: .3; } }
+.dp-say-tile {
+  display: inline-grid; place-items: center; width: 1.3em; height: 1.3em; margin-right: 3px; border-radius: 4px; line-height: 1;
+  vertical-align: -.22em; font-weight: 900; font-size: .9em; color: #fff;
+}
+.dp-say-tile.is-correct { background: var(--dp-hit); }
+.dp-say-tile.is-present { background: var(--dp-near); }
+.dp-say-tile.is-absent { background: #6b7079; }
