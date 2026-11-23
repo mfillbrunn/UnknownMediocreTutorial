@@ -2,7 +2,9 @@
 
 /* Feedback colors. Color-blind mode (.dp-cb) swaps green/yellow for
    orange/blue, as Wordle's high-contrast mode does. */
-#dailyPickScreen { --dp-hit: #3f9d4f; --dp-near: #c9a227; --dp-hit-light: #8fe0a3; }
+#dailyPickScreen { --dp-hit: #4f9b5c; --dp-near: #cfa33a; --dp-hit-light: #8fe0a3; --dp-miss: #6b665e;
+  /* The one "accent" is the theme's own ink: warm white on dark, ink on cream. */
+  --dp-accent: #f1ece2; --dp-on-accent: #1c1b19; --dp-link: #e9e3d8; }
 #dailyPickScreen.dp-cb { --dp-hit: #f5793a; --dp-near: #3d8fd9; --dp-hit-light: #ffb48a; }
 
 /* The screen wrapper's own tinted panel showed as a ghost around the card. */
@@ -103,7 +105,7 @@
   display: flex; align-items: center; justify-content: center;
   padding: 20px;
   border-radius: inherit;
-  background: rgba(8,12,18,.6);
+  background: rgba(14,13,12,.6);
 }
 .dp-intro[hidden] { display: none; }
 .dp-intro-card {
@@ -111,7 +113,7 @@
   padding: 22px 22px 16px;
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 14px;
-  background: #16202e;
+  background: #262421;
   box-shadow: 0 12px 32px rgba(0,0,0,.45);
   text-align: center;
   font-size: 17px; line-height: 1.45;
@@ -150,11 +152,11 @@
 .dp-word[disabled] { cursor: default; }
 /* The word lined up to guess: solid blue, lifted, with a soft glow. */
 .dp-word.is-selected {
-  background: #3b7dd8;
-  border-color: #9cc8ff;
-  color: #fff;
+  background: var(--dp-accent);
+  border-color: var(--dp-accent);
+  color: var(--dp-on-accent);
   transform: translateY(-2px);
-  box-shadow: 0 0 0 2px rgba(111,177,255,.35), 0 6px 16px rgba(59,125,216,.45);
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--dp-accent) 35%, transparent);
 }
 .dp-word.just-selected { animation: dp-lift .2s ease-out; }
 @keyframes dp-lift {
@@ -217,7 +219,7 @@
 }
 .dp-tile.is-correct { background: var(--dp-hit); }
 .dp-tile.is-present { background: var(--dp-near); }
-.dp-tile.is-absent { background: #555b63; }
+.dp-tile.is-absent { background: #5f5b55; }
 /* "In the word, spot not shown": green and yellow split corner to corner,
    with a thin dark seam so it reads as two halves even on small tiles. */
 .dp-tile.is-in {
@@ -253,7 +255,7 @@
   background: transparent; color: inherit; opacity: .45;
   border-color: rgba(255,255,255,.22);
 }
-.dp-share { background: #3b7dd8; color: #fff; }
+.dp-share { background: var(--dp-accent); color: var(--dp-on-accent); }
 
 /* ---------- Feedback on guessed tiles ----------
    A guessed word keeps its feedback in miniature along the bottom of its tile:
@@ -266,7 +268,7 @@
 .dp-mini i { width: 9px; height: 9px; border-radius: 2px; }
 .dp-mini i.is-correct { background: var(--dp-hit); }
 .dp-mini i.is-present { background: var(--dp-near); }
-.dp-mini i.is-absent { background: #6b727c; }
+.dp-mini i.is-absent { background: #6b665e; }
 .dp-mini i.is-in { background: linear-gradient(135deg, var(--dp-hit) 0 50%, var(--dp-near) 50% 100%); }
 .dp-mini i.is-count {
   width: 17px; height: 17px; border-radius: 50%;
@@ -335,7 +337,7 @@
 .dp-dist-row { display: grid; grid-template-columns: 112px 1fr; align-items: center; gap: 8px; margin: 5px 0; font-size: 13px; }
 .dp-dist-label { opacity: .75; white-space: nowrap; }
 .dp-dist-track { display: flex; align-items: center; gap: 6px; min-height: 20px; }
-.dp-dist-bar { display: block; height: 20px; border-radius: 4px; background: #555b63; }
+.dp-dist-bar { display: block; height: 20px; border-radius: 4px; background: #5f5b55; }
 .dp-dist-track b { font-variant-numeric: tabular-nums; font-size: 13px; }
 .dp-dist-row.is-today .dp-dist-bar { background: var(--dp-hit); }
 .dp-dist-row.is-today .dp-dist-label { opacity: 1; font-weight: 800; }
@@ -389,14 +391,14 @@
   content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
   background: #fff; transition: transform .15s ease;
 }
-.dp-switch input:checked + .dp-switch-ui { background: #3b7dd8; }
+.dp-switch input:checked + .dp-switch-ui { background: var(--dp-accent); color: var(--dp-on-accent); }
 .dp-switch input:checked + .dp-switch-ui::after { transform: translateX(18px); }
-.dp-switch input:focus-visible + .dp-switch-ui { outline: 2px solid #9cc8ff; outline-offset: 2px; }
+.dp-switch input:focus-visible + .dp-switch-ui { outline: 2px solid var(--dp-accent); outline-offset: 2px; }
 
 /* ---------- Text links ---------- */
 .dp-link {
   display: block; margin: 10px auto 0; padding: 6px 10px;
-  border: 0; background: none; color: #9cc8ff;
+  border: 0; background: none; color: var(--dp-link);
   font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
 }
 #dailyPickScreen .dp-link { font-size: 14px !important; }
@@ -410,7 +412,7 @@
 .dp-tut-body p { margin: 0 0 10px; }
 .dp-tut-dots { display: flex; justify-content: center; gap: 6px; margin: 6px 0 12px; }
 .dp-tut-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.22); }
-.dp-tut-dots i.is-on { background: #3b7dd8; width: 18px; border-radius: 4px; }
+.dp-tut-dots i.is-on { background: var(--dp-accent); width: 18px; border-radius: 4px; color: var(--dp-on-accent); }
 .dp-tut-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .dp-tut-nav .dp-link { margin: 0; }
 .dp-tut-nav .dp-next { margin: 0 !important; }
@@ -424,14 +426,14 @@
   border: 1.5px solid rgba(255,255,255,.16); background: rgba(255,255,255,.07);
   font-weight: 800; letter-spacing: .02em;
 }
-.dp-demo-word.is-selected { background: #3b7dd8; border-color: #9cc8ff; color: #fff; }
+.dp-demo-word.is-selected { background: var(--dp-accent); border-color: var(--dp-accent); color: var(--dp-on-accent); }
 .dp-demo-word.is-struck { color: rgba(255,255,255,.34); border-color: rgba(255,120,120,.22); background: rgba(255,90,90,.05); }
 .dp-demo-word.is-struck::after {
   content: ""; position: absolute; left: 10%; right: 10%; top: 50%;
   height: 3px; margin-top: -1.5px; border-radius: 3px; background: rgba(255,120,120,.95);
 }
 .dp-demo-arrow { opacity: .6; }
-.dp-demo-btn { padding: 8px 12px; border-radius: 9px; background: #f1f2f4; color: #15181d; font-weight: 700; font-size: 14px; }
+.dp-demo-btn { padding: 8px 12px; border-radius: 9px; background: #f1ece2; color: #1c1b19; font-weight: 700; font-size: 14px; }
 .dp-demo-steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 10px; }
 .dp-demo-steps > span { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .dp-demo-steps small { font-size: 12px; opacity: .7; }
@@ -462,7 +464,7 @@
 .dp-flow-tile { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .dp-flow-tile .dp-demo-word { min-width: 0; width: 54px; padding: 9px 0; font-size: 11px; }
 .dp-flow-tile small, .dp-flow-arrow small { font-size: 10px; opacity: .7; white-space: nowrap; }
-.dp-flow-arrow { display: flex; flex-direction: column; align-items: center; margin-bottom: 16px; color: #9cc8ff; }
+.dp-flow-arrow { display: flex; flex-direction: column; align-items: center; margin-bottom: 16px; color: var(--dp-link); }
 .dp-flow-arrow b { font-size: 18px; line-height: 1; }
 
 /* ---------- Daily / Weekly tabs ---------- */
@@ -499,7 +501,7 @@
 .dp-mini.dp-mini-grid {
   left: auto; right: 7px; bottom: auto; top: 7px;
   display: grid; grid-template-columns: repeat(var(--cols), 5px); gap: 1px;
-  padding: 2px; border-radius: 3px; background: rgba(10,14,20,.85);
+  padding: 2px; border-radius: 3px; background: rgba(16,15,13,.85);
 }
 .dp-mini.dp-mini-grid i { width: 5px; height: 5px; border-radius: 1px; }
 
@@ -517,7 +519,7 @@
 .dp-cell { border-radius: 2px; min-height: 0; }
 .dp-cell.is-correct { background: var(--dp-hit); }
 .dp-cell.is-present { background: var(--dp-near); }
-.dp-cell.is-absent { background: #555b63; }
+.dp-cell.is-absent { background: #5f5b55; }
 .dp-cell.is-empty { background: rgba(255,255,255,.07); }
 .dp-row.is-revealing .dp-cell { animation: dp-flip .32s ease-out both; animation-delay: calc(var(--i) * 45ms); }
 .dp-row.is-win .dp-fb-grid { animation: dp-hop .5s ease-in-out .8s both; }
@@ -538,7 +540,7 @@
 .dp-score-main { display: grid; grid-template-columns: 1fr 1fr; align-items: end; }
 .dp-score-main > div + div { border-left: 1px solid rgba(255,255,255,.12); }
 .dp-score-num { font-size: 58px; }
-.dp-score-num.dp-score-time { color: #f5f8fc; font-size: 46px; line-height: 58px; }
+.dp-score-num.dp-score-time { color: #f6f2ea; font-size: 46px; line-height: 58px; }
 .dp-score-label { font-size: 13px; margin-top: 2px; }
 .dp-score-verdict { margin-top: 6px; font-size: 18px; }
 .dp-grid-score { padding: 6px 4px 8px; gap: 0; }
@@ -585,7 +587,7 @@
 /* Guess: full width, blue like the picked word. */
 #dailyPickScreen .dp-center #dpGuess {
   align-self: stretch; padding: 13px 0; border: 0;
-  background: #3b7dd8 !important; color: #fff !important;
+  background: var(--dp-accent) !important; color: var(--dp-on-accent) !important;
   font-size: 18px !important;
 }
 #dailyPickScreen .dp-center #dpGuess:disabled {
@@ -594,54 +596,54 @@
 }
 
 /* ---------- Light mode ---------- */
-#dailyPickScreen.dp-light { color: #1b1f27; }
+#dailyPickScreen.dp-light { color: #2b2925; }
 #dailyPickScreen.dp-light .dp-card {
-  background: #ffffff !important; border-color: #d6dce6 !important;
-  box-shadow: 0 16px 48px rgba(20,28,40,.12) !important; color: #1b1f27;
+  background: #ffffff !important; border-color: #dcd5c9 !important;
+  box-shadow: 0 16px 48px rgba(33,31,27,.12) !important; color: #2b2925;
 }
-#dailyPickScreen.dp-light .menu-title { color: #141c28 !important; }
-#dailyPickScreen.dp-light .dp-word { background: #f2f4f8; border-color: #d3d9e3; color: #1b1f27; }
-#dailyPickScreen.dp-light .dp-word.is-selected { background: #3b7dd8; border-color: #2f6fc6; color: #fff; }
-#dailyPickScreen.dp-light .dp-word.is-struck { color: rgba(27,31,39,.35); background: #f7f8fa; border-color: #e1e5ec; }
-#dailyPickScreen.dp-light .dp-word.is-guessed { border-color: #d9b44a; background: #f7f8fa; }
-#dailyPickScreen.dp-light .dp-center { background: #f0f2f6; }
-#dailyPickScreen.dp-light .dp-tile.is-empty { border-color: #cbd2dc; }
+#dailyPickScreen.dp-light .menu-title { color: #201e1c !important; }
+#dailyPickScreen.dp-light .dp-word { background: #f4efe6; border-color: #ddd6ca; color: #2b2925; }
+#dailyPickScreen.dp-light .dp-word.is-selected { background: var(--dp-accent); border-color: var(--dp-accent); color: var(--dp-on-accent); }
+#dailyPickScreen.dp-light .dp-word.is-struck { color: rgba(36,34,30,.35); background: #f9f9f8; border-color: #e5dfd3; }
+#dailyPickScreen.dp-light .dp-word.is-guessed { border-color: #d9b44a; background: #f9f9f8; }
+#dailyPickScreen.dp-light .dp-center { background: #f2ede4; }
+#dailyPickScreen.dp-light .dp-tile.is-empty { border-color: #d3ccbf; }
 #dailyPickScreen.dp-light .dp-tile.is-absent,
-#dailyPickScreen.dp-light .dp-cell.is-absent { background: #7d8592; }
-#dailyPickScreen.dp-light .dp-tile.is-plain { color: #1b1f27; }
-#dailyPickScreen.dp-light .dp-mini i.is-absent { background: #9aa1ab; }
+#dailyPickScreen.dp-light .dp-cell.is-absent { background: #928a7d; }
+#dailyPickScreen.dp-light .dp-tile.is-plain { color: #2b2925; }
+#dailyPickScreen.dp-light .dp-mini i.is-absent { background: #aba59a; }
 #dailyPickScreen.dp-light .dp-mini.dp-mini-grid { background: rgba(255,255,255,.92); }
-#dailyPickScreen.dp-light .dp-fb-grid { background: rgba(20,28,40,.08); }
-#dailyPickScreen.dp-light .dp-help-btn { border-color: #b9c1cd; }
-#dailyPickScreen.dp-light .dp-center #dpGuess:disabled { border-color: rgba(20,28,40,.25); }
-#dailyPickScreen.dp-light .dp-next:not(.dp-share):not(#dpGuess) { background: #1b1f27; color: #fff; }
+#dailyPickScreen.dp-light .dp-fb-grid { background: rgba(33,31,27,.08); }
+#dailyPickScreen.dp-light .dp-help-btn { border-color: #c4bdb1; }
+#dailyPickScreen.dp-light .dp-center #dpGuess:disabled { border-color: rgba(33,31,27,.25); }
+#dailyPickScreen.dp-light .dp-next:not(.dp-share):not(#dpGuess) { background: #2b2925; color: #fff; }
 #dailyPickScreen.dp-light .dp-next:disabled:not(#dpGuess) { background: transparent; color: inherit; }
-#dailyPickScreen.dp-light .dp-link { color: #2f6fc6; }
-#dailyPickScreen.dp-light .dp-intro { background: rgba(238,241,245,.7); }
-#dailyPickScreen.dp-light .dp-intro-card { background: #ffffff; border-color: #d6dce6; box-shadow: 0 12px 32px rgba(20,28,40,.18); }
+#dailyPickScreen.dp-light .dp-link { color: var(--dp-link); }
+#dailyPickScreen.dp-light .dp-intro { background: rgba(243,242,240,.7); }
+#dailyPickScreen.dp-light .dp-intro-card { background: #ffffff; border-color: #dcd5c9; box-shadow: 0 12px 32px rgba(33,31,27,.18); }
 #dailyPickScreen.dp-light .dp-settings,
 #dailyPickScreen.dp-light .dp-stat,
 #dailyPickScreen.dp-light .dp-dist,
-#dailyPickScreen.dp-light .dp-tabs { background: #f0f2f6; }
-#dailyPickScreen.dp-light .dp-grid-score { background: #f0f2f6; border-color: #dde2ea; }
-#dailyPickScreen.dp-light .dp-dist-bar { background: #b8bfca; }
+#dailyPickScreen.dp-light .dp-tabs { background: #f2ede4; }
+#dailyPickScreen.dp-light .dp-grid-score { background: #f2ede4; border-color: #e2dbcf; }
+#dailyPickScreen.dp-light .dp-dist-bar { background: #c7c3bb; }
 #dailyPickScreen.dp-light .dp-dist-row.is-today .dp-dist-bar { background: var(--dp-hit); }
-#dailyPickScreen.dp-light .dp-score-main > div + div { border-left-color: rgba(20,28,40,.12); }
-#dailyPickScreen.dp-light .dp-switch-ui { background: #cdd3dc; }
-#dailyPickScreen.dp-light .dp-switch input:checked + .dp-switch-ui { background: #3b7dd8; }
-#dailyPickScreen.dp-light .dp-tut-dots i { background: #cdd3dc; }
-#dailyPickScreen.dp-light .dp-tut-dots i.is-on { background: #3b7dd8; }
-#dailyPickScreen.dp-light .dp-demo-word { background: #f2f4f8; border-color: #d3d9e3; }
-#dailyPickScreen.dp-light .dp-demo-word.is-selected { background: #3b7dd8; color: #fff; }
-#dailyPickScreen.dp-light .dp-demo-word.is-struck { color: rgba(27,31,39,.35); }
-#dailyPickScreen.dp-light .dp-demo-btn { background: #3b7dd8; color: #fff; }
+#dailyPickScreen.dp-light .dp-score-main > div + div { border-left-color: rgba(33,31,27,.12); }
+#dailyPickScreen.dp-light .dp-switch-ui { background: #d4cdc1; }
+#dailyPickScreen.dp-light .dp-switch input:checked + .dp-switch-ui { background: var(--dp-accent); color: var(--dp-on-accent); }
+#dailyPickScreen.dp-light .dp-tut-dots i { background: #d4cdc1; }
+#dailyPickScreen.dp-light .dp-tut-dots i.is-on { background: var(--dp-accent); color: var(--dp-on-accent); }
+#dailyPickScreen.dp-light .dp-demo-word { background: #f4efe6; border-color: #ddd6ca; }
+#dailyPickScreen.dp-light .dp-demo-word.is-selected { background: var(--dp-accent); color: var(--dp-on-accent); }
+#dailyPickScreen.dp-light .dp-demo-word.is-struck { color: rgba(36,34,30,.35); }
+#dailyPickScreen.dp-light .dp-demo-btn { background: var(--dp-accent); color: var(--dp-on-accent); }
 #dailyPickScreen.dp-light .dp-tab.is-on { background: #ffffff; }
-#dailyPickScreen.dp-light .dp-cell.is-empty { background: rgba(20,28,40,.06); }
+#dailyPickScreen.dp-light .dp-cell.is-empty { background: rgba(33,31,27,.06); }
 @media (hover: hover) {
-  #dailyPickScreen.dp-light .dp-word:not([disabled]):not(.is-selected):hover { background: #e8ecf2; border-color: #c3cad5; }
-  #dailyPickScreen.dp-light .dp-help-btn:hover { background: #f0f2f6; }
+  #dailyPickScreen.dp-light .dp-word:not([disabled]):not(.is-selected):hover { background: #ebe5da; border-color: #cbc4b6; }
+  #dailyPickScreen.dp-light .dp-help-btn:hover { background: #f2ede4; }
 }
-.dp-demo-btn { background: #3b7dd8; color: #fff; }
+.dp-demo-btn { background: var(--dp-accent); color: var(--dp-on-accent); }
 .dp-hint:empty { display: none; }
 
 /* ---------- Larger switches ---------- */
@@ -652,44 +654,45 @@
 #dailyPickScreen .dp-help-btn.is-open { font-size: 18px !important; }
 
 /* ---------- Light mode, refined ---------- */
-#dailyPickScreen.dp-light { --dp-hit: #2f9449; --dp-near: #d3a21f; --dp-hit-light: #7fd096; }
+#dailyPickScreen.dp-light { --dp-hit: #3f8f4f; --dp-near: #c9992a; --dp-hit-light: #7fd096; --dp-miss: #8b867c;
+  --dp-accent: #2b2925; --dp-on-accent: #fffdf8; --dp-link: #2b2925; }
 #dailyPickScreen.dp-light.dp-cb { --dp-hit: #ef6c2b; --dp-near: #2f80d0; --dp-hit-light: #ffb48a; }
-body.dp-light-page { background: #eef1f6; }
-#dailyPickScreen.dp-light .dp-card { border-color: #e1e6ee !important; box-shadow: 0 10px 36px rgba(20,28,40,.08) !important; }
-#dailyPickScreen.dp-light .dp-title-grid, #dailyPickScreen.dp-light .dp-clock { color: #6d7685; opacity: 1; }
+body.dp-light-page { background: #f3eee3; }
+#dailyPickScreen.dp-light .dp-card { border-color: #e5dfd3 !important; box-shadow: 0 10px 36px rgba(33,31,27,.08) !important; }
+#dailyPickScreen.dp-light .dp-title-grid, #dailyPickScreen.dp-light .dp-clock { color: #77726a; opacity: 1; }
 /* Word tiles: white on white, lifted by a soft shadow. */
 #dailyPickScreen.dp-light .dp-word {
-  background: #ffffff; border-color: #dfe4ec; color: #141c28;
-  box-shadow: 0 1px 2px rgba(20,28,40,.06), 0 2px 6px rgba(20,28,40,.04);
+  background: #ffffff; border-color: #e4ddd1; color: #201e1c;
+  box-shadow: 0 1px 2px rgba(33,31,27,.06), 0 2px 6px rgba(33,31,27,.04);
 }
-#dailyPickScreen.dp-light .dp-word.is-selected { background: #3b7dd8; border-color: #2f6fc6; color: #fff; box-shadow: 0 0 0 2px rgba(59,125,216,.25), 0 6px 14px rgba(59,125,216,.3); }
-#dailyPickScreen.dp-light .dp-word.is-struck { background: #f5f6f9; border-color: #e7eaf0; color: rgba(20,28,40,.3); box-shadow: none; }
+#dailyPickScreen.dp-light .dp-word.is-selected { background: var(--dp-accent); border-color: var(--dp-accent); color: var(--dp-on-accent); box-shadow:0 0 0 2px color-mix(in srgb, var(--dp-accent) 25%, transparent); }
+#dailyPickScreen.dp-light .dp-word.is-struck { background: #f8f7f6; border-color: #edecea; color: rgba(33,31,27,.3); box-shadow: none; }
 #dailyPickScreen.dp-light .dp-word.is-struck::after { background: #e5484d; box-shadow: none; }
 #dailyPickScreen.dp-light .dp-word.is-guessed { background: #fbf8ee; border-color: #e6c766; }
 #dailyPickScreen.dp-light .dp-word.is-guessed::after { background: rgba(229,72,77,.6); }
 /* The secret, once found: solid green like the dark theme. */
 #dailyPickScreen.dp-light .dp-word.is-solved { background: var(--dp-hit); border-color: var(--dp-hit); color: #fff; }
 /* Panel and feedback */
-#dailyPickScreen.dp-light .dp-center { background: #f5f7fa; border: 1px solid #e6eaf0; }
-#dailyPickScreen.dp-light .dp-tile.is-absent, #dailyPickScreen.dp-light .dp-cell.is-absent { background: #8a929e; }
-#dailyPickScreen.dp-light .dp-mini i.is-absent { background: #b3b9c3; }
-#dailyPickScreen.dp-light .dp-key, #dailyPickScreen.dp-light .dp-hint { color: #4a5261; opacity: 1; }
-#dailyPickScreen.dp-light .dp-last { color: #6d7685; opacity: 1; }
-#dailyPickScreen.dp-light .dp-help-btn { border-color: #cfd6e0; color: #141c28; }
+#dailyPickScreen.dp-light .dp-center { background: #f7f3ec; border: 1px solid #ece6dc; }
+#dailyPickScreen.dp-light .dp-tile.is-absent, #dailyPickScreen.dp-light .dp-cell.is-absent { background: #9e978a; }
+#dailyPickScreen.dp-light .dp-mini i.is-absent { background: #c2bdb4; }
+#dailyPickScreen.dp-light .dp-key, #dailyPickScreen.dp-light .dp-hint { color: #5e584d; opacity: 1; }
+#dailyPickScreen.dp-light .dp-last { color: #77726a; opacity: 1; }
+#dailyPickScreen.dp-light .dp-help-btn { border-color: #d6cfc3; color: #201e1c; }
 /* Results */
 #dailyPickScreen.dp-light .dp-grid-score, #dailyPickScreen.dp-light .dp-stat, #dailyPickScreen.dp-light .dp-dist, #dailyPickScreen.dp-light .dp-settings {
-  background: #f5f7fa; border: 1px solid #e6eaf0;
+  background: #f7f3ec; border: 1px solid #ece6dc;
 }
-#dailyPickScreen.dp-light .dp-dist-bar { background: #c6ccd6; }
-#dailyPickScreen.dp-light .dp-grid-name, #dailyPickScreen.dp-light .dp-score-label, #dailyPickScreen.dp-light .dp-dist-title { color: #6d7685; opacity: 1; }
+#dailyPickScreen.dp-light .dp-dist-bar { background: #cec7bb; }
+#dailyPickScreen.dp-light .dp-grid-name, #dailyPickScreen.dp-light .dp-score-label, #dailyPickScreen.dp-light .dp-dist-title { color: #77726a; opacity: 1; }
 
 /* While the rules are open, the "?" is a red close button. */
 .dp-help-btn.is-open, #dailyPickScreen.dp-light .dp-help-btn.is-open { background: #d64545; border-color: #d64545; color: #fff; }
 
 /* Results: the numbers stay neutral; the result line carries the color
    (green at par or better, amber over par). */
-.dp-score-num, .dp-score-num.dp-score-time { color: #f5f8fc; }
-#dailyPickScreen.dp-light .dp-score-num { color: #141c28; }
+.dp-score-num, .dp-score-num.dp-score-time { color: #f6f2ea; }
+#dailyPickScreen.dp-light .dp-score-num { color: #201e1c; }
 .dp-score-verdict.is-good { color: var(--dp-hit); }
 .dp-score-verdict.is-over { color: #e8a33d; }
 #dailyPickScreen.dp-light .dp-score-verdict.is-over { color: #c47a12; }
@@ -703,7 +706,7 @@ body.dp-light-page { background: #eef1f6; }
   align-self: center; width: 62%; min-width: 200px; margin: 4px 0;
   padding: 13px 0; border-radius: 999px;
   display: flex; align-items: center; justify-content: center; gap: 8px;
-  box-shadow: 0 6px 18px rgba(59,125,216,.4);
+  box-shadow:none;
 }
 #dailyPickScreen .dp-summary .dp-share { font-size: 18px !important; }
 .dp-share svg { display: block; flex-shrink: 0; }
@@ -729,10 +732,10 @@ body.dp-light-page { background: #eef1f6; }
 .dp-details tr.is-total { border-top: 2px solid rgba(255,255,255,.18) !important; }
 .dp-details tr.is-total th, .dp-details tr.is-total td { font-weight: 900; }
 .dp-details-note { margin-top: 6px; text-align: center; font-size: 11.5px; opacity: .55; }
-#dailyPickScreen.dp-light .dp-views, #dailyPickScreen.dp-light .dp-details { background: #f5f7fa; border: 1px solid #e6eaf0; }
-#dailyPickScreen.dp-light .dp-view.is-on { background: #ffffff; box-shadow: 0 1px 3px rgba(20,28,40,.1); }
-#dailyPickScreen.dp-light .dp-details tbody tr + tr { border-top-color: #e3e7ee; }
-#dailyPickScreen.dp-light .dp-details tr.is-total { border-top-color: #cfd6e0 !important; }
+#dailyPickScreen.dp-light .dp-views, #dailyPickScreen.dp-light .dp-details { background: #f7f3ec; border: 1px solid #ece6dc; }
+#dailyPickScreen.dp-light .dp-view.is-on { background: #ffffff; box-shadow: 0 1px 3px rgba(33,31,27,.1); }
+#dailyPickScreen.dp-light .dp-details tbody tr + tr { border-top-color: #e6dfd0; }
+#dailyPickScreen.dp-light .dp-details tr.is-total { border-top-color: #d6cfc3 !important; }
 
 /* Overall and Details share one space, sized to the taller of the two. */
 .dp-panes { display: grid; }
@@ -753,7 +756,7 @@ body.dp-light-page { background: #eef1f6; }
 }
 #dailyPickScreen .dp-summary .dp-side-btn { font-size: 12.5px !important; overflow: hidden; text-overflow: ellipsis; }
 .dp-stats.is-four { grid-template-columns: repeat(4, 1fr); }
-#dailyPickScreen.dp-light .dp-summary .dp-side-btn { background: #fff; color: #1b1f27; border-color: #c3cad5; }
+#dailyPickScreen.dp-light .dp-summary .dp-side-btn { background: #fff; color: #2b2925; border-color: #cbc4b6; }
 
 /* ---------- Speed ---------- */
 .dp-clock { position: relative; }
@@ -792,7 +795,7 @@ body.dp-light-page { background: #eef1f6; }
 .dp-speed-cell.is-solved { background: var(--dp-hit); border: 0; color: #fff; }
 .dp-speed-cell small { position: absolute; top: 3px; left: 6px; font-size: 10px; font-weight: 700; opacity: .6; }
 .dp-speed-note { font-size: 12px; opacity: .6; text-align: center; margin-top: -4px; }
-#dailyPickScreen.dp-light .dp-speed-cell:not(.is-solved) { background: #f2f4f8; border-color: #c3cad5; }
+#dailyPickScreen.dp-light .dp-speed-cell:not(.is-solved) { background: #f4efe6; border-color: #cbc4b6; }
 
 /* ---------- Weekly: Colors ---------- */
 .dp-paints { display: inline-flex; gap: 3px; }
@@ -816,7 +819,7 @@ body.dp-light-page { background: #eef1f6; }
 .dp-paint-tile b { display: block; width: 100%; height: 7px; border-radius: 4px; }
 .dp-paint-tile b.is-correct { background: var(--dp-hit); }
 .dp-paint-tile b.is-present { background: var(--dp-near); }
-.dp-paint-tile b.is-absent { background: #555b63; }
+.dp-paint-tile b.is-absent { background: #5f5b55; }
 .dp-mixes { display: grid; gap: 5px; width: max-content; margin: 2px auto 10px; font-size: 14px; text-align: left; }
 .dp-mix { display: flex; align-items: center; gap: 6px; }
 .dp-mix .dp-paints-inline { margin: 0; }
@@ -825,13 +828,13 @@ body.dp-light-page { background: #eef1f6; }
 /* ---------- Weekly: Arrows (no colors at all) ---------- */
 .dp-arrow-tile {
   flex-direction: column; gap: 1px; line-height: 1;
-  background: #3a3f47; border: 1.5px solid rgba(255,255,255,.18);
+  background: #47423a; border: 1.5px solid rgba(255,255,255,.18);
 }
 .dp-arrow-tile small { font-size: .8em; font-weight: 800; opacity: .9; }
 .dp-mini-arrows { gap: 4px; bottom: 5px; }
 .dp-mini-arrows i { width: auto; height: auto; font-style: normal; font-weight: 800; font-size: 12px; line-height: 1; }
 .dp-key b { font-weight: 900; }
-#dailyPickScreen.dp-light .dp-arrow-tile { background: #eef1f5; color: #1b1f27; border-color: #cbd2dc; }
+#dailyPickScreen.dp-light .dp-arrow-tile { background: #f3f2f0; color: #2b2925; border-color: #d3ccbf; }
 /* Just Share and one other button: two equal halves. */
 .dp-share-row:has(> :nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
@@ -848,14 +851,14 @@ body.dp-light-page { background: #eef1f6; }
 #dailyPickScreen .dp-intro-card .dp-start-play { font-size: 17px !important; }
 .dp-start-sub { margin-top: 8px; font-size: 14px; opacity: .7; }
 .dp-start-card .dp-link { margin-top: 14px; }
-#dailyPickScreen.dp-light .dp-start-card { background: #fff; border-color: #d3d9e3; color: #1b1f27; }
+#dailyPickScreen.dp-light .dp-start-card { background: #fff; border-color: #ddd6ca; color: #2b2925; }
 
 /* ---------- New grid banner ---------- */
 .dp-banner {
   position: absolute; z-index: 4; left: 50%; top: 64px;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   padding: 10px 22px 11px; border-radius: 14px;
-  background: #16202e; border: 1px solid rgba(255,255,255,.16);
+  background: #262421; border: 1px solid rgba(255,255,255,.16);
   box-shadow: 0 10px 28px rgba(0,0,0,.45);
   pointer-events: none; white-space: nowrap;
   transform: translateX(-50%);
@@ -871,7 +874,7 @@ body.dp-light-page { background: #eef1f6; }
   12%, 78% { opacity: 1; transform: translate(-50%, 0) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -14px) scale(.97); }
 }
-#dailyPickScreen.dp-light .dp-banner { background: #fff; border-color: #d3d9e3; color: #1b1f27; }
+#dailyPickScreen.dp-light .dp-banner { background: #fff; border-color: #ddd6ca; color: #2b2925; }
 
 /* ---------- Experimental picker ---------- */
 .dp-choose-card { width: 100%; max-width: 330px; display: flex; flex-direction: column; gap: 10px; }
@@ -886,8 +889,8 @@ body.dp-light-page { background: #eef1f6; }
 .dp-choice span { font-size: 14px; opacity: .75; line-height: 1.35; }
 .dp-choice em { font-style: normal; font-size: 13px; font-weight: 700; color: var(--dp-hit-light); }
 .dp-choose-card .dp-link { margin-top: 2px; align-self: center; }
-#dailyPickScreen.dp-light .dp-choose-card { background: #fff; border-color: #d3d9e3; color: #1b1f27; }
-#dailyPickScreen.dp-light .dp-choice { background: #f2f4f8; border-color: #d3d9e3; }
+#dailyPickScreen.dp-light .dp-choose-card { background: #fff; border-color: #ddd6ca; color: #2b2925; }
+#dailyPickScreen.dp-light .dp-choice { background: #f4efe6; border-color: #ddd6ca; }
 #dailyPickScreen.dp-light .dp-choice em { color: #2e7d3c; }
 
 /* ---------- Rule cards: worked example and "are you sure?" ---------- */
@@ -907,7 +910,7 @@ body.dp-light-page { background: #eef1f6; }
 .dp-ex-cell b { width: 30px; height: 5px; border-radius: 3px; }
 .dp-ex-cell b.is-correct { background: var(--dp-hit); }
 .dp-ex-cell b.is-present { background: var(--dp-near); }
-.dp-ex-cell b.is-absent { background: #555b63; }
+.dp-ex-cell b.is-absent { background: #5f5b55; }
 .dp-ex-cell small { font-size: 10px; opacity: .55; line-height: 1; }
 .dp-ex-why { margin: 6px 0 2px; padding-left: 20px; font-size: 13.5px; line-height: 1.4; }
 .dp-ex-why li { margin-bottom: 3px; }
@@ -929,8 +932,8 @@ body.dp-light-page { background: #eef1f6; }
 /* One letter: letters without feedback this time. */
 .dp-tile.is-hidden { background: transparent; border: 2px solid rgba(255,255,255,.18); color: rgba(255,255,255,.45); }
 .dp-mini i.is-hidden { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.28); }
-#dailyPickScreen.dp-light .dp-tile.is-hidden { border-color: #cbd2dc; color: #9aa1ab; }
-#dailyPickScreen.dp-light .dp-mini i.is-hidden { box-shadow: inset 0 0 0 1.5px #b8bfc9; }
+#dailyPickScreen.dp-light .dp-tile.is-hidden { border-color: #d3ccbf; color: #aba59a; }
+#dailyPickScreen.dp-light .dp-mini i.is-hidden { box-shadow: inset 0 0 0 1.5px #c7c2ba; }
 .dp-ex-rows { display: flex; flex-direction: column; align-items: center; gap: 5px; margin: 2px 0 6px; }
 .dp-ex-rows .dp-tile { width: 32px; height: 32px; font-size: 16px; }
 
@@ -948,7 +951,7 @@ body.dp-light-page { background: #eef1f6; }
 /* Pick two: the two words offered, as buttons, and marked on the board. */
 .dp-pick-two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
 .dp-pick { padding: 13px 0; letter-spacing: .06em; }
-.dp-word.is-offered { border-color: #6fb1ff; box-shadow: 0 0 0 2px rgba(111,177,255,.35); }
+.dp-word.is-offered { border-color: var(--dp-accent); box-shadow:0 0 0 2px color-mix(in srgb, var(--dp-accent) 35%, transparent); }
 
 /* Elimination grids: the secret, struck out, when the grid is lost. */
 .dp-word.is-lost-secret { border-color: #e5484d; box-shadow: 0 0 0 2px rgba(229,72,77,.45); }
@@ -976,7 +979,7 @@ body.dp-light-page { background: #eef1f6; }
 .dp-star.is-on { color: #f2c14e; }
 .dp-star:active { transform: scale(.88); }
 .dp-choose-card .dp-share { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; padding: 12px 0; margin-top: 4px; }
-#dailyPickScreen.dp-light .dp-star { color: #cfd5de; }
+#dailyPickScreen.dp-light .dp-star { color: #d6cfc3; }
 #dailyPickScreen.dp-light .dp-star.is-on { color: #e0a800; }
 #dailyPickScreen.dp-light .dp-rate-open { color: #b07f00; border-color: #e0b84a; }
 .dp-rate-row > span:first-child { text-align: left; }
@@ -987,8 +990,8 @@ body.dp-light-page { background: #eef1f6; }
 .dp-rule-foot {
   position: sticky; bottom: -16px; z-index: 1;
   margin: 0 -22px -16px; padding: 4px 22px 16px;
-  background: #16202e;
-  box-shadow: 0 -18px 16px -2px #16202e;
+  background: #262421;
+  box-shadow: 0 -18px 16px -2px #262421;
 }
 .dp-rule-foot .dp-next { margin-top: 6px; }
 .dp-rule-foot .dp-sure { margin-top: 6px; }
@@ -1013,7 +1016,7 @@ body.dp-light-page { background: #eef1f6; }
 .dp-archive-day em.is-done { color: var(--dp-hit-light); opacity: 1; }
 .dp-archive .dp-link { align-self: center; margin-top: 6px; }
 .dp-archive-tag { text-align: center; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .6; }
-#dailyPickScreen.dp-light .dp-archive-day { background: #f2f4f8; border-color: #d3d9e3; }
+#dailyPickScreen.dp-light .dp-archive-day { background: #f4efe6; border-color: #ddd6ca; }
 #dailyPickScreen.dp-light .dp-archive-day em.is-done { color: #2e7d3c; }
 
 /* ======================================================================
@@ -1054,10 +1057,10 @@ body.dp-light-page { background: #eef1f6; }
 #dailyPickScreen .dp-card-fb i { font-size: clamp(11px, 3.2vw, 14px) !important; }
 .dp-card-fb i.is-correct { background: var(--dp-hit); }
 .dp-card-fb i.is-present { background: var(--dp-near); }
-.dp-card-fb i.is-absent { background: #6b727c; }
+.dp-card-fb i.is-absent { background: #6b665e; }
 .dp-card-fb i.is-in { background: linear-gradient(135deg, var(--dp-hit) 0 50%, var(--dp-near) 50% 100%); }
 .dp-card-fb i.is-hidden { background: transparent; color: inherit; opacity: .45; box-shadow: inset 0 0 0 1.5px currentColor; }
-.dp-card-fb i.is-left, .dp-card-fb i.is-right, .dp-card-fb i.is-same { background: #555b63; height: auto; padding: 3px 0; gap: 1px; }
+.dp-card-fb i.is-left, .dp-card-fb i.is-right, .dp-card-fb i.is-same { background: #5f5b55; height: auto; padding: 3px 0; gap: 1px; }
 .dp-card-fb small { font-size: 10px; }
 .dp-card-counts { display: flex; gap: 5px; }
 .dp-card-counts i { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 800; font-size: 12px; color: #fff; }
@@ -1158,7 +1161,7 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 .dp-word.is-struck::after { top: 50%; }
 .dp-demo-card { min-height: 78px; }
 .dp-demo-card .dp-card-word { font-size: 22px; }
-.dp-word:focus-visible { outline: 2px solid #3b7dd8; outline-offset: 2px; }
+.dp-word:focus-visible { outline: 2px solid var(--dp-accent); outline-offset: 2px; }
 #dailyPickScreen.dp-light .dp-word.is-split::before { background: linear-gradient(to bottom right, transparent calc(50% - .75px), rgba(80,60,20,.12) 50%, transparent calc(50% + .75px)); }
 #dailyPickScreen.dp-light .dp-corner-x { background: #fbe4e3; color: #d83a3f; }
 #dailyPickScreen.dp-light .dp-corner-check { background: #e2f1e3; color: #2f8a45; }
@@ -1186,7 +1189,7 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
   position: absolute; top: -7px; right: -7px; z-index: 2;
   width: 28px; height: 28px; padding: 0; border-radius: 50%;
   display: grid; place-items: center; cursor: pointer; font-family: inherit; font-weight: 900; line-height: 1;
-  background: #1f2a38; color: #59c46c; border: 2px solid #3f9d4f;
+  background: #2c2a26; color: #59c46c; border: 2px solid #3f9d4f;
   box-shadow: 0 2px 6px rgba(0,0,0,.35);
   transition: transform .1s ease, background .15s ease;
 }
@@ -1200,39 +1203,39 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 /* The ✓ is a button, not a status: solid blue (the Guess button's color),
    raised. Once picked it becomes a plain ✕ to unpick. */
 .dp-pick-dot, #dailyPickScreen.dp-light .dp-pick-dot {
-  background: #3b7dd8; color: #fff; border: 2px solid #fff;
-  box-shadow: 0 2px 0 #2a5ea8, 0 3px 8px rgba(30,60,120,.35);
+  background: var(--dp-accent); color: var(--dp-on-accent); border: 2px solid #fff;
+  box-shadow: 0 2px 0 #746c5e, 0 3px 8px rgba(82,77,68,.35);
 }
-.dp-pick-dot:active { transform: translateY(1px) scale(.92); box-shadow: 0 1px 0 #2a5ea8; }
+.dp-pick-dot:active { transform: translateY(1px) scale(.92); box-shadow: 0 1px 0 #746c5e; }
 .dp-pick-dot.is-unpick, #dailyPickScreen.dp-light .dp-pick-dot.is-unpick,
 .dp-word.is-selected .dp-pick-dot, #dailyPickScreen.dp-light .dp-word.is-selected .dp-pick-dot {
-  background: #5b5f66; color: #fff; border-color: #fff; transform: none;
-  box-shadow: 0 2px 0 #3d4046, 0 3px 8px rgba(0,0,0,.3);
+  background: #66625b; color: #fff; border-color: #fff; transform: none;
+  box-shadow: 0 2px 0 #46433d, 0 3px 8px rgba(0,0,0,.3);
 }
 #dailyPickScreen.dp-light .dp-pick-dot.is-unpick { background: #6d665a; box-shadow: 0 2px 0 #4f4a41, 0 3px 8px rgba(80,60,20,.25); }
 #dailyPickScreen .dp-pick-dot { font-size: 14px !important; }
 .dp-word.is-struck .dp-pick-dot { opacity: .55; }
 /* The picked card: outlined in the same blue as the Guess button. */
 .dp-word.is-selected, #dailyPickScreen.dp-light .dp-word.is-selected {
-  border-color: #3b7dd8; box-shadow: 0 0 0 2px rgba(59,125,216,.35), 0 6px 14px rgba(59,125,216,.2);
+  border-color: var(--dp-accent); box-shadow:0 0 0 2px color-mix(in srgb, var(--dp-accent) 35%, transparent);
 }
 #dailyPickScreen.dp-light .dp-word.is-selected { background: #fffdf8; color: #2b2925; }
-.dp-hint-check, .dp-tut-check { background: #3b7dd8; color: #fff; }
+.dp-hint-check, .dp-tut-check { background: var(--dp-accent); color: var(--dp-on-accent); }
 /* A raised key, not a badge: white with a border and a shadow under it,
    the check in the Guess blue. Pressing pushes it down. */
 .dp-pick-dot, #dailyPickScreen.dp-light .dp-pick-dot {
   width: 30px; height: 30px; top: -8px; right: -8px;
-  background: #fff; color: #3b7dd8; border: 1.5px solid #c9c2b4;
+  background: #fff; color: #2b2925; border: 1.5px solid #c9c2b4;
   box-shadow: 0 3px 0 #c9c2b4, 0 4px 10px rgba(60,45,20,.18);
 }
-.dp-pick-dot { background: #2a3442; color: #8ec5ff; border-color: #4a5566; box-shadow: 0 3px 0 #10161f, 0 4px 10px rgba(0,0,0,.35); }
+.dp-pick-dot { background: #34312d; color: var(--dp-link); border-color: #57524b; box-shadow: 0 3px 0 #141311, 0 4px 10px rgba(0,0,0,.35); }
 .dp-pick-dot:active, #dailyPickScreen.dp-light .dp-pick-dot:active { transform: translateY(2px); box-shadow: 0 1px 0 #c9c2b4; }
 #dailyPickScreen .dp-pick-dot { font-size: 15px !important; }
 /* The corner key shows the card's state. Picked: pressed in, solid blue. */
 .dp-pick-dot.is-picked, #dailyPickScreen.dp-light .dp-pick-dot.is-picked,
 .dp-word.is-selected .dp-pick-dot, #dailyPickScreen.dp-light .dp-word.is-selected .dp-pick-dot {
-  background: #3b7dd8; color: #fff; border-color: #2f6fc6;
-  transform: translateY(2px); box-shadow: 0 1px 0 #2a5ea8, inset 0 1px 2px rgba(0,0,0,.2);
+  background: var(--dp-accent); color: var(--dp-on-accent); border-color: var(--dp-accent);
+  transform: translateY(2px); box-shadow: 0 1px 0 #746c5e, inset 0 1px 2px rgba(0,0,0,.2);
 }
 /* Crossed out: a red ✕, still a key (tap it, or the card, to bring the word back). */
 .dp-pick-dot.is-out, #dailyPickScreen.dp-light .dp-pick-dot.is-out,
@@ -1262,14 +1265,14 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 /* 2. Corner buttons: a dark (or paper) circle with a thin colored ring. */
 #dailyPickScreen .dp-word .dp-pick-dot {
   top: -6px; right: -6px; width: 28px; height: 28px;
-  background: #1c2430; color: #8ec5ff; border: 2px solid #3b7dd8;
+  background: #2a2825; color: var(--dp-link); border: 2px solid var(--dp-accent);
   box-shadow: 0 2px 6px rgba(0,0,0,.35); transform: none;
 }
 #dailyPickScreen .dp-word .dp-pick-dot.is-out { background: #2a1d21; color: #ff7a7e; border-color: #c4474c; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
-#dailyPickScreen .dp-word .dp-pick-dot.is-picked { background: #3b7dd8; color: #fff; border-color: #fff; }
-#dailyPickScreen.dp-light .dp-word .dp-pick-dot { background: #fffdf8; color: #2f6fc6; border-color: #3b7dd8; box-shadow: 0 1px 4px rgba(80,60,20,.18); }
+#dailyPickScreen .dp-word .dp-pick-dot.is-picked { background: var(--dp-accent); color: var(--dp-on-accent); border-color: #fff; }
+#dailyPickScreen.dp-light .dp-word .dp-pick-dot { background: #fffdf8; color: #2b2925; border-color: var(--dp-accent); box-shadow: 0 1px 4px rgba(80,60,20,.18); }
 #dailyPickScreen.dp-light .dp-word .dp-pick-dot.is-out { background: #fffdf8; color: #d83a3f; border-color: #e5484d; box-shadow: 0 1px 4px rgba(80,60,20,.15); }
-#dailyPickScreen.dp-light .dp-word .dp-pick-dot.is-picked { background: #3b7dd8; color: #fff; border-color: #fffdf8; }
+#dailyPickScreen.dp-light .dp-word .dp-pick-dot.is-picked { background: var(--dp-accent); color: var(--dp-on-accent); border-color: #fffdf8; }
 #dailyPickScreen .dp-word .dp-pick-dot:active { transform: scale(.9); }
 
 /* 3. Roomier cards. */
@@ -1277,7 +1280,7 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 .dp-word { min-height: clamp(76px, 10.5vh, 96px); }
 .dp-board.is-pics .dp-word, .dp-board.is-colors .dp-word { min-height: 0; }
 /* One glow at a time: the picked card gets an outline, not a halo. */
-#dailyPickScreen:not(.dp-light) .dp-word.is-selected { box-shadow: 0 0 0 2px rgba(142,197,255,.35); }
+#dailyPickScreen:not(.dp-light) .dp-word.is-selected { box-shadow:0 0 0 2px color-mix(in srgb, var(--dp-accent) 35%, transparent); }
 
 /* 4. Title with a divider, the key as an outlined strip, a fuller Guess. */
 .dp-title-grid { margin-left: 12px; padding-left: 12px; border-left: 2px solid rgba(255,255,255,.18); }
@@ -1286,7 +1289,7 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 #dailyPickScreen.dp-light .dp-center .dp-key { border-color: #e2d9c6; background: #fffdf8; }
 .dp-center #dpGuess:not(:disabled) {
   padding-top: 15px; padding-bottom: 15px; border-radius: 14px;
-  background: linear-gradient(180deg, #4a8be6, #3170cc); color: #fff; border-color: transparent;
+  background: var(--dp-accent); color: var(--dp-on-accent); border-color: transparent;
 }
 #dailyPickScreen .dp-center #dpGuess { font-size: 18px !important; }
 #dailyPickScreen .dp-word.is-guessed .dp-card-face { display: flex; justify-content: center; align-items: center; }
@@ -1305,9 +1308,9 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
   border-width: 1.5px; box-shadow: none;
 }
 #dailyPickScreen .dp-pick-dot { font-size: 14px !important; }
-#dailyPickScreen:not(.dp-light) .dp-word .dp-pick-dot { background: rgba(59,125,216,.14); border-color: rgba(110,165,235,.55); color: #8ec5ff; }
-#dailyPickScreen.dp-light .dp-word .dp-pick-dot { background: #eef4fc; border-color: #b9d0ef; color: #2f6fc6; }
-#dailyPickScreen .dp-word .dp-pick-dot.is-picked, #dailyPickScreen.dp-light .dp-word .dp-pick-dot.is-picked { background: #3b7dd8; border-color: #3b7dd8; color: #fff; }
+#dailyPickScreen:not(.dp-light) .dp-word .dp-pick-dot { background: color-mix(in srgb, var(--dp-accent) 14%, transparent); border-color: color-mix(in srgb, var(--dp-accent) 55%, transparent); color: var(--dp-link); }
+#dailyPickScreen.dp-light .dp-word .dp-pick-dot { background: #f1ece2; border-color: var(--dp-accent); color: var(--dp-link); }
+#dailyPickScreen .dp-word .dp-pick-dot.is-picked, #dailyPickScreen.dp-light .dp-word .dp-pick-dot.is-picked { background: var(--dp-accent); border-color: var(--dp-accent); color: var(--dp-on-accent); }
 .dp-board { padding-top: 0; }
 .dp-word .dp-card-face { padding-top: 14px; }
 /* Crossed out: the ✕ stays, dimmed with the card. */
@@ -1347,7 +1350,7 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 .dp-drop-text { font-size: 13px; line-height: 1.35; font-weight: 600; opacity: .7; }
 .dp-drop-text b { font-weight: 900; }
 .dp-drop.has-guess { border-style: solid; border-color: rgba(255,255,255,.1); }
-.dp-drop.is-over { border-style: dashed; border-color: #3b7dd8; background: rgba(59,125,216,.12); }
+.dp-drop.is-over { border-style: dashed; border-color: var(--dp-accent); background: color-mix(in srgb, var(--dp-accent) 12%, transparent); }
 .dp-drop.is-over .dp-drop-text { visibility: hidden; }
 .dp-drop.is-over .dp-drop-row { opacity: .3; }
 .dp-drop .dp-row { gap: 3px; }
@@ -1357,7 +1360,7 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 .dp-drop .dp-count-tile { width: 24px; height: 24px; }
 #dailyPickScreen.dp-light .dp-drop { border-color: #cfc4ae; }
 #dailyPickScreen.dp-light .dp-drop.has-guess { border-color: #e6dfd0; background: #fffdf8; }
-#dailyPickScreen.dp-light .dp-drop.is-over { border-color: #3b7dd8; background: rgba(59,125,216,.08); }
+#dailyPickScreen.dp-light .dp-drop.is-over { border-color: var(--dp-accent); background: color-mix(in srgb, var(--dp-accent) 8%, transparent); }
 #dailyPickScreen.dp-light .dp-drop-text { color: #6d665a; opacity: 1; }
 
 /* Dragging: the card lifts and follows the finger; its spot fades. */
@@ -1412,8 +1415,8 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-seg label { position: relative; cursor: pointer; }
 .dp-seg input { position: absolute; opacity: 0; pointer-events: none; }
 .dp-seg span { display: block; padding: 10px 6px; border-radius: 9px; text-align: center; font-weight: 800; opacity: .6; transition: background .15s ease, opacity .15s ease; }
-.dp-seg input:checked + span { background: #3b7dd8; color: #fff; opacity: 1; }
-.dp-seg input:focus-visible + span { outline: 2px solid #8ec5ff; outline-offset: 1px; }
+.dp-seg input:checked + span { background: var(--dp-accent); color: var(--dp-on-accent); opacity: 1; }
+.dp-seg input:focus-visible + span { outline: 2px solid var(--dp-accent); outline-offset: 1px; }
 .dp-setting-note { font-size: 13px; line-height: 1.45; opacity: .7; margin: 8px 2px 0; }
 .dp-settings-panel > .dp-next { display: block; width: 100%; margin-top: 20px; }
 #dailyPickScreen.dp-light .dp-seg { background: #ebe4d5; }
@@ -1423,7 +1426,7 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-drop.has-button { border-style: solid; padding: 8px; }
 .dp-drop .dp-drop-guess {
   width: 100%; height: 100%; margin: 0; padding: 0 10px; border-radius: 10px;
-  background: linear-gradient(180deg, #4a8be6, #3170cc); color: #fff; border: 0;
+  background: var(--dp-accent); color: var(--dp-on-accent); border: 0;
   display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: .04em;
 }
 #dailyPickScreen .dp-drop .dp-drop-guess { font-size: clamp(17px, 5vw, 22px) !important; }
@@ -1451,16 +1454,16 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 /* While a word is being dragged: the spot lights up blue (and its text or
    last guess fades back); right over it, it gets stronger. */
 .dp-drop.is-target, #dailyPickScreen.dp-light .dp-drop.is-target {
-  border-style: dashed; border-color: #3b7dd8; background: rgba(59,125,216,.12);
+  border-style: dashed; border-color: var(--dp-accent); background: color-mix(in srgb, var(--dp-accent) 12%, transparent);
   animation: dp-target-pulse 1.2s ease-in-out infinite;
 }
 .dp-drop.is-target .dp-drop-text { visibility: hidden; }
 .dp-drop.is-target .dp-drop-row { opacity: .3; }
 .dp-drop.is-target.is-over, #dailyPickScreen.dp-light .dp-drop.is-target.is-over {
-  background: rgba(59,125,216,.26); border-color: #6fb1ff; animation: none;
-  box-shadow: 0 0 0 3px rgba(59,125,216,.25);
+  background: color-mix(in srgb, var(--dp-accent) 26%, transparent); border-color: var(--dp-accent); animation: none;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--dp-accent) 25%, transparent);
 }
-@keyframes dp-target-pulse { 50% { background: rgba(59,125,216,.2); } }
+@keyframes dp-target-pulse { 50% { background: color-mix(in srgb, var(--dp-accent) 20%, transparent); } }
 @media (prefers-reduced-motion: reduce) { .dp-drop.is-target { animation: none; } }
 
 /* Three choices in a row (How to guess). */
@@ -1470,37 +1473,37 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-hold-ring {
   position: fixed; z-index: 50; width: 44px; height: 44px; pointer-events: none;
   transform: translate(-50%, -62%); border-radius: 50%;
-  background: #16202e; box-shadow: 0 4px 14px rgba(0,0,0,.4);
+  background: #262421; box-shadow: 0 4px 14px rgba(0,0,0,.4);
   animation: dp-ring-in .15s ease-out;
 }
 .dp-hold-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
 .dp-hold-ring circle { fill: none; stroke-width: 4; }
 .dp-hold-track { stroke: rgba(255,255,255,.18); }
 .dp-hold-fill {
-  stroke: #3b7dd8; stroke-linecap: round;
+  stroke: var(--dp-accent); stroke-linecap: round;
   stroke-dasharray: 94.25; stroke-dashoffset: 94.25;
   animation: dp-ring-fill var(--fill, 700ms) linear forwards;
 }
 @keyframes dp-ring-fill { to { stroke-dashoffset: 0; } }
 @keyframes dp-ring-in { from { opacity: 0; transform: translate(-50%, -50%) scale(.6); } }
-.dp-word.is-holding { transform: scale(.96); border-color: #3b7dd8; transition: transform .7s ease, border-color .15s ease; }
+.dp-word.is-holding { transform: scale(.96); border-color: var(--dp-accent); transition: transform .7s ease, border-color .15s ease; }
 #dailyPickScreen.dp-light .dp-hold-ring { background: #fffdf8; box-shadow: 0 4px 14px rgba(80,60,20,.2); }
 #dailyPickScreen.dp-light .dp-hold-track { stroke: #e2d9c6; }
 
 /* One letter: on every card, the letter the next guess will show. */
 .dp-next-letter {
-  font-weight: inherit; color: #8ec5ff;
+  font-weight: inherit; color: var(--dp-link);
   text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 4px;
 }
-#dailyPickScreen.dp-light .dp-next-letter { color: #2f6fc6; }
+#dailyPickScreen.dp-light .dp-next-letter { color: var(--dp-link); }
 .dp-word.is-struck .dp-next-letter { color: inherit; text-decoration: none; }
 /* ...and under the grid: which of the five it is. */
 .dp-pos-hint { display: inline-flex; align-items: center; gap: 10px; }
 .dp-pos { display: inline-flex; gap: 3px; }
 .dp-pos i { width: 14px; height: 18px; border-radius: 3px; border: 1.5px solid rgba(255,255,255,.3); }
-.dp-pos i.is-on { background: #3b7dd8; border-color: #3b7dd8; }
+.dp-pos i.is-on { background: var(--dp-accent); border-color: var(--dp-accent); color: var(--dp-on-accent); }
 #dailyPickScreen.dp-light .dp-pos i { border-color: #cfc4ae; }
-#dailyPickScreen.dp-light .dp-pos i.is-on { background: #3b7dd8; border-color: #3b7dd8; }
+#dailyPickScreen.dp-light .dp-pos i.is-on { background: var(--dp-accent); border-color: var(--dp-accent); color: var(--dp-on-accent); }
 .dp-pos-hint { white-space: nowrap; gap: 8px; } .dp-pos-hint b { margin-left: 4px; }
 
 /* Tap mode: the legend (stacked) on the left, the Guess button on the right,
@@ -1512,12 +1515,12 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
   height: 56px; margin: 0; padding: 0 10px; border-radius: 14px; width: 100%;
   display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; overflow: hidden;
 }
-.dp-side-guess:not(:disabled) { background: linear-gradient(180deg, #4a8be6, #3170cc); color: #fff; border-color: transparent; }
+.dp-side-guess:not(:disabled) { background: var(--dp-accent); color: var(--dp-on-accent); border-color: transparent; }
 #dailyPickScreen .dp-side-guess { font-size: 17px !important; }
 .dp-side-guess b { letter-spacing: .04em; }
 /* The fade above the rule card's button: only while there's more to scroll. */
 .dp-rule-foot, #dailyPickScreen.dp-light .dp-rule-foot { box-shadow: none; transition: box-shadow .2s ease; }
-#dpRuleCard.has-more .dp-rule-foot { box-shadow: 0 -18px 16px -2px #16202e; }
+#dpRuleCard.has-more .dp-rule-foot { box-shadow: 0 -18px 16px -2px #262421; }
 #dailyPickScreen.dp-light #dpRuleCard.has-more .dp-rule-foot { box-shadow: 0 -18px 16px -2px #fffdf8; }
 /* The stacked legend wraps inside its own column, never under the button. */
 .dp-key.is-stacked { min-width: 0; }
@@ -1529,8 +1532,8 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 #dailyPickScreen .dp-side-guess { font-size: 17px !important; }
 /* A picked word is solid blue in both looks. */
 #dailyPickScreen.dp-light .dp-word.is-selected {
-  background: #3b7dd8; border-color: #2f6fc6; color: #fff;
-  box-shadow: 0 0 0 2px rgba(59,125,216,.25), 0 6px 14px rgba(59,125,216,.25);
+  background: var(--dp-accent); border-color: var(--dp-accent); color: var(--dp-on-accent);
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--dp-accent) 25%, transparent);
 }
 /* Guess button: aims for 200px wide; gives way to the legend on narrow
    phones, but never below 110px. */
@@ -1543,25 +1546,25 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 
 /* Hold: a bubble above the finger with the word and the filling ring,
    over a dimmed screen. */
-.dp-hold-dim { position: fixed; inset: 0; z-index: 48; background: rgba(5,8,14,.55); pointer-events: none; animation: dp-dim-in .15s ease-out; }
+.dp-hold-dim { position: fixed; inset: 0; z-index: 48; background: rgba(10,9,8,.55); pointer-events: none; animation: dp-dim-in .15s ease-out; }
 @keyframes dp-dim-in { from { opacity: 0; } }
 .dp-hold-ring {
   width: auto; height: auto; border-radius: 999px; z-index: 50;
   display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 18px;
   transform: translate(-50%, -100%); white-space: nowrap;
-  background: #1c2738; border: 1.5px solid #3b7dd8; box-shadow: 0 10px 28px rgba(0,0,0,.5);
+  background: #2a2825; border: 1.5px solid var(--dp-accent); box-shadow: 0 10px 28px rgba(0,0,0,.5);
 }
 .dp-hold-ring svg { width: 44px; height: 44px; flex: none; }
 .dp-hold-word { font-weight: 900; font-size: 24px; letter-spacing: .04em; color: #fff; }
 @keyframes dp-ring-in { from { opacity: 0; transform: translate(-50%, -85%) scale(.8); } }
 /* The held card stays bright above the dim. */
 .dp-word.is-holding { position: relative; z-index: 49; }
-#dailyPickScreen.dp-light .dp-hold-ring { background: #fffdf8; border-color: #3b7dd8; }
+#dailyPickScreen.dp-light .dp-hold-ring { background: #fffdf8; border-color: var(--dp-accent); }
 #dailyPickScreen.dp-light .dp-hold-word { color: #2b2925; }
 #dailyPickScreen.dp-light .dp-hold-dim { background: rgba(40,32,20,.35); }
 
 /* ---------- Guided first game ---------- */
-.dp-coach-dim { position: fixed; inset: 0; z-index: 60; background: rgba(5,8,14,.62); }
+.dp-coach-dim { position: fixed; inset: 0; z-index: 60; background: rgba(10,9,8,.62); }
 .dp-coach-dim[hidden], .dp-coach-say[hidden], .dp-coach-hand[hidden] { display: none; }
 .dp-coach-splash {
   position: fixed; inset: 0; z-index: 61; display: grid; place-content: center; text-align: center; gap: 14px;
@@ -1570,13 +1573,13 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-coach-splash b { font-size: clamp(30px, 9vw, 44px); font-weight: 900; color: #fff; letter-spacing: .02em; text-shadow: 0 4px 20px rgba(0,0,0,.5); }
 .dp-coach-splash small { font-size: 14px; color: rgba(255,255,255,.6); }
 @keyframes dp-splash { 0% { opacity: 0; transform: scale(.92); } 15%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; } }
-.dp-coach-focus { position: relative; z-index: 61; box-shadow: 0 0 0 3px #3b7dd8, 0 0 30px rgba(59,125,216,.5) !important; }
+.dp-coach-focus { position: relative; z-index: 61; box-shadow:0 0 0 3px var(--dp-accent) !important; }
 /* The words: a bubble at the top of the screen, or at the bottom when the
    target is up high, so it never covers what you have to tap. */
 .dp-coach-say {
   position: fixed; z-index: 63; left: 50%; bottom: max(18px, env(safe-area-inset-bottom)); transform: translateX(-50%);
   width: min(360px, calc(100vw - 32px)); padding: 14px 16px 10px; border-radius: 16px;
-  background: #fffdf8; color: #1b1f27; box-shadow: 0 12px 34px rgba(0,0,0,.45);
+  background: #fffdf8; color: #2b2925; box-shadow: 0 12px 34px rgba(0,0,0,.45);
   font-size: 16px; line-height: 1.4; text-align: center; pointer-events: auto;
   animation: dp-say-in .25s ease-out;
 }
@@ -1601,7 +1604,7 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 #dailyPickScreen.is-coaching .dp-head-buttons { visibility: hidden; }
 #dailyPickScreen.dp-light .dp-coach-dim { background: rgba(40,32,20,.5); }
 @media (prefers-reduced-motion: reduce) { .dp-coach-hand svg, .dp-coach-splash { animation: none !important; } .dp-coach-hand { transition: none; } }
-.dp-coach-dim.is-dark { background: rgba(5,8,14,.86); } .dp-coach-done .dp-share { padding-left: 26px; padding-right: 26px; }
+.dp-coach-dim.is-dark { background: rgba(10,9,8,.86); } .dp-coach-done .dp-share { padding-left: 26px; padding-right: 26px; }
 
 /* ======================================================================
    Main buttons (Share, Play, Guess) in the theme's own button colors:
@@ -1612,7 +1615,7 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 #dailyPickScreen .dp-drop-guess,
 #dailyPickScreen .dp-start-play,
 #dailyPickScreen .dp-center #dpGuess:not(:disabled) {
-  background: #eef0f3; color: #141a24; border-color: transparent; box-shadow: none;
+  background: #f2f1ef; color: #1e1d1a; border-color: transparent; box-shadow: none;
 }
 #dailyPickScreen.dp-light .dp-share,
 #dailyPickScreen.dp-light .dp-side-guess:not(:disabled),
@@ -1647,7 +1650,7 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 @keyframes dp-hand-double2 { 0%, 52%, 100% { transform: none; } 14%, 38% { transform: translateY(7px) scale(.92) rotate(-4deg); } 26% { transform: none; } }
 .dp-hand-ripple {
   position: absolute; left: 22px; top: 4px; width: 0; height: 0; border-radius: 50%;
-  border: 3px solid rgba(142,197,255,.9); transform: translate(-50%, -50%);
+  border: 3px solid color-mix(in srgb, var(--dp-accent) 90%, transparent); transform: translate(-50%, -50%);
   animation: dp-ripple 1.1s ease-out .9s infinite;
 }
 .dp-coach-hand.is-double .dp-hand-ripple { animation: dp-ripple-2 1.4s ease-out .8s infinite; }
@@ -1668,7 +1671,7 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-done-note { margin: 4px 0 8px; font-size: 14px; opacity: .7; max-width: 300px; line-height: 1.45; }
 .dp-coach-done .dp-done-play { width: min(100%, 300px); padding: 14px 0; }
 #dailyPickScreen.dp-light .dp-done-steps { background: #f4efe4; }
-.dp-setting-group.dp-coach-focus { padding: 10px; margin-left: -10px; margin-right: -10px; border-radius: 14px; background: #16202e; } #dailyPickScreen.dp-light .dp-setting-group.dp-coach-focus { background: #fffdf8; }
+.dp-setting-group.dp-coach-focus { padding: 10px; margin-left: -10px; margin-right: -10px; border-radius: 14px; background: #262421; } #dailyPickScreen.dp-light .dp-setting-group.dp-coach-focus { background: #fffdf8; }
 /* Settings > Colors: each choice shows its two feedback colors. */
 .dp-seg span:has(.dp-sw) { display: flex; align-items: center; justify-content: center; gap: 3px; }
 .dp-sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; flex: none; box-shadow: 0 0 0 1.5px rgba(255,255,255,.35); }
@@ -1704,24 +1707,58 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-word.has-xbtn.is-struck::after { left: 24px; right: 6%; }
 .dp-board.is-diamond.is-rows4 { grid-template-rows: repeat(4, var(--card-h)); }
 
-/* ---------- Tutorial v4: the words sit in the header, in place of the
-   title, always in the same spot and never over the board ---------- */
-#dailyPickScreen.is-coaching .dp-head { display: block; }
-#dailyPickScreen.is-coaching .dp-head > :not(.dp-coach-say) { display: none !important; }
+/* ---------- Tutorial: a thought bubble over the screen (it never moves
+   the board), placed clear of what to tap, its dots trailing toward it ---------- */
+#dailyPickScreen.is-coaching .dp-clock { visibility: hidden; }
 #dailyPickScreen.is-coaching #dailyPickRoot > .dp-link[data-practice="end"] { visibility: hidden; }
-.dp-head .dp-coach-say {
-  position: relative; z-index: 63; left: auto; top: auto !important; bottom: auto; transform: none;
-  width: 100%; box-sizing: border-box; margin: 0 0 4px; padding: 10px 12px 6px;
-  border-radius: 14px; box-shadow: 0 6px 18px rgba(0,0,0,.3);
-  font-size: clamp(14px, 4.1vw, 15.5px); line-height: 1.35; animation: dp-say-swap .25s ease-out;
+.dp-coach-say.dp-think {
+  position: fixed; z-index: 63; transform: none; bottom: auto;
+  box-sizing: border-box; padding: 14px 18px 8px; border-radius: 28px;
+  background: #fffdf8; color: #2b2925; border: 2.5px solid #2b2925;
+  box-shadow: 0 10px 28px rgba(0,0,0,.35);
+  font-size: clamp(14.5px, 4.1vw, 16px); line-height: 1.4; text-align: center;
+  transition: top .35s cubic-bezier(.3,.7,.2,1); animation: none;
 }
-.dp-head .dp-coach-say .dp-say-text { display: flex; flex-direction: column; justify-content: center; min-height: 2.9em; }
-.dp-head .dp-coach-say .dp-coach-skip { margin-top: 2px; }
-@keyframes dp-say-swap { from { opacity: .3; } }
+.dp-think.is-pop { animation: dp-think-pop .32s cubic-bezier(.3,1.4,.5,1); }
+@keyframes dp-think-pop { from { transform: scale(.94); opacity: .4; } }
+.dp-think .dp-say-text { display: block; }
+.dp-think .dp-say-head { display: block; margin-bottom: 6px; }
+.dp-think .dp-say-line { display: block; text-align: left; margin: 4px auto 0; width: fit-content; }
+.dp-think .dp-say-lead { display: block; margin-bottom: 3px; color: #2f7d43; font-weight: 700; }
+.dp-think .dp-say-no { color: #c0392b; }
+.dp-think small { display: block; margin-top: 6px; font-size: 12.5px; color: #8a8276; }
+.dp-think .dp-coach-skip { margin: 4px auto 0; font-size: 12px; color: #9a9184; }
+/* the thought dots */
+.dp-think-dot { position: absolute; display: none; border-radius: 50%; background: #fffdf8; border: 2.5px solid #2b2925; left: var(--tail-x, 50%); transform: translateX(-50%); }
+.dp-think-dot.is-1 { width: 16px; height: 16px; }
+.dp-think-dot.is-2 { width: 9px; height: 9px; }
+.dp-think.is-tail-down .dp-think-dot { display: block; }
+.dp-think.is-tail-down .dp-think-dot.is-1 { top: calc(100% + 4px); }
+.dp-think.is-tail-down .dp-think-dot.is-2 { top: calc(100% + 24px); margin-left: 6px; }
+.dp-think.is-tail-up .dp-think-dot { display: block; }
+.dp-think.is-tail-up .dp-think-dot.is-1 { bottom: calc(100% + 4px); }
+.dp-think.is-tail-up .dp-think-dot.is-2 { bottom: calc(100% + 24px); margin-left: 6px; }
 .dp-say-tile {
-  display: inline-grid; place-items: center; width: 1.3em; height: 1.3em; margin-right: 3px; border-radius: 4px; line-height: 1;
-  vertical-align: -.22em; font-weight: 900; font-size: .9em; color: #fff;
+  display: inline-grid; place-items: center; width: 1.35em; height: 1.35em; margin-right: 2px; border-radius: 5px;
+  vertical-align: -.25em; font-weight: 900; font-size: .88em; line-height: 1; color: #fff;
 }
 .dp-say-tile.is-correct { background: var(--dp-hit); }
 .dp-say-tile.is-present { background: var(--dp-near); }
-.dp-say-tile.is-absent { background: #6b7079; }
+.dp-say-tile.is-absent { background: var(--dp-miss, #7a756c); }
+/* the hand: a bit smaller and bouncier */
+.dp-coach-hand { width: 60px; height: 68px; margin: -2px 0 0 -20px; filter: drop-shadow(0 5px 8px rgba(0,0,0,.35)); }
+.dp-hand-ripple { left: 20px; border-color: rgba(229,72,77,.85); }
+@keyframes dp-hand-tap2 { 0%, 60%, 100% { transform: none; } 30% { transform: translateY(6px) scale(.9) rotate(-6deg); } }
+@keyframes dp-hand-double2 { 0%, 52%, 100% { transform: none; } 14%, 38% { transform: translateY(6px) scale(.9) rotate(-6deg); } 26% { transform: translateY(-1px); } }
+.dp-think.is-passive { pointer-events: none; }
+.dp-think.is-passive .dp-coach-skip { pointer-events: auto; }
+
+/* Inside the main site too: the warm, flat card (no navy gradient). */
+#dailyPickScreen:not(.dp-light) .dp-card.menu-center { background: #22201e !important; border-color: rgba(236,228,214,.14) !important; box-shadow: 0 14px 40px rgba(0,0,0,.4) !important; }
+/* Skip sits where the header's buttons were (they hide while coaching). */
+#dailyPickScreen .dp-head { position: relative; }
+.dp-coach-skipwrap { position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 5; }
+.dp-coach-skipwrap .dp-coach-skip { margin: 0; padding: 8px 4px; font-size: 13px; color: inherit; opacity: .6; }
+#dailyPickScreen.is-coaching #dpTitle .dp-title-grid { display: none; }
+#dpTourSay.dp-coach-say { border: 2.5px solid #2b2925; border-radius: 28px; }
+#dailyPickScreen .dp-board .dp-word.has-xbtn .dp-card-word { letter-spacing: -.03em; }

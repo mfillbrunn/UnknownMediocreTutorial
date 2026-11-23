@@ -1444,7 +1444,8 @@
   function guessSelected() {
     const r = round();
     if (!selected || r.solved) return;
-    if (coach && !["guess", "free"].includes(coachStep()?.type)) return;
+    if (!coachCanGuess()) return;
+    coachBeforeGuess();
     const coachGuess = !!coach;
     if (playMode === "daily" && totalGuesses() === 0) track("started");
     r.guesses.push(selected);
@@ -1473,8 +1474,7 @@
     revealing = true;
     render();
     revealing = false;
-    if (coachGuess && coach && coachStep()?.type === "guess") setTimeout(coachNext, 700); // after the feedback flips in
-    else if (coach && coachStep()?.type === "free") coachShow(); // "Press Guess" becomes "Your turn", then "Found it!"
+    if (coachGuess) coachAfterGuess();
   }
 
   // One row per puzzle: a white square per wrong guess, then the green one.
@@ -1635,7 +1635,6 @@
     current = firstUnsolved();
     selected = "";
     render();
-    if (coach && coachStep()?.type === "free") { coachNext(); flapIn(); return; }
     if (over()) return;
     maybeAnnounceRule();
     // Behind a new grid's rule card the flip would go unseen: it waits for "Got it".
@@ -2169,15 +2168,23 @@
   // shows each move. Only the word (or button) the hand points at responds,
   // so the explanations always match what's on screen.
   // The pointing hand, with a ripple where the fingertip taps.
-  const HAND_HTML = `<span class="dp-hand-ripple"></span><svg viewBox="0 0 64 72" aria-hidden="true">
-    <path d="M24 4.5c3.3 0 6 2.7 6 6V29l2.7-.9c2.6-.9 5.4.5 6.3 3.1l.3.9 2.2-.6c2.8-.7 5.6 1 6.3 3.8l.2.8 1.6-.3c2.9-.5 5.6 1.4 6.1 4.3l2 12.6C59.4 62 53.4 69 44.8 69H32.2c-4.7 0-9-2.6-11.2-6.8L8.6 38.4c-1.4-2.7-.3-6 2.4-7.3 2.4-1.2 5.3-.5 6.9 1.6L18 33V10.5c0-3.3 2.7-6 6-6z" fill="#fff" stroke="#1b1f27" stroke-width="3.2" stroke-linejoin="round"/>
-    <path d="M30 29v13M41.3 32.2V43M50.1 36.3V45" fill="none" stroke="#1b1f27" stroke-width="2.6" stroke-linecap="round" opacity=".55"/>
-    <path d="M26 64h20" stroke="#cfd6e0" stroke-width="3" stroke-linecap="round"/></svg>`;
-  // One hand-made grid. Grids 2 and 3 explain themselves (their rule card)
-  // the first time they come up in the real Daily.
+  // A round, friendly cartoon glove: one clean outline (drawn as a thicker
+  // ink copy under the white shapes), a red cuff, the fingertip at (22, 2).
+  const HAND_SHAPES = `<rect x="15.5" y="1" width="13" height="36" rx="6.5"/><circle cx="34.5" cy="31" r="6.6"/><circle cx="44" cy="33.5" r="6.2"/>
+    <circle cx="51.5" cy="38.5" r="5.6"/><rect x="12" y="28" width="44" height="30" rx="13"/><ellipse cx="13.5" cy="43" rx="7" ry="10.5" transform="rotate(-32 13.5 43)"/>`;
+  const HAND_HTML = `<span class="dp-hand-ripple"></span><svg viewBox="0 -2 66 74" aria-hidden="true">
+    <g fill="#2b2925" stroke="#2b2925" stroke-width="7" stroke-linejoin="round">${HAND_SHAPES}</g>
+    <g fill="#fffdf8">${HAND_SHAPES}</g>
+    <path d="M40 30.5v5.5M48.8 35v4.5M18 36.5c4.5 3 5.5 8.5 4 13" fill="none" stroke="#2b2925" stroke-width="2.4" stroke-linecap="round" opacity=".45"/>
+    <path d="M18.8 7.2c2-1.6 4.4-1.6 6.4 0" fill="none" stroke="#2b2925" stroke-width="2" stroke-linecap="round" opacity=".3"/>
+    <rect x="17" y="52" width="33" height="15" rx="6.5" fill="#e5484d" stroke="#2b2925" stroke-width="3.2"/>
+    <path d="M22 59.5h23" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".5"/></svg>`;
+  // The tutorial grid: picked so that whatever word a newcomer guesses first,
+  // some secret gives a green, a yellow and grays, and leaves 4 to 6 words
+  // that still fit. The secret is chosen right after that first guess.
   const COACH_GRIDS = [
-    { mode: "full", answer: "plant", words: ["chair", "sloth", "blunt", "money", "flint", "stamp", "plant", "water",
-      "cleft", "bread", "ultra", "plait", "drink", "glint", "cloud", "alter"] }
+    { mode: "full", answer: "fruit", words: ["great", "paint", "exact", "orbit", "flint", "joint", "habit", "fruit",
+      "faint", "about", "trunk", "sweat", "think", "eight", "adopt", "sight"] }
   ];
   const up = w => `<b>${w.toUpperCase()}</b>`;
   const cap = t => t[0].toUpperCase() + t.slice(1);
@@ -2188,28 +2195,58 @@
     <path d="M16 6.5c1.5-1.7 3.4-1.8 4.6-.6M24.5 11.5c1.7-1.5 3.6-1.4 4.6-.2M20 2.5v2.3M28.5 6.5l-1.8 1.4M26.5 17.5h2.4" fill="none" stroke="#3b7dd8" stroke-width="2" stroke-linecap="round"/>
     <circle cx="23.2" cy="5.8" r="1.4" fill="#e5484d"/><circle cx="29" cy="14" r="1.3" fill="#3f9d4f"/><circle cx="17.5" cy="10.5" r="1.2" fill="#3f9d4f"/>
   </svg>`;
-  // A little feedback tile, to point at the one on the board.
-  const tile = (letter, kind) => `<span class="dp-say-tile is-${kind}">${letter}</span>`;
-  const pickText = w => () => (settings.firstPick === "single" && !round().guesses.length ? `Tap ${up(w)} to guess it` : `Tap ${up(w)} twice to pick it`);
-  // Every step is something to do, never just something to read:
-  // splash: the goal, big, for a moment. tap: the word to tap and the state
-  // it should end in. guess: press Guess. free: the player plays on alone.
-  // Each color is taught by the cross-out it leads to.
-  const COACH_STEPS = [
-    { type: "splash", text: "Find the secret word" },
-    { type: "tap", word: "sloth", expect: "picked", text: pickText("sloth") },
-    { type: "guess", text: "Press <b>Guess</b>" },
-    { type: "tap", word: "stamp", expect: "struck", text: () => `${tile("S", "absent")} Gray: not in the word.<br>So ${up("stamp")} is out: <b>tap it once</b>.` },
-    { type: "tap", word: "chair", expect: "struck", text: () => `${tile("L", "correct")} ${cap(colorName("hit"))}: right spot.<br>${up("chair")} has no L 2nd: tap it.` },
-    { type: "tap", word: "plait", expect: "picked", text: () => `${tile("T", "present")} ${cap(colorName("near"))}: in it, wrong spot.<br>${up("plait")} fits it all: <b>tap it twice</b>.` },
-    { type: "free", text: () => (round().solved ? `<b>Found it!</b> ${PARTY}` : round().guesses.length < 2 ? "Now press <b>Guess</b>.<br>Then it's <b>your turn</b>!" : "<b>Your turn</b>: cross out, guess again,<br>until you find the secret.") }
-  ];
-  let coach = null; // { step, prevInput }
+  // A little feedback tile, to point at the ones on the board.
+  const tile = (letter, kind) => `<span class="dp-say-tile is-${kind}">${letter.toUpperCase()}</span>`;
+  const ORD = ["1st", "2nd", "3rd", "4th", "5th"];
+  const fbKey = (g, s) => feedback(g, s).join();
+
+  // The secret for the tutorial, once the first guess is known: the one
+  // whose feedback has a green and a yellow (and grays), leaves 4 to 6
+  // words that fit, and has a good second guess among them.
+  function coachSecret(words, g) {
+    let best = null;
+    for (const s of words) {
+      if (s === g) continue;
+      const f = feedback(g, s);
+      const c = f.filter(x => x === "correct").length, p = f.filter(x => x === "present").length;
+      const fits = words.filter(w => w !== g && fbKey(g, w) === f.join());
+      let score = (c ? 4 : 0) + (p ? 4 : 0) + (c + p <= 3 ? 1 : 0) + (fits.length >= 4 && fits.length <= 6 ? 3 : fits.length >= 3 && fits.length <= 7 ? 1 : 0);
+      const others = fits.filter(w => w !== s);
+      if (others.length) score += Math.max(...others.map(n => new Set(fits.map(x => fbKey(n, x))).size)) >= fits.length - 1 ? 2 : 0;
+      if (!best || score > best.score) best = { s, score };
+    }
+    return best ? best.s : words.find(w => w !== g);
+  }
+
+  // Why a word can't be the secret, from one guess's feedback.
+  function whyOut(w, g, f, only) {
+    const kept = new Set(g.split("").filter((x, i) => f[i] !== "absent"));
+    for (let i = 0; i < 5; i++) {
+      if (only && only !== "absent") break;
+      if (f[i] === "absent" && !kept.has(g[i]) && w.includes(g[i])) return { kind: "absent", letter: g[i], text: `${up(w)} has ${/[aefhilmnorsx]/.test(g[i]) ? "an" : "a"} ${g[i].toUpperCase()}, which is gray` };
+    }
+    for (let i = 0; i < 5; i++) {
+      if (only && only !== "correct") break;
+      if (f[i] === "correct" && w[i] !== g[i]) return { kind: "correct", letter: g[i], text: `${up(w)} has no ${g[i].toUpperCase()} in ${ORD[i]} place (${colorName("hit")})` };
+    }
+    for (let i = 0; i < 5; i++) {
+      if (only && only !== "present") break;
+      if (f[i] !== "present") continue;
+      if (!w.includes(g[i])) return { kind: "present", letter: g[i], text: `${up(w)} has no ${g[i].toUpperCase()}, but ${colorName("near")} means it's in the word` };
+      if (w[i] === g[i]) return { kind: "present", letter: g[i], text: `${up(w)} has ${g[i].toUpperCase()} in ${ORD[i]} place, but ${colorName("near")} means not there` };
+    }
+    return only ? null : { kind: "other", text: `${up(w)} doesn't match the colors` };
+  }
+
+  // The tutorial is a handful of phases, each moved on by what the player
+  // does (a tap anywhere moves past a message; the right tap moves on):
+  // intro -> pick -> guess -> colors -> cross -> next -> guess2 -> free -> found
+  let coach = null; // { phase, prevInput, msg, examples, sug }
 
   async function startCoach() {
     await startPractice({ grids: COACH_GRIDS });
     if (playMode !== "practice") return;
-    coach = { step: 0, prevInput: settings.input };
+    coach = { phase: "intro", prevInput: settings.input, msg: "" };
     settings.input = "tap"; // the guided game is played with taps
     selected = "";
     $("dailyPickScreen").classList.add("is-coaching");
@@ -2220,60 +2257,111 @@
   function coachEnd(done) {
     if (!coach) return;
     settings.input = coach.prevInput;
+    clearTimeout(coach.timer);
     coach = null;
     $("dailyPickScreen")?.classList.remove("is-coaching");
-    ["dpCoachHand", "dpCoachSay", "dpCoachDim", "dpCoachSplash"].forEach(id => $(id)?.remove());
+    ["dpCoachHand", "dpCoachSay", "dpCoachDim", "dpCoachSplash", "dpCoachSkipWrap"].forEach(id => $(id)?.remove());
     document.querySelectorAll(".dp-coach-focus").forEach(el => el.classList.remove("dp-coach-focus"));
     try { localStorage.setItem(INTRO_SEEN_KEY, "1"); } catch (e) { /* private mode */ }
     if (done) track("tutorial-done");
   }
 
-  const coachStep = () => coach && COACH_STEPS[coach.step];
-  function coachNext() {
-    if (!coach) return;
-    const was = COACH_STEPS[coach.step];
-    if (was?.next) {
-      current = Math.min(current + 1, puzzles.length - 1);
-      selected = "";
-      coach.step++;
-      render();
-      flapIn();
-      return;
-    }
-    if (was?.finish) {
-      state.coachDone = true;
-      coach.step = COACH_STEPS.length;
-      stopClock();
-      render();
-      return;
-    }
-    coach.step++;
-    if (coach.step >= COACH_STEPS.length) {
-      // Solved: a moment to enjoy it before the summary.
-      if ($("dpCoachHand")) $("dpCoachHand").hidden = true;
-      const say = $("dpCoachSay");
-      if (say) { say.hidden = false; say.innerHTML = `<b>Found it! ${PARTY}</b>`; }
-      return;
-    }
+  // The words that can't be the secret, given every guess so far.
+  function coachOut() {
+    const r = round(), p = puzzles[current];
+    return p.words.filter(w => !r.guesses.includes(w) && r.guesses.some(g => fbKey(g, w) !== fbKey(g, p.answer)));
+  }
+  const coachLeft = () => coachOut().filter(w => !round().struck.includes(w));
+  const firstGuess = () => round().guesses[0];
+
+  function coachSet(phase, msg = "") {
+    coach.phase = phase;
+    coach.msg = msg;
     coachShow();
   }
+  const coachCanGuess = () => !coach || ["guess", "guess2", "free"].includes(coach.phase);
 
-  // Does this tap fit the current step? (Taps on anything else are ignored.)
+  // Before a word tap goes through: is it one the tutorial wants now?
   function coachAllows(word) {
-    const st = coachStep();
-    if (!st) return true;
-    if (st.type === "free") return true;
-    if (st.type === "tap" && st.word === word) return true;
+    if (!coach) return true;
+    const r = round();
+    const struck = r.struck.includes(word);
+    if (coach.phase === "intro") coach.phase = "pick";
+    if (coach.phase === "colors") coach.phase = "cross";
+    if (coach.phase === "pick" || coach.phase === "guess") {
+      // Only one word on the go before the first guess.
+      r.struck = r.struck.filter(w => w === word);
+      if (selected && selected !== word) selected = "";
+      return true;
+    }
+    if (coach.phase === "cross") {
+      if (struck) return coachNo("It's already crossed out.");
+      if (!coachOut().includes(word)) return coachNo(`Not ${up(word)}: it still fits, so it could be the secret!`);
+      return true;
+    }
+    if (coach.phase === "next" || coach.phase === "guess2") {
+      if (struck && coachOut().includes(word)) return coachNo("That one's out. Pick one that still fits!");
+      return true;
+    }
+    return true;
+  }
+  function coachNo(msg) {
     const hand = $("dpCoachHand");
     hand?.classList.remove("is-nudge"); void hand?.offsetWidth; hand?.classList.add("is-nudge");
+    coach.msg = `<span class="dp-say-no">${msg}</span>`;
+    coachShow();
     return false;
   }
+
+  // After a word tap went through.
   function coachAfterTap(word) {
-    const st = coachStep();
-    if (!st || st.type !== "tap" || st.word !== word) return;
+    if (!coach) return;
     const r = round();
-    const now = word === selected ? "picked" : r.struck.includes(word) ? "struck" : "normal";
-    if (now === st.expect) coachNext(); else coachShow();
+    coach.last = word;
+    if (coach.phase === "pick" || coach.phase === "guess") return coachSet(selected ? "guess" : "pick", r.struck.includes(word) ? "pickAgain" : "");
+    if (coach.phase === "cross" && r.struck.includes(word)) {
+      const why = whyOut(word, firstGuess(), feedback(firstGuess(), puzzles[current].answer));
+      const yes = (coach.examples || []).some(x => x.w === word) ? "Yes!" : `Yes! ${why.text}.`;
+      return coachSet(coachLeft().length ? "cross" : "next", yes);
+    }
+    if (coach.phase === "next" || coach.phase === "guess2") return coachSet(selected ? "guess2" : "next", r.struck.includes(word) && !coachOut().includes(word) ? "again" : "");
+  }
+
+  // After a guess: the first one decides the secret (before its feedback).
+  function coachBeforeGuess() {
+    if (coach && coach.phase === "guess" && !round().guesses.length) {
+      const p = puzzles[current];
+      p.answer = coachSecret(p.words, selected);
+      const f = feedback(selected, p.answer);
+      // Two worked examples: a word out for a gray letter, one out for a
+      // green or yellow one.
+      const out = p.words.filter(w => w !== selected && fbKey(selected, w) !== f.join());
+      const pickBy = (kind, not) => out.find(w => w !== not && whyOut(w, selected, f, kind));
+      const e1 = pickBy("absent");
+      const e2 = pickBy("correct", e1) || pickBy("present", e1);
+      coach.examples = [e1 && { w: e1, kind: "absent" }, e2 && { w: e2, kind: whyOut(e2, selected, f, "correct") ? "correct" : "present" }].filter(Boolean);
+      if (!coach.examples.length && out[0]) coach.examples = [{ w: out[0] }];
+      // A good next guess: fits, isn't the secret, splits the rest best.
+      const fits = p.words.filter(w => w !== selected && fbKey(selected, w) === f.join());
+      const others = fits.filter(w => w !== p.answer);
+      coach.sug = others.sort((a, b) => new Set(fits.map(x => fbKey(b, x))).size - new Set(fits.map(x => fbKey(a, x))).size)[0] || p.answer;
+    }
+  }
+  function coachAfterGuess() {
+    if (!coach) return;
+    const r = round();
+    if (r.solved) return coachSet("found");
+    if (coach.phase === "guess") return setTimeout(() => coach && coachSet("colors"), 650); // after the tiles flip in
+    return coachSet("free");
+  }
+
+  // A tap anywhere (not on a word) moves past a message.
+  function coachScreenTap(event) {
+    if (!coach) return;
+    if (event.target.closest?.("#dpCoachSkip")) { event.stopPropagation(); coachEnd(false); render(); startClock(); return; }
+    if (event.target.closest?.(".dp-word, #dpGuess, button")) return;
+    if (coach.phase === "intro") coachSet("pick");
+    else if (coach.phase === "colors") coachSet("cross");
   }
 
   function coachEl(id, cls, parent = $("dailyPickScreen")) {
@@ -2281,41 +2369,120 @@
     if (!el) { el = document.createElement("div"); el.id = id; el.className = cls; parent.appendChild(el); }
     return el;
   }
+  const wordEl = w => document.querySelector(`#dailyPickRoot .dp-word[data-word="${w}"]`);
 
-  // Draws the current step: the hand, the words, the dim.
+  // What the bubble says and points at, for the current phase.
+  function coachContent() {
+    const r = round(), p = puzzles[current];
+    const twice = r.guesses.length || settings.firstPick !== "single";
+    const g = firstGuess();
+    const f = g ? feedback(g, p.answer) : null;
+    const lit = r.guesses.length ? document.querySelector("#dpDrop") : null;
+    const unstruck = p.words.filter(w => !r.struck.includes(w) && !r.guesses.includes(w));
+    switch (coach.phase) {
+      case "intro":
+        return { text: `Find the <b>secret word</b> to win!<br>It's one of these 16 words.`, small: "Tap anywhere to start", avoid: unstruck.map(wordEl), board: true };
+      case "pick": {
+        const demo = p.words[5];
+        return { text: coach.msg === "pickAgain" ? `<b>Tap it again</b> to pick it.` : `To start, pick <b>any word</b>:<br>${twice ? "<b>tap it twice</b>" : "<b>tap it</b>"}, then press <b>Guess</b>.`,
+          target: coach.msg === "pickAgain" ? wordEl(coach.last) : wordEl(demo), double: twice && coach.msg !== "pickAgain", avoid: unstruck.map(wordEl) };
+      }
+      case "guess":
+        return { text: `Now press <b>Guess</b>.`, target: $("dpGuess") };
+      case "colors": {
+        const kinds = [["correct", `<b>${cap(colorName("hit"))}</b>: right letter, right spot`], ["present", `<b>${cap(colorName("near"))}</b>: right letter, wrong spot`], ["absent", `<b>Gray</b>: not in the word`]];
+        const lines = kinds.filter(([k]) => f.includes(k)).map(([k, t]) => `<span class="dp-say-line">${g.split("").filter((x, i) => f[i] === k).map(x => tile(x, k)).join("")} ${t}</span>`).join("");
+        return { text: `<span class="dp-say-head">Your guess shows how close it is:</span>${lines}`, small: "Tap anywhere to go on", target: lit, focus: lit, noHand: true };
+      }
+      case "cross": {
+        const exo = (coach.examples || []).find(x => !r.struck.includes(x.w));
+        const ex = exo?.w;
+        const left = coachLeft().length;
+        const lead = coach.msg ? `<span class="dp-say-lead">${coach.msg}</span>` : "";
+        const ask = ex
+          ? `${r.struck.some(w => !r.guesses.includes(w)) ? "Another one: " : "Now <b>cross out</b> every word that can't be the secret: <b>tap it once</b>.<br>Like this one: "}${(whyOut(ex, g, f, exo.kind) || whyOut(ex, g, f)).text}.`
+          : `Cross out the rest that don't fit: <b>${left} left</b>.`;
+        return { text: lead + ask, target: ex ? wordEl(ex) : null, avoid: [lit, ...coachLeft().map(wordEl)], soft: unstruck.map(wordEl) };
+      }
+      case "next": {
+        if (coach.msg === "again") return { text: `<b>Tap it again</b> to pick it.`, target: wordEl(coach.last), avoid: [lit] };
+        const lead = coach.msg ? `<span class="dp-say-lead">${coach.msg}</span>` : "";
+        return { text: `${lead}All cleared! Now pick your next guess.<br>${up(coach.sug)} is a good one: <b>tap it twice</b>.`,
+          target: wordEl(coach.sug), double: true, avoid: [lit, ...unstruck.map(wordEl)] };
+      }
+      case "guess2":
+        return { text: `Press <b>Guess</b>.`, target: $("dpGuess"), avoid: [lit] };
+      case "free":
+        return { text: `<b>Your turn!</b> Cross out what can't be it,<br>then guess again until you find it.`, avoid: [lit, $("dpGuess"), ...unstruck.map(wordEl)] };
+      case "found":
+        return { text: `<b>Found it!</b> ${PARTY}`, avoid: [lit] };
+    }
+    return { text: "" };
+  }
+
+  // Draws the bubble (over the screen, never moving the board) and the hand.
   function coachShow() {
-    const st = coachStep();
-    if (!st) return;
+    if (!coach || !$("dailyPickRoot")?.querySelector(".dp-board")) return;
     document.querySelectorAll(".dp-coach-focus").forEach(el => el.classList.remove("dp-coach-focus"));
-    const dim = coachEl("dpCoachDim", "dp-coach-dim");
-    dim.hidden = !(st.type === "splash" || st.type === "note");
-    dim.classList.toggle("is-dark", st.type === "splash");
+    $("dpCoachDim")?.remove();
     $("dpCoachSplash")?.remove();
-    const say = coachEl("dpCoachSay", "dp-coach-say", $("dailyPickScreen").querySelector(".dp-head") || $("dailyPickScreen"));
+    const c = coachContent();
+    const say = coachEl("dpCoachSay", "dp-coach-say dp-think");
     const hand = coachEl("dpCoachHand", "dp-coach-hand");
-    hand.innerHTML = HAND_HTML;
-    if (st.type === "splash") {
-      hand.hidden = true;
-      say.hidden = true;
-      const splash = coachEl("dpCoachSplash", "dp-coach-splash");
-      splash.innerHTML = `<b>${st.text}</b><small>Tap to start</small>`;
-      clearTimeout(coach.timer);
-      coach.timer = setTimeout(() => { if (coachStep() === st) coachNext(); }, 2600);
-      return;
-    }
+    if (!hand.firstChild) hand.innerHTML = HAND_HTML;
+    const skip = coachEl("dpCoachSkipWrap", "dp-coach-skipwrap", $("dailyPickScreen").querySelector(".dp-head") || $("dailyPickScreen"));
+    if (!skip.firstChild) skip.innerHTML = `<button type="button" class="dp-coach-skip" id="dpCoachSkip">Skip tutorial</button>`;
+    const html = `<span class="dp-say-text">${c.text}</span>${c.small ? `<small>${c.small}</small>` : ""}<i class="dp-think-dot is-1"></i><i class="dp-think-dot is-2"></i>`;
+    if (say.dataset.html !== html) { say.innerHTML = html; say.dataset.html = html; say.classList.remove("is-pop"); void say.offsetWidth; say.classList.add("is-pop"); }
     say.hidden = false;
-    say.innerHTML = `<span class="dp-say-text"><span>${typeof st.text === "function" ? st.text() : st.text}</span>${st.type === "note" ? `<small>Tap to continue</small>` : ""}</span><button type="button" class="dp-coach-skip" id="dpCoachSkip">Skip</button>`;
-    const target = st.type === "tap" ? document.querySelector(`#dailyPickRoot .dp-word[data-word="${st.word}"]`)
-      : st.type === "guess" ? $("dpGuess") : st.target ? document.querySelector(st.target) : null;
-    if (st.type === "note" && st.target) document.querySelectorAll(st.target).forEach(el => el.classList.add("dp-coach-focus"));
-    hand.hidden = !target || st.type === "note";
-    if (target) {
-      const b = target.getBoundingClientRect();
-      // The fingertip on the target's middle (lower for the Guess button).
-      hand.style.left = `${b.left + b.width / 2}px`;
-      hand.style.top = `${b.top + b.height * (st.type === "guess" ? .6 : .68)}px`;
-      hand.classList.toggle("is-double", st.type === "tap" && st.expect === "picked" && (round().guesses.length > 0 || settings.firstPick !== "single"));
+    // A message (no action yet) takes taps; otherwise taps go through it.
+    say.classList.toggle("is-passive", !["intro", "colors"].includes(coach.phase));
+    c.focus?.classList.add("dp-coach-focus");
+    const target = c.target || null;
+    const tb = target?.getBoundingClientRect();
+    hand.hidden = !tb || !!c.noHand;
+    let handBox = null;
+    if (tb && !c.noHand) {
+      const x = tb.left + tb.width / 2, y = tb.top + tb.height * (target.id === "dpGuess" ? .6 : .62);
+      hand.style.left = `${x}px`;
+      hand.style.top = `${y}px`;
+      hand.classList.toggle("is-double", !!c.double);
+      handBox = { left: x - 24, right: x + 46, top: y - 6, bottom: y + 72 };
     }
+    // Where the bubble goes: the spot that covers the least of what matters
+    // now (the thing to tap, the hand, the feedback, words still to tap),
+    // as close to the target as it can.
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const W = Math.min(340, vw - 24);
+    const left = Math.round((vw - W) / 2);
+    say.style.width = `${W}px`;
+    say.style.left = `${left}px`;
+    const H = say.offsetHeight;
+    const boxes = [];
+    const add = (el, weight) => { const b = el?.getBoundingClientRect?.(); if (b && b.width) boxes.push({ b, weight }); };
+    add(target, 12);
+    if (handBox) boxes.push({ b: handBox, weight: 12 });
+    (c.avoid || []).forEach(el => add(el, 5));
+    (c.soft || []).forEach(el => add(el, 1));
+    const ty = tb ? tb.top + tb.height / 2 : vh / 2;
+    let best = null;
+    for (let top = 8; top <= Math.max(8, vh - H - 8); top += 4) {
+      let cost = 0;
+      for (const { b, weight } of boxes) {
+        const ix = Math.max(0, Math.min(left + W, b.right) - Math.max(left, b.left));
+        const iy = Math.max(0, Math.min(top + H, b.bottom) - Math.max(top, b.top));
+        cost += ix * iy * weight;
+      }
+      cost += Math.abs(top + H / 2 - ty) * 8;
+      if (!best || cost < best.cost) best = { top, cost };
+    }
+    say.style.top = `${best.top}px`;
+    // The thought bubble's little dots trail toward the target.
+    const below = tb && tb.top > best.top + H;
+    const above = tb && tb.bottom < best.top;
+    say.classList.toggle("is-tail-down", !!below);
+    say.classList.toggle("is-tail-up", !!above);
+    if (tb) say.style.setProperty("--tail-x", `${Math.max(26, Math.min(W - 26, tb.left + tb.width / 2 - left))}px`);
   }
 
   async function startPractice(custom) {
@@ -2714,13 +2881,8 @@
     $("dpHelpClose")?.addEventListener("click", closeHelp);
     $("dpIntro")?.addEventListener("click", onTutorialClick);
     $("dpTutorialBtn")?.addEventListener("click", () => { closeHelp(); startCoach(); });
-    // The coach: skip, tap-to-continue notes, the splash.
-    $("dailyPickScreen").addEventListener("click", event => {
-      if (!coach) return;
-      if (event.target.closest?.("#dpCoachSkip")) { event.stopPropagation(); coachEnd(false); render(); startClock(); return; }
-      const st = coachStep();
-      if (st && (st.type === "note" || st.type === "splash") && event.target.closest?.("#dpCoachDim, #dpCoachSplash, #dpCoachSay")) { clearTimeout(coach.timer); coachNext(); }
-    }, true);
+    // The coach: Skip, and a tap anywhere moves past a message.
+    document.addEventListener("click", coachScreenTap, true);
     window.addEventListener("resize", () => coach && coachShow());
     $("dailyPickScreen").addEventListener("click", event => {
       if (!tour) return;

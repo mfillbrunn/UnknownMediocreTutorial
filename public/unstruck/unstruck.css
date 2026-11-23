@@ -14,11 +14,11 @@ body {
   min-height: 100dvh;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Arial, sans-serif;
   color: #e5e5e5;
-  background-color: #202328;
+  background-color: #1b1a18;
   background-image:
     radial-gradient(circle at 18% 12%, rgba(255,255,255,.035), transparent 30%),
-    radial-gradient(circle at 82% 76%, rgba(120,134,156,.055), transparent 34%),
-    linear-gradient(145deg, #24282e 0%, #202328 48%, #1d2025 100%);
+    radial-gradient(circle at 82% 76%, rgba(160,150,135,.055), transparent 34%),
+    linear-gradient(145deg, #211f1d 0%, #1b1a18 48%, #181715 100%);
   background-attachment: fixed;
 }
 
@@ -37,18 +37,18 @@ button { font: inherit; color: inherit; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 1px solid rgba(190,211,232,.2);
+  border: 1px solid rgba(236,228,214,.2);
   border-radius: 16px;
-  background: linear-gradient(145deg, rgba(24,34,49,.96), rgba(11,16,24,.96));
+  background: #22201e;
   box-shadow: 0 22px 70px rgba(0,0,0,.44);
 }
 
-.dp-card .menu-title { font-weight: 800; text-transform: uppercase; color: #f5f8fc; }
+.dp-card .menu-title { font-weight: 800; text-transform: uppercase; color: #f6f2ea; }
 
 /* Light action buttons (Guess, Play, Got it). */
-.dp-next { background: #f1f2f4; color: #15181d; }
+.dp-next { background: #f1ece2; color: #1c1b19; }
 .dp-next:disabled { background: transparent; color: inherit; }
-.dp-share { background: #3b7dd8; color: #fff; }
+.dp-share { background: var(--dp-accent); color: var(--dp-on-accent); }
 
 @media (min-width: 760px) {
   .unstruck-page { padding-top: 4vh; }
@@ -62,4 +62,4 @@ button { font: inherit; color: inherit; }
   padding-bottom: max(32px, env(safe-area-inset-bottom));
 }
 /* Light mode: the page behind the card. */
-body.dp-light-page { color: #1b1f27; background: #eef1f5; }
+body.dp-light-page { color: #2b2925; background: #f3f2f0; }
