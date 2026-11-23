@@ -692,7 +692,8 @@
   }
 
   function startClock() {
-    if (runningSince || over() || !$("dailyPickScreen")?.classList.contains("active") || helpOpen() || introOpen() || ruleOpen() || splashOpen()) return;
+    // Never in a tab nobody is looking at (it starts when they come back).
+    if (runningSince || document.hidden || over() || !$("dailyPickScreen")?.classList.contains("active") || helpOpen() || introOpen() || ruleOpen() || splashOpen()) return;
     runningSince = Date.now();
     ticker = setInterval(() => { showClock(); autoTick(); }, 250);
   }
@@ -988,7 +989,10 @@
       return;
     }
     if (playMode === "daily" && state.date !== G().period()) {
+      // The new day opens on its start screen: its clock waits for Play,
+      // not midnight (a tab left open overnight used to start it then).
       clearInterval(countdownTimer);
+      splashDone = false;
       open();
       return;
     }
@@ -2817,7 +2821,7 @@
     if (!state) return;
     if (document.hidden) stopClock();
     // Back after midnight Eastern with Unstruck still open: load the new day.
-    else if (playMode === "daily" && state.date !== G().period() && $("dailyPickScreen")?.classList.contains("active")) open();
+    else if (playMode === "daily" && state.date !== G().period() && $("dailyPickScreen")?.classList.contains("active")) { splashDone = false; open(); }
     else if (!(tip && tip.stage === "start" && $("dpTipSay"))) startClock(); // a grid's first tip holds the clock
   });
   window.addEventListener("pagehide", () => { if (state) stopClock(); });
