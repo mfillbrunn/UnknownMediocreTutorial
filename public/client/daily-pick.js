@@ -769,7 +769,7 @@
           <li>You don't have to cross out <b>every</b> word, but it helps.</li>
           <li>Grids 2 and 3 work the same way, with a little <b>less help</b> from the colors.</li>
         </ol>
-        <button type="button" class="dp-next dp-share dp-done-play" data-practice="end">Play today's Unstruck</button>
+        <button type="button" class="dp-next dp-brag dp-done-play" data-practice="end">Play today's Unstruck</button>
         <button type="button" class="dp-link" data-coach="again">Replay the tutorial</button>
       </div>`;
       return;
@@ -778,7 +778,7 @@
     root.innerHTML = `<div class="dp-summary">
       <div class="dp-verdict">Practice solved!</div>
       <div class="dp-verdict-sub">${n} ${n === 1 ? "guess" : "guesses"} · ${formatTime(elapsed())} · doesn't count toward your stats</div>
-      <button type="button" class="dp-next dp-share" data-practice="start">Play it again</button>
+      <button type="button" class="dp-next dp-brag" data-practice="start">Play it again</button>
       <button type="button" class="dp-next" data-practice="end">Today's Unstruck →</button>
     </div>`;
   }
@@ -815,7 +815,7 @@
       { target: ".dp-score", text: `You solved all three grids! This is your <b>total number of guesses</b> across them, and <b>how long you took</b>.` },
       { target: ".dp-grid-scores", text: `Here's each grid:<br>${each}` },
       { target: ".dp-panes", text: "Down here are your stats over time: days played, your streak, averages, and more under <b>Details</b>." },
-      { target: "#dpShare", text: "Share your result with friends: it sends your score, not the words." },
+      { target: "#dpBrag", text: "Share your result with friends: it sends your score, not the words." },
       { target: "#dpSettingsBtn", tap: true, text: "And this gear up here is <b>Settings</b>. Tap it" },
       { target: "#dpSettings .dp-setting-group:nth-of-type(1)", settings: true, text: "<b>Look</b>: dark or light." },
       { target: "#dpSettings .dp-setting-group:nth-of-type(2)", settings: true, text: "<b>Colors</b>: switch on color-blind colors if green and yellow are hard to tell apart." },
@@ -916,7 +916,7 @@
         <div class="dp-score-verdict ${diff <= 0 ? "is-good" : "is-over"}">${golfTerm(diff)} <span>${diff === 0 ? `(even with par ${G().par})` : `(${relToPar(diff)} vs par ${G().par})`}</span></div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
-      <div class="dp-share-row"><button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button>${game === "daily" && EXPERIMENTAL_BUTTON && (WEEKLY_ENABLED || SPEED_ENABLED) ? `<button type="button" class="dp-next dp-side-btn" id="dpExperimental">Experimental</button>` : ""}</div>
+      <div class="dp-brag-row"><button type="button" class="dp-next dp-brag" id="dpBrag">${SHARE_LABEL}</button>${game === "daily" && EXPERIMENTAL_BUTTON && (WEEKLY_ENABLED || SPEED_ENABLED) ? `<button type="button" class="dp-next dp-side-btn" id="dpExperimental">Experimental</button>` : ""}</div>
       <div class="dp-views" role="tablist">
         <button type="button" class="dp-view${summaryView === "overall" ? " is-on" : ""}" data-view="overall" role="tab">Overall</button>
         <button type="button" class="dp-view${summaryView === "details" ? " is-on" : ""}" data-view="details" role="tab">Details</button>
@@ -969,7 +969,7 @@
       </div>
       <div class="dp-speed-cells">${cells}</div>
       <div class="dp-speed-note">The number in each solved grid is how many guesses it took.</div>
-      <div class="dp-share-row"><button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button></div>
+      <div class="dp-brag-row"><button type="button" class="dp-next dp-brag" id="dpBrag">${SHARE_LABEL}</button></div>
       <div class="dp-stats is-four">
         ${stat(stats.played, "Played")}
         ${stat(stats.current, "Streak")}
@@ -2039,7 +2039,7 @@
       <div class="dp-rate-note">1 star = okay, 5 stars = great</div>
       ${RATE_GROUPS.map(([group, items]) => `<div class="dp-rate-group"><div class="dp-rate-head">${group}</div>
         ${items.map(([key, label]) => `<div class="dp-rate-row"><span>${label}</span><span class="dp-stars">${stars(key)}</span></div>`).join("")}</div>`).join("")}
-      <button type="button" class="dp-next dp-share" id="dpRateShare">${SHARE_LABEL}</button>
+      <button type="button" class="dp-next dp-brag" id="dpRateBrag">${SHARE_LABEL}</button>
       <button type="button" class="dp-link" id="dpRateBack">← Back</button>`;
     $("dpChooseCard").scrollTop = 0;
   }
@@ -2126,7 +2126,7 @@
         <div class="dp-score-verdict ${diff <= 0 ? "is-good" : "is-over"}">${golfTerm(diff)} <span>${diff === 0 ? `(even with par ${G().par})` : `(${relToPar(diff)} vs par ${G().par})`}</span></div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
-      <div class="dp-share-row"><button type="button" class="dp-next dp-share" id="dpShare">${SHARE_LABEL}</button></div>
+      <div class="dp-brag-row"><button type="button" class="dp-next dp-brag" id="dpBrag">${SHARE_LABEL}</button></div>
       <button type="button" class="dp-link" data-archive-list>← Back to the archive</button>
       <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div></div>`;
   }
@@ -2994,7 +2994,7 @@
       if (event.target.closest("#dpChooseClose") || event.target === $("dpChoose")) closeChooser();
       else if (event.target.closest("#dpRateOpen")) openRatings();
       else if (event.target.closest("#dpRateBack")) openChooser();
-      else if (event.target.closest("#dpRateShare")) { track("ratings-shared"); shareOut(ratingsText(), event.target.closest("#dpRateShare"), SHARE_LABEL); }
+      else if (event.target.closest("#dpRateBrag")) { track("ratings-shared"); shareOut(ratingsText(), event.target.closest("#dpRateBrag"), SHARE_LABEL); }
       else {
         const star = event.target.closest("[data-rate]");
         if (star) rate(star.dataset.rate, +star.dataset.stars);
@@ -3020,7 +3020,7 @@
       if (event.target.closest?.("#dpGuess")) return guessSelected();
       // Taps on the board are handled with dragging (initDrag).
       if (event.target.closest?.(".dp-board")) return;
-      const shareButton = event.target.closest?.("#dpShare");
+      const shareButton = event.target.closest?.("#dpBrag");
       if (shareButton) share(shareButton);
       if (event.target.closest?.("#dpExperimental")) openChooser();
       const day = event.target.closest?.("[data-archive-day]");

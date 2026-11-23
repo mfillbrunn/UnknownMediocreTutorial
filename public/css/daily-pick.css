@@ -255,7 +255,7 @@
   background: transparent; color: inherit; opacity: .45;
   border-color: rgba(255,255,255,.22);
 }
-.dp-share { background: var(--dp-accent); color: var(--dp-on-accent); }
+.dp-brag { background: var(--dp-accent); color: var(--dp-on-accent); }
 
 /* ---------- Feedback on guessed tiles ----------
    A guessed word keeps its feedback in miniature along the bottom of its tile:
@@ -328,7 +328,7 @@
 .dp-verdict { text-align: center; font-size: 32px; font-weight: 800; margin-top: 4px; }
 .dp-verdict span { font-size: 20px; opacity: .7; }
 .dp-verdict-sub { text-align: center; font-size: 15px; opacity: .7; margin-top: -4px; font-variant-numeric: tabular-nums; }
-.dp-summary .dp-share { align-self: center; margin: 4px 0 6px; padding: 12px 40px; }
+.dp-summary .dp-brag { align-self: center; margin: 4px 0 6px; padding: 12px 40px; }
 .dp-stats.dp-stats-4 { grid-template-columns: repeat(4, 1fr); margin-top: 0; }
 
 /* Score history, golf style. */
@@ -347,7 +347,7 @@
 #dailyPickScreen .dp-word { font-size: clamp(15px, 4.5vw, 24px) !important; }
 #dailyPickScreen .dp-next { font-size: 16px !important; }
 #dailyPickScreen .dp-help-btn { font-size: 16px !important; }
-#dailyPickScreen .dp-summary .dp-share { font-size: 17px !important; }
+#dailyPickScreen .dp-summary .dp-brag { font-size: 17px !important; }
 
 /* ---------- Desktop ---------- */
 @media (min-width: 760px) {
@@ -545,7 +545,7 @@
 .dp-score-verdict { margin-top: 6px; font-size: 18px; }
 .dp-grid-score { padding: 6px 4px 8px; gap: 0; }
 .dp-grid-score b { font-size: 28px; }
-.dp-summary .dp-share { margin: 2px 0; padding: 10px 40px; }
+.dp-summary .dp-brag { margin: 2px 0; padding: 10px 40px; }
 .dp-stats-title { margin-top: 4px; }
 .dp-summary .dp-stat { padding: 7px 2px; }
 .dp-dist { margin-top: 0; padding: 10px 12px; }
@@ -556,7 +556,7 @@
 .dp-summary .dp-link { margin-top: 0; padding: 4px 10px; }
 .dp-summary .dp-copyright { margin-top: 2px; }
 /* Share fills its row, so there's no empty space on either side. */
-.dp-summary .dp-share { align-self: stretch; margin: 0; padding: 9px 0; }
+.dp-summary .dp-brag { align-self: stretch; margin: 0; padding: 9px 0; }
 .dp-grid-time { margin-top: 2px; font-size: 12px; font-weight: 700; opacity: .75; font-variant-numeric: tabular-nums; }
 .dp-grid-time { display: inline-flex; align-items: center; gap: 4px; }
 .dp-clock-icon { display: block; flex-shrink: 0; }
@@ -616,7 +616,7 @@
 #dailyPickScreen.dp-light .dp-fb-grid { background: rgba(33,31,27,.08); }
 #dailyPickScreen.dp-light .dp-help-btn { border-color: #c4bdb1; }
 #dailyPickScreen.dp-light .dp-center #dpGuess:disabled { border-color: rgba(33,31,27,.25); }
-#dailyPickScreen.dp-light .dp-next:not(.dp-share):not(#dpGuess) { background: #2b2925; color: #fff; }
+#dailyPickScreen.dp-light .dp-next:not(.dp-brag):not(#dpGuess) { background: #2b2925; color: #fff; }
 #dailyPickScreen.dp-light .dp-next:disabled:not(#dpGuess) { background: transparent; color: inherit; }
 #dailyPickScreen.dp-light .dp-link { color: var(--dp-link); }
 #dailyPickScreen.dp-light .dp-intro { background: rgba(243,242,240,.7); }
@@ -702,14 +702,14 @@ body.dp-light-page { background: #f3eee3; }
 
 /* Share: a centered pill with an icon, so it stands apart from the
    full-width cards around it. */
-.dp-summary .dp-share {
+.dp-summary .dp-brag {
   align-self: center; width: 62%; min-width: 200px; margin: 4px 0;
   padding: 13px 0; border-radius: 999px;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   box-shadow:none;
 }
-#dailyPickScreen .dp-summary .dp-share { font-size: 18px !important; }
-.dp-share svg { display: block; flex-shrink: 0; }
+#dailyPickScreen .dp-summary .dp-brag { font-size: 18px !important; }
+.dp-brag svg { display: block; flex-shrink: 0; }
 
 /* ---------- Results: Overall / Details ---------- */
 .dp-views {
@@ -744,13 +744,13 @@ body.dp-light-page { background: #f3eee3; }
 .dp-pane > .dp-details, .dp-pane > .dp-dist { flex: 1; }
 
 /* ---------- Results: Speed | Share | Experimental ---------- */
-.dp-share-row { display: flex; justify-content: center; margin: 4px 0; }
-.dp-share-row:has(.dp-side-btn) {
+.dp-brag-row { display: flex; justify-content: center; margin: 4px 0; }
+.dp-brag-row:has(.dp-side-btn) {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; gap: 8px;
 }
-.dp-summary .dp-share-row .dp-share { margin: 0; }
-.dp-share-row:has(.dp-side-btn) .dp-share { width: 100%; min-width: 0; }
-.dp-summary .dp-share-row .dp-side-btn {
+.dp-summary .dp-brag-row .dp-brag { margin: 0; }
+.dp-brag-row:has(.dp-side-btn) .dp-brag { width: 100%; min-width: 0; }
+.dp-summary .dp-brag-row .dp-side-btn {
   height: 40px; padding: 0 2px; border-radius: 999px; white-space: nowrap;
   background: rgba(255,255,255,.08); color: inherit; border-color: rgba(255,255,255,.24);
 }
@@ -836,7 +836,7 @@ body.dp-light-page { background: #f3eee3; }
 .dp-key b { font-weight: 900; }
 #dailyPickScreen.dp-light .dp-arrow-tile { background: #f3f2f0; color: #2b2925; border-color: #d3ccbf; }
 /* Just Share and one other button: two equal halves. */
-.dp-share-row:has(> :nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dp-brag-row:has(> :nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 /* ---------- Start screen ---------- */
 /* The grid stays out of sight until Play, so nobody gets a head start. */
@@ -978,7 +978,7 @@ body.dp-light-page { background: #f3eee3; }
 #dailyPickScreen .dp-star { font-size: 24px !important; }
 .dp-star.is-on { color: #f2c14e; }
 .dp-star:active { transform: scale(.88); }
-.dp-choose-card .dp-share { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; padding: 12px 0; margin-top: 4px; }
+.dp-choose-card .dp-brag { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; padding: 12px 0; margin-top: 4px; }
 #dailyPickScreen.dp-light .dp-star { color: #d6cfc3; }
 #dailyPickScreen.dp-light .dp-star.is-on { color: #e0a800; }
 #dailyPickScreen.dp-light .dp-rate-open { color: #b07f00; border-color: #e0b84a; }
@@ -1122,7 +1122,7 @@ body.dp-light-page { background: #f3eee3; color: #2b2925; }
 #dailyPickScreen.dp-light .dp-archive-day { background: #f4efe4; border-color: #e6dfd0; }
 #dailyPickScreen.dp-light .dp-view.is-on { background: #fffdf8; }
 #dailyPickScreen.dp-light .dp-help-btn { border-color: #d8cfbd; color: #2b2925; }
-#dailyPickScreen.dp-light .dp-next:not(.dp-share):not(#dpGuess) { background: #2b2925; color: #fffdf8; }
+#dailyPickScreen.dp-light .dp-next:not(.dp-brag):not(#dpGuess) { background: #2b2925; color: #fffdf8; }
 #dailyPickScreen.dp-light .dp-title-grid, #dailyPickScreen.dp-light .dp-grid-name,
 #dailyPickScreen.dp-light .dp-score-label, #dailyPickScreen.dp-light .dp-dist-title { color: #8a8276; }
 #dailyPickScreen.dp-light .dp-score-num { color: #2b2925; }
@@ -1604,32 +1604,32 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 #dailyPickScreen.is-coaching .dp-head-buttons { visibility: hidden; }
 #dailyPickScreen.dp-light .dp-coach-dim { background: rgba(40,32,20,.5); }
 @media (prefers-reduced-motion: reduce) { .dp-coach-hand svg, .dp-coach-splash { animation: none !important; } .dp-coach-hand { transition: none; } }
-.dp-coach-dim.is-dark { background: rgba(10,9,8,.86); } .dp-coach-done .dp-share { padding-left: 26px; padding-right: 26px; }
+.dp-coach-dim.is-dark { background: rgba(10,9,8,.86); } .dp-coach-done .dp-brag { padding-left: 26px; padding-right: 26px; }
 
 /* ======================================================================
    Main buttons (Share, Play, Guess) in the theme's own button colors:
    light on dark, dark on light. Share stays the biggest.
    ====================================================================== */
-#dailyPickScreen .dp-share,
+#dailyPickScreen .dp-brag,
 #dailyPickScreen .dp-side-guess:not(:disabled),
 #dailyPickScreen .dp-drop-guess,
 #dailyPickScreen .dp-start-play,
 #dailyPickScreen .dp-center #dpGuess:not(:disabled) {
   background: #f2f1ef; color: #1e1d1a; border-color: transparent; box-shadow: none;
 }
-#dailyPickScreen.dp-light .dp-share,
+#dailyPickScreen.dp-light .dp-brag,
 #dailyPickScreen.dp-light .dp-side-guess:not(:disabled),
 #dailyPickScreen.dp-light .dp-drop-guess,
 #dailyPickScreen.dp-light .dp-start-play,
 #dailyPickScreen.dp-light .dp-center #dpGuess:not(:disabled) {
   background: #2b2925; color: #fffdf8;
 }
-#dailyPickScreen .dp-summary .dp-share { box-shadow: 0 4px 14px rgba(0,0,0,.25); font-weight: 800; }
-#dailyPickScreen.dp-light .dp-summary .dp-share { box-shadow: 0 4px 14px rgba(43,41,37,.2); }
+#dailyPickScreen .dp-summary .dp-brag { box-shadow: 0 4px 14px rgba(0,0,0,.25); font-weight: 800; }
+#dailyPickScreen.dp-light .dp-summary .dp-brag { box-shadow: 0 4px 14px rgba(43,41,37,.2); }
 /* Share and Settings on one row: Share wide, Settings a compact button. */
-.dp-share-row:has(.dp-sum-settings):not(:has(#dpExperimental)) { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: stretch; }
-.dp-share-row:has(.dp-sum-settings) .dp-share { width: 100%; min-width: 0; }
-.dp-summary .dp-share-row .dp-sum-settings {
+.dp-brag-row:has(.dp-sum-settings):not(:has(#dpExperimental)) { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: stretch; }
+.dp-brag-row:has(.dp-sum-settings) .dp-brag { width: 100%; min-width: 0; }
+.dp-summary .dp-brag-row .dp-sum-settings {
   height: auto; padding: 0 16px; display: flex; align-items: center; gap: 6px;
   border-radius: 999px; background: transparent; color: inherit; border: 1.5px solid rgba(255,255,255,.28);
 }
@@ -1784,3 +1784,8 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 /* The tutorial's last two notes. */
 .dp-done-steps.is-notes { line-height: 1.4; width: min(100%, 320px); padding: 14px 16px 14px 34px; }
 .dp-done-steps.is-notes li + li { margin-top: 10px; }
+
+/* The results' Share button: named without "share" (content blockers'
+   "hide share buttons" lists were hiding it), and never folded to nothing. */
+.dp-summary .dp-brag-row { min-height: 46px; flex-shrink: 0; }
+.dp-summary #dpBrag { min-height: 46px; flex-shrink: 0; }

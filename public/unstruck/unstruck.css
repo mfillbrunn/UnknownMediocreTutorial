@@ -48,7 +48,7 @@ button { font: inherit; color: inherit; }
 /* Light action buttons (Guess, Play, Got it). */
 .dp-next { background: #f1ece2; color: #1c1b19; }
 .dp-next:disabled { background: transparent; color: inherit; }
-.dp-share { background: var(--dp-accent); color: var(--dp-on-accent); }
+.dp-brag { background: var(--dp-accent); color: var(--dp-on-accent); }
 
 @media (min-width: 760px) {
   .unstruck-page { padding-top: 4vh; }
