@@ -1789,3 +1789,5 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
    "hide share buttons" lists were hiding it), and never folded to nothing. */
 .dp-summary .dp-brag-row { min-height: 46px; flex-shrink: 0; }
 .dp-summary #dpBrag { min-height: 46px; flex-shrink: 0; }
+/* Past games list (in the pop-up). */
+.dp-past-note { margin: 0 0 10px; font-size: 14px; line-height: 1.4; opacity: .75; text-align: center; }

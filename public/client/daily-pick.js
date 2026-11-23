@@ -67,6 +67,9 @@
   // Shows the Experimental button (Speed, Flags / Colors / Arrows) on the
   // Daily's results, and its paragraphs in How to play. Hidden for now.
   const EXPERIMENTAL_BUTTON = false;
+  // "Past games" on the Daily's results: replay any of the last few days
+  // (they count apart, like the archive: no streak, no stats).
+  const PAST_DAYS = 3;
   // Experimental's third set: the Daily's three rules on smaller grids of 12 words.
   const MINI_ENABLED = false;
   const MINI_WORDS = 12;
@@ -717,7 +720,7 @@
     const title = $("dpTitle");
     if (!title) return;
     const number = state ? ` <span class="dp-title-grid">${G().title.replace(/^Unstruck ?/, "")} #${G().number(state.date)}</span>` : "";
-    const kind = SET_GAMES.includes(game) && grid ? gridLabel(grid - 1) : game === "speed" ? "Speed" : game === "mini" ? "12 ·" : "Grid";
+    const kind = SET_GAMES.includes(game) && grid ? gridLabel(grid - 1) : game === "speed" ? "Speed" : game === "mini" ? "12 ·" : game === "archive" && state ? `#${G().number(state.date)} ·` : "Grid";
     if (playMode === "practice") title.innerHTML = `Unstruck <span class="dp-title-grid">Practice${puzzles.length > 1 && grid ? ` ${grid}/${puzzles.length}` : ""}</span>`;
     else title.innerHTML = grid ? `Unstruck <span class="dp-title-grid">${kind} ${grid}/${puzzles.length}</span>` : `Unstruck${number}`;
     document.querySelectorAll("#dailyPickScreen .dp-tab").forEach(tab => tab.classList.toggle("is-on", tab.dataset.game === game));
@@ -916,7 +919,7 @@
         <div class="dp-score-verdict ${diff <= 0 ? "is-good" : "is-over"}">${golfTerm(diff)} <span>${diff === 0 ? `(even with par ${G().par})` : `(${relToPar(diff)} vs par ${G().par})`}</span></div>
       </div>
       <div class="dp-grid-scores">${grids}</div>
-      <div class="dp-brag-row"><button type="button" class="dp-next dp-brag" id="dpBrag">${SHARE_LABEL}</button>${game === "daily" && EXPERIMENTAL_BUTTON && (WEEKLY_ENABLED || SPEED_ENABLED) ? `<button type="button" class="dp-next dp-side-btn" id="dpExperimental">Experimental</button>` : ""}</div>
+      <div class="dp-brag-row"><button type="button" class="dp-next dp-brag" id="dpBrag">${SHARE_LABEL}</button>${game === "daily" && pastDays().length ? `<button type="button" class="dp-next dp-side-btn" id="dpPast" data-past>Past games</button>` : ""}${game === "daily" && EXPERIMENTAL_BUTTON && (WEEKLY_ENABLED || SPEED_ENABLED) ? `<button type="button" class="dp-next dp-side-btn" id="dpExperimental">Experimental</button>` : ""}</div>
       <div class="dp-views" role="tablist">
         <button type="button" class="dp-view${summaryView === "overall" ? " is-on" : ""}" data-view="overall" role="tab">Overall</button>
         <button type="button" class="dp-view${summaryView === "details" ? " is-on" : ""}" data-view="details" role="tab">Details</button>
@@ -1165,7 +1168,7 @@
     }
 
     const exit = playMode === "practice" ? `<button type="button" class="dp-link" data-practice="end">← Back to today's Unstruck</button>`
-      : game === "archive" ? `<button type="button" class="dp-link" data-archive-list>← Back to the archive</button>`
+      : game === "archive" ? (ARCHIVE ? `<button type="button" class="dp-link" data-archive-list>← Back to the archive</button>` : `<button type="button" class="dp-link" data-game="daily">← Back to today's Unstruck</button>`)
       : game !== "daily" ? `<button type="button" class="dp-link" data-game="daily">← Back to the Daily</button>` : "";
     // The middle spot. Word grids show the latest guess there, big; before
     // the first guess it says what to do, and that goes as a word is dragged in.
@@ -2106,6 +2109,31 @@
     open("archive");
   }
 
+  // ---- Past games: the last few days, from the results --------------------
+  function pastDays() {
+    const days = [];
+    for (let d = addDays(today(), -1); d >= LAUNCH_DATE && days.length < PAST_DAYS; d = addDays(d, -1)) days.push(d);
+    return days;
+  }
+  function openPast() {
+    track("past-open");
+    const read = key => { try { return JSON.parse(localStorage.getItem(key)) || {}; } catch (e) { return {}; } };
+    const replayed = read("umt.unstruck.archiveHistory");
+    const onTheDay = read(HISTORY_KEY);
+    const status = date => {
+      if (replayed[date]) return `<em>Replayed: ${replayed[date].score} guesses</em>`;
+      if (read(`umt.unstruck.archive.${date}`).rounds?.some(r => r.guesses.length)) return `<em>In progress</em>`;
+      if (onTheDay[date]) return `<em>You played it: ${onTheDay[date].score} guesses</em>`;
+      return "";
+    };
+    $("dpChooseCard").innerHTML = `<div class="dp-rule-grid">Past games</div>
+      <p class="dp-past-note">Play one of the last ${PAST_DAYS} days. These don't count toward your streak or stats.</p>
+      ${pastDays().map(date => `<button type="button" class="dp-choice" data-past-day="${date}">
+        <b>Unstruck #${puzzleNumber(date)}</b><span>${prettyDay(date)}</span>${status(date)}</button>`).join("")}
+      <button type="button" class="dp-link" id="dpChooseClose">Not now</button>`;
+    $("dpChoose").hidden = false;
+  }
+
   function renderArchiveSummary(root) {
     recordDay();
     setTitle(0);
@@ -2127,7 +2155,8 @@
       </div>
       <div class="dp-grid-scores">${grids}</div>
       <div class="dp-brag-row"><button type="button" class="dp-next dp-brag" id="dpBrag">${SHARE_LABEL}</button></div>
-      <button type="button" class="dp-link" data-archive-list>← Back to the archive</button>
+      ${ARCHIVE ? `<button type="button" class="dp-link" data-archive-list>← Back to the archive</button>` : `<button type="button" class="dp-link" data-past>Play another past game</button>
+      <button type="button" class="dp-link" data-game="daily">← Back to today's Unstruck</button>`}
       <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div></div>`;
   }
 
@@ -2942,6 +2971,9 @@
         return;
       }
       if (event.target.closest?.('[data-coach="again"]')) return startCoach();
+      const past = event.target.closest?.("[data-past-day]");
+      if (past) { track("past-play"); return playArchive(past.dataset.pastDay); }
+      if (event.target.closest?.("[data-past]")) return openPast();
       const button = event.target.closest?.("[data-practice]");
       if (!button) return;
       if (button.dataset.practice === "start") startPractice();
