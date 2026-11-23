@@ -69,7 +69,7 @@
   const EXPERIMENTAL_BUTTON = false;
   // "Past games" on the Daily's results: replay any of the last few days
   // (they count apart, like the archive: no streak, no stats).
-  const PAST_DAYS = 3;
+  const PAST_DAYS = 1; // just yesterday, so it's a treat, not a binge
   // Experimental's third set: the Daily's three rules on smaller grids of 12 words.
   const MINI_ENABLED = false;
   const MINI_WORDS = 12;
@@ -1181,7 +1181,7 @@
         : settings.input === "hold" ? "<b>Tap</b> to cross out<br><b>Hold</b> a word to guess it"
         : "<b>Tap</b> to cross out<br><b>Drag</b> here to guess";
     // Tapping: the Guess button always sits beside the legend under the
-    // grid (greyed out until a word is picked), so nothing moves.
+    // grid (grayed out until a word is picked), so nothing moves.
     const guessButton = "";
     const pickName = !selected ? "" : pics ? name(selected) : paints ? paintRow(selected, "dp-paints dp-paints-inline") : selected.toUpperCase();
     const sideGuess = tapping && !done
@@ -1291,7 +1291,7 @@
       if (!drag || event.pointerId !== drag.id) return;
       if (drag.hold) {
         // Sliding off cancels the hold (nothing happens on release).
-        if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) > 14) { drag.cancelled = true; clearTimeout(drag.holdStart); clearTimeout(drag.holdDone); drag.ring?.remove(); drag.ring = null; drag.dim?.remove(); drag.dim = null; drag.card.classList.remove("is-holding"); }
+        if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) > 14) { drag.canceled = true; clearTimeout(drag.holdStart); clearTimeout(drag.holdDone); drag.ring?.remove(); drag.ring = null; drag.dim?.remove(); drag.dim = null; drag.card.classList.remove("is-holding"); }
         return;
       }
       if (!drag.moved) {
@@ -1324,7 +1324,7 @@
       const drag0 = drag.card;
       if (drag.hold) {
         // A quick tap crosses out; a hold let go early (or slid off) does nothing.
-        const tapped = !drag.ring && !drag.cancelled && !drag.completed;
+        const tapped = !drag.ring && !drag.canceled && !drag.completed;
         end();
         if (tapped) onWordClick(word, "strike");
         return;
@@ -1742,7 +1742,7 @@
       const fb = arrowFeedback(guess, secret);
       const say = (g, a, f) => (f === "same" ? `${g.toUpperCase()} is right` : `the secret's ${a.toUpperCase()} comes ${f === "left" ? "before" : "after"} ${g.toUpperCase()}`);
       return `<p>Words again, but no colors. Under each letter of your guess, an arrow points to where the secret's letter in that spot is in the alphabet:</p>
-        <p><b>←</b> it comes earlier (towards A).<br><b>→</b> it comes later (towards Z).<br><b>–</b> it's the right letter.</p>
+        <p><b>←</b> it comes earlier (toward A).<br><b>→</b> it comes later (toward Z).<br><b>–</b> it's the right letter.</p>
         <div class="dp-example"><div class="dp-example-title">Example: the secret is BLADE</div>
           <div class="dp-demo"><div class="dp-row">${fb.map((f, i) => `<span class="dp-tile dp-arrow-tile is-${f}">${guess[i]}<small>${ARROWS[f]}</small></span>`).join("")}</div></div>
           <ol class="dp-ex-why">${fb.map((f, i) => `<li><b>${guess[i].toUpperCase()} ${ARROWS[f]}</b> ${say(guess[i], secret[i], f)}.</li>`).join("")}</ol>
@@ -2127,7 +2127,7 @@
       return "";
     };
     $("dpChooseCard").innerHTML = `<div class="dp-rule-grid">Past games</div>
-      <p class="dp-past-note">Play one of the last ${PAST_DAYS} days. These don't count toward your streak or stats.</p>
+      <p class="dp-past-note">${PAST_DAYS === 1 ? "Missed yesterday? Play it here." : `Play one of the last ${PAST_DAYS} days.`} It doesn't count toward your streak or stats.</p>
       ${pastDays().map(date => `<button type="button" class="dp-choice" data-past-day="${date}">
         <b>Unstruck #${puzzleNumber(date)}</b><span>${prettyDay(date)}</span>${status(date)}</button>`).join("")}
       <button type="button" class="dp-link" id="dpChooseClose">Not now</button>`;
