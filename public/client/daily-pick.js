@@ -760,13 +760,11 @@
       root.innerHTML = `<div class="dp-summary dp-coach-done">
         <div class="dp-done-badge" aria-hidden="true">✓</div>
         <div class="dp-verdict">You're ready!</div>
-        <p class="dp-done-lead">That's the whole game.</p>
-        <ol class="dp-done-steps">
-          <li><b>Guess</b> a word</li>
-          <li><b>Cross out</b> what can't be the secret</li>
-          <li><b>Guess again</b> until you find it</li>
+        <p class="dp-done-lead">Two last things:</p>
+        <ol class="dp-done-steps is-notes">
+          <li>You don't have to cross out <b>every</b> word, but it helps.</li>
+          <li>Grids 2 and 3 work the same way, with a little <b>less help</b> from the colors.</li>
         </ol>
-        <p class="dp-done-note">Every day: three new grids. Grids 2 and 3 give less feedback, and explain how when you get there. Fewer guesses is better.</p>
         <button type="button" class="dp-next dp-share dp-done-play" data-practice="end">Play today's Unstruck</button>
         <button type="button" class="dp-link" data-coach="again">Replay the tutorial</button>
       </div>`;
@@ -2414,8 +2412,9 @@
         const lead = coach.msg ? `<span class="dp-say-lead">${coach.msg}</span>` : "";
         const ask = ex
           ? `${r.struck.some(w => !r.guesses.includes(w)) ? "Another one: " : "Now <b>cross out</b> every word that can't be the secret: <b>tap it once</b>.<br>Like this one: "}${(whyOut(ex, g, f, exo.kind) || whyOut(ex, g, f)).text}.`
-          : `Cross out the rest that don't fit: <b>${left} left</b>.`;
-        return { text: lead + ask, target: ex ? wordEl(ex) : null, avoid: [lit, ...coachLeft().map(wordEl)], soft: unstruck.map(wordEl) };
+          : `Cross out the rest that don't fit: <b style="white-space:nowrap">${left} left</b>.`;
+        // Once the examples are done: crossing out is a help, not a must.
+        return { text: lead + ask, small: ex ? "" : "In a real game you don't have to cross out everything, but it helps.", target: ex ? wordEl(ex) : null, avoid: [lit, ...coachLeft().map(wordEl)], soft: unstruck.map(wordEl) };
       }
       case "next": {
         if (coach.msg === "again") return { text: `<b>Tap it again</b> to pick it.`, target: wordEl(coach.last), avoid: [lit] };
