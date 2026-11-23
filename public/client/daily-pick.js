@@ -66,7 +66,7 @@
   let archiveDate = null; // the past day being played
   // Shows the Experimental button (Speed, Flags / Colors / Arrows) on the
   // Daily's results, and its paragraphs in How to play. Hidden for now.
-  const EXPERIMENTAL_BUTTON = true;
+  const EXPERIMENTAL_BUTTON = false;
   // Experimental's third set: the Daily's three rules on smaller grids of 12 words.
   const MINI_ENABLED = false;
   const MINI_WORDS = 12;
