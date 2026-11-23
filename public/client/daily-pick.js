@@ -1383,6 +1383,7 @@
   function onWordClick(word, act = "pick") {
     const r = round();
     if (r.solved || r.guesses.includes(word)) return;
+    if (tip) tipHide();
     if (coach && !coachAllows(word)) return;
     if (ELIM_KINDS.includes(puzzles[current].kind)) {
       // No picking here: a tap strikes a word out, or brings it back.
@@ -1475,6 +1476,7 @@
     render();
     revealing = false;
     if (coachGuess) coachAfterGuess();
+    if (tip) tipAfterGuess();
   }
 
   // One row per puzzle: a white square per wrong guess, then the green one.
@@ -1632,6 +1634,7 @@
 
   function nextPuzzle() {
     advanceTimer = null;
+    tipClear();
     current = firstUnsolved();
     selected = "";
     render();
@@ -1840,6 +1843,12 @@
       : game === "speed" ? (current === 0 ? SPEED_RULE : null) : RULES[puzzles[current].mode]?.();
     state.announced = state.announced || [];
     if (playMode !== "daily" || r.guesses.length || state.announced[current] || over()) return;
+    // Grids 2 and 3: a short tip the first time, the banner after that.
+    if (dailyLike() && !special && ["split", "counts"].includes(puzzles[current].mode)) {
+      state.announced[current] = true;
+      save();
+      return ruleSeen(puzzles[current].mode) ? showBanner() : tipStart(puzzles[current].mode);
+    }
     // The Daily: a banner, or the full rule the first time it comes up.
     if (dailyLike() && (special ? newRuleSeen(puzzles[current].mode) : !rule || ruleSeen(puzzles[current].mode))) {
       state.announced[current] = true;
@@ -1938,6 +1947,7 @@
   async function open(which = game) {
     if ((!WEEKLY_ENABLED && which === "weekly") || (!SPEED_ENABLED && which === "speed") || (!TWISTS_ENABLED && which === "twists") || (!MINI_ENABLED && which === "mini")) which = "daily";
     if (playMode === "practice") leavePractice();
+    tipClear();
     closeChooser();
     if (window.showScreen) window.showScreen("dailyPickScreen");
     else $("dailyPickScreen").classList.add("active");
@@ -2168,17 +2178,23 @@
   // shows each move. Only the word (or button) the hand points at responds,
   // so the explanations always match what's on screen.
   // The pointing hand, with a ripple where the fingertip taps.
-  // A round, friendly cartoon glove: one clean outline (drawn as a thicker
-  // ink copy under the white shapes), a red cuff, the fingertip at (22, 2).
-  const HAND_SHAPES = `<rect x="15.5" y="1" width="13" height="36" rx="6.5"/><circle cx="34.5" cy="31" r="6.6"/><circle cx="44" cy="33.5" r="6.2"/>
-    <circle cx="51.5" cy="38.5" r="5.6"/><rect x="12" y="28" width="44" height="30" rx="13"/><ellipse cx="13.5" cy="43" rx="7" ry="10.5" transform="rotate(-32 13.5 43)"/>`;
-  const HAND_HTML = `<span class="dp-hand-ripple"></span><svg viewBox="0 -2 66 74" aria-hidden="true">
-    <g fill="#2b2925" stroke="#2b2925" stroke-width="7" stroke-linejoin="round">${HAND_SHAPES}</g>
-    <g fill="#fffdf8">${HAND_SHAPES}</g>
-    <path d="M40 30.5v5.5M48.8 35v4.5M18 36.5c4.5 3 5.5 8.5 4 13" fill="none" stroke="#2b2925" stroke-width="2.4" stroke-linecap="round" opacity=".45"/>
-    <path d="M18.8 7.2c2-1.6 4.4-1.6 6.4 0" fill="none" stroke="#2b2925" stroke-width="2" stroke-linecap="round" opacity=".3"/>
-    <rect x="17" y="52" width="33" height="15" rx="6.5" fill="#e5484d" stroke="#2b2925" stroke-width="3.2"/>
-    <path d="M22 59.5h23" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".5"/></svg>`;
+  // A friendly cartoon glove pointing up: the index finger, three curled
+  // fingers (back ones a shade darker), the thumb in front, a red cuff.
+  // The fingertip is at (22, 1.5) of its 64 x 76 box.
+  const HAND_HTML = `<span class="dp-hand-ripple"></span><svg viewBox="0 0 64 76" aria-hidden="true" stroke-linejoin="round" stroke-linecap="round">
+    <g stroke="#2b2925" stroke-width="3.2">
+      <rect x="15" y="3" width="14" height="44" rx="7" fill="#fffdf8"/>
+      <rect x="46" y="31" width="11" height="18" rx="5.5" fill="#f1eadf"/>
+      <rect x="37" y="27.5" width="12" height="20" rx="6" fill="#f6f1e7"/>
+      <rect x="27" y="25" width="12.5" height="22" rx="6.25" fill="#fffdf8"/>
+      <path d="M12 49c0-5 3.5-8 8-8h28c5.5 0 9.5 3.5 9.5 9v2c0 8-6.5 14-14.5 14H26c-8 0-14-6-14-14z" fill="#fffdf8"/>
+    </g>
+    <rect x="16.7" y="38" width="9.8" height="5.2" fill="#fffdf8"/>
+    <rect x="5.5" y="46" width="22" height="11.5" rx="5.75" transform="rotate(-28 16.5 51.75)" fill="#fffdf8" stroke="#2b2925" stroke-width="3.2"/>
+    <path d="M19.5 9.5v12" stroke="#fff" stroke-width="2.6" opacity=".9"/>
+    <path d="M18.6 8.4c2-1.7 4.8-1.7 6.8 0" fill="none" stroke="#2b2925" stroke-width="1.8" opacity=".3"/>
+    <rect x="17" y="61" width="32" height="12.5" rx="6" fill="#e5484d" stroke="#2b2925" stroke-width="3.2"/>
+    <path d="M22 67.2h22" stroke="#fff" stroke-width="2" opacity=".5"/></svg>`;
   // The tutorial grid: picked so that whatever word a newcomer guesses first,
   // some secret gives a green, a yellow and grays, and leaves 4 to 6 words
   // that still fit. The secret is chosen right after that first guess.
@@ -2357,6 +2373,7 @@
 
   // A tap anywhere (not on a word) moves past a message.
   function coachScreenTap(event) {
+    if (tip && $("dpTipSay") && !event.target.closest?.(".dp-word")) tipHide();
     if (!coach) return;
     if (event.target.closest?.("#dpCoachSkip")) { event.stopPropagation(); coachEnd(false); render(); startClock(); return; }
     if (event.target.closest?.(".dp-word, #dpGuess, button")) return;
@@ -2449,21 +2466,25 @@
       hand.classList.toggle("is-double", !!c.double);
       handBox = { left: x - 24, right: x + 46, top: y - 6, bottom: y + 72 };
     }
-    // Where the bubble goes: the spot that covers the least of what matters
-    // now (the thing to tap, the hand, the feedback, words still to tap),
-    // as close to the target as it can.
+    placeThink(say, target, [...(handBox ? [{ b: handBox, weight: 12 }] : [])], c.avoid, c.soft);
+  }
+
+  // Where a thought bubble goes: the spot that covers the least of what
+  // matters now (the thing to tap, the hand, the feedback, words still to
+  // tap), as close to the target as it can; its dots trail toward it.
+  function placeThink(say, target, extra = [], avoid = [], soft = []) {
+    const tb = target?.getBoundingClientRect();
     const vw = window.innerWidth, vh = window.innerHeight;
     const W = Math.min(340, vw - 24);
     const left = Math.round((vw - W) / 2);
     say.style.width = `${W}px`;
     say.style.left = `${left}px`;
     const H = say.offsetHeight;
-    const boxes = [];
+    const boxes = [...extra];
     const add = (el, weight) => { const b = el?.getBoundingClientRect?.(); if (b && b.width) boxes.push({ b, weight }); };
     add(target, 12);
-    if (handBox) boxes.push({ b: handBox, weight: 12 });
-    (c.avoid || []).forEach(el => add(el, 5));
-    (c.soft || []).forEach(el => add(el, 1));
+    (avoid || []).forEach(el => add(el, 5));
+    (soft || []).forEach(el => add(el, 1));
     const ty = tb ? tb.top + tb.height / 2 : vh / 2;
     let best = null;
     for (let top = 8; top <= Math.max(8, vh - H - 8); top += 4) {
@@ -2477,12 +2498,66 @@
       if (!best || cost < best.cost) best = { top, cost };
     }
     say.style.top = `${best.top}px`;
-    // The thought bubble's little dots trail toward the target.
     const below = tb && tb.top > best.top + H;
     const above = tb && tb.bottom < best.top;
     say.classList.toggle("is-tail-down", !!below);
     say.classList.toggle("is-tail-up", !!above);
     if (tb) say.style.setProperty("--tail-x", `${Math.max(26, Math.min(W - 26, tb.left + tb.width / 2 - left))}px`);
+  }
+
+  // ---- First time on grid 2 or 3: a short tip in a thought bubble ----------
+  // When the grid starts it says what its feedback means (the clock waits
+  // until a tap); after the first guess there, it reads that guess's own
+  // feedback. Any tap sends it off, and a tap on a word still counts.
+  let tip = null; // { mode, grid, stage: "start" | "wait" | "after" }
+  function tipStart(mode) {
+    tip = { mode, grid: current, stage: "start" };
+    stopClock();
+    tipShow();
+  }
+  function tipClear() {
+    $("dpTipSay")?.remove();
+    tip = null;
+  }
+  function tipHide() {
+    if (!tip || !$("dpTipSay")) return;
+    $("dpTipSay").remove();
+    if (tip.stage === "start") { tip.stage = "wait"; startClock(); } else tip = null;
+  }
+  function tipAfterGuess() {
+    if (!tip || tip.stage !== "wait" || tip.grid !== current) return;
+    if (round().solved) { tip = null; return; }
+    tip.stage = "after";
+    setTimeout(() => { if (tip?.stage === "after" && tip.grid === current) tipShow(); }, 650);
+  }
+  const countChip = (n, kind) => `<span class="dp-say-count is-${kind}">${n}</span>`;
+  const splitTile = letter => `<span class="dp-say-tile" style="background:${SPLIT_FILL}">${letter.toUpperCase()}</span>`;
+  function tipContent() {
+    const r = round();
+    const tap = "Tap anywhere to start";
+    if (tip.stage === "start") {
+      return tip.mode === "split"
+        ? { text: `<b>Grid 2</b> gives less help:<br>${splitTile("a")} in the word, but <b>the spot isn't shown</b>.<br>${tile("e", "absent")} Gray: not in the word.`, small: tap }
+        : { text: `<b>Grid 3</b> gives only counts:<br>${countChip(2, "correct")} letters in the right spot, ${countChip(1, "present")} in the wrong spot.<br>It won't say <b>which</b> letters!`, small: tap };
+    }
+    const g = r.guesses[0], f = feedback(g, puzzles[current].answer);
+    if (tip.mode === "split") {
+      const inn = [...new Set(g.split("").filter((x, i) => f[i] !== "absent"))];
+      const out = [...new Set(g.split("").filter((x, i) => f[i] === "absent" && !inn.includes(x)))];
+      const lines = [inn.length && `${inn.map(splitTile).join("")} ${inn.length === 1 ? "is" : "are"} in the word, somewhere`, out.length && `${out.map(x => tile(x, "absent")).join("")} ${out.length === 1 ? "isn't" : "aren't"}`].filter(Boolean);
+      return { text: `${lines.join(".<br>")}.<br>Cross out the words that don't fit.`, small: "Tap anywhere to go on" };
+    }
+    const c = f.filter(x => x === "correct").length, p = f.filter(x => x === "present").length;
+    return { text: `${up(g)} has ${countChip(c, "correct")} ${c === 1 ? "letter" : "letters"} in the right spot<br>and ${countChip(p, "present")} in the wrong spot.<br>Which ones? That's for you to work out!`, small: "Tap anywhere to go on" };
+  }
+  function tipShow() {
+    if (!tip || !$("dailyPickRoot")?.querySelector(".dp-board")) return;
+    const c = tipContent();
+    let say = $("dpTipSay");
+    if (!say) { say = document.createElement("div"); say.id = "dpTipSay"; say.className = "dp-coach-say dp-think is-pop is-tip"; $("dailyPickScreen").appendChild(say); }
+    say.innerHTML = `<span class="dp-say-text">${c.text}</span>${c.small ? `<small>${c.small}</small>` : ""}<i class="dp-think-dot is-1"></i><i class="dp-think-dot is-2"></i>`;
+    const drop = $("dpDrop");
+    placeThink(say, drop, [], [document.querySelector(".dp-key-row")], [...document.querySelectorAll("#dailyPickRoot .dp-word")]);
   }
 
   async function startPractice(custom) {
@@ -2499,6 +2574,7 @@
     clearTimeout(advanceTimer);
     advanceTimer = null;
     if (playMode === "daily") { dailyPuzzles = puzzles; dailyState = state; }
+    tipClear();
     playMode = "practice";
     track("practice");
     if (coach && !custom) coachEnd(false);
@@ -2750,7 +2826,7 @@
     if (document.hidden) stopClock();
     // Back after midnight Eastern with Unstruck still open: load the new day.
     else if (playMode === "daily" && state.date !== G().period() && $("dailyPickScreen")?.classList.contains("active")) open();
-    else startClock();
+    else if (!(tip && tip.stage === "start" && $("dpTipSay"))) startClock(); // a grid's first tip holds the clock
   });
   window.addEventListener("pagehide", () => { if (state) stopClock(); });
 
@@ -2883,7 +2959,7 @@
     $("dpTutorialBtn")?.addEventListener("click", () => { closeHelp(); startCoach(); });
     // The coach: Skip, and a tap anywhere moves past a message.
     document.addEventListener("click", coachScreenTap, true);
-    window.addEventListener("resize", () => coach && coachShow());
+    window.addEventListener("resize", () => { if (coach) coachShow(); if (tip && $("dpTipSay")) tipShow(); });
     $("dailyPickScreen").addEventListener("click", event => {
       if (!tour) return;
       if (event.target.closest?.("#dpTourSkip")) { event.stopPropagation(); tourEnd(); return; }

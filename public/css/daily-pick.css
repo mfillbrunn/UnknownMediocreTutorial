@@ -1746,7 +1746,7 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-say-tile.is-present { background: var(--dp-near); }
 .dp-say-tile.is-absent { background: var(--dp-miss, #7a756c); }
 /* the hand: a bit smaller and bouncier */
-.dp-coach-hand { width: 60px; height: 68px; margin: -2px 0 0 -20px; filter: drop-shadow(0 5px 8px rgba(0,0,0,.35)); }
+.dp-coach-hand { width: 58px; height: 69px; margin: -1px 0 0 -20px; filter: drop-shadow(0 5px 8px rgba(0,0,0,.35)); }
 .dp-hand-ripple { left: 20px; border-color: rgba(229,72,77,.85); }
 @keyframes dp-hand-tap2 { 0%, 60%, 100% { transform: none; } 30% { transform: translateY(6px) scale(.9) rotate(-6deg); } }
 @keyframes dp-hand-double2 { 0%, 52%, 100% { transform: none; } 14%, 38% { transform: translateY(6px) scale(.9) rotate(-6deg); } 26% { transform: translateY(-1px); } }
@@ -1762,3 +1762,21 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 #dailyPickScreen.is-coaching #dpTitle .dp-title-grid { display: none; }
 #dpTourSay.dp-coach-say { border: 2.5px solid #2b2925; border-radius: 28px; }
 #dailyPickScreen .dp-board .dp-word.has-xbtn .dp-card-word { letter-spacing: -.03em; }
+/* Count chips in the tips (grid 3). */
+.dp-say-count {
+  display: inline-grid; place-items: center; min-width: 1.45em; height: 1.45em; padding: 0 3px; border-radius: 999px;
+  vertical-align: -.28em; font-weight: 900; font-size: .88em; line-height: 1; color: #fff;
+}
+.dp-say-count.is-correct { background: var(--dp-hit); }
+.dp-say-count.is-present { background: var(--dp-near); }
+
+/* Crossed-out words sink (darker than the card); guessed words stay up,
+   so the two read apart at a glance. */
+#dailyPickScreen .dp-board .dp-word.is-struck:not(.is-guessed):not(.is-solved) {
+  background: rgba(0,0,0,.3) !important; border-color: rgba(255,255,255,.05) !important; box-shadow: inset 0 1px 3px rgba(0,0,0,.25) !important;
+}
+#dailyPickScreen .dp-board .dp-word.is-guessed:not(.is-solved) { background: rgba(255,255,255,.075) !important; border-color: rgba(255,255,255,.17) !important; }
+#dailyPickScreen.dp-light .dp-board .dp-word.is-struck:not(.is-guessed):not(.is-solved) {
+  background: #e9e2d3 !important; border-color: #ddd4c3 !important; box-shadow: inset 0 1px 3px rgba(80,60,20,.1) !important;
+}
+#dailyPickScreen.dp-light .dp-board .dp-word.is-guessed:not(.is-solved) { background: #fffdf8 !important; border-color: #ddd3c0 !important; }
