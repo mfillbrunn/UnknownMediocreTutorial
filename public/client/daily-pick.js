@@ -930,17 +930,17 @@
       </div>
       <div class="dp-panes">
       <div class="dp-pane" data-pane="details"${summaryView === "details" ? "" : " aria-hidden=\"true\""}>${detailsTable()}</div>
-      <div class="dp-pane" data-pane="overall"${summaryView === "overall" ? "" : " aria-hidden=\"true\""}><div class="dp-stats">
+      <div class="dp-pane" data-pane="overall"${summaryView === "overall" ? "" : " aria-hidden=\"true\""}><div class="dp-stats${stats.best > stats.current ? "" : " is-four"}">
         ${stat(stats.played, "Played")}
         ${stat(stats.current, "Streak")}
-        ${stat(stats.best, "Best streak")}
+        ${stats.best > stats.current ? stat(stats.best, "Best streak") : ""}
         ${stat(stats.average ? stats.average.toFixed(1) : "–", "Average")}
         ${stat(stats.bestScore || "–", "Best score")}
       </div>
       ${distributionChart(diff)}</div>
       </div>
       <div class="dp-countdown">${G().nextLabel} <b id="dpCountdown">${formatCountdown(G().next())}</b></div>
-      ${game === "daily" ? `<button type="button" class="dp-link" data-practice="start">Play the practice grid</button>` : `<button type="button" class="dp-link" data-game="daily">Play today's Daily →</button>`}
+      ${game === "daily" ? "" : `<button type="button" class="dp-link" data-game="daily">Play today's Daily →</button>`}
       <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div></div>`;
     clearInterval(countdownTimer);
     countdownTimer = setInterval(tickCountdown, 1000);
