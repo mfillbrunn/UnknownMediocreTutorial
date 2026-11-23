@@ -1791,3 +1791,7 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-summary #dpBrag { min-height: 46px; flex-shrink: 0; }
 /* Past games list (in the pop-up). */
 .dp-past-note { margin: 0 0 10px; font-size: 14px; line-height: 1.4; opacity: .75; text-align: center; }
+/* How to play: one short line per grid. */
+.dp-help-grids { margin: 0 0 12px; padding-left: 18px; line-height: 1.5; }
+.dp-help-grids li + li { margin-top: 6px; }
+.dp-help-grids .dp-rule-count { margin: 0 1px; }

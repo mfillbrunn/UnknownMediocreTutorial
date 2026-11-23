@@ -2929,25 +2929,17 @@
       </div>
       <div id="dpHelp" class="dp-help" role="dialog" aria-modal="true" aria-labelledby="dpHelpTitle" hidden>
         <h3 id="dpHelpTitle">How to play</h3>
-        <p>You get a grid of 16 five-letter words, and one of them is the secret word you have to find. To do that, you start by picking one word; if it's already the correct one, lucky &ndash; you've solved the grid! If not, you'll get feedback on how the word you picked compares against the secret word.</p>
-        <p>You then use that info to eliminate words that don't match and narrow down the possible solutions before picking your next word; rinse and repeat.</p>
-        <p><b>Tap</b> a word to cross it out when it can't be the secret; tap it again to bring it back. To guess a word, <b>drag it into the guessing box</b> (under the grid, or in its middle). Prefer tapping, holding a word to guess it, or the box in the middle of the grid? It's all in <b>Settings</b> (the gear, top right). A guessed word keeps its colored letters on its card, so all your clues stay in view.</p>
-        <p>There are three new grids every day, and they differ in what feedback you get:</p>
-        <ul>
-          <li>In the first grid, each letter is
-            <span class="dp-help-chip" style="background:var(--dp-hit)"></span> <span data-c="hit">green</span> (correct letter and position),
-            <span class="dp-help-chip" style="background:var(--dp-near)"></span> <span data-c="near">yellow</span> (letter is in the word but not in that position), or
-            <span class="dp-help-chip" style="background:#555b63"></span> gray (letter not in the word at all).</li>
-          <li>In the second grid, a letter that's in the word is
-            <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> half <span data-c="hit">green</span>, half <span data-c="near">yellow</span> &ndash; so you don't find out whether it's in the right position. Letters not in the word are gray.</li>
-          <li hidden>In the third grid, each letter of your guess gets an arrow instead of a color: <b>←</b> if the secret's letter in that spot comes earlier in the alphabet, <b>→</b> if it comes later, <b>–</b> if it's the right letter.</li>
-          <li>In the third grid, you only see how many letters are <span data-c="hit">green</span> and how many are <span data-c="near">yellow</span> (say, 1 <span data-c="hit">green</span> and 2 <span data-c="near">yellow</span>), but not which ones.</li>
+        <p>Find the <b>secret word</b> among the 16.</p>
+        <p><b>Tap a word twice</b> to pick it, then press <b>Guess</b>. Your guess shows how close it is. <b>Tap a word once</b> to cross it out when it can't be the secret.</p>
+        <ul class="dp-help-grids">
+          <li><b>Grid 1:</b> <span class="dp-help-chip" style="background:var(--dp-hit)"></span> right spot, <span class="dp-help-chip" style="background:var(--dp-near)"></span> wrong spot, <span class="dp-help-chip" style="background:var(--dp-miss)"></span> not in the word.</li>
+          <li><b>Grid 2:</b> <span class="dp-help-chip" style="background:${SPLIT_CHIP}"></span> in the word, but the spot isn't shown.</li>
+          <li><b>Grid 3:</b> only counts: <i class="dp-rule-count is-correct">2</i> right spot, <i class="dp-rule-count is-present">1</i> wrong spot, not which letters.</li>
         </ul>
+        <p>Your score is your guesses across all three grids (par is ${DAY_PAR}). Three new grids every day.</p>
         ${EXPERIMENTAL_BUTTON && WEEKLY_ENABLED ? `<p><b>Experimental</b> (the button next to Share once you've finished the Daily) has two extras. <b>Flags · Colors · Arrows</b>, new every Monday, is three different grids: <b>Flags</b>, where each flag is split into a grid of colors; <b>Colors</b>, rows of five paints where a paint matches a tile when they have a color in common (white, red and pink all match pink); and <b>Arrows</b>, words where each letter's arrow points to the secret's letter in the alphabet. Each grid explains itself when it starts.</p>` : ""}
         ${EXPERIMENTAL_BUTTON && TWISTS_ENABLED ? `<p><b>One letter · Autopilot · Pick two</b> (also under Experimental, new every Monday): word grids with a twist. <b>One letter</b> shows feedback for just one letter per guess, in turn. In <b>Autopilot</b> the game guesses for you every 10 seconds while you strike words out, and in <b>Pick two</b> you choose between two words it offers. In both, you solve it when only the secret is left, and lose if you strike the secret out. Each grid explains itself when it starts.</p>` : ""}
         ${EXPERIMENTAL_BUTTON && SPEED_ENABLED ? `<p><b>Speed</b> (also under Experimental): 3 minutes to solve as many of the day's ${SPEED_GRIDS} grids as you can, all with full feedback. Every guess costs 2 seconds, right or wrong.</p>` : ""}
-        <p>The total number of guesses across all three grids is your score (par is 7), and the time you took is recorded too. So the fewer guesses and the shorter the time, the better!</p>
-        <p>Want to warm up first? The practice grid is the same for everyone and doesn't count toward your stats.</p>
         <button id="dpHelpClose" class="dp-next" type="button">Got it</button>
         <button id="dpTutorialBtn" class="dp-link" type="button">Replay the tutorial</button>
         <button class="dp-link" type="button" data-practice="start">Play the practice grid</button>
