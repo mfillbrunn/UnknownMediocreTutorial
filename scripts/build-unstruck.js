@@ -57,8 +57,9 @@ const swaps = [
   [/href="unstruck\.css\?v=[^"]*"/, `href="unstruck.css?v=${version["unstruck.css"]}"`],
   [/href="\.\.\/css\/daily-pick\.css\?v=[^"]*"/, `href="game.css?v=${version["game.css"]}"`],
   [/src="\.\.\/client\/daily-pick\.js\?v=[^"]*" data-words="[^"]*" data-media="[^"]*"/, `src="game.js?v=${version["game.js"]}" data-words="words.txt?v=${version["words.txt"]}" data-media="media/"`],
-  [/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${site}/og-image.png">\n  <meta property="og:url" content="${site}/">`],
-  [/<meta name="twitter:image" content="[^"]*">/, `<meta name="twitter:image" content="${site}/og-image.png">`]
+  // The preview image is versioned too, so apps that cache it pick up a new one.
+  [/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${site}/og-image.png?v=${version["og-image.png"]}">\n  <meta property="og:url" content="${site}/">`],
+  [/<meta name="twitter:image" content="[^"]*">/, `<meta name="twitter:image" content="${site}/og-image.png?v=${version["og-image.png"]}">`]
 ];
 for (const [pattern, replacement] of swaps) {
   if (!pattern.test(html)) throw new Error(`build-unstruck: couldn't find ${pattern} in public/unstruck/index.html`);
