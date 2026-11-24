@@ -590,6 +590,80 @@
     };
     track("finished", golfTerm(totalGuesses() - G().par));
     try { localStorage.setItem(G().historyKey, JSON.stringify(history)); } catch (e) { /* private mode */ }
+    if (game === "daily" && playMode === "daily") boardSubmit();
+  }
+
+  // ---- Global leaderboard (today's Daily) -----------------------------------
+  // No sign-up: a random id for this browser, the first finish of the day,
+  // and a name if the player gives one. Only on Unstruck's own site, where
+  // the server (worker/leaderboard.js) answers /api/.
+  const boardOn = () => "unstruckStandalone" in (document.body?.dataset || {});
+  const BOARD_SHOWN = 10;
+  let boardData = null;
+  function boardDevice() {
+    try {
+      let id = localStorage.getItem("umt.unstruck.device");
+      if (!id) {
+        id = Array.from(crypto.getRandomValues(new Uint8Array(24)), b => "abcdefghijklmnopqrstuvwxyz0123456789"[b % 36]).join("");
+        localStorage.setItem("umt.unstruck.device", id);
+      }
+      return id;
+    } catch (e) { return ""; }
+  }
+  async function boardPost(path, body) {
+    const res = await fetch(`/api/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    return res.json().catch(() => ({ error: "Something went wrong." }));
+  }
+  async function boardSubmit() {
+    if (!boardOn() || !boardDevice()) return;
+    const key = `umt.unstruck.boardSent.${state.date}`;
+    try { if (localStorage.getItem(key)) return; } catch (e) { return; }
+    const day = state.date;
+    try {
+      const res = await boardPost("score", { day, device: boardDevice(), grids: state.rounds.map(r => r.guesses.length), timeMs: Math.round(elapsed()) });
+      if (res.ok || res.error) localStorage.setItem(key, "1"); // sent, or refused for good
+    } catch (e) { /* offline: tried again when the board opens */ }
+  }
+  async function boardLoad() {
+    const pane = document.querySelector('#dailyPickRoot [data-pane="board"]');
+    if (!pane) return;
+    await boardSubmit();
+    try {
+      const res = await fetch(`/api/board?day=${state.date}&device=${boardDevice()}`);
+      boardData = await res.json();
+    } catch (e) { boardData = { error: true }; }
+    boardRender();
+  }
+  function boardRender() {
+    const pane = document.querySelector('#dailyPickRoot [data-pane="board"]');
+    if (!pane) return;
+    if (!boardData) { pane.innerHTML = `<div class="dp-board-note">Loading…</div>`; return; }
+    if (boardData.error || !boardData.top) { pane.innerHTML = `<div class="dp-board-note">Couldn't load the leaderboard. Try again in a bit.</div>`; return; }
+    const esc = t => String(t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const row = r => `<div class="dp-lb-row${r.me ? " is-me" : ""}"><span class="dp-lb-rank">${r.rank}</span>
+      <span class="dp-lb-name">${r.name ? esc(r.name) : ""}${r.me ? ` <em>you</em>` : ""}</span>
+      <span class="dp-lb-score">${r.guesses}</span><span class="dp-lb-time">${formatTime(r.timeMs)}</span></div>`;
+    const top = boardData.top.slice(0, BOARD_SHOWN);
+    const me = boardData.me && !top.some(r => r.me) ? `<div class="dp-lb-gap">⋯</div>${row(boardData.me)}` : "";
+    pane.innerHTML = `<div class="dp-lb">
+      <div class="dp-lb-head"><span>Today · ${boardData.total} ${boardData.total === 1 ? "player" : "players"}</span><span>Guesses</span><span>Time</span></div>
+      ${top.length ? top.map(row).join("") : `<div class="dp-board-note">No scores yet today.</div>`}${me}
+      <form class="dp-lb-form" id="dpLbForm"><input id="dpLbName" maxlength="16" autocomplete="nickname" placeholder="Your name (optional)" value="${esc(boardData.name || "")}"><button type="submit" class="dp-next dp-side-btn">Save</button></form>
+      <div class="dp-lb-msg" id="dpLbMsg">${boardData.name ? "" : "Without a name, your score shows without one."}</div>
+    </div>`;
+  }
+  async function boardSaveName(event) {
+    event.preventDefault();
+    const name = $("dpLbName").value;
+    const msg = $("dpLbMsg");
+    msg.textContent = "Saving…";
+    try {
+      const res = await boardPost("name", { device: boardDevice(), name });
+      if (res.error) { msg.textContent = res.error; return; }
+      track("board-name");
+      await boardLoad();
+      $("dpLbMsg").textContent = res.name ? "Saved!" : "Name removed.";
+    } catch (e) { msg.textContent = "Couldn't save. Try again in a bit."; }
   }
 
   // Each grid's time (ms): from the grid before being solved to this one;
@@ -927,9 +1001,11 @@
       <div class="dp-views" role="tablist">
         <button type="button" class="dp-view${summaryView === "overall" ? " is-on" : ""}" data-view="overall" role="tab">Overall</button>
         <button type="button" class="dp-view${summaryView === "details" ? " is-on" : ""}" data-view="details" role="tab">Details</button>
+        ${boardOn() && game === "daily" ? `<button type="button" class="dp-view${summaryView === "board" ? " is-on" : ""}" data-view="board" role="tab">Leaderboard</button>` : ""}
       </div>
       <div class="dp-panes">
       <div class="dp-pane" data-pane="details"${summaryView === "details" ? "" : " aria-hidden=\"true\""}>${detailsTable()}</div>
+      ${boardOn() && game === "daily" ? `<div class="dp-pane dp-pane-board" data-pane="board"${summaryView === "board" ? "" : " aria-hidden=\"true\""}></div>` : ""}
       <div class="dp-pane" data-pane="overall"${summaryView === "overall" ? "" : " aria-hidden=\"true\""}><div class="dp-stats${stats.best > stats.current ? "" : " is-four"}">
         ${stat(stats.played, "Played")}
         ${stat(stats.current, "Streak")}
@@ -945,6 +1021,7 @@
     clearInterval(countdownTimer);
     countdownTimer = setInterval(tickCountdown, 1000);
     if (game === "daily") maybeStartTour();
+    if (summaryView === "board" && document.querySelector('#dailyPickRoot [data-pane="board"]')) { boardRender(); boardLoad(); }
   }
 
   // Speed's results: how many grids, then each grid as a square.
@@ -3075,6 +3152,7 @@
     document.addEventListener("keydown", event => {
       if (event.key === "Escape") { closeRule(); closeIntro(); closeHelp(); closeSettings(); closeChooser(); }
     });
+    $("dailyPickRoot")?.addEventListener("submit", event => { if (event.target.id === "dpLbForm") boardSaveName(event); });
     $("dailyPickRoot")?.addEventListener("click", event => {
       if (event.target.closest?.("#dpGuess")) return guessSelected();
       // Taps on the board are handled with dragging (initDrag).
@@ -3094,6 +3172,7 @@
         summaryView = view.dataset.view;
         document.querySelectorAll("#dailyPickScreen [data-view]").forEach(b => b.classList.toggle("is-on", b.dataset.view === summaryView));
         document.querySelectorAll("#dailyPickScreen [data-pane]").forEach(pane => pane.dataset.pane === summaryView ? pane.removeAttribute("aria-hidden") : pane.setAttribute("aria-hidden", "true"));
+        if (summaryView === "board") { track("board-open"); boardRender(); boardLoad(); }
       }
     });
     // ?reset in the address starts this device's current day (and week) over:

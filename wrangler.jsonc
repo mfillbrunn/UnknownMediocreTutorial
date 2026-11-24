@@ -14,5 +14,11 @@
   "keep_vars": true,
   "assets": {
     "directory": "./dist/unstruck"
-  }
+  },
+  // Today's leaderboard (worker/leaderboard.js): one Durable Object with its
+  // own SQLite database. The migration below creates it on the first deploy.
+  "durable_objects": {
+    "bindings": [{ "name": "LEADERBOARD", "class_name": "Leaderboard" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Leaderboard"] }]
 }

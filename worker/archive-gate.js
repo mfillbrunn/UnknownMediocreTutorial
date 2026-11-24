@@ -1,4 +1,5 @@
-// worker/archive-gate.js: the one bit of server code on the Unstruck site.
+// worker/archive-gate.js: the server code on the Unstruck site (the archive
+// gate here, and the leaderboard's /api/ in leaderboard.js).
 //
 // The game itself is plain files (dist/unstruck), served straight by
 // Cloudflare. This Worker only runs for addresses that aren't one of those
@@ -11,10 +12,15 @@
 // Without the secret set, the archive stays shut.
 
 import archivePage from "../dist/archive.html";
+import { handleApi, Leaderboard } from "./leaderboard.js";
+
+// The leaderboard's Durable Object class has to be exported from here.
+export { Leaderboard };
 
 export default {
   async fetch(request, env) {
     const { pathname } = new URL(request.url);
+    if (pathname.startsWith("/api/")) return handleApi(request, env);
     if (pathname !== "/archive" && pathname !== "/archive/") {
       return page(404, "Page not found", `<p>There's nothing here.</p>`);
     }

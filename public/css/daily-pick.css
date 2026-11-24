@@ -1795,3 +1795,28 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-help-grids { margin: 0 0 12px; padding-left: 18px; line-height: 1.5; }
 .dp-help-grids li + li { margin-top: 6px; }
 .dp-help-grids .dp-rule-count { margin: 0 1px; }
+
+/* ---------- Results: Leaderboard tab ---------- */
+.dp-lb { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.05); font-size: 14px; }
+.dp-lb-head, .dp-lb-row { display: grid; grid-template-columns: 30px minmax(0, 1fr) 62px 52px; align-items: center; gap: 6px; }
+.dp-lb-head { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .55; padding-bottom: 4px; }
+.dp-lb-head span:first-child { grid-column: 1 / 3; }
+.dp-lb-head span:not(:first-child), .dp-lb-score, .dp-lb-time { text-align: right; font-variant-numeric: tabular-nums; }
+.dp-lb-row { padding: 4px 6px; margin: 0 -6px; border-radius: 8px; }
+.dp-lb-row.is-me { background: rgba(255,255,255,.1); font-weight: 800; }
+.dp-lb-rank { opacity: .6; font-variant-numeric: tabular-nums; }
+.dp-lb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dp-lb-name em { font-style: normal; font-size: 11px; opacity: .6; font-weight: 700; }
+.dp-lb-score { font-weight: 800; }
+.dp-lb-gap { text-align: center; opacity: .4; line-height: 1; }
+.dp-lb-form { display: flex; gap: 8px; margin-top: 8px; }
+.dp-lb-form input { flex: 1; min-width: 0; padding: 9px 12px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,.18); background: rgba(0,0,0,.2); color: inherit; font: inherit; font-size: 16px; }
+#dailyPickScreen .dp-summary .dp-lb-form .dp-side-btn { height: auto; padding: 0 16px; font-size: 14px !important; }
+.dp-lb-msg { min-height: 16px; font-size: 12.5px; opacity: .65; text-align: center; }
+.dp-board-note { padding: 18px 8px; text-align: center; opacity: .65; font-size: 14px; }
+#dailyPickScreen.dp-light .dp-lb { background: #f2ede4; }
+#dailyPickScreen.dp-light .dp-lb-row.is-me { background: #e6dfd0; }
+#dailyPickScreen.dp-light .dp-lb-form input { background: #fffdf8; border-color: #d3ccbf; }
+.dp-views:has(> :nth-child(3)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dp-panes { grid-template-columns: minmax(0, 1fr); }
+.dp-pane, .dp-lb { min-width: 0; }
