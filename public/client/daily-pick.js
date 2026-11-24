@@ -1021,6 +1021,8 @@
     clearInterval(countdownTimer);
     countdownTimer = setInterval(tickCountdown, 1000);
     if (game === "daily") maybeStartTour();
+    // Finished before the leaderboard existed (or offline then): send it now.
+    if (game === "daily" && playMode === "daily") boardSubmit();
     if (summaryView === "board" && document.querySelector('#dailyPickRoot [data-pane="board"]')) { boardRender(); boardLoad(); }
   }
 
