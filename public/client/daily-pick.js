@@ -2276,19 +2276,19 @@
     const kept = new Set(g.split("").filter((x, i) => f[i] !== "absent"));
     for (let i = 0; i < 5; i++) {
       if (only && only !== "absent") break;
-      if (f[i] === "absent" && !kept.has(g[i]) && w.includes(g[i])) return { kind: "absent", letter: g[i], text: `${up(w)} has ${/[aefhilmnorsx]/.test(g[i]) ? "an" : "a"} ${g[i].toUpperCase()}, which is gray` };
+      if (f[i] === "absent" && !kept.has(g[i]) && w.includes(g[i])) return { kind: "absent", letter: g[i], text: `${up(w)}: has ${/[aefhilmnorsx]/.test(g[i]) ? "an" : "a"} ${g[i].toUpperCase()} (gray)` };
     }
     for (let i = 0; i < 5; i++) {
       if (only && only !== "correct") break;
-      if (f[i] === "correct" && w[i] !== g[i]) return { kind: "correct", letter: g[i], text: `${up(w)} has no ${g[i].toUpperCase()} in ${ORD[i]} place (${colorName("hit")})` };
+      if (f[i] === "correct" && w[i] !== g[i]) return { kind: "correct", letter: g[i], text: `${up(w)}: no ${g[i].toUpperCase()} in ${ORD[i]} (${colorName("hit")})` };
     }
     for (let i = 0; i < 5; i++) {
       if (only && only !== "present") break;
       if (f[i] !== "present") continue;
-      if (!w.includes(g[i])) return { kind: "present", letter: g[i], text: `${up(w)} has no ${g[i].toUpperCase()}, but ${colorName("near")} means it's in the word` };
-      if (w[i] === g[i]) return { kind: "present", letter: g[i], text: `${up(w)} has ${g[i].toUpperCase()} in ${ORD[i]} place, but ${colorName("near")} means not there` };
+      if (!w.includes(g[i])) return { kind: "present", letter: g[i], text: `${up(w)}: no ${g[i].toUpperCase()} (${colorName("near")} means it's in the word)` };
+      if (w[i] === g[i]) return { kind: "present", letter: g[i], text: `${up(w)}: ${g[i].toUpperCase()} in ${ORD[i]} (${colorName("near")} means not there)` };
     }
-    return only ? null : { kind: "other", text: `${up(w)} doesn't match the colors` };
+    return only ? null : { kind: "other", text: `${up(w)}: doesn't match the colors` };
   }
 
   // The tutorial is a handful of phases, each moved on by what the player
@@ -2347,6 +2347,7 @@
       if (selected && selected !== word) selected = "";
       return true;
     }
+    if (coach.phase === "auto") return false;
     if (coach.phase === "cross") {
       if (struck) return coachNo("It's already crossed out.");
       if (!coachOut().includes(word)) return coachNo(`Not ${up(word)}: it still fits, so it could be the secret!`);
@@ -2375,9 +2376,29 @@
     if (coach.phase === "cross" && r.struck.includes(word)) {
       const why = whyOut(word, firstGuess(), feedback(firstGuess(), puzzles[current].answer));
       const yes = (coach.examples || []).some(x => x.w === word) ? "Yes!" : `Yes! ${why.text}.`;
-      return coachSet(coachLeft().length ? "cross" : "next", yes);
+      if (!coachLeft().length) return coachSet("next");
+      const exLeft = (coach.examples || []).some(x => !r.struck.includes(x.w));
+      return exLeft ? coachSet("cross", yes) : coachAutoCross();
     }
     if (coach.phase === "next" || coach.phase === "guess2") return coachSet(selected ? "guess2" : "next", r.struck.includes(word) && !coachOut().includes(word) ? "again" : "");
+  }
+
+  // The lesson's learned after two examples: the rest cross themselves
+  // out, one by one, then on to the next guess.
+  function coachAutoCross() {
+    coachSet("auto");
+    clearTimeout(coach.timer);
+    const step = () => {
+      if (!coach || coach.phase !== "auto") return;
+      const w = coachLeft()[0];
+      if (!w) return coachSet("next");
+      round().struck.push(w);
+      toggled = { word: w, kind: "struck" };
+      render();
+      toggled = null;
+      coach.timer = setTimeout(step, 260);
+    };
+    coach.timer = setTimeout(step, 900);
   }
 
   // After a guess: the first one decides the secret (before its feedback).
@@ -2459,16 +2480,18 @@
         // Once the examples are done: crossing out is a help, not a must.
         return { text: lead + ask, small: ex ? "" : "In a real game you don't have to cross out everything, but it helps.", target: ex ? wordEl(ex) : null, avoid: [lit, ...coachLeft().map(wordEl)], soft: unstruck.map(wordEl) };
       }
+      case "auto":
+        return { text: `<span class="dp-say-lead">Yes! You've got it.</span>I'll cross out the rest for you.`, small: "In a real game you don't have to cross out everything, but it helps.", avoid: [lit, ...p.words.map(wordEl)] };
       case "next": {
         if (coach.msg === "again") return { text: `<b>Tap it again</b> to pick it.`, target: wordEl(coach.last), avoid: [lit] };
         const lead = coach.msg ? `<span class="dp-say-lead">${coach.msg}</span>` : "";
-        return { text: `${lead}All cleared! Now pick your next guess.<br>${up(coach.sug)} is a good one: <b>tap it twice</b>.`,
+        return { text: `${lead}All cleared! ${up(coach.sug)} fits everything:<br><b>tap it twice</b> to pick it.`,
           target: wordEl(coach.sug), double: true, avoid: [lit, ...unstruck.map(wordEl)] };
       }
       case "guess2":
         return { text: `Press <b>Guess</b>.`, target: $("dpGuess"), avoid: [lit] };
       case "free":
-        return { text: `<b>Your turn!</b> Cross out what can't be it,<br>then guess again until you find it.`, avoid: [lit, $("dpGuess"), ...unstruck.map(wordEl)] };
+        return { text: `<b>Your turn!</b><br>Keep crossing out and guessing until you find it.`, avoid: [lit, $("dpGuess"), ...unstruck.map(wordEl)] };
       case "found":
         return { text: `<b>Found it!</b> ${PARTY}`, avoid: [lit] };
     }
@@ -2536,8 +2559,9 @@
       if (!best || cost < best.cost) best = { top, cost };
     }
     say.style.top = `${best.top}px`;
-    const below = tb && tb.top > best.top + H;
-    const above = tb && tb.bottom < best.top;
+    // (only when it's close: across other things they'd point at the wrong one)
+    const below = tb && tb.top > best.top + H && tb.top - (best.top + H) < 70;
+    const above = tb && tb.bottom < best.top && best.top - tb.bottom < 70;
     say.classList.toggle("is-tail-down", !!below);
     say.classList.toggle("is-tail-up", !!above);
     if (tb) say.style.setProperty("--tail-x", `${Math.max(26, Math.min(W - 26, tb.left + tb.width / 2 - left))}px`);
