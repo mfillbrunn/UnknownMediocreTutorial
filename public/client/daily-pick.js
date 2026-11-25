@@ -686,10 +686,15 @@
     });
   }
 
-  // Averages and bests per grid and overall, for the results' Details view.
+  // Medians and bests per grid and overall, for the results' Details view.
   function computeDetails() {
     const days = Object.values(loadHistory());
-    const avg = list => (list.length ? list.reduce((a, b) => a + b, 0) / list.length : null);
+    // The median, not the mean: one bad day (or a tab left open) can't skew it.
+    const avg = list => {
+      if (!list.length) return null;
+      const sorted = [...list].sort((a, b) => a - b), mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    };
     const count = state.rounds.length;
     const grids = Array.from({ length: count }, (_, i) => {
       const guesses = days.map(d => d.grids?.[i]).filter(n => n != null);
@@ -884,13 +889,13 @@
   function detailsTable() {
     const d = computeDetails();
     const num = v => (v == null ? "–" : Number.isInteger(v) ? v : v.toFixed(1));
-    // Averages rounded to the nearest second (formatTime alone would cut them down).
+    // Medians rounded to the nearest second (formatTime alone would cut them down).
     const time = v => (v == null ? "–" : formatTime(Math.round(v / 1000) * 1000));
     const name = gridLabel;
     const row = (label, x, cls = "") => `<tr class="${cls}"><th>${label}</th><td>${num(x.avg)}</td><td>${time(x.time)}</td><td>${time(x.fastest)}</td></tr>`;
     return `<div class="dp-details">
       <table>
-        <thead><tr><th></th><th>Avg guesses</th><th>Avg time</th><th>Fastest</th></tr></thead>
+        <thead><tr><th></th><th>Median guesses</th><th>Median time</th><th>Fastest</th></tr></thead>
         <tbody>${d.grids.map((g, i) => row(name(i), g)).join("")}${row("Total", d.total, "is-total")}</tbody>
       </table>
       <div class="dp-details-note">Over all the days you've played on this device.</div>
