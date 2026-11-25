@@ -72,3 +72,4 @@ body.dp-light-page { color: #2b2925; background: #f3f2f0; }
 .dp-preload-dots i { width: 9px; height: 9px; border-radius: 50%; background: #f6f2ea; opacity: .25; animation: dp-preload 1.2s ease-in-out infinite; }
 .dp-preload-dots i:nth-child(2) { animation-delay: .2s; } .dp-preload-dots i:nth-child(3) { animation-delay: .4s; }
 @keyframes dp-preload { 50% { opacity: .9; } }
+.dp-preload-logo { display: block; width: 92px; height: 92px; margin: 0 auto 12px; }

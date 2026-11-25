@@ -2280,6 +2280,14 @@
   let loadTracked = false;
   const splashOpen = () => !!$("dpStart") && !$("dpStart").hidden;
 
+  // The start screen's picture: three words struck out one by one, then the
+  // one left standing turns green. The whole game in two seconds.
+  const HERO_SVG = `<svg class="dp-hero" viewBox="0 0 96 96" aria-hidden="true">
+    <rect class="t" x="4" y="4" width="40" height="40" rx="10"/><rect class="t" x="52" y="4" width="40" height="40" rx="10"/><rect class="t" x="4" y="52" width="40" height="40" rx="10"/>
+    <rect class="w" x="52" y="52" width="40" height="40" rx="10"/>
+    <path class="s" d="M13 24h22"/><path class="s" d="M61 24h22"/><path class="s" d="M13 72h22"/>
+    <path class="c" d="M62 72.5l6.5 6.5 13-14"/></svg>`;
+
   function openSplash() {
     const n = G().number(state.date);
     const streak = computeStats().current;
@@ -2289,15 +2297,10 @@
     const label = started ? `Continue Unstruck #${n}` : streak ? `Continue your ${streak}-day streak` : isNew ? "Play" : `Play Unstruck #${n}`;
     const sub = started ? `Grid ${current + 1} of ${puzzles.length}${firstGame() ? "" : ` · ${formatTime(elapsed())}`}` : streak ? `Play Unstruck #${n}` : isNew ? "Starts with a quick 1-minute tutorial" : "";
     const friend = FRIEND && FRIEND.day === n && !started ? `<div class="dp-start-friend">A friend scored <b>${FRIEND.score}</b> today. Can you beat it?</div>` : "";
-    // A little board: crossed out, still in, the guess with its colors.
-    const mini = isNew ? `<div class="dp-start-mini" aria-hidden="true">
-        <span class="is-x">TRAIL</span><span>SKATE</span><span class="is-x">CRANE</span><span>SNAKE</span>
-        <span class="is-g"><i class="n">A</i><i>R</i><i>I</i><i class="n">S</i><i class="h">E</i></span><span class="is-p">SHAPE</span><span class="is-x">NOISE</span><span>PASTE</span>
-      </div>` : "";
-    $("dpStartCard").innerHTML = `<div class="dp-start-title">Unstruck</div>
+    $("dpStartCard").innerHTML = `${HERO_SVG}<div class="dp-start-title">Unstruck</div>
       <div class="dp-start-date">#${n} · ${day}</div>
       ${started ? "" : `<div class="dp-start-pitch">Find the secret word among 16.<br>Three grids, about 3 minutes.</div>`}
-      ${mini}${friend}
+      ${friend}
       <button type="button" class="dp-next dp-start-play" id="dpStartPlay">${label}</button>
       ${sub ? `<div class="dp-start-sub">${sub}</div>` : ""}
       <button type="button" class="dp-link" id="dpStartHelp">How to play</button>`;
