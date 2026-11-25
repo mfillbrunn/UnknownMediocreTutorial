@@ -1820,3 +1820,29 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .dp-views:has(> :nth-child(3)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .dp-panes { grid-template-columns: minmax(0, 1fr); }
 .dp-pane, .dp-lb { min-width: 0; }
+
+/* ---------- Start screen: what the game is, at a glance ---------- */
+.dp-start-pitch { font-size: 16px; line-height: 1.4; opacity: .85; text-align: center; margin: 2px 0 4px; }
+.dp-start-friend { font-size: 15px; text-align: center; padding: 8px 12px; border-radius: 12px; background: rgba(255,255,255,.07); }
+#dailyPickScreen.dp-light .dp-start-friend { background: #f2ede4; }
+.dp-start-mini { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; width: min(100%, 260px); margin: 4px auto 6px; }
+.dp-start-mini span {
+  position: relative; height: 34px; border-radius: 7px; display: grid; place-items: center;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.16); font-size: 11px; font-weight: 800; letter-spacing: .02em;
+}
+.dp-start-mini .is-x { background: rgba(0,0,0,.3); border-color: rgba(255,255,255,.05); color: rgba(236,231,221,.32); }
+.dp-start-mini .is-x::after { content: ""; position: absolute; left: 14%; right: 14%; top: 50%; height: 2px; background: #e5484d; border-radius: 1px; }
+.dp-start-mini .is-p { background: var(--dp-accent); border-color: var(--dp-accent); color: var(--dp-on-accent); }
+.dp-start-mini .is-g { display: flex; gap: 1px; justify-content: center; background: rgba(0,0,0,.17); border-color: rgba(255,255,255,.07); }
+.dp-start-mini .is-g i { font-style: normal; width: 9px; height: 13px; border-radius: 2px; display: grid; place-items: center; font-size: 7.5px; font-weight: 900; color: #fff; background: var(--dp-miss); }
+.dp-start-mini .is-g i.h { background: var(--dp-hit); } .dp-start-mini .is-g i.n { background: var(--dp-near); }
+#dailyPickScreen.dp-light .dp-start-mini span:not(.is-p):not(.is-x):not(.is-g) { background: #fffdf8; border-color: #ddd6ca; }
+#dailyPickScreen.dp-light .dp-start-mini .is-x { background: #e9e2d3; border-color: #ddd4c3; color: rgba(43,41,37,.35); }
+#dailyPickScreen.dp-light .dp-start-mini .is-g { background: #efe9dc; border-color: #e0d8c7; }
+
+/* A player's first Daily: no clock on screen (the results still show it). */
+#dailyPickScreen.is-first-game #dpClock { visibility: hidden; }
+
+/* Share: full contrast, so it never reads as switched off. */
+#dailyPickScreen .dp-summary .dp-brag { background: #ffffff; color: #141311; }
+#dailyPickScreen.dp-light .dp-summary .dp-brag { background: #141311; color: #ffffff; }

@@ -26,18 +26,25 @@
   <meta name="twitter:description" content="Find the secret word among 16. Three new grids every day.">
   <meta name="twitter:image" content="og-image.png">
 
-  <link rel="stylesheet" href="unstruck.css?v=5">
-  <link rel="stylesheet" href="../css/daily-pick.css?v=147">
+  <link rel="stylesheet" href="unstruck.css?v=6">
+  <link rel="stylesheet" href="../css/daily-pick.css?v=148">
 </head>
 <body data-unstruck-standalone>
   <main class="unstruck-page">
-    <section id="dailyPickScreen" class="screen active" aria-label="Unstruck"></section>
+    <section id="dailyPickScreen" class="screen active" aria-label="Unstruck">
+      <!-- Shown at once while the game's code loads; the game replaces it. -->
+      <div class="dp-preload">
+        <div class="dp-preload-title">Unstruck</div>
+        <div class="dp-preload-pitch">Find the secret word among 16.<br>Three grids, about 3 minutes.</div>
+        <div class="dp-preload-dots" aria-label="Loading"><i></i><i></i><i></i></div>
+      </div>
+    </section>
   </main>
   <!-- Analytics: GoatCounter (unstruck.goatcounter.com). It counts visits and
        where they came from, plus four Unstruck moments: started (first guess of
        the day), finished (with the golf result), shared, practice.
        No cookies, no personal data. -->
   <script data-goatcounter="https://unstruck.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
-  <script src="../client/daily-pick.js?v=202" data-words="../wordlists/daily-pick-words.txt" data-media="../unstruck-media/"></script>
+  <script src="../client/daily-pick.js?v=203" data-words="../wordlists/daily-pick-words.txt" data-media="../unstruck-media/"></script>
 </body>
 </html>

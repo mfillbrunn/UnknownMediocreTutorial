@@ -64,6 +64,14 @@
   // data-archive on this script: past days' Dailies, played from a list.
   const ARCHIVE = "archive" in (document.currentScript?.dataset || {});
   let archiveDate = null; // the past day being played
+  // Arrived from a friend's shared result: their score and the day it was for.
+  const FRIEND = (() => {
+    try {
+      const q = new URLSearchParams(location.search);
+      const g = +q.get("g"), n = +q.get("n");
+      return g >= 3 && g <= 48 && n > 0 ? { score: g, day: n } : null;
+    } catch (e) { return null; }
+  })();
   // Shows the Experimental button (Speed, Flags / Colors / Arrows) on the
   // Daily's results, and its paragraphs in How to play. Hidden for now.
   const EXPERIMENTAL_BUTTON = false;
@@ -754,6 +762,7 @@
   function showClock() {
     const clock = $("dpClock");
     if (!clock) return;
+    $("dailyPickScreen")?.classList.toggle("is-first-game", firstGame());
     clock.hidden = over() && !advanceTimer;
     if (game !== "speed") {
       clock.textContent = formatTime(elapsed());
@@ -776,10 +785,15 @@
     render();
   }
 
+  // A player's very first Daily: the clock runs but isn't shown, so there's
+  // no pressure while learning; the results still show the time.
+  const firstGame = () => game === "daily" && playMode === "daily" && !Object.keys(loadHistory()).length;
+
   function startClock() {
     // Never in a tab nobody is looking at (it starts when they come back).
     if (runningSince || document.hidden || over() || !$("dailyPickScreen")?.classList.contains("active") || helpOpen() || introOpen() || ruleOpen() || splashOpen()) return;
     runningSince = Date.now();
+    showClock();
     ticker = setInterval(() => { showClock(); autoTick(); }, 250);
   }
 
@@ -1603,7 +1617,9 @@
       `Time: ${formatTime(elapsed())}`,
       // The streak only once it's worth bragging about.
       ...(streak >= 5 && game !== "archive" ? [`🔥 ${streak}-${unit} streak`] : []),
-      link
+      // The Daily's link carries the score, so a friend's start screen can say
+      // "A friend scored 8. Can you beat it?" (ref=share: counted apart).
+      game === "daily" ? `${link}?ref=share&g=${totalGuesses()}&n=${G().number(state.date)}` : link
     ].join("\n");
   }
 
@@ -1907,6 +1923,8 @@
     if (!banner) return;
     banner.innerHTML = `<b>Grid ${current + 1}</b><span>${BANNER_LINES[puzzles[current].mode]()}</span>`;
     banner.hidden = false;
+    const drop = $("dpDrop")?.getBoundingClientRect(), box = banner.offsetParent?.getBoundingClientRect();
+    if (drop && box) banner.style.top = `${Math.round(drop.top - box.top + drop.height / 2 - banner.offsetHeight / 2)}px`;
     banner.classList.remove("is-showing");
     void banner.offsetWidth;
     banner.classList.add("is-showing");
@@ -2055,7 +2073,7 @@
     try {
       await prepare(which);
     } catch (e) {
-      root.textContent = "Couldn't load the puzzles. Please try again.";
+      root.innerHTML = `<div class="dp-board-note">Couldn't load the puzzles.<br><button type="button" class="dp-next" data-retry="${which}">Try again</button></div>`;
       return;
     }
     game = which;
@@ -2063,6 +2081,14 @@
     current = firstUnsolved();
     selected = "";
     render();
+    // Once per page load: who this visit is, so the funnel can be read
+    // properly (a reload after finishing can never "start").
+    if (game === "daily" && playMode === "daily" && !loadTracked) {
+      loadTracked = true;
+      const kind = !introSeen() && !Object.keys(loadHistory()).length ? "new" : over() ? "finished" : totalGuesses() > 0 || (state.elapsed || 0) > 0 ? "inprogress" : "unplayed";
+      track(`load-${kind}`);
+      if (FRIEND) track("arrive-friend", `friend scored ${FRIEND.score}`);
+    }
     // Opening Unstruck shows the start screen first (not once the day is done).
     if (game === "daily" && playMode === "daily" && !splashDone && !over()) {
       splashDone = true;
@@ -2251,6 +2277,7 @@
 
   // ---- Start screen --------------------------------------------------------
   let splashDone = false;
+  let loadTracked = false;
   const splashOpen = () => !!$("dpStart") && !$("dpStart").hidden;
 
   function openSplash() {
@@ -2258,10 +2285,19 @@
     const streak = computeStats().current;
     const started = totalGuesses() > 0 || (state.elapsed || 0) > 0;
     const day = new Date(`${state.date}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
-    const label = started ? `Continue Unstruck #${n}` : streak ? `Continue your ${streak}-day streak` : `Play Unstruck #${n}`;
-    const sub = started ? `Grid ${current + 1} of ${puzzles.length} · ${formatTime(elapsed())}` : streak ? `Play Unstruck #${n}` : "";
+    const isNew = !introSeen() && !Object.keys(loadHistory()).length;
+    const label = started ? `Continue Unstruck #${n}` : streak ? `Continue your ${streak}-day streak` : isNew ? "Play" : `Play Unstruck #${n}`;
+    const sub = started ? `Grid ${current + 1} of ${puzzles.length}${firstGame() ? "" : ` · ${formatTime(elapsed())}`}` : streak ? `Play Unstruck #${n}` : isNew ? "Starts with a quick 1-minute tutorial" : "";
+    const friend = FRIEND && FRIEND.day === n && !started ? `<div class="dp-start-friend">A friend scored <b>${FRIEND.score}</b> today. Can you beat it?</div>` : "";
+    // A little board: crossed out, still in, the guess with its colors.
+    const mini = isNew ? `<div class="dp-start-mini" aria-hidden="true">
+        <span class="is-x">TRAIL</span><span>SKATE</span><span class="is-x">CRANE</span><span>SNAKE</span>
+        <span class="is-g"><i class="n">A</i><i>R</i><i>I</i><i class="n">S</i><i class="h">E</i></span><span class="is-p">SHAPE</span><span class="is-x">NOISE</span><span>PASTE</span>
+      </div>` : "";
     $("dpStartCard").innerHTML = `<div class="dp-start-title">Unstruck</div>
       <div class="dp-start-date">#${n} · ${day}</div>
+      ${started ? "" : `<div class="dp-start-pitch">Find the secret word among 16.<br>Three grids, about 3 minutes.</div>`}
+      ${mini}${friend}
       <button type="button" class="dp-next dp-start-play" id="dpStartPlay">${label}</button>
       ${sub ? `<div class="dp-start-sub">${sub}</div>` : ""}
       <button type="button" class="dp-link" id="dpStartHelp">How to play</button>`;
@@ -2378,7 +2414,7 @@
   async function startCoach() {
     await startPractice({ grids: COACH_GRIDS });
     if (playMode !== "practice") return;
-    coach = { phase: "intro", prevInput: settings.input, msg: "" };
+    coach = { phase: "pick", prevInput: settings.input, msg: "" };
     settings.input = "tap"; // the guided game is played with taps
     selected = "";
     $("dailyPickScreen").classList.add("is-coaching");
@@ -2512,7 +2548,7 @@
   function coachScreenTap(event) {
     if (tip && $("dpTipSay") && !event.target.closest?.(".dp-word")) tipHide();
     if (!coach) return;
-    if (event.target.closest?.("#dpCoachSkip")) { event.stopPropagation(); track(`tutorial-skip-${coach.phase}`, `skipped at: ${coach.phase}`); coachEnd(false); render(); startClock(); return; }
+    if (event.target.closest?.("#dpCoachSkip")) { event.stopPropagation(); track(`tutorial-skip-${coach.phase}`, `skipped at: ${coach.phase}`); coachEnd(false); endPractice(); return; }
     if (event.target.closest?.(".dp-word, #dpGuess, button")) return;
     if (coach.phase === "intro") coachSet("pick");
     else if (coach.phase === "colors") coachSet("cross");
@@ -2538,7 +2574,7 @@
         return { text: `Find the <b>secret word</b> to win!<br>It's one of these 16 words.`, small: "Tap anywhere to start", avoid: unstruck.map(wordEl), board: true };
       case "pick": {
         const demo = p.words[5];
-        return { text: coach.msg === "pickAgain" ? `<b>Tap it again</b> to pick it.` : `To start, pick <b>any word</b>:<br>${twice ? "<b>tap it twice</b>" : "<b>tap it</b>"}, then press <b>Guess</b>.`,
+        return { text: coach.msg === "pickAgain" ? `<b>Tap it again</b> to pick it.` : `The <b>secret word</b> is one of these 16.<br>Pick <b>any word</b> to start: ${twice ? "<b>tap it twice</b>" : "<b>tap it</b>"},<br>then press <b>Guess</b>.`,
           target: coach.msg === "pickAgain" ? wordEl(coach.last) : wordEl(demo), double: twice && coach.msg !== "pickAgain", avoid: unstruck.map(wordEl) };
       }
       case "guess":
@@ -3139,8 +3175,8 @@
       }
     });
     $("dpStart")?.addEventListener("click", event => {
-      if (event.target.closest("#dpStartPlay")) closeSplash();
-      else if (event.target.closest("#dpStartHelp")) openHelp();
+      if (event.target.closest("#dpStartPlay")) { track("splash-play"); closeSplash(); }
+      else if (event.target.closest("#dpStartHelp")) { track("splash-help"); openHelp(); }
     });
     // Keyboard: Enter or Space crosses a word out (or brings it back); G guesses it.
     $("dailyPickRoot")?.addEventListener("keydown", event => {
@@ -3165,6 +3201,8 @@
       const day = event.target.closest?.("[data-archive-day]");
       if (day) return playArchive(day.dataset.archiveDay);
       if (event.target.closest?.("[data-archive-list]")) return showArchive();
+      const retry = event.target.closest?.("[data-retry]");
+      if (retry) return open(retry.dataset.retry);
       const pick = event.target.closest?.("[data-pick]");
       if (pick && !round().solved) { selected = pick.dataset.pick; guessSelected(); }
       const view = event.target.closest?.("[data-view]");
