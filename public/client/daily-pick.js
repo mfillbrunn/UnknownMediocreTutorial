@@ -654,7 +654,7 @@
     const top = boardData.top.slice(0, BOARD_SHOWN);
     const me = boardData.me && !top.some(r => r.me) ? `<div class="dp-lb-gap">⋯</div>${row(boardData.me)}` : "";
     pane.innerHTML = `<div class="dp-lb">
-      <div class="dp-lb-head"><span>Today · ${boardData.total} ${boardData.total === 1 ? "player" : "players"}</span><span>Guesses</span><span>Time</span></div>
+      <div class="dp-lb-head"><span>Today's top ${BOARD_SHOWN}</span><span>Guesses</span><span>Time</span></div>
       ${top.length ? top.map(row).join("") : `<div class="dp-board-note">No scores yet today.</div>`}${me}
       <form class="dp-lb-form" id="dpLbForm"><input id="dpLbName" maxlength="16" autocomplete="nickname" placeholder="Your name (optional)" value="${esc(boardData.name || "")}"><button type="submit" class="dp-next dp-side-btn">Save</button></form>
       <div class="dp-lb-msg" id="dpLbMsg">${boardData.name ? "" : "Without a name, your score shows without one."}</div>
