@@ -1861,3 +1861,8 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 #dailyPickScreen .dp-start { padding-top: clamp(56px, 9vh, 96px); }
 @media (max-height: 640px) { #dailyPickScreen .dp-start { padding-top: 54px; } .dp-hero { width: 56px; height: 56px; } }
 .dp-start-friend { margin-bottom: 10px; }
+/* The Leaderboard tab stands out a little: the game's green. */
+#dailyPickScreen .dp-view-board { color: #7fcb8b; opacity: 1; }
+#dailyPickScreen .dp-view-board.is-on { background: rgba(79,155,92,.28); color: #a6e3b0; }
+#dailyPickScreen.dp-light .dp-view-board { color: #3f8f4f; }
+#dailyPickScreen.dp-light .dp-view-board.is-on { background: #dcefdc; color: #2f7d43; }

@@ -1014,8 +1014,8 @@
       <div class="dp-brag-row"><button type="button" class="dp-next dp-brag" id="dpBrag">${SHARE_LABEL}</button>${game === "daily" && pastDays().length ? `<button type="button" class="dp-next dp-side-btn" id="dpPast" data-past>Past games</button>` : ""}${game === "daily" && EXPERIMENTAL_BUTTON && (WEEKLY_ENABLED || SPEED_ENABLED) ? `<button type="button" class="dp-next dp-side-btn" id="dpExperimental">Experimental</button>` : ""}</div>
       <div class="dp-views" role="tablist">
         <button type="button" class="dp-view${summaryView === "overall" ? " is-on" : ""}" data-view="overall" role="tab">Overall</button>
+        ${boardOn() && game === "daily" ? `<button type="button" class="dp-view dp-view-board${summaryView === "board" ? " is-on" : ""}" data-view="board" role="tab">Leaderboard</button>` : ""}
         <button type="button" class="dp-view${summaryView === "details" ? " is-on" : ""}" data-view="details" role="tab">Details</button>
-        ${boardOn() && game === "daily" ? `<button type="button" class="dp-view${summaryView === "board" ? " is-on" : ""}" data-view="board" role="tab">Leaderboard</button>` : ""}
       </div>
       <div class="dp-panes">
       <div class="dp-pane" data-pane="details"${summaryView === "details" ? "" : " aria-hidden=\"true\""}>${detailsTable()}</div>
