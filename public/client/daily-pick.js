@@ -686,19 +686,21 @@
     });
   }
 
-  // Averages (medians) and bests per grid and overall, for the results' Details view.
-  // The middle value (halfway between the two middle ones for an even count),
-  // so one bad day, or a tab left open, can't drag the "average" off.
-  function median(list) {
+  // Averages (trimmed) and bests per grid and overall, for the results' Details view.
+  // The average, trimmed: from 5 games on, the top and bottom 10% (at least
+  // one of each) are left out, so one disaster day, or a lucky one, can't
+  // pull it off. Fewer than 5 games: the plain average.
+  function trimmedMean(list) {
     if (!list.length) return null;
-    const sorted = [...list].sort((a, b) => a - b), mid = Math.floor(sorted.length / 2);
-    return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    const sorted = [...list].sort((a, b) => a - b);
+    const cut = sorted.length >= 5 ? Math.max(1, Math.floor(sorted.length * 0.1)) : 0;
+    const kept = sorted.slice(cut, sorted.length - cut);
+    return kept.reduce((a, b) => a + b, 0) / kept.length;
   }
 
   function computeDetails() {
     const days = Object.values(loadHistory());
-    // "Average" on screen, the median underneath (see median()).
-    const avg = median;
+    const avg = trimmedMean;
     const count = state.rounds.length;
     const grids = Array.from({ length: count }, (_, i) => {
       const guesses = days.map(d => d.grids?.[i]).filter(n => n != null);
@@ -734,8 +736,7 @@
       played: dates.length,
       current,
       best,
-      // Shown as "Average", worked out as the median: one bad day can't skew it.
-      average: median(scores) || 0,
+      average: trimmedMean(scores) || 0,
       bestScore: scores.length ? Math.min(...scores) : 0
     };
   }
