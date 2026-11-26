@@ -1917,3 +1917,12 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
   .dp-lb-cols.is-two .dp-lb-head, .dp-lb-cols.is-two .dp-lb-col + .dp-lb-col .dp-lb-head { display: none; }
   .dp-lb:has(.dp-lb-cols.is-two) .dp-lb-key { display: inline; }
 }
+/* One column, compact rows; a muted dash where there's no name. */
+.dp-lb-key { display: none !important; }
+.dp-lb-cols { gap: 1px; } .dp-lb-col { gap: 1px; }
+.dp-lb-row { padding: 3px 6px; }
+.dp-lb-head span:nth-child(3), .dp-lb-head span:nth-child(4) { font-size: 10px; }
+.dp-lb-anon { opacity: .35; }
+/* You in the top three: keep the medal, add a green outline so you still stand out. */
+#dailyPickScreen .dp-lb-row.is-me.is-gold, #dailyPickScreen .dp-lb-row.is-me.is-silver, #dailyPickScreen .dp-lb-row.is-me.is-bronze { box-shadow: inset 0 0 0 2px #6fbf7c, inset 4px 0 0 #6fbf7c; }
+#dailyPickScreen.dp-light .dp-lb-row.is-me.is-gold, #dailyPickScreen.dp-light .dp-lb-row.is-me.is-silver, #dailyPickScreen.dp-light .dp-lb-row.is-me.is-bronze { box-shadow: inset 0 0 0 2px #2f9449, inset 4px 0 0 #2f9449; }
