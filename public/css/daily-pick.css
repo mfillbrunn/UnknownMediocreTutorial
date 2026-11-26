@@ -1874,3 +1874,46 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 #dailyPickScreen .dp-lb-row.is-me em { color: #a6e3b0; opacity: 1; }
 #dailyPickScreen.dp-light .dp-lb-row.is-me { background: #dcefdc; box-shadow: inset 3px 0 0 #2f9449; color: #1f5c2e; }
 #dailyPickScreen.dp-light .dp-lb-row.is-me em { color: #2f7d43; }
+
+/* Leaderboard: two columns when there's room, and the top three in medals. */
+.dp-lb-title { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .55; padding-bottom: 2px; }
+.dp-lb-head span:first-child { grid-column: auto; }
+.dp-lb-cols { display: flex; flex-direction: column; gap: 3px; }
+.dp-lb-col { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.dp-lb-cols.is-two .dp-lb-col + .dp-lb-col .dp-lb-head { display: none; }
+@media (min-width: 370px) {
+  .dp-lb-cols.is-two { flex-direction: row; gap: 14px; }
+  .dp-lb-cols.is-two .dp-lb-col { flex: 1; }
+  .dp-lb-cols.is-two .dp-lb-col + .dp-lb-col .dp-lb-head { display: grid; }
+  .dp-lb-cols.is-two .dp-lb-head, .dp-lb-cols.is-two .dp-lb-row { grid-template-columns: 18px minmax(0, 1fr) 26px 40px; gap: 4px; font-size: 13px; }
+  .dp-lb-cols.is-two .dp-lb-head { font-size: 9.5px; }
+  .dp-lb-cols.is-two .dp-lb-row { padding: 4px 5px; margin: 0 -5px; }
+}
+.dp-lb-head span:nth-child(3), .dp-lb-head span:nth-child(4) { text-align: right; }
+/* medals */
+.dp-lb-row.is-gold { background: linear-gradient(90deg, rgba(232,184,58,.34), rgba(232,184,58,.12)); }
+.dp-lb-row.is-silver { background: linear-gradient(90deg, rgba(200,204,210,.28), rgba(200,204,210,.08)); }
+.dp-lb-row.is-bronze { background: linear-gradient(90deg, rgba(205,127,70,.30), rgba(205,127,70,.10)); }
+.dp-lb-row.is-gold .dp-lb-rank, .dp-lb-row.is-silver .dp-lb-rank, .dp-lb-row.is-bronze .dp-lb-rank {
+  opacity: 1; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 900; color: #1c1b19;
+}
+.dp-lb-row.is-gold .dp-lb-rank { background: #e8b83a; }
+.dp-lb-row.is-silver .dp-lb-rank { background: #c8ccd2; }
+.dp-lb-row.is-bronze .dp-lb-rank { background: #cd7f46; }
+#dailyPickScreen.dp-light .dp-lb-row.is-gold { background: linear-gradient(90deg, #f5dd96, #f8ebc6); }
+#dailyPickScreen.dp-light .dp-lb-row.is-silver { background: linear-gradient(90deg, #e1e3e6, #eeefef); }
+#dailyPickScreen.dp-light .dp-lb-row.is-bronze { background: linear-gradient(90deg, #ecc2a2, #f3dccb); }
+/* you, in a medal row: keep the medal, add your green stripe */
+#dailyPickScreen .dp-lb-row.is-me.is-gold, #dailyPickScreen .dp-lb-row.is-me.is-silver, #dailyPickScreen .dp-lb-row.is-me.is-bronze { color: inherit; }
+#dailyPickScreen .dp-lb-row.is-me.is-gold { background: linear-gradient(90deg, rgba(232,184,58,.34), rgba(232,184,58,.12)); }
+#dailyPickScreen .dp-lb-row.is-me.is-silver { background: linear-gradient(90deg, rgba(200,204,210,.28), rgba(200,204,210,.08)); }
+#dailyPickScreen .dp-lb-row.is-me.is-bronze { background: linear-gradient(90deg, rgba(205,127,70,.30), rgba(205,127,70,.10)); }
+#dailyPickScreen.dp-light .dp-lb-row.is-me.is-gold { background: linear-gradient(90deg, #f5dd96, #f8ebc6); color: #2b2925; }
+#dailyPickScreen.dp-light .dp-lb-row.is-me.is-silver { background: linear-gradient(90deg, #e1e3e6, #eeefef); color: #2b2925; }
+#dailyPickScreen.dp-light .dp-lb-row.is-me.is-bronze { background: linear-gradient(90deg, #ecc2a2, #f3dccb); color: #2b2925; }
+.dp-lb-title { display: flex; justify-content: space-between; align-items: baseline; }
+.dp-lb-key { display: none; text-transform: none; letter-spacing: 0; font-weight: 700; }
+@media (min-width: 370px) {
+  .dp-lb-cols.is-two .dp-lb-head, .dp-lb-cols.is-two .dp-lb-col + .dp-lb-col .dp-lb-head { display: none; }
+  .dp-lb:has(.dp-lb-cols.is-two) .dp-lb-key { display: inline; }
+}

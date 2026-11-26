@@ -648,14 +648,19 @@
     if (!boardData) { pane.innerHTML = `<div class="dp-board-note">Loading…</div>`; return; }
     if (boardData.error || !boardData.top) { pane.innerHTML = `<div class="dp-board-note">Couldn't load the leaderboard. Try again in a bit.</div>`; return; }
     const esc = t => String(t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-    const row = r => `<div class="dp-lb-row${r.me ? " is-me" : ""}"><span class="dp-lb-rank">${r.rank}</span>
+    const medal = rank => (rank === 1 ? " is-gold" : rank === 2 ? " is-silver" : rank === 3 ? " is-bronze" : "");
+    const row = r => `<div class="dp-lb-row${r.me ? " is-me" : ""}${medal(r.rank)}"><span class="dp-lb-rank">${r.rank}</span>
       <span class="dp-lb-name">${r.name ? esc(r.name) : ""}${r.me ? ` <em>you</em>` : ""}</span>
       <span class="dp-lb-score">${r.guesses}</span><span class="dp-lb-time">${formatTime(r.timeMs)}</span></div>`;
     const top = boardData.top.slice(0, BOARD_SHOWN);
     const me = boardData.me && !top.some(r => r.me) ? `<div class="dp-lb-gap">⋯</div>${row(boardData.me)}` : "";
+    // Two columns (1-5, 6-10) where the phone is wide enough; one otherwise.
+    const head = `<div class="dp-lb-head"><span></span><span></span><span>Guesses</span><span>Time</span></div>`;
+    const half = Math.ceil(top.length / 2);
+    const cols = top.length > 5 ? [top.slice(0, half), top.slice(half)] : [top];
     pane.innerHTML = `<div class="dp-lb">
-      <div class="dp-lb-head"><span>Today's top ${BOARD_SHOWN}</span><span>Guesses</span><span>Time</span></div>
-      ${top.length ? top.map(row).join("") : `<div class="dp-board-note">No scores yet today.</div>`}${me}
+      <div class="dp-lb-title"><span>Today's top ${BOARD_SHOWN}</span><span class="dp-lb-key">guesses · time</span></div>
+      ${top.length ? `<div class="dp-lb-cols${cols.length > 1 ? " is-two" : ""}">${cols.map(c => `<div class="dp-lb-col">${head}${c.map(row).join("")}</div>`).join("")}</div>` : `<div class="dp-board-note">No scores yet today.</div>`}${me}
       <form class="dp-lb-form" id="dpLbForm"><input id="dpLbName" maxlength="16" autocomplete="nickname" placeholder="Your name (optional)" value="${esc(boardData.name || "")}"><button type="submit" class="dp-next dp-side-btn">Save</button></form>
       <div class="dp-lb-msg" id="dpLbMsg">${boardData.name ? "" : "Without a name, your score shows without one."}</div>
     </div>`;
