@@ -623,7 +623,7 @@
     return res.json().catch(() => ({ error: "Something went wrong." }));
   }
   async function boardSubmit() {
-    if (!boardOn() || !boardDevice()) return;
+    if (!boardOn() || !boardDevice() || !over()) return;
     const key = `umt.unstruck.boardSent.${state.date}`;
     try { if (localStorage.getItem(key)) return; } catch (e) { return; }
     const day = state.date;
@@ -778,7 +778,7 @@
     const clock = $("dpClock");
     if (!clock) return;
     $("dailyPickScreen")?.classList.toggle("is-first-game", firstGame());
-    clock.hidden = over() && !advanceTimer;
+    clock.hidden = (over() && !advanceTimer) || statsPreview;
     if (game !== "speed") {
       clock.textContent = formatTime(elapsed());
       clock.classList.remove("is-low");
@@ -806,7 +806,7 @@
 
   function startClock() {
     // Never in a tab nobody is looking at (it starts when they come back).
-    if (runningSince || document.hidden || over() || !$("dailyPickScreen")?.classList.contains("active") || helpOpen() || introOpen() || ruleOpen() || splashOpen()) return;
+    if (runningSince || statsPreview || document.hidden || over() || !$("dailyPickScreen")?.classList.contains("active") || helpOpen() || introOpen() || ruleOpen() || splashOpen()) return;
     runningSince = Date.now();
     showClock();
     ticker = setInterval(() => { showClock(); autoTick(); }, 250);
@@ -995,6 +995,28 @@
     if (settingsOpen()) closeSettings();
   }
 
+  // Overall | Leaderboard | Details, for the results and the stats preview.
+  function statsTabs(stats, diff) {
+    const stat = (value, label) => `<div class="dp-stat"><b>${value}</b><span>${label}</span></div>`;
+    return `<div class="dp-views" role="tablist">
+        <button type="button" class="dp-view${summaryView === "overall" ? " is-on" : ""}" data-view="overall" role="tab">Overall</button>
+        ${boardOn() && game === "daily" ? `<button type="button" class="dp-view dp-view-board${summaryView === "board" ? " is-on" : ""}" data-view="board" role="tab">Leaderboard</button>` : ""}
+        <button type="button" class="dp-view${summaryView === "details" ? " is-on" : ""}" data-view="details" role="tab">Details</button>
+      </div>
+      <div class="dp-panes">
+      <div class="dp-pane" data-pane="details"${summaryView === "details" ? "" : " aria-hidden=\"true\""}>${detailsTable()}</div>
+      ${boardOn() && game === "daily" ? `<div class="dp-pane dp-pane-board" data-pane="board"${summaryView === "board" ? "" : " aria-hidden=\"true\""}></div>` : ""}
+      <div class="dp-pane" data-pane="overall"${summaryView === "overall" ? "" : " aria-hidden=\"true\""}><div class="dp-stats${stats.best > stats.current ? "" : " is-four"}">
+        ${stat(stats.played, "Played")}
+        ${stat(stats.current, "Streak")}
+        ${stats.best > stats.current ? stat(stats.best, "Best streak") : ""}
+        ${stat(stats.average ? stats.average.toFixed(1) : "–", "Average")}
+        ${stat(stats.bestScore || "–", "Best score")}
+      </div>
+      ${distributionChart(diff)}</div>
+      </div>`;
+  }
+
   function renderSummary(root) {
     $("dailyPickScreen")?.classList.add("is-results");
     if (playMode === "practice") return renderPracticeSummary(root);
@@ -1027,23 +1049,7 @@
       </div>
       <div class="dp-grid-scores">${grids}</div>
       <div class="dp-brag-row"><button type="button" class="dp-next dp-brag" id="dpBrag">${SHARE_LABEL}</button>${game === "daily" && pastDays().length ? `<button type="button" class="dp-next dp-side-btn" id="dpPast" data-past>Past games</button>` : ""}${game === "daily" && EXPERIMENTAL_BUTTON && (WEEKLY_ENABLED || SPEED_ENABLED) ? `<button type="button" class="dp-next dp-side-btn" id="dpExperimental">Experimental</button>` : ""}</div>
-      <div class="dp-views" role="tablist">
-        <button type="button" class="dp-view${summaryView === "overall" ? " is-on" : ""}" data-view="overall" role="tab">Overall</button>
-        ${boardOn() && game === "daily" ? `<button type="button" class="dp-view dp-view-board${summaryView === "board" ? " is-on" : ""}" data-view="board" role="tab">Leaderboard</button>` : ""}
-        <button type="button" class="dp-view${summaryView === "details" ? " is-on" : ""}" data-view="details" role="tab">Details</button>
-      </div>
-      <div class="dp-panes">
-      <div class="dp-pane" data-pane="details"${summaryView === "details" ? "" : " aria-hidden=\"true\""}>${detailsTable()}</div>
-      ${boardOn() && game === "daily" ? `<div class="dp-pane dp-pane-board" data-pane="board"${summaryView === "board" ? "" : " aria-hidden=\"true\""}></div>` : ""}
-      <div class="dp-pane" data-pane="overall"${summaryView === "overall" ? "" : " aria-hidden=\"true\""}><div class="dp-stats${stats.best > stats.current ? "" : " is-four"}">
-        ${stat(stats.played, "Played")}
-        ${stat(stats.current, "Streak")}
-        ${stats.best > stats.current ? stat(stats.best, "Best streak") : ""}
-        ${stat(stats.average ? stats.average.toFixed(1) : "–", "Average")}
-        ${stat(stats.bestScore || "–", "Best score")}
-      </div>
-      ${distributionChart(diff)}</div>
-      </div>
+${statsTabs(stats, diff)}
       <div class="dp-countdown">${G().nextLabel} <b id="dpCountdown">${formatCountdown(G().next())}</b></div>
       ${game === "daily" ? "" : `<button type="button" class="dp-link" data-game="daily">Play today's Daily →</button>`}
       <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div></div>`;
@@ -1053,6 +1059,37 @@
     // Finished before the leaderboard existed (or offline then): send it now.
     if (game === "daily" && playMode === "daily") boardSubmit();
     if (summaryView === "board" && document.querySelector('#dailyPickRoot [data-pane="board"]')) { boardRender(); boardLoad(); }
+  }
+
+  // From the start screen: your stats and today's leaderboard before playing,
+  // with Play where Share would be. The clock doesn't run meanwhile.
+  let statsPreview = false;
+  function renderStatsPreview(root) {
+    $("dailyPickScreen")?.classList.add("is-results");
+    setTitle(0);
+    const stats = computeStats();
+    root.innerHTML = `<div class="dp-summary dp-preview">
+      <div class="dp-preview-lead">Today's Unstruck <b>#${G().number(state.date)}</b> is waiting.</div>
+      <div class="dp-brag-row"><button type="button" class="dp-next dp-brag" id="dpPreviewPlay" data-preview-play>Play</button></div>
+      ${statsTabs(stats, NaN)}
+      <div class="dp-copyright">&copy; 2026 Unstruck. All rights reserved.</div></div>`;
+    if (summaryView === "board" && document.querySelector('#dailyPickRoot [data-pane="board"]')) { boardRender(); boardLoad(); }
+  }
+  function openStatsPreview() {
+    track("splash-stats");
+    $("dpStart").hidden = true;
+    $("dailyPickScreen").classList.remove("is-splash");
+    statsPreview = true;
+    stopClock();
+    render();
+  }
+  function closeStatsPreview() {
+    statsPreview = false;
+    $("dailyPickScreen")?.classList.remove("is-results");
+    render();
+    setTitle(current + 1);
+    flapIn();
+    beginPlay();
   }
 
   // Speed's results: how many grids, then each grid as a square.
@@ -1120,6 +1157,7 @@
     const root = $("dailyPickRoot");
     if (!root) return;
     showClock();
+    if (statsPreview && playMode === "daily" && game === "daily" && !over()) return renderStatsPreview(root);
     if ((over() || (playMode === "practice" && state.coachDone)) && !advanceTimer) return renderSummary(root);
     $("dailyPickScreen")?.classList.remove("is-results");
     clearInterval(countdownTimer);
@@ -2318,7 +2356,8 @@
       ${friend}
       <button type="button" class="dp-next dp-start-play" id="dpStartPlay">${label}</button>
       ${sub ? `<div class="dp-start-sub">${sub}</div>` : ""}
-      <button type="button" class="dp-link" id="dpStartHelp">How to play</button>`;
+      <button type="button" class="dp-link" id="dpStartHelp">How to play</button>
+      ${Object.keys(loadHistory()).length || boardOn() ? `<button type="button" class="dp-link" id="dpStartStats">Stats &amp; leaderboard</button>` : ""}`;
     $("dailyPickScreen").classList.add("is-splash");
     $("dpStart").hidden = false;
     setTitle(0);
@@ -3195,6 +3234,7 @@
     $("dpStart")?.addEventListener("click", event => {
       if (event.target.closest("#dpStartPlay")) { track("splash-play"); closeSplash(); }
       else if (event.target.closest("#dpStartHelp")) { track("splash-help"); openHelp(); }
+      else if (event.target.closest("#dpStartStats")) openStatsPreview();
     });
     // Keyboard: Enter or Space crosses a word out (or brings it back); G guesses it.
     $("dailyPickRoot")?.addEventListener("keydown", event => {
@@ -3219,6 +3259,7 @@
       const day = event.target.closest?.("[data-archive-day]");
       if (day) return playArchive(day.dataset.archiveDay);
       if (event.target.closest?.("[data-archive-list]")) return showArchive();
+      if (event.target.closest?.("[data-preview-play]")) { track("preview-play"); return closeStatsPreview(); }
       const retry = event.target.closest?.("[data-retry]");
       if (retry) return open(retry.dataset.retry);
       const pick = event.target.closest?.("[data-pick]");

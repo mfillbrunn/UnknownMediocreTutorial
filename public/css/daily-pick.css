@@ -1926,3 +1926,5 @@ body.dp-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 /* You in the top three: keep the medal, add a green outline so you still stand out. */
 #dailyPickScreen .dp-lb-row.is-me.is-gold, #dailyPickScreen .dp-lb-row.is-me.is-silver, #dailyPickScreen .dp-lb-row.is-me.is-bronze { box-shadow: inset 0 0 0 2px #6fbf7c, inset 4px 0 0 #6fbf7c; }
 #dailyPickScreen.dp-light .dp-lb-row.is-me.is-gold, #dailyPickScreen.dp-light .dp-lb-row.is-me.is-silver, #dailyPickScreen.dp-light .dp-lb-row.is-me.is-bronze { box-shadow: inset 0 0 0 2px #2f9449, inset 4px 0 0 #2f9449; }
+/* Stats before playing: a line, then Play where Share would be. */
+.dp-preview-lead { text-align: center; font-size: 17px; opacity: .85; margin: 6px 0 2px; }
