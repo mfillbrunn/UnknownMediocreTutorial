@@ -19,7 +19,7 @@ const MIN_MS_PER_GRID = 4000; // nobody reads 16 words, guesses and confirms in 
 const MAX_MS = 6 * 60 * 60 * 1000;
 
 // Today in US Eastern time, like the game.
-function easternDate(offsetDays = 0) {
+export function easternDate(offsetDays = 0) {
   const d = new Date(Date.now() + offsetDays * 86400000);
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 }
@@ -83,6 +83,20 @@ export class Leaderboard extends DurableObject {
     return { ok: true };
   }
 
+  // For the owner's admin page only (never sent to players).
+  adminList(days) {
+    const out = {};
+    for (const day of days) {
+      out[day] = this.sql.exec(`SELECT s.device, s.guesses, s.time_ms AS timeMs, s.grids, s.ip, s.at, n.name FROM scores s
+        LEFT JOIN names n ON n.device = s.device WHERE s.day = ? ORDER BY s.guesses, s.time_ms, s.at`, day).toArray();
+    }
+    return out;
+  }
+  adminRemove(day, device) {
+    this.sql.exec(`DELETE FROM scores WHERE day = ? AND device = ?`, day, device);
+    return { ok: true };
+  }
+
   setName(device, raw) {
     const { name, error } = cleanName(raw);
     if (error) return { error };
@@ -112,6 +126,15 @@ export class Leaderboard extends DurableObject {
   }
 }
 
+// A network address is kept only as a short one-way tag (enough to limit
+// scores per network and to spot one network posting several scores).
+export async function netTag(ip) {
+  if (/^[0-9a-f]{16}$/.test(ip)) return ip;
+  const data = new TextEncoder().encode(`unstruck:${ip}`);
+  const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", data));
+  return Array.from(hash.slice(0, 8), b => b.toString(16).padStart(2, "0")).join("");
+}
+
 // ---- The API: /api/board, /api/score, /api/name ---------------------------
 const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
@@ -121,7 +144,7 @@ const deviceOk = d => typeof d === "string" && /^[a-z0-9]{16,40}$/.test(d);
 export async function handleApi(request, env) {
   const url = new URL(request.url);
   const stub = env.LEADERBOARD.get(env.LEADERBOARD.idFromName("global"));
-  const ip = request.headers.get("CF-Connecting-IP") || "local";
+  const ip = await netTag(request.headers.get("CF-Connecting-IP") || "local");
   try {
     if (url.pathname === "/api/board" && request.method === "GET") {
       const day = url.searchParams.get("day") || easternDate();
