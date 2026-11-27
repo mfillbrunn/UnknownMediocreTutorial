@@ -901,8 +901,10 @@
     const num = v => (v == null ? "–" : Number.isInteger(v) ? v : v.toFixed(1));
     // Averages rounded to the nearest second (formatTime alone would cut them down).
     const time = v => (v == null ? "–" : formatTime(Math.round(v / 1000) * 1000));
+    // A real time you played: shown exactly as the results showed it.
+    const fastest = v => (v == null ? "–" : formatTime(v));
     const name = gridLabel;
-    const row = (label, x, cls = "") => `<tr class="${cls}"><th>${label}</th><td>${num(x.avg)}</td><td>${time(x.time)}</td><td>${time(x.fastest)}</td></tr>`;
+    const row = (label, x, cls = "") => `<tr class="${cls}"><th>${label}</th><td>${num(x.avg)}</td><td>${time(x.time)}</td><td>${fastest(x.fastest)}</td></tr>`;
     return `<div class="dp-details">
       <table>
         <thead><tr><th></th><th>Avg guesses</th><th>Avg time</th><th>Fastest</th></tr></thead>
