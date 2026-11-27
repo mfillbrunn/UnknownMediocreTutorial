@@ -14,6 +14,7 @@
 import { DurableObject } from "cloudflare:workers";
 
 const MAX_PER_IP_PER_DAY = 8;
+const SAME_NETWORK_GAP_MS = 30 * 60 * 1000;
 const TOP = 20;
 const MIN_MS_PER_GRID = 4000; // nobody reads 16 words, guesses and confirms in under 4s
 const MAX_MS = 6 * 60 * 60 * 1000;
@@ -64,6 +65,8 @@ export class Leaderboard extends DurableObject {
       day TEXT NOT NULL, device TEXT NOT NULL, guesses INTEGER NOT NULL, time_ms INTEGER NOT NULL,
       grids TEXT NOT NULL, ip TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (day, device))`);
     this.sql.exec(`CREATE INDEX IF NOT EXISTS scores_rank ON scores (day, guesses, time_ms)`);
+    // ranked = 0: saved (the player sees it) but kept off the public board.
+    try { this.sql.exec(`ALTER TABLE scores ADD COLUMN ranked INTEGER NOT NULL DEFAULT 1`); } catch (e) { /* already there */ }
     this.sql.exec(`CREATE TABLE IF NOT EXISTS names (device TEXT PRIMARY KEY, name TEXT NOT NULL)`);
   }
 
@@ -76,8 +79,13 @@ export class Leaderboard extends DurableObject {
     const fromIp = this.sql.exec(`SELECT COUNT(*) AS n FROM scores WHERE day = ? AND ip = ?`, day, ip).one().n;
     if (fromIp >= MAX_PER_IP_PER_DAY) return { error: "Too many scores from here today." };
     const guesses = grids.reduce((a, b) => a + b, 0);
-    this.sql.exec(`INSERT INTO scores (day, device, guesses, time_ms, grids, ip, at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      day, device, guesses, timeMs, grids.join(","), ip, Date.now());
+    // A new browser on a network that sent a score in the last 30 minutes:
+    // that's how a replay with the answers already known looks, so it doesn't
+    // rank. (People sharing a home's network who play at other times do.)
+    const soon = this.sql.exec(`SELECT COUNT(*) AS n FROM scores WHERE day = ? AND ip = ? AND device != ? AND at > ?`,
+      day, ip, device, Date.now() - SAME_NETWORK_GAP_MS).one().n;
+    this.sql.exec(`INSERT INTO scores (day, device, guesses, time_ms, grids, ip, at, ranked) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      day, device, guesses, timeMs, grids.join(","), ip, Date.now(), soon ? 0 : 1);
     // Old days go after a while; the board is about today.
     this.sql.exec(`DELETE FROM scores WHERE day < ?`, easternDate(-14));
     return { ok: true };
@@ -87,7 +95,7 @@ export class Leaderboard extends DurableObject {
   adminList(days) {
     const out = {};
     for (const day of days) {
-      out[day] = this.sql.exec(`SELECT s.device, s.guesses, s.time_ms AS timeMs, s.grids, s.ip, s.at, n.name FROM scores s
+      out[day] = this.sql.exec(`SELECT s.device, s.guesses, s.time_ms AS timeMs, s.grids, s.ip, s.at, s.ranked, n.name FROM scores s
         LEFT JOIN names n ON n.device = s.device WHERE s.day = ? ORDER BY s.guesses, s.time_ms, s.at`, day).toArray();
     }
     return out;
@@ -107,17 +115,18 @@ export class Leaderboard extends DurableObject {
 
   board(day, device) {
     const rows = this.sql.exec(`SELECT s.device, s.guesses, s.time_ms AS timeMs, s.grids, n.name FROM scores s
-      LEFT JOIN names n ON n.device = s.device WHERE s.day = ? ORDER BY s.guesses, s.time_ms, s.at LIMIT ?`, day, TOP).toArray();
-    const total = this.sql.exec(`SELECT COUNT(*) AS n FROM scores WHERE day = ?`, day).one().n;
+      LEFT JOIN names n ON n.device = s.device WHERE s.day = ? AND s.ranked = 1 ORDER BY s.guesses, s.time_ms, s.at LIMIT ?`, day, TOP).toArray();
+    const total = this.sql.exec(`SELECT COUNT(*) AS n FROM scores WHERE day = ? AND ranked = 1`, day).one().n;
     const strip = (r, rank) => ({ rank, name: r.name || "", guesses: r.guesses, timeMs: r.timeMs, grids: r.grids.split(",").map(Number), me: r.device === device });
     const top = rows.map((r, i) => strip(r, i + 1));
     let me = top.find(r => r.me) || null;
     if (!me && device) {
-      const mine = this.sql.exec(`SELECT s.device, s.guesses, s.time_ms AS timeMs, s.grids, s.at, n.name FROM scores s
+      const mine = this.sql.exec(`SELECT s.device, s.guesses, s.time_ms AS timeMs, s.grids, s.at, s.ranked, n.name FROM scores s
         LEFT JOIN names n ON n.device = s.device WHERE s.day = ? AND s.device = ?`, day, device).toArray()[0];
       if (mine) {
-        const ahead = this.sql.exec(`SELECT COUNT(*) AS n FROM scores WHERE day = ? AND (guesses < ? OR (guesses = ? AND (time_ms < ? OR (time_ms = ? AND at < ?))))`,
+        const ahead = this.sql.exec(`SELECT COUNT(*) AS n FROM scores WHERE day = ? AND ranked = 1 AND (guesses < ? OR (guesses = ? AND (time_ms < ? OR (time_ms = ? AND at < ?))))`,
           day, mine.guesses, mine.guesses, mine.timeMs, mine.timeMs, mine.at).one().n;
+        // An unranked score still shows its place, to its own player only.
         me = strip(mine, ahead + 1);
       }
     }

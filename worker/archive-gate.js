@@ -112,7 +112,7 @@ async function admin(request, env) {
     rows.forEach((r, i) => {
       const fast = r.timeMs / r.guesses < 5000;
       const sent = new Date(r.at).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
-      html += `<tr class="${fast ? "fast" : ""}"><td>${i + 1}</td><td>${esc(r.name || "—")}</td><td>${esc(r.grids)}</td><td>${r.guesses}</td><td>${time(r.timeMs)}</td>
+      html += `<tr class="${fast ? "fast" : ""}${r.ranked ? "" : " off"}"><td>${i + 1}</td><td>${esc(r.name || "—")}${r.ranked ? "" : ' <span class="tag">not ranked</span>'}</td><td>${esc(r.grids)}</td><td>${r.guesses}</td><td>${time(r.timeMs)}</td>
         <td><code>${esc(r.device.slice(0, 6))}</code></td><td><code class="${nets[r.net] > 1 ? "dup" : ""}">${r.net}</code></td><td>${sent}</td>
         <td><form method="post" onsubmit="return confirm('Remove this score?')"><input type="hidden" name="day" value="${day}"><input type="hidden" name="device" value="${esc(r.device)}"><button>Remove</button></form></td></tr>`;
     });
@@ -121,9 +121,9 @@ async function admin(request, env) {
   const body = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Unstruck admin</title>
 <style>body{margin:0;padding:16px;background:#1b1a18;color:#f1ece2;font:14px/1.4 -apple-system,Segoe UI,Roboto,Arial,sans-serif}h1{font-size:20px}h2{font-size:16px;margin:22px 0 6px}small{opacity:.6;font-weight:400}
 table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:5px 6px;border-bottom:1px solid #34312d;text-align:left;white-space:nowrap}th{opacity:.6;font-weight:600}
-tr.fast td{background:rgba(229,72,77,.18)}code{font-size:12px}code.dup{background:#e8b83a;color:#1c1b19;padding:1px 4px;border-radius:4px}button{background:#e5484d;color:#fff;border:0;border-radius:6px;padding:4px 8px}
+tr.fast td{background:rgba(229,72,77,.18)}tr.off td{opacity:.55}.tag{font-size:11px;background:#57524b;padding:1px 5px;border-radius:4px}code{font-size:12px}code.dup{background:#e8b83a;color:#1c1b19;padding:1px 4px;border-radius:4px}button{background:#e5484d;color:#fff;border:0;border-radius:6px;padding:4px 8px}
 .key{opacity:.7;font-size:13px}.wrap{overflow-x:auto}</style></head><body><h1>Unstruck leaderboard: last 3 days</h1>
-<p class="key">Red rows: under 5 seconds per guess. A yellow network tag: that network sent more than one score in these 3 days (one person on several browsers, or a shared home or office network). Browser is the same 6 letters every day for the same browser.</p>
+<p class="key">Red rows: under 5 seconds per guess. A yellow network tag: that network sent more than one score in these 3 days (one person on several browsers, or a shared home or office network). Browser is the same 6 letters every day for the same browser. Not ranked: a new browser on a network that sent a score in the 30 minutes before (kept off the public board automatically).</p>
 <div class="wrap">${html}</div></body></html>`;
   return new Response(body, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
 }
